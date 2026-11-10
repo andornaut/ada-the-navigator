@@ -66,10 +66,16 @@ try {
   );
   events.checks.push("Real renderer and accessible home status");
   async function contextControlProof(expected, phase) {
-    assert.equal(await page.locator(".ada-use:visible").count(), expected,
-      `${phase}: the dedicated control must be the only visible contextual action`);
-    assert.equal(await page.locator('[data-action="interact"]').count(), 0,
-      `${phase}: travel must not duplicate the contextual action`);
+    assert.equal(
+      await page.locator(".ada-use:visible").count(),
+      expected,
+      `${phase}: the dedicated control must be the only visible contextual action`,
+    );
+    assert.equal(
+      await page.locator('[data-action="interact"]').count(),
+      0,
+      `${phase}: travel must not duplicate the contextual action`,
+    );
   }
   await contextControlProof(0, "home");
   async function frameProof(portrait = false) {
@@ -267,7 +273,9 @@ try {
   }, storageKey);
   try {
     await page.locator('[data-action="settings"]').click();
-    const warning = page.getByRole("status").filter({ hasText: PROTOTYPE.labels.savingUnavailable });
+    const warning = page
+      .getByRole("status")
+      .filter({ hasText: PROTOTYPE.labels.savingUnavailable });
     await warning.waitFor({ state: "visible" });
     assert.equal(await warning.count(), 1, "Save failure must have one accessible status");
     assert.equal(await warning.getAttribute("id"), "save-status");
@@ -287,8 +295,11 @@ try {
     await page.locator(".ada-use").click();
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
-    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable,
-      "Dialogue rendering must not clear a failed-save warning");
+    assert.equal(
+      await warning.textContent(),
+      PROTOTYPE.labels.savingUnavailable,
+      "Dialogue rendering must not clear a failed-save warning",
+    );
     await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
     await page.locator(".ada-use").waitFor({ state: "visible" });
     await contextControlProof(1, "resumed flight");
@@ -298,8 +309,11 @@ try {
     await contextControlProof(0, "keyboard interaction dialogue");
     await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
     assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
-    assert.equal(await page.evaluate((key) => localStorage.getItem(key), storageKey), beforeStorageFailure,
-      "Failed writes must preserve the last persisted state");
+    assert.equal(
+      await page.evaluate((key) => localStorage.getItem(key), storageKey),
+      beforeStorageFailure,
+      "Failed writes must preserve the last persisted state",
+    );
     await page.screenshot({ path: `${output}/save-unavailable.png` });
   } finally {
     await page.evaluate(() => {
@@ -311,14 +325,20 @@ try {
   await page.waitForFunction((key) => {
     const saved = JSON.parse(localStorage.getItem(key));
     const status = document.querySelector("#game-status");
-    return document.querySelector("#save-status")?.textContent === "" &&
+    return (
+      document.querySelector("#save-status")?.textContent === "" &&
       saved?.flight?.player.x === Number(status.dataset.x) &&
-      saved?.flight?.player.y === Number(status.dataset.y);
+      saved?.flight?.player.y === Number(status.dataset.y)
+    );
   }, storageKey);
   await page.locator('[data-action="close-settings"]').click();
   await contextControlProof(1, "recovered flight");
-  events.checks.push("Blocked browser storage preserves gameplay and last save; status survives dialogue and clears after successful write");
-  events.checks.push("One dedicated context control supports pointer and keyboard use, absent in home and dialogue");
+  events.checks.push(
+    "Blocked browser storage preserves gameplay and last save; status survives dialogue and clears after successful write",
+  );
+  events.checks.push(
+    "One dedicated context control supports pointer and keyboard use, absent in home and dialogue",
+  );
 
   const dangerInput = new GameModel(PROTOTYPE, safeSerialized);
   dangerInput.state.flight.dangerFor = 5;
@@ -328,7 +348,9 @@ try {
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await page.locator('[data-action="return-home"]:disabled').waitFor({ state: "visible" });
   await contextControlProof(0, "danger outside a friendly destination");
-  events.checks.push("Danger blocks travel and exposes no inapplicable or duplicate contextual control");
+  events.checks.push(
+    "Danger blocks travel and exposes no inapplicable or duplicate contextual control",
+  );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });

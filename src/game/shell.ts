@@ -46,13 +46,9 @@ export class StoryShell {
     this.travel.className = "travel-panel";
     this.travel.setAttribute("aria-label", PROTOTYPE.labels.destinations ?? "");
     this.hud.className = "flight-hud";
-    document.getElementById("app")?.append(
-      this.status,
-      this.savingStatus,
-      this.hud,
-      this.panel,
-      this.travel,
-    );
+    document
+      .getElementById("app")
+      ?.append(this.status, this.savingStatus, this.hud, this.panel, this.travel);
   }
 
   render(state: GameState, view: ShellView): void {
