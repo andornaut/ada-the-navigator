@@ -186,3 +186,66 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   expect(model.state.progress[3].resolved).toBe(true);
   expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
 });
+
+it("places whale debris offscreen and preserves pre-introduction clearing", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.state.unlocked.push(2, 3);
+  launch(model, 3);
+  const f = model.state.flight!;
+  f.freshDistance = PROTOTYPE.tuning.introFreshDistance;
+  model.step(0.01, idle);
+  const whale = f.objects.find((o) => o.id === "whale")!;
+  expect(Math.hypot(whale.x - f.player.x, whale.y - f.player.y)).toBeGreaterThan(
+    PROTOTYPE.tuning.chunkSize,
+  );
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.progress[3].introduced).toBe(false);
+  const debris = f.objects.filter((o) => o.kind === "debris");
+  expect(debris).toHaveLength(PROTOTYPE.tuning.whaleDebris.count);
+  f.objects = f.objects.filter((o) => o.kind === "destination" || o.kind === "debris");
+  for (const obstruction of debris) {
+    f.player = { x: obstruction.x - 300, y: obstruction.y };
+    f.velocity = { x: 0, y: 0 };
+    for (let i = 0; i < 400 && f.objects.some((o) => o.id === obstruction.id); i++) {
+      model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
+    }
+    expect(f.objects.some((o) => o.id === obstruction.id)).toBe(false);
+  }
+  expect(model.state.progress[3].introduced).toBe(false);
+  expect(model.state.progress[3].stage).toBe(2);
+  const restored = new GameModel(PROTOTYPE, model.save());
+  expect(restored.state).toEqual(model.state);
+  arrive(restored, "whale");
+  restored.step(0.01, idle);
+  expect(restored.state.dialogue?.text).toBe(PROTOTYPE.chapters[3].dialogue.freed?.text);
+  expect(restored.state.progress[3].stage).toBe(3);
+  expect(restored.state.flight!.objects.some((o) => o.kind === "debris")).toBe(false);
+  restored.choose("continue");
+  talk(restored, "family");
+  talk(restored, "whale");
+  expect(restored.state.progress[3].questComplete).toBe(true);
+});
+
+it("keeps remaining whale debris aligned when an unknown encounter is placed ahead again", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.state.unlocked.push(2, 3);
+  launch(model, 3);
+  const f = model.state.flight!;
+  f.freshDistance = PROTOTYPE.tuning.introFreshDistance;
+  model.step(0.01, idle);
+  const whale = f.objects.find((o) => o.id === "whale")!;
+  const debris = f.objects.filter((o) => o.kind === "debris");
+  const offsets = debris.map((o) => ({ x: o.x - whale.x, y: o.y - whale.y }));
+  f.player = { x: whale.x + PROTOTYPE.tuning.chunkSize * 4, y: whale.y };
+  f.velocity = { x: PROTOTYPE.tuning.maxSpeed, y: 0 };
+  const chunkSize = PROTOTYPE.tuning.chunkSize;
+  f.freshChunk = `${Math.floor(f.player.x / chunkSize)},${Math.floor(f.player.y / chunkSize)}`;
+  model.step(0.01, { ...idle, move: { x: 1, y: 0 } });
+  const relocated = f.objects.find((o) => o.id === "whale")!;
+  expect(relocated.x).not.toBe(whale.x);
+  debris.forEach((o, i) => {
+    expect(o.x - relocated.x).toBeCloseTo(offsets[i]!.x);
+    expect(o.y - relocated.y).toBeCloseTo(offsets[i]!.y);
+    expect(f.objects).toContain(o);
+  });
+});

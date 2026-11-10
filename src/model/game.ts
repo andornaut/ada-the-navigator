@@ -226,7 +226,7 @@ export class GameModel {
       if (
         event.type === "debrisCleared" &&
         f.sector === 3 &&
-        this.current.stage === 1 &&
+        this.current.stage <= 1 &&
         !f.objects.some((o) => o.kind === "debris" && o.hp > 0)
       ) {
         this.current.stage = 2;
@@ -238,7 +238,7 @@ export class GameModel {
         f.freshDistance > previousFreshDistance &&
         !this.current.known.includes(first[f.sector])
       ) {
-        placeDestinationAhead(this.content, first[f.sector], f);
+        this.placePending(first[f.sector]);
       }
     }
     if (
@@ -252,7 +252,7 @@ export class GameModel {
       if (id) {
         ensureDestination(this.content, id, f);
         if (f.freshDistance > previousFreshDistance && !this.current.known.includes(id)) {
-          placeDestinationAhead(this.content, id, f);
+          this.placePending(id);
         }
       }
     }
@@ -264,19 +264,43 @@ export class GameModel {
       this.nearest() === intro
     ) {
       this.current.introduced = true;
-      this.current.stage = 1;
+      this.current.stage = Math.max(1, this.current.stage);
       if (f.sector === 1) {
         this.current.questItem = "food";
       }
       this.ensureWhaleDebris();
-      this.exchange(f.sector === 1 ? "grower" : intro);
+      if (f.sector === 3 && this.current.stage === 2) {
+        this.current.stage = 3;
+        this.exchange("freed");
+      } else {
+        this.exchange(f.sector === 1 ? "grower" : intro);
+      }
     } else if (input.use) {
       this.interact();
     }
   }
+  private placePending(id: string): void {
+    const f = this.state.flight;
+    if (!f) {
+      return;
+    }
+    const old = f.objects.find((o) => o.id === id);
+    const before = old ? { x: old.x, y: old.y } : null;
+    const debris = id === "whale" ? f.objects.filter((o) => o.id.startsWith("whale-debris:")) : [];
+    const destination = placeDestinationAhead(this.content, id, f);
+    if (before) {
+      for (const object of debris) {
+        object.x += destination.x - before.x;
+        object.y += destination.y - before.y;
+        if (!f.objects.includes(object)) {
+          f.objects.push(object);
+        }
+      }
+    }
+  }
   private ensureWhaleDebris(): void {
     const f = this.state.flight;
-    if (!f || f.sector !== 3 || this.current.stage !== 1) {
+    if (!f || f.sector !== 3 || this.current.stage >= 2) {
       return;
     }
     const whale = f.objects.find((o) => o.id === "whale");
