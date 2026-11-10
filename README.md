@@ -78,20 +78,24 @@ npm ci && \
 
 Open the local URL printed by Vite to play the development build. The available
 prototype behavior depends on the integrated source revision. Dependency
-installation enables the Husky pre-commit hook. Run tests and production builds
-through the isolated checks below.
+installation enables the Husky pre-commit hook. Native npm checks run directly in
+the current environment; Make selects the container profile below.
 
 ## Checks
 
-GNU Make, Node.js and Docker are required for verification. The prepared public
-interface is `make check` (lint, test and build), `make lint`, `make test`,
-`make build` and `make check-info`. The four npm check aliases call those Make
-targets. `make check-info` prints JSON version 1 with the three check categories.
+Native npm scripts never invoke Make: `npm run lint` checks formatting and
+source lint, `npm test` runs Vitest, and `npm run build` builds Vite output and
+retains assets. `npm run check` combines scratch-owned hook verification,
+TypeScript, lint, tests, build and both packaging dry runs.
 
-Make adoption is held pending the [container adoption contract](docs/container-adoption.md).
-Local Make source verification is authorized with the per-start resource
-admission callback. The detached receipt adapter and browser proof remain available; see
-[isolated checks](docs/checks.md). CI requires `AI attributions`, `Lint` and `Test`.
+`make check` enters the canonical container launcher. This repository also keeps
+optional `make lint`, `make test` and `make build` aliases. Its custom Dockerfile
+is required by CI, which runs `make lint` for `Lint` and `make test build` for
+`Test`. `AI attributions` remains a separate required check.
+
+See [check commands and evidence](docs/checks.md) and
+[container compatibility](docs/container-adoption.md). The detached receipt
+adapter and browser artifact proof remain available.
 
 ## Delivery
 

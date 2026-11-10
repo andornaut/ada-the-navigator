@@ -75,7 +75,12 @@ console.error(
   }),
 );
 for (const script of categories[category]) {
-  const extra = category === "test" ? ["--", ...args, "--maxWorkers=4"] : [];
+  const extra =
+    script === "internal:hooks"
+      ? ["--", "--output", "/tmp/evidence/hooks.json"]
+      : category === "test"
+        ? ["--", ...args, "--maxWorkers=4"]
+        : [];
   const result = spawnSync("npm", ["run", script, ...extra], { stdio: "inherit" });
   if (result.error || result.status !== 0) {
     console.error(result.error?.message ?? `${script} failed: ${result.signal ?? result.status}`);
