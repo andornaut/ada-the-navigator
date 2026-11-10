@@ -18,7 +18,8 @@ jobs:
   check:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    # Leave two minutes before the delivery CI polling deadline.
+    # Capped at 28 minutes before the delivery polling deadline: a job still running
+    # at that limit has hung rather than completed within its check budget.
     timeout-minutes: 28
     strategy:
       fail-fast: false
@@ -56,7 +57,7 @@ jobs:
           done
       - name: Preserve check evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: checks-${{ matrix.mode }}
           path: .check-results/

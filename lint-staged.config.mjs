@@ -1,5 +1,3 @@
-export default {
-  "*.{js,mjs,ts}": ["prettier --write", "eslint --fix --max-warnings 0"],
-  "*.{json,yaml,yml,css,html}": "prettier --write",
-  "*.md": ["prettier --write", "markdownlint-cli2"],
-};
+import { readFileSync } from "node:fs";
+
+export default JSON.parse(readFileSync(new URL("./.lintstagedrc", import.meta.url), "utf8"));
