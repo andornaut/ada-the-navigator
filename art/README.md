@@ -2,7 +2,8 @@
 
 Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
 Gameplay supplies semantic requirements. Prototype art covers Ada's ship and
-character portraits. Other space objects use monochrome runtime placeholders.
+character portraits. Other space objects use simple runtime shapes with the
+[space palette](space-palette.md): muted surroundings and stronger active signals.
 
 ## Published toolkit
 

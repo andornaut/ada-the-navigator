@@ -100,12 +100,16 @@ function visible({ points, twoSided }: Face): boolean {
   if (twoSided) {
     return true;
   }
-  const [a, b, c] = points as [Point, Point, Point, ...Point[]];
-  const u = b.map((value, i) => value - a[i]!) as unknown as Point;
-  const v = c.map((value, i) => value - a[i]!) as unknown as Point;
-  const nx = u[1] * v[2] - u[2] * v[1];
-  const ny = u[2] * v[0] - u[0] * v[2];
-  const nz = u[0] * v[1] - u[1] * v[0];
+  // A full polygon normal also handles the concave delta outline.
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (const [i, a] of points.entries()) {
+    const b = points[(i + 1) % points.length]!;
+    nx += (a[1] - b[1]) * (a[2] + b[2]);
+    ny += (a[2] - b[2]) * (a[0] + b[0]);
+    nz += (a[0] - b[0]) * (a[1] + b[1]);
+  }
   return -nx - ny + Math.sqrt(3) * nz > 0.00001;
 }
 
