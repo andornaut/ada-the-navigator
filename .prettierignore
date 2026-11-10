@@ -1,0 +1,7 @@
+.worktrees/
+.wrangler/
+dist/
+node_modules/
+package-lock.json
+AGENTS.md
+.check-results/

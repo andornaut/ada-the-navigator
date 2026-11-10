@@ -1,0 +1,62 @@
+{
+  "name": "ada-the-navigator",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "tsc --noEmit",
+    "lint": "prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
+    "format": "prettier --write . && eslint --fix .",
+    "test": "vitest run",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.19.0/game-kit-0.19.0.tgz",
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.22.0/art-kit-0.22.0.tgz",
+    "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v2.1.1/delivery-kit-2.1.1.tgz",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "eslint-plugin-import-x": "4.17.1",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-sort-destructure-keys": "^3.0.0",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "markdownlint-cli2": "^0.24.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "@eslint/config-array": {
+      "minimatch": "11.0.3"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.3"
+    },
+    "eslint": {
+      "minimatch": "11.0.3"
+    },
+    "eslint-plugin-import-x": {
+      "minimatch": "11.0.3"
+    },
+    "markdown-it": "15.0.3",
+    "markdownlint": {
+      "re2js": "2.8.7"
+    },
+    "micromark-extension-math": {
+      "katex": "0.18.2"
+    }
+  }
+}
