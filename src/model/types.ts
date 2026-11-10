@@ -1,8 +1,16 @@
 import type { SectorId, Weapon } from "../data/types.ts";
 
-export interface Vec { x: number; y: number }
-export interface FlightInput { move: Vec; aim: Vec; use: boolean }
-export type ObjectKind = "rock" | "resource" | "enemy" | "hazard" | "pickup" | "destination" | "debris";
+export interface Vec {
+  x: number;
+  y: number;
+}
+export interface FlightInput {
+  move: Vec;
+  aim: Vec;
+  use: boolean;
+}
+export type ObjectKind =
+  "rock" | "resource" | "enemy" | "hazard" | "pickup" | "destination" | "debris";
 export interface SpaceObject extends Vec {
   id: string;
   kind: ObjectKind;
@@ -39,6 +47,7 @@ export interface FlightState {
   shots: Shot[];
   chunks: string[];
   exploredChunks: string[];
+  freshChunk: string | null;
   freshDistance: number;
   nextId: number;
 }
@@ -53,7 +62,10 @@ export interface SectorProgress {
   discoveries: number;
   disabledEnemies: number;
 }
-export interface DialogueChoice { id: string; label: string }
+export interface DialogueChoice {
+  id: string;
+  label: string;
+}
 export interface DialogueState {
   title: string;
   text: string;
