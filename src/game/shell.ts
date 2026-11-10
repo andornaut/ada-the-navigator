@@ -61,7 +61,7 @@ export class StoryShell {
     if (flight) {
       const labels = PROTOTYPE.labels;
       const shield = `${labels.shield}: ${Math.ceil(flight.shield)}/${PROTOTYPE.tuning.shieldMax}`;
-      const cargo = `${labels.cargo}: ${flight.cargo}/${PROTOTYPE.tuning.cargoCapacity}`;
+      const cargo = `${labels.cargo}: ${flight.cargo}`;
       const ammo = flight.weapon === "basic" ? "" : ` (${labels.ammo}: ${flight.ammo})`;
       const weaponNames = {
         basic: labels.weaponBasic,

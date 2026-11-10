@@ -130,6 +130,21 @@ export class PrototypeScene extends Phaser.Scene {
         this.settingsOpen = paused;
         this.flush();
       },
+      onWeaponSelect: (weapon) => {
+        if (!this.settingsOpen && this.model.state.mode === "space" && !this.model.state.dialogue) {
+          apply(() => this.model.selectWeapon(weapon));
+        }
+      },
+      weaponLabels: {
+        ammo: PROTOTYPE.labels.ammo ?? "",
+        group: PROTOTYPE.labels.weapon ?? "",
+        names: {
+          basic: PROTOTYPE.labels.weaponBasic ?? "",
+          pierce: PROTOTYPE.labels.weaponPierce ?? "",
+          rapid: PROTOTYPE.labels.weaponRapid ?? "",
+          spread: PROTOTYPE.labels.weaponSpread ?? "",
+        },
+      },
     });
     const hide = (): void => {
       this.controls.reset();
@@ -203,6 +218,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.controls.reset();
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
+    this.controls.setWeapons(this.model.weapons());
     this.shell.render(state, {
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,

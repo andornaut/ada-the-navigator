@@ -213,3 +213,7 @@ button:disabled {
   padding: 8px 12px;
   border: 1px solid #969696;
 }
+
+#app:has(.ada-weapon-selector:not([hidden])) .flight-hud {
+  max-width: calc(100% - 280px);
+}

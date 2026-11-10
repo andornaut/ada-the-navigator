@@ -74,6 +74,65 @@ const STYLE = `
   top:max(8px,var(--inset-top))
 }
 
+.ada-controls .ada-settings-open{
+  width:48px;
+  height:48px;
+  padding:0;
+  display:grid;
+  place-items:center
+}
+
+.ada-controls .ada-settings-open::before{
+  content:"";
+  width:20px;
+  height:20px;
+  background:url('/art/ui/sprites/icon-settings-nav.png') center / 20px 20px no-repeat;
+  image-rendering:pixelated
+}
+
+.ada-controls .ada-weapon-selector{
+  position:absolute;
+  right:calc(max(8px,var(--inset-right)) + 56px);
+  top:max(8px,var(--inset-top));
+  display:flex;
+  gap:4px
+}
+
+.ada-controls .ada-weapon-selector button{
+  width:48px;
+  height:48px;
+  padding:2px;
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  font-size:12px;
+  line-height:14px
+}
+
+.ada-controls .ada-weapon-selector button[aria-pressed=true]{
+  outline:2px solid #fff;
+  outline-offset:1px;
+  box-shadow:inset 0 0 0 2px #5078b4
+}
+
+.ada-controls .ada-weapon-selector button:focus-visible{
+  outline:3px solid #5078b4;
+  outline-offset:4px
+}
+
+.ada-controls .ada-weapon-selector button:disabled{
+  opacity:0.5;
+  cursor:default
+}
+
+.ada-controls .ada-weapon-selector svg{
+  width:24px;
+  height:24px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2
+}
+
 .ada-controls [data-control]{
   position:absolute;
   bottom:20px;
@@ -195,7 +254,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
-  openButton.textContent = options.labels.settings;
+  openButton.setAttribute("aria-label", options.labels.settings);
+  openButton.title = options.labels.settings;
   openButton.setAttribute("aria-haspopup", "dialog");
   openButton.setAttribute("aria-expanded", "false");
   const useButton = document.createElement("button");

@@ -7,8 +7,10 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import type { Scene } from "phaser";
 
+import type { Weapon } from "../data/types.ts";
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { drawSticks } from "../ui/sticks.ts";
+import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
 import { movementCssScale } from "./geometry.ts";
 import { type ControlSample, ControlState } from "./state.ts";
@@ -17,6 +19,8 @@ export interface ControlsOptions {
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
+  readonly onWeaponSelect: (weapon: Weapon) => void;
+  readonly weaponLabels: WeaponLabels;
 }
 
 export interface Controls {
@@ -27,6 +31,7 @@ export interface Controls {
   sample(): ControlSample;
   setContext(label: string | undefined): void;
   setEnabled(enabled: boolean): void;
+  setWeapons(weapons: readonly WeaponChoice[]): void;
 }
 
 const CONTROL_KEYS = new Set([
@@ -70,10 +75,19 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       } else {
         state.closeModal();
       }
+      weapons.setEnabled(enabled && !open);
       options.onPauseChange?.(open);
     },
     onVisibilityChange(value) {
       visibility = value;
+    },
+  });
+  const weapons = createWeaponSelector(settings.root, {
+    labels: options.weaponLabels,
+    onSelect(weapon) {
+      if (state.accepts()) {
+        options.onWeaponSelect(weapon);
+      }
     },
   });
   const graphics = scene.add.graphics().setScrollFactor(0).setDepth(10000);
@@ -186,6 +200,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       disposed = true;
       stopPointers();
       state.setEnabled(false);
+      weapons.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
       scene.cameras.remove(camera);
@@ -216,8 +231,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setEnabled(value) {
       enabled = value;
       state.setEnabled(value);
+      weapons.setEnabled(value && !settings.isOpen());
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
+    setWeapons: (choices) => weapons.setWeapons(choices),
   };
   scene.events.once("shutdown", controls.dispose);
   draw();
