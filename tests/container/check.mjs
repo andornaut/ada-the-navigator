@@ -28,22 +28,6 @@ if (!Object.hasOwn(categories, category) || (category !== "test" && args.length)
   process.exit(2);
 }
 mkdirSync("/tmp/evidence", { recursive: true });
-if (category === "lint") {
-  for (const args of [
-    ["--version"],
-    ["--", "tests/container/run", "tests/container/check", "tests/container/admit"],
-    ["--shell=sh", "--", ".husky/pre-commit"],
-  ]) {
-    console.error(JSON.stringify({ event: "shellcheck", command: ["shellcheck", ...args] }));
-    const result = spawnSync("shellcheck", args, { stdio: "inherit" });
-    if (result.error || result.status !== 0) {
-      console.error(
-        result.error?.message ?? `ShellCheck failed: ${result.signal ?? result.status}`,
-      );
-      process.exit(result.status || 1);
-    }
-  }
-}
 if (!existsSync("node_modules")) {
   // Vite writes .vite and .vite-temp beside packages, so the dependency root stays writable.
   mkdirSync("node_modules");

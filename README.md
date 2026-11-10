@@ -83,7 +83,8 @@ the current environment; Make selects the container profile below.
 
 ## Checks
 
-Native npm scripts never invoke Make: `npm run lint` checks formatting and
+Native lint requires ShellCheck 0.11.0 on PATH; the container image supplies it.
+Native npm scripts never invoke Make: `npm run lint` checks shell helpers, formatting and
 source lint, `npm test` runs Vitest, and `npm run build` builds Vite output and
 retains assets. `npm run check` combines scratch-owned hook verification,
 TypeScript, lint, tests, build and both packaging dry runs.
