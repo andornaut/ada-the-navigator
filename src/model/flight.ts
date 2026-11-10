@@ -1,6 +1,8 @@
 import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
+import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import {
@@ -14,6 +16,7 @@ import {
 } from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
+import { planPlayerVolley } from "./player-projectiles.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -23,7 +26,12 @@ import type {
   Vec,
 } from "./types.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { collectWeapon, ensureOwnedWeapons, loseSelectedWeapon } from "./weapons.ts";
+import {
+  collectWeapon,
+  ensureOwnedWeapons,
+  loseSelectedWeapon,
+  UPGRADE_WEAPONS,
+} from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -106,7 +114,7 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         }
         if (object.kind === "pickup") {
           object.weapon =
-            (["rapid", "spread", "pierce"] as const)[Math.floor(next() * 3)] ?? "rapid";
+            UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "missiles";
         }
         if (
           !existing.has(object.id) &&
@@ -469,34 +477,33 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   return true;
 }
 
-function fire(content: PrototypeContent, aim: Vec, flight: FlightState): void {
+function fire(
+  content: PrototypeContent,
+  viewportWidth: number,
+  aim: Vec,
+  flight: FlightState,
+): void {
   ensureOwnedWeapons(flight);
-  const weapon = flight.weapon;
-  const angles =
-    weapon === "spread"
-      ? [-content.tuning.flight.spreadAngle, 0, content.tuning.flight.spreadAngle]
-      : [0];
-  for (const angle of angles) {
-    const heading = {
-      x: aim.x * Math.cos(angle) - aim.y * Math.sin(angle),
-      y: aim.x * Math.sin(angle) + aim.y * Math.cos(angle),
-    };
+  const volley = planPlayerVolley(WEAPON_CATALOG[flight.weapon], {
+    aim,
+    baseDamage: content.tuning.flight.playerShotDamage,
+    baseLifetime: content.tuning.flight.projectileLifetime,
+    baseSpeed: content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
+    origin: flight.player,
+    viewportWidth,
+  });
+  for (const projectile of volley.projectiles) {
     flight.shots.push({
-      ...flight.player,
+      ...projectile,
       enemy: false,
       hitIds: [],
       id: `shot:${flight.nextId++}`,
-      life: content.tuning.flight.projectileLifetime,
-      piercing: weapon === "pierce",
-      projectile: "bolt",
-      velocity: {
-        x: heading.x * content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
-        y: heading.y * content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
-      },
+      piercing: false,
     });
   }
-  flight.fireCooldown += content.tuning.fireInterval[weapon];
+  flight.fireCooldown += volley.interval;
 }
+
 function damage(content: PrototypeContent, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
     return;
@@ -724,11 +731,11 @@ function shots(
     if (elapsed === 0) {
       continue;
     }
-    shot.life -= elapsed;
-    const steps = Math.max(1, Math.ceil((length(shot.velocity) * elapsed) / 5));
+    const travelTime = Math.min(elapsed, Math.max(0, shot.life));
+    const steps = Math.max(1, Math.ceil((length(shot.velocity) * travelTime) / 5));
     for (let i = 0; i < steps && shot.life > 0; i++) {
-      shot.x += (shot.velocity.x * elapsed) / steps;
-      shot.y += (shot.velocity.y * elapsed) / steps;
+      shot.x += (shot.velocity.x * travelTime) / steps;
+      shot.y += (shot.velocity.y * travelTime) / steps;
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
           shot.life = 0;
@@ -746,6 +753,10 @@ function shots(
         ) {
           shot.life = 0;
         }
+        continue;
+      }
+      if (shot.damage === undefined) {
+        shot.life = 0;
         continue;
       }
       for (const object of flight.objects) {
@@ -777,14 +788,14 @@ function shots(
           }
           object.enemy = damageEnemy(
             definition,
-            { amount: content.tuning.flight.playerShotDamage, hardpointId: part?.id ?? null },
+            { amount: shot.damage, hardpointId: part?.id ?? null },
             object.enemy,
           );
           object.hp = enemyEffects(definition, object.enemy).defeated
             ? 0
             : Math.max(1, object.enemy.hp);
         } else {
-          object.hp -= content.tuning.flight.playerShotDamage;
+          object.hp -= shot.damage;
         }
         if (!shot.piercing) {
           shot.life = 0;
@@ -815,6 +826,7 @@ function shots(
         }
       }
     }
+    shot.life = Math.max(0, shot.life - elapsed);
   }
   flight.shots = flight.shots.filter((s) => s.life > 0);
   for (const object of flight.objects) {
@@ -853,7 +865,7 @@ export function stepFlight(
     }
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
     if (aiming && flight.fireCooldown <= 0) {
-      fire(content, flight.facing, flight);
+      fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight);
     }
     const shotDelays = new Map<string, number>();
     const threat = enemies(content, slice, flight, events, shotDelays);

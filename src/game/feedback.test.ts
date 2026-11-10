@@ -45,7 +45,7 @@ describe("model feedback", () => {
 
   it("does not report exhausted special weapons as pickups", () => {
     const { feedback, flight, state } = launched();
-    flight.weapon = "rapid";
+    flight.weapon = "missiles";
     flight.ammo = 2;
     feedback.observe(100, state);
     flight.weapon = "basic";
@@ -106,6 +106,7 @@ describe("model feedback", () => {
     syncFlightRegion(PROTOTYPE, flight);
     flight.shots = [
       {
+        damage: PROTOTYPE.tuning.flight.playerShotDamage,
         enemy: false,
         hitIds: ["archived-hit"],
         id: "surviving-projectile",

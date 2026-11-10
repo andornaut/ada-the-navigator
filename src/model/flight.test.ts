@@ -65,11 +65,11 @@ describe("flight boundaries", () => {
     stepFlight(PROTOTYPE, 0.1, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
-    flight.weapon = "spread";
+    flight.weapon = "tripleLaser";
     flight.ammo = 1;
     stepFlight(PROTOTYPE, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(3);
-    expect(flight.weapon).toBe("spread");
+    expect(flight.weapon).toBe("tripleLaser");
     expect(flight.ammo).toBe(1);
     expect(flight.facing).toEqual({ x: 0, y: -1 });
   });
@@ -125,20 +125,27 @@ describe("flight boundaries", () => {
   it("collects cargo without a capacity limit and retains each collected upgrade", () => {
     const flight = empty();
     flight.cargo = 500;
-    flight.weapon = "rapid";
+    flight.weapon = "missiles";
     flight.ammo = 1;
     flight.objects.push(
       { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
-      { ...flight.player, hp: 1, id: "spread", kind: "pickup", radius: 10, weapon: "spread" },
+      {
+        ...flight.player,
+        hp: 1,
+        id: "tripleLaser",
+        kind: "pickup",
+        radius: 10,
+        weapon: "tripleLaser",
+      },
     );
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.cargo).toBe(501);
     expect(flight.objects).toHaveLength(0);
-    expect(flight.weapon).toBe("spread");
-    expect(flight.ownedWeapons).toEqual(["rapid", "spread"]);
+    expect(flight.weapon).toBe("tripleLaser");
+    expect(flight.ownedWeapons).toEqual(["missiles", "tripleLaser"]);
   });
 
-  it("pierces debris and disables ships, while destroyed resource rocks release cargo pieces", () => {
+  it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     flight.objects = [
@@ -146,9 +153,8 @@ describe("flight boundaries", () => {
       { behavior: "guard", hp: 1, id: "enemy", kind: "enemy", radius: 10, x: 160, y: 100 },
       { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
     ];
-    flight.weapon = "pierce";
-    flight.ammo = 1;
-    const events = stepFlight(PROTOTYPE, 0.2, { ...idle, aim: { x: 1, y: 0 } }, flight);
+    flight.weapon = "basic";
+    const events = stepFlight(PROTOTYPE, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ type: "enemyDisabled" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(

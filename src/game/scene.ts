@@ -4,9 +4,11 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
+import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
+import { projectileOpacity } from "../model/player-projectiles.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
@@ -183,9 +185,9 @@ export class PrototypeScene extends Phaser.Scene {
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
           basic: PROTOTYPE.labels.weaponBasic ?? "",
-          pierce: PROTOTYPE.labels.weaponPierce ?? "",
-          rapid: PROTOTYPE.labels.weaponRapid ?? "",
-          spread: PROTOTYPE.labels.weaponSpread ?? "",
+          missiles: PROTOTYPE.labels.weaponMissiles ?? "",
+          scattershot: PROTOTYPE.labels.weaponScattershot ?? "",
+          tripleLaser: PROTOTYPE.labels.weaponTripleLaser ?? "",
         },
       },
     });
@@ -224,6 +226,7 @@ export class PrototypeScene extends Phaser.Scene {
         aim: screenToWorld(sampled.aim),
         move: screenToWorld(sampled.move),
         use: sampled.use,
+        viewportWidth: this.cameras.main.width / this.cameras.main.zoom,
       };
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);
       this.observeFeedback();
@@ -316,13 +319,17 @@ export class PrototypeScene extends Phaser.Scene {
         x: shot.x - shot.velocity.x * 0.035,
         y: shot.y - shot.velocity.y * 0.035,
       });
-      if (shot.projectile === "missile") {
+      const alpha = shot.fade ? projectileOpacity(shot.fade, shot.life) : 1;
+      if (shot.projectile === "dot") {
+        this.ink.fillStyle(color, alpha);
+        this.ink.fillCircle(point.x, point.y, 1.5);
+      } else if (shot.projectile === "missile") {
         const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
         const dx = Math.cos(angle);
         const dy = Math.sin(angle);
-        this.ink.lineStyle(3, color);
+        this.ink.lineStyle(3, shot.enemy ? color : 0xffffff, alpha);
         this.ink.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
-        this.ink.lineStyle(1, this.palette.environmentDetail);
+        this.ink.lineStyle(1, color, alpha);
         this.ink.lineBetween(
           point.x - dx * 17,
           point.y - dy * 17,
@@ -342,7 +349,7 @@ export class PrototypeScene extends Phaser.Scene {
           point.y,
         );
       } else {
-        this.ink.lineStyle(2, color);
+        this.ink.lineStyle(1.5, color, alpha);
         this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
@@ -669,28 +676,32 @@ export class PrototypeScene extends Phaser.Scene {
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
-        } else if (object.weapon === "rapid") {
-          for (const offset of [-0.5, 0, 0.5]) {
-            this.ink.lineBetween(
-              point.x - radius / 2,
-              point.y + radius * offset,
-              point.x + radius / 2,
-              point.y + radius * offset,
-            );
+        } else if (object.weapon === "missiles") {
+          this.ink.lineBetween(point.x, point.y - radius * 0.65, point.x, point.y + radius * 0.65);
+          this.ink.lineBetween(
+            point.x,
+            point.y + radius * 0.2,
+            point.x - radius * 0.4,
+            point.y + radius * 0.6,
+          );
+          this.ink.lineBetween(
+            point.x,
+            point.y + radius * 0.2,
+            point.x + radius * 0.4,
+            point.y + radius * 0.6,
+          );
+        } else if (object.weapon) {
+          for (const degrees of WEAPON_CATALOG[object.weapon].anglesDegrees) {
+            const angle = (degrees * Math.PI) / 180;
+            const x = point.x + Math.cos(angle) * radius * 0.7;
+            const y = point.y + Math.sin(angle) * radius * 0.7;
+            if (object.weapon === "scattershot") {
+              this.ink.fillStyle(color);
+              this.ink.fillCircle(x, y, 1);
+            } else {
+              this.ink.lineBetween(point.x - radius * 0.5, point.y, x, y);
+            }
           }
-        } else if (object.weapon === "spread") {
-          for (const offset of [-0.6, 0, 0.6]) {
-            this.ink.lineBetween(
-              point.x - radius / 2,
-              point.y,
-              point.x + radius / 2,
-              point.y + radius * offset,
-            );
-          }
-        } else if (object.weapon === "pierce") {
-          this.ink.lineBetween(point.x - radius * 0.7, point.y, point.x + radius * 0.7, point.y);
-          this.ink.lineBetween(point.x, point.y - radius / 2, point.x + radius * 0.7, point.y);
-          this.ink.lineBetween(point.x, point.y + radius / 2, point.x + radius * 0.7, point.y);
         }
         break;
       case "resource":

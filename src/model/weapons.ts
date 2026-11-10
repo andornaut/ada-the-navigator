@@ -6,9 +6,9 @@ export interface WeaponChoice {
   ammo: null;
   selected: boolean;
 }
-const upgrades = ["rapid", "spread", "pierce"] as const;
+export const UPGRADE_WEAPONS = ["missiles", "tripleLaser", "scattershot"] as const;
 
-/** Legacy flights establish ownership from their selected upgrade without relying on ammunition. */
+/** Selection participates in the owned upgrade roster without spending ammunition. */
 export function ensureOwnedWeapons(flight: FlightState) {
   const owned = (flight.ownedWeapons ??= []);
   if (flight.weapon !== "basic" && !owned.includes(flight.weapon)) {
@@ -21,7 +21,7 @@ export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const choices: WeaponChoice[] = [
     { ammo: null, id: "basic", selected: flight.weapon === "basic" },
   ];
-  for (const id of upgrades) {
+  for (const id of UPGRADE_WEAPONS) {
     if (flight.weapon === id || flight.ownedWeapons?.includes(id)) {
       choices.push({ ammo: null, id, selected: flight.weapon === id });
     }

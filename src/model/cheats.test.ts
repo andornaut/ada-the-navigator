@@ -12,15 +12,15 @@ it("grants only flight weapon ownership, saves normally and remains idempotent",
   Object.assign(flight, {
     cargo: 12345,
     fireCooldown: 0.37,
-    ownedWeapons: ["spread"],
+    ownedWeapons: ["tripleLaser"],
     shield: 42,
-    weapon: "spread",
+    weapon: "tripleLaser",
   });
   const before = structuredClone(model.state);
   expect(grantAllWeapons(model.state)).toBe(true);
   expect(model.state).toEqual({
     ...before,
-    flight: { ...before.flight, ownedWeapons: ["spread", "rapid", "pierce"] },
+    flight: { ...before.flight, ownedWeapons: ["tripleLaser", "missiles", "scattershot"] },
   });
   const serialized = model.save();
   expect(new GameModel(PROTOTYPE, serialized).state).toEqual(model.state);

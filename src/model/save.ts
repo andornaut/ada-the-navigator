@@ -1,8 +1,10 @@
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { enemyEffects } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
 import type { GameState, SpaceObject } from "./types.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
+import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** Storage access can fail in private browsing or when quotas are exhausted. */
 export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
@@ -110,7 +112,7 @@ function spaceObject(routes: readonly string[], value: unknown): value is SpaceO
     (value.cooldown === undefined || nonnegative(value.cooldown)) &&
     (value.behavior === undefined ||
       ["pursue", "shoot", "guard"].includes(String(value.behavior))) &&
-    (value.weapon === undefined || ["rapid", "spread", "pierce"].includes(String(value.weapon)))
+    (value.weapon === undefined || UPGRADE_WEAPONS.some((weapon) => weapon === value.weapon))
   );
 }
 function persistentWorld(
@@ -158,7 +160,7 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
   return (
     strings(value) &&
     Array.isArray(value) &&
-    Array.from(value).every((weapon) => ["rapid", "spread", "pierce"].includes(weapon)) &&
+    Array.from(value).every((weapon) => UPGRADE_WEAPONS.some((id) => id === weapon)) &&
     new Set(value).size === value.length &&
     (selected === "basic" || value.includes(selected))
   );
@@ -258,7 +260,7 @@ export function restoreSave(saved: unknown): GameState | null {
         return null;
       }
       if (
-        !["basic", "rapid", "spread", "pierce"].includes(String(f.weapon)) ||
+        !Object.hasOwn(WEAPON_CATALOG, String(f.weapon)) ||
         !strings(f.chunks) ||
         !Array.isArray(f.chunks) ||
         f.chunks.length > (ACTIVE_CHUNK_RADIUS * 2 + 1) ** 2 ||
@@ -292,7 +294,22 @@ export function restoreSave(saved: unknown): GameState | null {
             typeof s.id === "string" &&
             typeof s.enemy === "boolean" &&
             typeof s.piercing === "boolean" &&
-            (s.projectile === undefined || s.projectile === "bolt" || s.projectile === "missile") &&
+            (s.projectile === undefined ||
+              ["bolt", "missile", "dot"].includes(String(s.projectile))) &&
+            (s.enemy || (finite(s.damage) && s.damage > 0)) &&
+            (s.fade === undefined ||
+              (!s.enemy &&
+                s.projectile === "dot" &&
+                record(s.fade) &&
+                finite(s.fade.initialLife) &&
+                s.fade.initialLife > 0 &&
+                finite(s.fade.projectedRange) &&
+                s.fade.projectedRange > 0 &&
+                finite(s.fade.fadeStartFraction) &&
+                s.fade.fadeStartFraction >= 0 &&
+                s.fade.fadeStartFraction < 1 &&
+                finite(s.life) &&
+                s.life <= s.fade.initialLife)) &&
             finite(s.life) &&
             strings(s.hitIds),
         )

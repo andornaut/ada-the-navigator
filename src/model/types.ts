@@ -1,5 +1,6 @@
 import type { SectorId, Weapon } from "../data/types.ts";
 import type { EnemyState } from "./enemy-ai.ts";
+import type { ProjectileFade } from "./player-projectiles.ts";
 
 export interface Vec {
   x: number;
@@ -9,6 +10,7 @@ export interface FlightInput {
   move: Vec;
   aim: Vec;
   use: boolean;
+  viewportWidth?: number;
 }
 export type ObjectKind =
   "rock" | "resource" | "enemy" | "hazard" | "pickup" | "destination" | "debris";
@@ -27,7 +29,9 @@ export interface SpaceObject extends Vec {
   cooldown?: number;
 }
 export interface Shot extends Vec {
-  projectile?: "bolt" | "missile";
+  projectile?: "bolt" | "missile" | "dot";
+  damage?: number;
+  fade?: ProjectileFade;
   id: string;
   velocity: Vec;
   enemy: boolean;

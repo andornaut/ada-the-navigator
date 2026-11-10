@@ -60,7 +60,7 @@ describe("space palette boundary", () => {
     expect(spaceObjectColor(palette, object("destination"))).toBe(palette.pointOfInterest);
     expect(spaceObjectColor(palette, object("resource"))).toBe(palette.pointOfInterest);
     expect(spaceObjectColor(palette, { ...object("pickup"), role: "cargo" })).toBe(palette.active);
-    expect(spaceObjectColor(palette, { ...object("pickup"), weapon: "rapid" })).toBe(
+    expect(spaceObjectColor(palette, { ...object("pickup"), weapon: "missiles" })).toBe(
       palette.weapon,
     );
     expect(spaceObjectColor(palette, object("destination"))).not.toBe(palette.obstacle);

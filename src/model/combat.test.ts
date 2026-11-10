@@ -47,6 +47,7 @@ function hit(flight: FlightState, point: Vec, count = 1): void {
   for (let i = 0; i < count; i++) {
     flight.shots.push({
       ...point,
+      damage: PROTOTYPE.tuning.flight.playerShotDamage,
       enemy: false,
       hitIds: [],
       id: `test:${flight.nextId++}`,
@@ -117,6 +118,7 @@ describe("integrated combat", () => {
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
     flight.objects.push(target);
     flight.shots.push({
+      damage: PROTOTYPE.tuning.flight.playerShotDamage,
       enemy: false,
       hitIds: [],
       id: "travel",

@@ -52,7 +52,7 @@ describe("prototype story and persistence", () => {
     introduce(model, "growers");
     model.state.flight!.cargo = 3;
     model.state.flight!.shield = 43;
-    model.state.flight!.weapon = "rapid";
+    model.state.flight!.weapon = "missiles";
     model.state.flight!.ammo = 7;
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
