@@ -175,6 +175,16 @@ function dormantState(
     (value.routes as string[]).every((id) => dormantRoutes.has(id))
   );
 }
+function weaponOwnership(value: unknown, selected: unknown): boolean {
+  return (
+    strings(value) &&
+    Array.isArray(value) &&
+    Array.from(value).every((weapon) => ["rapid", "spread", "pierce"].includes(weapon)) &&
+    new Set(value).size === value.length &&
+    (selected === "basic" || value.includes(selected))
+  );
+}
+
 /** Accept only complete snapshots; a partial restore can invalidate quest state. */
 export function restoreSave(saved: unknown): GameState | null {
   try {
@@ -266,6 +276,9 @@ export function restoreSave(saved: unknown): GameState | null {
         !strings(f.chunks) ||
         !strings(f.exploredChunks)
       ) {
+        return null;
+      }
+      if (f.ownedWeapons !== undefined && !weaponOwnership(f.ownedWeapons, f.weapon)) {
         return null;
       }
       if (!Array.isArray(f.objects) || !f.objects.every((object) => spaceObject(routes, object))) {

@@ -55,6 +55,7 @@ export interface FlightState {
   dangerFor: number;
   cargo: number;
   weapon: Weapon;
+  ownedWeapons?: Exclude<Weapon, "basic">[];
   ammo: number;
   fireCooldown: number;
   objects: SpaceObject[];

@@ -1,4 +1,4 @@
-import type { PrototypeContent, SectorId } from "../data/types.ts";
+import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -13,6 +13,7 @@ import {
 } from "./flight.ts";
 import { restoreSave } from "./save.ts";
 import type { FlightInput, GameState, SectorProgress } from "./types.ts";
+import { ownedWeapons, selectFlightWeapon, type WeaponChoice } from "./weapons.ts";
 
 function progress(): SectorProgress {
   return {
@@ -107,6 +108,15 @@ export class GameModel {
       return this.label("deliver");
     }
     return this.label("talk");
+  }
+  weapons(): WeaponChoice[] {
+    return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];
+  }
+  selectWeapon(weapon: Weapon): boolean {
+    const flight = this.state.flight;
+    return this.state.mode === "space" && !this.state.dialogue && flight !== null
+      ? selectFlightWeapon(weapon, flight)
+      : false;
   }
   destinations(): { id: string; label: string }[] {
     return this.current.known.map((id) => ({

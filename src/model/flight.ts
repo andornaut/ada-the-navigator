@@ -12,6 +12,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
+import { collectWeapon, ensureOwnedWeapons, loseSelectedWeapon } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -468,9 +469,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
 }
 
 function fire(content: PrototypeContent, aim: Vec, flight: FlightState): void {
-  if (flight.weapon !== "basic" && flight.ammo <= 0) {
-    flight.weapon = "basic";
-  }
+  ensureOwnedWeapons(flight);
   const weapon = flight.weapon;
   const angles =
     weapon === "spread"
@@ -496,18 +495,15 @@ function fire(content: PrototypeContent, aim: Vec, flight: FlightState): void {
     });
   }
   flight.fireCooldown += content.tuning.fireInterval[weapon];
-  if (weapon !== "basic") {
-    flight.ammo--;
-    if (flight.ammo <= 0) {
-      flight.weapon = "basic";
-    }
-  }
 }
 function damage(content: PrototypeContent, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
     return;
   }
   flight.shield = Math.max(0, flight.shield - content.tuning.enemyDamage);
+  if (flight.shield === 0 && loseSelectedWeapon(flight)) {
+    flight.shield = content.tuning.shieldMax;
+  }
   flight.sinceDamage = 0;
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
@@ -876,15 +872,10 @@ export function stepFlight(
         continue;
       }
       if (object.role === "cargo") {
-        if (flight.cargo < content.tuning.cargoCapacity) {
-          flight.cargo++;
-          object.hp = 0;
-        }
+        flight.cargo++;
+        object.hp = 0;
       } else if (object.weapon) {
-        const ammo = content.tuning.weaponAmmo[object.weapon];
-        flight.ammo =
-          flight.weapon === object.weapon ? Math.min(ammo * 2, flight.ammo + ammo) : ammo;
-        flight.weapon = object.weapon;
+        collectWeapon(object.weapon, flight);
         object.hp = 0;
       }
     }

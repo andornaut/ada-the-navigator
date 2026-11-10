@@ -59,7 +59,7 @@ describe("flight boundaries", () => {
     expect(flight.freshDistance).toBe(before);
   });
 
-  it("keeps movement independent of aim, fires only while aiming and falls back on empty ammo", () => {
+  it("keeps movement independent of aim and fires an upgrade only while aiming with unlimited ammo", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     stepFlight(PROTOTYPE, 0.1, { ...idle, move: { x: 1, y: 0 } }, flight);
@@ -69,7 +69,8 @@ describe("flight boundaries", () => {
     flight.ammo = 1;
     stepFlight(PROTOTYPE, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(3);
-    expect(flight.weapon).toBe("basic");
+    expect(flight.weapon).toBe("spread");
+    expect(flight.ammo).toBe(1);
     expect(flight.facing).toEqual({ x: 0, y: -1 });
   });
 
@@ -121,31 +122,22 @@ describe("flight boundaries", () => {
     expect(flight.dangerFor).toBe(0);
   });
 
-  it("caps cargo and matching ammunition while replacing different upgrades", () => {
+  it("collects cargo without a capacity limit and retains each collected upgrade", () => {
     const flight = empty();
-    const pickup = (id: string) => ({
-      ...flight.player,
-      hp: 1,
-      id,
-      kind: "pickup" as const,
-      radius: 10,
-    });
-    flight.cargo = PROTOTYPE.tuning.cargoCapacity;
+    flight.cargo = 500;
     flight.weapon = "rapid";
-    flight.ammo = PROTOTYPE.tuning.weaponAmmo.rapid * 2 - 1;
+    flight.ammo = 1;
     flight.objects.push(
-      { ...pickup("cargo"), role: "cargo" },
-      { ...pickup("rapid"), weapon: "rapid" },
+      { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
+      { ...flight.player, hp: 1, id: "spread", kind: "pickup", radius: 10, weapon: "spread" },
     );
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.cargo).toBe(PROTOTYPE.tuning.cargoCapacity);
-    expect(flight.objects.some((o) => o.id === "cargo")).toBe(true);
-    expect(flight.ammo).toBe(PROTOTYPE.tuning.weaponAmmo.rapid * 2);
-    flight.objects.push({ ...pickup("pierce"), weapon: "pierce" });
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.weapon).toBe("pierce");
-    expect(flight.ammo).toBe(PROTOTYPE.tuning.weaponAmmo.pierce);
+    expect(flight.cargo).toBe(501);
+    expect(flight.objects).toHaveLength(0);
+    expect(flight.weapon).toBe("spread");
+    expect(flight.ownedWeapons).toEqual(["rapid", "spread"]);
   });
+
   it("pierces debris and disables ships, while destroyed resource rocks release cargo pieces", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
