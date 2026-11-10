@@ -189,6 +189,7 @@ function start(mode, ci) {
       ["npm", "run", "check"],
       ["npm", "test", "--", "--maxWorkers=4"],
       ["npm", "run", "build"],
+      ["npm", "run", "deploy:prebuilt:dry-run"],
     );
   }
   guard(ci);

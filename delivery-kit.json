@@ -28,6 +28,10 @@
       {
         "name": "build",
         "run": "npm run build"
+      },
+      {
+        "name": "cloudflare",
+        "run": "npm run deploy:prebuilt:dry-run"
       }
     ]
   },
