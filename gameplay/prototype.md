@@ -95,7 +95,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Upgrades: rapid fire, three-shot spread and piercing shots. Each uses limited ammo.
 - Matching pickups refill ammo; a different upgrade replaces the active one.
 - Empty upgraded ammunition restores basic fire.
-- Three core enemy behaviors: pursuing, firing projectiles and stationary guarding.
+- Enemy behavior uses data-defined archetypes and reusable behavior rules for
+  solo ships, packs, frigates and capital ships.
 - A recurring hostile alien faction provides continuity across sectors.
 - Disabled enemy ships teleport away. How and why are unknown, as with Ada's tech.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
@@ -144,6 +145,38 @@ Additional mining deposits provide recorded totals and achievement progress,
 without currency or a shop. Achievements emphasize story, exploration and sector
 activities, with none requiring missable dialogue choices. Exact achievement
 requirements and repeatable-task content remain to be specified.
+
+## Space encounters and feedback
+
+Combat occurs in small groups separated by quiet stretches. Terrain mixes open
+areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
+Nearby optional discoveries show a direction indicator; this does not add a map.
+Discovery rewards use existing cargo and weapon pickups.
+
+Visual effects distinguish hits, shield damage, disabled ships, pickups and
+deposits. Sound effects remain restrained. Screen shake can be disabled.
+Other space objects retain monochrome placeholder graphics.
+
+Moving inanimate obstacles have constant velocity and direction. Regions of
+traveling debris create navigation challenges along exploration and quest routes.
+They do not chase Ada or change direction to intercept her.
+
+Small enemy ships have independent movement, aiming and firing, with solo,
+erratic circling, swarming and pack behaviors. Aggression can begin on sight or
+only after being attacked. Individual enemies can flee, and packs can retreat
+after losing members. Behavior selection and tuning belong in data wherever
+practical; reusable code handles the underlying behavior operations.
+
+Frigates have two or three designated hardpoints, such as an engine and weapons.
+Capital ships are prominent large targets, including ships around ten times
+Ada's size and larger ships that extend beyond the viewport. All designated
+hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
+firing; a disabled engine stops movement. Large-ship weapons and command areas
+must be visually distinguishable from the rest of the hull.
+
+The exact enemy speed envelope and placement of large ships on required routes
+remain pending decisions. This encounter expansion does not define sector four's
+story or conclusion.
 
 ## Verification priorities
 
