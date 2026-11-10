@@ -13,7 +13,10 @@
       "displayWidth": 28,
       "displayHeight": 42,
       "facing": "up",
-      "pivot": { "x": 0.5, "y": 0.5 }
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
     },
     {
       "id": "ship-thrust",
@@ -23,7 +26,10 @@
       "displayWidth": 28,
       "displayHeight": 42,
       "facing": "up",
-      "pivot": { "x": 0.5, "y": 0.5 }
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
     },
     {
       "id": "ada-portrait",
@@ -31,10 +37,16 @@
       "width": 64,
       "height": 32,
       "facing": "front",
-      "pivot": { "x": 0.5, "y": 0.5 },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "frameWidth": 32,
       "frameHeight": 32,
-      "frames": { "happy": 0, "neutral": 1 }
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
     },
     {
       "id": "casey-portrait",
@@ -42,10 +54,16 @@
       "width": 64,
       "height": 32,
       "facing": "front",
-      "pivot": { "x": 0.5, "y": 0.5 },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "frameWidth": 32,
       "frameHeight": 32,
-      "frames": { "happy": 0, "neutral": 1 }
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
     },
     {
       "id": "mr-b-portrait",
@@ -53,10 +71,16 @@
       "width": 64,
       "height": 32,
       "facing": "front",
-      "pivot": { "x": 0.5, "y": 0.5 },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "frameWidth": 32,
       "frameHeight": 32,
-      "frames": { "happy": 0, "neutral": 1 }
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
     },
     {
       "id": "trista-portrait",
@@ -64,10 +88,16 @@
       "width": 64,
       "height": 32,
       "facing": "front",
-      "pivot": { "x": 0.5, "y": 0.5 },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "frameWidth": 32,
       "frameHeight": 32,
-      "frames": { "happy": 0, "neutral": 1 }
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
     },
     {
       "id": "dog-portrait",
@@ -75,10 +105,18 @@
       "width": 96,
       "height": 32,
       "facing": "front",
-      "pivot": { "x": 0.5, "y": 0.5 },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "frameWidth": 32,
       "frameHeight": 32,
-      "frames": { "happy": 0, "neutral": 1, "upset": 2 }
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "upset": 2
+      }
     }
-  ]
+  ],
+  "spacePalette": "/art/space-palette.json"
 }

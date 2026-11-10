@@ -22,6 +22,6 @@ signals. Warm coral and amber balance cool lavender, mint and blue. Use signal
 colors in compact accents with existing shapes and labels; color supplements
 their existing meaning and introduces no mechanics.
 
-Preserve the selected ship's white body and opaque blue panels. Hardpoint color
+Preserve the selected ship's white body and opaque blue canopy. Hardpoint color
 is an accent, not a replacement hull palette. This palette is for space visuals;
 the borrowed UI palette remains separate.
