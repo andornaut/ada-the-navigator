@@ -50,6 +50,7 @@ export function snapshot() {
     "tsconfig.json",
     "tsconfig.node.json",
     "cloudflare.config.ts",
+    "wrangler.jsonc",
   ]);
   const folders = new Set([
     "src",
@@ -154,8 +155,8 @@ try {
   const cloudflareOutput = '/tmp/work/.cloudflare/output/v0';
   if (existsSync(cloudflareOutput)) {
     cpSync(cloudflareOutput, '/tmp/evidence/.cloudflare/output/v0', {recursive:true});
-    cpSync(cloudflareOutput + '/workers/default/assets', '/tmp/evidence/dist', {recursive:true});
-  } else if (existsSync('/tmp/work/dist')) {
+  }
+  if (existsSync('/tmp/work/dist')) {
     cpSync('/tmp/work/dist','/tmp/evidence/dist',{recursive:true});
   }
 } catch(error) {writeFileSync('/tmp/evidence/error.txt',error.message);code=1;}
@@ -186,6 +187,7 @@ function start(mode, ci) {
       ["npm", "test", "--", "--maxWorkers=4"],
       ["npm", "run", "build"],
       ["npm", "run", "deploy:prebuilt:dry-run"],
+      ["npm", "run", "deploy:wrangler:dry-run"],
     );
   }
   guard(ci);

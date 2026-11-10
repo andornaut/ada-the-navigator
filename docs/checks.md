@@ -21,8 +21,9 @@ is removed. Logs, exit status and source fingerprints remain there for review.
 A changed fingerprint invalidates the result.
 
 The `lint` mode runs `npm run lint`. The `test` mode runs `npm run check`,
-`npm test -- --maxWorkers=4` and `npm run build`. Both install locked dependencies
-and exercise `prepare` plus the actual pre-commit hook with staged TypeScript
+`npm test -- --maxWorkers=4`, `npm run build` and both deployment packaging dry runs.
+Both install locked dependencies and exercise `prepare` plus the actual pre-commit
+hook with staged TypeScript
 and Markdown fixtures in a disposable Git repository. `all` combines both modes.
 Published kit API coverage belongs to the application tests.
 
@@ -33,8 +34,9 @@ scratch; Git metadata, nested worktrees, dependency directories, instruction
 files and credential files are excluded. Host files receive no writable mount.
 Logs and build outputs leave through `docker cp`. The Cloudflare Vite plugin
 writes `.cloudflare/output/v0/`; the gate preserves that complete directory under
-its evidence directory for a reviewed prebuilt deployment. It also copies the
-Worker's client assets to evidence `dist/` for the browser harness.
+its evidence directory for prebuilt validation. The build retains an identical
+`dist/` for the bus and browser harness, verifying its SHA-256 asset fingerprint
+against the generated assets. The gate copies that retained `dist/` into evidence.
 
 Local starts are refused when one-minute load is at least 20. `--ci` skips only
 this local resource check and requires `GITHUB_ACTIONS=true` plus
@@ -49,37 +51,41 @@ to the allowlist.
 
 ## Cloudflare build and deployment checks
 
-`cloudflare.config.ts` defines an assets-only Worker named `ada-the-navigator`
-with compatibility date `2026-11-10` and logs and traces enabled. The Cloudflare
-Vite plugin supplies its assets; there is no `assets.directory` setting or
-application Worker entrypoint. `npm run build` remains `vite build` and emits
-`.cloudflare/output/v0/` in the isolated checkout.
+`cloudflare.config.ts` defines the existing assets-only Worker `ada-the-navigator`
+with compatibility date `2026-11-10`, its shared account and custom domain, and
+logs and traces enabled. The Cloudflare Vite plugin emits `.cloudflare/output/v0/`.
+`npm run build` then refreshes `dist/` from the generated assets and verifies
+matching asset fingerprints. No application Worker entrypoint is configured.
 
-Run deployment dry runs only in an isolated Node.js 24.22.2 checkout. The first
-command builds and validates without uploading; the second validates an existing
-production build without rebuilding:
-
-```bash
-npm run deploy:dry-run
-```
+Run deployment dry runs only in an isolated Node.js 24.22.2 checkout. The CF
+prebuilt check validates production Build Output without rebuilding:
 
 ```bash
 npm run deploy:prebuilt:dry-run
 ```
 
-The prebuilt script runs `cf deploy --prebuilt --mode production --dry-run`.
-Vite records the production mode in Build Output, so the matching `--mode` is
-required. Restore the complete reviewed `.cloudflare/output/v0/` directory from
-gate evidence at that same relative path before using a prebuilt command.
-Evidence `dist/` is a browser-test copy of the assets, not a deployable substitute
-for the complete Build Output.
+This runs `cf deploy --prebuilt --mode production --dry-run`. Vite records the
+production mode, so the matching `--mode` is required. CF prebuilt validation
+requires the complete reviewed `.cloudflare/output/v0/` directory.
 
-The manual `npm run deploy:prebuilt` script runs
-`cf deploy --prebuilt --mode production`. It uploads and deploys, and requires
-explicit deployment approval plus authorized account access. It is not a CI
-publication step. Existing OAuth authentication supports account discovery and
-deployment; `faramir run` does not require project enrollment. The shared account and custom domain are explicit in source; credentials are not. Delivery remains paused with `deploy.mode`
-set to `none`.
+The bus-compatible Wrangler packaging check uses the retained assets:
+
+```bash
+npm run deploy:wrangler:dry-run
+```
+
+This runs pinned Wrangler with `deploy --config wrangler.jsonc --no-bundle --dry-run`.
+Root `wrangler.jsonc` points `assets.directory` to `./dist` and defines no Worker
+entrypoint or build command. This route needs the gated `dist/` and locked
+`node_modules/`, without Cloudflare's hidden output or a deployment rebuild.
+Both dry runs are included in the isolated `all` and `test` gates.
+
+Only delivery-kit 2.1.1 deploys the admitted gated artifact after exact-commit CI
+passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
+America/Toronto with `deploy.mode` set to `wrangler`. Desired control remains
+paused; game-dev enables only Ada after READY review. The monitor schedule is
+unchanged. Existing OAuth authentication remains in place; credentials are not
+part of the repository. No manual deployment is part of this procedure.
 
 ## Browser smoke checks
 

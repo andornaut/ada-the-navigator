@@ -93,21 +93,23 @@ resource limits. CI requires `AI attributions`, `Lint` and `Test`.
 
 ## Delivery
 
-Delivery is paused. `delivery-kit.json` proposes :30 America/Toronto and sets
-`deploy.mode` to `none`. Scheduled delivery and its runner remain inactive.
+`delivery-kit.json` schedules Ada departures hourly at :00 America/Toronto using
+pinned delivery-kit 2.1.1. Only the existing bus deploys, after the isolated gate
+and required CI pass for the exact commit. The monitor schedule is unchanged.
+Desired control remains paused; game-dev enables only Ada after READY review.
 
-Cloudflare setup uses typed `cloudflare.config.ts` for the assets-only Worker
-`ada-the-navigator`. The Cloudflare Vite plugin builds static assets and deployment
-metadata into `.cloudflare/output/v0/`. No application Worker
-entrypoint is configured. The shared account and custom domain are
-explicit in the configuration. Logs and traces are enabled in the configuration.
+Cloudflare setup uses typed `cloudflare.config.ts` for the existing assets-only
+Worker `ada-the-navigator` and custom domain `navigator.adabekele.com`. The
+Cloudflare Vite plugin writes static assets and deployment metadata into
+`.cloudflare/output/v0/`. The gate build also retains those assets as `dist/`.
 
-See [Cloudflare build and deployment checks](docs/checks.md#cloudflare-build-and-deployment-checks)
-for dry-run and prebuilt commands. The Worker exists in the shared account with
-the custom domain `navigator.adabekele.com`. Workers.dev and preview URLs remain
-disabled. The existing Wrangler account login
-can access that account; the separately configured broker token is not equivalent.
-Deployment requires authorized authentication and account selection, reviewed
-evidence for the exact source and artifact, and explicit deployment approval.
-Project enrollment is not required for broker commands. Runner activation requires
-separate approval. Credentials are not part of this repository.
+The bus uses pinned Wrangler with root `wrangler.jsonc` and the retained gated
+`dist/`. Deployment neither rebuilds nor depends on hidden Cloudflare output.
+No application Worker entrypoint or deploy-time build command is configured.
+The existing account, disabled workers.dev and preview URLs, logs and traces
+are preserved in both configurations.
+
+The isolated gate validates both CF prebuilt output and Wrangler packaging with
+`npm run deploy:prebuilt:dry-run` and `npm run deploy:wrangler:dry-run`. These
+commands do not deploy. See [isolated checks](docs/checks.md) for gate evidence.
+Credentials are not part of this repository.

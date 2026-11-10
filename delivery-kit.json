@@ -6,7 +6,7 @@
     "github": "andornaut/ada-the-navigator"
   },
   "schedule": {
-    "departures": ["30"],
+    "departures": ["00"],
     "timezone": "America/Toronto"
   },
   "gate": {
@@ -32,6 +32,10 @@
       {
         "name": "cloudflare",
         "run": "npm run deploy:prebuilt:dry-run"
+      },
+      {
+        "name": "wrangler",
+        "run": "npm run deploy:wrangler:dry-run"
       }
     ]
   },
@@ -45,7 +49,7 @@
     "timeoutSeconds": 1800
   },
   "deploy": {
-    "mode": "none"
+    "mode": "wrangler"
   },
   "reports": {
     "project": "Ada the Navigator",
