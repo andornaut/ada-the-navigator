@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "git": {
+    "main": "main",
+    "remote": "origin",
+    "github": "andornaut/ada-the-navigator"
+  },
+  "schedule": {
+    "departures": [
+      "30"
+    ],
+    "timezone": "America/Toronto"
+  },
+  "gate": {
+    "image": "node:24.21.0",
+    "install": "npm ci",
+    "steps": [
+      {
+        "name": "check",
+        "run": "npm run check"
+      },
+      {
+        "name": "lint",
+        "run": "npm run lint"
+      },
+      {
+        "name": "test",
+        "run": "npm test -- --maxWorkers=4"
+      },
+      {
+        "name": "build",
+        "run": "npm run build"
+      }
+    ]
+  },
+  "resources": {
+    "cpus": 4,
+    "loadLimit": 20
+  },
+  "ci": {
+    "requiredNames": [
+      "AI attributions",
+      "Lint",
+      "Test"
+    ],
+    "pollSeconds": 60,
+    "timeoutSeconds": 1800
+  },
+  "deploy": {
+    "mode": "none"
+  },
+  "reports": {
+    "project": "Ada the Navigator",
+    "scheduledTicks": true,
+    "recipient": "game-dev",
+    "workerParents": [
+      "game-dev"
+    ]
+  }
+}
