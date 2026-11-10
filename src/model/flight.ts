@@ -253,6 +253,10 @@ function move(
     (heading.x * magnitude * content.tuning.maxSpeed - flight.velocity.x) * blend;
   flight.velocity.y +=
     (heading.y * magnitude * content.tuning.maxSpeed - flight.velocity.y) * blend;
+  // Stop subpixel drift so released controls stop advancing exploration.
+  if (!magnitude && length(flight.velocity) < 0.01) {
+    flight.velocity = { x: 0, y: 0 };
+  }
   const start = { ...flight.player };
   const steps = Math.max(1, Math.ceil((length(flight.velocity) * dt) / 4));
   for (let i = 0; i < steps; i++) {

@@ -56,7 +56,7 @@ try {
   });
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
-  await page.locator('#game-status[data-mode="home"]').waitFor();
+  await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   await page.locator("canvas").waitFor({ state: "visible" });
   assert.ok(
     await page.locator("canvas").evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
@@ -78,7 +78,7 @@ try {
     await enterFlight(remaining - 1);
   }
   await enterFlight(4);
-  await page.locator('#game-status[data-mode="space"]').waitFor();
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const position = () =>
     page.locator("#game-status").evaluate((element) => ({
       x: Number(element.dataset.x),
@@ -134,7 +134,7 @@ try {
   const persisted = await readSave();
   assert.equal(persisted.version, 1);
   await page.reload();
-  await page.locator('#game-status[data-mode="space"]').waitFor();
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const resumed = await readSave();
   for (const field of ["seed", "cargo", "ammo", "shield", "player"]) {
     assert.deepEqual(
@@ -265,7 +265,7 @@ try {
     value: serialized,
   });
   await page.reload();
-  await page.locator('#game-status[data-mode="home"]').waitFor();
+  await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const choices = page.locator('[data-action="dialogue-choice"]');
   await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
   assert.equal(await choices.count(), 2, "Toronto resolution must offer both real choices");

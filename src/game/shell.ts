@@ -59,7 +59,13 @@ export class StoryShell {
       const shield = `${labels.shield}: ${Math.ceil(flight.shield)}/${PROTOTYPE.tuning.shieldMax}`;
       const cargo = `${labels.cargo}: ${flight.cargo}/${PROTOTYPE.tuning.cargoCapacity}`;
       const ammo = flight.weapon === "basic" ? "" : ` (${labels.ammo}: ${flight.ammo})`;
-      const weapon = `${labels.weapon}: ${flight.weapon}${ammo}`;
+      const weaponNames = {
+        basic: labels.weaponBasic,
+        pierce: labels.weaponPierce,
+        rapid: labels.weaponRapid,
+        spread: labels.weaponSpread,
+      };
+      const weapon = `${labels.weapon}: ${weaponNames[flight.weapon]}${ammo}`;
       this.hud.textContent = `${shield} · ${cargo} · ${weapon}\n${labels.objective}: ${view.objective}`;
     }
     const nextSignature = JSON.stringify([

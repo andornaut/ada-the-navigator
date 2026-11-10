@@ -207,3 +207,15 @@ describe("flight boundaries", () => {
     });
   });
 });
+
+it("stops movement and fresh exploration after released controls finish braking", () => {
+  const flight = empty();
+  flight.player = { x: 100, y: 100 };
+  stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
+  stepFlight(PROTOTYPE, 4, idle, flight);
+  const position = { ...flight.player };
+  const explored = flight.freshDistance;
+  stepFlight(PROTOTYPE, 1, idle, flight);
+  expect(flight.player).toEqual(position);
+  expect(flight.freshDistance).toBe(explored);
+});
