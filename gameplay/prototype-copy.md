@@ -15,7 +15,7 @@ Ada: "Let's see where it can go."
 Grandmother: "You've planted those carefully. We may need more room next year."
 Ada: "Could we grow things somewhere else too?"
 Grandmother: "Someone nearby tried starting a community garden. It hasn't got
-   going. They needed more help. I can introduce you."
+going. They needed more help. I can introduce you."
 
 Choices:
 
@@ -30,7 +30,7 @@ Space introduction:
 Grower: "A visitor! We grow food here, but our equipment needs repairs."
 Ada: "Is there anyone who can help?"
 Grower: "There's a workshop out here somewhere. We haven't spoken much. Would
-   you take them some food and ask?"
+you take them some food and ask?"
 
 Workshop: "We can repair that equipment. We're short of parts, though."
 Workshop: "The salvagers might have what we need. Take them this tool kit."
@@ -40,7 +40,7 @@ Ada: "I know some growers. You could help each other."
 Salvager: "Take these parts to the workshop. We'll contact the growers."
 
 Workshop, delivery complete: "Now we can make those repairs. We'll arrange the
-   next exchange ourselves. Thank you for introducing us."
+next exchange ourselves. Thank you for introducing us."
 Ada: "You each had something the others needed."
 
 Optional questions:
@@ -64,7 +64,7 @@ Choices:
 Organizer: "Yes. Someone who can't come every week might still help us start."
 Ada: "We don't all have to do the same thing."
 Closing: "On planting day, neighbors bring tools, plants and time. The garden
-   has begun."
+has begun."
 
 Objectives, in order:
 
@@ -77,13 +77,13 @@ Objectives, in order:
 ## Chapter two: the mining hub
 
 Opening: "At school, Ada notices a child being pushed out of a playground game.
-   Other children look away."
+Other children look away."
 Ada: "That wasn't right. I wonder who else noticed."
 
 Hub introduction:
 
 Station: "Welcome. Break resource rocks in the field and collect what they release.
-   Bring your cargo here to deposit it. You can return with a partial load."
+Bring your cargo here to deposit it. You can return with a partial load."
 
 First deposit milestone:
 
@@ -124,7 +124,7 @@ Choices:
 
 Friend: "We can help make sure nobody gets pushed out."
 Closing: "Ada and her friends make room. When the behavior happens again, they
-   don't laugh along or leave the child alone."
+don't laugh along or leave the child alone."
 
 Optional safety exchange:
 
