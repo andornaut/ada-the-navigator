@@ -146,6 +146,52 @@ try {
   assert.deepEqual(resumed.progress, persisted.progress);
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
+  const [{ GameModel }, { PROTOTYPE }, { ensureDestination }] = await Promise.all([
+    import(new URL("../src/model/game.ts", import.meta.url)),
+    import(new URL("../src/data/prototype.ts", import.meta.url)),
+    import(new URL("../src/model/flight.ts", import.meta.url)),
+  ]);
+  async function seedOnce(value, marker) {
+    // The old app's pagehide save runs before this one-shot seed on the new document.
+    await page.addInitScript(
+      ({ key, once, serialized }) => {
+        if (!sessionStorage.getItem(once)) {
+          localStorage.setItem(key, serialized);
+          sessionStorage.setItem(once, "1");
+        }
+      },
+      { key: storageKey, serialized: value, once: marker },
+    );
+    await page.reload();
+  }
+  const safeInput = new GameModel(PROTOTYPE);
+  safeInput.startSector(1);
+  safeInput.choose("0");
+  Object.assign(safeInput.state.progress[1], {
+    introduced: true,
+    stage: 1,
+    questItem: "food",
+    known: ["growers"],
+    discoveries: 1,
+  });
+  assert.ok(safeInput.state.flight, "Safe input fixture requires a real flight");
+  const friendly = ensureDestination(PROTOTYPE, "growers", safeInput.state.flight);
+  safeInput.teleport("growers");
+  assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
+  assert.equal(safeInput.state.flight.freshChunk, null);
+  const safeSerialized = safeInput.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, safeSerialized).state, safeInput.state);
+  save("input-fixture.json", {
+    scope:
+      "Friendly-destination safe-zone precondition for control checks only; no quest completion proof",
+    state: JSON.parse(safeSerialized),
+  });
+  await seedOnce(safeSerialized, "ada-browser.input-fixture.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  assert.deepEqual(await position(), safeInput.state.flight.player);
+  events.checks.push(
+    "Model-generated friendly-destination fixture supplies the input-check precondition",
+  );
   await page.setViewportSize({ width: 844, height: 390 });
   const joystick = page.locator('[data-control="move-joystick"]');
   await joystick.waitFor({ state: "visible" });
@@ -234,10 +280,6 @@ try {
   events.checks.push("Native touch release clears movement and firing without resurrection");
 
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
-  const [{ GameModel }, { PROTOTYPE }] = await Promise.all([
-    import(new URL("../src/model/game.ts", import.meta.url)),
-    import(new URL("../src/data/prototype.ts", import.meta.url)),
-  ]);
   const fixture = new GameModel(PROTOTYPE);
   fixture.startSector(1);
   fixture.choose("0");
@@ -259,12 +301,7 @@ try {
     scope: "Completed-quest save fixture for Toronto resolution UI boundary only",
     state: JSON.parse(serialized),
   });
-  // Install after the old page's pagehide save, before the new app reads storage.
-  await page.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
-    key: storageKey,
-    value: serialized,
-  });
-  await page.reload();
+  await seedOnce(serialized, "ada-browser.resolution-fixture.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const choices = page.locator('[data-action="dialogue-choice"]');
   await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
@@ -291,6 +328,28 @@ try {
   save("result.json", { passed: false, error: error.stack });
   process.exitCode = 1;
   if (page) {
+    try {
+      const diagnostics = await page.evaluate(
+        (key) => ({
+          mode: document.querySelector("#game-status")?.dataset.mode ?? null,
+          gameState: JSON.parse(localStorage.getItem(key) ?? "null"),
+          targets: [...document.querySelectorAll("[data-control]")].map((target) => {
+            const bounds = target.getBoundingClientRect();
+            return {
+              control: target.getAttribute("data-control"),
+              x: bounds.x,
+              y: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+            };
+          }),
+        }),
+        storageKey,
+      );
+      save("failure-diagnostics.json", diagnostics);
+    } catch (diagnosticError) {
+      save("failure-diagnostics-error.json", { error: diagnosticError.message });
+    }
     try {
       await page.screenshot({ path: `${output}/failure.png`, timeout: 3000 });
     } catch {
