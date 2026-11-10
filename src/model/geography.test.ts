@@ -332,3 +332,40 @@ it("wakes every same-route guard across pages before translation without duplica
     expect(actual.enemy!.hardpoints).toEqual(expected.enemy!.hardpoints);
   }
 });
+
+it("returns the canonical mutable far guard until an outer boundary archives its latest state", () => {
+  const flight = empty();
+  flight.sector = 3;
+  const destination: SpaceObject = {
+    hp: 1,
+    id: "growers",
+    kind: "destination",
+    radius: 30,
+    x: 10000,
+    y: 10000,
+  };
+  flight.objects.push(destination);
+  const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
+  expect(flight.objects).toContain(guard);
+  expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBe(guard);
+  guard.enemy!.hardpoints[0]!.hp = 2;
+  guard.enemy!.hardpoints[1]!.cooldown = 0.7;
+  guard.enemy!.engaged = true;
+  guard.enemy!.pursuitSeconds = 1.25;
+  guard.x += 400;
+  guard.y += 300;
+  guard.enemy!.home = { x: guard.x, y: guard.y };
+  guard.enemy!.position = { x: guard.x, y: guard.y };
+  const expected = structuredClone(guard);
+  expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBe(guard);
+  syncFlightRegion(PROTOTYPE, flight);
+  expect(flight.objects).not.toContain(guard);
+  expect(routeBlocked(destination.id, flight)).toBe(true);
+  const pages = { ...flight.dormant!.pages };
+  expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBeNull();
+  expect(flight.dormant!.pages).toEqual(pages);
+  activateRouteEncounter(PROTOTYPE, destination.id, flight);
+  expect(flight.objects.find((object) => object.id === guard.id)).toEqual(expected);
+  expect(flight.objects.filter((object) => object.id === guard.id)).toHaveLength(1);
+  expect(flight.combat!.routeEncounters).toEqual([destination.id]);
+});

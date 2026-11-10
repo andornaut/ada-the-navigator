@@ -345,7 +345,6 @@ export function ensureRouteEncounter(
   flight.objects.push(object);
   relocateRouteGuards(content, flight);
   combat(flight).routeEncounters.push(id);
-  syncFlightRegion(content, flight);
   return object;
 }
 
