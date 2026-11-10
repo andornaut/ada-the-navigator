@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "ui": {
+    "manifest": "/art/ui/manifest.json",
+    "basePath": "/art/ui/"
+  },
   "assets": [
     {
       "id": "ship",

@@ -27,6 +27,11 @@ Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `hei
 `frameHeight`, and zero-based named `frames`. Portrait dimensions describe the
 whole sheet; the pivot applies to each frame. Tech owns loading and rotation.
 
+The `ui` entry points to the [Chibi UI subset manifest](../public/art/ui/manifest.json)
+and its public base path. That subset preserves the source `fonts` and `sprites`
+schema, with paths relative to `/art/ui/`; it is separate from the prototype
+`assets` list. [UI provenance](ui.md) records fonts, slices and licences.
+
 Both ship textures face up with a centered pivot and a 64 by 96 transparent canvas.
 The manifest recommends 28 by 42 logical pixels for display. Swap idle and thrust textures
 without changing geometry. [Ship geometry](ship.md) and
