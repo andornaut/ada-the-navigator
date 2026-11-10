@@ -320,6 +320,155 @@ try {
     return state?.progress[1].resolved && state.unlocked.includes(2);
   }, storageKey);
   events.checks.push("Fixture-based Toronto resolution and closing unlock the next sector UI");
+  // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
+  const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
+    import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
+    import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
+    import(new URL("../src/model/save.ts", import.meta.url)),
+  ]);
+  const combat = new GameModel(PROTOTYPE);
+  combat.startSector(1);
+  combat.choose("0");
+  assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
+  const flight = combat.state.flight;
+  combat.state.progress[1].introduced = true;
+  combat.state.dialogue = null;
+  flight.objects = [];
+  flight.shots = [];
+  const origin = { ...flight.player };
+  for (const [archetype, offset] of [
+    ["capital", { x: -140, y: 140 }],
+    ["oversizedCapital", { x: 350, y: -350 }],
+  ]) {
+    const definition = enemyCatalog[archetype];
+    assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
+    const at = { x: origin.x + offset.x, y: origin.y + offset.y };
+    let enemy = createEnemy(
+      definition,
+      { archetype, id: `browser-combat:${archetype}`, packId: null, phase: 0 },
+      at,
+    );
+    const engine = definition.hardpoints.find((part) => part.kind === "engine");
+    assert.ok(engine, "Fixture requires a destructible engine");
+    enemy = damageEnemy(definition, { amount: engine.hp, hardpointId: engine.id }, enemy);
+    assert.ok(enemy.hardpoints.some((part) => part.hp === 0));
+    assert.ok(enemy.hardpoints.some((part) => part.hp > 0));
+    flight.objects.push({
+      ...at,
+      enemy,
+      hp: definition.hp,
+      id: enemy.id,
+      kind: "enemy",
+      radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+    });
+  }
+  flight.shots.push({
+    enemy: true,
+    hitIds: [],
+    id: "browser-combat:missile",
+    life: PROTOTYPE.tuning.flight.enemyProjectileLifetime,
+    piercing: false,
+    projectile: "missile",
+    velocity: { x: 12, y: 12 },
+    x: origin.x,
+    y: origin.y - 180,
+  });
+  const combatSerialized = combat.save();
+  assert.deepEqual(restoreSave(combatSerialized), combat.state, "Canonical restore accepts combat");
+  assert.deepEqual(new GameModel(PROTOTYPE, combatSerialized).state, combat.state);
+  save("combat-fixture.json", {
+    scope:
+      "Real-model canonical save fixture with damaged hardpoints and a seeded missile; render/restore proof only, not natural encounter or combat completion",
+    state: JSON.parse(combatSerialized),
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await seedOnce(combatSerialized, "ada-browser.combat-fixture.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page.waitForFunction((key) => {
+    const current = JSON.parse(localStorage.getItem(key))?.flight;
+    return (
+      current?.objects.some((object) => object.enemy?.archetype === "oversizedCapital") &&
+      current.objects.some(
+        (object) =>
+          object.enemy?.archetype === "capital" &&
+          object.enemy.hardpoints.some((part) => part.hp === 0) &&
+          object.enemy.hardpoints.some((part) => part.hp > 0),
+      ) &&
+      current.shots.some((shot) => shot.enemy && shot.projectile === "missile")
+    );
+  }, storageKey);
+  const combatSnapshot = await readSave();
+  const canvas = page.locator("canvas");
+  await canvas.waitFor({ state: "visible" });
+  const combatImage = await canvas.screenshot({ path: `${output}/combat-canvas.png` });
+  const pixels = await page.evaluate(async (encoded) => {
+    const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    const sample = document.createElement("canvas");
+    sample.width = bitmap.width;
+    sample.height = bitmap.height;
+    const drawing = sample.getContext("2d");
+    drawing.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    // The ship is centered. These regions exclude it, the HUD and dim background markers.
+    const regions = {
+      capital: { x: 200, y: 200, width: 300, height: 300 },
+      missile: { x: 780, y: 235, width: 90, height: 70 },
+    };
+    return Object.fromEntries(
+      Object.entries(regions).map(([name, region]) => {
+        const image = drawing.getImageData(region.x, region.y, region.width, region.height);
+        let bright = 0;
+        for (let offset = 0; offset < image.data.length; offset += 4) {
+          if (Math.min(...image.data.slice(offset, offset + 3)) > 140) {
+            bright++;
+          }
+        }
+        return [name, { ...region, bright }];
+      }),
+    );
+  }, combatImage.toString("base64"));
+  assert.ok(pixels.capital.bright > 20, "Large-enemy region must contain rendered geometry");
+  assert.ok(pixels.missile.bright > 2, "Seeded missile region must contain rendered geometry");
+  await page.screenshot({ path: `${output}/combat.png` });
+  save("combat-proof.json", {
+    scope: "Rendered canonical combat fixture; screenshot review required for visual correctness",
+    state: combatSnapshot,
+    canvas: await canvas.boundingBox(),
+    oversizedSizeRatio: enemyCatalog.oversizedCapital.sizeRatio,
+    pixels,
+  });
+  events.checks.push(
+    "Canonical combat save restores large and oversized enemies, partial hardpoint damage and missile with renderer screenshots",
+  );
+
+  await page.locator('[data-action="settings"]').click();
+  const toggles = [];
+  for (const key of ["sound", "screenShake"]) {
+    const label = PROTOTYPE.labels[key];
+    assert.equal(typeof label, "string", `Canonical ${key} settings label must exist`);
+    const checkbox = page.getByRole("checkbox", { name: label, exact: true });
+    await checkbox.waitFor({ state: "visible" });
+    const initial = await checkbox.isChecked();
+    await checkbox.setChecked(!initial);
+    assert.equal(await checkbox.isChecked(), !initial, `${key} must toggle`);
+    toggles.push({ key, initial, toggled: !initial });
+  }
+  await page.screenshot({ path: `${output}/combat-settings.png` });
+  await page.locator('[data-action="close-settings"]').click();
+  await page.locator('[data-action="settings"]').click();
+  for (const { key, initial, toggled } of toggles) {
+    const checkbox = page.getByRole("checkbox", { name: PROTOTYPE.labels[key], exact: true });
+    assert.equal(await checkbox.isChecked(), toggled, `${key} survives dialog reopening`);
+    await checkbox.setChecked(initial);
+  }
+  await page.locator('[data-action="close-settings"]').click();
+  save("combat-settings-proof.json", {
+    scope:
+      "Checkbox interaction and dialog-state proof only; audio output and shake intensity unmeasured",
+    toggles,
+  });
+  events.checks.push("Canonical sound and screen-shake controls toggle and retain dialog state");
   assert.deepEqual(events.errors, [], "No browser runtime or console errors");
   assert.deepEqual(events.failedRequests, [], "No failed asset requests");
   assert.deepEqual(events.badResponses, [], "No failed HTTP responses");
