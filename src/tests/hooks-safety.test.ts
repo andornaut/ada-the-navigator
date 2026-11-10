@@ -45,6 +45,6 @@ it("proves real hooks in scratch without changing a dirty caller index or workin
   expect(fingerprint()).toBe(before);
   expect(result.error).toBeUndefined();
   expect(result.status, result.stdout + result.stderr).toBe(0);
-  expect(JSON.parse(readFileSync(output, "utf8"))).toEqual({ positive: true, negative: true });
+  expect(JSON.parse(readFileSync(output, "utf8"))).toEqual({ negative: true, positive: true });
   expect(result.stdout).toContain('"event":"hook-proof"');
 });
