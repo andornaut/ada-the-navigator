@@ -236,6 +236,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     caption.textContent = label;
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
+    toggle.setAttribute("aria-label", label);
     toggle.checked = true;
     toggle.addEventListener("change", () => {
       visibility[side] = toggle.checked;
@@ -263,6 +264,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     text.textContent = caption;
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
+    toggle.setAttribute("aria-label", caption);
     toggle.checked = feedback[key];
     toggle.addEventListener("change", () => {
       feedback[key] = toggle.checked;
