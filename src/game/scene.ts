@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { createControls } from "../input/controls.ts";
 import { GameModel } from "../model/game.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
+import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { StoryShell } from "./shell.ts";
 
@@ -41,6 +43,9 @@ export class PrototypeScene extends Phaser.Scene {
   private enabled: boolean | undefined;
   private durable = "";
   private savedAt = 0;
+  private feedback = new ModelFeedback();
+  private feedbackSound = new FeedbackSound();
+  private screenShake = true;
 
   constructor() {
     super("prototype");
@@ -72,6 +77,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
     const apply = (action: () => void): void => {
       action();
+      this.observeFeedback();
       this.controls.reset();
       this.flush();
       this.refresh();
@@ -96,7 +102,16 @@ export class PrototypeScene extends Phaser.Scene {
         aimControls: PROTOTYPE.labels.aimControls ?? "",
         close: PROTOTYPE.labels.close ?? "",
         moveControls: PROTOTYPE.labels.moveControls ?? "",
+        screenShake: PROTOTYPE.labels.screenShake ?? "",
         settings: PROTOTYPE.labels.settings ?? "",
+        sound: PROTOTYPE.labels.sound ?? "",
+      },
+      onFeedbackChange: (settings) => {
+        this.feedbackSound.enabled = settings.sound;
+        this.screenShake = settings.screenShake;
+        if (!settings.screenShake) {
+          this.cameras.main.shakeEffect.reset();
+        }
       },
       onPauseChange: (paused) => {
         this.settingsOpen = paused;
@@ -107,16 +122,22 @@ export class PrototypeScene extends Phaser.Scene {
       this.controls.reset();
       this.flush();
     };
+    window.addEventListener("pointerdown", this.feedbackSound.unlock);
+    window.addEventListener("keydown", this.feedbackSound.unlock);
     document.addEventListener("visibilitychange", hide);
     window.addEventListener("pagehide", hide);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.flush();
       document.removeEventListener("visibilitychange", hide);
       window.removeEventListener("pagehide", hide);
+      window.removeEventListener("pointerdown", this.feedbackSound.unlock);
+      window.removeEventListener("keydown", this.feedbackSound.unlock);
+      this.feedbackSound.dispose();
       this.controls.dispose();
       this.shell.dispose();
       this.labels.clear();
     });
+    this.observeFeedback();
     this.refresh();
   }
 
@@ -125,6 +146,7 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     const state = this.model.state;
+    this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
     if (!this.settingsOpen && !document.hidden && state.mode === "space" && !state.dialogue) {
       const sampled = this.controls.sample();
       const input: FlightInput = {
@@ -133,6 +155,7 @@ export class PrototypeScene extends Phaser.Scene {
         use: sampled.use,
       };
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);
+      this.observeFeedback();
     }
     this.refresh();
     this.draw();
@@ -147,6 +170,14 @@ export class PrototypeScene extends Phaser.Scene {
       this.flush();
       this.durable = durable;
       this.savedAt = time;
+    }
+  }
+
+  private observeFeedback(): void {
+    const kinds = this.feedback.observe(PROTOTYPE.tuning.maxSpeed * 0.1, this.model.state);
+    this.feedbackSound.play(kinds);
+    if (this.screenShake && kinds.includes("damage")) {
+      this.cameras.main.shake(100, 0.002);
     }
   }
 
@@ -213,8 +244,23 @@ export class PrototypeScene extends Phaser.Scene {
         x: shot.x - shot.velocity.x * 0.035,
         y: shot.y - shot.velocity.y * 0.035,
       });
-      this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
+      if (shot.projectile === "missile") {
+        const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        this.ink.lineStyle(3, 0xffffff);
+        this.ink.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
+        this.ink.lineStyle(1, 0x999999);
+        this.ink.lineBetween(point.x - dx * 17, point.y - dy * 17, point.x - dx * 11, point.y - dy * 11);
+        this.ink.lineBetween(point.x - dx * 7 - dy * 4, point.y - dy * 7 + dx * 4, point.x, point.y);
+        this.ink.lineBetween(point.x - dx * 7 + dy * 4, point.y - dy * 7 - dx * 4, point.x, point.y);
+      } else {
+        this.ink.lineStyle(2, 0xffffff);
+        this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
+      }
     }
+    this.drawDiscovery();
+    this.drawFeedback();
     this.ship.setPosition(this.scale.width / 2, this.scale.height / 2);
     const thrust = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
     this.ship.setTexture(thrust ? "ship-thrust" : "ship");
@@ -232,9 +278,143 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  private drawEnemy(point: Vec, object: SpaceObject): void {
+    const enemy = object.enemy;
+    if (!enemy) {
+      this.ink.strokeTriangle(point.x, point.y + object.radius, point.x - object.radius, point.y - object.radius, point.x + object.radius, point.y - object.radius);
+      return;
+    }
+    const definition = enemyCatalog[enemy.archetype];
+    const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
+    // Hull and hardpoints share the runtime's fixed world axes.
+    const local = (x: number, y: number): Vec => this.project({ x: object.x + x * width, y: object.y + y * width });
+    const large = enemy.archetype === "capital" || enemy.archetype === "oversizedCapital";
+    const frigate = enemy.archetype === "frigate";
+    const pack = enemy.packId !== null;
+    const hull: [number, number][] = large
+      ? [[-0.28, -0.5], [0.28, -0.5], [0.5, -0.25], [0.5, 0.4], [0.25, 0.5], [-0.25, 0.5], [-0.5, 0.4], [-0.5, -0.25]]
+      : frigate
+        ? [[0, -0.6], [0.42, -0.25], [0.42, 0.4], [0, 0.55], [-0.42, 0.4], [-0.42, -0.25]]
+        : pack
+          ? [[0, -0.6], [0.5, 0], [0.32, 0.4], [0, 0.2], [-0.32, 0.4], [-0.5, 0]]
+          : [[0, -0.6], [0.5, 0.45], [0, 0.2], [-0.5, 0.45]];
+    const polygon = hull.map(([x, y]) => local(x, y));
+    this.ink.fillStyle(0x171717);
+    this.ink.fillPoints(polygon, true);
+    this.ink.lineStyle(1.5, 0xd4d4d4);
+    this.ink.strokePoints(polygon, true);
+    if (large) {
+      const a = local(-0.16, -0.5);
+      const b = local(-0.16, 0.5);
+      const c = local(0.16, -0.5);
+      const d = local(0.16, 0.5);
+      this.ink.lineStyle(1, 0x777777);
+      this.ink.lineBetween(a.x, a.y, b.x, b.y);
+      this.ink.lineBetween(c.x, c.y, d.x, d.y);
+    }
+    if (pack) {
+      this.ink.lineStyle(1, 0xffffff);
+      this.ink.strokeCircle(point.x, point.y, 3);
+    }
+    for (const part of definition.hardpoints) {
+      const at = local(part.offset.x, part.offset.y);
+      const hp = enemy.hardpoints.find((value) => value.id === part.id)?.hp ?? 0;
+      const size = Math.max(7, Math.min(18, width * 0.065));
+      this.ink.fillStyle(hp > 0 ? 0x454545 : 0x101010);
+      this.ink.lineStyle(2, hp > 0 ? 0xffffff : 0x777777);
+      if (part.kind === "command") {
+        this.ink.fillTriangle(at.x, at.y - size, at.x - size, at.y + size, at.x + size, at.y + size);
+        this.ink.strokeTriangle(at.x, at.y - size, at.x - size, at.y + size, at.x + size, at.y + size);
+      } else if (part.kind === "engine") {
+        this.ink.fillRect(at.x - size, at.y - size * 0.6, size * 2, size * 1.2);
+        this.ink.strokeRect(at.x - size, at.y - size * 0.6, size * 2, size * 1.2);
+        if (hp > 0) {
+          this.ink.lineBetween(at.x - size / 2, at.y + size, at.x - size / 2, at.y + size * 1.5);
+          this.ink.lineBetween(at.x + size / 2, at.y + size, at.x + size / 2, at.y + size * 1.5);
+        }
+      } else {
+        this.ink.fillCircle(at.x, at.y, size);
+        this.ink.strokeCircle(at.x, at.y, size);
+        this.ink.lineBetween(at.x, at.y, at.x, at.y - size * 1.5);
+      }
+      if (hp <= 0) {
+        this.ink.lineBetween(at.x - size, at.y - size, at.x + size, at.y + size);
+        this.ink.lineBetween(at.x + size, at.y - size, at.x - size, at.y + size);
+      }
+      this.ink.lineStyle(3, 0x555555);
+      this.ink.lineBetween(at.x - size, at.y + size + 5, at.x + size, at.y + size + 5);
+      if (hp > 0) {
+        this.ink.lineStyle(3, 0xffffff);
+        this.ink.lineBetween(at.x - size, at.y + size + 5, at.x - size + size * 2 * Math.min(1, hp / part.hp), at.y + size + 5);
+      }
+    }
+  }
+
+  private drawDiscovery(): void {
+    const flight = this.model.state.flight;
+    if (!flight) {
+      return;
+    }
+    const cx = this.scale.width / 2;
+    const cy = this.scale.height / 2;
+    const candidates = flight.objects
+      .filter((object) => object.role === "discovery" && (object.kind === "pickup" || object.kind === "resource"))
+      .map((object) => this.project(object))
+      .filter((point) => point.x < 0 || point.y < 0 || point.x > this.scale.width || point.y > this.scale.height)
+      .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
+    const target = candidates[0];
+    // Provisional nearby range scales with the viewport, without revealing distant targets.
+    if (!target || Math.hypot(target.x - cx, target.y - cy) > Math.max(this.scale.width, this.scale.height) * 1.5) {
+      return;
+    }
+    const dx = target.x - cx;
+    const dy = target.y - cy;
+    const length = Math.hypot(dx, dy);
+    const ux = dx / length;
+    const uy = dy / length;
+    const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
+    const x = cx + dx * Math.max(0, scale);
+    const y = cy + dy * Math.max(0, scale);
+    this.ink.lineStyle(2, 0xffffff, 0.8);
+    this.ink.strokeTriangle(x + ux * 8, y + uy * 8, x - ux * 5 - uy * 5, y - uy * 5 + ux * 5, x - ux * 5 + uy * 5, y - uy * 5 - ux * 5);
+    this.ink.strokeCircle(x - ux * 13, y - uy * 13, 3);
+  }
+
+  private drawFeedback(): void {
+    for (const pulse of this.feedback.pulses) {
+      const at = this.project(pulse);
+      const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
+      this.ink.lineStyle(pulse.kind === "damage" ? 3 : 1.5, 0xffffff, Math.max(0, 1 - pulse.age / 0.65));
+      if (pulse.kind === "hit" || pulse.kind === "disabled") {
+        for (let i = 0; i < 6; i++) {
+          const angle = i * Math.PI / 3;
+          this.ink.lineBetween(at.x + Math.cos(angle) * radius, at.y + Math.sin(angle) * radius, at.x + Math.cos(angle) * (radius + 7), at.y + Math.sin(angle) * (radius + 7));
+        }
+        if (pulse.kind === "disabled") {
+          this.ink.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
+        }
+      } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
+        this.ink.strokePoints([{x: at.x, y: at.y - radius}, {x: at.x + radius, y: at.y}, {x: at.x, y: at.y + radius}, {x: at.x - radius, y: at.y}], true);
+        if (pulse.kind === "deposit") {
+          this.ink.strokeCircle(at.x, at.y, radius * 0.65);
+        }
+      } else {
+        this.ink.strokeCircle(at.x, at.y, radius);
+        if (pulse.kind === "damage") {
+          this.ink.lineBetween(at.x - radius, at.y - radius, at.x - radius * 0.65, at.y - radius * 0.65);
+          this.ink.lineBetween(at.x + radius, at.y + radius, at.x + radius * 0.65, at.y + radius * 0.65);
+        }
+        if (pulse.kind === "teleport") {
+          this.ink.strokeCircle(at.x, at.y, radius * 0.6);
+        }
+      }
+    }
+  }
+
   private drawObject(object: SpaceObject): void {
     const point = this.project(object);
-    const radius = object.radius;
+    const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
+    const radius = definition ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2) : object.radius;
     if (
       point.x < -radius - 60 ||
       point.y < -radius - 60 ||
@@ -285,14 +465,7 @@ export class PrototypeScene extends Phaser.Scene {
         );
         break;
       case "enemy":
-        this.ink.strokeTriangle(
-          point.x,
-          point.y + radius,
-          point.x - radius,
-          point.y - radius,
-          point.x + radius,
-          point.y - radius,
-        );
+        this.drawEnemy(point, object);
         break;
       case "pickup":
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);

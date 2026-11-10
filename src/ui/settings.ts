@@ -5,6 +5,8 @@ export interface SettingsLabels {
   readonly close: string;
   readonly moveControls: string;
   readonly settings: string;
+  readonly sound?: string;
+  readonly screenShake?: string;
 }
 
 export interface ControlVisibility {
@@ -12,8 +14,14 @@ export interface ControlVisibility {
   readonly move: boolean;
 }
 
+export interface FeedbackSettings {
+  readonly sound: boolean;
+  readonly screenShake: boolean;
+}
+
 export interface SettingsOptions {
   readonly labels: SettingsLabels;
+  readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onOpenChange: (open: boolean) => void;
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
 }
@@ -241,6 +249,26 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     row("move", options.labels.moveControls),
     row("aim", options.labels.aimControls),
   );
+  const feedback = { screenShake: !window.matchMedia("(prefers-reduced-motion: reduce)").matches, sound: true };
+  for (const key of ["sound", "screenShake"] as const) {
+    const caption = options.labels[key];
+    if (!caption) {
+      continue;
+    }
+    const element = document.createElement("label");
+    const text = document.createElement("span");
+    text.textContent = caption;
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.checked = feedback[key];
+    toggle.addEventListener("change", () => {
+      feedback[key] = toggle.checked;
+      options.onFeedbackChange?.({ ...feedback });
+    });
+    element.append(text, toggle);
+    card.append(element);
+  }
+  options.onFeedbackChange?.({ ...feedback });
   modal.append(card);
   root.append(style, ...joystickTargets, openButton, useButton, modal);
   parent.append(root);

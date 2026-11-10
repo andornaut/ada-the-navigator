@@ -7,12 +7,13 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import type { Scene } from "phaser";
 
-import { createSettings, type SettingsLabels } from "../ui/settings.ts";
+import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { drawSticks } from "../ui/sticks.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
   readonly labels: SettingsLabels;
+  readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
 }
 
@@ -58,6 +59,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let visibility = { aim: true, move: true };
   const settings = createSettings(parent, {
     labels: options.labels,
+    onFeedbackChange(value) {
+      options.onFeedbackChange?.(value);
+    },
     onOpenChange(open) {
       if (open) {
         state.openModal();
