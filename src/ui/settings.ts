@@ -82,6 +82,13 @@ const STYLE = `
   place-items:center
 }
 
+.ada-controls .ada-settings-open,
+.ada-controls .ada-weapon-selector button{
+  background:#181425;
+  border-color:#ead4aa;
+  color:#ead4aa
+}
+
 .ada-controls .ada-settings-open::before{
   content:"";
   width:20px;
@@ -108,13 +115,14 @@ const STYLE = `
 }
 
 .ada-controls .ada-weapon-selector button[aria-pressed=true]{
-  outline:2px solid #fff;
+  outline:2px solid #ead4aa;
   outline-offset:1px;
-  box-shadow:inset 0 0 0 2px #5078b4
+  box-shadow:inset 0 0 0 2px #ead4aa
 }
 
+.ada-controls .ada-settings-open:focus-visible,
 .ada-controls .ada-weapon-selector button:focus-visible{
-  outline:3px solid #5078b4;
+  outline:3px solid #ead4aa;
   outline-offset:4px
 }
 
@@ -123,12 +131,10 @@ const STYLE = `
   cursor:default
 }
 
-.ada-controls .ada-weapon-selector svg{
-  width:24px;
-  height:24px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:2
+.ada-controls .ada-weapon-selector img{
+  width:20px;
+  height:20px;
+  pointer-events:none
 }
 
 .ada-controls .ada-shield-meter{

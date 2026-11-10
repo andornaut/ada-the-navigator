@@ -16,14 +16,6 @@ interface WeaponSelectorOptions {
   readonly onSelect: (weapon: Weapon) => void;
 }
 
-// The same monochrome bolt and upgrade marks used by the space renderer.
-const GLYPHS: Readonly<Record<Weapon, string>> = {
-  basic: "M5 12H19",
-  pierce: "M4 12H20M12 6L20 12L12 18",
-  rapid: "M6 6H18M6 12H18M6 18H18",
-  spread: "M6 12L18 5M6 12H18M6 12L18 19",
-};
-
 export function createWeaponSelector(parent: HTMLElement, options: WeaponSelectorOptions) {
   const root = document.createElement("div");
   root.className = "ada-weapon-selector";
@@ -50,13 +42,13 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.weapon = choice.id;
-        const glyph = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        glyph.setAttribute("viewBox", "0 0 24 24");
+        const glyph = document.createElement("img");
+        glyph.src = `/art/ui/icons/weapon-${choice.id}.svg`;
+        glyph.alt = "";
+        glyph.width = 20;
+        glyph.height = 20;
+        glyph.draggable = false;
         glyph.setAttribute("aria-hidden", "true");
-        glyph.setAttribute("focusable", "false");
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", GLYPHS[choice.id]);
-        glyph.append(path);
         button.append(glyph);
         button.addEventListener("click", () => {
           if (enabled && !button.disabled) {
