@@ -518,14 +518,14 @@ try {
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "spread",
     storageKey,
   );
-  await page.keyboard.down("Space");
+  await page.keyboard.down("ArrowRight");
   try {
     await page.waitForFunction(
       (key) => JSON.parse(localStorage.getItem(key)).flight.shots.some((shot) => !shot.enemy),
       storageKey,
     );
   } finally {
-    await page.keyboard.up("Space");
+    await page.keyboard.up("ArrowRight");
   }
   assert.equal(
     (await readSave()).flight.weapon,
@@ -546,7 +546,9 @@ try {
   );
   const gear = page.locator('[data-action="settings"]');
   assert.ok((await gear.getAttribute("aria-label"))?.length, "Gear requires an accessible name");
-  const gearImage = await gear.evaluate((node) => getComputedStyle(node).backgroundImage);
+  const gearImage = await gear.evaluate(
+    (node) => getComputedStyle(node, "::before").backgroundImage,
+  );
   assert.ok(gearImage.includes("/art/ui/sprites/icon-settings-nav.png"));
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
