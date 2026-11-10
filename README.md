@@ -64,7 +64,8 @@ hardpoints and straight-flying missiles. Required approach encounters stay outsi
 friendly safe zones. See the [enemy rule interface](gameplay/enemies.md).
 
 Flight snapshots are stored locally in this browser. If browser storage is
-unavailable, play continues without persistent saves.
+unavailable, play continues with a nonblocking save warning. The warning clears
+after a successful write; failed writes preserve the last persisted snapshot.
 
 ## Development
 
