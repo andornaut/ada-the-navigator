@@ -761,7 +761,7 @@ try {
     await page.keyboard.down("ArrowRight");
     try {
       await page.waitForFunction(
-        ({ key, projectile, minimum, faded }) => {
+        ({ faded, key, minimum, projectile }) => {
           const shots =
             JSON.parse(localStorage.getItem(key))?.flight?.shots.filter(
               (shot) => !shot.enemy && shot.projectile === projectile,
