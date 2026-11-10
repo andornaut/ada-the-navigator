@@ -9,102 +9,82 @@ const side = "#d4dfe9";
 const rear = "#abbfce";
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
+// Swapping plan axes reverses winding; reverse to retain upward-facing tops.
+function plan(z: number, points: readonly (readonly [number, number])[]): Point[] {
+  return points.map(([x, y]): Point => [y * 0.32, x * 0.32, z]).toReversed();
+}
+
 function model(yaw: number, thrust: boolean): Face[] {
   const faces: Face[] = [];
-  const nose: Point = [0, -25, 3];
-  const left: Point = [-16, 17, 3];
-  const right: Point = [16, 17, 3];
-  // Counterclockwise top and outward sides of the shallow triangular solid.
-  faces.push({ color: white, layer: 3, points: [nose, right, left] });
-  const rim = [nose, left, right];
-  for (let i = 0; i < rim.length; i++) {
-    const a = rim[i]!;
-    const b = rim[(i + 1) % rim.length]!;
+  const hull = plan(4, [
+    [-100, 0],
+    [64, -67],
+    [49, -17],
+    [76, 0],
+    [49, 17],
+    [64, 67],
+  ]);
+  // One continuous concave delta top includes both rear wing corners.
+  faces.push({ color: white, layer: 3, points: hull });
+  for (let i = 0; i < hull.length; i++) {
+    const a = hull[(i + 1) % hull.length]!;
+    const b = hull[i]!;
     faces.push({
-      color: i === 1 ? rear : side,
+      color: i === 0 || i === 5 ? side : rear,
       layer: 2,
-      points: [a, b, [b[0], b[1], -2], [a[0], a[1], -2]],
+      points: [a, b, [b[0], b[1], 0], [a[0], a[1], 0]],
     });
   }
   for (const sign of [-1, 1]) {
-    const root: Point = [sign * 7, 0, 2];
-    const tip: Point = [sign * 25, 17, 2];
-    const heel: Point = [sign * 12, 17, 2];
-    const top = sign === 1 ? [root, tip, heel] : [root, heel, tip];
-    faces.push({ color: white, layer: 1, points: top });
-    const seam: Point[] = [
-      [sign * 10.5, 5, 3.05],
-      [sign * 11.1, 5, 3.05],
-      [sign * 15.9, 16, 3.05],
-      [sign * 15.3, 16, 3.05],
-    ];
-    faces.push({ color: rear, layer: 4, points: sign === 1 ? seam : seam.toReversed() });
-    // The third wing edge is buried inside the central hull.
-    for (const [a, b] of [
-      [root, tip],
-      [tip, heel],
-    ] as [Point, Point][]) {
-      const edge = sign === 1 ? [b, a] : [a, b];
-      const [start, end] = edge as [Point, Point];
-      faces.push({
-        color: side,
-        layer: 0,
-        points: [start, end, [end[0], end[1], 0], [start[0], start[1], 0]],
-      });
-    }
+    // Short mouths follow the outer rear edges immediately inside each wing tip.
+    const a: Point = [sign * 64 * 0.32, 63.1 * 0.32 + 0.03, 0.8];
+    const b: Point = [sign * 54.5 * 0.32, 60.25 * 0.32 + 0.03, 0.8];
+    const mouth: Point[] = [a, b, [b[0], b[1], 3.2], [a[0], a[1], 3.2]];
     faces.push({
       color: "#64caff",
       layer: 2,
-      points: [
-        [sign * 22 - 2, 17.1, 0],
-        [sign * 22 + 2, 17.1, 0],
-        [sign * 22 + 2, 17.1, 2],
-        [sign * 22 - 2, 17.1, 2],
-      ],
+      points: sign === 1 ? mouth : mouth.toReversed(),
     });
     if (thrust) {
       faces.push({
         color: "#b9ecff",
         layer: -1,
         points: [
-          [sign * 22 - 2, 17.2, 1],
-          [sign * 22, 24, 1],
-          [sign * 22 + 2, 17.2, 1],
+          [a[0], a[1], 2],
+          [sign * 18.96, 26.3, 2],
+          [b[0], b[1], 2],
         ],
         twoSided: true,
       });
     }
   }
-  // The 182-unit trapezoidal footprint stays inside the 672-unit hull top.
-  const base: Point[] = [
-    [-5, -7, 3],
-    [5, -7, 3],
-    [8, 7, 3],
-    [-8, 7, 3],
-  ];
-  const roof: Point[] = [
-    [-4, -4, 7],
-    [4, -4, 7],
-    [6, 5, 7],
-    [-6, 5, 7],
-  ];
-  for (let i = 0; i < base.length; i++) {
-    const next = (i + 1) % base.length;
+  const roof = plan(7.5, [
+    [-55, 0],
+    [-24, -27],
+    [24, -25],
+    [35, 0],
+    [24, 25],
+    [-24, 27],
+  ]);
+  // Flat hexagonal roof and opaque vertical sides share the selected footprint.
+  for (let i = 0; i < roof.length; i++) {
+    const a = roof[(i + 1) % roof.length]!;
+    const b = roof[i]!;
     faces.push({
       color: "#1767b3",
       layer: 5,
-      points: [base[i]!, base[next]!, roof[next]!, roof[i]!],
+      points: [a, b, [b[0], b[1], 4], [a[0], a[1], 4]],
     });
   }
-  faces.push({ color: "#2585d0", layer: 5, points: roof });
-  const tail = rotate(yaw, [0, 14, 0]);
+  faces.push({ color: "#2585d0", layer: 6, points: roof });
+  const tail = rotate(yaw, [0, 18.5, 0]);
   faces.push({
-    color: side,
-    layer: tail[0] + tail[1] > 0 ? 4 : 6,
+    color: white,
+    layer: tail[0] + tail[1] > 0 ? 4 : 7,
     points: [
-      [0, 9, 3],
-      [0, 17, 3],
-      [0, 15, 8],
+      [0, 12.16, 4],
+      [0, 24, 4],
+      [0, 21.44, 8],
     ],
     twoSided: true,
   });

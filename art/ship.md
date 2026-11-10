@@ -12,13 +12,17 @@
 - Local forward is negative Y. Rotate the solid model into world heading before
   projecting `screenX = (x - y) * sqrt(3) / 2` and
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
-- Compact white triangular hull, two triangular rear wings and a small vertical
-  triangular tail use eleven hull polygons before visibility culling. Filled
-  shaded sides show thickness. The low opaque blue canopy has a flat trapezoidal roof,
-  two blue tones and a two-occupant footprint of roughly 27 percent of the central hull top, without interior detail.
-- Twin mouths sit at the rear wing corners and stay blue in both states.
-  Thrust adds short pale blue flames.
-  Faces share one projection and outward-normal culling. Wing sides precede wing
-  tops, then hull sides and hull top, then canopy. The tail draws before or after
-  the canopy according to heading; depth orders faces within each layer.
-  No raster assets, filters, strokes, external dependencies or screen rotation.
+- Compact delta A uses one continuous filled white hull with two rear wing
+  corners and a small vertical triangular tail. The six-point hull and large
+  six-point opaque blue canopy match the selected plan coordinates at scale 0.32:
+  `localX = planY * 0.32`, `localY = planX * 0.32`. Reversing mapped vertex
+  order preserves counterclockwise top winding.
+- Hull thickness is 4 units. The canopy uses its full selected hexagonal footprint,
+  a flat roof 3.5 units above the hull and darker blue vertical sides. No interior,
+  seams or panel detail. The canopy size follows the selected profile directly.
+- Twin subtle blue mouths follow the rear wing edges near their outer corners.
+  Thrust adds short pale blue flames. Hull sides precede the continuous hull top;
+  canopy sides precede its roof. The tail draws before or after the canopy
+  according to heading. All faces use one projection and outward-normal culling;
+  depth orders faces within each component layer.
+- No raster assets, filters, strokes, external dependencies or screen rotation.
