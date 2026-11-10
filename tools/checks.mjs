@@ -14,7 +14,11 @@ function run(command, args) {
     throw result.error;
   }
   if (result.status !== 0) {
-    throw new Error(`${command}: ${result.stderr}`);
+    const error = new Error(
+      `${command}: ${result.stderr || `exited with ${result.signal ?? result.status}`}`,
+    );
+    error.exitCode = result.status || 1;
+    throw error;
   }
   return result.stdout.trim();
 }
@@ -190,43 +194,97 @@ function start(mode, ci) {
       ["npm", "run", "deploy:wrangler:dry-run"],
     );
   }
-  guard(ci);
-  run("docker", [
-    "create",
-    "--name",
-    name,
-    "--cpus",
-    "4",
-    "--memory",
-    "4g",
-    "--pids-limit",
-    "512",
-    "--user",
-    "19001:19001",
-    "--group-add",
-    run("stat", ["-c", "%g", root]),
-    "--cap-drop",
-    "ALL",
-    "--security-opt",
-    "no-new-privileges",
-    "--mount",
-    `type=bind,source=${root},target=/checkout,readonly`,
-    "--env",
-    "HOME=/tmp",
-    "--env",
-    "CI=true",
-    "--env",
-    `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
-    "--env",
-    `CHECK_STEPS=${JSON.stringify(steps)}`,
-    "node:24.22.2",
-    "node",
-    "--input-type=module",
-    "-e",
-    program,
-  ]);
-  guard(ci);
-  run("docker", ["start", name]);
+  const directory = resolve(results, name);
+  const receiptPath = resolve(directory, "startup.json");
+  const receipt = { name, containerId: null, stage: "create", cleanup: "unconfirmed" };
+  const saveReceipt = () => writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+  saveReceipt();
+  try {
+    guard(ci);
+    const containerId = run("docker", [
+      "create",
+      "--name",
+      name,
+      "--cpus",
+      "4",
+      "--memory",
+      "4g",
+      "--pids-limit",
+      "512",
+      "--user",
+      "19001:19001",
+      "--group-add",
+      run("stat", ["-c", "%g", root]),
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges",
+      "--mount",
+      `type=bind,source=${root},target=/checkout,readonly`,
+      "--env",
+      "HOME=/tmp",
+      "--env",
+      "CI=true",
+      "--env",
+      `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
+      "--env",
+      `CHECK_STEPS=${JSON.stringify(steps)}`,
+      "node:24.22.2",
+      "node",
+      "--input-type=module",
+      "-e",
+      program,
+    ]);
+    if (!/^[a-f0-9]{64}$/.test(containerId)) {
+      throw new Error("docker create did not return a container ID; creation is unconfirmed");
+    }
+    receipt.containerId = containerId;
+    receipt.stage = "start";
+    receipt.cleanup = "retained";
+    saveReceipt();
+    guard(ci);
+    run("docker", ["start", containerId]);
+    receipt.stage = "started";
+    saveReceipt();
+  } catch (error) {
+    receipt.error = error.message;
+    let recovery = `Creation is unconfirmed; inspect container name ${name} before retrying.`;
+    if (receipt.containerId) {
+      recovery = `Container retained; collect with: node tools/checks.mjs collect ${name}`;
+      try {
+        const state = JSON.parse(
+          run("docker", [
+            "inspect",
+            "--format",
+            '{"id":{{json .Id}},"status":{{json .State.Status}},"running":{{json .State.Running}},"startedAt":{{json .State.StartedAt}}}',
+            receipt.containerId,
+          ]),
+        );
+        receipt.state = state;
+        if (
+          state.id === receipt.containerId &&
+          state.status === "created" &&
+          state.running === false &&
+          state.startedAt === "0001-01-01T00:00:00Z"
+        ) {
+          run("docker", ["rm", receipt.containerId]);
+          receipt.cleanup = "removed-unstarted";
+          recovery = "Owned unstarted container removed; retry start when resources are available.";
+        }
+      } catch (cleanupError) {
+        receipt.cleanupError = cleanupError.message;
+        recovery = `Container retained; inspect ${receipt.containerId}, then collect ${name} if it started.`;
+      }
+    }
+    receipt.recovery = recovery;
+    saveReceipt();
+    const failure = new Error(
+      `Failed to start ${name}: ${error.message}. Receipt: ${receiptPath}. ${recovery}`,
+      { cause: error },
+    );
+    failure.exitCode = error.exitCode || 1;
+    throw failure;
+  }
   console.log(name);
 }
 
@@ -315,6 +373,6 @@ if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
     }
   } catch (error) {
     console.error(error.message);
-    process.exitCode = 1;
+    process.exitCode = error.exitCode || 1;
   }
 }
