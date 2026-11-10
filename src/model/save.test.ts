@@ -289,10 +289,10 @@ describe("combat save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("accepts bolt projectiles and empty combat metadata", () => {
+  it("accepts bolt projectiles with consistent combat metadata", () => {
     const snapshot = combatSnapshot();
     Object.assign(snapshot.flight.shots[0]!, { projectile: "bolt" });
-    snapshot.flight.combat = { initialPackSizes: { pack: 0 }, routeEncounters: [] };
+    snapshot.flight.combat = { initialPackSizes: { pack: 1 }, routeEncounters: [] };
     expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 });
