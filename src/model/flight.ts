@@ -39,7 +39,10 @@ function safe(content: PrototypeContent, point: Vec, flight: FlightState): boole
     (o) => o.kind === "destination" && distance(point, o) <= content.tuning.safeRadius,
   );
 }
-const chunkIndexes = new WeakMap<FlightState, { keys: Set<string>; length: number; source: string[] }>();
+const chunkIndexes = new WeakMap<
+  FlightState,
+  { keys: Set<string>; length: number; source: string[] }
+>();
 function generatedChunks(flight: FlightState): Set<string> {
   let index = chunkIndexes.get(flight);
   if (!index || index.source !== flight.chunks || index.length !== flight.chunks.length) {
@@ -293,8 +296,11 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
 export { relocateRouteGuards as settleRouteEncounters };
 
 export function routeBlocked(id: string, flight: FlightState): boolean {
-  return Boolean(flight.dormant?.routes.includes(id)) || flight.objects.some(
-    (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
+  return (
+    Boolean(flight.dormant?.routes.includes(id)) ||
+    flight.objects.some(
+      (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
+    )
   );
 }
 
@@ -352,8 +358,13 @@ export function ensureDestination(
   if (existing) {
     return existing;
   }
-  const heading = direction(length(flight.velocity) ? flight.velocity :
-    length(flight.facing) ? flight.facing : { x: 0, y: -1 });
+  const heading = direction(
+    length(flight.velocity)
+      ? flight.velocity
+      : length(flight.facing)
+        ? flight.facing
+        : { x: 0, y: -1 },
+  );
   const span = content.tuning.chunkSize * 2;
   const index = flight.objects.filter((o) => o.kind === "destination").length;
   const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * content.tuning.safeRadius * 2.5;
@@ -549,7 +560,11 @@ function move(
       }
     }
   }
-  if (length(input.aim) <= 0.01 && distance(start, flight.player) > 0.001 && length(flight.velocity)) {
+  if (
+    length(input.aim) <= 0.01 &&
+    distance(start, flight.player) > 0.001 &&
+    length(flight.velocity)
+  ) {
     flight.facing = direction(flight.velocity);
   }
 }

@@ -193,10 +193,12 @@ export function stepEnemy(
   const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
   const aim = unit(delta);
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
-  const alive = context.peers.filter(
-    (peer) =>
-      peer.packId === state.packId && (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-  ).length + (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
+  const alive =
+    context.peers.filter(
+      (peer) =>
+        peer.packId === state.packId &&
+        (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
+    ).length + (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
   const packFlee = packSize > 1 && 1 - alive / packSize >= definition.morale.packLossRatio;
   const next: EnemyState = {
     ...state,

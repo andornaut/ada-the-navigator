@@ -17,8 +17,15 @@ import { ACTIVE_CHUNK_RADIUS, archivedObjectIds } from "./geography.ts";
 import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 
 const progress: SectorProgress = {
-  deposited: 0, disabledEnemies: 0, discoveries: 0, introduced: false, known: [],
-  questComplete: false, questItem: null, resolved: false, stage: 0,
+  deposited: 0,
+  disabledEnemies: 0,
+  discoveries: 0,
+  introduced: false,
+  known: [],
+  questComplete: false,
+  questItem: null,
+  resolved: false,
+  stage: 0,
 };
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function empty(): FlightState {
@@ -27,14 +34,22 @@ function empty(): FlightState {
   return flight;
 }
 function objects(flight: FlightState): SpaceObject[] {
-  return [...flight.objects, ...Object.values(flight.dormant?.pages ?? {}).flatMap((page) => JSON.parse(page) as SpaceObject[])];
+  return [
+    ...flight.objects,
+    ...Object.values(flight.dormant?.pages ?? {}).flatMap(
+      (page) => JSON.parse(page) as SpaceObject[],
+    ),
+  ];
 }
 function enemy(id: string, x: number, packId: string | null = null): SpaceObject {
   const point = { x, y: 100 };
   return {
     ...point,
     enemy: createEnemy(enemyCatalog.swarm, { archetype: "swarm", id, packId, phase: 0.2 }, point),
-    hp: 2, id, kind: "enemy", radius: 10,
+    hp: 2,
+    id,
+    kind: "enemy",
+    radius: 10,
   };
 }
 
@@ -46,10 +61,15 @@ describe("geographically bounded simulation", () => {
       flight.player = { x: index * 4096, y: 0 };
       stepFlight(PROTOTYPE, 0.001, idle, flight);
       const centerX = Math.floor(flight.player.x / PROTOTYPE.tuning.chunkSize);
-      expect(flight.objects.every((object) => object.kind === "destination" || (
-        Math.abs(Math.floor(object.x / PROTOTYPE.tuning.chunkSize) - centerX) <= ACTIVE_CHUNK_RADIUS &&
-        Math.abs(Math.floor(object.y / PROTOTYPE.tuning.chunkSize)) <= ACTIVE_CHUNK_RADIUS
-      ))).toBe(true);
+      expect(
+        flight.objects.every(
+          (object) =>
+            object.kind === "destination" ||
+            (Math.abs(Math.floor(object.x / PROTOTYPE.tuning.chunkSize) - centerX) <=
+              ACTIVE_CHUNK_RADIUS &&
+              Math.abs(Math.floor(object.y / PROTOTYPE.tuning.chunkSize)) <= ACTIVE_CHUNK_RADIUS),
+        ),
+      ).toBe(true);
       expect(flight.objects.length).toBeLessThan(250);
     }
     expect(flight.chunks.length).toBeGreaterThan(500);
@@ -68,7 +88,9 @@ describe("geographically bounded simulation", () => {
       { hp: 1, id: "upgrade", kind: "pickup", radius: 10, weapon: "rapid", x: 0, y: 0 },
     );
     stepFlight(PROTOTYPE, 0.15, { ...idle, aim: { x: 1, y: 0 } }, flight);
-    expect(flight.objects.some((object) => object.id === "mined" || object.id === "upgrade")).toBe(false);
+    expect(flight.objects.some((object) => object.id === "mined" || object.id === "upgrade")).toBe(
+      false,
+    );
     const remaining = structuredClone(flight.objects);
     const ammo = flight.ammo;
     flight.player = { x: 12000, y: 0 };
@@ -77,15 +99,23 @@ describe("geographically bounded simulation", () => {
     syncFlightRegion(PROTOTYPE, flight);
     expect(flight.objects).toEqual(remaining);
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(objects(flight).some((object) => object.id === "mined" || object.id === "upgrade")).toBe(false);
+    expect(objects(flight).some((object) => object.id === "mined" || object.id === "upgrade")).toBe(
+      false,
+    );
     expect(flight.ammo).toBe(ammo);
-    expect(flight.objects.filter((object) => object.role === "cargo")).toHaveLength(PROTOTYPE.tuning.flight.piecesPerRock);
+    expect(flight.objects.filter((object) => object.role === "cargo")).toHaveLength(
+      PROTOTYPE.tuning.flight.piecesPerRock,
+    );
   });
 
   it("preserves damaged enemy hardpoints, cooldowns and pursuit state without inactive clock catch-up", () => {
     const flight = empty();
     const point = { x: 100, y: 100 };
-    const state = createEnemy(enemyCatalog.frigate, { archetype: "frigate", id: "damaged", packId: null, phase: 0.4 }, point);
+    const state = createEnemy(
+      enemyCatalog.frigate,
+      { archetype: "frigate", id: "damaged", packId: null, phase: 0.4 },
+      point,
+    );
     state.hardpoints[0]!.hp = 1;
     state.hardpoints[1]!.cooldown = 0.75;
     state.age = 3;
@@ -95,7 +125,14 @@ describe("geographically bounded simulation", () => {
     state.lastSeenAge = 0.4;
     state.pursuitSeconds = 1.2;
     state.velocity = { x: 3, y: 7 };
-    const target: SpaceObject = { ...point, enemy: state, hp: 8, id: "damaged", kind: "enemy", radius: 30 };
+    const target: SpaceObject = {
+      ...point,
+      enemy: state,
+      hp: 8,
+      id: "damaged",
+      kind: "enemy",
+      radius: 30,
+    };
     flight.objects.push(target);
     const before = structuredClone(target);
     flight.player = { x: 12000, y: 0 };
@@ -118,7 +155,16 @@ describe("geographically bounded simulation", () => {
     expect(flight.dormant!.packMembers.pack).toBe(1);
     stepFlight(PROTOTYPE, 0.001, idle, flight);
     expect(near.enemy!.fleeing).toBe(false);
-    flight.shots.push({ enemy: false, hitIds: [], id: "kill", life: 1, piercing: false, velocity: { x: 0, y: 0 }, x: near.x, y: near.y });
+    flight.shots.push({
+      enemy: false,
+      hitIds: [],
+      id: "kill",
+      life: 1,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x: near.x,
+      y: near.y,
+    });
     near.enemy!.hp = 1;
     near.hp = 1;
     expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
@@ -131,8 +177,25 @@ describe("geographically bounded simulation", () => {
   it("owns a crossing debris object in one coordinate page while global projectiles expire normally", () => {
     const flight = empty();
     const boundary = (ACTIVE_CHUNK_RADIUS + 1) * PROTOTYPE.tuning.chunkSize;
-    flight.objects.push({ hp: 4, id: "crossing", kind: "debris", radius: 10, velocity: { x: 180, y: 0 }, x: boundary - 1, y: 0 });
-    flight.shots.push({ enemy: true, hitIds: [], id: "finite", life: 0.05, piercing: false, velocity: { x: 100, y: 0 }, x: 9000, y: 0 });
+    flight.objects.push({
+      hp: 4,
+      id: "crossing",
+      kind: "debris",
+      radius: 10,
+      velocity: { x: 180, y: 0 },
+      x: boundary - 1,
+      y: 0,
+    });
+    flight.shots.push({
+      enemy: true,
+      hitIds: [],
+      id: "finite",
+      life: 0.05,
+      piercing: false,
+      velocity: { x: 100, y: 0 },
+      x: 9000,
+      y: 0,
+    });
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.objects.some((object) => object.id === "crossing")).toBe(false);
     const page = flight.dormant!.pages["4,0"]!;
@@ -145,7 +208,9 @@ describe("geographically bounded simulation", () => {
     syncFlightRegion(PROTOTYPE, flight);
     expect(flight.objects.find((object) => object.id === "crossing")).toEqual(saved);
     expect(objects(flight).filter((object) => object.id === "crossing")).toHaveLength(1);
-    expect(Object.values(flight.dormant!.pages).some((encoded) => encoded.includes('"finite"'))).toBe(false);
+    expect(
+      Object.values(flight.dormant!.pages).some((encoded) => encoded.includes('"finite"')),
+    ).toBe(false);
   });
 
   it("keeps dormant required guards blocking, wakes them explicitly, and preserves known teleport arrivals", () => {
@@ -186,11 +251,12 @@ describe("geographically bounded simulation", () => {
     flight.weapon = "rapid";
     const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
     const input = { ...idle, aim: { x: 1, y: 0 }, move: { x: 0, y: 1 } };
-    expect(stepFlight(PROTOTYPE, 0.2, input, resumed)).toEqual(stepFlight(PROTOTYPE, 0.2, input, flight));
+    expect(stepFlight(PROTOTYPE, 0.2, input, resumed)).toEqual(
+      stepFlight(PROTOTYPE, 0.2, input, flight),
+    );
     expect(resumed).toEqual(flight);
   });
 });
-
 
 it("reports only the current archive delta and resets once on the next simulation step", () => {
   const flight = empty();

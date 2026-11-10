@@ -201,7 +201,6 @@ it("stops movement and fresh exploration after released controls finish braking"
   expect(flight.freshDistance).toBe(explored);
 });
 
-
 it("retains nonzero movement-facing through released coasting and rest before placing the next quest", () => {
   const flight = empty();
   stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
@@ -216,7 +215,9 @@ it("retains nonzero movement-facing through released coasting and rest before pl
   const second = ensureDestination(PROTOTYPE, "workshop", flight);
   expect(first.x).toBeGreaterThan(before.x);
   expect(second.x).toBeGreaterThan(before.x);
-  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+    PROTOTYPE.tuning.safeRadius * 2,
+  );
 });
 
 it("places distinct quest destinations for legacy zero-facing saves without leaving them on the player", () => {
@@ -226,7 +227,9 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
   const second = ensureDestination(PROTOTYPE, "workshop", flight);
   expect(first.y).toBeLessThan(flight.player.y);
   expect(second.y).toBeLessThan(flight.player.y);
-  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+    PROTOTYPE.tuning.safeRadius * 2,
+  );
   syncFlightRegion(PROTOTYPE, flight);
   expect(flight.objects).toContain(first);
   expect(flight.objects).toContain(second);

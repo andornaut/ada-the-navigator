@@ -24,8 +24,11 @@ function coordinates(content: PrototypeContent, point: Vec): Vec {
   };
 }
 function liveEnemy(object: SpaceObject): boolean {
-  return object.kind === "enemy" && object.hp > 0 &&
-    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
+  return (
+    object.kind === "enemy" &&
+    object.hp > 0 &&
+    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated)
+  );
 }
 function dormant(flight: FlightState) {
   return (flight.dormant ??= { packMembers: {}, pages: {}, routes: [], version: 1 });
@@ -95,7 +98,11 @@ function activatePage(key: string, flight: FlightState): void {
 }
 
 /** Activate only spatially addressed pages, without traversing the visited world. */
-export function activateFlightRegion(content: PrototypeContent, point: Vec, flight: FlightState): void {
+export function activateFlightRegion(
+  content: PrototypeContent,
+  point: Vec,
+  flight: FlightState,
+): void {
   if (!flight.dormant) {
     return;
   }
@@ -115,8 +122,12 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
   const active: SpaceObject[] = [];
   for (const object of flight.objects) {
     const point = coordinates(content, object);
-    if (object.kind === "destination" || object.id.startsWith("whale-debris:") ||
-      (Math.abs(point.x - center.x) <= ACTIVE_CHUNK_RADIUS && Math.abs(point.y - center.y) <= ACTIVE_CHUNK_RADIUS)) {
+    if (
+      object.kind === "destination" ||
+      object.id.startsWith("whale-debris:") ||
+      (Math.abs(point.x - center.x) <= ACTIVE_CHUNK_RADIUS &&
+        Math.abs(point.y - center.y) <= ACTIVE_CHUNK_RADIUS)
+    ) {
       active.push(object);
       continue;
     }
@@ -131,7 +142,7 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
   const state = dormant(flight);
   for (const [key, objects] of pages) {
     const prior = state.pages[key];
-    const existing = prior === undefined ? [] : JSON.parse(prior) as SpaceObject[];
+    const existing = prior === undefined ? [] : (JSON.parse(prior) as SpaceObject[]);
     account(1, objects, flight);
     state.pages[key] = JSON.stringify([...existing, ...objects]);
     let ids = archived.get(flight);
@@ -147,7 +158,11 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
 }
 
 /** Explicit quest relocation may wake its guard even when its current page is distant. */
-export function activateRouteEncounter(content: PrototypeContent, id: string, flight: FlightState): void {
+export function activateRouteEncounter(
+  content: PrototypeContent,
+  id: string,
+  flight: FlightState,
+): void {
   if (!flight.dormant?.routes.includes(id)) {
     return;
   }
