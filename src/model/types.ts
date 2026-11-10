@@ -1,5 +1,7 @@
 import type { SectorId, Weapon } from "../data/types.ts";
 
+import type { EnemyState } from "./enemy-ai.ts";
+
 export interface Vec {
   x: number;
   y: number;
@@ -17,11 +19,15 @@ export interface SpaceObject extends Vec {
   radius: number;
   hp: number;
   role?: string;
+  enemy?: EnemyState;
+  velocity?: Vec;
+  routeId?: string;
   behavior?: "pursue" | "shoot" | "guard";
   weapon?: Exclude<Weapon, "basic">;
   cooldown?: number;
 }
 export interface Shot extends Vec {
+  projectile?: "bolt" | "missile";
   id: string;
   velocity: Vec;
   enemy: boolean;
@@ -30,6 +36,7 @@ export interface Shot extends Vec {
   hitIds: string[];
 }
 export interface FlightState {
+  combat?: { initialPackSizes: Record<string, number>; routeEncounters: string[] };
   sector: SectorId;
   seed: number;
   time: number;
