@@ -494,10 +494,27 @@ try {
     storageKey,
   );
   assert.equal(await rapidButton.getAttribute("aria-pressed"), "true");
-  assert.ok(
-    !(await page.locator(".flight-hud").textContent()).includes(PROTOTYPE.labels.ammo),
-    "Unlimited upgrades must not display an ammo counter",
+  assert.equal(
+    await page.locator(".flight-hud").count(),
+    0,
+    "The removed top-left information HUD must not be recreated",
   );
+  const weaponImages = await page.locator(".ada-weapon-selector button img").evaluateAll((images) =>
+    images.map((image) => ({
+      loaded: image.complete && image.naturalWidth > 0,
+      source: image.getAttribute("src"),
+      decorative: image.getAttribute("aria-hidden") === "true" && image.getAttribute("alt") === "",
+      weapon: image.parentElement.dataset.weapon,
+    })),
+  );
+  assert.equal(weaponImages.length, 3, "Basic and both owned upgrades require real icon images");
+  for (const icon of weaponImages) {
+    assert.ok(
+      icon.loaded && icon.decorative,
+      "Weapon icons must load without duplicating button names",
+    );
+    assert.equal(icon.source, `/art/ui/icons/weapon-${icon.weapon}.svg`);
+  }
   await page.reload();
   await page.waitForFunction(
     () => document.querySelector('[data-weapon="rapid"]')?.getAttribute("aria-pressed") === "true",
@@ -550,6 +567,19 @@ try {
     (node) => getComputedStyle(node, "::before").backgroundImage,
   );
   assert.ok(gearImage.includes("/art/ui/sprites/icon-settings-nav.png"));
+  assert.equal(
+    (
+      await page.request.get("http://ada-preview:4173/art/ui/sprites/icon-settings-nav.png")
+    ).status(),
+    200,
+    "The real settings icon resource must be served",
+  );
+  assert.equal(
+    (await readSave()).flight.ammo,
+    0,
+    "Actual firing must retain zero legacy ammo without consuming the unlimited upgrade",
+  );
+  save("weapon-icons-proof.json", { weaponImages, gearImage });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
     "Owned unlimited weapons support accessible selection, reload, modal guards and a full-width shield meter",
@@ -632,12 +662,14 @@ try {
     state: JSON.parse(cargoSave),
   });
   await seedOnce(cargoSave, "ada-browser.wide-cargo.v1");
-  await page.waitForFunction(() =>
-    document.querySelector(".flight-hud")?.textContent.includes("12345"),
-  );
-  assert.ok(
-    !(await page.locator(".flight-hud").textContent()).includes("12345/"),
-    "Cargo must have no capacity denominator",
+  await page.waitForFunction((key) => {
+    const state = JSON.parse(localStorage.getItem(key));
+    return state.mode === "space" && state.flight?.sector === 2 && state.flight.cargo === 12345;
+  }, storageKey);
+  assert.equal(
+    await page.locator(".flight-hud").count(),
+    0,
+    "Wide cargo must not restore the removed information HUD",
   );
   await page.getByRole("button", { name: PROTOTYPE.labels.deposit, exact: true }).click();
   await page.waitForFunction((key) => {
@@ -649,7 +681,9 @@ try {
     (key) => JSON.parse(localStorage.getItem(key)).progress[2].deposited === 12345,
     storageKey,
   );
-  events.checks.push("Wide cargo displays without a cap and real deposit persists after reload");
+  events.checks.push(
+    "Canonical wide cargo survives restore and a real deposit persists after reload",
+  );
 
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
   const fixture = new GameModel(PROTOTYPE);
