@@ -304,34 +304,58 @@ describe("combat admission and subframe firing", () => {
     expect(admitted.every((object) => !object.enemy!.fleeing)).toBe(true);
   });
 
-  it.each(["destination", "guard"] as const)("does not count %s clearance as a casualty but still retreats after a real loss", (clearance) => {
-    const flight = empty();
-    const points = clearance === "destination"
-      ? [{ x: 0, y: -1024 }, { x: 50, y: -1024 }, { x: 400, y: -1024 }, { x: 450, y: -1024 }]
-      : [{ x: 690, y: 0 }, { x: 700, y: 0 }, { x: 1100, y: 0 }, { x: 1150, y: 0 }];
-    const members = pack(flight, points);
-    if (clearance === "destination") {
-      ensureDestination(PROTOTYPE, "clearance", flight);
-    } else {
-      flight.objects.push({ hp: 1, id: "clearance", kind: "destination", radius: 30, x: 1000, y: 0 });
-      ensureRouteEncounter(PROTOTYPE, "clearance", flight);
-    }
-    expect(flight.combat!.initialPackSizes.roster).toBe(2);
-    expect(flight.objects).not.toContain(members[0]);
-    expect(flight.objects).not.toContain(members[1]);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(members[2]!.enemy!.fleeing).toBe(false);
-    expect(members[3]!.enemy!.fleeing).toBe(false);
-    hit(flight, members[2]!, 2);
-    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
-    expect(flight.combat!.initialPackSizes.roster).toBe(2);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(members[3]!.enemy!.fleeing).toBe(true);
-  });
+  it.each(["destination", "guard"] as const)(
+    "does not count %s clearance as a casualty but still retreats after a real loss",
+    (clearance) => {
+      const flight = empty();
+      const points =
+        clearance === "destination"
+          ? [
+              { x: 0, y: -1024 },
+              { x: 50, y: -1024 },
+              { x: 400, y: -1024 },
+              { x: 450, y: -1024 },
+            ]
+          : [
+              { x: 690, y: 0 },
+              { x: 700, y: 0 },
+              { x: 1100, y: 0 },
+              { x: 1150, y: 0 },
+            ];
+      const members = pack(flight, points);
+      if (clearance === "destination") {
+        ensureDestination(PROTOTYPE, "clearance", flight);
+      } else {
+        flight.objects.push({
+          hp: 1,
+          id: "clearance",
+          kind: "destination",
+          radius: 30,
+          x: 1000,
+          y: 0,
+        });
+        ensureRouteEncounter(PROTOTYPE, "clearance", flight);
+      }
+      expect(flight.combat!.initialPackSizes.roster).toBe(2);
+      expect(flight.objects).not.toContain(members[0]);
+      expect(flight.objects).not.toContain(members[1]);
+      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      expect(members[2]!.enemy!.fleeing).toBe(false);
+      expect(members[3]!.enemy!.fleeing).toBe(false);
+      hit(flight, members[2]!, 2);
+      expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
+      expect(flight.combat!.initialPackSizes.roster).toBe(2);
+      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      expect(members[3]!.enemy!.fleeing).toBe(true);
+    },
+  );
 
   it("does not erase an already recorded casualty when destination clearance removes its dead object", () => {
     const flight = empty();
-    const members = pack(flight, [{ x: 0, y: -1024 }, { x: 400, y: -1024 }]);
+    const members = pack(flight, [
+      { x: 0, y: -1024 },
+      { x: 400, y: -1024 },
+    ]);
     members[0]!.hp = 0;
     members[0]!.enemy!.hp = 0;
     ensureDestination(PROTOTYPE, "clearance", flight);
@@ -374,39 +398,56 @@ describe("combat admission and subframe firing", () => {
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(0);
   });
 
-  it.each(["destination", "guard"] as const)("preserves both required fights through nearby %s clearance", (clearance) => {
-    const flight = empty();
-    flight.sector = 3;
-    const first = ensureDestination(PROTOTYPE, "first", flight);
-    const firstGuard = ensureRouteEncounter(PROTOTYPE, "first", flight)!;
-    const original = { x: firstGuard.x, y: firstGuard.y };
-    let second: SpaceObject;
-    if (clearance === "destination") {
-      // Compensate for the second destination's lateral offset to place it on the guard.
-      flight.player = { x: original.x - PROTOTYPE.tuning.safeRadius * 2.5, y: original.y + PROTOTYPE.tuning.chunkSize * 2 };
-      second = ensureDestination(PROTOTYPE, "second", flight);
-      expect({ x: second.x, y: second.y }).toEqual(original);
-    } else {
-      // Parallel approaches place oversized guard footprints across each other.
-      second = { hp: 1, id: "second", kind: "destination", radius: 30, x: first.x + 400, y: first.y };
-      flight.objects.push(second);
-      flight.player = { x: second.x, y: 0 };
-    }
-    expect(flight.objects).toContain(firstGuard);
-    const secondGuard = ensureRouteEncounter(PROTOTYPE, "second", flight)!;
-    expect(flight.objects).toContain(firstGuard);
-    expect(flight.objects).toContain(secondGuard);
-    expect(routeBlocked("first", flight)).toBe(true);
-    expect(routeBlocked("second", flight)).toBe(true);
-    for (const guard of [firstGuard, secondGuard]) {
-      for (const destination of [first, second]) {
-        expect(Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+  it.each(["destination", "guard"] as const)(
+    "preserves both required fights through nearby %s clearance",
+    (clearance) => {
+      const flight = empty();
+      flight.sector = 3;
+      const first = ensureDestination(PROTOTYPE, "first", flight);
+      const firstGuard = ensureRouteEncounter(PROTOTYPE, "first", flight)!;
+      const original = { x: firstGuard.x, y: firstGuard.y };
+      let second: SpaceObject;
+      if (clearance === "destination") {
+        // Compensate for the second destination's lateral offset to place it on the guard.
+        flight.player = {
+          x: original.x - PROTOTYPE.tuning.safeRadius * 2.5,
+          y: original.y + PROTOTYPE.tuning.chunkSize * 2,
+        };
+        second = ensureDestination(PROTOTYPE, "second", flight);
+        expect({ x: second.x, y: second.y }).toEqual(original);
+      } else {
+        // Parallel approaches place oversized guard footprints across each other.
+        second = {
+          hp: 1,
+          id: "second",
+          kind: "destination",
+          radius: 30,
+          x: first.x + 400,
+          y: first.y,
+        };
+        flight.objects.push(second);
+        flight.player = { x: second.x, y: 0 };
       }
-      expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
-      expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
-    }
-    expect(Math.hypot(firstGuard.x - secondGuard.x, firstGuard.y - secondGuard.y)).toBeGreaterThanOrEqual(firstGuard.radius + secondGuard.radius);
-    expect(ensureRouteEncounter(PROTOTYPE, "first", flight)).toBe(firstGuard);
-    expect(ensureRouteEncounter(PROTOTYPE, "second", flight)).toBe(secondGuard);
-  });
+      expect(flight.objects).toContain(firstGuard);
+      const secondGuard = ensureRouteEncounter(PROTOTYPE, "second", flight)!;
+      expect(flight.objects).toContain(firstGuard);
+      expect(flight.objects).toContain(secondGuard);
+      expect(routeBlocked("first", flight)).toBe(true);
+      expect(routeBlocked("second", flight)).toBe(true);
+      for (const guard of [firstGuard, secondGuard]) {
+        for (const destination of [first, second]) {
+          expect(
+            Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
+          ).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+        }
+        expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
+        expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
+      }
+      expect(
+        Math.hypot(firstGuard.x - secondGuard.x, firstGuard.y - secondGuard.y),
+      ).toBeGreaterThanOrEqual(firstGuard.radius + secondGuard.radius);
+      expect(ensureRouteEncounter(PROTOTYPE, "first", flight)).toBe(firstGuard);
+      expect(ensureRouteEncounter(PROTOTYPE, "second", flight)).toBe(secondGuard);
+    },
+  );
 });

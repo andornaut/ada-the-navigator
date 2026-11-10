@@ -9,6 +9,7 @@ import type { Scene } from "phaser";
 
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { drawSticks } from "../ui/sticks.ts";
+import { FRAME_TURN } from "../view/frame-turn.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -75,8 +76,21 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   const graphics = scene.add.graphics().setScrollFactor(0).setDepth(10000);
+  const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
+  scene.cameras.main.ignore(graphics);
+  const fitControls = (): void => {
+    camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
+    camera.ignore(scene.children.list.filter((object) => object !== graphics));
+  };
+  scene.events.on("prerender", fitControls);
+  fitControls();
   const point = (event: PagePointerEvent) =>
-    pageToGame(0, canvas.getBoundingClientRect(), scene.scale.gameSize, clientPoint(event));
+    pageToGame(
+      FRAME_TURN.turn(),
+      canvas.getBoundingClientRect(),
+      scene.scale.gameSize,
+      clientPoint(event),
+    );
   const joystickTarget = (target: EventTarget | null) => {
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
@@ -166,6 +180,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       stopPointers();
       state.setEnabled(false);
       settings.dispose();
+      scene.events.off("prerender", fitControls);
+      scene.cameras.remove(camera);
       graphics.destroy();
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);

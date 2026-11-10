@@ -70,8 +70,8 @@ const STYLE = `
 
 .ada-controls .ada-settings-open{
   position:absolute;
-  right:max(8px,env(safe-area-inset-right));
-  top:max(8px,env(safe-area-inset-top))
+  right:max(8px,var(--inset-right));
+  top:max(8px,var(--inset-top))
 }
 
 .ada-controls [data-control]{
@@ -94,7 +94,7 @@ const STYLE = `
 .ada-controls .ada-use{
   position:absolute;
   left:50%;
-  bottom:max(24px,env(safe-area-inset-bottom));
+  bottom:max(24px,var(--inset-bottom));
   transform:translateX(-50%);
   max-width:calc(100% - 32px)
 }

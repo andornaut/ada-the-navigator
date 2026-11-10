@@ -5,6 +5,7 @@ import {
   ensureRouteEncounter,
   placeDestinationAhead,
   routeBlocked,
+  settleRouteEncounters,
   stepFlight,
   teleport as teleportFlight,
 } from "./flight.ts";
@@ -323,6 +324,9 @@ export class GameModel {
         if (!f.objects.includes(object)) {
           f.objects.push(object);
         }
+      }
+      if (destination.x !== before.x || destination.y !== before.y) {
+        settleRouteEncounters(this.content, f);
       }
     }
   }

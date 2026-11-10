@@ -29,6 +29,11 @@ from Ada's compact white-and-blue ship.
 
 ## Controls
 
+The game uses a 720 × 360 base view (2:1 landscape), matching Chibi. The canvas
+expands to available space while the play view stays centered across the top.
+Portrait touch screens turn the page frame to landscape; controls remain mapped
+to the visible frame. Rendering uses nearest-neighbor scaling.
+
 Prototype input mappings:
 
 | Input                    | Action                                            |

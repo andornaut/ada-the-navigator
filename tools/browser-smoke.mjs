@@ -651,7 +651,8 @@ try {
   await page.locator('[data-action="close-settings"]').click();
   save("portrait-proof.json", {
     scope:
-      "Real mobile context, landscape frame rotation and mapped twin-touch input using the canonical safe-destination fixture",
+      "Real mobile context, landscape frame rotation and mapped twin-touch input " +
+      "using the canonical safe-destination fixture",
     frame: portraitFrame,
     before: portraitBefore,
     held: portraitHeld,

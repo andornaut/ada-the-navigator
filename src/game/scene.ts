@@ -2,6 +2,7 @@ import Phaser from "phaser";
 
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { SCREEN } from "../data/screen.ts";
 import { createControls } from "../input/controls.ts";
 import { GameModel } from "../model/game.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
@@ -69,6 +70,19 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   create(): void {
+    const fit = (): void => {
+      this.cameras.main.setViewport(
+        Math.floor((this.scale.gameSize.width - SCREEN.width) / 2),
+        0,
+        SCREEN.width,
+        SCREEN.height,
+      );
+    };
+    fit();
+    this.scale.on(Phaser.Scale.Events.RESIZE, fit);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.scale.off(Phaser.Scale.Events.RESIZE, fit),
+    );
     this.ink = this.add.graphics();
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
@@ -206,7 +220,7 @@ export class PrototypeScene extends Phaser.Scene {
     const center = this.model.state.flight?.player ?? { x: 0, y: 0 };
     const x = point.x - center.x;
     const y = point.y - center.y;
-    return { x: this.scale.width / 2 + x - y, y: this.scale.height / 2 + (x + y) / 2 };
+    return { x: SCREEN.width / 2 + x - y, y: SCREEN.height / 2 + (x + y) / 2 };
   }
 
   private draw(): void {
@@ -221,7 +235,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     // Stationary world markers provide motion cues without a navigation map.
     const cell = 160;
-    const span = Math.ceil(Math.max(this.scale.width, this.scale.height) / cell) + 2;
+    const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
     this.ink.fillStyle(0x525252, 0.6);
@@ -276,7 +290,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.drawDiscovery();
     this.drawFeedback();
-    this.ship.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     const thrust = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
     this.ship.setTexture(thrust ? "ship-thrust" : "ship");
     const dx = flight.facing.x - flight.facing.y;
@@ -428,8 +442,8 @@ export class PrototypeScene extends Phaser.Scene {
     if (!flight) {
       return;
     }
-    const cx = this.scale.width / 2;
-    const cy = this.scale.height / 2;
+    const cx = SCREEN.width / 2;
+    const cy = SCREEN.height / 2;
     const candidates = flight.objects
       .filter(
         (object) =>
@@ -437,15 +451,14 @@ export class PrototypeScene extends Phaser.Scene {
       )
       .map((object) => this.project(object))
       .filter(
-        (point) =>
-          point.x < 0 || point.y < 0 || point.x > this.scale.width || point.y > this.scale.height,
+        (point) => point.x < 0 || point.y < 0 || point.x > SCREEN.width || point.y > SCREEN.height,
       )
       .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
     const target = candidates[0];
     // Provisional nearby range scales with the viewport, without revealing distant targets.
     if (
       !target ||
-      Math.hypot(target.x - cx, target.y - cy) > Math.max(this.scale.width, this.scale.height) * 1.5
+      Math.hypot(target.x - cx, target.y - cy) > Math.max(SCREEN.width, SCREEN.height) * 1.5
     ) {
       return;
     }
@@ -536,8 +549,8 @@ export class PrototypeScene extends Phaser.Scene {
     if (
       point.x < -radius - 60 ||
       point.y < -radius - 60 ||
-      point.x > this.scale.width + radius + 60 ||
-      point.y > this.scale.height + radius + 60
+      point.x > SCREEN.width + radius + 60 ||
+      point.y > SCREEN.height + radius + 60
     ) {
       return;
     }

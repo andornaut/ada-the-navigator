@@ -204,12 +204,11 @@ function generateRegion(
 }
 
 /** Layout clearance changes the roster without recording a combat casualty. */
-function clearLayoutObjects(
-  keep: (object: SpaceObject) => boolean,
-  flight: FlightState,
-): void {
+function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: FlightState): void {
   flight.objects = flight.objects.filter((object) => {
-    const liveEnemy = object.kind === "enemy" && object.hp > 0 &&
+    const liveEnemy =
+      object.kind === "enemy" &&
+      object.hp > 0 &&
       (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
     if (keep(object) || (liveEnemy && object.routeId)) {
       return true;
@@ -227,23 +226,35 @@ function clearLayoutObjects(
 
 /** Plan all guard positions before applying layout changes to their persistent state. */
 function relocateRouteGuards(content: PrototypeContent, flight: FlightState): void {
-  const guards = flight.objects.filter((object) =>
-    object.kind === "enemy" && object.routeId && object.hp > 0 &&
-    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+  const guards = flight.objects.filter(
+    (object) =>
+      object.kind === "enemy" &&
+      object.routeId &&
+      object.hp > 0 &&
+      (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
   );
   const destinations = flight.objects.filter((object) => object.kind === "destination");
   const positions = new Map<SpaceObject, Vec>();
   const maxRadius = flight.objects.reduce(
-    (radius, object) => Math.max(radius, object.radius), content.tuning.safeRadius,
+    (radius, object) => Math.max(radius, object.radius),
+    content.tuning.safeRadius,
   );
   for (const guard of guards) {
     const point = { x: guard.x, y: guard.y };
     const stride = 2 * (guard.radius + maxRadius + 120);
     // Each obstacle excludes less than one stride, so finitely many obstacles cannot trap this search.
-    while (destinations.some((object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120) ||
-      flight.objects.some((object) => object !== guard &&
-        ["enemy", "rock", "resource", "debris"].includes(object.kind) && object.hp > 0 &&
-        distance(positions.get(object) ?? object, point) < object.radius + guard.radius + 20)) {
+    while (
+      destinations.some(
+        (object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120,
+      ) ||
+      flight.objects.some(
+        (object) =>
+          object !== guard &&
+          ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
+          object.hp > 0 &&
+          distance(positions.get(object) ?? object, point) < object.radius + guard.radius + 20,
+      )
+    ) {
       point.x += stride;
     }
     positions.set(guard, point);
