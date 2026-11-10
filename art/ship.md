@@ -3,7 +3,7 @@
 - Rebuild with `node art/tools/ship.ts` inside the isolated export container.
   The single module uses Node builtins and writes directly to `public/art/`.
 - Exports: `ship-{0..7}.svg` and `ship-thrust-{0..7}.svg`.
-  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 7.
+  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 5 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
 - Heading index is normalized `round(atan2(world.y, world.x) / (PI / 4))` modulo 8.

@@ -32,13 +32,15 @@ and its public base path. That subset preserves the source `fonts` and `sprites`
 schema, with paths relative to `/art/ui/`; it is separate from the prototype
 `assets` list. [UI provenance](ui.md) records fonts, slices and licences.
 
-Both ship textures face up with a centered pivot and a 64 by 96 transparent canvas.
-The manifest recommends 28 by 42 logical pixels for display. Swap idle and thrust textures
-without changing geometry. [Ship geometry](ship.md) and
+Ship textures use eight isometric headings with a centered pivot and a 96 by 96
+transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
+Choose the projected heading without rotating the image; swap idle and thrust
+textures without changing geometry. [Ship geometry](ship.md) and
 [portrait provenance](portraits.md) describe the authored and reused assets.
 
-SVG files are authored source and runtime exports. Edit those files directly;
-portrait PNGs remain byte-identical to their documented source exports. Sprite
+Ship SVGs are deterministic exports from `art/tools/ship.ts`; edit the generator
+and regenerate them in an isolated container. Portrait PNGs remain byte-identical
+to their documented source exports. Sprite
 metadata changes only the local image filename. No generated kit source or assets
 from another game's build pipeline are required.
 

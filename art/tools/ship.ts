@@ -12,8 +12,8 @@ const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 function model(thrust: boolean): Face[] {
   const faces: Face[] = [];
   const nose: Point = [0, -25, 3];
-  const left: Point = [-12, 17, 3];
-  const right: Point = [12, 17, 3];
+  const left: Point = [-16, 17, 3];
+  const right: Point = [16, 17, 3];
   // Counterclockwise top and outward sides of the shallow triangular solid.
   faces.push({ color: white, points: [nose, right, left] });
   const rim = [nose, left, right];
@@ -64,12 +64,12 @@ function model(thrust: boolean): Face[] {
       });
     }
   }
-  // Opaque canopy: 272 square units over the 1008-unit central hull top.
+  // The opaque canopy covers about one quarter of the central hull top.
   const base: Point[] = [
-    [-8, -12, 3.1],
-    [8, -12, 3.1],
-    [8, 5, 3.1],
-    [-8, 5, 3.1],
+    [-7, -6, 3.1],
+    [7, -6, 3.1],
+    [7, 7, 3.1],
+    [-7, 7, 3.1],
   ];
   for (let i = 0; i < base.length; i++) {
     faces.push({
@@ -79,19 +79,19 @@ function model(thrust: boolean): Face[] {
   }
   faces.push({
     color: white,
-    points: [[0, 9, 3], [0, 19, 3], [0, 17, 11]],
+    points: [
+      [0, 9, 3],
+      [0, 19, 3],
+      [0, 17, 11],
+    ],
     twoSided: true,
   });
   return faces;
 }
 
 function rotate(yaw: number, [x, y, z]: Point): Point {
-  const angle = yaw * Math.PI / 4 + Math.PI / 2;
-  return [
-    x * Math.cos(angle) - y * Math.sin(angle),
-    x * Math.sin(angle) + y * Math.cos(angle),
-    z,
-  ];
+  const angle = (yaw * Math.PI) / 4 + Math.PI / 2;
+  return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), z];
 }
 
 function visible({ points, twoSided }: Face): boolean {
@@ -117,8 +117,9 @@ function svg(yaw: number, thrust: boolean): string {
     .filter(visible)
     .sort((a, b) => depth(b) - depth(a))
     .map(({ color, points }) => {
-      const projected = points.map(([x, y, z]) =>
-        `${(48 + (x - y) * Math.sqrt(3) / 2).toFixed(2)},${(48 + (x + y) / 2 - z).toFixed(2)}`,
+      const projected = points.map(
+        ([x, y, z]) =>
+          `${(48 + ((x - y) * Math.sqrt(3)) / 2).toFixed(2)},${(48 + (x + y) / 2 - z).toFixed(2)}`,
       );
       return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
     });
@@ -137,5 +138,5 @@ for (let yaw = 0; yaw < 8; yaw++) {
     writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
   }
 }
-writeFileSync(`${output}ship.svg`, svg(7, false));
-writeFileSync(`${output}ship-thrust.svg`, svg(7, true));
+writeFileSync(`${output}ship.svg`, svg(5, false));
+writeFileSync(`${output}ship-thrust.svg`, svg(5, true));
