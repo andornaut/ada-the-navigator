@@ -6,20 +6,20 @@ This spec uses its semantic keys; Tech owns runtime integration.
 
 ## Semantic rendering
 
-| Existing subject | Palette keys | Shape and emphasis |
-| --- | --- | --- |
-| Space field | `background` `#292734` | Dark muted violet field. |
-| Harmless scenery: `rock`, stationary `debris` | `environment` `#34333F`, `environmentDetail` `#403F4D` | Muted solid silhouettes with restrained seams; visible blocking contours, no hazard cross or bright combat accents. |
-| Resource-bearing `resource` | `environment`, `active` `#65C9BF` | Solid rock body with bright collectible/resource inset; retain distinction from ordinary scenery. |
-| Damaging `hazard` | `obstacle` `#D68B72` | Bright crossed circle with a clear outer damage boundary. |
-| Ballistic `debris` with `velocity` | `environment`, `obstacle` | Muted body, bright warning contour and directional marks. These objects damage on contact; never render them as harmless scenery. |
-| Friendly `destination`, including space NPC encounters | `pointOfInterest` `#C4AFCC` | Distinct double ellipse and label. Preserve safe interaction space; do not use hostile hull or hazard symbols. |
-| Cargo `pickup` | `active` | Square container with central cargo dot. |
-| Weapon `pickup` | `weapon` `#F0BD68` | Square container with existing rapid, spread or pierce glyph. |
-| `enemy` hull and live combat parts | `environment`, `obstacle`, `shipHardpoint` `#70ACE8`, `weapon` | Bright hostile hull contour; blue live command/engine parts, amber live weapons. Retain archetype silhouettes, part shapes and health bars. |
-| Disabled hardpoints | `environment`, `environmentDetail` | Muted crossed-out parts; no live accent. |
-| Shots | `weapon` for friendly, `obstacle` for hostile | Preserve bolt versus missile shape; differentiate ownership beyond hue through an additional contour or glyph. |
-| Discovery indicator | `pointOfInterest` | Preserve existing arrow and circle; no additional navigation system. |
+| Existing subject                                       | Palette keys                                                   | Shape and emphasis                                                                                                                          |
+| ------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Space field                                            | `background` `#292734`                                         | Dark muted violet field.                                                                                                                    |
+| Harmless scenery: `rock`, stationary `debris`          | `environment` `#34333F`, `environmentDetail` `#403F4D`         | Muted solid silhouettes with restrained seams; visible blocking contours, no hazard cross or bright combat accents.                         |
+| Resource-bearing `resource`                            | `environment`, `active` `#65C9BF`                              | Solid rock body with bright collectible/resource inset; retain distinction from ordinary scenery.                                           |
+| Damaging `hazard`                                      | `obstacle` `#D68B72`                                           | Bright crossed circle with a clear outer damage boundary.                                                                                   |
+| Ballistic `debris` with `velocity`                     | `environment`, `obstacle`                                      | Muted body, bright warning contour and directional marks. These objects damage on contact; never render them as harmless scenery.           |
+| Friendly `destination`, including space NPC encounters | `pointOfInterest` `#C4AFCC`                                    | Distinct double ellipse and label. Preserve safe interaction space; do not use hostile hull or hazard symbols.                              |
+| Cargo `pickup`                                         | `active`                                                       | Square container with central cargo dot.                                                                                                    |
+| Weapon `pickup`                                        | `weapon` `#F0BD68`                                             | Square container with existing rapid, spread or pierce glyph.                                                                               |
+| `enemy` hull and live combat parts                     | `environment`, `obstacle`, `shipHardpoint` `#70ACE8`, `weapon` | Bright hostile hull contour; blue live command/engine parts, amber live weapons. Retain archetype silhouettes, part shapes and health bars. |
+| Disabled hardpoints                                    | `environment`, `environmentDetail`                             | Muted crossed-out parts; no live accent.                                                                                                    |
+| Shots                                                  | `weapon` for friendly, `obstacle` for hostile                  | Preserve bolt versus missile shape; differentiate ownership beyond hue through an additional contour or glyph.                              |
+| Discovery indicator                                    | `pointOfInterest`                                              | Preserve existing arrow and circle; no additional navigation system.                                                                        |
 
 Ordinary asteroids and stationary scenery block or slide Ada without damage.
 Attacks, marked hazards and moving ballistic debris damage the shield. Color
