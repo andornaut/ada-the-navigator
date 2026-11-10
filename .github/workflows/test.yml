@@ -27,8 +27,10 @@ jobs:
         include:
           - name: Lint
             mode: lint
+            targets: lint
           - name: Test
             mode: test
+            targets: test build
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -38,23 +40,14 @@ jobs:
         uses: actions/setup-node@v7.1.0
         with:
           node-version: 24.22.2
-      - name: Start isolated checks
-        id: start
+      - name: Run Make checks with source and artifact evidence
         run: |
-          name=$(node tools/checks.mjs start ${{ matrix.mode }} --ci)
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-      - name: Collect isolated checks
-        run: |
-          while true; do
-            set +e
-            node tools/checks.mjs collect '${{ steps.start.outputs.name }}'
-            status=$?
-            set -e
-            if [ "$status" -ne 75 ]; then
-              exit "$status"
-            fi
-            sleep 10
-          done
+          node tools/ci-evidence.mjs begin ${{ matrix.mode }}
+          set +e
+          make ${{ matrix.targets }} 2>&1 | tee .check-results/ci-${{ matrix.mode }}/check.log
+          status=$?
+          set -e
+          node tools/ci-evidence.mjs finish ${{ matrix.mode }} "$status"
       - name: Preserve check evidence
         if: always()
         uses: actions/upload-artifact@v7.0.2

@@ -1,40 +1,52 @@
 # Isolated checks
 
-## Make interface and adoption hold
+## Native commands and Make
 
-The public check surface is GNU Make. `npm run check`, `npm run lint`, `npm test`
-and `npm run build` delegate to `make check`, `make lint`, `make test` and
-`make build`, respectively. `make check-info` emits
-`{"version":1,"checks":["lint","test","build"]}` without building an image.
+Native npm scripts run directly in the invoking environment and never enter
+Make. Choose the execution environment for the task. Preserve resource admission,
+load below 20, four CPUs, four test workers and the configured memory ceilings.
 
-| Target       | Inner category work                                                |
-| ------------ | ------------------------------------------------------------------ |
-| `make check` | All three categories in order                                      |
-| `make lint`  | Installed hook acceptance/rejection, TypeScript and source lint    |
-| `make test`  | Vitest with at most four workers                                   |
-| `make build` | Vite, retained assets, CF prebuilt and Wrangler packaging dry runs |
+| Command                                | Work                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| `npm run check`                        | Scratch hook proof, types, lint, tests, build and both packaging dry runs |
+| `npm run lint`                         | Prettier, ESLint and Markdown lint                                        |
+| `npm test`                             | Vitest, with at most four workers                                         |
+| `npm run build`                        | Vite and retained assets                                                  |
+| `make check`                           | Complete container profile, the default Make target                       |
+| `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                         |
 
-The byte-identical generic launcher builds a dependency-cache image from the
-explicit `tests/container/context` inputs. It extracts a source snapshot into
-writable `/work` scratch as UID/GID 19001, with read-only root and host inputs,
-`HOME=/tmp`, four CPUs and `nofile=256:256`. Its revision, source hash and
-`SOURCE_DATE_EPOCH` describe the snapshot. `make build` exports `dist/` and
-`.cloudflare/output/v0/` after verifying the source remained stable. `make check`
-does not export artifacts. Explicit `make test` exports only `TEST_OUTPUTS`,
-which is empty by default. Explicit build/test exports validate and replace the
-configured generated paths, removing stale outputs.
+Hook verification creates its own scratch Git repository and preserves the
+caller's working files and index. `--output <proof.json>` selects explicit hook
+evidence; the default output remains in owned scratch. Normal staged-file
+formatting and fixes are unchanged. `internal:*` scripts retain the direct
+commands used by the delivery runner and inner dispatcher.
 
-The cached dependencies remain read-only. Inner setup creates a writable
-`node_modules/` directory with individual package links, so Vite can write
-`.vite/` and `.vite-temp/` in scratch. Inner lint initializes scratch Git for the
-actual Husky dispatcher; no host Git metadata is mounted.
+## Container profile and CI
 
-Make enters the canonical launcher directly. The launcher calls `tests/container/admit` before image building and every category start,
-with a five-second callback limit. The callback reports the phase and load, and
-rejects load at or above 20. Local Make verification is authorized. Ready compatible CI packages may be
-published with exact-commit CI verification; this migration requires atomic
-gate-step and resident compatibility review. See
-[adoption requirements](container-adoption.md).
+The byte-identical canonical `tests/container/run` has SHA-256
+`3e63f48cff28d8ebbb2738f942417c7f2ed7e68f6fe313d48765517f29f14e17`.
+It builds the repository's custom dependency-cache image from the explicit
+`tests/container/context` inputs. The Node.js 24.22.2 Dockerfile, dependency
+cache, scratch ownership, writable Vite caches and inner categories are unchanged.
+
+Make exports the category list, build/test output paths and resource admission
+callback. The launcher calls `tests/container/admit` before every image and
+category start, with a five-second limit. It preserves revision, source hash,
+dirty inventory and `SOURCE_DATE_EPOCH` provenance, and rejects changed source.
+`make check` exports no artifacts. Explicit `make build` exports `dist/` and
+`.cloudflare/output/v0/`; explicit `make test` exports only configured
+`TEST_OUTPUTS`, empty by default. Exports validate and replace ignored generated
+paths, removing stale content.
+
+CI uses Make with this custom Dockerfile: `Lint` runs `make lint`; `Test` runs
+`make test build`. `tools/ci-evidence.mjs` records source fingerprints around
+those commands and copies the actual exported build into `.check-results/ci-test/`.
+It verifies that retained `dist/`, CF assets and the evidence copy match.
+Receipts label these explicit Make commands separately from detached adapter
+execution. Both matrix jobs preserve their logs and receipts as CI artifacts.
+`AI attributions` remains unchanged.
+
+See [container compatibility](container-adoption.md) for runner boundaries.
 
 ## Detached receipt compatibility
 
@@ -101,7 +113,7 @@ logs and traces enabled. The Cloudflare Vite plugin emits `.cloudflare/output/v0
 The inner build refreshes `dist/` from the generated assets and verifies
 matching asset fingerprints. No application Worker entrypoint is configured.
 
-Run deployment dry runs only in an isolated Node.js 24.22.2 checkout. The CF
+Use the native dry-run scripts in the chosen Node.js 24.22.2 environment. The CF
 prebuilt check validates production Build Output without rebuilding:
 
 ```bash
