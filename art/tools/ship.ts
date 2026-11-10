@@ -32,6 +32,13 @@ function model(yaw: number, thrust: boolean): Face[] {
     const heel: Point = [sign * 12, 17, 2];
     const top = sign === 1 ? [root, tip, heel] : [root, heel, tip];
     faces.push({ color: white, layer: 1, points: top });
+    const seam: Point[] = [
+      [sign * 10.5, 5, 3.05],
+      [sign * 11.1, 5, 3.05],
+      [sign * 15.9, 16, 3.05],
+      [sign * 15.3, 16, 3.05],
+    ];
+    faces.push({ color: rear, layer: 4, points: sign === 1 ? seam : seam.toReversed() });
     // The third wing edge is buried inside the central hull.
     for (const [a, b] of [
       [root, tip],
@@ -92,7 +99,7 @@ function model(yaw: number, thrust: boolean): Face[] {
   faces.push({ color: "#2585d0", layer: 5, points: roof });
   const tail = rotate(yaw, [0, 14, 0]);
   faces.push({
-    color: white,
+    color: side,
     layer: tail[0] + tail[1] > 0 ? 4 : 6,
     points: [
       [0, 9, 3],
