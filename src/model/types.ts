@@ -34,7 +34,15 @@ export interface Shot extends Vec {
   piercing: boolean;
   hitIds: string[];
 }
+/** Dormant pages are immutable encoded object arrays; projectiles remain active. */
+export interface DormantFlightState {
+  version: 1;
+  pages: Record<string, string>;
+  packMembers: Record<string, number>;
+  routes: string[];
+}
 export interface FlightState {
+  dormant?: DormantFlightState;
   combat?: { initialPackSizes: Record<string, number>; routeEncounters: string[] };
   sector: SectorId;
   seed: number;

@@ -1,5 +1,6 @@
 import { enemyCatalog } from "../data/enemy-catalog.ts";
-import type { GameState } from "./types.ts";
+import { enemyEffects } from "./enemy-ai.ts";
+import type { GameState, SpaceObject } from "./types.ts";
 
 /** Storage access can fail in private browsing or when quotas are exhausted. */
 export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
@@ -74,6 +75,103 @@ function combatState(routes: readonly string[], value: unknown): boolean {
     ) &&
     strings(value.routeEncounters) &&
     (value.routeEncounters as string[]).every((id) => routes.includes(id))
+  );
+}
+function spaceObject(routes: readonly string[], value: unknown): value is SpaceObject {
+  return (
+    record(value) &&
+    vector(value) &&
+    typeof value.id === "string" &&
+    ["rock", "resource", "enemy", "hazard", "pickup", "destination", "debris"].includes(
+      String(value.kind),
+    ) &&
+    (value.routeId === undefined ||
+      (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
+    (value.velocity === undefined || vector(value.velocity)) &&
+    (value.enemy === undefined ||
+      (value.kind === "enemy" &&
+        enemyState(value.enemy) &&
+        record(value.enemy) &&
+        value.enemy.id === value.id)) &&
+    nonnegative(value.radius) &&
+    finite(value.hp) &&
+    (value.role === undefined || typeof value.role === "string") &&
+    (value.cooldown === undefined || nonnegative(value.cooldown)) &&
+    (value.behavior === undefined ||
+      ["pursue", "shoot", "guard"].includes(String(value.behavior))) &&
+    (value.weapon === undefined || ["rapid", "spread", "pierce"].includes(String(value.weapon)))
+  );
+}
+function chunkKey(value: string): boolean {
+  const coordinates = value.split(",");
+  return (
+    coordinates.length === 2 &&
+    coordinates.every((part) => Number.isSafeInteger(Number(part)) && String(Number(part)) === part)
+  );
+}
+function dormantState(
+  routes: readonly string[],
+  active: readonly SpaceObject[],
+  value: unknown,
+): boolean {
+  if (
+    !record(value) ||
+    value.version !== 1 ||
+    !record(value.pages) ||
+    !record(value.packMembers) ||
+    !Object.values(value.packMembers).every(
+      (count) => Number.isSafeInteger(count) && nonnegative(count),
+    ) ||
+    !strings(value.routes) ||
+    !(value.routes as string[]).every((id) => routes.includes(id))
+  ) {
+    return false;
+  }
+  const packMembers = new Map<string, number>();
+  const dormantRoutes = new Set<string>();
+  const ids = new Set(active.map((object) => object.id));
+  if (ids.size !== active.length) {
+    return false;
+  }
+  for (const [key, encoded] of Object.entries(value.pages)) {
+    if (!chunkKey(key) || typeof encoded !== "string") {
+      return false;
+    }
+    const objects: unknown = JSON.parse(encoded);
+    if (!Array.isArray(objects)) {
+      return false;
+    }
+    for (const object of objects) {
+      if (
+        !spaceObject(routes, object) ||
+        object.kind === "destination" ||
+        object.id.startsWith("whale-debris:") ||
+        ids.has(object.id)
+      ) {
+        return false;
+      }
+      ids.add(object.id);
+      const liveEnemy =
+        object.kind === "enemy" &&
+        object.hp > 0 &&
+        (!object.enemy ||
+          !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
+      if (liveEnemy) {
+        const packId = object.enemy?.packId;
+        if (packId) {
+          packMembers.set(packId, (packMembers.get(packId) ?? 0) + 1);
+        }
+        if (object.routeId) {
+          dormantRoutes.add(object.routeId);
+        }
+      }
+    }
+  }
+  return (
+    Object.keys(value.packMembers).length === packMembers.size &&
+    Object.entries(value.packMembers).every(([id, count]) => packMembers.get(id) === count) &&
+    (value.routes as string[]).length === dormantRoutes.size &&
+    (value.routes as string[]).every((id) => dormantRoutes.has(id))
   );
 }
 /** Accept only complete snapshots; a partial restore can invalidate quest state. */
@@ -169,33 +267,10 @@ export function restoreSave(saved: unknown): GameState | null {
       ) {
         return null;
       }
-      if (
-        !Array.isArray(f.objects) ||
-        !f.objects.every(
-          (o) =>
-            record(o) &&
-            vector(o) &&
-            typeof o.id === "string" &&
-            ["rock", "resource", "enemy", "hazard", "pickup", "destination", "debris"].includes(
-              String(o.kind),
-            ) &&
-            (o.routeId === undefined ||
-              (typeof o.routeId === "string" && routes.includes(o.routeId))) &&
-            (o.velocity === undefined || vector(o.velocity)) &&
-            (o.enemy === undefined ||
-              (o.kind === "enemy" &&
-                enemyState(o.enemy) &&
-                record(o.enemy) &&
-                o.enemy.id === o.id)) &&
-            nonnegative(o.radius) &&
-            finite(o.hp) &&
-            (o.role === undefined || typeof o.role === "string") &&
-            (o.cooldown === undefined || nonnegative(o.cooldown)) &&
-            (o.behavior === undefined ||
-              ["pursue", "shoot", "guard"].includes(String(o.behavior))) &&
-            (o.weapon === undefined || ["rapid", "spread", "pierce"].includes(String(o.weapon))),
-        )
-      ) {
+      if (!Array.isArray(f.objects) || !f.objects.every((object) => spaceObject(routes, object))) {
+        return null;
+      }
+      if (f.dormant !== undefined && !dormantState(routes, f.objects, f.dormant)) {
         return null;
       }
       if (

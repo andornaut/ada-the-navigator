@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -292,6 +292,163 @@ describe("combat save boundary", () => {
     const snapshot = combatSnapshot();
     Object.assign(snapshot.flight.shots[0]!, { projectile: "bolt" });
     snapshot.flight.combat = { initialPackSizes: { pack: 0 }, routeEncounters: [] };
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+  });
+});
+
+function dormantSnapshot() {
+  const snapshot = combatSnapshot();
+  return {
+    ...snapshot,
+    flight: {
+      ...snapshot.flight,
+      dormant: {
+        packMembers: { pack: 1 },
+        pages: { "10,0": JSON.stringify(snapshot.flight.objects) },
+        routes: ["growers"],
+        version: 1 as const,
+      },
+      objects: [],
+    },
+  };
+}
+
+describe("dormant save boundary", () => {
+  it("roundtrips inactive combat and debris exactly without re-encoding pages", () => {
+    const snapshot = dormantSnapshot();
+    const encoded = snapshot.flight.dormant.pages["10,0"];
+    const restored = restoreSave(JSON.stringify(snapshot));
+    expect(restored).toEqual(snapshot);
+    expect(restored?.flight?.dormant?.pages["10,0"]).toBe(encoded);
+    expect(restored?.flight?.shots).toEqual(snapshot.flight.shots);
+    expect(restored?.flight?.dormant).not.toBe(snapshot.flight.dormant);
+    const objects = JSON.parse(restored!.flight!.dormant!.pages["10,0"]!) as {
+      enemy?: { hardpoints: { cooldown: number; hp: number }[] };
+    }[];
+    expect(objects[0]!.enemy!.hardpoints[1]!.hp).toBe(0);
+    expect(objects[0]!.enemy!.hardpoints[4]!.cooldown).toBe(1.7);
+  });
+
+  it("does not parse inactive object trees during repeated serialization", () => {
+    const snapshot = dormantSnapshot();
+    const model = new GameModel(PROTOTYPE, JSON.stringify(snapshot));
+    expect(model.state).toEqual(snapshot);
+    const parse = vi.spyOn(JSON, "parse");
+    try {
+      const first = model.save();
+      expect(model.save()).toBe(first);
+      expect(parse).not.toHaveBeenCalled();
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  it.each([
+    null,
+    {},
+    { packMembers: {}, pages: {}, routes: [], version: 2 },
+    { packMembers: {}, pages: [], routes: [], version: 1 },
+    { packMembers: [], pages: {}, routes: [], version: 1 },
+    { packMembers: { pack: -1 }, pages: {}, routes: [], version: 1 },
+    { packMembers: { pack: 1.5 }, pages: {}, routes: [], version: 1 },
+    { packMembers: { pack: Infinity }, pages: {}, routes: [], version: 1 },
+    { packMembers: {}, pages: {}, routes: ["hub"], version: 1 },
+    { packMembers: {}, pages: {}, routes: [1], version: 1 },
+  ])("rejects malformed or unsupported dormant metadata %j", (dormant) => {
+    const snapshot = dormantSnapshot();
+    Object.assign(snapshot.flight, { dormant });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it.each(["broken", "null", "{}", '[{"kind":"enemy"}]', '[{"projectile":"missile"}]'])(
+    "rejects malformed encoded page %s",
+    (page) => {
+      const snapshot = dormantSnapshot();
+      snapshot.flight.dormant.pages["10,0"] = page;
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
+
+  it.each(["bad", "1.5,0", "01,0", "-0,0", "0,Infinity", "9007199254740992,0"])(
+    "rejects ambiguous or invalid chunk key %s",
+    (key) => {
+      const snapshot = dormantSnapshot();
+      Object.assign(snapshot.flight.dormant, { pages: { [key]: "[]" } });
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
+
+  it("rejects unencoded pages", () => {
+    const snapshot = dormantSnapshot();
+    Object.assign(snapshot.flight.dormant, { pages: { "10,0": [] } });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it.each([
+    { enemy: { archetype: "unknown" } },
+    { velocity: { x: null, y: 0 } },
+    { cooldown: -1 },
+    { routeId: "hub" },
+    { kind: "destination" },
+    { id: "whale-debris:0" },
+  ])("applies strict object and pinned quest validation inside pages %j", (change) => {
+    const snapshot = dormantSnapshot();
+    const object = { ...combatSnapshot().flight.objects[0]!, ...change };
+    snapshot.flight.dormant.pages["10,0"] = JSON.stringify([object]);
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it.each([
+    { packMembers: {} },
+    { packMembers: { pack: 2 } },
+    { packMembers: { pack: 1, phantom: 1 } },
+    { routes: [] },
+    { routes: ["growers", "growers"] },
+    { routes: ["workshop"] },
+  ])("rejects indexes that disagree with the retained live roster %j", (change) => {
+    const snapshot = dormantSnapshot();
+    Object.assign(snapshot.flight.dormant, change);
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it("counts a disabled hull with required live hardpoints as an alive dormant member", () => {
+    const snapshot = dormantSnapshot();
+    const objects = combatSnapshot().flight.objects;
+    objects[0]!.enemy!.hp = 0;
+    snapshot.flight.dormant.pages["10,0"] = JSON.stringify(objects);
+    expect(restoreSave(snapshot)).toEqual(snapshot);
+  });
+
+  it("does not index an enemy whose required hardpoints are all disabled", () => {
+    const snapshot = dormantSnapshot();
+    const objects = combatSnapshot().flight.objects;
+    for (const part of objects[0]!.enemy!.hardpoints) {
+      part.hp = 0;
+    }
+    snapshot.flight.dormant.pages["10,0"] = JSON.stringify(objects);
+    expect(restoreSave(snapshot)).toBeNull();
+    Object.assign(snapshot.flight.dormant, { packMembers: {}, routes: [] });
+    expect(restoreSave(snapshot)).toEqual(snapshot);
+  });
+
+  it("rejects duplicate ownership across active objects and dormant pages", () => {
+    const snapshot = dormantSnapshot();
+    Object.assign(snapshot.flight, { objects: combatSnapshot().flight.objects });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it("rejects duplicate ownership between dormant pages", () => {
+    const snapshot = dormantSnapshot();
+    Object.assign(snapshot.flight.dormant.pages, {
+      "11,0": snapshot.flight.dormant.pages["10,0"],
+    });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it("keeps empty inactive chunks and consumed-state tombstones", () => {
+    const snapshot = dormantSnapshot();
+    snapshot.flight.chunks.push("10,0", "11,0");
+    Object.assign(snapshot.flight.dormant.pages, { "11,0": "[]" });
     expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 });

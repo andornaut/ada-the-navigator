@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination, ensureRouteEncounter } from "./flight.ts";
 import { GameModel } from "./game.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -281,4 +281,49 @@ it("discovers a cleared required approach after reversing away from its first lo
   expect(model.state.progress[1].introduced).toBe(true);
   expect(model.state.dialogue?.text).toBe(content.chapters[1].dialogue.grower?.text);
   expect(model.state.dialogue?.context).toBe("grower");
+});
+
+it("wakes an inactive guard before relocating its pending destination", () => {
+  const content = structuredClone(PROTOTYPE);
+  content.tuning.introFreshDistance = 0;
+  content.tuning.flight.objectsPerChunk = 0;
+  const model = new GameModel(content);
+  launch(model);
+  const flight = model.state.flight!;
+  flight.objects = [];
+  const target = ensureDestination(content, "growers", flight);
+  const guard = ensureRouteEncounter(content, "growers", flight)!;
+  const shift = content.tuning.chunkSize * 20;
+  target.x += shift;
+  guard.x += shift;
+  guard.enemy!.position.x += shift;
+  guard.enemy!.home.x += shift;
+  guard.enemy!.hardpoints[1]!.hp = 1;
+  guard.enemy!.hardpoints[1]!.cooldown = 1.25;
+  const parts = structuredClone(guard.enemy!.hardpoints);
+  const previousTarget = { x: target.x, y: target.y };
+  const previousGuard = { x: guard.x, y: guard.y };
+  const size = content.tuning.chunkSize;
+  const key = `${Math.floor(guard.x / size)},${Math.floor(guard.y / size)}`;
+  flight.objects = [target];
+  flight.dormant = {
+    packMembers: {},
+    pages: { [key]: JSON.stringify([guard]) },
+    routes: ["growers"],
+    version: 1,
+  };
+  const resumed = new GameModel(content, model.save());
+  expect(resumed.state).toEqual(model.state);
+  resumed.step(0.05, { ...idle, move: { x: 1, y: 0 } });
+  const next = resumed.state.flight!;
+  const movedTarget = next.objects.find((object) => object.id === "growers")!;
+  const movedGuard = next.objects.find((object) => object.id === guard.id)!;
+  expect(movedTarget.x).toBeLessThan(previousTarget.x);
+  expect(movedGuard).toBeDefined();
+  expect(movedGuard.enemy!.hardpoints).toEqual(parts);
+  expect(movedGuard.x - previousGuard.x).toBeCloseTo(movedTarget.x - previousTarget.x);
+  expect(movedGuard.y - previousGuard.y).toBeCloseTo(movedTarget.y - previousTarget.y);
+  expect(next.dormant!.routes).not.toContain("growers");
+  expect(resumed.state.progress[1].introduced).toBe(false);
+  expect(new GameModel(content, resumed.save()).state).toEqual(resumed.state);
 });

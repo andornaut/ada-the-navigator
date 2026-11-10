@@ -1,5 +1,6 @@
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import {
+  activateRouteEncounter,
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
@@ -301,6 +302,7 @@ export class GameModel {
     if (!f) {
       return;
     }
+    activateRouteEncounter(this.content, id, f);
     const old = f.objects.find((o) => o.id === id);
     const before = old ? { x: old.x, y: old.y } : null;
     const debris = id === "whale" ? f.objects.filter((o) => o.id.startsWith("whale-debris:")) : [];
