@@ -84,9 +84,14 @@ const STYLE = `
 
 .ada-controls .ada-settings-open,
 .ada-controls .ada-weapon-selector button{
-  background:#181425;
-  border-color:#ead4aa;
+  background:#262b44;
+  border-color:#181425;
   color:#ead4aa
+}
+
+.ada-controls .ada-settings-open[aria-expanded=true],
+.ada-controls .ada-weapon-selector button[aria-pressed=true]{
+  background:#181425
 }
 
 .ada-controls .ada-settings-open::before{
