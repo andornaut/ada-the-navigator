@@ -37,7 +37,9 @@ if (category === "lint") {
     console.error(JSON.stringify({ event: "shellcheck", command: ["shellcheck", ...args] }));
     const result = spawnSync("shellcheck", args, { stdio: "inherit" });
     if (result.error || result.status !== 0) {
-      console.error(result.error?.message ?? `ShellCheck failed: ${result.signal ?? result.status}`);
+      console.error(
+        result.error?.message ?? `ShellCheck failed: ${result.signal ?? result.status}`,
+      );
       process.exit(result.status || 1);
     }
   }
