@@ -192,6 +192,73 @@ describe("enemy rules", () => {
     expect(first.fire[0]?.speed).not.toBe(first.fire[1]?.speed);
   });
 
+  it.each(["capital", "oversizedCapital"] as const)(
+    "aims every %s bolt and missile from its own muzzle before applying spread",
+    (archetype) => {
+      const state = { ...spawn(archetype), position: { x: 110, y: -75 } };
+      const context = { ...observation(state), player: { x: 390, y: 145 } };
+      const angles = [-0.2, 0, 0.35];
+      const definition = {
+        ...enemyCatalog[archetype],
+        hardpoints: enemyCatalog[archetype].hardpoints.map((part) =>
+          part.kind === "weapon" ? { ...part, fire: { ...part.fire, angles } } : part,
+        ),
+      };
+      const result = stepEnemy(definition, context, state);
+      const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
+      expect(result.fire).toHaveLength(weapons.length * angles.length);
+      expect(new Set(result.fire.map((shot) => shot.projectile))).toEqual(
+        new Set(["bolt", "missile"]),
+      );
+      for (const part of weapons) {
+        const shots = result.fire.filter((shot) => shot.hardpointId === part.id);
+        expect(shots).toHaveLength(angles.length);
+        for (const [index, shot] of shots.entries()) {
+          expect(shot.origin).toEqual({
+            x: state.position.x + part.offset.x * definition.sizeRatio * context.adaWidth,
+            y: state.position.y + part.offset.y * definition.sizeRatio * context.adaWidth,
+          });
+          const dx = context.player.x - shot.origin.x;
+          const dy = context.player.y - shot.origin.y;
+          const cross = dx * shot.aim.y - dy * shot.aim.x;
+          const dot = dx * shot.aim.x + dy * shot.aim.y;
+          expect(Math.hypot(shot.aim.x, shot.aim.y)).toBeCloseTo(1, 12);
+          expect(Math.atan2(cross, dot)).toBeCloseTo(angles[index]!, 12);
+          if (angles[index] === 0) {
+            expect(cross).toBeCloseTo(0, 10);
+            expect(dot).toBeGreaterThan(0);
+          }
+        }
+      }
+    },
+  );
+
+  it.each([
+    { targetable: true, visibility: "unknown" as const },
+    { targetable: true, visibility: "occluded" as const },
+    { targetable: false, visibility: "visible" as const },
+  ])("never reads hidden target coordinates or fires with %j", (visibility) => {
+    const state = {
+      ...spawn("capital"),
+      engaged: true,
+      lastSeen: { x: 200, y: 100 },
+    };
+    const context = {
+      ...observation(state),
+      ...visibility,
+      get player(): { x: number; y: number } {
+        throw new Error("Hidden target coordinates must not be read");
+      },
+    };
+    const result = stepEnemy(enemyCatalog.capital, context, state);
+    expect(result.fire).toEqual([]);
+    expect(result.state.lastSeen).toEqual(state.lastSeen);
+    expect(result.state.lastSeenAge).toBeCloseTo(context.dt);
+    expect(result.state.returning).toBe(false);
+    const expired = { ...state, lastSeenAge: enemyCatalog.capital.pursuit.unseenSeconds };
+    expect(stepEnemy(enemyCatalog.capital, context, expired).state.returning).toBe(true);
+  });
+
   it("requires the command part after hull, engines and weapons are disabled", () => {
     const definition = enemyCatalog.capital;
     let state = damageEnemy(definition, { amount: 999, hardpointId: null }, spawn("capital"));

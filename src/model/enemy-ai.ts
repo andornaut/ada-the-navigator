@@ -220,10 +220,9 @@ export function stepEnemy(
     next.lastSeenAge += context.dt;
   }
   next.pursuitSeconds = next.engaged ? state.pursuitSeconds + context.dt : 0;
-  const playerHomeDistance = Math.hypot(
-    context.player.x - state.home.x,
-    context.player.y - state.home.y,
-  );
+  const playerHomeDistance = observed
+    ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
+    : 0;
   const homeDistance = Math.hypot(state.position.x - state.home.x, state.position.y - state.home.y);
   if (
     next.engaged &&
@@ -283,17 +282,19 @@ export function stepEnemy(
     if (!canFire) {
       return Math.max(0, cooldown - context.dt);
     }
+    const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
+    const muzzleAim = unit({ x: target.x - origin.x, y: target.y - origin.y });
     let delay = Math.max(0, cooldown);
     while (delay < context.dt) {
       for (const angle of profile.angles) {
         fire.push({
           aim: {
-            x: aim.x * Math.cos(angle) - aim.y * Math.sin(angle),
-            y: aim.x * Math.sin(angle) + aim.y * Math.cos(angle),
+            x: muzzleAim.x * Math.cos(angle) - muzzleAim.y * Math.sin(angle),
+            y: muzzleAim.x * Math.sin(angle) + muzzleAim.y * Math.cos(angle),
           },
           delay,
           hardpointId,
-          origin: { x: state.position.x + offset.x, y: state.position.y + offset.y },
+          origin: { ...origin },
           profileId: profile.id,
           projectile: profile.projectile,
           speed: context.adaSpeed * profile.projectileSpeedRatio,
