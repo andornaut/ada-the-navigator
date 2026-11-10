@@ -411,6 +411,21 @@ describe("dormant save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
+  it("rejects a duplicated route that replaces another retained guard route", () => {
+    const snapshot = dormantSnapshot();
+    const second = combatSnapshot().flight.objects[0]!;
+    second.id = "other-guard";
+    second.enemy!.id = second.id;
+    second.routeId = "workshop";
+    const first = combatSnapshot().flight.objects[0]!;
+    snapshot.flight.dormant.pages["10,0"] = JSON.stringify([first, second]);
+    snapshot.flight.dormant.packMembers.pack = 2;
+    snapshot.flight.dormant.routes = ["workshop", "growers"];
+    expect(restoreSave(snapshot)).toEqual(snapshot);
+    snapshot.flight.dormant.routes = ["growers", "growers"];
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
   it("counts a disabled hull with required live hardpoints as an alive dormant member", () => {
     const snapshot = dormantSnapshot();
     const objects = combatSnapshot().flight.objects;

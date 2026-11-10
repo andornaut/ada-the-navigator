@@ -170,6 +170,7 @@ function dormantState(
   return (
     Object.keys(value.packMembers).length === packMembers.size &&
     Object.entries(value.packMembers).every(([id, count]) => packMembers.get(id) === count) &&
+    new Set(value.routes as string[]).size === (value.routes as string[]).length &&
     (value.routes as string[]).length === dormantRoutes.size &&
     (value.routes as string[]).every((id) => dormantRoutes.has(id))
   );
