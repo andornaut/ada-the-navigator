@@ -263,38 +263,104 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
   prunePackState(flight);
 }
 
-/** Plan all guard positions before applying layout changes to their persistent state. */
-function relocateRouteGuards(content: PrototypeContent, flight: FlightState): void {
-  const guards = flight.objects.filter(
-    (object) =>
-      object.kind === "enemy" &&
-      persistentObject(object) &&
-      object.hp > 0 &&
-      (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+function capital(object: SpaceObject): boolean {
+  return (
+    object.kind === "enemy" &&
+    object.hp > 0 &&
+    (object.enemy?.archetype === "capital" || object.enemy?.archetype === "oversizedCapital") &&
+    !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
   );
+}
+
+function capitalGap(): number {
+  // The inverse isometric viewport has equal world bounding-box width and height.
+  const span = SCREEN.width / 2 + SCREEN.height;
+  return Math.hypot(span, span);
+}
+
+function enemySpacing(first: SpaceObject, second: SpaceObject): number {
+  return first.radius + second.radius + (capital(first) && capital(second) ? capitalGap() : 0);
+}
+
+function routePlacementRandom(seed: number, id: string): () => number {
+  let placementSeed = seed;
+  const name = `route-placement:${id}`;
+  for (let index = 0; index < name.length; index++) {
+    placementSeed = hash(placementSeed, name.charCodeAt(index), index);
+  }
+  return random(placementSeed);
+}
+
+function settleResumedCapitals(content: PrototypeContent, flight: FlightState): void {
+  const capitals = flight.objects.filter(capital);
+  if (
+    capitals.some((first, index) =>
+      capitals
+        .slice(index + 1)
+        .some((second) => distance(first, second) < enemySpacing(first, second)),
+    )
+  ) {
+    placeGuards(content, capitals, flight);
+  }
+}
+
+function relocateRouteGuards(content: PrototypeContent, flight: FlightState): void {
+  placeGuards(
+    content,
+    flight.objects.filter(
+      (object) =>
+        object.kind === "enemy" &&
+        persistentObject(object) &&
+        object.hp > 0 &&
+        (!object.enemy ||
+          !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+    ),
+    flight,
+  );
+}
+
+/** Plan all guard positions before applying layout changes to their persistent state. */
+function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: FlightState): void {
   const destinations = flight.objects.filter((object) => object.kind === "destination");
   const positions = new Map<SpaceObject, Vec>();
   const maxRadius = flight.objects.reduce(
     (radius, object) => Math.max(radius, object.radius),
     content.tuning.safeRadius,
   );
+  const guardSet = new Set(guards);
+  // A capital ignores unplaced capital guards; each of those is placed against it afterward.
+  const blocked = (guard: SpaceObject, point: Vec): boolean =>
+    destinations.some(
+      (object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120,
+    ) ||
+    flight.objects.some(
+      (object) =>
+        object !== guard &&
+        !(capital(guard) && capital(object) && guardSet.has(object) && !positions.has(object)) &&
+        ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
+        object.hp > 0 &&
+        distance(positions.get(object) ?? object, point) <
+          Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object)),
+    );
+  // Reserve valid existing capital positions before searching for displaced or newly added guards.
   for (const guard of guards) {
+    if (capital(guard) && !blocked(guard, guard)) {
+      positions.set(guard, { x: guard.x, y: guard.y });
+    }
+  }
+  for (const guard of guards) {
+    if (positions.has(guard)) {
+      continue;
+    }
     const point = { x: guard.x, y: guard.y };
-    const stride = 2 * (guard.radius + maxRadius + 120);
-    // Each obstacle excludes less than one stride, so finitely many obstacles cannot trap this search.
-    while (
-      destinations.some(
-        (object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120,
-      ) ||
-      flight.objects.some(
-        (object) =>
-          object !== guard &&
-          ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
-          object.hp > 0 &&
-          distance(positions.get(object) ?? object, point) < object.radius + guard.radius + 20,
-      )
-    ) {
-      point.x += stride;
+    const spacing = capital(guard) ? Math.max(120, capitalGap()) : 120;
+    const stride = 2 * (guard.radius + maxRadius + spacing);
+    const angle = capital(guard) ? routePlacementRandom(flight.seed, guard.id)() * Math.PI * 2 : 0;
+    const heading = { x: Math.cos(angle), y: Math.sin(angle) };
+    // Each obstacle excludes less than one stride along this deterministic search direction.
+    while (blocked(guard, point)) {
+      point.x += heading.x * stride;
+      point.y += heading.y * stride;
     }
     positions.set(guard, point);
   }
@@ -645,7 +711,7 @@ function enemies(
               ? distance(other, point) < content.tuning.safeRadius + object.radius
               : ["rock", "resource", "debris", "enemy"].includes(other.kind) &&
                 other.hp > 0 &&
-                distance(other, point) < other.radius + object.radius),
+                distance(other, point) < enemySpacing(object, other)),
         );
         if (!blocked) {
           object[axis] = point[axis];
@@ -861,6 +927,8 @@ export function stepFlight(
     return events;
   }
   syncFlightRegion(content, flight);
+  // Settle capitals that the region sync just paged in from dormant chunks.
+  settleResumedCapitals(content, flight);
   let remaining = dt;
   while (remaining > 1e-9 && flight.shield > 0) {
     const slice = Math.min(remaining, 1 / 60);

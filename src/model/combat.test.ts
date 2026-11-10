@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { SCREEN } from "../data/screen.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import {
   createFlight,
@@ -519,4 +520,255 @@ it("settles a translated route guard after destination relocation without resett
   expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
   expect(routeBlocked(destination.id, flight)).toBe(true);
   expect(flight.combat!.routeEncounters).toEqual([destination.id]);
+});
+
+const viewportSpan = SCREEN.width / 2 + SCREEN.height;
+const capitalHullGap = Math.hypot(viewportSpan, viewportSpan);
+const capitalPairs = [
+  ["capital", "capital"],
+  ["capital", "oversizedCapital"],
+  ["oversizedCapital", "oversizedCapital"],
+] as const;
+
+function silence(object: SpaceObject): void {
+  object.cooldown = 999;
+  for (const part of object.enemy!.hardpoints) {
+    part.cooldown = 999;
+  }
+}
+
+function stopEngines(object: SpaceObject): void {
+  const definition = enemyCatalog[object.enemy!.archetype];
+  for (const part of object.enemy!.hardpoints) {
+    if (definition.hardpoints.some((entry) => entry.id === part.id && entry.kind === "engine")) {
+      part.hp = 0;
+    }
+  }
+}
+
+describe("capital local-area separation", () => {
+  it.each(capitalPairs)(
+    "keeps required %s and %s guards separated without displacing a valid first guard",
+    (firstKind, secondKind) => {
+      const flight = empty();
+      flight.sector = firstKind === "capital" ? 2 : 3;
+      const firstDestination = ensureDestination(PROTOTYPE, "first-capital", flight);
+      const first = ensureRouteEncounter(PROTOTYPE, firstDestination.id, flight)!;
+      expect(first.x).toBeCloseTo(firstDestination.x);
+      expect(first.y).toBeCloseTo(
+        firstDestination.y + PROTOTYPE.tuning.safeRadius + first.radius + 120,
+      );
+      first.enemy!.hardpoints[0]!.hp = 2;
+      const saved = structuredClone(first);
+      const secondDestination: SpaceObject = {
+        hp: 1,
+        id: "second-capital",
+        kind: "destination",
+        radius: 30,
+        x: firstDestination.x + 800,
+        y: firstDestination.y,
+      };
+      flight.objects.push(secondDestination);
+      flight.player = { x: secondDestination.x, y: 0 };
+      flight.sector = secondKind === "capital" ? 2 : 3;
+      const second = ensureRouteEncounter(PROTOTYPE, secondDestination.id, flight)!;
+      expect(first).toEqual(saved);
+      expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+        first.radius + second.radius + capitalHullGap,
+      );
+      expect(routeBlocked(firstDestination.id, flight)).toBe(true);
+      expect(routeBlocked(secondDestination.id, flight)).toBe(true);
+      expect(
+        flight.objects.filter(
+          (object) =>
+            object.enemy?.archetype === "capital" || object.enemy?.archetype === "oversizedCapital",
+        ),
+      ).toHaveLength(2);
+      const repeated = structuredClone(flight);
+      settleRouteEncounters(PROTOTYPE, repeated);
+      expect(repeated).toEqual(flight);
+    },
+  );
+
+  it.each(capitalPairs)(
+    "does not let moving %s and %s collapse the gap across long frames or an engine disable",
+    (firstKind, secondKind) => {
+      const flight = empty();
+      const radius =
+        (enemyCatalog[firstKind].sizeRatio + enemyCatalog[secondKind].sizeRatio) *
+        PROTOTYPE.tuning.flight.shipRadius;
+      const startDistance = radius + capitalHullGap + 30;
+      const first = ship(firstKind, { x: -startDistance / 2, y: 0 });
+      const second = ship(secondKind, { x: startDistance / 2, y: 0 });
+      first.id = first.enemy!.id = "first";
+      second.id = second.enemy!.id = "second";
+      first.enemy!.velocity.x = 36;
+      second.enemy!.velocity.x = -36;
+      silence(first);
+      silence(second);
+      flight.objects.push(first, second);
+      stepFlight(PROTOTYPE, 2, idle, flight);
+      expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+        radius + capitalHullGap,
+      );
+      expect(first.x).toBeGreaterThan(-startDistance / 2);
+      expect(second.x).toBeLessThan(startDistance / 2);
+      stopEngines(first);
+      const stopped = { x: first.x, y: first.y };
+      stepFlight(PROTOTYPE, 3, idle, flight);
+      expect({ x: first.x, y: first.y }).toEqual(stopped);
+      expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+        radius + capitalHullGap,
+      );
+    },
+  );
+
+  it("repairs close capitals in a resumed flight deterministically while retaining damage and route markers", () => {
+    const flight = empty();
+    const first = ship("capital", { x: 300, y: 0 });
+    const second = ship("oversizedCapital", { x: 500, y: 0 });
+    first.id = first.enemy!.id = "resume-first";
+    second.id = second.enemy!.id = "resume-second";
+    first.routeId = "required-first";
+    second.routeId = "required-second";
+    stopEngines(first);
+    stopEngines(second);
+    silence(first);
+    silence(second);
+    first.enemy!.hardpoints[0]!.hp = 2;
+    flight.objects.push(first, second);
+    flight.combat = { initialPackSizes: {}, routeEncounters: [first.routeId, second.routeId] };
+    const hardpoints = structuredClone([first.enemy!.hardpoints, second.enemy!.hardpoints]);
+    const restored = JSON.parse(JSON.stringify(flight)) as FlightState;
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(PROTOTYPE, 1 / 60, idle, restored);
+    expect(restored).toEqual(flight);
+    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+      first.radius + second.radius + capitalHullGap,
+    );
+    expect(first.enemy!.hardpoints.map((part) => part.hp)).toEqual(
+      hardpoints[0]!.map((part) => part.hp),
+    );
+    expect(second.enemy!.hardpoints.map((part) => part.hp)).toEqual(
+      hardpoints[1]!.map((part) => part.hp),
+    );
+    expect(flight.combat!.routeEncounters).toEqual([first.routeId, second.routeId]);
+    expect(routeBlocked(first.routeId, flight)).toBe(true);
+    expect(routeBlocked(second.routeId, flight)).toBe(true);
+    const positions = [first, second].map((object) => ({
+      home: { ...object.enemy!.home },
+      x: object.x,
+      y: object.y,
+    }));
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(
+      [first, second].map((object) => ({ home: object.enemy!.home, x: object.x, y: object.y })),
+    ).toEqual(positions);
+  });
+
+  it("settles a translated capital away from another capital without changing the existing valid guard", () => {
+    const flight = empty();
+    const first = ship("capital", { x: -2000, y: 0 });
+    const second = ship("oversizedCapital", { x: 2000, y: 0 });
+    first.id = first.enemy!.id = "anchored";
+    second.id = second.enemy!.id = "translated";
+    first.routeId = "first";
+    second.routeId = "second";
+    flight.objects.push(first, second);
+    const saved = structuredClone(first);
+    second.x = first.x + 500;
+    second.enemy!.position.x = second.x;
+    second.enemy!.home.x = second.x;
+    second.enemy!.hardpoints[0]!.hp = 2;
+    const parts = structuredClone(second.enemy!.hardpoints);
+    settleRouteEncounters(PROTOTYPE, flight);
+    expect(first).toEqual(saved);
+    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+      first.radius + second.radius + capitalHullGap,
+    );
+    expect(second.enemy!.hardpoints).toEqual(parts);
+    expect(second.enemy!.home).toEqual({ x: second.x, y: second.y });
+    expect(second.enemy!.position).toEqual({ x: second.x, y: second.y });
+    expect(routeBlocked("first", flight)).toBe(true);
+    expect(routeBlocked("second", flight)).toBe(true);
+  });
+
+  it("allows nearby frigates and does not apply the capital gap to mixed pairs", () => {
+    const flight = empty();
+    const first = ship("capital", { x: 300, y: 0 });
+    const second = ship("frigate", { x: 600, y: 0 });
+    const third = ship("frigate", { x: 750, y: 0 });
+    first.id = first.enemy!.id = "capital";
+    second.id = second.enemy!.id = "frigate-first";
+    third.id = third.enemy!.id = "frigate-second";
+    flight.objects.push(first, second, third);
+    for (const object of flight.objects) {
+      stopEngines(object);
+      silence(object);
+    }
+    const positions = flight.objects.map((object) => ({ x: object.x, y: object.y }));
+    stepFlight(PROTOTYPE, 2, idle, flight);
+    expect(flight.objects.map((object) => ({ x: object.x, y: object.y }))).toEqual(positions);
+    expect(second.x - first.x).toBeLessThan(capitalHullGap);
+    expect(third.x - second.x).toBeLessThan(capitalHullGap);
+  });
+
+  it("keeps frigates out of capital settlement and on hull-clearance placement", () => {
+    const flight = empty();
+    const capitals = [ship("capital", { x: 300, y: 0 }), ship("capital", { x: 500, y: 0 })];
+    const frigates = [ship("frigate", { x: -1000, y: 600 }), ship("frigate", { x: -950, y: 600 })];
+    for (const [index, object] of [...capitals, ...frigates].entries()) {
+      object.id = object.enemy!.id = `settled-${index}`;
+      stopEngines(object);
+      silence(object);
+    }
+    flight.objects.push(...capitals, ...frigates);
+    const frigatePositions = frigates.map((object) => ({ x: object.x, y: object.y }));
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(frigates.map((object) => ({ x: object.x, y: object.y }))).toEqual(frigatePositions);
+    expect(
+      Math.hypot(capitals[0]!.x - capitals[1]!.x, capitals[0]!.y - capitals[1]!.y),
+    ).toBeGreaterThanOrEqual(capitals[0]!.radius + capitals[1]!.radius + capitalHullGap);
+
+    const placed = empty();
+    const first = ship("frigate", { x: 0, y: 600 });
+    const second = ship("frigate", { x: 40, y: 600 });
+    const third = ship("frigate", { x: 240, y: 600 });
+    for (const [index, object] of [first, second, third].entries()) {
+      object.id = object.enemy!.id = `placed-${index}`;
+    }
+    placed.objects.push(first, second, third);
+    settleRouteEncounters(PROTOTYPE, placed);
+    // The earlier blocked frigate advances along +x by one stride; nearby frigates keep their places.
+    const stride = 2 * (first.radius + PROTOTYPE.tuning.safeRadius + 120);
+    expect({ x: first.x, y: first.y }).toEqual({ x: stride, y: 600 });
+    expect({ x: second.x, y: second.y }).toEqual({ x: 40, y: 600 });
+    expect({ x: third.x, y: third.y }).toEqual({ x: 240, y: 600 });
+  });
+
+  it("uses reproducible placement without changing the layout seed or introducing saved RNG state", () => {
+    const prepare = (): FlightState => {
+      const flight = empty();
+      flight.sector = 2;
+      for (const [index, x] of [0, 800, 1600].entries()) {
+        const destination: SpaceObject = {
+          hp: 1,
+          id: `route-${index}`,
+          kind: "destination",
+          radius: 30,
+          x,
+          y: -1024,
+        };
+        flight.objects.push(destination);
+        flight.player = { x, y: 0 };
+        ensureRouteEncounter(PROTOTYPE, destination.id, flight);
+      }
+      return flight;
+    };
+    const flight = prepare();
+    expect(prepare()).toEqual(flight);
+    expect(flight.seed).toBe(173);
+    expect(flight.objects.filter((object) => object.kind === "enemy")).toHaveLength(3);
+    expect(Object.keys(flight.combat!).sort()).toEqual(["initialPackSizes", "routeEncounters"]);
+  });
 });
