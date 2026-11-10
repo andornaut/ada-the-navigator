@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, lstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { loadavg } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -86,7 +86,9 @@ function snapshot() {
   if (unsupported.length) {
     throw new Error(`Unsupported source paths: ${unsupported.join(", ")}`);
   }
+  const head = run("git", ["rev-parse", "HEAD"]);
   const hash = createHash("sha256");
+  hash.update(head);
   hash.update(
     run("git", [
       "status",
@@ -112,7 +114,7 @@ function snapshot() {
       hash.update("deleted");
     }
   }
-  return { files, fingerprint: hash.digest("hex") };
+  return { head, files, fingerprint: hash.digest("hex") };
 }
 
 function guard(ci) {
@@ -169,7 +171,7 @@ function start(mode, ci) {
   mkdirSync(resolve(results, name), { recursive: true });
   writeFileSync(resolve(results, name, "source.json"), `${JSON.stringify(source, null, 2)}\n`);
   const steps = [
-    ["git", "init", "--quiet"],
+    ["git", "init", "--quiet", "--initial-branch", "main"],
     ["npm", "ci"],
     ["node", "tools/hooks-smoke.mjs"],
   ];
@@ -233,14 +235,55 @@ function collect(name) {
     return;
   }
   const directory = resolve(results, name);
-  run("docker", ["cp", `${name}:/tmp/evidence/.`, directory]);
+  mkdirSync(directory, { recursive: true });
+  const log = openSync(resolve(directory, "docker.log"), "w");
+  let logs;
+  try {
+    logs = spawnSync("docker", ["logs", name], { cwd: root, stdio: ["ignore", log, log] });
+  } finally {
+    closeSync(log);
+  }
+  if (logs.error) {
+    throw logs.error;
+  }
+  if (logs.status !== 0) {
+    throw new Error("Cannot preserve Docker logs; container retained");
+  }
+  const copy = spawnSync("docker", ["cp", `${name}:/tmp/evidence/.`, directory], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (copy.error) {
+    throw copy.error;
+  }
+  let missingEvidence = false;
+  if (copy.status !== 0) {
+    missingEvidence =
+      /^Error response from daemon: Could not find the file \/tmp\/evidence(?:\/\.)? in container /i.test(
+        copy.stderr.trim(),
+      );
+    if (!missingEvidence) {
+      throw new Error(`Cannot copy evidence: ${copy.stderr}`);
+    }
+    writeFileSync(resolve(directory, "evidence-copy.txt"), copy.stderr);
+  }
   const before = JSON.parse(readFileSync(resolve(directory, "source.json"), "utf8"));
-  const after = snapshot();
-  const stable = before.fingerprint === after.fingerprint;
+  let after;
+  let fingerprintError;
+  try {
+    after = snapshot();
+  } catch (error) {
+    fingerprintError = error.message;
+  }
+  const stable = before.fingerprint === after?.fingerprint;
   const verification = {
     stable,
     before: before.fingerprint,
-    after: after.fingerprint,
+    after: after?.fingerprint ?? null,
+    beforeHead: before.head ?? null,
+    afterHead: after?.head ?? null,
+    fingerprintError: fingerprintError ?? null,
+    missingEvidence,
     exitCode: state.ExitCode,
   };
   writeFileSync(
@@ -252,7 +295,7 @@ function collect(name) {
   if (!stable) {
     throw new Error("Source changed during checks: discard results");
   }
-  process.exitCode = state.ExitCode;
+  process.exitCode = state.ExitCode || (missingEvidence ? 1 : 0);
 }
 
 try {
