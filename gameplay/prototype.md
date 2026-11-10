@@ -133,8 +133,23 @@ Leaving a sector and re-entering generates a new layout seed. Story progress,
 known destinations, deposited resources and achievements persist. Carried cargo
 and weapon pickups reset. Known destinations remain usable despite regeneration.
 
-Closing the game is not leaving the sector: resume the same flight with its
-layout, cargo, ammunition and shield state. Save durable milestones as they occur.
+Closing the game is not leaving the sector: resume the same flight losslessly,
+including its layout, cargo, ammunition, shield and active and dormant object state.
+Save durable milestones as they occur.
+
+The active simulation window is bounded. Outside it, inactive enemy AI and debris
+retain their exact state without advancing movement or cooldowns. Reactivation
+applies no catch-up damage or elapsed-time simulation. Projectiles remain globally
+owned exactly once and expire after a finite lifetime; they are not dormant copies.
+Unloading is not defeat, a resource drop, a pack casualty or a feedback event.
+
+Generated chunks retain consumed-state tombstones so revisiting does not reroll
+encounters or restore collected or destroyed objects. Saved visited history grows
+with exploration even though the active simulation window remains bounded.
+
+Destinations and quest debris remain accessible. Dormant required guards still
+block their routes. Wake a required guard before relocating its pending destination,
+then synchronize the guard's position and retained state with that relocation.
 
 A completed sector keeps its resolved story and offers exploration, combat and
 optional repeatable sector activities. One optional task per sector can remain
