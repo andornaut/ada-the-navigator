@@ -93,7 +93,10 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   the visual thumb follows that travel.
 - Right joystick aims and fires continuously while deflected.
 - Maximum movement speed is provisionally 200 world units per second.
-- Settings use Chibi's gear control.
+- Settings use Chibi's gear control. Weapon and settings controls use icons inspired
+  by Chibi, with accessible labels.
+- Do not show a top-left information or status panel. Objectives, deposits and
+  progression remain part of the game.
 - With no aim input, the ship faces movement. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
 - Upgrades are rapid fire, three-shot spread and piercing shots. Icon pickups,
