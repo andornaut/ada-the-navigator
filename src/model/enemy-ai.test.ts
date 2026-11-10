@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import type { EnemyArchetype } from "../data/enemy-catalog.ts";
-import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
-import type { EnemyContext, EnemyState } from "./enemy-ai.ts";
+import { type EnemyArchetype,enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import {
+  createEnemy,
+  damageEnemy,
+  type EnemyContext,
+  enemyEffects,
+  type EnemyState,
+  stepDebris,
+  stepEnemy,
+} from "./enemy-ai.ts";
 
 const spawn = (archetype: EnemyArchetype): EnemyState =>
   createEnemy(

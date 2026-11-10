@@ -18,8 +18,14 @@ function launched() {
 describe("model feedback", () => {
   it("tracks independent hardpoint damage even when hull HP does not change", () => {
     const { feedback, flight, state } = launched();
-    const enemy = createEnemy(enemyCatalog.frigate, { archetype: "frigate", id: "frigate", packId: null, phase: 0 }, { x: 20, y: 30 });
-    flight.objects = [{ enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 30, x: 20, y: 30 }];
+    const enemy = createEnemy(
+      enemyCatalog.frigate,
+      { archetype: "frigate", id: "frigate", packId: null, phase: 0 },
+      { x: 20, y: 30 },
+    );
+    flight.objects = [
+      { enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 30, x: 20, y: 30 },
+    ];
     feedback.observe(100, state);
     enemy.hardpoints[0]!.hp--;
     expect(feedback.observe(100, state)).toEqual(["hit"]);

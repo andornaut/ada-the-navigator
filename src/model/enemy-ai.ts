@@ -236,7 +236,12 @@ export function stepEnemy(
   }
   if (next.returning) {
     next.engaged = false;
-    if (homeDistance <= 5 && observed && playerHomeDistance > definition.perception) {
+    if (
+      state.returning &&
+      homeDistance <= 5 &&
+      observed &&
+      playerHomeDistance > definition.perception
+    ) {
       next.returning = false;
       next.pursuitSeconds = 0;
     }

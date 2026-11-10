@@ -378,7 +378,8 @@ try {
   assert.deepEqual(new GameModel(PROTOTYPE, combatSerialized).state, combat.state);
   save("combat-fixture.json", {
     scope:
-      "Real-model canonical save fixture with damaged hardpoints and a seeded missile; render/restore proof only, not natural encounter or combat completion",
+      "Real-model save fixture with damaged hardpoints and a seeded missile; " +
+      "render/restore proof only, not natural encounter or combat completion",
     state: JSON.parse(combatSerialized),
   });
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -439,12 +440,13 @@ try {
     pixels,
   });
   events.checks.push(
-    "Canonical combat save restores large and oversized enemies, partial hardpoint damage and missile with renderer screenshots",
+    "Canonical combat save restores large and oversized enemies, partial hardpoint damage " +
+      "and missile with renderer screenshots",
   );
 
   await page.locator('[data-action="settings"]').click();
   const toggles = [];
-  for (const key of ["sound", "screenShake"]) {
+  async function toggleSetting(key) {
     const label = PROTOTYPE.labels[key];
     assert.equal(typeof label, "string", `Canonical ${key} settings label must exist`);
     const checkbox = page.getByRole("checkbox", { name: label, exact: true });
@@ -454,14 +456,18 @@ try {
     assert.equal(await checkbox.isChecked(), !initial, `${key} must toggle`);
     toggles.push({ key, initial, toggled: !initial });
   }
+  await toggleSetting("sound");
+  await toggleSetting("screenShake");
   await page.screenshot({ path: `${output}/combat-settings.png` });
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="settings"]').click();
-  for (const { key, initial, toggled } of toggles) {
+  async function restoreSetting({ initial, key, toggled }) {
     const checkbox = page.getByRole("checkbox", { name: PROTOTYPE.labels[key], exact: true });
     assert.equal(await checkbox.isChecked(), toggled, `${key} survives dialog reopening`);
     await checkbox.setChecked(initial);
   }
+  await restoreSetting(toggles[0]);
+  await restoreSetting(toggles[1]);
   await page.locator('[data-action="close-settings"]').click();
   save("combat-settings-proof.json", {
     scope:

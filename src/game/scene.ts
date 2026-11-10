@@ -251,9 +251,24 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.lineStyle(3, 0xffffff);
         this.ink.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
         this.ink.lineStyle(1, 0x999999);
-        this.ink.lineBetween(point.x - dx * 17, point.y - dy * 17, point.x - dx * 11, point.y - dy * 11);
-        this.ink.lineBetween(point.x - dx * 7 - dy * 4, point.y - dy * 7 + dx * 4, point.x, point.y);
-        this.ink.lineBetween(point.x - dx * 7 + dy * 4, point.y - dy * 7 - dx * 4, point.x, point.y);
+        this.ink.lineBetween(
+          point.x - dx * 17,
+          point.y - dy * 17,
+          point.x - dx * 11,
+          point.y - dy * 11,
+        );
+        this.ink.lineBetween(
+          point.x - dx * 7 - dy * 4,
+          point.y - dy * 7 + dx * 4,
+          point.x,
+          point.y,
+        );
+        this.ink.lineBetween(
+          point.x - dx * 7 + dy * 4,
+          point.y - dy * 7 - dx * 4,
+          point.x,
+          point.y,
+        );
       } else {
         this.ink.lineStyle(2, 0xffffff);
         this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
@@ -281,24 +296,63 @@ export class PrototypeScene extends Phaser.Scene {
   private drawEnemy(point: Vec, object: SpaceObject): void {
     const enemy = object.enemy;
     if (!enemy) {
-      this.ink.strokeTriangle(point.x, point.y + object.radius, point.x - object.radius, point.y - object.radius, point.x + object.radius, point.y - object.radius);
+      this.ink.strokeTriangle(
+        point.x,
+        point.y + object.radius,
+        point.x - object.radius,
+        point.y - object.radius,
+        point.x + object.radius,
+        point.y - object.radius,
+      );
       return;
     }
     const definition = enemyCatalog[enemy.archetype];
     const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     // Hull and hardpoints share the runtime's fixed world axes.
-    const local = (x: number, y: number): Vec => this.project({ x: object.x + x * width, y: object.y + y * width });
+    const local = (x: number, y: number): Vec =>
+      this.project({ x: object.x + x * width, y: object.y + y * width });
     const large = enemy.archetype === "capital" || enemy.archetype === "oversizedCapital";
     const frigate = enemy.archetype === "frigate";
     const pack = enemy.packId !== null;
     const hull: [number, number][] = large
-      ? [[-0.28, -0.5], [0.28, -0.5], [0.5, -0.25], [0.5, 0.4], [0.25, 0.5], [-0.25, 0.5], [-0.5, 0.4], [-0.5, -0.25]]
+      ? [
+          [-0.28, -0.5],
+          [0.28, -0.5],
+          [0.5, -0.25],
+          [0.5, 0.4],
+          [0.25, 0.5],
+          [-0.25, 0.5],
+          [-0.5, 0.4],
+          [-0.5, -0.25],
+        ]
       : frigate
-        ? [[0, -0.6], [0.42, -0.25], [0.42, 0.4], [0, 0.55], [-0.42, 0.4], [-0.42, -0.25]]
+        ? [
+            [0, -0.6],
+            [0.42, -0.25],
+            [0.42, 0.4],
+            [0, 0.55],
+            [-0.42, 0.4],
+            [-0.42, -0.25],
+          ]
         : pack
-          ? [[0, -0.6], [0.5, 0], [0.32, 0.4], [0, 0.2], [-0.32, 0.4], [-0.5, 0]]
-          : [[0, -0.6], [0.5, 0.45], [0, 0.2], [-0.5, 0.45]];
-    const polygon = hull.map(([x, y]) => local(x, y));
+          ? [
+              [0, -0.6],
+              [0.5, 0],
+              [0.32, 0.4],
+              [0, 0.2],
+              [-0.32, 0.4],
+              [-0.5, 0],
+            ]
+          : [
+              [0, -0.6],
+              [0.5, 0.45],
+              [0, 0.2],
+              [-0.5, 0.45],
+            ];
+    const polygon = hull.map(([x, y]) => {
+      const point = local(x, y);
+      return new Phaser.Math.Vector2(point.x, point.y);
+    });
     this.ink.fillStyle(0x171717);
     this.ink.fillPoints(polygon, true);
     this.ink.lineStyle(1.5, 0xd4d4d4);
@@ -323,8 +377,22 @@ export class PrototypeScene extends Phaser.Scene {
       this.ink.fillStyle(hp > 0 ? 0x454545 : 0x101010);
       this.ink.lineStyle(2, hp > 0 ? 0xffffff : 0x777777);
       if (part.kind === "command") {
-        this.ink.fillTriangle(at.x, at.y - size, at.x - size, at.y + size, at.x + size, at.y + size);
-        this.ink.strokeTriangle(at.x, at.y - size, at.x - size, at.y + size, at.x + size, at.y + size);
+        this.ink.fillTriangle(
+          at.x,
+          at.y - size,
+          at.x - size,
+          at.y + size,
+          at.x + size,
+          at.y + size,
+        );
+        this.ink.strokeTriangle(
+          at.x,
+          at.y - size,
+          at.x - size,
+          at.y + size,
+          at.x + size,
+          at.y + size,
+        );
       } else if (part.kind === "engine") {
         this.ink.fillRect(at.x - size, at.y - size * 0.6, size * 2, size * 1.2);
         this.ink.strokeRect(at.x - size, at.y - size * 0.6, size * 2, size * 1.2);
@@ -345,7 +413,12 @@ export class PrototypeScene extends Phaser.Scene {
       this.ink.lineBetween(at.x - size, at.y + size + 5, at.x + size, at.y + size + 5);
       if (hp > 0) {
         this.ink.lineStyle(3, 0xffffff);
-        this.ink.lineBetween(at.x - size, at.y + size + 5, at.x - size + size * 2 * Math.min(1, hp / part.hp), at.y + size + 5);
+        this.ink.lineBetween(
+          at.x - size,
+          at.y + size + 5,
+          at.x - size + size * 2 * Math.min(1, hp / part.hp),
+          at.y + size + 5,
+        );
       }
     }
   }
@@ -358,13 +431,22 @@ export class PrototypeScene extends Phaser.Scene {
     const cx = this.scale.width / 2;
     const cy = this.scale.height / 2;
     const candidates = flight.objects
-      .filter((object) => object.role === "discovery" && (object.kind === "pickup" || object.kind === "resource"))
+      .filter(
+        (object) =>
+          object.role === "discovery" && (object.kind === "pickup" || object.kind === "resource"),
+      )
       .map((object) => this.project(object))
-      .filter((point) => point.x < 0 || point.y < 0 || point.x > this.scale.width || point.y > this.scale.height)
+      .filter(
+        (point) =>
+          point.x < 0 || point.y < 0 || point.x > this.scale.width || point.y > this.scale.height,
+      )
       .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
     const target = candidates[0];
     // Provisional nearby range scales with the viewport, without revealing distant targets.
-    if (!target || Math.hypot(target.x - cx, target.y - cy) > Math.max(this.scale.width, this.scale.height) * 1.5) {
+    if (
+      !target ||
+      Math.hypot(target.x - cx, target.y - cy) > Math.max(this.scale.width, this.scale.height) * 1.5
+    ) {
       return;
     }
     const dx = target.x - cx;
@@ -376,7 +458,14 @@ export class PrototypeScene extends Phaser.Scene {
     const x = cx + dx * Math.max(0, scale);
     const y = cy + dy * Math.max(0, scale);
     this.ink.lineStyle(2, 0xffffff, 0.8);
-    this.ink.strokeTriangle(x + ux * 8, y + uy * 8, x - ux * 5 - uy * 5, y - uy * 5 + ux * 5, x - ux * 5 + uy * 5, y - uy * 5 - ux * 5);
+    this.ink.strokeTriangle(
+      x + ux * 8,
+      y + uy * 8,
+      x - ux * 5 - uy * 5,
+      y - uy * 5 + ux * 5,
+      x - ux * 5 + uy * 5,
+      y - uy * 5 - ux * 5,
+    );
     this.ink.strokeCircle(x - ux * 13, y - uy * 13, 3);
   }
 
@@ -384,25 +473,52 @@ export class PrototypeScene extends Phaser.Scene {
     for (const pulse of this.feedback.pulses) {
       const at = this.project(pulse);
       const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
-      this.ink.lineStyle(pulse.kind === "damage" ? 3 : 1.5, 0xffffff, Math.max(0, 1 - pulse.age / 0.65));
+      this.ink.lineStyle(
+        pulse.kind === "damage" ? 3 : 1.5,
+        0xffffff,
+        Math.max(0, 1 - pulse.age / 0.65),
+      );
       if (pulse.kind === "hit" || pulse.kind === "disabled") {
         for (let i = 0; i < 6; i++) {
-          const angle = i * Math.PI / 3;
-          this.ink.lineBetween(at.x + Math.cos(angle) * radius, at.y + Math.sin(angle) * radius, at.x + Math.cos(angle) * (radius + 7), at.y + Math.sin(angle) * (radius + 7));
+          const angle = (i * Math.PI) / 3;
+          this.ink.lineBetween(
+            at.x + Math.cos(angle) * radius,
+            at.y + Math.sin(angle) * radius,
+            at.x + Math.cos(angle) * (radius + 7),
+            at.y + Math.sin(angle) * (radius + 7),
+          );
         }
         if (pulse.kind === "disabled") {
           this.ink.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
         }
       } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
-        this.ink.strokePoints([{x: at.x, y: at.y - radius}, {x: at.x + radius, y: at.y}, {x: at.x, y: at.y + radius}, {x: at.x - radius, y: at.y}], true);
+        this.ink.strokePoints(
+          [
+            new Phaser.Math.Vector2(at.x, at.y - radius),
+            new Phaser.Math.Vector2(at.x + radius, at.y),
+            new Phaser.Math.Vector2(at.x, at.y + radius),
+            new Phaser.Math.Vector2(at.x - radius, at.y),
+          ],
+          true,
+        );
         if (pulse.kind === "deposit") {
           this.ink.strokeCircle(at.x, at.y, radius * 0.65);
         }
       } else {
         this.ink.strokeCircle(at.x, at.y, radius);
         if (pulse.kind === "damage") {
-          this.ink.lineBetween(at.x - radius, at.y - radius, at.x - radius * 0.65, at.y - radius * 0.65);
-          this.ink.lineBetween(at.x + radius, at.y + radius, at.x + radius * 0.65, at.y + radius * 0.65);
+          this.ink.lineBetween(
+            at.x - radius,
+            at.y - radius,
+            at.x - radius * 0.65,
+            at.y - radius * 0.65,
+          );
+          this.ink.lineBetween(
+            at.x + radius,
+            at.y + radius,
+            at.x + radius * 0.65,
+            at.y + radius * 0.65,
+          );
         }
         if (pulse.kind === "teleport") {
           this.ink.strokeCircle(at.x, at.y, radius * 0.6);
@@ -414,7 +530,9 @@ export class PrototypeScene extends Phaser.Scene {
   private drawObject(object: SpaceObject): void {
     const point = this.project(object);
     const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
-    const radius = definition ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2) : object.radius;
+    const radius = definition
+      ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2)
+      : object.radius;
     if (
       point.x < -radius - 60 ||
       point.y < -radius - 60 ||

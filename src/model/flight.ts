@@ -1,5 +1,4 @@
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype,enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import type {
@@ -108,13 +107,21 @@ function spawnEnemy(
 ): SpaceObject {
   const definition = enemyCatalog[archetype];
   return {
-    ...point, id, kind: "enemy", hp: definition.hp,
-    radius: content.tuning.flight.shipRadius * definition.sizeRatio,
+    ...point,
     enemy: createEnemy(definition, { archetype, id, packId, phase }, point),
+    hp: definition.hp,
+    id,
+    kind: "enemy",
+    radius: content.tuning.flight.shipRadius * definition.sizeRatio,
   };
 }
 
-function generateRegion(content: PrototypeContent, x: number, y: number, flight: FlightState): void {
+function generateRegion(
+  content: PrototypeContent,
+  x: number,
+  y: number,
+  flight: FlightState,
+): void {
   const size = content.tuning.chunkSize;
   // One encounter cell per quiet-distance grid; adjacent chunk traversal cannot duplicate it.
   const span = Math.max(3, Math.ceil(enemyEncounterTuning.quietDistance / size));
@@ -123,7 +130,10 @@ function generateRegion(content: PrototypeContent, x: number, y: number, flight:
   }
   const next = random(hash(flight.seed ^ 9173, x, y));
   const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-  if (distance(center, flight.player) < content.tuning.safeRadius * 2 || safe(content, center, flight)) {
+  if (
+    distance(center, flight.player) < content.tuning.safeRadius * 2 ||
+    safe(content, center, flight)
+  ) {
     return;
   }
   const region = Math.floor(next() * 4);
@@ -135,11 +145,16 @@ function generateRegion(content: PrototypeContent, x: number, y: number, flight:
     const speed = content.tuning.maxSpeed * (slow + next() * (fast - slow));
     for (let i = 0; i < count; i++) {
       const point = { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size };
-      if (!safe(content, point, flight)) flight.objects.push({
-        ...point, id: `ballistic:${x},${y}:${i}`, kind: "debris", hp: content.tuning.flight.rockHp,
-        radius: content.tuning.flight.rockRadius,
-        velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-      });
+      if (!safe(content, point, flight)) {
+        flight.objects.push({
+          ...point,
+          hp: content.tuning.flight.rockHp,
+          id: `ballistic:${x},${y}:${i}`,
+          kind: "debris",
+          radius: content.tuning.flight.rockRadius,
+          velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+        });
+      }
     }
     return;
   }
@@ -150,52 +165,84 @@ function generateRegion(content: PrototypeContent, x: number, y: number, flight:
   const archetype = choices[Math.floor(next() * choices.length)] ?? "fighter";
   combat(flight).initialPackSizes[packId] = count;
   for (let i = 0; i < count; i++) {
-    const object = spawnEnemy(content, archetype, `${packId}:${i}`, {
-      x: center.x + i * 85, y: center.y,
-    }, packId, next() * Math.PI * 2);
-    if (!safe(content, object, flight)) flight.objects.push(object);
+    const object = spawnEnemy(
+      content,
+      archetype,
+      `${packId}:${i}`,
+      {
+        x: center.x + i * 85,
+        y: center.y,
+      },
+      packId,
+      next() * Math.PI * 2,
+    );
+    if (!safe(content, object, flight)) {
+      flight.objects.push(object);
+    }
   }
   // Open, clustered and paired-wall regions share the same deterministic grid.
   if (region === 0) {
     return;
   }
   for (let i = 0; i < 8; i++) {
-    const point = region === 1
-      ? { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size }
-      : { x: center.x + (i - 4) * 75, y: center.y + (i % 2 ? 130 : -130) };
-    if (!safe(content, point, flight)) flight.objects.push({
-      ...point, id: `terrain:${x},${y}:${i}`, kind: "rock",
-      hp: content.tuning.flight.rockHp, radius: content.tuning.flight.rockRadius,
-    });
+    const point =
+      region === 1
+        ? { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size }
+        : { x: center.x + (i - 4) * 75, y: center.y + (i % 2 ? 130 : -130) };
+    if (!safe(content, point, flight)) {
+      flight.objects.push({
+        ...point,
+        hp: content.tuning.flight.rockHp,
+        id: `terrain:${x},${y}:${i}`,
+        kind: "rock",
+        radius: content.tuning.flight.rockRadius,
+      });
+    }
   }
 }
 
 export function routeBlocked(id: string, flight: FlightState): boolean {
-  return flight.objects.some((object) => object.kind === "enemy" && object.routeId === id && object.hp > 0);
+  return flight.objects.some(
+    (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
+  );
 }
 
-export function ensureRouteEncounter(content: PrototypeContent, id: string, flight: FlightState): SpaceObject | null {
-  const existing = flight.objects.find((object) => object.kind === "enemy" && object.routeId === id);
+export function ensureRouteEncounter(
+  content: PrototypeContent,
+  id: string,
+  flight: FlightState,
+): SpaceObject | null {
+  const existing = flight.objects.find(
+    (object) => object.kind === "enemy" && object.routeId === id,
+  );
   if (existing) {
     return existing;
   }
   if (combat(flight).routeEncounters.includes(id)) {
     return null;
   }
-  const destination = flight.objects.find((object) => object.kind === "destination" && object.id === id);
+  const destination = flight.objects.find(
+    (object) => object.kind === "destination" && object.id === id,
+  );
   if (!destination) {
     return null;
   }
-  const archetype = flight.sector === 1 ? "frigate" : flight.sector === 2 ? "capital" : "oversizedCapital";
+  const archetype =
+    flight.sector === 1 ? "frigate" : flight.sector === 2 ? "capital" : "oversizedCapital";
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
-  const heading = direction({ x: flight.player.x - destination.x, y: flight.player.y - destination.y });
+  const heading = direction({
+    x: flight.player.x - destination.x,
+    y: flight.player.y - destination.y,
+  });
   const approach = length(heading) ? heading : { x: 0, y: 1 };
   const offset = content.tuning.safeRadius + radius + 120;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
   const object = spawnEnemy(content, archetype, `route:${id}`, point);
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
-  flight.objects = flight.objects.filter((other) => other.kind === "destination" || distance(other, point) > other.radius + radius + 20);
+  flight.objects = flight.objects.filter(
+    (other) => other.kind === "destination" || distance(other, point) > other.radius + radius + 20,
+  );
   flight.objects.push(object);
   combat(flight).routeEncounters.push(id);
   return object;
@@ -405,60 +452,102 @@ function move(
     flight.facing = heading;
   }
 }
-function enemies(content: PrototypeContent, dt: number, flight: FlightState): boolean {
+function enemies(
+  content: PrototypeContent,
+  dt: number,
+  flight: FlightState,
+  events: FlightEvent[],
+): boolean {
   let threatening = false;
   const objects = flight.objects.filter((object) => object.kind === "enemy" && object.hp > 0);
   for (const object of objects) {
     // Legacy saved ships gain canonical state without resetting their damage or identity.
     if (!object.enemy) {
-      object.enemy = createEnemy(enemyCatalog.fighter, { archetype: "fighter", id: object.id, packId: null, phase: 0 }, object);
+      object.enemy = createEnemy(
+        enemyCatalog.fighter,
+        { archetype: "fighter", id: object.id, packId: null, phase: 0 },
+        object,
+      );
       object.enemy.hp = object.hp;
     }
   }
-  const peers = objects.flatMap((object) => object.enemy ? [object.enemy] : []);
+  const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   for (const object of objects) {
     const state = object.enemy!;
     const definition = enemyCatalog[state.archetype];
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
-    const visible = !flight.objects.some((obstacle) =>
-      ["rock", "resource", "debris"].includes(obstacle.kind) &&
-      segmentDistance(obstacle, object, flight.player) < obstacle.radius,
+    const visible = !flight.objects.some(
+      (obstacle) =>
+        ["rock", "resource", "debris"].includes(obstacle.kind) &&
+        segmentDistance(obstacle, object, flight.player) < obstacle.radius,
     );
-    const intent = stepEnemy(definition, {
-      adaSpeed: content.tuning.maxSpeed, adaWidth: content.tuning.flight.shipRadius * 2,
-      dt, initialPackSizes: combat(flight).initialPackSizes, peers, player: flight.player,
-      speedCapRatio: enemyEncounterTuning.speedCapRatio, targetable,
-      visibility: visible ? "visible" : "occluded",
-    }, { ...state, position: { x: object.x, y: object.y } });
+    const intent = stepEnemy(
+      definition,
+      {
+        adaSpeed: content.tuning.maxSpeed,
+        adaWidth: content.tuning.flight.shipRadius * 2,
+        dt,
+        initialPackSizes: combat(flight).initialPackSizes,
+        peers,
+        player: flight.player,
+        speedCapRatio: enemyEncounterTuning.speedCapRatio,
+        targetable,
+        visibility: visible ? "visible" : "occluded",
+      },
+      { ...state, position: { x: object.x, y: object.y } },
+    );
     object.enemy = intent.state;
     if (intent.effects.defeated) {
+      object.hp = 0;
+      events.push({ type: "enemyDisabled" });
       continue;
     }
-    const steps = Math.max(1, Math.ceil(length(intent.velocity) * dt / 4));
+    const steps = Math.max(1, Math.ceil((length(intent.velocity) * dt) / 4));
     for (let i = 0; i < steps; i++) {
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
-        point[axis] += intent.velocity[axis] * dt / steps;
-        const blocked = flight.objects.some((other) => other !== object && (
-          other.kind === "destination"
-            ? distance(other, point) < content.tuning.safeRadius + object.radius
-            : ["rock", "resource", "debris", "enemy"].includes(other.kind) && other.hp > 0 && distance(other, point) < other.radius + object.radius
-        ));
-        if (!blocked) object[axis] = point[axis];
-        else object.enemy.velocity[axis] = 0;
+        point[axis] += (intent.velocity[axis] * dt) / steps;
+        const blocked = flight.objects.some(
+          (other) =>
+            other !== object &&
+            (other.kind === "destination"
+              ? distance(other, point) < content.tuning.safeRadius + object.radius
+              : ["rock", "resource", "debris", "enemy"].includes(other.kind) &&
+                other.hp > 0 &&
+                distance(other, point) < other.radius + object.radius),
+        );
+        if (!blocked) {
+          object[axis] = point[axis];
+        } else {
+          object.enemy.velocity[axis] = 0;
+        }
       }
     }
     object.enemy.position = { x: object.x, y: object.y };
-    threatening ||= targetable && intent.state.engaged && !intent.state.returning && !intent.state.fleeing && distance(object, flight.player) <= definition.perception;
+    threatening ||=
+      targetable &&
+      intent.state.engaged &&
+      !intent.state.returning &&
+      !intent.state.fleeing &&
+      distance(object, flight.player) <= definition.perception;
     for (const fire of intent.fire) {
       flight.shots.push({
-        ...fire.origin, enemy: true, hitIds: [], id: `shot:${flight.nextId++}`,
-        projectile: fire.projectile, life: content.tuning.flight.enemyProjectileLifetime,
-        piercing: false, velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
+        ...fire.origin,
+        enemy: true,
+        hitIds: [],
+        id: `shot:${flight.nextId++}`,
+        life: content.tuning.flight.enemyProjectileLifetime,
+        piercing: false,
+        projectile: fire.projectile,
+        velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
       });
     }
     object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
-    if (targetable && distance(object, flight.player) < object.radius + content.tuning.flight.shipRadius && !object.cooldown) {
+    if (
+      targetable &&
+      distance(object, flight.player) < object.radius + content.tuning.flight.shipRadius &&
+      !object.cooldown
+    ) {
       damage(content, flight);
       object.cooldown = content.tuning.flight.damageInterval;
     }
@@ -470,7 +559,9 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const square = dx * dx + dy * dy;
-  const t = square ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / square)) : 0;
+  const t = square
+    ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / square))
+    : 0;
   return distance(point, { x: start.x + dx * t, y: start.y + dy * t });
 }
 
@@ -482,11 +573,21 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
     object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
     // Protected regions absorb traveling debris without changing its ballistic heading.
-    if (flight.objects.some((destination) => destination.kind === "destination" && segmentDistance(destination, object, next.position) < content.tuning.safeRadius + object.radius)) {
+    if (
+      flight.objects.some(
+        (destination) =>
+          destination.kind === "destination" &&
+          segmentDistance(destination, object, next.position) <
+            content.tuning.safeRadius + object.radius,
+      )
+    ) {
       object.hp = 0;
       continue;
     }
-    if (segmentDistance(flight.player, object, next.position) < object.radius + content.tuning.flight.shipRadius) {
+    if (
+      segmentDistance(flight.player, object, next.position) <
+      object.radius + content.tuning.flight.shipRadius
+    ) {
       if (!object.cooldown) {
         damage(content, flight);
         object.cooldown = content.tuning.flight.damageInterval;
@@ -516,7 +617,14 @@ function shots(
           damage(content, flight);
           shot.life = 0;
         }
-        if (flight.objects.some((object) => ["rock", "resource", "debris"].includes(object.kind) && object.hp > 0 && distance(shot, object) <= object.radius + 3)) {
+        if (
+          flight.objects.some(
+            (object) =>
+              ["rock", "resource", "debris"].includes(object.kind) &&
+              object.hp > 0 &&
+              distance(shot, object) <= object.radius + 3,
+          )
+        ) {
           shot.life = 0;
         }
         continue;
@@ -534,17 +642,28 @@ function shots(
         if (object.kind === "enemy" && object.enemy) {
           const definition = enemyCatalog[object.enemy.archetype];
           const width = definition.sizeRatio * content.tuning.flight.shipRadius * 2;
-          const part = definition.hardpoints.find((part) =>
-            object.enemy!.hardpoints.some((value) => value.id === part.id && value.hp > 0) &&
-            distance(shot, { x: object.x + part.offset.x * width, y: object.y + part.offset.y * width }) <= content.tuning.flight.shipRadius + 6,
+          const part = definition.hardpoints.find(
+            (part) =>
+              object.enemy!.hardpoints.some((value) => value.id === part.id && value.hp > 0) &&
+              distance(shot, {
+                x: object.x + part.offset.x * width,
+                y: object.y + part.offset.y * width,
+              }) <=
+                content.tuning.flight.shipRadius + 6,
           );
           // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
           if (definition.hardpoints.length && !part) {
             shot.hitIds.pop();
             continue;
           }
-          object.enemy = damageEnemy(definition, { amount: content.tuning.flight.playerShotDamage, hardpointId: part?.id ?? null }, object.enemy);
-          object.hp = enemyEffects(definition, object.enemy).defeated ? 0 : Math.max(1, object.enemy.hp);
+          object.enemy = damageEnemy(
+            definition,
+            { amount: content.tuning.flight.playerShotDamage, hardpointId: part?.id ?? null },
+            object.enemy,
+          );
+          object.hp = enemyEffects(definition, object.enemy).defeated
+            ? 0
+            : Math.max(1, object.enemy.hp);
         } else {
           object.hp -= content.tuning.flight.playerShotDamage;
         }
@@ -609,7 +728,7 @@ export function stepFlight(
     if (aiming && flight.fireCooldown <= 0) {
       fire(content, flight.facing, flight);
     }
-    const threat = enemies(content, slice, flight);
+    const threat = enemies(content, slice, flight, events);
     shots(content, slice, flight, events);
     for (const object of flight.objects) {
       if (

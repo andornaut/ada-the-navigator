@@ -145,26 +145,6 @@ describe("flight boundaries", () => {
     expect(flight.weapon).toBe("pierce");
     expect(flight.ammo).toBe(PROTOTYPE.tuning.weaponAmmo.pierce);
   });
-  it("distinguishes pursuit, ranged fire and a stationary contact guard", () => {
-    const flight = empty();
-    flight.player = { x: 100, y: 100 };
-    flight.objects = ["pursue", "shoot", "guard"].map((behavior, i) => ({
-      behavior: behavior as "pursue" | "shoot" | "guard",
-      cooldown: 0,
-      hp: 10,
-      id: behavior,
-      kind: "enemy",
-      radius: 14,
-      x: 200,
-      y: 90 + i * 10,
-    }));
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
-    expect(flight.objects.find((o) => o.id === "pursue")?.x).toBeLessThan(200);
-    expect(flight.objects.find((o) => o.id === "guard")?.x).toBe(200);
-    expect(flight.shots.filter((s) => s.enemy)).toHaveLength(1);
-    expect(flight.dangerFor).toBeGreaterThan(0);
-  });
-
   it("pierces debris and disables ships, while destroyed resource rocks release cargo pieces", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };

@@ -249,7 +249,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     row("move", options.labels.moveControls),
     row("aim", options.labels.aimControls),
   );
-  const feedback = { screenShake: !window.matchMedia("(prefers-reduced-motion: reduce)").matches, sound: true };
+  const feedback = {
+    screenShake: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    sound: true,
+  };
   for (const key of ["sound", "screenShake"] as const) {
     const caption = options.labels[key];
     if (!caption) {

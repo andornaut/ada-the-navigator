@@ -1,6 +1,7 @@
 import type { GameState, Vec } from "../model/types.ts";
 
-export type FeedbackKind = "hit" | "disabled" | "damage" | "shield" | "pickup" | "deposit" | "teleport";
+export type FeedbackKind =
+  "hit" | "disabled" | "damage" | "shield" | "pickup" | "deposit" | "teleport";
 export interface FeedbackPulse extends Vec {
   kind: FeedbackKind;
   age: number;
@@ -49,12 +50,17 @@ export class ModelFeedback {
       deposited: state.progress[flight.sector].deposited,
       disabledEnemies: state.progress[flight.sector].disabledEnemies,
       impacts: new Set(flight.shots.flatMap((shot) => shot.hitIds.map((id) => `${shot.id}:${id}`))),
-      objects: new Map(flight.objects.map((object) => [object.id, {
-        enemy: object.kind === "enemy",
-        hp: object.hp,
-        parts: new Map(object.enemy?.hardpoints.map((part) => [part.id, part.hp]) ?? []),
-        point: { x: object.x, y: object.y },
-      }])),
+      objects: new Map(
+        flight.objects.map((object) => [
+          object.id,
+          {
+            enemy: object.kind === "enemy",
+            hp: object.hp,
+            parts: new Map(object.enemy?.hardpoints.map((part) => [part.id, part.hp]) ?? []),
+            point: { x: object.x, y: object.y },
+          },
+        ]),
+      ),
       player: { ...flight.player },
       sector: flight.sector,
       seed: flight.seed,
@@ -73,16 +79,26 @@ export class ModelFeedback {
     };
     if (next.shield < previous.shield) {
       emit("damage", next.player);
-    } else if (next.shield > previous.shield && !this.pulses.some((pulse) => pulse.kind === "shield")) {
+    } else if (
+      next.shield > previous.shield &&
+      !this.pulses.some((pulse) => pulse.kind === "shield")
+    ) {
       emit("shield", next.player);
     }
-    if (next.cargo > previous.cargo || next.ammo > previous.ammo || (next.weapon !== "basic" && next.weapon !== previous.weapon)) {
+    if (
+      next.cargo > previous.cargo ||
+      next.ammo > previous.ammo ||
+      (next.weapon !== "basic" && next.weapon !== previous.weapon)
+    ) {
       emit("pickup", next.player);
     }
     if (next.deposited > previous.deposited) {
       emit("deposit", next.player);
     }
-    if (Math.hypot(next.player.x - previous.player.x, next.player.y - previous.player.y) > teleportDistance) {
+    if (
+      Math.hypot(next.player.x - previous.player.x, next.player.y - previous.player.y) >
+      teleportDistance
+    ) {
       emit("teleport", next.player);
     }
     for (const [id, object] of next.objects) {
@@ -109,7 +125,11 @@ export class ModelFeedback {
       if (before.enemy && removedDisabled > 0) {
         emit("disabled", before.point);
         removedDisabled--;
-      } else if (flight.shots.some((shot) => shot.hitIds.includes(id) && !previous.impacts.has(`${shot.id}:${id}`))) {
+      } else if (
+        flight.shots.some(
+          (shot) => shot.hitIds.includes(id) && !previous.impacts.has(`${shot.id}:${id}`),
+        )
+      ) {
         emit("hit", before.point);
       }
     }
@@ -151,7 +171,12 @@ export class FeedbackSound {
 
   play(kinds: readonly FeedbackKind[]): void {
     const context = this.context;
-    if (!this.enabled || !context || context.state !== "running" || context.currentTime - this.lastSound < 0.12) {
+    if (
+      !this.enabled ||
+      !context ||
+      context.state !== "running" ||
+      context.currentTime - this.lastSound < 0.12
+    ) {
       return;
     }
     const kind = kinds.find((kind) => kind === "damage") ?? kinds[0];

@@ -60,12 +60,9 @@ function enemyState(value: unknown): boolean {
   return (
     hardpoints.length === definition.hardpoints.length &&
     definition.hardpoints.every(
-      (part) =>
-        hardpoints.filter((entry) => record(entry) && entry.id === part.id).length === 1,
+      (part) => hardpoints.filter((entry) => record(entry) && entry.id === part.id).length === 1,
     ) &&
-    hardpoints.every(
-      (part) => record(part) && nonnegative(part.hp) && nonnegative(part.cooldown),
-    )
+    hardpoints.every((part) => record(part) && nonnegative(part.hp) && nonnegative(part.cooldown))
   );
 }
 function combatState(routes: readonly string[], value: unknown): boolean {

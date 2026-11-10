@@ -169,18 +169,14 @@ describe("combat save boundary", () => {
     expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 
-  it.each([
-    "age",
-    "hp",
-    "lastSeenAge",
-    "phase",
-    "primaryCooldown",
-    "pursuitSeconds",
-  ])("rejects nonfinite enemy %s", (field) => {
-    const snapshot = combatSnapshot();
-    Object.assign(snapshot.flight.objects[0]!.enemy!, { [field]: Infinity });
-    expect(restoreSave(snapshot)).toBeNull();
-  });
+  it.each(["age", "hp", "lastSeenAge", "phase", "primaryCooldown", "pursuitSeconds"])(
+    "rejects nonfinite enemy %s",
+    (field) => {
+      const snapshot = combatSnapshot();
+      Object.assign(snapshot.flight.objects[0]!.enemy!, { [field]: Infinity });
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
 
   it.each(["home", "position", "velocity", "lastSeen"] as const)(
     "rejects nonfinite enemy %s coordinates",
@@ -237,15 +233,14 @@ describe("combat save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it.each([
-    { projectile: "laser" },
-    { projectile: null },
-    { velocity: { x: 0, y: Infinity } },
-  ])("rejects malformed projectiles %j", (change) => {
-    const snapshot = combatSnapshot();
-    Object.assign(snapshot.flight.shots[0]!, change);
-    expect(restoreSave(snapshot)).toBeNull();
-  });
+  it.each([{ projectile: "laser" }, { projectile: null }, { velocity: { x: 0, y: Infinity } }])(
+    "rejects malformed projectiles %j",
+    (change) => {
+      const snapshot = combatSnapshot();
+      Object.assign(snapshot.flight.shots[0]!, change);
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
 
   it.each([{ velocity: { x: Infinity, y: 0 } }, { velocity: null }])(
     "rejects malformed ballistic velocity %j",

@@ -1,5 +1,4 @@
 import type { SectorId, Weapon } from "../data/types.ts";
-
 import type { EnemyState } from "./enemy-ai.ts";
 
 export interface Vec {

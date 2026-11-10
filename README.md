@@ -93,12 +93,14 @@ Delivery is paused. `delivery-kit.json` proposes :30 America/Toronto and sets
 
 Cloudflare setup uses typed `cloudflare.config.ts` for the assets-only Worker
 `ada-the-navigator`. The Cloudflare Vite plugin builds static assets and deployment
-metadata into `.cloudflare/output/v0/`. No application Worker entrypoint or
-account ID is configured. Logs and traces are enabled in the configuration.
+metadata into `.cloudflare/output/v0/`. No application Worker
+entrypoint is configured. The shared account and custom domain are
+explicit in the configuration. Logs and traces are enabled in the configuration.
 
 See [Cloudflare build and deployment checks](docs/checks.md#cloudflare-build-and-deployment-checks)
 for dry-run and prebuilt commands. The Worker exists in the shared account with
-public URLs, preview URLs and routes disabled. The existing Wrangler account login
+the custom domain `navigator.adabekele.com`. Workers.dev and preview URLs remain
+disabled. The existing Wrangler account login
 can access that account; the separately configured broker token is not equivalent.
 Deployment requires authorized authentication and account selection, reviewed
 evidence for the exact source and artifact, and explicit deployment approval.

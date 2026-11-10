@@ -78,8 +78,7 @@ The manual `npm run deploy:prebuilt` script runs
 `cf deploy --prebuilt --mode production`. It uploads and deploys, and requires
 explicit deployment approval plus authorized account access. It is not a CI
 publication step. Existing OAuth authentication supports account discovery and
-deployment; `faramir run` does not require project enrollment. No account ID or
-credential is embedded in source. Delivery remains paused with `deploy.mode`
+deployment; `faramir run` does not require project enrollment. The shared account and custom domain are explicit in source; credentials are not. Delivery remains paused with `deploy.mode`
 set to `none`.
 
 ## Browser smoke checks
