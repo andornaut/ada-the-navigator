@@ -83,14 +83,15 @@ through the isolated checks below.
 
 ## Checks
 
-Docker is required for verification. Start the complete isolated gate with:
+GNU Make, Node.js and Docker are required for verification. The prepared public
+interface is `make check` (lint, test and build), `make lint`, `make test`,
+`make build` and `make check-info`. The four npm check aliases call those Make
+targets. `make check-info` prints JSON version 1 with the three check categories.
 
-```bash
-node tools/checks.mjs start all
-```
-
-See [isolated checks](docs/checks.md) for collection, evidence, scheduling and
-resource limits. CI requires `AI attributions`, `Lint` and `Test`.
+Make adoption is held pending the [container adoption contract](docs/container-adoption.md).
+Do not start manual gates while that hold is active. The existing detached
+receipt adapter and browser proof interface are retained; see
+[isolated checks](docs/checks.md). CI requires `AI attributions`, `Lint` and `Test`.
 
 ## Delivery
 

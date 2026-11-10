@@ -29,6 +29,7 @@ export function snapshot() {
     .filter(Boolean)
     .filter((name) => !name.startsWith(".check-results/"));
   const rootNames = new Set([
+    "Makefile",
     "package.json",
     "package-lock.json",
     "delivery-kit.json",
@@ -57,6 +58,7 @@ export function snapshot() {
     "wrangler.jsonc",
   ]);
   const folders = new Set([
+    "tests",
     "src",
     "tools",
     "docs",
@@ -177,23 +179,12 @@ function start(mode, ci) {
   const name = `ada-check-${randomUUID()}`;
   mkdirSync(resolve(results, name), { recursive: true });
   writeFileSync(resolve(results, name, "source.json"), `${JSON.stringify(source, null, 2)}\n`);
+  const categories = mode === "lint" ? ["lint"] : ["lint", "test", "build"];
   const steps = [
     ["git", "init", "--quiet", "--initial-branch", "main"],
     ["npm", "ci"],
-    ["node", "tools/hooks-smoke.mjs"],
+    ...categories.map((category) => ["tests/container/check", category]),
   ];
-  if (mode !== "test") {
-    steps.push(["npm", "run", "lint"]);
-  }
-  if (mode !== "lint") {
-    steps.push(
-      ["npm", "run", "check"],
-      ["npm", "test", "--", "--maxWorkers=4"],
-      ["npm", "run", "build"],
-      ["npm", "run", "deploy:prebuilt:dry-run"],
-      ["npm", "run", "deploy:wrangler:dry-run"],
-    );
-  }
   const directory = resolve(results, name);
   const receiptPath = resolve(directory, "startup.json");
   const receipt = { name, containerId: null, stage: "create", cleanup: "unconfirmed" };

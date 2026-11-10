@@ -1,5 +1,39 @@
 # Isolated checks
 
+## Make interface and adoption hold
+
+The public check surface is GNU Make. `npm run check`, `npm run lint`, `npm test`
+and `npm run build` delegate to `make check`, `make lint`, `make test` and
+`make build`, respectively. `make check-info` emits
+`{"version":1,"checks":["lint","test","build"]}` without building an image.
+
+| Target       | Inner category work                                                |
+| ------------ | ------------------------------------------------------------------ |
+| `make check` | All three categories in order                                      |
+| `make lint`  | Installed hook acceptance/rejection, TypeScript and source lint    |
+| `make test`  | Vitest with at most four workers                                   |
+| `make build` | Vite, retained assets, CF prebuilt and Wrangler packaging dry runs |
+
+The byte-identical generic launcher builds a dependency-cache image from the
+explicit `tests/container/context` inputs. It extracts a source snapshot into
+writable `/work` scratch as UID/GID 19001, with read-only root and host inputs,
+`HOME=/tmp`, four CPUs and `nofile=256:256`. Its revision, source hash and
+`SOURCE_DATE_EPOCH` describe the snapshot. `make build` exports `dist/` and
+`.cloudflare/output/v0/` after verifying the source remained stable. `make check`
+does not export artifacts.
+
+The cached dependencies remain read-only. Inner setup creates a writable
+`node_modules/` directory with individual package links, so Vite can write
+`.vite/` and `.vite-temp/` in scratch. Inner lint initializes scratch Git for the
+actual Husky dispatcher; no host Git metadata is mounted.
+
+The repository wrapper checks load before entering the launcher. The launcher
+has no subsequent load-admission hook after image building or between categories.
+Make adoption and manual verification remain held until that contract is settled;
+see [adoption requirements](container-adoption.md).
+
+## Detached receipt compatibility
+
 Use Node.js 24.22.2 (or supported Node.js 26.12.0+) and Docker. Fetch `node:24.22.2` before
 starting checks. The orchestrator runs on the host; dependency installation,
 hook verification, lint, type checks, tests and builds run inside Docker.
@@ -25,11 +59,12 @@ in `.check-results/<name>/startup.json`. Only an owned container confirmed never
 started is removed automatically. Running or uncertain containers are retained;
 follow the recorded collection instructions before retrying.
 
-The `lint` mode runs `npm run lint`. The `test` mode runs `npm run check`,
-`npm test -- --maxWorkers=4`, `npm run build` and both deployment packaging dry runs.
-Both install locked dependencies and exercise `prepare` plus the actual pre-commit
-hook with staged TypeScript
-and Markdown fixtures in a disposable Git repository. `all` combines both modes.
+The adapter retains its `node:24.22.2` image, locked `npm ci` installation and
+writable `/tmp/work` container scratch. Its `lint` mode dispatches inner `lint`;
+`test` and `all` dispatch inner `lint`, `test` and `build`. This includes hook
+acceptance/rejection, types, the full tests, build and both packaging dry runs.
+All categories invoke `tests/container/check` directly, without Make or Docker
+inside the container. `internal:*` scripts are the only category command source.
 Published kit API coverage belongs to the application tests.
 
 Containers use UID/GID 19001, the checkout supplemental group, `HOME=/tmp`,
@@ -59,7 +94,7 @@ to the allowlist.
 `cloudflare.config.ts` defines the existing assets-only Worker `ada-the-navigator`
 with compatibility date `2026-11-10`, its shared account and custom domain, and
 logs and traces enabled. The Cloudflare Vite plugin emits `.cloudflare/output/v0/`.
-`npm run build` then refreshes `dist/` from the generated assets and verifies
+The inner build refreshes `dist/` from the generated assets and verifies
 matching asset fingerprints. No application Worker entrypoint is configured.
 
 Run deployment dry runs only in an isolated Node.js 24.22.2 checkout. The CF
