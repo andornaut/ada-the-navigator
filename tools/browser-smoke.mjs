@@ -558,6 +558,20 @@ try {
   const { stepFlight } = await import(new URL("../src/model/flight.ts", import.meta.url));
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
   assert.ok(damaged.selectWeapon("rapid"));
+  // Damage is meaningful only outside the friendly destination's protected region.
+  damaged.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 2;
+  assert.ok(
+    damaged.state.flight.objects
+      .filter((object) => object.kind === "destination")
+      .every(
+        (destination) =>
+          Math.hypot(
+            destination.x - damaged.state.flight.player.x,
+            destination.y - damaged.state.flight.player.y,
+          ) > PROTOTYPE.tuning.safeRadius,
+      ),
+    "Projectile fixture must be outside every active protected destination",
+  );
   damaged.state.flight.shield = PROTOTYPE.tuning.enemyDamage;
   damaged.state.flight.shots.push({
     ...damaged.state.flight.player,
@@ -574,6 +588,13 @@ try {
     { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false },
     damaged.state.flight,
   );
+  assert.equal(
+    damaged.state.flight.weapon,
+    "basic",
+    "Real projectile damage must remove the selected upgrade",
+  );
+  assert.deepEqual(damaged.state.flight.ownedWeapons, ["spread"]);
+  assert.equal(damaged.state.flight.shield, PROTOTYPE.tuning.shieldMax);
   const damageSave = damaged.save();
   assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
