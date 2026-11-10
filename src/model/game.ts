@@ -8,6 +8,7 @@ import {
   routeBlocked,
   settleRouteEncounters,
   stepFlight,
+  syncFlightRegion,
   teleport as teleportFlight,
 } from "./flight.ts";
 import { restoreSave } from "./save.ts";
@@ -331,6 +332,7 @@ export class GameModel {
         settleRouteEncounters(this.content, f);
       }
     }
+    syncFlightRegion(this.content, f);
   }
   private ensureWhaleDebris(): void {
     const f = this.state.flight;

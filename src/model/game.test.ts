@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
-import { ensureDestination, ensureRouteEncounter } from "./flight.ts";
+import { ensureDestination, ensureRouteEncounter, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, sector: SectorId = 1) {
@@ -317,13 +318,21 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   resumed.step(0.05, { ...idle, move: { x: 1, y: 0 } });
   const next = resumed.state.flight!;
   const movedTarget = next.objects.find((object) => object.id === "growers")!;
-  const movedGuard = next.objects.find((object) => object.id === guard.id)!;
+  const retained = [
+    ...next.objects,
+    ...Object.values(next.dormant?.pages ?? {}).flatMap(
+      (page) => JSON.parse(page) as SpaceObject[],
+    ),
+  ];
+  const guards = retained.filter((object) => object.id === guard.id);
+  expect(guards).toHaveLength(1);
+  const movedGuard = guards[0]!;
   expect(movedTarget.x).toBeLessThan(previousTarget.x);
   expect(movedGuard).toBeDefined();
   expect(movedGuard.enemy!.hardpoints).toEqual(parts);
   expect(movedGuard.x - previousGuard.x).toBeCloseTo(movedTarget.x - previousTarget.x);
   expect(movedGuard.y - previousGuard.y).toBeCloseTo(movedTarget.y - previousTarget.y);
-  expect(next.dormant!.routes).not.toContain("growers");
+  expect(routeBlocked("growers", next)).toBe(true);
   expect(resumed.state.progress[1].introduced).toBe(false);
   expect(new GameModel(content, resumed.save()).state).toEqual(resumed.state);
 });
