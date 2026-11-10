@@ -20,7 +20,6 @@
 * {
   box-sizing: border-box;
 }
-html,
 body,
 #app,
 #game-canvas {
@@ -28,12 +27,19 @@ body,
   height: 100%;
   margin: 0;
 }
+html {
+  width: 100%;
+  margin: 0;
+}
 body {
   overflow: hidden;
+  padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
+  touch-action: none;
 }
 #app {
   position: relative;
   isolation: isolate;
+  container-type: size;
 }
 #game-canvas {
   position: absolute;
@@ -42,6 +48,7 @@ body {
 }
 #game-canvas canvas {
   display: block;
+  image-rendering: pixelated;
 }
 button {
   font: inherit;
@@ -74,9 +81,9 @@ button:disabled {
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(36rem, calc(100% - 32px));
-  max-height: calc(100dvh - 120px);
+  max-height: calc(100% - 32px);
   overflow-y: auto;
-  padding: clamp(18px, 4vw, 32px);
+  padding: clamp(18px, 4cqw, 32px);
   border: 2px solid #a3a3a3;
   border-radius: 10px;
   background: #181818;
@@ -85,7 +92,7 @@ button:disabled {
 .story-panel h1,
 .story-panel h2 {
   margin: 0 0 18px;
-  font-size: clamp(22px, 5vw, 32px);
+  font-size: clamp(22px, 5cqw, 32px);
 }
 .story-panel p {
   line-height: 1.55;
@@ -107,8 +114,8 @@ button:disabled {
 .flight-hud {
   position: absolute;
   z-index: 2;
-  left: max(12px, env(safe-area-inset-left));
-  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, var(--inset-left));
+  top: max(12px, var(--inset-top));
   max-width: calc(100% - 110px);
   white-space: pre-line;
   line-height: 1.6;
@@ -135,12 +142,12 @@ button:disabled {
   position: absolute;
   z-index: 3;
   top: 155px;
-  right: max(12px, env(safe-area-inset-right));
+  right: max(12px, var(--inset-right));
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-width: min(210px, 45%);
-  max-height: 40dvh;
+  max-height: 40%;
   overflow-y: auto;
   font-size: 13px;
   padding: 6px;
@@ -153,10 +160,10 @@ button:disabled {
   margin: 0;
   line-height: 1.4;
 }
-@media (max-height: 500px) {
+@container (max-height: 500px) {
   .travel-panel {
     top: 85px;
-    max-height: 30dvh;
+    max-height: 30%;
   }
   #game-status {
     top: 70px;
@@ -168,4 +175,24 @@ button:disabled {
   height: 64px;
   margin-left: 72px;
   background: url("/art/portraits/dog.png") 0 0 / 192px 64px no-repeat;
+}
+
+/* DOM controls use the turned frame's safe edges, as the canvas does. */
+#game-canvas .ada-controls .ada-settings-open {
+  right: max(8px, var(--inset-right));
+  top: max(8px, var(--inset-top));
+}
+#game-canvas .ada-controls .ada-use {
+  bottom: max(24px, var(--inset-bottom));
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  html #game-canvas {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  html #game-canvas canvas {
+    flex: none;
+  }
 }
