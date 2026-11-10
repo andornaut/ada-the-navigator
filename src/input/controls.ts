@@ -10,6 +10,7 @@ import type { Scene } from "phaser";
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { drawSticks } from "../ui/sticks.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
+import { movementCssScale } from "./geometry.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -79,18 +80,24 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
   scene.cameras.main.ignore(graphics);
   const fitControls = (): void => {
+    const bounds = canvas.getBoundingClientRect();
+    if (bounds.width > 0 && bounds.height > 0) {
+      state.setMoveScale(movementCssScale(FRAME_TURN.turn(), scene.scale.gameSize, bounds));
+    }
     camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
     camera.ignore(scene.children.list.filter((object) => object !== graphics));
   };
   scene.events.on("prerender", fitControls);
   fitControls();
-  const point = (event: PagePointerEvent) =>
-    pageToGame(
+  const point = (event: PagePointerEvent) => {
+    fitControls();
+    return pageToGame(
       FRAME_TURN.turn(),
       canvas.getBoundingClientRect(),
       scene.scale.gameSize,
       clientPoint(event),
     );
+  };
   const joystickTarget = (target: EventTarget | null) => {
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;

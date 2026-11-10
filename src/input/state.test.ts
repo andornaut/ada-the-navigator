@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ControlState, stickVector } from "./state.ts";
+import { ControlState, MOVE_STICK_GEOMETRY, stickVector } from "./state.ts";
 
 const zero = { x: 0, y: 0 };
 
@@ -100,5 +100,52 @@ describe("independent twin stick ownership", () => {
     const diagonal = stickVector(geometry, { x: 100, y: 100 });
     expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(1);
     expect(() => new ControlState({ deadZone: 25, reach: 25 })).toThrow(/geometry/);
+  });
+});
+
+describe("left stick analog throttle", () => {
+  it.each([0, 0.1, 0.5, 1, 2])("maps radial travel to bounded strength %s", (strength) => {
+    const controls = new ControlState();
+    const geometry = MOVE_STICK_GEOMETRY;
+    const travel = strength === 0 ? geometry.deadZone : geometry.deadZone + strength * 17.6;
+    controls.down("move", 1, { x: 100, y: 80 });
+    controls.move(1, { x: 100 + travel, y: 80 });
+    expect(controls.sample().move.x).toBeCloseTo(Math.min(1, strength), 12);
+    expect(controls.sample().move.y).toBe(0);
+    controls.release(1);
+    expect(controls.sample().move).toEqual(zero);
+  });
+
+  it.each([0, Math.PI / 4, Math.PI / 2, Math.PI, -Math.PI / 3])(
+    "retains half throttle in direction %s without normalizing it to full speed",
+    (angle) => {
+      const controls = new ControlState();
+      controls.down("move", 1, zero);
+      controls.move(1, { x: Math.cos(angle) * 11.2, y: Math.sin(angle) * 11.2 });
+      const move = controls.sample().move;
+      expect(Math.hypot(move.x, move.y)).toBeCloseTo(0.5, 12);
+      expect(move.x).toBeCloseTo(Math.cos(angle) * 0.5, 12);
+      expect(move.y).toBeCloseTo(Math.sin(angle) * 0.5, 12);
+    },
+  );
+
+  it("keeps the left dead zone radial and independent of aim and keyboard", () => {
+    const controls = new ControlState();
+    controls.down("move", 1, zero);
+    controls.down("aim", 2, { x: 500, y: 0 });
+    controls.move(1, { x: 1.44, y: 1.92 });
+    controls.move(2, { x: 505, y: 0 });
+    expect(controls.sample()).toEqual({ aim: zero, move: zero, use: false });
+    controls.move(1, { x: 11.2, y: 0 });
+    controls.move(2, { x: 521.5, y: 0 });
+    const sample = controls.sample();
+    expect(sample.aim).toEqual({ x: 0.5, y: 0 });
+    expect(sample.move.x).toBeCloseTo(0.5, 12);
+    expect(sample.move.y).toBe(0);
+    controls.release(1);
+    expect(controls.sample().aim).toEqual({ x: 0.5, y: 0 });
+    controls.keyDown("KeyW");
+    controls.keyDown("KeyD");
+    expect(Math.hypot(controls.sample().move.x, controls.sample().move.y)).toBeCloseTo(1);
   });
 });

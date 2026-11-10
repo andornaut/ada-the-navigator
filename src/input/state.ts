@@ -26,6 +26,7 @@ export interface StickGeometry {
 
 // Native 75px ring frame, with a radial dead zone and bounded thumb travel.
 export const STICK_GEOMETRY: StickGeometry = { deadZone: 6, reach: 37 };
+export const MOVE_STICK_GEOMETRY: StickGeometry = { deadZone: 2.4, reach: 20 };
 
 function bounded(vector: Vector): Vector {
   const length = Math.hypot(vector.x, vector.y);
@@ -47,6 +48,7 @@ export class ControlState {
   private readonly keys = new Set<string>();
   private readonly sticks = new Map<StickSide, Stick>();
   private readonly geometry: StickGeometry;
+  private moveScale: Vector = { x: 1, y: 1 };
   private modal: ModalInputScope | undefined;
   private enabled = true;
   private useAvailable = false;
@@ -137,6 +139,34 @@ export class ControlState {
     return this.sticks.get(side);
   }
 
+  get movementScale(): Vector {
+    return this.moveScale;
+  }
+
+  setMoveScale(scale: Vector): void {
+    if (![scale.x, scale.y].every((value) => Number.isFinite(value) && value > 0)) {
+      throw new Error("Invalid movement scale");
+    }
+    this.moveScale = { ...scale };
+  }
+
+  stickSample(side: StickSide): Vector {
+    const stick = this.sticks.get(side);
+    if (!stick) {
+      return { x: 0, y: 0 };
+    }
+    const offset = {
+      x: stick.position.x - stick.origin.x,
+      y: stick.position.y - stick.origin.y,
+    };
+    return side === "move"
+      ? stickVector(MOVE_STICK_GEOMETRY, {
+          x: offset.x * this.moveScale.x,
+          y: offset.y * this.moveScale.y,
+        })
+      : stickVector(this.geometry, offset);
+  }
+
   openModal(): void {
     this.modal ??= this.gate.open();
     this.reset();
@@ -173,13 +203,7 @@ export class ControlState {
       x: Number(this.keys.has(right)) - Number(this.keys.has(left)),
       y: Number(this.keys.has(down)) - Number(this.keys.has(up)),
     };
-    const stick = this.sticks.get(side);
-    const touch = stick
-      ? stickVector(this.geometry, {
-          x: stick.position.x - stick.origin.x,
-          y: stick.position.y - stick.origin.y,
-        })
-      : { x: 0, y: 0 };
+    const touch = this.stickSample(side);
     return bounded({ x: keyboard.x + touch.x, y: keyboard.y + touch.y });
   }
 }

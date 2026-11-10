@@ -1,6 +1,6 @@
 import type { GameObjects } from "phaser";
 
-import { type ControlState, STICK_GEOMETRY } from "../input/state.ts";
+import { type ControlState, MOVE_STICK_GEOMETRY, STICK_GEOMETRY } from "../input/state.ts";
 import type { ControlVisibility } from "./settings.ts";
 
 interface StickView {
@@ -27,8 +27,28 @@ export function drawSticks(
     if (!view.visibility[side] || (!stick && !view.showIdle)) {
       continue;
     }
+    if (side === "move") {
+      const scale = state.movementScale;
+      const reach = MOVE_STICK_GEOMETRY.reach;
+      const centre = stick?.origin ?? {
+        x: (reach + 20) / scale.x,
+        y: view.height - (reach + 20) / scale.y,
+      };
+      const sampled = state.stickSample("move");
+      const x = centre.x + (sampled.x * reach) / scale.x;
+      const y = centre.y + (sampled.y * reach) / scale.y;
+      graphics.lineStyle(5, 0x172335, 1);
+      graphics.strokeEllipse(centre.x, centre.y, (reach * 2) / scale.x, (reach * 2) / scale.y);
+      graphics.lineStyle(3, 0xfff8e6, 1);
+      graphics.strokeEllipse(centre.x, centre.y, (reach * 2) / scale.x, (reach * 2) / scale.y);
+      graphics.fillStyle(stick ? 0xffffff : 0xfff8e6, 1);
+      graphics.fillEllipse(x, y, 10 / scale.x, 10 / scale.y);
+      graphics.lineStyle(1, 0x172335, 1);
+      graphics.strokeEllipse(x, y, 10 / scale.x, 10 / scale.y);
+      continue;
+    }
     const centre = stick?.origin ?? {
-      x: side === "move" ? edge : view.width - edge,
+      x: view.width - edge,
       y: view.height - edge,
     };
     const dx = stick ? stick.position.x - centre.x : 0;
