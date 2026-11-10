@@ -29,8 +29,9 @@ actual Husky dispatcher; no host Git metadata is mounted.
 
 The repository wrapper checks load before entering the launcher. The launcher
 has no subsequent load-admission hook after image building or between categories.
-Make adoption and manual verification remain held until that contract is settled;
-see [adoption requirements](container-adoption.md).
+Make adoption and generic public Make execution remain held until that contract
+is settled. Local source verification is authorized through the receipt adapter
+below; see [adoption requirements](container-adoption.md).
 
 ## Detached receipt compatibility
 

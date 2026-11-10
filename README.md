@@ -89,8 +89,8 @@ interface is `make check` (lint, test and build), `make lint`, `make test`,
 targets. `make check-info` prints JSON version 1 with the three check categories.
 
 Make adoption is held pending the [container adoption contract](docs/container-adoption.md).
-Do not start manual gates while that hold is active. The existing detached
-receipt adapter and browser proof interface are retained; see
+Generic public Make execution awaits the reviewed launcher update. Local source
+verification may use the existing detached receipt adapter and browser proof; see
 [isolated checks](docs/checks.md). CI requires `AI attributions`, `Lint` and `Test`.
 
 ## Delivery

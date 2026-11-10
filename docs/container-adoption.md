@@ -17,8 +17,11 @@ load check. Adoption remains held for a maintainer-approved admission profile or
 an explicit admission-semantics decision. The initial wrapper check alone does
 not establish compliance with Ada's per-start load policy.
 
-Manual Docker builds, tests and gates remain held pending authorization.
-Formatting, source inspection and static parsing do not establish runtime success.
+Local source verification is authorized through the existing detached receipt
+adapter and its browser proof. Generic public Make execution awaits the reviewed
+launcher update. This authorization does not adopt the proposal, change live
+runner control or authorize a manual bus departure. Static inspection alone does
+not establish runtime success.
 
 ## Runner compatibility
 
