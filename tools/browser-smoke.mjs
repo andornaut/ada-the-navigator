@@ -123,6 +123,14 @@ try {
   }
   events.checks.push("Settings pause movement and clear held input on resume");
 
+  await page.waitForFunction((key) => {
+    const status = document.querySelector("#game-status");
+    const saved = JSON.parse(localStorage.getItem(key));
+    return (
+      saved?.flight?.player?.x === Number(status.dataset.x) &&
+      saved?.flight?.player?.y === Number(status.dataset.y)
+    );
+  }, storageKey);
   const persisted = await readSave();
   assert.equal(persisted.version, 1);
   await page.reload();
