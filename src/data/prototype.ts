@@ -225,7 +225,7 @@ export const PROTOTYPE: PrototypeContent = {
     chapterComplete: "Chapter complete. You can keep exploring.",
     close: "Close",
     continue: "Continue",
-    deferred: "Story in development",
+    deferred: "Sector four: story in development",
     deliver: "Deliver",
     deposit: "Deposit",
     destinations: "Discovered destinations",
