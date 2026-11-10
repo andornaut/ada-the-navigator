@@ -454,12 +454,16 @@ describe("combat admission and subframe firing", () => {
   );
 });
 
-
 it("settles a translated route guard after destination relocation without resetting its combat state", () => {
   const flight = empty();
   flight.sector = 3;
   const destination: SpaceObject = {
-    hp: 1, id: "moving-route", kind: "destination", radius: 30, x: 10000, y: 10000,
+    hp: 1,
+    id: "moving-route",
+    kind: "destination",
+    radius: 30,
+    x: 10000,
+    y: 10000,
   };
   flight.objects.push(destination);
   const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
@@ -470,8 +474,12 @@ it("settles a translated route guard after destination relocation without resett
   const saved = structuredClone(guard.enemy!);
   const old = { x: destination.x, y: destination.y };
   const friendly: SpaceObject = {
-    hp: 1, id: "friendly", kind: "destination", radius: 30,
-    x: 400 + guard.x - old.x, y: -1024 + guard.y - old.y,
+    hp: 1,
+    id: "friendly",
+    kind: "destination",
+    radius: 30,
+    x: 400 + guard.x - old.x,
+    y: -1024 + guard.y - old.y,
   };
   flight.objects.push(friendly);
   const relocated = placeDestinationAhead(PROTOTYPE, destination.id, flight);
@@ -488,11 +496,16 @@ it("settles a translated route guard after destination relocation without resett
   expect(Math.hypot(guard.x - friendly.x, guard.y - friendly.y)).toBeLessThan(1e-6);
   settleRouteEncounters(PROTOTYPE, flight);
   for (const target of [relocated, friendly]) {
-    expect(Math.hypot(guard.x - target.x, guard.y - target.y) - guard.radius).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+    expect(
+      Math.hypot(guard.x - target.x, guard.y - target.y) - guard.radius,
+    ).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
   }
   expect(guard.enemy!.hardpoints).toEqual(saved.hardpoints);
   expect({
-    ...guard.enemy!, home: saved.home, position: saved.position, velocity: saved.velocity,
+    ...guard.enemy!,
+    home: saved.home,
+    position: saved.position,
+    velocity: saved.velocity,
   }).toEqual(saved);
   expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
   expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
