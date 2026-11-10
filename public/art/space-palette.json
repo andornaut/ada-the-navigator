@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "colors": {
+    "background": "#292734",
+    "environment": "#34333F",
+    "environmentDetail": "#403F4D",
+    "pointOfInterest": "#C4AFCC",
+    "obstacle": "#D68B72",
+    "active": "#65C9BF",
+    "weapon": "#F0BD68",
+    "shipHardpoint": "#70ACE8"
+  }
+}
