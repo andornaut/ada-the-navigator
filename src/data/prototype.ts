@@ -177,5 +177,6 @@ export const PROTOTYPE: PrototypeContent = {
     encounterFreshDistance: 600,
     safeRadius: 160,
     dangerReleaseSeconds: 3,
+    whaleDebris: { count: 3, radius: 24, hp: 3, spacing: 60 },
   },
 };
