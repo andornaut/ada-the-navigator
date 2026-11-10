@@ -298,3 +298,20 @@ describe("enemy rules", () => {
     expect(Math.hypot(ordinary.velocity.x, ordinary.velocity.y)).toBeCloseTo(80);
   });
 });
+
+
+it("counts dormant pack survivors for morale without exposing hidden positions to steering or fire", () => {
+  const state = { ...spawn("swarm"), packId: "pack" };
+  const context = {
+    ...observation(state), dormantPackMembers: { pack: 3 }, initialPackSizes: { pack: 4 },
+  };
+  const supported = stepEnemy(enemyCatalog.swarm, context, state);
+  expect(supported.state.fleeing).toBe(false);
+  expect(supported.fire).toHaveLength(1);
+  const losses = stepEnemy(enemyCatalog.swarm, { ...context, dormantPackMembers: { pack: 1 } }, state);
+  expect(losses.state.fleeing).toBe(true);
+  expect(losses.fire).toEqual([]);
+  const unknown = stepEnemy(enemyCatalog.swarm, { ...context, visibility: "unknown" }, state);
+  expect(unknown.state.lastSeen).toBeNull();
+  expect(unknown.fire).toEqual([]);
+});

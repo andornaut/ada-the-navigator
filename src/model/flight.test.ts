@@ -6,6 +6,7 @@ import {
   ensureDestination,
   placeDestinationAhead,
   stepFlight,
+  syncFlightRegion,
   teleport,
 } from "./flight.ts";
 import type { FlightInput, FlightState, SectorProgress } from "./types.ts";
@@ -198,4 +199,35 @@ it("stops movement and fresh exploration after released controls finish braking"
   stepFlight(PROTOTYPE, 1, idle, flight);
   expect(flight.player).toEqual(position);
   expect(flight.freshDistance).toBe(explored);
+});
+
+
+it("retains nonzero movement-facing through released coasting and rest before placing the next quest", () => {
+  const flight = empty();
+  stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
+  stepFlight(PROTOTYPE, 0.1, idle, flight);
+  expect(flight.velocity.x).toBeGreaterThan(0);
+  expect(flight.facing).toEqual({ x: 1, y: 0 });
+  stepFlight(PROTOTYPE, 4, idle, flight);
+  expect(flight.velocity).toEqual({ x: 0, y: 0 });
+  expect(flight.facing).toEqual({ x: 1, y: 0 });
+  const before = { ...flight.player };
+  const first = ensureDestination(PROTOTYPE, "growers", flight);
+  const second = ensureDestination(PROTOTYPE, "workshop", flight);
+  expect(first.x).toBeGreaterThan(before.x);
+  expect(second.x).toBeGreaterThan(before.x);
+  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+});
+
+it("places distinct quest destinations for legacy zero-facing saves without leaving them on the player", () => {
+  const flight = empty();
+  flight.facing = { x: 0, y: 0 };
+  const first = ensureDestination(PROTOTYPE, "growers", flight);
+  const second = ensureDestination(PROTOTYPE, "workshop", flight);
+  expect(first.y).toBeLessThan(flight.player.y);
+  expect(second.y).toBeLessThan(flight.player.y);
+  expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+  syncFlightRegion(PROTOTYPE, flight);
+  expect(flight.objects).toContain(first);
+  expect(flight.objects).toContain(second);
 });

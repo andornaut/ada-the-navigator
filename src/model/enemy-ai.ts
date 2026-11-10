@@ -25,6 +25,7 @@ export interface EnemyState {
   velocity: Point;
 }
 export interface EnemyContext {
+  dormantPackMembers?: Readonly<Record<string, number>>;
   adaSpeed: number;
   adaWidth: number;
   dt: number;
@@ -195,7 +196,7 @@ export function stepEnemy(
   const alive = context.peers.filter(
     (peer) =>
       peer.packId === state.packId && (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-  ).length;
+  ).length + (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
   const packFlee = packSize > 1 && 1 - alive / packSize >= definition.morale.packLossRatio;
   const next: EnemyState = {
     ...state,

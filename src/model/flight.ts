@@ -1,6 +1,9 @@
 import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
+import { activateFlightRegion, beginFlightStep, syncFlightRegion } from "./geography.ts";
+
+export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -36,20 +39,34 @@ function safe(content: PrototypeContent, point: Vec, flight: FlightState): boole
     (o) => o.kind === "destination" && distance(point, o) <= content.tuning.safeRadius,
   );
 }
+const chunkIndexes = new WeakMap<FlightState, { keys: Set<string>; length: number; source: string[] }>();
+function generatedChunks(flight: FlightState): Set<string> {
+  let index = chunkIndexes.get(flight);
+  if (!index || index.source !== flight.chunks || index.length !== flight.chunks.length) {
+    index = { keys: new Set(flight.chunks), length: flight.chunks.length, source: flight.chunks };
+    chunkIndexes.set(flight, index);
+  }
+  return index.keys;
+}
+
 function generate(content: PrototypeContent, point: Vec, flight: FlightState): void {
+  activateFlightRegion(content, point, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const weights = tuning.spawnWeights;
   const totalWeight = weights.resource + weights.rock + weights.enemy + weights.pickup;
+  const generated = generatedChunks(flight);
   const cx = Math.floor(point.x / size);
   const cy = Math.floor(point.y / size);
   for (let x = cx - 2; x <= cx + 2; x++) {
     for (let y = cy - 2; y <= cy + 2; y++) {
       const key = `${x},${y}`;
-      if (flight.chunks.includes(key)) {
+      if (generated.has(key)) {
         continue;
       }
       flight.chunks.push(key);
+      generated.add(key);
+      chunkIndexes.get(flight)!.length = flight.chunks.length;
       const next = random(hash(flight.seed, x, y));
       generateRegion(content, x, y, flight);
       for (let i = 0; i < tuning.objectsPerChunk; i++) {
@@ -276,7 +293,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
 export { relocateRouteGuards as settleRouteEncounters };
 
 export function routeBlocked(id: string, flight: FlightState): boolean {
-  return flight.objects.some(
+  return Boolean(flight.dormant?.routes.includes(id)) || flight.objects.some(
     (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
   );
 }
@@ -303,6 +320,7 @@ export function ensureRouteEncounter(
   }
   const archetype =
     flight.sector === 1 ? "frigate" : flight.sector === 2 ? "capital" : "oversizedCapital";
+  activateFlightRegion(content, destination, flight);
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
   const heading = direction({
     x: flight.player.x - destination.x,
@@ -321,6 +339,7 @@ export function ensureRouteEncounter(
   flight.objects.push(object);
   relocateRouteGuards(content, flight);
   combat(flight).routeEncounters.push(id);
+  syncFlightRegion(content, flight);
   return object;
 }
 
@@ -333,7 +352,8 @@ export function ensureDestination(
   if (existing) {
     return existing;
   }
-  const heading = direction(length(flight.velocity) ? flight.velocity : flight.facing);
+  const heading = direction(length(flight.velocity) ? flight.velocity :
+    length(flight.facing) ? flight.facing : { x: 0, y: -1 });
   const span = content.tuning.chunkSize * 2;
   const index = flight.objects.filter((o) => o.kind === "destination").length;
   const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * content.tuning.safeRadius * 2.5;
@@ -409,6 +429,7 @@ export function createFlight(
   for (const id of progress.known) {
     ensureDestination(content, id, flight);
   }
+  syncFlightRegion(content, flight);
   return flight;
 }
 
@@ -420,6 +441,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   if (!object) {
     return false;
   }
+  beginFlightStep(flight);
   generate(content, object, flight);
   flight.player = { x: object.x, y: object.y };
   flight.velocity = { x: 0, y: 0 };
@@ -431,6 +453,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   flight.shots = flight.shots.filter(
     (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
   );
+  syncFlightRegion(content, flight);
   return true;
 }
 
@@ -526,8 +549,8 @@ function move(
       }
     }
   }
-  if (!length(input.aim) && distance(start, flight.player) > 0.001) {
-    flight.facing = heading;
+  if (length(input.aim) <= 0.01 && distance(start, flight.player) > 0.001 && length(flight.velocity)) {
+    flight.facing = direction(flight.velocity);
   }
 }
 function enemies(
@@ -566,6 +589,7 @@ function enemies(
         adaSpeed: content.tuning.maxSpeed,
         adaWidth: content.tuning.flight.shipRadius * 2,
         dt,
+        dormantPackMembers: flight.dormant?.packMembers ?? {},
         initialPackSizes: combat(flight).initialPackSizes,
         peers,
         player: flight.player,
@@ -793,10 +817,12 @@ export function stepFlight(
   input: FlightInput,
   flight: FlightState,
 ): FlightEvent[] {
+  beginFlightStep(flight);
   const events: FlightEvent[] = [];
   if (!Number.isFinite(dt) || dt <= 0 || flight.shield <= 0) {
     return events;
   }
+  syncFlightRegion(content, flight);
   let remaining = dt;
   while (remaining > 1e-9 && flight.shield > 0) {
     const slice = Math.min(remaining, 1 / 60);
@@ -806,6 +832,7 @@ export function stepFlight(
     generate(content, flight.player, flight);
     moveDebris(content, slice, flight);
     move(content, slice, input, flight);
+    syncFlightRegion(content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
       flight.facing = direction(input.aim);
@@ -866,6 +893,7 @@ export function stepFlight(
       events.push({ type: "depleted" });
     }
   }
+  syncFlightRegion(content, flight);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&
