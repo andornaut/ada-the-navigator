@@ -12,8 +12,7 @@ It is not modified to add local behavior. No Docker proxy is used. Non-writable
 execution creates the `/work` tmpfs with the runtime UID and GID, so scratch Git
 uses actual workspace ownership without a `safe.directory` override.
 
-The repository wrapper rejects initial load at or above 20. The approved launcher
-also invokes executable `tests/container/admit` before image building and before
+The approved launcher invokes executable `tests/container/admit` before image building and before
 every category start. The callback rejects load at or above 20 and emits phase
 and load evidence; the launcher gives it five seconds. This resolves the per-start
 resource admission blocker without a Docker proxy or local launcher changes.

@@ -12,7 +12,7 @@ export CHECK_TIMEOUT_SECONDS CHECK_MEMORY CHECK_SCRATCH_SIZE CHECK_WORK_SIZE CHE
 .PHONY: check check-info lint test build
 
 check lint test build:
-	@node tools/container-host.mjs $@
+	@./tests/container/run $@
 
 check-info:
-	@node tools/container-host.mjs info
+	@./tests/container/run info
