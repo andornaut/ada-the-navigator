@@ -148,20 +148,31 @@ Leaving a sector and re-entering generates a new layout seed. Story progress,
 known destinations, deposited resources and achievements persist. Carried cargo
 and weapon pickups reset. Known destinations remain usable despite regeneration.
 
-Closing the game is not leaving the sector: resume the same flight losslessly,
-including its layout, cargo, owned and selected weapons, shield and active and
-dormant object state.
+Closing the game is not leaving the sector: resume the same flight with exact
+important state and current nearby space, cargo, owned and selected weapons and
+shield. Disposed ordinary history is not part of that exact-resume guarantee.
 Save durable milestones as they occur.
 
-The active simulation window is bounded. Outside it, inactive enemy AI and debris
-retain their exact state without advancing movement or cooldowns. Reactivation
-applies no catch-up damage or elapsed-time simulation. Projectiles remain globally
-owned exactly once and expire after a finite lifetime; they are not dormant copies.
-Unloading is not defeat, a resource drop, a pack casualty or a feedback event.
+Preauthored chunk shapes, contents and points of interest assemble near Ada.
+They provide the existing sector variety of open areas, asteroid clusters and
+narrow passages without adding stories or indoor transitions. Active and generation
+distances are provisional tuning: three chunks for active space and two for
+nearby generation. Retention depends on distance, not elapsed time.
 
-Generated chunks retain consumed-state tombstones so revisiting does not reroll
-encounters or restore collected or destroyed objects. Saved visited history grows
-with exploration even though the active simulation window remains bounded.
+Ordinary scenery and trash may be discarded beyond the retention distance and
+regenerated on backtracking. Bound ordinary chunk, explored-chunk and pack-history
+metadata as well as active simulation. Persistent meaningful history can still grow;
+save size is not independent of completed interactions and important encounters.
+
+Retain frigates and capital ships independently of disposable chunks, including
+mutable hardpoints, AI state and destroyed-ship tombstones. Interacted NPC state,
+story, quests, routes and destinations also persist independently of those chunks.
+Important guards must not reroll or disappear to bypass a required fight.
+
+Retained inactive AI and debris freeze without advancing movement or cooldowns.
+Reactivation applies no catch-up damage or elapsed-time simulation. Projectiles
+remain globally owned exactly once and expire after a finite lifetime.
+Unloading is not defeat, a resource drop, a pack casualty or a feedback event.
 
 Destinations and quest debris remain accessible. Dormant required guards still
 block their routes. Wake a required guard before relocating its pending destination,
