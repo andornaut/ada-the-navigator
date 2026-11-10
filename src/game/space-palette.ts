@@ -64,6 +64,7 @@ export function spaceObjectColor(palette: SpacePalette, object: SpaceObject): nu
     case "rock":
       return palette.environmentDetail;
   }
+  return palette.environmentDetail;
 }
 
 export function spaceColorCss(color: number): string {
