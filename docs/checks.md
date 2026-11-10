@@ -29,11 +29,11 @@ The cached dependencies remain read-only. Inner setup creates a writable
 `.vite/` and `.vite-temp/` in scratch. Inner lint initializes scratch Git for the
 actual Husky dispatcher; no host Git metadata is mounted.
 
-The repository wrapper checks load before entering the launcher. The launcher
-calls `tests/container/admit` before image building and every category start,
+Make enters the canonical launcher directly. The launcher calls `tests/container/admit` before image building and every category start,
 with a five-second callback limit. The callback reports the phase and load, and
-rejects load at or above 20. Local Make verification is authorized; source
-publication and runner adoption remain held. See
+rejects load at or above 20. Local Make verification is authorized. Ready compatible CI packages may be
+published with exact-commit CI verification; this migration requires atomic
+gate-step and resident compatibility review. See
 [adoption requirements](container-adoption.md).
 
 ## Detached receipt compatibility
