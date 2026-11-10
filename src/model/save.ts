@@ -1,3 +1,4 @@
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { GameState } from "./types.ts";
 
 /** Storage access can fail in private browsing or when quotas are exhausted. */
@@ -35,6 +36,48 @@ const destinationIds: Record<number, readonly string[]> = {
 };
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
+}
+function enemyState(value: unknown): boolean {
+  if (
+    !record(value) ||
+    typeof value.archetype !== "string" ||
+    !Object.hasOwn(enemyCatalog, value.archetype) ||
+    typeof value.id !== "string" ||
+    !(value.packId === null || typeof value.packId === "string") ||
+    !["engaged", "fleeing", "returning"].every((key) => typeof value[key] === "boolean") ||
+    !["home", "position", "velocity"].every((key) => vector(value[key])) ||
+    !(value.lastSeen === null || vector(value.lastSeen)) ||
+    !["age", "hp", "lastSeenAge", "primaryCooldown", "pursuitSeconds"].every((key) =>
+      nonnegative(value[key]),
+    ) ||
+    !finite(value.phase) ||
+    !Array.isArray(value.hardpoints)
+  ) {
+    return false;
+  }
+  const definition = enemyCatalog[value.archetype as keyof typeof enemyCatalog];
+  const hardpoints: unknown[] = value.hardpoints;
+  return (
+    hardpoints.length === definition.hardpoints.length &&
+    definition.hardpoints.every(
+      (part) =>
+        hardpoints.filter((entry) => record(entry) && entry.id === part.id).length === 1,
+    ) &&
+    hardpoints.every(
+      (part) => record(part) && nonnegative(part.hp) && nonnegative(part.cooldown),
+    )
+  );
+}
+function combatState(routes: readonly string[], value: unknown): boolean {
+  return (
+    record(value) &&
+    record(value.initialPackSizes) &&
+    Object.values(value.initialPackSizes).every(
+      (size) => Number.isInteger(size) && nonnegative(size),
+    ) &&
+    strings(value.routeEncounters) &&
+    (value.routeEncounters as string[]).every((id) => routes.includes(id))
+  );
 }
 /** Accept only complete snapshots; a partial restore can invalidate quest state. */
 export function restoreSave(saved: unknown): GameState | null {
@@ -115,6 +158,10 @@ export function restoreSave(saved: unknown): GameState | null {
       ) {
         return null;
       }
+      const routes = destinationIds[value.selectedSector as number] ?? [];
+      if (f.combat !== undefined && !combatState(routes, f.combat)) {
+        return null;
+      }
       if (!(f.freshChunk === null || typeof f.freshChunk === "string")) {
         return null;
       }
@@ -135,6 +182,14 @@ export function restoreSave(saved: unknown): GameState | null {
             ["rock", "resource", "enemy", "hazard", "pickup", "destination", "debris"].includes(
               String(o.kind),
             ) &&
+            (o.routeId === undefined ||
+              (typeof o.routeId === "string" && routes.includes(o.routeId))) &&
+            (o.velocity === undefined || vector(o.velocity)) &&
+            (o.enemy === undefined ||
+              (o.kind === "enemy" &&
+                enemyState(o.enemy) &&
+                record(o.enemy) &&
+                o.enemy.id === o.id)) &&
             nonnegative(o.radius) &&
             finite(o.hp) &&
             (o.role === undefined || typeof o.role === "string") &&
@@ -156,6 +211,7 @@ export function restoreSave(saved: unknown): GameState | null {
             typeof s.id === "string" &&
             typeof s.enemy === "boolean" &&
             typeof s.piercing === "boolean" &&
+            (s.projectile === undefined || s.projectile === "bolt" || s.projectile === "missile") &&
             finite(s.life) &&
             strings(s.hitIds),
         )
