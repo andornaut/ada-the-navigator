@@ -1,13 +1,12 @@
 import type { Weapon } from "../data/types.ts";
 
 export interface WeaponChoice {
-  readonly ammo: number | null;
+  readonly ammo: null;
   readonly id: Weapon;
   readonly selected: boolean;
 }
 
 export interface WeaponLabels {
-  readonly ammo: string;
   readonly group: string;
   readonly names: Readonly<Record<Weapon, string>>;
 }
@@ -32,7 +31,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   root.setAttribute("aria-label", options.labels.group);
   root.hidden = true;
   parent.append(root);
-  const buttons = new Map<Weapon, { button: HTMLButtonElement; count: HTMLSpanElement }>();
+  const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
   let enabled = false;
 
@@ -41,7 +40,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     const ids = new Set(choices.map((choice) => choice.id));
     for (const [id, entry] of buttons) {
       if (!ids.has(id)) {
-        entry.button.remove();
+        entry.remove();
         buttons.delete(id);
       }
     }
@@ -58,28 +57,21 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", GLYPHS[choice.id]);
         glyph.append(path);
-        const count = document.createElement("span");
-        count.setAttribute("aria-hidden", "true");
-        button.append(glyph, count);
+        button.append(glyph);
         button.addEventListener("click", () => {
           if (enabled && !button.disabled) {
             options.onSelect(choice.id);
           }
         });
         root.append(button);
-        entry = { button, count };
+        entry = button;
         buttons.set(choice.id, entry);
       }
       const name = options.labels.names[choice.id];
-      const label = choice.ammo === null ? name : `${name}, ${options.labels.ammo}: ${choice.ammo}`;
-      entry.button.setAttribute("aria-label", label);
-      entry.button.setAttribute("aria-pressed", String(choice.selected));
-      entry.button.title = name;
-      entry.button.disabled = !enabled || (choice.ammo !== null && choice.ammo <= 0);
-      const count = choice.ammo === null ? "" : String(choice.ammo);
-      if (entry.count.textContent !== count) {
-        entry.count.textContent = count;
-      }
+      entry.setAttribute("aria-label", name);
+      entry.setAttribute("aria-pressed", String(choice.selected));
+      entry.title = name;
+      entry.disabled = !enabled;
     }
   };
   return {

@@ -135,8 +135,8 @@ export class PrototypeScene extends Phaser.Scene {
           apply(() => this.model.selectWeapon(weapon));
         }
       },
+      shieldLabel: PROTOTYPE.labels.shield ?? "",
       weaponLabels: {
-        ammo: PROTOTYPE.labels.ammo ?? "",
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
           basic: PROTOTYPE.labels.weaponBasic ?? "",
@@ -219,6 +219,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.controls.setWeapons(this.model.weapons());
+    this.controls.setShield(PROTOTYPE.tuning.shieldMax, state.flight?.shield ?? 0);
     this.shell.render(state, {
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,

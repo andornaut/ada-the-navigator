@@ -9,6 +9,7 @@ import type { Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
+import { createShieldMeter } from "../ui/shield.ts";
 import { drawSticks } from "../ui/sticks.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
@@ -20,6 +21,7 @@ export interface ControlsOptions {
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
   readonly onWeaponSelect: (weapon: Weapon) => void;
+  readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;
 }
 
@@ -31,6 +33,7 @@ export interface Controls {
   sample(): ControlSample;
   setContext(label: string | undefined): void;
   setEnabled(enabled: boolean): void;
+  setShield(maximum: number, shield: number): void;
   setWeapons(weapons: readonly WeaponChoice[]): void;
 }
 
@@ -90,6 +93,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
     },
   });
+  const shield = createShieldMeter(options.shieldLabel, settings.root);
   const graphics = scene.add.graphics().setScrollFactor(0).setDepth(10000);
   const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
   scene.cameras.main.ignore(graphics);
@@ -200,6 +204,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       disposed = true;
       stopPointers();
       state.setEnabled(false);
+      shield.dispose();
       weapons.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
@@ -232,8 +237,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       enabled = value;
       state.setEnabled(value);
       weapons.setEnabled(value && !settings.isOpen());
+      shield.setEnabled(value);
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
+    setShield: (maximum, value) => shield.setShield(maximum, value),
     setWeapons: (choices) => weapons.setWeapons(choices),
   };
   scene.events.once("shutdown", controls.dispose);

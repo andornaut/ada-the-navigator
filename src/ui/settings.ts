@@ -104,9 +104,7 @@ const STYLE = `
   padding:2px;
   display:grid;
   justify-items:center;
-  align-content:center;
-  font-size:12px;
-  line-height:14px
+  align-content:center
 }
 
 .ada-controls .ada-weapon-selector button[aria-pressed=true]{
@@ -131,6 +129,24 @@ const STYLE = `
   fill:none;
   stroke:currentColor;
   stroke-width:2
+}
+
+.ada-controls .ada-shield-meter{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:3px;
+  background:#525252;
+  pointer-events:none
+}
+
+.ada-controls .ada-shield-meter span{
+  display:block;
+  height:100%;
+  width:100%;
+  background:#fff;
+  transform-origin:left center
 }
 
 .ada-controls [data-control]{
