@@ -30,23 +30,26 @@ try {
   page = await context.newPage();
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
-  page.on("pageerror", (error) => events.errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      events.errors.push(message.text());
-    }
-  });
-  page.on("requestfailed", (request) =>
-    events.failedRequests.push({
-      url: request.url(),
-      error: request.failure()?.errorText,
-    }),
-  );
-  page.on("response", (response) => {
-    if (response.status() >= 400) {
-      events.badResponses.push({ url: response.url(), status: response.status() });
-    }
-  });
+  function observe(observed) {
+    observed.on("pageerror", (error) => events.errors.push(error.message));
+    observed.on("console", (message) => {
+      if (message.type() === "error") {
+        events.errors.push(message.text());
+      }
+    });
+    observed.on("requestfailed", (request) =>
+      events.failedRequests.push({
+        url: request.url(),
+        error: request.failure()?.errorText,
+      }),
+    );
+    observed.on("response", (response) => {
+      if (response.status() >= 400) {
+        events.badResponses.push({ url: response.url(), status: response.status() });
+      }
+    });
+  }
+  observe(page);
   // No outside requests are needed to render the built prototype.
   await context.route("**/*", (route) => {
     if (new URL(route.request().url()).origin === "http://ada-preview:4173") {
@@ -62,6 +65,58 @@ try {
     await page.locator("canvas").evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
   );
   events.checks.push("Real renderer and accessible home status");
+  async function frameProof(portrait = false) {
+    const frame = await page.locator("canvas").evaluate((canvas) => {
+      const bounds = canvas.getBoundingClientRect();
+      const style = getComputedStyle(document.body);
+      const matrix = new DOMMatrixReadOnly(
+        style.transform === "none" ? undefined : style.transform,
+      );
+      return {
+        intrinsic: { width: canvas.width, height: canvas.height },
+        bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+        body: { width: document.body.clientWidth, height: document.body.clientHeight },
+        rotation: { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d },
+        imageRendering: getComputedStyle(canvas).imageRendering,
+        viewport: { width: innerWidth, height: innerHeight },
+      };
+    });
+    assert.ok(frame.intrinsic.width >= 720 && frame.intrinsic.height >= 360);
+    assert.ok(
+      Math.abs(frame.intrinsic.width - 720) <= 1 || Math.abs(frame.intrinsic.height - 360) <= 1,
+      "EXPAND must preserve one logical base dimension of 720x360",
+    );
+    const displayRatio = portrait
+      ? frame.bounds.height / frame.bounds.width
+      : frame.bounds.width / frame.bounds.height;
+    assert.ok(
+      Math.abs(frame.intrinsic.width / frame.intrinsic.height - displayRatio) < 0.02,
+      "Canvas base dimensions and CSS display must scale uniformly",
+    );
+    assert.ok(["pixelated", "crisp-edges"].includes(frame.imageRendering));
+    if (portrait) {
+      assert.ok(Math.abs(frame.rotation.a) < 0.001 && Math.abs(frame.rotation.d) < 0.001);
+      assert.ok(Math.abs(Math.abs(frame.rotation.b) - 1) < 0.001);
+      assert.ok(Math.abs(frame.rotation.b + frame.rotation.c) < 0.001);
+      assert.ok(
+        frame.body.width > frame.body.height,
+        "Portrait body must retain a landscape frame",
+      );
+      assert.ok(
+        frame.bounds.height > frame.bounds.width,
+        "Landscape canvas must turn into portrait",
+      );
+      assert.ok(Math.abs(frame.bounds.x) < 3 && Math.abs(frame.bounds.y) < 3);
+      assert.ok(Math.abs(frame.bounds.width - frame.viewport.width) < 3);
+      assert.ok(Math.abs(frame.bounds.height - frame.viewport.height) < 3);
+    } else {
+      assert.ok(Math.abs(frame.rotation.a - 1) < 0.001 && Math.abs(frame.rotation.b) < 0.001);
+      assert.ok(frame.bounds.width > frame.bounds.height);
+    }
+    return frame;
+  }
+  save("desktop-frame.json", await frameProof());
+  events.checks.push("Desktop canvas preserves the 720x360 EXPAND base and pixel-art scaling");
 
   await page.locator('[data-action="start-sector"][data-sector="1"]').click();
   async function enterFlight(remaining) {
@@ -402,33 +457,53 @@ try {
   const canvas = page.locator("canvas");
   await canvas.waitFor({ state: "visible" });
   const combatImage = await canvas.screenshot({ path: `${output}/combat-canvas.png` });
-  const pixels = await page.evaluate(async (encoded) => {
-    const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-    const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
-    const sample = document.createElement("canvas");
-    sample.width = bitmap.width;
-    sample.height = bitmap.height;
-    const drawing = sample.getContext("2d");
-    drawing.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    // The ship is centered. These regions exclude it, the HUD and dim background markers.
-    const regions = {
-      capital: { x: 200, y: 200, width: 300, height: 300 },
-      missile: { x: 780, y: 235, width: 90, height: 70 },
-    };
-    return Object.fromEntries(
-      Object.entries(regions).map(([name, region]) => {
-        const image = drawing.getImageData(region.x, region.y, region.width, region.height);
-        let bright = 0;
-        for (let offset = 0; offset < image.data.length; offset += 4) {
-          if (Math.min(...image.data.slice(offset, offset + 3)) > 140) {
-            bright++;
+  const intrinsic = await canvas.evaluate((element) => ({
+    width: element.width,
+    height: element.height,
+  }));
+  const pixels = await page.evaluate(
+    async ({ encoded, intrinsic }) => {
+      const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+      const sample = document.createElement("canvas");
+      sample.width = bitmap.width;
+      sample.height = bitmap.height;
+      const drawing = sample.getContext("2d");
+      drawing.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
+      const regions = {
+        capital: { x: 10, y: 130, width: 140, height: 125 },
+        missile: { x: 510, y: 65, width: 65, height: 55 },
+      };
+      return Object.fromEntries(
+        Object.entries(regions).map(([name, region]) => {
+          const scaleX = sample.width / intrinsic.width;
+          const scaleY = sample.height / intrinsic.height;
+          const bitmapRegion = {
+            x: Math.floor((region.x + Math.max(0, (intrinsic.width - 720) / 2)) * scaleX),
+            y: Math.floor(region.y * scaleY),
+            width: Math.max(1, Math.floor(region.width * scaleX)),
+            height: Math.max(1, Math.floor(region.height * scaleY)),
+          };
+          const image = drawing.getImageData(
+            bitmapRegion.x,
+            bitmapRegion.y,
+            bitmapRegion.width,
+            bitmapRegion.height,
+          );
+          let bright = 0;
+          for (let offset = 0; offset < image.data.length; offset += 4) {
+            if (Math.min(...image.data.slice(offset, offset + 3)) > 140) {
+              bright++;
+            }
           }
-        }
-        return [name, { ...region, bright }];
-      }),
-    );
-  }, combatImage.toString("base64"));
+          return [name, { logical: region, bitmap: bitmapRegion, bright }];
+        }),
+      );
+    },
+    { encoded: combatImage.toString("base64"), intrinsic },
+  );
   assert.ok(pixels.capital.bright > 20, "Large-enemy region must contain rendered geometry");
   assert.ok(pixels.missile.bright > 2, "Seeded missile region must contain rendered geometry");
   await page.screenshot({ path: `${output}/combat.png` });
@@ -475,6 +550,119 @@ try {
     toggles,
   });
   events.checks.push("Canonical sound and screen-shake controls toggle and retain dialog state");
+  const portraitContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 2,
+  });
+  await portraitContext.route("**/*", (route) =>
+    new URL(route.request().url()).origin === "http://ada-preview:4173"
+      ? route.continue()
+      : route.abort("blockedbyclient"),
+  );
+  await portraitContext.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
+    key: storageKey,
+    value: safeSerialized,
+  });
+  page = await portraitContext.newPage();
+  page.setDefaultTimeout(10000);
+  page.setDefaultNavigationTimeout(15000);
+  observe(page);
+  assert.equal((await page.goto("http://ada-preview:4173/")).status(), 200);
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page.locator('[data-control="aim-joystick"]').waitFor({ state: "visible" });
+  // Wait for the kit/Phaser viewport synchronization after its first painted frame.
+  await page.waitForFunction(() => {
+    const transform = getComputedStyle(document.body).transform;
+    return transform !== "none" && Math.abs(new DOMMatrixReadOnly(transform).b) > 0.99;
+  });
+  const portraitFrame = await frameProof(true);
+  await page
+    .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
+    .waitFor({ state: "visible" });
+  const portraitBefore = await position();
+  const portraitBounds = await Promise.all(
+    ["move", "aim"].map((side) => page.locator(`[data-control="${side}-joystick"]`).boundingBox()),
+  );
+  assert.ok(portraitBounds.every((box) => box && box.width > 0 && box.height > 0));
+  const portraitOrigins = portraitBounds.map((box, index) => ({
+    id: index + 11,
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+    radiusX: 8,
+    radiusY: 8,
+    force: 1,
+  }));
+  const portraitTouch = await portraitContext.newCDPSession(page);
+  await portraitTouch.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: portraitOrigins,
+  });
+  let portraitHeld;
+  try {
+    const { a, b, c, d } = portraitFrame.rotation;
+    const deflected = portraitOrigins.map((point, index) => ({
+      ...point,
+      x: point.x + (index === 0 ? a * 25 : -c * 25),
+      y: point.y + (index === 0 ? b * 25 : -d * 25),
+    }));
+    await portraitTouch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: deflected,
+    });
+    await page.waitForFunction(
+      ({ before, key }) => {
+        const flight = JSON.parse(localStorage.getItem(key))?.flight;
+        return (
+          flight &&
+          flight.player.x > before.x &&
+          flight.player.y < before.y &&
+          flight.shots.some((shot) => !shot.enemy && shot.velocity.x < 0 && shot.velocity.y < 0)
+        );
+      },
+      { before: portraitBefore, key: storageKey },
+    );
+    portraitHeld = (await readSave()).flight;
+    await page.screenshot({ path: `${output}/portrait-touch.png` });
+  } finally {
+    await portraitTouch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await portraitTouch.detach();
+  }
+  const portraitRest = await waitForRest(await position());
+  await page.waitForFunction(
+    (key) => !JSON.parse(localStorage.getItem(key)).flight.shots.some((shot) => !shot.enemy),
+    storageKey,
+  );
+  await page.waitForTimeout(300);
+  assert.deepEqual(
+    await position(),
+    portraitRest,
+    "Portrait touch release cancels mapped movement",
+  );
+  await page.locator('[data-action="settings"]').click();
+  await page
+    .getByRole("checkbox", { name: PROTOTYPE.labels.sound, exact: true })
+    .waitFor({ state: "visible" });
+  await page
+    .getByRole("checkbox", { name: PROTOTYPE.labels.screenShake, exact: true })
+    .waitFor({ state: "visible" });
+  await page.screenshot({ path: `${output}/portrait-settings.png` });
+  await page.locator('[data-action="close-settings"]').click();
+  save("portrait-proof.json", {
+    scope:
+      "Real mobile context, landscape frame rotation and mapped twin-touch input using the canonical safe-destination fixture",
+    frame: portraitFrame,
+    before: portraitBefore,
+    held: portraitHeld,
+    released: portraitRest,
+  });
+  events.checks.push(
+    "Portrait mobile context rotates the landscape frame and maps native twin-touch movement/aim/release",
+  );
+  events.checks.push(
+    "Portrait settings and contextual action remain accessible in the turned frame",
+  );
   assert.deepEqual(events.errors, [], "No browser runtime or console errors");
   assert.deepEqual(events.failedRequests, [], "No failed asset requests");
   assert.deepEqual(events.badResponses, [], "No failed HTTP responses");
