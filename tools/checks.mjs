@@ -1,0 +1,270 @@
+import { spawnSync } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
+import { lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { loadavg } from "node:os";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = fileURLToPath(new URL("..", import.meta.url));
+const results = resolve(root, ".check-results");
+
+function run(command, args) {
+  const result = spawnSync(command, args, { cwd: root, encoding: "utf8" });
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(`${command}: ${result.stderr}`);
+  }
+  return result.stdout.trim();
+}
+
+function snapshot() {
+  const candidates = run("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
+    .split("\0")
+    .filter(Boolean)
+    .filter((name) => !name.startsWith(".check-results/"));
+  const rootNames = new Set([
+    "package.json",
+    "package-lock.json",
+    "delivery-kit.json",
+    "index.html",
+    "README.md",
+    "LICENSE",
+    ".nvmrc",
+    ".node-version",
+    ".gitignore",
+    ".prettierignore",
+    ".prettierrc",
+    ".prettierrc.json",
+    ".markdownlint.json",
+    ".markdownlint.jsonc",
+    ".markdownlint-cli2.jsonc",
+    ".markdownlint-cli2.yaml",
+    "eslint.config.mjs",
+    "eslint.config.base.mjs",
+    "lint-staged.config.mjs",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "tsconfig.json",
+    "tsconfig.node.json",
+    "wrangler.jsonc",
+  ]);
+  const folders = new Set([
+    "src",
+    "tools",
+    "docs",
+    "art",
+    "gameplay",
+    "public",
+    ".github",
+    ".husky",
+  ]);
+  const files = candidates
+    .filter((name) => {
+      if (rootNames.has(name)) {
+        return true;
+      }
+      const [folder, ...parts] = name.split("/");
+      return (
+        folders.has(folder) &&
+        parts.length > 0 &&
+        parts.every(
+          (part) =>
+            !part.startsWith(".") &&
+            part !== "node_modules" &&
+            !/^(?:AGENTS|CLAUDE|GEMINI)(?:\.local)?\.md$|secret|credential|\.(?:pem|key|p12|pfx|age|gpg|vault)$/i.test(
+              part,
+            ),
+        )
+      );
+    })
+    .sort();
+  const unsupported = candidates.filter(
+    (name) => !files.includes(name) && !/^(?:AGENTS|CLAUDE|GEMINI)(?:\.local)?\.md$/.test(name),
+  );
+  if (unsupported.length) {
+    throw new Error(`Unsupported source paths: ${unsupported.join(", ")}`);
+  }
+  const hash = createHash("sha256");
+  hash.update(
+    run("git", [
+      "status",
+      "--porcelain=v1",
+      "-z",
+      "--untracked-files=all",
+      "--",
+      ".",
+      ":(exclude).check-results",
+    ]),
+  );
+  for (const name of files) {
+    hash.update(name);
+    try {
+      if (!lstatSync(resolve(root, name)).isFile()) {
+        throw new Error(`Non-regular source: ${name}`);
+      }
+      hash.update(readFileSync(resolve(root, name)));
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        throw error;
+      }
+      hash.update("deleted");
+    }
+  }
+  return { files, fingerprint: hash.digest("hex") };
+}
+
+function guard(ci) {
+  if (ci) {
+    if (
+      process.env.GITHUB_ACTIONS !== "true" ||
+      process.env.RUNNER_ENVIRONMENT !== "github-hosted"
+    ) {
+      throw new Error("--ci requires a GitHub-hosted runner");
+    }
+    return;
+  }
+  const minute = Number(
+    new Intl.DateTimeFormat("en", { timeZone: "America/Toronto", minute: "2-digit" }).format(
+      new Date(),
+    ),
+  );
+  if (minute >= 50 || minute < 15 || loadavg()[0] >= 20) {
+    throw new Error("Start blocked: Toronto :50 to :15 or load >=20");
+  }
+}
+
+const program = `
+const {cpSync,mkdirSync,writeFileSync,openSync,existsSync} = await import('node:fs');
+const {dirname} = await import('node:path');
+const {spawnSync} = await import('node:child_process');
+mkdirSync('/tmp/work',{recursive:true});
+mkdirSync('/tmp/evidence',{recursive:true});
+const log = openSync('/tmp/evidence/check.log','w');
+let code = 0;
+try {
+  for (const name of JSON.parse(Buffer.from(process.env.SOURCE_FILES,'base64').toString())) {
+    if (!existsSync('/checkout/'+name)) continue;
+    mkdirSync(dirname('/tmp/work/'+name),{recursive:true});
+    cpSync('/checkout/'+name,'/tmp/work/'+name,{dereference:false});
+  }
+  for (const [command,...args] of JSON.parse(process.env.CHECK_STEPS)) {
+    const result = spawnSync(command,args,{cwd:'/tmp/work',env:process.env,stdio:['ignore',log,log]});
+    if (result.error || result.status !== 0) {code=result.status || 1;break;}
+  }
+  if (existsSync('/tmp/work/dist')) cpSync('/tmp/work/dist','/tmp/evidence/dist',{recursive:true});
+} catch(error) {writeFileSync('/tmp/evidence/error.txt',error.message);code=1;}
+writeFileSync('/tmp/evidence/result.json',JSON.stringify({code})+'\\n');
+process.exitCode=code;
+`;
+
+function start(mode, ci) {
+  if (!["all", "lint", "test"].includes(mode)) {
+    throw new Error("Unknown check mode");
+  }
+  guard(ci);
+  const source = snapshot();
+  const name = `ada-check-${randomUUID()}`;
+  mkdirSync(resolve(results, name), { recursive: true });
+  writeFileSync(resolve(results, name, "source.json"), `${JSON.stringify(source, null, 2)}\n`);
+  const steps = [
+    ["git", "init", "--quiet"],
+    ["npm", "ci"],
+    ["node", "tools/hooks-smoke.mjs"],
+  ];
+  if (mode !== "test") {
+    steps.push(["npm", "run", "lint"]);
+  }
+  if (mode !== "lint") {
+    steps.push(
+      ["npm", "run", "check"],
+      ["npm", "test", "--", "--maxWorkers=4"],
+      ["npm", "run", "build"],
+    );
+  }
+  guard(ci);
+  run("docker", [
+    "create",
+    "--name",
+    name,
+    "--cpus",
+    "4",
+    "--memory",
+    "4g",
+    "--pids-limit",
+    "512",
+    "--user",
+    "19001:19001",
+    "--group-add",
+    run("stat", ["-c", "%g", root]),
+    "--cap-drop",
+    "ALL",
+    "--security-opt",
+    "no-new-privileges",
+    "--mount",
+    `type=bind,source=${root},target=/checkout,readonly`,
+    "--env",
+    "HOME=/tmp",
+    "--env",
+    "CI=true",
+    "--env",
+    `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
+    "--env",
+    `CHECK_STEPS=${JSON.stringify(steps)}`,
+    "node:24.21.0",
+    "node",
+    "--input-type=module",
+    "-e",
+    program,
+  ]);
+  guard(ci);
+  run("docker", ["start", name]);
+  console.log(name);
+}
+
+function collect(name) {
+  if (!/^ada-check-[a-f0-9-]{36}$/.test(name ?? "")) {
+    throw new Error("Invalid check name");
+  }
+  const state = JSON.parse(run("docker", ["inspect", "--format", "{{json .State}}", name]));
+  if (state.Running) {
+    process.exitCode = 75;
+    return;
+  }
+  const directory = resolve(results, name);
+  run("docker", ["cp", `${name}:/tmp/evidence/.`, directory]);
+  const before = JSON.parse(readFileSync(resolve(directory, "source.json"), "utf8"));
+  const after = snapshot();
+  const stable = before.fingerprint === after.fingerprint;
+  const verification = {
+    stable,
+    before: before.fingerprint,
+    after: after.fingerprint,
+    exitCode: state.ExitCode,
+  };
+  writeFileSync(
+    resolve(directory, "verification.json"),
+    `${JSON.stringify(verification, null, 2)}\n`,
+  );
+  run("docker", ["rm", name]);
+  console.log(directory);
+  if (!stable) {
+    throw new Error("Source changed during checks: discard results");
+  }
+  process.exitCode = state.ExitCode;
+}
+
+try {
+  const [command, argument, flag] = process.argv.slice(2);
+  if (command === "start") {
+    start(argument ?? "all", flag === "--ci");
+  } else if (command === "collect") {
+    collect(argument);
+  } else {
+    throw new Error("Usage: node tools/checks.mjs start [all|lint|test] [--ci] | collect <name>");
+  }
+} catch (error) {
+  console.error(error.message);
+  process.exitCode = 1;
+}

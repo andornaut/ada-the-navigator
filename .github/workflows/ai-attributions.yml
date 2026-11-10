@@ -1,0 +1,34 @@
+name: AI attributions
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+# The scan needs repository history but no write access.
+permissions:
+  contents: read
+
+concurrency:
+  group: attributions-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  ai-attributions:
+    name: AI attributions
+    runs-on: ubuntu-latest
+    # Bound a history scan well below the delivery CI deadline.
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Scan attribution
+        uses: andornaut/ai-attributions@v1
+        with:
+          agents-files: true
+          emdashes: true

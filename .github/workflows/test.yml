@@ -1,0 +1,65 @@
+name: Checks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+# Checks read source and publish no repository changes.
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.event_name }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    # Leave two minutes before the delivery CI polling deadline.
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            mode: lint
+          - name: Test
+            mode: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up orchestration Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.21.0
+      - name: Start isolated checks
+        id: start
+        run: |
+          name=$(node tools/checks.mjs start ${{ matrix.mode }} --ci)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Collect isolated checks
+        run: |
+          while true; do
+            set +e
+            node tools/checks.mjs collect '${{ steps.start.outputs.name }}'
+            status=$?
+            set -e
+            if [ "$status" -ne 75 ]; then
+              exit "$status"
+            fi
+            sleep 10
+          done
+      - name: Preserve check evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: checks-${{ matrix.mode }}
+          path: .check-results/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
