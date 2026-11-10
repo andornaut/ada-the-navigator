@@ -174,9 +174,10 @@ hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
 firing; a disabled engine stops movement. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.
 
-The exact enemy speed envelope and placement of large ships on required routes
-remain pending decisions. This encounter expansion does not define sector four's
-story or conclusion.
+Most enemy ships remain at or below Ada's speed. Selected small ships can reach
+110% of her speed, with a finite pursuit range. Frigates and capital ships can
+block required quest routes in the first three sectors. This encounter expansion
+does not define sector four's story or conclusion.
 
 ## Verification priorities
 
