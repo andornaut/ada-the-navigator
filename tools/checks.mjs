@@ -44,6 +44,7 @@ export function snapshot() {
     "eslint.config.mjs",
     "eslint.config.base.mjs",
     "lint-staged.config.mjs",
+    ".lintstagedrc",
     "vite.config.ts",
     "vitest.config.ts",
     "tsconfig.json",
