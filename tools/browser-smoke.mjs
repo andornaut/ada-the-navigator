@@ -334,7 +334,8 @@ try {
   await page.locator('[data-action="close-settings"]').click();
   await contextControlProof(1, "recovered flight");
   events.checks.push(
-    "Blocked browser storage preserves gameplay and last save; status survives dialogue and clears after successful write",
+    "Blocked browser storage preserves gameplay and last save; " +
+      "status survives dialogue and clears after successful write",
   );
   events.checks.push(
     "One dedicated context control supports pointer and keyboard use, absent in home and dialogue",

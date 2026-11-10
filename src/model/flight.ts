@@ -603,8 +603,8 @@ function enemies(
       {
         adaSpeed: content.tuning.maxSpeed,
         adaWidth: content.tuning.flight.shipRadius * 2,
-        dt,
         dormantPackMembers: flight.dormant?.packMembers ?? {},
+        dt,
         initialPackSizes: combat(flight).initialPackSizes,
         peers,
         player: flight.player,

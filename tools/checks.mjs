@@ -256,7 +256,8 @@ function start(mode, ci) {
           run("docker", [
             "inspect",
             "--format",
-            '{"id":{{json .Id}},"status":{{json .State.Status}},"running":{{json .State.Running}},"startedAt":{{json .State.StartedAt}}}',
+            '{"id":{{json .Id}},"status":{{json .State.Status}},' +
+              '"running":{{json .State.Running}},"startedAt":{{json .State.StartedAt}}}',
             receipt.containerId,
           ]),
         );
