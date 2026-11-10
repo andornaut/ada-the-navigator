@@ -174,6 +174,9 @@ hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
 firing; a disabled engine stops movement. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.
 
+Missile launchers initially fire straight-flying missiles, visually distinct
+from ordinary shots. Homing is not part of this combat pass.
+
 Most enemy ships remain at or below Ada's speed. Selected small ships can reach
 110% of her speed, with a finite pursuit range. Frigates and capital ships can
 block required quest routes in the first three sectors. This encounter expansion
