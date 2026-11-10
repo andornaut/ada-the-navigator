@@ -238,7 +238,7 @@ export const PROTOTYPE: PrototypeContent = {
     settings: "Settings",
     shield: "Shield",
     shieldDepleted: "Your ship brought you home. Your story progress is saved.",
-    soundEffects: "Sound effects",
+    sound: "Sound effects",
     start: "Begin",
     talk: "Talk",
     toronto: "Toronto",
