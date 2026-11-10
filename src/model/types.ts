@@ -47,7 +47,11 @@ export interface PersistentWorldState {
 export interface FlightState {
   world: PersistentWorldState;
   visited: Record<string, string>;
-  combat?: { initialPackSizes: Record<string, number>; routeEncounters: string[] };
+  combat?: {
+    initialPackSizes: Record<string, number>;
+    routeEncounters: string[];
+    unloadedPackMembers?: Record<string, number>;
+  };
   sector: SectorId;
   seed: number;
   time: number;

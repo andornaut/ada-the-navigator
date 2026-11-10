@@ -9,7 +9,9 @@ import {
   activateFlightRegion,
   beginFlightStep,
   persistentObject,
+  prunePackState,
   recordObjectRemoval,
+  recordUnloadedPackMember,
   retainedPackMembers,
   retainedRouteBlocked,
   syncFlightRegion,
@@ -205,8 +207,15 @@ function generateRegion(
   const count = low + Math.floor(next() * (high - low + 1));
   const choices: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
   const archetype = choices[Math.floor(next() * choices.length)] ?? "fighter";
-  let admitted = flight.objects.filter((object) => object.enemy?.packId === packId).length;
-  for (let i = 0; i < count; i++) {
+  const state = combat(flight);
+  const initialized = Object.hasOwn(state.initialPackSizes, packId);
+  // Preserve the casualty count and admit only the represented pack's unloaded survivor budget.
+  let budget = initialized ? (state.unloadedPackMembers?.[packId] ?? 0) : count;
+  let admitted = 0;
+  const existing = flight.objects.filter(
+    (object) => object.hp > 0 && object.enemy?.packId === packId,
+  ).length;
+  for (let i = 0; i < count && budget > 0; i++) {
     const object = spawnEnemy(
       content,
       archetype,
@@ -225,30 +234,33 @@ function generateRegion(
     ) {
       flight.objects.push(object);
       admitted++;
+      budget--;
     }
   }
-  combat(flight).initialPackSizes[packId] = admitted;
+  if (!initialized) {
+    state.initialPackSizes[packId] = existing + admitted;
+  } else if (admitted && state.unloadedPackMembers) {
+    if (budget > 0) {
+      state.unloadedPackMembers[packId] = budget;
+    } else {
+      delete state.unloadedPackMembers[packId];
+      if (!Object.keys(state.unloadedPackMembers).length) {
+        delete state.unloadedPackMembers;
+      }
+    }
+  }
 }
 
 /** Layout clearance changes the roster without recording a combat casualty. */
 function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: FlightState): void {
   flight.objects = flight.objects.filter((object) => {
-    const liveEnemy =
-      object.kind === "enemy" &&
-      object.hp > 0 &&
-      (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
     if (keep(object) || persistentObject(object)) {
       return true;
     }
-    const packId = object.enemy?.packId;
-    if (liveEnemy && packId) {
-      const sizes = combat(flight).initialPackSizes;
-      if (sizes[packId] !== undefined) {
-        sizes[packId] = Math.max(0, sizes[packId] - 1);
-      }
-    }
+    recordUnloadedPackMember(object, flight);
     return false;
   });
+  prunePackState(flight);
 }
 
 /** Plan all guard positions before applying layout changes to their persistent state. */

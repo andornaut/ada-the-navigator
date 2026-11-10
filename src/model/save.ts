@@ -2,7 +2,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { enemyEffects } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
-import type { GameState, SpaceObject } from "./types.ts";
+import type { FlightState, GameState, PersistentWorldState, SpaceObject } from "./types.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -76,13 +76,29 @@ function enemyState(value: unknown): boolean {
     hardpoints.every((part) => record(part) && nonnegative(part.hp) && nonnegative(part.cooldown))
   );
 }
-function combatState(routes: readonly string[], value: unknown): boolean {
+function combatState(
+  routes: readonly string[],
+  value: unknown,
+): value is NonNullable<FlightState["combat"]> {
   return (
     record(value) &&
     record(value.initialPackSizes) &&
-    Object.values(value.initialPackSizes).every(
-      (size) => Number.isInteger(size) && nonnegative(size),
+    Object.entries(value.initialPackSizes).every(
+      ([id, size]) =>
+        id.length > 0 &&
+        !["__proto__", "prototype", "constructor"].includes(id) &&
+        Number.isSafeInteger(size) &&
+        nonnegative(size),
     ) &&
+    (value.unloadedPackMembers === undefined ||
+      (record(value.unloadedPackMembers) &&
+        Object.entries(value.unloadedPackMembers).every(
+          ([id, count]) =>
+            id.length > 0 &&
+            !["__proto__", "prototype", "constructor"].includes(id) &&
+            Number.isSafeInteger(count) &&
+            nonnegative(count),
+        ))) &&
     strings(value.routeEncounters) &&
     (value.routeEncounters as string[]).every((id) => routes.includes(id))
   );
@@ -119,7 +135,7 @@ function persistentWorld(
   routes: readonly string[],
   active: readonly SpaceObject[],
   value: unknown,
-): boolean {
+): value is PersistentWorldState {
   if (
     !record(value) ||
     value.version !== 1 ||
@@ -156,6 +172,37 @@ function persistentWorld(
   }
   return true;
 }
+function unloadedPackState(
+  active: readonly SpaceObject[],
+  world: PersistentWorldState,
+  combat: NonNullable<FlightState["combat"]>,
+): boolean {
+  const unloaded = combat.unloadedPackMembers;
+  if (unloaded === undefined) {
+    return true;
+  }
+  const represented = new Map<string, number>();
+  for (const object of [...active, ...Object.values(world.notables)]) {
+    if (
+      !object ||
+      object.kind !== "enemy" ||
+      object.hp <= 0 ||
+      !object.enemy?.packId ||
+      enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
+    ) {
+      continue;
+    }
+    represented.set(object.enemy.packId, (represented.get(object.enemy.packId) ?? 0) + 1);
+  }
+  return Object.entries(unloaded).every(
+    ([id, count]) =>
+      count >= 0 &&
+      represented.has(id) &&
+      Object.hasOwn(combat.initialPackSizes, id) &&
+      (represented.get(id) ?? 0) + count <= (combat.initialPackSizes[id] ?? 0),
+  );
+}
+
 function weaponOwnership(value: unknown, selected: unknown): boolean {
   return (
     strings(value) &&
@@ -282,6 +329,9 @@ export function restoreSave(saved: unknown): GameState | null {
         return null;
       }
       if (!persistentWorld(routes, f.objects, f.world)) {
+        return null;
+      }
+      if (f.combat !== undefined && !unloadedPackState(f.objects, f.world, f.combat)) {
         return null;
       }
       if (

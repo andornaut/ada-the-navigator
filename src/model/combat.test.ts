@@ -313,7 +313,7 @@ describe("combat admission and subframe firing", () => {
   });
 
   it.each(["destination", "guard"] as const)(
-    "does not count %s clearance as a casualty but still retreats after a real loss",
+    "keeps %s clearance separate from a later combat casualty",
     (clearance) => {
       const flight = empty();
       const points =
@@ -344,7 +344,8 @@ describe("combat admission and subframe firing", () => {
         });
         ensureRouteEncounter(PROTOTYPE, "clearance", flight);
       }
-      expect(flight.combat!.initialPackSizes.roster).toBe(2);
+      expect(flight.combat!.initialPackSizes.roster).toBe(4);
+      expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
       expect(flight.objects).not.toContain(members[0]);
       expect(flight.objects).not.toContain(members[1]);
       stepFlight(PROTOTYPE, 0.001, idle, flight);
@@ -352,9 +353,10 @@ describe("combat admission and subframe firing", () => {
       expect(members[3]!.enemy!.fleeing).toBe(false);
       hit(flight, members[2]!, 2);
       expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
-      expect(flight.combat!.initialPackSizes.roster).toBe(2);
+      expect(flight.combat!.initialPackSizes.roster).toBe(4);
+      expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
       stepFlight(PROTOTYPE, 0.001, idle, flight);
-      expect(members[3]!.enemy!.fleeing).toBe(true);
+      expect(members[3]!.enemy!.fleeing).toBe(false);
     },
   );
 

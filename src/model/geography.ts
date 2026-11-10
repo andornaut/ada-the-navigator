@@ -113,7 +113,16 @@ export function retainedPackMembers(
   content: PrototypeContent,
   flight: FlightState,
 ): Readonly<Record<string, number>> {
-  return indexWorld(content, flight).packs;
+  const retained = indexWorld(content, flight).packs;
+  const unloaded = flight.combat?.unloadedPackMembers;
+  if (!unloaded) {
+    return retained;
+  }
+  const counts = { ...retained };
+  for (const [id, count] of Object.entries(unloaded)) {
+    counts[id] = (counts[id] ?? 0) + count;
+  }
+  return counts;
 }
 export function retainedRouteBlocked(id: string, flight: FlightState): boolean {
   const index = indexes.get(flight.world);
@@ -164,6 +173,23 @@ export function recordObjectRemoval(
   }
   flight.world.notables[object.id] = null;
 }
+/** Noncombat removal preserves the casualty denominator while the pack remains represented. */
+export function recordUnloadedPackMember(object: SpaceObject, flight: FlightState): void {
+  const packId = object.enemy?.packId;
+  const state = flight.combat;
+  if (
+    !liveEnemy(object) ||
+    persistentObject(object) ||
+    !packId ||
+    !state ||
+    !Object.hasOwn(state.initialPackSizes, packId)
+  ) {
+    return;
+  }
+  const unloaded = (state.unloadedPackMembers ??= {});
+  unloaded[packId] = (unloaded[packId] ?? 0) + 1;
+}
+
 export function syncFlightRegion(content: PrototypeContent, flight: FlightState): void {
   activateFlightRegion(content, flight.player, flight);
   const center = coordinates(content, flight.player);
@@ -191,12 +217,8 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
       } else {
         recordObjectRemoval(content, object, flight);
       }
-    } else if (liveEnemy(object) && object.enemy?.packId && flight.combat) {
-      const pack = object.enemy.packId;
-      flight.combat.initialPackSizes[pack] = Math.max(
-        0,
-        (flight.combat.initialPackSizes[pack] ?? 0) - 1,
-      );
+    } else {
+      recordUnloadedPackMember(object, flight);
     }
   }
   flight.objects = active;
@@ -204,18 +226,41 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
     const point = chunkCoordinates(value);
     return point !== null && near(point, center);
   });
+  prunePackState(flight);
+}
+
+/** Unloaded counts alone never retain an otherwise unrepresented ordinary pack. */
+export function prunePackState(flight: FlightState): void {
   if (flight.combat) {
+    const retained = indexes.get(flight.world)?.packs;
+    const persistentPacks = retained
+      ? Object.keys(retained)
+      : Object.values(flight.world.notables).flatMap((object) =>
+          object && liveEnemy(object) && object.enemy?.packId ? [object.enemy.packId] : [],
+        );
     const packs = new Set([
-      ...Object.keys(index.packs),
-      ...active.flatMap((object) => (object.enemy?.packId ? [object.enemy.packId] : [])),
+      ...persistentPacks,
+      ...flight.objects
+        .filter(liveEnemy)
+        .flatMap((object) => (object.enemy?.packId ? [object.enemy.packId] : [])),
     ]);
     for (const id of Object.keys(flight.combat.initialPackSizes)) {
       if (!packs.has(id)) {
         delete flight.combat.initialPackSizes[id];
+        if (flight.combat.unloadedPackMembers) {
+          delete flight.combat.unloadedPackMembers[id];
+        }
       }
+    }
+    if (
+      flight.combat.unloadedPackMembers &&
+      !Object.keys(flight.combat.unloadedPackMembers).length
+    ) {
+      delete flight.combat.unloadedPackMembers;
     }
   }
 }
+
 export function activateRouteEncounter(
   content: PrototypeContent,
   id: string,

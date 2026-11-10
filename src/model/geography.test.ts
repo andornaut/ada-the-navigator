@@ -158,7 +158,8 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       type: "enemyDisabled",
     });
     expect(near.enemy!.fleeing).toBe(false);
-    expect(flight.combat.initialPackSizes.pack).toBe(1);
+    expect(flight.combat.initialPackSizes.pack).toBe(2);
+    expect(flight.combat.unloadedPackMembers?.pack).toBe(1);
     expect(flight.world.notables).not.toHaveProperty(far.id);
     flight.player = { x: 12000, y: 0 };
     syncFlightRegion(PROTOTYPE, flight);
