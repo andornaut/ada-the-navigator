@@ -19,7 +19,7 @@ function run(command, args) {
   return result.stdout.trim();
 }
 
-function snapshot() {
+export function snapshot() {
   const candidates = run("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .split("\0")
     .filter(Boolean)
@@ -117,7 +117,7 @@ function snapshot() {
   return { head, files, fingerprint: hash.digest("hex") };
 }
 
-function guard(ci) {
+export function guard(ci) {
   if (ci) {
     if (
       process.env.GITHUB_ACTIONS !== "true" ||
@@ -298,16 +298,18 @@ function collect(name) {
   process.exitCode = state.ExitCode || (missingEvidence ? 1 : 0);
 }
 
-try {
-  const [command, argument, flag] = process.argv.slice(2);
-  if (command === "start") {
-    start(argument ?? "all", flag === "--ci");
-  } else if (command === "collect") {
-    collect(argument);
-  } else {
-    throw new Error("Usage: node tools/checks.mjs start [all|lint|test] [--ci] | collect <name>");
+if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  try {
+    const [command, argument, flag] = process.argv.slice(2);
+    if (command === "start") {
+      start(argument ?? "all", flag === "--ci");
+    } else if (command === "collect") {
+      collect(argument);
+    } else {
+      throw new Error("Usage: node tools/checks.mjs start [all|lint|test] [--ci] | collect <name>");
+    }
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
   }
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
 }
