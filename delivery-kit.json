@@ -6,9 +6,7 @@
     "github": "andornaut/ada-the-navigator"
   },
   "schedule": {
-    "departures": [
-      "30"
-    ],
+    "departures": ["30"],
     "timezone": "America/Toronto"
   },
   "gate": {
@@ -38,11 +36,7 @@
     "loadLimit": 20
   },
   "ci": {
-    "requiredNames": [
-      "AI attributions",
-      "Lint",
-      "Test"
-    ],
+    "requiredNames": ["AI attributions", "Lint", "Test"],
     "pollSeconds": 60,
     "timeoutSeconds": 1800
   },
@@ -53,8 +47,6 @@
     "project": "Ada the Navigator",
     "scheduledTicks": true,
     "recipient": "game-dev",
-    "workerParents": [
-      "game-dev"
-    ]
+    "workerParents": ["game-dev"]
   }
 }
