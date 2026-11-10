@@ -20,7 +20,9 @@ writable `/work` scratch as UID/GID 19001, with read-only root and host inputs,
 `HOME=/tmp`, four CPUs and `nofile=256:256`. Its revision, source hash and
 `SOURCE_DATE_EPOCH` describe the snapshot. `make build` exports `dist/` and
 `.cloudflare/output/v0/` after verifying the source remained stable. `make check`
-does not export artifacts.
+does not export artifacts. Explicit `make test` exports only `TEST_OUTPUTS`,
+which is empty by default. Explicit build/test exports validate and replace the
+configured generated paths, removing stale outputs.
 
 The cached dependencies remain read-only. Inner setup creates a writable
 `node_modules/` directory with individual package links, so Vite can write
@@ -28,10 +30,11 @@ The cached dependencies remain read-only. Inner setup creates a writable
 actual Husky dispatcher; no host Git metadata is mounted.
 
 The repository wrapper checks load before entering the launcher. The launcher
-has no subsequent load-admission hook after image building or between categories.
-Make adoption and generic public Make execution remain held until that contract
-is settled. Local source verification is authorized through the receipt adapter
-below; see [adoption requirements](container-adoption.md).
+calls `tests/container/admit` before image building and every category start,
+with a five-second callback limit. The callback reports the phase and load, and
+rejects load at or above 20. Local Make verification is authorized; source
+publication and runner adoption remain held. See
+[adoption requirements](container-adoption.md).
 
 ## Detached receipt compatibility
 

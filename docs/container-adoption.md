@@ -8,20 +8,20 @@ existing runner adopts the reviewed gate-step change.
 
 The prepared Make surface is separate from the active source and resident.
 `tests/container/run` is copied byte-identically from the approved foundation,
-SHA-256 `ec111204a6c28c0569609848ba71fa523467434d239400eb112b5a07c0b12d9c`.
+SHA-256 `3e2d24919f32292713f8e612ca13a350ade76589f6fef20f27af297b81940196`.
 It is not modified to add local behavior. No Docker proxy is used.
 
-The repository wrapper rejects initial load at or above 20. The generic launcher
-can start containers after image building and between categories without another
-load check. Adoption remains held for a maintainer-approved admission profile or
-an explicit admission-semantics decision. The initial wrapper check alone does
-not establish compliance with Ada's per-start load policy.
+The repository wrapper rejects initial load at or above 20. The approved launcher
+also invokes executable `tests/container/admit` before image building and before
+every category start. The callback rejects load at or above 20 and emits phase
+and load evidence; the launcher gives it five seconds. This resolves the per-start
+resource admission blocker without a Docker proxy or local launcher changes.
 
-Local source verification is authorized through the existing detached receipt
-adapter and its browser proof. Generic public Make execution awaits the reviewed
-launcher update. This authorization does not adopt the proposal, change live
-runner control or authorize a manual bus departure. Static inspection alone does
-not establish runtime success.
+Local source verification through Make and the detached receipt adapter is
+authorized. This does not adopt the proposal, change live runner control or
+authorize a manual bus departure. Source publication and resident/configuration
+adoption remain held for owner review. Static inspection alone does not establish
+runtime success.
 
 ## Runner compatibility
 

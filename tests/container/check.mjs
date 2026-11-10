@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readdirSync, symlinkSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+} from "node:fs";
 
 if (
   process.getuid?.() !== 19001 ||
@@ -42,6 +50,23 @@ if (category === "lint") {
   mkdirSync(".git/info", { recursive: true });
   appendFileSync(".git/info/exclude", "\n/node_modules\n");
 }
+const nofile = readFileSync("/proc/self/limits", "utf8")
+  .split("\n")
+  .find((line) => line.startsWith("Max open files"))
+  ?.trim();
+console.error(
+  JSON.stringify({
+    event: "check-category",
+    category,
+    uid: process.getuid(),
+    cwd: process.cwd(),
+    node: process.version,
+    nofile,
+    sourceArchiveSha256: process.env.CHECK_SOURCE_SHA256 ?? null,
+    revision: process.env.CHECK_REVISION ?? null,
+    dependencyRootDirectory: lstatSync("node_modules").isDirectory(),
+  }),
+);
 for (const script of categories[category]) {
   const extra = category === "test" ? ["--", ...args, "--maxWorkers=4"] : [];
   const result = spawnSync("npm", ["run", script, ...extra], { stdio: "inherit" });
@@ -50,3 +75,14 @@ for (const script of categories[category]) {
     process.exit(result.status || 1);
   }
 }
+
+console.error(
+  JSON.stringify({
+    event: "check-category-complete",
+    category,
+    viteTemp: existsSync("node_modules/.vite-temp"),
+    viteCache: existsSync("node_modules/.vite"),
+    hookProof:
+      category === "lint" ? JSON.parse(readFileSync("/tmp/evidence/hooks.json", "utf8")) : null,
+  }),
+);
