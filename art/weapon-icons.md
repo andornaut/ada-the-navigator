@@ -1,20 +1,39 @@
 # Weapon icons
 
 Native SVG source, 20 × 20 px, `viewBox="0 0 20 20"`, transparent background.
-Solid warm cream (`#ead4aa`) paths use at least 2 px padding. The compact
-silhouettes follow Chibi's navigation icon style and Ada's pickup glyph semantics.
+Warm cream (`#ead4aa`) paths follow Chibi's compact navigation icon style, with
+at least 2 px padding. Laser strokes and scatter dots are 2 px thick.
 
-| ID              | Path                                    | Semantics                             |
-| --------------- | --------------------------------------- | ------------------------------------- |
-| `weapon-basic`  | `public/art/ui/icons/weapon-basic.svg`  | Single rightward bolt                 |
-| `weapon-rapid`  | `public/art/ui/icons/weapon-rapid.svg`  | Three parallel short shots            |
-| `weapon-spread` | `public/art/ui/icons/weapon-spread.svg` | Three bolts fanning outward           |
-| `weapon-pierce` | `public/art/ui/icons/weapon-pierce.svg` | Long arrow beam crossing a target bar |
+## Current roster
+
+| ID            | Path                                         | Icon semantics                          |
+| ------------- | -------------------------------------------- | --------------------------------------- |
+| `basic`       | `public/art/ui/icons/weapon-basic.svg`       | Single rightward bolt, starter weapon   |
+| `missiles`    | `public/art/ui/icons/weapon-missiles.svg`    | Pointed solid body, fins and exhaust    |
+| `tripleLaser` | `public/art/ui/icons/weapon-tripleLaser.svg` | Three long thin bolts in a tight fan    |
+| `scattershot` | `public/art/ui/icons/weapon-scattershot.svg` | Seven separate solid dots in a wide fan |
+
+Filename case matches the direct DOM URL `weapon-${id}.svg`. Legacy rapid, spread
+and pierce icons remain available for existing references.
+
+## Projectile visual specification
+
+- Missiles: compact white projectile with an amber trail. Automatic fire, slow
+  travel and cadence, high power. No manual trigger, homing or splash.
+- Triple Laser: three thin amber bolts, centred at 0° with side bolts at ±20°.
+- Scattershot: many small amber dot pellets in a shotgun fan, fading and vanishing
+  by roughly half the projected screen width. Dots describe pellet shapes, not
+  damage over time.
+
+The logical screen is 720 × 360. Scattershot range follows projected screen width;
+these assets do not define runtime projectile geometry or timing. Gameplay owns
+weapon labels, including Missiles, Triple Laser and Scattershot.
+
+## Integration
 
 Each SVG is decorative (`aria-hidden="true"`), with no embedded player strings.
 The caller supplies the accessible weapon label on its control or image element,
 using Gameplay's strings. Keep inline SVGs hidden from the accessibility tree.
 
-Use Chibi's dark navigation background. Cream glyphs have poor contrast on cream
-cards; Tech owns button styling and final background contrast review. These files
-contain no settings assets or runtime integration.
+Use Chibi's dark navigation button background. Cream glyphs have poor contrast on
+cream cards; Tech owns button styling and final background contrast review.
