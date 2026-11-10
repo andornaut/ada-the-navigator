@@ -87,7 +87,13 @@ resource limits. CI requires `AI attributions`, `Lint` and `Test`.
 Delivery is paused. `delivery-kit.json` proposes :30 America/Toronto and sets
 `deploy.mode` to `none`. No runner or deployment is activated.
 
-Future deployment requires a reviewed static build, an explicitly selected
-deployment target and secret reference names, successful checks for the exact
-source commit, and explicit runner activation. Credentials are not part of this
-repository.
+Cloudflare setup uses typed `cloudflare.config.ts` for the assets-only Worker
+`ada-the-navigator`. The Cloudflare Vite plugin builds static assets and deployment
+metadata into `.cloudflare/output/v0/`. No application Worker entrypoint or
+account ID is configured. Logs and traces are enabled in the configuration.
+
+See [Cloudflare build and deployment checks](docs/checks.md#cloudflare-build-and-deployment-checks)
+for dry-run and prebuilt commands. Deployment requires operator enrollment,
+authorized authentication and account selection, reviewed evidence for the exact
+source and artifact, and explicit deployment approval. Runner activation requires
+separate approval. Credentials are not part of this repository.

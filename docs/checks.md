@@ -47,6 +47,40 @@ source content and Git's dirty-file inventory before and after the run.
 Unsupported source paths cause a refusal and must be reviewed before being added
 to the allowlist.
 
+## Cloudflare build and deployment checks
+
+`cloudflare.config.ts` defines an assets-only Worker named `ada-the-navigator`
+with compatibility date `2026-11-10` and logs and traces enabled. The Cloudflare
+Vite plugin supplies its assets; there is no `assets.directory` setting or
+application Worker entrypoint. `npm run build` remains `vite build` and emits
+`.cloudflare/output/v0/` in the isolated checkout.
+
+Run deployment dry runs only in an isolated Node.js 24.22.2 checkout. The first
+command builds and validates without uploading; the second validates an existing
+production build without rebuilding:
+
+```bash
+npm run deploy:dry-run
+```
+
+```bash
+npm run deploy:prebuilt:dry-run
+```
+
+The prebuilt script runs `cf deploy --prebuilt --mode production --dry-run`.
+Vite records the production mode in Build Output, so the matching `--mode` is
+required. Restore the complete reviewed `.cloudflare/output/v0/` directory from
+gate evidence at that same relative path before using a prebuilt command.
+Evidence `dist/` is a browser-test copy of the assets, not a deployable substitute
+for the complete Build Output.
+
+The manual `npm run deploy:prebuilt` script runs
+`cf deploy --prebuilt --mode production`. It uploads and deploys, and requires
+explicit deployment approval plus authorized account access. It is not a CI
+publication step. Operator enrollment and authentication are prerequisites for
+account discovery and deployment; no account ID or credential is embedded in
+source. Delivery remains paused with `deploy.mode` set to `none`.
+
 ## Browser smoke checks
 
 After collecting a successful `all` or `test` gate, use its evidence directory
