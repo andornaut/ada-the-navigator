@@ -144,7 +144,19 @@ export function createCheats(
     refresh();
   });
   close.addEventListener("click", () => setOpen(false));
-  modal.addEventListener("pointerdown", (event) => event.stopPropagation());
+  modal.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    if (event.target === modal) {
+      event.preventDefault();
+      close.focus();
+    }
+  });
+  const retainFocus = (event: FocusEvent): void => {
+    if (open && event.target instanceof Node && !card.contains(event.target)) {
+      close.focus();
+    }
+  };
+  document.addEventListener("focusin", retainFocus);
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -185,6 +197,7 @@ export function createCheats(
       media.removeEventListener("change", refresh);
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
+      document.removeEventListener("focusin", retainFocus);
       modal.remove();
       launcher.remove();
     },
