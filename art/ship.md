@@ -1,6 +1,6 @@
 # Ship geometry
 
-- Rebuild with `node art/tools/ship.ts` inside the isolated export container.
+- Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
 - Exports: `ship-{0..7}.svg` and `ship-thrust-{0..7}.svg`.
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 5 (up).

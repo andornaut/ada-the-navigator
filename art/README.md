@@ -40,7 +40,7 @@ textures without changing geometry. [Ship geometry](ship.md) and
 [portrait provenance](portraits.md) describe the authored and reused assets.
 
 Ship SVGs are deterministic exports from `art/tools/ship.ts`; edit the generator
-and regenerate them in an isolated container. Portrait PNGs remain byte-identical
+and regenerate the matching outputs. Portrait PNGs remain byte-identical
 to their documented source exports. Sprite
 metadata changes only the local image filename. No generated kit source or assets
 from another game's build pipeline are required.
@@ -51,4 +51,4 @@ should expose `buildCommand` validation through `--check` and join the integrate
 gate. No executable art validation entry exists yet. Integration validation must
 check manifest paths, dimensions, named frame indices and idle/thrust geometry,
 then inspect both ship states at their actual display size. Run the project tests
-and build through the isolated integrated gate before delivery.
+and build through the integrated gate before delivery.
