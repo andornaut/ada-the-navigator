@@ -296,8 +296,32 @@ export class PrototypeScene extends Phaser.Scene {
         break;
       case "pickup":
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
-        this.ink.lineBetween(point.x - radius / 2, point.y, point.x + radius / 2, point.y);
-        this.ink.lineBetween(point.x, point.y - radius / 2, point.x, point.y + radius / 2);
+        if (object.role === "cargo") {
+          this.ink.fillStyle(0xffffff);
+          this.ink.fillCircle(point.x, point.y, radius / 3);
+        } else if (object.weapon === "rapid") {
+          for (const offset of [-0.5, 0, 0.5]) {
+            this.ink.lineBetween(
+              point.x - radius / 2,
+              point.y + radius * offset,
+              point.x + radius / 2,
+              point.y + radius * offset,
+            );
+          }
+        } else if (object.weapon === "spread") {
+          for (const offset of [-0.6, 0, 0.6]) {
+            this.ink.lineBetween(
+              point.x - radius / 2,
+              point.y,
+              point.x + radius / 2,
+              point.y + radius * offset,
+            );
+          }
+        } else if (object.weapon === "pierce") {
+          this.ink.lineBetween(point.x - radius * 0.7, point.y, point.x + radius * 0.7, point.y);
+          this.ink.lineBetween(point.x, point.y - radius / 2, point.x + radius * 0.7, point.y);
+          this.ink.lineBetween(point.x, point.y + radius / 2, point.x + radius * 0.7, point.y);
+        }
         break;
       case "resource":
         this.ink.fillStyle(0xffffff);
