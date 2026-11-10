@@ -83,8 +83,7 @@ not establish an unlimited supply of authored Earth stories.
 - Use button: planned for interactions; its exact actions remain open.
 
 Chibi is the reference for settings and joystick behavior. Ada's left joystick
-should follow Chibi's behavior. The spoken reference to “GP's controls” for the
-use button has not been identified separately. Existing controls should be
+should follow Chibi's behavior. Existing controls should be
 reviewed before defining detailed interaction requirements. No code reuse or
 implementation interface is established here.
 
