@@ -1,5 +1,5 @@
 export type SectorId = 1 | 2 | 3;
-export type Weapon = "basic" | "rapid" | "spread" | "pierce";
+export type Weapon = "basic" | "missiles" | "tripleLaser" | "scattershot";
 
 export interface ChapterContent {
   name: string;
@@ -25,7 +25,6 @@ export interface PrototypeContent {
     shieldRechargeRate: number;
     enemyDamage: number;
     enemyProjectileSpeed: number;
-    fireInterval: Readonly<Record<Weapon, number>>;
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
     encounterFreshDistance: number;
@@ -45,7 +44,6 @@ export interface PrototypeContent {
       projectileSpeedFactor: number;
       projectileLifetime: number;
       enemyProjectileLifetime: number;
-      spreadAngle: number;
       shipRadius: number;
       enemyRadius: number;
       rockRadius: number;

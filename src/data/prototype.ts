@@ -250,9 +250,9 @@ export const PROTOTYPE: PrototypeContent = {
     use: "Use",
     weapon: "Weapon",
     weaponBasic: "Basic",
-    weaponPierce: "Piercing",
-    weaponRapid: "Rapid fire",
-    weaponSpread: "Spread",
+    weaponMissiles: "Missiles",
+    weaponScattershot: "Scattershot",
+    weaponTripleLaser: "Triple Laser",
   },
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
@@ -263,7 +263,6 @@ export const PROTOTYPE: PrototypeContent = {
     encounterFreshDistance: 600,
     enemyDamage: 6,
     enemyProjectileSpeed: 150,
-    fireInterval: { basic: 0.28, pierce: 0.5, rapid: 0.12, spread: 0.4 },
     flight: {
       damageInterval: 1,
       enemyFireInterval: 2.5,
@@ -284,7 +283,6 @@ export const PROTOTYPE: PrototypeContent = {
       rockRadius: 20,
       shipRadius: 10,
       spawnWeights: { enemy: 0.1, pickup: 0.12, resource: 0.4, rock: 0.38 },
-      spreadAngle: 0.22,
     },
     introFreshDistance: 10800,
     maxSpeed: 200,

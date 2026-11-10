@@ -99,9 +99,17 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   progression remain part of the game.
 - With no aim input, the ship faces movement. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
-- Upgrades are rapid fire, three-shot spread and piercing shots. Icon pickups,
-  presented like Chibi's power-ups, automatically equip their upgrade and retain
-  other owned upgrades.
+- Basic is the starter weapon. Upgrades are Missiles, Triple Laser and Scattershot.
+  Icon pickups, presented like Chibi's power-ups, automatically equip their upgrade
+  and retain other owned upgrades.
+- Missiles fire one slower, stronger straight projectile. Triple Laser fires three
+  bolts at -20, 0 and 20 degrees. Scattershot fires seven visual dots at -30, -20,
+  -10, 0, 10, 20 and 30 degrees; the dots do not apply damage over time.
+- Each scattershot dot travels half the current projected viewport width along its
+  own rotated heading, fades after 65% of that range and vanishes at the limit.
+- Weapon intervals, speed and damage ratios, angles, range and fade are provisional
+  catalog tuning. Speed ratios multiply the existing base projectile speed; damage
+  ratios multiply base shot damage. No homing, splash, piercing or reload is added.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
   ownership of the other upgrades.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
