@@ -249,6 +249,39 @@ describe("casualty-preserving pack retention", () => {
     expect(resumed.state.flight!.combat!.unloadedPackMembers?.[packId]).toBe(1);
   });
 
+  it.each([undefined, {}])(
+    "bounds active and inactive pack totals with unloaded ledger %j",
+    (unloadedPackMembers) => {
+      const { model, packId } = fixture();
+      const flight = model.state.flight!;
+      flight.objects = members(model, packId).slice(0, 1);
+      const point = { x: 9000, y: 100 };
+      const state = createEnemy(
+        enemyCatalog.frigate,
+        { archetype: "frigate", id: "support", packId, phase: 0.2 },
+        point,
+      );
+      flight.world = {
+        version: 1,
+        notables: {
+          support: { ...point, enemy: state, hp: 10, id: "support", kind: "enemy", radius: 30 },
+        },
+      };
+      flight.combat = {
+        initialPackSizes: { [packId]: 2 },
+        routeEncounters: [],
+        ...(unloadedPackMembers === undefined ? {} : { unloadedPackMembers }),
+      };
+      expect(restoreSave(model.save())).toEqual(model.state);
+      flight.combat.initialPackSizes[packId] = 1;
+      expect(restoreSave(model.save())).toBeNull();
+      flight.world.notables = {};
+      expect(restoreSave(model.save())).toEqual(model.state);
+      flight.combat.initialPackSizes[packId] = 0;
+      expect(restoreSave(model.save())).toBeNull();
+    },
+  );
+
   it("rejects invalid or unrepresented unloaded ledgers without accepting phantom survivors", () => {
     const { model, packId } = fixture();
     const flight = model.state.flight!;
@@ -262,6 +295,7 @@ describe("casualty-preserving pack retention", () => {
     for (const unloadedPackMembers of [
       null,
       [],
+      { [packId]: 0 },
       { [packId]: -1 },
       { [packId]: 1.5 },
       { [packId]: 4 },

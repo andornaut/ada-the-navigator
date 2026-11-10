@@ -177,10 +177,7 @@ function unloadedPackState(
   world: PersistentWorldState,
   combat: NonNullable<FlightState["combat"]>,
 ): boolean {
-  const unloaded = combat.unloadedPackMembers;
-  if (unloaded === undefined) {
-    return true;
-  }
+  const unloaded = combat.unloadedPackMembers ?? {};
   const represented = new Map<string, number>();
   for (const object of [...active, ...Object.values(world.notables)]) {
     if (
@@ -194,12 +191,15 @@ function unloadedPackState(
     }
     represented.set(object.enemy.packId, (represented.get(object.enemy.packId) ?? 0) + 1);
   }
-  return Object.entries(unloaded).every(
-    ([id, count]) =>
-      count >= 0 &&
-      represented.has(id) &&
-      Object.hasOwn(combat.initialPackSizes, id) &&
-      (represented.get(id) ?? 0) + count <= (combat.initialPackSizes[id] ?? 0),
+  return (
+    [...represented].every(
+      ([id, count]) =>
+        Object.hasOwn(combat.initialPackSizes, id) &&
+        count + (unloaded[id] ?? 0) <= combat.initialPackSizes[id]!,
+    ) &&
+    Object.entries(unloaded).every(
+      ([id, count]) => Number.isSafeInteger(count) && count > 0 && represented.has(id),
+    )
   );
 }
 
