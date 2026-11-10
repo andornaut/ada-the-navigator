@@ -314,30 +314,42 @@ try {
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
   await page.locator('[data-action="settings"]').click();
   await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
-  await page.evaluate(() => document.documentElement.requestFullscreen());
+  // Exercise the iOS installed-window signal without installing or launching a PWA.
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "standalone", { configurable: true, value: true });
+    window.dispatchEvent(new PageTransitionEvent("pageshow"));
+  });
   await page.waitForFunction(
     () => document.querySelector('[data-action="cheats"]')?.hidden === true,
   );
   assert.equal(
     await page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true }).count(),
     0,
-    "An installed display mode must close the cheats modal",
+    "An installed-window signal must close the cheats modal",
   );
   await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
   await page.locator('[data-cheat="grant-all-weapons"]').evaluate((button) => button.click());
   assert.deepEqual(
     (await readSave()).flight.ownedWeapons ?? [],
     [],
-    "Direct hidden-button dispatch in fullscreen must not grant saved ownership",
+    "Direct hidden-button dispatch in the installed-window fixture must not grant saved ownership",
   );
-  await page.evaluate(() => document.exitFullscreen());
+  save("installed-window-proof.json", {
+    scope:
+      "Navigator standalone eligibility fixture and pageshow recheck, not an actual installed PWA",
+    grantBlocked: (await readSave()).flight.ownedWeapons ?? [],
+  });
+  await page.evaluate(() => {
+    Reflect.deleteProperty(navigator, "standalone");
+    window.dispatchEvent(new PageTransitionEvent("pageshow"));
+  });
   await page.waitForFunction(
     () => document.querySelector('[data-action="cheats"]')?.hidden === false,
   );
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
     "Browser-only cheats pause input, retain focus and save only granted ownership; " +
-      "real fullscreen closes and rejects direct dispatch",
+      "an installed-window fixture closes and rejects direct dispatch",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
