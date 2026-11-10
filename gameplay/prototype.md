@@ -130,7 +130,7 @@ No map or minimap.
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
 exploration reliably encounters required events regardless of direction. Standing
-still and teleporting do not advance encounter pacing. Chunk generation must place
+still, teleporting and revisiting chunks do not advance fresh-exploration pacing. Chunk generation must place
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
@@ -160,9 +160,11 @@ distances are provisional tuning: three chunks for active space and two for
 nearby generation. Retention depends on distance, not elapsed time.
 
 Ordinary scenery and trash may be discarded beyond the retention distance and
-regenerated on backtracking. Bound ordinary chunk, explored-chunk and pack-history
-metadata as well as active simulation. Persistent meaningful history can still grow;
-save size is not independent of completed interactions and important encounters.
+regenerated on backtracking. Bound ordinary chunk, object and pack-history metadata
+as well as active simulation. Persist a compact visited-chunk bitset so first visits
+remain exact even when ordinary contents regenerate. Revisits never count as fresh
+exploration. Compact visited information can grow with visited chunks; meaningful
+persistent history can also grow with interactions and important encounters.
 
 Retain frigates and capital ships independently of disposable chunks, including
 mutable hardpoints, AI state and destroyed-ship tombstones. Interacted NPC state,
