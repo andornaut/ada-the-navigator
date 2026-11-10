@@ -2,7 +2,12 @@
 
 Approved portraits reused from the Archie repository (`andornaut/archies-dog-walks`) at exact commit `8124ae5a9281e67b51191d8a9a609fc7f76480af`.
 
-Ada is the brown/dark-skinned girl depicted in the source art. The dog portrait retains the source appearance; no breed or character name is assigned here. Toronto refers to the city, not the dog.
+Copyright (c) 2026 andornaut. Source portraits are licensed under
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+The [source licence](portraits-LICENSE.txt) is included unchanged. PNGs are
+unchanged; JSON metadata uses local image filenames and normalized formatting.
+
+Ada is the brown/dark-skinned girl depicted in the source art. The dog portrait retains the source appearance; no breed or character name is assigned here.
 
 The `casey`, `trista` and `mr-b` assets are reusable Toronto portraits. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
 
@@ -18,7 +23,7 @@ Every frame is 32 × 32 pixels, untrimmed, with a 1000 ms duration. The Ada, cas
 | mr-b     | Frame 0 | Frame 1 | Not present |
 | trista   | Frame 0 | Frame 1 | Not present |
 
-PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corresponding destination PNG filename. Source frame keys, geometry, durations and tags are preserved.
+PNG files are byte-for-byte copies. The only JSON data change is `meta.image` to the corresponding destination PNG filename. Source frame keys, geometry, durations and tags are preserved.
 
 ## Provenance and SHA-256
 
@@ -29,7 +34,7 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corres
 - Source: `public/art/sprites/face-walker-ada.json`
   - SHA-256: `d6774039c54f424b91d7040ca11cfc9c8b3dc0492dabb63b1ca3b03a482d215a`
   - Destination: `public/art/portraits/ada.json`
-  - SHA-256: `a5a62b9061fd801ea4301d60bf888f8390ee0affd38d6d3fb7a9c57e6ff37361`
+  - SHA-256: `92147003c29fea73106df6a8132324e1f2343e893bb3927626775f4d7f55dd0d`
 - Source: `public/art/sprites/face-dog-archie.png`
   - SHA-256: `20aaa3fa0ef7dacb3ee7902c8536c0f27ff9eb01a40bd646427eabb8a6a60463`
   - Destination: `public/art/portraits/dog.png`
@@ -37,7 +42,7 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corres
 - Source: `public/art/sprites/face-dog-archie.json`
   - SHA-256: `a167ac587f398a119a839684e0187b267108c38ac9ad4983781b59d64eb4bd11`
   - Destination: `public/art/portraits/dog.json`
-  - SHA-256: `c469332c04dd6c1e97c5595aaf0fada8c1ed68fe9ca80e6a554f4232a4bb95d0`
+  - SHA-256: `e23485d72e1452175d0e19f9aef7d26e069d980661142e4baff01ab779579594`
 - Source: `public/art/sprites/face-walker-casey.png`
   - SHA-256: `d7d4761d5c8f72dc41c881dfa4d4328663309bad8ddbc878edc9f643983508bb`
   - Destination: `public/art/portraits/casey.png`
@@ -45,7 +50,7 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corres
 - Source: `public/art/sprites/face-walker-casey.json`
   - SHA-256: `2cb6d01b87ca091ea1587990396724b3169784a02e3bcb0a943fc771462dd217`
   - Destination: `public/art/portraits/casey.json`
-  - SHA-256: `0d27faf38c219217f5e1a084449904debc55cc7f43d78a302150965d73f96b22`
+  - SHA-256: `18e978be9ca083d94db8100093f7a32ec9e0d77a6a37d123cfc8ac813470b94e`
 - Source: `public/art/sprites/face-walker-trista.png`
   - SHA-256: `bf8f6344b56ee5bcca4f66bfa01c188e4d3a8481a3f87b385936f4f1d8b361d0`
   - Destination: `public/art/portraits/trista.png`
@@ -53,7 +58,7 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corres
 - Source: `public/art/sprites/face-walker-trista.json`
   - SHA-256: `906f93a27f3574783b0de199f54457c347f404275e6cf37ba98f4d41fddab9d9`
   - Destination: `public/art/portraits/trista.json`
-  - SHA-256: `e7dbf256dc023b5353ebd9e2211a561bbfa08e89d2c61242d21e7a214bc4a023`
+  - SHA-256: `7e18cbe0ade78322cf60cb93c78b8892af9ea4fe9aae676f0dda55f62fd9180a`
 - Source: `public/art/sprites/face-walker-mr-b.png`
   - SHA-256: `3f2d78aac50e5dac51077a9069c85bf95a0bb6705437d8528098401b9b94f51c`
   - Destination: `public/art/portraits/mr-b.png`
@@ -61,7 +66,7 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corres
 - Source: `public/art/sprites/face-walker-mr-b.json`
   - SHA-256: `8c8c80e879ea6824f8b36f9e247ec5698e030a65d69f55bc069ca98c10fd15e4`
   - Destination: `public/art/portraits/mr-b.json`
-  - SHA-256: `2024382c712ab9c34598a96f03a99242dd34af1730f2b9cb3cdfc45182ad5d7e`
+  - SHA-256: `ade24dcfa71bf1841f13c5d84b3d66633c62ed3739888d76d4f0fae27ee2e2fe`
 
 ## Verification limits
 

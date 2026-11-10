@@ -1,8 +1,8 @@
-# Art infrastructure
+# Art
 
 Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
-Gameplay supplies semantic requirements. No assets or runtime consumer exist yet;
-this scope defines no visual style, story or gameplay.
+Gameplay supplies semantic requirements. Prototype art covers Ada's ship and
+character portraits. Other space objects use monochrome runtime placeholders.
 
 ## Published toolkit
 
@@ -21,11 +21,26 @@ Use explicit subpath imports such as `@andornaut/art-kit/build`,
 
 ## Ada contract and validation
 
-Art and Tech own the Ada manifest contract: its shape, path and export grouping
-remain undefined. Semantic IDs must be stable and independent of filenames, with
-meaning supplied by Gameplay requirements.
+The runtime contract is [the manifest](../public/art/manifest.json), version 1.
+Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `height`,
+`facing`, and normalized `pivot`. Portrait sheets also define `frameWidth`,
+`frameHeight`, and zero-based named `frames`. Portrait dimensions describe the
+whole sheet; the pivot applies to each frame. Tech owns loading and rotation.
+
+Both ship textures face up with a centered pivot and a 64 by 96 transparent canvas.
+The manifest recommends 28 by 42 logical pixels for display. Swap idle and thrust textures
+without changing geometry. [Ship geometry](ship.md) and
+[portrait provenance](portraits.md) describe the authored and reused assets.
+
+SVG files are authored source and runtime exports. Edit those files directly;
+portrait PNGs remain byte-identical to their documented source exports. Sprite
+metadata changes only the local image filename. No generated kit source or assets
+from another game's build pipeline are required.
 
 The toolkit's `buildCommand(options, argv)` supports `check.paths`, optional
 `index: true`, and strict ordering and module checks. A future art build entry
 should expose `buildCommand` validation through `--check` and join the integrated
-gate. No executable art validation entry exists yet.
+gate. No executable art validation entry exists yet. Integration validation must
+check manifest paths, dimensions, named frame indices and idle/thrust geometry,
+then inspect both ship states at their actual display size. Run the project tests
+and build through the isolated integrated gate before delivery.

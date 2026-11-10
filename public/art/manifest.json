@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "ship",
+      "path": "/art/ship.svg",
+      "width": 64,
+      "height": 96,
+      "displayWidth": 28,
+      "displayHeight": 42,
+      "facing": "up",
+      "pivot": { "x": 0.5, "y": 0.5 }
+    },
+    {
+      "id": "ship-thrust",
+      "path": "/art/ship-thrust.svg",
+      "width": 64,
+      "height": 96,
+      "displayWidth": 28,
+      "displayHeight": 42,
+      "facing": "up",
+      "pivot": { "x": 0.5, "y": 0.5 }
+    },
+    {
+      "id": "ada-portrait",
+      "path": "/art/portraits/ada.png",
+      "width": 64,
+      "height": 32,
+      "facing": "front",
+      "pivot": { "x": 0.5, "y": 0.5 },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": { "happy": 0, "neutral": 1 }
+    },
+    {
+      "id": "casey-portrait",
+      "path": "/art/portraits/casey.png",
+      "width": 64,
+      "height": 32,
+      "facing": "front",
+      "pivot": { "x": 0.5, "y": 0.5 },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": { "happy": 0, "neutral": 1 }
+    },
+    {
+      "id": "mr-b-portrait",
+      "path": "/art/portraits/mr-b.png",
+      "width": 64,
+      "height": 32,
+      "facing": "front",
+      "pivot": { "x": 0.5, "y": 0.5 },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": { "happy": 0, "neutral": 1 }
+    },
+    {
+      "id": "trista-portrait",
+      "path": "/art/portraits/trista.png",
+      "width": 64,
+      "height": 32,
+      "facing": "front",
+      "pivot": { "x": 0.5, "y": 0.5 },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": { "happy": 0, "neutral": 1 }
+    },
+    {
+      "id": "dog-portrait",
+      "path": "/art/portraits/dog.png",
+      "width": 96,
+      "height": 32,
+      "facing": "front",
+      "pivot": { "x": 0.5, "y": 0.5 },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": { "happy": 0, "neutral": 1, "upset": 2 }
+    }
+  ]
+}
