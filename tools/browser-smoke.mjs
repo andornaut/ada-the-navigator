@@ -355,6 +355,34 @@ try {
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
+  // Compare observable flight response, not the implementation's stick sampling formula.
+  async function analogRun(distance, marker) {
+    await seedOnce(safeSerialized, marker);
+    const target = await page.locator('[data-control="move-joystick"]').boundingBox();
+    assert.ok(target);
+    const start = await position();
+    await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
+    await page.mouse.down();
+    try {
+      await page.mouse.move(target.x + target.width / 2 + distance, target.y + target.height / 2);
+      await page.waitForTimeout(500);
+    } finally {
+      await page.mouse.up();
+    }
+    const end = await waitForRest(await position());
+    return Math.hypot(end.x - start.x, end.y - start.y);
+  }
+  const deadTravel = await analogRun(1, "ada-browser.analog-dead.v1");
+  const smallTravel = await analogRun(8, "ada-browser.analog-small.v1");
+  const fullTravel = await analogRun(20, "ada-browser.analog-full.v1");
+  assert.equal(deadTravel, 0, "Movement inside the CSS dead zone must remain idle");
+  assert.ok(
+    smallTravel > 0 && fullTravel > smallTravel * 1.5,
+    "Full CSS travel must move materially farther than partial travel over the same interval",
+  );
+  save("analog-proof.json", { deadTravel, smallTravel, fullTravel });
+  events.checks.push("CSS move-stick dead zone and partial/full throttle affect actual flight");
+  await seedOnce(safeSerialized, "ada-browser.after-analog.v1");
   const joystick = page.locator('[data-control="move-joystick"]');
   await joystick.waitFor({ state: "visible" });
   const bounds = await joystick.boundingBox();
@@ -440,6 +468,165 @@ try {
     "Released native aim must not resume firing",
   );
   events.checks.push("Native touch release clears movement and firing without resurrection");
+
+  const equipment = new GameModel(PROTOTYPE, safeSerialized);
+  equipment.state.flight.ownedWeapons = ["rapid", "spread"];
+  equipment.state.flight.weapon = "basic";
+  equipment.state.flight.ammo = 0;
+  const equipmentSave = equipment.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, equipmentSave).state, equipment.state);
+  save("equipment-fixture.json", {
+    scope:
+      "Canonical owned-upgrade fixture for UI selection and persistence, not pickup progression",
+    state: JSON.parse(equipmentSave),
+  });
+  await seedOnce(equipmentSave, "ada-browser.equipment.v1");
+  const rapidButton = page.locator('button[data-weapon="rapid"]');
+  await rapidButton.waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator('button[data-weapon="pierce"]').count(),
+    0,
+    "An unowned upgrade must not be offered",
+  );
+  await rapidButton.click();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "rapid",
+    storageKey,
+  );
+  assert.equal(await rapidButton.getAttribute("aria-pressed"), "true");
+  assert.ok(
+    !(await page.locator(".flight-hud").textContent()).includes(PROTOTYPE.labels.ammo),
+    "Unlimited upgrades must not display an ammo counter",
+  );
+  await page.reload();
+  await page.waitForFunction(
+    () => document.querySelector('[data-weapon="rapid"]')?.getAttribute("aria-pressed") === "true",
+  );
+  assert.deepEqual((await readSave()).flight.ownedWeapons, ["rapid", "spread"]);
+  await page.locator('[data-action="settings"]').click();
+  assert.ok(await rapidButton.isDisabled(), "Settings must disable weapon selection");
+  const pausedWeapon = (await readSave()).flight.weapon;
+  await page.locator('[data-weapon="spread"]').evaluate((button) => button.click());
+  assert.equal(
+    (await readSave()).flight.weapon,
+    pausedWeapon,
+    "A disabled weapon must not change selection behind the modal",
+  );
+  await page.locator('[data-action="close-settings"]').click();
+  await page.locator('[data-weapon="spread"]').click();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "spread",
+    storageKey,
+  );
+  await page.keyboard.down("Space");
+  try {
+    await page.waitForFunction(
+      (key) => JSON.parse(localStorage.getItem(key)).flight.shots.some((shot) => !shot.enemy),
+      storageKey,
+    );
+  } finally {
+    await page.keyboard.up("Space");
+  }
+  assert.equal(
+    (await readSave()).flight.weapon,
+    "spread",
+    "Zero legacy ammo must not consume an upgrade",
+  );
+  const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
+  assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
+  const bar = await meter.boundingBox();
+  const gameFrame = await page.locator("#game-canvas").boundingBox();
+  assert.ok(
+    bar &&
+      gameFrame &&
+      Math.abs(bar.width - gameFrame.width) < 2 &&
+      bar.height >= 2 &&
+      bar.height <= 4,
+    "Shield meter must span the bottom of the game frame at about three CSS pixels",
+  );
+  const gear = page.locator('[data-action="settings"]');
+  assert.ok((await gear.getAttribute("aria-label"))?.length, "Gear requires an accessible name");
+  const gearImage = await gear.evaluate((node) => getComputedStyle(node).backgroundImage);
+  assert.ok(gearImage.includes("/art/ui/sprites/icon-settings-nav.png"));
+  await page.screenshot({ path: `${output}/weapon-shield.png` });
+  events.checks.push(
+    "Owned unlimited weapons support accessible selection, reload, modal guards and a full-width shield meter",
+  );
+
+  const { stepFlight } = await import(new URL("../src/model/flight.ts", import.meta.url));
+  const damaged = new GameModel(PROTOTYPE, equipmentSave);
+  assert.ok(damaged.selectWeapon("rapid"));
+  damaged.state.flight.shield = PROTOTYPE.tuning.enemyDamage;
+  damaged.state.flight.shots.push({
+    ...damaged.state.flight.player,
+    enemy: true,
+    hitIds: [],
+    id: "browser-shield-break",
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+  });
+  stepFlight(
+    PROTOTYPE,
+    0.01,
+    { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false },
+    damaged.state.flight,
+  );
+  const damageSave = damaged.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
+  save("shield-break-fixture.json", {
+    scope: "Real-model projectile damage before restore, not a natural browser combat playthrough",
+    state: JSON.parse(damageSave),
+  });
+  await seedOnce(damageSave, "ada-browser.shield-break.v1");
+  await page.waitForFunction(
+    () => document.querySelector('[data-weapon="basic"]')?.getAttribute("aria-pressed") === "true",
+  );
+  assert.equal(await page.locator('[data-weapon="rapid"]').count(), 0);
+  assert.equal(await page.locator('[data-weapon="spread"]').getAttribute("aria-pressed"), "false");
+  assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
+  await page.locator('[data-weapon="spread"]').click();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "spread",
+    storageKey,
+  );
+  events.checks.push(
+    "Canonical shield-break damage restores Basic and shield while retaining only other upgrades for manual selection",
+  );
+
+  const cargoModel = new GameModel(PROTOTYPE);
+  cargoModel.state.unlocked = [1, 2];
+  cargoModel.startSector(2);
+  cargoModel.choose("0");
+  Object.assign(cargoModel.state.progress[2], { introduced: true, stage: 1, known: ["hub"] });
+  ensureDestination(PROTOTYPE, "hub", cargoModel.state.flight);
+  cargoModel.teleport("hub");
+  cargoModel.state.flight.cargo = 12345;
+  const cargoSave = cargoModel.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, cargoSave).state, cargoModel.state);
+  save("cargo-fixture.json", {
+    scope: "Canonical wide-cargo deposit UI fixture, not natural mining progression",
+    state: JSON.parse(cargoSave),
+  });
+  await seedOnce(cargoSave, "ada-browser.wide-cargo.v1");
+  await page.waitForFunction(() =>
+    document.querySelector(".flight-hud")?.textContent.includes("12345"),
+  );
+  assert.ok(
+    !(await page.locator(".flight-hud").textContent()).includes("12345/"),
+    "Cargo must have no capacity denominator",
+  );
+  await page.getByRole("button", { name: PROTOTYPE.labels.deposit, exact: true }).click();
+  await page.waitForFunction((key) => {
+    const state = JSON.parse(localStorage.getItem(key));
+    return state.flight.cargo === 0 && state.progress[2].deposited === 12345;
+  }, storageKey);
+  await page.reload();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).progress[2].deposited === 12345,
+    storageKey,
+  );
+  events.checks.push("Wide cargo displays without a cap and real deposit persists after reload");
 
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
   const fixture = new GameModel(PROTOTYPE);
