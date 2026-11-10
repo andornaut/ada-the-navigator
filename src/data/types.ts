@@ -33,5 +33,6 @@ export interface PrototypeContent {
     encounterFreshDistance: number;
     safeRadius: number;
     dangerReleaseSeconds: number;
+    whaleDebris: { count: number; radius: number; hp: number; spacing: number };
   };
 }
