@@ -42,6 +42,7 @@ jobs:
           node-version: 24.22.2
       - name: Run Make checks with source and artifact evidence
         run: |
+          set -o pipefail
           node tools/ci-evidence.mjs begin ${{ matrix.mode }}
           set +e
           make ${{ matrix.targets }} 2>&1 | tee .check-results/ci-${{ matrix.mode }}/check.log
