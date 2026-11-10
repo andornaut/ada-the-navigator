@@ -262,10 +262,10 @@ describe("casualty-preserving pack retention", () => {
         point,
       );
       flight.world = {
-        version: 1,
         notables: {
           support: { ...point, enemy: state, hp: 10, id: "support", kind: "enemy", radius: 30 },
         },
+        version: 1,
       };
       flight.combat = {
         initialPackSizes: { [packId]: 2 },
