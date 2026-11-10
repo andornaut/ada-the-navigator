@@ -20,6 +20,11 @@ Evidence is copied into `.check-results/<name>/` before the completed container
 is removed. Logs, exit status and source fingerprints remain there for review.
 A changed fingerprint invalidates the result.
 
+Startup failures record the container name, confirmed ID and recovery instructions
+in `.check-results/<name>/startup.json`. Only an owned container confirmed never
+started is removed automatically. Running or uncertain containers are retained;
+follow the recorded collection instructions before retrying.
+
 The `lint` mode runs `npm run lint`. The `test` mode runs `npm run check`,
 `npm test -- --maxWorkers=4`, `npm run build` and both deployment packaging dry runs.
 Both install locked dependencies and exercise `prepare` plus the actual pre-commit
