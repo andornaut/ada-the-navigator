@@ -172,7 +172,7 @@ export const PROTOTYPE: PrototypeContent = {
     weaponAmmo: { rapid: 40, spread: 24, pierce: 20 },
     cargoCapacity: 12,
     miningMilestones: [12, 24, 36],
-    introFreshDistance: 900,
+    introFreshDistance: 10800,
     encounterFreshDistance: 600,
     safeRadius: 160,
     dangerReleaseSeconds: 3,
