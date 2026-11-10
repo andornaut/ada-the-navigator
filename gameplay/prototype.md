@@ -105,6 +105,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Missiles fire one slower, stronger straight projectile. Triple Laser fires three
   bolts at -20, 0 and 20 degrees. Scattershot fires seven visual dots at -30, -20,
   -10, 0, 10, 20 and 30 degrees; the dots do not apply damage over time.
+- Fan angles are measured in the projected aim plane. Rotate there before
+  unprojecting each shot direction; preserve the weapon's world-speed ratio.
 - Each scattershot dot travels half the current projected viewport width along its
   own rotated heading, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional

@@ -5,6 +5,7 @@ export interface WeaponDefinition {
   speedRatio: number;
   damageRatio: number;
   projectileKind: "bolt" | "missile" | "dot";
+  /** Visible angular offsets in the projected aim plane, before unprojection. */
   anglesDegrees: readonly number[];
   rangeScreenWidths: number | null;
   fadeStartFraction: number | null;
