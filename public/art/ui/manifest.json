@@ -1,0 +1,52 @@
+{
+  "fonts": [
+    {
+      "key": "font-body",
+      "png": "fonts/font-body.png",
+      "fnt": "fonts/font-body.fnt"
+    },
+    {
+      "key": "font-title",
+      "png": "fonts/font-title.png",
+      "fnt": "fonts/font-title.fnt"
+    }
+  ],
+  "sprites": [
+    {
+      "key": "ui-close",
+      "png": "sprites/ui-close.png",
+      "json": "sprites/ui-close.json",
+      "once": []
+    },
+    {
+      "key": "ui-focus",
+      "png": "sprites/ui-focus.png",
+      "json": "sprites/ui-focus.json",
+      "once": [],
+      "slice": {
+        "left": 4,
+        "top": 4,
+        "right": 4,
+        "bottom": 4
+      }
+    },
+    {
+      "key": "ui-settings-card",
+      "png": "sprites/ui-settings-card.png",
+      "json": "sprites/ui-settings-card.json",
+      "once": [],
+      "slice": {
+        "left": 2,
+        "top": 2,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "key": "ui-switch",
+      "png": "sprites/ui-switch.png",
+      "json": "sprites/ui-switch.json",
+      "once": []
+    }
+  ]
+}
