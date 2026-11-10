@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="96" viewBox="0 0 64 96">
+  <title>Ada and Toronto's ship</title>
+  <desc>Upward-facing white ship with blue panels, a two-seat canopy and twin rear engines.</desc>
+  <g id="thrust">
+    <path fill="#2974c4" d="M6 80H16L14 88 11 94 8 88ZM48 80H58L56 88 53 94 50 88Z"/>
+    <path fill="#63caff" d="M8 80H14V86L11 92 8 86ZM50 80H56V86L53 92 50 86Z"/>
+    <path fill="#e2faff" d="M10 80H12V86H10ZM52 80H54V86H52Z"/>
+  </g>
+  <g id="ship">
+    <path fill="#183454" d="M32 4 36 10 58 78 45 80 37 76 35 82H29L27 76 19 80 6 78 28 10Z"/>
+    <path fill="#f4f8ff" d="M32 4 54 74 44 76 36 70H28L20 76 10 74Z"/>
+    <path fill="#d0e2f0" d="M32 4V24L26 34 18 66 10 74 28 14Z"/>
+    <path fill="#ffffff" d="M32 4 36 16 46 54 38 36 32 24Z"/>
+    <path fill="#2974c4" d="M22 38 18 60 12 72 20 70 26 48Z"/>
+    <path fill="#2974c4" d="M42 38 46 60 52 72 44 70 38 48Z"/>
+    <path fill="#74caff" d="M20 50 18 60 16 64H20L23 50ZM44 50 46 60 48 64H44L41 50Z"/>
+    <path fill="#2974c4" d="M31 14H33L36 26H28Z"/>
+    <path fill="#173753" d="M26 30H38L42 38V58L38 64H26L22 58V38Z"/>
+    <path fill="#83cfee" d="M27 32H37L40 38V56L37 60H27L24 56V38Z"/>
+    <path fill="#b6ecff" d="M28 34H36L38 38H26Z"/>
+    <path fill="#235172" d="M24 46H31V58H25ZM33 46H40L39 58H33Z"/>
+    <path fill="#e1eff9" d="M25 52H30V58H25ZM34 52H39V58H34Z"/>
+    <path fill="#223b62" d="M25 50H30V54H25Z"/>
+    <path fill="#30232c" d="M25 40H29L31 42V48H24V43Z"/>
+    <path fill="#945637" d="M25 43H29V49H25Z"/>
+    <path fill="#bd8053" d="M25 43H29V46H25Z"/>
+    <path fill="#241e29" d="M25 44H26V45H25ZM28 44H29V45H28Z"/>
+    <path fill="#2d76bf" d="M34 50H39V54H34Z"/>
+    <path fill="#70472e" d="M33 40H35V47H33ZM38 40H40V47H38Z"/>
+    <path fill="#d6a364" d="M35 41H38L39 43V48L37 50H35L34 47V43Z"/>
+    <path fill="#f3dbad" d="M35 46H38V49H35Z"/>
+    <path fill="#282932" d="M35 43H36V44H35ZM37 43H38V44H37ZM36 46H38V47H36Z"/>
+    <path fill="#e6f6ff" d="M31 32H33V60H31Z"/>
+    <path fill="#173753" d="M24 56H40V58H24Z"/>
+    <path fill="#b5ccdd" d="M27 66H37V70H27Z"/>
+    <path fill="#2974c4" d="M30 66H34V72H30Z"/>
+    <path fill="#183454" d="M6 68H16V80H6ZM48 68H58V80H48Z"/>
+    <path fill="#e6f0fb" d="M6 68H16V74H6ZM48 68H58V74H48Z"/>
+    <path fill="#2974c4" d="M8 68H14V72H8ZM50 68H56V72H50Z"/>
+    <path fill="#4e6f88" d="M8 74H14V78H8ZM50 74H56V78H50Z"/>
+    <path fill="#91dcff" d="M8 78H14V80H8ZM50 78H56V80H50Z"/>
+    <path fill="#e6f0fb" d="M30 72H34V80H30Z"/>
+    <path fill="#2974c4" d="M31 74H33V82H31Z"/>
+  </g>
+</svg>
