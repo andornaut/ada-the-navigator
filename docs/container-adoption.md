@@ -5,7 +5,8 @@ of the old npm gate commands, direct inner gate steps and resident compatibility
 
 ## Held proposal
 
-The prepared Make surface is separate from the active source and resident.
+This isolated candidate applies the steps-only gate proposal in its own
+`delivery-kit.json`. Canonical main and the resident remain unchanged.
 `tests/container/run` is copied byte-identically from the approved foundation,
 SHA-256 `44f1255396a1422872b4920b5607111e4bd46ea0ddd4d8013b9a14ee67fc67b2`.
 It is not modified to add local behavior. No Docker proxy is used. Non-writable
@@ -27,9 +28,9 @@ success.
 ## Runner compatibility
 
 [The gate-step proposal](delivery-make-proposal.patch) changes only the gate
-categories to direct `tests/container/check` calls. It is a proposal, not an
-applied configuration. Root `delivery-kit.json`, the Node image pin, locked
-installation, schedule, deployment route and live control remain unchanged.
+categories to direct `tests/container/check` calls. It is applied only in this isolated candidate; the patch remains the baseline
+review artifact. The Node image pin, locked installation, schedule, deployment
+route and live control remain unchanged.
 
 The existing kit and receipt adapter install dependencies in `/tmp/work` and call
 the same inner entry there. The generic image uses `/work` and cached dependencies
