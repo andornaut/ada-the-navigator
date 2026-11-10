@@ -13,6 +13,12 @@
   ],
   "sprites": [
     {
+      "key": "icon-settings-nav",
+      "png": "sprites/icon-settings-nav.png",
+      "json": "sprites/icon-settings-nav.json",
+      "once": []
+    },
+    {
       "key": "ui-close",
       "png": "sprites/ui-close.png",
       "json": "sprites/ui-close.json",

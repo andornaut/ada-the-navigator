@@ -9,6 +9,8 @@ Source files remain unchanged.
 Serve these outputs under `/art/ui/`. The nested `manifest.json` retains only
 `font-body`, `font-title`, `ui-settings-card`, `ui-close`, `ui-switch` and
 `ui-focus`, preserving their exact entries, ordering, slices and relative paths.
+The [settings navigation icon](settings-icon.md) supplies `icon-settings-nav`
+from its separately pinned source. Its entry uses the same sprite schema.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 
@@ -65,7 +67,7 @@ pins the full input; the destination manifest is the documented subset.
 | sprites/ui-focus.json                       | `1ab8a4c81c35ab038530df74ae6be1f696a5dd766f4688f22dc6411ae521390c` |
 | palette.json                                | `083925bef07449205f067a6826adab748fa8e3d33658d111d6259f77292c9928` |
 | manifest.json (source full)                 | `17f5bb498704ebba47b3faf5f7e71cbe343b91a95f4e21ba4f7522a1c2fe2ebd` |
-| manifest.json (destination subset)          | `f969ca546acf2114d25e420808604cba49fe90b112fcdbc25698929705ea2204` |
+| manifest.json (destination subset)          | `72dccf453ffc547a81c83dbee9a149aa4b5e4687e93fc6425ae3f9705ee2a836` |
 
 ## Formatted destination metadata SHA-256
 
