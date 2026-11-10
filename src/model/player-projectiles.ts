@@ -63,14 +63,18 @@ export function planPlayerVolley(
     return { interval, projectiles: [] };
   }
   const aim = { x: context.aim.x / length, y: context.aim.y / length };
+  const projectedAim = { x: aim.x - aim.y, y: (aim.x + aim.y) / 2 };
   const speed = context.baseSpeed * definition.speedRatio;
   const damage = context.baseDamage * definition.damageRatio;
   const projectiles = definition.anglesDegrees.map((degrees): PlayerProjectile => {
     const angle = (degrees * Math.PI) / 180;
-    const heading = {
-      x: aim.x * Math.cos(angle) - aim.y * Math.sin(angle),
-      y: aim.x * Math.sin(angle) + aim.y * Math.cos(angle),
+    const projected = {
+      x: projectedAim.x * Math.cos(angle) - projectedAim.y * Math.sin(angle),
+      y: projectedAim.x * Math.sin(angle) + projectedAim.y * Math.cos(angle),
     };
+    const world = { x: projected.x / 2 + projected.y, y: projected.y - projected.x / 2 };
+    const worldLength = Math.hypot(world.x, world.y);
+    const heading = { x: world.x / worldLength, y: world.y / worldLength };
     const projectedSpeed = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
     const projectedRange =
       definition.rangeScreenWidths === null

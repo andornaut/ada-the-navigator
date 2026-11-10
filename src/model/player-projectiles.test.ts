@@ -27,19 +27,39 @@ describe("pure player projectile volleys", () => {
     expect(missile.fade).toBeUndefined();
   });
 
-  it("rotates three thin laser shots by exactly minus twenty, zero and plus twenty degrees", () => {
-    const volley = planPlayerVolley(WEAPON_CATALOG.tripleLaser, {
-      ...context,
-      aim: { x: 0, y: 5 },
-    });
-    expect(volley.projectiles).toHaveLength(3);
-    expect(volley.projectiles.map((shot) => shot.projectile)).toEqual(["bolt", "bolt", "bolt"]);
-    for (const [index, degrees] of [-20, 0, 20].entries()) {
-      const shot = volley.projectiles[index]!;
-      const heading = Math.atan2(shot.velocity.y, shot.velocity.x);
-      expect(heading).toBeCloseTo(Math.PI / 2 + (degrees * Math.PI) / 180);
-      expect(Math.hypot(shot.velocity.x, shot.velocity.y)).toBeCloseTo(context.baseSpeed);
-      expect(shot.damage).toBe(context.baseDamage);
+  it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
+    const cases = [
+      { definition: WEAPON_CATALOG.tripleLaser, degrees: [-20, 0, 20] },
+      { definition: WEAPON_CATALOG.scattershot, degrees: [-30, -20, -10, 0, 10, 20, 30] },
+    ];
+    for (const { definition, degrees } of cases) {
+      for (const aim of [
+        { x: 1, y: 0 },
+        { x: 1, y: 1 },
+        { x: 0, y: 1 },
+        { x: -1, y: 1 },
+        { x: -1, y: 0 },
+        { x: -1, y: -1 },
+        { x: 0, y: -1 },
+        { x: 1, y: -1 },
+      ]) {
+        const volley = planPlayerVolley(definition, { ...context, aim });
+        const forward = { x: aim.x - aim.y, y: (aim.x + aim.y) / 2 };
+        expect(volley.projectiles).toHaveLength(degrees.length);
+        for (const [index, expected] of degrees.entries()) {
+          const shot = volley.projectiles[index]!;
+          const screen = {
+            x: shot.velocity.x - shot.velocity.y,
+            y: (shot.velocity.x + shot.velocity.y) / 2,
+          };
+          const cross = forward.x * screen.y - forward.y * screen.x;
+          const dot = forward.x * screen.x + forward.y * screen.y;
+          expect((Math.atan2(cross, dot) * 180) / Math.PI).toBeCloseTo(expected);
+          expect(Math.hypot(shot.velocity.x, shot.velocity.y)).toBeCloseTo(context.baseSpeed);
+          expect(shot.damage).toBeCloseTo(context.baseDamage * definition.damageRatio);
+          expect(shot.projectile).toBe(definition.projectileKind);
+        }
+      }
     }
   });
 
