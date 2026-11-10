@@ -2,35 +2,36 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 type Point = readonly [number, number, number];
-type Face = { color: string; points: Point[]; twoSided?: boolean };
+type Face = { color: string; layer: number; points: Point[]; twoSided?: boolean };
 
 const white = "#ffffff";
 const side = "#d4dfe9";
 const rear = "#abbfce";
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
-function model(thrust: boolean): Face[] {
+function model(yaw: number, thrust: boolean): Face[] {
   const faces: Face[] = [];
   const nose: Point = [0, -25, 3];
   const left: Point = [-16, 17, 3];
   const right: Point = [16, 17, 3];
   // Counterclockwise top and outward sides of the shallow triangular solid.
-  faces.push({ color: white, points: [nose, right, left] });
+  faces.push({ color: white, layer: 3, points: [nose, right, left] });
   const rim = [nose, left, right];
   for (let i = 0; i < rim.length; i++) {
     const a = rim[i]!;
     const b = rim[(i + 1) % rim.length]!;
     faces.push({
       color: i === 1 ? rear : side,
+      layer: 2,
       points: [a, b, [b[0], b[1], -2], [a[0], a[1], -2]],
     });
   }
   for (const sign of [-1, 1]) {
     const root: Point = [sign * 7, 0, 2];
-    const tip: Point = [sign * 25, 20, 2];
-    const heel: Point = [sign * 9, 17, 2];
+    const tip: Point = [sign * 25, 17, 2];
+    const heel: Point = [sign * 12, 17, 2];
     const top = sign === 1 ? [root, tip, heel] : [root, heel, tip];
-    faces.push({ color: white, points: top });
+    faces.push({ color: white, layer: 1, points: top });
     // The third wing edge is buried inside the central hull.
     for (const [a, b] of [
       [root, tip],
@@ -40,49 +41,63 @@ function model(thrust: boolean): Face[] {
       const [start, end] = edge as [Point, Point];
       faces.push({
         color: side,
+        layer: 0,
         points: [start, end, [end[0], end[1], 0], [start[0], start[1], 0]],
       });
     }
     faces.push({
       color: "#64caff",
+      layer: 2,
       points: [
-        [sign * 9 - 2, 17.1, -1],
-        [sign * 9 + 2, 17.1, -1],
-        [sign * 9 + 2, 17.1, 2],
-        [sign * 9 - 2, 17.1, 2],
+        [sign * 22 - 2, 17.1, 0],
+        [sign * 22 + 2, 17.1, 0],
+        [sign * 22 + 2, 17.1, 2],
+        [sign * 22 - 2, 17.1, 2],
       ],
     });
     if (thrust) {
       faces.push({
         color: "#b9ecff",
+        layer: -1,
         points: [
-          [sign * 9 - 2, 17.2, 0],
-          [sign * 9, 25, 0],
-          [sign * 9 + 2, 17.2, 0],
+          [sign * 22 - 2, 17.2, 1],
+          [sign * 22, 24, 1],
+          [sign * 22 + 2, 17.2, 1],
         ],
         twoSided: true,
       });
     }
   }
-  // The opaque canopy covers about one quarter of the central hull top.
+  // The 182-unit trapezoidal footprint stays inside the 672-unit hull top.
   const base: Point[] = [
-    [-7, -6, 3.1],
-    [7, -6, 3.1],
-    [7, 7, 3.1],
-    [-7, 7, 3.1],
+    [-5, -7, 3],
+    [5, -7, 3],
+    [8, 7, 3],
+    [-8, 7, 3],
+  ];
+  const roof: Point[] = [
+    [-4, -4, 7],
+    [4, -4, 7],
+    [6, 5, 7],
+    [-6, 5, 7],
   ];
   for (let i = 0; i < base.length; i++) {
+    const next = (i + 1) % base.length;
     faces.push({
-      color: i % 2 === 0 ? "#1767b3" : "#2585d0",
-      points: [base[i]!, base[(i + 1) % base.length]!, [0, -4, 13]],
+      color: "#1767b3",
+      layer: 5,
+      points: [base[i]!, base[next]!, roof[next]!, roof[i]!],
     });
   }
+  faces.push({ color: "#2585d0", layer: 5, points: roof });
+  const tail = rotate(yaw, [0, 14, 0]);
   faces.push({
     color: white,
+    layer: tail[0] + tail[1] > 0 ? 4 : 6,
     points: [
       [0, 9, 3],
-      [0, 19, 3],
-      [0, 17, 11],
+      [0, 17, 3],
+      [0, 15, 8],
     ],
     twoSided: true,
   });
@@ -112,10 +127,10 @@ function depth({ points }: Face): number {
 }
 
 function svg(yaw: number, thrust: boolean): string {
-  const polygons = model(thrust)
+  const polygons = model(yaw, thrust)
     .map((face) => ({ ...face, points: face.points.map((point) => rotate(yaw, point)) }))
     .filter(visible)
-    .sort((a, b) => depth(b) - depth(a))
+    .sort((a, b) => a.layer - b.layer || depth(b) - depth(a))
     .map(({ color, points }) => {
       const projected = points.map(
         ([x, y, z]) =>

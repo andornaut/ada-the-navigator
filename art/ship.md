@@ -14,8 +14,11 @@
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
 - Compact white triangular hull, two triangular rear wings and a small vertical
   triangular tail use eleven hull polygons before visibility culling. Filled
-  shaded sides show thickness. The elevated opaque blue canopy has a two-occupant
-  footprint of roughly 27 percent of the central hull top, without interior detail.
-- Twin rear mouths stay blue in both states. Thrust adds short pale blue flames.
-  Faces share one projection and use outward-normal culling and depth ordering.
+  shaded sides show thickness. The low opaque blue canopy has a flat trapezoidal roof,
+  two blue tones and a two-occupant footprint of roughly 27 percent of the central hull top, without interior detail.
+- Twin mouths sit at the rear wing corners and stay blue in both states.
+  Thrust adds short pale blue flames.
+  Faces share one projection and outward-normal culling. Wing sides precede wing
+  tops, then hull sides and hull top, then canopy. The tail draws before or after
+  the canopy according to heading; depth orders faces within each layer.
   No raster assets, filters, strokes, external dependencies or screen rotation.
