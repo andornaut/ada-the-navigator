@@ -14,8 +14,8 @@ import {
   teleport,
 } from "./flight.ts";
 import {
-  ACTIVE_CHUNK_RADIUS,
   activateFlightRegion,
+  ACTIVE_CHUNK_RADIUS,
   archivedObjectIds,
   persistentObject,
 } from "./geography.ts";
@@ -195,7 +195,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     expect(flight.world.notables).toEqual({});
   });
 
-  it("keeps quest guards, destinations, explicit persistence markers and whale debris independent of ordinary eviction", () => {
+  it("retains quest objects and explicit persistence markers beyond the ordinary window", () => {
     const flight = empty();
     const destination = ensureDestination(PROTOTYPE, "growers", flight);
     const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;

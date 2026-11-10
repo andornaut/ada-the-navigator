@@ -316,7 +316,7 @@ describe("current generation save boundary", () => {
     const restored = restoreSave(JSON.stringify(snapshot));
     expect(restored).toEqual(snapshot);
     expect(restored!.flight!.world).not.toBe(snapshot.flight.world);
-    const object = restored!.flight!.world.notables["guard"]!;
+    const object = restored!.flight!.world.notables.guard!;
     expect(object.enemy!.hardpoints[1]!.hp).toBe(0);
     expect(object.enemy!.hardpoints[4]!.cooldown).toBe(1.7);
     expect(restored!.flight!.shots).toEqual(snapshot.flight.shots);
@@ -339,9 +339,9 @@ describe("current generation save boundary", () => {
   it.each([
     null,
     {},
-    { version: 2, notables: {} },
-    { version: 1, notables: [] },
-    { version: 1, notables: {}, extra: [] },
+    { notables: {}, version: 2 },
+    { notables: [], version: 1 },
+    { extra: [], notables: {}, version: 1 },
   ])("rejects invalid persistent world metadata %j", (world) => {
     const snapshot = notableSnapshot();
     Object.assign(snapshot.flight, { world });
@@ -428,7 +428,7 @@ describe("current generation save boundary", () => {
     const old = JSON.parse(JSON.stringify(snapshot)) as { flight: Record<string, unknown> };
     delete old.flight.world;
     delete old.flight.visited;
-    old.flight.dormant = { version: 1, pages: {}, packMembers: {}, routes: [] };
+    old.flight.dormant = { packMembers: {}, pages: {}, routes: [], version: 1 };
     old.flight.exploredChunks = ["0,0"];
     expect(restoreSave(old)).toBeNull();
     expect(new GameModel(PROTOTYPE, old).state.mode).toBe("home");

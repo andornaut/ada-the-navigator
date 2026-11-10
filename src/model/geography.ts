@@ -188,7 +188,9 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
       if (object.hp > 0 && !(object.kind === "enemy" && !liveEnemy(object))) {
         flight.world.notables[object.id] = object;
         account(content, index, object, true);
-      } else recordObjectRemoval(content, object, flight);
+      } else {
+        recordObjectRemoval(content, object, flight);
+      }
     } else if (liveEnemy(object) && object.enemy?.packId && flight.combat) {
       const pack = object.enemy.packId;
       flight.combat.initialPackSizes[pack] = Math.max(
