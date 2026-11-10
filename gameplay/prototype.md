@@ -95,21 +95,24 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Maximum movement speed is provisionally 200 world units per second.
 - Settings use Chibi's gear control.
 - With no aim input, the ship faces movement. Centered aim does not fire.
-- Basic weapon has unlimited ammunition.
-- Icon pickups, presented like Chibi's power-ups, automatically equip one upgrade.
-- Upgrades: rapid fire, three-shot spread and piercing shots. Each uses limited ammo.
+- Basic fire and all upgrades have unlimited ammunition.
+- Upgrades are rapid fire, three-shot spread and piercing shots. Icon pickups,
+  presented like Chibi's power-ups, automatically equip their upgrade and retain
+  other owned upgrades.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
-  every other owned upgrade's remaining ammunition.
-- Pickups automatically equip their upgrade and retain other owned weapons.
-  Matching pickups refill that weapon up to twice its pickup ammunition allocation.
-- Empty upgraded ammunition restores basic fire.
+  ownership of the other upgrades.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships.
 - A recurring hostile alien faction provides continuity across sectors.
 - Disabled enemy ships teleport away. How and why are unknown, as with Ada's tech.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.
-- Shield depletion returns Ada to Toronto and sector selection.
+- Shield depletion while an upgrade is selected removes that upgrade, fully restores
+  the shield and always equips basic fire. Other owned upgrades remain available
+  for manual selection.
+- Shield depletion while basic fire is selected returns Ada to Toronto and sector
+  selection. Story progress persists; the next flight generates a new layout.
+- The shield bar spans the full bottom width and is approximately three pixels high.
 - One forgiving difficulty; no overall exploration timer.
 - Ordinary scenery blocks or slides the ship without damage. Attacks and marked
   hazards damage the shield.
@@ -143,7 +146,8 @@ known destinations, deposited resources and achievements persist. Carried cargo
 and weapon pickups reset. Known destinations remain usable despite regeneration.
 
 Closing the game is not leaving the sector: resume the same flight losslessly,
-including its layout, cargo, ammunition, shield and active and dormant object state.
+including its layout, cargo, owned and selected weapons, shield and active and
+dormant object state.
 Save durable milestones as they occur.
 
 The active simulation window is bounded. Outside it, inactive enemy AI and debris
@@ -208,7 +212,7 @@ does not define sector four's story or conclusion.
 
 ## Verification priorities
 
-Check independent move/aim controls, shield recharge and depletion, weapon fallback,
+Check independent move/aim controls, shield recharge, both shield-depletion outcomes,
 safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
 interrupted-flight resume. Verify the three Toronto resolutions unlock sectors
