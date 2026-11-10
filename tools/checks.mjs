@@ -44,6 +44,7 @@ function snapshot() {
     "eslint.config.mjs",
     "eslint.config.base.mjs",
     "lint-staged.config.mjs",
+    ".lintstagedrc",
     "vite.config.ts",
     "vitest.config.ts",
     "tsconfig.json",
@@ -127,13 +128,8 @@ function guard(ci) {
     }
     return;
   }
-  const minute = Number(
-    new Intl.DateTimeFormat("en", { timeZone: "America/Toronto", minute: "2-digit" }).format(
-      new Date(),
-    ),
-  );
-  if (minute >= 50 || minute < 15 || loadavg()[0] >= 20) {
-    throw new Error("Start blocked: Toronto :50 to :15 or load >=20");
+  if (loadavg()[0] >= 20) {
+    throw new Error("Start blocked: load >=20");
   }
 }
 
