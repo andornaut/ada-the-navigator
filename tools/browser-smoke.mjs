@@ -579,6 +579,7 @@ try {
   });
   const portraitFrame = await frameProof(true);
   await page
+    .locator("#game-canvas")
     .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
     .waitFor({ state: "visible" });
   const portraitBefore = await position();
