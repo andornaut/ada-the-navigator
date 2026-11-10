@@ -13,7 +13,7 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
-import { ACTIVE_CHUNK_RADIUS, archivedObjectIds } from "./geography.ts";
+import { activateFlightRegion, ACTIVE_CHUNK_RADIUS, archivedObjectIds } from "./geography.ts";
 import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 
 const progress: SectorProgress = {
@@ -279,7 +279,7 @@ it("retains a route blocker index when one of several dormant guards sharing a r
   syncFlightRegion(PROTOTYPE, flight);
   expect(flight.dormant!.routes).toEqual(["growers"]);
   const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
-  activateRouteEncounter(PROTOTYPE, "growers", resumed);
+  activateFlightRegion(PROTOTYPE, first, resumed);
   expect(resumed.objects.filter((object) => object.routeId === "growers")).toHaveLength(1);
   expect(resumed.dormant!.routes).toEqual(["growers"]);
   expect(routeBlocked("growers", resumed)).toBe(true);
@@ -288,4 +288,47 @@ it("retains a route blocker index when one of several dormant guards sharing a r
   activateRouteEncounter(PROTOTYPE, "growers", resumed);
   expect(resumed.objects.filter((object) => object.routeId === "growers")).toHaveLength(1);
   expect(resumed.dormant!.routes).toEqual([]);
+});
+
+it("wakes every same-route guard across pages before translation without duplicating nearby pages", () => {
+  const flight = empty();
+  const guards = [9000, 9300, 15000].map((x, index): SpaceObject => {
+    const point = { x, y: 100 };
+    const id = `guard-${index}`;
+    const state = createEnemy(
+      enemyCatalog.frigate,
+      { archetype: "frigate", id, packId: null, phase: 0.1 },
+      point,
+    );
+    state.hardpoints[0]!.hp = index + 1;
+    state.hardpoints[1]!.cooldown = index + 0.25;
+    return { ...point, enemy: state, hp: 8, id, kind: "enemy", radius: 30, routeId: "growers" };
+  });
+  flight.objects.push(...guards);
+  syncFlightRegion(PROTOTYPE, flight);
+  const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
+  activateRouteEncounter(PROTOTYPE, "growers", resumed);
+  const active = resumed.objects.filter((object) => object.routeId === "growers");
+  expect(active).toHaveLength(3);
+  for (const expected of guards) {
+    expect(active.find((object) => object.id === expected.id)).toEqual(expected);
+  }
+  expect(resumed.dormant!.routes).toEqual([]);
+  expect(objects(resumed).filter((object) => object.routeId === "growers")).toHaveLength(3);
+  expect(routeBlocked("growers", resumed)).toBe(true);
+  // Model relocation can now translate the complete route group in one operation.
+  for (const object of active) {
+    object.x += 1000;
+    object.y += 500;
+    object.enemy!.home.x += 1000;
+    object.enemy!.home.y += 500;
+    object.enemy!.position.x += 1000;
+    object.enemy!.position.y += 500;
+  }
+  for (const expected of guards) {
+    const actual = active.find((object) => object.id === expected.id)!;
+    expect(actual.x).toBe(expected.x + 1000);
+    expect(actual.y).toBe(expected.y + 500);
+    expect(actual.enemy!.hardpoints).toEqual(expected.enemy!.hardpoints);
+  }
 });

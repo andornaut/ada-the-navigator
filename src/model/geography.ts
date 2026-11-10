@@ -157,7 +157,7 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
   flight.objects = active;
 }
 
-/** Explicit quest relocation may wake its guard even when its current page is distant. */
+/** Explicit quest relocation wakes every matching guard before their positions are translated. */
 export function activateRouteEncounter(
   content: PrototypeContent,
   id: string,
@@ -168,8 +168,9 @@ export function activateRouteEncounter(
   }
   // Rare quest relocation searches encoded pages; ordinary simulation only addresses nearby keys.
   const marker = JSON.stringify(id);
-  for (const [key, encoded] of Object.entries(flight.dormant.pages)) {
-    if (!encoded.includes(marker)) {
+  for (const key of Object.keys(flight.dormant.pages)) {
+    const encoded = flight.dormant.pages[key];
+    if (encoded === undefined || !encoded.includes(marker)) {
       continue;
     }
     const objects = JSON.parse(encoded) as SpaceObject[];
@@ -177,7 +178,6 @@ export function activateRouteEncounter(
     if (guard) {
       activatePage(key, flight);
       activateFlightRegion(content, guard, flight);
-      return;
     }
   }
 }
