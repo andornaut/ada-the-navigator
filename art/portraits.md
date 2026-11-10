@@ -4,16 +4,21 @@ Approved portraits reused from the Archie repository (`andornaut/archies-dog-wal
 
 Ada is the brown/dark-skinned girl depicted in the source art. The dog portrait retains the source appearance; no breed or character name is assigned here. Toronto refers to the city, not the dog.
 
+The `casey`, `trista` and `mr-b` assets are reusable Toronto portraits. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
+
 ## Geometry and tags
 
-Every frame is 32 × 32 pixels, untrimmed, with a 1000 ms duration. Ada's sheet is 64 × 32 pixels; the dog's sheet is 96 × 32 pixels.
+Every frame is 32 × 32 pixels, untrimmed, with a 1000 ms duration. The Ada, casey, trista and mr-b sheets are 64 × 32 pixels; the dog's sheet is 96 × 32 pixels.
 
-| Portrait | happy | neutral | upset |
-| --- | --- | --- | --- |
-| Ada | Frame 0 | Frame 1 | Not present |
-| Dog | Frame 0 | Frame 1 | Frame 2 |
+| Portrait | happy   | neutral | upset       |
+| -------- | ------- | ------- | ----------- |
+| Ada      | Frame 0 | Frame 1 | Not present |
+| casey    | Frame 0 | Frame 1 | Not present |
+| Dog      | Frame 0 | Frame 1 | Frame 2     |
+| mr-b     | Frame 0 | Frame 1 | Not present |
+| trista   | Frame 0 | Frame 1 | Not present |
 
-PNG files are byte-for-byte copies. JSON changes only `meta.image` to the destination filename, `ada.png` or `dog.png`. Source frame keys, geometry, durations and tags are preserved.
+PNG files are byte-for-byte copies. JSON changes only `meta.image` to the corresponding destination PNG filename. Source frame keys, geometry, durations and tags are preserved.
 
 ## Provenance and SHA-256
 
@@ -33,7 +38,31 @@ PNG files are byte-for-byte copies. JSON changes only `meta.image` to the destin
   - SHA-256: `a167ac587f398a119a839684e0187b267108c38ac9ad4983781b59d64eb4bd11`
   - Destination: `public/art/portraits/dog.json`
   - SHA-256: `c469332c04dd6c1e97c5595aaf0fada8c1ed68fe9ca80e6a554f4232a4bb95d0`
+- Source: `public/art/sprites/face-walker-casey.png`
+  - SHA-256: `d7d4761d5c8f72dc41c881dfa4d4328663309bad8ddbc878edc9f643983508bb`
+  - Destination: `public/art/portraits/casey.png`
+  - SHA-256: `d7d4761d5c8f72dc41c881dfa4d4328663309bad8ddbc878edc9f643983508bb`
+- Source: `public/art/sprites/face-walker-casey.json`
+  - SHA-256: `2cb6d01b87ca091ea1587990396724b3169784a02e3bcb0a943fc771462dd217`
+  - Destination: `public/art/portraits/casey.json`
+  - SHA-256: `0d27faf38c219217f5e1a084449904debc55cc7f43d78a302150965d73f96b22`
+- Source: `public/art/sprites/face-walker-trista.png`
+  - SHA-256: `bf8f6344b56ee5bcca4f66bfa01c188e4d3a8481a3f87b385936f4f1d8b361d0`
+  - Destination: `public/art/portraits/trista.png`
+  - SHA-256: `bf8f6344b56ee5bcca4f66bfa01c188e4d3a8481a3f87b385936f4f1d8b361d0`
+- Source: `public/art/sprites/face-walker-trista.json`
+  - SHA-256: `906f93a27f3574783b0de199f54457c347f404275e6cf37ba98f4d41fddab9d9`
+  - Destination: `public/art/portraits/trista.json`
+  - SHA-256: `e7dbf256dc023b5353ebd9e2211a561bbfa08e89d2c61242d21e7a214bc4a023`
+- Source: `public/art/sprites/face-walker-mr-b.png`
+  - SHA-256: `3f2d78aac50e5dac51077a9069c85bf95a0bb6705437d8528098401b9b94f51c`
+  - Destination: `public/art/portraits/mr-b.png`
+  - SHA-256: `3f2d78aac50e5dac51077a9069c85bf95a0bb6705437d8528098401b9b94f51c`
+- Source: `public/art/sprites/face-walker-mr-b.json`
+  - SHA-256: `8c8c80e879ea6824f8b36f9e247ec5698e030a65d69f55bc069ca98c10fd15e4`
+  - Destination: `public/art/portraits/mr-b.json`
+  - SHA-256: `2024382c712ab9c34598a96f03a99242dd34af1730f2b9cb3cdfc45182ad5d7e`
 
 ## Verification limits
 
-All four tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources. Tests, builds, lint and containers were not run, as explicitly requested for this handoff. Integration checks remain deferred.
+All ten tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources. Tests, builds, lint and containers were not run. Integration checks remain deferred.
