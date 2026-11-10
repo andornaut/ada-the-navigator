@@ -249,3 +249,31 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
     expect(f.objects).toContain(o);
   });
 });
+
+it("discovers the required encounter after reversing away from its first location", () => {
+  const content = structuredClone(PROTOTYPE);
+  content.tuning.introFreshDistance = 8;
+  content.tuning.flight.objectsPerChunk = 0;
+  const model = new GameModel(content);
+  launch(model);
+  const flight = model.state.flight!;
+  for (let i = 0; i < 100 && !flight.objects.some((o) => o.id === "growers"); i++) {
+    model.step(0.1, { ...idle, move: { x: 1, y: 0 } });
+  }
+  const pending = flight.objects.find((o) => o.id === "growers");
+  expect(pending).toBeDefined();
+  const originalX = pending!.x;
+  expect(originalX - flight.player.x).toBeGreaterThan(content.tuning.chunkSize);
+  expect(model.state.progress[1].known).toEqual([]);
+  expect(model.state.dialogue).toBeNull();
+  for (let i = 0; i < 300 && !model.state.dialogue; i++) {
+    model.step(0.1, { ...idle, move: { x: -1, y: 0 } });
+  }
+  const discovered = flight.objects.find((o) => o.id === "growers")!;
+  expect(discovered.x).toBeLessThan(originalX);
+  expect(model.state.progress[1].known).toEqual(["growers"]);
+  expect(model.state.progress[1].discoveries).toBe(1);
+  expect(model.state.progress[1].introduced).toBe(true);
+  expect(model.state.dialogue?.text).toBe(content.chapters[1].dialogue.grower?.text);
+  expect(model.state.dialogue?.context).toBe("grower");
+});
