@@ -28,7 +28,6 @@ export class StoryShell {
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private readonly travel = document.createElement("nav");
-  private readonly hud = document.createElement("div");
   private signature = "";
 
   private readonly actions: ShellActions;
@@ -45,10 +44,7 @@ export class StoryShell {
     this.panel.className = "story-panel";
     this.travel.className = "travel-panel";
     this.travel.setAttribute("aria-label", PROTOTYPE.labels.destinations ?? "");
-    this.hud.className = "flight-hud";
-    document
-      .getElementById("app")
-      ?.append(this.status, this.savingStatus, this.hud, this.panel, this.travel);
+    document.getElementById("app")?.append(this.status, this.savingStatus, this.panel, this.travel);
   }
 
   render(state: GameState, view: ShellView): void {
@@ -57,20 +53,6 @@ export class StoryShell {
     this.status.dataset.x = String(flight?.player.x ?? 0);
     this.status.dataset.y = String(flight?.player.y ?? 0);
     this.status.textContent = state.notice;
-    this.hud.hidden = state.mode !== "space";
-    if (flight) {
-      const labels = PROTOTYPE.labels;
-      const shield = `${labels.shield}: ${Math.ceil(flight.shield)}/${PROTOTYPE.tuning.shieldMax}`;
-      const cargo = `${labels.cargo}: ${flight.cargo}`;
-      const weaponNames = {
-        basic: labels.weaponBasic,
-        pierce: labels.weaponPierce,
-        rapid: labels.weaponRapid,
-        spread: labels.weaponSpread,
-      };
-      const weapon = `${labels.weapon}: ${weaponNames[flight.weapon]}`;
-      this.hud.textContent = `${shield} · ${cargo} · ${weapon}\n${labels.objective}: ${view.objective}`;
-    }
     const nextSignature = JSON.stringify([
       state.mode,
       state.selectedSector,
@@ -167,6 +149,5 @@ export class StoryShell {
     this.status.remove();
     this.panel.remove();
     this.travel.remove();
-    this.hud.remove();
   }
 }

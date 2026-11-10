@@ -111,19 +111,6 @@ button:disabled {
   image-rendering: pixelated;
   margin-bottom: 16px;
 }
-.flight-hud {
-  position: absolute;
-  z-index: 2;
-  left: max(12px, var(--inset-left));
-  top: max(12px, var(--inset-top));
-  max-width: calc(100% - 110px);
-  white-space: pre-line;
-  line-height: 1.6;
-  padding: 8px 12px;
-  font-size: 14px;
-  background: #101010dc;
-  pointer-events: none;
-}
 #game-status {
   position: absolute;
   z-index: 3;
@@ -212,8 +199,4 @@ button:disabled {
 #save-status:not(:empty) {
   padding: 8px 12px;
   border: 1px solid #969696;
-}
-
-#app:has(.ada-weapon-selector:not([hidden])) .flight-hud {
-  max-width: calc(100% - 280px);
 }
