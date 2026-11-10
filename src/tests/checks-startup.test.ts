@@ -1,5 +1,5 @@
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,6 +37,31 @@ if (command === 'create') {
 // Run the real CLI with controlled Docker responses, inside the existing isolated test gate.
 function attempt(scenario: string) {
   const scratch = mkdtempSync(join(tmpdir(), "ada-startup-"));
+  const project = join(scratch, "project");
+  mkdirSync(join(project, "tools"), { recursive: true });
+  cpSync(join(root, "tools/checks.mjs"), join(project, "tools/checks.mjs"));
+  writeFileSync(join(project, "package.json"), '{"private":true,"type":"module"}\n');
+  writeFileSync(join(project, ".gitignore"), ".check-results/\n");
+  execFileSync("git", ["init", "--quiet", "--initial-branch", "main"], { cwd: project });
+  execFileSync("git", ["add", "."], { cwd: project });
+  execFileSync(
+    "git",
+    [
+      "-c",
+      "user.name=Fixture User",
+      "-c",
+      "user.email=fixture@example.invalid",
+      "-c",
+      "core.hooksPath=/dev/null",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "--quiet",
+      "--message",
+      "Create fixture checkout",
+    ],
+    { cwd: project },
+  );
   const commandsPath = join(scratch, "commands.jsonl");
   writeFileSync(join(scratch, "docker"), fakeDocker, { mode: 0o755 });
   const preload = `import os from 'node:os'; import {syncBuiltinESMExports} from 'node:module';
@@ -48,12 +73,12 @@ syncBuiltinESMExports();`;
     [
       "--import",
       `data:text/javascript,${encodeURIComponent(preload)}`,
-      join(root, "tools/checks.mjs"),
+      join(project, "tools/checks.mjs"),
       "start",
       "all",
     ],
     {
-      cwd: root,
+      cwd: project,
       encoding: "utf8",
       env: {
         ...process.env,
@@ -70,7 +95,7 @@ syncBuiltinESMExports();`;
   const name = `${result.stdout}\n${result.stderr}`.match(/ada-check-[a-f0-9-]{36}/)?.[0];
   expect(name).toBeDefined();
   const receipt = JSON.parse(
-    readFileSync(resolve(root, ".check-results", name!, "startup.json"), "utf8"),
+    readFileSync(resolve(project, ".check-results", name!, "startup.json"), "utf8"),
   );
   const commands = readFileSync(commandsPath, "utf8")
     .trim()
