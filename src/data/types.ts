@@ -26,7 +26,6 @@ export interface PrototypeContent {
     enemyDamage: number;
     enemyProjectileSpeed: number;
     fireInterval: Readonly<Record<Weapon, number>>;
-    weaponAmmo: Readonly<Record<Exclude<Weapon, "basic">, number>>;
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
     encounterFreshDistance: number;

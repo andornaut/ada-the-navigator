@@ -293,7 +293,6 @@ export const PROTOTYPE: PrototypeContent = {
     shieldMax: 100,
     shieldRechargeDelay: 3,
     shieldRechargeRate: 18,
-    weaponAmmo: { pierce: 20, rapid: 40, spread: 24 },
     whaleDebris: { count: 3, hp: 3, radius: 24, spacing: 60 },
   },
 };
