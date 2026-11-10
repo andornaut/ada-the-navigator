@@ -234,6 +234,10 @@ export const PROTOTYPE: PrototypeContent = {
     nearbyDiscovery: "Nearby discovery",
     objective: "Objective",
     resume: "Resume",
+    savingUnavailable: [
+      "Couldn't save progress. You can keep playing, but recent progress may be lost ",
+      "if you close the game.",
+    ].join(""),
     screenShake: "Screen shake",
     settings: "Settings",
     shield: "Shield",

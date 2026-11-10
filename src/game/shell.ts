@@ -7,7 +7,6 @@ export interface ShellActions {
   choose: (id: string) => void;
   home: () => void;
   teleport: (id: string) => void;
-  interact: () => void;
 }
 
 function button(label: string, action: () => void): HTMLButtonElement {
@@ -20,12 +19,12 @@ function button(label: string, action: () => void): HTMLButtonElement {
 
 export interface ShellView {
   objective: string;
-  contextLabel: string | undefined;
   inDanger: boolean;
   destinations: { id: string; label: string }[];
 }
 
 export class StoryShell {
+  private readonly savingStatus = document.createElement("div");
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private readonly travel = document.createElement("nav");
@@ -36,6 +35,10 @@ export class StoryShell {
 
   constructor(actions: ShellActions) {
     this.actions = actions;
+    this.savingStatus.id = "save-status";
+    this.savingStatus.setAttribute("role", "status");
+    this.savingStatus.setAttribute("aria-live", "polite");
+    this.savingStatus.setAttribute("aria-atomic", "true");
     this.status.id = "game-status";
     this.status.setAttribute("role", "status");
     this.status.setAttribute("aria-live", "polite");
@@ -43,11 +46,16 @@ export class StoryShell {
     this.travel.className = "travel-panel";
     this.travel.setAttribute("aria-label", PROTOTYPE.labels.destinations ?? "");
     this.hud.className = "flight-hud";
-    document.getElementById("app")?.append(this.status, this.hud, this.panel, this.travel);
+    document.getElementById("app")?.append(
+      this.status,
+      this.savingStatus,
+      this.hud,
+      this.panel,
+      this.travel,
+    );
   }
 
   render(state: GameState, view: ShellView): void {
-    const interaction = view.contextLabel;
     const { flight } = state;
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
@@ -74,7 +82,6 @@ export class StoryShell {
       state.unlocked,
       state.dialogue,
       view.destinations,
-      interaction,
       view.inDanger,
     ]);
     if (nextSignature === this.signature) {
@@ -140,11 +147,6 @@ export class StoryShell {
         hint.textContent = PROTOTYPE.labels.travelUnavailable ?? "";
         this.travel.append(hint);
       }
-      if (interaction) {
-        const use = button(interaction, this.actions.interact);
-        use.dataset.action = "interact";
-        this.travel.append(use);
-      }
     }
     const restore = [...this.panel.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
       focusedChoice
@@ -158,7 +160,15 @@ export class StoryShell {
     }
   }
 
+  setSavingAvailable(available: boolean): void {
+    const text = available ? "" : (PROTOTYPE.labels.savingUnavailable ?? "");
+    if (this.savingStatus.textContent !== text) {
+      this.savingStatus.textContent = text;
+    }
+  }
+
   dispose(): void {
+    this.savingStatus.remove();
     this.status.remove();
     this.panel.remove();
     this.travel.remove();

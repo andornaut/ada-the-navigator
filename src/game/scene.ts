@@ -103,7 +103,6 @@ export class PrototypeScene extends Phaser.Scene {
           apply(() => this.model.returnHome());
         }
       },
-      interact: () => apply(() => this.model.interact()),
       start: (sector) => apply(() => this.model.startSector(sector)),
       teleport: (id) => {
         if (!this.model.inDanger) {
@@ -205,7 +204,6 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.shell.render(state, {
-      contextLabel: this.model.contextLabel,
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,
       objective: this.model.objective,
@@ -213,7 +211,7 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   private flush(): void {
-    writeSave(this.model.save());
+    this.shell.setSavingAvailable(writeSave(this.model.save()));
   }
 
   private project(point: Vec): Vec {

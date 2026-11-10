@@ -1,3 +1,5 @@
+import { readSave as readStoredSave, writeSave as writeStoredSave } from "../model/save.ts";
+
 const KEY = "ada-the-navigator.prototype.v1";
 
 export function readSave(): unknown {
@@ -8,11 +10,10 @@ export function readSave(): unknown {
   }
 }
 
-export function writeSave(saved: string): void {
+export function writeSave(saved: string): boolean {
   try {
-    writeStoredSave(localStorage, KEY, saved);
+    return writeStoredSave(localStorage, KEY, saved);
   } catch {
-    // Flight remains playable when browser storage is unavailable.
+    return false;
   }
 }
-import { readSave as readStoredSave, writeSave as writeStoredSave } from "../model/save.ts";

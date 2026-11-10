@@ -65,6 +65,13 @@ try {
     await page.locator("canvas").evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
   );
   events.checks.push("Real renderer and accessible home status");
+  async function contextControlProof(expected, phase) {
+    assert.equal(await page.locator(".ada-use:visible").count(), expected,
+      `${phase}: the dedicated control must be the only visible contextual action`);
+    assert.equal(await page.locator('[data-action="interact"]').count(), 0,
+      `${phase}: travel must not duplicate the contextual action`);
+  }
+  await contextControlProof(0, "home");
   async function frameProof(portrait = false) {
     const frame = await page.locator("canvas").evaluate((canvas) => {
       const bounds = canvas.getBoundingClientRect();
@@ -247,6 +254,83 @@ try {
   events.checks.push(
     "Model-generated friendly-destination fixture supplies the input-check precondition",
   );
+  await page.locator(".ada-use").waitFor({ state: "visible" });
+  await contextControlProof(1, "friendly flight");
+  assert.equal((await page.locator(".ada-use").textContent()).trim(), PROTOTYPE.labels.talk);
+  const beforeStorageFailure = await page.evaluate((key) => {
+    const saved = localStorage.getItem(key);
+    window.__adaOriginalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    };
+    return saved;
+  }, storageKey);
+  try {
+    await page.locator('[data-action="settings"]').click();
+    const warning = page.getByRole("status").filter({ hasText: PROTOTYPE.labels.savingUnavailable });
+    await warning.waitFor({ state: "visible" });
+    assert.equal(await warning.count(), 1, "Save failure must have one accessible status");
+    assert.equal(await warning.getAttribute("id"), "save-status");
+    await page.locator('[data-action="close-settings"]').click();
+    const blockedPosition = await position();
+    await page.keyboard.down("d");
+    try {
+      await page.waitForFunction(({ x, y }) => {
+        const status = document.querySelector("#game-status");
+        return Number(status.dataset.x) !== x || Number(status.dataset.y) !== y;
+      }, blockedPosition);
+    } finally {
+      await page.keyboard.up("d");
+    }
+    await waitForRest(await position());
+    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
+    await page.locator(".ada-use").click();
+    await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
+    await contextControlProof(0, "dialogue during save failure");
+    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable,
+      "Dialogue rendering must not clear a failed-save warning");
+    await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
+    await page.locator(".ada-use").waitFor({ state: "visible" });
+    await contextControlProof(1, "resumed flight");
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.press("Space");
+    await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
+    await contextControlProof(0, "keyboard interaction dialogue");
+    await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
+    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
+    assert.equal(await page.evaluate((key) => localStorage.getItem(key), storageKey), beforeStorageFailure,
+      "Failed writes must preserve the last persisted state");
+    await page.screenshot({ path: `${output}/save-unavailable.png` });
+  } finally {
+    await page.evaluate(() => {
+      Storage.prototype.setItem = window.__adaOriginalSetItem;
+      delete window.__adaOriginalSetItem;
+    });
+  }
+  await page.locator('[data-action="settings"]').click();
+  await page.waitForFunction((key) => {
+    const saved = JSON.parse(localStorage.getItem(key));
+    const status = document.querySelector("#game-status");
+    return document.querySelector("#save-status")?.textContent === "" &&
+      saved?.flight?.player.x === Number(status.dataset.x) &&
+      saved?.flight?.player.y === Number(status.dataset.y);
+  }, storageKey);
+  await page.locator('[data-action="close-settings"]').click();
+  await contextControlProof(1, "recovered flight");
+  events.checks.push("Blocked browser storage preserves gameplay and last save; status survives dialogue and clears after successful write");
+  events.checks.push("One dedicated context control supports pointer and keyboard use, absent in home and dialogue");
+
+  const dangerInput = new GameModel(PROTOTYPE, safeSerialized);
+  dangerInput.state.flight.dangerFor = 5;
+  dangerInput.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
+  dangerInput.state.flight.objects = [];
+  dangerInput.state.flight.shots = [];
+  await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
+  await page.locator('[data-action="return-home"]:disabled').waitFor({ state: "visible" });
+  await contextControlProof(0, "danger outside a friendly destination");
+  events.checks.push("Danger blocks travel and exposes no inapplicable or duplicate contextual control");
+  await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
   const joystick = page.locator('[data-control="move-joystick"]');
   await joystick.waitFor({ state: "visible" });
@@ -358,6 +442,7 @@ try {
   });
   await seedOnce(serialized, "ada-browser.resolution-fixture.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+  await contextControlProof(0, "home resolution");
   const choices = page.locator('[data-action="dialogue-choice"]');
   await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
   assert.equal(await choices.count(), 2, "Toronto resolution must offer both real choices");

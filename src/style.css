@@ -196,3 +196,20 @@ button:disabled {
     flex: none;
   }
 }
+
+#save-status {
+  position: absolute;
+  z-index: 21;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(36rem, calc(100% - 32px));
+  font-size: 14px;
+  line-height: 1.4;
+  background: #101010ed;
+  pointer-events: none;
+}
+#save-status:not(:empty) {
+  padding: 8px 12px;
+  border: 1px solid #969696;
+}
