@@ -37,20 +37,6 @@ if (!existsSync("node_modules")) {
     }
   }
 }
-// The generic tmpfs root belongs to root; trust only this guarded container scratch checkout.
-if (category === "lint" && lstatSync(".").uid !== process.getuid()) {
-  const trusted = spawnSync(
-    "git",
-    ["config", "--global", "--add", "safe.directory", process.cwd()],
-    {
-      stdio: "inherit",
-    },
-  );
-  if (trusted.error || trusted.status !== 0) {
-    console.error(trusted.error?.message ?? "Cannot configure scratch Git ownership.");
-    process.exit(trusted.status || 1);
-  }
-}
 if (category === "lint" && !existsSync(".git")) {
   const initialized = spawnSync("git", ["init", "--quiet", "--initial-branch", "main"], {
     stdio: "inherit",
@@ -73,6 +59,13 @@ console.error(
     event: "check-category",
     category,
     uid: process.getuid(),
+    workspaceUid: lstatSync(".").uid,
+    workspaceGid: lstatSync(".").gid,
+    safeDirectoryConfigured:
+      category === "lint"
+        ? spawnSync("git", ["config", "--get-all", "safe.directory"], { stdio: "ignore" })
+            .status === 0
+        : null,
     cwd: process.cwd(),
     node: process.version,
     nofile,

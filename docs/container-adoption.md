@@ -8,8 +8,10 @@ existing runner adopts the reviewed gate-step change.
 
 The prepared Make surface is separate from the active source and resident.
 `tests/container/run` is copied byte-identically from the approved foundation,
-SHA-256 `3e2d24919f32292713f8e612ca13a350ade76589f6fef20f27af297b81940196`.
-It is not modified to add local behavior. No Docker proxy is used.
+SHA-256 `44f1255396a1422872b4920b5607111e4bd46ea0ddd4d8013b9a14ee67fc67b2`.
+It is not modified to add local behavior. No Docker proxy is used. Non-writable
+execution creates the `/work` tmpfs with the runtime UID and GID, so scratch Git
+uses actual workspace ownership without a `safe.directory` override.
 
 The repository wrapper rejects initial load at or above 20. The approved launcher
 also invokes executable `tests/container/admit` before image building and before
