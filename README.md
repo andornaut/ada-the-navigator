@@ -6,9 +6,8 @@ game-kit and delivery-kit.
 
 ## Prototype scope
 
-The [prototype contract](gameplay/prototype.md) defines the implementation target;
-integration and playtesting are still in progress. This is an untuned prototype,
-not a polished game or a claim that every contracted behavior has passed checks.
+The [prototype contract](gameplay/prototype.md) defines the scope and approved
+rules. This is an untuned prototype for gameplay testing.
 
 Three story sectors are designed:
 
@@ -53,10 +52,10 @@ The persistence contract distinguishes an interrupted flight from leaving a sect
   cargo, ammunition and shield state.
 - Leaving and re-entering should generate a new layout seed and reset carried
   cargo and weapon pickups. Story progress, known destinations, deposited
-  resources and achievements persist.
+  resources and activity counters persist.
 
-These behaviors require integrated validation; reload is not intended to act as
-leaving a sector.
+Flight snapshots are stored locally in this browser. If browser storage is
+unavailable, play continues without persistent saves.
 
 ## Development
 
