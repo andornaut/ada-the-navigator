@@ -204,7 +204,7 @@ try {
   await page.reload();
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const resumed = await readSave();
-  for (const field of ["seed", "cargo", "ammo", "shield", "player"]) {
+  for (const field of ["seed", "cargo", "ammo", "shield", "player", "world", "visited"]) {
     assert.deepEqual(
       resumed.flight[field],
       persisted.flight[field],
@@ -294,7 +294,7 @@ try {
     await page.getByRole("button", { name: CHEAT_COPY.grantAllWeapons, exact: true }).click();
     await page.waitForFunction((key) => {
       const owned = JSON.parse(localStorage.getItem(key)).flight.ownedWeapons ?? [];
-      return ["rapid", "spread", "pierce"].every((weapon) => owned.includes(weapon));
+      return ["missiles", "tripleLaser", "scattershot"].every((weapon) => owned.includes(weapon));
     }, storageKey);
     const granted = await readSave();
     assert.deepEqual(granted.progress, beforeGrant.progress);
@@ -561,7 +561,7 @@ try {
   events.checks.push("Native touch release clears movement and firing without resurrection");
 
   const equipment = new GameModel(PROTOTYPE, safeSerialized);
-  equipment.state.flight.ownedWeapons = ["rapid", "spread"];
+  equipment.state.flight.ownedWeapons = ["missiles", "tripleLaser"];
   equipment.state.flight.weapon = "basic";
   equipment.state.flight.ammo = 0;
   const equipmentSave = equipment.save();
@@ -572,19 +572,19 @@ try {
     state: JSON.parse(equipmentSave),
   });
   await seedOnce(equipmentSave, "ada-browser.equipment.v1");
-  const rapidButton = page.locator('button[data-weapon="rapid"]');
-  await rapidButton.waitFor({ state: "visible" });
+  const missileButton = page.locator('button[data-weapon="missiles"]');
+  await missileButton.waitFor({ state: "visible" });
   assert.equal(
-    await page.locator('button[data-weapon="pierce"]').count(),
+    await page.locator('button[data-weapon="scattershot"]').count(),
     0,
     "An unowned upgrade must not be offered",
   );
-  await rapidButton.click();
+  await missileButton.click();
   await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "rapid",
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "missiles",
     storageKey,
   );
-  assert.equal(await rapidButton.getAttribute("aria-pressed"), "true");
+  assert.equal(await missileButton.getAttribute("aria-pressed"), "true");
   assert.equal(
     await page.locator(".flight-hud").count(),
     0,
@@ -608,22 +608,23 @@ try {
   }
   await page.reload();
   await page.waitForFunction(
-    () => document.querySelector('[data-weapon="rapid"]')?.getAttribute("aria-pressed") === "true",
+    () =>
+      document.querySelector('[data-weapon="missiles"]')?.getAttribute("aria-pressed") === "true",
   );
-  assert.deepEqual((await readSave()).flight.ownedWeapons, ["rapid", "spread"]);
+  assert.deepEqual((await readSave()).flight.ownedWeapons, ["missiles", "tripleLaser"]);
   await page.locator('[data-action="settings"]').click();
-  assert.ok(await rapidButton.isDisabled(), "Settings must disable weapon selection");
+  assert.ok(await missileButton.isDisabled(), "Settings must disable weapon selection");
   const pausedWeapon = (await readSave()).flight.weapon;
-  await page.locator('[data-weapon="spread"]').evaluate((button) => button.click());
+  await page.locator('[data-weapon="tripleLaser"]').evaluate((button) => button.click());
   assert.equal(
     (await readSave()).flight.weapon,
     pausedWeapon,
     "A disabled weapon must not change selection behind the modal",
   );
   await page.locator('[data-action="close-settings"]').click();
-  await page.locator('[data-weapon="spread"]').click();
+  await page.locator('[data-weapon="tripleLaser"]').click();
   await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "spread",
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "tripleLaser",
     storageKey,
   );
   await page.keyboard.down("ArrowRight");
@@ -637,7 +638,7 @@ try {
   }
   assert.equal(
     (await readSave()).flight.weapon,
-    "spread",
+    "tripleLaser",
     "Zero legacy ammo must not consume an upgrade",
   );
   const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
@@ -678,7 +679,7 @@ try {
 
   const { stepFlight } = await import(new URL("../src/model/flight.ts", import.meta.url));
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
-  assert.ok(damaged.selectWeapon("rapid"));
+  assert.ok(damaged.selectWeapon("missiles"));
   // Damage is meaningful only outside the friendly destination's protected region.
   damaged.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 2;
   assert.ok(
@@ -714,7 +715,7 @@ try {
     "basic",
     "Real projectile damage must remove the selected upgrade",
   );
-  assert.deepEqual(damaged.state.flight.ownedWeapons, ["spread"]);
+  assert.deepEqual(damaged.state.flight.ownedWeapons, ["tripleLaser"]);
   assert.equal(damaged.state.flight.shield, PROTOTYPE.tuning.shieldMax);
   const damageSave = damaged.save();
   assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
@@ -726,16 +727,131 @@ try {
   await page.waitForFunction(
     () => document.querySelector('[data-weapon="basic"]')?.getAttribute("aria-pressed") === "true",
   );
-  assert.equal(await page.locator('[data-weapon="rapid"]').count(), 0);
-  assert.equal(await page.locator('[data-weapon="spread"]').getAttribute("aria-pressed"), "false");
+  assert.equal(await page.locator('[data-weapon="missiles"]').count(), 0);
+  assert.equal(
+    await page.locator('[data-weapon="tripleLaser"]').getAttribute("aria-pressed"),
+    "false",
+  );
   assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
-  await page.locator('[data-weapon="spread"]').click();
+  await page.locator('[data-weapon="tripleLaser"]').click();
   await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "spread",
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "tripleLaser",
     storageKey,
   );
   events.checks.push(
     "Canonical shield-break damage restores Basic and shield while retaining only other upgrades for manual selection",
+  );
+
+  const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
+  const weaponModel = new GameModel(PROTOTYPE, safeSerialized);
+  weaponModel.state.flight.ownedWeapons = ["missiles", "tripleLaser", "scattershot"];
+  weaponModel.state.flight.weapon = "basic";
+  weaponModel.state.flight.objects = [];
+  weaponModel.state.flight.shots = [];
+  const weaponSave = weaponModel.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, weaponSave).state, weaponModel.state);
+  save("weapon-volley-fixture.json", {
+    scope:
+      "Canonical cleared-flight fixture for actual UI firing, not natural pickup or combat progression",
+    state: JSON.parse(weaponSave),
+  });
+  async function heldVolley(weapon, projectile, minimum, faded = false) {
+    await seedOnce(weaponSave, `ada-browser.volley-${weapon}.v1`);
+    await page.locator(`button[data-weapon="${weapon}"]`).click();
+    await page.keyboard.down("ArrowRight");
+    try {
+      await page.waitForFunction(
+        ({ key, projectile, minimum, faded }) => {
+          const shots =
+            JSON.parse(localStorage.getItem(key))?.flight?.shots.filter(
+              (shot) => !shot.enemy && shot.projectile === projectile,
+            ) ?? [];
+          return (
+            shots.length >= minimum &&
+            (!faded || shots.some((shot) => shot.fade && shot.life / shot.fade.initialLife < 0.35))
+          );
+        },
+        { key: storageKey, projectile, minimum, faded },
+      );
+      const snapshot = await readSave();
+      assert.deepEqual(
+        new GameModel(PROTOTYPE, JSON.stringify(snapshot)).state,
+        snapshot,
+        "Actual fired projectiles and fade metadata must survive canonical save validation",
+      );
+      await page.screenshot({ path: `${output}/volley-${weapon}.png` });
+      return snapshot;
+    } finally {
+      await page.keyboard.up("ArrowRight");
+    }
+  }
+  const missiles = await heldVolley("missiles", "missile", 2);
+  const missileShots = missiles.flight.shots.filter(
+    (shot) => !shot.enemy && shot.projectile === "missile",
+  );
+  assert.ok(
+    new Set(missileShots.map((shot) => shot.id)).size >= 2,
+    "One held aim input must emit multiple automatic missiles",
+  );
+  const heading = Math.atan2(missileShots[0].velocity.y, missileShots[0].velocity.x);
+  for (const shot of missileShots) {
+    assert.ok(
+      Math.abs(Math.atan2(shot.velocity.y, shot.velocity.x) - heading) < 0.000001,
+      "Held-direction missiles must retain a straight shared heading",
+    );
+    assert.ok(shot.damage > PROTOTYPE.tuning.flight.playerShotDamage);
+  }
+  const triple = await heldVolley("tripleLaser", "bolt", 3);
+  const bolts = triple.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "bolt");
+  const newest = Math.max(...bolts.map((shot) => shot.life));
+  const angles = bolts
+    .filter((shot) => Math.abs(shot.life - newest) < 0.000001)
+    .map((shot) => (Math.atan2(shot.velocity.y, shot.velocity.x) * 180) / Math.PI)
+    .sort((a, b) => a - b);
+  assert.equal(angles.length, 3, "A real triple-laser volley must emit three simultaneous bolts");
+  for (const [index, offset] of [-20, 0, 20].entries()) {
+    assert.ok(
+      Math.abs(angles[index] - angles[1] - offset) < 0.000001,
+      "The real triple-laser volley must retain its approved ±20 degree spread",
+    );
+  }
+  const scatter = await heldVolley("scattershot", "dot", 7, true);
+  const dots = scatter.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "dot");
+  const fading = dots.filter((shot) => shot.life / shot.fade.initialLife < 0.35);
+  assert.ok(fading.length > 0, "Actual scatter particles must reach their fade segment");
+  for (const shot of dots) {
+    assert.equal(
+      shot.fade.projectedRange,
+      SCREEN.width * 0.5,
+      "Range must use the fixed main camera's logical width at zoom one, not CSS width or DPR",
+    );
+    assert.equal(shot.fade.fadeStartFraction, 0.65);
+    const dx = shot.x - scatter.flight.player.x;
+    const dy = shot.y - scatter.flight.player.y;
+    assert.ok(
+      Math.hypot(dx - dy, (dx + dy) / 2) <= SCREEN.width * 0.5 + 0.001,
+      "Actual scatter particles must remain inside the captured half-camera projected range",
+    );
+    assert.ok(shot.damage > 0 && shot.damage < PROTOTYPE.tuning.flight.playerShotDamage);
+  }
+  await page.waitForFunction(
+    (key) =>
+      !JSON.parse(localStorage.getItem(key)).flight.shots.some(
+        (shot) => !shot.enemy && shot.projectile === "dot",
+      ),
+    storageKey,
+  );
+  save("weapon-volley-proof.json", {
+    scope:
+      "Actual UI input and canonical saved shot trajectories; screenshots require visual fade review",
+    cameraWidth: SCREEN.width,
+    missiles: missileShots,
+    tripleAngles: angles,
+    scatter: dots,
+  });
+  events.checks.push(
+    "Actual held aim emits automatic straight missiles, triple ±20 degree bolts " +
+      "and fading half-camera scatter particles",
   );
 
   const cargoModel = new GameModel(PROTOTYPE);
