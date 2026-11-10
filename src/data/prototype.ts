@@ -221,7 +221,6 @@ export const PROTOTYPE: PrototypeContent = {
     ammo: "Ammo",
     askMore: "Ask more",
     cargo: "Cargo",
-    cargoFull: "Cargo full. Deposit at the station when ready.",
     chapterComplete: "Chapter complete. You can keep exploring.",
     close: "Close",
     continue: "Continue",
@@ -259,7 +258,6 @@ export const PROTOTYPE: PrototypeContent = {
   tuning: {
     accelerationSeconds: 0.18,
     brakingSeconds: 0.22,
-    cargoCapacity: 12,
     chunkSize: 512,
     dangerReleaseSeconds: 3,
     encounterFreshDistance: 600,
