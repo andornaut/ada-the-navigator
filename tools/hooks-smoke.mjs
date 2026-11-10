@@ -2,35 +2,47 @@ import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 
-// Exercise the installed dispatcher with staged files in disposable container scratch.
+// Exercise the installed hook only in the gate's disposable container checkout.
 execFileSync("npm", ["run", "prepare"], { stdio: "inherit" });
 assert.ok(existsSync(".husky/_/pre-commit"), "prepare must install the pre-commit dispatcher");
-const hook = [".husky/_/pre-commit"];
-const proof = { acceptedAndFormatted: false, rejectedInvalidSource: false };
+const fixtures = ["hook-check.ts", "hook-check.md", "hook-invalid.ts"];
+const proof = { positive: false, negative: false };
 try {
-  writeFileSync("hook-check.ts", "export const hookCheck={value:true};\n");
-  writeFileSync("hook-check.md", "# Hook check\n");
-  execFileSync("git", ["add", "hook-check.ts", "hook-check.md"]);
-  execFileSync("sh", hook, { stdio: "inherit" });
-  const formatted = readFileSync("hook-check.ts", "utf8");
-  assert.equal(formatted, "export const hookCheck = { value: true };\n");
-  assert.equal(execFileSync("git", ["show", ":hook-check.ts"], { encoding: "utf8" }), formatted);
-  proof.acceptedAndFormatted = true;
+  writeFileSync(fixtures[0], "export const hookCheck={ready:true};\n");
+  writeFileSync(fixtures[1], "# Hook check\n");
+  execFileSync("git", ["add", fixtures[0], fixtures[1]]);
+  execFileSync("sh", [".husky/_/pre-commit"], { stdio: "inherit" });
+  const expected = "export const hookCheck = { ready: true };\n";
+  assert.equal(readFileSync(fixtures[0], "utf8"), expected, "Hook must format the working file");
+  assert.equal(
+    execFileSync("git", ["show", `:${fixtures[0]}`], { encoding: "utf8" }),
+    expected,
+    "Hook must stage its formatted result",
+  );
+  proof.positive = true;
   execFileSync("git", ["reset", "--quiet"]);
-  writeFileSync("hook-check.ts", "export const broken = ;\n");
-  execFileSync("git", ["add", "hook-check.ts"]);
-  const rejected = spawnSync("sh", hook, { stdio: "inherit" });
-  assert.equal(rejected.error, undefined);
-  assert.notEqual(rejected.status, null);
-  assert.notEqual(rejected.status, 0, "the installed hook must reject invalid staged TypeScript");
-  assert.match(execFileSync("git", ["show", ":hook-check.ts"], { encoding: "utf8" }), /broken = ;/);
-  proof.rejectedInvalidSource = true;
-  writeFileSync("/tmp/evidence/hook-proof.json", `${JSON.stringify(proof, null, 2)}\n`);
+  writeFileSync(fixtures[2], "export const hookInvalid: any = true;\n");
+  execFileSync("git", ["add", fixtures[2]]);
+  const rejected = spawnSync("sh", [".husky/_/pre-commit"], { encoding: "utf8" });
+  if (rejected.error) {
+    throw rejected.error;
+  }
+  assert.ok(
+    rejected.status !== null && rejected.status !== 0,
+    "Hook must reject an ESLint violation",
+  );
+  assert.match(
+    `${rejected.stdout}\n${rejected.stderr}`,
+    /@typescript-eslint\/no-explicit-any/,
+    "Failure must come from the staged ESLint rule",
+  );
+  proof.negative = true;
 } finally {
+  writeFileSync("/tmp/evidence/hooks.json", `${JSON.stringify(proof)}\n`);
   execFileSync("git", ["reset", "--quiet"]);
-  for (const name of ["hook-check.ts", "hook-check.md"]) {
-    if (existsSync(name)) {
-      unlinkSync(name);
+  for (const fixture of fixtures) {
+    if (existsSync(fixture)) {
+      unlinkSync(fixture);
     }
   }
 }
