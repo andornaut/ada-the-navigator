@@ -1,15 +1,14 @@
 # Ada the Navigator ideas
 
 Ideas are proposals outside the current version. Recording an idea does not
-approve it for implementation. The current target is version one, documented in
-[the design](design.md).
+approve implementation. Version one has four sectors; the fourth remains deferred
+within that version. See [the prototype contract](prototype.md) for current rules.
 
-## Version two candidates
+## Future candidates
 
-- Ship upgrades: their effects, acquisition and limits are undecided.
-- Cosmetics: their forms and acquisition are undecided.
-- Horizontal progression: possible ways to expand available choices are undecided.
-- Vertical progression: possible increases in capability are undecided.
+- Permanent ship upgrades and their acquisition.
+- Cosmetics and their acquisition.
+- Other horizontal or vertical progression beyond temporary weapon pickups.
 
-The relationship between these progression systems remains open. None is required
-for version one's achievements or continued procedural play.
+Temporary weapon upgrades, ammunition drops, achievements and continued procedural
+play are already part of version one.
