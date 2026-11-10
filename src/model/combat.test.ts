@@ -262,3 +262,151 @@ describe("integrated combat", () => {
     expect(replay).toEqual(flight);
   });
 });
+
+function pack(flight: FlightState, points: Vec[]): SpaceObject[] {
+  const members = points.map((point, index) => {
+    const object = ship("swarm", point);
+    object.id = `roster:${index}`;
+    object.enemy!.id = object.id;
+    object.enemy!.packId = "roster";
+    return object;
+  });
+  flight.combat = { initialPackSizes: { roster: members.length }, routeEncounters: [] };
+  flight.objects.push(...members);
+  return members;
+}
+
+describe("combat admission and subframe firing", () => {
+  it("records only admitted pack members when a safezone excludes part of a seeded group", () => {
+    let template: FlightState | undefined;
+    let members: SpaceObject[] = [];
+    for (let seed = 0; seed < 64; seed++) {
+      const candidate = createFlight(PROTOTYPE, 1, seed, progress);
+      const group = candidate.objects.filter((object) => object.enemy?.archetype === "swarm");
+      if (group.length >= 3) {
+        template = candidate;
+        members = group;
+        break;
+      }
+    }
+    expect(template).toBeDefined();
+    const flight = template!;
+    const packId = members[0]!.enemy!.packId!;
+    const last = members.at(-1)!;
+    flight.chunks = [];
+    flight.combat = { initialPackSizes: {}, routeEncounters: [] };
+    flight.objects = [{ hp: 1, id: "safe", kind: "destination", radius: 30, x: last.x, y: last.y }];
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    const admitted = flight.objects.filter((object) => object.enemy?.packId === packId);
+    expect(admitted.length).toBeGreaterThan(0);
+    expect(admitted.length).toBeLessThan(members.length);
+    expect(flight.combat!.initialPackSizes[packId]).toBe(admitted.length);
+    expect(admitted.every((object) => !object.enemy!.fleeing)).toBe(true);
+  });
+
+  it.each(["destination", "guard"] as const)("does not count %s clearance as a casualty but still retreats after a real loss", (clearance) => {
+    const flight = empty();
+    const points = clearance === "destination"
+      ? [{ x: 0, y: -1024 }, { x: 50, y: -1024 }, { x: 400, y: -1024 }, { x: 450, y: -1024 }]
+      : [{ x: 690, y: 0 }, { x: 700, y: 0 }, { x: 1100, y: 0 }, { x: 1150, y: 0 }];
+    const members = pack(flight, points);
+    if (clearance === "destination") {
+      ensureDestination(PROTOTYPE, "clearance", flight);
+    } else {
+      flight.objects.push({ hp: 1, id: "clearance", kind: "destination", radius: 30, x: 1000, y: 0 });
+      ensureRouteEncounter(PROTOTYPE, "clearance", flight);
+    }
+    expect(flight.combat!.initialPackSizes.roster).toBe(2);
+    expect(flight.objects).not.toContain(members[0]);
+    expect(flight.objects).not.toContain(members[1]);
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(members[2]!.enemy!.fleeing).toBe(false);
+    expect(members[3]!.enemy!.fleeing).toBe(false);
+    hit(flight, members[2]!, 2);
+    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
+    expect(flight.combat!.initialPackSizes.roster).toBe(2);
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(members[3]!.enemy!.fleeing).toBe(true);
+  });
+
+  it("does not erase an already recorded casualty when destination clearance removes its dead object", () => {
+    const flight = empty();
+    const members = pack(flight, [{ x: 0, y: -1024 }, { x: 400, y: -1024 }]);
+    members[0]!.hp = 0;
+    members[0]!.enemy!.hp = 0;
+    ensureDestination(PROTOTYPE, "clearance", flight);
+    expect(flight.combat!.initialPackSizes.roster).toBe(2);
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(members[1]!.enemy!.fleeing).toBe(true);
+  });
+
+  it("ages and moves a new shot only after its fire delay, then gives it a full subsequent slice", () => {
+    const flight = empty();
+    const target = ship("fighter", { x: 300, y: 0 });
+    target.enemy!.primaryCooldown = 0.012;
+    flight.objects.push(target);
+    const dt = 1 / 60;
+    stepFlight(PROTOTYPE, dt, idle, flight);
+    const shot = flight.shots.find((shot) => shot.enemy)!;
+    const elapsed = dt - 0.012;
+    expect(shot).toBeDefined();
+    expect(shot.x).toBeCloseTo(300 + shot.velocity.x * elapsed, 10);
+    expect(shot.y).toBeCloseTo(shot.velocity.y * elapsed, 10);
+    expect(shot.life).toBeCloseTo(PROTOTYPE.tuning.flight.enemyProjectileLifetime - elapsed, 10);
+    const before = { life: shot.life, x: shot.x, y: shot.y };
+    stepFlight(PROTOTYPE, dt, idle, flight);
+    expect(shot.x).toBeCloseTo(before.x + shot.velocity.x * dt, 10);
+    expect(shot.y).toBeCloseTo(before.y + shot.velocity.y * dt, 10);
+    expect(shot.life).toBeCloseTo(before.life - dt, 10);
+  });
+
+  it("does not hit Ada before a delayed bolt can reach her collision boundary", () => {
+    const flight = empty();
+    const target = ship("fighter", { x: 15, y: 0 });
+    target.cooldown = 999;
+    target.enemy!.primaryCooldown = 0.012;
+    flight.objects.push(target);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(1);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.enemyDamage);
+    expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(0);
+  });
+
+  it.each(["destination", "guard"] as const)("preserves both required fights through nearby %s clearance", (clearance) => {
+    const flight = empty();
+    flight.sector = 3;
+    const first = ensureDestination(PROTOTYPE, "first", flight);
+    const firstGuard = ensureRouteEncounter(PROTOTYPE, "first", flight)!;
+    const original = { x: firstGuard.x, y: firstGuard.y };
+    let second: SpaceObject;
+    if (clearance === "destination") {
+      // Compensate for the second destination's lateral offset to place it on the guard.
+      flight.player = { x: original.x - PROTOTYPE.tuning.safeRadius * 2.5, y: original.y + PROTOTYPE.tuning.chunkSize * 2 };
+      second = ensureDestination(PROTOTYPE, "second", flight);
+      expect({ x: second.x, y: second.y }).toEqual(original);
+    } else {
+      // Parallel approaches place oversized guard footprints across each other.
+      second = { hp: 1, id: "second", kind: "destination", radius: 30, x: first.x + 400, y: first.y };
+      flight.objects.push(second);
+      flight.player = { x: second.x, y: 0 };
+    }
+    expect(flight.objects).toContain(firstGuard);
+    const secondGuard = ensureRouteEncounter(PROTOTYPE, "second", flight)!;
+    expect(flight.objects).toContain(firstGuard);
+    expect(flight.objects).toContain(secondGuard);
+    expect(routeBlocked("first", flight)).toBe(true);
+    expect(routeBlocked("second", flight)).toBe(true);
+    for (const guard of [firstGuard, secondGuard]) {
+      for (const destination of [first, second]) {
+        expect(Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+      }
+      expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
+      expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
+    }
+    expect(Math.hypot(firstGuard.x - secondGuard.x, firstGuard.y - secondGuard.y)).toBeGreaterThanOrEqual(firstGuard.radius + secondGuard.radius);
+    expect(ensureRouteEncounter(PROTOTYPE, "first", flight)).toBe(firstGuard);
+    expect(ensureRouteEncounter(PROTOTYPE, "second", flight)).toBe(secondGuard);
+  });
+});

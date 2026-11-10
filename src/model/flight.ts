@@ -163,7 +163,7 @@ function generateRegion(
   const count = low + Math.floor(next() * (high - low + 1));
   const choices: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
   const archetype = choices[Math.floor(next() * choices.length)] ?? "fighter";
-  combat(flight).initialPackSizes[packId] = count;
+  let admitted = 0;
   for (let i = 0; i < count; i++) {
     const object = spawnEnemy(
       content,
@@ -178,8 +178,10 @@ function generateRegion(
     );
     if (!safe(content, object, flight)) {
       flight.objects.push(object);
+      admitted++;
     }
   }
+  combat(flight).initialPackSizes[packId] = admitted;
   // Open, clustered and paired-wall regions share the same deterministic grid.
   if (region === 0) {
     return;
@@ -197,6 +199,65 @@ function generateRegion(
         kind: "rock",
         radius: content.tuning.flight.rockRadius,
       });
+    }
+  }
+}
+
+/** Layout clearance changes the roster without recording a combat casualty. */
+function clearLayoutObjects(
+  keep: (object: SpaceObject) => boolean,
+  flight: FlightState,
+): void {
+  flight.objects = flight.objects.filter((object) => {
+    const liveEnemy = object.kind === "enemy" && object.hp > 0 &&
+      (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
+    if (keep(object) || (liveEnemy && object.routeId)) {
+      return true;
+    }
+    const packId = object.enemy?.packId;
+    if (liveEnemy && packId) {
+      const sizes = combat(flight).initialPackSizes;
+      if (sizes[packId] !== undefined) {
+        sizes[packId] = Math.max(0, sizes[packId] - 1);
+      }
+    }
+    return false;
+  });
+}
+
+/** Plan all guard positions before applying layout changes to their persistent state. */
+function relocateRouteGuards(content: PrototypeContent, flight: FlightState): void {
+  const guards = flight.objects.filter((object) =>
+    object.kind === "enemy" && object.routeId && object.hp > 0 &&
+    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+  );
+  const destinations = flight.objects.filter((object) => object.kind === "destination");
+  const positions = new Map<SpaceObject, Vec>();
+  const maxRadius = flight.objects.reduce(
+    (radius, object) => Math.max(radius, object.radius), content.tuning.safeRadius,
+  );
+  for (const guard of guards) {
+    const point = { x: guard.x, y: guard.y };
+    const stride = 2 * (guard.radius + maxRadius + 120);
+    // Each obstacle excludes less than one stride, so finitely many obstacles cannot trap this search.
+    while (destinations.some((object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120) ||
+      flight.objects.some((object) => object !== guard &&
+        ["enemy", "rock", "resource", "debris"].includes(object.kind) && object.hp > 0 &&
+        distance(positions.get(object) ?? object, point) < object.radius + guard.radius + 20)) {
+      point.x += stride;
+    }
+    positions.set(guard, point);
+  }
+  for (const [guard, point] of positions) {
+    if (guard.x === point.x && guard.y === point.y) {
+      continue;
+    }
+    guard.x = point.x;
+    guard.y = point.y;
+    if (guard.enemy) {
+      guard.enemy.home = { ...point };
+      guard.enemy.position = { ...point };
+      guard.enemy.velocity = { x: 0, y: 0 };
     }
   }
 }
@@ -240,10 +301,12 @@ export function ensureRouteEncounter(
   const object = spawnEnemy(content, archetype, `route:${id}`, point);
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
-  flight.objects = flight.objects.filter(
+  clearLayoutObjects(
     (other) => other.kind === "destination" || distance(other, point) > other.radius + radius + 20,
+    flight,
   );
   flight.objects.push(object);
+  relocateRouteGuards(content, flight);
   combat(flight).routeEncounters.push(id);
   return object;
 }
@@ -276,9 +339,11 @@ export function ensureDestination(
   generate(content, target, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
   flight.objects.push(object);
-  flight.objects = flight.objects.filter(
+  clearLayoutObjects(
     (o) => o.kind === "destination" || distance(o, object) > content.tuning.safeRadius,
+    flight,
   );
+  relocateRouteGuards(content, flight);
   flight.shots = flight.shots.filter(
     (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
   );
@@ -457,6 +522,7 @@ function enemies(
   dt: number,
   flight: FlightState,
   events: FlightEvent[],
+  shotDelays: Map<string, number>,
 ): boolean {
   let threatening = false;
   const objects = flight.objects.filter((object) => object.kind === "enemy" && object.hp > 0);
@@ -531,11 +597,13 @@ function enemies(
       !intent.state.fleeing &&
       distance(object, flight.player) <= definition.perception;
     for (const fire of intent.fire) {
+      const id = `shot:${flight.nextId++}`;
+      shotDelays.set(id, fire.delay);
       flight.shots.push({
         ...fire.origin,
         enemy: true,
         hitIds: [],
-        id: `shot:${flight.nextId++}`,
+        id,
         life: content.tuning.flight.enemyProjectileLifetime,
         piercing: false,
         projectile: fire.projectile,
@@ -603,13 +671,18 @@ function shots(
   dt: number,
   flight: FlightState,
   events: FlightEvent[],
+  shotDelays: ReadonlyMap<string, number>,
 ): void {
   for (const shot of flight.shots) {
-    shot.life -= dt;
-    const steps = Math.max(1, Math.ceil((length(shot.velocity) * dt) / 5));
+    const elapsed = Math.max(0, dt - (shotDelays.get(shot.id) ?? 0));
+    if (elapsed === 0) {
+      continue;
+    }
+    shot.life -= elapsed;
+    const steps = Math.max(1, Math.ceil((length(shot.velocity) * elapsed) / 5));
     for (let i = 0; i < steps && shot.life > 0; i++) {
-      shot.x += (shot.velocity.x * dt) / steps;
-      shot.y += (shot.velocity.y * dt) / steps;
+      shot.x += (shot.velocity.x * elapsed) / steps;
+      shot.y += (shot.velocity.y * elapsed) / steps;
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
           shot.life = 0;
@@ -728,8 +801,9 @@ export function stepFlight(
     if (aiming && flight.fireCooldown <= 0) {
       fire(content, flight.facing, flight);
     }
-    const threat = enemies(content, slice, flight, events);
-    shots(content, slice, flight, events);
+    const shotDelays = new Map<string, number>();
+    const threat = enemies(content, slice, flight, events, shotDelays);
+    shots(content, slice, flight, events, shotDelays);
     for (const object of flight.objects) {
       if (
         object.kind === "hazard" &&
