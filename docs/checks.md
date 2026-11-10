@@ -36,10 +36,10 @@ writes `.cloudflare/output/v0/`; the gate preserves that complete directory unde
 its evidence directory for a reviewed prebuilt deployment. It also copies the
 Worker's client assets to evidence `dist/` for the browser harness.
 
-Local starts are refused from :50 through :14 America/Toronto, or when one-minute
-load is at least 20. `--ci` skips only those local scheduling checks and requires
-`GITHUB_ACTIONS=true` plus `RUNNER_ENVIRONMENT=github-hosted`. Hosted CI uses the
-same Docker isolation and emits the required `Lint` and `Test` checks.
+Local starts are refused when one-minute load is at least 20. `--ci` skips only
+this local resource check and requires `GITHUB_ACTIONS=true` plus
+`RUNNER_ENVIRONMENT=github-hosted`. Hosted CI uses the same Docker isolation and
+emits the required `Lint` and `Test` checks.
 The separate `AI attributions` workflow uses the canonical attribution action.
 
 Do not change source between start and collect. Fingerprints include allowed
@@ -77,9 +77,10 @@ for the complete Build Output.
 The manual `npm run deploy:prebuilt` script runs
 `cf deploy --prebuilt --mode production`. It uploads and deploys, and requires
 explicit deployment approval plus authorized account access. It is not a CI
-publication step. Operator enrollment and authentication are prerequisites for
-account discovery and deployment; no account ID or credential is embedded in
-source. Delivery remains paused with `deploy.mode` set to `none`.
+publication step. Existing OAuth authentication supports account discovery and
+deployment; `faramir run` does not require project enrollment. No account ID or
+credential is embedded in source. Delivery remains paused with `deploy.mode`
+set to `none`.
 
 ## Browser smoke checks
 
@@ -108,7 +109,7 @@ The harness uses a local static preview and Playwright in isolated containers,
 with UID/GID 19001, the checkout supplemental group, `HOME=/tmp`, at most four
 CPUs per container and read-only source/artifact mounts. Fetch
 `mcr.microsoft.com/playwright/mcp:v0.0.83` before starting. Browser starts obey the
-same local time and load restrictions as the source gates.
+same local load restriction as the source gates.
 
 Browser smoke coverage supports prototype integration review; it does not
 establish story completeness or gameplay balance. Review the collected results
