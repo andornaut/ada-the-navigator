@@ -8,19 +8,19 @@
   "routes": [
     {
       "pattern": "navigator.adabekele.com",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
   },
   "observability": {
     "enabled": true,
     "logs": {
-      "enabled": true
+      "enabled": true,
     },
     "traces": {
-      "enabled": true
-    }
-  }
+      "enabled": true,
+    },
+  },
 }

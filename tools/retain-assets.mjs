@@ -22,7 +22,11 @@ function fingerprint(directory) {
   for (const name of files.sort()) {
     hash.update(name);
     hash.update("\0");
-    hash.update(createHash("sha256").update(readFileSync(join(directory, name))).digest());
+    hash.update(
+      createHash("sha256")
+        .update(readFileSync(join(directory, name)))
+        .digest(),
+    );
   }
   return hash.digest("hex");
 }
