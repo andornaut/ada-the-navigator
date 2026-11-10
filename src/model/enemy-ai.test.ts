@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype,enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import {
   createEnemy,
   damageEnemy,

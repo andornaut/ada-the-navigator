@@ -1,4 +1,4 @@
-import { type EnemyArchetype,enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import type {
