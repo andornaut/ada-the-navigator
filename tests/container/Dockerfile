@@ -1,5 +1,7 @@
 FROM node:24.22.2
 
+COPY --from=koalaman/shellcheck:v0.11.0 /bin/shellcheck /usr/local/bin/shellcheck
+
 RUN install -d -m 0755 -o 19001 -g 19001 /opt/check
 COPY --chown=19001:19001 package.json package-lock.json /opt/check/
 USER 19001:19001
