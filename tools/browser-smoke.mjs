@@ -171,6 +171,118 @@ try {
   assert.deepEqual(await position(), released, "Pointer release must cancel held movement");
   events.checks.push("Pointer release cancels movement");
   await page.screenshot({ path: `${output}/phone.png` });
+  const moveBounds = await page.locator('[data-control="move-joystick"]').boundingBox();
+  const aimBounds = await page.locator('[data-control="aim-joystick"]').boundingBox();
+  assert.ok(moveBounds && aimBounds, "Both real joystick targets must be present");
+  const touchBefore = await position();
+  const touch = await context.newCDPSession(page);
+  const origins = [moveBounds, aimBounds].map((box, index) => ({
+    id: index + 1,
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+    radiusX: 8,
+    radiusY: 8,
+    force: 1,
+  }));
+  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: origins });
+  try {
+    const deflected = origins.map((point, index) => ({
+      ...point,
+      x: point.x + (index === 0 ? 25 : 0),
+      y: point.y - (index === 1 ? 25 : 0),
+    }));
+    await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: deflected });
+    await page.waitForFunction(
+      ({ before, key }) => {
+        const flight = JSON.parse(localStorage.getItem(key))?.flight;
+        return (
+          flight &&
+          (flight.player.x !== before.x || flight.player.y !== before.y) &&
+          flight.shots.some((shot) => !shot.enemy)
+        );
+      },
+      { key: storageKey, before: touchBefore },
+    );
+    const held = (await readSave()).flight;
+    save("touch-proof.json", {
+      before: touchBefore,
+      whileHeld: { player: held.player, shots: held.shots },
+    });
+    await page.screenshot({ path: `${output}/phone.png` });
+  } finally {
+    await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await touch.detach();
+  }
+  events.checks.push(
+    "Simultaneous native move and aim touch changes saved position and emits player shots",
+  );
+  const touchReleased = await waitForRest(await position());
+  await page.waitForFunction((key) => {
+    const flight = JSON.parse(localStorage.getItem(key))?.flight;
+    return flight && !flight.shots.some((shot) => !shot.enemy);
+  }, storageKey);
+  await page.waitForTimeout(1250);
+  assert.deepEqual(
+    await position(),
+    touchReleased,
+    "Released native touches must not resume movement",
+  );
+  assert.ok(
+    !(await readSave()).flight.shots.some((shot) => !shot.enemy),
+    "Released native aim must not resume firing",
+  );
+  events.checks.push("Native touch release clears movement and firing without resurrection");
+
+  // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
+  const [{ GameModel }, { PROTOTYPE }] = await Promise.all([
+    import(new URL("../src/model/game.ts", import.meta.url)),
+    import(new URL("../src/data/prototype.ts", import.meta.url)),
+  ]);
+  const fixture = new GameModel(PROTOTYPE);
+  fixture.startSector(1);
+  fixture.choose("0");
+  assert.ok(fixture.state.flight, "The real model must create a valid flight");
+  Object.assign(fixture.state.progress[1], {
+    stage: 4,
+    introduced: true,
+    questComplete: true,
+    resolved: false,
+    questItem: null,
+    known: ["growers", "workshop", "salvagers"],
+    discoveries: 3,
+  });
+  fixture.returnHome();
+  assert.equal(fixture.state.dialogue.context, "resolution");
+  const serialized = fixture.save();
+  assert.deepEqual(new GameModel(PROTOTYPE, serialized).state, fixture.state);
+  save("resolution-fixture.json", {
+    scope: "Completed-quest save fixture for Toronto resolution UI boundary only",
+    state: JSON.parse(serialized),
+  });
+  // Install after the old page's pagehide save, before the new app reads storage.
+  await page.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
+    key: storageKey,
+    value: serialized,
+  });
+  await page.reload();
+  await page.locator('#game-status[data-mode="home"]').waitFor();
+  const choices = page.locator('[data-action="dialogue-choice"]');
+  await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
+  assert.equal(await choices.count(), 2, "Toronto resolution must offer both real choices");
+  await page.screenshot({ path: `${output}/resolution.png` });
+  await choices.nth(1).click();
+  await page.getByText(PROTOTYPE.chapters[1].closing, { exact: true }).waitFor();
+  assert.equal(await choices.count(), 1, "Resolution must lead to the closing continuation");
+  assert.equal((await choices.first().textContent()).trim(), PROTOTYPE.labels.continue);
+  await choices.first().click();
+  const nextSector = page.locator('[data-action="start-sector"][data-sector="2"]');
+  await nextSector.waitFor({ state: "visible" });
+  assert.ok(await nextSector.isEnabled(), "Toronto resolution must unlock sector two");
+  await page.waitForFunction((key) => {
+    const state = JSON.parse(localStorage.getItem(key));
+    return state?.progress[1].resolved && state.unlocked.includes(2);
+  }, storageKey);
+  events.checks.push("Fixture-based Toronto resolution and closing unlock the next sector UI");
   assert.deepEqual(events.errors, [], "No browser runtime or console errors");
   assert.deepEqual(events.failedRequests, [], "No failed asset requests");
   assert.deepEqual(events.badResponses, [], "No failed HTTP responses");
