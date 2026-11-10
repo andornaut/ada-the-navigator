@@ -118,7 +118,7 @@ describe("owned unlimited weapons", () => {
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.enemyDamage);
   });
 
-  it("returns to Toronto when basic depletes even with other owned upgrades, retaining story for a fresh flight", () => {
+  it("returns to Toronto on basic depletion despite reserves, preserving story for a fresh flight", () => {
     const model = launched();
     pickup(model, "spread");
     expect(model.selectWeapon("basic")).toBe(true);
