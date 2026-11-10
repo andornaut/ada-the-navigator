@@ -43,3 +43,36 @@ Do not change source between start and collect. Fingerprints include allowed
 source content and Git's dirty-file inventory before and after the run.
 Unsupported source paths cause a refusal and must be reviewed before being added
 to the allowlist.
+
+## Browser smoke checks
+
+After collecting a successful `all` or `test` gate, use its evidence directory
+containing the built `dist` artifact:
+
+```bash
+node tools/browser-check.mjs start .check-results/ada-check-UUID
+```
+
+Replace `ada-check-UUID` with the collected gate name. The browser harness
+requires successful gate evidence with a stable fingerprint matching the current
+source. It prints an `ada-browser-UUID` name; collect that run with:
+
+```bash
+node tools/browser-check.mjs collect ada-browser-UUID
+```
+
+Exit 75 means the browser is still running. Collection saves browser and preview
+logs, browser evidence and `verification.json` in `.check-results/<browser-name>/`
+before removing the browser and preview containers and their internal network.
+Evidence includes `desktop.png`, `phone.png`, `events.json` and `result.json`.
+Both the source fingerprint and built-artifact hash must remain unchanged.
+
+The harness uses a local static preview and Playwright in isolated containers,
+with UID/GID 19001, the checkout supplemental group, `HOME=/tmp`, at most four
+CPUs per container and read-only source/artifact mounts. Fetch
+`mcr.microsoft.com/playwright/mcp:v0.0.83` before starting. Browser starts obey the
+same local time and load restrictions as the source gates.
+
+Browser smoke coverage supports prototype integration review; it does not
+establish story completeness or gameplay balance. Review the collected results
+for the exact source revision before claiming a behavior is verified.
