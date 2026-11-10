@@ -10,7 +10,7 @@
     "timezone": "America/Toronto"
   },
   "gate": {
-    "image": "node:24.21.0",
+    "image": "node:24.22.2",
     "install": "npm ci",
     "steps": [
       {

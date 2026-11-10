@@ -121,7 +121,7 @@ function start(argument) {
       `${name}-preview`,
       "--network-alias",
       "ada-preview",
-      "node:24.21.0",
+      "node:24.22.2",
       "/source/tools/browser-check.mjs",
       "serve",
     ]);

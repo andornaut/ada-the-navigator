@@ -1,6 +1,6 @@
 # Isolated checks
 
-Use Node.js 24.21.0 or newer and Docker. Fetch `node:24.21.0` before
+Use Node.js 24.22.2 (or supported Node.js 26.12.0+) and Docker. Fetch `node:24.22.2` before
 starting checks. The orchestrator runs on the host; dependency installation,
 hook verification, lint, type checks, tests and builds run inside Docker.
 
@@ -31,7 +31,10 @@ four CPUs and a four-worker test limit. The checkout mount
 is read-only. The container layer is disposable writable scratch. An explicit source-file allowlist is copied to writable `/tmp`
 scratch; Git metadata, nested worktrees, dependency directories, instruction
 files and credential files are excluded. Host files receive no writable mount.
-Logs and built `dist` outputs leave through `docker cp`.
+Logs and build outputs leave through `docker cp`. The Cloudflare Vite plugin
+writes `.cloudflare/output/v0/`; the gate preserves that complete directory under
+its evidence directory for a reviewed prebuilt deployment. It also copies the
+Worker's client assets to evidence `dist/` for the browser harness.
 
 Local starts are refused from :50 through :14 America/Toronto, or when one-minute
 load is at least 20. `--ci` skips only those local scheduling checks and requires

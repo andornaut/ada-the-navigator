@@ -48,7 +48,7 @@ export function snapshot() {
     "vitest.config.ts",
     "tsconfig.json",
     "tsconfig.node.json",
-    "wrangler.jsonc",
+    "cloudflare.config.ts",
   ]);
   const folders = new Set([
     "src",
@@ -155,7 +155,13 @@ try {
     const result = spawnSync(command,args,{cwd:'/tmp/work',env:process.env,stdio:['ignore',log,log]});
     if (result.error || result.status !== 0) {code=result.status || 1;break;}
   }
-  if (existsSync('/tmp/work/dist')) cpSync('/tmp/work/dist','/tmp/evidence/dist',{recursive:true});
+  const cloudflareOutput = '/tmp/work/.cloudflare/output/v0';
+  if (existsSync(cloudflareOutput)) {
+    cpSync(cloudflareOutput, '/tmp/evidence/.cloudflare/output/v0', {recursive:true});
+    cpSync(cloudflareOutput + '/workers/default/assets', '/tmp/evidence/dist', {recursive:true});
+  } else if (existsSync('/tmp/work/dist')) {
+    cpSync('/tmp/work/dist','/tmp/evidence/dist',{recursive:true});
+  }
 } catch(error) {writeFileSync('/tmp/evidence/error.txt',error.message);code=1;}
 writeFileSync('/tmp/evidence/result.json',JSON.stringify({code})+'\\n');
 process.exitCode=code;
@@ -214,7 +220,7 @@ function start(mode, ci) {
     `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
     "--env",
     `CHECK_STEPS=${JSON.stringify(steps)}`,
-    "node:24.21.0",
+    "node:24.22.2",
     "node",
     "--input-type=module",
     "-e",

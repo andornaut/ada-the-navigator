@@ -10,7 +10,17 @@ import ts from "typescript-eslint";
 import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
 
 export default defineConfig(
-  { ignores: [".check-results/", ".worktrees/", ".wrangler/", "dist/", "node_modules/", "var/"] },
+  {
+    ignores: [
+      ".cloudflare/",
+      ".check-results/",
+      ".worktrees/",
+      ".wrangler/",
+      "dist/",
+      "node_modules/",
+      "var/",
+    ],
+  },
   js.configs.recommended,
   ts.configs.recommended,
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },

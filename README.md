@@ -59,7 +59,7 @@ unavailable, play continues without persistent saves.
 
 ## Development
 
-Use Node.js 24.21.0 or newer. Install the locked dependencies and start Vite:
+Use Node.js 24.22.2 (or supported Node.js 26.12.0+). Install the locked dependencies and start Vite:
 
 ```bash
 npm ci && \
