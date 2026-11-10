@@ -879,6 +879,42 @@ try {
     .locator("#game-canvas")
     .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
     .waitFor({ state: "visible" });
+  const portraitWeapon = page.locator('button[data-weapon="basic"]');
+  await portraitWeapon.waitFor({ state: "visible" });
+  const turnedControls = await page.evaluate(() => {
+    const weapon = document.querySelector('button[data-weapon="basic"]').getBoundingClientRect();
+    const gear = document.querySelector('[data-action="settings"]').getBoundingClientRect();
+    const canvas = document.querySelector("canvas").getBoundingClientRect();
+    const inverse = new DOMMatrixReadOnly(getComputedStyle(document.body).transform).inverse();
+    const relative = new DOMPoint(
+      weapon.x + weapon.width / 2 - gear.x - gear.width / 2,
+      weapon.y + weapon.height / 2 - gear.y - gear.height / 2,
+      0,
+      0,
+    ).matrixTransform(inverse);
+    return {
+      leftOfGear: relative.x,
+      rowOffset: relative.y,
+      insideCanvas:
+        weapon.left >= canvas.left - 1 &&
+        weapon.right <= canvas.right + 1 &&
+        weapon.top >= canvas.top - 1 &&
+        weapon.bottom <= canvas.bottom + 1,
+      accessibleName: document
+        .querySelector('button[data-weapon="basic"]')
+        .getAttribute("aria-label"),
+    };
+  });
+  assert.ok(
+    turnedControls.leftOfGear < 0 && Math.abs(turnedControls.rowOffset) < 16,
+    "Turned weapon selector must remain left of the gear on the same landscape row",
+  );
+  assert.ok(
+    turnedControls.insideCanvas,
+    "Turned weapon button must remain inside the visible canvas",
+  );
+  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponBasic);
+  save("portrait-weapon-alignment.json", turnedControls);
   const portraitBefore = await position();
   const portraitBounds = await Promise.all(
     ["move", "aim"].map((side) => page.locator(`[data-control="${side}-joystick"]`).boundingBox()),
