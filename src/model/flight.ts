@@ -273,6 +273,8 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
   }
 }
 
+export { relocateRouteGuards as settleRouteEncounters };
+
 export function routeBlocked(id: string, flight: FlightState): boolean {
   return flight.objects.some(
     (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
