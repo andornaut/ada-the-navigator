@@ -241,7 +241,11 @@ describe("integrated combat", () => {
     const packs = flight.combat?.initialPackSizes ?? {};
     expect(Object.keys(packs).length).toBeGreaterThan(2);
     expect(Object.values(packs).every((size) => size >= 1 && size <= 4)).toBe(true);
-    expect(flight.objects.some((object) => object.id.startsWith("terrain:"))).toBe(true);
+    expect(
+      flight.objects.some(
+        (object) => object.id.startsWith("chunk:") && ["rock", "resource"].includes(object.kind),
+      ),
+    ).toBe(true);
     expect(
       flight.objects.some((object) => object.id.startsWith("ballistic:") && object.velocity),
     ).toBe(true);

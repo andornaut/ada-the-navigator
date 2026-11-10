@@ -1,6 +1,8 @@
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { enemyEffects } from "./enemy-ai.ts";
+import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
 import type { GameState, SpaceObject } from "./types.ts";
+import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 
 /** Storage access can fail in private browsing or when quotas are exhausted. */
 export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
@@ -25,10 +27,16 @@ function finite(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 function vector(value: unknown): boolean {
-  return record(value) && finite(value.x) && finite(value.y);
+  return (
+    record(value) &&
+    finite(value.x) &&
+    finite(value.y) &&
+    Math.abs(value.x) <= Number.MAX_SAFE_INTEGER / 2 &&
+    Math.abs(value.y) <= Number.MAX_SAFE_INTEGER / 2
+  );
 }
 function strings(value: unknown): boolean {
-  return Array.isArray(value) && value.every((v) => typeof v === "string");
+  return Array.isArray(value) && Array.from(value).every((v) => typeof v === "string");
 }
 const destinationIds: Record<number, readonly string[]> = {
   1: ["growers", "workshop", "salvagers"],
@@ -82,6 +90,8 @@ function spaceObject(routes: readonly string[], value: unknown): value is SpaceO
     record(value) &&
     vector(value) &&
     typeof value.id === "string" &&
+    value.id.length > 0 &&
+    !["__proto__", "prototype", "constructor"].includes(value.id) &&
     ["rock", "resource", "enemy", "hazard", "pickup", "destination", "debris"].includes(
       String(value.kind),
     ) &&
@@ -96,20 +106,14 @@ function spaceObject(routes: readonly string[], value: unknown): value is SpaceO
     nonnegative(value.radius) &&
     finite(value.hp) &&
     (value.role === undefined || typeof value.role === "string") &&
+    (value.persistent === undefined || typeof value.persistent === "boolean") &&
     (value.cooldown === undefined || nonnegative(value.cooldown)) &&
     (value.behavior === undefined ||
       ["pursue", "shoot", "guard"].includes(String(value.behavior))) &&
     (value.weapon === undefined || ["rapid", "spread", "pierce"].includes(String(value.weapon)))
   );
 }
-function chunkKey(value: string): boolean {
-  const coordinates = value.split(",");
-  return (
-    coordinates.length === 2 &&
-    coordinates.every((part) => Number.isSafeInteger(Number(part)) && String(Number(part)) === part)
-  );
-}
-function dormantState(
+function persistentWorld(
   routes: readonly string[],
   active: readonly SpaceObject[],
   value: unknown,
@@ -117,63 +121,38 @@ function dormantState(
   if (
     !record(value) ||
     value.version !== 1 ||
-    !record(value.pages) ||
-    !record(value.packMembers) ||
-    !Object.values(value.packMembers).every(
-      (count) => Number.isSafeInteger(count) && nonnegative(count),
-    ) ||
-    !strings(value.routes) ||
-    !(value.routes as string[]).every((id) => routes.includes(id))
+    !record(value.notables) ||
+    Object.keys(value).some((key) => !["version", "notables"].includes(key))
   ) {
     return false;
   }
-  const packMembers = new Map<string, number>();
-  const dormantRoutes = new Set<string>();
   const ids = new Set(active.map((object) => object.id));
   if (ids.size !== active.length) {
     return false;
   }
-  for (const [key, encoded] of Object.entries(value.pages)) {
-    if (!chunkKey(key) || typeof encoded !== "string") {
+  for (const [id, object] of Object.entries(value.notables)) {
+    if (!id || ["__proto__", "prototype", "constructor"].includes(id) || ids.has(id)) {
       return false;
     }
-    const objects: unknown = JSON.parse(encoded);
-    if (!Array.isArray(objects)) {
-      return false;
+    ids.add(id);
+    if (object === null) {
+      continue;
     }
-    for (const object of objects) {
-      if (
-        !spaceObject(routes, object) ||
-        object.kind === "destination" ||
-        object.id.startsWith("whale-debris:") ||
-        ids.has(object.id)
-      ) {
-        return false;
-      }
-      ids.add(object.id);
-      const liveEnemy =
-        object.kind === "enemy" &&
-        object.hp > 0 &&
-        (!object.enemy ||
-          !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
-      if (liveEnemy) {
-        const packId = object.enemy?.packId;
-        if (packId) {
-          packMembers.set(packId, (packMembers.get(packId) ?? 0) + 1);
-        }
-        if (object.routeId) {
-          dormantRoutes.add(object.routeId);
-        }
-      }
+    if (
+      !spaceObject(routes, object) ||
+      object.id !== id ||
+      !persistentObject(object) ||
+      object.hp <= 0 ||
+      object.kind === "destination" ||
+      object.id.startsWith("whale-debris:") ||
+      (object.kind === "enemy" &&
+        object.enemy &&
+        enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated)
+    ) {
+      return false;
     }
   }
-  return (
-    Object.keys(value.packMembers).length === packMembers.size &&
-    Object.entries(value.packMembers).every(([id, count]) => packMembers.get(id) === count) &&
-    new Set(value.routes as string[]).size === (value.routes as string[]).length &&
-    (value.routes as string[]).length === dormantRoutes.size &&
-    (value.routes as string[]).every((id) => dormantRoutes.has(id))
-  );
+  return true;
 }
 function weaponOwnership(value: unknown, selected: unknown): boolean {
   return (
@@ -268,28 +247,44 @@ export function restoreSave(saved: unknown): GameState | null {
       if (f.combat !== undefined && !combatState(routes, f.combat)) {
         return null;
       }
-      if (!(f.freshChunk === null || typeof f.freshChunk === "string")) {
+      if (
+        !Number.isSafeInteger(f.seed) ||
+        !Number.isSafeInteger(f.nextId) ||
+        !(
+          f.freshChunk === null ||
+          (typeof f.freshChunk === "string" && chunkCoordinates(f.freshChunk) !== null)
+        )
+      ) {
         return null;
       }
       if (
         !["basic", "rapid", "spread", "pierce"].includes(String(f.weapon)) ||
         !strings(f.chunks) ||
-        !strings(f.exploredChunks)
+        !Array.isArray(f.chunks) ||
+        f.chunks.length > (ACTIVE_CHUNK_RADIUS * 2 + 1) ** 2 ||
+        new Set(f.chunks).size !== f.chunks.length ||
+        !f.chunks.every((key) => typeof key === "string" && chunkCoordinates(key) !== null) ||
+        !validVisitedPages(f.visited) ||
+        f.dormant !== undefined ||
+        f.exploredChunks !== undefined
       ) {
         return null;
       }
       if (f.ownedWeapons !== undefined && !weaponOwnership(f.ownedWeapons, f.weapon)) {
         return null;
       }
-      if (!Array.isArray(f.objects) || !f.objects.every((object) => spaceObject(routes, object))) {
+      if (
+        !Array.isArray(f.objects) ||
+        !Array.from(f.objects).every((object) => spaceObject(routes, object))
+      ) {
         return null;
       }
-      if (f.dormant !== undefined && !dormantState(routes, f.objects, f.dormant)) {
+      if (!persistentWorld(routes, f.objects, f.world)) {
         return null;
       }
       if (
         !Array.isArray(f.shots) ||
-        !f.shots.every(
+        !Array.from(f.shots).every(
           (s) =>
             record(s) &&
             vector(s) &&

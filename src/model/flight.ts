@@ -1,7 +1,17 @@
+import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
+import { planChunk } from "./chunk-templates.ts";
 import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
-import { activateFlightRegion, beginFlightStep, syncFlightRegion } from "./geography.ts";
+import {
+  activateFlightRegion,
+  beginFlightStep,
+  persistentObject,
+  recordObjectRemoval,
+  retainedPackMembers,
+  retainedRouteBlocked,
+  syncFlightRegion,
+} from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import type {
@@ -12,6 +22,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
+import { markVisited, visitedChunk } from "./visited.ts";
 import { collectWeapon, ensureOwnedWeapons, loseSelectedWeapon } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
@@ -57,9 +68,8 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
   activateFlightRegion(content, point, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
-  const weights = tuning.spawnWeights;
-  const totalWeight = weights.resource + weights.rock + weights.enemy + weights.pickup;
   const generated = generatedChunks(flight);
+  const existing = new Set(flight.objects.map((object) => object.id));
   const cx = Math.floor(point.x / size);
   const cy = Math.floor(point.y / size);
   for (let x = cx - 2; x <= cx + 2; x++) {
@@ -71,43 +81,41 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       flight.chunks.push(key);
       generated.add(key);
       chunkIndexes.get(flight)!.length = flight.chunks.length;
-      const next = random(hash(flight.seed, x, y));
+      const plan = planChunk(CHUNK_CATALOG, {
+        clearance: content.tuning.flight.shipRadius,
+        objectsPerChunk: tuning.objectsPerChunk,
+        rockRadius: tuning.rockRadius,
+        sector: flight.sector,
+        seed: flight.seed,
+        shipRadius: tuning.shipRadius,
+        size,
+        spawnWeights: tuning.spawnWeights,
+        x,
+        y,
+      });
+      const next = random(hash(flight.seed ^ 17, x, y));
       generateRegion(content, x, y, flight);
-      for (let i = 0; i < tuning.objectsPerChunk; i++) {
-        const choice = next() * totalWeight;
-        const kind =
-          choice < weights.resource
-            ? "resource"
-            : choice < weights.resource + weights.rock
-              ? "rock"
-              : choice < weights.resource + weights.rock + weights.enemy
-                ? "enemy"
-                : "pickup";
+      for (const placement of plan.placements) {
         const object: SpaceObject = {
-          hp: kind === "resource" || kind === "rock" ? tuning.rockHp : tuning.enemyHp,
-          id: `chunk:${key}:${i}`,
-          kind,
-          radius: kind === "enemy" ? tuning.enemyRadius : tuning.rockRadius,
-          x: (x + 0.1 + next() * 0.8) * size,
-          y: (y + 0.1 + next() * 0.8) * size,
+          ...placement,
+          hp: placement.kind === "pickup" ? 1 : tuning.rockHp,
+          radius: placement.kind === "pickup" ? tuning.pickupRadius : tuning.rockRadius,
         };
-        // Combat uses sparse seeded encounter regions rather than per-object rolls.
-        if (kind === "enemy") {
-          continue;
-        }
-        if (kind === "resource" || kind === "pickup") {
+        if (object.kind !== "rock") {
           object.role = "discovery";
         }
-        if (kind === "pickup") {
+        if (object.kind === "pickup") {
           object.weapon =
             (["rapid", "spread", "pierce"] as const)[Math.floor(next() * 3)] ?? "rapid";
-          object.radius = tuning.pickupRadius;
         }
         if (
+          !existing.has(object.id) &&
+          !Object.hasOwn(flight.world.notables, object.id) &&
           distance(object, flight.player) > content.tuning.safeRadius &&
           !safe(content, object, flight)
         ) {
           flight.objects.push(object);
+          existing.add(object.id);
         }
       }
     }
@@ -166,11 +174,16 @@ function generateRegion(
     const speed = content.tuning.maxSpeed * (slow + next() * (fast - slow));
     for (let i = 0; i < count; i++) {
       const point = { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size };
-      if (!safe(content, point, flight)) {
+      const id = `ballistic:${x},${y}:${i}`;
+      if (
+        !safe(content, point, flight) &&
+        !flight.objects.some((object) => object.id === id) &&
+        !Object.hasOwn(flight.world.notables, id)
+      ) {
         flight.objects.push({
           ...point,
           hp: content.tuning.flight.rockHp,
-          id: `ballistic:${x},${y}:${i}`,
+          id,
           kind: "debris",
           radius: content.tuning.flight.rockRadius,
           velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
@@ -184,7 +197,7 @@ function generateRegion(
   const count = low + Math.floor(next() * (high - low + 1));
   const choices: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
   const archetype = choices[Math.floor(next() * choices.length)] ?? "fighter";
-  let admitted = 0;
+  let admitted = flight.objects.filter((object) => object.enemy?.packId === packId).length;
   for (let i = 0; i < count; i++) {
     const object = spawnEnemy(
       content,
@@ -197,31 +210,16 @@ function generateRegion(
       packId,
       next() * Math.PI * 2,
     );
-    if (!safe(content, object, flight)) {
+    if (
+      !safe(content, object, flight) &&
+      !flight.objects.some((other) => other.id === object.id) &&
+      !Object.hasOwn(flight.world.notables, object.id)
+    ) {
       flight.objects.push(object);
       admitted++;
     }
   }
   combat(flight).initialPackSizes[packId] = admitted;
-  // Open, clustered and paired-wall regions share the same deterministic grid.
-  if (region === 0) {
-    return;
-  }
-  for (let i = 0; i < 8; i++) {
-    const point =
-      region === 1
-        ? { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size }
-        : { x: center.x + (i - 4) * 75, y: center.y + (i % 2 ? 130 : -130) };
-    if (!safe(content, point, flight)) {
-      flight.objects.push({
-        ...point,
-        hp: content.tuning.flight.rockHp,
-        id: `terrain:${x},${y}:${i}`,
-        kind: "rock",
-        radius: content.tuning.flight.rockRadius,
-      });
-    }
-  }
 }
 
 /** Layout clearance changes the roster without recording a combat casualty. */
@@ -231,7 +229,7 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
       object.kind === "enemy" &&
       object.hp > 0 &&
       (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated);
-    if (keep(object) || (liveEnemy && object.routeId)) {
+    if (keep(object) || persistentObject(object)) {
       return true;
     }
     const packId = object.enemy?.packId;
@@ -250,7 +248,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
   const guards = flight.objects.filter(
     (object) =>
       object.kind === "enemy" &&
-      object.routeId &&
+      persistentObject(object) &&
       object.hp > 0 &&
       (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
   );
@@ -298,7 +296,7 @@ export { relocateRouteGuards as settleRouteEncounters };
 
 export function routeBlocked(id: string, flight: FlightState): boolean {
   return (
-    Boolean(flight.dormant?.routes.includes(id)) ||
+    retainedRouteBlocked(id, flight) ||
     flight.objects.some(
       (object) => object.kind === "enemy" && object.routeId === id && object.hp > 0,
     )
@@ -316,7 +314,10 @@ export function ensureRouteEncounter(
   if (existing) {
     return existing;
   }
-  if (combat(flight).routeEncounters.includes(id)) {
+  if (
+    Object.hasOwn(flight.world.notables, `route:${id}`) ||
+    combat(flight).routeEncounters.includes(id)
+  ) {
     return null;
   }
   const destination = flight.objects.find(
@@ -419,7 +420,6 @@ export function createFlight(
     cargo: 0,
     chunks: [],
     dangerFor: 0,
-    exploredChunks: ["0,0"],
     facing: { x: 0, y: -1 },
     fireCooldown: 0,
     freshChunk: "0,0",
@@ -434,8 +434,11 @@ export function createFlight(
     sinceDamage: content.tuning.shieldRechargeDelay,
     time: 0,
     velocity: { x: 0, y: 0 },
+    visited: {},
     weapon: "basic",
+    world: { notables: {}, version: 1 },
   };
+  markVisited(flight.visited, "0,0");
   generate(content, flight.player, flight);
   for (const id of progress.known) {
     ensureDestination(content, id, flight);
@@ -458,9 +461,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
   const key = chunk(content, object);
-  if (!flight.exploredChunks.includes(key)) {
-    flight.exploredChunks.push(key);
-  }
+  markVisited(flight.visited, key);
   flight.shots = flight.shots.filter(
     (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
   );
@@ -549,10 +550,8 @@ function move(
       flight.freshDistance += distance(before, flight.player);
     }
     if (afterKey !== key) {
-      flight.freshChunk = flight.exploredChunks.includes(afterKey) ? null : afterKey;
-      if (!flight.exploredChunks.includes(afterKey)) {
-        flight.exploredChunks.push(afterKey);
-      }
+      flight.freshChunk = visitedChunk(flight.visited, afterKey) ? null : afterKey;
+      markVisited(flight.visited, afterKey);
     }
   }
   if (
@@ -598,7 +597,7 @@ function enemies(
       {
         adaSpeed: content.tuning.maxSpeed,
         adaWidth: content.tuning.flight.shipRadius * 2,
-        dormantPackMembers: flight.dormant?.packMembers ?? {},
+        dormantPackMembers: retainedPackMembers(content, flight),
         dt,
         initialPackSizes: combat(flight).initialPackSizes,
         peers,
@@ -818,6 +817,11 @@ function shots(
     }
   }
   flight.shots = flight.shots.filter((s) => s.life > 0);
+  for (const object of flight.objects) {
+    if (object.hp <= 0) {
+      recordObjectRemoval(content, object, flight);
+    }
+  }
   flight.objects = flight.objects.filter((o) => o.hp > 0);
 }
 
@@ -877,6 +881,11 @@ export function stepFlight(
       } else if (object.weapon) {
         collectWeapon(object.weapon, flight);
         object.hp = 0;
+      }
+    }
+    for (const object of flight.objects) {
+      if (object.hp <= 0) {
+        recordObjectRemoval(content, object, flight);
       }
     }
     flight.objects = flight.objects.filter((o) => o.hp > 0);

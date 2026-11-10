@@ -372,6 +372,12 @@ export class GameModel {
     if (!id || !f) {
       return;
     }
+    const destination = f.objects.find(
+      (object) => object.kind === "destination" && object.id === id,
+    );
+    if (destination) {
+      destination.persistent = true;
+    }
     const p = this.current;
     if (f.sector === 1) {
       if (id === "growers" && p.stage === 1) {

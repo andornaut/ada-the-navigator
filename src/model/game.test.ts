@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
-import { ensureDestination, ensureRouteEncounter, routeBlocked } from "./flight.ts";
+import {
+  ensureDestination,
+  ensureRouteEncounter,
+  routeBlocked,
+  syncFlightRegion,
+} from "./flight.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -304,15 +309,8 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   const parts = structuredClone(guard.enemy!.hardpoints);
   const previousTarget = { x: target.x, y: target.y };
   const previousGuard = { x: guard.x, y: guard.y };
-  const size = content.tuning.chunkSize;
-  const key = `${Math.floor(guard.x / size)},${Math.floor(guard.y / size)}`;
   flight.objects = [target];
-  flight.dormant = {
-    packMembers: {},
-    pages: { [key]: JSON.stringify([guard]) },
-    routes: ["growers"],
-    version: 1,
-  };
+  flight.world.notables[guard.id] = guard;
   const resumed = new GameModel(content, model.save());
   expect(resumed.state).toEqual(model.state);
   resumed.step(0.05, { ...idle, move: { x: 1, y: 0 } });
@@ -320,8 +318,8 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   const movedTarget = next.objects.find((object) => object.id === "growers")!;
   const retained = [
     ...next.objects,
-    ...Object.values(next.dormant?.pages ?? {}).flatMap(
-      (page) => JSON.parse(page) as SpaceObject[],
+    ...Object.values(next.world.notables).filter(
+      (object): object is SpaceObject => object !== null,
     ),
   ];
   const guards = retained.filter((object) => object.id === guard.id);
@@ -335,4 +333,18 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   expect(routeBlocked("growers", next)).toBe(true);
   expect(resumed.state.progress[1].introduced).toBe(false);
   expect(new GameModel(content, resumed.save()).state).toEqual(resumed.state);
+});
+
+it("marks an interacted destination persistent before ordinary eviction", () => {
+  const model = new GameModel(PROTOTYPE);
+  launch(model);
+  arrive(model, "growers");
+  model.interact();
+  const flight = model.state.flight!;
+  const npc = flight.objects.find((object) => object.id === "growers")!;
+  expect(npc.persistent).toBe(true);
+  flight.player = { x: 12000, y: 12000 };
+  syncFlightRegion(PROTOTYPE, flight);
+  expect(flight.objects).toContain(npc);
+  expect(model.state.progress[1].known).toContain("growers");
 });

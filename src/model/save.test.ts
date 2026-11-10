@@ -5,6 +5,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
+import type { FlightState, GameState, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {
   it("roundtrips real initial and launched states without sharing mutable references", () => {
@@ -257,7 +258,7 @@ describe("combat save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("accepts exact legacy snapshots without introducing combat fields", () => {
+  it("accepts current snapshots without optional combat fields", () => {
     const snapshot = combatSnapshot();
     Reflect.deleteProperty(snapshot.flight, "combat");
     for (const object of snapshot.flight.objects) {
@@ -296,41 +297,33 @@ describe("combat save boundary", () => {
   });
 });
 
-function dormantSnapshot() {
+function notableSnapshot(): GameState & { flight: FlightState } {
   const snapshot = combatSnapshot();
+  const notable = snapshot.flight.objects[0]! as SpaceObject;
   return {
     ...snapshot,
     flight: {
       ...snapshot.flight,
-      dormant: {
-        packMembers: { pack: 1 },
-        pages: { "10,0": JSON.stringify(snapshot.flight.objects) },
-        routes: ["growers"],
-        version: 1 as const,
-      },
-      objects: [],
+      objects: snapshot.flight.objects.slice(1) as SpaceObject[],
+      world: { notables: { [notable.id]: notable }, version: 1 as const },
     },
   };
 }
 
-describe("dormant save boundary", () => {
-  it("roundtrips inactive combat and debris exactly without re-encoding pages", () => {
-    const snapshot = dormantSnapshot();
-    const encoded = snapshot.flight.dormant.pages["10,0"];
+describe("current generation save boundary", () => {
+  it("roundtrips inactive notable parts, AI and active projectiles exactly", () => {
+    const snapshot = notableSnapshot();
     const restored = restoreSave(JSON.stringify(snapshot));
     expect(restored).toEqual(snapshot);
-    expect(restored?.flight?.dormant?.pages["10,0"]).toBe(encoded);
-    expect(restored?.flight?.shots).toEqual(snapshot.flight.shots);
-    expect(restored?.flight?.dormant).not.toBe(snapshot.flight.dormant);
-    const objects = JSON.parse(restored!.flight!.dormant!.pages["10,0"]!) as {
-      enemy?: { hardpoints: { cooldown: number; hp: number }[] };
-    }[];
-    expect(objects[0]!.enemy!.hardpoints[1]!.hp).toBe(0);
-    expect(objects[0]!.enemy!.hardpoints[4]!.cooldown).toBe(1.7);
+    expect(restored!.flight!.world).not.toBe(snapshot.flight.world);
+    const object = restored!.flight!.world.notables["guard"]!;
+    expect(object.enemy!.hardpoints[1]!.hp).toBe(0);
+    expect(object.enemy!.hardpoints[4]!.cooldown).toBe(1.7);
+    expect(restored!.flight!.shots).toEqual(snapshot.flight.shots);
   });
 
-  it("does not parse inactive object trees during repeated serialization", () => {
-    const snapshot = dormantSnapshot();
+  it("serializes only the current schema without decoding discarded ordinary history", () => {
+    const snapshot = notableSnapshot();
     const model = new GameModel(PROTOTYPE, JSON.stringify(snapshot));
     expect(model.state).toEqual(snapshot);
     const parse = vi.spyOn(JSON, "parse");
@@ -346,41 +339,12 @@ describe("dormant save boundary", () => {
   it.each([
     null,
     {},
-    { packMembers: {}, pages: {}, routes: [], version: 2 },
-    { packMembers: {}, pages: [], routes: [], version: 1 },
-    { packMembers: [], pages: {}, routes: [], version: 1 },
-    { packMembers: { pack: -1 }, pages: {}, routes: [], version: 1 },
-    { packMembers: { pack: 1.5 }, pages: {}, routes: [], version: 1 },
-    { packMembers: { pack: Infinity }, pages: {}, routes: [], version: 1 },
-    { packMembers: {}, pages: {}, routes: ["hub"], version: 1 },
-    { packMembers: {}, pages: {}, routes: [1], version: 1 },
-  ])("rejects malformed or unsupported dormant metadata %j", (dormant) => {
-    const snapshot = dormantSnapshot();
-    Object.assign(snapshot.flight, { dormant });
-    expect(restoreSave(snapshot)).toBeNull();
-  });
-
-  it.each(["broken", "null", "{}", '[{"kind":"enemy"}]', '[{"projectile":"missile"}]'])(
-    "rejects malformed encoded page %s",
-    (page) => {
-      const snapshot = dormantSnapshot();
-      snapshot.flight.dormant.pages["10,0"] = page;
-      expect(restoreSave(snapshot)).toBeNull();
-    },
-  );
-
-  it.each(["bad", "1.5,0", "01,0", "-0,0", "0,Infinity", "9007199254740992,0"])(
-    "rejects ambiguous or invalid chunk key %s",
-    (key) => {
-      const snapshot = dormantSnapshot();
-      Object.assign(snapshot.flight.dormant, { pages: { [key]: "[]" } });
-      expect(restoreSave(snapshot)).toBeNull();
-    },
-  );
-
-  it("rejects unencoded pages", () => {
-    const snapshot = dormantSnapshot();
-    Object.assign(snapshot.flight.dormant, { pages: { "10,0": [] } });
+    { version: 2, notables: {} },
+    { version: 1, notables: [] },
+    { version: 1, notables: {}, extra: [] },
+  ])("rejects invalid persistent world metadata %j", (world) => {
+    const snapshot = notableSnapshot();
+    Object.assign(snapshot.flight, { world });
     expect(restoreSave(snapshot)).toBeNull();
   });
 
@@ -389,81 +353,86 @@ describe("dormant save boundary", () => {
     { velocity: { x: null, y: 0 } },
     { cooldown: -1 },
     { routeId: "hub" },
+    { persistent: "true" },
+    { hp: 0 },
     { kind: "destination" },
-    { id: "whale-debris:0" },
-  ])("applies strict object and pinned quest validation inside pages %j", (change) => {
-    const snapshot = dormantSnapshot();
-    const object = { ...combatSnapshot().flight.objects[0]!, ...change };
-    snapshot.flight.dormant.pages["10,0"] = JSON.stringify([object]);
+    { id: "different" },
+  ])("validates complete retained object records %j", (change) => {
+    const snapshot = notableSnapshot();
+    Object.assign(snapshot.flight.world.notables.guard!, change);
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it.each([
-    { packMembers: {} },
-    { packMembers: { pack: 2 } },
-    { packMembers: { pack: 1, phantom: 1 } },
-    { routes: [] },
-    { routes: ["growers", "growers"] },
-    { routes: ["workshop"] },
-  ])("rejects indexes that disagree with the retained live roster %j", (change) => {
-    const snapshot = dormantSnapshot();
-    Object.assign(snapshot.flight.dormant, change);
+  it("rejects ordinary scenery and trash mobs in the persistent ledger", () => {
+    const snapshot = notableSnapshot();
+    snapshot.flight.world.notables = {
+      rock: { hp: 2, id: "rock", kind: "rock", radius: 10, x: 5000, y: 0 },
+    };
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("rejects a duplicated route that replaces another retained guard route", () => {
-    const snapshot = dormantSnapshot();
-    const second = combatSnapshot().flight.objects[0]!;
-    second.id = "other-guard";
-    second.enemy!.id = second.id;
-    second.routeId = "workshop";
-    const first = combatSnapshot().flight.objects[0]!;
-    snapshot.flight.dormant.pages["10,0"] = JSON.stringify([first, second]);
-    snapshot.flight.dormant.packMembers.pack = 2;
-    snapshot.flight.dormant.routes = ["workshop", "growers"];
+  it("preserves explicit defeated tombstones while preventing duplicate canonical ownership", () => {
+    const snapshot = notableSnapshot();
+    Object.assign(snapshot.flight.world.notables, { "route:workshop": null });
     expect(restoreSave(snapshot)).toEqual(snapshot);
-    snapshot.flight.dormant.routes = ["growers", "growers"];
+    snapshot.flight.objects.push(snapshot.flight.world.notables.guard!);
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("counts a disabled hull with required live hardpoints as an alive dormant member", () => {
-    const snapshot = dormantSnapshot();
-    const objects = combatSnapshot().flight.objects;
-    objects[0]!.enemy!.hp = 0;
-    snapshot.flight.dormant.pages["10,0"] = JSON.stringify(objects);
+  it("accepts a destroyed hull with required live parts but rejects an unrecorded defeated notable", () => {
+    const snapshot = notableSnapshot();
+    snapshot.flight.world.notables.guard!.enemy!.hp = 0;
     expect(restoreSave(snapshot)).toEqual(snapshot);
-  });
-
-  it("does not index an enemy whose required hardpoints are all disabled", () => {
-    const snapshot = dormantSnapshot();
-    const objects = combatSnapshot().flight.objects;
-    for (const part of objects[0]!.enemy!.hardpoints) {
+    for (const part of snapshot.flight.world.notables.guard!.enemy!.hardpoints) {
       part.hp = 0;
     }
-    snapshot.flight.dormant.pages["10,0"] = JSON.stringify(objects);
     expect(restoreSave(snapshot)).toBeNull();
-    Object.assign(snapshot.flight.dormant, { packMembers: {}, routes: [] });
+    Object.assign(snapshot.flight.world.notables, { guard: null });
     expect(restoreSave(snapshot)).toEqual(snapshot);
   });
 
-  it("rejects duplicate ownership across active objects and dormant pages", () => {
-    const snapshot = dormantSnapshot();
-    Object.assign(snapshot.flight, { objects: combatSnapshot().flight.objects });
+  it("rejects ambiguous chunk keys, unbounded active keys and malformed visited pages", () => {
+    for (const key of ["bad", "1.5,0", "01,0", "-0,0", "0,Infinity", "9007199254740992,0"]) {
+      const snapshot = notableSnapshot();
+      snapshot.flight.chunks = [key];
+      expect(restoreSave(snapshot)).toBeNull();
+    }
+    for (const visited of [
+      null,
+      [],
+      { "0,0": "broken" },
+      { "01,0": btoa("x".repeat(32)) },
+      { "0,0": btoa("x".repeat(33)) },
+      { "0,0": btoa("\0".repeat(32)) },
+    ]) {
+      const snapshot = notableSnapshot();
+      Object.assign(snapshot.flight, { visited });
+      expect(restoreSave(snapshot)).toBeNull();
+    }
+    const snapshot = notableSnapshot();
+    snapshot.flight.chunks = Array.from({ length: 50 }, (_, index) => `${index},0`);
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("rejects duplicate ownership between dormant pages", () => {
-    const snapshot = dormantSnapshot();
-    Object.assign(snapshot.flight.dormant.pages, {
-      "11,0": snapshot.flight.dormant.pages["10,0"],
-    });
+  it("rejects unsafe generation coordinates and fractional seed identities", () => {
+    const snapshot = notableSnapshot();
+    snapshot.flight.player.x = Number.MAX_VALUE;
+    expect(restoreSave(snapshot)).toBeNull();
+    snapshot.flight.player.x = 0;
+    snapshot.flight.seed = 1.5;
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("keeps empty inactive chunks and consumed-state tombstones", () => {
-    const snapshot = dormantSnapshot();
-    snapshot.flight.chunks.push("10,0", "11,0");
-    Object.assign(snapshot.flight.dormant.pages, { "11,0": "[]" });
-    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+  it("rejects old generation schemas and uses the existing safe home fallback without migration", () => {
+    const snapshot = notableSnapshot();
+    const old = JSON.parse(JSON.stringify(snapshot)) as { flight: Record<string, unknown> };
+    delete old.flight.world;
+    delete old.flight.visited;
+    old.flight.dormant = { version: 1, pages: {}, packMembers: {}, routes: [] };
+    old.flight.exploredChunks = ["0,0"];
+    expect(restoreSave(old)).toBeNull();
+    expect(new GameModel(PROTOTYPE, old).state.mode).toBe("home");
+    expect(new GameModel(PROTOTYPE, old).state.flight).toBeNull();
+    expect(old.flight).not.toHaveProperty("world");
   });
 });

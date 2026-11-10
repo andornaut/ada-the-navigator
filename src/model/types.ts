@@ -18,6 +18,7 @@ export interface SpaceObject extends Vec {
   radius: number;
   hp: number;
   role?: string;
+  persistent?: boolean;
   enemy?: EnemyState;
   velocity?: Vec;
   routeId?: string;
@@ -34,15 +35,14 @@ export interface Shot extends Vec {
   piercing: boolean;
   hitIds: string[];
 }
-/** Dormant pages are immutable encoded object arrays; projectiles remain active. */
-export interface DormantFlightState {
+/** Only inactive notable records and permanent defeat tombstones survive chunk eviction. */
+export interface PersistentWorldState {
   version: 1;
-  pages: Record<string, string>;
-  packMembers: Record<string, number>;
-  routes: string[];
+  notables: Record<string, SpaceObject | null>;
 }
 export interface FlightState {
-  dormant?: DormantFlightState;
+  world: PersistentWorldState;
+  visited: Record<string, string>;
   combat?: { initialPackSizes: Record<string, number>; routeEncounters: string[] };
   sector: SectorId;
   seed: number;
@@ -61,7 +61,6 @@ export interface FlightState {
   objects: SpaceObject[];
   shots: Shot[];
   chunks: string[];
-  exploredChunks: string[];
   freshChunk: string | null;
   freshDistance: number;
   nextId: number;
