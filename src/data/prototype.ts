@@ -142,6 +142,7 @@ export const PROTOTYPE: PrototypeContent = {
     deliver: "Deliver",
     deposit: "Deposit",
     continue: "Continue",
+    askMore: "Ask more",
     travel: "Travel",
     toronto: "Toronto",
     destinations: "Discovered destinations",
