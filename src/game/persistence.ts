@@ -2,8 +2,7 @@ const KEY = "ada-the-navigator.prototype.v1";
 
 export function readSave(): unknown {
   try {
-    const saved = localStorage.getItem(KEY);
-    return saved === null ? undefined : JSON.parse(saved);
+    return readStoredSave(localStorage, KEY);
   } catch {
     return undefined;
   }
@@ -11,8 +10,9 @@ export function readSave(): unknown {
 
 export function writeSave(saved: string): void {
   try {
-    localStorage.setItem(KEY, saved);
+    writeStoredSave(localStorage, KEY, saved);
   } catch {
     // Flight remains playable when browser storage is unavailable.
   }
 }
+import { readSave as readStoredSave, writeSave as writeStoredSave } from "../model/save.ts";
