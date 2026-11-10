@@ -14,6 +14,7 @@ import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
+import { selectShipAsset, type ShipAsset } from "./ship-art.ts";
 import {
   FALLBACK_SPACE_PALETTE,
   readSpacePalette,
@@ -21,16 +22,12 @@ import {
   spaceObjectColor,
 } from "./space-palette.ts";
 
-interface Asset {
-  id: string;
+interface Asset extends ShipAsset {
   path: string;
   width: number;
   height: number;
-  displayWidth?: number;
-  displayHeight?: number;
   frameWidth?: number;
   frameHeight?: number;
-  pivot: Vec;
 }
 
 /** World axes project diagonally; controls continue to follow screen directions. */
@@ -50,6 +47,7 @@ export class PrototypeScene extends Phaser.Scene {
   private controls!: ReturnType<typeof createControls>;
   private ink!: Phaser.GameObjects.Graphics;
   private ship!: Phaser.GameObjects.Image;
+  private shipAssets: readonly ShipAsset[] = [];
   private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
   private enabled: boolean | undefined;
@@ -112,8 +110,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink = this.add.graphics();
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
-    const ship = manifest?.assets.find((asset) => asset.id === "ship");
-    this.ship.setDisplaySize(ship?.displayWidth ?? 28, ship?.displayHeight ?? 42);
+    this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
+    const ship = this.shipAssets.find((asset) => asset.id === "ship");
+    this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
     const apply = (action: () => void): void => {
       action();
@@ -357,12 +356,12 @@ export class PrototypeScene extends Phaser.Scene {
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     const thrust = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
-    this.ship.setTexture(thrust ? "ship-thrust" : "ship");
-    const dx = flight.facing.x - flight.facing.y;
-    const dy = (flight.facing.x + flight.facing.y) / 2;
-    if (dx || dy) {
-      this.ship.setRotation(Math.atan2(dy, dx) + Math.PI / 2);
-    }
+    const ship = selectShipAsset(this.shipAssets, thrust, flight.facing);
+    this.ship.setTexture(ship?.id ?? "ship");
+    this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
+    this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
+    // Authored direction frames already include perspective and must not rotate in screen space.
+    this.ship.setRotation(0);
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const [id, label] of this.labels) {
       if (!activeIds.has(id)) {
