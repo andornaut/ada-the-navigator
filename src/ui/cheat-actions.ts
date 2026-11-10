@@ -56,12 +56,12 @@ export function createCheatSession(options: CheatSessionOptions) {
       }
       const token = epoch;
       let committed = false;
-      const work = Symbol();
+      const work = Symbol("cheat invocation");
       pending.add(work);
       try {
         await action.execute({
           commit(effect) {
-            if (!available() || epoch !== token) {
+            if (!pending.has(work) || !available() || epoch !== token) {
               return false;
             }
             effect();

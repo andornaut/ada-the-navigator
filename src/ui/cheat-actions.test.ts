@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createCheatSession } from "./cheat-actions.ts";
+import { type CheatExecution, createCheatSession } from "./cheat-actions.ts";
 
 function fixture() {
   let mode = "browser";
@@ -20,8 +20,18 @@ function fixture() {
     },
   };
   let release: (() => void) | undefined;
+  let retained: CheatExecution | undefined;
   const session = createCheatSession({
     actions: [
+      {
+        description: "Retained context fixture",
+        execute: (context) => {
+          retained = context;
+        },
+        id: "retained",
+        label: "Retained context fixture",
+        scope: "save",
+      },
       {
         description: "Save fixture",
         execute: ({ commit }) => {
@@ -50,6 +60,7 @@ function fixture() {
     run: () => run,
   });
   return {
+    commitLater: () => retained?.commit(() => mutations++) ?? false,
     get mutations() {
       return mutations;
     },
@@ -121,6 +132,15 @@ describe("browser-tab cheat eligibility", () => {
       expect(state.save).not.toHaveBeenCalled();
     },
   );
+
+  it("revokes a retained commit callback after its action has returned", async () => {
+    const state = fixture();
+    expect(await state.session.execute("retained")).toBe(false);
+    expect(state.session.available()).toBe(true);
+    expect(state.commitLater()).toBe(false);
+    expect(state.mutations).toBe(0);
+    expect(state.save).not.toHaveBeenCalled();
+  });
 
   it("does not invoke the save callback for a run-scoped commit or dispatch twice while busy", async () => {
     const state = fixture();
