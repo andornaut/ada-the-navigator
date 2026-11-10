@@ -34,5 +34,27 @@ export interface PrototypeContent {
     safeRadius: number;
     dangerReleaseSeconds: number;
     whaleDebris: { count: number; radius: number; hp: number; spacing: number };
+    flight: {
+      objectsPerChunk: number;
+      spawnWeights: { resource: number; rock: number; enemy: number; pickup: number };
+      rockHp: number;
+      enemyHp: number;
+      playerShotDamage: number;
+      piecesPerRock: number;
+      pursuitSpeedFactor: number;
+      damageInterval: number;
+      enemyFireInterval: number;
+      projectileSpeedFactor: number;
+      projectileLifetime: number;
+      enemyProjectileLifetime: number;
+      spreadAngle: number;
+      shipRadius: number;
+      enemyRadius: number;
+      rockRadius: number;
+      pickupRadius: number;
+      pieceRadius: number;
+      pickupReach: number;
+      engagementChunks: number;
+    };
   };
 }
