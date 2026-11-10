@@ -54,6 +54,10 @@ The persistence contract distinguishes an interrupted flight from leaving a sect
   cargo and weapon pickups. Story progress, known destinations, deposited
   resources and activity counters persist.
 
+Combat includes data-defined solo ships and packs, independent large-ship
+hardpoints and straight-flying missiles. Required approach encounters stay outside
+friendly safe zones. See the [enemy rule interface](gameplay/enemies.md).
+
 Flight snapshots are stored locally in this browser. If browser storage is
 unavailable, play continues without persistent saves.
 
@@ -85,7 +89,7 @@ resource limits. CI requires `AI attributions`, `Lint` and `Test`.
 ## Delivery
 
 Delivery is paused. `delivery-kit.json` proposes :30 America/Toronto and sets
-`deploy.mode` to `none`. No runner or deployment is activated.
+`deploy.mode` to `none`. Scheduled delivery and its runner remain inactive.
 
 Cloudflare setup uses typed `cloudflare.config.ts` for the assets-only Worker
 `ada-the-navigator`. The Cloudflare Vite plugin builds static assets and deployment
@@ -93,7 +97,10 @@ metadata into `.cloudflare/output/v0/`. No application Worker entrypoint or
 account ID is configured. Logs and traces are enabled in the configuration.
 
 See [Cloudflare build and deployment checks](docs/checks.md#cloudflare-build-and-deployment-checks)
-for dry-run and prebuilt commands. Deployment requires operator enrollment,
-authorized authentication and account selection, reviewed evidence for the exact
-source and artifact, and explicit deployment approval. Runner activation requires
+for dry-run and prebuilt commands. The Worker exists in the shared account with
+public URLs, preview URLs and routes disabled. The existing Wrangler account login
+can access that account; the separately configured broker token is not equivalent.
+Deployment requires authorized authentication and account selection, reviewed
+evidence for the exact source and artifact, and explicit deployment approval.
+Project enrollment is not required for broker commands. Runner activation requires
 separate approval. Credentials are not part of this repository.

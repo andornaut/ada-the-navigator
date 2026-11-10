@@ -158,12 +158,12 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   launch(model, 3);
   introduce(model, "whale");
   const f = model.state.flight!;
-  expect(f.objects.filter((o) => o.kind === "debris")).toHaveLength(
+  expect(f.objects.filter((o) => o.id.startsWith("whale-debris:"))).toHaveLength(
     PROTOTYPE.tuning.whaleDebris.count,
   );
   // Exercise the actual projectile/event path at each obstruction, without ambient enemies.
-  f.objects = f.objects.filter((o) => o.kind === "destination" || o.kind === "debris");
-  for (const debris of [...f.objects.filter((o) => o.kind === "debris")]) {
+  f.objects = f.objects.filter((o) => o.kind === "destination" || o.id.startsWith("whale-debris:"));
+  for (const debris of [...f.objects.filter((o) => o.id.startsWith("whale-debris:"))]) {
     f.player = { x: debris.x - 100, y: debris.y };
     f.velocity = { x: 0, y: 0 };
     for (let i = 0; i < 400 && f.objects.some((o) => o.id === debris.id); i++) {
@@ -174,7 +174,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   expect(model.state.progress[3].stage).toBe(2);
   model.returnHome();
   launch(model, 3);
-  expect(model.state.flight!.objects.some((o) => o.kind === "debris")).toBe(false);
+  expect(model.state.flight!.objects.some((o) => o.id.startsWith("whale-debris:"))).toBe(false);
   talk(model, "whale");
   talk(model, "family");
   talk(model, "whale");
@@ -200,9 +200,9 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   );
   expect(model.state.dialogue).toBeNull();
   expect(model.state.progress[3].introduced).toBe(false);
-  const debris = f.objects.filter((o) => o.kind === "debris");
+  const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
   expect(debris).toHaveLength(PROTOTYPE.tuning.whaleDebris.count);
-  f.objects = f.objects.filter((o) => o.kind === "destination" || o.kind === "debris");
+  f.objects = f.objects.filter((o) => o.kind === "destination" || o.id.startsWith("whale-debris:"));
   for (const obstruction of debris) {
     f.player = { x: obstruction.x - 300, y: obstruction.y };
     f.velocity = { x: 0, y: 0 };
@@ -219,7 +219,7 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   restored.step(0.01, idle);
   expect(restored.state.dialogue?.text).toBe(PROTOTYPE.chapters[3].dialogue.freed?.text);
   expect(restored.state.progress[3].stage).toBe(3);
-  expect(restored.state.flight!.objects.some((o) => o.kind === "debris")).toBe(false);
+  expect(restored.state.flight!.objects.some((o) => o.id.startsWith("whale-debris:"))).toBe(false);
   restored.choose("continue");
   talk(restored, "family");
   talk(restored, "whale");
@@ -234,7 +234,7 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   f.freshDistance = PROTOTYPE.tuning.introFreshDistance;
   model.step(0.01, idle);
   const whale = f.objects.find((o) => o.id === "whale")!;
-  const debris = f.objects.filter((o) => o.kind === "debris");
+  const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
   const offsets = debris.map((o) => ({ x: o.x - whale.x, y: o.y - whale.y }));
   f.player = { x: whale.x + PROTOTYPE.tuning.chunkSize * 4, y: whale.y };
   f.velocity = { x: PROTOTYPE.tuning.maxSpeed, y: 0 };
@@ -250,7 +250,7 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   });
 });
 
-it("discovers the required encounter after reversing away from its first location", () => {
+it("discovers a cleared required approach after reversing away from its first location", () => {
   const content = structuredClone(PROTOTYPE);
   content.tuning.introFreshDistance = 8;
   content.tuning.flight.objectsPerChunk = 0;
@@ -262,6 +262,11 @@ it("discovers the required encounter after reversing away from its first locatio
   }
   const pending = flight.objects.find((o) => o.id === "growers");
   expect(pending).toBeDefined();
+  const guard = flight.objects.find((object) => object.routeId === "growers")!;
+  expect(guard.enemy).toBeDefined();
+  for (const part of guard.enemy!.hardpoints) {
+    part.hp = 0;
+  }
   const originalX = pending!.x;
   expect(originalX - flight.player.x).toBeGreaterThan(content.tuning.chunkSize);
   expect(model.state.progress[1].known).toEqual([]);

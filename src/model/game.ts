@@ -2,7 +2,9 @@ import type { PrototypeContent, SectorId } from "../data/types.ts";
 import {
   createFlight,
   ensureDestination,
+  ensureRouteEncounter,
   placeDestinationAhead,
+  routeBlocked,
   stepFlight,
   teleport as teleportFlight,
 } from "./flight.ts";
@@ -81,6 +83,7 @@ export class GameModel {
         (o) =>
           o.kind === "destination" &&
           this.current.known.includes(o.id) &&
+          !routeBlocked(o.id, f) &&
           Math.hypot(o.x - f.player.x, o.y - f.player.y) <= this.content.tuning.safeRadius,
       )
       .sort(
@@ -209,6 +212,7 @@ export class GameModel {
     ) {
       return;
     }
+    this.ensureRequiredApproaches();
     const previousFreshDistance = f.freshDistance;
     for (const event of stepFlight(this.content, dt, input, f)) {
       if (event.type === "depleted") {
@@ -227,7 +231,7 @@ export class GameModel {
         event.type === "debrisCleared" &&
         f.sector === 3 &&
         this.current.stage <= 1 &&
-        !f.objects.some((o) => o.kind === "debris" && o.hp > 0)
+        !f.objects.some((o) => o.id.startsWith("whale-debris:") && o.hp > 0)
       ) {
         this.current.stage = 2;
       }
@@ -256,6 +260,7 @@ export class GameModel {
         }
       }
     }
+    this.ensureRequiredApproaches();
     this.ensureWhaleDebris();
     const intro = first[f.sector];
     if (
@@ -279,6 +284,17 @@ export class GameModel {
       this.interact();
     }
   }
+  private ensureRequiredApproaches(): void {
+    const f = this.state.flight;
+    if (!f || this.current.questComplete) {
+      return;
+    }
+    for (const object of [...f.objects]) {
+      if (object.kind === "destination" && !this.current.known.includes(object.id)) {
+        ensureRouteEncounter(this.content, object.id, f);
+      }
+    }
+  }
   private placePending(id: string): void {
     const f = this.state.flight;
     if (!f) {
@@ -289,6 +305,18 @@ export class GameModel {
     const debris = id === "whale" ? f.objects.filter((o) => o.id.startsWith("whale-debris:")) : [];
     const destination = placeDestinationAhead(this.content, id, f);
     if (before) {
+      for (const guard of f.objects.filter((object) => object.routeId === id)) {
+        const dx = destination.x - before.x;
+        const dy = destination.y - before.y;
+        guard.x += dx;
+        guard.y += dy;
+        if (guard.enemy) {
+          guard.enemy.position.x += dx;
+          guard.enemy.position.y += dy;
+          guard.enemy.home.x += dx;
+          guard.enemy.home.y += dy;
+        }
+      }
       for (const object of debris) {
         object.x += destination.x - before.x;
         object.y += destination.y - before.y;
@@ -304,7 +332,7 @@ export class GameModel {
       return;
     }
     const whale = f.objects.find((o) => o.id === "whale");
-    if (!whale || f.objects.some((o) => o.kind === "debris")) {
+    if (!whale || f.objects.some((o) => o.id.startsWith("whale-debris:"))) {
       return;
     }
     const tuning = this.content.tuning.whaleDebris;
