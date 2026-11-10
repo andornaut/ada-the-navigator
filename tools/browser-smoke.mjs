@@ -779,8 +779,11 @@ try {
     width: element.width,
     height: element.height,
   }));
+  const paletteResponse = await page.request.get("http://ada-preview:4173/art/space-palette.json");
+  assert.equal(paletteResponse.status(), 200, "Approved space palette must be served");
+  const { colors: paletteColors } = await paletteResponse.json();
   const pixels = await page.evaluate(
-    async ({ encoded, intrinsic }) => {
+    async ({ encoded, intrinsic, paletteColors }) => {
       const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
       const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
       const sample = document.createElement("canvas");
@@ -791,8 +794,10 @@ try {
       bitmap.close();
       // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
       const regions = {
-        capital: { x: 10, y: 130, width: 140, height: 125 },
+        capital: { x: 0, y: 90, width: 240, height: 195 },
         missile: { x: 510, y: 65, width: 65, height: 55 },
+        disabled: { x: 615, y: 155, width: 50, height: 50 },
+        background: { x: 280, y: 280, width: 160, height: 60 },
       };
       return Object.fromEntries(
         Object.entries(regions).map(([name, region]) => {
@@ -810,20 +815,92 @@ try {
             bitmapRegion.width,
             bitmapRegion.height,
           );
-          let bright = 0;
+          const colors = Object.fromEntries(
+            [
+              "obstacle",
+              "shipHardpoint",
+              "weapon",
+              "environment",
+              "environmentDetail",
+              "background",
+            ].map((role) => {
+              const hex = paletteColors[role];
+              if (!/^#[0-9a-f]{6}$/i.test(hex)) {
+                throw new Error(`Missing valid palette role: ${role}`);
+              }
+              return [
+                role,
+                [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16)),
+              ];
+            }),
+          );
+          const counts = Object.fromEntries(Object.keys(colors).map((role) => [role, 0]));
+          const outline = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
           for (let offset = 0; offset < image.data.length; offset += 4) {
-            if (Math.min(...image.data.slice(offset, offset + 3)) > 140) {
-              bright++;
+            for (const [role, rgb] of Object.entries(colors)) {
+              // Small channel tolerance permits raster rounding without accepting another palette class.
+              if (
+                rgb.every((channel, index) => Math.abs(image.data[offset + index] - channel) <= 3)
+              ) {
+                counts[role]++;
+                if (role === "obstacle") {
+                  const index = offset / 4;
+                  const x = index % image.width;
+                  const y = Math.floor(index / image.width);
+                  outline.minX = Math.min(outline.minX, x);
+                  outline.maxX = Math.max(outline.maxX, x);
+                  outline.minY = Math.min(outline.minY, y);
+                  outline.maxY = Math.max(outline.maxY, y);
+                }
+              }
             }
           }
-          return [name, { logical: region, bitmap: bitmapRegion, bright }];
+          return [
+            name,
+            {
+              logical: region,
+              bitmap: bitmapRegion,
+              counts,
+              area: image.width * image.height,
+              outlineSpan: {
+                x: counts.obstacle ? (outline.maxX - outline.minX) / scaleX : 0,
+                y: counts.obstacle ? (outline.maxY - outline.minY) / scaleY : 0,
+              },
+            },
+          ];
         }),
       );
     },
-    { encoded: combatImage.toString("base64"), intrinsic },
+    { encoded: combatImage.toString("base64"), intrinsic, paletteColors },
   );
-  assert.ok(pixels.capital.bright > 20, "Large-enemy region must contain rendered geometry");
-  assert.ok(pixels.missile.bright > 2, "Seeded missile region must contain rendered geometry");
+  assert.ok(
+    pixels.capital.counts.obstacle > 20 &&
+      pixels.capital.outlineSpan.x > 50 &&
+      pixels.capital.outlineSpan.y > 40,
+    "Large enemy must have a spatially extended coral hull outline, not isolated projectile pixels",
+  );
+  assert.ok(
+    pixels.capital.counts.environment > pixels.capital.area * 0.2,
+    "Large enemy must contain the approved hull fill",
+  );
+  assert.ok(
+    pixels.capital.counts.shipHardpoint > 20 && pixels.capital.counts.weapon > 20,
+    "Large enemy must render both live blue ship and amber weapon hardpoints",
+  );
+  assert.ok(
+    pixels.disabled.counts.environmentDetail > 20 &&
+      pixels.disabled.counts.background > 20 &&
+      pixels.disabled.counts.environment > 20,
+    "Disabled oversized hardpoint must have a dark cutout and detail cross within the hull",
+  );
+  assert.ok(
+    pixels.missile.counts.obstacle > 2 && pixels.missile.outlineSpan.y > 2,
+    "Seeded missile must contain coral projectile geometry",
+  );
+  assert.ok(
+    pixels.background.counts.background > pixels.background.area * 0.9,
+    "Empty space must render the approved background rather than the monochrome fallback",
+  );
   await page.screenshot({ path: `${output}/combat.png` });
   save("combat-proof.json", {
     scope: "Rendered canonical combat fixture; screenshot review required for visual correctness",
@@ -831,6 +908,7 @@ try {
     canvas: await canvas.boundingBox(),
     oversizedSizeRatio: enemyCatalog.oversizedCapital.sizeRatio,
     pixels,
+    paletteColors,
   });
   events.checks.push(
     "Canonical combat save restores large and oversized enemies, partial hardpoint damage " +
