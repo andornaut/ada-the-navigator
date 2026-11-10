@@ -1,8 +1,21 @@
-# Ship prototype
+# Ship geometry
 
-- `public/art/ship.svg` is idle; `public/art/ship-thrust.svg` adds twin exhaust flames only. Hull, cockpit and engine geometry are identical.
-- Both SVGs use a transparent 64 by 96 viewport, face up and have pivot (0.5, 0.5) at source coordinate (32, 48).
-- The pointed hull runs from (32, 4) to rear shoulders near (8, 78) and (56, 78). Engines occupy the rear corners; the central tail is compact.
-- Recommended display size is 28 by 42 logical pixels, with 32 by 48 available for half-scale rendering. Ada sits on the left with brown skin and dark hair; her dog sits on the right with tan fur and dark ears.
-- Export or embed the complete viewport without trimming transparent margins. Preserve the common pivot and aspect ratio when switching states.
-- Assets contain authored SVG paths with solid fills, no strokes, external images, fonts, scripts or filters.
+- Rebuild with `node art/tools/ship.ts` inside the isolated export container.
+  The single module uses Node builtins and writes directly to `public/art/`.
+- Exports: `ship-{0..7}.svg` and `ship-thrust-{0..7}.svg`.
+  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 7.
+- Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
+  Keep the viewport intact and render the selected frame with rotation zero.
+- Heading index is normalized `round(atan2(world.y, world.x) / (PI / 4))` modulo 8.
+  Index 0 projects down-right, 1 down, 2 down-left, 3 left, 4 up-left,
+  5 up, 6 up-right and 7 right.
+- Local forward is negative Y. Rotate the solid model into world heading before
+  projecting `screenX = (x - y) * sqrt(3) / 2` and
+  `screenY = (x + y) / 2 - z`, then add the viewport pivot.
+- Compact white triangular hull, two triangular rear wings and a small vertical
+  triangular tail use eleven hull polygons before visibility culling. Filled
+  shaded sides show thickness. The elevated opaque blue canopy has a two-occupant
+  footprint of roughly 27 percent of the central hull top, without interior detail.
+- Twin rear mouths stay blue in both states. Thrust adds short pale blue flames.
+  Faces share one projection and use outward-normal culling and depth ordering.
+  No raster assets, filters, strokes, external dependencies or screen rotation.
