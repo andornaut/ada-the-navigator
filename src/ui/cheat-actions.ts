@@ -24,7 +24,7 @@ export interface CheatSessionOptions {
 export function createCheatSession(options: CheatSessionOptions) {
   let disposed = false;
   let epoch = 0;
-  let busy = false;
+  const pending = new Set<symbol>();
   let run = options.run();
   let eligible = !runsInAppWindow(options.host);
   const refresh = (): boolean => {
@@ -40,14 +40,14 @@ export function createCheatSession(options: CheatSessionOptions) {
   const available = (): boolean => refresh() && run !== null && options.canExecute();
   return {
     available,
-    busy: () => busy,
+    busy: () => pending.size > 0,
     dispose(): void {
       disposed = true;
       epoch++;
     },
     eligible: refresh,
     async execute(id: string): Promise<boolean> {
-      if (busy || !available()) {
+      if (pending.size > 0 || !available()) {
         return false;
       }
       const action = options.actions.find((entry) => entry.id === id);
@@ -56,7 +56,8 @@ export function createCheatSession(options: CheatSessionOptions) {
       }
       const token = epoch;
       let committed = false;
-      busy = true;
+      const work = Symbol();
+      pending.add(work);
       try {
         await action.execute({
           commit(effect) {
@@ -73,7 +74,7 @@ export function createCheatSession(options: CheatSessionOptions) {
         });
         return committed;
       } finally {
-        busy = false;
+        pending.delete(work);
       }
     },
   };

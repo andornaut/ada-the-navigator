@@ -336,7 +336,8 @@ try {
   );
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
-    "Browser-only cheats pause input, retain focus and save only granted ownership; real fullscreen closes and rejects direct dispatch",
+    "Browser-only cheats pause input, retain focus and save only granted ownership; " +
+      "real fullscreen closes and rejects direct dispatch",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
