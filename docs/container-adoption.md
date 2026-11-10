@@ -1,8 +1,7 @@
 # Container check adoption
 
-CLEANUP (added 2026-11-10): Remove this adoption hold after the canonical admission
-contract is approved, the exact source passes isolated verification, and the
-existing runner adopts the reviewed gate-step change.
+CLEANUP (added 2026-11-10): Remove this adoption hold after exact source verification and atomic review
+of the old npm gate commands, direct inner gate steps and resident compatibility.
 
 ## Held proposal
 
@@ -21,9 +20,10 @@ resource admission blocker without a Docker proxy or local launcher changes.
 
 Local source verification through Make and the detached receipt adapter is
 authorized. This does not adopt the proposal, change live runner control or
-authorize a manual bus departure. Source publication and resident/configuration
-adoption remain held for owner review. Static inspection alone does not establish
-runtime success.
+authorize a manual bus departure. Ready compatible CI packages may be integrated and published with exact-commit CI
+verification. This migration requires atomic gate-step and resident compatibility
+review before integration. Static inspection alone does not establish runtime
+success.
 
 ## Runner compatibility
 
