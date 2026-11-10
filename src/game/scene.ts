@@ -8,6 +8,7 @@ import { GameModel } from "../model/game.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
+import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
   FALLBACK_SPACE_PALETTE,
@@ -679,6 +680,24 @@ export class PrototypeScene extends Phaser.Scene {
       case "debris":
         this.ink.fillEllipse(point.x, point.y, radius * 2, radius * 1.4);
         this.ink.strokeEllipse(point.x, point.y, radius * 2, radius * 1.4);
+        if (object.kind === "rock") {
+          const detail = sceneryDetail(object.id);
+          this.ink.lineStyle(1, this.palette.environmentDetail);
+          this.ink.strokePoints(
+            detail.outline.map(
+              (at) => new Phaser.Math.Vector2(point.x + at.x * radius, point.y + at.y * radius),
+            ),
+            true,
+          );
+          for (const [start, end] of detail.seams) {
+            this.ink.lineBetween(
+              point.x + start.x * radius,
+              point.y + start.y * radius,
+              point.x + end.x * radius,
+              point.y + end.y * radius,
+            );
+          }
+        }
         break;
     }
   }
