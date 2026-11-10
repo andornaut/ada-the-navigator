@@ -48,7 +48,7 @@ describe("integrated weapon projectiles", () => {
     expect(flight.shots).toHaveLength(0);
   });
 
-  it("stops each scatter pellet at its captured projected range even when expiry occurs inside a simulation step", () => {
+  it("stops scatter pellets at their captured range when expiry falls within a step", () => {
     const { flight } = launched("scattershot");
     stepFlight(PROTOTYPE, 0.001, { ...idle, aim: { x: 1, y: 1 }, viewportWidth: 960 }, flight);
     const pellets = [...flight.shots];
