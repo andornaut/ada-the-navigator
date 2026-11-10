@@ -421,6 +421,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
   });
   return {
+    card,
     close: () => setOpen(false),
     dispose(): void {
       if (disposed) {
@@ -433,6 +434,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     isOpen: () => open,
     joystickTargets,
     open: () => setOpen(true),
+    openButton,
     root,
     useButton,
   };

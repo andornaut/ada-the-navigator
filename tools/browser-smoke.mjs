@@ -260,6 +260,84 @@ try {
   events.checks.push(
     "Model-generated friendly-destination fixture supplies the input-check precondition",
   );
+  const { CHEAT_COPY } = await import(new URL("../src/data/cheat-copy.ts", import.meta.url));
+  await page.keyboard.down("d");
+  try {
+    await page.locator('[data-action="settings"]').click();
+    await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+    const cheatDialog = page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
+    await cheatDialog.waitFor({ state: "visible" });
+    const paused = await position();
+    const beforeGrant = await readSave();
+    await page.waitForTimeout(250);
+    assert.deepEqual(await position(), paused, "Cheat modal must pause held flight input");
+    const behindModal = await page.locator("canvas").boundingBox();
+    assert.ok(behindModal);
+    await page.mouse.move(behindModal.x + 12, behindModal.y + behindModal.height - 20);
+    await page.mouse.down();
+    try {
+      await page.mouse.move(behindModal.x + 32, behindModal.y + behindModal.height - 20);
+      await page.waitForTimeout(100);
+      assert.deepEqual(
+        await position(),
+        paused,
+        "Pointer drag behind cheats must not reach flight controls",
+      );
+    } finally {
+      await page.mouse.up();
+    }
+    await page.keyboard.press("Shift+Tab");
+    assert.ok(
+      await cheatDialog.evaluate((dialog) => dialog.contains(document.activeElement)),
+      "Cheat modal must retain keyboard focus",
+    );
+    await page.getByRole("button", { name: CHEAT_COPY.grantAllWeapons, exact: true }).click();
+    await page.waitForFunction((key) => {
+      const owned = JSON.parse(localStorage.getItem(key)).flight.ownedWeapons ?? [];
+      return ["rapid", "spread", "pierce"].every((weapon) => owned.includes(weapon));
+    }, storageKey);
+    const granted = await readSave();
+    assert.deepEqual(granted.progress, beforeGrant.progress);
+    for (const field of ["weapon", "shield", "cargo", "fireCooldown"]) {
+      assert.deepEqual(
+        granted.flight[field],
+        beforeGrant.flight[field],
+        `Grant preserves ${field}`,
+      );
+    }
+    await page.screenshot({ path: `${output}/cheats.png` });
+    await cheatDialog.getByRole("button", { name: CHEAT_COPY.close, exact: true }).click();
+  } finally {
+    await page.keyboard.up("d");
+  }
+  await waitForRest(await position());
+  await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
+  await page.locator('[data-action="settings"]').click();
+  await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
+  await page.evaluate(() => document.documentElement.requestFullscreen());
+  await page.waitForFunction(
+    () => document.querySelector('[data-action="cheats"]')?.hidden === true,
+  );
+  assert.equal(
+    await page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true }).count(),
+    0,
+    "An installed display mode must close the cheats modal",
+  );
+  await page.locator('[data-action="cheats"]').evaluate((button) => button.click());
+  await page.locator('[data-cheat="grant-all-weapons"]').evaluate((button) => button.click());
+  assert.deepEqual(
+    (await readSave()).flight.ownedWeapons ?? [],
+    [],
+    "Direct hidden-button dispatch in fullscreen must not grant saved ownership",
+  );
+  await page.evaluate(() => document.exitFullscreen());
+  await page.waitForFunction(
+    () => document.querySelector('[data-action="cheats"]')?.hidden === false,
+  );
+  await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
+  events.checks.push(
+    "Browser-only cheats pause input, retain focus and save only granted ownership; real fullscreen closes and rejects direct dispatch",
+  );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
   assert.equal((await page.locator(".ada-use").textContent()).trim(), PROTOTYPE.labels.talk);

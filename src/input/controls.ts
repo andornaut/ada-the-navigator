@@ -8,6 +8,8 @@ import {
 import type { Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
+import type { CheatAction } from "../ui/cheat-actions.ts";
+import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { createShieldMeter } from "../ui/shield.ts";
 import { drawSticks } from "../ui/sticks.ts";
@@ -17,6 +19,13 @@ import { movementCssScale } from "./geometry.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly cheats: {
+    readonly actions: readonly CheatAction[];
+    readonly canExecute: () => boolean;
+    readonly labels: CheatLabels;
+    readonly onSave: () => void;
+    readonly run: () => object | null;
+  };
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
@@ -72,19 +81,30 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onFeedbackChange(value) {
       options.onFeedbackChange?.(value);
     },
-    onOpenChange(open) {
-      if (open) {
-        state.openModal();
-      } else {
-        state.closeModal();
-      }
-      weapons.setEnabled(enabled && !open);
-      options.onPauseChange?.(open);
+    onOpenChange() {
+      syncModal();
     },
     onVisibilityChange(value) {
       visibility = value;
     },
   });
+  const cheats = createCheats(settings.root, settings.card, {
+    ...options.cheats,
+    beforeOpen: () => settings.close(),
+    onOpenChange: () => syncModal(),
+    restoreFocus: () => settings.openButton.focus(),
+  });
+  const modalOpen = (): boolean => settings.isOpen() || cheats.isOpen();
+  function syncModal(): void {
+    const open = modalOpen();
+    if (open) {
+      state.openModal();
+    } else {
+      state.closeModal();
+    }
+    weapons.setEnabled(enabled && !open);
+    options.onPauseChange?.(open);
+  }
   const weapons = createWeaponSelector(settings.root, {
     labels: options.weaponLabels,
     onSelect(weapon) {
@@ -142,7 +162,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
-        if (settings.isOpen()) {
+        if (cheats.isOpen()) {
+          cheats.close();
+        } else if (settings.isOpen()) {
           settings.close();
         } else {
           settings.open();
@@ -177,8 +199,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   window.addEventListener("pagehide", reset);
   document.addEventListener("visibilitychange", onVisibility);
   const draw = () => {
+    cheats.refresh();
     for (const target of settings.joystickTargets) {
-      target.hidden = !enabled || settings.isOpen();
+      target.hidden = !enabled || modalOpen();
     }
     drawSticks(
       graphics,
@@ -186,7 +209,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         height: scene.scale.height,
         showIdle: true,
         visibility,
-        visible: enabled && !settings.isOpen(),
+        visible: enabled && !modalOpen(),
         width: scene.scale.width,
       },
       state,
@@ -196,7 +219,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   scene.events.on("pause", reset);
   scene.events.on("sleep", reset);
   const controls: Controls = {
-    closeSettings: () => settings.close(),
+    closeSettings: () => {
+      cheats.close();
+      settings.close();
+    },
     dispose() {
       if (disposed) {
         return;
@@ -206,6 +232,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       state.setEnabled(false);
       shield.dispose();
       weapons.dispose();
+      cheats.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
       scene.cameras.remove(camera);
@@ -224,7 +251,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         parent.style.position = previousPosition;
       }
     },
-    openSettings: () => settings.open(),
+    openSettings: () => {
+      cheats.close();
+      settings.open();
+    },
     reset,
     sample: () => state.sample(),
     setContext(label) {
@@ -236,7 +266,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setEnabled(value) {
       enabled = value;
       state.setEnabled(value);
-      weapons.setEnabled(value && !settings.isOpen());
+      weapons.setEnabled(value && !modalOpen());
       shield.setEnabled(value);
       settings.useButton.hidden = !value || contextLabel === undefined;
     },

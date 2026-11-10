@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 
+import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { createControls } from "../input/controls.ts";
+import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
@@ -133,6 +135,25 @@ export class PrototypeScene extends Phaser.Scene {
       },
     });
     this.controls = createControls(this, {
+      cheats: {
+        actions: [
+          {
+            description: CHEAT_COPY.grantDescription,
+            execute: ({ commit }) => {
+              commit(() => {
+                grantAllWeapons(this.model.state);
+              });
+            },
+            id: "grant-all-weapons",
+            label: CHEAT_COPY.grantAllWeapons,
+            scope: "save",
+          },
+        ],
+        canExecute: () => this.model.state.mode === "space" && !this.model.state.dialogue,
+        labels: CHEAT_COPY,
+        onSave: () => apply(() => {}),
+        run: () => (this.model.state.mode === "space" ? this.model.state.flight : null),
+      },
       labels: {
         aimControls: PROTOTYPE.labels.aimControls ?? "",
         close: PROTOTYPE.labels.close ?? "",
