@@ -289,7 +289,7 @@ export const PROTOTYPE: PrototypeContent = {
       spreadAngle: 0.22,
     },
     introFreshDistance: 10800,
-    maxSpeed: 180,
+    maxSpeed: 200,
     miningMilestones: [12, 24, 36],
     safeRadius: 160,
     shieldMax: 100,

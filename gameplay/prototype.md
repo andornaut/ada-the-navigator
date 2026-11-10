@@ -88,12 +88,20 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 
 - Isometric sprite-based presentation with independently controlled movement and aim.
 - Very gentle acceleration and braking, without strong momentum.
-- Left joystick moves. Right joystick aims and fires continuously while deflected.
+- Left joystick moves with analog speed and a short noticeable drag to reach full
+  speed. Provisional movement reach is 20 CSS pixels with a 2.4 CSS pixel deadzone;
+  the visual thumb follows that travel.
+- Right joystick aims and fires continuously while deflected.
+- Maximum movement speed is provisionally 200 world units per second.
+- Settings use Chibi's gear control.
 - With no aim input, the ship faces movement. Centered aim does not fire.
 - Basic weapon has unlimited ammunition.
 - Icon pickups, presented like Chibi's power-ups, automatically equip one upgrade.
 - Upgrades: rapid fire, three-shot spread and piercing shots. Each uses limited ammo.
-- Matching pickups refill ammo; a different upgrade replaces the active one.
+- Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
+  every other owned upgrade's remaining ammunition.
+- Pickups automatically equip their upgrade and retain other owned weapons.
+  Matching pickups refill that weapon up to twice its pickup ammunition allocation.
 - Empty upgraded ammunition restores basic fire.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships.
@@ -110,7 +118,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 ## Interactions and navigation
 
 Use one contextual button, visible only when an interaction is available, with
-an action label. Resources collect on contact. No map or minimap.
+an action label. Resources collect on contact. Mining cargo has no capacity limit.
+No map or minimap.
 
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
@@ -123,7 +132,7 @@ available only outside immediate danger. Ada can return voluntarily to Toronto.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
 
-Quest deliveries use a separate carried-item state, outside mining cargo capacity.
+Quest deliveries use a separate carried-item state, independent of mining cargo.
 Sources provide replacement quest items while their delivery remains unfinished.
 Completed deliveries remain completed.
 
@@ -200,7 +209,7 @@ does not define sector four's story or conclusion.
 ## Verification priorities
 
 Check independent move/aim controls, shield recharge and depletion, weapon fallback,
-safe dialogue and arrivals, cargo capacity and deposits, recoverable deliveries,
+safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
 interrupted-flight resume. Verify the three Toronto resolutions unlock sectors
 in order and completed stories remain resolved on replay.
