@@ -9,6 +9,12 @@ import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { StoryShell } from "./shell.ts";
+import {
+  FALLBACK_SPACE_PALETTE,
+  readSpacePalette,
+  spaceColorCss,
+  spaceObjectColor,
+} from "./space-palette.ts";
 
 interface Asset {
   id: string;
@@ -47,6 +53,7 @@ export class PrototypeScene extends Phaser.Scene {
   private feedback = new ModelFeedback();
   private feedbackSound = new FeedbackSound();
   private screenShake = true;
+  private palette = FALLBACK_SPACE_PALETTE;
 
   constructor() {
     super("prototype");
@@ -54,7 +61,13 @@ export class PrototypeScene extends Phaser.Scene {
 
   preload(): void {
     this.load.once("filecomplete-json-art-manifest", () => {
-      const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] };
+      const manifest = this.cache.json.get("art-manifest") as {
+        assets: Asset[];
+        spacePalette?: string;
+      };
+      if (manifest.spacePalette) {
+        this.load.json("space-palette", manifest.spacePalette);
+      }
       for (const asset of manifest.assets) {
         if (asset.path.endsWith(".svg")) {
           this.load.svg(asset.id, asset.path);
@@ -70,6 +83,14 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.palette = readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
+    const background = this.palette.background;
+    this.game.config.backgroundColor.setTo(
+      (background >> 16) & 255,
+      (background >> 8) & 255,
+      background & 255,
+    );
+    this.cameras.main.setBackgroundColor(background);
     const fit = (): void => {
       this.cameras.main.setViewport(
         Math.floor((this.scale.gameSize.width - SCREEN.width) / 2),
@@ -253,7 +274,7 @@ export class PrototypeScene extends Phaser.Scene {
     const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
-    this.ink.fillStyle(0x525252, 0.6);
+    this.ink.fillStyle(this.palette.environmentDetail, 0.6);
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.project({
@@ -266,8 +287,8 @@ export class PrototypeScene extends Phaser.Scene {
     for (const object of flight.objects) {
       this.drawObject(object);
     }
-    this.ink.lineStyle(2, 0xffffff);
     for (const shot of flight.shots) {
+      const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
       const point = this.project(shot);
       const tail = this.project({
         x: shot.x - shot.velocity.x * 0.035,
@@ -277,9 +298,9 @@ export class PrototypeScene extends Phaser.Scene {
         const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
         const dx = Math.cos(angle);
         const dy = Math.sin(angle);
-        this.ink.lineStyle(3, 0xffffff);
+        this.ink.lineStyle(3, color);
         this.ink.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
-        this.ink.lineStyle(1, 0x999999);
+        this.ink.lineStyle(1, this.palette.environmentDetail);
         this.ink.lineBetween(
           point.x - dx * 17,
           point.y - dy * 17,
@@ -299,7 +320,7 @@ export class PrototypeScene extends Phaser.Scene {
           point.y,
         );
       } else {
-        this.ink.lineStyle(2, 0xffffff);
+        this.ink.lineStyle(2, color);
         this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
@@ -382,29 +403,30 @@ export class PrototypeScene extends Phaser.Scene {
       const point = local(x, y);
       return new Phaser.Math.Vector2(point.x, point.y);
     });
-    this.ink.fillStyle(0x171717);
+    this.ink.fillStyle(this.palette.environment);
     this.ink.fillPoints(polygon, true);
-    this.ink.lineStyle(1.5, 0xd4d4d4);
+    this.ink.lineStyle(1.5, this.palette.obstacle);
     this.ink.strokePoints(polygon, true);
     if (large) {
       const a = local(-0.16, -0.5);
       const b = local(-0.16, 0.5);
       const c = local(0.16, -0.5);
       const d = local(0.16, 0.5);
-      this.ink.lineStyle(1, 0x777777);
+      this.ink.lineStyle(1, this.palette.environmentDetail);
       this.ink.lineBetween(a.x, a.y, b.x, b.y);
       this.ink.lineBetween(c.x, c.y, d.x, d.y);
     }
     if (pack) {
-      this.ink.lineStyle(1, 0xffffff);
+      this.ink.lineStyle(1, this.palette.obstacle);
       this.ink.strokeCircle(point.x, point.y, 3);
     }
     for (const part of definition.hardpoints) {
       const at = local(part.offset.x, part.offset.y);
       const hp = enemy.hardpoints.find((value) => value.id === part.id)?.hp ?? 0;
       const size = Math.max(7, Math.min(18, width * 0.065));
-      this.ink.fillStyle(hp > 0 ? 0x454545 : 0x101010);
-      this.ink.lineStyle(2, hp > 0 ? 0xffffff : 0x777777);
+      const accent = part.kind === "weapon" ? this.palette.weapon : this.palette.shipHardpoint;
+      this.ink.fillStyle(hp > 0 ? this.palette.environment : this.palette.background);
+      this.ink.lineStyle(2, hp > 0 ? accent : this.palette.environmentDetail);
       if (part.kind === "command") {
         this.ink.fillTriangle(
           at.x,
@@ -438,10 +460,10 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.lineBetween(at.x - size, at.y - size, at.x + size, at.y + size);
         this.ink.lineBetween(at.x + size, at.y - size, at.x - size, at.y + size);
       }
-      this.ink.lineStyle(3, 0x555555);
+      this.ink.lineStyle(3, this.palette.environmentDetail);
       this.ink.lineBetween(at.x - size, at.y + size + 5, at.x + size, at.y + size + 5);
       if (hp > 0) {
-        this.ink.lineStyle(3, 0xffffff);
+        this.ink.lineStyle(3, accent);
         this.ink.lineBetween(
           at.x - size,
           at.y + size + 5,
@@ -485,7 +507,7 @@ export class PrototypeScene extends Phaser.Scene {
     const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
     const x = cx + dx * Math.max(0, scale);
     const y = cy + dy * Math.max(0, scale);
-    this.ink.lineStyle(2, 0xffffff, 0.8);
+    this.ink.lineStyle(2, this.palette.pointOfInterest, 0.8);
     this.ink.strokeTriangle(
       x + ux * 8,
       y + uy * 8,
@@ -503,7 +525,13 @@ export class PrototypeScene extends Phaser.Scene {
       const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
       this.ink.lineStyle(
         pulse.kind === "damage" ? 3 : 1.5,
-        0xffffff,
+        pulse.kind === "damage"
+          ? this.palette.obstacle
+          : pulse.kind === "shield" || pulse.kind === "pickup"
+            ? this.palette.active
+            : pulse.kind === "hit"
+              ? this.palette.weapon
+              : this.palette.pointOfInterest,
         Math.max(0, 1 - pulse.age / 0.65),
       );
       if (pulse.kind === "hit" || pulse.kind === "disabled") {
@@ -569,8 +597,9 @@ export class PrototypeScene extends Phaser.Scene {
     ) {
       return;
     }
-    this.ink.lineStyle(1.5, 0xd4d4d4);
-    this.ink.fillStyle(0x222222);
+    const color = spaceObjectColor(this.palette, object);
+    this.ink.lineStyle(1.5, color);
+    this.ink.fillStyle(this.palette.environment);
     switch (object.kind) {
       case "destination": {
         this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
@@ -582,8 +611,8 @@ export class PrototypeScene extends Phaser.Scene {
           if (!label) {
             label = this.add
               .text(0, 0, destination.label, {
-                backgroundColor: "#101010",
-                color: "#ededed",
+                backgroundColor: spaceColorCss(this.palette.background),
+                color: spaceColorCss(this.palette.pointOfInterest),
                 fontFamily: '"Liberation Sans", sans-serif',
                 fontSize: "14px",
               })
@@ -616,7 +645,7 @@ export class PrototypeScene extends Phaser.Scene {
       case "pickup":
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         if (object.role === "cargo") {
-          this.ink.fillStyle(0xffffff);
+          this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
         } else if (object.weapon === "rapid") {
           for (const offset of [-0.5, 0, 0.5]) {
@@ -643,7 +672,7 @@ export class PrototypeScene extends Phaser.Scene {
         }
         break;
       case "resource":
-        this.ink.fillStyle(0xffffff);
+        this.ink.fillStyle(color);
         this.ink.fillCircle(point.x, point.y, radius);
         break;
       case "rock":
