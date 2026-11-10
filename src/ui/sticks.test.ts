@@ -44,6 +44,21 @@ describe("left stick CSS travel display", () => {
     expect(state.sample().move).toEqual({ x: 0, y: 0 });
   });
 
+  it("keeps the displayed diagonal on the finger ray without reusing the game heading as CSS", () => {
+    const state = new ControlState();
+    state.setMoveScale({ x: 2, y: 1 });
+    state.down("move", 1, { x: 100, y: 100 });
+    state.move(1, { x: 105, y: 105 });
+    const graphics = drawing();
+    drawSticks(graphics as unknown as GameObjects.Graphics, view, state);
+    const [x, y] = graphics.fillEllipse.mock.calls[0]!;
+    const visible = { x: (x - 100) * 2, y: y - 100 };
+    expect(visible.x * 5 - visible.y * 10).toBeCloseTo(0, 10);
+    const move = state.sample().move;
+    expect(move.x).toBeCloseTo(move.y, 12);
+    expect(Math.hypot(visible.x, visible.y)).toBeCloseTo(Math.hypot(move.x, move.y) * 20, 10);
+  });
+
   it("preserves the right aim ring and twelve-pixel thumb travel", () => {
     const state = new ControlState();
     state.setMoveScale({ x: 2, y: 0.5 });

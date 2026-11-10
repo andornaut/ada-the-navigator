@@ -159,12 +159,18 @@ export class ControlState {
       x: stick.position.x - stick.origin.x,
       y: stick.position.y - stick.origin.y,
     };
-    return side === "move"
-      ? stickVector(MOVE_STICK_GEOMETRY, {
-          x: offset.x * this.moveScale.x,
-          y: offset.y * this.moveScale.y,
-        })
-      : stickVector(this.geometry, offset);
+    if (side === "aim") {
+      return stickVector(this.geometry, offset);
+    }
+    const css = stickVector(MOVE_STICK_GEOMETRY, {
+      x: offset.x * this.moveScale.x,
+      y: offset.y * this.moveScale.y,
+    });
+    const strength = Math.hypot(css.x, css.y);
+    const length = Math.hypot(offset.x, offset.y);
+    return length === 0 || strength === 0
+      ? { x: 0, y: 0 }
+      : { x: (offset.x / length) * strength, y: (offset.y / length) * strength };
   }
 
   openModal(): void {

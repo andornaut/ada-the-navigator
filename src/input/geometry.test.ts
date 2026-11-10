@@ -39,6 +39,47 @@ describe("CSS movement travel", () => {
     },
   );
 
+  it.each([0, 90, -90] as const)(
+    "keeps diagonal projected movement aligned with the finger at frame turn %s",
+    (turn) => {
+      const box = { height: 360, width: 1440, x: 30, y: 20 };
+      const scale = movementCssScale(turn, size, box);
+      for (const drag of [
+        { x: 16, y: 8 },
+        { x: -9, y: 12 },
+        { x: -12, y: -6 },
+      ]) {
+        const controls = new ControlState();
+        controls.setMoveScale(scale);
+        const origin = { x: 100, y: 50 };
+        controls.down("move", 1, pageToGame(turn, box, size, origin));
+        controls.move(
+          1,
+          pageToGame(turn, box, size, {
+            x: origin.x + drag.x,
+            y: origin.y + drag.y,
+          }),
+        );
+        const move = controls.sample().move;
+        expect(Math.hypot(move.x, move.y)).toBeCloseTo(
+          (Math.hypot(drag.x, drag.y) - 2.4) / 17.6,
+          12,
+        );
+        // Scene movement unprojects into world axes and projects back onto the game frame.
+        const world = { x: move.x / 2 + move.y, y: move.y - move.x / 2 };
+        const frame = { x: (world.x - world.y) * scale.x, y: ((world.x + world.y) / 2) * scale.y };
+        const visible =
+          turn === 0
+            ? frame
+            : turn === 90
+              ? { x: -frame.y, y: frame.x }
+              : { x: frame.y, y: -frame.x };
+        expect(visible.x * drag.y - visible.y * drag.x).toBeCloseTo(0, 10);
+        expect(visible.x * drag.x + visible.y * drag.y).toBeGreaterThan(0);
+      }
+    },
+  );
+
   it.each([
     { x: 0, y: 1 },
     { x: Infinity, y: 1 },

@@ -1,6 +1,11 @@
 import type { GameObjects } from "phaser";
 
-import { type ControlState, MOVE_STICK_GEOMETRY, STICK_GEOMETRY } from "../input/state.ts";
+import {
+  type ControlState,
+  MOVE_STICK_GEOMETRY,
+  STICK_GEOMETRY,
+  stickVector,
+} from "../input/state.ts";
 import type { ControlVisibility } from "./settings.ts";
 
 interface StickView {
@@ -34,7 +39,10 @@ export function drawSticks(
         x: (reach + 20) / scale.x,
         y: view.height - (reach + 20) / scale.y,
       };
-      const sampled = state.stickSample("move");
+      const sampled = stickVector(MOVE_STICK_GEOMETRY, {
+        x: stick ? (stick.position.x - centre.x) * scale.x : 0,
+        y: stick ? (stick.position.y - centre.y) * scale.y : 0,
+      });
       const x = centre.x + (sampled.x * reach) / scale.x;
       const y = centre.y + (sampled.y * reach) / scale.y;
       graphics.lineStyle(5, 0x172335, 1);
