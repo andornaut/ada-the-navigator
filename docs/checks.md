@@ -163,3 +163,6 @@ same local load restriction as the source gates.
 Browser smoke coverage supports prototype integration review; it does not
 establish story completeness or gameplay balance. Review the collected results
 for the exact source revision before claiming a behavior is verified.
+
+WORKAROUND: Nested Markdown overrides address [GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c)
+and [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7). Remove them once upstream dependencies include the fixes.
