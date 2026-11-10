@@ -806,13 +806,18 @@ try {
   const newest = Math.max(...bolts.map((shot) => shot.life));
   const angles = bolts
     .filter((shot) => Math.abs(shot.life - newest) < 0.000001)
-    .map((shot) => (Math.atan2(shot.velocity.y, shot.velocity.x) * 180) / Math.PI)
+    .map(
+      (shot) =>
+        (Math.atan2((shot.velocity.x + shot.velocity.y) / 2, shot.velocity.x - shot.velocity.y) *
+          180) /
+        Math.PI,
+    )
     .sort((a, b) => a - b);
   assert.equal(angles.length, 3, "A real triple-laser volley must emit three simultaneous bolts");
   for (const [index, offset] of [-20, 0, 20].entries()) {
     assert.ok(
       Math.abs(angles[index] - angles[1] - offset) < 0.000001,
-      "The real triple-laser volley must retain its approved ±20 degree spread",
+      "The visible projected triple-laser volley must retain its approved ±20 degree spread",
     );
   }
   const scatter = await heldVolley("scattershot", "dot", 7, true);
@@ -846,7 +851,7 @@ try {
       "Actual UI input and canonical saved shot trajectories; screenshots require visual fade review",
     cameraWidth: SCREEN.width,
     missiles: missileShots,
-    tripleAngles: angles,
+    tripleProjectedAngles: angles,
     scatter: dots,
   });
   events.checks.push(
