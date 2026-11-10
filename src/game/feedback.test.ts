@@ -4,6 +4,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy } from "../model/enemy-ai.ts";
 import { GameModel } from "../model/game.ts";
+import { syncFlightRegion } from "../model/geography.ts";
 import { ModelFeedback } from "./feedback.ts";
 
 function launched() {
@@ -68,6 +69,56 @@ describe("model feedback", () => {
     state.progress[1].disabledEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
     expect(feedback.pulses.at(-1)).toMatchObject({ kind: "disabled", x: 20, y: 30 });
+  });
+
+  it("attributes a same-step kill only to the defeated enemy when an earlier enemy is archived", () => {
+    const { feedback, flight, state } = launched();
+    const archived = {
+      hp: 4,
+      id: "archived-first",
+      kind: "enemy" as const,
+      radius: 10,
+      x: 9000,
+      y: 9000,
+    };
+    const defeated = {
+      hp: 4,
+      id: "defeated-second",
+      kind: "enemy" as const,
+      radius: 10,
+      x: 20,
+      y: 30,
+    };
+    flight.objects = [archived, defeated];
+    feedback.observe(100, state);
+    syncFlightRegion(PROTOTYPE, flight);
+    flight.objects = [];
+    state.progress[1].disabledEnemies++;
+    expect(feedback.observe(100, state)).toEqual(["disabled"]);
+    expect(feedback.pulses).toEqual([{ age: 0, kind: "disabled", x: 20, y: 30 }]);
+    expect(feedback.observe(100, state)).toEqual([]);
+  });
+
+  it("does not emit hit feedback when an archived target appears in a projectile's hit history", () => {
+    const { feedback, flight, state } = launched();
+    flight.objects = [{ hp: 4, id: "archived-hit", kind: "enemy", radius: 10, x: 9000, y: 9000 }];
+    feedback.observe(100, state);
+    syncFlightRegion(PROTOTYPE, flight);
+    flight.shots = [
+      {
+        enemy: false,
+        hitIds: ["archived-hit"],
+        id: "surviving-projectile",
+        life: 1,
+        piercing: true,
+        velocity: { x: 1, y: 0 },
+        x: 20,
+        y: 30,
+      },
+    ];
+    expect(feedback.observe(100, state)).toEqual([]);
+    expect(feedback.pulses).toEqual([]);
+    expect(state.progress[1].disabledEnemies).toBe(0);
   });
 
   it("distinguishes deposits and discontinuous travel from ordinary motion", () => {

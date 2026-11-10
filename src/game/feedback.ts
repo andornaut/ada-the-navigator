@@ -1,3 +1,4 @@
+import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 
 export type FeedbackKind =
@@ -118,8 +119,9 @@ export class ModelFeedback {
       }
     }
     let removedDisabled = Math.max(0, next.disabledEnemies - previous.disabledEnemies);
+    const archived = archivedObjectIds(flight);
     for (const [id, before] of previous.objects) {
-      if (next.objects.has(id)) {
+      if (next.objects.has(id) || archived.has(id)) {
         continue;
       }
       if (before.enemy && removedDisabled > 0) {
