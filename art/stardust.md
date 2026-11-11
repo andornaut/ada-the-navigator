@@ -55,9 +55,6 @@ frame.
 
 ## HUD count
 
-A pill left of the top-right weapon buttons, 6 px from them and vertically
-centred on them, in logical px:
-
-- Ink `#181425` fill, 26 px high, corner radius 6, 7 px side padding.
-- `icon-stardust-20`, 4 px gap, then the count in bold cream `#ead4aa` at 15 px.
-- The pill grows leftward with the count; its right edge stays fixed.
+An ink `#181425` pill with `icon-stardust-20` and the count in bold cream
+`#ead4aa`, left of the top-right weapon buttons. Its geometry and anchor are
+`STARDUST_PILL` in [Layout](layout.md#hud-and-overlays).

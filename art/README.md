@@ -35,7 +35,9 @@ The `ui` entry points to the [Chibi UI subset manifest](../public/art/ui/manifes
 and its public base path. That subset preserves the source `fonts` and `sprites`
 schema, with paths relative to `/art/ui/`; it is separate from the prototype
 `assets` list. [UI provenance](ui.md) records fonts, slices and licences.
-[Controls](controls.md) is the button, switch, focus and modal contract.
+[Layout](layout.md) is the coordinate system, spacing and size tokens, and
+every screen's groups. [Controls](controls.md) is the button, switch, focus
+and refusal contract.
 [Station and shop](shop.md) lays out the station card, shop and buy confirm.
 
 Ship textures use sixteen isometric headings with a centered pivot and a 96 by 96
