@@ -175,16 +175,17 @@ out of every inset. Other HUD elements anchor to
 | 1280x720       | None              | 720x405      | 0           | 8, 712, 8                 |
 | 1920x1080      | None              | 720x405      | 0           | 8, 712, 8                 |
 
-| Element    | Geometry                                                                                                                                                                                                                                                                                                                           | Constant                                                         |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Pause      | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                 | `PAUSE_BUTTON`, `playView.ts`                                    |
-| Weapons    | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                        | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`            |
-| Stardust   | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon target (the HUD rect's right without weapons), centred on the row (`top + 10`); grows leftward                                                                                                | `STARDUST_PILL`, `playView.ts`                                   |
-| Shield bar | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                                                                                                                                 | `SHIELD_BAR`, `playView.ts`, to implement                        |
-| Sticks     | 75 frames; ring drawn edge `max(85, inset)` from the left (move) or right (aim) and `max(20, inset)` above the bottom; knob reach 12                                                                                                                                                                                               | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts` |
-| Use        | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (`max(20, inset)`); press `hitAround(face)`; shown only while an interaction is available    | `USE_BUTTON`, `touchControls.ts`, to implement                   |
-| Settings   | Start screen only: a `HUD_BUTTON` in the idle state with `icon-settings-nav` (20) as its glyph, on the HUD rect's top-right corner                                                                                                                                                                                                 | `HUD_BUTTON`, `playView.ts`                                      |
-| Notice     | A compact strip: `TYPE.body` on an ink panel, `TEXT_BUTTON.compactHeight` high (grows per wrapped line), content inset `TEXT_BUTTON.inset`; top edge on the HUD rect's top, centred on it, clear of the pause and weapon press areas and the Stardust pill by `SPACING.gap`; each shown briefly; notices stack `SPACING.gap` apart | `NOTICE`, `noticeReserve`, `playView.ts`                         |
+| Element      | Geometry                                                                                                                                                                                                                                                                                                                           | Constant                                                         |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                 | `PAUSE_BUTTON`, `playView.ts`                                    |
+| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                        | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`            |
+| Stardust     | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon target (the HUD rect's right without weapons), centred on the row (`top + 10`); grows leftward                                                                                                | `STARDUST_PILL`, `playView.ts`                                   |
+| Shield bar   | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                                                                                                                                 | `SHIELD_BAR`, `playView.ts`, to implement                        |
+| Sticks       | 75 frames; ring drawn edge `max(85, inset)` from the left (move) or right (aim) and `max(20, inset)` above the bottom; knob reach 12                                                                                                                                                                                               | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts` |
+| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (`max(20, inset)`); press `hitAround(face)`; shown only while an interaction is available    | `USE_BUTTON`, `touchControls.ts`, to implement                   |
+| Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `icon-settings-nav` (20) as its glyph, on the HUD rect's top-right corner                                                                                                                                                                                                 | `HUD_BUTTON`, `playView.ts`                                      |
+| Notice       | A compact strip: `TYPE.body` on an ink panel, `TEXT_BUTTON.compactHeight` high (grows per wrapped line), content inset `TEXT_BUTTON.inset`; top edge on the HUD rect's top, centred on it, clear of the pause and weapon press areas and the Stardust pill by `SPACING.gap`; each shown briefly; notices stack `SPACING.gap` apart | `NOTICE`, `noticeReserve`, `playView.ts`                         |
+| Conversation | In-flight dialogue box below the weapon row: top `SPACING.gap` below the weapon press areas, centred, `min(availableWidth, 640)` wide, 64 high, one portrait and one line; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                            | `CONVERSATION`, `conversationBox.ts`, to implement               |
 
 Overlap rules:
 
@@ -194,8 +195,11 @@ Overlap rules:
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
 - Press areas inside one cluster may overlap; `pressedArea` gives the press to
   the nearest drawn centre.
-- While a modal or conversation shows, the pause button hides and the HUD
-  takes no input under the dim.
+- While a modal card or storybook page shows, the pause button hides and the
+  HUD takes no input under the dim. The conversation box is not modal: the
+  pause button, weapons and sticks stay visible and live.
+- The conversation box's bottom sits at least 24 above the ship's drawn top at
+  the 360-high view.
 
 ## Screens
 
@@ -270,9 +274,43 @@ Each page sizes its own panel to its content, up to the available height;
 beyond that the text column scrolls and the choices and page controls stay
 fixed. Ordinary pages keep a short panel so the background stays visible; only
 a choice page grows to fit its choices. The panel's width, bottom edge and
-page-control row stay fixed across pages. Space
-conversations use the same panel over the paused, dimmed space view, without
-a background.
+page-control row stay fixed across pages. A space story page that pauses
+flight uses the same panel over the paused, dimmed space view, without a
+background. In-flight lines use the [conversation box](#conversation-box),
+which neither pauses nor dims.
+
+### Conversation box
+
+In-flight dialogue: one line at a time from one speaker, over live flight.
+Constants: `CONVERSATION`, `conversationBox.ts`, to implement. Colours are in
+[Controls](controls.md#conversation-box); portraits are in
+[Portraits](portraits.md).
+
+| Token          | Value                                                        | Rule                                                                                    |
+| -------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| Width          | `min(availableWidth, CONVERSATION.maxWidth)`, max 640        | Centred on the available rect; 634 at 720 with phone insets, 640 otherwise              |
+| Top            | Weapon press-area bottom plus `SPACING.gap`                  | HUD rect top + 48 target (the target is the press area) = 56, so 64 without a top inset |
+| Height         | `CONVERSATION.frame + 2 * SPACING.gap` = 64                  | Fixed; the box never grows                                                              |
+| Padding        | `SPACING.gap` on every side                                  | Frame and text column sit 8 inside the panel                                            |
+| Panel          | Ink `#181425` at alpha 0.70, square corners                  | No border, nine-slice or dim; the tab, line and portrait draw fully opaque over it      |
+| Portrait frame | `CONVERSATION.frame` 48x48: 2 ink edge, navy `#262b44` face  | Ada at the inner left, every other speaker at the inner right; never mirrored           |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, inset 2 | Fills the face; integer scale at every `s`                                              |
+| Text column    | `SPACING.gap` from the frame, the rest of the inner width    | 562 wide at 634, 568 at 640                                                             |
+| Text block     | Tab 20, `SPACING.rowGap`, line 20: 44 high                   | Centred on the frame: block top 2 below the frame top                                   |
+| Name tab       | 20 high, label width plus `2 * SPACING.markGap`              | `TYPE.label` in ink on the speaker's opaque tab colour, at the column's left edge       |
+| Line           | `TYPE.body`, cream, left-aligned, one line                   | Never wraps or shrinks; every Gameplay line fits the 562 column                         |
+
+- The box takes no input and holds no controls. It shows only during flight;
+  one box shows at a time, and the next line replaces the current one in
+  place.
+- Both sides use the same left-aligned text column; only the frame changes
+  side with the speaker.
+- Clearance at the 360-high view: the box bottom is at 128. The ship's pivot
+  sits at the view centre (180) with a 42 display frame; its highest drawn hull
+  point across the 16 headings is 167.2 (heading 2), 39.2 below the box. The
+  rule is at least 24.
+- At the 1280x720 view (720x405 logical) the box bottom is still 128 and the
+  hull top 189.7, 61.7 below.
 
 ### Galaxy selector
 

@@ -48,7 +48,8 @@ underneath.
   `image-rendering: pixelated`), so it stays sharp at every view scale. Its
   placement and press area are `PAUSE_BUTTON` in
   [Layout](layout.md#hud-and-overlays). It is a touch control, hidden on
-  desktop (Escape pauses) and while dialogue is open.
+  desktop (Escape pauses) and while a modal card or storybook page is open. It
+  stays visible and live while the conversation box shows.
 - Geometry is Chibi's `pauseChromeLayers` (`chibis-way-home`
   `src/ui/chrome/pauseChrome.ts`): circles centred at 17.5,17.5 and two 4x13
   bars at 12,11 and 19,11 (3 apart), in the ring colour.
@@ -130,6 +131,42 @@ ring are 7.76:1 on the card; the focus ring is 10.11:1 on the page background
 `#292734`. The pressed close X is 10.41:1 on `#403d55`. The switch tick is
 4.87:1 on the on track. Primary and secondary faces are 4.54:1 and 3.72:1
 against the card, and 5.91:1 and 4.84:1 against the page background.
+
+## Conversation box
+
+The in-flight conversation box is not modal: it draws no dim and leaves the
+HUD visible and live. Geometry is `CONVERSATION` in
+[Layout](layout.md#conversation-box).
+
+| Token              | Colour    | Use                                           |
+| ------------------ | --------- | --------------------------------------------- |
+| Conversation panel | `#181425` | Ink panel at alpha 0.70                       |
+| Portrait edge      | `#181425` | 2 px frame edge, opaque                       |
+| Portrait face      | `#262b44` | Frame face behind the portrait's clear pixels |
+| Ada tab            | `#70ace8` | Her ship's blue accent                        |
+| Astra tab          | `#ffc9a8` | Her warm core                                 |
+| Penny tab          | `#feae34` | Her golden coat                               |
+| Unknown voice tab  | `#b8b3c9` | General Gadget before he is named             |
+| General Gadget tab | `#d68b72` | The drones' coral hull                        |
+
+Tabs, labels, lines and portraits are fully opaque; only the panel is
+translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
+cream.
+
+| Text           | Colour    | Ground                                       | Contrast |
+| -------------- | --------- | -------------------------------------------- | -------- |
+| Line           | `#ead4aa` | Panel over `#ffffff`, the brightest backdrop | 4.61:1   |
+| Line           | `#ead4aa` | Panel over the field `#292734`               | 11.78:1  |
+| Ada label      | `#181425` | `#70ace8`                                    | 7.51:1   |
+| Astra label    | `#181425` | `#ffc9a8`                                    | 12.16:1  |
+| Penny label    | `#181425` | `#feae34`                                    | 9.71:1   |
+| Unknown voice  | `#181425` | `#b8b3c9`                                    | 8.86:1   |
+| General Gadget | `#181425` | `#d68b72`                                    | 6.69:1   |
+
+The panel at 0.70 over pure white composites to `#5d5a66`, the brightest
+possible ground; 0.70 is the lowest alpha, to two decimals, that keeps the line
+at 4.5:1 over white (0.69 gives 4.45:1). Every galaxy field and space object
+composites darker, so the line never drops below 4.61:1.
 
 ## Top-right HUD icon buttons
 
