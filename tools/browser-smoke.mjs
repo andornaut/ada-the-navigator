@@ -879,7 +879,7 @@ try {
   });
   damaged.state.economy.stardust = 30;
   damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
-  assert.equal(damaged.state.mode, "home", "Shield depletion must warp Ada home");
+  assert.equal(damaged.state.mode, "home", "Shield depletion must jump Ada home");
   assert.deepEqual(damaged.state.economy.ownedWeapons, ["tripleLaser"]);
   assert.equal(damaged.state.economy.weapon, "basic", "The equipped upgrade must be lost");
   assert.equal(damaged.state.economy.stardust, 20, "Recharging must cost 10 Stardust");
@@ -891,16 +891,16 @@ try {
   });
   await seedOnce(damageSave, "ada-browser.shield-break.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
-  const warpNotice = await page.locator("#game-status").textContent();
+  const jumpNotice = await page.locator("#game-status").textContent();
   assert.ok(
-    warpNotice.includes(PROTOTYPE.labels.warpHome) &&
-      warpNotice.includes("Your Missiles was lost.") &&
-      warpNotice.includes("Recharging cost 10 Stardust."),
-    `The warp home notice must name the loss and the fee: ${warpNotice}`,
+    jumpNotice.includes(PROTOTYPE.labels.jumpHome) &&
+      jumpNotice.includes("Your Missiles was lost.") &&
+      jumpNotice.includes("Recharging cost 10 Stardust."),
+    `The jump home notice must name the loss and the fee: ${jumpNotice}`,
   );
   assert.equal(await page.locator('[data-weapon="missiles"]').count(), 0);
   events.checks.push(
-    "Canonical shield depletion warps Ada home, losing the equipped upgrade and charging the recharge fee",
+    "Canonical shield depletion jumps Ada home, losing the equipped upgrade and charging the recharge fee",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));

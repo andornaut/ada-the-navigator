@@ -323,10 +323,10 @@ export class GameModel {
     teleportFlight(this.content, id, f);
   }
   /**
-   * Shield depletion quantum warps Ada home: the flight ends, the equipped weapon and
+   * Shield depletion quantum jumps Ada home: the flight ends, the equipped weapon and
    * its levels are lost unless it is Basic, and recharging costs a flat fee.
    */
-  private warpHome(): void {
+  private jumpHome(): void {
     const flight = this.state.flight;
     if (!flight) {
       return;
@@ -334,15 +334,15 @@ export class GameModel {
     const lost = loseEquippedWeapon(flight);
     this.pullLoadout();
     const economy = this.state.economy;
-    const fee = Math.min(ECONOMY.warpFee, economy.stardust);
+    const fee = Math.min(ECONOMY.jumpFee, economy.stardust);
     economy.stardust -= fee;
     this.home(true);
     this.state.notice = [
-      this.label("warpHome"),
+      this.label("jumpHome"),
       lost
-        ? fill(this.label("warpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
+        ? fill(this.label("jumpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
         : "",
-      fee > 0 ? fill(this.label("warpRecharge"), { amount: fee }) : "",
+      fee > 0 ? fill(this.label("jumpRecharge"), { amount: fee }) : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -369,7 +369,7 @@ export class GameModel {
     this.pullLoadout();
     for (const event of events) {
       if (event.type === "depleted") {
-        this.warpHome();
+        this.jumpHome();
         return;
       }
       if (event.type === "stardust") {

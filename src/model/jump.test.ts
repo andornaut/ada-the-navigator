@@ -100,7 +100,7 @@ describe("weapon lock", () => {
   });
 });
 
-describe("quantum warp home", () => {
+describe("quantum jump home", () => {
   it("ends the flight, loses the equipped weapon and its levels, and charges the fee", () => {
     const model = launched();
     const flight = model.state.flight!;
@@ -119,7 +119,7 @@ describe("quantum warp home", () => {
     });
     expect(model.state.economy.levels.weapons).toMatchObject({ missiles: 0, tripleLaser: 1 });
     expect(model.state.notice).toBe(
-      "Your ship warped you home to recharge. Your story progress is saved. " +
+      "Astra jumped you home to recharge. Your story progress is saved. " +
         "Your Missiles was lost. Recharging cost 10 Stardust.",
     );
   });
@@ -145,7 +145,7 @@ describe("quantum warp home", () => {
     });
   });
 
-  it("keeps Basic and its upgrade level through a warp", () => {
+  it("keeps Basic and its upgrade level through a jump", () => {
     const model = launched();
     model.state.flight!.levels.weapons.basic = 2;
     model.state.economy.stardust = 100;
@@ -153,7 +153,7 @@ describe("quantum warp home", () => {
     expect(model.state.economy.levels.weapons.basic).toBe(2);
     expect(model.state.economy.weapon).toBe("basic");
     expect(model.state.notice).toBe(
-      "Your ship warped you home to recharge. Your story progress is saved. " +
+      "Astra jumped you home to recharge. Your story progress is saved. " +
         "Recharging cost 10 Stardust.",
     );
   });

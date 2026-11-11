@@ -98,7 +98,7 @@ describe("owned unlimited weapons", () => {
     expect(flight.shield).toBe(0);
   });
 
-  it("warps home on basic depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
+  it("jumps home on basic depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
     const model = launched();
     pickup(model, "tripleLaser");
     model.state.flight!.dangerFor = 0;

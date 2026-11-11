@@ -65,7 +65,7 @@ export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boole
 }
 
 /**
- * The quantum warp loses the equipped upgrade weapon and its upgrade levels; Basic is
+ * The quantum jump loses the equipped upgrade weapon and its upgrade levels; Basic is
  * never lost. Returns the lost weapon, or null.
  */
 export function loseEquippedWeapon(flight: FlightState): UpgradeWeapon | null {

@@ -45,8 +45,8 @@ export interface EconomyCatalog {
   paints: Readonly<Record<string, PaintScheme>>;
   /** The free starting scheme, always owned. */
   defaultPaint: string;
-  /** Flat Stardust fee for recharging after a quantum warp home. */
-  warpFee: number;
+  /** Flat Stardust fee for recharging after a quantum jump home. */
+  jumpFee: number;
   /** Seconds weapon changes stay locked after combat ends. */
   weaponLockSeconds: number;
   /** Seconds a destroyed enemy breaks apart before releasing its drops. */
@@ -98,6 +98,7 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 15,
     swarm: 2,
   },
+  jumpFee: 10,
   ownedWeaponStardust: 25,
   paints: {
     classic: { label: "paintClassic", price: 0 },
@@ -135,7 +136,6 @@ export const ECONOMY: EconomyCatalog = {
   },
   tractorRadius: { base: 100, levels: [150, 200] },
   tractorSpeed: { base: 150, levels: [220, 300] },
-  warpFee: 10,
   weaponDropChance: { ...small, capital: 0.25, frigate: 0.1, oversizedCapital: 0.25 },
   weaponLockSeconds: 5,
   weaponPrices: { missiles: 150, scattershot: 350, tripleLaser: 250 },
