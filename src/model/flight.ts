@@ -751,15 +751,14 @@ function move(
   const magnitude = Math.min(1, length(input.move));
   // Engine tuning changes only Ada's physics; enemies keep reading the base maxSpeed.
   const physics = shipTuning(ECONOMY, content, flight.levels).physics;
+  const top = adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics });
   const motion = stepShipMotion(
     physics,
     dt,
-    { maxSpeed: adaMaxSpeed(content.tuning) },
+    { maxSpeed: top },
     {
       direction: input.move,
-      speed:
-        movementSpeedFraction(content.tuning, magnitude) *
-        adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics }),
+      speed: movementSpeedFraction(content.tuning, magnitude) * top,
     },
     { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
   );
