@@ -1,22 +1,30 @@
+import {
+  type ControlVisibility,
+  type DeviceSetting,
+  pageStorage,
+  prefersReducedMotion,
+  readDeviceSettings,
+  writeSetting,
+} from "./device-settings.ts";
+
+export type { ControlVisibility } from "./device-settings.ts";
+
 export const FONT_ROLES = { body: "font-body", heading: "font-title" } as const;
 
 export interface SettingsLabels {
   readonly aimControls: string;
   readonly close: string;
+  readonly motionNote: string;
   readonly moveControls: string;
+  readonly reducedMotion: string;
   readonly settings: string;
-  readonly sound?: string;
-  readonly screenShake?: string;
-}
-
-export interface ControlVisibility {
-  readonly aim: boolean;
-  readonly move: boolean;
+  readonly sound: string;
+  readonly soundNote: string;
 }
 
 export interface FeedbackSettings {
+  readonly reducedMotion: boolean;
   readonly sound: boolean;
-  readonly screenShake: boolean;
 }
 
 export interface SettingsOptions {
@@ -162,19 +170,10 @@ const STYLE = `
 
 .ada-controls [data-control]{
   position:absolute;
-  bottom:20px;
-  width:74px;
-  height:74px;
+  width:75px;
+  height:75px;
   pointer-events:auto;
   touch-action:none
-}
-
-.ada-controls [data-control=move-joystick]{
-  left:20px
-}
-
-.ada-controls [data-control=aim-joystick]{
-  right:20px
 }
 
 .ada-controls .ada-use{
@@ -262,6 +261,18 @@ const STYLE = `
   overflow-wrap:anywhere
 }
 
+.ada-controls label .ada-setting-text{
+  display:grid;
+  gap:2px;
+  padding:4px 0
+}
+
+.ada-controls label .ada-setting-note{
+  font-size:13px;
+  line-height:16px;
+  opacity:0.75
+}
+
 .ada-controls input{
   width:32px;
   height:20px;
@@ -316,51 +327,53 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   closeButton.dataset.action = "close-settings";
   closeButton.setAttribute("aria-label", options.labels.close);
   header.append(spacer, title, closeButton);
-  const visibility = { aim: true, move: true };
-  const row = (side: keyof ControlVisibility, label: string) => {
+  // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
+  // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
+  // Install joins last, shown only while the game can be installed.
+  const storage = pageStorage();
+  const settings = { ...readDeviceSettings(storage, prefersReducedMotion(window)) };
+  const visibility = () => ({ aim: settings.aim, move: settings.move });
+  const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });
+  const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
     const element = document.createElement("label");
+    const text = document.createElement("span");
+    text.className = "ada-setting-text";
     const caption = document.createElement("span");
     caption.textContent = label;
+    text.append(caption);
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.setAttribute("aria-label", label);
-    toggle.checked = true;
-    toggle.addEventListener("change", () => {
-      visibility[side] = toggle.checked;
-      options.onVisibilityChange({ ...visibility });
-    });
-    element.append(caption, toggle);
-    return element;
-  };
-  card.append(
-    header,
-    row("move", options.labels.moveControls),
-    row("aim", options.labels.aimControls),
-  );
-  const feedback = {
-    screenShake: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    sound: true,
-  };
-  for (const key of ["sound", "screenShake"] as const) {
-    const caption = options.labels[key];
-    if (!caption) {
-      continue;
+    if (note) {
+      const noteText = document.createElement("span");
+      noteText.className = "ada-setting-note";
+      noteText.id = `ada-setting-note-${setting}`;
+      noteText.textContent = note;
+      text.append(noteText);
+      toggle.setAttribute("aria-describedby", noteText.id);
     }
-    const element = document.createElement("label");
-    const text = document.createElement("span");
-    text.textContent = caption;
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.setAttribute("aria-label", caption);
-    toggle.checked = feedback[key];
+    toggle.checked = settings[setting];
     toggle.addEventListener("change", () => {
-      feedback[key] = toggle.checked;
-      options.onFeedbackChange?.({ ...feedback });
+      settings[setting] = toggle.checked;
+      writeSetting(storage, setting, toggle.checked);
+      if (setting === "aim" || setting === "move") {
+        options.onVisibilityChange(visibility());
+      } else {
+        options.onFeedbackChange?.(feedback());
+      }
     });
     element.append(text, toggle);
-    card.append(element);
-  }
-  options.onFeedbackChange?.({ ...feedback });
+    return element;
+  };
+  const rows: HTMLElement[] = [
+    switchRow("move", options.labels.moveControls),
+    switchRow("aim", options.labels.aimControls),
+    switchRow("sound", options.labels.sound, options.labels.soundNote),
+    switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
+  ];
+  card.append(header, ...rows);
+  options.onFeedbackChange?.(feedback());
+  options.onVisibilityChange(visibility());
   modal.append(card);
   root.append(style, ...joystickTargets, openButton, useButton, modal);
   parent.append(root);

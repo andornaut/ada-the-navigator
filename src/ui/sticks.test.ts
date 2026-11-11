@@ -1,74 +1,97 @@
-import type { GameObjects } from "phaser";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { ControlState } from "../input/state.ts";
-import { drawSticks } from "./sticks.ts";
+import { centredAt, stickRestCentres, stickViews } from "./sticks.ts";
+import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "./touch-chrome.ts";
 
-function drawing() {
-  return {
-    clear: vi.fn(),
-    fillCircle: vi.fn(),
-    fillEllipse: vi.fn(),
-    fillStyle: vi.fn(),
-    lineStyle: vi.fn(),
-    strokeCircle: vi.fn(),
-    strokeEllipse: vi.fn(),
-  };
-}
-const view = {
+const layout = {
   height: 360,
-  showIdle: false,
   visibility: { aim: true, move: true },
   visible: true,
   width: 720,
 };
+const knobCentre = (point: { x: number; y: number }) => ({
+  x: point.x + (TOUCH_KNOB_FRAME - 1) / 2,
+  y: point.y + (TOUCH_KNOB_FRAME - 1) / 2,
+});
+
+describe("joystick placement", () => {
+  it("rests both same-sized rings where Chibi's move hint rests, mirrored across the view", () => {
+    expect(stickRestCentres(layout)).toEqual({ aim: { x: 598, y: 303 }, move: { x: 121, y: 303 } });
+    const views = stickViews(layout, new ControlState());
+    expect(views.move?.ring).toEqual(centredAt({ x: 121, y: 303 }, TOUCH_CHROME_FRAME));
+    expect(views.aim?.ring).toEqual(centredAt({ x: 598, y: 303 }, TOUCH_CHROME_FRAME));
+    expect(views.move?.ringPose).toBe("rest");
+    expect(views.move?.knobPose).toBe("rest");
+    expect(knobCentre(views.move!.knob)).toEqual({ x: 121, y: 303 });
+  });
+
+  it("follows the centred view across and the canvas bottom down in a wider, taller canvas", () => {
+    expect(stickRestCentres({ height: 400, width: 900 })).toEqual({
+      aim: { x: 688, y: 343 },
+      move: { x: 211, y: 343 },
+    });
+  });
+
+  it("omits a side hidden by its setting and both while controls do not show", () => {
+    const hidden = stickViews(
+      { ...layout, visibility: { aim: true, move: false } },
+      new ControlState(),
+    );
+    expect(hidden.move).toBeUndefined();
+    expect(hidden.aim).toBeDefined();
+    expect(stickViews({ ...layout, visible: false }, new ControlState())).toEqual({});
+  });
+});
 
 describe("left stick CSS travel display", () => {
   it.each([0.1, 0.5, 1])("draws the sampled %s throttle with the same CSS geometry", (strength) => {
     const state = new ControlState();
-    state.setMoveScale({ x: 2, y: 0.5 });
+    state.setMoveScale({ x: 0.5, y: 0.5 });
     state.down("move", 1, { x: 100, y: 100 });
-    state.move(1, { x: 100 + (2.4 + strength * 17.6) / 2, y: 100 });
-    const graphics = drawing();
-    drawSticks(graphics as unknown as GameObjects.Graphics, view, state);
-    expect(graphics.strokeEllipse).toHaveBeenCalledWith(100, 100, 20, 80);
-    const [x, y, width, height] = graphics.fillEllipse.mock.calls[0]!;
-    expect(x).toBeCloseTo(100 + strength * 10, 12);
-    expect(y).toBe(100);
-    expect(width).toBe(5);
-    expect(height).toBe(20);
+    state.move(1, { x: 100 + (2.4 + strength * 17.6) / 0.5, y: 100 });
+    const view = stickViews(layout, state).move!;
+    expect(view.ring).toEqual(centredAt({ x: 100, y: 100 }, TOUCH_CHROME_FRAME));
+    expect(knobCentre(view.knob)).toEqual({ x: 100 + Math.round(strength * 40), y: 100 });
+    expect(view.ringPose).toBe("held-right");
+    expect(view.knobPose).toBe("held");
     expect(Math.hypot(state.sample().move.x, state.sample().move.y)).toBeCloseTo(strength, 12);
     state.release(1);
-    drawSticks(graphics as unknown as GameObjects.Graphics, view, state);
-    expect(graphics.fillEllipse).toHaveBeenCalledTimes(1);
+    expect(stickViews(layout, state).move?.knobPose).toBe("rest");
     expect(state.sample().move).toEqual({ x: 0, y: 0 });
   });
 
-  it("keeps the displayed diagonal on the finger ray without reusing the game heading as CSS", () => {
+  it("lights the left chevron while the stick pushes left and neither inside the dead zone", () => {
     const state = new ControlState();
-    state.setMoveScale({ x: 2, y: 1 });
     state.down("move", 1, { x: 100, y: 100 });
-    state.move(1, { x: 105, y: 105 });
-    const graphics = drawing();
-    drawSticks(graphics as unknown as GameObjects.Graphics, view, state);
-    const [x, y] = graphics.fillEllipse.mock.calls[0]!;
-    const visible = { x: (x - 100) * 2, y: y - 100 };
-    expect(visible.x * 5 - visible.y * 10).toBeCloseTo(0, 10);
-    const move = state.sample().move;
-    expect(move.x).toBeCloseTo(move.y, 12);
-    expect(Math.hypot(visible.x, visible.y)).toBeCloseTo(Math.hypot(move.x, move.y) * 20, 10);
+    state.move(1, { x: 90, y: 100 });
+    expect(stickViews(layout, state).move?.ringPose).toBe("held-left");
+    state.move(1, { x: 101, y: 100 });
+    expect(stickViews(layout, state).move?.ringPose).toBe("rest");
+    expect(stickViews(layout, state).move?.knobPose).toBe("held");
   });
 
-  it("preserves the right aim ring and twelve-pixel thumb travel", () => {
+  it("keeps the displayed diagonal on the finger ray", () => {
     const state = new ControlState();
-    state.setMoveScale({ x: 2, y: 0.5 });
+    state.down("move", 1, { x: 100, y: 100 });
+    state.move(1, { x: 110, y: 110 });
+    const knob = knobCentre(stickViews(layout, state).move!.knob);
+    expect(knob.x - 100).toBe(knob.y - 100);
+    const move = state.sample().move;
+    expect(move.x).toBeCloseTo(move.y, 12);
+  });
+});
+
+describe("right stick display", () => {
+  it("keeps the aim ring the move ring's size with twelve-pixel knob travel", () => {
+    const state = new ControlState();
     state.down("aim", 2, { x: 500, y: 100 });
     state.move(2, { x: 537, y: 100 });
-    const graphics = drawing();
-    drawSticks(graphics as unknown as GameObjects.Graphics, view, state);
-    expect(graphics.strokeCircle).toHaveBeenCalledWith(500, 100, 37);
-    expect(graphics.fillCircle).toHaveBeenCalledWith(512, 100, 5);
-    expect(graphics.fillEllipse).not.toHaveBeenCalled();
+    const view = stickViews(layout, state).aim!;
+    expect(view.ring).toEqual(centredAt({ x: 500, y: 100 }, TOUCH_CHROME_FRAME));
+    expect(knobCentre(view.knob)).toEqual({ x: 512, y: 100 });
+    expect(view.ringPose).toBe("rest");
+    expect(view.knobPose).toBe("held");
     expect(state.sample().aim).toEqual({ x: 1, y: 0 });
   });
 });

@@ -1,74 +1,119 @@
-import type { GameObjects } from "phaser";
-
+import { SCREEN } from "../data/screen.ts";
 import {
   type ControlState,
   MOVE_STICK_GEOMETRY,
-  STICK_GEOMETRY,
+  type StickSide,
   stickVector,
 } from "../input/state.ts";
-import type { ControlVisibility } from "./settings.ts";
+import type { ControlVisibility } from "./device-settings.ts";
+import {
+  type Point,
+  TOUCH_CHROME_FRAME,
+  TOUCH_KNOB_FRAME,
+  type TouchChromePose,
+} from "./touch-chrome.ts";
 
-interface StickView {
+interface Size {
   readonly height: number;
-  readonly showIdle: boolean;
-  readonly visibility: ControlVisibility;
-  readonly visible: boolean;
   readonly width: number;
 }
 
-export function drawSticks(
-  graphics: GameObjects.Graphics,
-  view: StickView,
+interface StickLayout extends Size {
+  readonly visibility: ControlVisibility;
+  readonly visible: boolean;
+}
+
+// Where one joystick's ring and knob are drawn: each part's top-left, in whole game pixels,
+// and the tag it shows.
+export interface StickView {
+  readonly knob: Point;
+  readonly knobPose: TouchChromePose;
+  readonly ring: Point;
+  readonly ringPose: TouchChromePose;
+}
+
+// The aim knob moves at most this many game pixels from its ring's centre, as Chibi's knob does.
+export const AIM_KNOB_REACH = 12;
+
+// Chibi's bottom controls sit CONTROL_BOTTOM above the canvas's bottom, drawn edge to edge; its
+// move hint rests as far in from the view's left as its Use button is from the view's right.
+const CONTROL_BOTTOM = 20;
+const CONTROL_SIDE = 85;
+const DRAWN_HALF = (TOUCH_CHROME_FRAME - 1) / 2 - 1;
+const REST_Y = SCREEN.height - 1 - CONTROL_BOTTOM - DRAWN_HALF;
+const MOVE_REST_X = CONTROL_SIDE + DRAWN_HALF;
+
+// How far the bottom controls move from where they sit in a canvas the game's own size: across
+// with the centred view and down to the canvas's bottom.
+function bottomShift(canvas: Size): Point {
+  return {
+    x: Math.floor((Math.floor(canvas.width) - SCREEN.width) / 2),
+    y: Math.floor(canvas.height) - SCREEN.height,
+  };
+}
+
+// Each joystick's ring centre at rest: the move ring where Chibi's move hint rests and the aim
+// ring mirrored across the view.
+export function stickRestCentres(canvas: Size): Readonly<Record<StickSide, Point>> {
+  const shift = bottomShift(canvas);
+  return {
+    aim: { x: shift.x + SCREEN.width - 1 - MOVE_REST_X, y: shift.y + REST_Y },
+    move: { x: shift.x + MOVE_REST_X, y: shift.y + REST_Y },
+  };
+}
+
+// The top-left of an odd-sized frame whose centre pixel sits on centre.
+export function centredAt(centre: Point, frame: number): Point {
+  return { x: centre.x - (frame - 1) / 2, y: centre.y - (frame - 1) / 2 };
+}
+
+const rounded = (point: Point): Point => ({ x: Math.round(point.x), y: Math.round(point.y) });
+
+// The joysticks as drawn: a side is absent while hidden by its setting or while controls do not
+// show. A held stick's ring centres on where its drag began; at rest it sits at its rest centre.
+// The move knob follows the CSS travel the move input samples; the aim knob moves at most
+// AIM_KNOB_REACH pixels.
+export function stickViews(
+  layout: StickLayout,
   state: ControlState,
-): void {
-  graphics.clear();
-  if (!view.visible) {
-    return;
+): Partial<Record<StickSide, StickView>> {
+  const views: Partial<Record<StickSide, StickView>> = {};
+  if (!layout.visible) {
+    return views;
   }
-  const radius = Math.min(STICK_GEOMETRY.reach, Math.max(12, (view.width - 48) / 4));
-  const edge = radius + 20;
+  const rest = stickRestCentres(layout);
   for (const side of ["move", "aim"] as const) {
-    const stick = state.stick(side);
-    if (!view.visibility[side] || (!stick && !view.showIdle)) {
+    if (!layout.visibility[side]) {
       continue;
     }
+    const stick = state.stick(side);
+    const centre = rounded(stick?.origin ?? rest[side]);
+    let knob: Point;
+    let ringPose: TouchChromePose = "rest";
     if (side === "move") {
       const scale = state.movementScale;
       const reach = MOVE_STICK_GEOMETRY.reach;
-      const centre = stick?.origin ?? {
-        x: (reach + 20) / scale.x,
-        y: view.height - (reach + 20) / scale.y,
-      };
       const sampled = stickVector(MOVE_STICK_GEOMETRY, {
-        x: stick ? (stick.position.x - centre.x) * scale.x : 0,
-        y: stick ? (stick.position.y - centre.y) * scale.y : 0,
+        x: stick ? (stick.position.x - stick.origin.x) * scale.x : 0,
+        y: stick ? (stick.position.y - stick.origin.y) * scale.y : 0,
       });
-      const x = centre.x + (sampled.x * reach) / scale.x;
-      const y = centre.y + (sampled.y * reach) / scale.y;
-      graphics.lineStyle(5, 0x172335, 1);
-      graphics.strokeEllipse(centre.x, centre.y, (reach * 2) / scale.x, (reach * 2) / scale.y);
-      graphics.lineStyle(3, 0xfff8e6, 1);
-      graphics.strokeEllipse(centre.x, centre.y, (reach * 2) / scale.x, (reach * 2) / scale.y);
-      graphics.fillStyle(stick ? 0xffffff : 0xfff8e6, 1);
-      graphics.fillEllipse(x, y, 10 / scale.x, 10 / scale.y);
-      graphics.lineStyle(1, 0x172335, 1);
-      graphics.strokeEllipse(x, y, 10 / scale.x, 10 / scale.y);
-      continue;
+      knob = {
+        x: centre.x + Math.round((sampled.x * reach) / scale.x),
+        y: centre.y + Math.round((sampled.y * reach) / scale.y),
+      };
+      ringPose = sampled.x < 0 ? "held-left" : sampled.x > 0 ? "held-right" : "rest";
+    } else {
+      const dx = stick ? stick.position.x - stick.origin.x : 0;
+      const dy = stick ? stick.position.y - stick.origin.y : 0;
+      const divisor = Math.max(1, Math.hypot(dx, dy) / AIM_KNOB_REACH);
+      knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
-    const centre = stick?.origin ?? {
-      x: view.width - edge,
-      y: view.height - edge,
+    views[side] = {
+      knob: centredAt(knob, TOUCH_KNOB_FRAME),
+      knobPose: stick ? "held" : "rest",
+      ring: centredAt(centre, TOUCH_CHROME_FRAME),
+      ringPose,
     };
-    const dx = stick ? stick.position.x - centre.x : 0;
-    const dy = stick ? stick.position.y - centre.y : 0;
-    const divisor = Math.max(1, Math.hypot(dx, dy) / 12);
-    graphics.lineStyle(5, 0x172335, 1);
-    graphics.strokeCircle(centre.x, centre.y, radius);
-    graphics.lineStyle(3, 0xfff8e6, 1);
-    graphics.strokeCircle(centre.x, centre.y, radius);
-    graphics.fillStyle(stick ? 0xffffff : 0xfff8e6, 1);
-    graphics.fillCircle(centre.x + dx / divisor, centre.y + dy / divisor, 5);
-    graphics.lineStyle(1, 0x172335, 1);
-    graphics.strokeCircle(centre.x + dx / divisor, centre.y + dy / divisor, 5);
   }
+  return views;
 }

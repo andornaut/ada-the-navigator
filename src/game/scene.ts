@@ -10,6 +10,7 @@ import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
+import { screenShakes } from "../ui/device-settings.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { sceneryDetail } from "./scenery.ts";
@@ -21,6 +22,7 @@ import {
   spaceColorCss,
   spaceObjectColor,
 } from "./space-palette.ts";
+import { preloadTouchChrome } from "./touch-chrome.ts";
 
 interface Asset extends ShipAsset {
   path: string;
@@ -83,6 +85,7 @@ export class PrototypeScene extends Phaser.Scene {
       }
     });
     this.load.json("art-manifest", "/art/manifest.json");
+    preloadTouchChrome(this);
   }
 
   create(): void {
@@ -158,15 +161,17 @@ export class PrototypeScene extends Phaser.Scene {
       labels: {
         aimControls: PROTOTYPE.labels.aimControls ?? "",
         close: PROTOTYPE.labels.close ?? "",
+        motionNote: PROTOTYPE.labels.motionNote ?? "",
         moveControls: PROTOTYPE.labels.moveControls ?? "",
-        screenShake: PROTOTYPE.labels.screenShake ?? "",
+        reducedMotion: PROTOTYPE.labels.reducedMotion ?? "",
         settings: PROTOTYPE.labels.settings ?? "",
         sound: PROTOTYPE.labels.sound ?? "",
+        soundNote: PROTOTYPE.labels.soundNote ?? "",
       },
       onFeedbackChange: (settings) => {
         this.feedbackSound.enabled = settings.sound;
-        this.screenShake = settings.screenShake;
-        if (!settings.screenShake) {
+        this.screenShake = screenShakes(settings);
+        if (!this.screenShake) {
           this.cameras.main.shakeEffect.reset();
         }
       },

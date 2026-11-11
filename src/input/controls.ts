@@ -5,14 +5,16 @@ import {
   onPageControl,
   type PagePointerEvent,
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
-import type { Scene } from "phaser";
+import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
+import { createTouchChrome, showTouchChrome } from "../game/touch-chrome.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
 import { createShieldMeter } from "../ui/shield.ts";
-import { drawSticks } from "../ui/sticks.ts";
+import { stickRestCentres, stickViews } from "../ui/sticks.ts";
+import { TOUCH_CHROME_FRAME } from "../ui/touch-chrome.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
 import { movementCssScale } from "./geometry.ts";
@@ -114,16 +116,58 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   const shield = createShieldMeter(options.shieldLabel, settings.root);
-  const graphics = scene.add.graphics().setScrollFactor(0).setDepth(10000);
+  const sticks = {
+    aim: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "aim") },
+    move: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "move") },
+  };
+  const stickParts = [sticks.move.ring, sticks.move.knob, sticks.aim.ring, sticks.aim.knob].filter(
+    (part) => part !== undefined,
+  );
+  for (const part of stickParts) {
+    part.setScrollFactor(0).setDepth(10000).setVisible(false);
+  }
+  scene.cameras.main.ignore(stickParts);
+  const stickSet = new Set<GameObjects.GameObject>(stickParts);
   const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
-  scene.cameras.main.ignore(graphics);
+  // Keep each joystick's pointer target over its drawn rest ring, in the canvas's CSS pixels.
+  let placedTargets = "";
+  const placeTargets = (): void => {
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const placement = [
+      width,
+      height,
+      canvas.offsetLeft,
+      canvas.offsetTop,
+      scene.scale.gameSize.width,
+      scene.scale.gameSize.height,
+    ].join();
+    if (width <= 0 || height <= 0 || placement === placedTargets) {
+      return;
+    }
+    placedTargets = placement;
+    const scale = {
+      x: width / scene.scale.gameSize.width,
+      y: height / scene.scale.gameSize.height,
+    };
+    const rest = stickRestCentres(scene.scale.gameSize);
+    settings.joystickTargets.forEach((target, index) => {
+      const centre = rest[index === 0 ? "move" : "aim"];
+      const size = { x: TOUCH_CHROME_FRAME * scale.x, y: TOUCH_CHROME_FRAME * scale.y };
+      target.style.left = `${canvas.offsetLeft + (centre.x + 0.5) * scale.x - size.x / 2}px`;
+      target.style.top = `${canvas.offsetTop + (centre.y + 0.5) * scale.y - size.y / 2}px`;
+      target.style.width = `${size.x}px`;
+      target.style.height = `${size.y}px`;
+    });
+  };
   const fitControls = (): void => {
     const bounds = canvas.getBoundingClientRect();
     if (bounds.width > 0 && bounds.height > 0) {
       state.setMoveScale(movementCssScale(FRAME_TURN.turn(), scene.scale.gameSize, bounds));
     }
     camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
-    camera.ignore(scene.children.list.filter((object) => object !== graphics));
+    camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
+    placeTargets();
   };
   scene.events.on("prerender", fitControls);
   fitControls();
@@ -203,17 +247,33 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     for (const target of settings.joystickTargets) {
       target.hidden = !enabled || modalOpen();
     }
-    drawSticks(
-      graphics,
+    const views = stickViews(
       {
         height: scene.scale.height,
-        showIdle: true,
         visibility,
         visible: enabled && !modalOpen(),
         width: scene.scale.width,
       },
       state,
     );
+    for (const side of ["move", "aim"] as const) {
+      const view = views[side];
+      const { knob, ring } = sticks[side];
+      if (ring) {
+        ring.setVisible(view !== undefined);
+        if (view) {
+          showTouchChrome(ring, view.ringPose);
+          ring.setPosition(view.ring.x, view.ring.y);
+        }
+      }
+      if (knob) {
+        knob.setVisible(view !== undefined);
+        if (view) {
+          showTouchChrome(knob, view.knobPose);
+          knob.setPosition(view.knob.x, view.knob.y);
+        }
+      }
+    }
   };
   scene.events.on("preupdate", draw);
   scene.events.on("pause", reset);
@@ -236,7 +296,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.dispose();
       scene.events.off("prerender", fitControls);
       scene.cameras.remove(camera);
-      graphics.destroy();
+      for (const part of stickParts) {
+        part.destroy();
+      }
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
       window.removeEventListener("blur", reset);

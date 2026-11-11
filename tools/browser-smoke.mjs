@@ -1289,8 +1289,10 @@ try {
     assert.equal(await checkbox.isChecked(), !initial, `${key} must toggle`);
     toggles.push({ key, initial, toggled: !initial });
   }
+  await toggleSetting("moveControls");
+  await toggleSetting("aimControls");
   await toggleSetting("sound");
-  await toggleSetting("screenShake");
+  await toggleSetting("reducedMotion");
   await page.screenshot({ path: `${output}/combat-settings.png` });
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="settings"]').click();
@@ -1301,13 +1303,17 @@ try {
   }
   await restoreSetting(toggles[0]);
   await restoreSetting(toggles[1]);
+  await restoreSetting(toggles[2]);
+  await restoreSetting(toggles[3]);
   await page.locator('[data-action="close-settings"]').click();
   save("combat-settings-proof.json", {
     scope:
       "Checkbox interaction and dialog-state proof only; audio output and shake intensity unmeasured",
     toggles,
   });
-  events.checks.push("Canonical sound and screen-shake controls toggle and retain dialog state");
+  events.checks.push(
+    "Canonical joystick, sound and reduced-motion controls toggle and retain dialog state",
+  );
   const portraitContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -1453,7 +1459,7 @@ try {
     .getByRole("checkbox", { name: PROTOTYPE.labels.sound, exact: true })
     .waitFor({ state: "visible" });
   await page
-    .getByRole("checkbox", { name: PROTOTYPE.labels.screenShake, exact: true })
+    .getByRole("checkbox", { name: PROTOTYPE.labels.reducedMotion, exact: true })
     .waitFor({ state: "visible" });
   await page.screenshot({ path: `${output}/portrait-settings.png` });
   await page.locator('[data-action="close-settings"]').click();
