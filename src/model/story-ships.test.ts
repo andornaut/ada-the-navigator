@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
 
 import { PROJECTS } from "../data/projects.ts";
@@ -11,12 +9,11 @@ import {
   STORY_SHIP_CRAFT,
   STORY_VIEW,
 } from "../data/story-ships.ts";
+import { ART_MANIFEST } from "../game/test-art-manifest.ts";
 import { drawnHeading, hubBay, hubWorn, storyShips } from "./story-ships.ts";
 import type { Vec } from "./types.ts";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-) as {
+const manifest = ART_MANIFEST as unknown as {
   assets: {
     craft?: string;
     displayHeight?: number;

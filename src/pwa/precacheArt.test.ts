@@ -64,6 +64,23 @@ describe("artUrls", () => {
     expect(named.filter((url) => !urls.includes(url))).toEqual([]);
   });
 
+  it("lists each galaxy manifest the core manifest maps, and every file it names", () => {
+    const urls = artUrls(artFiles);
+    const manifest = read("/art/manifest.json") as { galaxies: Record<string, string> };
+    const galaxies = Object.values(manifest.galaxies);
+    expect(galaxies).toEqual([
+      "/art/sunflower/manifest.json",
+      "/art/cartwheel/manifest.json",
+      "/art/whirlpool/manifest.json",
+    ]);
+    for (const galaxy of galaxies) {
+      expect(urls).toContain(galaxy);
+      const named = namedArtUrls(read(galaxy));
+      expect(named.length).toBeGreaterThan(1);
+      expect(named.filter((url) => !urls.includes(url))).toEqual([]);
+    }
+  });
+
   it("lists every enemy heading frame and jets file", () => {
     const urls = artUrls(artFiles);
     for (const archetype of ["swarm", "fighter", "interceptor", "retaliator"]) {

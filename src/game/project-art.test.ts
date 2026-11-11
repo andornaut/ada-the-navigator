@@ -12,10 +12,11 @@ import {
   revealAlpha,
 } from "./project-art.ts";
 import { readOutpostArt, stationDockWorld, type StationFrame } from "./station-art.ts";
+import { ART_MANIFEST } from "./test-art-manifest.ts";
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
-const manifest = read("../../public/art/manifest.json") as {
+const manifest = ART_MANIFEST as unknown as {
   assets: (StationFrame & { outpost?: string })[];
 };
 const PROJECTS_FILE = read("../../public/art/projects.json") as {

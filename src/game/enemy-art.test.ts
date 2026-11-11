@@ -10,7 +10,6 @@ import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
-import manifest from "../../public/art/manifest.json";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
@@ -40,6 +39,7 @@ import {
   turretMuzzles,
 } from "./enemy-art.ts";
 import { jetLength } from "./ship-jets.ts";
+import { ART_MANIFEST as manifest } from "./test-art-manifest.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string): unknown => {

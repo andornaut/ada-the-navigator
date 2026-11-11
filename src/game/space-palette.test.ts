@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -11,6 +11,7 @@ import {
   spaceColorCss,
   spaceObjectColor,
 } from "./space-palette.ts";
+import { ART_MANIFEST, publicJson } from "./test-art-manifest.ts";
 
 const colors = {
   active: "#65C9BF",
@@ -77,10 +78,7 @@ describe("space palette boundary", () => {
 });
 
 const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
-const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
-  galaxies: string;
-};
-const galaxiesData: unknown = JSON.parse(readFileSync(publicFile(manifest.galaxies), "utf8"));
+const galaxiesData = publicJson(ART_MANIFEST.galaxyFields);
 
 describe("galaxy fields", () => {
   const fields = readGalaxyFields(galaxiesData);

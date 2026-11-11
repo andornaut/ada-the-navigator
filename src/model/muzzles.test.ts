@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -7,6 +7,7 @@ import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
 import { aimIndex } from "../game/enemy-art.ts";
+import { ART_MANIFEST } from "../game/test-art-manifest.ts";
 import {
   createEnemy,
   damageEnemy,
@@ -133,9 +134,9 @@ describe("drawn muzzles", () => {
     expect(Object.keys(MUZZLE_LAYOUTS).sort()).toEqual(
       [...new Set(files.map((name) => name.replace("-hardpoints.json", "")))].sort(),
     );
-    const manifest = JSON.parse(
-      readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-    ) as { assets: { displayWidth?: number; id: string; width: number }[] };
+    const manifest = ART_MANIFEST as unknown as {
+      assets: { displayWidth?: number; id: string; width: number }[];
+    };
     for (const archetype of Object.keys(MUZZLE_LAYOUTS)) {
       const hull = manifest.assets.find((asset) =>
         [`enemy-${archetype}-0`, `enemy-claim-${archetype}`].includes(asset.id),

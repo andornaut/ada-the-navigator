@@ -59,6 +59,13 @@ import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
 import {
+  type CoreManifest,
+  type GalaxyManifest,
+  galaxyManifestKey,
+  galaxyManifestPaths,
+  readGalaxyManifest,
+} from "./art-manifest.ts";
+import {
   type AsteroidOutline,
   BACKDROP_FIELD,
   backdropRock,
@@ -72,7 +79,6 @@ import {
 import {
   craftArt,
   craftFrameSets,
-  galaxyAsset,
   type HubArt,
   hubLayers,
   readBuoyArt,
@@ -309,6 +315,7 @@ export class PrototypeScene extends Phaser.Scene {
   private flightClock = 0;
   private reveals = new Map<string, number>();
   private revealGroups = new Map<string, Phaser.GameObjects.RenderTexture>();
+  // The core manifest's assets and every loaded galaxy manifest's, with their data links.
   private manifest: {
     assets: readonly Asset[];
     cartwheelDebris?: string;
@@ -318,7 +325,10 @@ export class PrototypeScene extends Phaser.Scene {
     whirlpoolCurrents?: string;
     whirlpoolDebris?: string;
   } = { assets: [] };
-  // Galaxy art loads on that galaxy's first flight (cartwheel-art.ts galaxyAsset).
+  // Each galaxy's manifest path from the core manifest, and the galaxy manifests loaded so far:
+  // Sunflower's at boot, every other galaxy's with its art on its first flight.
+  private galaxyManifestPaths: Partial<Record<SectorId, string>> = {};
+  private galaxyManifests = new Map<SectorId, GalaxyManifest<Asset>>();
   private galaxyLoads = new Set<SectorId>();
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
@@ -407,18 +417,24 @@ export class PrototypeScene extends Phaser.Scene {
 
   preload(): void {
     this.load.once("filecomplete-json-art-manifest", () => {
-      const manifest = this.cache.json.get("art-manifest") as {
-        assets: Asset[];
-        galaxies?: string;
-        quantumJump?: string;
-        spacePalette?: string;
-        whales?: string;
-      };
+      const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset>;
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
       }
-      if (manifest.galaxies) {
-        this.load.json("galaxies", manifest.galaxies);
+      if (typeof manifest.galaxyFields === "string") {
+        this.load.json("galaxy-fields", manifest.galaxyFields);
+      }
+      // The galaxies map is paths, never inline data: only a string path is loaded.
+      this.galaxyManifestPaths = galaxyManifestPaths(manifest.galaxies);
+      const sunflower = this.galaxyManifestPaths[1];
+      if (sunflower) {
+        this.load.once(`filecomplete-json-${galaxyManifestKey(1)}`, () => {
+          const galaxy = readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(1)));
+          for (const asset of galaxy?.assets ?? []) {
+            this.loadGalaxyAsset(asset);
+          }
+        });
+        this.load.json(galaxyManifestKey(1), sunflower);
       }
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
@@ -434,10 +450,10 @@ export class PrototypeScene extends Phaser.Scene {
         }
       }
       for (const asset of manifest.assets) {
-        // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
-        // a heavy's part frames when that craft first appears and a galaxy's own art on its
-        // first flight.
-        if (loadsOnDemand(asset) || enemyPartFrame(asset) || galaxyAsset(asset) !== null) {
+        // Painted ship frames load for the scheme in use, thrust frames only without valid jets
+        // and a heavy's part frames when that craft first appears. A galaxy's own art is in its
+        // galaxy manifest, not here.
+        if (loadsOnDemand(asset) || enemyPartFrame(asset)) {
           continue;
         }
         if (enemySvg(asset)) {
@@ -481,9 +497,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.palette = this.basePalette;
     this.galaxyPalettes = galaxyPalettes(
       this.basePalette,
-      readGalaxyFields(this.cache.json.get("galaxies")),
+      readGalaxyFields(this.cache.json.get("galaxy-fields")),
     );
-    this.lightGalaxies = readLightGalaxies(this.cache.json.get("galaxies"));
+    this.lightGalaxies = readLightGalaxies(this.cache.json.get("galaxy-fields"));
     const background = this.palette.background;
     this.game.config.backgroundColor.setTo(
       (background >> 16) & 255,
@@ -515,18 +531,14 @@ export class PrototypeScene extends Phaser.Scene {
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     this.towInk = this.add.graphics();
     this.towSprite = this.add.image(0, 0, "ship").setVisible(false);
-    const manifest = this.cache.json.get("art-manifest") as
-      | {
-          assets: Asset[];
-          cartwheelDebris?: string;
-          resourceRocks?: string;
-          tow?: string;
-          whales?: string;
-          whirlpoolCurrents?: string;
-          whirlpoolDebris?: string;
-        }
-      | undefined;
-    this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
+    const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
+    // Sunflower's outposts come from Sunflower's manifest, loaded with the boot set.
+    const sunflower = readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(1)));
+    if (sunflower) {
+      this.galaxyManifests.set(1, sunflower);
+    }
+    const bootAssets = [...(manifest?.assets ?? []), ...(sunflower?.assets ?? [])];
+    this.shipAssets = bootAssets.filter((asset) => this.textures.exists(asset.id));
     // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
     // the authored thrust frames, which load only then; until they do, the idle frames draw.
     const jets = readShipJets(this.cache.json.get("ship-jets"));
@@ -552,13 +564,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
     this.manifest = {
-      assets: manifest?.assets ?? [],
-      ...(manifest?.cartwheelDebris ? { cartwheelDebris: manifest.cartwheelDebris } : {}),
+      assets: bootAssets,
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
       ...(manifest?.tow ? { tow: manifest.tow } : {}),
-      ...(manifest?.whales ? { whales: manifest.whales } : {}),
-      ...(manifest?.whirlpoolCurrents ? { whirlpoolCurrents: manifest.whirlpoolCurrents } : {}),
-      ...(manifest?.whirlpoolDebris ? { whirlpoolDebris: manifest.whirlpoolDebris } : {}),
     };
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
@@ -1030,21 +1038,72 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     this.galaxyLoads.add(sector);
-    const assets = this.manifest.assets.filter(
-      (asset) => galaxyAsset(asset) === sector && !whaleFrameAsset(asset),
-    );
-    const scale = Math.min(window.devicePixelRatio || 1, 2);
-    for (const asset of assets) {
-      if (enemySvg(asset)) {
-        this.loadEnemySvg(asset);
-      } else if (asset.path.endsWith(".svg")) {
-        this.load.svg(asset.id, asset.path, { scale });
-      } else if (asset.frameWidth && asset.frameHeight) {
-        this.load.spritesheet(asset.id, asset.path, {
-          frameHeight: asset.frameHeight,
-          frameWidth: asset.frameWidth,
-        });
+    // Resource rocks are in every galaxy's chunks, and any galaxy's rescue draws the tow line:
+    // both load with the first flight.
+    for (const [key, path] of [
+      ["resource-rocks", this.manifest.resourceRocks],
+      ["tow", this.manifest.tow],
+    ] as const) {
+      if (path && !this.cache.json.exists(key)) {
+        this.load.json(key, path);
       }
+    }
+    const path = this.galaxyManifestPaths[sector];
+    if (this.galaxyManifests.has(sector) || !path) {
+      this.queueGalaxyArt(sector);
+    } else {
+      this.load.once(`filecomplete-json-${galaxyManifestKey(sector)}`, () =>
+        this.queueGalaxyArt(sector),
+      );
+      this.load.json(galaxyManifestKey(sector), path);
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => this.readGalaxyArt());
+    this.load.start();
+  }
+
+  /** Queues one of a galaxy manifest's SVGs or sheets; whale frames and part frames wait. */
+  private loadGalaxyAsset(asset: Asset): void {
+    if (whaleFrameAsset(asset) || enemyPartFrame(asset) || this.textures.exists(asset.id)) {
+      return;
+    }
+    if (enemySvg(asset)) {
+      this.loadEnemySvg(asset);
+    } else if (asset.path.endsWith(".svg")) {
+      this.load.svg(asset.id, asset.path, { scale: Math.min(window.devicePixelRatio || 1, 2) });
+    } else if (asset.frameWidth && asset.frameHeight) {
+      this.load.spritesheet(asset.id, asset.path, {
+        frameHeight: asset.frameHeight,
+        frameWidth: asset.frameWidth,
+      });
+    }
+  }
+
+  /**
+   * Adds a galaxy's loaded manifest to the known assets and data links, then queues its art:
+   * its SVGs and sheets, its craft and claim jumper data and its own data files.
+   */
+  private queueGalaxyArt(sector: SectorId): void {
+    const galaxy =
+      this.galaxyManifests.get(sector) ??
+      readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(sector)));
+    if (!galaxy) {
+      return;
+    }
+    if (!this.galaxyManifests.has(sector)) {
+      this.galaxyManifests.set(sector, galaxy);
+      this.manifest = {
+        ...this.manifest,
+        ...galaxy.links,
+        assets: [...this.manifest.assets, ...galaxy.assets],
+      };
+      this.claimPartAssets = [
+        ...this.claimPartAssets,
+        ...galaxy.assets.filter((asset) => enemyPartFrame(asset) && asset.family === "claim"),
+      ];
+    }
+    const assets = galaxy.assets;
+    for (const asset of assets) {
+      this.loadGalaxyAsset(asset);
     }
     for (const [craft, frames] of craftFrameSets(assets)) {
       this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
@@ -1064,27 +1123,17 @@ export class PrototypeScene extends Phaser.Scene {
         this.load.json(`claim-hardpoints-${archetype}`, enemyHardpointsPath(archetype, frames[0]!));
       }
     }
-    // Resource rocks are in every galaxy's chunks, and any galaxy's rescue draws the tow line:
-    // both load with the first flight.
-    const shared = [
-      ["resource-rocks", this.manifest.resourceRocks],
-      ["tow", this.manifest.tow],
-    ].filter(([key]) => !this.cache.json.exists(key!));
-    const data = {
-      2: [["cartwheel-debris", this.manifest.cartwheelDebris]],
-      3: [
-        ["whales", this.manifest.whales],
-        ["whirlpool-currents", this.manifest.whirlpoolCurrents],
-        ["whirlpool-debris", this.manifest.whirlpoolDebris],
-      ],
-    }[sector as 2 | 3];
-    for (const [key, path] of [...shared, ...(data ?? [])]) {
-      if (path) {
-        this.load.json(key!, path);
+    // The galaxy's own data files, named by its manifest's links.
+    for (const [key, path] of [
+      ["cartwheel-debris", galaxy.links.cartwheelDebris],
+      ["whales", galaxy.links.whales],
+      ["whirlpool-currents", galaxy.links.whirlpoolCurrents],
+      ["whirlpool-debris", galaxy.links.whirlpoolDebris],
+    ] as const) {
+      if (path && !this.cache.json.exists(key)) {
+        this.load.json(key, path);
       }
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => this.readGalaxyArt());
-    this.load.start();
   }
 
   /** Reads the galaxy art whose textures and data have loaded. */

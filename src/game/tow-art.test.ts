@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { JOB_POOL, JOB_TUNING } from "../data/jobs.ts";
+import { ART_MANIFEST } from "./test-art-manifest.ts";
 import {
   craftFrame,
   craftHeading,
@@ -17,7 +18,7 @@ import {
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
-const manifest = json("/art/manifest.json") as { assets: TowFrame[]; tow: string };
+const manifest = ART_MANIFEST as unknown as { assets: TowFrame[]; tow: string };
 const tow = json(manifest.tow);
 
 describe("tow art", () => {

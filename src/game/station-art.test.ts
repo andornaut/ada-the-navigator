@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
@@ -10,10 +8,11 @@ import {
   type StationFrame,
   stationFrame,
 } from "./station-art.ts";
+import { ART_MANIFEST } from "./test-art-manifest.ts";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-) as { assets: (StationFrame & { destination?: string; outpost?: string })[] };
+const manifest = ART_MANIFEST as unknown as {
+  assets: (StationFrame & { destination?: string; outpost?: string })[];
+};
 const art = readStationArt(manifest.assets)!;
 const outposts = readOutpostArt(manifest.assets);
 

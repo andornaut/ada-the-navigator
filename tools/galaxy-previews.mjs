@@ -264,7 +264,9 @@ async function capturePreview(shared, galaxy, locked) {
   try {
     const page = await context.newPage();
     const field = fieldData(data, galaxy, sector, locked);
-    await page.route(`**${manifest.galaxies}`, (route) => route.fulfill({ json: field.galaxies }));
+    await page.route(`**${manifest.galaxyFields}`, (route) =>
+      route.fulfill({ json: field.galaxies }),
+    );
     await page.route(`**${manifest.asteroids}`, (route) =>
       route.fulfill({ json: field.asteroids }),
     );
@@ -300,7 +302,7 @@ async function capture() {
   const dist = "/dist";
   const read = (url) => JSON.parse(readFileSync(join(dist, url), "utf8"));
   const manifest = read("art/manifest.json");
-  const galaxies = read(manifest.galaxies);
+  const galaxies = read(manifest.galaxyFields);
   const data = {
     asteroids: read(manifest.asteroids),
     galaxies,

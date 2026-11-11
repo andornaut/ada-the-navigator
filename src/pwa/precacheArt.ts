@@ -1,5 +1,6 @@
-// The public directory holding every file the game loads at runtime: the art manifest and what it
-// names, the UI subset under ui/ and the files the DOM UI links from its styles and buttons.
+// The public directory holding every file the game loads at runtime: the core art manifest, each
+// galaxy manifest it maps and what they name, the UI subset under ui/ and the files the DOM UI
+// links from its styles and buttons.
 export const ART_DIRECTORY = "art";
 
 // App icons reach the precache through the page's links and the web app manifest; the icon
@@ -7,8 +8,9 @@ export const ART_DIRECTORY = "art";
 const NOT_PRECACHED: readonly string[] = ["app-icon/"];
 
 // The URLs of the art the service worker precaches, given each file's path under ART_DIRECTORY
-// with forward slashes. Every runtime art file is listed, so the art manifest, the UI manifest and
-// the DOM UI need no list of their own, and an added file is precached by the next build.
+// with forward slashes. Every runtime art file is listed, so the core and galaxy manifests, the UI
+// manifest and the DOM UI need no list of their own, and an added file is precached by the next
+// build.
 export function artUrls(files: readonly string[]): string[] {
   return files
     .filter((file) => !NOT_PRECACHED.some((prefix) => file.startsWith(prefix)))

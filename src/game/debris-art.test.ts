@@ -3,10 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debris-art.ts";
+import { ART_MANIFEST } from "./test-art-manifest.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
-const manifest = json("/art/manifest.json") as {
+const manifest = ART_MANIFEST as unknown as {
   assets: { id: string }[];
   cartwheelDebris: string;
   whirlpoolDebris: string;

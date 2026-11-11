@@ -1,8 +1,7 @@
 import type { SectorId } from "../data/types.ts";
-import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame, enemyPartFrame } from "./enemy-art.ts";
+import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame } from "./enemy-art.ts";
 import { readShipJets } from "./ship-jets.ts";
 import type { StationArt, StationFrame } from "./station-art.ts";
-import { whaleFrameAsset } from "./whale-art.ts";
 
 // Art's Cartwheel hub, mooring buoy, story craft and props (art/cartwheel.md,
 // art/cartwheel-props.md), and which galaxy's flights load each asset.
@@ -24,24 +23,19 @@ export interface CartwheelAsset
 export const STORY_CRAFT_FRAME = /^craft-([a-z][a-z0-9]*)-(\d+)$/;
 
 /**
- * The galaxy whose flights load an asset, or null for the boot set: Cartwheel's hub, buoy,
- * story craft, ore nugget, traveling debris and claim jumper hulls, and Whirlpool's whale
- * frames and river debris. Claim part frames load when their craft first appears. Cartwheel's
- * stranded craft load with it, for its rescue jobs.
+ * The galaxy whose manifest lists an asset, or null for the core manifest's boot set. Cartwheel's
+ * and Whirlpool's entries load on that galaxy's first flight; Sunflower's load with the boot set.
  */
-export function galaxyAsset(asset: CartwheelAsset): SectorId | null {
-  if (
-    asset.id.startsWith("craft-stranded-") ||
-    asset.destination === "hub" ||
-    asset.id.startsWith("mooring-buoy-") ||
-    STORY_CRAFT_FRAME.test(asset.id) ||
-    asset.id === "ore-nugget" ||
-    asset.id.startsWith("cartwheel-debris-") ||
-    (asset.family === "claim" && !enemyPartFrame(asset))
-  ) {
-    return 2;
+export function galaxyAsset(
+  galaxies: ReadonlyMap<SectorId, { readonly assets: readonly { readonly id: string }[] }>,
+  asset: { readonly id: string },
+): SectorId | null {
+  for (const [sector, galaxy] of galaxies) {
+    if (galaxy.assets.some(({ id }) => id === asset.id)) {
+      return sector;
+    }
   }
-  return whaleFrameAsset(asset) || asset.id.startsWith("whirlpool-") ? 3 : null;
+  return null;
 }
 
 /** Both blink frames of a fixed-facing prop, or undefined to keep its placeholder. */
