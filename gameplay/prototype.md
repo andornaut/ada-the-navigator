@@ -65,7 +65,8 @@ galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
 background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
 number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. Galaxy names and flavor text are pending. Unlocked galaxies remain
+galaxy one is unlocked. Galaxies are named after real galaxies' nicknames:
+Sunflower (one), Cartwheel (two), Whirlpool (three) and Black Eye (four). Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate
 exit from space.
 

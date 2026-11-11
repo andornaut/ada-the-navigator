@@ -221,6 +221,12 @@ Objectives, in order:
 - Storybook pages: Next, Back, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Jump, Next, Back. A locked galaxy's name and
   text: ...
+- Galaxy names and flavor text:
+  - Galaxy 1, Sunflower: "Scattered outposts grow, build and salvage, each on
+    their own."
+  - Galaxy 2, Cartwheel: "A busy mining hub where every rock is worth something."
+  - Galaxy 3, Whirlpool: "Swirling debris, and a song somewhere in the dark."
+  - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
 - Travel card: Discovered destinations. With none yet: No destinations mapped yet.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
