@@ -383,8 +383,10 @@ line, and the last tap closes the conversation. A conversation has one to three
 lines, and only one shows at a time, with a cooldown between ordinary
 conversations. Hints are always on.
 
-Conversations come from data, each with a trigger and a priority: warnings, then
-Penny, then first-flight lessons, then lore. Triggers include the first flight's
+Conversations come from data, each with a trigger and a priority: warnings
+(including the General's broadcasts), then notices, then first-flight lessons, then
+Penny, then lore. A higher priority interrupts a lower one, which resumes after it
+if still relevant. Triggers include the first flight's
 lessons (each shown once, skipped when the player has already done the action),
 a first arrival in a galaxy, meeting each alien group, a newly mapped destination
 or station, a capital ship sighting, a low shield (once per fight), drones
@@ -395,7 +397,7 @@ asks questions and reacts. Seen conversations are saved so they do not repeat.
 Penny rides in the second seat and never barks aloud. When an undiscovered point
 of interest comes within a provisional 900 world units of Ada, even off screen,
 one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
-once per point of interest. Exact lines are in
+once per point of interest, at most once per 60 seconds (provisional). Exact lines are in
 [the player copy](prototype-copy.md#in-flight-conversations).
 
 ## Space encounters and feedback
