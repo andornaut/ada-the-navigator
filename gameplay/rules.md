@@ -153,6 +153,11 @@ better piloting skills. No instant apology or friendship is required. Subsequent
 visits preserve the changed relationships. The hub sells the galaxy's holodisk for
 a provisional 300 Stardust.
 
+Cartwheel's space is an industrial ring of mining platforms in rust and ember
+tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
+run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
+quickly from Sunflower; the roster is in [Ships](ships.md#galaxy-two-roster).
+
 ### Galaxy three: whale family
 
 Ada loves her dog but resents walking it and overlooks its dependence on her for
@@ -171,6 +176,39 @@ Travel destination. Each galaxy's chapter completes only once its holodisk is
 recovered. No persistent
 companion-following AI or escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
 is expressed through her actions rather than a speech.
+
+Whirlpool's space is teal and full of swirling debris. Gadget's hunter drones
+chase the whale family; the roster is in [Ships](ships.md#galaxy-three-roster).
+Its signature mechanic is space currents, flow fields that push every ship in
+them. All values are provisional tuning:
+
+- A current is an open curved path 3000 to 8000 world units long and 300 to 500
+  wide. Its flow is strongest at the centre line, a peak of 70 world units per
+  second (0.35 of Ada's 200 base top speed), falls to zero at its edges and fades
+  out over the last 600 world units at each end.
+- Currents and their debris rivers are placed by the galaxy's seed, so they stay
+  in the same places on every flight, like stations. They cover about a fifth of
+  open space, never overlap or close into loops, and keep 800 world units clear
+  of stations, story destinations, landmarks and quantum jump arrivals. Asteroids
+  are not placed in currents, and chunk generation keeps them clear.
+- The flow adds to a ship's own velocity as drift, outside its physics and speed
+  cap: riding a current gives Ada up to 270 world units per second, and pushing
+  against its centre still makes 130. Ada steers, docks and fights normally in a
+  current.
+- Currents never trap Ada. The peak flow stays well below her slowest top speed,
+  towing included (130), every current ends in open space, and she can always
+  leave across it.
+- Small enemy craft drift fully. Frigates, capitals, platforms, stations and
+  whales do not drift. Inactive retained ships do not drift.
+- Projectiles, missiles and beams ignore currents, so aim stays readable.
+- Stardust and weapon pickups drift with the flow until they leave the current;
+  the tractor beam pulls them as usual.
+- A debris river is traveling debris that follows its current at the local flow
+  speed, entering at one end and leaving at the other. This is Whirlpool's one
+  exception to constant-velocity moving obstacles; debris still never chases Ada.
+  About a third of currents carry one.
+- Currents show as flowing teal streaks whose direction reads at a glance,
+  drawn as a placeholder until Art's streak art lands.
 
 ### Galaxy four: deferred conclusion
 
@@ -418,7 +456,7 @@ lost carried quest items remain replaceable.
 Additional mining deposits provide recorded totals and achievement progress.
 Stardust and station shops are described in [Economy](economy.md). Achievements emphasize story, exploration and galaxy
 activities, with none requiring missable dialogue choices. [Quests](quests.md)
-defines achievements; repeatable-task content remains to be specified.
+defines achievements and [repeatable activities](quests.md#repeatable-activities).
 
 ## Astra and Penny in flight
 

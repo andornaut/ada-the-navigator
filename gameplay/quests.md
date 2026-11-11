@@ -1,6 +1,6 @@
 # Quests
 
-Station jobs, the landmarks surveys chart and achievements. Every number in this
+Station jobs, the landmarks surveys chart, repeatable activities and achievements. Every number in this
 document is provisional tuning. [Economy](economy.md) defines Stardust pacing and
 stations, and [the version one rules](rules.md) define direction indicators,
 Penny's sense, conversations, carried items and persistence.
@@ -185,6 +185,48 @@ flight. The Map and survey titles use these names.
 | Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker  |
 | Whirlpool | Tide Nebula, Bubble Cloud, Swirl Haze, Kelp Glow        | Sunken Skimmer, Coral Hull, Driftwood Hull, Old Diving Bell          | Song Buoy, Wave Light, Shell Beacon, Current Marker |
 | Black Eye | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker      |
+
+## Repeatable activities
+
+Once a galaxy's chapter is complete, its story places offer a repeatable
+activity through Talk, with Accept and Not now. An activity takes the galaxy's
+one optional task slot, shared with station jobs: while it is active, that
+galaxy's job boards offer no job, and an active job keeps the activity from
+being offered. An accepted activity, its galaxy and its progress persist across
+flights like a job; a supply run's carried item uses the job carried-item slot.
+It pays at completion with the job completion notice and can be repeated without
+limit. Black Eye has no repeatable activity yet.
+
+| Galaxy    | Activity        | Offered by          | Goal                                                     | Reward |
+| --------- | --------------- | ------------------- | -------------------------------------------------------- | -----: |
+| Sunflower | Supply run      | Any of the outposts | Carry supplies to one of the other two outposts.         |     15 |
+| Cartwheel | Mining contract | The hub             | Deposit 30 resources at the hub; partial loads count.    |     35 |
+| Whirlpool | Guide a calf    | The whale family    | Lead a whale calf 5000 to 8000 world units home to them. |     50 |
+
+- **Supply run**: uses the job carried-item slot and the delivery rules.
+- **Mining contract**: counts only deposits made after accepting. At most half of
+  ore fields have a platform guarding them, so unguarded ore is always available.
+- **Guide a calf**: the calf waits at a seeded spot with at least one current
+  between it and its family. Within 400 world units of Ada it follows her,
+  moving like `chase` without firing, stopping 120 short, at most 0.8 of Ada's
+  base top speed. Beyond 700 it waits. It drifts with currents like Ada. One
+  hunter pack waits along the way. The calf takes no damage, and drones ignore
+  it. Reaching within 400 world units of the family completes the activity.
+  Return home or a shield-depletion jump returns the calf to its start.
+
+Activity lines:
+
+- Grower: "Fresh food for the salvagers. Would you carry it?"
+- Workshop: "These repaired tools belong to the growers. Could you take them?"
+- Salvager: "We found parts the workshop needs. Will you bring them?"
+- Station: "Contract open: deposit 30 resources here. Partial loads count."
+- Whale family: "One of our young ones swam off to play. Could you guide them
+  home? Stay close. They follow friends."
+
+| Key            | Text    |
+| -------------- | ------- |
+| `activityTake` | Accept  |
+| `activitySkip` | Not now |
 
 ## Achievements
 

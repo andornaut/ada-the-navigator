@@ -46,11 +46,13 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | `retaliator`  |                 2 |         0.45 |                  1.20 |             1.50 |          0.90 |             0.35 |
 | `frigate`     |                 4 |          0.4 |                   1.5 |              2.0 |           1.2 |             0.40 |
 | `capital`     |                 5 |          0.2 |                   2.5 |              3.0 |           2.0 |             0.50 |
+| `platform`    |                 3 |            0 |                     – |                – |             – |             0.30 |
 
 Ada's ship has noticeable momentum: it takes about a second to reach full speed,
 coasts for over a second when the stick is released, and swings wide on sharp
 turns. Small enemies are nimble, the interceptor is fast but carries its momentum
 through overshooting passes, and larger ships are progressively heavier.
+The `platform` is fixed in place and only turns its turrets.
 
 ## Behaviours
 
@@ -95,9 +97,74 @@ Galaxy one has its own playtest roster.
 Weights choose each galaxy-one encounter; the group size range replaces the
 shared range for that archetype. Galaxy one enemies notice Ada from 20% farther
 away and fire 15% more often than the base catalog. Encounters come about 20%
-more often. Values not listed keep the current catalog values. Other galaxies
-keep the current shared encounter table until they are themed. All values are
+more often. Values not listed keep the current catalog values. Cartwheel and
+Whirlpool have their own rosters below, in the same format; Black Eye keeps the
+current shared encounter table until its roster is specified. All values are
 provisional playtest tuning.
+
+## Galaxy two roster
+
+Cartwheel's drones are claim jumpers: they gather at ore fields and hit and run
+any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
+
+| Archetype      | Encounter       | Group | Weight |  HP | Behaviours                                                                      |
+| -------------- | --------------- | ----: | -----: | --: | ------------------------------------------------------------------------------- |
+| `swarm`        | Pack            |   5–7 |   0.25 |   2 | `swarm`; packs `flee` after losses                                              |
+| `fighter`      | Claim jumpers   |   2–4 |   0.40 |   5 | `hitAndRun`; a group shares pack morale                                         |
+| `interceptor`  | Solo or pair    |   1–2 |   0.12 |   3 | `hitAndRun`                                                                     |
+| `retaliator`   | Solo            |     1 |   0.10 |   9 | `retaliate`, then `chase`; three-bolt spread                                    |
+| `frigate`      | Solo            |     1 |   0.10 |  12 | `siege`; size 4 Ada widths                                                      |
+| Capital battle | Group           |     1 |   0.03 |   – | A `capital` with 4 `escort` fighters                                            |
+| `platform`     | Ore-field guard |     1 |      – |  12 | `siege` at speed 0: two turrets, 6 HP each, both required; placed, not weighted |
+
+An ore field is a seeded cluster of 6 to 10 resource-bearing rocks about 900
+world units across, placed like stations: at least 3000 world units apart and
+1500 from the hub, stations and quantum jump arrivals. Half of claim-jumper
+groups are placed at ore fields. Cartwheel enemies notice Ada from 30% farther
+away and fire 30% more often than the base catalog, and encounters come about
+30% more often.
+
+The `platform` is Cartwheel's one new archetype: fixed guards need a ship that
+holds its position, and every existing archetype moves. It reuses `siege`, whose
+turrets fire while it advances, with no speed to advance.
+
+- **Placement:** one platform stands at the edge of at most half of the ore
+  fields, chosen by the seed, so unguarded ore is always available. Its hull
+  keeps a seeded fixed facing.
+- **Parts:** two turrets, 6 HP each, both required; the hull has no HP of its
+  own. Hit areas, turret mounts and muzzles come from Art's drawn hardpoints,
+  as for the frigate and capital, and the hull's hit circle follows the size
+  column. Shots on the hull outside a turret do no damage, as on other multipart
+  ships.
+- **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
+  a two-bolt burst, 0.15 seconds between bolts, every 1.4 seconds while Ada is
+  within 520 world units, using the base enemy bolt. It stops firing beyond 520
+  and never pursues.
+- **State:** retained like a frigate, so disabled turrets and a destroyed
+  platform persist until the galaxy regenerates. Ada bounces off it on contact.
+  It drops 6 Stardust and has the frigate's weapon drop chance.
+
+## Galaxy three roster
+
+Whirlpool's drones are hunters tracking the whale family, which knows where the
+holodisk drifted. They chase rather than hit and run.
+
+| Archetype      | Encounter    | Group | Weight |  HP | Behaviours                                   |
+| -------------- | ------------ | ----: | -----: | --: | -------------------------------------------- |
+| `swarm`        | Pack         |   5–8 |   0.25 |   3 | `swarm`; packs `flee` after losses           |
+| `fighter`      | Hunting pack |   3–4 |   0.30 |   5 | `chase`; a group shares pack morale          |
+| `interceptor`  | Solo or pair |   1–2 |   0.15 |   4 | `chase`                                      |
+| `retaliator`   | Solo         |     1 |   0.10 |  10 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`      | Solo         |     1 |   0.15 |  12 | `siege`; size 4 Ada widths                   |
+| Capital battle | Group        |     1 |   0.05 |   – | A `capital` with 4 `escort` fighters         |
+
+Hunting packs are placed near whale destinations and along the calf-guiding
+route. Hunters never target or damage whales; their shots pass through them.
+Space currents push small craft and leave frigates and capitals unaffected (see
+[the version one rules](rules.md#galaxy-three-whale-family)). Whirlpool
+enemies notice Ada from 40% farther away and fire 45% more often than the base
+catalog, and encounters come about 35% more often. Whirlpool adds no new
+archetype: currents change how the existing ones fight.
 
 ## Presentation
 
