@@ -4,13 +4,14 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, readResourceRocks } from "../data/asteroid-catalog.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
-import { STORY_SHIP_CRAFT } from "../data/story-ships.ts";
+import { DONATION_PROJECTS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import {
   type CartwheelAsset,
   craftArt,
   craftFrameSets,
   galaxyAsset,
+  HUB_PROJECT_ART,
   hubLayers,
   readBuoyArt,
   readHubArt,
@@ -72,6 +73,16 @@ describe("Cartwheel art", () => {
     expect(hubLayers(hub, true, true)).toEqual([hub.worn, hub.bay]);
     expect(hubLayers(hub, false, true)).toEqual([hub.repaired, hub.bay]);
     expect(readHubArt(assets.filter((asset) => asset.variant !== "worn"))).toBeUndefined();
+  });
+
+  it("maps every Cartwheel project id to an art key on the hub's entries", () => {
+    const keys = new Set(
+      assets.flatMap((asset) => (asset.destination === "hub" && asset.project) || []),
+    );
+    expect(Object.keys(HUB_PROJECT_ART).sort()).toEqual([...DONATION_PROJECTS[2]].sort());
+    for (const id of DONATION_PROJECTS[2]) {
+      expect(keys.has(HUB_PROJECT_ART[id as keyof typeof HUB_PROJECT_ART])).toBe(true);
+    }
   });
 
   it("reads the mooring buoy's blink pair", () => {

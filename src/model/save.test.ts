@@ -536,21 +536,21 @@ describe("asteroid save boundary", () => {
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
     saved.flight!.storyScene = { at: 3, id: "blocked", lineDue: false };
-    saved.progress[2].funded = ["hub-repairs"];
+    saved.progress[2].funded = ["hubRepairs"];
     saved.progress[2].replayScene = "docking";
     const restored = restoreSave(JSON.stringify(saved))!;
     expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked", lineDue: false });
-    expect(restored.progress[2].funded).toEqual(["hub-repairs"]);
+    expect(restored.progress[2].funded).toEqual(["hubRepairs"]);
     expect(restored.progress[2].replayScene).toBe("docking");
     const replay = JSON.parse(JSON.stringify(saved)) as { progress: Record<number, unknown> };
     Object.assign(replay.progress[2]!, { replayScene: "duel" });
     expect(restoreSave(JSON.stringify(replay))).toBeNull();
     for (const [scene, funded] of [
-      [{ at: 3, id: "duel", lineDue: false }, ["hub-repairs"]],
-      [{ at: -1, id: "blocked", lineDue: false }, ["hub-repairs"]],
-      [{ at: 3, id: "blocked" }, ["hub-repairs"]],
-      [{ at: 3, id: "blocked", lineDue: false }, ["nursery-beacon"]],
-      [{ at: 3, id: "blocked", lineDue: false }, ["hub-repairs", "hub-repairs"]],
+      [{ at: 3, id: "duel", lineDue: false }, ["hubRepairs"]],
+      [{ at: -1, id: "blocked", lineDue: false }, ["hubRepairs"]],
+      [{ at: 3, id: "blocked" }, ["hubRepairs"]],
+      [{ at: 3, id: "blocked", lineDue: false }, ["nurseryBeacon"]],
+      [{ at: 3, id: "blocked", lineDue: false }, ["hubRepairs", "hubRepairs"]],
     ] as const) {
       const bad = JSON.parse(JSON.stringify(saved)) as {
         flight: { storyScene: unknown };

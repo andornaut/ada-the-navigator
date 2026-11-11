@@ -146,7 +146,7 @@ describe("Cartwheel story ships", () => {
 
   it("keeps the hub worn until Hub repairs is funded", () => {
     expect(hubWorn({})).toBe(true);
-    expect(hubWorn({ funded: ["second-docking-bay"] })).toBe(true);
-    expect(hubWorn({ funded: ["hub-repairs"] })).toBe(false);
+    expect(hubWorn({ funded: ["dockingBay"] })).toBe(true);
+    expect(hubWorn({ funded: ["hubRepairs"] })).toBe(false);
   });
 });

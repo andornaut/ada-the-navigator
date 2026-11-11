@@ -7,9 +7,9 @@ import type { SectorId } from "./types.ts";
  * galaxy's progress changes that galaxy's world.
  */
 export const DONATION_PROJECTS: Readonly<Record<SectorId, readonly string[]>> = {
-  1: ["greenhouse-ring", "workshop-crane", "salvage-beacons"],
-  2: ["second-docking-bay", "hub-repairs"],
-  3: ["nursery-beacon", "current-buoys"],
+  1: ["greenhouseRing", "workshopCrane", "salvageBeacons"],
+  2: ["dockingBay", "hubRepairs"],
+  3: ["nurseryBeacon", "currentBuoys"],
 };
 
 export type StoryShipId = "miner" | "visitor-1" | "visitor-2" | "blocker";

@@ -57,6 +57,15 @@ function readBlink<T extends StationFrame>(
   return { frameMs: a.frameMs!, frames: [a, b] };
 }
 
+/**
+ * Cartwheel's project ids, as saved progress stores them, to the `project` keys on Art's hub
+ * entries (art/cartwheel.md "Placement anchors").
+ */
+export const HUB_PROJECT_ART = {
+  dockingBay: "second-docking-bay",
+  hubRepairs: "hub-repairs",
+} as const satisfies Readonly<Record<string, string>>;
+
 export interface HubArt<T extends StationFrame = StationFrame> {
   readonly bay?: StationArt<T>;
   readonly repaired?: StationArt<T>;
@@ -77,8 +86,12 @@ export function readHubArt<T extends CartwheelAsset>(assets: readonly T[]): HubA
   if (!worn) {
     return undefined;
   }
-  const repaired = pair((asset) => asset.variant === "repaired");
-  const bay = pair((asset) => asset.overlay === true && asset.project === "second-docking-bay");
+  const repaired = pair(
+    (asset) => asset.variant === "repaired" && asset.project === HUB_PROJECT_ART.hubRepairs,
+  );
+  const bay = pair(
+    (asset) => asset.overlay === true && asset.project === HUB_PROJECT_ART.dockingBay,
+  );
   return { worn, ...(repaired ? { repaired } : {}), ...(bay ? { bay } : {}) };
 }
 
