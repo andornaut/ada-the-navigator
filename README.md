@@ -67,6 +67,23 @@ Flight snapshots are stored locally in this browser. If browser storage is
 unavailable, play continues with a nonblocking save warning. The warning clears
 after a successful write; failed writes preserve the last persisted snapshot.
 
+## Offline and install
+
+The production build writes `/sw.js`, a service worker scoped to `/` that
+precaches the game page at `/play/`, the build output it loads, the web app
+manifest and its icons, and every file under `public/art/` except `app-icon/`.
+The precache version is a hash of that content, so any change installs a new
+worker. Hashed `/assets/` files are served cache-first; the page, art and
+manifest are network-first, so an online load shows the latest deploy and an
+offline load uses the cached copy. A first visit registers the worker once the
+game has drawn. A new worker takes over on a later launch, after every page the
+old one controls has closed. The landing page at `/` is not precached.
+
+Both pages link `/manifest.webmanifest`, which installs the game at `/play/`.
+`src/pwa/index.ts` exposes the install state, its change listener, the install
+prompt and the browser whose own menu installs the game (iOS and Firefox for
+Android). The dev server registers no service worker.
+
 ## Development
 
 Use Node.js 24.22.2 (or supported Node.js 26.12.0+). Install the locked dependencies and start Vite:

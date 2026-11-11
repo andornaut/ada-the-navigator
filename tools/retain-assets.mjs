@@ -35,7 +35,7 @@ const source = fileURLToPath(
   new URL("../.cloudflare/output/v0/workers/default/assets/", import.meta.url),
 );
 const target = fileURLToPath(new URL("../dist/", import.meta.url));
-for (const page of ["index.html", "play/index.html", "manifest.webmanifest"]) {
+for (const page of ["index.html", "play/index.html", "manifest.webmanifest", "sw.js"]) {
   if (!statSync(join(source, page)).isFile()) {
     throw new Error(`Cloudflare build must produce the asset: ${page}`);
   }
