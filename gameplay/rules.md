@@ -9,7 +9,7 @@ balance values are provisional and must be tuned through playtesting.
 Version one is the game now being built, with four galaxies; anything later
 belongs in [Ideas](ideas.md).
 The fourth galaxy, Black Eye, holds the finale; its home chapter is to be
-designed.
+designed. Station jobs are in [Quests](quests.md).
 
 Space uses authored sprites for ships, stations, outposts, pickups and asteroids,
 with simple placeholders only where art has not landed yet.

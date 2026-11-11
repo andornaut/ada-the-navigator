@@ -48,6 +48,8 @@ one, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
 Ada already owns gives one pack of its ammunition instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
+Station jobs also pay Stardust; see [Quests](quests.md#rewards).
+
 ## Stations
 
 Stations are rare points of interest, each with a shop. They are placed by the
@@ -60,7 +62,8 @@ area. The dock is the station sprite's visible entrance. Ada docks when her
 hull circle overlaps the mouth circle: half the drawn mouth width in world units,
 scaled by a forgiving `dockForgiveness` of 3.
 Undocking places Ada at rest just outside the dock, so flying back in docks again. Flying into its dock opens the station card, which pauses action like a
-conversation. The card shows the Stardust balance, a welcome line, Undock and Shop.
+conversation. The card shows the Stardust balance, a welcome line, Undock, Shop and Jobs; Jobs
+opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
 undock. Station quests are part of the station concept; their content is
 not yet designed, so the station card shows no quest board until it is.
@@ -199,45 +202,45 @@ The status pill shows the Stardust count as a bare number with en-US grouping
 
 The shield shop row reuses the existing `shield` label.
 
-| Key                 | Text                                                               |
-| ------------------- | ------------------------------------------------------------------ |
-| `stardust`          | Stardust                                                           |
-| `stardustAmount`    | {amount} Stardust                                                  |
-| `station`           | Station                                                            |
-| `shop`              | Shop                                                               |
-| `shopWeapons`       | Weapons                                                            |
-| `shopShip`          | Ship                                                               |
-| `owned`             | Owned                                                              |
-| `level`             | Level {level} of {max}                                             |
-| `confirmTitle`      | Buy {name}?                                                        |
-| `confirmLeft`       | {amount} left after                                                |
-| `confirmBuy`        | Buy                                                                |
-| `confirmCancel`     | Cancel                                                             |
-| `projects`          | Projects                                                           |
-| `donate`            | Donate                                                             |
-| `projectFunded`     | Funded                                                             |
-| `ammoPack`          | {weapon} ammo                                                      |
-| `ammoPackCount`     | ×{count}                                                           |
-| `outOfAmmo`         | Out of ammo.                                                       |
-| `projectProgress`   | {paid} of {price}                                                  |
-| `donateTitle`       | Donate to {name}?                                                  |
-| `donateStillNeeded` | {amount} still needed after                                        |
-| `undock`            | Undock                                                             |
-| `stationWelcome`    | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
-| `inUse`             | In use                                                             |
-| `paintClassic`      | Classic                                                            |
-| `paintCobalt`       | Cobalt                                                             |
-| `paintSeafoam`      | Seafoam                                                            |
-| `paintGraphite`     | Graphite                                                           |
-| `paintIris`         | Iris                                                               |
-| `aboutHeavyMissile` | One slow missile with a big blast.                                 |
-| `aboutRapidMissile` | Quick missiles with a small blast.                                 |
-| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                   |
-| `aboutScattershot`  | A shotgun spread, strongest up close.                              |
-| `aboutPhaser`       | An instant beam that strikes the first thing in its path.          |
-| `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
-| `shieldRecharge`    | Shield recharge                                                    |
-| `engineTuning`      | Engine tuning                                                      |
-| `tractorBeam`       | Tractor beam                                                       |
-| `weaponUpgrade`     | {weapon} upgrade                                                   |
-| `shipPaint`         | Ship paint                                                         |
+| Key                 | Text                                                             |
+| ------------------- | ---------------------------------------------------------------- |
+| `stardust`          | Stardust                                                         |
+| `stardustAmount`    | {amount} Stardust                                                |
+| `station`           | Station                                                          |
+| `shop`              | Shop                                                             |
+| `shopWeapons`       | Weapons                                                          |
+| `shopShip`          | Ship                                                             |
+| `owned`             | Owned                                                            |
+| `level`             | Level {level} of {max}                                           |
+| `confirmTitle`      | Buy {name}?                                                      |
+| `confirmLeft`       | {amount} left after                                              |
+| `confirmBuy`        | Buy                                                              |
+| `confirmCancel`     | Cancel                                                           |
+| `projects`          | Projects                                                         |
+| `donate`            | Donate                                                           |
+| `projectFunded`     | Funded                                                           |
+| `ammoPack`          | {weapon} ammo                                                    |
+| `ammoPackCount`     | ×{count}                                                         |
+| `outOfAmmo`         | Out of ammo.                                                     |
+| `projectProgress`   | {paid} of {price}                                                |
+| `donateTitle`       | Donate to {name}?                                                |
+| `donateStillNeeded` | {amount} still needed after                                      |
+| `undock`            | Undock                                                           |
+| `stationWelcome`    | Welcome aboard. Trade your Stardust, or take a job.              |
+| `inUse`             | In use                                                           |
+| `paintClassic`      | Classic                                                          |
+| `paintCobalt`       | Cobalt                                                           |
+| `paintSeafoam`      | Seafoam                                                          |
+| `paintGraphite`     | Graphite                                                         |
+| `paintIris`         | Iris                                                             |
+| `aboutHeavyMissile` | One slow missile with a big blast.                               |
+| `aboutRapidMissile` | Quick missiles with a small blast.                               |
+| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                 |
+| `aboutScattershot`  | A shotgun spread, strongest up close.                            |
+| `aboutPhaser`       | An instant beam that strikes the first thing in its path.        |
+| `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved. |
+| `shieldRecharge`    | Shield recharge                                                  |
+| `engineTuning`      | Engine tuning                                                    |
+| `tractorBeam`       | Tractor beam                                                     |
+| `weaponUpgrade`     | {weapon} upgrade                                                 |
+| `shipPaint`         | Ship paint                                                       |

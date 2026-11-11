@@ -393,8 +393,7 @@ Black Eye:
   saved.
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again."
-- Station welcome: Welcome aboard. Trade your Stardust for weapons and ship
-  upgrades.
+- Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
 - Completed story: Chapter complete. You can keep exploring.
