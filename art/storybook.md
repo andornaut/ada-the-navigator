@@ -100,17 +100,20 @@ The glow plays on the press that leaves Ada's room for the cockpit: the page
 change from an `adaRoom` page to the ship scene's first page (in the prologue,
 "Touch the glow."; at boarding, the room narration's press). Data:
 [story-transition.json](../public/art/story-transition.json), linked from the
-root manifest as `storyTransition`; key `rockGlow`.
+root manifest as `storyTransition`. Key `rockGlow` ends on `cockpit` (the
+prologue); `rockGlowSeated` is identical but ends on `cockpit-seated`
+(boarding). The game picks the entry whose final background matches the next
+page's.
 
 - `from` is the page's background, `story-ada-room`. On the press the story
   panel hides, then `steps` play in order.
 - Each step cross-fades linearly from the previous image to its `background`
   over `fadeMs`, then holds for `holdMs`. A `fadeMs` of 0 is a cut.
 - Steps: `story-ada-room-glow-1` (160 ms), `story-ada-room-glow-2` (160 ms),
-  `story-ada-room-glow-3` (200 ms, hold 240 ms), then a cut to `cockpit`, the
+  `story-ada-room-glow-3` (200 ms, hold 240 ms), then a cut to the entry's
   cockpit background. The ship scene's first page panel then appears.
 - `reducedMotion` replaces `steps`: one 400 ms cross-fade from
-  `story-ada-room` to `cockpit`, with no glow frames.
+  `story-ada-room` to the entry's cockpit background, with no glow frames.
 
 The glow frames are `story-ada-room` with the rock's glow grown to a third, two
 thirds and all of the room: 32 nested ellipses (height 0.6 of width) in

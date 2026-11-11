@@ -602,7 +602,7 @@ function park(P: Palette): Scene {
   return s;
 }
 
-/* "Pick up the rock." transition: the rock's glow washes Ada's room, then the cockpit */
+/* Rock glow transition: the rock's glow washes Ada's room, then the cockpit */
 
 // Glow amounts of the transition frames; 1 is the approved full wash.
 const GLOW = [1 / 3, 2 / 3, 1] as const;
@@ -614,18 +614,21 @@ const step = (background: string, fadeMs: number, holdMs: number) => ({
   fadeMs,
   holdMs,
 });
+// The same glow into either cockpit background: empty in the prologue, seated at boarding.
+const rockGlow = (cockpit: string) => ({
+  from: "story-ada-room",
+  steps: [
+    step("story-ada-room-glow-1", 160, 0),
+    step("story-ada-room-glow-2", 160, 0),
+    step("story-ada-room-glow-3", 200, 240),
+    step(cockpit, 0, 0),
+  ],
+  reducedMotion: [step(cockpit, 400, 0)],
+});
 export const TRANSITION = {
   version: 1,
-  rockGlow: {
-    from: "story-ada-room",
-    steps: [
-      step("story-ada-room-glow-1", 160, 0),
-      step("story-ada-room-glow-2", 160, 0),
-      step("story-ada-room-glow-3", 200, 240),
-      step("cockpit", 0, 0),
-    ],
-    reducedMotion: [step("cockpit", 400, 0)],
-  },
+  rockGlow: rockGlow("cockpit"),
+  rockGlowSeated: rockGlow("cockpit-seated"),
 };
 
 /* Outputs */
