@@ -23,8 +23,8 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const VIEW = { height: 360, width: 720 };
 // A fixed world per galaxy, so a re-run captures the same frame.
 const SEED = 1;
-// The ship's offset from the framed station in world units: the station draws 80 logical px left
-// of the ship, which stays at the view's centre.
+// The ship's offset from the framed destination in world units: the destination draws 80 logical
+// px left of the ship, which stays at the view's centre.
 const SHIP_OFFSET = { x: 40, y: -40 };
 // The hostile and drifting kinds a capture leaves out, so nothing moves between runs.
 const MOVING = ["debris", "enemy", "hazard"];
@@ -117,27 +117,22 @@ function serve(dist) {
   });
 }
 
-// CLEANUP (added 2026-11-11): every capture frames the nearest station on a field without rocks;
-// reframe each on its galaxy's own outposts or landmark, with field mass, once the asteroid
-// renderer lands, and recapture.
-// A save in flight in galaxy `number` with the ship beside its station nearest the start, or, for
-// a galaxy with no flight yet, the base field with no objects at the same framing.
+// CLEANUP (added 2026-11-11): the committed captures predate this framing and the destination
+// art; recapture galaxies one to three with `make previews` once destinations draw as art.
+// A save in flight in galaxy `number` with the ship beside the first destination of its route, or,
+// for a galaxy with no flight yet, the base field with no objects at the same framing.
 // CLEANUP (added 2026-11-11): galaxy four has no flight (SectorId is 1 to 3), so it captures the
 // empty field; re-run this tool once galaxy four has a sector, and drop the empty-field case.
 async function fixture(number) {
   const [
-    { ECONOMY },
-    { GameModel },
+    { GameModel, galaxyRoute },
     { PROTOTYPE },
-    { createFlight, ensureStation },
-    { stationsNear },
+    { createFlight, ensureDestination },
     { playOpening },
   ] = await Promise.all([
-    import("/source/src/data/economy.ts"),
     import("/source/src/model/game.ts"),
     import("/source/src/data/prototype.ts"),
     import("/source/src/model/flight.ts"),
-    import("/source/src/model/stations.ts"),
     import("/source/src/model/test-launch.ts"),
   ]);
 
@@ -155,22 +150,23 @@ async function fixture(number) {
   for (const id of [1, 2, 3]) {
     Object.assign(state.progress[id], { introduced: true, opened: true });
   }
-  // The station site nearest the start, placed with its region generated around it.
-  const site = flyable
-    ? stationsNear(ECONOMY, number, 2 * ECONOMY.station.cellSize, flight.player).sort(
-        (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
-      )[0]
-    : undefined;
-  const station = site
-    ? ensureStation(PROTOTYPE, site.id, flight)
+  // The galaxy's first destination in its route, from the model's data, placed with its
+  // surroundings generated around it; unknown, so it draws no label.
+  const focus = flyable
+    ? ensureDestination(PROTOTYPE, galaxyRoute(number)[0], flight)
     : { x: flight.player.x - SHIP_OFFSET.x, y: flight.player.y - SHIP_OFFSET.y };
-  assert.ok(!flyable || station, `Galaxy ${number} needs a station to frame`);
   flight.objects = flyable ? flight.objects.filter(({ kind }) => !MOVING.includes(kind)) : [];
-  flight.player = { x: station.x + SHIP_OFFSET.x, y: station.y + SHIP_OFFSET.y };
+  // Drift stops, so every run captures the same frame.
+  for (const object of flight.objects) {
+    if (object.velocity) {
+      object.velocity = { x: 0, y: 0 };
+    }
+  }
+  flight.player = { x: focus.x + SHIP_OFFSET.x, y: focus.y + SHIP_OFFSET.y };
   flight.velocity = { x: 0, y: 0 };
-  // The station's screen position: the scene projects world offsets from the ship at the centre.
-  const dx = station.x - flight.player.x;
-  const dy = station.y - flight.player.y;
+  // The focus's screen position: the scene projects world offsets from the ship at the centre.
+  const dx = focus.x - flight.player.x;
+  const dy = focus.y - flight.player.y;
   return {
     focus: { x: VIEW.width / 2 + dx - dy, y: VIEW.height / 2 + (dx + dy) / 2 },
     save: model.save(),
@@ -302,7 +298,7 @@ async function previewGalaxy({ background, browser, galaxies }, galaxy) {
     );
     writeFileSync(`/out/galaxy-${galaxy.id}.png`, Buffer.from(result.tinted, "base64"));
     writeFileSync(`/out/galaxy-${galaxy.id}-locked.png`, Buffer.from(result.locked, "base64"));
-    console.log(`${galaxy.id}: station at ${focus.x},${focus.y}`);
+    console.log(`${galaxy.id}: framed on ${focus.x},${focus.y}`);
   } finally {
     await context.close();
   }

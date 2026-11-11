@@ -44,9 +44,8 @@ export interface GalaxyCard {
 
 /**
  * A galaxy's selector preview (tools/galaxy-previews.mjs): tinted, or the locked greyscale.
- * CLEANUP (added 2026-11-11): the committed captures frame each galaxy's nearest station on a field
- * without rocks; replace them with captures reframed on each galaxy's own outposts or landmark,
- * with field mass, once the asteroid renderer lands, as Black Eye's once galaxy four has a flight.
+ * CLEANUP (added 2026-11-11): the committed captures for galaxies one to three predate the
+ * framing on each route's first destination; recapture them once destinations draw as art.
  */
 export function galaxyPreview(galaxy: Pick<GalaxyCard, "id">, locked: boolean): string {
   return `/previews/galaxy-${galaxy.id}${locked ? "-locked" : ""}.png`;

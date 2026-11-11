@@ -117,12 +117,17 @@ export interface StoryView {
   /** The choices shown: a choice page's, or the optional questions not yet asked. */
   readonly choices: readonly StoryChoice[];
 }
-const first = { 1: "growers", 2: "hub", 3: "whale" } as const;
 const required: Record<SectorId, readonly string[]> = {
   1: ["growers", "workshop", "salvagers", "workshop"],
   2: ["hub", "hub", "miner", "visitors", "hub"],
   3: ["whale", "whale", "whale", "family", "whale"],
 };
+
+/** A galaxy's story destinations in the order its route first visits them; the first opens it. */
+export function galaxyRoute(sector: SectorId): readonly string[] {
+  return [...new Set(required[sector])];
+}
+const first = (sector: SectorId): string => galaxyRoute(sector)[0]!;
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
 /** The conversation line the box shows, with its speaker's name tab and portrait side. */
@@ -714,12 +719,12 @@ export class GameModel {
       ),
     });
     if (!this.current.introduced && f.freshDistance >= this.content.tuning.introFreshDistance) {
-      ensureDestination(this.content, first[f.sector], f);
+      ensureDestination(this.content, first(f.sector), f);
       if (
         f.freshDistance > previousFreshDistance &&
-        !this.current.known.includes(first[f.sector])
+        !this.current.known.includes(first(f.sector))
       ) {
-        this.placePending(first[f.sector]);
+        this.placePending(first(f.sector));
       }
     }
     if (
@@ -742,7 +747,7 @@ export class GameModel {
     }
     this.ensureRequiredApproaches();
     this.ensureWhaleDebris();
-    const intro = first[f.sector];
+    const intro = first(f.sector);
     if (
       !this.current.introduced &&
       this.current.known.includes(intro) &&
