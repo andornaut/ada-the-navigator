@@ -2,7 +2,7 @@ import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" }
 import type { SectorId } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetLayer, readJetLayers } from "./ship-jets.ts";
-import type { BeamGlow, EffectShape } from "./weapon-effects.ts";
+import type { BeamGlow, EffectShape, EllipseShape } from "./weapon-effects.ts";
 
 // Art's light-field rule (art/galaxies.md "Light fields"): on a galaxy whose field is light,
 // play objects sit in ink keylines, effects draw over ink edges and the outermost glows turn to
@@ -120,6 +120,62 @@ export function lightGalaxy(
   sector: SectorId | null | undefined,
 ): boolean {
   return sector !== null && sector !== undefined && light.has(sector);
+}
+
+/** Art's keyline source: the pixels at this alpha or more, so the keyline edge stays crisp. */
+export const KEYLINE_ALPHA = 0.5;
+
+/**
+ * Turns RGBA pixels into the keyline's source silhouette in place: opaque ink where alpha is at
+ * least `threshold`, clear elsewhere.
+ */
+export function thresholdSilhouette(
+  ink: number,
+  threshold: number,
+  pixels: Uint8ClampedArray,
+): void {
+  const cut = threshold * 255;
+  for (let index = 0; index + 3 < pixels.length; index += 4) {
+    const solid = pixels[index + 3]! >= cut;
+    pixels[index] = (ink >> 16) & 255;
+    pixels[index + 1] = (ink >> 8) & 255;
+    pixels[index + 2] = ink & 255;
+    pixels[index + 3] = solid ? 255 : 0;
+  }
+}
+
+/**
+ * A blast's ink edges on a light field: its ring stroke 2 `grow` wider on the same path, and a
+ * `grow` px outline just outside the flash's outermost layer, each at its shape's alpha. The tint
+ * fill, the inner line and the debris take none.
+ */
+export function blastEdges(
+  ink: number,
+  grow: number,
+  shapes: readonly EffectShape[],
+): EffectShape[] {
+  const edges: EffectShape[] = [];
+  let flash: EllipseShape | undefined;
+  for (const shape of shapes) {
+    if (shape.kind !== "ellipse") {
+      continue;
+    }
+    if (shape.part === "ring" && shape.stroke !== undefined) {
+      edges.push(...inkEdges(ink, grow, [shape]));
+    } else if (shape.part === "flash" && (!flash || shape.halfWidth > flash.halfWidth)) {
+      flash = shape;
+    }
+  }
+  if (flash) {
+    edges.push({
+      ...flash,
+      colour: ink,
+      halfHeight: flash.halfHeight + grow / 2,
+      halfWidth: flash.halfWidth + grow / 2,
+      stroke: grow,
+    });
+  }
+  return edges;
 }
 
 /** The ink keyline's eight offsets: a square kernel `grow` px wide. */

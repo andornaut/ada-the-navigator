@@ -83,13 +83,16 @@ import {
   type PartPose,
   selectEnemyFrame,
 } from "./enemy-art.ts";
-import { FeedbackSound, ModelFeedback } from "./feedback.ts";
+import { type FeedbackPulse, FeedbackSound, ModelFeedback } from "./feedback.ts";
 import {
+  blastEdges,
   inkEdges,
+  KEYLINE_ALPHA,
   keylineOffsets,
   LIGHT_FIELD,
   lightGalaxy,
   readLightGalaxies,
+  thresholdSilhouette,
 } from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
@@ -1171,7 +1174,14 @@ export class PrototypeScene extends Phaser.Scene {
         this.reducedMotion,
         flash.age * 1000,
       );
-      this.drawEffect(shapes, this.edges(["blastRing", "blastFlash"], shapes));
+      // A light field edges only the ring stroke and the flash's outline, never the tint.
+      const edged =
+        this.light &&
+        ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind));
+      this.drawEffect(
+        shapes,
+        edged ? blastEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes) : [],
+      );
     }
     // Art's Phaser beam from the nose, and a hit's spark at the contact.
     for (const flash of activeBeamFlashes(flight)) {
@@ -1346,9 +1356,9 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Each keylined sprite's ink keyline: eight ink copies of its frame offset by `keyline` px in
-   * every direction (a square kernel), just beneath it in its depth slot, at its alpha. Keylines
-   * not drawn this frame are destroyed.
+   * Each keylined sprite's ink keyline: eight copies of its frame's ink silhouette offset by
+   * `keyline` px in every direction (a square kernel), just beneath it in its depth slot, at its
+   * alpha. Keylines not drawn this frame are destroyed.
    */
   private drawKeylines(): void {
     const used = new Set<string>();
@@ -1358,21 +1368,23 @@ export class PrototypeScene extends Phaser.Scene {
         continue;
       }
       used.add(key);
+      const silhouette = this.keylineSilhouette(sprite);
+      if (!silhouette) {
+        continue;
+      }
       let copies = this.keylines.get(key);
       if (!copies) {
-        copies = offsets.map(() => this.add.image(0, 0, sprite.texture.key));
+        copies = offsets.map(() => this.add.image(0, 0, silhouette));
         this.keylines.set(key, copies);
       }
       copies.forEach((copy, index) => {
         copy
-          .setTexture(sprite.texture.key, sprite.frame.name)
+          .setTexture(silhouette)
           .setOrigin(sprite.originX, sprite.originY)
           .setDisplaySize(sprite.displayWidth, sprite.displayHeight)
           .setPosition(sprite.x + offsets[index]!.x, sprite.y + offsets[index]!.y)
           .setDepth(sprite.depth - 2e-6)
           .setAlpha(sprite.alpha)
-          .setTint(LIGHT_FIELD.ink)
-          .setTintMode(Phaser.TintModes.FILL)
           .setVisible(true);
       });
     }
@@ -1384,6 +1396,41 @@ export class PrototypeScene extends Phaser.Scene {
         this.keylines.delete(key);
       }
     }
+  }
+
+  /**
+   * A sprite frame's keyline source, made once per frame: opaque ink where the frame's alpha is
+   * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
+   */
+  private keylineSilhouette(sprite: Phaser.GameObjects.Image): string | undefined {
+    const frame = sprite.frame;
+    const key = `keyline:${sprite.texture.key}#${String(frame.name)}`;
+    if (this.textures.exists(key)) {
+      return key;
+    }
+    const width = Math.max(1, frame.cutWidth);
+    const height = Math.max(1, frame.cutHeight);
+    const canvas = this.textures.createCanvas(key, width, height);
+    if (!canvas) {
+      return undefined;
+    }
+    const context = canvas.getContext();
+    context.drawImage(
+      frame.source.image as CanvasImageSource,
+      frame.cutX,
+      frame.cutY,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height,
+    );
+    const pixels = context.getImageData(0, 0, width, height);
+    thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels.data);
+    context.putImageData(pixels, 0, 0);
+    canvas.refresh();
+    return key;
   }
 
   /** On a light field, the ink edges beneath an effect whose kind takes them (`lightField.effects`). */
@@ -1689,70 +1736,84 @@ export class PrototypeScene extends Phaser.Scene {
     };
   }
 
+  /**
+   * Feedback pulses; on a light field each stroke first draws in ink 2 keyline wider on the same
+   * path, its 1 px ink edge.
+   */
   private drawFeedback(): void {
-    for (const pulse of this.feedback.pulses) {
-      // Travel plays the quantum jump; the old teleport ring is retired with it.
-      if (pulse.kind === "teleport" && this.quantum) {
-        continue;
+    const grow = this.light ? LIGHT_FIELD.keyline : 0;
+    for (const edge of grow ? [true, false] : [false]) {
+      for (const pulse of this.feedback.pulses) {
+        this.drawPulse(edge ? grow : 0, pulse);
       }
-      const at = this.project(pulse);
-      const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
-      this.overlay.lineStyle(
-        pulse.kind === "damage" ? 3 : 1.5,
-        pulse.kind === "damage"
+    }
+  }
+
+  /** One feedback pulse, or with `grow` its ink edge: the same strokes `2 grow` wider in ink. */
+  private drawPulse(grow: number, pulse: FeedbackPulse): void {
+    // Travel plays the quantum jump; the old teleport ring is retired with it.
+    if (pulse.kind === "teleport" && this.quantum) {
+      return;
+    }
+    const at = this.project(pulse);
+    const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
+    this.overlay.lineStyle(
+      (pulse.kind === "damage" ? 3 : 1.5) + 2 * grow,
+      grow
+        ? LIGHT_FIELD.ink
+        : pulse.kind === "damage"
           ? this.palette.obstacle
           : pulse.kind === "shield" || pulse.kind === "pickup"
             ? this.palette.active
             : pulse.kind === "hit"
               ? this.palette.weapon
               : this.palette.pointOfInterest,
-        Math.max(0, 1 - pulse.age / 0.65),
-      );
-      if (pulse.kind === "hit" || pulse.kind === "disabled") {
-        for (let i = 0; i < 6; i++) {
-          const angle = (i * Math.PI) / 3;
-          this.overlay.lineBetween(
-            at.x + Math.cos(angle) * radius,
-            at.y + Math.sin(angle) * radius,
-            at.x + Math.cos(angle) * (radius + 7),
-            at.y + Math.sin(angle) * (radius + 7),
-          );
-        }
-        if (pulse.kind === "disabled") {
-          this.overlay.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
-        }
-      } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
-        this.overlay.strokePoints(
-          [
-            new Phaser.Math.Vector2(at.x, at.y - radius),
-            new Phaser.Math.Vector2(at.x + radius, at.y),
-            new Phaser.Math.Vector2(at.x, at.y + radius),
-            new Phaser.Math.Vector2(at.x - radius, at.y),
-          ],
-          true,
+      Math.max(0, 1 - pulse.age / 0.65),
+    );
+    if (pulse.kind === "hit" || pulse.kind === "disabled") {
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        this.overlay.lineBetween(
+          at.x + Math.cos(angle) * radius,
+          at.y + Math.sin(angle) * radius,
+          at.x + Math.cos(angle) * (radius + 7),
+          at.y + Math.sin(angle) * (radius + 7),
         );
-        if (pulse.kind === "deposit") {
-          this.overlay.strokeCircle(at.x, at.y, radius * 0.65);
-        }
-      } else {
-        this.overlay.strokeCircle(at.x, at.y, radius);
-        if (pulse.kind === "damage") {
-          this.overlay.lineBetween(
-            at.x - radius,
-            at.y - radius,
-            at.x - radius * 0.65,
-            at.y - radius * 0.65,
-          );
-          this.overlay.lineBetween(
-            at.x + radius,
-            at.y + radius,
-            at.x + radius * 0.65,
-            at.y + radius * 0.65,
-          );
-        }
-        if (pulse.kind === "teleport") {
-          this.overlay.strokeCircle(at.x, at.y, radius * 0.6);
-        }
+      }
+      if (pulse.kind === "disabled") {
+        this.overlay.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
+      }
+    } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
+      this.overlay.strokePoints(
+        [
+          new Phaser.Math.Vector2(at.x, at.y - radius),
+          new Phaser.Math.Vector2(at.x + radius, at.y),
+          new Phaser.Math.Vector2(at.x, at.y + radius),
+          new Phaser.Math.Vector2(at.x - radius, at.y),
+        ],
+        true,
+      );
+      if (pulse.kind === "deposit") {
+        this.overlay.strokeCircle(at.x, at.y, radius * 0.65);
+      }
+    } else {
+      this.overlay.strokeCircle(at.x, at.y, radius);
+      if (pulse.kind === "damage") {
+        this.overlay.lineBetween(
+          at.x - radius,
+          at.y - radius,
+          at.x - radius * 0.65,
+          at.y - radius * 0.65,
+        );
+        this.overlay.lineBetween(
+          at.x + radius,
+          at.y + radius,
+          at.x + radius * 0.65,
+          at.y + radius * 0.65,
+        );
+      }
+      if (pulse.kind === "teleport") {
+        this.overlay.strokeCircle(at.x, at.y, radius * 0.6);
       }
     }
   }

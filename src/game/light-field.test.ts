@@ -3,18 +3,22 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  blastEdges,
   inkEdges,
+  KEYLINE_ALPHA,
   keylineOffsets,
   LIGHT_FIELD,
   lightGalaxy,
   readLightField,
   readLightGalaxies,
+  thresholdSilhouette,
 } from "./light-field.ts";
 import { layerColor } from "./ship-jets.ts";
 import {
   AMBER_BEAM_GLOW,
   beam,
   beamKeys,
+  blast,
   EFFECT_COLOURS,
   type EffectShape,
   glowingBeam,
@@ -82,6 +86,45 @@ describe("light-field rule", () => {
     expect(offsets).toHaveLength(8);
     expect(new Set(offsets.map(({ x, y }) => `${x},${y}`)).size).toBe(8);
     expect(offsets.every(({ x, y }) => Math.max(Math.abs(x), Math.abs(y)) === 1)).toBe(true);
+  });
+
+  it("cuts the keyline source at alpha 0.5 into opaque ink, so the grown edge is crisp", () => {
+    expect(KEYLINE_ALPHA).toBe(0.5);
+    // Four pixels: clear, just under the cut, at the cut and opaque.
+    const pixels = new Uint8ClampedArray([
+      255, 255, 255, 0, 10, 200, 30, 127, 10, 200, 30, 128, 1, 2, 3, 255,
+    ]);
+    thresholdSilhouette(INK, KEYLINE_ALPHA, pixels);
+    expect([...pixels]).toEqual([
+      0x18, 0x14, 0x25, 0, 0x18, 0x14, 0x25, 0, 0x18, 0x14, 0x25, 255, 0x18, 0x14, 0x25, 255,
+    ]);
+  });
+
+  it("edges a blast's ring stroke and its flash's outline in ink, never the tint fill", () => {
+    const at = { x: 0, y: 0 };
+    const shapes = blast(at, 60, false, 10);
+    const tint = shapes[0]!;
+    const ring = shapes.find((shape) => shape.kind === "ellipse" && shape.part === "ring")!;
+    const flash = shapes.filter((shape) => shape.kind === "ellipse" && shape.part === "flash");
+    expect(tint).toMatchObject({ kind: "ellipse" });
+    expect(tint).not.toHaveProperty("stroke");
+    expect(flash).toHaveLength(4);
+    const outer = flash[0]!;
+    expect(blastEdges(INK, 1, shapes)).toEqual([
+      { ...ring, colour: INK, stroke: (ring as { stroke: number }).stroke + 2 },
+      {
+        ...outer,
+        colour: INK,
+        halfHeight: (outer as { halfHeight: number }).halfHeight + 0.5,
+        halfWidth: (outer as { halfWidth: number }).halfWidth + 0.5,
+        stroke: 1,
+      },
+    ]);
+    // After the flash, and under reduced motion, only the ring takes an edge.
+    expect(blastEdges(INK, 1, blast(at, 60, false, 150))).toHaveLength(1);
+    expect(blastEdges(INK, 1, blast(at, 60, true, 10))).toEqual([
+      expect.objectContaining({ colour: INK, part: "ring" }),
+    ]);
   });
 
   it("edges each effect shape in ink at its own alpha: strokes 2 wider, fills grown by 1", () => {

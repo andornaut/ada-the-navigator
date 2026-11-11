@@ -35,7 +35,10 @@ export interface DiscShape {
   readonly kind: "disc";
   readonly radius: number;
 }
-/** An axis-aligned ellipse, filled or stroked at `stroke` px. */
+/**
+ * An axis-aligned ellipse, filled or stroked at `stroke` px. A blast marks its ring stroke and
+ * flash layers by `part`, which a light field edges in ink.
+ */
 export interface EllipseShape {
   readonly alpha: number;
   readonly at: Vec;
@@ -43,6 +46,7 @@ export interface EllipseShape {
   readonly halfHeight: number;
   readonly halfWidth: number;
   readonly kind: "ellipse";
+  readonly part?: "flash" | "ring";
   readonly stroke?: number;
 }
 /** A straight stroke, with round caps when `round`. */
@@ -297,6 +301,7 @@ export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number
         alpha: 0.9 * a,
         colour: amber,
         kind: "ellipse",
+        part: "ring",
         stroke: spec.reduced.stroke,
       },
     ];
@@ -319,6 +324,7 @@ export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number
       alpha: a,
       colour: amber,
       kind: "ellipse",
+      part: "ring",
       stroke: spec.ring[0] + (spec.ring[1] - spec.ring[0]) * (t / spec.totalMs),
     },
   ];
@@ -359,7 +365,13 @@ export function blast(at: Vec, radius: number, reducedMotion: boolean, t: number
       [0.66, cream, 1],
       [0.36, white, 1],
     ] as const) {
-      shapes.push({ ...ground(at, fr * scale), alpha: alpha * step.q, colour, kind: "ellipse" });
+      shapes.push({
+        ...ground(at, fr * scale),
+        alpha: alpha * step.q,
+        colour,
+        kind: "ellipse",
+        part: "flash",
+      });
     }
   }
   return shapes;
