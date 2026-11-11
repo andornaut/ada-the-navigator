@@ -54,6 +54,7 @@ route order is the game's and needs no manifest change:
 | `cartwheel` | [`/art/cartwheel/manifest.json`](../public/art/cartwheel/manifest.json) |
 | `whirlpool` | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
 | `andromeda` | [`/art/andromeda/manifest.json`](../public/art/andromeda/manifest.json) |
+| `needle`    | [`/art/needle/manifest.json`](../public/art/needle/manifest.json)       |
 
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,

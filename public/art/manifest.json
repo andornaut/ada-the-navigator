@@ -8,7 +8,8 @@
     "sunflower": "/art/sunflower/manifest.json",
     "cartwheel": "/art/cartwheel/manifest.json",
     "whirlpool": "/art/whirlpool/manifest.json",
-    "andromeda": "/art/andromeda/manifest.json"
+    "andromeda": "/art/andromeda/manifest.json",
+    "needle": "/art/needle/manifest.json"
   },
   "assets": [
     {
