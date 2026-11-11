@@ -145,6 +145,12 @@ describe("conversation portraits", () => {
     ).toEqual([1, 1, 1]);
   });
 
+  it("hold a thank-you speaker Art has not drawn on an empty frame, never the General's loop", () => {
+    for (const speaker of AWAITING_ART) {
+      expect(portraitFrame(false, { ...line, elapsed: 0.25, speaker })).toBe(0);
+    }
+  });
+
   it("loop the General's unknown frames, then his named ones once his tab reads his name", () => {
     const general = { ...line, elapsed: 0.25, speaker: "general" } as const;
     expect(portraitFrame(false, general)).toBe(frames("gadget")["unknown-speaking-3"]);
