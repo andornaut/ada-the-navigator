@@ -30,8 +30,10 @@ flights. The first launch shows only Start, which begins galaxy one's home openi
 and then the prologue. Start stays alone until the first flight begins. Later
 launches show Continue and Restart.
 
-Continue goes to galaxy selection in the cockpit, open on the farthest unlocked
-galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+Every launch opens on the start screen; Continue resumes where the save left off.
+A flight closed mid-flight resumes exactly: galaxy, position, tow and danger (see
+the exact-resume rule below). Otherwise Continue goes to galaxy selection in the
+cockpit, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
@@ -45,7 +47,7 @@ screen, where Continue resumes as above.
 
 Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
 cancel. Confirming clears all story progress, galaxies, holodisks, Stardust,
-purchases and seen conversations, keeps device settings and achievements, and
+purchases, seen conversations and any saved flight, keeps device settings and achievements, and
 replays from Start.
 
 ## Story progression
