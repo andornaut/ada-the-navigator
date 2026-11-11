@@ -20,6 +20,11 @@ export function pauseActions(inDanger: boolean): readonly PauseActionView[] {
   ];
 }
 
+// The Travel card lists the discovered destinations, or says none are mapped yet.
+export function travelShowsEmpty(destinations: readonly unknown[]): boolean {
+  return destinations.length === 0;
+}
+
 // The pause button: a 35px frame whose disc edge sits 8px in from the view's top and left (the
 // disc is drawn 1px inside its frame), in a 52.5px press area centred on the frame.
 export const PAUSE_BUTTON = { edge: 8, frame: 35, press: 52.5 } as const;

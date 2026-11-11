@@ -11,6 +11,7 @@ import {
   pauseButtonPlacement,
   pauseButtonShown,
   pauseFrames,
+  travelShowsEmpty,
 } from "./pause.ts";
 
 const json = (path: string): unknown =>
@@ -42,7 +43,15 @@ describe("Paused card", () => {
     expect(PROTOTYPE.labels.returnHome).toBe("Return home");
     expect(PROTOTYPE.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
     expect(PROTOTYPE.labels.toronto).toBeUndefined();
+    expect(PROTOTYPE.labels.travelEmpty).toBe("No destinations mapped yet.");
     expect(JSON.stringify(PROTOTYPE)).not.toContain("Toronto");
+  });
+});
+
+describe("Travel card", () => {
+  it("says no destinations are mapped yet until one is discovered", () => {
+    expect(travelShowsEmpty([])).toBe(true);
+    expect(travelShowsEmpty([{ id: "workshop", label: "Workshop" }])).toBe(false);
   });
 });
 

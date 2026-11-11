@@ -226,21 +226,6 @@ export const MODAL_STYLE = `
   cursor:default
 }
 
-/* The shared refusal cue: a short sideways shake. */
-@keyframes ada-refuse{
-  0%,100%{transform:none}
-  25%{transform:translateX(-3px)}
-  75%{transform:translateX(3px)}
-}
-.ada-controls .ada-refuse{
-  animation:ada-refuse 90ms 2
-}
-@media (prefers-reduced-motion:reduce){
-  .ada-controls .ada-refuse{
-    animation:none
-  }
-}
-
 /* A stacked action group fills the card's body width, its faces 8px apart. */
 .ada-controls .ada-actions.ada-stack{
   grid-auto-flow:row;

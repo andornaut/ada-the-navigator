@@ -1,5 +1,6 @@
 import { createButton, createCard } from "./modal.ts";
-import { type PauseAction, pauseActions } from "./pause.ts";
+import { type PauseAction, pauseActions, travelShowsEmpty } from "./pause.ts";
+import { refuse } from "./refusal.ts";
 
 export interface PauseLabels {
   readonly close: string;
@@ -9,6 +10,7 @@ export interface PauseLabels {
   readonly settings: string;
   readonly title: string;
   readonly travel: string;
+  readonly travelEmpty: string;
   readonly travelUnavailable: string;
 }
 
@@ -18,6 +20,8 @@ export interface PauseOptions {
   readonly onReturnHome: () => void;
   readonly onSettings: () => void;
   readonly onTravel: (destination: string) => void;
+  // Whether the player chose Reduced motion, which keeps the refusal cue still.
+  readonly reducedMotion: () => boolean;
 }
 
 export interface PauseState {
@@ -42,12 +46,6 @@ function setAvailable(button: HTMLButtonElement, available: boolean): void {
   } else {
     button.setAttribute("aria-disabled", "true");
   }
-}
-
-function refuse(button: HTMLButtonElement): void {
-  button.classList.remove("ada-refuse");
-  void button.offsetWidth;
-  button.classList.add("ada-refuse");
 }
 
 // The Paused card and its Travel card, as in Chibi: one card shows at a time over the dimmed
@@ -91,7 +89,11 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   travel.card.dataset.dialog = "travel";
   travel.frame.hidden = true;
   const places = stack();
-  travel.card.append(places);
+  const empty = document.createElement("p");
+  empty.className = "ada-card-note";
+  empty.dataset.inkTop = "0";
+  empty.textContent = labels.travelEmpty;
+  travel.card.append(places, empty);
   modal.append(paused.frame, travel.frame);
   root.append(modal);
   let open = false;
@@ -121,6 +123,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       setAvailable(buttons.get(id)!, available);
     }
     note.hidden = !state.inDanger;
+    empty.hidden = !travelShowsEmpty(state.destinations);
+    places.hidden = !empty.hidden;
     places.replaceChildren(
       ...state.destinations.map(({ id, label }) => {
         const button = createButton(label);
@@ -128,7 +132,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
         setAvailable(button, !state.inDanger);
         button.addEventListener("click", () => {
           if (state.inDanger) {
-            refuse(button);
+            refuse(button, options.reducedMotion());
             return;
           }
           setOpen(false);
@@ -144,7 +148,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const act = (id: PauseAction) => {
     const button = buttons.get(id)!;
     if (!pauseActions(state.inDanger).find((view) => view.id === id)?.available) {
-      refuse(button);
+      refuse(button, options.reducedMotion());
       return;
     }
     if (id === "resume") {

@@ -252,6 +252,7 @@ export class PrototypeScene extends Phaser.Scene {
           settings: PROTOTYPE.labels.settings ?? "",
           title: PROTOTYPE.labels.pauseTitle ?? "",
           travel: PROTOTYPE.labels.travel ?? "",
+          travelEmpty: PROTOTYPE.labels.travelEmpty ?? "",
           travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
         },
         onReturnHome: () => {

@@ -111,10 +111,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let disposed = false;
   let contextLabel: string | undefined;
   let visibility = { aim: true, move: true };
+  let reducedMotion = false;
   const settings = createSettings(parent, {
     install: options.install,
     labels: options.labels,
     onFeedbackChange(value) {
+      reducedMotion = value.reducedMotion;
       options.onFeedbackChange?.(value);
     },
     onOpenChange(open) {
@@ -159,6 +161,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.open();
     },
     onTravel: (destination) => options.pause.onTravel(destination),
+    reducedMotion: () => reducedMotion,
   });
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),

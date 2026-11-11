@@ -260,6 +260,7 @@ export const PROTOTYPE: PrototypeContent = {
     start: "Begin",
     talk: "Talk",
     travel: "Travel",
+    travelEmpty: "No destinations mapped yet.",
     travelUnavailable: "Unavailable while you are in danger.",
     use: "Use",
     weapon: "Weapon",
