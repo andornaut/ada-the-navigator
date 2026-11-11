@@ -216,10 +216,11 @@ page's.
 - `reducedMotion` replaces `steps`: one 400 ms cross-fade from
   `story-ada-room` to the entry's cockpit background, with no glow frames.
 
-Every glow frame is drawn from `story-ada-room`. A boarding page in
-`story-ada-room-recorder` would need recorder versions of the three frames;
-none are drawn while Gameplay's story leaves Needle's boarding background
-unnamed.
+Needle boards from the recorder room, so key `rockGlowRecorderSeated` is the
+same glow from `story-ada-room-recorder` through `story-ada-room-recorder-glow-1`
+to `-3` into `cockpit-seated`, with the same timing and reduced motion. Its
+frames are the recorder room with the same glow amounts, the recorder in place
+on its song sheet, and carry the room's subject band (255..300).
 
 The glow frames are `story-ada-room` with the rock's glow grown to a third, two
 thirds and all of the room: 32 nested ellipses (height 0.6 of width) in

@@ -1392,13 +1392,14 @@ const step = (background: string, fadeMs: number, holdMs: number) => ({
   fadeMs,
   holdMs,
 });
-// The same glow into either cockpit background: empty in the prologue, seated at boarding.
-const rockGlow = (cockpit: string) => ({
-  from: "story-ada-room",
+// The same glow from a room into either cockpit background: empty in the prologue, seated at
+// boarding. Needle boards from the recorder room, whose frames keep the recorder on the desk.
+const rockGlow = (cockpit: string, room = "story-ada-room") => ({
+  from: room,
   steps: [
-    step("story-ada-room-glow-1", 160, 0),
-    step("story-ada-room-glow-2", 160, 0),
-    step("story-ada-room-glow-3", 200, 240),
+    step(`${room}-glow-1`, 160, 0),
+    step(`${room}-glow-2`, 160, 0),
+    step(`${room}-glow-3`, 200, 240),
     step(cockpit, 0, 0),
   ],
   reducedMotion: [step(cockpit, 400, 0)],
@@ -1407,6 +1408,7 @@ export const TRANSITION = {
   version: 1,
   rockGlow: rockGlow("cockpit"),
   rockGlowSeated: rockGlow("cockpit-seated"),
+  rockGlowRecorderSeated: rockGlow("cockpit-seated", "story-ada-room-recorder"),
 };
 
 /* Outputs */
@@ -1456,6 +1458,12 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P) => room(P, { glow: glowAmount(0), recorder: true }),
     subject: band(255, 300),
   },
+  ...GLOW.map((glow, i) => ({
+    id: `story-ada-room-recorder-glow-${i + 1}`,
+    palette: ROOM,
+    build: (P: Palette) => room(P, { glow: glowAmount(glow), recorder: true }),
+    subject: band(255, 300),
+  })),
   // Needle's closing: the stage, and Ada playing in the spotlight.
   {
     id: "story-concert-hall",

@@ -3392,6 +3392,57 @@
       }
     },
     {
+      "id": "story-ada-room-recorder-glow-1",
+      "path": "/art/story/ada-room-recorder-glow-1.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-glow-2",
+      "path": "/art/story/ada-room-recorder-glow-2.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-ada-room-recorder-glow-3",
+      "path": "/art/story/ada-room-recorder-glow-3.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
       "id": "story-concert-hall",
       "path": "/art/story/concert-hall.png",
       "width": 1920,

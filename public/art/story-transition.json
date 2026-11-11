@@ -63,5 +63,37 @@
         "holdMs": 0
       }
     ]
+  },
+  "rockGlowRecorderSeated": {
+    "from": "story-ada-room-recorder",
+    "steps": [
+      {
+        "background": "story-ada-room-recorder-glow-1",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-recorder-glow-2",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-recorder-glow-3",
+        "fadeMs": 200,
+        "holdMs": 240
+      },
+      {
+        "background": "cockpit-seated",
+        "fadeMs": 0,
+        "holdMs": 0
+      }
+    ],
+    "reducedMotion": [
+      {
+        "background": "cockpit-seated",
+        "fadeMs": 400,
+        "holdMs": 0
+      }
+    ]
   }
 }
