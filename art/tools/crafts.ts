@@ -1,4 +1,12 @@
-import { depth, ENEMY_HEADINGS, facesViewer, type Point, rotate } from "./projection.ts";
+import {
+  depth,
+  ENEMY_HEADINGS,
+  facesViewer,
+  json,
+  type Point,
+  rotate,
+  round,
+} from "./projection.ts";
 
 // Sector one enemy models, shared by the frame and destruction exports.
 export type Plan = readonly (readonly [number, number])[];
@@ -14,6 +22,8 @@ export type Part = {
   rear?: string;
   loose?: true;
   decal?: true;
+  // Part of an aimed turret top: heavies.ts draws it as its own sprite set.
+  turret?: true;
 };
 export type Craft = {
   name: string;
@@ -30,11 +40,11 @@ export type Face = { color: string; points: Point[] };
 export const coral = "#d68b72";
 export const coralSide = "#a8654f";
 export const coralRear = "#7f4b3d";
-const plate = "#e6a890";
-const amber = "#f0bd68";
-const amberSide = "#b98a40";
-const visor = "#2a2433";
-const visorSide = "#1e1a26";
+export const plate = "#e6a890";
+export const amber = "#f0bd68";
+export const amberSide = "#b98a40";
+export const visor = "#2a2433";
+export const visorSide = "#1e1a26";
 
 export const mirror = (half: Plan): Plan => [
   ...half,
@@ -47,7 +57,8 @@ export const box = (x0: number, y0: number, x1: number, y1: number): Plan => [
   [x0, y1],
 ];
 
-const ink = "#181425";
+export const ink = "#181425";
+export const turretTop = "#c27a62";
 
 // General Gadget's insignia: a horseshoe claw opening forward (negative y), prong tips hooked
 // inward, closing on an amber disc. Unit outline of the right half from the rear centre.
@@ -82,7 +93,7 @@ function clawPlan(cx: number, cy: number, r: number): Plan {
 }
 
 // The mark at plan centre (cx, cy) with radius r, flat on the hull top at height z.
-function insignia(cx: number, cy: number, r: number, z: number): Part[] {
+export function insignia(cx: number, cy: number, r: number, z: number): Part[] {
   const disc: Plan = Array.from({ length: CLAW_DISC.sides }, (_, i) => {
     const a = (i / CLAW_DISC.sides) * 2 * Math.PI;
     const radius = CLAW_DISC.r * r;
@@ -224,9 +235,10 @@ export const crafts: Craft[] = [
         ],
         z0: 7,
         z1: 11,
-        top: "#c27a62",
+        top: turretTop,
         side: coralRear,
         loose: true,
+        turret: true,
       },
       // Barrels follow the gameplay spread angles -0.2, 0 and 0.2 radians.
       ...[-0.2, 0, 0.2].map((angle): Part => {
@@ -240,6 +252,7 @@ export const crafts: Craft[] = [
           top: amber,
           side: amberSide,
           loose: true,
+          turret: true,
         };
       }),
       // Insignia on bare hull top.
@@ -298,4 +311,50 @@ export function drawOrder(yaw: number, hullTop: number, parts: readonly Part[]):
     }))
     .sort((a, b) => a.layer - b.layer || b.depth - a.depth || a.part.z1 - b.part.z1)
     .map(({ part }) => part);
+}
+
+// Frame px to Ada's logical display px: 42 / 96.
+export const DISPLAY_SCALE = 0.4375;
+
+// One jet mouth in frame px; `hardpoint` names the engine hardpoint that drives it.
+export type JetMouth = {
+  anchor: [number, number];
+  axis: [number, number];
+  half: [number, number];
+  hardpoint?: string;
+};
+
+// Family speed jets (version 1): Tech draws outer and core triangles per mouth behind the frame.
+export function jetsFile(frame: number, mouths: (yaw: number) => JetMouth[]): string {
+  const scale = Math.sqrt(frame / 96);
+  return json({
+    version: 1,
+    frame,
+    length: { base: round(6 * scale), scale: round(24 * scale), exponent: 2 },
+    layers: [
+      { name: "outer", colors: ["#b8644c", "#f0a07c"], width: 1.6, length: 1 },
+      { name: "core", colors: ["#d68b72", "#ffe2c8"], width: 0.8, length: 0.55 },
+    ],
+    headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+      index: yaw,
+      mouths: mouths(yaw),
+    })),
+  });
+}
+
+// Root manifest entries for a sixteen-heading hull set, `enemy-{name}-{index}`.
+export function hullEntries(name: string, frame: number) {
+  const display = frame * DISPLAY_SCALE;
+  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+    id: `enemy-${name}-${yaw}`,
+    path: `/art/enemies/${name}-${yaw}.svg`,
+    width: frame,
+    height: frame,
+    displayWidth: display,
+    displayHeight: display,
+    facing: `world-${yaw}`,
+    directionIndex: yaw,
+    pivot: { x: 0.5, y: 0.5 },
+    archetype: name,
+  }));
 }
