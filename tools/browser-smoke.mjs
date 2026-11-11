@@ -1222,6 +1222,15 @@ try {
   const scatter = await heldVolley("scattershot", "dot", 7, true);
   const dots = scatter.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "dot");
   const fading = dots.filter((shot) => shot.life / shot.fade.initialLife < 0.35);
+  // Pellets leave the nose of the heading they fired at, so from Ada's centre each lies within
+  // the range plus the farthest nose offset of the 16 headings.
+  const { noseScreenOffset } = await import(new URL("../src/model/nose.ts", import.meta.url));
+  const noseReach = Math.max(
+    ...Array.from({ length: 16 }, (_, heading) => {
+      const { x, y } = noseScreenOffset(heading);
+      return Math.hypot(x, y);
+    }),
+  );
   assert.ok(fading.length > 0, "Actual scatter particles must reach their fade segment");
   for (const shot of dots) {
     assert.equal(
@@ -1233,8 +1242,8 @@ try {
     const dx = shot.x - scatter.flight.player.x;
     const dy = shot.y - scatter.flight.player.y;
     assert.ok(
-      Math.hypot(dx - dy, (dx + dy) / 2) <= SCREEN.width * 0.5 + 0.001,
-      "Actual scatter particles must remain inside the captured half-camera projected range",
+      Math.hypot(dx - dy, (dx + dy) / 2) <= SCREEN.width * 0.5 + noseReach + 0.001,
+      "Actual scatter particles must remain inside the half-camera projected range from the nose",
     );
     assert.ok(shot.damage > 0 && shot.damage < PROTOTYPE.tuning.flight.playerShotDamage);
   }
