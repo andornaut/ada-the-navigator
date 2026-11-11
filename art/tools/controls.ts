@@ -23,6 +23,8 @@ const RECOLOURS: Readonly<Record<string, Colours>> = {
     "5a6988": "d2b886",
     c0cbdc: "2f2d3d",
   },
+  // Shop item rows: a darker face over the card, with the lip and highlight in the card shade.
+  "ui-button-tile": { "5a6988": "2f2d3d", "8b9bb4": "46425e", c0cbdc: "2f2d3d" },
   "ui-close": { "181425": "ead4aa", "3a4466": "403d55" },
   "ui-focus": { fee761: "ead4aa" },
   "ui-settings-card": { "8b9bb4": "2f2d3d", c0cbdc: "3b3850", ffffff: "6b6685" },
@@ -44,6 +46,9 @@ const TAG_RECOLOURS: Readonly<Record<string, Readonly<Record<string, Colours>>>>
     pressed: { c0cbdc: "aaa4c6" },
   },
 };
+
+// Sheets drawn from a differently named source sheet.
+const SOURCES: Readonly<Record<string, string>> = { "ui-button-tile": "ui-button" };
 
 interface AsepriteData {
   frames: Record<
@@ -68,8 +73,9 @@ async function recolour(
   byTag: Readonly<Record<string, Colours>>,
   key: string,
 ): Promise<void> {
-  const image = decodePng(await readFile(`${source}/${key}.png`));
-  const data = JSON.parse(await readFile(`${source}/${key}.json`, "utf8")) as AsepriteData;
+  const from = SOURCES[key] ?? key;
+  const image = decodePng(await readFile(`${source}/${from}.png`));
+  const data = JSON.parse(await readFile(`${source}/${from}.json`, "utf8")) as AsepriteData;
   const frameColours = Object.keys(data.frames).map((_, index) => {
     const tag = data.meta.frameTags.find(({ from, to }) => from <= index && index <= to);
     return { ...colours, ...(tag ? byTag[tag.name] : {}) };

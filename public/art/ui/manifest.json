@@ -85,6 +85,18 @@
       }
     },
     {
+      "key": "ui-button-tile",
+      "png": "sprites/ui-button-tile.png",
+      "json": "sprites/ui-button-tile.json",
+      "once": [],
+      "slice": {
+        "left": 2,
+        "top": 4,
+        "right": 2,
+        "bottom": 6
+      }
+    },
+    {
       "key": "ui-close",
       "png": "sprites/ui-close.png",
       "json": "sprites/ui-close.json",

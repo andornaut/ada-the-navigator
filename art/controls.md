@@ -92,6 +92,19 @@ groups.
 tick; off places it left with a cross. Off is an available value and never looks
 disabled. Focus uses the shared ring.
 
+## Refusal cue
+
+A control that refuses an action stays in place and plays Archie's shared
+refusal cue for 320ms:
+
+- Its labels tint red `#e4574e` at 80ms, return at 160ms, tint again at 240ms
+  and return at 320ms.
+- The whole control shakes 3px right and back four times, 40ms each way.
+- Reduced motion: the labels hold the red tint for the full 320ms, with no
+  shake.
+
+A repeat activation during the cue does not restart it.
+
 ## Colour tokens
 
 | Token          | Colour    | Use                                           |

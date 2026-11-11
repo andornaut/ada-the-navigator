@@ -35,6 +35,7 @@ and its public base path. That subset preserves the source `fonts` and `sprites`
 schema, with paths relative to `/art/ui/`; it is separate from the prototype
 `assets` list. [UI provenance](ui.md) records fonts, slices and licences.
 [Controls](controls.md) is the button, switch, focus and modal contract.
+[Station and shop](shop.md) lays out the station card, shop and buy confirm.
 
 Ship textures use sixteen isometric headings with a centered pivot and a 96 by 96
 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
