@@ -44,6 +44,56 @@
       "station": "settlers"
     },
     {
+      "id": "station-settlers-school-a",
+      "path": "/art/andromeda/settlers-school-a.svg",
+      "width": 64,
+      "height": 96,
+      "displayWidth": 28,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.3125
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "station": "settlers",
+      "project": "courierSchool",
+      "berths": [
+        {
+          "x": 27.101,
+          "y": 51.213,
+          "outward": [0, 1],
+          "width": 19.596
+        }
+      ]
+    },
+    {
+      "id": "station-settlers-school-b",
+      "path": "/art/andromeda/settlers-school-b.svg",
+      "width": 64,
+      "height": 96,
+      "displayWidth": 28,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.3125
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "station": "settlers",
+      "project": "courierSchool",
+      "berths": [
+        {
+          "x": 27.101,
+          "y": 51.213,
+          "outward": [0, 1],
+          "width": 19.596
+        }
+      ]
+    },
+    {
       "id": "outpost-hamlet-a",
       "path": "/art/andromeda/hamlet-a.svg",
       "width": 80,
@@ -209,6 +259,40 @@
       },
       "beacon": "guide",
       "state": "dented"
+    },
+    {
+      "id": "beacon-guide-spare-a",
+      "path": "/art/andromeda/beacon-spare-a.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.625
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "beacon": "guide",
+      "project": "spareBeacon"
+    },
+    {
+      "id": "beacon-guide-spare-b",
+      "path": "/art/andromeda/beacon-spare-b.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.625
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "beacon": "guide",
+      "project": "spareBeacon"
     },
     {
       "id": "craft-pip-0",

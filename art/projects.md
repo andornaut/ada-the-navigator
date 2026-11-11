@@ -1,11 +1,12 @@
 # Community projects
 
 The shop's Projects tab, the donation confirm, and the world change each funded
-project shows at its outpost. Gameplay owns the projects, prices, order, the
+project shows at its site. Gameplay owns the projects, prices, order, the
 donation rule and the strings ([Donations](../gameplay/economy.md)); keys below
 are Gameplay's player string keys, and keys marked placeholder await Gameplay
 strings. Project ids are Gameplay's (`greenhouseRing`, `workshopCrane`,
-`salvageBeacons`, `dockingBay`, `hubRepairs`, `nurseryBeacon`, `currentBuoys`).
+`salvageBeacons`, `dockingBay`, `hubRepairs`, `nurseryBeacon`, `currentBuoys`,
+`courierSchool`, `spareBeacon`).
 
 ## Projects tab
 
@@ -43,15 +44,17 @@ Focus and contrast are the item row's ([Shop](shop.md#item-row)).
 
 Effect lines, placeholder strings:
 
-| Project          | Key (placeholder)           | Text (placeholder)      |
-| ---------------- | --------------------------- | ----------------------- |
-| `greenhouseRing` | `projectEffectGreenhouse`   | Domes for more crops    |
-| `workshopCrane`  | `projectEffectCrane`        | A crane for heavy lifts |
-| `salvageBeacons` | `projectEffectBeacons`      | Lights the scrap lanes  |
-| `dockingBay`     | `projectEffectDockingBay`   | No miner waits alone    |
-| `hubRepairs`     | `projectEffectHubRepairs`   | Fixes the station's hub |
-| `nurseryBeacon`  | `projectEffectNursery`      | Guides whale calves     |
-| `currentBuoys`   | `projectEffectCurrentBuoys` | Marks the currents      |
+| Project          | Key (placeholder)            | Text (placeholder)      |
+| ---------------- | ---------------------------- | ----------------------- |
+| `greenhouseRing` | `projectEffectGreenhouse`    | Domes for more crops    |
+| `workshopCrane`  | `projectEffectCrane`         | A crane for heavy lifts |
+| `salvageBeacons` | `projectEffectBeacons`       | Lights the scrap lanes  |
+| `dockingBay`     | `projectEffectDockingBay`    | No miner waits alone    |
+| `hubRepairs`     | `projectEffectHubRepairs`    | Fixes the station's hub |
+| `nurseryBeacon`  | `projectEffectNursery`       | Guides whale calves     |
+| `currentBuoys`   | `projectEffectCurrentBuoys`  | Marks the currents      |
+| `courierSchool`  | `projectEffectCourierSchool` | Trains careful couriers |
+| `spareBeacon`    | `projectEffectSpareBeacon`   | A backup guide light    |
 
 ## Donation confirm
 
@@ -78,8 +81,11 @@ plays.
 ## World changes
 
 `node art/tools/outposts.ts` writes Sunflower's world changes with the
-[outposts](outposts.md), and `public/art/projects.json` places them, keyed by
-project id. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
+[outposts](outposts.md) and `node art/tools/andromeda.ts` writes Andromeda's
+([Andromeda](andromeda.md#world-changes)). `public/art/projects.json` places
+them, keyed by project id; each generator replaces only its own projects
+through `art/tools/projects.ts`, so reruns in any order leave the file
+byte-identical. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
 Whirlpool's are in [whirlpool.md](whirlpool.md#project-world-changes), placed by
 `public/art/whirlpool/projects.json`. A project absent from `projects.json` has no world art yet, so
 funding it changes nothing in the world.
@@ -95,22 +101,26 @@ A change is one of two kinds:
   one depth sort of both: the workshop crane and the salvage beacons. Overlays
   keep the outpost's frames unchanged and reuse one small sprite.
 
-Both kinds use the outpost schema ([Frames and manifest](outposts.md#frames-and-manifest))
-with `outpost`, the role they attach to, and `project`. Replacement frames carry
-the dock; overlays carry none. The base `outpost-<role>-a` and `-b` entries are
+Both kinds use the base asset's schema (for an outpost,
+[Frames and manifest](outposts.md#frames-and-manifest)) with the fields that
+name the base they attach to, and `project`. Replacement frames carry the
+dock; overlays carry none, or only `berths` they add. The base entries are
 unchanged.
 
 ### projects.json
 
 - `reveal`: `durationMs` 600, `easing` `cubicOut` (see [Reveal](#reveal)).
-- `projects.<id>.outpost`: the outpost role and destination id.
+- The base a project attaches to, by the base entries' own fields:
+  `outpost` (the outpost role and destination id) at Sunflower's outposts,
+  `station` `settlers` at every Andromeda station, and `beacon` `guide` with
+  `state` `relit` at Andromeda's relit dark beacon.
 - `kind` `replace`: `frames` (A, B) replace `replaces` (A, B).
 - `kind` `overlay`: `frames` (A, B) and `anchors`. Each anchor places one copy
-  of the sprite with its pivot at the outpost's pivot plus (`x`, `y`) frame px;
+  of the sprite with its pivot at the base's pivot plus (`x`, `y`) frame px;
   scale by the display size like the dock (`* 0.4375` to display px), then
   convert screen to world as for the dock. `layer` `behind` draws before the
-  outpost, `front` after it, all in the outpost's depth slot. `phase` 0 shows
-  frame A while the outpost shows A; `phase` 1 shows the other frame.
+  base, `front` after it, all in the base's depth slot. `phase` 0 shows
+  frame A while the base shows A; `phase` 1 shows the other frame.
 
 ### Greenhouse ring
 

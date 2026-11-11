@@ -122,6 +122,7 @@ and where each asset sits:
 | [Andromeda's settlements](andromeda.md#settlements) (hamlet, lamp house)                               | Andromeda                                                       |
 | [Guide beacons](andromeda.md#guide-beacons) (lit, dented, relit)                                       | Andromeda                                                       |
 | [Pip's mail scooter](andromeda.md#pips-mail-scooter)                                                   | Andromeda                                                       |
+| [Courier school and spare beacon](andromeda.md#world-changes)                                          | Andromeda, once funded                                          |
 | Coral drone family (swarm, fighter, interceptor, retaliator)                                           | Shared, keylined on Sunflower                                   |
 | [Claim-jumper family and turret platform](heavies.md)                                                  | Cartwheel                                                       |
 | Play asteroids                                                                                         | Shared                                                          |

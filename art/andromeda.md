@@ -29,6 +29,8 @@ and `displayHeight` equal the SVG's intrinsic size.
 | Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
 | Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 21 by 28 | `(0.5, 0.75)`   |
 | Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35       | `(0.5, 0.5)`    |
+| Courier school     | `station-settlers-school-a`, `-b`                                           | 64, 96   | 28 by 42 | `(0.5, 0.3125)` |
+| Spare beacon       | `beacon-guide-spare-a`, `-b`                                                | 48, 64   | 21 by 28 | `(0.5, 0.625)`  |
 
 ## Settlers' station
 
@@ -171,6 +173,42 @@ The scooter's reach is 16 units, to the hull nose: `distance` is 7 at headings
 holds with its pivot on the dock or berth point moved along `outward` by
 `nose[k].distance` for its docking heading `k`, so the nose meets the dock
 face.
+
+## World changes
+
+Both of Andromeda's [community projects](projects.md#world-changes) are
+overlays: every part sits beside its base, so the base frames stay unchanged
+and drawing the overlay before the base gives the same pixels as one depth
+sort of both. The generator fails if any overlay face, placed at its site,
+overlaps a base face on screen. Each overlay's pivot is its own site on the
+world plane, and `projects.json` places it with one anchor, `layer` `behind`
+(both sites are farther from the viewer than the base pivot) and `phase` 0,
+blinking on the base's clock. Reduced motion holds frame A.
+
+| Project         | Base                                                      | Anchor `(x, y)`       | Entries                                                                      |
+| --------------- | --------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------- |
+| `courierSchool` | Every settlers' station (`station` `settlers`)            | `(-123.033, -19.033)` | `station-settlers-school-a`, `-b`: `overlay`, `station`, `project`, `berths` |
+| `spareBeacon`   | The relit dark beacon (`beacon` `guide`, `state` `relit`) | `(-55.426, -2)`       | `beacon-guide-spare-a`, `-b`: `overlay`, `beacon`, `project`                 |
+
+### Courier school
+
+A small training dock beside the station at the screen left, its pad centre
+104 units from the station pivot at plan angle 150 degrees: a pearl training
+pad with a classroom cottage, a short pier toward the viewer ending in a
+narrow cream collar with its own mouth and corner lights, and a slalom of four
+slate buoys whose lamps alternate warm `#ffe9b8` and marker `#b8c1ff` (frame A
+lights the first and third, frame B the second and fourth in `#4a5080` off).
+
+- `berths` adds the pier's mouth in the dock schema, frame px of the overlay:
+  `(27.101, 51.213)`, outward `[0, 1]`, width 19.596. A craft docks there
+  moving opposite `outward`, held off the face by its nose distance.
+
+### Spare beacon
+
+A spare guide beacon held upright in a slate cradle on a small pad, its site
+34 units left and 30 back of the relit beacon (screen left, just behind it).
+Its lantern is on standby, a steady dim `#6f78b8` in both frames, and a blue
+standby light on the pad blinks: `#70ace8` in frame A, `#3f5878` in B.
 
 ## Palette
 

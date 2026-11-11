@@ -62,7 +62,8 @@ jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
 and `oreField` links; Whirlpool the whales, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers'
-station, the settlements, the guide beacons and Pip's mail scooter. The station, discovery cache,
+station, the settlements, the guide beacons, Pip's mail scooter and their
+project frames. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 

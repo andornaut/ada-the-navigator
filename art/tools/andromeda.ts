@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import * as m from "./andromeda-models.ts";
 import { jetsFile } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
+import { writeProjects } from "./projects.ts";
 import {
   anchor,
   ENEMY_HEADINGS,
@@ -348,3 +349,122 @@ replaceEntries(
   writeCraft(m.pip),
   (id) => id.includes("portrait"),
 );
+
+// ---------------------------------------------------------------- world changes
+
+// Screen outlines of two convex faces overlap with positive area (separating axis test).
+function overlaps(p: Face, q: Face): boolean {
+  const outline = (face: Face) => face.points.map((point) => projectAt(0, 0, point));
+  const [pa, pb] = [outline(p), outline(q)];
+  for (const poly of [pa, pb]) {
+    for (const [i, [x0, y0]] of poly.entries()) {
+      const [x1, y1] = poly[(i + 1) % poly.length]!;
+      const [nx, ny] = [y0 - y1, x1 - x0];
+      if (Math.hypot(nx, ny) < 1e-9) continue;
+      const span = (points: [number, number][]) => points.map(([x, y]) => x * nx + y * ny);
+      const [sa, sb] = [span(pa), span(pb)];
+      if (Math.max(...sa) <= Math.min(...sb) + 1e-6 || Math.max(...sb) <= Math.min(...sa) + 1e-6) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// An overlay must draw the same pixels in either layer as one depth sort with its base: the
+// generator fails if any overlay face, placed at its site, overlaps any base face on screen.
+function checkClear(
+  name: string,
+  base: readonly Face[],
+  overlay: Part[][],
+  [sx, sy]: Point2,
+  levels: readonly number[] = [],
+) {
+  const placed = polygons(
+    overlay.map((group) => group.map((part) => shiftPart(sx, sy, part))),
+    undefined,
+    levels,
+  );
+  for (const face of placed) {
+    if (base.some((under) => overlaps(under, face))) {
+      throw new Error(`${name} overlaps its base`);
+    }
+  }
+}
+const shiftPart = (dx: number, dy: number, part: Part): Part => ({
+  ...part,
+  plan: part.plan.map(([x, y]) => [x + dx, y + dy] as const),
+});
+
+// An overlay anchor: the overlay pivot (its site on the world plane) from the base pivot, frame px.
+function siteAnchor([sx, sy]: Point2, layer: "behind" | "front", phase: 0 | 1) {
+  const [x, y] = projectAt(0, 0, [sx, sy, 0]);
+  return { x: round(x), y: round(y), layer, phase };
+}
+
+// Courier school: an overlay pair beside the settlers' station, with one berth at its pier.
+for (const lit of [true, false])
+  checkClear(
+    "courier school",
+    polygons(m.station(lit), undefined, m.STATION_LEVELS),
+    m.courierSchool(lit),
+    m.SCHOOL.site,
+    m.SCHOOL_LEVELS,
+  );
+const school = pair(
+  "station-settlers-school",
+  "settlers-school",
+  "Courier school",
+  m.courierSchool,
+  m.SCHOOL_LEVELS,
+);
+const schoolFrame = layout(allFaces(school));
+for (const item of school) writeFixed(schoolFrame, item);
+const schoolBerth = dockAt(schoolFrame, m.SCHOOL.pierFace, m.SCHOOL.mouth, m.SCHOOL.across);
+const schoolEntries = school.map((item) =>
+  fixedEntry(schoolFrame, item, {
+    overlay: true,
+    station: "settlers",
+    project: "courierSchool",
+    berths: [schoolBerth],
+  }),
+);
+replaceEntries(
+  "andromeda",
+  (id) => /^station-settlers-school-[ab]$/.test(id),
+  schoolEntries,
+  (id) => id.startsWith("outpost-"),
+);
+
+// Spare beacon: an overlay pair beside the relit beacon.
+for (const lit of [true, false])
+  checkClear("spare beacon", polygons(m.beacon("relit", lit)), m.spareBeacon(lit), m.SPARE_SITE);
+const spare = pair("beacon-guide-spare", "beacon-spare", "Spare guide beacon", m.spareBeacon);
+const spareFrame = layout(allFaces(spare));
+for (const item of spare) writeFixed(spareFrame, item);
+const spareEntries = spare.map((item) =>
+  fixedEntry(spareFrame, item, { overlay: true, beacon: "guide", project: "spareBeacon" }),
+);
+replaceEntries(
+  "andromeda",
+  (id) => /^beacon-guide-spare-[ab]$/.test(id),
+  spareEntries,
+  (id) => /^(enemy-|craft-|andromeda-haze)|portrait/.test(id),
+);
+
+// Both sit behind their base: their sites are farther from the viewer than the base pivot.
+writeProjects({
+  courierSchool: {
+    station: "settlers",
+    kind: "overlay",
+    frames: school.map(({ id }) => id),
+    anchors: [siteAnchor(m.SCHOOL.site, "behind", 0)],
+  },
+  spareBeacon: {
+    beacon: "guide",
+    state: "relit",
+    kind: "overlay",
+    frames: spare.map(({ id }) => id),
+    anchors: [siteAnchor(m.SPARE_SITE, "behind", 0)],
+  },
+});

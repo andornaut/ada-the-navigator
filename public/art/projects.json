@@ -48,6 +48,33 @@
           "phase": 0
         }
       ]
+    },
+    "courierSchool": {
+      "station": "settlers",
+      "kind": "overlay",
+      "frames": ["station-settlers-school-a", "station-settlers-school-b"],
+      "anchors": [
+        {
+          "x": -123.033,
+          "y": -19.033,
+          "layer": "behind",
+          "phase": 0
+        }
+      ]
+    },
+    "spareBeacon": {
+      "beacon": "guide",
+      "state": "relit",
+      "kind": "overlay",
+      "frames": ["beacon-guide-spare-a", "beacon-guide-spare-b"],
+      "anchors": [
+        {
+          "x": -55.426,
+          "y": -2,
+          "layer": "behind",
+          "phase": 0
+        }
+      ]
     }
   }
 }

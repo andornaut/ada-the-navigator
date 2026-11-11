@@ -2,7 +2,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { replaceEntries } from "./manifest.ts";
-import { depth, facesViewer, json, type Point, projectAt, round } from "./projection.ts";
+import { writeProjects } from "./projects.ts";
+import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 
 type Plan = readonly (readonly [number, number])[];
 type Part = { plan: Plan; z0: number; z1: number; top: string; side: string };
@@ -966,11 +967,4 @@ const placed = Object.entries(overlays).map(
       },
     ] as const,
 );
-writeFileSync(
-  `${art}projects.json`,
-  json({
-    version: 1,
-    reveal: { durationMs: 600, easing: "cubicOut" },
-    projects: Object.fromEntries([...replacements, ...placed]),
-  }),
-);
+writeProjects(Object.fromEntries([...replacements, ...placed]));
