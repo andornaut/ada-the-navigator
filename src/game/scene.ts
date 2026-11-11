@@ -1038,18 +1038,19 @@ export class PrototypeScene extends Phaser.Scene {
         this.load.json(`claim-hardpoints-${archetype}`, enemyHardpointsPath(archetype, frames[0]!));
       }
     }
+    // Resource rocks are in every galaxy's chunks; their catalog loads with the first flight.
+    const shared = this.cache.json.exists("resource-rocks")
+      ? []
+      : [["resource-rocks", this.manifest.resourceRocks]];
     const data = {
-      2: [
-        ["resource-rocks", this.manifest.resourceRocks],
-        ["cartwheel-debris", this.manifest.cartwheelDebris],
-      ],
+      2: [["cartwheel-debris", this.manifest.cartwheelDebris]],
       3: [
         ["whales", this.manifest.whales],
         ["whirlpool-currents", this.manifest.whirlpoolCurrents],
         ["whirlpool-debris", this.manifest.whirlpoolDebris],
       ],
     }[sector as 2 | 3];
-    for (const [key, path] of data ?? []) {
+    for (const [key, path] of [...shared, ...(data ?? [])]) {
       if (path) {
         this.load.json(key!, path);
       }
