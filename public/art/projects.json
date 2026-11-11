@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "reveal": {
+    "durationMs": 600,
+    "easing": "cubicOut"
+  },
+  "projects": {
+    "greenhouseRing": {
+      "outpost": "growers",
+      "kind": "replace",
+      "frames": ["outpost-growers-ring-a", "outpost-growers-ring-b"],
+      "replaces": ["outpost-growers-a", "outpost-growers-b"]
+    },
+    "workshopCrane": {
+      "outpost": "workshop",
+      "kind": "overlay",
+      "frames": ["outpost-workshop-crane-a", "outpost-workshop-crane-b"],
+      "anchors": [
+        {
+          "x": 0,
+          "y": 0,
+          "layer": "front",
+          "phase": 0
+        }
+      ]
+    },
+    "salvageBeacons": {
+      "outpost": "salvagers",
+      "kind": "overlay",
+      "frames": ["outpost-salvagers-beacon-a", "outpost-salvagers-beacon-b"],
+      "anchors": [
+        {
+          "x": -36.232,
+          "y": -44.86,
+          "layer": "behind",
+          "phase": 0
+        },
+        {
+          "x": -79.605,
+          "y": 8.104,
+          "layer": "front",
+          "phase": 1
+        },
+        {
+          "x": 55.426,
+          "y": 32,
+          "layer": "front",
+          "phase": 0
+        }
+      ]
+    }
+  }
+}

@@ -11,7 +11,8 @@ sector one enemy ships and their [destruction](destruction.md), the galaxy one
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
 [Whirlpool whales](whales.md), character portraits and the
 [storybook](storybook.md) Earth backgrounds.
-[Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
+[Community projects](projects.md) add the Projects shop tab and the world
+changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted
 surroundings and stronger active signals.
 

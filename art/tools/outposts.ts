@@ -200,6 +200,10 @@ type Outpost = {
   face: number;
   pivot: number;
   mouthWidth: number;
+  // A replacement frame pair names its outpost role and the project that shows it.
+  outpost?: string;
+  project?: string;
+  title?: string;
 };
 
 // Growers: leaf-green planters radiating like a sunflower head around glass domes.
@@ -545,6 +549,173 @@ function salvagers(lit: boolean): Part[][] {
   return groups;
 }
 
+// Community project world changes (art/projects.md).
+const rad = (degrees: number) => (degrees * Math.PI) / 180;
+
+function annulusSegment(a0: number, a1: number, inner: number, outer: number): Plan {
+  return [
+    [outer * Math.cos(a0), outer * Math.sin(a0)],
+    [outer * Math.cos(a1), outer * Math.sin(a1)],
+    [inner * Math.cos(a1), inner * Math.sin(a1)],
+    [inner * Math.cos(a0), inner * Math.sin(a0)],
+  ];
+}
+
+// Greenhouse ring around the growers' deck centre: 32 walkway segments with a glass tube and a
+// leaf seam, and eight domes, one between each pair of planter tips. The walkway skips the dock
+// gap between the two domes beside the dock axis (45 degrees).
+const RING_INNER = 61.5;
+const RING_OUTER = 69.5;
+const RING_BASE = 3;
+const RING_DOMES = [15, 75, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5];
+const RING_GAP = [15, 75] as const;
+const RING_SEGMENTS = 32;
+
+function greenhouseRing(lit: boolean): Part[][] {
+  const groups: Part[][] = [];
+  const step = 360 / RING_SEGMENTS;
+  for (let i = 0; i < RING_SEGMENTS; i++) {
+    const [d0, d1] = [i * step + step / 2, (i + 1) * step + step / 2];
+    const mid = (d0 + d1) / 2;
+    if (mid > RING_GAP[0] && mid < RING_GAP[1]) {
+      continue;
+    }
+    const [a0, a1] = [rad(d0), rad(d1)];
+    groups.push([
+      {
+        plan: annulusSegment(a0, a1, RING_INNER, RING_OUTER),
+        z0: 0,
+        z1: RING_BASE,
+        top: cream,
+        side: creamSide,
+      },
+      {
+        plan: annulusSegment(a0, a1, 63, 68),
+        z0: RING_BASE,
+        z1: 5.5,
+        top: growersGlass,
+        side: growersGlassSide,
+      },
+      { plan: annulusSegment(a0, a1, 64.7, 66.3), z0: 5.5, z1: 6.1, top: leaf, side: leafSide },
+    ]);
+  }
+  const lamp = lit ? bloom : bloomDim;
+  const lampSide = lit ? bloomSide : bloomDimSide;
+  const r = (RING_INNER + RING_OUTER) / 2;
+  for (const d of RING_DOMES) {
+    const [cx, cy] = [r * Math.cos(rad(d)), r * Math.sin(rad(d))];
+    groups.push([
+      {
+        plan: ngon(12, 9.2, cx, cy, Math.PI / 12),
+        z0: 0,
+        z1: RING_BASE + 0.5,
+        top: cream,
+        side: creamSide,
+      },
+      ...dome(cx, cy, 8, RING_BASE + 0.5, growersGlass, growersGlassSide, growersGlassCap),
+      {
+        plan: box(cx - 1.3, cy - 1.3, cx + 1.3, cy + 1.3),
+        z0: RING_BASE + 8.9,
+        z1: RING_BASE + 11,
+        top: lamp,
+        side: lampSide,
+      },
+    ]);
+  }
+  return groups;
+}
+
+const growersRing = (lit: boolean): Part[][] => [...growers(lit), ...greenhouseRing(lit)];
+
+// Workshop crane: a tall gantry straddling the hall behind its centre, taller than the two jib
+// cranes, with a trolley, a hook block and a warm beacon on the bridge lit in frame A.
+const GANTRY_BACK = HALL_CENTRE - 6;
+
+function gantry(lit: boolean): Part[][] {
+  const legs = [-46, 46].map((across): Part[] => {
+    const [x, y] = at(GANTRY_BACK, across);
+    return [
+      {
+        plan: box(x - 2.4, y - 2.4, x + 2.4, y + 2.4),
+        z0: 0,
+        z1: 44,
+        top: yellow,
+        side: yellowSide,
+      },
+      {
+        plan: box(x - 3.6, y - 3.6, x + 3.6, y + 3.6),
+        z0: 0,
+        z1: 3,
+        top: yellowSide,
+        side: yellowDark,
+      },
+    ];
+  });
+  const [bx, by] = at(GANTRY_BACK, 0);
+  const [tx, ty] = at(GANTRY_BACK, 12);
+  const beacon = lit ? warm : yellowDark;
+  return [
+    ...legs,
+    [
+      {
+        plan: orientedBox(bx, by, DOCK + Math.PI / 2, 98, 4.4),
+        z0: 44,
+        z1: 48,
+        top: yellow,
+        side: yellowSide,
+      },
+      {
+        plan: box(tx - 3.2, ty - 3.2, tx + 3.2, ty + 3.2),
+        z0: 41,
+        z1: 44,
+        top: yellowSide,
+        side: yellowDark,
+      },
+      {
+        plan: box(tx - 0.5, ty - 0.5, tx + 0.5, ty + 0.5),
+        z0: 32,
+        z1: 41,
+        top: yellowDark,
+        side: yellowDark,
+      },
+      { plan: box(tx - 3, ty - 2, tx + 3, ty + 2), z0: 29, z1: 32, top: cream, side: creamSide },
+      {
+        plan: box(bx - 1.4, by - 1.4, bx + 1.4, by + 1.4),
+        z0: 48,
+        z1: 50.5,
+        top: beacon,
+        side: beacon,
+      },
+    ],
+  ];
+}
+
+// Salvage beacon: a periwinkle lamp on a mast over a slate float, centred on its float.
+function salvageBeacon(lit: boolean): Part[][] {
+  return [
+    [
+      { plan: ngon(6, 5), z0: 0, z1: 3, top: slate, side: slateSide },
+      { plan: box(-0.7, -0.7, 0.7, 0.7), z0: 3, z1: 15, top: dark, side: darkSide },
+      {
+        plan: box(-2.2, -2.2, 2.2, 2.2),
+        z0: 15,
+        z1: 18.5,
+        top: lit ? magnet : magnetDim,
+        side: lit ? magnetSide : magnetDimSide,
+      },
+    ],
+  ];
+}
+
+// Three beacons in clear space around the salvagers' yard, as (degrees, radius) from the pivot:
+// behind the back stack, left of the front stack and right of the dock, away from the magnet.
+// Neighbours blink opposite: phase 0 lights in frame A, phase 1 in frame B.
+const SALVAGE_BEACONS = [
+  [200, 70],
+  [125, 66],
+  [0, 64],
+] as const;
+
 // Visible sides in plan order, then the top.
 function faces(part: Part): { color: string; points: Point[] }[] {
   const top = (plan: Plan) => plan.map(([x, y]): Point => [x, y, part.z1]);
@@ -577,17 +748,33 @@ function polygons(groups: Part[][]) {
 
 const outposts: Readonly<Record<string, Outpost>> = {
   growers: { build: growers, face: GROWERS_FACE, pivot: 0, mouthWidth: 26 },
+  // The growers with the greenhouse ring: the same pivot and dock entrance in a larger frame.
+  "growers-ring": {
+    build: growersRing,
+    face: GROWERS_FACE,
+    pivot: 0,
+    mouthWidth: 26,
+    outpost: "growers",
+    project: "greenhouseRing",
+    title: "Growers outpost with the greenhouse ring",
+  },
   // Pivot on the hall's base centre.
   workshop: { build: workshop, face: WORKSHOP_FACE, pivot: HALL_CENTRE, mouthWidth: 24 },
   salvagers: { build: salvagers, face: SALVAGERS_FACE, pivot: 0, mouthWidth: 26 },
 };
 
-function entries(name: string, { build, face, pivot, mouthWidth }: Outpost) {
-  // Model point relative to the pivot, which lies on the dock axis on the world plane.
-  const [px, py] = at(pivot, 0);
+type Polygons = ReturnType<typeof polygons>;
+
+// Writes both blink frames around the world-plane model point `pivot` and returns the frame
+// geometry. The pivot sits on the vertical centre line at an exact five-decimal height.
+function writeFrames(
+  name: string,
+  title: string,
+  [px, py]: readonly [number, number],
+  frames: { a: Polygons; b: Polygons },
+) {
   const local = ([x, y, z]: Point): Point => [x - px, y - py, z];
-  const frames = { a: polygons(build(true)), b: polygons(build(false)) };
-  // Frame bounds over both blink frames, with the pivot on the vertical centre line.
+  // Frame bounds over both blink frames.
   const all = [...frames.a, ...frames.b].flatMap(({ points }) => points.map(local));
   const xs = all.map((point) => projectAt(0, 0, point)[0]);
   const ys = all.map((point) => projectAt(0, 0, point)[1]);
@@ -608,27 +795,22 @@ function entries(name: string, { build, face, pivot, mouthWidth }: Outpost) {
       });
       return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
     });
-    const title = `${name[0]!.toUpperCase()}${name.slice(1)} outpost ${frame.toUpperCase()}`;
     writeFileSync(
       `${output}${name}-${frame}.svg`,
       [
         `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-        `  <title>${title}</title>`,
+        `  <title>${title} ${frame.toUpperCase()}</title>`,
         ...shapes,
         "</svg>",
         "",
       ].join("\n"),
     );
   }
+  return { above, halfWidth, height, local, width };
+}
 
-  // Dock entrance: the mouth's centre on the z = 0 plane, opening toward screen-down.
-  const [entranceX, entranceY] = projectAt(halfWidth, above, local([...at(face, 0), 0]));
-  const dock = {
-    x: round(entranceX),
-    y: round(entranceY),
-    outward: [0, 1],
-    width: round((mouthWidth * Math.sqrt(3)) / Math.SQRT2),
-  };
+// Manifest fields shared by outpost frames and overlays.
+function frameEntries(name: string, width: number, height: number, above: number) {
   return (["a", "b"] as const).map((frame) => ({
     id: `outpost-${name}-${frame}`,
     path: `/art/outposts/${name}-${frame}.svg`,
@@ -639,15 +821,110 @@ function entries(name: string, { build, face, pivot, mouthWidth }: Outpost) {
     facing: "fixed",
     pivot: { x: 0.5, y: above / height },
     frameMs: BLINK_MS,
-    dock,
-    outpost: name,
   }));
 }
 
+function entries(
+  name: string,
+  { build, face, pivot, mouthWidth, outpost, project, title }: Outpost,
+) {
+  const role = outpost ?? name;
+  const frames = { a: polygons(build(true)), b: polygons(build(false)) };
+  // The pivot lies on the dock axis on the world plane.
+  const { above, halfWidth, height, local, width } = writeFrames(
+    name,
+    title ?? `${name[0]!.toUpperCase()}${name.slice(1)} outpost`,
+    at(pivot, 0),
+    frames,
+  );
+
+  // Dock entrance: the mouth's centre on the z = 0 plane, opening toward screen-down.
+  const [entranceX, entranceY] = projectAt(halfWidth, above, local([...at(face, 0), 0]));
+  const dock = {
+    x: round(entranceX),
+    y: round(entranceY),
+    outward: [0, 1],
+    width: round((mouthWidth * Math.sqrt(3)) / Math.SQRT2),
+  };
+  return frameEntries(name, width, height, above).map((entry) => ({
+    ...entry,
+    dock,
+    outpost: role,
+    ...(project ? { project } : {}),
+  }));
+}
+
+// A project sprite drawn at anchors around its outpost's pivot, in the outpost's blink.
+type Overlay = {
+  build: (lit: boolean) => Part[][];
+  outpost: string;
+  project: string;
+  title: string;
+  // The sprite's pivot, a world-plane model point.
+  pivot: readonly [number, number];
+  // Each copy's pivot as a model point, whether it draws behind or in front of the outpost, and
+  // its blink phase: 0 shows frame A while the outpost shows A, 1 shows B.
+  anchors: readonly { at: readonly [number, number]; layer: "behind" | "front"; phase: 0 | 1 }[];
+};
+
+// Each outpost's pivot as a model point, matching `outposts`.
+const pivots: Readonly<Record<string, readonly [number, number]>> = {
+  growers: at(0, 0),
+  workshop: at(HALL_CENTRE, 0),
+  salvagers: at(0, 0),
+};
+
+const overlays: Readonly<Record<string, Overlay>> = {
+  // The gantry rises beside and above the hall and never passes behind it, so it draws over the
+  // unchanged outpost.
+  "workshop-crane": {
+    build: gantry,
+    outpost: "workshop",
+    project: "workshopCrane",
+    title: "Workshop crane",
+    pivot: at(HALL_CENTRE, 0),
+    anchors: [{ at: at(HALL_CENTRE, 0), layer: "front", phase: 0 }],
+  },
+  // One beacon at each yard anchor; beacons farther than the pivot draw behind the outpost.
+  "salvagers-beacon": {
+    build: salvageBeacon,
+    outpost: "salvagers",
+    project: "salvageBeacons",
+    title: "Salvage beacon",
+    pivot: [0, 0],
+    anchors: SALVAGE_BEACONS.map(([degrees, radius], k) => {
+      const point = [radius * Math.cos(rad(degrees)), radius * Math.sin(rad(degrees))] as const;
+      return {
+        at: point,
+        layer: point[0] + point[1] < 0 ? "behind" : "front",
+        phase: k % 2 === 0 ? 0 : 1,
+      };
+    }),
+  },
+};
+
+function overlayEntries(name: string, { build, outpost, pivot, project, title }: Overlay) {
+  const frames = { a: polygons(build(true)), b: polygons(build(false)) };
+  const { above, height, width } = writeFrames(name, title, pivot, frames);
+  return frameEntries(name, width, height, above).map((entry) => ({
+    ...entry,
+    outpost,
+    project,
+  }));
+}
+
+// Frame px from the outpost's pivot to a world-plane model point.
+function offset(outpost: string, [x, y]: readonly [number, number]) {
+  const [px, py] = pivots[outpost]!;
+  const [sx, sy] = projectAt(0, 0, [x - px, y - py, 0]);
+  return { x: round(sx), y: round(sy) };
+}
+
 mkdirSync(output, { recursive: true });
-const manifestEntries = Object.entries(outposts).flatMap(([name, outpost]) =>
-  entries(name, outpost),
-);
+const manifestEntries = [
+  ...Object.entries(outposts).flatMap(([name, outpost]) => entries(name, outpost)),
+  ...Object.entries(overlays).flatMap(([name, overlay]) => overlayEntries(name, overlay)),
+];
 
 // Outpost entries follow the station and precede the discovery cache and the enemies.
 const manifestPath = `${art}manifest.json`;
@@ -657,3 +934,45 @@ const later = kept.findIndex(({ id }) => id === "discovery-cache" || id.startsWi
 const insert = later === -1 ? kept.length : later;
 manifest.assets = [...kept.slice(0, insert), ...manifestEntries, ...kept.slice(insert)];
 writeFileSync(manifestPath, json(manifest));
+
+// World changes keyed by Gameplay's project id: a replacement frame pair for the outpost, or an
+// overlay at anchors offset from the outpost's pivot in frame px.
+const replacements = Object.entries(outposts).flatMap(([name, { outpost, project }]) =>
+  outpost && project
+    ? [
+        [
+          project,
+          {
+            outpost,
+            kind: "replace",
+            frames: [`outpost-${name}-a`, `outpost-${name}-b`],
+            replaces: [`outpost-${outpost}-a`, `outpost-${outpost}-b`],
+          },
+        ] as const,
+      ]
+    : [],
+);
+const placed = Object.entries(overlays).map(
+  ([name, { anchors, outpost, project }]) =>
+    [
+      project,
+      {
+        outpost,
+        kind: "overlay",
+        frames: [`outpost-${name}-a`, `outpost-${name}-b`],
+        anchors: anchors.map(({ at: point, layer, phase }) => ({
+          ...offset(outpost, point),
+          layer,
+          phase,
+        })),
+      },
+    ] as const,
+);
+writeFileSync(
+  `${art}projects.json`,
+  json({
+    version: 1,
+    reveal: { durationMs: 600, easing: "cubicOut" },
+    projects: Object.fromEntries([...replacements, ...placed]),
+  }),
+);

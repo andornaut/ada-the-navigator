@@ -287,7 +287,7 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 | Trailing slot | Right inset, centred vertically; one width for every row: the widest price pill, Owned or In use               |
 | Price pill    | `PILL` with `icon-stardust`, `SPACING.markGap`, the price in `TYPE.label`; every pill one width                |
 | Owned, In use | `icon-shop-check` (12x8), `SPACING.markGap`, the label in `TYPE.label`, right-aligned                          |
-| Row width     | inset + well + gap + widest name or level line + gap + slot + inset; one width across both tabs                |
+| Row width     | inset + well + gap + widest name or level line + gap + slot + inset; one width across every tab                |
 | Paint heading | `icon-shop-ship-paint` (20), `SPACING.markGap`, `TYPE.label`, on a 20 line, `SPACING.gap` above the paint rows |
 | Confirm well  | 56x56; glyph at 2x by nearest neighbour (40, or 48 for the upgrade composite), swatch 48, centred              |
 | Confirm price | `icon-stardust-20`, `SPACING.markGap`, the price in `TYPE.heading`                                             |

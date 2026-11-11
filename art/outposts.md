@@ -1,8 +1,10 @@
 # Outposts and discovery cache
 
 - Rebuild the outposts with `node art/tools/outposts.ts`. It writes
-  `public/art/outposts/<outpost>-a.svg` and `<outpost>-b.svg` and replaces the
-  `outpost-*` manifest entries, which follow the `station-*` entries.
+  `public/art/outposts/<outpost>-a.svg` and `<outpost>-b.svg`, the
+  [community project](projects.md) frames and overlays beside them and
+  `public/art/projects.json`, and replaces the `outpost-*` manifest entries,
+  which follow the `station-*` entries.
 - Rebuild the cache with `node art/tools/discovery-cache.ts`. It writes
   `public/art/discovery-cache.png` with its Aseprite data
   `discovery-cache.json` and replaces the `discovery-cache` manifest entry,

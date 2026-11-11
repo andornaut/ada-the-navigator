@@ -1,6 +1,7 @@
 # Shop icons
 
-Glyphs for the [station and shop](shop.md) rows: cream `#ead4aa` pixel art on a
+Glyphs for the [station and shop](shop.md) and
+[community project](projects.md) rows: cream `#ead4aa` pixel art on a
 clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 `#3b3850` (7.76:1). Each shop item maps to one glyph:
 
@@ -22,6 +23,13 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Paint scheme rows  | The scheme's idle frame 12, drawn 32x32      | 32x32 |
 | Owned and In use   | `icon-shop-check`                            | 12x8  |
 | Upgrade badge      | `icon-shop-upgrade-badge`, inside composites | 12x12 |
+| Greenhouse ring    | `icon-project-greenhouse-ring`               | 20x20 |
+| Workshop crane     | `icon-project-workshop-crane`                | 20x20 |
+| Salvage beacons    | `icon-project-salvage-beacons`               | 20x20 |
+| Second docking bay | `icon-project-docking-bay`                   | 20x20 |
+| Hub repairs        | `icon-project-hub-repairs`                   | 20x20 |
+| Nursery beacon     | `icon-project-nursery-beacon`                | 20x20 |
+| Current-map buoys  | `icon-project-current-buoys`                 | 20x20 |
 
 Each weapon sheet is the same pixel grid as its [weapon icon](weapon-icons.md),
 written by `art/tools/weapon-icons.ts`. The plain double
@@ -39,7 +47,7 @@ separate from the glyph it overlaps.
 
 - `icon-shop-check` has one `rest` frame, cream: Owned and In use rows are
   never disabled.
-- The other `icon-shop-*` sheets have tags `normal` (frame 0, cream) and
+- The other `icon-shop-*` sheets and the `icon-project-*` sheets have tags `normal` (frame 0, cream) and
   `disabled` (frame 1, `#9a96ad`) for unaffordable rows. They are not tinted at
   runtime. The badge keeps its ink edge and chevron in both.
 - Weapon SVGs are one colour. In an unaffordable row, use the weapon's sheet
@@ -63,6 +71,13 @@ run Prettier on the written JSON.
 
 | PNG                                 | SHA-256                                                            |
 | ----------------------------------- | ------------------------------------------------------------------ |
+| `icon-project-current-buoys.png`    | `5506bbcad2512bfde4a81aff6de192c0323362489c7328d38a94affbbf60f5ef` |
+| `icon-project-docking-bay.png`      | `e095d8686977f4106b3c0ad2411463f69f882db4a5b232229226d6782cd049f7` |
+| `icon-project-greenhouse-ring.png`  | `ba3f3a641b967036222e6b50524be3565e5d62abe5e3d7244bf5662148436542` |
+| `icon-project-hub-repairs.png`      | `1739732899b4686c7b71148ab3a6c8161cf76f15105691219e0455de5254af0f` |
+| `icon-project-nursery-beacon.png`   | `dcd26f20c29b2878e804476c0f174eac9c12698a02583746f6b6e3c2164048a7` |
+| `icon-project-salvage-beacons.png`  | `5cc9cadcceb5ae00a6ba0990c9c797f997cdcf4710b81c2672612e0235a43c4e` |
+| `icon-project-workshop-crane.png`   | `faabbcbdb7df95dd1d9ac04d10f92dc623e0d14f4574c003489b5a89a5291b1b` |
 | `icon-shop-check.png`               | `50000ad861883d7612f0fdf2e40d633f9a71e36599074e7653f2580da6e4c148` |
 | `icon-shop-engine-tuning.png`       | `63a5f882e0e1bc130c65a206a6f290b5eb66f94f1b4a0043a9ab02cbdc5dab7a` |
 | `icon-shop-shield.png`              | `2a65f554935484920101167705269f0fe9c47295badac9c01970d80cfc561f67` |
@@ -88,3 +103,12 @@ run Prettier on the written JSON.
   `icon-shop-weapon-scattershot` and `icon-shop-weapon-phaser`: the weapon's
   HUD glyph.
 - `icon-shop-weapon-upgrade`: two stacked chevrons.
+- `icon-project-greenhouse-ring`: a greenhouse dome with a sprout, inside a ring.
+- `icon-project-workshop-crane`: a tower crane lifting a crate.
+- `icon-project-salvage-beacons`: a beacon lamp on a post over a float, between
+  two signal arcs.
+- `icon-project-docking-bay`: a dock collar with two mouths and their lit floor
+  strips.
+- `icon-project-hub-repairs`: an open-ended wrench.
+- `icon-project-nursery-beacon`: a lantern with a lit core over a cradle.
+- `icon-project-current-buoys`: buoys along a current that ends in an arrow.

@@ -67,6 +67,48 @@
       "once": []
     },
     {
+      "key": "icon-project-current-buoys",
+      "png": "sprites/icon-project-current-buoys.png",
+      "json": "sprites/icon-project-current-buoys.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-docking-bay",
+      "png": "sprites/icon-project-docking-bay.png",
+      "json": "sprites/icon-project-docking-bay.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-greenhouse-ring",
+      "png": "sprites/icon-project-greenhouse-ring.png",
+      "json": "sprites/icon-project-greenhouse-ring.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-hub-repairs",
+      "png": "sprites/icon-project-hub-repairs.png",
+      "json": "sprites/icon-project-hub-repairs.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-nursery-beacon",
+      "png": "sprites/icon-project-nursery-beacon.png",
+      "json": "sprites/icon-project-nursery-beacon.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-salvage-beacons",
+      "png": "sprites/icon-project-salvage-beacons.png",
+      "json": "sprites/icon-project-salvage-beacons.json",
+      "once": []
+    },
+    {
+      "key": "icon-project-workshop-crane",
+      "png": "sprites/icon-project-workshop-crane.png",
+      "json": "sprites/icon-project-workshop-crane.json",
+      "once": []
+    },
+    {
       "key": "icon-reduced-motion",
       "png": "sprites/icon-reduced-motion.png",
       "json": "sprites/icon-reduced-motion.json",

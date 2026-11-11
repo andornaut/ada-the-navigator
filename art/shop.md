@@ -8,15 +8,15 @@ order and behaviour; the keys below are Gameplay's player string keys.
 
 ## Shared parts
 
-| Part                | Asset or token                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Card, close, focus  | `ui-settings-card`, `ui-close`, `ui-focus`                                                  |
-| Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                                |
-| Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                             |
-| Stardust            | `icon-stardust` (16px) in price pills; `icon-stardust-20` in balances and the confirm price |
-| Item glyphs         | `icon-shop-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md)                 |
-| Owned and In use    | `icon-shop-check`, 12x8                                                                     |
-| Ship paint swatches | The scheme's `ship-24` frame: `ship-24` for Classic, `ship-<scheme>-24` for the others      |
+| Part                | Asset or token                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| Card, close, focus  | `ui-settings-card`, `ui-close`, `ui-focus`                                                       |
+| Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                                     |
+| Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                                  |
+| Stardust            | `icon-stardust` (16px) in price pills; `icon-stardust-20` in balances and the confirm price      |
+| Item glyphs         | `icon-shop-*` and `icon-project-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md) |
+| Owned and In use    | `icon-shop-check`, 12x8                                                                          |
+| Ship paint swatches | The scheme's `ship-24` frame: `ship-24` for Classic, `ship-<scheme>-24` for the others           |
 
 Text uses the [controls text tokens](controls.md#colour-tokens): titles white
 `#ffffff`, body and names cream `#ead4aa`, supporting text `#b8b3c9`, disabled
@@ -38,13 +38,15 @@ No quest board until station quests are designed.
 1. Header: `shop`. The close X, an outside tap, back and Escape return to the
    station card; only the station card's exits undock.
 2. Balance: the amount alone, without the word Stardust.
-3. Tabs: one action group, Weapons (`shopWeapons`) left and Ship (`shopShip`)
-   right, sharing one width. The selected tab draws `ui-button-primary`, the
+3. Tabs: one action group, Weapons (`shopWeapons`), Ship (`shopShip`) and,
+   once the galaxy's projects are offered, Projects (`projects`), left to
+   right and sharing one width. The selected tab draws `ui-button-primary`, the
    other `ui-button`; both keep the normal and pressed frames. Tabs are a tab
    list; switching tabs resets the list scroll to the top.
 4. Item list: the selected tab's row groups, in a vertical scroll viewport.
 
-The Weapons tab holds one row group. The Ship tab holds the upgrade row group,
+The Weapons tab holds one row group. The Projects tab holds the galaxy's
+project rows ([Community projects](projects.md)). The Ship tab holds the upgrade row group,
 then the paint group: the paint heading (`icon-shop-ship-paint`, then
 `shipPaint` in white) and the paint row group. The heading is left-aligned to
 the paint row group.
@@ -53,7 +55,7 @@ the paint row group.
 
 - A control grid ([Layout](layout.md#groups)). Rows fill left then right in
   item order, and a group always starts a new line.
-- Every row in the shop shares one width across both tabs, so the card keeps
+- Every row in the shop shares one width across every tab, so the card keeps
   its width when the tab changes. The group centres in the list.
 
 ### Item row
