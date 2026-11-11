@@ -74,11 +74,15 @@ groups.
   bars 3px apart; press swells it to 35px for the first 60ms frame only. Its edge
   sits 8px in from the view's top and left, with a 52.5x52.5 press area. It is a
   touch control, hidden on desktop (Escape pauses) and while dialogue is open.
-- Pause card: title "Paused" (Gameplay owns the strings), then Resume (primary),
-  Settings and the return-home action, stacked in that order. The three faces
-  are 48px high, fill the body width and sit 8px apart, with 16px from each face
-  to the card's left and right edges and from the last face to the bottom.
-  Settings opens over the same dim; one card shows at a time.
+- Pause card: title "Paused" with the close X, then Resume (primary), Travel,
+  Settings and Return home (secondary), stacked in that order. The faces are
+  48px high, share the body width and sit 8px apart, with 16px from each face to
+  the card's left and right edges and from the last face (or the note) to the
+  bottom. While Ada is in danger, Travel and Return home use the disabled face
+  and refuse with the shared cue, and the note "Unavailable while you are in
+  danger." sits below the stack in supporting text. Travel opens the
+  "Discovered destinations" card and Settings opens over the same dim; one card
+  shows at a time.
 - The space screen shows no navigation or destination panel; navigation lives in
   the pause card.
 
