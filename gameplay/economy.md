@@ -141,7 +141,7 @@ The shield shop row reuses the existing `shield` label. `jumpHome` replaces
 | `aboutRapidMissile` | Quick missiles with a small blast.                                 |
 | `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                   |
 | `aboutScattershot`  | A shotgun spread, strongest up close.                              |
-| `aboutPhaser`       | An instant beam that hits everything in its path.                  |
+| `aboutPhaser`       | An instant beam that strikes the first thing in its path.          |
 | `weaponLocked`      | Weapons can't be changed in combat.                                |
 | `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
 | `jumpWeaponLost`    | Your {weapon} was lost.                                            |
