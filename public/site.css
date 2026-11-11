@@ -147,58 +147,58 @@ body.site {
   text-wrap: pretty;
 }
 
-.site .site-play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 48px;
-  min-width: 172px;
-  min-height: 56px;
-  padding: 12px 22px;
-  border: 2px solid #ead4aa;
-  border-radius: 6px;
-  background: #ead4aa;
-  color: #292734;
-  font-size: 18px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.site .site-play:hover {
-  background: #f6e5c6;
-  border-color: #f6e5c6;
-}
-
-/* Play, and Install beside it while the game can be installed. */
+/* Install (secondary) on the left and Play (primary) on the right, one shared width, as in
+   art/controls.md. inline-grid with 1fr columns sizes both to the widest label. */
 .site .site-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: inline-grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 8px;
+  max-width: 100%;
 }
 
+/* 48px button: 44px face over a 4px lip. Pressed drops the face 2px and removes the lip. */
+.site .site-play,
 .site .site-install,
 .site .site-steps-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  gap: 6px;
+  min-width: 160px;
+  min-height: 48px;
   margin: 0;
-  padding: 12px 22px;
-  border: 2px solid #ead4aa;
-  border-radius: 6px;
-  background: transparent;
-  color: #ead4aa;
+  padding: 0 16px;
+  border: 0 solid transparent;
+  border-bottom-width: 4px;
+  border-radius: 2px;
+  background-clip: padding-box;
+  color: #181425;
   font: inherit;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
+  line-height: 20px;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.site .site-install:hover,
-.site .site-steps-close:hover {
-  border-color: #f6e5c6;
-  background: #3c384b;
-  color: #f6e5c6;
+.site .site-play {
+  border-bottom-color: #8a7148;
+  background-color: #bfa06f;
+}
+
+.site .site-install,
+.site .site-steps-close {
+  border-bottom-color: #5f5980;
+  background-color: #9690b4;
+}
+
+.site .site-play:active,
+.site .site-install:active,
+.site .site-steps-close:active {
+  border-top-width: 2px;
+  border-bottom-width: 2px;
+  border-color: transparent;
 }
 
 .site .site-install[hidden] {
@@ -209,6 +209,17 @@ body.site {
 .site button:focus-visible {
   outline: 3px solid #70ace8;
   outline-offset: 5px;
+}
+
+/* Focus ring 4px outside the face in every state: ink, 2px cream, ink. */
+.site .site-play:focus-visible,
+.site .site-install:focus-visible,
+.site .site-steps-close:focus-visible {
+  outline: 2px solid #ead4aa;
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 1px #181425,
+    0 0 0 4px #181425;
 }
 
 /* The install steps for the browser's own menu (iOS, Firefox for Android), one browser's shown
