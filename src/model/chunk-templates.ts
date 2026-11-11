@@ -293,7 +293,8 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
   if (feature) {
     placements.push(feature);
   }
-  // A drift path never leaves the slot's corridor clearance or reaches a neighbor's gap.
+  // A drift path never leaves the slot's corridor clearance or reaches a neighbor's gap. Paths
+  // are assigned in order and each one leaves room for those before it, so no two paths overlap.
   for (const [index, { drift, free }] of drifting) {
     const placement = placements[index]!;
     const room = placements.reduce(
@@ -304,6 +305,7 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
               limit,
               Math.hypot(other.x - placement.x, other.y - placement.y) -
                 other.radius -
+                (other.orbit?.radius ?? 0) -
                 placement.radius -
                 2 * halfWidth,
             ),

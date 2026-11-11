@@ -85,6 +85,19 @@
         }
       ],
       "sizeRatio": 5
+    },
+    "retaliator": {
+      "hardpoints": [
+        {
+          "fire": "bolt",
+          "id": "turret",
+          "offset": [0, 0],
+          "order": 0,
+          "required": false,
+          "role": "turret"
+        }
+      ],
+      "sizeRatio": 2
     }
   },
   "version": 1

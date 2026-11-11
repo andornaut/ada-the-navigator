@@ -1,3 +1,4 @@
+import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { EconomyCatalog, UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { SectorId } from "../data/types.ts";
@@ -49,8 +50,12 @@ export function rollEnemyDrop(
   return drop;
 }
 
-export function rollAsteroidStardust(catalog: EconomyCatalog, next: () => number): number {
-  const [low, high] = catalog.asteroidStardust;
+export function rollAsteroidStardust(
+  catalog: EconomyCatalog,
+  size: AsteroidSize,
+  next: () => number,
+): number {
+  const [low, high] = catalog.asteroidStardust[size];
   return low + Math.floor(next() * (high - low + 1));
 }
 

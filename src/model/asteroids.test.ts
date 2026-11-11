@@ -8,6 +8,7 @@ import {
   readAsteroidCatalog,
 } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import {
@@ -21,9 +22,10 @@ import {
 } from "./asteroids.ts";
 import { type ChunkPlanOptions, planChunk } from "./chunk-templates.ts";
 import { createEnemy } from "./enemy-ai.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, ensureDestination, ensureStation, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { stationsNear } from "./stations.ts";
 import { playOpening } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 
@@ -247,6 +249,60 @@ describe("asteroid chunk fields", () => {
     expect(drifting).toBeGreaterThan(20);
     expect(features).toBeGreaterThan(20);
   });
+  it("keeps every drift path clear of every other rock and drift path in its chunk", () => {
+    const free = options.shipRadius + options.clearance;
+    // Every eligible rock drifts, so neighbouring paths compete for the same room.
+    const asteroids = { field: { ...ASTEROID_FIELDS[1], driftChance: 1 }, shapes };
+    let pairs = 0;
+    let bothDrift = 0;
+    for (let x = -24; x < 24; x++) {
+      for (let y = -24; y < 24; y++) {
+        const { placements } = planChunk(CHUNK_CATALOG, { ...options, asteroids, x, y });
+        placements.forEach((a, index) => {
+          for (const b of placements.slice(index + 1)) {
+            if (!a.orbit && !b.orbit) {
+              continue;
+            }
+            pairs++;
+            bothDrift += a.orbit && b.orbit ? 1 : 0;
+            const reach =
+              a.radius + (a.orbit?.radius ?? 0) + b.radius + (b.orbit?.radius ?? 0) + 2 * free;
+            expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(reach - 1e-9);
+          }
+        });
+      }
+    }
+    expect(pairs).toBeGreaterThan(50);
+    expect(bothDrift, "neighbouring drift paths are exercised").toBeGreaterThan(10);
+  });
+
+  it("keeps large and huge asteroids out of the chunk passages and edges", () => {
+    const free = options.shipRadius + options.clearance;
+    let big = 0;
+    for (let x = -12; x < 12; x++) {
+      for (let y = -12; y < 12; y++) {
+        const plan = planChunk(CHUNK_CATALOG, { ...options, x, y });
+        const origin = { x: x * options.size, y: y * options.size };
+        for (const placement of plan.placements) {
+          const size = placement.asteroid && ASTEROID_SHAPES.get(placement.asteroid)!.size;
+          if (size !== "large" && size !== "huge") {
+            continue;
+          }
+          big++;
+          expect(placement.orbit).toBeUndefined();
+          for (const along of [placement.x - origin.x, placement.y - origin.y]) {
+            // Clear of the passages through the chunk center and along its edges.
+            expect(Math.abs(along - options.size / 2) - placement.radius).toBeGreaterThanOrEqual(
+              free,
+            );
+            expect(along - placement.radius).toBeGreaterThanOrEqual(free);
+            expect(options.size - along - placement.radius).toBeGreaterThanOrEqual(free);
+          }
+        }
+      }
+    }
+    expect(big).toBeGreaterThan(20);
+  });
 });
 
 describe("asteroids in flight", () => {
@@ -394,6 +450,152 @@ describe("asteroids in flight", () => {
     expect(back.x).toBeCloseTo(expected.position.x);
     expect(back.y).toBeCloseTo(expected.position.y);
     expect(restoreSave(resumed.save())?.flight?.objects).toContainEqual(back);
+  });
+
+  /** Distance from `point` to the edge of an object's footprint, a drift path included. */
+  const gap = (point: Vec, object: SpaceObject) => {
+    const reach = object.orbit
+      ? { radius: object.radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
+      : object;
+    return Math.hypot(reach.x - point.x, reach.y - point.y) - reach.radius;
+  };
+  const drifter = (id: string, from: Vec, distance: number): SpaceObject => {
+    const center = { x: from.x + distance, y: from.y };
+    // Phase 0 puts the rock on the far side of its path, outside any safe area it reaches.
+    return rock(id, {
+      orbit: { ...center, phase: 0, radius: 40, rate: 0.2 },
+      radius: 20,
+      x: center.x + 40,
+      y: center.y,
+    });
+  };
+
+  it("keeps every asteroid and drift path clear of stations, destinations and the launch point", () => {
+    const { flight, model } = launched();
+    const sizes = new Set<string>();
+    let stations = 0;
+    const check = () => {
+      const areas = flight.objects.filter((o) => o.kind === "station" || o.kind === "destination");
+      stations = Math.max(stations, areas.filter((o) => o.kind === "station").length);
+      for (const object of flight.objects) {
+        if (!object.asteroid) {
+          continue;
+        }
+        sizes.add(ASTEROID_SHAPES.get(object.asteroid)!.size);
+        for (const area of areas) {
+          const safe =
+            area.kind === "station" ? ECONOMY.station.safeRadius : PROTOTYPE.tuning.safeRadius;
+          expect(gap(area, object), `${object.id} near ${area.id}`).toBeGreaterThan(safe);
+        }
+      }
+    };
+    for (let step = 0; step < 40; step++) {
+      flight.player.x += 900;
+      model.step(1 / 60, idle);
+      check();
+    }
+    // Fly past a station so its own chunks generate around it.
+    const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, flight.player)[0]!;
+    for (let step = -4; step <= 4; step++) {
+      flight.player = { x: site.x + step * 300, y: site.y + 500 };
+      model.step(1 / 60, idle);
+      check();
+    }
+    expect(stations).toBeGreaterThan(0);
+    expect(sizes).toContain("large");
+    expect(sizes).toContain("huge");
+    // Beside the launch point after its chunks paged out, regenerated layout keeps the launch
+    // point's safe radius although Ada is elsewhere. Some planned layout would reach it.
+    const safe = PROTOTYPE.tuning.safeRadius;
+    const beside = { x: 3 * safe, y: 0 };
+    const planned = [];
+    for (let x = -2; x <= 2; x++) {
+      for (let y = -2; y <= 2; y++) {
+        const plan = planChunk(CHUNK_CATALOG, { ...options, seed: flight.seed, x, y });
+        planned.push(
+          ...plan.placements.filter((placement) => {
+            const reach = placement.radius + (placement.orbit?.radius ?? 0);
+            return (
+              Math.hypot(placement.x, placement.y) - reach <= safe &&
+              Math.hypot(placement.x - beside.x, placement.y - beside.y) - reach > safe
+            );
+          }),
+        );
+      }
+    }
+    expect(planned.length).toBeGreaterThan(0);
+    flight.player = { ...beside };
+    model.step(1 / 60, idle);
+    expect(flight.chunks).toContain("0,0");
+    for (const object of flight.objects) {
+      if (["rock", "resource"].includes(object.kind) || object.role === "discovery") {
+        expect(gap({ x: 0, y: 0 }, object), object.id).toBeGreaterThan(safe);
+      }
+    }
+    check();
+  });
+
+  it("clears a drift path that would reach a newly placed destination's safe area", () => {
+    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const target = ensureDestination(PROTOTYPE, "probe", structuredClone(flight));
+    const safe = PROTOTYPE.tuning.safeRadius;
+    const reaching = drifter("reaching", target, safe + 20 + 10);
+    const clear = drifter("clear", target, safe + 20 + 40 + 10);
+    // Only the reaching rock's path, not its current position, enters the safe area.
+    expect(Math.hypot(reaching.x - target.x, reaching.y - target.y)).toBeGreaterThan(safe);
+    flight.objects.push(reaching, clear);
+    ensureDestination(PROTOTYPE, "probe", flight);
+    expect(flight.objects).not.toContain(reaching);
+    expect(flight.objects).toContain(clear);
+  });
+
+  it("clears a drift path that would reach a newly placed station's safe area", () => {
+    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
+    expect(flight.objects.some((o) => o.id === site.id)).toBe(false);
+    const safe = ECONOMY.station.safeRadius;
+    const reaching = drifter("reaching", site, safe + 20 + 10);
+    const clear = drifter("clear", site, safe + 20 + 40 + 10);
+    expect(Math.hypot(reaching.x - site.x, reaching.y - site.y)).toBeGreaterThan(safe);
+    flight.objects.push(reaching, clear);
+    expect(ensureStation(PROTOTYPE, site.id, flight)).not.toBeNull();
+    expect(flight.objects).not.toContain(reaching);
+    expect(flight.objects).toContain(clear);
+  });
+
+  it("bounces Ada off a drifting asteroid that moves into her, without damage", () => {
+    const { flight, model } = launched();
+    const shield = flight.shield;
+    const rate = -0.3;
+    const radius = 60;
+    const center = { x: flight.player.x + radius, y: flight.player.y };
+    // The rock starts a quarter loop above its center and sweeps through Ada's resting spot.
+    const moving = rock("drifter", {
+      orbit: { ...center, phase: -Math.PI / 2 - rate * flight.time, radius, rate },
+      radius: 20,
+      x: center.x,
+      y: center.y - radius,
+    });
+    flight.objects.push(moving);
+    flight.velocity = { x: 0, y: 0 };
+    let pushed = 0;
+    for (let step = 0; step < 480; step++) {
+      // Only the rock and safe areas remain, so any shield loss would come from the rock.
+      flight.objects = flight.objects.filter(
+        (object) => object === moving || ["destination", "station"].includes(object.kind),
+      );
+      model.step(1 / 60, idle);
+      const contact = sceneryContact(moving, flight.player, tuning.shipRadius + 1);
+      if (contact) {
+        pushed = Math.max(
+          pushed,
+          flight.velocity.x * contact.normal.x + flight.velocity.y * contact.normal.y,
+        );
+      }
+    }
+    expect(pushed).toBeGreaterThan(0);
+    expect(flight.shield).toBe(shield);
+    expect(flight.objects).toContain(moving);
   });
 
   it("bounces enemies off scenery by the same rule", () => {

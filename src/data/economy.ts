@@ -1,3 +1,4 @@
+import type { AsteroidSize } from "./asteroid-catalog.ts";
 import type { EnemyArchetype } from "./enemy-catalog.ts";
 import type { SectorId, Weapon } from "./types.ts";
 
@@ -31,8 +32,8 @@ export interface Destruction extends DestructionTiming {
 export interface EconomyCatalog {
   /** Stardust released by each destroyed enemy archetype. */
   enemyStardust: Readonly<Record<EnemyArchetype, number>>;
-  /** Inclusive Stardust range released by a destroyed asteroid. */
-  asteroidStardust: readonly [number, number];
+  /** Inclusive Stardust range released by a destroyed asteroid of each size. */
+  asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
   /** Chance per galaxy that a destroyed enemy drops a random upgrade weapon. */
   weaponDropChance: Readonly<Record<SectorId, Readonly<Record<EnemyArchetype, number>>>>;
   /** Stardust given instead of a dropped weapon Ada already owns. */
@@ -106,7 +107,7 @@ const small = { fighter: 0.005, interceptor: 0.005, retaliator: 0.005, swarm: 0.
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
-  asteroidStardust: [0, 1],
+  asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,
   // with Art's 40% reduced spread.

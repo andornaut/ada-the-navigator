@@ -7,6 +7,7 @@ import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
@@ -111,15 +112,25 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("releases zero or one Stardust per asteroid with equal seeded frequency", () => {
+  it("releases zero or one Stardust per small asteroid with equal seeded frequency", () => {
     const counts = new Map<number, number>();
     for (let index = 0; index < 6000; index++) {
-      const value = rollAsteroidStardust(ECONOMY, dropRandom(5, `rock:${index}`));
+      const value = rollAsteroidStardust(ECONOMY, "small", dropRandom(5, `rock:${index}`));
       counts.set(value, (counts.get(value) ?? 0) + 1);
     }
     expect([...counts.keys()].sort()).toEqual([0, 1]);
     for (const count of counts.values()) {
       expect(count / 6000).toBeCloseTo(1 / 2, 1);
+    }
+  });
+
+  it.each([
+    ["medium", 1],
+    ["large", 2],
+    ["huge", 3],
+  ] as const)("releases exactly %s asteroid Stardust: %i", (size, amount) => {
+    for (let index = 0; index < 200; index++) {
+      expect(rollAsteroidStardust(ECONOMY, size, dropRandom(5, `rock:${index}`))).toBe(amount);
     }
   });
 
@@ -295,6 +306,24 @@ describe("Stardust drops", () => {
     expect(total(pickups(value))).toBeGreaterThanOrEqual(ECONOMY.enemyStardust.frigate);
   });
 
+  it("releases a huge asteroid's three Stardust where it breaks", () => {
+    const value = flight();
+    const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
+    const rock: SpaceObject = {
+      asteroid: shape.id,
+      hp: 1,
+      id: "huge-rock",
+      kind: "rock",
+      radius: shape.radius,
+      x: 600,
+      y: 0,
+    };
+    value.objects.push(rock);
+    value.shots.push(killShot(rock));
+    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    expect(total(pickups(value))).toBe(3);
+  });
+
   it("releases Stardust from asteroids but none from story mining deposits", () => {
     const value = flight();
     const rock: SpaceObject = { hp: 1, id: "rock", kind: "rock", radius: 20, x: 400, y: 0 };
@@ -310,7 +339,9 @@ describe("Stardust drops", () => {
     value.shots.push(killShot(rock), killShot(deposit));
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
     const released = pickups(value);
-    expect(total(released)).toBe(rollAsteroidStardust(ECONOMY, dropRandom(value.seed, "rock")));
+    expect(total(released)).toBe(
+      rollAsteroidStardust(ECONOMY, "small", dropRandom(value.seed, "rock")),
+    );
     expect(released.every((object) => object.x > 0)).toBe(true);
     expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
       PROTOTYPE.tuning.flight.piecesPerRock,

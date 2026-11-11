@@ -15,6 +15,7 @@
  */
 import { pathToFileURL } from "node:url";
 
+import type { AsteroidSize } from "../src/data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
@@ -105,7 +106,7 @@ export interface Prices {
 
 export interface EconomyOverrides {
   enemyStardust?: Partial<Record<EnemyArchetype, number>>;
-  asteroidStardust?: [number, number];
+  asteroidStardust?: Partial<Record<AsteroidSize, [number, number]>>;
   discoveryStardust?: number;
   ownedWeaponStardust?: number;
   weaponDropChance?: Partial<Record<SectorId, Partial<Record<EnemyArchetype, number>>>>;
@@ -186,6 +187,7 @@ interface Pickup {
 }
 interface Rock {
   id: string;
+  size: AsteroidSize;
   x: number;
   y: number;
 }
@@ -266,7 +268,7 @@ function mulberry(seed: number): () => number {
 export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
   return {
     ...ECONOMY,
-    asteroidStardust: overrides.asteroidStardust ?? ECONOMY.asteroidStardust,
+    asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
     jumpFee: overrides.jumpFee ?? ECONOMY.jumpFee,
@@ -300,6 +302,9 @@ export function onScreen(dx: number, dy: number, margin = 0): boolean {
   );
 }
 
+/** Where every flight launches; layout and encounters keep clear of it. */
+const FLIGHT_START = { x: 0, y: 0 };
+
 /**
  * One chunk's layout objects and encounter pack, as flight.ts generates them with Ada at
  * `player`. Resource rocks carry cargo, not Stardust, and debris drops nothing, so both
@@ -328,7 +333,7 @@ export function generateChunk(
         const escorts = roll.escorts ?? null;
         // A flight's start begins calm: the whole encounter stays clear of it.
         const reach = encounterReach(PROTOTYPE, archetype, count, roll.escorts);
-        if (distance(center, { x: 0, y: 0 }) >= tuning.flight.arrivalCalm + reach) {
+        if (distance(center, FLIGHT_START) >= tuning.flight.arrivalCalm + reach) {
           chunk.pack = {
             archetype,
             count,
@@ -361,6 +366,7 @@ export function generateChunk(
       (placement.orbit?.radius ?? 0);
     const clear =
       distance(placement, player) - reach > tuning.safeRadius &&
+      distance(placement, FLIGHT_START) - reach > tuning.safeRadius &&
       stationsNear(catalog, sector, catalog.station.safeRadius + reach, placement).length === 0;
     if (!clear) {
       continue;
@@ -370,7 +376,8 @@ export function generateChunk(
       ? orbitMotion(0, { ...placement.orbit, x: placement.x, y: placement.y }).position
       : placement;
     if (placement.kind === "rock") {
-      chunk.rocks.push({ id: placement.id, x: at.x, y: at.y });
+      const size = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid)?.size : undefined;
+      chunk.rocks.push({ id: placement.id, size: size ?? "small", x: at.x, y: at.y });
     } else if (placement.kind === "pickup") {
       chunk.caches.push({
         amount: catalog.discoveryStardust,
@@ -743,7 +750,11 @@ export function simulate(input: SimulationInput): RunResult {
         bucket = 0;
         result.asteroidsShot++;
         best.chunk.rocks.splice(best.chunk.rocks.indexOf(best.rock), 1);
-        const amount = rollAsteroidStardust(catalog, dropRandom(flightSeed, best.rock.id));
+        const amount = rollAsteroidStardust(
+          catalog,
+          best.rock.size,
+          dropRandom(flightSeed, best.rock.id),
+        );
         if (amount > 0) {
           const dust: Pickup = {
             amount,

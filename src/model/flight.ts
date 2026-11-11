@@ -16,6 +16,7 @@ import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
 import {
   ASTEROID_SHAPES,
+  asteroidSize,
   bounce,
   orbitMotion,
   reflectDirection,
@@ -106,12 +107,28 @@ function safe(content: PrototypeContent, point: Vec, flight: FlightState): boole
     return radius !== null && distance(point, o) <= radius;
   });
 }
-/** Whether a whole object, not only its center, stays outside every safe area. */
+/** An object's whole footprint: a drifting asteroid's covers its path around the orbit center. */
+function footprint(object: SpaceObject): Vec & { radius: number } {
+  return object.orbit
+    ? { radius: object.radius + object.orbit.radius, x: object.orbit.x, y: object.orbit.y }
+    : object;
+}
+/** Whether an object's footprint stays more than `clearance` from `point`. */
+function clearOf(clearance: number, point: Vec, object: SpaceObject): boolean {
+  const reach = footprint(object);
+  return distance(reach, point) > clearance + reach.radius;
+}
+/**
+ * Whether an object's whole footprint stays outside every safe area and the safe radius of
+ * every launch point, so no rock or drift path reaches one.
+ */
 function clearOfSafeAreas(content: PrototypeContent, object: SpaceObject, flight: FlightState) {
-  return !flight.objects.some((o) => {
-    const radius = protectedRadius(content, o);
-    return radius !== null && distance(object, o) <= radius + object.radius;
-  });
+  return (
+    flight.objects.every((o) => {
+      const radius = protectedRadius(content, o);
+      return radius === null || clearOf(radius, o, object);
+    }) && arrivalPoints(flight).every((point) => clearOf(content.tuning.safeRadius, point, object))
+  );
 }
 const SCENERY = ["rock", "resource", "debris"];
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
@@ -238,12 +255,12 @@ function placeStation(site: Vec & { id: string }, flight: FlightState): SpaceObj
     y: site.y,
   };
   flight.objects.push(station);
-  // A station's safe area holds no layout objects from chunks generated before it.
+  // A station's safe area holds no layout object or drift path from chunks generated before it.
   clearLayoutObjects(
     (object) =>
       object === station ||
       object.kind === "destination" ||
-      distance(object, station) > ECONOMY.station.safeRadius,
+      clearOf(ECONOMY.station.safeRadius, station, object),
     flight,
   );
   return station;
@@ -333,12 +350,6 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
           object.y = motion.position.y;
           object.velocity = motion.velocity;
         }
-        const reach = {
-          ...object,
-          radius: object.radius + (placement.orbit?.radius ?? 0),
-          x: placement.x,
-          y: placement.y,
-        };
         if (object.kind !== "rock") {
           object.role = "discovery";
         }
@@ -349,8 +360,8 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         if (
           !existing.has(object.id) &&
           !Object.hasOwn(flight.world.notables, object.id) &&
-          distance(reach, flight.player) - reach.radius > content.tuning.safeRadius &&
-          clearOfSafeAreas(content, reach, flight)
+          clearOf(content.tuning.safeRadius, flight.player, object) &&
+          clearOfSafeAreas(content, object, flight)
         ) {
           flight.objects.push(object);
           existing.add(object.id);
@@ -856,8 +867,9 @@ export function ensureDestination(
   generate(content, target, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
   flight.objects.push(object);
+  // A destination's safe area holds no layout object or drift path from earlier chunks.
   clearLayoutObjects(
-    (o) => o.kind === "destination" || distance(o, object) > content.tuning.safeRadius,
+    (o) => o.kind === "destination" || clearOf(content.tuning.safeRadius, object, o),
     flight,
   );
   relocateRouteGuards(content, flight);
@@ -1453,8 +1465,8 @@ function hit(
   }
   if (object.kind === "rock") {
     const next = dropRandom(flight.seed, object.id);
-    const stardust = rollAsteroidStardust(ECONOMY, next);
-    // An asteroid scatters its Stardust about its own radius.
+    const stardust = rollAsteroidStardust(ECONOMY, asteroidSize(object), next);
+    // An asteroid scatters its Stardust, more for bigger sizes, about its own radius.
     releaseStardust(object, object.radius, next, stardust, stardust, flight);
   }
   if (object.kind === "debris") {

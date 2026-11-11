@@ -119,6 +119,11 @@ export function sceneryShape(object: SpaceObject): AsteroidShape | null {
   return object.asteroid ? (ASTEROID_SHAPES.get(object.asteroid) ?? null) : null;
 }
 
+/** Size class of a rock: its asteroid variant's size; a plain circle rock counts as small. */
+export function asteroidSize(object: SpaceObject): AsteroidSize {
+  return sceneryShape(object)?.size ?? "small";
+}
+
 /** Deepest overlap of a circle with a scenery object, or null when they do not touch. */
 export function sceneryContact(object: SpaceObject, center: Vec, radius: number): Contact | null {
   const dx = center.x - object.x;
