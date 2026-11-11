@@ -4,7 +4,8 @@ Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
 Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
 sector one enemy ships and their [destruction](destruction.md), the
 [station](station.md), the [outposts and discovery cache](outposts.md),
-[Stardust](stardust.md), [the rock](rock.md), the
+[asteroids and backdrop rocks](asteroids.md), [Stardust](stardust.md),
+[the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), character portraits and the
 [storybook](storybook.md) Earth backgrounds. [Galaxies](galaxies.md) retint the
@@ -53,9 +54,9 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station and outpost SVGs are deterministic exports from
-`art/tools/ship.ts`, `art/tools/enemies.ts`, `art/tools/station.ts` and
-`art/tools/outposts.ts`; edit the generators and
+Ship, enemy, station, outpost and asteroid SVGs are deterministic exports from
+`art/tools/ship.ts`, `art/tools/enemies.ts`, `art/tools/station.ts`,
+`art/tools/outposts.ts` and `art/tools/asteroids.ts`; edit the generators and
 regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
