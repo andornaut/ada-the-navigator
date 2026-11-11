@@ -252,7 +252,7 @@ function spaceObject(
       (value.kind === "pickup" &&
         record(value.release) &&
         nonnegative(value.release.at) &&
-        vector(value.release.from))) &&
+        (value.release.from === undefined || vector(value.release.from)))) &&
     (value.amount === undefined ||
       (value.kind === "pickup" &&
         Number.isSafeInteger(value.amount) &&

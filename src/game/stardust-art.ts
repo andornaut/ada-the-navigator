@@ -44,6 +44,14 @@ export function stardustFrame(
   return reducedMotion ? art.rest : loopFrame(art, phaseMs, timeMs);
 }
 
+/** Whether a pickup draws yet: a released one appears from its release time. */
+export function stardustShown(
+  release: { readonly at: number } | undefined,
+  seconds: number,
+): boolean {
+  return !release || seconds >= release.at;
+}
+
 /** A released pickup's share of the way from its wreck, settling over 110 ms. */
 export function releaseSettle(settleMs: number, ageMs: number): number {
   return ageMs <= 0 ? 0 : 1 - Math.exp(-ageMs / settleMs);

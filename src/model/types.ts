@@ -36,10 +36,13 @@ export interface WreckState {
   /** Whether a missile blast destroyed it, so the blast's flash stands in for its own. */
   blasted?: boolean;
 }
-/** Where and when a released pickup left its wreck, for the view's settle. */
+/**
+ * When a released pickup starts to draw and, for a wreck's drop, where it left from for the
+ * view's settle. Without `from` it appears in place.
+ */
 export interface PickupRelease {
   at: number;
-  from: Vec;
+  from?: Vec;
 }
 export interface SpaceObject extends Vec {
   id: string;

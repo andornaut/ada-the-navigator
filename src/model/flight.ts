@@ -65,6 +65,7 @@ import type {
   FlightEvent,
   FlightInput,
   FlightState,
+  PickupRelease,
   SectorProgress,
   Shot,
   SpaceObject,
@@ -1510,8 +1511,9 @@ function hit(
     }
     const next = dropRandom(flight.seed, object.id);
     const stardust = rollAsteroidStardust(ECONOMY, asteroidSize(object), next);
-    // An asteroid scatters its Stardust, more for bigger sizes, about its own radius.
-    releaseStardust(object, object.radius, next, stardust, stardust, flight);
+    // The pickups are collectable at once; they draw from Art's release time (art/asteroids.md).
+    const release = { at: flight.time + ROCK_RELEASE.releaseSeconds };
+    releaseStardust(object, ROCK_RELEASE.spread, next, stardust, stardust, release, flight);
   }
   if (object.kind === "debris") {
     events.push({ id: object.id, type: "debrisCleared" });
@@ -1765,9 +1767,16 @@ function destroyEnemy(object: SpaceObject, flight: FlightState): void {
 }
 
 /**
+ * A destroyed rock takes the generic reduced destruction at every motion setting
+ * (art/asteroids.md "Destruction"), so the fighter's reduced timing stands in: its Stardust
+ * appears in place at 240 ms, spread over 7.68 * U(0.6, 1) world units.
+ */
+const ROCK_RELEASE = ECONOMY.destruction.fighter.reduced;
+
+/**
  * Releases a drop's Stardust pickups around a destroyed object (art/destruction.md): pickup
  * i of n heads to screen angle 2 pi i / n within 0.3 rad, at spread * U(0.6, 1) with the
- * screen-y offset squashed by 0.8. Each records where and when it left, for its settle.
+ * screen-y offset squashed by 0.8. Each records its release for the view.
  */
 function releaseStardust(
   at: Vec,
@@ -1775,6 +1784,7 @@ function releaseStardust(
   next: () => number,
   cap: number,
   amount: number,
+  release: PickupRelease,
   flight: FlightState,
 ) {
   const pieces = splitStardust(cap, amount);
@@ -1788,7 +1798,7 @@ function releaseStardust(
       id: `stardust:${flight.nextId++}`,
       kind: "pickup",
       radius: ECONOMY.stardustPickupRadius,
-      release: { at: flight.time, from: { x: at.x, y: at.y } },
+      release: { ...release },
       role: "stardust",
       // The view's projection maps screen offsets back to world axes.
       x: at.x + screen.y + screen.x / 2,
@@ -1832,6 +1842,7 @@ function stepWrecks(
       next,
       ECONOMY.pickupCap[object.wreck.archetype],
       drop.stardust,
+      { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );
     if (drop.weapon) {

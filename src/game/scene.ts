@@ -106,6 +106,7 @@ import {
   stardustDrawn,
   stardustFrame,
   stardustPhase,
+  stardustShown,
 } from "./stardust-art.ts";
 import {
   readOutpostArt,
@@ -1614,12 +1615,16 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Art's Stardust gem with its glint loop from a per-pickup phase. A released pickup settles
-   * out from its wreck; reduced motion shows the rest frame where it lands.
+   * Art's Stardust gem with its glint loop from a per-pickup phase. A released pickup draws from
+   * its release time and settles out from its wreck; a rock's appears in place; reduced motion
+   * shows the rest frame where it lands.
    */
   private drawStardust(object: SpaceObject, point: Vec, radius: number): void {
     const art = this.stardustArt;
     const flight = this.model.state.flight;
+    if (flight && !stardustShown(object.release, flight.time)) {
+      return;
+    }
     if (!art || !flight) {
       this.ink.fillStyle(this.palette.active);
       this.ink.fillCircle(point.x, point.y, radius / 2);
@@ -1628,7 +1633,7 @@ export class PrototypeScene extends Phaser.Scene {
     const at = stardustDrawn(
       this.destruction?.pickups.settleMs ?? 110,
       this.reducedMotion,
-      object.release && this.project(object.release.from),
+      object.release?.from && this.project(object.release.from),
       object.release ? (flight.time - object.release.at) * 1000 : 0,
       point,
     );

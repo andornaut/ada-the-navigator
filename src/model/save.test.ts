@@ -6,7 +6,7 @@ import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
 import { playOpening } from "./test-launch.ts";
-import type { FlightState, GameState, SpaceObject } from "./types.ts";
+import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {
   it("roundtrips real initial and launched states without sharing mutable references", () => {
@@ -283,6 +283,29 @@ describe("combat save boundary", () => {
       expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
     },
   );
+
+  it("roundtrips released Stardust with and without a settle origin, and rejects a bad origin", () => {
+    const snapshot = combatSnapshot();
+    const pickup = (id: string, release: PickupRelease): SpaceObject => ({
+      amount: 1,
+      hp: 1,
+      id,
+      kind: "pickup",
+      radius: 6,
+      release,
+      role: "stardust",
+      x: 40,
+      y: 12,
+    });
+    const objects: SpaceObject[] = snapshot.flight.objects;
+    objects.push(
+      pickup("stardust:1", { at: 3, from: { x: 36, y: 10 } }),
+      pickup("stardust:2", { at: 3.24 }),
+    );
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+    Object.assign(objects.at(-1)!, { release: { at: 3.24, from: "pivot" } });
+    expect(restoreSave(JSON.stringify(snapshot))).toBeNull();
+  });
 
   it("rejects AI state attached to ballistic debris", () => {
     const snapshot = combatSnapshot();

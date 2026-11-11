@@ -324,6 +324,35 @@ describe("Stardust drops", () => {
     expect(total(pickups(value))).toBe(3);
   });
 
+  it("makes an asteroid's Stardust collectable at once, drawn in place from 240 ms within 7.68 units", () => {
+    const value = flight();
+    const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
+    const rock: SpaceObject = {
+      asteroid: shape.id,
+      hp: 1,
+      id: "huge-rock",
+      kind: "rock",
+      radius: shape.radius,
+      x: 600,
+      y: 0,
+    };
+    value.objects.push(rock);
+    value.shots.push(killShot(rock));
+    const destroyedAt = value.time;
+    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    const released = pickups(value);
+    expect(released).toHaveLength(3);
+    for (const pickup of released) {
+      // Art's generic reduced destruction (the fighter's reduced timing) at every motion setting.
+      expect(pickup.release?.at).toBeCloseTo(destroyedAt + 1 / 60 + 0.24, 9);
+      expect(pickup.release?.from).toBeUndefined();
+      const offset = Math.hypot(pickup.x - rock.x, pickup.y - rock.y);
+      expect(offset).toBeGreaterThan(0);
+      expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
+      expect(offset).toBeLessThan(shape.radius);
+    }
+  });
+
   it("releases Stardust from asteroids but none from story mining deposits", () => {
     const value = flight();
     const rock: SpaceObject = { hp: 1, id: "rock", kind: "rock", radius: 20, x: 400, y: 0 };

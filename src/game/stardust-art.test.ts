@@ -9,6 +9,7 @@ import {
   stardustDrawn,
   stardustFrame,
   stardustPhase,
+  stardustShown,
 } from "./stardust-art.ts";
 
 const manifest = JSON.parse(
@@ -57,6 +58,12 @@ describe("Stardust pickup art", () => {
     expect(stardustDrawn(110, false, from, 55, point).x).toBeCloseTo(10 * releaseSettle(110, 55));
     expect(stardustDrawn(110, true, from, 0, point)).toEqual(point);
     expect(stardustDrawn(110, false, undefined, 0, point)).toEqual(point);
+  });
+
+  it("hides a released pickup until its release time, and always draws an unreleased one", () => {
+    expect(stardustShown({ at: 3.24 }, 3.2)).toBe(false);
+    expect(stardustShown({ at: 3.24 }, 3.24)).toBe(true);
+    expect(stardustShown(undefined, 0)).toBe(true);
   });
 
   it("holds the rest frame under reduced motion, with no glint", () => {
