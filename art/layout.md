@@ -422,10 +422,10 @@ values with its own sprites and fonts.
   label (62.5) by 3.5.
 - Clearance at the 360-high view: the box bottom is at 136. The ship's pivot
   sits at the view centre (180) with a 42 display frame; its highest drawn hull
-  point across the 32 headings is 167.2 (heading 4), 31.2 below the box. The
+  point across the 32 headings is 168.2 (heading 4, the apex), 32.2 below the box. The
   rule is at least 24.
 - At the 1280x720 view (720x405 logical) the box bottom is still 136 and the
-  hull top 189.7, 53.7 below.
+  hull top 190.7, 54.7 below.
 
 ### Galaxy selector
 

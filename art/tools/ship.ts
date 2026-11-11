@@ -118,17 +118,10 @@ function plan(z: number, points: readonly (readonly [number, number])[]): Point[
   return points.map(([x, y]): Point => [y * 0.32, x * 0.32, z]).toReversed();
 }
 
-// Short mouths follow the outer rear edges immediately inside each wing tip.
-function mouthEdge(sign: number): [Point, Point] {
-  return [
-    [sign * 64 * 0.32, 63.1 * 0.32 + 0.03, 0.8],
-    [sign * 54.5 * 0.32, 60.25 * 0.32 + 0.03, 0.8],
-  ];
-}
-
-// Hull: plan outline and top height. The frames, speed jets and nose all derive from the
-// model definitions in this module, so a model swap regenerates them together.
+// Hull: a pyramid on the swept delta plan. The frames, speed jets and nose all derive from
+// the model definitions in this module, so a model swap regenerates them together.
 const HULL = {
+  // Plan outline: nose, wing tip, rear notch, tail, notch, wing tip.
   plan: [
     [-100, 0],
     [64, -67],
@@ -137,70 +130,259 @@ const HULL = {
     [49, 17],
     [64, 67],
   ],
-  top: 4,
+  // Vertical edge strip round the plan; the upper faces start at its top.
+  skirt: 1.2,
+  // The ridge runs low from the nose to the shoulder at the canopy's rear edge, then
+  // climbs steeply to the rear-centre apex. Local (x, y, z).
+  shoulder: [0, 6, 7.5],
+  apex: [0, 17, 15],
+  // Rear faces lean forward from the skirt top, degrees from horizontal.
+  lean: 76,
 } as const;
 
-// Nose: the midpoint of the hull top's forward-most vertices (local forward is negative Y).
+// A plane as n . p = d.
+type Plane = { readonly d: number; readonly n: Point };
+
+const minus = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+
+const cross = (a: Point, b: Point): Point => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
+
+function through(p: Point, q: Point, r: Point): Plane {
+  const n = cross(minus(q, p), minus(r, p));
+  return { d: dot(n, p), n };
+}
+
+// The rear-facing plane that rises from plan edge a-b at the lean.
+function leaning(a: Point, b: Point): Plane {
+  const [ex, ey] = [b[0] - a[0], b[1] - a[1]];
+  // The plan perpendicular that points rearward (positive Y).
+  const sign = Math.sign(ex) / Math.hypot(ex, ey);
+  const lean = (HULL.lean * Math.PI) / 180;
+  const n: Point = [-ey * sign * Math.sin(lean), ex * sign * Math.sin(lean), Math.cos(lean)];
+  return { d: dot(n, a), n };
+}
+
+// The point common to three planes.
+function meet(p: Plane, q: Plane, r: Plane): Point {
+  const [qr, rp, pq] = [cross(q.n, r.n), cross(r.n, p.n), cross(p.n, q.n)];
+  const det = dot(p.n, qr);
+  const at = (i: number) => (p.d * qr[i]! + q.d * rp[i]! + r.d * pq[i]!) / det;
+  return [at(0), at(1), at(2)];
+}
+
+// Named hull vertices. The swept plan's notches lie ahead of the apex, so the rear is
+// split into planar faces: a wall leaning up from each wing's trailing edge, a tail side
+// from each notch to the apex, and the rear face, whose base lies on the tail edges where
+// the lean from the apex meets the skirt top. A wing's corner is where its wall, its
+// steep face and its tail side meet.
+function vertices() {
+  const [tipR, notchR, tail, notchL, tipL, nose] = plan(HULL.skirt, HULL.plan) as [
+    Point,
+    Point,
+    Point,
+    Point,
+    Point,
+    Point,
+  ];
+  const { apex, lean, shoulder, skirt } = HULL;
+  const baseY = apex[1] + (apex[2] - skirt) / Math.tan((lean * Math.PI) / 180);
+  const onTail = (notch: Point): Point => {
+    const k = (baseY - notch[1]) / (tail[1] - notch[1]);
+    return [notch[0] * (1 - k), baseY, skirt];
+  };
+  const [baseL, baseR] = [onTail(notchL), onTail(notchR)];
+  const corner = (tip: Point, notch: Point, base: Point) =>
+    meet(through(shoulder, tip, apex), leaning(tip, notch), through(notch, base, apex));
+  return {
+    apex,
+    baseL,
+    baseR,
+    cornerL: corner(tipL, notchL, baseL),
+    cornerR: corner(tipR, notchR, baseR),
+    nose,
+    notchL,
+    notchR,
+    shoulder,
+    tail,
+    tipL,
+    tipR,
+  };
+}
+
+// Upper faces, each a planar polygon wound to face up. The wing faces carry the canopy;
+// the tail faces rise behind it to the apex, the walls hold the mouths, and the flat
+// plate is the tail tip behind the rear face.
+type Part = "plate" | "tail" | "wing";
+
+function upperFaces(): { part: Part; points: Point[] }[] {
+  const v = vertices();
+  const up = (points: Point[]) => (normal(points)[2] < 0 ? points.toReversed() : points);
+  const sides = [
+    [v.tipL, v.notchL, v.cornerL, v.baseL],
+    [v.tipR, v.notchR, v.cornerR, v.baseR],
+  ] as const;
+  const wing = sides.map(([tip]) => [v.nose, tip, v.shoulder]);
+  const tail = [
+    ...sides.flatMap(([tip, notch, corner, base]) => [
+      [v.shoulder, tip, corner, v.apex],
+      [tip, notch, corner],
+      [notch, base, v.apex, corner],
+    ]),
+    [v.baseL, v.baseR, v.apex],
+  ];
+  return [
+    ...wing.map((points) => ({ part: "wing" as const, points: up(points) })),
+    ...tail.map((points) => ({ part: "tail" as const, points: up(points) })),
+    { part: "plate", points: up([v.baseL, v.tail, v.baseR]) },
+  ];
+}
+
+// Wing roof height under the canopy: the lower of the two wing planes.
+function roof(x: number, y: number): number {
+  const v = vertices();
+  const height = ({ d, n }: Plane) => (d - n[0] * x - n[1] * y) / n[2];
+  return Math.min(
+    height(through(v.nose, v.tipL, v.shoulder)),
+    height(through(v.nose, v.shoulder, v.tipR)),
+  );
+}
+
+// Nose: the midpoint of the plan's forward-most vertices at the skirt top (local forward
+// is negative Y).
 function nose(): Point {
-  const hull = plan(HULL.top, HULL.plan);
+  const hull = plan(HULL.skirt, HULL.plan);
   const front = Math.min(...hull.map(([, y]) => y));
   const tip = hull.filter(([, y]) => y === front);
   const mean = (axis: number) => tip.reduce((sum, point) => sum + point[axis]!, 0) / tip.length;
   return [mean(0), mean(1), mean(2)];
 }
 
+// Engine mouths on the wing walls: |x| from inner to outer, z from the skirt top up by
+// low and high, the top kept 0.6 under the wall's top edge.
+const MOUTHS = { inner: 9.5, outer: 15, low: 0.3, high: 2.6 };
+
+// Mouth quad on the sign side's wall, lifted 0.03 off it, wound outward: outer low,
+// inner low, inner high, outer high.
+function mouth(sign: number): Point[] {
+  const v = vertices();
+  const [tip, notch, corner] =
+    sign === 1 ? [v.tipR, v.notchR, v.cornerR] : [v.tipL, v.notchL, v.cornerL];
+  const { d, n } = leaning(tip, notch);
+  const at = (x: number, z: number): Point => [x, (d - n[0] * x - n[2] * z) / n[1] + 0.03, z];
+  const edge = (x: number) => tip[2] + ((corner[2] - tip[2]) * (x - tip[0])) / (corner[0] - tip[0]);
+  const { high, inner, low, outer } = MOUTHS;
+  const z0 = HULL.skirt + low;
+  const top = (x: number) => Math.min(HULL.skirt + high, edge(x) - 0.6);
+  const quad = [
+    at(sign * outer, z0),
+    at(sign * inner, z0),
+    at(sign * inner, top(sign * inner)),
+    at(sign * outer, top(sign * outer)),
+  ];
+  return sign === 1 ? quad : quad.toReversed();
+}
+
+// Mouth middle and half width along its base, outer minus inner over two.
+function mouthAxis(sign: number): { half: Point; middle: Point } {
+  const quad = mouth(sign);
+  const [outerLow, innerLow] = sign === 1 ? [quad[0]!, quad[1]!] : [quad[3]!, quad[2]!];
+  const middle = quad.reduce<Point>(
+    (sum, [x, y, z]) => [sum[0] + x / 4, sum[1] + y / 4, sum[2] + z / 4],
+    [0, 0, 0],
+  );
+  const half: Point = [(outerLow[0] - innerLow[0]) / 2, (outerLow[1] - innerLow[1]) / 2, 0];
+  return { half, middle };
+}
+
+// Light below which an upper face prefers the rear side colour.
+const SHADE = 0.6;
+
+// Upper faces take the hull paint in light order among the visible ones. The brightest
+// is top; each other face prefers front sides at light SHADE or more and rear sides
+// below it, and steps to the next tier (darker first) while a brighter face it shares an
+// edge with already has that colour, so neighbouring planes differ. The flat tail plate
+// is always top.
+function shade(yaw: number, paint: Paint, upper: readonly { part: Part; points: Point[] }[]) {
+  const tiers = [paint.top, paint.frontSides, paint.rearSides];
+  const key = (p: Point) => p.map((c) => c.toFixed(4)).join(",");
+  const edges = upper.map(({ points }) =>
+    points.map((p, j) => [key(p), key(points[(j + 1) % points.length]!)].toSorted().join("|")),
+  );
+  const touches = (i: number, j: number) => edges[i]!.some((edge) => edges[j]!.includes(edge));
+  const plate = upper.findIndex(({ part }) => part === "plate");
+  const ranked = upper
+    .map(({ points }, i) => ({
+      i,
+      light: lit(yaw, points),
+      shown: facesViewer(turned(yaw, points)),
+    }))
+    .filter(({ i, shown }) => shown && i !== plate)
+    .toSorted((a, b) => b.light - a.light);
+  const color = new Map<number, string>([[plate, paint.top]]);
+  for (const [rank, { i, light }] of ranked.entries()) {
+    const preferred = rank === 0 ? 0 : light >= SHADE ? 1 : 2;
+    const order = [preferred, ...[1, 2, 0].filter((tier) => tier !== preferred)];
+    const taken = new Set(
+      ranked
+        .slice(0, rank)
+        .filter(({ i: j }) => touches(i, j))
+        .map(({ i: j }) => color.get(j)),
+    );
+    const tier = rank === 0 ? 0 : (order.find((t) => t !== 0 && !taken.has(tiers[t])) ?? preferred);
+    color.set(i, tiers[tier]!);
+  }
+  return color;
+}
+
 function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
   const faces: Face[] = [];
-  const hull = plan(HULL.top, HULL.plan);
-  // One continuous concave delta top includes both rear wing corners.
-  faces.push({ color: paint.top, layer: 3, points: hull });
-  for (let i = 0; i < hull.length; i++) {
-    const a = hull[(i + 1) % hull.length]!;
-    const b = hull[i]!;
+  const outline = plan(HULL.skirt, HULL.plan);
+  // Skirt: edges 0 and 5 (the right wing's trailing and leading edges) in the front side
+  // colour, the rest in the rear side colour.
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[(i + 1) % outline.length]!;
+    const b = outline[i]!;
     faces.push({
       color: i === 0 || i === 5 ? paint.frontSides : paint.rearSides,
       layer: 2,
       points: [a, b, [b[0], b[1], 0], [a[0], a[1], 0]],
     });
   }
+  const upper = upperFaces();
+  const color = shade(yaw, paint, upper);
+  // Tail faces and the plate draw after the canopy when the rear points toward the
+  // viewer, otherwise with the wing faces before it. The mouths draw last.
+  const rear = rotate(SHIP_HEADINGS, yaw, [0, 1, 0]);
+  const tailLayer = rear[0] + rear[1] > 0 ? 6 : 3;
+  for (const [i, { part, points }] of upper.entries()) {
+    const layer = part === "wing" ? 3 : tailLayer;
+    faces.push({ color: color.get(i) ?? paint.rearSides, layer, points });
+  }
   for (const sign of [-1, 1]) {
-    const [a, b] = mouthEdge(sign);
-    const mouth: Point[] = [a, b, [b[0], b[1], 3.2], [a[0], a[1], 3.2]];
-    faces.push({
-      color: "#64caff",
-      layer: 2,
-      points: sign === 1 ? mouth : mouth.toReversed(),
-    });
+    faces.push({ color: "#64caff", layer: 6.5, points: mouth(sign) });
     if (thrust) {
       // Long pale outer flame with a shorter white core stays legible at 42px.
-      const mx = (a[0] + b[0]) / 2;
-      const my = (a[1] + b[1]) / 2;
-      faces.push({
-        color: "#b9ecff",
-        layer: -2,
-        points: [
-          [mx + (a[0] - mx) * 1.6, my + (a[1] - my) * 1.6, 2],
-          [mx, my + 16, 2],
-          [mx + (b[0] - mx) * 1.6, my + (b[1] - my) * 1.6, 2],
-        ],
-        twoSided: true,
-      });
-      faces.push({
-        color: white,
-        layer: -1,
-        points: [
-          [mx + (a[0] - mx) * 0.8, my + (a[1] - my) * 0.8, 2],
-          [mx, my + 9, 2],
-          [mx + (b[0] - mx) * 0.8, my + (b[1] - my) * 0.8, 2],
-        ],
-        twoSided: true,
-      });
+      const { half, middle } = mouthAxis(sign);
+      const [mx, my, mz] = middle;
+      const flame = (width: number, length: number): Point[] => [
+        [mx - half[0] * width, my - half[1] * width, mz],
+        [mx, my + length, mz],
+        [mx + half[0] * width, my + half[1] * width, mz],
+      ];
+      faces.push({ color: "#b9ecff", layer: -2, points: flame(1.6, 16), twoSided: true });
+      faces.push({ color: white, layer: -1, points: flame(0.8, 9), twoSided: true });
     }
   }
-  dome(faces, yaw, paint);
-  fin(faces, yaw, paint);
+  canopy(faces, yaw, paint);
   return faces;
 }
+
+const turned = (yaw: number, points: readonly Point[]) =>
+  points.map((point) => rotate(SHIP_HEADINGS, yaw, point));
 
 // Newell normal of a polygon, unnormalized.
 function normal(points: readonly Point[]): Point {
@@ -237,25 +419,32 @@ function outward(centre: Point, points: Point[]): Point[] {
   return dot(normal(points), offset) < 0 ? points.toReversed() : points;
 }
 
-// World light for the canopy highlight, from above and screen-left of the viewer.
+// World light for shading, from above and screen-left of the viewer.
 const LIGHT = unit([-0.25, 0.45, 1]);
 
-// Canopy: opaque faceted half-ellipsoid on the hull top. Semi-axes a (across) and
-// b (along), height h above the hull, centre on local Y; ring latitudes in degrees.
-const DOME = { a: 9.2, b: 12.8, centre: -4.2, h: 5.5, rings: [0, 30, 60, 90], segments: 16 };
+// World-space light on a local face at this heading.
+function lit(yaw: number, points: readonly Point[]): number {
+  return dot(unit(rotate(SHIP_HEADINGS, yaw, normal(points))), LIGHT);
+}
 
-function dome(faces: Face[], yaw: number, paint: Paint): void {
-  const { a, b, centre, h, rings, segments } = DOME;
+// Canopy: a faceted dome on the wing roof, its rear edge at the shoulder. Plan semi-axes
+// a (across) and b (along), centre on local Y. The base ring lies on the roof; the crown
+// is level, h above the roof at the centre, and each ring rises sin(latitude) of the way
+// from the roof to the crown. Ring latitudes in degrees.
+const CANOPY = { a: 9, b: 9, centre: -3, h: 2.8, rings: [0, 30, 60, 90], segments: 16 };
+
+function canopy(faces: Face[], yaw: number, paint: Paint): void {
+  const { a, b, centre, h, rings, segments } = CANOPY;
+  const crown = roof(0, centre) + h;
   const at = (u: number, v: number): Point => {
     const theta = (u / segments) * 2 * Math.PI;
     const phi = (v * Math.PI) / 180;
-    return [
-      a * Math.cos(phi) * Math.cos(theta),
-      centre + b * Math.cos(phi) * Math.sin(theta),
-      4 + h * Math.sin(phi),
-    ];
+    const x = a * Math.cos(phi) * Math.cos(theta);
+    const y = centre + b * Math.cos(phi) * Math.sin(theta);
+    const base = roof(x, y);
+    return [x, y, base + (crown - base) * Math.sin(phi)];
   };
-  const middle: Point = [0, centre, 4];
+  const middle: Point = [0, centre, roof(0, centre) - 2];
   const shell: Point[][] = [];
   for (let ring = 0; ring < rings.length - 1; ring++) {
     const [low, high] = [rings[ring]!, rings[ring + 1]!];
@@ -269,9 +458,9 @@ function dome(faces: Face[], yaw: number, paint: Paint): void {
   }
   // The lowest ring takes the side colour and the rest the roof colour; the two
   // facets facing the light most directly take the highlight.
-  const lit = shell.map((points) => dot(unit(rotate(SHIP_HEADINGS, yaw, normal(points))), LIGHT));
+  const light = shell.map((points) => lit(yaw, points));
   const brightest = new Set(
-    lit
+    light
       .map((value, i) => [value, i] as const)
       .toSorted((x, y) => y[0] - x[0])
       .slice(0, 2)
@@ -292,63 +481,6 @@ function dome(faces: Face[], yaw: number, paint: Paint): void {
     silhouette: true,
     twoSided: true,
   });
-}
-
-// Fin: tapered vertical fin on the rear centreline with a swept leading edge.
-// Profile is (localY, z): leading base, leading tip, trailing tip, trailing base.
-// Each flank carries a leading-edge stripe that ends at `stripe` on the base and tip.
-const FIN = {
-  half: { base: 1.2, tip: 0.6 },
-  profile: [
-    [14.5, 4],
-    [21.5, 12.5],
-    [23.6, 12.5],
-    [24.2, 4],
-  ],
-  stripe: { base: 18, tip: 22.6 },
-} as const;
-
-function fin(faces: Face[], yaw: number, paint: Paint): void {
-  const { half, profile, stripe } = FIN;
-  const [[y0, z0], [y1, z1], [y2], [y3]] = profile;
-  const at = (sign: number, y: number, z: number): Point => [
-    sign * (z > z0 ? half.tip : half.base),
-    y,
-    z,
-  ];
-  const outline = (sign: number) => profile.map(([y, z]) => at(sign, y, z));
-  const [left, right] = [outline(-1), outline(1)];
-  const centre: Point = [0, 21, 7];
-  // The tail draws after the canopy when the rear points toward the viewer.
-  const rear = rotate(SHIP_HEADINGS, yaw, [0, 18.5, 0]);
-  const layer = rear[0] + rear[1] > 0 ? 7 : 4;
-  for (const sign of [-1, 1]) {
-    const band = [
-      at(sign, y0, z0),
-      at(sign, y1, z1),
-      at(sign, stripe.tip, z1),
-      at(sign, stripe.base, z0),
-    ];
-    const body = [
-      at(sign, stripe.base, z0),
-      at(sign, stripe.tip, z1),
-      at(sign, y2, z1),
-      at(sign, y3, z0),
-    ];
-    const facing = outward(centre, body);
-    const color =
-      dot(unit(rotate(SHIP_HEADINGS, yaw, normal(facing))), LIGHT) > 0
-        ? paint.frontSides
-        : paint.rearSides;
-    faces.push({ color, layer, points: facing });
-    faces.push({ color: paint.canopyRoof, layer, points: outward(centre, band) });
-  }
-  // Edges in profile order: leading edge, tip, trailing edge.
-  const edgeColors = [paint.canopyRoof, paint.canopyRoof, paint.canopySides];
-  for (const [i, color] of edgeColors.entries()) {
-    const points = [left[i]!, left[i + 1]!, right[i + 1]!, right[i]!];
-    faces.push({ color, layer, points: outward(centre, points) });
-  }
 }
 
 // Canopy highlight: the roof colour mixed 45 percent toward white.
@@ -415,11 +547,11 @@ function jets(): string {
   const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: [-1, 1].map((sign) => {
-      const [a, b] = mouthEdge(sign);
+      const { half, middle } = mouthAxis(sign);
       return {
-        anchor: anchor(SHIP_HEADINGS, 48, yaw, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 2]),
+        anchor: anchor(SHIP_HEADINGS, 48, yaw, middle),
         axis: vector(SHIP_HEADINGS, yaw, [0, 1, 0]),
-        half: vector(SHIP_HEADINGS, yaw, [(a[0] - b[0]) / 2, (a[1] - b[1]) / 2, 0]),
+        half: vector(SHIP_HEADINGS, yaw, half),
       };
     }),
   }));

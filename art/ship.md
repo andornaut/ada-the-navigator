@@ -41,34 +41,72 @@
 - Local forward is negative Y. Rotate the solid model into world heading before
   projecting `screenX = (x - y) * sqrt(3) / 2` and
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
-- Compact delta A uses one continuous filled white hull with two rear wing
-  corners, a rounded opaque canopy and a tall vertical fin. The six-point hull
-  matches the selected plan coordinates at scale 0.32:
+- The hull is a pyramid on the swept delta plan: triangular in rear view, with
+  a low ridge under the canopy that climbs steeply behind it to a rear-centre
+  apex, so the top of the rear triangle reads as a small white tail. No fin.
+  The six-point plan matches the selected plan coordinates at scale 0.32:
   `localX = planY * 0.32`, `localY = planX * 0.32`. Reversing mapped vertex
-  order preserves counterclockwise top winding.
-- Hull thickness is 4 units. No interior, seams or panel detail.
-- The canopy is a faceted half-ellipsoid on the hull top: semi-axes 9.2 across
-  and 12.8 along, centre at local Y -4.2, 5.5 units high, 16 segments and rings
-  at 0, 30, 60 and 90 degrees (the top ring meets at the apex). The 0 to 30 degree
-  ring is the canopy side colour and the rest the roof colour. Per heading, the
-  two facets whose world normals best face the light `(-0.25, 0.45, 1)` take the
-  highlight colour, so the highlight stays upper left on screen.
+  order preserves counterclockwise top winding. No interior, seams or panel
+  detail.
+- A vertical 1.2-unit skirt runs round the plan; every upper face starts at its
+  top (z 1.2).
+
+| Vertex         | Local (x, y, z)      | Role                                      |
+| -------------- | -------------------- | ----------------------------------------- |
+| Nose           | (0, -32, 1.2)        | Forward tip; shots leave here             |
+| Wing tips      | (±21.44, 20.48, 1.2) | Swept-back tips                           |
+| Notches        | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
+| Tail           | (0, 24.32, 1.2)      | Tail tip                                  |
+| Shoulder       | (0, 6, 7.5)          | Ridge kink at the canopy's rear edge      |
+| Apex           | (0, 17, 15)          | Rear-centre top                           |
+| Rear-face base | (±2.44, 20.44, 1.2)  | On the tail edges, 76 degrees below apex  |
+| Corners        | (±4.29, 13.25, 9.21) | Where wall, steep face and tail side meet |
+
+- The notches lie ahead of the apex, so no single rear face can rise from the
+  notched outline to the apex without overhanging. The rear splits into planar
+  faces instead: per side a wall from the trailing edge (wing tip to notch) at
+  the 76 degree lean, up to its corner; a tail side from the notch and rear-face
+  base up to the corner and the apex; and between the tail edges one rear face
+  from the base up to the apex at 76 degrees, behind which a flat plate fills
+  the tail tip at skirt height. Each corner is the common point of its wall,
+  steep face and tail side planes, so every face is planar.
+- Upper faces, slope from horizontal: per side a wing face (nose, wing tip,
+  shoulder) at 23.7 degrees, a steep face (shoulder, wing tip, corner, apex) at
+  45.5, the wall (wing tip, notch, corner) at 76.0 and the tail side (notch,
+  rear-face base, apex, corner) at 74.2; the rear face at 76.0; the plate at 0.
+  The ridge rises 9.4 degrees from the nose to the shoulder and 34.3 degrees
+  from the shoulder to the apex. The steep face is concave at its corner.
+- The canopy is a faceted dome on the two wing faces, its rear edge at the
+  shoulder: plan semi-axes 9 across and 9 along, centre at local Y -3, 16
+  segments and rings at 0, 30, 60 and 90 degrees (the top ring meets at the
+  crown). The base ring lies on the wing faces; the crown is level at z 8.81,
+  2.8 above the ridge at the centre, and each ring rises `sin(latitude)` of the
+  way from the hull surface to the crown, so the glass sits mostly flat. The 0
+  to 30 degree ring is the canopy side colour and the rest the roof colour. Per
+  heading, the two facets whose world normals best face the light
+  `(-0.25, 0.45, 1)` take the highlight colour, so the highlight stays upper
+  left on screen.
 - The canopy stays opaque: a clear canopy reads as grey at 42px and loses the
   blue accent.
 - A canopy-roof-coloured underlay with the canopy's projected convex outline
   draws before the facets and hides antialiasing seams between them.
-- The fin stands on the rear centreline from local Y 14.5 to 24.2 at the hull top,
-  rises to z 12.5 with a 21.5 to 23.6 tip chord, and tapers from 1.2 to 0.6 units
-  half thickness. Its flanks carry a roof-coloured leading-edge stripe (base to
-  Y 18, tip to Y 22.6); the leading edge and tip are roof colour, the trailing
-  edge side colour. The flank lit by the canopy light uses the front side colour,
-  the other the rear side colour. The height keeps the fin below the canopy's
-  rear edge on screen when the ship points up.
-- Twin subtle blue mouths follow the rear wing edges near their outer corners.
-  Thrust adds pale blue flames 16 units long with 9-unit white cores, readable at
-  42px display. Hull sides precede the continuous hull top; the canopy underlay
-  precedes its facets. The fin draws after the canopy when the rear points toward
-  the viewer (rotated `x + y > 0`), otherwise before it.
+- Shading: upper faces take the hull paint in light order among the visible
+  ones, by the same world light. The brightest is the top colour; every other
+  face prefers the front side colour at light 0.6 or more and the rear side
+  colour below it, and steps to the next tier (darker first, never top) while a
+  brighter face it shares an edge with already has that colour, so neighbouring
+  planes differ. The plate is always the top colour. Skirt edges 0 and 5 (the
+  right wing's trailing and leading edges) take the front side colour, the rest
+  the rear side colour.
+- Twin subtle blue mouths sit on the walls: `|x|` 9.5 to 15, from 0.3 to 2.6
+  above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
+  off the wall. Thrust adds pale blue flames 16 units long with 9-unit white
+  cores from each mouth's middle, readable at 42px display.
+- Draw order, by layer: thrust flames, skirt, wing faces, canopy underlay and
+  facets, then the tail faces (steep faces, walls, tail sides, rear face and
+  plate), then the mouths. When the rear points away from the viewer (rotated
+  `x + y <= 0`), the tail faces draw with the wing faces before the canopy
+  instead.
 - All faces use one projection. The viewer looks along `-(1, 1, 1)` from
   `+(1, 1, 1)`: outward-normal culling keeps faces whose normal has
   `nx + ny + nz > 0`, and depth `-(x + y + z)` orders faces far to near within
@@ -77,10 +115,10 @@
 
 ## Paint schemes
 
-Ship paint sets five colours: the hull top, the front side faces (hull edges 0
-and 5 and the lit fin flank), the rear side faces (and the shaded fin flank), the
-canopy roof (with the fin stripe, leading edge and tip) and the canopy sides
-(with the fin trailing edge). The canopy highlight is derived: the roof colour
+Ship paint sets five colours: the hull top, front sides and rear sides (the
+three hull tiers, assigned per heading by the [shading](#ship-geometry) rule,
+and skirt edges 0 and 5 front, the rest rear), the canopy roof and the canopy
+sides. The canopy highlight is derived: the roof colour
 mixed 45 percent toward white per channel. Engine mouths `#64caff`, thrust
 flames and speed jets are the same on every scheme. Geometry, culling and draw
 order are shared, so each painted frame has exactly the polygons of the matching
@@ -123,8 +161,10 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
 - `headings` holds all 32 ship headings, `headings[k].index` = `k`. Per
   heading, each of the two `mouths` gives frame-px values in the 96 by 96
-  frame: `anchor` (projected mouth midpoint at z = 2), `axis` (projected rear
-  direction per ship unit) and `half` (projected half mouth width). Scale them
+  frame: `anchor` (projected middle of the mouth on its wall, local
+  (±12.25, 17.39, 2.60)), `axis` (projected rear
+  direction per ship unit) and `half` (projected half mouth width along the
+  trailing edge, local (±2.75, 0.83, 0)). Scale them
   with the ship's display size.
 - Per mouth, draw one filled triangle per `layers` entry in order (halo, outer,
   core): base `anchor ± half * width`, tip `anchor + axis * jetLength * length`.
@@ -139,7 +179,7 @@ links it as `shipNose`.
 
 - `frame` is the frame size in px (96) and `displayScale` the display px per
   frame px (0.4375, 42 / 96).
-- `noses[k]` is `[x, y]` in frame px for heading `k`, 32 entries: the hull top's
-  forward tip, local (0, -32, 4), projected like the frames, so it is the drawn
+- `noses[k]` is `[x, y]` in frame px for heading `k`, 32 entries: the hull's
+  forward tip at the skirt top, local (0, -32, 1.2), projected like the frames, so it is the drawn
   tip vertex of `ship-k`. Its offset from the pivot (48, 48) times
   `displayScale` gives display px from the ship's position.
