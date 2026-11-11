@@ -5,7 +5,13 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { createEnemy } from "./enemy-ai.ts";
-import { createFlight, ensureDestination, stationDock, stepFlight } from "./flight.ts";
+import {
+  createFlight,
+  ensureDestination,
+  stationDock,
+  stationDockRadius,
+  stepFlight,
+} from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationById, stationInCell, type StationSite, stationsNear } from "./stations.ts";
@@ -14,7 +20,8 @@ import type { FlightInput, FlightState, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
-const { dockRadius, safeRadius } = ECONOMY.station;
+const { safeRadius } = ECONOMY.station;
+const dockRadius = stationDockRadius(PROTOTYPE);
 
 function sites(sector: SectorId, span = 15): StationSite[] {
   const found: StationSite[] = [];
@@ -195,6 +202,20 @@ describe("station discovery and docking", () => {
       model.step(1 / 30, up);
     }
     expect(model.state.docked).toBe(site.id);
+  });
+
+  it("docks when Ada's hull circle overlaps the dock's mouth circle", () => {
+    expect(dockRadius).toBe(ECONOMY.station.dockMouthRadius + PROTOTYPE.tuning.flight.shipRadius);
+    const at = (reach: number) => {
+      const model = launched();
+      const flight = model.state.flight!;
+      flight.player = { x: dock.x + dockOutward.x * reach, y: dock.y + dockOutward.y * reach };
+      flight.velocity = { x: 0, y: 0 };
+      model.step(1 / 60, idle);
+      return model.state.docked;
+    };
+    expect(at(dockRadius - 0.05)).toBe(site.id);
+    expect(at(dockRadius + 0.05)).toBeNull();
   });
 
   it("refuses travel and purchases outside a dock", () => {

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import {
+  nameLabelled,
   readStationArt,
   stationDockWorld,
   type StationFrame,
@@ -36,6 +37,18 @@ describe("station art", () => {
     expect(dock.offset.y).toBeCloseTo(ECONOMY.station.dockOffset.y, 2);
     expect(dock.outward.x).toBeCloseTo(ECONOMY.station.dockOutward.x, 9);
     expect(dock.outward.y).toBeCloseTo(ECONOMY.station.dockOutward.y, 9);
+  });
+
+  it("derives the dock's mouth circle from Art's drawn mouth width", () => {
+    const dock = stationDockWorld(art.frames[0])!;
+    // 37.967 frame px is 16.61 display px across; a world circle draws 2 sqrt 2 radii wide.
+    expect(dock.mouthRadius).toBeCloseTo((37.967 * 0.4375) / (2 * Math.SQRT2), 9);
+    expect(dock.mouthRadius).toBeCloseTo(ECONOMY.station.dockMouthRadius, 3);
+  });
+
+  it("draws no in-world name label on a station", () => {
+    expect(nameLabelled("station")).toBe(false);
+    expect(nameLabelled("destination")).toBe(true);
   });
 
   it("keeps the placeholder when the station frames are missing", () => {

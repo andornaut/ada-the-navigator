@@ -68,12 +68,18 @@ import {
 } from "./space-palette.ts";
 import {
   readStardustArt,
-  releaseSettle,
   type StardustArt,
+  stardustDrawn,
   stardustFrame,
   stardustPhase,
 } from "./stardust-art.ts";
-import { readStationArt, type StationArt, type StationFrame, stationFrame } from "./station-art.ts";
+import {
+  nameLabelled,
+  readStationArt,
+  type StationArt,
+  type StationFrame,
+  stationFrame,
+} from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
@@ -471,6 +477,7 @@ export class PrototypeScene extends Phaser.Scene {
       const input: FlightInput = {
         aim: screenToWorld(sampled.aim),
         move: screenToWorld(sampled.move),
+        reducedMotion: this.reducedMotion,
         use: sampled.use,
         viewportWidth: this.cameras.main.width / this.cameras.main.zoom,
       };
@@ -998,7 +1005,9 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   private drawDestinationLabel(object: SpaceObject, point: Vec, radius: number): void {
-    const destination = this.model.destinations().find((entry) => entry.id === object.id);
+    const destination = nameLabelled(object.kind)
+      ? this.model.destinations().find((entry) => entry.id === object.id)
+      : undefined;
     if (!destination) {
       return;
     }
@@ -1033,7 +1042,7 @@ export class PrototypeScene extends Phaser.Scene {
       .setVisible(true);
   }
 
-  /** Art's station blinks between frames A and B; reduced motion holds A. */
+  /** Art's station blinks between frames A and B; reduced motion holds A. Stations draw no name label. */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
     const art = this.stationArt;
     if (!art) {
@@ -1045,13 +1054,12 @@ export class PrototypeScene extends Phaser.Scene {
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)
       .setPosition(point.x, point.y);
-    this.drawDestinationLabel(object, point, frame.displayHeight! * (1 - frame.pivot.y));
   }
 
   /** Fallback without the station art: a ring hull, its dock and its safe-area outline. */
   private drawStationPlaceholder(object: SpaceObject, point: Vec, radius: number): void {
     const safe = ECONOMY.station.safeRadius;
-    const dock = ECONOMY.station.dockRadius;
+    const mouth = ECONOMY.station.dockMouthRadius * Math.SQRT2;
     this.ink.lineStyle(1, this.palette.pointOfInterest, 0.35);
     this.ink.strokeEllipse(point.x, point.y, safe * 2, safe);
     this.ink.fillStyle(this.palette.environment);
@@ -1060,8 +1068,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.strokeEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
     const dockAt = this.project(stationDock(object));
     this.ink.lineStyle(1.5, this.palette.active, 0.8);
-    this.ink.strokeEllipse(dockAt.x, dockAt.y, dock * 2, dock);
-    this.drawDestinationLabel(object, point, radius);
+    this.ink.strokeEllipse(dockAt.x, dockAt.y, mouth * 2, mouth);
   }
 
   /**
@@ -1076,15 +1083,13 @@ export class PrototypeScene extends Phaser.Scene {
       this.ink.fillCircle(point.x, point.y, radius / 2);
       return;
     }
-    let at = point;
-    if (object.release && !this.reducedMotion) {
-      const settle = releaseSettle(
-        this.destruction?.pickups.settleMs ?? 110,
-        (flight.time - object.release.at) * 1000,
-      );
-      const from = this.project(object.release.from);
-      at = { x: from.x + (point.x - from.x) * settle, y: from.y + (point.y - from.y) * settle };
-    }
+    const at = stardustDrawn(
+      this.destruction?.pickups.settleMs ?? 110,
+      this.reducedMotion,
+      object.release && this.project(object.release.from),
+      object.release ? (flight.time - object.release.at) * 1000 : 0,
+      point,
+    );
     const frame = stardustFrame(
       art,
       this.reducedMotion,

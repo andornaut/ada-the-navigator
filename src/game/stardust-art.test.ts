@@ -6,6 +6,7 @@ import {
   readStardustArt,
   releaseSettle,
   type StardustAsset,
+  stardustDrawn,
   stardustFrame,
   stardustPhase,
 } from "./stardust-art.ts";
@@ -47,5 +48,20 @@ describe("Stardust pickup art", () => {
     expect(releaseSettle(110, 0)).toBe(0);
     expect(releaseSettle(110, 110)).toBeCloseTo(1 - Math.exp(-1), 12);
     expect(releaseSettle(110, 1000)).toBeGreaterThan(0.999);
+  });
+
+  it("bursts a released pickup out from its wreck, but under reduced motion draws it in place", () => {
+    const from = { x: 0, y: 0 };
+    const point = { x: 10, y: 4 };
+    expect(stardustDrawn(110, false, from, 0, point)).toEqual(from);
+    expect(stardustDrawn(110, false, from, 55, point).x).toBeCloseTo(10 * releaseSettle(110, 55));
+    expect(stardustDrawn(110, true, from, 0, point)).toEqual(point);
+    expect(stardustDrawn(110, false, undefined, 0, point)).toEqual(point);
+  });
+
+  it("holds the rest frame under reduced motion, with no glint", () => {
+    for (const time of [0, 420, 480, 560]) {
+      expect(stardustFrame(art, true, 0, time)).toBe(art.rest);
+    }
   });
 });

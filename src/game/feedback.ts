@@ -1,3 +1,4 @@
+import { wreckId } from "../model/flight.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 
@@ -78,6 +79,14 @@ export class ModelFeedback {
       events.add(kind);
       this.pulses.push({ ...point, age: 0, kind });
     };
+    // A destroyed enemy's destruction art replaces its markers: the cue sounds, no bracket.
+    const destroyed = (id: string, kind: FeedbackKind, point: Vec) => {
+      if (kind === "disabled" && next.objects.has(wreckId(id))) {
+        events.add(kind);
+        return;
+      }
+      emit(kind, point);
+    };
     if (next.shield < previous.shield) {
       emit("damage", next.player);
     } else if (
@@ -115,7 +124,7 @@ export class ModelFeedback {
         disabled ||= oldHp !== undefined && oldHp > 0 && hp <= 0;
       }
       if (hit) {
-        emit(disabled || object.hp <= 0 ? "disabled" : "hit", object.point);
+        destroyed(id, disabled || object.hp <= 0 ? "disabled" : "hit", object.point);
       }
     }
     let removedDisabled = Math.max(0, next.disabledEnemies - previous.disabledEnemies);
@@ -125,7 +134,7 @@ export class ModelFeedback {
         continue;
       }
       if (before.enemy && removedDisabled > 0) {
-        emit("disabled", before.point);
+        destroyed(id, "disabled", before.point);
         removedDisabled--;
       } else if (
         flight.shots.some(

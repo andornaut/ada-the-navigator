@@ -223,18 +223,46 @@ describe("Stardust drops", () => {
   });
 
   it("times each shard-drawn destruction from Art's destruction data", () => {
+    interface Timing {
+      durationMs: number;
+      releaseMs: number;
+      spread: number;
+    }
     const art = JSON.parse(
       readFileSync(new URL("../../public/art/enemies/destruction.json", import.meta.url), "utf8"),
-    ) as {
-      archetypes: Record<string, { durationMs: number; releaseMs: number; spread: number }>;
-    };
+    ) as { archetypes: Record<string, Timing & { reduced: Timing }> };
+    const seconds = (timing: Timing) => ({
+      durationSeconds: timing.durationMs / 1000,
+      releaseSeconds: timing.releaseMs / 1000,
+      spread: timing.spread,
+    });
     for (const [archetype, timing] of Object.entries(art.archetypes)) {
       expect(ECONOMY.destruction[archetype as EnemyArchetype]).toEqual({
-        durationSeconds: timing.durationMs / 1000,
-        releaseSeconds: timing.releaseMs / 1000,
-        spread: timing.spread,
+        ...seconds(timing),
+        reduced: seconds(timing.reduced),
       });
     }
+  });
+
+  it("under reduced motion releases a wreck's drops in place at Art's reduced release", () => {
+    const value = flight();
+    const target = enemy("fighter", "target", 300, 0);
+    value.objects.push(target);
+    value.shots.push(killShot(target));
+    const reduced = { ...idle, reducedMotion: true };
+    stepFlight(PROTOTYPE, 1 / 60, reduced, value);
+    const wreck = value.objects.find((object) => object.kind === "wreck")!;
+    // Art's reduced fighter: drops appear at 240 ms, within 7.68 units, and the hull is gone at 360 ms.
+    stepFlight(PROTOTYPE, 0.2, reduced, value);
+    expect(pickups(value)).toEqual([]);
+    stepFlight(PROTOTYPE, 0.05, reduced, value);
+    expect(total(pickups(value))).toBe(5);
+    for (const pickup of pickups(value)) {
+      const offset = Math.hypot(pickup.x - wreck.x, pickup.y - wreck.y);
+      expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
+    }
+    stepFlight(PROTOTYPE, 0.12, reduced, value);
+    expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
   });
 
   it("destroys a multipart ship once all its required parts are disabled", () => {

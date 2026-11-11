@@ -1,4 +1,9 @@
-import type { Vec } from "../model/types.ts";
+import type { ObjectKind, Vec } from "../model/types.ts";
+
+/** Destinations carry an in-world name; a station reads as a safe area from its art alone. */
+export function nameLabelled(kind: ObjectKind): boolean {
+  return kind === "destination";
+}
 
 // Art's station sprite (art/station.md): two fixed-facing blink frames and a dock entrance.
 
@@ -54,10 +59,14 @@ function screenToWorld(screen: Vec): Vec {
 }
 
 /**
- * The dock entrance as a world offset from the station's pivot and a world unit outward
- * direction, from the frame-px dock point scaled by the display size.
+ * The dock entrance as a world offset from the station's pivot, a world unit outward
+ * direction and the mouth circle's world radius, from the frame-px dock point and mouth
+ * width scaled by the display size. The mouth lies on the world plane, so its drawn width is
+ * a world circle's screen width, 2 sqrt 2 times its radius under the 2:1 projection.
  */
-export function stationDockWorld(frame: StationFrame): { offset: Vec; outward: Vec } | undefined {
+export function stationDockWorld(
+  frame: StationFrame,
+): { mouthRadius: number; offset: Vec; outward: Vec } | undefined {
   if (!frame.dock) {
     return undefined;
   }
@@ -68,5 +77,6 @@ export function stationDockWorld(frame: StationFrame): { offset: Vec; outward: V
   });
   const out = screenToWorld({ x: frame.dock.outward[0], y: frame.dock.outward[1] });
   const length = Math.hypot(out.x, out.y);
-  return { offset, outward: { x: out.x / length, y: out.y / length } };
+  const mouthRadius = (frame.dock.width * scale) / (2 * Math.SQRT2);
+  return { mouthRadius, offset, outward: { x: out.x / length, y: out.y / length } };
 }

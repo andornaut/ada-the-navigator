@@ -63,3 +63,21 @@ export function stardustFrame(
 export function releaseSettle(settleMs: number, ageMs: number): number {
   return ageMs <= 0 ? 0 : 1 - Math.exp(-ageMs / settleMs);
 }
+
+/**
+ * Where a pickup draws: a released one bursts out from its wreck and settles; under reduced
+ * motion it appears in place, with no burst or spread motion.
+ */
+export function stardustDrawn(
+  settleMs: number,
+  reducedMotion: boolean,
+  from: Vec | undefined,
+  ageMs: number,
+  point: Vec,
+): Vec {
+  if (!from || reducedMotion) {
+    return point;
+  }
+  const settle = releaseSettle(settleMs, ageMs);
+  return { x: from.x + (point.x - from.x) * settle, y: from.y + (point.y - from.y) * settle };
+}

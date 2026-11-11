@@ -13,6 +13,8 @@ export interface FlightInput {
   aim: Vec;
   use: boolean;
   viewportWidth?: number;
+  /** The device's reduced-motion setting, which times and places destruction drops. */
+  reducedMotion?: boolean;
 }
 export type ObjectKind =
   | "rock"

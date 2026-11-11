@@ -242,7 +242,7 @@ export class GameModel {
   undock(): void {
     const id = this.state.docked;
     if (id && this.state.flight) {
-      undockFlight(id, this.state.flight);
+      undockFlight(this.content, id, this.state.flight);
     }
     this.state.docked = null;
   }

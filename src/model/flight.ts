@@ -702,7 +702,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
   flight.player =
     object.kind === "station"
-      ? outsideDock(ECONOMY.station.dockRadius + 40, object)
+      ? outsideDock(stationDockRadius(content) + 40, object)
       : { x: object.x, y: object.y };
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
@@ -794,6 +794,13 @@ export function stationDock(station: Vec): Vec {
     y: station.y + ECONOMY.station.dockOffset.y,
   };
 }
+/**
+ * How near the dock Ada's centre must be to dock: her hull circle overlaps the dock's mouth
+ * circle (gameplay/economy.md).
+ */
+export function stationDockRadius(content: PrototypeContent): number {
+  return ECONOMY.station.dockMouthRadius + content.tuning.flight.shipRadius;
+}
 /** The point `distance` from a station's dock along its outward direction. */
 function outsideDock(distance: number, station: Vec): Vec {
   const dock = stationDock(station);
@@ -804,12 +811,12 @@ function outsideDock(distance: number, station: Vec): Vec {
  * Undocking places Ada at rest just outside the dock, so flying back in docks again.
  * Returns false without a flight at that station.
  */
-export function undockFlight(id: string, flight: FlightState): boolean {
+export function undockFlight(content: PrototypeContent, id: string, flight: FlightState): boolean {
   const station = flight.objects.find((object) => object.kind === "station" && object.id === id);
   if (!station) {
     return false;
   }
-  flight.player = outsideDock(ECONOMY.station.dockRadius + 1, station);
+  flight.player = outsideDock(stationDockRadius(content) + 1, station);
   flight.velocity = { x: 0, y: 0 };
   flight.dockId = null;
   movementHeadings.delete(flight);
@@ -1154,10 +1161,15 @@ function shots(
   flight.objects = flight.objects.filter((o) => o.hp > 0);
 }
 
+/** The id of the wreck that replaces a destroyed enemy. */
+export function wreckId(enemyId: string): string {
+  return `wreck:${enemyId}`;
+}
+
 /** A defeated enemy is replaced by a wreck that breaks apart, then releases its drops. */
 function destroyEnemy(object: SpaceObject, flight: FlightState): void {
   object.hp = 0;
-  const id = `wreck:${object.id}`;
+  const id = wreckId(object.id);
   if (flight.objects.some((other) => other.id === id)) {
     return;
   }
@@ -1209,13 +1221,20 @@ function releaseStardust(
   });
 }
 
-function stepWrecks(content: PrototypeContent, dt: number, flight: FlightState): void {
+/** Reduced motion uses Art's reduced timing: a shorter fade, a later release, a tighter spread. */
+function stepWrecks(
+  content: PrototypeContent,
+  dt: number,
+  reducedMotion: boolean,
+  flight: FlightState,
+): void {
   for (const object of [...flight.objects]) {
     if (object.kind !== "wreck" || !object.wreck || object.hp <= 0) {
       continue;
     }
     object.wreck.age += dt;
-    const timing = ECONOMY.destruction[object.wreck.archetype];
+    const destruction = ECONOMY.destruction[object.wreck.archetype];
+    const timing = reducedMotion ? destruction.reduced : destruction;
     if (object.wreck.age >= timing.durationSeconds) {
       object.hp = 0;
     }
@@ -1306,7 +1325,7 @@ export function stepFlight(
     const shotDelays = new Map<string, number>();
     const threat = enemies(content, slice, flight, events, shotDelays);
     shots(content, slice, flight, events, shotDelays);
-    stepWrecks(content, slice, flight);
+    stepWrecks(content, slice, input.reducedMotion ?? false, flight);
     for (const object of flight.objects) {
       if (
         object.kind === "hazard" &&
@@ -1384,7 +1403,7 @@ export function stepFlight(
   const dock = flight.objects.find(
     (object) =>
       object.kind === "station" &&
-      distance(stationDock(object), flight.player) <= ECONOMY.station.dockRadius,
+      distance(stationDock(object), flight.player) <= stationDockRadius(content),
   );
   if (!dock) {
     flight.dockId = null;

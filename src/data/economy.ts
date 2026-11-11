@@ -17,10 +17,15 @@ export interface PaintScheme {
   price: number;
 }
 
-export interface Destruction {
+export interface DestructionTiming {
   durationSeconds: number;
   releaseSeconds: number;
   spread: number;
+}
+
+export interface Destruction extends DestructionTiming {
+  /** Under reduced motion: no burst, the drops appear already spread at the reduced release. */
+  reduced: DestructionTiming;
 }
 
 export interface EconomyCatalog {
@@ -81,7 +86,8 @@ export interface EconomyCatalog {
     dockOffset: { x: number; y: number };
     /** World unit direction out of the dock, from the station art; undocking and travel arrive along it. */
     dockOutward: { x: number; y: number };
-    dockRadius: number;
+    /** World radius of the dock's mouth circle, from the station art's mouth width. */
+    dockMouthRadius: number;
     safeRadius: number;
   };
 }
@@ -92,15 +98,51 @@ const small = { fighter: 0.02, interceptor: 0.02, retaliator: 0.02, swarm: 0.02 
 export const ECONOMY: EconomyCatalog = {
   asteroidStardust: [1, 3],
   defaultPaint: "classic",
-  // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart.
+  // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,
+  // with Art's 40% reduced spread.
   destruction: {
-    capital: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 40 },
-    fighter: { durationSeconds: 0.45, releaseSeconds: 0.15, spread: 19.2 },
-    frigate: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 30 },
-    interceptor: { durationSeconds: 0.44, releaseSeconds: 0.15, spread: 18 },
-    oversizedCapital: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 40 },
-    retaliator: { durationSeconds: 0.6, releaseSeconds: 0.19, spread: 33.6 },
-    swarm: { durationSeconds: 0.43, releaseSeconds: 0.14, spread: 16.8 },
+    capital: {
+      durationSeconds: 0.6,
+      reduced: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 16 },
+      releaseSeconds: 0.6,
+      spread: 40,
+    },
+    fighter: {
+      durationSeconds: 0.45,
+      reduced: { durationSeconds: 0.36, releaseSeconds: 0.24, spread: 7.68 },
+      releaseSeconds: 0.15,
+      spread: 19.2,
+    },
+    frigate: {
+      durationSeconds: 0.6,
+      reduced: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 12 },
+      releaseSeconds: 0.6,
+      spread: 30,
+    },
+    interceptor: {
+      durationSeconds: 0.44,
+      reduced: { durationSeconds: 0.35, releaseSeconds: 0.23, spread: 7.2 },
+      releaseSeconds: 0.15,
+      spread: 18,
+    },
+    oversizedCapital: {
+      durationSeconds: 0.6,
+      reduced: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 16 },
+      releaseSeconds: 0.6,
+      spread: 40,
+    },
+    retaliator: {
+      durationSeconds: 0.6,
+      reduced: { durationSeconds: 0.45, releaseSeconds: 0.3, spread: 13.44 },
+      releaseSeconds: 0.19,
+      spread: 33.6,
+    },
+    swarm: {
+      durationSeconds: 0.43,
+      reduced: { durationSeconds: 0.35, releaseSeconds: 0.23, spread: 6.72 },
+      releaseSeconds: 0.14,
+      spread: 16.8,
+    },
   },
   discoveryStardust: 25,
   effects: {
@@ -144,11 +186,11 @@ export const ECONOMY: EconomyCatalog = {
     cellSize: 12000,
     chance: 0.5,
     destinationClearance: 1200,
+    // Half station-a's drawn 16.61 display px mouth, as a world-plane circle's radius.
+    dockMouthRadius: 5.873,
     // station-a's dock entrance, 27.2 display px below the pivot, in world units.
     dockOffset: { x: 27.223, y: 27.223 },
     dockOutward: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
-    // Half the dock mouth plus Ada's radius, so her ship docks as it enters the mouth.
-    dockRadius: 18,
     jitter: 4000,
     originClearance: 3000,
     radius: 40,

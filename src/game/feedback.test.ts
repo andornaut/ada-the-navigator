@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy } from "../model/enemy-ai.ts";
+import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
 import { playOpening } from "../model/test-launch.ts";
@@ -75,6 +76,26 @@ describe("model feedback", () => {
     state.progress[1].disabledEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
     expect(feedback.pulses.at(-1)).toMatchObject({ kind: "disabled", x: 20, y: 30 });
+  });
+
+  it("sounds a kill but draws no marker once the enemy's destruction starts", () => {
+    const { feedback, flight, state } = launched();
+    flight.objects = [{ hp: 4, id: "target", kind: "enemy", radius: 10, x: 20, y: 30 }];
+    feedback.observe(100, state);
+    flight.objects = [
+      {
+        hp: 1,
+        id: wreckId("target"),
+        kind: "wreck",
+        radius: 10,
+        wreck: { age: 0, archetype: "fighter", facing: { x: 0, y: -1 } },
+        x: 20,
+        y: 30,
+      },
+    ];
+    state.progress[1].disabledEnemies++;
+    expect(feedback.observe(100, state)).toEqual(["disabled"]);
+    expect(feedback.pulses).toEqual([]);
   });
 
   it("attributes a same-step kill only to the defeated enemy when an earlier enemy is archived", () => {
