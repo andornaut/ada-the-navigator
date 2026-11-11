@@ -395,10 +395,38 @@ try {
     "A new game has no achievement unlocked",
   );
   await page.screenshot({ path: `${output}/achievements-start.png` });
+  // An open modal draws above the top-row buttons: the topmost element at each button's centre
+  // belongs to the modal.
+  async function modalCovers(inside, boxes) {
+    return page.evaluate(
+      ({ centres, inside }) => {
+        const modal = document.querySelector(inside)?.closest(".ada-modal");
+        return centres.map(([x, y]) => Boolean(modal?.contains(document.elementFromPoint(x, y))));
+      },
+      {
+        centres: boxes.map((box) => [box.x + box.width / 2, box.y + box.height / 2]),
+        inside,
+      },
+    );
+  }
+  assert.deepEqual(
+    await modalCovers('[data-dialog="achievements"]', [achievementsBox, settingsBox]),
+    [true, true],
+    "The open Achievements modal draws above the Achievements and Settings buttons",
+  );
   await page.locator('[data-action="achievements-next"]').click();
   assert.equal((await achievementsPage()).count, "2/3");
   await page.locator('[data-action="close-achievements"]').click();
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  await page.locator('[data-action="settings"]').click();
+  await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+  assert.deepEqual(
+    await modalCovers('[data-action="close-settings"]', [achievementsBox]),
+    [true],
+    "The open Settings modal draws above the Achievements button",
+  );
+  await page.locator('[data-action="close-settings"]').click();
+  await page.locator('[data-action="close-settings"]').waitFor({ state: "hidden" });
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
   // galaxy selection on galaxy one.

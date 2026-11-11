@@ -89,12 +89,20 @@ const CLOSE_HIT = CARD_CLOSE.hit;
 // The shared card and control styles apply in the controls overlay and on the start screen.
 export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 
+/**
+ * An open modal's stacking order in its layer: above every HUD and start-screen control there,
+ * whatever their document order, so no button draws over an open card. Every other control in
+ * the layer stays below it.
+ */
+export const MODAL_LAYER = 10;
+
 export const MODAL_STYLE = `
 /* A modal dims the whole play area; its card centres in the page safe rect, shrinks to fit and
    scrolls its body on a short screen. */
 ${UI_SCOPE} .ada-modal{
   position:absolute;
   inset:0;
+  z-index:${MODAL_LAYER};
   display:flex;
   align-items:center;
   justify-content:center;

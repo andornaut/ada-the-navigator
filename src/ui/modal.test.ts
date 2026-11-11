@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +10,7 @@ import {
   actionOrder,
   BUTTON_SLICE,
   buttonTag,
+  MODAL_LAYER,
   MODAL_STYLE,
   SWITCH_ROW_PARTS,
   switchState,
@@ -190,5 +191,41 @@ describe("modal text", () => {
     expect(close).toContain(`right:${units(-6)}`);
     expect(close).toContain(`width:${units(48)}`);
     expect(rule(`${UI_SCOPE} .ada-close::before`)).toContain(`width:${units(24)}`);
+  });
+});
+
+describe("modal stacking", () => {
+  it("draws an open modal above every other control in its layer", () => {
+    const modal = MODAL_STYLE.slice(MODAL_STYLE.indexOf(`${UI_SCOPE} .ada-modal{`));
+    expect(modal.slice(0, modal.indexOf("}"))).toContain(`z-index:${MODAL_LAYER}`);
+    // The page's own layers stack the controls layer itself, not the controls inside it.
+    const pageLayers = [
+      ".ada-controls{",
+      ".ada-controls.ada-",
+      "#game-status{",
+      "#save-status{",
+      ".ada-conversation{",
+    ];
+    const ui = new URL("./", import.meta.url);
+    const sources = readdirSync(ui)
+      .filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"))
+      // Interpolations are blanked to the same length, so their braces never read as a rule's.
+      .map((name) => {
+        const source = readFileSync(new URL(name, ui), "utf8");
+        return [name, source.replace(/\$\{[^{}]*\}/gu, (text) => "_".repeat(text.length))] as const;
+      });
+    let checked = 0;
+    for (const [name, source] of sources) {
+      for (const match of source.matchAll(/z-index:\s*(\d+)/gu)) {
+        const before = source.slice(0, match.index);
+        const selector = before.slice(before.lastIndexOf("}") + 1, before.lastIndexOf("{") + 1);
+        if (pageLayers.some((layer) => selector.includes(layer))) {
+          continue;
+        }
+        checked++;
+        expect(Number(match[1]), `${name}: ${selector.trim()}`).toBeLessThan(MODAL_LAYER);
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });
