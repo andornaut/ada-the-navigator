@@ -175,10 +175,9 @@ function meet(p: Plane, q: Plane, r: Plane): Point {
 }
 
 // Named hull vertices. The swept plan's notches lie ahead of the apex, so the rear is
-// split into planar faces: a wall leaning up from each wing's trailing edge, a tail side
-// from each notch to the apex, and the rear face, whose base lies on the tail edges where
-// the lean from the apex meets the skirt top. A wing's corner is where its wall, its
-// steep face and its tail side meet.
+// split into planar faces: a wall leaning up from each wing's trailing edge, and a tail
+// side from each notch up to the apex and down the single tail ridge to the tail tip.
+// A wing's corner is where its wall, its steep face and its tail side meet.
 function vertices() {
   const [tipR, notchR, tail, notchL, tipL, nose] = plan(HULL.skirt, HULL.plan) as [
     Point,
@@ -188,21 +187,13 @@ function vertices() {
     Point,
     Point,
   ];
-  const { apex, lean, shoulder, skirt } = HULL;
-  const baseY = apex[1] + (apex[2] - skirt) / Math.tan((lean * Math.PI) / 180);
-  const onTail = (notch: Point): Point => {
-    const k = (baseY - notch[1]) / (tail[1] - notch[1]);
-    return [notch[0] * (1 - k), baseY, skirt];
-  };
-  const [baseL, baseR] = [onTail(notchL), onTail(notchR)];
-  const corner = (tip: Point, notch: Point, base: Point) =>
-    meet(through(shoulder, tip, apex), leaning(tip, notch), through(notch, base, apex));
+  const { apex, shoulder } = HULL;
+  const corner = (tip: Point, notch: Point) =>
+    meet(through(shoulder, tip, apex), leaning(tip, notch), through(notch, tail, apex));
   return {
     apex,
-    baseL,
-    baseR,
-    cornerL: corner(tipL, notchL, baseL),
-    cornerR: corner(tipR, notchR, baseR),
+    cornerL: corner(tipL, notchL),
+    cornerR: corner(tipR, notchR),
     nose,
     notchL,
     notchR,
@@ -213,31 +204,25 @@ function vertices() {
   };
 }
 
-// Upper faces, each a planar polygon wound to face up. The wing faces carry the canopy;
-// the tail faces rise behind it to the apex, the walls hold the mouths, and the flat
-// plate is the tail tip behind the rear face.
-type Part = "plate" | "tail" | "wing";
+// Upper faces, each a planar polygon wound to face up: per side the wing face, which
+// carries the canopy, then the steep face, the wall, which holds the mouth, and the tail
+// side, which rise behind the canopy.
+type Part = "side" | "steep" | "wall" | "wing";
 
 function upperFaces(): { part: Part; points: Point[] }[] {
   const v = vertices();
   const up = (points: Point[]) => (normal(points)[2] < 0 ? points.toReversed() : points);
   const sides = [
-    [v.tipL, v.notchL, v.cornerL, v.baseL],
-    [v.tipR, v.notchR, v.cornerR, v.baseR],
+    [v.tipL, v.notchL, v.cornerL],
+    [v.tipR, v.notchR, v.cornerR],
   ] as const;
-  const wing = sides.map(([tip]) => [v.nose, tip, v.shoulder]);
-  const tail = [
-    ...sides.flatMap(([tip, notch, corner, base]) => [
-      [v.shoulder, tip, corner, v.apex],
-      [tip, notch, corner],
-      [notch, base, v.apex, corner],
-    ]),
-    [v.baseL, v.baseR, v.apex],
-  ];
+  const faces = (part: Part, pick: (side: (typeof sides)[number]) => Point[]) =>
+    sides.map((side) => ({ part, points: up(pick(side)) }));
   return [
-    ...wing.map((points) => ({ part: "wing" as const, points: up(points) })),
-    ...tail.map((points) => ({ part: "tail" as const, points: up(points) })),
-    { part: "plate", points: up([v.baseL, v.tail, v.baseR]) },
+    ...faces("wing", ([tip]) => [v.nose, tip, v.shoulder]),
+    ...faces("steep", ([tip, , corner]) => [v.shoulder, tip, corner, v.apex]),
+    ...faces("wall", ([tip, notch, corner]) => [tip, notch, corner]),
+    ...faces("side", ([, notch, corner]) => [notch, v.tail, v.apex, corner]),
   ];
 }
 
@@ -298,42 +283,55 @@ function mouthAxis(sign: number): { half: Point; middle: Point } {
   return { half, middle };
 }
 
-// Light below which an upper face prefers the rear side colour.
-const SHADE = 0.6;
+// Light below which a wing face prefers the rear side colour, and below which a steep
+// face or tail side prefers the front side colour over the top colour.
+const SHADE = { back: 0.45, wing: 0.6 };
 
-// Upper faces take the hull paint in light order among the visible ones. The brightest
-// is top; each other face prefers front sides at light SHADE or more and rear sides
-// below it, and steps to the next tier (darker first) while a brighter face it shares an
-// edge with already has that colour, so neighbouring planes differ. The flat tail plate
-// is always top.
+// Upper faces take the paint in light order among the visible ones. The walls are the
+// canopy side colour, a blue band round the mouths. The brightest other face is top. Wing
+// faces prefer front sides at light SHADE.wing or more and rear sides below it; steep
+// faces and tail sides prefer top at SHADE.back or more and front sides below it, so the
+// tail reads white with blue-grey shade. Each face takes its first preference that no
+// brighter face sharing an edge with it already has, so neighbouring planes differ.
 function shade(yaw: number, paint: Paint, upper: readonly { part: Part; points: Point[] }[]) {
-  const tiers = [paint.top, paint.frontSides, paint.rearSides];
   const key = (p: Point) => p.map((c) => c.toFixed(4)).join(",");
   const edges = upper.map(({ points }) =>
     points.map((p, j) => [key(p), key(points[(j + 1) % points.length]!)].toSorted().join("|")),
   );
   const touches = (i: number, j: number) => edges[i]!.some((edge) => edges[j]!.includes(edge));
-  const plate = upper.findIndex(({ part }) => part === "plate");
   const ranked = upper
-    .map(({ points }, i) => ({
+    .map(({ part, points }, i) => ({
       i,
       light: lit(yaw, points),
+      part,
       shown: facesViewer(turned(yaw, points)),
     }))
-    .filter(({ i, shown }) => shown && i !== plate)
+    .filter(({ shown }) => shown)
     .toSorted((a, b) => b.light - a.light);
-  const color = new Map<number, string>([[plate, paint.top]]);
-  for (const [rank, { i, light }] of ranked.entries()) {
-    const preferred = rank === 0 ? 0 : light >= SHADE ? 1 : 2;
-    const order = [preferred, ...[1, 2, 0].filter((tier) => tier !== preferred)];
+  const { frontSides, rearSides, top } = paint;
+  const prefer = (part: Part, light: number, brightest: boolean): string[] =>
+    part === "wall"
+      ? [paint.canopySides]
+      : brightest
+        ? [top]
+        : part === "wing"
+          ? light >= SHADE.wing
+            ? [frontSides, rearSides]
+            : [rearSides, frontSides]
+          : light >= SHADE.back
+            ? [top, frontSides]
+            : [frontSides, top];
+  const color = new Map<number, string>();
+  const lead = ranked.find(({ part }) => part !== "wall");
+  for (const [rank, { i, light, part }] of ranked.entries()) {
     const taken = new Set(
       ranked
         .slice(0, rank)
         .filter(({ i: j }) => touches(i, j))
         .map(({ i: j }) => color.get(j)),
     );
-    const tier = rank === 0 ? 0 : (order.find((t) => t !== 0 && !taken.has(tiers[t])) ?? preferred);
-    color.set(i, tiers[tier]!);
+    const options = prefer(part, light, lead?.i === i);
+    color.set(i, options.find((option) => !taken.has(option)) ?? options[0]!);
   }
   return color;
 }
@@ -354,8 +352,8 @@ function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
   }
   const upper = upperFaces();
   const color = shade(yaw, paint, upper);
-  // Tail faces and the plate draw after the canopy when the rear points toward the
-  // viewer, otherwise with the wing faces before it. The mouths draw last.
+  // Faces behind the canopy draw after it when the rear points toward the viewer,
+  // otherwise with the wing faces before it. The mouths draw last.
   const rear = rotate(SHIP_HEADINGS, yaw, [0, 1, 0]);
   const tailLayer = rear[0] + rear[1] > 0 ? 6 : 3;
   for (const [i, { part, points }] of upper.entries()) {

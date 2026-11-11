@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
   <title>Ship 2 idle</title>
   <polygon fill="#d4dfe9" points="14.14,39.22 63.00,67.71 63.00,68.91 14.14,40.42"/>
-  <polygon fill="#ffffff" points="35.66,34.11 36.60,30.91 41.18,32.79"/>
-  <polygon fill="#abbfce" points="40.03,21.89 46.65,28.97 62.66,27.62 45.19,36.58"/>
-  <polygon fill="#abbfce" points="34.50,38.03 35.66,34.11 40.03,21.89 36.93,31.30"/>
+  <polygon fill="#ffffff" points="34.50,38.03 36.60,30.91 40.03,21.89 36.93,31.30"/>
+  <polygon fill="#ffffff" points="40.03,21.89 46.65,28.97 62.66,27.62 45.19,36.58"/>
   <polygon fill="#d4dfe9" points="45.19,36.58 14.14,39.22 36.93,31.30 40.03,21.89"/>
   <polygon fill="#d4dfe9" points="45.19,36.58 62.66,27.62 63.00,67.71"/>
   <polygon fill="#ffffff" points="63.00,67.71 14.14,39.22 45.19,36.58"/>

@@ -51,29 +51,28 @@
 - A vertical 1.2-unit skirt runs round the plan; every upper face starts at its
   top (z 1.2).
 
-| Vertex         | Local (x, y, z)      | Role                                      |
-| -------------- | -------------------- | ----------------------------------------- |
-| Nose           | (0, -32, 1.2)        | Forward tip; shots leave here             |
-| Wing tips      | (±21.44, 20.48, 1.2) | Swept-back tips                           |
-| Notches        | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
-| Tail           | (0, 24.32, 1.2)      | Tail tip                                  |
-| Shoulder       | (0, 6, 7.5)          | Ridge kink at the canopy's rear edge      |
-| Apex           | (0, 17, 15)          | Rear-centre top                           |
-| Rear-face base | (±2.44, 20.44, 1.2)  | On the tail edges, 76 degrees below apex  |
-| Corners        | (±4.29, 13.25, 9.21) | Where wall, steep face and tail side meet |
+| Vertex    | Local (x, y, z)      | Role                                      |
+| --------- | -------------------- | ----------------------------------------- |
+| Nose      | (0, -32, 1.2)        | Forward tip; shots leave here             |
+| Wing tips | (±21.44, 20.48, 1.2) | Swept-back tips                           |
+| Notches   | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
+| Tail      | (0, 24.32, 1.2)      | Tail tip                                  |
+| Shoulder  | (0, 6, 7.5)          | Ridge kink at the canopy's rear edge      |
+| Apex      | (0, 17, 15)          | Rear-centre top                           |
+| Corners   | (±4.29, 13.25, 9.21) | Where wall, steep face and tail side meet |
 
 - The notches lie ahead of the apex, so no single rear face can rise from the
   notched outline to the apex without overhanging. The rear splits into planar
   faces instead: per side a wall from the trailing edge (wing tip to notch) at
-  the 76 degree lean, up to its corner; a tail side from the notch and rear-face
-  base up to the corner and the apex; and between the tail edges one rear face
-  from the base up to the apex at 76 degrees, behind which a flat plate fills
-  the tail tip at skirt height. Each corner is the common point of its wall,
-  steep face and tail side planes, so every face is planar.
+  the 76 degree lean, up to its corner, and a tail side from the notch up to the
+  corner and the apex and down to the tail tip. The two tail sides meet on one
+  straight ridge from the apex to the tail tip, 62.1 degrees from horizontal, so
+  the tail is a sharp wedge from behind. Each corner is the common point of its
+  wall, steep face and tail side planes, so every face is planar.
 - Upper faces, slope from horizontal: per side a wing face (nose, wing tip,
   shoulder) at 23.7 degrees, a steep face (shoulder, wing tip, corner, apex) at
   45.5, the wall (wing tip, notch, corner) at 76.0 and the tail side (notch,
-  rear-face base, apex, corner) at 74.2; the rear face at 76.0; the plate at 0.
+  tail tip, apex, corner) at 74.2.
   The ridge rises 9.4 degrees from the nose to the shoulder and 34.3 degrees
   from the shoulder to the apex. The steep face is concave at its corner.
 - The canopy is a faceted dome on the two wing faces, its rear edge at the
@@ -90,21 +89,23 @@
   blue accent.
 - A canopy-roof-coloured underlay with the canopy's projected convex outline
   draws before the facets and hides antialiasing seams between them.
-- Shading: upper faces take the hull paint in light order among the visible
-  ones, by the same world light. The brightest is the top colour; every other
-  face prefers the front side colour at light 0.6 or more and the rear side
-  colour below it, and steps to the next tier (darker first, never top) while a
-  brighter face it shares an edge with already has that colour, so neighbouring
-  planes differ. The plate is always the top colour. Skirt edges 0 and 5 (the
-  right wing's trailing and leading edges) take the front side colour, the rest
-  the rear side colour.
+- Shading: the walls take the canopy side colour, a blue band round the
+  mouths, so the back reads two-tone. The other upper faces take the hull paint
+  in light order among the visible ones, by the same world light. The brightest
+  is the top colour. Wing faces prefer the front side colour at light 0.6 or
+  more and the rear side colour below it; steep faces and tail sides prefer the
+  top colour at light 0.45 or more and the front side colour below it, so the
+  tail reads white with blue-grey shade. Each face takes its first preference
+  that no brighter face sharing an edge with it already has, so neighbouring
+  planes differ. Skirt edges 0 and 5 (the right wing's trailing and leading
+  edges) take the front side colour, the rest the rear side colour.
 - Twin subtle blue mouths sit on the walls: `|x|` 9.5 to 15, from 0.3 to 2.6
   above the skirt top, the top kept 0.6 under the wall's top edge, lifted 0.03
   off the wall. Thrust adds pale blue flames 16 units long with 9-unit white
   cores from each mouth's middle, readable at 42px display.
 - Draw order, by layer: thrust flames, skirt, wing faces, canopy underlay and
-  facets, then the tail faces (steep faces, walls, tail sides, rear face and
-  plate), then the mouths. When the rear points away from the viewer (rotated
+  facets, then the tail faces (steep faces, walls and tail sides), then the
+  mouths. When the rear points away from the viewer (rotated
   `x + y <= 0`), the tail faces draw with the wing faces before the canopy
   instead.
 - All faces use one projection. The viewer looks along `-(1, 1, 1)` from
@@ -118,7 +119,7 @@
 Ship paint sets five colours: the hull top, front sides and rear sides (the
 three hull tiers, assigned per heading by the [shading](#ship-geometry) rule,
 and skirt edges 0 and 5 front, the rest rear), the canopy roof and the canopy
-sides. The canopy highlight is derived: the roof colour
+sides (with the walls round the mouths). The canopy highlight is derived: the roof colour
 mixed 45 percent toward white per channel. Engine mouths `#64caff`, thrust
 flames and speed jets are the same on every scheme. Geometry, culling and draw
 order are shared, so each painted frame has exactly the polygons of the matching
