@@ -15,7 +15,7 @@ timed against them. `src/data/weapon-catalog.ts` holds the current tuning.
 | Rapid Missile | 0.30 s   | x1.3  | x1.5         | Missile, blast R 25           |
 | Heavy Missile | 1.2 s    | x0.6  | x8 and blast | Missile, blast R 60, 72, 85   |
 | Multi-Laser   | 0.3 s    | x1    | x1           | Fan of 3, 4, 5 bolts by level |
-| Phaser        | 1.12 s   | n/a   | x4           | Hitscan beam, 320 world units |
+| Phaser        | 1.12 s   | n/a   | x4           | Hitscan beam, 320 wu range    |
 
 Levels 2 and 3 change intervals, damage, blast radius and beam range as the
 catalogue sets them. The effects below take the level's blast radius and beam
@@ -66,7 +66,7 @@ A small white dart with amber fins and a long thin amber streak. Draw in order:
 4. Body: white polygon `(0, 0) (-2.2, -1.2) (-7, -1.2) (-7, 1.2) (-2.2, 1.2)`.
 
 Flicker: two frames, 50 ms each, looping. Frame 1 moves the streak tail to
-`u = -(6 + 23 f)`; nothing else changes.
+`u = -(6 + 23 f)`; nothing else changes. Reduced motion holds frame 0.
 
 ## Heavy Missile
 
@@ -93,6 +93,7 @@ keyline and a thick two-tone plume. Let `tail = 13.2 + 16.8 f` in frame 0 and
 8. Band: cream rectangle `u` -7.6 to -6.4, `v` -2.9 to 2.9.
 
 Flicker: two frames, 90 ms each, looping (plume 30 then 25 px long at heading 14).
+Reduced motion holds frame 0.
 
 ## Missile blasts
 
@@ -145,8 +146,14 @@ reads from the bolt count only; colour and width stay the bolt's.
 ## Phaser beam
 
 A hitscan flash from the nose to the first contact (Tech's beam test against hit
-circles and asteroids), or to the level's full range on a miss: `|P(d x range)|`
-px, 453 px at heading 14 and 226 px at headings 2 and 10 for 320 wu.
+circles and asteroids), or on a miss to the level's full range, `|P(d x range)|`
+px. Gameplay's ranges are 320, 384 and 460.8 wu at levels 1 to 3:
+
+| Level | Range (wu) | Heading 14 (px) | Headings 2 and 10 (px) |
+| ----- | ---------- | --------------- | ---------------------- |
+| 1     | 320        | 453             | 226                    |
+| 2     | 384        | 543             | 272                    |
+| 3     | 460.8      | 652             | 326                    |
 
 Keyframes for width factor `w` and alpha `a`, linear between keys: 0 ms `w`
 0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0. The
@@ -190,7 +197,7 @@ ring, radius 3, 1.5 px stroke, alpha `1 - p` over 160 ms.
 
 | Effect   | Full                              | Reduced                             |
 | -------- | --------------------------------- | ----------------------------------- |
-| Missiles | Two-frame exhaust flicker         | Unchanged                           |
+| Missiles | Two-frame exhaust flicker         | Frame 0 held, no flicker            |
 | Blasts   | Flash, growing ring, debris, tint | Static ring and tint at `R`, fading |
 | Beam     | Width keys, taper, bloom          | Steady 2 px line, fading            |
 | Spark    | Rays, core, flecks                | Static ring, fading                 |
