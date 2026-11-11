@@ -568,6 +568,48 @@
       }
     },
     {
+      "id": "stardust",
+      "path": "/art/stardust.png",
+      "width": 36,
+      "height": 9,
+      "displayWidth": 9,
+      "displayHeight": 9,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 9,
+      "frameHeight": 9,
+      "frames": {
+        "rest": 0,
+        "glint1": 1,
+        "glint2": 2
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "rest",
+          "ms": 420
+        },
+        {
+          "frame": 1,
+          "name": "glint1",
+          "ms": 60
+        },
+        {
+          "frame": 2,
+          "name": "glint2",
+          "ms": 80
+        },
+        {
+          "frame": 3,
+          "name": "glint1",
+          "ms": 60
+        }
+      ]
+    },
+    {
       "id": "station-a",
       "path": "/art/station-a.svg",
       "width": 180,

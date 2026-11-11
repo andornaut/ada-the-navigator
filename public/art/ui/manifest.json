@@ -115,6 +115,18 @@
       "once": []
     },
     {
+      "key": "icon-stardust",
+      "png": "sprites/icon-stardust.png",
+      "json": "sprites/icon-stardust.json",
+      "once": []
+    },
+    {
+      "key": "icon-stardust-20",
+      "png": "sprites/icon-stardust-20.png",
+      "json": "sprites/icon-stardust-20.json",
+      "once": []
+    },
+    {
       "key": "ui-button",
       "png": "sprites/ui-button.png",
       "json": "sprites/ui-button.json",
