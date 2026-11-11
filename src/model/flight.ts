@@ -63,7 +63,7 @@ import {
 } from "./drops.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
-import { oreFieldsNear } from "./ore-fields.ts";
+import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
@@ -468,15 +468,19 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         if (object.kind === "pickup") {
           object.amount = ECONOMY.discoveryStardust;
         }
-        // Asteroids and resource rocks are not placed in currents, drift loops included.
+        // Asteroids and resource rocks are not placed in currents or ore fields, drift loops
+        // included; an ore field holds only its own rocks.
         const footprint = object.radius + (object.orbit?.radius ?? 0);
+        const at = object.orbit ?? object;
         if (
           !existing.has(object.id) &&
           !Object.hasOwn(flight.world.notables, object.id) &&
           clearOf(content.tuning.safeRadius, flight.player, object) &&
           clearOfSafeAreas(content, object, flight) &&
           clearOfLandmarks(object, flight) &&
-          (object.kind === "pickup" || !inCurrent(flight.sector, footprint, object))
+          (object.kind === "pickup" ||
+            (!inCurrent(flight.sector, footprint, object) &&
+              clearOfOreFields(flight.sector, footprint, at)))
         ) {
           flight.objects.push(object);
           existing.add(object.id);

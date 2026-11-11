@@ -99,7 +99,8 @@ describe("space currents", () => {
     const { point, tangent } = middle(current);
     const flow = flowAt(3, point);
     expect(speed(flow)).toBeCloseTo(CURRENTS.peakFlow, 6);
-    expect(flow.x * tangent.x + flow.y * tangent.y).toBeCloseTo(CURRENTS.peakFlow, 6);
+    // The flow runs along its segment; the drawn tangent turns smoothly between segment midpoints.
+    expect(flow.x * tangent.x + flow.y * tangent.y).toBeCloseTo(CURRENTS.peakFlow, 2);
     const edge = {
       x: point.x - tangent.y * (current.width / 2 + 1),
       y: point.y + tangent.x * (current.width / 2 + 1),

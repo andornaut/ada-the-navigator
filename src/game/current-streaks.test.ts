@@ -3,14 +3,16 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CURRENTS } from "../data/galaxy-features.ts";
-import { flowFraction } from "../model/currents.ts";
+import { currentInCell, flowFraction } from "../model/currents.ts";
 import {
   chevronStyle,
   laneCount,
   laneOffset,
   laneSpeed,
+  markRadius,
   readStreakSpec,
   rowOffset,
+  type StreakMark,
   streakMarks,
 } from "./current-streaks.ts";
 
@@ -30,6 +32,34 @@ const current = {
   width: 400,
 };
 const flow = (arc: number, offset: number) => flowFraction(current, arc, offset);
+
+// Every pair of marks whose discs, centred between their back corners and the tip's frame
+// centre and reaching their farthest point, meet.
+function overlapping(marks: readonly StreakMark[]): string[] {
+  const discs = marks.map(({ points }) => {
+    const [back, tip, other] = points;
+    const reach = Math.hypot(back.x - other.x, back.y - other.y) / 2;
+    const mid = { x: (back.x + other.x) / 2, y: (back.y + other.y) / 2 };
+    // The frame centre sits back * reach ahead of the back corners' midpoint, toward the tip.
+    const toward = Math.hypot(tip.x - mid.x, tip.y - mid.y);
+    const ahead = (spec.chevron.back * reach) / toward;
+    return {
+      centre: { x: mid.x + (tip.x - mid.x) * ahead, y: mid.y + (tip.y - mid.y) * ahead },
+      radius: markRadius(spec, reach),
+    };
+  });
+  const pairs: string[] = [];
+  discs.forEach((a, i) => {
+    for (let j = i + 1; j < discs.length; j++) {
+      const b = discs[j]!;
+      const apart = Math.hypot(a.centre.x - b.centre.x, a.centre.y - b.centre.y);
+      if (apart < a.radius + b.radius - 1e-6) {
+        pairs.push(`${i} ${j} ${apart.toFixed(2)}`);
+      }
+    }
+  });
+  return pairs;
+}
 
 describe("current streaks", () => {
   it("reads Art's colour, minimum flow and reduced-motion time", () => {
@@ -81,7 +111,7 @@ describe("current streaks", () => {
     expect(Math.max(...arcs)).toBeLessThan(1200 - 600 * 0.06 + 13);
   });
 
-  it("keeps each chevron's shape and downstream heading across a bend", () => {
+  it("keeps each chevron's shape and turns its heading smoothly across a bend", () => {
     // A right-angle bend: +x for 600, then +y for 600, at full flow everywhere.
     const bend = {
       length: 1200,
@@ -107,18 +137,66 @@ describe("current streaks", () => {
       expect(Math.hypot(tip.x - back.x, tip.y - back.y)).toBeCloseTo(arm, 9);
       expect(Math.hypot(tip.x - other.x, tip.y - other.y)).toBeCloseTo(arm, 9);
       expect(Math.hypot(back.x - other.x, back.y - other.y)).toBeCloseTo(2 * reach, 9);
-      // The tip points along one leg's downstream direction, +x or +y.
+      // The tip points downstream, between the legs' +x and +y, turning across the corner.
       const mid = { x: (back.x + other.x) / 2, y: (back.y + other.y) / 2 };
       const heading = {
         x: (tip.x - mid.x) / ((spec.chevron.tip + spec.chevron.back) * reach),
         y: (tip.y - mid.y) / ((spec.chevron.tip + spec.chevron.back) * reach),
       };
-      const downstream =
-        Math.abs(heading.x - 1) < 1e-9 && Math.abs(heading.y) < 1e-9
-          ? true
-          : Math.abs(heading.y - 1) < 1e-9 && Math.abs(heading.x) < 1e-9;
-      expect(downstream, JSON.stringify(heading)).toBe(true);
+      expect(Math.hypot(heading.x, heading.y)).toBeCloseTo(1, 9);
+      expect(Math.min(heading.x, heading.y), JSON.stringify(heading)).toBeGreaterThan(-1e-9);
     }
+    // Some chevrons at the corner head between the two legs.
+    const turning = marks.filter(({ points }) => {
+      const [back, tip, other] = points;
+      const mid = { x: (back.x + other.x) / 2, y: (back.y + other.y) / 2 };
+      return tip.x - mid.x > 1 && tip.y - mid.y > 1;
+    });
+    expect(turning.length).toBeGreaterThan(0);
+    expect(overlapping(marks)).toEqual([]);
+  });
+
+  it("never overlaps two marks on a seeded current's bends, at any time", () => {
+    let checked = 0;
+    for (let x = -4; x <= 4; x++) {
+      for (let y = -4; y <= 4; y++) {
+        const seeded = currentInCell(3, { x, y });
+        if (!seeded) {
+          continue;
+        }
+        const along = (arc: number, offset: number) => flowFraction(seeded, arc, offset);
+        for (const [seconds, reduced] of [
+          [0, true],
+          [0.4, false],
+          [1.3, false],
+          [2.9, false],
+        ] as const) {
+          const marks = streakMarks(spec, seeded, CURRENTS.peakFlow, along, seconds, reduced);
+          expect(overlapping(marks), `${seeded.id} at ${seconds}`).toEqual([]);
+          checked += marks.length;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(1000);
+  });
+
+  it("follows a gentle bend with every lane's marks, culling none", () => {
+    // A quarter turn of radius 1000 in 24 segments: wider than any lane's offset.
+    const points = Array.from({ length: 25 }, (_, index) => {
+      const angle = (index / 24) * (Math.PI / 2);
+      return { x: 1000 * Math.sin(angle), y: 1000 - 1000 * Math.cos(angle) };
+    });
+    const stations = points.map((_, index) => (index * 1000 * Math.PI) / 48);
+    const arc = { length: stations.at(-1)!, points, stations, width: 400 };
+    const straight = {
+      ...current,
+      length: arc.length,
+      points: [points[0]!, { x: arc.length, y: 0 }],
+      stations: [0, arc.length],
+    };
+    const count = (shape: typeof arc) =>
+      streakMarks(spec, shape, CURRENTS.peakFlow, () => 1, 0, false).length;
+    expect(count(arc)).toBe(count(straight));
   });
 
   it("moves marks with their lane's flow and holds the t = 0 frame under reduced motion", () => {

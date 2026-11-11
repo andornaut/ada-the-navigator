@@ -122,6 +122,11 @@ export function chevronStyle(
   return { alpha: at(spec.alpha, f), reach: at(spec.chevron.arm, f), width: at(spec.stroke, f) };
 }
 
+/** A chevron's extent from its centre: its farthest point, a back corner or the tip. */
+export function markRadius(spec: StreakSpec, reach: number): number {
+  return reach * Math.max(Math.hypot(spec.chevron.back, 1), spec.chevron.tip);
+}
+
 export interface StreakMark {
   readonly alpha: number;
   /** Back, tip, back: world points of the two-segment polyline, pointing downstream. */
@@ -161,6 +166,27 @@ export function streakMarks(
     return [local(back, -reach), local(spec.chevron.tip * reach, 0), local(back, reach)];
   };
   const marks: StreakMark[] = [];
+  // Inside a bend tighter than a lane's offset its marks would fold onto each other: a mark
+  // whose disc meets a kept mark's is left out (markRadius; a grid of the largest diameter).
+  const cell = 2 * markRadius(spec, chevronStyle(spec, 1).reach);
+  const kept = new Map<string, { centre: Vec; radius: number }[]>();
+  const clear = (centre: Vec, radius: number): boolean => {
+    const cx = Math.floor(centre.x / cell);
+    const cy = Math.floor(centre.y / cell);
+    for (let x = cx - 1; x <= cx + 1; x++) {
+      for (let y = cy - 1; y <= cy + 1; y++) {
+        for (const other of kept.get(`${x},${y}`) ?? []) {
+          const apart = Math.hypot(other.centre.x - centre.x, other.centre.y - centre.y);
+          if (apart < other.radius + radius) {
+            return false;
+          }
+        }
+      }
+    }
+    const key = `${cx},${cy}`;
+    kept.set(key, [...(kept.get(key) ?? []), { centre, radius }]);
+    return true;
+  };
   for (let lane = 0; lane < laneCount(spec, current.width); lane++) {
     const offset = laneOffset(spec, current.width, lane);
     const speed = laneSpeed(peak, current.width, offset);
@@ -170,10 +196,14 @@ export function streakMarks(
         continue;
       }
       const f = flow(arc, offset);
-      if (f <= spec.minFlow || !near(place(arc, offset))) {
+      const centre = place(arc, offset);
+      if (f <= spec.minFlow || !near(centre)) {
         continue;
       }
       const { alpha, reach, width } = chevronStyle(spec, f);
+      if (!clear(centre, markRadius(spec, reach))) {
+        continue;
+      }
       marks.push({
         alpha,
         points: chevron(arc, offset, reach),

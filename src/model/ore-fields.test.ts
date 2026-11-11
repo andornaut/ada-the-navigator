@@ -10,7 +10,12 @@ import { shipDirection } from "../game/ship-art.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemy-ai.ts";
 import { createFlight, PLATFORM_FACING, stepFlight } from "./flight.ts";
-import { type OreField, oreFieldInCell, oreFieldsNear } from "./ore-fields.ts";
+import {
+  ORE_FIELD_CLEAR_RADIUS,
+  type OreField,
+  oreFieldInCell,
+  oreFieldsNear,
+} from "./ore-fields.ts";
 import { stationsNear } from "./stations.ts";
 
 const grid = (sector: 1 | 2 | 3, span: number): OreField[] => {
@@ -92,6 +97,37 @@ describe("ore fields", () => {
       const reach = Math.hypot(field.guard!.x - field.x, field.guard!.y - field.y);
       expect(reach).toBeCloseTo(ORE_FIELDS.diameter / 2 + ORE_FIELDS.guardGap, 9);
     }
+  });
+
+  it("keeps every ordinary asteroid 600 from each field's centre, over several seeds", () => {
+    expect(ORE_FIELD_CLEAR_RADIUS).toBe(ORE_FIELDS.diameter / 2 + ORE_FIELDS.asteroidMargin);
+    expect(ORE_FIELD_CLEAR_RADIUS).toBe(600);
+    const placed = fields.filter((entry) => Math.hypot(entry.x, entry.y) > 6000).slice(0, 6);
+    let ordinary = 0;
+    for (const seed of [3, 7, 11, 20261111]) {
+      const flight = createFlight(PROTOTYPE, 2, seed, { known: [] });
+      for (const field of placed) {
+        flight.player = { x: field.x + 2000, y: field.y };
+        stepFlight(PROTOTYPE, 0.001, idle, flight);
+      }
+      // Chunk asteroids: rocks and resource rocks that belong to no field.
+      const asteroids = flight.objects.filter(
+        (object) =>
+          (object.kind === "rock" || object.kind === "resource") && !object.id.startsWith("ore:"),
+      );
+      for (const rock of asteroids) {
+        for (const field of oreFieldsNear(2, ORE_FIELD_CLEAR_RADIUS, rock)) {
+          expect.fail(
+            `${rock.id} lies ${Math.hypot(rock.x - field.x, rock.y - field.y)} from ${field.id}`,
+          );
+        }
+      }
+      ordinary += asteroids.filter((rock) =>
+        placed.some((field) => Math.hypot(rock.x - field.x, rock.y - field.y) < 1500),
+      ).length;
+    }
+    // The fields' surroundings still hold ordinary asteroids.
+    expect(ordinary).toBeGreaterThan(0);
   });
 
   it("places a field's rocks and its retained platform, unrotated, in flight", () => {

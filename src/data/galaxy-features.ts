@@ -5,6 +5,11 @@ import type { SectorId } from "./types.ts";
  * stations. All values are provisional tuning in world units.
  */
 export const ORE_FIELDS = {
+  /**
+   * Ordinary asteroids stay this far beyond the field's radius: chunk generation keeps them out
+   * of `diameter / 2 + asteroidMargin` (600) around its centre, so a field holds only its rocks.
+   */
+  asteroidMargin: 150,
   /** Placement grid; fields sit in a central band, so neighbours stay `cellSize - jitter` apart. */
   cellSize: 4500,
   /** Chance that a cell holds an ore field. */

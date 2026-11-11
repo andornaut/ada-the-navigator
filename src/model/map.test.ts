@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DESTINATION_MAP_KINDS } from "../data/destinations.ts";
+import { DESTINATIONS } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -460,11 +460,11 @@ describe("galaxy map", () => {
   it("reads each story destination's Map kind from its data: the hub a Station", () => {
     // Every destination of galaxies one to three, the holodisk waypoint included, declares one.
     const ids = [...([1, 2, 3] as const).flatMap((sector) => galaxyRoute(sector)), "holodisk"];
-    expect(Object.keys(DESTINATION_MAP_KINDS).sort()).toEqual([...new Set(ids)].sort());
-    expect(DESTINATION_MAP_KINDS.hub).toBe("station");
-    expect(placeType({ symbol: DESTINATION_MAP_KINDS.hub! })).toBe("station");
+    expect(Object.keys(DESTINATIONS).sort()).toEqual([...new Set(ids)].sort());
+    expect(DESTINATIONS.hub?.mapKind).toBe("station");
+    expect(placeType({ symbol: DESTINATIONS.hub!.mapKind })).toBe("station");
     for (const story of ["whale", "family"]) {
-      expect(placeType({ symbol: DESTINATION_MAP_KINDS[story]! }), story).toBe("story");
+      expect(placeType({ symbol: DESTINATIONS[story]!.mapKind }), story).toBe("story");
     }
     // The Map's hub place reads its kind from that field.
     const model = new GameModel(PROTOTYPE);
@@ -475,7 +475,7 @@ describe("galaxy map", () => {
     ensureDestination(PROTOTYPE, "hub", model.state.flight!);
     expect(model.map?.places.find(({ id }) => id === "hub")).toMatchObject({
       kind: "destination",
-      symbol: DESTINATION_MAP_KINDS.hub,
+      symbol: DESTINATIONS.hub?.mapKind,
       travel: true,
     });
   });

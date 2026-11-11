@@ -79,6 +79,17 @@ export function oreFieldInCell(sector: SectorId, cell: Vec): OreField | null {
 }
 
 /** Ore fields whose centres are within `radius` of a point. */
+/** The radius around an ore field's centre that ordinary asteroids keep out of. */
+export const ORE_FIELD_CLEAR_RADIUS = ORE_FIELDS.diameter / 2 + ORE_FIELDS.asteroidMargin;
+
+/**
+ * Whether an ordinary asteroid of `footprint` (its radius, plus its drift loop's) at a point
+ * stays out of every seeded ore field's clear radius.
+ */
+export function clearOfOreFields(sector: SectorId, footprint: number, point: Vec): boolean {
+  return oreFieldsNear(sector, ORE_FIELD_CLEAR_RADIUS + footprint, point).length === 0;
+}
+
 export function oreFieldsNear(sector: SectorId, radius: number, point: Vec): OreField[] {
   const size = ORE_FIELDS.cellSize;
   const fields: OreField[] = [];

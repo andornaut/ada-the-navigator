@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
+import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
@@ -2754,8 +2755,14 @@ export class PrototypeScene extends Phaser.Scene {
       .setVisible(true);
   }
 
-  /** A destination: its outpost or holodisk art, else the placeholder rings. */
+  /**
+   * A destination: its outpost or holodisk art, else the placeholder rings; nothing for one its
+   * data marks undrawn (data/destinations.ts), which its buoy and craft stand for.
+   */
   private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
+    if (!destinationDrawn(object.id)) {
+      return;
+    }
     if (object.id === "hub" && this.hubArt) {
       const progress = this.model.state.progress[this.model.state.flight!.sector];
       hubLayers(this.hubArt, hubWorn(progress), hubBay(progress)).forEach((layer, index) => {

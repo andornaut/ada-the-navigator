@@ -229,18 +229,52 @@ export function inCurrent(sector: SectorId, radius: number, point: Vec): boolean
   );
 }
 
-/** A point on a current's path at an arc position, with its unit tangent. */
-export function pointOnCurrent(current: Current, arc: number): { point: Vec; tangent: Vec } {
+/**
+ * A point on a current's path at an arc position, with its unit tangent. The point follows the
+ * polyline; the tangent turns smoothly from one segment's direction to the next between their
+ * midpoints, so anything offset along its normal (streak lanes) follows a bend instead of
+ * jumping at its vertex.
+ */
+export function pointOnCurrent(
+  current: Pick<Current, "length" | "points" | "stations">,
+  arc: number,
+): { point: Vec; tangent: Vec } {
+  const { points, stations } = current;
   const at = Math.max(0, Math.min(current.length, arc));
   let index = 1;
-  while (index < current.stations.length - 1 && current.stations[index]! < at) {
+  while (index < stations.length - 1 && stations[index]! < at) {
     index++;
   }
-  const a = current.points[index - 1]!;
-  const b = current.points[index]!;
-  const segment = current.stations[index]! - current.stations[index - 1]!;
-  const t = segment > 0 ? (at - current.stations[index - 1]!) / segment : 0;
-  const tangent =
-    segment > 0 ? { x: (b.x - a.x) / segment, y: (b.y - a.y) / segment } : { x: 1, y: 0 };
-  return { point: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, tangent };
+  const a = points[index - 1]!;
+  const b = points[index]!;
+  const segment = stations[index]! - stations[index - 1]!;
+  const t = segment > 0 ? (at - stations[index - 1]!) / segment : 0;
+  const point = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+  const direction = (i: number): Vec | null => {
+    const length = stations[i]! - stations[i - 1]!;
+    const from = points[i - 1]!;
+    const to = points[i]!;
+    return length > 0 ? { x: (to.x - from.x) / length, y: (to.y - from.y) / length } : null;
+  };
+  const middle = (i: number) => (stations[i - 1]! + stations[i]!) / 2;
+  const own = direction(index);
+  if (!own) {
+    return { point, tangent: { x: 1, y: 0 } };
+  }
+  // The neighbouring segment on this side of the segment's midpoint, and how far across.
+  const before = at < middle(index);
+  const other = before ? index - 1 : index + 1;
+  const neighbour = other >= 1 && other < stations.length ? direction(other) : null;
+  if (!neighbour) {
+    return { point, tangent: own };
+  }
+  // Linear from this segment's direction at its midpoint to the neighbour's at its midpoint.
+  const span = Math.abs(middle(index) - middle(other));
+  const weight = span > 0 ? Math.abs(middle(index) - at) / span : 0;
+  const blend = {
+    x: own.x * (1 - weight) + neighbour.x * weight,
+    y: own.y * (1 - weight) + neighbour.y * weight,
+  };
+  const size = Math.hypot(blend.x, blend.y);
+  return { point, tangent: size > 1e-9 ? { x: blend.x / size, y: blend.y / size } : own };
 }

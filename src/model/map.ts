@@ -1,4 +1,4 @@
-import { DESTINATION_MAP_KINDS } from "../data/destinations.ts";
+import { DESTINATIONS } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
@@ -136,7 +136,7 @@ export type MapSymbol =
 
 /** A story destination's symbol: the Map kind its data declares (data/destinations.ts). */
 function destinationSymbol(id: string): MapSymbol {
-  return DESTINATION_MAP_KINDS[id] ?? "destination";
+  return DESTINATIONS[id]?.mapKind ?? "destination";
 }
 
 /** The place panel's type line kinds (gameplay/player-copy.md "Map place panel"). */
