@@ -258,6 +258,19 @@ try {
   save("desktop-frame.json", await frameProof());
   events.checks.push("Desktop canvas preserves the 720x360 EXPAND base and pixel-art scaling");
 
+  const [
+    { GameModel },
+    { PROTOTYPE },
+    { ensureDestination },
+    { playOpening },
+    { restoreSave: restoreCalm },
+  ] = await Promise.all([
+    import(new URL("../src/model/game.ts", import.meta.url)),
+    import(new URL("../src/data/prototype.ts", import.meta.url)),
+    import(new URL("../src/model/flight.ts", import.meta.url)),
+    import(new URL("../src/model/test-launch.ts", import.meta.url)),
+    import(new URL("../src/model/save.ts", import.meta.url)),
+  ]);
   // Reads storybook pages (the default choice, else Next or its named action) until galaxy
   // selection opens or flight begins, and returns each page's background and text.
   async function readStory(remaining = 30, pages = []) {
@@ -352,19 +365,6 @@ try {
   }
   events.checks.push("Settings pause movement and clear held input on resume");
 
-  const [
-    { GameModel },
-    { PROTOTYPE },
-    { ensureDestination },
-    { playOpening },
-    { restoreSave: restoreCalm },
-  ] = await Promise.all([
-    import(new URL("../src/model/game.ts", import.meta.url)),
-    import(new URL("../src/data/prototype.ts", import.meta.url)),
-    import(new URL("../src/model/flight.ts", import.meta.url)),
-    import(new URL("../src/model/test-launch.ts", import.meta.url)),
-    import(new URL("../src/model/save.ts", import.meta.url)),
-  ]);
   async function seedOnce(value, marker) {
     // The old app's pagehide save runs before this one-shot seed on the new document.
     await page.addInitScript(

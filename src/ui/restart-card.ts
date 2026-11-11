@@ -17,6 +17,9 @@ export function createRestartCard(
   options: { readonly labels: RestartLabels; readonly onRestart: () => void },
 ) {
   const { labels } = options;
+  const style = document.createElement("style");
+  // The confirm covers the start screen's panel, which sits above the controls layer.
+  style.textContent = ".ada-controls.ada-restart-open{z-index:30}";
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -37,9 +40,10 @@ export function createRestartCard(
     ]),
   );
   modal.append(card.frame);
-  root.append(modal);
+  root.append(style, modal);
   const setOpen = (open: boolean) => {
     modal.hidden = !open;
+    root.classList.toggle("ada-restart-open", open);
     if (open) {
       card.fit();
       cancel.focus();
@@ -69,6 +73,8 @@ export function createRestartCard(
     close: () => setOpen(false),
     dispose(): void {
       card.dispose();
+      root.classList.remove("ada-restart-open");
+      style.remove();
       modal.remove();
     },
     isOpen: () => !modal.hidden,

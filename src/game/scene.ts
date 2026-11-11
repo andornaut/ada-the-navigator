@@ -450,6 +450,7 @@ export class PrototypeScene extends Phaser.Scene {
       onSkip: () => apply(() => this.model.storySkip()),
     });
     this.galaxies = createGalaxySelect(this.controls.overlay, {
+      flavors: GALAXIES.map(({ flavor }) => flavor),
       labels: {
         close: label("close"),
         home: label("homeButton"),

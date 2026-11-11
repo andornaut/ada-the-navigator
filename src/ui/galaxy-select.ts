@@ -26,6 +26,8 @@ export interface GalaxyPage {
 }
 
 export interface GalaxySelectOptions {
+  /** Every galaxy's flavor line, so the card keeps the tallest page's height. */
+  readonly flavors: readonly string[];
   readonly labels: GalaxySelectLabels;
   readonly onHome: () => void;
   readonly onJump: () => void;
@@ -35,9 +37,11 @@ export interface GalaxySelectOptions {
 
 const STYLE = `
 .ada-controls .ada-galaxy{
+  align-self:stretch;
   display:flex;
   flex-direction:column;
   align-items:center;
+  text-align:center;
   gap:${units(GALAXY_CARD.rowGap)}
 }
 
@@ -57,6 +61,19 @@ const STYLE = `
 }
 .ada-controls .ada-galaxy[data-locked] p{
   color:${TEXT_TOKENS.disabledLabel}
+}
+
+/* Every page's flavor line shares one cell, so paging never resizes the card. */
+.ada-controls .ada-galaxy-flavors{
+  align-self:stretch;
+  display:grid
+}
+.ada-controls .ada-galaxy-flavors > p{
+  grid-area:1 / 1;
+  visibility:hidden
+}
+.ada-controls .ada-galaxy-flavors > p[data-current]{
+  visibility:visible
 }
 `;
 
@@ -82,9 +99,15 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
   shot.className = "ada-galaxy-shot";
   const name = document.createElement("p");
   name.className = "ada-galaxy-name";
-  const flavor = document.createElement("p");
-  flavor.className = "ada-galaxy-flavor ada-prose";
-  galaxy.append(shot, name, flavor);
+  const flavors = document.createElement("div");
+  flavors.className = "ada-galaxy-flavors ada-prose";
+  const lines = [...options.flavors, labels.locked].map((text) => {
+    const line = document.createElement("p");
+    line.textContent = text;
+    return line;
+  });
+  flavors.append(...lines);
+  galaxy.append(shot, name, flavors);
   const actions = document.createElement("div");
   actions.className = "ada-actions";
   actions.dataset.inkTop = "0";
@@ -156,7 +179,11 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
       }
       shot.style.background = page.hue;
       name.textContent = page.unlocked ? page.name : labels.locked;
-      flavor.textContent = page.unlocked ? page.flavor : labels.locked;
+      const text = page.unlocked ? page.flavor : labels.locked;
+      for (const line of lines) {
+        line.toggleAttribute("data-current", line.textContent === text);
+        line.setAttribute("aria-hidden", String(line.textContent !== text));
+      }
       previous.disabled = page.first;
       next.disabled = page.last;
       jump.classList.toggle("ada-unavailable", !page.unlocked);
