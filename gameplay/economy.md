@@ -38,7 +38,9 @@ sector's seed, so a sector's stations stay in the same places on every flight, a
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. A station is a safe
 area. Flying into its dock opens the station card, which pauses action like a
-conversation. Station quests are part of the station concept; their content is
+conversation. The card shows the Stardust balance, a welcome line, Undock and Shop.
+Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
+undock. Station quests are part of the station concept; their content is
 not yet designed, so the station card shows no quest board until it is.
 
 ## Shop
@@ -58,11 +60,21 @@ not yet designed, so the station card shows no quest board until it is.
 Enemy speed ratios stay relative to Ada's base speed, so engine tuning lets Ada
 outrun the fastest enemies. The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. An item Ada cannot
-afford stays visible and refuses with the shared refusal feedback.
+afford stays visible with a flat disabled face and refuses with Archie's shared
+refusal feedback; reduced motion shows the red tint without shaking. A levelled
+row shows Ada's current level ("Level 0 of 3" before the first purchase) and the
+price of the next level; a maxed row shows Owned. The buy confirm shows a weapon's
+one-line description.
+
+Ship paint schemes are Classic (the free white and blue default), Cobalt,
+Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
+no confirm; the scheme in use has the selection ring and shows In use instead of
+Owned.
 
 ## Weapons in combat
 
-Weapons cannot be changed during combat or for 5 seconds after it ends. Combat is
+Weapons cannot be changed during combat or for 5 seconds after it ends; the lock
+and its icon treatment last through those 5 seconds. Combat is
 the existing danger state that also blocks travel. While weapon changes are
 locked, the other weapon icons are visibly disabled and refuse with the shared
 refusal feedback. The selected weapon's icon has a treatment like Chibi's
@@ -81,27 +93,37 @@ Stardust, never taking Stardust below zero.
 The shield shop row reuses the existing `shield` label. `warpHome` replaces
 `shieldDepleted`.
 
-| Key              | Text                                                                 |
-| ---------------- | -------------------------------------------------------------------- |
-| `stardust`       | Stardust                                                             |
-| `stardustAmount` | {amount} Stardust                                                    |
-| `station`        | Station                                                              |
-| `shop`           | Shop                                                                 |
-| `shopWeapons`    | Weapons                                                              |
-| `shopShip`       | Ship                                                                 |
-| `owned`          | Owned                                                                |
-| `level`          | Level {level} of {max}                                               |
-| `confirmTitle`   | Buy {name}?                                                          |
-| `confirmLeft`    | {amount} left after                                                  |
-| `confirmBuy`     | Buy                                                                  |
-| `confirmCancel`  | Cancel                                                               |
-| `undock`         | Undock                                                               |
-| `weaponLocked`   | Weapons can't be changed in combat.                                  |
-| `warpHome`       | Your ship warped you home to recharge. Your story progress is saved. |
-| `warpWeaponLost` | Your {weapon} was lost.                                              |
-| `warpRecharge`   | Recharging cost {amount} Stardust.                                   |
-| `shieldRecharge` | Shield recharge                                                      |
-| `engineTuning`   | Engine tuning                                                        |
-| `tractorBeam`    | Tractor beam                                                         |
-| `weaponUpgrade`  | {weapon} upgrade                                                     |
-| `shipPaint`      | Ship paint                                                           |
+| Key                | Text                                                                 |
+| ------------------ | -------------------------------------------------------------------- |
+| `stardust`         | Stardust                                                             |
+| `stardustAmount`   | {amount} Stardust                                                    |
+| `station`          | Station                                                              |
+| `shop`             | Shop                                                                 |
+| `shopWeapons`      | Weapons                                                              |
+| `shopShip`         | Ship                                                                 |
+| `owned`            | Owned                                                                |
+| `level`            | Level {level} of {max}                                               |
+| `confirmTitle`     | Buy {name}?                                                          |
+| `confirmLeft`      | {amount} left after                                                  |
+| `confirmBuy`       | Buy                                                                  |
+| `confirmCancel`    | Cancel                                                               |
+| `undock`           | Undock                                                               |
+| `stationWelcome`   | Welcome aboard. Trade your Stardust for weapons and ship upgrades.   |
+| `inUse`            | In use                                                               |
+| `paintClassic`     | Classic                                                              |
+| `paintCobalt`      | Cobalt                                                               |
+| `paintSeafoam`     | Seafoam                                                              |
+| `paintGraphite`    | Graphite                                                             |
+| `paintIris`        | Iris                                                                 |
+| `aboutMissiles`    | One slow, strong missile.                                            |
+| `aboutTripleLaser` | Three bolts in a fan.                                                |
+| `aboutScattershot` | Seven short-range shots in a wide spread.                            |
+| `weaponLocked`     | Weapons can't be changed in combat.                                  |
+| `warpHome`         | Your ship warped you home to recharge. Your story progress is saved. |
+| `warpWeaponLost`   | Your {weapon} was lost.                                              |
+| `warpRecharge`     | Recharging cost {amount} Stardust.                                   |
+| `shieldRecharge`   | Shield recharge                                                      |
+| `engineTuning`     | Engine tuning                                                        |
+| `tractorBeam`      | Tractor beam                                                         |
+| `weaponUpgrade`    | {weapon} upgrade                                                     |
+| `shipPaint`        | Ship paint                                                           |
