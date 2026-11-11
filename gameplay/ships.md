@@ -53,9 +53,9 @@ coasts for over a second when the stick is released, and swings wide on sharp
 turns. Small enemies are nimble, the interceptor is fast but carries its momentum
 through overshooting passes, and larger ships are progressively heavier.
 
-## Sector one roster
+## Galaxy one roster
 
-Sector one enemies are four small and medium archetypes from one visual family,
+Galaxy one enemies are four small and medium archetypes from one visual family,
 with distinct sizes, behaviours and physics. Frigates and capitals keep their
 existing route roles.
 
@@ -66,18 +66,18 @@ existing route roles.
 | `interceptor` | Solo      |     1 |   0.15 |   3 | Attacks on sight; no orbit, engagement band 260, so its momentum carries it past Ada in repeated passes.     |
 | `retaliator`  | Solo      |     1 |   0.15 |   8 | Ignores Ada until hit; slow loose orbit (0.2); fires a three-bolt spread (angles −0.2, 0, 0.2; every 2.2 s). |
 
-Weights choose each sector-one encounter's archetype; the group size range replaces
+Weights choose each galaxy-one encounter's archetype; the group size range replaces
 the shared range for that archetype. Values not listed keep the current catalog
-values. Other sectors keep the current shared encounter table until they are
+values. Other galaxies keep the current shared encounter table until they are
 themed.
 
 ## Presentation
 
-Each sector themes its enemy ships as one visual family. Shapes stay simple and
+Each galaxy themes its enemy ships as one visual family. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
-blue ship. Sector-one craft are drawn with 16 heading frames: the model facing
+blue ship. Galaxy-one craft are drawn with 16 heading frames: the model facing
 stays continuous and the nearest frame is drawn. A ship drawn with frames and
 hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles. The size column sets the hit circle's diameter: the mean of the drawn sprite's
 length and width, so hits match what is drawn. Sprites keep their drawn sizes.

@@ -4,11 +4,41 @@ Working player text for the three designed chapters. Speaker labels identify
 roles rather than final names. Choices converge; optional questions never gate
 completion. The text can be split across short dialogue panels.
 
-## Opening
+## Prologue
 
-Ada: "This rock feels warm. There's something inside it..."
-Ada: "A ship? There's barely enough room for me and the dog!"
-Ada: "Let's see where it can go."
+Plays once, after chapter one's home opening.
+
+Narration: "On a walk with Archie, Ada digs up an unusual rock. At home, she
+polishes it until a faint pattern begins to glow."
+
+Choice: "Touch the glow."
+
+Narration: "Light swirls around Ada and Archie. They are standing in a tiny
+cockpit. Outside, colours shimmer like nowhere at all."
+
+Astra: "Navigator detected. Hello. I am Astra, this ship's mind."
+Ada: "Where are we?"
+Astra: "Between dimensions. While you are aboard, Earth's time waits for you."
+Astra: "My memory is damaged. I know only one galaxy. A holodisk holding part of
+my memory is somewhere there."
+Astra: "I was made to explore and map, but I cannot fly without a navigator. Will
+you be mine?"
+
+Optional questions:
+
+- "How did you get to Earth?" Astra: "I don't remember. The holodisk may help."
+- "Can Archie come?" Astra: "There are two seats. Please strap him in."
+- "How do I get home?" Astra: "Ask me any time you're safe. I'll jump you back to
+  the moment you left."
+
+Narration: "Ada sits in the pilot's chair and buckles Archie in beside her."
+Astra: "Quantum jump ready."
+Choice: "Let's find your holodisk."
+
+Boarding, for later chapters: Astra: "Welcome back, Navigator."
+
+Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
+Astra: "Memory restored. I've found new coordinates. A new galaxy is ready."
 
 ## Chapter one: the garden
 
@@ -68,11 +98,12 @@ has begun."
 
 Objectives, in order:
 
-1. Explore the sector.
+1. Explore the galaxy.
 2. Take food to the workshop.
 3. Take the tool kit to the salvagers.
 4. Bring spare parts to the workshop.
-5. Return home when ready.
+5. Collect the holodisk from the outposts.
+6. Return home when ready.
 
 ## Chapter two: the mining hub
 
@@ -132,11 +163,12 @@ Ada: "If anyone threatens or hurts you, we can find an adult you trust together.
 
 Objectives:
 
-- Explore the sector.
+- Explore the galaxy.
 - Mine resources and deposit cargo at the station.
 - Keep mining; get to know the miners when you return.
 - Speak with the miner and regular visitors.
 - Use the station interaction to join the approach when everyone is ready.
+- Buy the holodisk at the hub.
 - Return home when ready.
 
 ## Chapter three: the whale
@@ -191,25 +223,26 @@ Closing: "Ada gives the dog time to stop, sniff and explore."
 
 Objectives, in order:
 
-1. Explore the sector.
+1. Explore the galaxy.
 2. Shoot the debris blocking the whale.
 3. Talk with the whale.
 4. Explore to find its family.
 5. Return to the whale and share the coordinates.
-6. Return home when ready.
+6. Fight your way to the holodisk.
+7. Return home when ready.
 
 ## Shared interface text
 
 - Use actions: Talk, Deliver, Deposit, Continue.
 - Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.
-- Travel card: Discovered destinations.
+- Travel card: Discovered destinations. With none yet: No destinations mapped yet.
 - Unavailable in danger: Unavailable while you are in danger.
 - Cargo: Cargo full. Deposit at the station when ready.
-- Shield depletion: Your ship warped you home to recharge. Your story progress is saved.
-- Sector four: Story in development.
+- Shield depletion: Astra jumped you home to recharge. Your story progress is saved.
+- Galaxy four: Story in development.
 - Completed story: Chapter complete. You can keep exploring.
 
-Sector four has no playable story or invented finale in this prototype. Keep its
+Galaxy four has no playable story or invented finale in this prototype. Keep its
 unfinished status explicit in development builds.
 
 ## Landing page

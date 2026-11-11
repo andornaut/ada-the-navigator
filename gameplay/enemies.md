@@ -13,7 +13,7 @@ the overall placement contract remains in the prototype document.
 The catalog interface defines typed aggression, size, physics ([Ships](ships.md)),
 perception and engagement radii, orbit and wobble, separation, firing patterns,
 morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
-sector one's solo and pack archetypes. Frigates have three independent parts: one engine and two
+galaxy one's solo and pack archetypes. Frigates have three independent parts: one engine and two
 weapons. Capital hull widths are 10 and 30 Ada widths. The latter must exceed the
 viewport in Tech's world-to-camera scale; size is not constrained to screen bounds.
 No authored assets or story are introduced. Capital command parts are required but
@@ -113,7 +113,7 @@ There is no parallel enemy-state collection or save-version migration.
 `src/model/save.ts` validates these optional fields when present while accepting
 complete version-1 saves without them. Enemy state validates catalog membership,
 identity, finite vectors, nonnegative timers and HP, and exactly one state entry per
-catalog hardpoint. Route IDs and route encounters must belong to the selected sector.
+catalog hardpoint. Route IDs and route encounters must belong to the selected galaxy.
 
 The flight adapter must take one peer snapshot and call the rules per live enemy
 per simulation slice. Apply resolved movement once, respecting safe zones and

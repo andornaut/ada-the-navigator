@@ -40,7 +40,7 @@ existing cargo role and do not drop Stardust.
 ## Stations
 
 Stations are rare points of interest, each with a shop. They are placed by the
-sector's seed, so a sector's stations stay in the same places on every flight, at
+galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. A station is a safe
 area. Flying into its dock opens the station card, which pauses action like a
@@ -88,50 +88,50 @@ locked, the other weapon icons are visibly disabled and refuse with the shared
 refusal feedback. The selected weapon's icon has a treatment like Chibi's
 power-ups.
 
-## Quantum warp home
+## Quantum jump home
 
-When the shield is depleted, Ada's ship uses its quantum warp to escape home to Earth
-so it can recharge. The flight ends and story progress is saved. The warp
+When the shield is depleted, Astra quantum jumps the ship home to Earth so it can
+recharge. The flight ends and story progress is saved. The jump
 permanently loses the equipped weapon and its upgrade levels unless it is Basic,
 so a weapon bought or found again starts at level 0. Recharging costs a flat 10
 Stardust, never taking Stardust below zero.
 
 ## Player strings
 
-The shield shop row reuses the existing `shield` label. `warpHome` replaces
+The shield shop row reuses the existing `shield` label. `jumpHome` replaces
 `shieldDepleted`.
 
-| Key                | Text                                                                 |
-| ------------------ | -------------------------------------------------------------------- |
-| `stardust`         | Stardust                                                             |
-| `stardustAmount`   | {amount} Stardust                                                    |
-| `station`          | Station                                                              |
-| `shop`             | Shop                                                                 |
-| `shopWeapons`      | Weapons                                                              |
-| `shopShip`         | Ship                                                                 |
-| `owned`            | Owned                                                                |
-| `level`            | Level {level} of {max}                                               |
-| `confirmTitle`     | Buy {name}?                                                          |
-| `confirmLeft`      | {amount} left after                                                  |
-| `confirmBuy`       | Buy                                                                  |
-| `confirmCancel`    | Cancel                                                               |
-| `undock`           | Undock                                                               |
-| `stationWelcome`   | Welcome aboard. Trade your Stardust for weapons and ship upgrades.   |
-| `inUse`            | In use                                                               |
-| `paintClassic`     | Classic                                                              |
-| `paintCobalt`      | Cobalt                                                               |
-| `paintSeafoam`     | Seafoam                                                              |
-| `paintGraphite`    | Graphite                                                             |
-| `paintIris`        | Iris                                                                 |
-| `aboutMissiles`    | One slow, strong missile.                                            |
-| `aboutTripleLaser` | Three bolts in a fan.                                                |
-| `aboutScattershot` | Seven short-range shots in a wide spread.                            |
-| `weaponLocked`     | Weapons can't be changed in combat.                                  |
-| `warpHome`         | Your ship warped you home to recharge. Your story progress is saved. |
-| `warpWeaponLost`   | Your {weapon} was lost.                                              |
-| `warpRecharge`     | Recharging cost {amount} Stardust.                                   |
-| `shieldRecharge`   | Shield recharge                                                      |
-| `engineTuning`     | Engine tuning                                                        |
-| `tractorBeam`      | Tractor beam                                                         |
-| `weaponUpgrade`    | {weapon} upgrade                                                     |
-| `shipPaint`        | Ship paint                                                           |
+| Key                | Text                                                               |
+| ------------------ | ------------------------------------------------------------------ |
+| `stardust`         | Stardust                                                           |
+| `stardustAmount`   | {amount} Stardust                                                  |
+| `station`          | Station                                                            |
+| `shop`             | Shop                                                               |
+| `shopWeapons`      | Weapons                                                            |
+| `shopShip`         | Ship                                                               |
+| `owned`            | Owned                                                              |
+| `level`            | Level {level} of {max}                                             |
+| `confirmTitle`     | Buy {name}?                                                        |
+| `confirmLeft`      | {amount} left after                                                |
+| `confirmBuy`       | Buy                                                                |
+| `confirmCancel`    | Cancel                                                             |
+| `undock`           | Undock                                                             |
+| `stationWelcome`   | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
+| `inUse`            | In use                                                             |
+| `paintClassic`     | Classic                                                            |
+| `paintCobalt`      | Cobalt                                                             |
+| `paintSeafoam`     | Seafoam                                                            |
+| `paintGraphite`    | Graphite                                                           |
+| `paintIris`        | Iris                                                               |
+| `aboutMissiles`    | One slow, strong missile.                                          |
+| `aboutTripleLaser` | Three bolts in a fan.                                              |
+| `aboutScattershot` | Seven short-range shots in a wide spread.                          |
+| `weaponLocked`     | Weapons can't be changed in combat.                                |
+| `jumpHome`         | Astra jumped you home to recharge. Your story progress is saved.   |
+| `jumpWeaponLost`   | Your {weapon} was lost.                                            |
+| `jumpRecharge`     | Recharging cost {amount} Stardust.                                 |
+| `shieldRecharge`   | Shield recharge                                                    |
+| `engineTuning`     | Engine tuning                                                      |
+| `tractorBeam`      | Tractor beam                                                       |
+| `weaponUpgrade`    | {weapon} upgrade                                                   |
+| `shipPaint`        | Ship paint                                                         |

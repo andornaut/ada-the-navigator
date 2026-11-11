@@ -6,15 +6,17 @@ balance values are provisional and must be tuned through playtesting.
 
 ## Scope and presentation
 
-Build a playable minimalist prototype with the first three story sectors.
-Version one includes a fourth concluding sector, but its story and mechanics are
+Build a playable minimalist prototype with the first three story galaxies.
+Version one includes a fourth concluding galaxy, but its story and mechanics are
 explicitly deferred. Do not invent a finale to fill that slot.
 
 Space uses monochrome shapes and basic placeholders except Ada's small ship.
 Its sprite is white and blue, an elongated triangle with one front point, two
 rear points, twin thrusters at those rear points, a small tail and a compact
 canopy with room for Ada and her dog. Keep the ship small relative to the viewport.
-Home characters and Ada may reuse Archie's sprites wholesale. Ada is a
+In these documents, Archie and Chibi name the sibling games Archie's Dog Walks
+and Chibi's Way Home unless the text says Ada's dog Archie. Home characters and
+Ada may reuse Archie's sprites wholesale. Ada is a
 brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply
 to the prototype; do not modify the source games.
@@ -24,17 +26,25 @@ to the prototype; do not modify the source games.
 Home is an interactive story styled after choose-your-own-adventure books.
 Player-visible text calls Ada's home "home" or "Earth" and never names her city.
 Different responses and approaches converge on each chapter's resolution;
-choices cannot cause permanent failure. Complete the current space quest and
-its home resolution to unlock the next sector. Unlocked sectors remain
+choices cannot cause permanent failure. Recover the current galaxy's holodisk,
+complete its space quest and complete its home resolution to unlock the next
+galaxy.
+
+On first launch, galaxy one's home opening is followed by the prologue: Ada digs
+up the rock, polishes it, touches its glow and arrives aboard with Archie. Astra
+introduces itself, its corrupted memory, the time rule and the holodisk, and asks
+Ada to be its navigator. Ada straps Archie in, and Astra quantum jumps to galaxy
+one. The prologue plays once. Later chapters go from their home opening to a
+brief boarding line, then the jump. Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate
 exit from space.
 
 Space conversations pause action and use brief essential exchanges with optional
 questions about character and culture. The first mandatory introductory encounter
 occurs after roughly a minute of exploration, with precise pacing tunable. It
-happens only once per sector; repeat visits resume progress.
+happens only once per galaxy; repeat visits resume progress.
 
-### Sector one: cooperating outposts
+### Galaxy one: cooperating outposts
 
 Ada has gardened with her grandmother since she was little. Through her grandmother
 she learns about a stalled community garden initiative. Ada learns that people
@@ -46,9 +56,10 @@ The space adventure initially appears unrelated. Three outposts try to survive
 independently, without realizing their complementary capabilities. A short delivery
 circuit connects them. Working roles are growers with food, a workshop with repair
 skills, and salvagers with materials. Ada helps them begin an ongoing exchange.
-They are not enemies; lack of coordination is the obstacle.
+They are not enemies; lack of coordination is the obstacle. Once their exchange
+is running, the outposts give Ada the galaxy's holodisk as thanks.
 
-### Sector two: mining hub
+### Galaxy two: mining hub
 
 Ada notices another child being bullied at school. No reason is needed to explain
 why that child is targeted. Ada and other children choose inclusion, visible
@@ -65,9 +76,10 @@ approach. She speaks with that miner and other regular visitors, establishes tha
 company would be welcome, and helps arrange an approach together. Others make
 space and reject the intimidation. The targeted miner docks; they do not need
 better piloting skills. No instant apology or friendship is required. Subsequent
-visits preserve the changed relationships.
+visits preserve the changed relationships. The hub sells the galaxy's holodisk for
+a provisional 300 Stardust.
 
-### Sector three: whale family
+### Galaxy three: whale family
 
 Ada loves her dog but resents walking it and overlooks its dependence on her for
 movement and exploration. Her space experience changes her understanding of care.
@@ -75,15 +87,17 @@ movement and exploration. Her space experience changes her understanding of care
 Ada encounters an intelligent space whale trapped by debris. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
-A short departure scene confirms reunion. No persistent companion-following AI or
-escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
+A short departure scene confirms reunion. The whale's family gives Ada a waypoint
+to the galaxy's holodisk, which she must fight her way to. No persistent
+companion-following AI or escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
 is expressed through her actions rather than a speech.
 
-### Sector four: deferred conclusion
+### Galaxy four: deferred conclusion
 
 A concluding home chapter draws on the first three experiences without adding
 another community problem. The recurring hostile faction is confronted in this
-sector, but its motives, finale, enemies and resolution remain undesigned.
+galaxy, and Ada takes its holodisk from them by force. The faction's motives,
+finale, enemies and resolution remain undesigned.
 
 ## Flight and combat
 
@@ -118,8 +132,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, stacked: "Resume" (primary), "Travel", "Settings" and "Return home".
   Travel opens the discovered destinations; choosing one teleports there. Return
-  home ends the flight and takes Ada home to Earth and sector selection, with story
-  progress saved and no warp cost. While Ada is in danger, Travel and Return home
+  home ends the flight and takes Ada home to Earth and galaxy selection, with story
+  progress saved and no quantum jump cost. While Ada is in danger, Travel and Return home
   stay visible but disabled, refuse with the shared refusal feedback, and the card
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
@@ -182,13 +196,13 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   ownership of the other upgrades. Weapons cannot be changed during combat or for 5
   seconds after it.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
-  solo ships, packs, frigates and capital ships. Sector one's roster is in
+  solo ships, packs, frigates and capital ships. Galaxy one's roster is in
   [Ships](ships.md).
-- A recurring hostile alien faction provides continuity across sectors.
+- A recurring hostile alien faction provides continuity across galaxies.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.
-- Shield depletion makes Ada's ship quantum warp her home to Earth and sector
+- Shield depletion makes Astra quantum jump Ada home to Earth and galaxy
   selection to recharge. The equipped weapon is lost unless it is Basic, and
   recharging costs a flat Stardust fee. Story progress persists; the next flight
   generates a new layout.
@@ -221,17 +235,17 @@ Completed deliveries remain completed.
 
 ## Persistence and regeneration
 
-Leaving a sector and re-entering generates a new layout seed. Story progress,
+Leaving a galaxy and re-entering generates a new layout seed. Story progress,
 known destinations, deposited resources and achievements persist. Carried cargo
 and weapon pickups reset. Known destinations remain usable despite regeneration.
 
-Closing the game is not leaving the sector: resume the same flight with exact
+Closing the game is not leaving the galaxy: resume the same flight with exact
 important state and current nearby space, cargo, owned and selected weapons and
 shield. Disposed ordinary history is not part of that exact-resume guarantee.
 Save durable milestones as they occur.
 
 Preauthored chunk shapes, contents and points of interest assemble near Ada.
-They provide the existing sector variety of open areas, asteroid clusters and
+They provide the existing galaxy variety of open areas, asteroid clusters and
 narrow passages without adding stories or indoor transitions. Active and generation
 distances are provisional tuning: three chunks for active space and two for
 nearby generation. Retention depends on distance, not elapsed time.
@@ -257,13 +271,13 @@ Destinations and quest debris remain accessible. Dormant required guards still
 block their routes. Wake a required guard before relocating its pending destination,
 then synchronize the guard's position and retained state with that relocation.
 
-A completed sector keeps its resolved story and offers exploration, combat and
-optional repeatable sector activities. One optional task per sector can remain
-active while Ada visits other sectors. Preserve its objective across regeneration;
+A completed galaxy keeps its resolved story and offers exploration, combat and
+optional repeatable galaxy activities. One optional task per galaxy can remain
+active while Ada visits other galaxies. Preserve its objective across regeneration;
 lost carried quest items remain replaceable.
 
 Additional mining deposits provide recorded totals and achievement progress.
-Stardust and station shops are described in [Economy](economy.md). Achievements emphasize story, exploration and sector
+Stardust and station shops are described in [Economy](economy.md). Achievements emphasize story, exploration and galaxy
 activities, with none requiring missable dialogue choices. Exact achievement
 requirements and repeatable-task content remain to be specified.
 
@@ -301,15 +315,15 @@ from ordinary shots. Homing is not part of this combat pass.
 
 Most enemy ships remain at or below Ada's speed. Selected small ships can reach
 110% of her speed, with a finite pursuit range. Frigates and capital ships can
-block required quest routes in the first three sectors. This encounter expansion
-does not define sector four's story or conclusion.
+block required quest routes in the first three galaxies. This encounter expansion
+does not define galaxy four's story or conclusion.
 
 ## Verification priorities
 
 Check independent move/aim controls, shield recharge, both shield-depletion outcomes,
 safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
-interrupted-flight resume. Verify the three home resolutions unlock sectors
+interrupted-flight resume. Verify the three home resolutions unlock galaxies
 in order and completed stories remain resolved on replay.
 
 Use rudimentary visuals to evaluate these behaviors before polishing graphics.
