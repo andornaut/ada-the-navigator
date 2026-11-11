@@ -9,6 +9,10 @@ completion.
 ## Prologue
 
 Plays once, after chapter one's home opening. Panel title: The Glowing Rock.
+In the cockpit, Ada and Penny stand (the empty cockpit) from their arrival through
+the optional questions; from "Ada sits in the pilot's chair and buckles Penny in
+beside her." onward they are seated. Boarding in later chapters, Continue and
+galaxy selection always show them seated.
 A replayed chapter one opening uses the boarding panels instead.
 
 Park page: "On a walk with Penny, Ada digs up an unusual rock."
