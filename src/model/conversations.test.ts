@@ -585,6 +585,28 @@ describe("conversations in the game", () => {
     expect(model.conversation?.key).toBe(key);
   });
 
+  it("show a notice over a lore line, which resumes where it was once the notice clears", () => {
+    const model = flying(["lesson:move", "lesson:aim", "lesson:stardust", "lesson:dock"]);
+    const lore = (key: string | undefined) =>
+      CONVERSATIONS.find(({ id }) => key?.startsWith(`${id}:`))?.priority === "lore";
+    for (let i = 0; i < 1200 && !lore(model.conversation?.key); i++) {
+      model.step(0.05, idle);
+    }
+    const key = model.conversation?.key;
+    expect(lore(key), key).toBe(true);
+    model.step(0.05, idle);
+    const elapsed = model.conversation!.elapsed;
+    model.state.flight!.dangerFor = 3;
+    model.returnHome();
+    model.state.flight!.dangerFor = 0;
+    model.step(0.05, idle);
+    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.conversation).toBeNull();
+    model.dismissNotice();
+    expect(model.conversation?.key).toBe(key);
+    expect(model.conversation?.elapsed).toBeCloseTo(elapsed, 9);
+  });
+
   it("dismiss a tapped notice at once, and resume the line under it", () => {
     const model = flying();
     model.step(0.05, idle);
