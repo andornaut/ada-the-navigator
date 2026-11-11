@@ -35,8 +35,10 @@ const source = fileURLToPath(
   new URL("../.cloudflare/output/v0/workers/default/assets/", import.meta.url),
 );
 const target = fileURLToPath(new URL("../dist/", import.meta.url));
-if (!statSync(join(source, "index.html")).isFile()) {
-  throw new Error("Cloudflare build must produce the assets entrypoint");
+for (const page of ["index.html", "play/index.html"]) {
+  if (!statSync(join(source, page)).isFile()) {
+    throw new Error(`Cloudflare build must produce the page: ${page}`);
+  }
 }
 const expected = fingerprint(source);
 // delivery-kit retains dist and node_modules for deployment after exact-commit CI.

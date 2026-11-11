@@ -59,6 +59,14 @@ try {
   });
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
+  assert.equal(await page.locator("#game-canvas").count(), 0, "Landing must not bootstrap Phaser");
+  const playLink = page.locator('a[href="/play/"]').first();
+  await playLink.waitFor({ state: "visible" });
+  await page.screenshot({ path: `${output}/site-desktop.png` });
+  await Promise.all([page.waitForURL("**/play/"), playLink.click()]);
+  events.checks.push(
+    "Root website links to the real game at /play/ without starting Phaser on the landing page",
+  );
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   await page.locator("canvas").waitFor({ state: "visible" });
   assert.ok(
@@ -212,6 +220,32 @@ try {
     );
   }
   assert.deepEqual(resumed.progress, persisted.progress);
+  await page.goto("http://ada-preview:4173/");
+  const onLanding = await readSave();
+  assert.equal(await page.locator("#game-canvas").count(), 0);
+  await Promise.all([
+    page.waitForURL("**/play/"),
+    page.locator('a[href="/play/"]').first().click(),
+  ]);
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  const returned = await readSave();
+  for (const field of [
+    "seed",
+    "cargo",
+    "shield",
+    "weapon",
+    "ownedWeapons",
+    "world",
+    "visited",
+    "player",
+  ]) {
+    assert.deepEqual(
+      returned.flight[field],
+      onLanding.flight[field],
+      `Website round trip preserves flight ${field}`,
+    );
+  }
+  assert.deepEqual(returned.progress, onLanding.progress);
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
   const [{ GameModel }, { PROTOTYPE }, { ensureDestination }] = await Promise.all([
@@ -1211,7 +1245,7 @@ try {
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
   observe(page);
-  assert.equal((await page.goto("http://ada-preview:4173/")).status(), 200);
+  assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.locator('[data-control="aim-joystick"]').waitFor({ state: "visible" });
   // Wait for the kit/Phaser viewport synchronization after its first painted frame.

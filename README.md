@@ -76,7 +76,8 @@ npm ci && \
   npm run dev
 ```
 
-Open the local URL printed by Vite to play the development build. The available
+Open the local URL printed by Vite for the website, then follow Play to `/play/`.
+The website and game use the same origin and browser save key. The available
 prototype behavior depends on the integrated source revision. Dependency
 installation enables the Husky pre-commit hook. Native npm checks run directly in
 the current environment; Make selects the container profile below.

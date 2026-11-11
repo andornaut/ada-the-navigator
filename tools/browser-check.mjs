@@ -243,9 +243,14 @@ function serve() {
   const server = createServer((request, response) => {
     try {
       const url = new URL(request.url, "http://ada-preview:4173");
+      if (url.pathname === "/play") {
+        response.writeHead(308, { Location: `/play/${url.search}` });
+        response.end();
+        return;
+      }
       const path = resolve(
         "/dist",
-        `.${decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname)}`,
+        `.${decodeURIComponent(url.pathname.endsWith("/") ? `${url.pathname}index.html` : url.pathname)}`,
       );
       if (!path.startsWith("/dist/") || !lstatSync(path).isFile()) {
         throw new Error("Missing asset");
