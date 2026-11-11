@@ -21,7 +21,7 @@ describe("the landing page's install markup", () => {
     const shown = Object.fromEntries(
       [
         ...LANDING.matchAll(
-          /<div data-browser="(\w+)" hidden>\s*<h2 id="install-steps-\1">([^<]*)<\/h2>\s*<p>([^<]*)<\/p>/gu,
+          /<div data-steps="(\w+)" hidden>\s*<h2 id="install-steps-\1">([^<]*)<\/h2>\s*<p>([^<]*)<\/p>/gu,
         ),
       ].map(([, kind, title, steps]) => [kind, { steps: words(steps!), title: words(title!) }]),
     );
