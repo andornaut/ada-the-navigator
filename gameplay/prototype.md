@@ -279,8 +279,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     damage over time.
   - Phaser: a long beam bolt, 4 times the length of a laser bolt, that damages
     every enemy it touches anywhere along its length, including side contact, once
-    per enemy per shot, and continues past them. It fires 3.5 times slower than
-    basic fire with much higher damage per contact; levels grow its length and
+    per enemy per shot, and continues past them. It fires 4 times slower than
+    basic fire and deals 4 times basic damage per contact; levels grow its length and
     damage.
 - A missile's blast damages every enemy within its radius, never Ada.
 - Fan angles are measured in the projected aim plane. Rotate there before
