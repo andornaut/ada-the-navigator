@@ -3,8 +3,11 @@
 Working player text for the three designed chapters. Speaker labels identify
 roles rather than final names. Each space dialogue panel shows one speaker label
 and its text; opening, resolution and closing panels show the chapter's panel
-title. Choices converge. Ask more shows a speaker's optional line and never gates
-completion.
+title, which heads the text column. Choices converge. Ask more shows a speaker's
+optional line and never gates completion. A story page's text is at most 220
+characters, a choice label at most 36, and a page offers at most three choices;
+a page with no choices leaves the choice column empty apart from Previous and
+Next.
 
 ## Prologue
 
@@ -79,8 +82,8 @@ The cockpit, standing:
 Optional questions, each returning to the list until Continue:
 
 - "What's a holodisk?" Astra: "A disc that holds part of my memory. Each one you
-  find helps me remember, and shows me new places to jump."
-- "How did you get to Earth?" Astra: "I don't remember. The holodisks may help."
+  find helps me remember, maybe even how I came to Earth, and shows me new
+  places to jump."
 - "Can Penny come?" Astra: "There are two seats. Please strap Penny in."
 - "How do I get home?" Astra: "Ask me any time you're safe. I'll jump you back to
   the moment you left."
@@ -245,13 +248,13 @@ about making room and refusing to laugh along."
 Choices:
 
 - "Make room in the game."
-- "Sit together and invite friends over."
+- "Sit with them and invite friends."
 
 Branch pages, then the story rejoins:
 
 - "Make room in the game.": "Ada's friends shuffle over and make a gap. The child
   steps in. When someone laughs, nobody laughs along."
-- "Sit together and invite friends over.": "At lunch, Ada and the child sit
+- "Sit with them and invite friends.": "At lunch, Ada and the child sit
   together. One by one, Ada's friends join them, and the table gets louder and
   happier."
 
