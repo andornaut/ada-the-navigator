@@ -22,8 +22,8 @@ const ALLOWED: readonly Allowed[] = [
   { file: "weapons.ts", reason: "Weapon buttons are the economy worker's" },
   {
     file: "settings.ts",
-    reason: "The weapon selector's rules and the base button under it and the station rows",
-    selectors: /\.ada-weapon-selector|^\.ada-controls button(:focus-visible)?$/u,
+    reason: "The base button under the weapon buttons and the station rows",
+    selectors: /^\.ada-controls button(:focus-visible)?$/u,
   },
 ];
 
@@ -153,9 +153,7 @@ describe("DOM UI sizes", () => {
   });
 
   it("allow only the listed files and rules", () => {
-    expect(
-      rawPixelFindings("settings.ts", "`.ada-controls .ada-weapon-selector{gap:4px}`"),
-    ).toEqual([]);
+    expect(rawPixelFindings("settings.ts", "`.ada-controls button{gap:4px}`")).toEqual([]);
     expect(rawPixelFindings("settings.ts", "`.ada-controls .ada-use{gap:4px}`")).toHaveLength(1);
     expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
   });
