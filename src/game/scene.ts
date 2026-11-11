@@ -3247,7 +3247,7 @@ export class PrototypeScene extends Phaser.Scene {
     const used = new Set<string>();
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
-        const rock = backdropRock(catalog, flight.seed, x, y);
+        const rock = backdropRock(catalog, flight.sector, flight.seed, x, y);
         if (!rock || !this.rockTexture(rock.sprite.file)) {
           continue;
         }

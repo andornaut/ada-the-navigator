@@ -7,6 +7,7 @@ import {
 } from "../data/asteroid-catalog.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
+import { clearOfOreFields } from "../model/ore-fields.ts";
 import type { Vec } from "../model/types.ts";
 
 /**
@@ -189,9 +190,14 @@ export interface BackdropRock extends Vec {
   readonly scale: number;
   readonly sprite: BackdropSprite;
 }
-/** The backdrop rock seeded in world cell (x, y), or null for an empty cell. */
+/**
+ * The backdrop rock seeded in world cell (x, y), or null for an empty cell. Like chunk
+ * asteroids, none stands within ORE_FIELD_CLEAR_RADIUS of an ore field's centre, so a field
+ * reads as its crystals alone.
+ */
 export function backdropRock(
   catalog: AsteroidArtCatalog,
+  sector: SectorId | null,
   seed: number,
   x: number,
   y: number,
@@ -204,12 +210,14 @@ export function backdropRock(
   const sprite = sprites[Math.floor(unit(seed, id, "backdrop-sprite") * sprites.length)]!;
   const [low, high] = BACKDROP_FIELD.scale;
   const { cell } = BACKDROP_FIELD;
-  return {
-    scale: low + unit(seed, id, "backdrop-scale") * (high - low),
-    sprite,
+  const at = {
     x: (x + unit(seed, id, "backdrop-x")) * cell,
     y: (y + unit(seed, id, "backdrop-y")) * cell,
   };
+  if (sector !== null && !clearOfOreFields(sector, 0, at)) {
+    return null;
+  }
+  return { scale: low + unit(seed, id, "backdrop-scale") * (high - low), sprite, ...at };
 }
 
 /** Every SVG the catalog draws: each rock frame and each backdrop sprite, once. */

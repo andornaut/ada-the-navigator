@@ -229,27 +229,43 @@ export function inCurrent(sector: SectorId, radius: number, point: Vec): boolean
   );
 }
 
-/**
- * A point on a current's path at an arc position, with its unit tangent. The point follows the
- * polyline; the tangent turns smoothly from one segment's direction to the next between their
- * midpoints, so anything offset along its normal (streak lanes) follows a bend instead of
- * jumping at its vertex.
- */
-export function pointOnCurrent(
-  current: Pick<Current, "length" | "points" | "stations">,
-  arc: number,
-): { point: Vec; tangent: Vec } {
-  const { points, stations } = current;
+type CurrentPath = Pick<Current, "length" | "points" | "stations">;
+
+/** The polyline segment holding an arc position: its end index and the arc clamped to the path. */
+function segmentAt(current: CurrentPath, arc: number): { at: number; index: number } {
   const at = Math.max(0, Math.min(current.length, arc));
   let index = 1;
-  while (index < stations.length - 1 && stations[index]! < at) {
+  while (index < current.stations.length - 1 && current.stations[index]! < at) {
     index++;
   }
-  const a = points[index - 1]!;
-  const b = points[index]!;
-  const segment = stations[index]! - stations[index - 1]!;
-  const t = segment > 0 ? (at - stations[index - 1]!) / segment : 0;
-  const point = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+  return { at, index };
+}
+
+/**
+ * A point on a current's path at an arc position, with its segment's unit tangent: the
+ * direction the flow and the debris river follow (flowAt, placeRiverRock).
+ */
+export function pointOnCurrent(current: CurrentPath, arc: number): { point: Vec; tangent: Vec } {
+  const { at, index } = segmentAt(current, arc);
+  const a = current.points[index - 1]!;
+  const b = current.points[index]!;
+  const segment = current.stations[index]! - current.stations[index - 1]!;
+  const t = segment > 0 ? (at - current.stations[index - 1]!) / segment : 0;
+  const tangent =
+    segment > 0 ? { x: (b.x - a.x) / segment, y: (b.y - a.y) / segment } : { x: 1, y: 0 };
+  return { point: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, tangent };
+}
+
+/**
+ * The drawn streaks' frame at an arc position: pointOnCurrent's point, with a tangent that turns
+ * smoothly from one segment's direction to the next between their midpoints, so streak lanes
+ * offset along its normal follow a bend instead of jumping at its vertex. Drawing only; the
+ * flow keeps each segment's direction.
+ */
+export function streakFrame(current: CurrentPath, arc: number): { point: Vec; tangent: Vec } {
+  const { points, stations } = current;
+  const { at, index } = segmentAt(current, arc);
+  const { point } = pointOnCurrent(current, arc);
   const direction = (i: number): Vec | null => {
     const length = stations[i]! - stations[i - 1]!;
     const from = points[i - 1]!;

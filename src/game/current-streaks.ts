@@ -1,4 +1,4 @@
-import { type Current, pointOnCurrent } from "../model/currents.ts";
+import { type Current, streakFrame } from "../model/currents.ts";
 import type { Vec } from "../model/types.ts";
 
 // Art's Whirlpool current streaks (art/whirlpool.md "Current streaks"): chevrons on the world
@@ -151,12 +151,12 @@ export function streakMarks(
   const time = reducedMotion ? spec.reducedMotion.time : seconds;
   const spacing = spec.rows.spacing;
   const place = (arc: number, offset: number): Vec => {
-    const { point, tangent } = pointOnCurrent(current as Current, arc);
+    const { point, tangent } = streakFrame(current, arc);
     return { x: point.x - tangent.y * offset, y: point.y + tangent.x * offset };
   };
   // A chevron keeps one frame: its centre's tangent, so a bend never bends its arms.
   const chevron = (arc: number, offset: number, reach: number): [Vec, Vec, Vec] => {
-    const { tangent } = pointOnCurrent(current as Current, arc);
+    const { tangent } = streakFrame(current, arc);
     const centre = place(arc, offset);
     const local = (along: number, across: number): Vec => ({
       x: centre.x + tangent.x * along - tangent.y * across,

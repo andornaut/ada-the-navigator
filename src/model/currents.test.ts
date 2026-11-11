@@ -12,6 +12,7 @@ import {
   inCurrent,
   nearestOnCurrent,
   pointOnCurrent,
+  streakFrame,
 } from "./currents.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
@@ -99,8 +100,7 @@ describe("space currents", () => {
     const { point, tangent } = middle(current);
     const flow = flowAt(3, point);
     expect(speed(flow)).toBeCloseTo(CURRENTS.peakFlow, 6);
-    // The flow runs along its segment; the drawn tangent turns smoothly between segment midpoints.
-    expect(flow.x * tangent.x + flow.y * tangent.y).toBeCloseTo(CURRENTS.peakFlow, 2);
+    expect(flow.x * tangent.x + flow.y * tangent.y).toBeCloseTo(CURRENTS.peakFlow, 6);
     const edge = {
       x: point.x - tangent.y * (current.width / 2 + 1),
       y: point.y + tangent.x * (current.width / 2 + 1),
@@ -116,6 +116,41 @@ describe("space currents", () => {
       CURRENTS.peakFlow / 2,
       0,
     );
+  });
+
+  it("draw streaks on the path with a tangent that turns smoothly at each vertex", () => {
+    const current = currents.find((entry) => entry.length > 3500)!;
+    const { points, stations } = current;
+    const direction = (i: number) => {
+      const length = stations[i]! - stations[i - 1]!;
+      return {
+        x: (points[i]!.x - points[i - 1]!.x) / length,
+        y: (points[i]!.y - points[i - 1]!.y) / length,
+      };
+    };
+    for (let index = 2; index < stations.length - 1; index++) {
+      // At a segment's midpoint the frame takes that segment's direction, like the flow.
+      const middle = (stations[index - 1]! + stations[index]!) / 2;
+      expect(streakFrame(current, middle).tangent.x).toBeCloseTo(direction(index).x, 9);
+      expect(streakFrame(current, middle).tangent.y).toBeCloseTo(direction(index).y, 9);
+      // Across a vertex it turns continuously, between its two segments' directions.
+      const vertex = stations[index - 1]!;
+      const before = streakFrame(current, vertex - 1e-6).tangent;
+      const after = streakFrame(current, vertex + 1e-6).tangent;
+      expect(Math.hypot(before.x - after.x, before.y - after.y)).toBeLessThan(1e-6);
+      const a = direction(index - 1);
+      const b = direction(index);
+      const cross = (u: Vec, v: Vec) => u.x * v.y - u.y * v.x;
+      expect(Math.sign(cross(a, after)) * Math.sign(cross(after, b))).toBeGreaterThanOrEqual(0);
+      // Its point is the path's own.
+      for (const arc of [middle, vertex]) {
+        expect(streakFrame(current, arc).point).toEqual(pointOnCurrent(current, arc).point);
+      }
+    }
+    // The flow's tangent stays its segment's direction right up to a vertex.
+    const vertex = stations[3]!;
+    expect(pointOnCurrent(current, vertex - 1e-6).tangent.x).toBeCloseTo(direction(3).x, 9);
+    expect(pointOnCurrent(current, vertex + 1e-6).tangent.x).toBeCloseTo(direction(4).x, 9);
   });
 
   it("drift Ada with the flow outside her own velocity and speed cap", () => {

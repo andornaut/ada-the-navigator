@@ -65,6 +65,7 @@ import {
   stationBoard,
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
+import { clearOfOreFields } from "../src/model/ore-fields.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
 import { addPacks, noAmmo } from "../src/model/weapons.ts";
@@ -439,10 +440,12 @@ export function generateChunk(
     const reach =
       (placement.kind === "pickup" ? flight.pickupRadius : placement.radius) +
       (placement.orbit?.radius ?? 0);
+    // Asteroids keep out of ore fields, as in flight.ts; caches may lie there.
     const clear =
       distance(placement, player) - reach > tuning.safeRadius &&
       distance(placement, FLIGHT_START) - reach > tuning.safeRadius &&
-      stationsNear(catalog, sector, catalog.station.safeRadius + reach, placement).length === 0;
+      stationsNear(catalog, sector, catalog.station.safeRadius + reach, placement).length === 0 &&
+      (placement.kind === "pickup" || clearOfOreFields(sector, reach, placement));
     if (!clear) {
       continue;
     }

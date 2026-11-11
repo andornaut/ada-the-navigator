@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART } from "../data/asteroid-catalog.ts";
+import { ORE_FIELD_CLEAR_RADIUS, oreFieldInCell } from "../model/ore-fields.ts";
 import type { Vec } from "../model/types.ts";
 import {
   asteroidFiles,
@@ -99,7 +100,7 @@ describe("Art's asteroid sprites", () => {
     expect(backdropTint(ART, 3)).toEqual(ART.tints.whirlpool);
     expect(backdropTint(ART, null)).toEqual(ART.tints.base);
     const cells = Array.from({ length: 400 }, (_, index) =>
-      backdropRock(ART, 9, index % 20, index),
+      backdropRock(ART, 1, 9, index % 20, index),
     );
     const filled = cells.filter((cell) => cell !== null);
     expect(filled.length / cells.length).toBeGreaterThan(BACKDROP_FIELD.chance - 0.1);
@@ -108,10 +109,42 @@ describe("Art's asteroid sprites", () => {
       expect(cell.scale).toBeGreaterThanOrEqual(0.6);
       expect(cell.scale).toBeLessThanOrEqual(1);
     }
-    expect(backdropRock(ART, 9, 4, 4)).toEqual(backdropRock(ART, 9, 4, 4));
+    expect(backdropRock(ART, 1, 9, 4, 4)).toEqual(backdropRock(ART, 1, 9, 4, 4));
+    expect(backdropRock(ART, null, 9, 4, 4)).toEqual(backdropRock(ART, 1, 9, 4, 4));
     expect(playDepth(100)).toBeLessThan(playDepth(101));
     expect(playDepth(-50)).toBeGreaterThan(1.9);
     expect(playDepth(5000)).toBeLessThan(3);
     expect(asteroidFiles(ART)).toHaveLength(202);
+  });
+
+  it("keeps backdrop rocks 600 from every Cartwheel ore field's centre, over several seeds", () => {
+    const { cell } = BACKDROP_FIELD;
+    const fields = [-3, -2, -1, 1, 2, 3]
+      .flatMap((x) => [-2, 2].map((y) => oreFieldInCell(2, { x, y })))
+      .filter((field) => field !== null);
+    expect(fields.length).toBeGreaterThan(3);
+    let around = 0;
+    for (const seed of [3, 9, 20261111]) {
+      for (const field of fields) {
+        const reach = Math.ceil(1200 / cell);
+        const cx = Math.floor(field.x / cell);
+        const cy = Math.floor(field.y / cell);
+        for (let x = cx - reach; x <= cx + reach; x++) {
+          for (let y = cy - reach; y <= cy + reach; y++) {
+            const rock = backdropRock(ART, 2, seed, x, y);
+            if (!rock) {
+              continue;
+            }
+            const apart = Math.hypot(rock.x - field.x, rock.y - field.y);
+            expect(apart, `${field.id} seed ${seed}`).toBeGreaterThanOrEqual(
+              ORE_FIELD_CLEAR_RADIUS,
+            );
+            around += apart < 1200 ? 1 : 0;
+          }
+        }
+      }
+    }
+    // Backdrop rocks still fill the space just beyond each field.
+    expect(around).toBeGreaterThan(0);
   });
 });
