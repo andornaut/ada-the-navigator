@@ -1,4 +1,7 @@
+import { GENERAL_NAMED, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
+import { COMPACT_PORTRAITS, portraitFrame, SPEAKING_FRAME_MS } from "./conversation.ts";
+import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
@@ -43,6 +46,60 @@ export interface StoryPageView {
 
 // The breath's alpha curve as linear keyframes, fine enough to follow the cosine.
 const BREATH_SAMPLES = 24;
+
+// Each speaker's 32 portrait sheet for the storybook panel (art/conversation.md "Sizes"): the same
+// frames as the compact sheet, drawn at 2x in the 68 frame.
+export const STORY_PORTRAITS = {
+  ada: { frames: 2, url: "/art/portraits/ada.png" },
+  astra: { frames: 5, url: "/art/portraits/astra.png" },
+  general: { frames: 10, url: "/art/portraits/gadget.png" },
+  penny: { frames: 3, url: "/art/portraits/penny.png" },
+} as const satisfies Record<keyof typeof COMPACT_PORTRAITS, { frames: number; url: string }>;
+
+/** A story page speaker with a portrait, on its side, with whether the General is named. */
+export interface StoryPortrait {
+  readonly named: boolean;
+  readonly side: "left" | "right";
+  readonly speaker: keyof typeof STORY_PORTRAITS;
+}
+
+/** The portrait for a page's speaker name; null for narration or a speaker Art has not drawn. */
+export function storyPortrait(name: string | undefined): StoryPortrait | null {
+  if (name === GENERAL_NAMED.name) {
+    return { named: true, side: SPEAKERS.general.side, speaker: "general" };
+  }
+  const speaker = (Object.keys(STORY_PORTRAITS) as StoryPortrait["speaker"][]).find(
+    (id) => SPEAKERS[id].name === name,
+  );
+  return speaker ? { named: false, side: SPEAKERS[speaker].side, speaker } : null;
+}
+
+/**
+ * The sheet frame a page's portrait shows elapsed seconds after the page appears: Ada's and
+ * Penny's neutral face, or Astra's or the General's speaking loop at 120 ms a frame, held on
+ * its first frame under reduced motion.
+ */
+export function storyPortraitFrame(
+  reducedMotion: boolean,
+  portrait: StoryPortrait,
+  elapsed: number,
+): number {
+  return portraitFrame(reducedMotion, { ...portrait, elapsed, mood: "neutral" });
+}
+
+const { image: PORTRAIT_IMAGE, inset: PORTRAIT_EDGE } = STORY_PANEL.portrait;
+
+// Each sheet sized so one frame fills the 64 portrait; storyPortraitFrame picks the frame.
+const STORY_PORTRAIT_RULES = Object.entries(STORY_PORTRAITS)
+  .map(
+    ([speaker, sheet]) => `
+.ada-controls .ada-story-portrait[data-speaker="${speaker}"]{
+  background:url('${sheet.url}') 0 0 / ${units(sheet.frames * PORTRAIT_IMAGE)} ${units(
+    PORTRAIT_IMAGE,
+  )} no-repeat
+}`,
+  )
+  .join("");
 
 export interface StoryOptions {
   readonly labels: StoryLabels;
@@ -128,8 +185,39 @@ export const STORYBOOK_STYLE = `
   scrollbar-color:#9690b4 #2f2d3d
 }
 
-.ada-controls .ada-story-text{
+/* A dialogue page's portrait and text column: Ada's frame at the left, every other speaker's at
+   the right, never mirrored, its top on the column's top. */
+.ada-controls .ada-story-line{
   flex:none;
+  display:flex;
+  align-items:flex-start;
+  gap:${units(STORY_PANEL.gap)}
+}
+.ada-controls .ada-story-line[data-side="right"]{
+  flex-direction:row-reverse
+}
+
+/* The 68 frame: a 2 ink edge round the navy face, the 32 sheet at 2x inside. */
+.ada-controls .ada-story-frame{
+  flex:none;
+  box-sizing:border-box;
+  width:${units(STORY_PANEL.portrait.frame)};
+  height:${units(STORY_PANEL.portrait.frame)};
+  border:${units(PORTRAIT_EDGE)} solid ${CONVERSATION_BOX.panel.ink};
+  background:${CONVERSATION_BOX.portrait.face}
+}
+
+.ada-controls .ada-story-portrait{
+  display:block;
+  width:${units(PORTRAIT_IMAGE)};
+  height:${units(PORTRAIT_IMAGE)};
+  image-rendering:pixelated
+}
+${STORY_PORTRAIT_RULES}
+
+.ada-controls .ada-story-text{
+  flex:1 1 auto;
+  min-width:0;
   display:flex;
   flex-direction:column;
   gap:${units(STORY_PANEL.speakerGap)}
@@ -207,6 +295,15 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const paragraph = document.createElement("p");
   paragraph.className = "ada-story-paragraph";
   text.append(speaker, paragraph);
+  const portraitFrameNode = document.createElement("div");
+  portraitFrameNode.className = "ada-story-frame";
+  portraitFrameNode.setAttribute("aria-hidden", "true");
+  const face = document.createElement("span");
+  face.className = "ada-story-portrait";
+  portraitFrameNode.append(face);
+  const line = document.createElement("div");
+  line.className = "ada-story-line";
+  line.append(portraitFrameNode, text);
   const choices = document.createElement("div");
   choices.className = "ada-actions ada-stack ada-story-choices";
   const controls = document.createElement("div");
@@ -222,7 +319,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
   const scroll = document.createElement("div");
   scroll.className = "ada-story-scroll";
-  scroll.append(text, choices);
+  scroll.append(line, choices);
   panel.append(scroll, controls);
   layer.append(background, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
@@ -251,6 +348,42 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let fade: Animation | undefined;
   let rendered: StoryPageView | null = null;
+  // The speaking loop's timer while a looping speaker's page shows.
+  let portraitTimer: ReturnType<typeof setInterval> | undefined;
+  const stopPortrait = () => {
+    clearInterval(portraitTimer);
+    portraitTimer = undefined;
+  };
+  // Shows the page speaker's portrait on its side and runs its speaking loop while the page
+  // shows; narration and a speaker Art has not drawn show no frame.
+  const showPortrait = (page: StoryPageView) => {
+    stopPortrait();
+    const portrait = storyPortrait(page.speaker);
+    portraitFrameNode.hidden = portrait === null;
+    line.dataset.side = portrait?.side ?? "left";
+    if (!portrait) {
+      delete face.dataset.speaker;
+      return;
+    }
+    face.dataset.speaker = portrait.speaker;
+    let ticks = 0;
+    const draw = () => {
+      const index = storyPortraitFrame(
+        options.reducedMotion(),
+        portrait,
+        (ticks * SPEAKING_FRAME_MS) / 1000,
+      );
+      face.dataset.frame = String(index);
+      face.style.backgroundPositionX = units(-index * PORTRAIT_IMAGE);
+    };
+    draw();
+    if ("speaking" in COMPACT_PORTRAITS[portrait.speaker]) {
+      portraitTimer = setInterval(() => {
+        ticks += 1;
+        draw();
+      }, SPEAKING_FRAME_MS);
+    }
+  };
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
   // One overlay's element, made on first use and placed by its box.
   const overlayFor = (overlay: StoryOverlay): HTMLDivElement => {
@@ -402,6 +535,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     panel.hidden = page === null || page.sleep === true;
     skip.hidden = page === null || !page.canSkip;
     if (!page) {
+      stopPortrait();
       if (backdrop) {
         setBackground(backdrop);
       }
@@ -414,6 +548,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     paragraph.hidden = page.text === "";
     paragraph.textContent = page.text;
     text.hidden = !page.speaker && page.text === "";
+    showPortrait(page);
+    line.hidden = text.hidden && portraitFrameNode.hidden;
     panel.setAttribute("aria-label", page.speaker ?? page.text);
     const buttons = (page.choices ?? []).map(({ label }, index) => {
       const button = createButton(label);
@@ -457,6 +593,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     shown = signature;
     stop();
     stopNight();
+    stopPortrait();
     const from = lastPage;
     lastPage = page;
     const steps =
@@ -495,6 +632,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     dispose(): void {
       stop();
       stopNight();
+      stopPortrait();
       style.remove();
       layer.remove();
     },

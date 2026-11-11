@@ -1,6 +1,6 @@
 import type { PremiseContent } from "./types.ts";
 
-// Narration has no speaker. Astra speaks without a portrait until Art supplies one.
+// Narration has no speaker.
 export const PREMISE: PremiseContent = {
   boarding: [
     { text: "Ada holds Penny close and touches the rock's glow." },

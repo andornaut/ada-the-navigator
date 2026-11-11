@@ -75,6 +75,37 @@ describe("conversation box style", () => {
     expect(name).toContain(`padding:0${squash(units(5))}`);
   });
 
+  it("fills each drawn speaker's tab from Art's table, Astra's teal among them", () => {
+    const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    const fill = (token: string) =>
+      new RegExp(`^\\| ${token} tab +\\| \`(#[0-9a-f]{6})\``, "mu").exec(table)?.[1];
+    expect(TAB_COLOURS.astra).toBe("#8fe0f2");
+    expect({
+      ada: fill("Ada"),
+      astra: fill("Astra"),
+      general: fill("Unknown voice"),
+      generalNamed: fill("General Gadget"),
+      penny: fill("Penny"),
+    }).toEqual({
+      ada: TAB_COLOURS.ada,
+      astra: TAB_COLOURS.astra,
+      general: TAB_COLOURS.general,
+      generalNamed: TAB_COLOURS.generalNamed,
+      penny: TAB_COLOURS.penny,
+    });
+  });
+
+  it("draws Astra's line with her compact sheet in the slot", () => {
+    expect(COMPACT_PORTRAITS.astra.url).toBe("/art/portraits/astra-compact.png");
+    expect(css.get('.ada-conversation-portrait[data-speaker="astra"]')).toBe(
+      squash(
+        `background:url('/art/portraits/astra-compact.png') 0 0 / ${units(5 * 44)} ${units(
+          44,
+        )} no-repeat`,
+      ),
+    );
+  });
+
   it("gives every speaker a tab colour and a compact portrait sheet that exists", () => {
     for (const speaker of Object.keys(SPEAKERS)) {
       expect(TAB_COLOURS).toHaveProperty(speaker);

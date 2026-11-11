@@ -1,11 +1,19 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
+import { SPEAKING_FRAME_MS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
-import { fromHudEdge, safeEdge } from "./layout/css.ts";
+import { fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { HUD_BUTTON, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING } from "./layout/tokens.ts";
-import { STORYBOOK_STYLE } from "./storybook.ts";
+import {
+  STORY_PORTRAITS,
+  STORYBOOK_STYLE,
+  storyPortrait,
+  storyPortraitFrame,
+} from "./storybook.ts";
 
 // One CSS rule's body from the storybook style.
 function rule(selector: string): string {
@@ -76,5 +84,89 @@ describe("the overnight recharge's overlays", () => {
     expect(overlay).toContain("background:0 0 / 100% 100% no-repeat");
     expect(overlay).toContain("image-rendering:pixelated");
     expect(overlay).toContain("pointer-events:none");
+  });
+});
+
+const MANIFEST = JSON.parse(
+  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+) as {
+  assets: {
+    frameWidth?: number;
+    frames?: Record<string, number>;
+    id: string;
+    loops?: Record<string, { frame: number; ms: number; name: string }[]>;
+    path: string;
+    width: number;
+  }[];
+};
+const asset = (id: string) => MANIFEST.assets.find((entry) => entry.id === id);
+
+describe("story page portraits", () => {
+  const astra = storyPortrait("Astra")!;
+
+  it("resolve Astra's 32 sheet, drawn at 2x in the 68 frame", () => {
+    expect(astra).toEqual({ named: false, side: "right", speaker: "astra" });
+    const sheet = asset("astra-portrait")!;
+    expect(STORY_PORTRAITS.astra.url).toBe(sheet.path);
+    expect(sheet.width / sheet.frameWidth!).toBe(STORY_PORTRAITS.astra.frames);
+    expect(STORY_PANEL.portrait).toEqual({ frame: 68, image: 64, inset: 2 });
+    expect(rule('.ada-controls .ada-story-portrait[data-speaker="astra"]')).toContain(
+      `background:url('${sheet.path}') 0 0 / ${units(5 * 64)} ${units(64)} no-repeat`,
+    );
+    const frame = rule(".ada-controls .ada-story-frame");
+    expect(frame).toContain(`width:${units(68)};`);
+    expect(frame).toContain(`border:${units(2)} solid #181425;`);
+    expect(rule(".ada-controls .ada-story-portrait")).toContain("image-rendering:pixelated");
+  });
+
+  it("give every drawn speaker a 32 sheet with its compact sheet's frames", () => {
+    const ids = { ada: "ada", astra: "astra", general: "gadget", penny: "penny" } as const;
+    for (const [speaker, id] of Object.entries(ids)) {
+      const sheet = asset(`${id}-portrait`)!;
+      expect(STORY_PORTRAITS[speaker as keyof typeof ids].url).toBe(sheet.path);
+      expect(sheet.width / sheet.frameWidth!).toBe(
+        STORY_PORTRAITS[speaker as keyof typeof ids].frames,
+      );
+      expect(sheet.frames).toEqual(asset(`${id}-portrait-compact`)!.frames);
+    }
+  });
+
+  it("put Ada at the left and every other speaker at the right, never mirrored", () => {
+    expect(storyPortrait("Ada")?.side).toBe("left");
+    for (const name of ["Astra", "Penny", "Unknown voice", "General Gadget"]) {
+      expect(storyPortrait(name)?.side, name).toBe("right");
+    }
+    expect(storyPortrait("General Gadget")?.named).toBe(true);
+    expect(rule('.ada-controls .ada-story-line[data-side="right"]')).toContain(
+      "flex-direction:row-reverse",
+    );
+    expect(STORYBOOK_STYLE).not.toMatch(/scaleX|scale\(-/u);
+  });
+
+  it("show no portrait for narration or a speaker Art has not drawn", () => {
+    expect(storyPortrait(undefined)).toBeNull();
+    expect(storyPortrait("Grandma")).toBeNull();
+    expect(storyPortrait("Workshop")).toBeNull();
+  });
+
+  it("loop Astra's speaking frames at 120 ms while her page shows, held on speaking-1", () => {
+    const { frames, loops } = asset("astra-portrait")!;
+    expect(loops!.speaking!.map(({ ms }) => ms)).toEqual([120, 120, 120, 120]);
+    expect(SPEAKING_FRAME_MS).toBe(120);
+    const speaking = loops!.speaking!.map(({ frame }) => frame);
+    expect([0, 0.12, 0.24, 0.36, 0.48].map((at) => storyPortraitFrame(false, astra, at))).toEqual([
+      ...speaking,
+      speaking[0],
+    ]);
+    for (const at of [0, 0.12, 0.36, 3]) {
+      expect(storyPortraitFrame(true, astra, at)).toBe(frames!["speaking-1"]);
+    }
+  });
+
+  it("show Ada's neutral face without a loop", () => {
+    const ada = storyPortrait("Ada")!;
+    for (const at of [0, 0.12, 3]) {
+      expect(storyPortraitFrame(false, ada, at)).toBe(asset("ada-portrait")!.frames!.neutral);
+    }
   });
 });

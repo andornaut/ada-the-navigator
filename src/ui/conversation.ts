@@ -28,7 +28,8 @@ const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATI
 // Each speaker's compact portrait sheet (art/conversation.md) and its frames. Astra and the
 // General loop their speaking frames while their line shows, the General's unknown set until his
 // tab reads his name, then his named set; Ada and Penny have no loop and show the line's mood.
-// Idle frames are for a silent speaker, such as the storybook panel, so the box never shows them.
+// Idle frames are for a silent speaker on screen; the box and the storybook panel show only the
+// one speaking, so neither shows them.
 export const COMPACT_PORTRAITS = {
   ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },
   astra: { frames: 5, speaking: [1, 2, 3, 4], url: "/art/portraits/astra-compact.png" },
@@ -104,7 +105,7 @@ const PORTRAIT_RULES = Object.entries(COMPACT_PORTRAITS)
 // Each speaker's name tab fill (art/controls.md "Conversation box").
 export const TAB_COLOURS = {
   ada: "#70ace8",
-  astra: "#ffc9a8",
+  astra: "#8fe0f2",
   general: "#b8b3c9",
   generalNamed: "#d68b72",
   penny: "#feae34",

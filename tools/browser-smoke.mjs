@@ -279,6 +279,7 @@ try {
   // Reads storybook pages (the default choice, else Next or its named action) until galaxy
   // selection opens or flight begins, and returns each page's background, its image and text,
   // and, just after its press, the transition frame fading in and whether the panel hid.
+  const storyShots = new Set();
   async function readStory(remaining = 60, pages = []) {
     await page.waitForFunction(
       () =>
@@ -305,7 +306,48 @@ try {
         (node) => node.querySelector(".ada-story-speaker:not([hidden])")?.textContent ?? "",
       ),
       text: (await panel.locator(".ada-story-paragraph").textContent()) ?? "",
+      portrait: await panel.evaluate((node) => {
+        const frame = node.querySelector(".ada-story-frame");
+        if (!frame || frame.hidden) {
+          return null;
+        }
+        const unit = Number(
+          getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+        );
+        const box = frame.getBoundingClientRect();
+        const card = node.getBoundingClientRect();
+        const round = (value) => Math.round((value / unit) * 10) / 10;
+        const face = frame.querySelector(".ada-story-portrait");
+        return {
+          frame: Number(face.dataset.frame),
+          image: getComputedStyle(face).backgroundImage,
+          left: round(box.left - card.left),
+          right: round(card.right - box.right),
+          side: node.querySelector(".ada-story-line").dataset.side,
+          size: round(box.width),
+          speaker: face.dataset.speaker,
+        };
+      }),
     });
+    // The cockpit's first Astra page standing and seated, and her loop on the standing one.
+    const current = pages.at(-1);
+    const shot =
+      current.speaker === "Astra" && current.background.startsWith("cockpit")
+        ? `story-astra-${current.background === "cockpit" ? "standing" : "seated"}`
+        : null;
+    if (shot && !storyShots.has(shot)) {
+      storyShots.add(shot);
+      await page.screenshot({ path: `${output}/${shot}.png` });
+      await page.waitForFunction(
+        (frame) =>
+          Number(
+            document.querySelector(".ada-story-panel:not([hidden]) .ada-story-portrait")?.dataset
+              .frame,
+          ) !== frame,
+        current.portrait?.frame,
+      );
+      current.looped = true;
+    }
     const choice = panel.locator('[data-action="story-choice"]');
     const press = (await choice.count())
       ? choice.first()
@@ -501,6 +543,40 @@ try {
     ),
     "Astra speaks in the prologue's cockpit",
   );
+  // Each dialogue page shows its speaker's 32 portrait in the 68 frame: Ada at the inner left,
+  // Astra at the inner right; narration and a speaker Art has not drawn show none.
+  const sheets = { Ada: "ada", Astra: "astra" };
+  for (const { background, portrait, speaker, text } of launchPages) {
+    const sheet = sheets[speaker];
+    if (!sheet) {
+      assert.equal(portrait, null, `No portrait on "${text}"`);
+      continue;
+    }
+    assert.equal(portrait?.speaker, sheet, `${speaker}'s portrait on "${text}"`);
+    assert.equal(portrait.size, 68, `${speaker}'s 68 frame on ${background}`);
+    assert.match(portrait.image, new RegExp(`/art/portraits/${sheet}\\.png`, "u"));
+    assert.equal(portrait.side, sheet === "ada" ? "left" : "right", `${speaker}'s side`);
+  }
+  const adaPage = launchPages.find(({ portrait }) => portrait?.speaker === "ada");
+  const astraPages = launchPages.filter(({ portrait }) => portrait?.speaker === "astra");
+  assert.ok(adaPage && astraPages.length, "Ada and Astra both speak with portraits");
+  assert.ok(
+    astraPages.every(({ portrait }) => Math.abs(portrait.right - adaPage.portrait.left) < 0.2),
+    "Astra's frame keeps the inset at the right that Ada's keeps at the left",
+  );
+  assert.deepEqual(
+    [...storyShots].sort(),
+    ["story-astra-seated", "story-astra-standing"],
+    "Astra speaks standing and seated in the cockpit",
+  );
+  assert.ok(
+    launchPages.filter(({ looped }) => looped).length === 2,
+    "Astra's speaking loop runs on the cockpit pages",
+  );
+  events.checks.push(
+    "Story pages show the speaker's 32 portrait in the 68 frame, Ada left and Astra right, " +
+      "Astra's speaking loop running standing and seated in the cockpit",
+  );
   events.checks.push(
     "Storybook pages show Art's backgrounds and the glowing room plays the rock glow into the " +
       "cockpit",
@@ -546,6 +622,30 @@ try {
       "selection's Jump begins the flight",
   );
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  // The first flight opens on Astra's move lesson in the conversation box: her compact sheet on
+  // the right, its speaking loop running, and her teal tab.
+  const astraBox = page.locator('.ada-conversation[data-speaker="astra"]:not([hidden])');
+  await astraBox.waitFor({ state: "visible" });
+  const astraFace = astraBox.locator(".ada-conversation-portrait");
+  const firstFrame = await astraFace.getAttribute("data-frame");
+  await page.waitForFunction(
+    (frame) =>
+      document.querySelector('.ada-conversation[data-speaker="astra"] .ada-conversation-portrait')
+        ?.dataset.frame !== frame,
+    firstFrame,
+  );
+  const astraLine = await astraBox.evaluate((box) => ({
+    image: getComputedStyle(box.querySelector(".ada-conversation-portrait")).backgroundImage,
+    side: box.dataset.side,
+    tab: getComputedStyle(box.querySelector(".ada-conversation-name")).backgroundColor,
+  }));
+  await page.screenshot({ path: `${output}/conversation-astra.png` });
+  assert.match(astraLine.image, /\/art\/portraits\/astra-compact\.png/u, "Astra's compact sheet");
+  assert.equal(astraLine.side, "right", "Astra's portrait sits at the box's right");
+  assert.equal(astraLine.tab, "rgb(143, 224, 242)", "Astra's tab is teal #8fe0f2");
+  events.checks.push(
+    "Astra's in-flight line shows her compact portrait at the right, looping, with her teal tab",
+  );
   const position = () =>
     page.locator("#game-status").evaluate((element) => ({
       x: Number(element.dataset.x),
