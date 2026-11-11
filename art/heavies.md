@@ -235,7 +235,8 @@ wrecks read against the coral hull; a destroyed nacelle reads by its ember,
 
 Cartwheel's drones and heavies are one family: the four sector one drones, the
 frigate and the capital recoloured into rust, steel and ember, plus the turret
-platform. Sunflower keeps the coral originals.
+platform. Sunflower keeps the coral originals. Andromeda's
+[garnet drones](andromeda.md#garnet-drones) are the same recolour in garnet.
 
 - Rebuild with `node art/tools/claim-jumpers.ts`, which takes the same
   `--offsets <file.json>` as `heavies.ts`. It draws the shared models in

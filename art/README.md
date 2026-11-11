@@ -62,8 +62,8 @@ jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
 and `oreField` links; Whirlpool the whales, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers'
-station, the settlements, the guide beacons, Pip's mail scooter and their
-project frames. The station, discovery cache,
+station, the settlements, the guide beacons, Pip's mail scooter, their
+project frames and the garnet drones. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
@@ -95,13 +95,15 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale and Whirlpool
-debris and project SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
-`art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/cartwheel.ts`,
-`art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`, `art/tools/whales.ts` and
-`art/tools/whirlpool.ts`, with the heavies' layered
-sprites from `art/tools/heavies.ts` and Cartwheel's claim jumpers from
-`art/tools/claim-jumpers.ts`; edit the generators and
+Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale, Whirlpool the whales, river debris, project frames and the
+`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
+Andromeda SVGs are deterministic exports from `art/tools/ship.ts`,
+`art/tools/enemies.ts`, `art/tools/station.ts`, `art/tools/outposts.ts`,
+`art/tools/cartwheel.ts`, `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`,
+`art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
+heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers from
+`art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
+`art/tools/garnet-drones.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the

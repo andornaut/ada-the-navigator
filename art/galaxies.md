@@ -125,6 +125,7 @@ and where each asset sits:
 | [Courier school and spare beacon](andromeda.md#world-changes)                                          | Andromeda, once funded                                          |
 | Coral drone family (swarm, fighter, interceptor, retaliator)                                           | Shared, keylined on Sunflower                                   |
 | [Claim-jumper family and turret platform](heavies.md)                                                  | Cartwheel                                                       |
+| [Garnet drone family, frigate and capital](andromeda.md#garnet-drones)                                 | Andromeda                                                       |
 | Play asteroids                                                                                         | Shared                                                          |
 | Stardust                                                                                               | Shared                                                          |
 | [Current streaks and river debris](whirlpool.md)                                                       | Whirlpool                                                       |

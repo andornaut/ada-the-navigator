@@ -1,7 +1,7 @@
 # Andromeda
 
 Andromeda's art: the settlers' station, the settlements, the guide beacons,
-Pip's mail scooter and the two project world changes.
+Pip's mail scooter, the two project world changes and the garnet drones.
 
 - Rebuild with `node art/tools/andromeda.ts`. It writes
   `public/art/andromeda/` and replaces its own entries in place in
@@ -209,6 +209,59 @@ A spare guide beacon held upright in a slate cradle on a small pad, its site
 34 units left and 30 back of the relit beacon (screen left, just behind it).
 Its lantern is on standby, a steady dim `#6f78b8` in both frames, and a blue
 standby light on the pad blinks: `#70ace8` in frame A, `#3f5878` in B.
+
+## Garnet drones
+
+Andromeda's drones and heavies are one family: the four sector one drones,
+the frigate and the capital recoloured into garnet, Gadget's drones hunting in
+the open. Sunflower keeps the coral originals and Cartwheel the
+[claim jumpers](heavies.md#cartwheel-claim-jumpers).
+
+- Rebuild with `node art/tools/garnet-drones.ts`, which takes the same
+  `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
+  process, writes `public/art/andromeda/enemies/` and replaces its own entries
+  in place in Andromeda's manifest, after the destinations and before the
+  story craft.
+- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
+  coral family; only fills change. Every SVG and shards file goes through the
+  colour swap below, every jets file through the garnet jet colours, and the
+  tool stops on any colour outside the family. Hardpoints files are the coral
+  family's, unchanged; destruction uses the shared `destruction.json` timing
+  and flash with the garnet shards.
+- File names are the coral names in `public/art/andromeda/enemies/`. Ids are
+  the coral ids with `enemy-garnet-` in place of `enemy-`, such as
+  `enemy-garnet-frigate-3` and `enemy-garnet-capital-turret-top-9`. Each entry
+  has the coral entry's fields, its own `path`, the coral `archetype` and
+  `family` `garnet`. No garnet id matches `enemy-{archetype}-{index}`, so the
+  coral heading sets stay complete.
+
+Contrast is WCAG against Andromeda's field `#232641`.
+
+| Role                   | Coral                           | Garnet    | Contrast |
+| ---------------------- | ------------------------------- | --------- | -------: |
+| Hull top               | `#d68b72`                       | `#e47485` |   5.01:1 |
+| Hull side              | `#a8654f`                       | `#b0495b` |   2.77:1 |
+| Hull rear              | `#7f4b3d`                       | `#823643` |   1.79:1 |
+| Plates                 | `#e6a890`                       | `#deb7b6` |   8.11:1 |
+| Turret top             | `#c27a62`                       | `#c65c6d` |   3.62:1 |
+| Scorch top             | `#5c3a31`                       | `#583237` |   1.35:1 |
+| Scorch side            | `#42291f`                       | `#3f2125` |   1.02:1 |
+| Burn (deck paint)      | `#6e4436`                       | `#6b3a41` |   1.62:1 |
+| Guns, lights, disc     | `#f0bd68`                       | unchanged |   8.55:1 |
+| Visor, claw ink, ember | `#2a2433`, `#181425`, `#f0a07c` | unchanged |          |
+
+Garnet is Oklab hue 12: 27 degrees from coral, 38 from claim rust and 34 from
+the holodisk magenta `#E868C8`, at a higher chroma than coral. The hull top
+keeps the space palette's 5:1. Claw ink is 6.12:1 on the garnet hull; scorch
+is 3.70:1 on it, so deck wrecks read; the wreck ember is 5.20:1 on garnet
+scorch and 7.03:1 on the field.
+
+Speed jets ramp slow to fast, in place of Gadget's jet colours:
+
+| Layer | Gadget                 | Garnet                 | Contrast, slow and fast |
+| ----- | ---------------------- | ---------------------- | ----------------------: |
+| Outer | `#b8644c` to `#f0a07c` | `#c1445c` to `#fb8898` |          2.98:1, 6.37:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#e47485` to `#ffe0e0` |         5.01:1, 11.92:1 |
 
 ## Palette
 
