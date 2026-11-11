@@ -13,6 +13,13 @@ export interface CheatAction {
   readonly scope: "save" | "run";
 }
 
+/** The cheat groups to show, Save-changing then Run-only; a group with no actions is hidden. */
+export function cheatGroups(actions: readonly Pick<CheatAction, "scope">[]): ("save" | "run")[] {
+  return (["save", "run"] as const).filter((scope) =>
+    actions.some((action) => action.scope === scope),
+  );
+}
+
 export interface CheatSessionOptions {
   readonly actions: readonly CheatAction[];
   readonly canExecute: () => boolean;

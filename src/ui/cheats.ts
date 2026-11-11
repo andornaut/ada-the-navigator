@@ -1,9 +1,8 @@
-import { type CheatAction, createCheatSession } from "./cheat-actions.ts";
+import { type CheatAction, cheatGroups, createCheatSession } from "./cheat-actions.ts";
 import { createActions, createButton, createCard } from "./modal.ts";
 
 export interface CheatLabels {
   readonly close: string;
-  readonly emptyRunActions: string;
   readonly open: string;
   readonly runGroup: string;
   readonly runPersistence: string;
@@ -51,7 +50,7 @@ export function createCheats(
   });
   const { card, close, frame } = parts;
   const buttons: HTMLButtonElement[] = [];
-  for (const scope of ["save", "run"] as const) {
+  for (const scope of cheatGroups(options.actions)) {
     const section = document.createElement("section");
     const heading = document.createElement("h3");
     heading.textContent = scope === "save" ? options.labels.saveGroup : options.labels.runGroup;
@@ -61,11 +60,6 @@ export function createCheats(
     section.setAttribute("aria-label", heading.textContent);
     section.append(heading, persistence);
     const actions = options.actions.filter((action) => action.scope === scope);
-    if (scope === "run" && actions.length === 0) {
-      const empty = document.createElement("p");
-      empty.textContent = options.labels.emptyRunActions;
-      section.append(empty);
-    }
     for (const action of actions) {
       const button = createButton(action.label);
       button.dataset.cheat = action.id;

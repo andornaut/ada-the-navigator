@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type CheatExecution, createCheatSession } from "./cheat-actions.ts";
+import { type CheatExecution, cheatGroups, createCheatSession } from "./cheat-actions.ts";
 
 function fixture() {
   let mode = "browser";
@@ -150,5 +150,14 @@ describe("browser-tab cheat eligibility", () => {
     expect(await result).toBe(true);
     expect(state.mutations).toBe(1);
     expect(state.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("cheat groups", () => {
+  it("hides a group with no actions and keeps Save-changing before Run-only", () => {
+    expect(cheatGroups([{ scope: "run" }])).toEqual(["run"]);
+    expect(cheatGroups([{ scope: "save" }])).toEqual(["save"]);
+    expect(cheatGroups([{ scope: "run" }, { scope: "save" }])).toEqual(["save", "run"]);
+    expect(cheatGroups([])).toEqual([]);
   });
 });
