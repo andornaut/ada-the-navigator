@@ -65,6 +65,7 @@ export function snapshot() {
     "art",
     "gameplay",
     "public",
+    "pages",
     ".github",
     ".husky",
   ]);
