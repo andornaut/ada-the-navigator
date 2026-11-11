@@ -771,6 +771,7 @@ export class PrototypeScene extends Phaser.Scene {
           title: PROTOTYPE.update.title,
         },
         offer: updateOffer,
+        restoreFocus: () => this.shell.focusDefault(),
       },
       weaponLabels: {
         ammo: PROTOTYPE.labels.weaponAmmoLabel ?? "",

@@ -67,7 +67,12 @@ export interface ControlsOptions {
   };
   // Settings or the cheats card opening or closing over the start screen.
   readonly onStartCover?: (what: StartCover, covering: boolean) => void;
-  readonly update?: { readonly labels: UpdateLabels; readonly offer: UpdateOffer };
+  readonly update?: {
+    readonly labels: UpdateLabels;
+    readonly offer: UpdateOffer;
+    // Focuses the start screen's default button as the offer closes.
+    readonly restoreFocus: () => void;
+  };
   // Returns whether the switch was refused.
   readonly onWeaponSelect: (weapon: Weapon) => boolean;
   readonly shieldLabel: string;
@@ -248,8 +253,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     shieldLabel: options.shieldLabel,
   });
   const update = options.update
-    ? createUpdateDialog(settings.root, options.update.labels, options.update.offer, () =>
-        syncModal(),
+    ? createUpdateDialog(
+        settings.root,
+        options.update.labels,
+        options.update.offer,
+        options.update.restoreFocus,
+        () => syncModal(),
       )
     : undefined;
   const stick = (kind: "aim" | "move") => ({

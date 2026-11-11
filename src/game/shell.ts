@@ -151,6 +151,11 @@ export class StoryShell {
     }
   }
 
+  /** Focuses the start screen's default button, its first, as a card over it closes. */
+  focusDefault(): void {
+    this.startScreen?.root.querySelector<HTMLButtonElement>("button")?.focus();
+  }
+
   /** Art's start screen art; the start screen redraws with it. */
   setTitleArt(art: TitleScreenArt | null): void {
     this.titleArt = art;
