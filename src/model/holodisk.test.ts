@@ -315,6 +315,29 @@ describe("galaxy three's holodisk", () => {
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
   });
 
+  it("is recovered on contact within pickup reach, not on entering its safe area", () => {
+    const model = questDone(3, ["whale", "family"]);
+    model.step(0.01, idle);
+    const f = model.state.flight!;
+    f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+    f.dangerFor = 0;
+    const disk = f.objects.find((o) => o.id === "holodisk")!;
+    const at = { x: disk.x, y: disk.y };
+    const { pickupRadius, pickupReach } = PROTOTYPE.tuning.flight;
+    const contact = pickupRadius + pickupReach;
+    f.player = { x: disk.x + contact + 1, y: disk.y };
+    f.velocity = { x: 0, y: 0 };
+    model.step(0.01, idle);
+    expect(model.state.progress[3].holodisk).toBe(false);
+    // The tractor beam pulls only Stardust, so the holodisk stays where it is.
+    expect(f.objects.find((o) => o.id === "holodisk")).toMatchObject(at);
+    f.player = { x: disk.x + contact - 1, y: disk.y };
+    f.velocity = { x: 0, y: 0 };
+    model.step(0.01, idle);
+    insertion(model);
+    expect(model.state.progress[3].holodisk).toBe(true);
+  });
+
   it("has no waypoint before the reunion", () => {
     const model = questDone(3, ["whale", "family"]);
     Object.assign(model.state.progress[3], { questComplete: false, stage: 4 });

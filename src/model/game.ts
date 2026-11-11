@@ -576,9 +576,10 @@ export class GameModel {
       if (event.type === "enemyDisabled") {
         this.current.disabledEnemies++;
       }
-      // Reaching the guarded holodisk recovers it; it never becomes a travel destination.
+      // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
+      // destination.
       if (event.type === "discovered" && event.id === "holodisk") {
-        if (this.holodiskWaypoint) {
+        if (this.holodiskWaypoint && this.holodiskTouched(f)) {
           this.recoverHolodisk();
         }
         continue;
@@ -650,6 +651,15 @@ export class GameModel {
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {
     return this.state.flight?.sector === 3 && this.current.questComplete && !this.current.holodisk;
+  }
+  /** Ada is within pickup reach of the holodisk, a pickup-sized object; the tractor never pulls it. */
+  private holodiskTouched(f: NonNullable<GameState["flight"]>): boolean {
+    const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk");
+    const { pickupRadius, pickupReach } = this.content.tuning.flight;
+    return (
+      disk !== undefined &&
+      Math.hypot(disk.x - f.player.x, disk.y - f.player.y) <= pickupRadius + pickupReach
+    );
   }
   private ensureRequiredApproaches(): void {
     const f = this.state.flight;
