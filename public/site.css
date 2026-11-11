@@ -169,9 +169,85 @@ body.site {
   border-color: #f6e5c6;
 }
 
-.site a:focus-visible {
+/* Play, and Install beside it while the game can be installed. */
+.site .site-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.site .site-install,
+.site .site-steps-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  margin: 0;
+  padding: 12px 22px;
+  border: 2px solid #ead4aa;
+  border-radius: 6px;
+  background: transparent;
+  color: #ead4aa;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site .site-install:hover,
+.site .site-steps-close:hover {
+  border-color: #f6e5c6;
+  background: #3c384b;
+  color: #f6e5c6;
+}
+
+.site .site-install[hidden] {
+  display: none;
+}
+
+.site a:focus-visible,
+.site button:focus-visible {
   outline: 3px solid #70ace8;
   outline-offset: 5px;
+}
+
+/* The install steps for the browser's own menu (iOS, Firefox for Android), one browser's shown
+   over the dimmed page. */
+.site .site-steps {
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #514c62;
+  border-radius: 6px;
+  background: #292734;
+  color: #ead4aa;
+}
+
+.site .site-steps::backdrop {
+  background: rgb(24 22 31 / 0.8);
+}
+
+.site .site-steps-body {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+}
+
+.site .site-steps h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.site .site-steps p {
+  margin: 0;
+  color: #c7bdc9;
+}
+
+.site .site-steps-close {
+  justify-self: end;
 }
 
 .site .site-controls {

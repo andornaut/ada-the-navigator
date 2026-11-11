@@ -33,7 +33,10 @@
         <p class="site-subline">
           Join Ada on space adventures and help her Toronto community with what she learns.
         </p>
-        <a class="site-play" href="/play/">Play <span aria-hidden="true">&rarr;</span></a>
+        <div class="site-actions">
+          <a class="site-play" href="/play/">Play <span aria-hidden="true">&rarr;</span></a>
+          <button class="site-install" id="install" type="button" hidden>Install</button>
+        </div>
         <ul class="site-controls" aria-label="Controls">
           <li>
             <span class="site-control-label">Mobile</span>
@@ -52,5 +55,18 @@
     <footer class="site-footer">
       <a href="https://github.com/andornaut/ada-the-navigator">View source on GitHub</a>
     </footer>
+    <dialog class="site-steps" id="install-steps" aria-labelledby="install-steps-ios">
+      <div class="site-steps-body">
+        <div data-browser="firefoxAndroid" hidden>
+          <h2 id="install-steps-firefoxAndroid">Add app to Home screen</h2>
+          <p>Tap the menu, then More, then Add app to Home screen.</p>
+        </div>
+        <div data-browser="ios" hidden>
+          <h2 id="install-steps-ios">Add to Home Screen</h2>
+          <p>Tap Share, then Add to Home Screen.</p>
+        </div>
+        <button class="site-steps-close" type="button">Close</button>
+      </div>
+    </dialog>
   </body>
 </html>
