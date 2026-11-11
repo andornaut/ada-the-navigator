@@ -8,7 +8,8 @@ completion.
 
 ## Prologue
 
-Plays once, after chapter one's home opening.
+Plays once, after chapter one's home opening. Panel title: The Glowing Rock.
+A replayed chapter one opening uses the boarding panels instead.
 
 Narration: "On a walk with Penny, Ada digs up an unusual rock. At home, she
 polishes it until a faint pattern begins to glow."
@@ -37,7 +38,8 @@ Narration: "Ada sits in the pilot's chair and buckles Penny in beside her."
 Astra: "Quantum jump ready."
 Choice: "Let's find your holodisk."
 
-Boarding, for later chapters: Astra: "Welcome back, Navigator."
+Boarding, for later chapters: Narration: "Ada holds Penny close and touches the
+rock's glow." Astra: "Welcome back, Navigator."
 
 Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
 Astra: "Memory restored. I've found new coordinates. A new galaxy is ready."
