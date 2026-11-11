@@ -140,7 +140,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
   the cheats card, the station card or shop) or defers the update offer; during
   flight with nothing open it pauses, and with the pause card open it resumes.
-  Where the browser cannot hand back to the game, back is the browser's own.
+  On the start screen with nothing open, and where the browser cannot hand back to
+  the game, back is the browser's own.
 - The landing page, as in Archie, shows an "Install" button beside Play while the
   game can be installed. It opens the browser's install prompt, or the same
   browser steps as the Settings Install row in a dialog with a "Close" button.
