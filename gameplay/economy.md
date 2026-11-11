@@ -45,7 +45,7 @@ drop is below its cap, so each pickup carries 1 Stardust.
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
 ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; in galaxy
 one, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
-Ada already owns becomes 25 Stardust instead. Story mining deposits keep their
+Ada already owns gives one pack of its ammunition instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
 ## Stations
@@ -97,11 +97,39 @@ Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
 no confirm; the scheme in use has the selection ring and shows In use instead of
 Owned.
 
+## Ammunition
+
+Basic fire is unlimited. Every other weapon has its own ammunition count with no
+capacity limit: Rapid Missile and Heavy Missile use missiles, Multi-Laser and
+Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
+count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
+one, so a Multi-Laser fan or a Scattershot spread costs one.
+
+Ammunition comes from the shop, sold per weapon in packs of about a minute of
+steady fire at level 1: Rapid Missile 200, Heavy Missile 50, Multi-Laser 200,
+Scattershot 130 and Phaser 55. Buying or finding a weapon includes three packs. A
+dropped weapon Ada already owns gives one pack of that weapon's ammunition. There
+are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
+ammo", with the pack size, such as "×200", on a second line, as levelled rows
+show their level. Prices are light: typical use of the stronger
+weapons costs about a sixth of Stardust income, provisionally 6 Stardust per
+pack, tuned by the pacing simulation. Ammunition persists across flights and the
+jump home.
+
+When the selected weapon runs out, Ada switches to Basic at once, ignoring the
+switch wait, and Astra's notice says "Out of ammo." An empty weapon's icon shows
+its empty state and refuses selection until ammunition is bought.
+
+Each weapon icon shows its remaining count below it in at most four characters:
+the exact number up to 9,999 without a separator, then whole thousands as "10k" to
+"999k", then whole millions as "1m" to "999m". Basic shows no count.
+
 ## Weapon switching
 
 Ada can switch weapons at any time, including in combat. After a switch, the next
 switch waits 1 second (provisional); during that wait the other weapon icons
-refuse with the shared refusal feedback. The selected weapon's icon has a treatment
+refuse with the shared refusal feedback. Equipping a picked-up weapon counts as a
+switch and starts the wait; the out-of-ammo switch to Basic does not. The selected weapon's icon has a treatment
 like Chibi's power-ups.
 
 ## Donations
@@ -188,6 +216,9 @@ The shield shop row reuses the existing `shield` label.
 | `projects`          | Projects                                                           |
 | `donate`            | Donate                                                             |
 | `projectFunded`     | Funded                                                             |
+| `ammoPack`          | {weapon} ammo                                                      |
+| `ammoPackCount`     | ×{count}                                                           |
+| `outOfAmmo`         | Out of ammo.                                                       |
 | `projectProgress`   | {paid} of {price}                                                  |
 | `donateTitle`       | Donate to {name}?                                                  |
 | `donateStillNeeded` | {amount} still needed after                                        |

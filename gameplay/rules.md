@@ -269,7 +269,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
-- Basic fire and all upgrades have unlimited ammunition.
+- Basic fire has unlimited ammunition; every other weapon has its own ammunition,
+  bought at shops (see [Economy](economy.md#ammunition)).
 - Basic is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
   Multi-Laser, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
@@ -305,7 +306,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   own rotated heading, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
-  ratios multiply base shot damage. No homing, piercing or reload is added.
+  ratios multiply base shot damage. No homing, piercing or reloading is added.
 - Top-right weapon icons select basic fire or an owned weapon, in the order Basic,
   Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser; only owned
   weapons show an icon. Switching preserves

@@ -10,7 +10,8 @@ group that has no actions.
 
 Grant all weapons idempotently adds Heavy Missile, Rapid Missile, Multi-Laser, Scattershot and Phaser to the
 current flight's loadout only. It does not change saved weapon ownership, levels or
-Stardust, and the granted weapons end with the flight. Selection, shield, story,
+Stardust, and the granted weapons end with the flight. Each granted weapon gets
+its three included packs for the current flight only; they are never saved. Selection, shield, story,
 cargo and fire cooldown remain unchanged. A granted weapon lost in a quantum jump
 home costs nothing beyond the flight.
 
