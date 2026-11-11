@@ -51,3 +51,8 @@ export function pressBack(stack: BackStack, inFlight: boolean, pause: () => void
   }
   return "none";
 }
+
+// Back is the browser's own on the start screen while no card or offer covers it.
+export function backReleased(startScreen: boolean, cardOpen: boolean): boolean {
+  return startScreen && !cardOpen;
+}

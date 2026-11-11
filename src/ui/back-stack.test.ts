@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type BackLayer, createBackStack, pressBack } from "./back-stack.ts";
+import { type BackLayer, backReleased, createBackStack, pressBack } from "./back-stack.ts";
 
 // A card that back closes.
 function card(open = false) {
@@ -87,5 +87,16 @@ describe("back", () => {
     stack.back();
     expect(station.back).toHaveBeenCalledOnce();
     expect(cards.settings.open).toBe(false);
+  });
+});
+
+describe("back release", () => {
+  it.each([
+    [true, false, true],
+    [true, true, false],
+    [false, false, false],
+    [false, true, false],
+  ])("on the start screen %s with a card open %s is the browser's: %s", (start, open, released) => {
+    expect(backReleased(start, open)).toBe(released);
   });
 });

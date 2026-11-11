@@ -1,14 +1,23 @@
 // The game as an installable app that plays offline: the service worker, persistent storage, the
-// install offer, the update offer and the back gesture. setupPhoneApp runs once from main.ts as the page loads; the
-// Settings Install row reads the install functions below, and the start screen the update offer.
+// install offer, the update offer and the back gesture. setupPhoneApp runs once from main.ts as
+// the page loads; the Settings Install row reads the install functions below, and the start
+// screen the update offer and the back guard's arming.
 //
 // Waiting updates activate only through the start screen's update offer, never automatically
 // before input or during play.
-import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
+import {
+  backCloseWatcher,
+  backGuardState,
+  isBackGuardState,
+  isFirefoxAndroidApp,
+} from "@andornaut/game-kit/web/pwa/backNavigation";
 import {
   browserCloseWatcher,
+  type CloseWatcherFactory,
   guardBackNavigation,
+  type HistoryLike,
 } from "@andornaut/game-kit/web/pwa/dom/backNavigation";
+import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
 import {
   type InstallFlow,
   type InstallOutcome,
@@ -86,25 +95,87 @@ function setupOfflinePlay(): void {
   startScreen = trackStartScreen(play.flow.setOfferVisible);
 }
 
+// Whether back stays on the game. The start screen with nothing open releases it; flight or an
+// open card arms it again (setBackArmed).
+let backArmed = true;
+let backGuardInUse = () => false;
+
+// The page's history as the back guard sees it: while released the guard adds no entry.
+const guardHistory: HistoryLike = {
+  get length() {
+    return history.length;
+  },
+  pushState(data, unused) {
+    if (backArmed) {
+      history.pushState(data, unused);
+    }
+  },
+  get state() {
+    return history.state as unknown;
+  },
+};
+
+// Back while released is the browser's: the guard entry it popped is not replaced, so one more
+// step leaves the game for the page before it. An installed app with no page before it closes,
+// as Chibi's Exit does, where the platform lets it.
+function releasedBack(): void {
+  if (backGuardInUse()) {
+    history.back();
+  } else if (pageRunsAsApp(window)) {
+    exitApp(browserExitPage());
+  } else {
+    history.back();
+  }
+}
+
 // Keeps back on the game, as in Chibi: each back dispatches PHONE_EVENTS.backPressed on window.
-// Before the player's first input, and where the browser cannot hand back to the game, back is
-// the browser's own.
+// Before the player's first input, while released, and where the browser cannot hand back to the
+// game, back is the browser's own.
 function guardBack(): void {
   // Firefox for Android's installed app keeps its own back.
   // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
   if (isFirefoxAndroidApp(navigator.userAgent, (query) => window.matchMedia(query).matches)) {
     return;
   }
+  const createCloseWatcher: CloseWatcherFactory | undefined = backCloseWatcher(
+    navigator.userAgent,
+    browserCloseWatcher(),
+  );
+  backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
   guardBackNavigation(
     {
-      onBack: () => dispatchPhoneEvent(window, PHONE_EVENTS.backPressed),
+      onBack: () => {
+        if (backArmed) {
+          dispatchPhoneEvent(window, PHONE_EVENTS.backPressed);
+        } else {
+          releasedBack();
+        }
+      },
       stateKey: BACK_GUARD_KEY,
     },
     window,
     window,
-    backCloseWatcher(navigator.userAgent, browserCloseWatcher()),
-    history,
+    createCloseWatcher,
+    guardHistory,
   );
+}
+
+// Arms or releases the back guard: released only on the start screen with nothing open. Arming
+// during the player's input adds the guard entry at once, as the guard does on input.
+export function setBackArmed(armed: boolean): void {
+  if (armed === backArmed) {
+    return;
+  }
+  backArmed = armed;
+  const activation = (navigator as { userActivation?: { isActive: boolean } }).userActivation;
+  if (
+    armed &&
+    backGuardInUse() &&
+    (activation?.isActive ?? false) &&
+    !isBackGuardState(BACK_GUARD_KEY, history.state)
+  ) {
+    history.pushState(backGuardState(BACK_GUARD_KEY), "");
+  }
 }
 
 // Sets up offline play, the install offer, the back gesture and persistent storage.

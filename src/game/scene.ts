@@ -19,9 +19,11 @@ import {
   menuBrowser,
   offersInstall,
   onInstallStateChange,
+  setBackArmed,
   startScreenShown,
   updateOffer,
 } from "../pwa/index.ts";
+import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
@@ -213,6 +215,7 @@ export class PrototypeScene extends Phaser.Scene {
       },
       onPauseChange: (paused) => {
         this.settingsOpen = paused;
+        this.armBack();
         this.flush();
       },
       onStartCover: coverStartScreen,
@@ -325,11 +328,17 @@ export class PrototypeScene extends Phaser.Scene {
       }
       startScreenShown(start);
     }
+    this.armBack();
     this.shell.render(state, {
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,
       objective: this.model.objective,
     });
+  }
+
+  // Back stays on the game except on the start screen with nothing open, where it is the browser's.
+  private armBack(): void {
+    setBackArmed(!backReleased(this.startShown, this.settingsOpen));
   }
 
   private flush(): void {

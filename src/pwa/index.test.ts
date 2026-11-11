@@ -123,6 +123,7 @@ describe("offline play", () => {
 // The page's history as the back guard reads it, with no entry before the game.
 function stubHistory() {
   const history = {
+    back: vi.fn(),
     length: 1,
     pushState: vi.fn((state: unknown) => {
       history.state = state;
@@ -162,6 +163,57 @@ describe("back gesture", () => {
     page.dispatchEvent(new Event("pointerup"));
     page.dispatchEvent(new Event("popstate"));
     expect(backs).not.toHaveBeenCalled();
+  });
+
+  it("leaves back to the browser on the start screen with nothing open", async () => {
+    const page = stubDevice({});
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const backs = vi.fn();
+    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.dispatchEvent(new Event("pointerup"));
+    pwa.setBackArmed(false);
+    // Back pops the guard entry; the game hears nothing, no guard returns and the browser steps
+    // back past the game.
+    history.state = null;
+    page.dispatchEvent(new Event("popstate"));
+    expect(backs).not.toHaveBeenCalled();
+    expect(history.pushState).toHaveBeenCalledOnce();
+    expect(history.back).toHaveBeenCalledOnce();
+    // Input on the released start screen adds no guard.
+    page.dispatchEvent(new Event("pointerup"));
+    expect(history.pushState).toHaveBeenCalledOnce();
+    pwa.setBackArmed(true);
+  });
+
+  it("re-arms during the player's input as flight starts or a card opens", async () => {
+    const page = stubDevice({});
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const backs = vi.fn();
+    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    pwa.setBackArmed(false);
+    Object.assign(navigator, { userActivation: { isActive: true } });
+    pwa.setBackArmed(true);
+    expect(history.pushState).toHaveBeenCalledOnce();
+    history.state = null;
+    page.dispatchEvent(new Event("popstate"));
+    expect(backs).toHaveBeenCalledOnce();
+    expect(history.back).not.toHaveBeenCalled();
+  });
+
+  it("re-arms without an entry outside the player's input, until the next input", async () => {
+    const page = stubDevice({});
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    pwa.setBackArmed(false);
+    pwa.setBackArmed(true);
+    expect(history.pushState).not.toHaveBeenCalled();
+    page.dispatchEvent(new Event("pointerup"));
+    expect(history.pushState).toHaveBeenCalledOnce();
   });
 
   it("keeps the browser's back in Firefox for Android's installed app", async () => {
