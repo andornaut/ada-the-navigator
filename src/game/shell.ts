@@ -2,6 +2,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import type { GameState } from "../model/types.ts";
 import { refuse } from "../ui/refusal.ts";
+import { createStartCard } from "../ui/start-card.ts";
 
 export interface ShellActions {
   start: (sector: SectorId) => void;
@@ -22,6 +23,7 @@ export class StoryShell {
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private signature = "";
+  private startCard: ReturnType<typeof createStartCard> | undefined;
 
   private readonly actions: ShellActions;
 
@@ -57,6 +59,8 @@ export class StoryShell {
     const active = document.activeElement as HTMLElement | null;
     const focusedAction = active?.dataset.action;
     const focusedChoice = active?.dataset.choice;
+    this.startCard?.dispose();
+    this.startCard = undefined;
     this.panel.replaceChildren();
     this.panel.hidden = state.mode === "space" && !state.dialogue;
     // Prologue and boarding panels are text-only; the context hook awaits Art's Astra and cockpit.
@@ -86,24 +90,19 @@ export class StoryShell {
       }
       this.panel.setAttribute("aria-label", state.dialogue.title);
     } else if (state.mode === "home") {
-      const heading = document.createElement("h1");
-      heading.textContent = PROTOTYPE.labels.home ?? "";
-      const portrait = document.createElement("div");
-      portrait.className = "home-portraits";
-      portrait.setAttribute("aria-hidden", "true");
-      const dog = document.createElement("span");
-      dog.className = "dog-portrait";
-      portrait.append(dog);
-      this.panel.append(heading, portrait);
-      for (const sector of state.unlocked) {
-        const node = button(PROTOTYPE.chapters[sector].name, () => this.actions.start(sector));
+      // The start screen's card: the shared card with the chapters as an action stack.
+      this.startCard = createStartCard(this.panel, {
+        chapters: state.unlocked.map((sector) => ({
+          label: PROTOTYPE.chapters[sector].name,
+          start: () => this.actions.start(sector),
+        })),
+        note: PROTOTYPE.labels.deferred ?? "",
+        title: PROTOTYPE.labels.home ?? "",
+      });
+      this.startCard.buttons.forEach((node, index) => {
         node.dataset.action = "start-sector";
-        node.dataset.sector = String(sector);
-        this.panel.append(node);
-      }
-      const deferred = document.createElement("p");
-      deferred.textContent = PROTOTYPE.labels.deferred ?? "";
-      this.panel.append(deferred);
+        node.dataset.sector = String(state.unlocked[index]);
+      });
     }
     const restore = [...this.panel.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
       focusedChoice
@@ -125,6 +124,7 @@ export class StoryShell {
   }
 
   dispose(): void {
+    this.startCard?.dispose();
     this.savingStatus.remove();
     this.status.remove();
     this.panel.remove();

@@ -112,20 +112,6 @@ button:disabled {
   box-shadow: none;
   color: #8a8a8a;
 }
-.home-portraits {
-  width: 64px;
-  height: 64px;
-  background: url("/art/portraits/ada.png") 0 0 / 128px 64px no-repeat;
-  image-rendering: pixelated;
-  margin-bottom: 16px;
-}
-.dog-portrait {
-  display: block;
-  width: 64px;
-  height: 64px;
-  margin-left: 72px;
-  background: url("/art/portraits/dog.png") 0 0 / 192px 64px no-repeat;
-}
 
 @media (orientation: portrait) and (pointer: coarse) {
   html #game-canvas {

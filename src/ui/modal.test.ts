@@ -14,6 +14,7 @@ import {
   SWITCH_ROW_PARTS,
   switchState,
   TEXT_TOKENS,
+  UI_SCOPE,
 } from "./modal.ts";
 import { buttonFrames, buttonProperty } from "./ui-skin.ts";
 
@@ -33,8 +34,8 @@ const rule = (selector: string) => {
 describe("Settings control rows", () => {
   it("hold icon, label and switch, left to right, in one control-row press target", () => {
     expect(SWITCH_ROW_PARTS).toEqual(["icon", "text", "switch"]);
-    expect(rule(".ada-controls .ada-row")).toContain(`min-height:${units(CONTROL_ROW.height)}`);
-    expect(rule(".ada-controls .ada-row")).toContain("cursor:pointer");
+    expect(rule(`${UI_SCOPE} .ada-row`)).toContain(`min-height:${units(CONTROL_ROW.height)}`);
+    expect(rule(`${UI_SCOPE} .ada-row`)).toContain("cursor:pointer");
   });
 
   it.each([
@@ -50,19 +51,19 @@ describe("Settings control rows", () => {
     const x = Object.values(sheet.frames)[from]!.frame.x;
     expect(position).toBe(x === 0 ? "0 0" : `${units(-x)} 0`);
     if (tag === "off") {
-      expect(rule(".ada-controls .ada-switch[data-tag=off]")).toContain(position);
+      expect(rule(`${UI_SCOPE} .ada-switch[data-tag=off]`)).toContain(position);
     } else {
-      expect(rule(".ada-controls .ada-switch")).toContain(
+      expect(rule(`${UI_SCOPE} .ada-switch`)).toContain(
         `background:url('/art/ui/sprites/ui-switch.png') ${position}`,
       );
     }
   });
 
   it("draws the shared focus ring its outset outside a focused row, button or close X", () => {
-    const start = MODAL_STYLE.indexOf(".ada-controls .ada-card .ada-button:focus-visible");
+    const start = MODAL_STYLE.indexOf(`${UI_SCOPE} .ada-card .ada-button:focus-visible`);
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
-    expect(focus).toContain(".ada-controls .ada-row:focus-visible");
-    expect(focus).toContain(".ada-controls .ada-close:focus-visible");
+    expect(focus).toContain(`${UI_SCOPE} .ada-row:focus-visible`);
+    expect(focus).toContain(`${UI_SCOPE} .ada-close:focus-visible`);
     expect(focus).toContain(`outline:${units(FOCUS_RING.band)} solid #ead4aa`);
     expect(focus).toContain(`outline-offset:${units(FOCUS_RING.fringe)}`);
     expect(focus).toContain(`0 0 0 ${units(FOCUS_RING.outset)} #181425`);
@@ -103,7 +104,7 @@ describe("modal buttons", () => {
   );
 
   it("is an action high with its insets inside whole-pixel slices, sinking when pressed", () => {
-    const button = rule(".ada-controls .ada-button");
+    const button = rule(`${UI_SCOPE} .ada-button`);
     expect(button).toContain(`min-height:${units(TEXT_BUTTON.height)}`);
     expect(button).toContain(`border-width:${slice(4)} ${slice(2)} ${slice(6)} ${slice(2)}`);
     // 12 down to the label's line box, 16 across, inside the 4, 2 and 6 slices; the 4 lip below.
@@ -112,46 +113,46 @@ describe("modal buttons", () => {
         16,
       )} - ${slice(6)})`,
     );
-    expect(rule(".ada-controls .ada-button:active:not(:disabled)")).toContain(
+    expect(rule(`${UI_SCOPE} .ada-button:active:not(:disabled)`)).toContain(
       `padding:calc(${units(14)} - ${slice(4)}) calc(${units(16)} - ${slice(2)}) calc(${units(
         14,
       )} - ${slice(6)})`,
     );
-    expect(rule(".ada-controls .ada-button:disabled")).toContain(TEXT_TOKENS.disabledLabel);
-    expect(rule(".ada-controls .ada-actions")).toContain(`gap:${units(SPACING.gap)}`);
-    expect(rule(".ada-controls .ada-actions")).toContain("grid-auto-columns:1fr");
+    expect(rule(`${UI_SCOPE} .ada-button:disabled`)).toContain(TEXT_TOKENS.disabledLabel);
+    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain(`gap:${units(SPACING.gap)}`);
+    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain("grid-auto-columns:1fr");
   });
 
   it("stacks groups a gap apart in the scrolling body, each at its own width and centred", () => {
-    const body = rule(".ada-controls .ada-card-body");
+    const body = rule(`${UI_SCOPE} .ada-card-body`);
     expect(body).toContain("flex-direction:column");
     expect(body).toContain("align-items:center");
     expect(body).toContain(`gap:${units(SPACING.gap)}`);
     expect(body).toContain("overflow-y:auto");
-    expect(rule(".ada-controls .ada-card")).toContain("overflow:hidden");
-    expect(rule(".ada-controls .ada-actions")).toContain("width:max-content");
-    const rows = rule(".ada-controls .ada-rows");
+    expect(rule(`${UI_SCOPE} .ada-card`)).toContain("overflow:hidden");
+    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain("width:max-content");
+    const rows = rule(`${UI_SCOPE} .ada-rows`);
     expect(rows).toContain("align-self:stretch");
     expect(rows).toContain(`gap:${units(SPACING.rowGap)}`);
   });
 
   it("reserves the close target's clearance on both sides of the title", () => {
-    expect(rule(".ada-controls .ada-card header")).toContain(`padding:0 ${units(34)}`);
+    expect(rule(`${UI_SCOPE} .ada-card header`)).toContain(`padding:0 ${units(34)}`);
   });
 
   it("draws a row's compact button as a 72x28 face with an 8 inset", () => {
-    const compact = rule(".ada-controls .ada-button.ada-compact");
+    const compact = rule(`${UI_SCOPE} .ada-button.ada-compact`);
     expect(compact).toContain(`min-width:${units(TEXT_BUTTON.compactWidth)}`);
     expect(compact).toContain(`height:${units(TEXT_BUTTON.compactHeight)}`);
     // The 2 nine-slice edge plus the padding makes the 8 inset.
     expect(compact).toContain(`padding:0 calc(${units(8)} - ${slice(2)})`);
-    expect(rule(".ada-controls .ada-row")).toContain("align-items:center");
+    expect(rule(`${UI_SCOPE} .ada-row`)).toContain("align-items:center");
   });
 
   it("keeps the end pad below the last control when a card scrolls to its end", () => {
     // Chibi's 16 padding includes the 2 frame; the trailing spacer follows the last group's gap.
-    expect(rule(".ada-controls .ada-card")).toContain(`padding:0 calc(${units(16)} - ${slice(2)})`);
-    expect(rule(".ada-controls .ada-card-body::after")).toContain(
+    expect(rule(`${UI_SCOPE} .ada-card`)).toContain(`padding:0 calc(${units(16)} - ${slice(2)})`);
+    expect(rule(`${UI_SCOPE} .ada-card-body::after`)).toContain(
       `height:calc(${units(8)} - ${slice(2)})`,
     );
   });
@@ -159,11 +160,11 @@ describe("modal buttons", () => {
 
 describe("modal text", () => {
   it("keeps notes at the body size, never widening their rows, and lets rows grow", () => {
-    expect(rule(".ada-controls .ada-setting-note")).toContain(`font-size:${units(TYPE.body.size)}`);
-    expect(rule(".ada-controls .ada-setting-note")).toContain("contain:inline-size");
-    expect(rule(".ada-controls .ada-prose")).toContain("contain:inline-size");
-    expect(rule(".ada-controls .ada-row")).toContain(`min-height:${units(CONTROL_ROW.height)}`);
-    expect(rule(".ada-controls .ada-row")).not.toMatch(/(^|;)\s*height:/);
+    expect(rule(`${UI_SCOPE} .ada-setting-note`)).toContain(`font-size:${units(TYPE.body.size)}`);
+    expect(rule(`${UI_SCOPE} .ada-setting-note`)).toContain("contain:inline-size");
+    expect(rule(`${UI_SCOPE} .ada-prose`)).toContain("contain:inline-size");
+    expect(rule(`${UI_SCOPE} .ada-row`)).toContain(`min-height:${units(CONTROL_ROW.height)}`);
+    expect(rule(`${UI_SCOPE} .ada-row`)).not.toMatch(/(^|;)\s*height:/);
   });
 
   it("uses the contract's text colours", () => {
@@ -174,15 +175,20 @@ describe("modal text", () => {
       supporting: "#b8b3c9",
       title: "#ffffff",
     });
-    expect(rule(".ada-controls .ada-card h2")).toContain(`font-size:${units(TYPE.heading.size)}`);
-    expect(rule(".ada-controls .ada-card h2")).toContain("color:#ffffff");
+    expect(rule(`${UI_SCOPE} .ada-card h2`)).toContain(`font-size:${units(TYPE.heading.size)}`);
+    expect(rule(`${UI_SCOPE} .ada-card h2`)).toContain("color:#ffffff");
+  });
+
+  it("keeps a page card's title in the padding, with no close X to clear", () => {
+    expect(rule(`${UI_SCOPE} .ada-card.ada-page-card header`)).toContain("padding:0 0px");
+    expect(UI_SCOPE).toBe(":is(.ada-controls,.ada-start)");
   });
 
   it("places the close X's 24 face 6 from the card's corner in its hitAround target", () => {
-    const close = rule(".ada-controls .ada-close");
+    const close = rule(`${UI_SCOPE} .ada-close`);
     expect(close).toContain(`top:${units(CARD_CLOSE.hit.y)}`);
     expect(close).toContain(`right:${units(-6)}`);
     expect(close).toContain(`width:${units(48)}`);
-    expect(rule(".ada-controls .ada-close::before")).toContain(`width:${units(24)}`);
+    expect(rule(`${UI_SCOPE} .ada-close::before`)).toContain(`width:${units(24)}`);
   });
 });

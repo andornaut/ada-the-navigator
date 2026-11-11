@@ -25,6 +25,7 @@ import {
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
+import { START_STYLE } from "./start-card.ts";
 import { STATION_STYLE } from "./station.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
 import { WEAPON_STYLE } from "./weapons.ts";
@@ -230,7 +231,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
-  style.textContent = STYLE + NOTICE_STYLE + STATION_STYLE + WEAPON_STYLE;
+  style.textContent = STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";

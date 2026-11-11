@@ -88,10 +88,13 @@ const CLOSE_HIT = CARD_CLOSE.hit;
 // The pause sheet's frames sit side by side.
 const PAUSE_SHEET_FRAMES = 4;
 
+// The shared card and control styles apply in the controls overlay and on the start screen.
+export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
+
 export const MODAL_STYLE = `
 /* A modal dims the whole play area; its card centres in the page safe rect, shrinks to fit and
    scrolls its body on a short screen. */
-.ada-controls .ada-modal{
+${UI_SCOPE} .ada-modal{
   position:absolute;
   inset:0;
   display:flex;
@@ -106,7 +109,7 @@ export const MODAL_STYLE = `
   box-sizing:border-box
 }
 
-.ada-controls .ada-card-frame{
+${UI_SCOPE} .ada-card-frame{
   position:relative;
   max-width:100%;
   max-height:100%;
@@ -116,7 +119,7 @@ export const MODAL_STYLE = `
 
 /* Chibi's content-fitted card (src/ui/layout sets its width and header gaps): the header and close
    X stay fixed while the body scrolls. */
-.ada-controls .ada-card{
+${UI_SCOPE} .ada-card{
   box-sizing:border-box;
   width:max-content;
   max-width:100%;
@@ -137,7 +140,7 @@ export const MODAL_STYLE = `
 }
 
 /* The title centres across the card with the close target's clearance reserved on each side. */
-.ada-controls .ada-card header{
+${UI_SCOPE} .ada-card header{
   flex:none;
   align-self:stretch;
   box-sizing:border-box;
@@ -145,9 +148,14 @@ export const MODAL_STYLE = `
   padding:0 ${units(cardTitleReserve(true) - CARD_CONTENT.padding)}
 }
 
+/* A page card has no close X, so its title keeps only the padding. */
+${UI_SCOPE} .ada-card.ada-page-card header{
+  padding:0 ${units(cardTitleReserve(false) - CARD_CONTENT.padding)}
+}
+
 /* The scroll group: groups stack a gap apart, each at its own width, centred in the inner width.
    A scrolling body reserves a gap and a track on its right, inside the padding. */
-.ada-controls .ada-card-body{
+${UI_SCOPE} .ada-card-body{
   flex:0 1 auto;
   min-height:0;
   overflow-x:hidden;
@@ -160,16 +168,16 @@ export const MODAL_STYLE = `
   margin-top:var(--body-gap,0);
   scrollbar-color:#9690b4 #2f2d3d
 }
-.ada-controls .ada-card-body::-webkit-scrollbar,
-.ada-controls .ada-scroll::-webkit-scrollbar{
+${UI_SCOPE} .ada-card-body::-webkit-scrollbar,
+${UI_SCOPE} .ada-scroll::-webkit-scrollbar{
   width:${units(SCROLL.gap + SCROLL.track)}
 }
-.ada-controls .ada-card-body::-webkit-scrollbar-track,
-.ada-controls .ada-scroll::-webkit-scrollbar-track{
+${UI_SCOPE} .ada-card-body::-webkit-scrollbar-track,
+${UI_SCOPE} .ada-scroll::-webkit-scrollbar-track{
   background:linear-gradient(to right,transparent ${units(SCROLL.gap)},#2f2d3d ${units(SCROLL.gap)})
 }
-.ada-controls .ada-card-body::-webkit-scrollbar-thumb,
-.ada-controls .ada-scroll::-webkit-scrollbar-thumb{
+${UI_SCOPE} .ada-card-body::-webkit-scrollbar-thumb,
+${UI_SCOPE} .ada-scroll::-webkit-scrollbar-thumb{
   background:#9690b4;
   background-clip:padding-box;
   border:solid transparent;
@@ -180,22 +188,22 @@ export const MODAL_STYLE = `
 
 /* The last control keeps the end pad below it at the scroll end: the frame and the last gap
    count toward it. */
-.ada-controls .ada-card-body::after{
+${UI_SCOPE} .ada-card-body::after{
   content:"";
   flex:none;
   height:${lessSlice(SCROLL.endPad - CARD_CONTENT.gap, CARD_SLICE)}
 }
 
-.ada-controls .ada-card-body > *{
+${UI_SCOPE} .ada-card-body > *{
   flex:none;
   max-width:100%
 }
 
 /* A card with a named scroll group scrolls only that group; its other groups stay in view. */
-.ada-controls .ada-card-body.ada-has-scroll{
+${UI_SCOPE} .ada-card-body.ada-has-scroll{
   overflow-y:hidden
 }
-.ada-controls .ada-card-body > .ada-scroll{
+${UI_SCOPE} .ada-card-body > .ada-scroll{
   flex:0 1 auto;
   min-height:0;
   overflow-y:auto;
@@ -204,12 +212,13 @@ export const MODAL_STYLE = `
 }
 
 /* Prose never widens a card: it wraps to the inner width the other groups and the floor set. */
-.ada-controls .ada-prose{
+${UI_SCOPE} .ada-prose{
   contain:inline-size;
   align-self:stretch
 }
 
-.ada-controls .ada-card h2{
+${UI_SCOPE} .ada-card h1,
+${UI_SCOPE} .ada-card h2{
   font-size:${units(TYPE.heading.size)};
   line-height:${units(TYPE.heading.lineHeight)};
   text-align:center;
@@ -219,7 +228,7 @@ export const MODAL_STYLE = `
   overflow-wrap:anywhere
 }
 
-.ada-controls .ada-card h3{
+${UI_SCOPE} .ada-card h3{
   margin:0;
   font-size:${units(TYPE.label.size)};
   line-height:${units(TYPE.label.lineHeight)};
@@ -227,13 +236,13 @@ export const MODAL_STYLE = `
   color:${TEXT_TOKENS.title}
 }
 
-.ada-controls .ada-card p{
+${UI_SCOPE} .ada-card p{
   margin:0;
   color:${TEXT_TOKENS.supporting}
 }
 
 /* The close X: a 24 face closeInset from the card's top and right, in its hitAround target. */
-.ada-controls .ada-close{
+${UI_SCOPE} .ada-close{
   position:absolute;
   top:${units(CLOSE_HIT.y)};
   right:${units(CLOSE_HIT.x)};
@@ -250,7 +259,7 @@ export const MODAL_STYLE = `
   cursor:pointer;
   pointer-events:auto
 }
-.ada-controls .ada-close::before{
+${UI_SCOPE} .ada-close::before{
   content:"";
   width:${units(CARD_CLOSE.art.width)};
   height:${units(CARD_CLOSE.art.height)};
@@ -259,13 +268,13 @@ export const MODAL_STYLE = `
   )};
   image-rendering:pixelated
 }
-.ada-controls .ada-close:active::before{
+${UI_SCOPE} .ada-close:active::before{
   background-position:${units(-CARD_CLOSE.art.width)} 0
 }
 
 /* Buttons: 48 high, a 44 face over a 4 lip; pressed sinks 2; disabled is flat. A wrapped label
    grows the face by a line box per line. */
-.ada-controls .ada-button{
+${UI_SCOPE} .ada-button{
   box-sizing:border-box;
   min-width:${units(TEXT_BUTTON.height)};
   height:auto;
@@ -288,19 +297,19 @@ export const MODAL_STYLE = `
   cursor:pointer;
   pointer-events:auto
 }
-.ada-controls .ada-button.ada-primary{
+${UI_SCOPE} .ada-button.ada-primary{
   background:#bfa06f;
   border-color:#bfa06f #bfa06f #8a7148;
   border-image-source:var(--ui-button-primary-normal)
 }
-.ada-controls .ada-button:active:not(:disabled){
+${UI_SCOPE} .ada-button:active:not(:disabled){
   padding:${SUNK_PADDING};
   border-image-source:var(--ui-button-pressed)
 }
-.ada-controls .ada-button.ada-primary:active:not(:disabled){
+${UI_SCOPE} .ada-button.ada-primary:active:not(:disabled){
   border-image-source:var(--ui-button-primary-pressed)
 }
-.ada-controls .ada-button:disabled{
+${UI_SCOPE} .ada-button:disabled{
   padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
   background:#2f2d3d;
@@ -308,13 +317,13 @@ export const MODAL_STYLE = `
   border-image-source:var(--ui-button-disabled);
   cursor:default
 }
-.ada-controls .ada-button.ada-primary:disabled{
+${UI_SCOPE} .ada-button.ada-primary:disabled{
   border-image-source:var(--ui-button-primary-disabled)
 }
 
 /* An unavailable action keeps the disabled face but stays pressable, so it can refuse. */
-.ada-controls .ada-button.ada-unavailable,
-.ada-controls .ada-button.ada-unavailable:active{
+${UI_SCOPE} .ada-button.ada-unavailable,
+${UI_SCOPE} .ada-button.ada-unavailable:active{
   padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
   background:#2f2d3d;
@@ -324,20 +333,20 @@ export const MODAL_STYLE = `
 }
 
 /* An action stack fills the card's inner width, its faces a gap apart. */
-.ada-controls .ada-actions.ada-stack{
+${UI_SCOPE} .ada-actions.ada-stack{
   grid-auto-flow:row;
   align-self:stretch;
   width:auto;
   gap:${units(CARD_CONTENT.gap)}
 }
 
-.ada-controls .ada-card .ada-card-note{
+${UI_SCOPE} .ada-card .ada-card-note{
   text-align:center
 }
 
 /* Chibi's pause button: the 35 frame on the HUD safe rect's top-left corner, in its hitAround
    press area. */
-.ada-controls .ada-pause{
+${UI_SCOPE} .ada-pause{
   position:absolute;
   left:${fromSafeEdge("left", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.x)};
   top:${fromSafeEdge("top", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.y)};
@@ -354,7 +363,7 @@ export const MODAL_STYLE = `
   pointer-events:auto;
   touch-action:none
 }
-.ada-controls .ada-pause::before{
+${UI_SCOPE} .ada-pause::before{
   content:"";
   width:${units(PAUSE_BUTTON.art.width)};
   height:${units(PAUSE_BUTTON.art.height)};
@@ -364,11 +373,11 @@ export const MODAL_STYLE = `
   )};
   image-rendering:pixelated
 }
-.ada-controls .ada-pause:focus-visible{${FOCUS_STYLE}
+${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
 /* An action row shares one width, the widest label plus the insets, a gap apart, centred. */
-.ada-controls .ada-actions{
+${UI_SCOPE} .ada-actions{
   display:grid;
   grid-auto-columns:1fr;
   grid-auto-flow:column;
@@ -380,7 +389,7 @@ export const MODAL_STYLE = `
 
 /* Control rows: measured at their widest label row, then filling the inner width so their notes
    wrap there; rows a row gap apart. */
-.ada-controls .ada-rows{
+${UI_SCOPE} .ada-rows{
   display:grid;
   grid-auto-rows:max-content;
   gap:${units(CARD_CONTENT.rowGap)};
@@ -389,21 +398,21 @@ export const MODAL_STYLE = `
 
 /* Chibi's compact exception for a button inside a control row: a 72x28 face, wider when its label
    and compact insets need it, full-size label; the whole row stays the target. */
-.ada-controls .ada-button.ada-compact{
+${UI_SCOPE} .ada-button.ada-compact{
   flex:none;
   min-width:${units(TEXT_BUTTON.compactWidth)};
   height:${units(TEXT_BUTTON.compactHeight)};
   min-height:${units(TEXT_BUTTON.compactHeight)};
   padding:0 ${COMPACT_SIDE}
 }
-.ada-controls .ada-button.ada-compact:active:not(:disabled){
+${UI_SCOPE} .ada-button.ada-compact:active:not(:disabled){
   padding:0 ${COMPACT_SIDE};
   border-image-source:var(--ui-button-pressed)
 }
 
 /* Control rows: at least 48 high (their text plus a row gap above and below), icon, label and
    action; the whole row is the press target. */
-.ada-controls .ada-row{
+${UI_SCOPE} .ada-row{
   box-sizing:border-box;
   display:flex;
   align-items:center;
@@ -422,7 +431,7 @@ export const MODAL_STYLE = `
   pointer-events:auto
 }
 
-.ada-controls .ada-switch{
+${UI_SCOPE} .ada-switch{
   flex:none;
   width:${units(CONTROL_ROW.switch.width)};
   height:${units(CONTROL_ROW.switch.height)};
@@ -431,11 +440,11 @@ export const MODAL_STYLE = `
   )} ${units(CONTROL_ROW.switch.height)};
   image-rendering:pixelated
 }
-.ada-controls .ada-switch[data-tag=off]{
+${UI_SCOPE} .ada-switch[data-tag=off]{
   background-position:${units(-CONTROL_ROW.switch.width)} 0
 }
 
-.ada-controls .ada-icon{
+${UI_SCOPE} .ada-icon{
   flex:none;
   width:${units(CONTROL_ROW.icon)};
   height:${units(CONTROL_ROW.icon)};
@@ -443,7 +452,7 @@ export const MODAL_STYLE = `
   image-rendering:pixelated
 }
 
-.ada-controls .ada-setting-text{
+${UI_SCOPE} .ada-setting-text{
   flex:1;
   display:grid;
   padding:${units(CONTROL_ROW.textInset)} 0;
@@ -452,7 +461,7 @@ export const MODAL_STYLE = `
 
 /* Supporting text keeps the body size, as in Chibi: it wraps and its row grows instead, and never
    widens the rows. */
-.ada-controls .ada-setting-note{
+${UI_SCOPE} .ada-setting-note{
   contain:inline-size;
   font-size:${units(TYPE.body.size)};
   line-height:${units(TYPE.body.lineHeight)};
@@ -460,7 +469,7 @@ export const MODAL_STYLE = `
 }
 
 /* Install steps: the row icons, a gap, then the wrapped body text. */
-.ada-controls .ada-steps{
+${UI_SCOPE} .ada-steps{
   display:flex;
   align-items:center;
   gap:${units(CONTROL_ROW.gap)};
@@ -469,29 +478,29 @@ export const MODAL_STYLE = `
 
 /* Cheats: per scope a heading, its persistence, then items a gap apart, each a button with its
    description a row gap below. */
-.ada-controls .ada-cheat-section{
+${UI_SCOPE} .ada-cheat-section{
   display:flex;
   flex-direction:column;
   gap:${units(CARD_CONTENT.rowGap)};
   align-self:stretch
 }
-.ada-controls .ada-cheat-items{
+${UI_SCOPE} .ada-cheat-items{
   display:flex;
   flex-direction:column;
   gap:${units(CARD_CONTENT.gap)}
 }
-.ada-controls .ada-cheat-item{
+${UI_SCOPE} .ada-cheat-item{
   display:flex;
   flex-direction:column;
   gap:${units(CARD_CONTENT.rowGap)}
 }
 
-.ada-controls .ada-card .ada-button:focus-visible,
-.ada-controls .ada-row:focus-visible,
-.ada-controls .ada-close:focus-visible{${FOCUS_STYLE}
+${UI_SCOPE} .ada-card .ada-button:focus-visible,
+${UI_SCOPE} .ada-row:focus-visible,
+${UI_SCOPE} .ada-close:focus-visible{${FOCUS_STYLE}
 }
 
-.ada-controls [hidden]{
+${UI_SCOPE} [hidden]{
   display:none!important
 }
 `;
@@ -520,9 +529,9 @@ function logicalSize(element: HTMLElement, unit: number): { height: number; widt
 // Fits a shown card: measures each visible group and the title at their natural widths in logical
 // px, sets the card's width, then the title's top and the body's gap so the header's gaps balance.
 // A group's data-ink-top gives the distance from its top to its first visible content.
-function fitCard(parts: Pick<CardParts, "body" | "card" | "title">): void {
+function fitCard(parts: Pick<CardParts, "body" | "card" | "title">, close: boolean): void {
   const { body, card, title } = parts;
-  const layer = card.closest<HTMLElement>(".ada-modal");
+  const layer = card.closest<HTMLElement>(".ada-modal, .ada-start");
   if (!layer || card.getClientRects().length === 0) {
     return;
   }
@@ -547,13 +556,13 @@ function fitCard(parts: Pick<CardParts, "body" | "card" | "title">): void {
   const width = cardWidth(
     availableWidth,
     groups.map((group) => logicalSize(group, unit).width),
-    text ? { close: true, width: titleWidth } : undefined,
+    text ? { close, width: titleWidth } : undefined,
   );
   card.style.width = units(width);
   const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
   const { bodyTop, titleTop } = cardHeaderLayout(
-    true,
+    close,
     first ? Number(first.dataset.inkTop ?? 0) : undefined,
     titleHeight,
   );
@@ -562,23 +571,31 @@ function fitCard(parts: Pick<CardParts, "body" | "card" | "title">): void {
   card.style.setProperty("--body-gap", units(bodyTop - titleTop - (titleHeight ?? 0)));
 }
 
-// A dialog card in its frame, with its title, close X and scrolling body. Show or hide it through
-// frame.hidden.
-export function createCard(options: {
-  readonly closeAction: string;
-  readonly closeLabel: string;
-  readonly fontRole?: string;
-  readonly title: string;
-}): CardParts {
+// A card in its frame, with its title and scrolling body: a dialog with its close X, or a page
+// card (the start screen) with its title as the page heading and no close X. Show or hide it
+// through frame.hidden.
+export function createCard(
+  options:
+    | {
+        readonly closeAction: string;
+        readonly closeLabel: string;
+        readonly fontRole?: string;
+        readonly title: string;
+      }
+    | { readonly fontRole?: string; readonly page: true; readonly title: string },
+): CardParts {
+  const page = "page" in options;
   const frame = document.createElement("div");
   frame.className = "ada-card-frame";
   const card = document.createElement("section");
-  card.className = "ada-card";
-  frame.setAttribute("role", "dialog");
-  frame.setAttribute("aria-modal", "true");
+  card.className = page ? "ada-card ada-page-card" : "ada-card";
+  if (!page) {
+    frame.setAttribute("role", "dialog");
+    frame.setAttribute("aria-modal", "true");
+  }
   frame.setAttribute("aria-label", options.title);
   const header = document.createElement("header");
-  const title = document.createElement("h2");
+  const title = document.createElement(page ? "h1" : "h2");
   title.textContent = options.title;
   if (options.fontRole) {
     title.dataset.fontRole = options.fontRole;
@@ -590,10 +607,14 @@ export function createCard(options: {
   const close = document.createElement("button");
   close.type = "button";
   close.className = "ada-close";
-  close.dataset.action = options.closeAction;
-  close.setAttribute("aria-label", options.closeLabel);
-  frame.append(card, close);
-  const fit = () => fitCard({ body, card, title });
+  if (page) {
+    frame.append(card);
+  } else {
+    close.dataset.action = options.closeAction;
+    close.setAttribute("aria-label", options.closeLabel);
+    frame.append(card, close);
+  }
+  const fit = () => fitCard({ body, card, title }, !page);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {
