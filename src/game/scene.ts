@@ -508,13 +508,14 @@ export class PrototypeScene extends Phaser.Scene {
         buttonLabel: PROTOTYPE.labels.pause ?? "",
         labels: {
           close: PROTOTYPE.labels.close ?? "",
-          destinations: PROTOTYPE.labels.destinations ?? "",
+          map: PROTOTYPE.labels.map ?? "",
+          mapPercent: PROTOTYPE.labels.mapPercent ?? "",
           resume: PROTOTYPE.labels.resume ?? "",
           returnHome: PROTOTYPE.labels.returnHome ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
           title: PROTOTYPE.labels.pauseTitle ?? "",
-          travel: PROTOTYPE.labels.travel ?? "",
           travelEmpty: PROTOTYPE.labels.travelEmpty ?? "",
+          travelHere: PROTOTYPE.labels.travelHere ?? "",
           travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
         },
         onReturnHome: () => {
@@ -933,10 +934,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
-    this.controls.setTravel({
-      destinations: this.model.destinations(),
-      inDanger: this.model.inDanger,
-    });
+    this.controls.setPause({ inDanger: this.model.inDanger, map: this.model.map });
     this.shell.render(state, screen);
     const flightGalaxy = state.mode === "space" ? state.flight?.sector : undefined;
     this.palette = (flightGalaxy && this.galaxyPalettes.get(flightGalaxy)) || this.basePalette;

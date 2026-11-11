@@ -17,6 +17,7 @@ import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
 import * as galaxySelectCard from "../src/ui/layout/galaxySelectCard.ts";
 import * as hitAreas from "../src/ui/layout/hitAreas.ts";
+import * as mapCard from "../src/ui/layout/mapCard.ts";
 import * as playView from "../src/ui/layout/playView.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as storyPage from "../src/ui/layout/storyPage.ts";
@@ -33,6 +34,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "css.ts": css,
   "galaxySelectCard.ts": galaxySelectCard,
   "hitAreas.ts": hitAreas,
+  "mapCard.ts": mapCard,
   "playView.ts": playView,
   "shopCard.ts": shopCard,
   "storyPage.ts": storyPage,
@@ -299,6 +301,30 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("css.ts", "viewProperty slice", css.VIEW_PROPERTIES.slice, edge);
   }
   call("css.ts", "viewStyle", css.viewStyle, controls.WHOLE_PX_EDGES);
+  // The map chart: projections, a lone place, close places and a spread galaxy.
+  for (const point of [
+    { x: 0, y: 0 },
+    { x: 1000, y: 0 },
+    { x: 0, y: 1000 },
+    { x: -2500, y: 4000 },
+  ]) {
+    call("mapCard.ts", "chartProjection", mapCard.chartProjection, point);
+  }
+  for (const points of [
+    [],
+    [{ x: 300, y: 700 }],
+    [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ],
+    [
+      { x: 0, y: 0 },
+      { x: 20000, y: -5000 },
+      { x: -8000, y: 12000 },
+    ],
+  ]) {
+    call("mapCard.ts", "chartPoints", mapCard.chartPoints, points);
+  }
 }
 
 /** The dump: each module's constants, and every function case's arguments and result. */

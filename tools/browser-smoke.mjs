@@ -803,11 +803,11 @@ try {
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
   const refused = await Promise.all(
-    ["travel", "returnHome"].map((action) =>
+    ["map", "returnHome"].map((action) =>
       page.locator(`[data-action="pause-${action}"]`).getAttribute("aria-disabled"),
     ),
   );
-  assert.deepEqual(refused, ["true", "true"], "Travel and Return home refuse in danger");
+  assert.deepEqual(refused, [null, "true"], "In danger Map still opens and Return home refuses");
   await page
     .locator('[data-dialog="pause"]')
     .getByText(PROTOTYPE.labels.travelUnavailable, { exact: true })
@@ -820,10 +820,28 @@ try {
     1,
     "A refused Return home keeps the flight",
   );
+  // Map opens in danger and shows how much is mapped; nothing undiscovered appears.
+  await page.locator('[data-action="pause-map"]').click();
+  const mapCard = page.locator('[data-dialog="map"]');
+  await mapCard.waitFor({ state: "visible" });
+  assert.match(
+    (await mapCard.locator(".ada-map-percent").textContent()) ?? "",
+    /^\d+% mapped$/u,
+    "Map shows the percent mapped",
+  );
+  const known = dangerInput.state.progress[dangerInput.state.flight.sector];
+  assert.ok(
+    (await mapCard.locator(".ada-map-place").count()) <= known.known.length + known.stations.length,
+    "Map shows only discovered places",
+  );
+  await page.keyboard.press("Escape");
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  assert.equal(await mapCard.isVisible(), false, "Back and Escape close Map to the Paused card");
   await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
-    "Danger blocks travel and exposes no inapplicable or duplicate contextual control",
+    "Danger blocks Return home, Map still opens with its percent and closes on Escape, and " +
+      "no inapplicable or duplicate contextual control shows",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });

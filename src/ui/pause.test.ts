@@ -6,33 +6,32 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createBackStack, pressBack } from "./back-stack.ts";
 import {
   escapeTarget,
+  mapShowsEmpty,
   PAUSE_ART,
   pauseActions,
   pauseButtonShown,
   pauseFrames,
   pausePose,
-  travelShowsEmpty,
 } from "./pause.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("stacks Resume (primary), Travel, Settings and Return home", () => {
+  it("stacks Resume (primary), Map, Settings and Return home", () => {
     expect(pauseActions(false).map(({ id, role }) => [id, role])).toEqual([
       ["resume", "primary"],
-      ["travel", "secondary"],
+      ["map", "secondary"],
       ["settings", "secondary"],
       ["returnHome", "secondary"],
     ]);
     expect(pauseActions(false).every(({ available }) => available)).toBe(true);
   });
 
-  it("keeps Travel and Return home visible but unavailable in danger", () => {
+  it("keeps Return home visible but unavailable in danger, and Map available", () => {
     const actions = pauseActions(true);
     expect(actions).toHaveLength(4);
     expect(actions.filter(({ available }) => !available).map(({ id }) => id)).toEqual([
-      "travel",
       "returnHome",
     ]);
   });
@@ -44,14 +43,19 @@ describe("Paused card", () => {
     expect(PROTOTYPE.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
     expect(PROTOTYPE.labels.toronto).toBeUndefined();
     expect(PROTOTYPE.labels.travelEmpty).toBe("No destinations mapped yet.");
+    expect(PROTOTYPE.labels.map).toBe("Map");
+    expect(PROTOTYPE.labels.mapPercent).toBe("{percent}% mapped");
+    expect(PROTOTYPE.labels.travelHere).toBe("Travel here");
+    expect(PROTOTYPE.labels.travel).toBeUndefined();
+    expect(PROTOTYPE.labels.destinations).toBeUndefined();
     expect(JSON.stringify(PROTOTYPE)).not.toContain("Toronto");
   });
 });
 
-describe("Travel card", () => {
-  it("says no destinations are mapped yet until one is discovered", () => {
-    expect(travelShowsEmpty([])).toBe(true);
-    expect(travelShowsEmpty([{ id: "workshop", label: "Workshop" }])).toBe(false);
+describe("Map card", () => {
+  it("says no destinations are mapped yet until a place is discovered", () => {
+    expect(mapShowsEmpty([])).toBe(true);
+    expect(mapShowsEmpty([{ id: "workshop", label: "Workshop" }])).toBe(false);
   });
 });
 
@@ -95,14 +99,14 @@ describe("Escape and back", () => {
 
   it("open the Paused card in flight, and close Settings back to it", () => {
     const stack = createBackStack();
-    const cards = { pause: false, settings: false, travel: false };
+    const cards = { map: false, pause: false, settings: false };
     const layer = (key: keyof typeof cards, back: () => void) =>
       stack.register({ back, isOpen: () => cards[key] });
     layer("pause", () => {
       cards.pause = false;
     });
-    layer("travel", () => {
-      cards.travel = false;
+    layer("map", () => {
+      cards.map = false;
       cards.pause = true;
     });
     layer("settings", () => {
@@ -116,7 +120,7 @@ describe("Escape and back", () => {
     cards.pause = false;
     cards.settings = true;
     expect(pressBack(stack, true, pause)).toBe("closed");
-    expect(cards).toEqual({ pause: true, settings: false, travel: false });
+    expect(cards).toEqual({ map: false, pause: true, settings: false });
     expect(pressBack(stack, true, pause)).toBe("closed");
     expect(cards.pause).toBe(false);
     expect(pause).toHaveBeenCalledOnce();

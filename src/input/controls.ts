@@ -81,7 +81,7 @@ export interface Controls {
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
-  setTravel(state: PauseState): void;
+  setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
   setStatus(view: StatusView): void;
   setWeapons(weapons: readonly WeaponChoice[]): void;
@@ -285,9 +285,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const leaveBack = [
     backStack.register({
       back: () => pause.close(),
-      isOpen: () => pause.isOpen() && !pause.travelOpen(),
+      isOpen: () => pause.isOpen() && !pause.mapOpen(),
     }),
-    backStack.register({ back: () => pause.closeTravel(), isOpen: () => pause.travelOpen() }),
+    backStack.register({ back: () => pause.closeMap(), isOpen: () => pause.mapOpen() }),
     backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
     backStack.register({
       back: () => settings.close(),
@@ -452,13 +452,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
 
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
+    setPause: (view) => pause.setState(view),
     setSettingsButton(shown) {
       settingsButton = shown;
       settings.openButton.hidden = !shown;
       settings.root.classList.toggle("ada-no-settings-button", !shown);
     },
     setStatus: (view) => status.setStatus(view, performance.now()),
-    setTravel: (travel) => pause.setState(travel),
     setWeapons(choices) {
       weapons.setWeapons(choices);
     },

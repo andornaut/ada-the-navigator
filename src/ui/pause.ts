@@ -1,8 +1,8 @@
 // Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
-// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with Resume, Travel,
+// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with Resume, Map,
 // Settings and Return home stacked full width.
 
-export type PauseAction = "resume" | "returnHome" | "settings" | "travel";
+export type PauseAction = "map" | "resume" | "returnHome" | "settings";
 
 export interface PauseActionView {
   // Whether the action acts; an unavailable one shows the disabled face and refuses.
@@ -11,19 +11,20 @@ export interface PauseActionView {
   readonly role: "primary" | "secondary";
 }
 
-// The Paused card's actions, top to bottom. In danger, Travel and Return home are unavailable.
+// The Paused card's actions, top to bottom. In danger, Return home is unavailable; Map still
+// opens, where Travel here is unavailable instead.
 export function pauseActions(inDanger: boolean): readonly PauseActionView[] {
   return [
     { available: true, id: "resume", role: "primary" },
-    { available: !inDanger, id: "travel", role: "secondary" },
+    { available: true, id: "map", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
     { available: !inDanger, id: "returnHome", role: "secondary" },
   ];
 }
 
-// The Travel card lists the discovered destinations, or says none are mapped yet.
-export function travelShowsEmpty(destinations: readonly unknown[]): boolean {
-  return destinations.length === 0;
+// The Map card says no destinations are mapped yet until a place is discovered.
+export function mapShowsEmpty(places: readonly unknown[]): boolean {
+  return places.length === 0;
 }
 
 // The pause button is a touch control shown only in flight; on a fine pointer Escape pauses.

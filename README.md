@@ -28,8 +28,9 @@ weapons: Basic, always available, and five upgrades (Rapid Missile, Multi-Laser,
 Heavy Missile, Scattershot and Phaser). Each has three levels and fires from the
 ship's nose without ammunition. Enemies, asteroids and discovery caches release
 Stardust, which station shops exchange for weapons, weapon levels, ship upgrades
-and paint schemes; enemies also drop weapons rarely. The Paused card's Travel
-reaches known destinations and discovered stations outside danger. Space draws
+and paint schemes; enemies also drop weapons rarely. The Paused card's Map shows
+the galaxy's discovered destinations and stations and how much of it is mapped;
+Travel here reaches a chosen one outside danger. Space draws
 authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
 discovery caches, the holodisk and its beacon, Stardust, weapon pickups, missiles,
 blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,
@@ -58,7 +59,7 @@ Prototype input mappings:
 | Right touch joystick     | Aim and fire while deflected                                                   |
 | Contextual action button | Talk, deliver or deposit when available                                        |
 
-The Paused card offers Resume, Travel, Settings and Return home.
+The Paused card offers Resume, Map, Settings and Return home.
 
 Mobile uses independent twin joysticks. Centering the aim stick stops firing;
 without aim input, the ship faces its movement direction.

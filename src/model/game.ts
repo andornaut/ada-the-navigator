@@ -27,6 +27,7 @@ import {
   objectiveDestination,
   questItemDestination,
 } from "./indicators.ts";
+import { type GalaxyMap, galaxyMap, NO_LANDMARKS } from "./map.ts";
 import { restoreSave } from "./save.ts";
 import {
   buy,
@@ -759,15 +760,36 @@ export class GameModel {
     return indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
       holodiskWaypoint: this.holodiskWaypoint,
-      objective: objectiveDestination(
-        f.sector,
-        p,
-        p.deposited >= this.content.tuning.miningMilestones[1],
-      ),
+      objective: this.objectiveId(f.sector),
       progress: p,
       questItem: questItemDestination(p),
       sector: f.sector,
     });
+  }
+  /**
+   * The pause menu's Map of the current galaxy (map.ts), or null outside a flight. Landmarks join
+   * through NO_LANDMARKS's slot once the landmark model charts them.
+   */
+  get map(): GalaxyMap | null {
+    const f = this.state.flight;
+    if (!f || this.state.mode !== "space") {
+      return null;
+    }
+    const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
+    return galaxyMap({
+      catalog: ECONOMY,
+      destinations: galaxyRoute(f.sector),
+      flight: f,
+      label: (id) => labels.get(id) ?? id,
+      landmarks: NO_LANDMARKS,
+      objective: this.objectiveId(f.sector),
+      progress: this.current,
+    });
+  }
+  /** The current objective's destination in a galaxy, if it has one (indicators.ts). */
+  private objectiveId(sector: SectorId): string | null {
+    const p = this.current;
+    return objectiveDestination(sector, p, p.deposited >= this.content.tuning.miningMilestones[1]);
   }
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {
