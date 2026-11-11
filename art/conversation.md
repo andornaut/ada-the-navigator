@@ -8,10 +8,10 @@ the root manifest. Reused sources and checksums are in [Portraits](portraits.md)
 
 ## Sizes
 
-| Use              | Frame | Drawn                   | Sheets               |
-| ---------------- | ----: | ----------------------- | -------------------- |
-| Storybook panel  |    32 | 2x (64) in the 68 frame | `{name}.png`         |
-| Conversation box |    22 | 2x (44) in the 48 frame | `{name}-compact.png` |
+| Use              | Frame | Drawn                                     | Sheets               |
+| ---------------- | ----: | ----------------------------------------- | -------------------- |
+| Storybook panel  |    32 | 2x (64) in the 68 frame                   | `{name}.png`         |
+| Conversation box |    22 | 2x (44) centred in the 48 slot (52 frame) | `{name}-compact.png` |
 
 - Every frame is untrimmed and square on a clear ground; the box or panel draws
   the frame (2 ink `#181425` edge, navy `#262b44` face). Always integer scale,

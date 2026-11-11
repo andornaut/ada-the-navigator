@@ -138,20 +138,22 @@ The in-flight conversation box is not modal: it draws no dim and leaves the
 HUD visible and live. Geometry is `CONVERSATION_BOX` in
 [Layout](layout.md#conversation-box).
 
-| Token              | Colour    | Use                                           |
-| ------------------ | --------- | --------------------------------------------- |
-| Conversation panel | `#181425` | Ink panel at alpha 0.70                       |
-| Portrait edge      | `#181425` | 2 px frame edge, opaque                       |
-| Portrait face      | `#262b44` | Frame face behind the portrait's clear pixels |
-| Ada tab            | `#70ace8` | Her ship's blue accent                        |
-| Astra tab          | `#ffc9a8` | Her warm core                                 |
-| Penny tab          | `#feae34` | Her golden coat                               |
-| Unknown voice tab  | `#b8b3c9` | General Gadget before he is named             |
-| General Gadget tab | `#d68b72` | The drones' coral hull                        |
+| Token              | Colour    | Use                                          |
+| ------------------ | --------- | -------------------------------------------- |
+| Conversation panel | `#181425` | Ink panel at alpha 0.70                      |
+| Portrait edge      | `#181425` | 2 px frame edge, opaque                      |
+| Portrait face      | `#262b44` | Slot face behind the portrait's clear pixels |
+| Tab edge           | `#181425` | 1 px name tab edge, opaque                   |
+| Ada tab            | `#70ace8` | Her ship's blue accent                       |
+| Astra tab          | `#ffc9a8` | Her warm core                                |
+| Penny tab          | `#feae34` | Her golden coat                              |
+| Unknown voice tab  | `#b8b3c9` | General Gadget before he is named            |
+| General Gadget tab | `#d68b72` | The drones' coral hull                       |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
-cream.
+cream. The name tab overhangs the panel's top edge by 10, so its upper half
+sits on open space.
 
 | Text           | Colour    | Ground                                       | Contrast |
 | -------------- | --------- | -------------------------------------------- | -------- |
@@ -167,6 +169,18 @@ The panel at 0.70 over pure white composites to `#5d5a66`, the brightest
 possible ground; 0.70 is the lowest alpha, to two decimals, that keeps the line
 at 4.5:1 over white (0.69 gives 4.45:1). Every galaxy field and space object
 composites darker, so the line never drops below 4.61:1.
+
+| Tab            | Fill      | On the field `#292734` | On Sunflower `#332712` | On the panel over `#332712` |
+| -------------- | --------- | ---------------------- | ---------------------- | --------------------------- |
+| Ada            | `#70ace8` | 6.11:1                 | 6.08:1                 | 7.12:1                      |
+| Astra          | `#ffc9a8` | 9.88:1                 | 9.84:1                 | 11.53:1                     |
+| Penny          | `#feae34` | 7.89:1                 | 7.86:1                 | 9.21:1                      |
+| Unknown voice  | `#b8b3c9` | 7.20:1                 | 7.17:1                 | 8.41:1                      |
+| General Gadget | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.34:1                      |
+
+Over white the fills alone fall to 1.48:1 (Astra) to 2.69:1 (General Gadget);
+the 1 ink edge holds 18.02:1 there, so the tab's outline reads over every
+backdrop.
 
 ## Status pill
 
