@@ -292,17 +292,23 @@ token above; strings are Gameplay's.
 
 ### Cards
 
-| Screen                  | Groups (top to bottom)                                                                                                                                                                                                                         | Scroll group |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Settings                | Header, close. Control rows (switch rows, then the Install row with its compact action). Cheats launcher (single action). Build label, supporting                                                                                              | Rows         |
-| Install steps           | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart, height fits text (not controls)                                                                                                             | Steps        |
-| Update offer            | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
-| Cheats                  | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused                  | Header, close. Action stack: Resume (primary), Travel, Settings, Return home. Danger note (supporting prose) when shown                                                                                                                        | None         |
-| Discovered destinations | Header, close (returns to Paused). Action stack of destinations, or the empty note (supporting prose)                                                                                                                                          | Stack        |
-| Station card            | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Shop                                                                                                                                                          | None         |
-| Shop                    | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
-| Buy confirm             | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
+| Screen        | Groups (top to bottom)                                                                                                                                                                                                                         | Scroll group |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Settings      | Header, close. Control rows (switch rows, then the Install row with its compact action). Cheats launcher (single action). Build label, supporting                                                                                              | Rows         |
+| Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart, height fits text (not controls)                                                                                                             | Steps        |
+| Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
+| Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
+| Paused        | Header, close. Action stack: Resume (primary), Map, Settings, Return home. Danger note (supporting prose) when shown                                                                                                                           | None         |
+| Station card  | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Shop                                                                                                                                                          | None         |
+| Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
+| Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
+
+Map, from the Paused card, is a full-screen map rather than a card: the
+galaxy's field under the insets, a header panel on the HUD rect's top-left, a
+column of `HUD_BUTTON` tools on its top-right and the place panel on the
+available rect's bottom. Its tokens (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`),
+fit, press areas and states are in [Map](map.md). Close, back and Escape return
+to Paused.
 
 The balance is one centred group: `icon-stardust-20`, `SPACING.markGap`, the
 amount in `TYPE.label`, on a 20 line. The shop's row and well geometry is in
@@ -464,6 +470,7 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                         | 640x64, 48 frame, name tab inside over one line                                     |
 | Story pages use `STORY_PANEL`                                                                                                  | `.story-panel` clamp and rem sizes                                                  |
 | Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                          | 16; a 24 line                                                                       |
+| Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                     | A 288x160 chart in a Map card (`MAP_CARD`)                                          |
 
 ## Exceptions
 

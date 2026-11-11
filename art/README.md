@@ -48,6 +48,8 @@ schema, with paths relative to `/art/ui/`; it is separate from the prototype
 every screen's groups. [Controls](controls.md) is the button, switch, focus
 and refusal contract.
 [Station and shop](shop.md) lays out the station card, shop and buy confirm.
+[Map](map.md) is the pause map: its screen, symbols and glyphs, fog and
+interaction.
 
 Ship textures use 32 isometric headings (enemy craft use 16) with a centered
 pivot and a 96 by 96 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
