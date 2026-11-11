@@ -9,8 +9,11 @@
  * weapon's ammunition at every station reached. Every behavioural assumption is a named,
  * overridable parameter.
  *
+ * With --jobs the player also takes and completes station jobs (gameplay/quests.md) back to
+ * back, through the game's own job boards, landmarks and rewards.
+ *
  * Usage: node tools/pacing-sim.ts [--sector 1|2|3] [--seeds 50] [--minutes 90]
- *   [--scenario name] [--set key=value ...] [--json] [--real] [--weapons]
+ *   [--scenario name] [--set key=value ...] [--json] [--real] [--weapons] [--jobs]
  * --weapons prints each weapon's single-target output and kill times per level.
  * Values given to --set are JSON; dotted keys reach nested parameters or overrides,
  * for example --set behaviour.hitRate=0.4 or --set economy.discoveryStardust=5.
@@ -28,6 +31,7 @@ import {
   sectorEncounters,
 } from "../src/data/enemy-catalog.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
+import { JOB_TUNING, JOB_TYPES, type JobType } from "../src/data/jobs.ts";
 import { PROJECTS } from "../src/data/projects.ts";
 import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
@@ -50,8 +54,19 @@ import {
   stepFlight,
   wreckId,
 } from "../src/model/flight.ts";
-import { stationsNear } from "../src/model/stations.ts";
-import type { FlightState } from "../src/model/types.ts";
+import {
+  acceptJob,
+  type BoardContext,
+  completeJob,
+  heldJob,
+  type JobBook,
+  nearestSafePlace,
+  pullTow,
+  stationBoard,
+} from "../src/model/jobs.ts";
+import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
+import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
+import type { FlightState, JobTarget } from "../src/model/types.ts";
 import { addPacks, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
@@ -107,6 +122,18 @@ export interface Behaviour {
    * reached, while the balance allows; 0 never buys ammunition.
    */
   restockPacks: number;
+  /**
+   * Takes station jobs back to back: docks at a station to take one at random from its board,
+   * flies its route, and after completing it heads for the nearest discovered station for the
+   * next. One held job at a time, as in the game.
+   */
+  jobs: boolean;
+  /** Seconds docked to read a board and take a job, or to hand over a delivery. */
+  dockSeconds: number;
+  /** Chance a delivery to a discovered station or known outpost uses Travel instead of flying. */
+  jobTravel: number;
+  /** Seconds a Travel jump takes, with its effect. */
+  travelSeconds: number;
 }
 
 export interface Prices {
@@ -168,6 +195,10 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   guardMinutes: [3, 6, 9],
   guardSeconds: 8,
   restockPacks: 3,
+  jobs: false,
+  dockSeconds: 10,
+  jobTravel: 0.5,
+  travelSeconds: 4,
 };
 
 /** Named value sets for comparison; `current` changes nothing. */
@@ -198,8 +229,8 @@ const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[
   ],
 };
 
-type Source = "enemies" | "asteroids" | "caches" | "guards";
-const SOURCES: readonly Source[] = ["enemies", "asteroids", "caches", "guards"];
+type Source = "enemies" | "asteroids" | "caches" | "guards" | "jobs";
+const SOURCES: readonly Source[] = ["enemies", "asteroids", "caches", "guards", "jobs"];
 const SMALL: readonly EnemyArchetype[] = ["swarm", "fighter", "interceptor", "retaliator"];
 
 interface Pickup {
@@ -271,6 +302,8 @@ export interface RunResult {
   duplicatePacks: number;
   /** Times the equipped weapon ran out of ammunition. */
   emptied: number;
+  /** Station jobs completed, by type. */
+  jobs: Partial<Record<JobType, number>>;
   /** Balance at the end of each minute. */
   balance: number[];
 }
@@ -562,8 +595,9 @@ export function simulate(input: SimulationInput): RunResult {
     packsBought: 0,
     projectsSeconds: prices.projects.map(() => null),
     sector,
+    jobs: {},
     seed: input.seed,
-    stardust: { asteroids: 0, caches: 0, enemies: 0, guards: 0 },
+    stardust: { asteroids: 0, caches: 0, enemies: 0, guards: 0, jobs: 0 },
     stationSeconds: [],
     weaponFoundSeconds: null,
     weaponsFound: [],
@@ -632,6 +666,17 @@ export function simulate(input: SimulationInput): RunResult {
   const declined = new Set<string>();
   const stations = new Set<string>();
   let guard = 0;
+  // Station jobs: the game's boards and the galaxy's one optional task slot, charted landmarks,
+  // discovered stations, the flight's known outposts, a towed craft and a hunt's search point.
+  const book: JobBook = { jobs: { boards: {}, made: 0 }, tasks: {} };
+  const progress = { charted: [] as string[], stations: [] as string[] };
+  const known = new Map<string, StationSite>();
+  const emptyBoards = new Set<string>();
+  const outpostCount = sector === 3 ? 2 : 3;
+  let outposts: JobTarget[] = [];
+  let tow: { x: number; y: number } | null = null;
+  let search: { x: number; y: number } | null = null;
+  let travelDecided = false;
   const earn = (source: Source, amount: number) => {
     result.stardust[source] += amount;
     balance += amount;
@@ -660,6 +705,20 @@ export function simulate(input: SimulationInput): RunResult {
     position = { x: 0, y: 0 };
     target = null;
     declined.clear();
+    // Known outposts are placed ahead of the launch point in turn, as ensureDestination does.
+    outposts = outposts.map(({ id }, index) => ({
+      id,
+      x: Math.ceil(index / 2) * (index % 2 ? 1 : -1) * tuning.safeRadius * 2.5,
+      y: -tuning.chunkSize * 2,
+    }));
+    // A flight's end loses a delivery's item and returns a towed craft to its spot.
+    const held = heldJob(sector, book);
+    if (held?.type === "delivery") {
+      held.carrying = false;
+    }
+    tow = null;
+    search = null;
+    travelDecided = false;
   };
   newFlight();
   const advance = (seconds: number) => {
@@ -753,6 +812,144 @@ export function simulate(input: SimulationInput): RunResult {
     }
     return [...chunks.values()];
   };
+  const boardContext = (): BoardContext => ({ hostiles: [], outposts, progress, sector });
+  const finishJob = () => {
+    const held = heldJob(sector, book)!;
+    const reward = completeJob(boardContext(), stationById(catalog, sector, held.station), book);
+    result.jobs[held.type] = (result.jobs[held.type] ?? 0) + 1;
+    earn("jobs", reward);
+    tow = null;
+    search = null;
+    travelDecided = false;
+  };
+  /** Docks at a station: reloads or hands over a delivery, or takes a job from its board. */
+  const dock = (site: StationSite) => {
+    const held = heldJob(sector, book);
+    if (held?.type === "delivery") {
+      if (held.station === site.id && !held.carrying) {
+        advance(behaviour.dockSeconds);
+        held.carrying = true;
+      } else if (held.target.id === site.id && held.carrying) {
+        advance(behaviour.dockSeconds);
+        finishJob();
+      }
+      return;
+    }
+    if (held || !behaviour.jobs) {
+      return;
+    }
+    advance(behaviour.dockSeconds);
+    const board = stationBoard(boardContext(), book, site);
+    const offer = board[Math.floor(rng() * board.length)];
+    if (!offer) {
+      emptyBoards.add(site.id);
+      return;
+    }
+    acceptJob(sector, site.id, offer.id, book);
+  };
+  const outpost = (id: string) => outposts.find((place) => place.id === id);
+  /**
+   * Where the held job sends the player now, with how near counts as arriving, or the nearest
+   * discovered station with offers to take the next job from.
+   */
+  const jobGoal = ():
+    ({ x: number; y: number } & { reach: number; station?: StationSite }) | null => {
+    const held = heldJob(sector, book);
+    if (!held) {
+      if (!behaviour.jobs) {
+        return null;
+      }
+      const sites = [...known.values()].filter((site) => !emptyBoards.has(site.id));
+      const nearest = sites.sort((a, b) => distance(a, position) - distance(b, position))[0];
+      return nearest ? { ...nearest, reach: catalog.station.safeRadius, station: nearest } : null;
+    }
+    if (held.type === "survey") {
+      const site = landmarkById(sector, held.target.id)!;
+      return { reach: 0, x: site.x, y: site.y };
+    }
+    if (held.type === "delivery") {
+      const id = held.carrying ? held.target.id : held.station;
+      const site = stationById(catalog, sector, id);
+      if (site) {
+        return { ...site, reach: catalog.station.safeRadius, station: site };
+      }
+      const place = outpost(id) ?? held.target;
+      return { reach: tuning.safeRadius, x: place.x, y: place.y };
+    }
+    if (held.type === "rescue") {
+      if (!tow) {
+        return { reach: JOB_TUNING.tow.attach, x: held.target.x, y: held.target.y };
+      }
+      const place = nearestSafePlace(outposts, stationById(catalog, sector, held.station), tow)!;
+      return { reach: 0, x: place.x, y: place.y };
+    }
+    const { hunt } = JOB_TUNING;
+    if (!held.entered) {
+      return { reach: hunt.radius, x: held.target.x, y: held.target.y };
+    }
+    if (distance(held.spot!, position) <= hunt.penny) {
+      return { reach: 0, x: held.spot!.x, y: held.spot!.y };
+    }
+    // Searching the marked area: wander between random points in it until Penny senses the item.
+    if (!search || distance(search, position) < 1) {
+      const reach = Math.sqrt(rng()) * hunt.radius;
+      const angle = rng() * Math.PI * 2;
+      search = {
+        x: held.target.x + Math.cos(angle) * reach,
+        y: held.target.y + Math.sin(angle) * reach,
+      };
+    }
+    return { reach: 0, ...search };
+  };
+  /** The held job's progress after a move: charting, docking, Use, the tow line and the hunt. */
+  const stepJob = (goal: ReturnType<typeof jobGoal>) => {
+    chartLandmarks(sector, progress, position);
+    const held = heldJob(sector, book);
+    if (!held) {
+      if (goal?.station && distance(goal, position) <= goal.reach) {
+        dock(goal.station);
+      }
+      return;
+    }
+    const { pickupRadius, pickupReach } = tuning.flight;
+    if (held.type === "survey" && progress.charted.includes(held.target.id)) {
+      finishJob();
+    } else if (held.type === "delivery") {
+      const place = outpost(held.target.id);
+      const site = stationById(catalog, sector, held.target.id);
+      // Travel here from the Map, once per carried item, to a place the player knows.
+      if (held.carrying && !travelDecided) {
+        travelDecided = true;
+        const reachable = place ?? (site && known.has(site.id) ? site : undefined);
+        if (reachable && rng() < behaviour.jobTravel) {
+          advance(behaviour.travelSeconds);
+          position = { x: reachable.x, y: reachable.y };
+        }
+      }
+      if (goal?.station && distance(goal, position) <= goal.reach) {
+        dock(goal.station);
+      } else if (held.carrying && place && distance(place, position) <= tuning.safeRadius) {
+        finishJob();
+      }
+    } else if (held.type === "rescue") {
+      if (tow) {
+        pullTow(position, tow);
+        const place = nearestSafePlace(outposts, stationById(catalog, sector, held.station), tow);
+        if (place && distance(place, tow) <= JOB_TUNING.tow.complete) {
+          finishJob();
+        }
+      } else if (distance(held.target, position) <= JOB_TUNING.tow.attach) {
+        tow = { x: held.target.x, y: held.target.y };
+      }
+    } else if (held.type === "hunt") {
+      if (distance(held.target, position) <= JOB_TUNING.hunt.radius) {
+        held.entered = true;
+      }
+      if (distance(held.spot!, position) <= pickupRadius + pickupReach) {
+        finishJob();
+      }
+    }
+  };
   let dustId = 0;
   const running = () => time < end;
   while (running()) {
@@ -769,6 +966,10 @@ export function simulate(input: SimulationInput): RunResult {
         add(result.destroyed, archetype);
         loot(archetype, `route:guard-${guard}:${index}`, "guards");
       });
+      // A route guard marks a story destination reached: an outpost the player now knows.
+      if (guard < outpostCount) {
+        outposts.push({ id: `outpost:${guard}`, x: position.x, y: position.y });
+      }
       guard++;
       continue;
     }
@@ -781,11 +982,14 @@ export function simulate(input: SimulationInput): RunResult {
       const gap = distance(site, position);
       if (gap <= catalog.station.safeRadius) {
         stations.add(site.id);
+        known.set(site.id, site);
+        progress.stations.push(site.id);
         result.stationSeconds.push(time);
         restock();
         if (target?.id === site.id) {
           target = null;
         }
+        dock(site);
       } else if (
         target?.kind !== "station" &&
         !declined.has(site.id) &&
@@ -901,11 +1105,17 @@ export function simulate(input: SimulationInput): RunResult {
       const [low, high] = behaviour.headingSeconds;
       nextTurn = time + low + rng() * (high - low);
     }
-    const goal = target ? Math.atan2(target.y - position.y, target.x - position.x) : heading;
-    const step = target ? Math.min(speed * dt, distance(target, position)) : speed * dt;
+    // Detours come first; otherwise the held job's route, else the exploration heading.
+    const job = jobGoal();
+    const aim = target ?? job;
+    const goal = aim ? Math.atan2(aim.y - position.y, aim.x - position.x) : heading;
+    // Towing scales Ada's top speed (gameplay/quests.md "Tow handling").
+    const cruise = (tow ? JOB_TUNING.tow.topSpeedScale : 1) * speed * dt;
+    const step = aim ? Math.min(cruise, distance(aim, position)) : cruise;
     const start = { ...position };
     position = { x: position.x + Math.cos(goal) * step, y: position.y + Math.sin(goal) * step };
     advance(dt);
+    stepJob(job);
     for (const chunk of near) {
       for (const list of [chunk.caches, chunk.dust]) {
         for (let index = list.length - 1; index >= 0; index--) {
@@ -968,6 +1178,8 @@ export function distribution(values: readonly number[]): Distribution {
 
 export interface Summary {
   scenario: string;
+  /** Station jobs completed per hour, by type. */
+  jobsPerHour: Record<JobType, number>;
   sector: SectorId;
   runs: number;
   minutes: number;
@@ -1085,6 +1297,12 @@ export function summarise(
     guardStardustPerRun: totals.guards / (runs.length || 1),
     holodiskMinutes: distribution(times((run) => run.holodiskSeconds)),
     holodiskUnreached: runs.filter((run) => run.holodiskSeconds === null).length,
+    jobsPerHour: Object.fromEntries(
+      JOB_TYPES.map((type) => [
+        type,
+        perMinute(runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0)) * 60,
+      ]),
+    ) as Record<JobType, number>,
     jumpsPerHour: perMinute(runs.reduce((sum, run) => sum + run.jumps, 0)) * 60,
     metPerMinute: byArchetype((run) => run.met),
     minutes,
@@ -1369,6 +1587,9 @@ export function formatSummary(summary: Summary): string {
       `${round(summary.ammoShareOfIncome * 100, 1)}% of income; packs bought/hour ` +
       `${round(summary.packsPerHour, 1)}, weapons emptied/hour ${round(summary.emptiedPerHour, 1)}, ` +
       `duplicate packs/hour ${round(summary.duplicatePacksPerHour, 2)}`,
+    `Jobs completed/hour: ${Object.entries(summary.jobsPerHour)
+      .map(([type, value]) => `${type} ${round(value ?? 0, 2)}`)
+      .join(", ")}`,
   ];
   return lines.join("\n");
 }
@@ -1403,6 +1624,8 @@ function main(argv: readonly string[]): void {
       options.weapons = true;
     } else if (flag === "--real") {
       options.real = true;
+    } else if (flag === "--jobs") {
+      behaviour.jobs = true;
     } else if (flag === "--sector" && value) {
       options.sector = Number(value) as SectorId;
       index++;
@@ -1428,7 +1651,7 @@ function main(argv: readonly string[]): void {
     } else {
       console.error(
         "Usage: node tools/pacing-sim.ts [--sector 1|2] [--seeds N] [--minutes N] " +
-          "[--scenario name] [--set key=json ...] [--json] [--real] [--weapons]",
+          "[--scenario name] [--set key=json ...] [--json] [--real] [--weapons] [--jobs]",
       );
       process.exit(2);
     }
@@ -1475,7 +1698,10 @@ function main(argv: readonly string[]): void {
     ...base,
     behaviour: {},
     economy: { ...base.economy, ...(scenario.economy as EconomyOverrides | undefined) },
-    name: options.scenario + (Object.keys(scenario).length ? " (with --set)" : ""),
+    name:
+      options.scenario +
+      (behaviour.jobs ? " with jobs" : "") +
+      (Object.keys(scenario).length ? " (with --set)" : ""),
     prices: { ...base.prices, ...(scenario.prices as Partial<Prices> | undefined) },
     ...(scenario.cacheSpawnWeight === undefined
       ? {}

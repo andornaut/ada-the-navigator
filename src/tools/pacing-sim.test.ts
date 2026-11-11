@@ -212,6 +212,33 @@ describe("pacing simulation runs", () => {
     }
   });
 
+  it("takes and completes every job type only when jobs are on, paid from the rewards table", () => {
+    const scenario = { behaviour: {}, description: "", economy: {}, name: "jobs", prices: {} };
+    const without = runScenario({ ...options, minutes: 40, scenario, seeds: 4 });
+    expect(without.runs.every((run) => run.stardust.jobs === 0)).toBe(true);
+    const withJobs = runScenario({
+      ...options,
+      behaviour: { ...DEFAULT_BEHAVIOUR, jobs: true },
+      minutes: 40,
+      scenario,
+      seeds: 4,
+    });
+    const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
+      withJobs.runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0);
+    for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
+      expect(completed(type)).toBeGreaterThan(0);
+    }
+    // Galaxy one's rewards are 10 to 25 Stardust a job.
+    for (const run of withJobs.runs) {
+      const count = Object.values(run.jobs).reduce<number>((sum, value) => sum + (value ?? 0), 0);
+      expect(run.stardust.jobs).toBeGreaterThanOrEqual(10 * count);
+      expect(run.stardust.jobs).toBeLessThanOrEqual(25 * count);
+    }
+    expect(withJobs.summary.firstWeaponMinutes.median).toBeLessThan(
+      without.summary.firstWeaponMinutes.median,
+    );
+  });
+
   it("meets galaxy one's frigates and escorted capital battles from the catalog", () => {
     const { summary } = runScenario({
       ...options,
