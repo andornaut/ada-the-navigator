@@ -13,12 +13,13 @@ export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> 
 };
 
 // The glyph of the button each browser's install steps start from, as in Chibi: Share on Apple
-// devices, the browser's menu elsewhere. The second step shows SETTING_ICONS.install.
-export const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string>> = {
+// devices, the browser's menu elsewhere, and none for Firefox on a computer, whose steps send the
+// player to another browser. The second step shows SETTING_ICONS.install.
+export const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>> = {
   chromiumAndroid: "icon-browser-menu",
   chromiumDesktop: "icon-browser-menu",
   firefoxAndroid: "icon-browser-menu",
-  firefoxDesktop: "icon-browser-menu",
+  firefoxDesktop: undefined,
   ios: "icon-ios-share",
   other: "icon-browser-menu",
   safariMac: "icon-ios-share",

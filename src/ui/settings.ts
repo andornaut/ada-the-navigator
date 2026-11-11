@@ -319,9 +319,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   // Chibi's steps glyphs: the browser's own button for the first step, then Install.
   const stepsLine = document.createElement("div");
   stepsLine.className = "ada-steps ada-prose";
-  const stepsGlyph = settingsIcon(STEPS_GLYPHS.ios);
+  // The kind's glyph replaces the Install glyph each time the steps open (openSteps).
+  const stepsGlyph = settingsIcon(SETTING_ICONS.install);
   const stepsText = document.createElement("p");
-  stepsLine.append(stepsGlyph, settingsIcon(SETTING_ICONS.install), stepsText);
+  const stepsInstallGlyph = settingsIcon(SETTING_ICONS.install);
+  stepsLine.append(stepsGlyph, stepsInstallGlyph, stepsText);
   const stepsClose = createButton(options.labels.close);
   stepsClose.dataset.action = "close-install-steps";
   stepsBody.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
@@ -351,7 +353,12 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     stepsTitle.textContent = words.title;
     stepsText.textContent = words.steps;
-    showIcon(stepsGlyph, STEPS_GLYPHS[kind]);
+    const glyph = STEPS_GLYPHS[kind];
+    stepsGlyph.hidden = glyph === undefined;
+    stepsInstallGlyph.hidden = glyph === undefined;
+    if (glyph !== undefined) {
+      showIcon(stepsGlyph, glyph);
+    }
     stepsFrame.setAttribute("aria-label", words.title);
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
