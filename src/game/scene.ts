@@ -145,6 +145,14 @@ import {
   type TaperShape,
 } from "./weapon-effects.ts";
 import {
+  readWhaleArt,
+  type WhaleArt,
+  whaleFrameAsset,
+  type WhaleKind,
+  whaleLoopFrame,
+  whalePhase,
+} from "./whale-art.ts";
+import {
   BEACON_FRAMES,
   beaconFrame,
   CACHE_FRAMES,
@@ -185,6 +193,8 @@ interface Asset extends ShipAsset, EnemyFrame {
   frames?: Readonly<Record<string, number>>;
   loop?: readonly { readonly frame: number; readonly ms: number }[];
   outpost?: string;
+  kind?: string;
+  loopFrame?: number;
 }
 
 /** World axes project diagonally; controls continue to follow screen directions. */
@@ -240,6 +250,8 @@ export class PrototypeScene extends Phaser.Scene {
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
   private rockQueued = false;
+  private whaleArt: WhaleArt<Asset> | undefined;
+  private whaleRequests = new Set<string>();
   // Destroyed rocks breaking at their pivot: the rock, its last frame, world position and start.
   private rockBreaks: {
     art: AsteroidArt;
@@ -297,6 +309,7 @@ export class PrototypeScene extends Phaser.Scene {
         galaxies?: string;
         quantumJump?: string;
         spacePalette?: string;
+        whales?: string;
       };
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
@@ -306,6 +319,9 @@ export class PrototypeScene extends Phaser.Scene {
       }
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
+      }
+      if (manifest.whales) {
+        this.load.json("whales", manifest.whales);
       }
       const composed = composedArchetypes(manifest.assets);
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
@@ -319,8 +335,8 @@ export class PrototypeScene extends Phaser.Scene {
       }
       for (const asset of manifest.assets) {
         // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
-        // and a heavy's part frames when that craft first appears.
-        if (loadsOnDemand(asset) || enemyPartFrame(asset)) {
+        // a heavy's part frames when that craft first appears and a whale's when it is drawn.
+        if (loadsOnDemand(asset) || enemyPartFrame(asset) || whaleFrameAsset(asset)) {
           continue;
         }
         if (asset.path.endsWith(".svg")) {
@@ -414,6 +430,10 @@ export class PrototypeScene extends Phaser.Scene {
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
+    this.whaleArt = readWhaleArt(
+      this.cache.json.get("whales"),
+      (manifest?.assets ?? []).filter(whaleFrameAsset),
+    );
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
     for (const archetype of Object.keys(this.destruction?.archetypes ?? {})) {
@@ -1868,9 +1888,74 @@ export class PrototypeScene extends Phaser.Scene {
       this.drawHolodisk(object, point);
       return;
     }
+    if (object.id === "whale" && this.drawWhale("whale", object.id, object)) {
+      return;
+    }
+    // The family: the smaller adult at the destination with its calves at their offsets.
+    if (
+      object.id === "family" &&
+      this.whaleArt?.family.every(({ kind, offset }) =>
+        this.drawWhale(kind, `${object.id}:${kind}`, {
+          x: object.x + offset.x,
+          y: object.y + offset.y,
+        }),
+      )
+    ) {
+      return;
+    }
     this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
     this.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
     this.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
+  }
+
+  /**
+   * A stationary whale at its world position, pivot on the world plane, in its fixed heading and
+   * idle loop from its own phase. Its loop's frames load on first draw; false until frame 0 has.
+   */
+  private drawWhale(kind: WhaleKind, id: string, at: Vec): boolean {
+    const art = this.whaleArt?.kinds.get(kind);
+    if (!art || !this.whaleArt) {
+      return false;
+    }
+    const frames = art.frames[art.stationaryHeading]!;
+    const wanted =
+      frames[
+        whaleLoopFrame(
+          this.whaleArt,
+          art,
+          false,
+          this.reducedMotion,
+          whalePhase(id, art.idleMs * frames.length),
+          this.time.now,
+        )
+      ]!;
+    const ready = frames.map((frame) => this.whaleTexture(frame));
+    const frame = ready[frames.indexOf(wanted)] ? wanted : ready[0] ? frames[0]! : undefined;
+    if (!frame) {
+      return false;
+    }
+    const point = this.project(at);
+    const key = id.includes(":") ? `${id.split(":")[0]}#${kind}` : id;
+    this.objectSprite(key, frame.id)
+      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(playDepth(point.y));
+    return true;
+  }
+
+  /** Whether a whale frame is ready; a missing one is queued, rastered at up to 2x display. */
+  private whaleTexture(frame: Asset): boolean {
+    if (this.textures.exists(frame.id)) {
+      return true;
+    }
+    if (!this.whaleRequests.has(frame.id) && frame.path) {
+      this.whaleRequests.add(frame.id);
+      this.load.svg(frame.id, frame.path, { scale: Math.min(window.devicePixelRatio || 1, 2) });
+      // Whale frames start with the next queued rock load.
+      this.rockQueued = true;
+    }
+    return false;
   }
 
   /**

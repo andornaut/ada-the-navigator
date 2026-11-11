@@ -435,7 +435,8 @@ export const PROTOTYPE: PrototypeContent = {
     shieldRechargeDelay: 3,
     shieldRechargeRate: 18,
     speedCurveExponent: 2.5,
-    whaleDebris: { count: 3, hp: 3, radius: 24, spacing: 60 },
+    // A ring 76 from the whale's centre clears Art's 48 footprint plus each rock's 24.
+    whaleDebris: { count: 3, hp: 3, radius: 24, spacing: 76 },
   },
   update: { accept: "Update now", cancel: "Cancel", title: "Update available" },
 };
