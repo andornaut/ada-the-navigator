@@ -858,13 +858,16 @@ try {
   assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
   const bar = await meter.boundingBox();
   const gameFrame = await page.locator("#game-canvas").boundingBox();
+  // The DOM UI is sized in logical px: --ada-unit CSS px each.
+  const unit = await page
+    .locator("#app")
+    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
   assert.ok(
     bar &&
       gameFrame &&
       Math.abs(bar.width - gameFrame.width) < 2 &&
-      bar.height >= 2 &&
-      bar.height <= 4,
-    "Shield meter must span the bottom of the game frame at about three CSS pixels",
+      Math.abs(bar.height - 3 * unit) <= 1,
+    "Shield meter must span the bottom of the game frame at three logical px",
   );
   const pauseButton = page.locator('[data-action="pause"]');
   assert.equal(await pauseButton.getAttribute("aria-label"), PROTOTYPE.labels.pause);
