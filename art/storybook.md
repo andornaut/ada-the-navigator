@@ -73,9 +73,16 @@ The game names each page's location by a background key
 | `adaRoom`           | `story-ada-room`                                 |
 | `adaRoomUnpolished` | `story-ada-room-unpolished` (the rock as dug up) |
 | `cockpit`           | `cockpit` ([cockpit](cockpit.md))                |
+| `cockpitSeated`     | `cockpit-seated` ([cockpit](cockpit.md))         |
 
-`Background` has no key for the unpolished room yet; `adaRoomUnpolished` is the
-name to add for it.
+`cockpit` is the empty cockpit, for pages before Ada and Penny sit and for the
+galaxy selector; `cockpitSeated` is every ship-scene page from the moment they
+sit. Gameplay marks that page in the sequence.
+
+On a cockpit page whose speaker is Astra, the `cockpit-astra` speaking frames
+play over either cockpit background at `at`, 120 ms each, while the page shows
+(reduced motion holds `speak1`). Other speakers and narration show no patch.
+See [Astra speaking](cockpit.md#astra-speaking).
 
 ## Pages
 
@@ -87,7 +94,9 @@ their scene's background (Grandma's choice uses `story-grandma-garden`).
 
 ## Rock glow transition
 
-The "Pick up the rock." page in Ada's room leads into the ship scene. Data:
+The glow plays on the press that leaves Ada's room for the cockpit: the page
+change from an `adaRoom` page to the ship scene's first page (in the prologue,
+"Touch the glow."; at boarding, the room narration's press). Data:
 [story-transition.json](../public/art/story-transition.json), linked from the
 root manifest as `storyTransition`; key `rockGlow`.
 
