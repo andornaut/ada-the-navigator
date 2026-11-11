@@ -390,8 +390,10 @@ Black Eye:
   - Galaxy 2, Cartwheel: "A busy mining hub where every rock is worth something."
   - Galaxy 3, Whirlpool: "Swirling debris, and a song somewhere in the dark."
   - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
-- Map: Map; {percent}% mapped; Travel here; Return to Earth. With nothing discovered yet: No
-  destinations mapped yet.
+- Map: Map; {percent}% mapped; Travel here; Return to Earth; Quests.
+- Quests modal: Quests; Story complete.; Job: {objective}; Station job boards
+  have more to do.; Explore to find something to do.
+- Map with nothing discovered yet: No destinations mapped yet.
 - Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
 - Map place panel: under the place's name, a line naming its kind: Station,
   Outpost, Story place (other story destinations, such as the whale and its family;

@@ -284,11 +284,15 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   one shape, in a full-width stack: "Resume" (primary), "Map", "Settings" and
   "Back to title". The card shows no objective text, and neither does space;
   in flight the direction indicator is the objective cue.
-  The Map shows the current story objective as a line and, when an optional
-  task is held, its "Job: {objective}" line. Each line is tied to its target's
-  chip once that target is mapped: the chip carries the objective indicator,
-  and selecting it shows the line in the place panel. Art designs the
-  arrangement.
+  The Map's header shows the galaxy name with its landmark pips and
+  "{percent}% mapped" below them, then a "Quests" button and "Return to Earth".
+  Quests opens a modal titled "Quests" listing the galaxy's current story
+  objective, or "Story complete." once the chapter is resolved, then the held
+  job or activity as "Job: {objective}". With no job held, a last line reads
+  "Station job boards have more to do." once the galaxy has a discovered station.
+  A line whose target is mapped is a button: it closes the modal and selects
+  and centres that chip. With no lines at all, the modal reads "Explore to find
+  something to do." The close X, an outside tap, back and Escape close it.
   Map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
