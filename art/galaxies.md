@@ -6,12 +6,15 @@
   project's Prettier settings, and links it from the core manifest as
   `galaxyFields`. The build fails if any space signal falls below
   5:1 on a dark galaxy's background, or the ink keyline below 5:1 on a light
-  galaxy's background.
-- `galaxies` lists galaxy 1 to 4 in selector order with `number`, `id`,
-  `tint` and `colors`. Ids are not display strings; Gameplay owns names and
-  flavour lines.
-- `lightField` holds the [light-field rule](#light-fields); `bank` holds field
-  tints that no galaxy uses yet, with `id`, `tint` and `colors`.
+  galaxy's background, or a [marker](#markers) below its ink or distance
+  floors. It also draws the [placeholder previews](#placeholder-previews) and
+  lists them in the core manifest.
+- `galaxies` maps each stable galaxy id to its `tint`, `colors` and `marker`.
+  It holds no position or number: route order, numbers, names and flavour
+  lines are Gameplay's, and keys sit in id order.
+- `marker` holds the [marker rule](#markers) and the shared locked grey;
+  `lightField` holds the [light-field rule](#light-fields); `bank` maps field
+  tints that no galaxy uses yet by id to their `tint` and `colors`.
 
 ## Field hues
 
@@ -21,14 +24,20 @@ results under the space palette's role names; they replace `background`,
 (`pointOfInterest`, `obstacle`, `active`, `weapon`, `shipHardpoint`), the ship
 and the in-between colours never change.
 
-| Number | Id          | `background` | `environment` | `environmentDetail` | Lowest edge contrast       |
-| ------ | ----------- | ------------ | ------------- | ------------------- | -------------------------- |
-| 1      | `sunflower` | `#D8C994`    | `#C9BA86`     | `#BAAB77`           | Ink keyline 10.90:1, light |
-| 2      | `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1          |
-| 3      | `whirlpool` | `#132D33`    | `#1F3940`     | `#2B464C`           | `obstacle` 5.37:1          |
-| 4      | `black-eye` | `#271423`    | `#331F2F`     | `#3F2B3B`           | `obstacle` 6.44:1          |
+| Id          | `background` | `environment` | `environmentDetail` | Lowest edge contrast       |
+| ----------- | ------------ | ------------- | ------------------- | -------------------------- |
+| `sunflower` | `#D8C994`    | `#C9BA86`     | `#BAAB77`           | Ink keyline 10.90:1, light |
+| `whirlpool` | `#132D33`    | `#1F3940`     | `#2B464C`           | `obstacle` 5.37:1          |
+| `needle`    | `#26221F`    | `#312D2A`     | `#3E3936`           | `obstacle` 5.86:1          |
+| `andromeda` | `#232641`    | `#2F324E`     | `#3A3E5B`           | `obstacle` 5.47:1          |
+| `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1          |
+| `black-eye` | `#271423`    | `#331F2F`     | `#3F2B3B`           | `obstacle` 6.44:1          |
 
-On the dark galaxies every other signal is above 6:1. Sunflower is Chibi's farm
+On the dark galaxies every other signal is above 6:1. Needle is a warm
+graphite, so its thin silver line of stars carries the galaxy; Andromeda is a
+deep blue under the brightest marker on the route. On both, the ship's white
+body is 14.74:1 or more and its darkest hull tone `#9AABBF` 6.28:1 or more, and
+cream HUD text on the ink panel at 0.65 is 11.71:1 or more. Sunflower is Chibi's farm
 yellow: its environment (1.17:1) and detail (1.38:1) step darker than the
 background, as Chibi's farm layers do. Bare signals there are 1.04:1
 (`weapon`) to 1.63:1 (`obstacle`), so on a light field every play object and
@@ -41,7 +50,7 @@ light galaxy, `light: true`. A field colour keeps its own Oklab L plus
 `lightness` and takes `chroma` at `hue`: `(L + lightness, chroma cos hue,
 chroma sin hue)`, converted back to sRGB and clamped. The four base roles keep
 their lightness steps, so the field reads the same in every galaxy, only in
-another hue; Black Eye is also 0.055 darker.
+another hue; Needle is also 0.025 darker and Black Eye 0.055.
 
 With `light: true` each role's step from the base background mirrors below it:
 `L' = 2 L_background - L + lightness`, with `L_background` the base
@@ -117,9 +126,41 @@ and where each asset sits:
 | Backdrop rocks                                                | Shared, tinted per galaxy (`tints` in `asteroids.json`) |
 | Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`) | `bank`, no galaxy: a field for a later dark galaxy      |
 
+## Markers
+
+Each galaxy's route-map [marker](layout.md#galaxy-selector) takes its main hue
+(`marker` per galaxy):
+
+- A light galaxy's marker is its background. A dark galaxy's is Oklab L 0.83
+  (`marker.lightness`) at its tint hue with twice its tint chroma
+  (`marker.chromaScale`), so every marker sits at one lightness and differs by
+  hue.
+- Every locked marker is one grey, `#8B8B8B` (`marker.locked`), so a locked
+  marker gives away no hue.
+- The build fails if ink is below 4.5:1 on a marker or the locked grey (each
+  face carries an ink route number), if two markers are less than 0.055 apart
+  in Oklab, or if a marker is less than 0.15 from the locked grey.
+
+| Id          | `marker`  | Ink on it | Oklab distance to the locked grey |
+| ----------- | --------- | --------- | --------------------------------- |
+| `sunflower` | `#D8C994` | 10.90:1   | 0.211                             |
+| `whirlpool` | `#94D3E3` | 10.88:1   | 0.205                             |
+| `needle`    | `#CFC5BD` | 10.62:1   | 0.193                             |
+| `andromeda` | `#B8C1FF` | 10.39:1   | 0.208                             |
+| `cartwheel` | `#F3B6AC` | 10.38:1   | 0.206                             |
+| `black-eye` | `#E9B4DC` | 10.32:1   | 0.209                             |
+| Locked      | `#8B8B8B` | 5.29:1    |                                   |
+
+In Gameplay's route order (Sunflower, Whirlpool, Needle, Andromeda, Cartwheel,
+Black Eye), neighbouring markers are 0.121, 0.082, 0.101, 0.133 and 0.070 apart
+in Oklab. The closest pairs two apart are Needle and Sunflower (0.059) and
+Needle and Cartwheel (0.060), which differ by number and name too. Needle's
+silver is warm rather than neutral, because a neutral grey marker would read
+as locked.
+
 ## Selector preview
 
-The [galaxy selector](layout.md#galaxy-selector) card shows one preview per
+The [galaxy selector](layout.md#galaxy-selector) panel shows one preview per
 galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
 
 - Capture the galaxy's space view with no HUD, touch controls, notices, panels
@@ -136,6 +177,28 @@ galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
 - Locked: unchanged. A base-field capture in greyscale, each pixel `30 + 0.6 Y`
   (`preview.locked`), with `Y` the ITU-R 601 luma, truncated. Every locked
   galaxy shares one grey range, so a locked preview gives away no hue.
+- Not built: the locked preview, greyed the same way.
+
+## Placeholder previews
+
+Needle and Andromeda have no space art yet, so `galaxies.ts` draws their
+previews as placeholders until their galaxies are built and captured:
+`public/art/previews/galaxy-{id}.png` and `galaxy-{id}-locked.png`, 180x90,
+opaque. The core manifest lists them as `galaxy-preview-{id}` and
+`galaxy-preview-{id}-locked`, each with `placeholder: true`.
+
+- Field tones only: the galaxy's `background`, `environment` and
+  `environmentDetail`, no signals, ship or HUD.
+- A motif centred on the first-destination point (60, 45): Needle a thin
+  edge-on line of stars at -12 degrees with a small central bulge, Andromeda a
+  two-armed spiral tilted 18 degrees.
+- Marked as a placeholder by a dashed 1 px `environmentDetail` frame 2 in from
+  the edge and a hatched lower-right corner.
+- The locked file draws the same placeholder on the base field and applies
+  the locked rule above.
+
+A capture replaces a placeholder once its galaxy is built; the placeholder's
+files and manifest entries go with it.
 
 ## Space palette
 

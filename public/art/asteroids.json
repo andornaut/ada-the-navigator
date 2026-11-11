@@ -9722,21 +9722,29 @@
       "backdropLit": "#49475D",
       "backdropSide": "#3A394A"
     },
-    "sunflower": {
-      "backdropLit": "#C9BB86",
-      "backdropSide": "#A1966B"
+    "andromeda": {
+      "backdropLit": "#414572",
+      "backdropSide": "#34375B"
+    },
+    "black-eye": {
+      "backdropLit": "#4F2F48",
+      "backdropSide": "#3F263A"
     },
     "cartwheel": {
       "backdropLit": "#643F39",
       "backdropSide": "#50322E"
     },
+    "needle": {
+      "backdropLit": "#48423D",
+      "backdropSide": "#3A3531"
+    },
+    "sunflower": {
+      "backdropLit": "#C9BB86",
+      "backdropSide": "#A1966B"
+    },
     "whirlpool": {
       "backdropLit": "#26515C",
       "backdropSide": "#1E414A"
-    },
-    "black-eye": {
-      "backdropLit": "#4F2F48",
-      "backdropSide": "#3F263A"
     }
   }
 }

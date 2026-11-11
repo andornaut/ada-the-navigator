@@ -35,13 +35,12 @@ const palette = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as 
 };
 const whirlpool = (
   JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-    galaxies: {
-      id: string;
-      tint: { chroma: number; hue: number };
-      colors: Record<string, string>;
-    }[];
+    galaxies: Record<
+      string,
+      { tint: { chroma: number; hue: number }; colors: Record<string, string> }
+    >;
   }
-).galaxies.find(({ id }) => id === "whirlpool")!;
+).galaxies.whirlpool!;
 // The whale's lit hull tone, the lightest part of it that crosses a streak.
 const whaleTop = (
   JSON.parse(readFileSync(`${art}whales.json`, "utf8")) as { palette: { hull: string[] } }

@@ -6,8 +6,7 @@
   and reduced with Lanczos filtering, then muted.
 
 A close-up of Ada's ship from outside, its opaque canopy the in-game canopy
-enlarged, over the in-between field. It sits behind dialogue and the galaxy
-selection card.
+enlarged, over the in-between field. It sits behind dialogue.
 
 ## View
 
@@ -90,8 +89,8 @@ sparkles.
   the view without letterboxing. At 779 by 360 it shows the approved framing.
 - The opaque canopy hides the seats, so `cockpit` and `cockpit-seated` are
   the same image under two ids: `cockpit` for the prologue's arrival pages
-  before Ada sits, `cockpit-seated` for every page after and for the galaxy
-  selection card. The page text carries the change. See
+  before Ada sits, `cockpit-seated` for every page after. The page text
+  carries the change. See
   [storybook](storybook.md#locations).
 
 ## Astra speaking

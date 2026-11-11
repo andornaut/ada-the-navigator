@@ -565,11 +565,13 @@ const palette = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as 
   colors: Record<string, string>;
 };
 const galaxies = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-  galaxies: {
-    id: string;
-    tint: { lightness: number; chroma: number; hue: number; light?: boolean };
-    colors: Record<string, string>;
-  }[];
+  galaxies: Record<
+    string,
+    {
+      tint: { lightness: number; chroma: number; hue: number; light?: boolean };
+      colors: Record<string, string>;
+    }
+  >;
 };
 
 function backdropLit(
@@ -593,7 +595,7 @@ const [, ba, bb] = toOklab(rgb(palette.colors.environmentDetail!));
 const baseTint = { chroma: Math.hypot(ba, bb), hue: (Math.atan2(bb, ba) * 180) / Math.PI };
 const fields = [
   { id: "base", colors: palette.colors, tint: baseTint },
-  ...galaxies.galaxies.map((g) => ({ id: g.id, colors: g.colors, tint: g.tint })),
+  ...Object.entries(galaxies.galaxies).map(([id, g]) => ({ id, colors: g.colors, tint: g.tint })),
 ].map(({ colors, id, tint }) => {
   const lit = backdropLit(colors, tint);
   return { colors, id, lit, side: multiply(lit, BACKDROP_SIDE) };

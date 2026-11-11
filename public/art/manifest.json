@@ -11593,6 +11593,62 @@
       "frames": {
         "rest": 0
       }
+    },
+    {
+      "id": "galaxy-preview-andromeda",
+      "path": "/art/previews/galaxy-andromeda.png",
+      "width": 180,
+      "height": 90,
+      "displayWidth": 180,
+      "displayHeight": 90,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "placeholder": true
+    },
+    {
+      "id": "galaxy-preview-andromeda-locked",
+      "path": "/art/previews/galaxy-andromeda-locked.png",
+      "width": 180,
+      "height": 90,
+      "displayWidth": 180,
+      "displayHeight": 90,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "placeholder": true
+    },
+    {
+      "id": "galaxy-preview-needle",
+      "path": "/art/previews/galaxy-needle.png",
+      "width": 180,
+      "height": 90,
+      "displayWidth": 180,
+      "displayHeight": 90,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "placeholder": true
+    },
+    {
+      "id": "galaxy-preview-needle-locked",
+      "path": "/art/previews/galaxy-needle-locked.png",
+      "width": 180,
+      "height": 90,
+      "displayWidth": 180,
+      "displayHeight": 90,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "placeholder": true
     }
   ],
   "spacePalette": "/art/space-palette.json",

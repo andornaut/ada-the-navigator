@@ -16,6 +16,11 @@
       "scale": 0.6
     }
   },
+  "marker": {
+    "lightness": 0.83,
+    "chromaScale": 2,
+    "locked": "#8B8B8B"
+  },
   "lightField": {
     "ink": "#181425",
     "keyline": 1,
@@ -85,10 +90,60 @@
     },
     "holodiskBeacon": "base"
   },
-  "galaxies": [
-    {
-      "number": 1,
-      "id": "sunflower",
+  "galaxies": {
+    "andromeda": {
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.05,
+        "hue": 278
+      },
+      "colors": {
+        "background": "#232641",
+        "environment": "#2F324E",
+        "environmentDetail": "#3A3E5B"
+      },
+      "marker": "#B8C1FF"
+    },
+    "black-eye": {
+      "tint": {
+        "lightness": -0.055,
+        "chroma": 0.04,
+        "hue": 335
+      },
+      "colors": {
+        "background": "#271423",
+        "environment": "#331F2F",
+        "environmentDetail": "#3F2B3B"
+      },
+      "marker": "#E9B4DC"
+    },
+    "cartwheel": {
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.036,
+        "hue": 30
+      },
+      "colors": {
+        "background": "#39221E",
+        "environment": "#452E2A",
+        "environmentDetail": "#523A36"
+      },
+      "marker": "#F3B6AC"
+    },
+    "needle": {
+      "tint": {
+        "lightness": -0.025,
+        "chroma": 0.008,
+        "hue": 60
+      },
+      "colors": {
+        "background": "#26221F",
+        "environment": "#312D2A",
+        "environmentDetail": "#3E3936"
+      },
+      "marker": "#CFC5BD"
+    },
+    "sunflower": {
       "tint": {
         "lightness": 0.5549,
         "chroma": 0.0714,
@@ -99,25 +154,10 @@
         "background": "#D8C994",
         "environment": "#C9BA86",
         "environmentDetail": "#BAAB77"
-      }
-    },
-    {
-      "number": 2,
-      "id": "cartwheel",
-      "tint": {
-        "lightness": 0,
-        "chroma": 0.036,
-        "hue": 30
       },
-      "colors": {
-        "background": "#39221E",
-        "environment": "#452E2A",
-        "environmentDetail": "#523A36"
-      }
+      "marker": "#D8C994"
     },
-    {
-      "number": 3,
-      "id": "whirlpool",
+    "whirlpool": {
       "tint": {
         "lightness": 0,
         "chroma": 0.034,
@@ -127,26 +167,12 @@
         "background": "#132D33",
         "environment": "#1F3940",
         "environmentDetail": "#2B464C"
-      }
-    },
-    {
-      "number": 4,
-      "id": "black-eye",
-      "tint": {
-        "lightness": -0.055,
-        "chroma": 0.04,
-        "hue": 335
       },
-      "colors": {
-        "background": "#271423",
-        "environment": "#331F2F",
-        "environmentDetail": "#3F2B3B"
-      }
+      "marker": "#94D3E3"
     }
-  ],
-  "bank": [
-    {
-      "id": "dark-gold",
+  },
+  "bank": {
+    "dark-gold": {
       "tint": {
         "lightness": 0,
         "chroma": 0.038,
@@ -158,5 +184,5 @@
         "environmentDetail": "#4C3F29"
       }
     }
-  ]
+  }
 }

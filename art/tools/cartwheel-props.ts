@@ -55,13 +55,12 @@ const palette = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as 
 };
 const cartwheel = (
   JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-    galaxies: {
-      id: string;
-      tint: { chroma: number; hue: number };
-      colors: Record<string, string>;
-    }[];
+    galaxies: Record<
+      string,
+      { tint: { chroma: number; hue: number }; colors: Record<string, string> }
+    >;
   }
-).galaxies.find(({ id }) => id === "cartwheel")!;
+).galaxies.cartwheel!;
 
 type Face = { color: string; points: Point[] };
 
