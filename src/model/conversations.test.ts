@@ -489,8 +489,12 @@ describe("conversations in the game", () => {
     playOpening(model);
     expect(model.state.mode).toBe("space");
     const flight = model.state.flight!;
+    // No enemies, stations, discoveries or drifting debris, which can strike Ada and start a fight.
     const quiet = (object: SpaceObject) =>
-      object.kind !== "enemy" && object.kind !== "station" && object.role !== "discovery";
+      object.kind !== "enemy" &&
+      object.kind !== "station" &&
+      object.kind !== "debris" &&
+      object.role !== "discovery";
     for (const object of flight.objects.filter((object) => !quiet(object))) {
       // A removal tombstone keeps the chunk from loading it again.
       flight.world.notables[object.id] = null;
