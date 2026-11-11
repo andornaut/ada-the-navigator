@@ -1118,7 +1118,8 @@ function shots(
           if (object.kind === "rock") {
             const next = dropRandom(flight.seed, object.id);
             const amount = rollAsteroidStardust(ECONOMY, next);
-            releaseStardust(object, amount, amount, flight);
+            // An asteroid scatters its Stardust about its own radius.
+            releaseStardust(object, object.radius, next, amount, amount, flight);
           }
           if (object.kind === "debris") {
             events.push({ id: object.id, type: "debrisCleared" });
@@ -1175,26 +1176,35 @@ function destroyEnemy(object: SpaceObject, flight: FlightState): void {
   });
 }
 
-/** Scatters Stardust pickups in a small ring around a destroyed object. */
+/**
+ * Releases a drop's Stardust pickups around a destroyed object (art/destruction.md): pickup
+ * i of n heads to screen angle 2 pi i / n within 0.3 rad, at spread * U(0.6, 1) with the
+ * screen-y offset squashed by 0.8. Each records where and when it left, for its settle.
+ */
 function releaseStardust(
-  at: Vec & { radius?: number },
+  at: Vec,
+  spread: number,
+  next: () => number,
   cap: number,
   amount: number,
   flight: FlightState,
 ) {
   const pieces = splitStardust(cap, amount);
-  const ring = pieces.length > 1 ? Math.min(40, 8 + (at.radius ?? 0) * 0.5) : 0;
   pieces.forEach((value, index) => {
-    const angle = (index / pieces.length) * Math.PI * 2;
+    const angle = (index / pieces.length) * Math.PI * 2 + (next() * 2 - 1) * 0.3;
+    const reach = spread * (0.6 + next() * 0.4);
+    const screen = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach * 0.8 };
     flight.objects.push({
       amount: value,
       hp: 1,
       id: `stardust:${flight.nextId++}`,
       kind: "pickup",
       radius: ECONOMY.stardustPickupRadius,
+      release: { at: flight.time, from: { x: at.x, y: at.y } },
       role: "stardust",
-      x: at.x + Math.cos(angle) * ring,
-      y: at.y + Math.sin(angle) * ring,
+      // The view's projection maps screen offsets back to world axes.
+      x: at.x + screen.y + screen.x / 2,
+      y: at.y + screen.y - screen.x / 2,
     });
   });
 }
@@ -1205,17 +1215,24 @@ function stepWrecks(content: PrototypeContent, dt: number, flight: FlightState):
       continue;
     }
     object.wreck.age += dt;
-    if (object.wreck.age < ECONOMY.breakApartSeconds) {
+    const timing = ECONOMY.destruction[object.wreck.archetype];
+    if (object.wreck.age >= timing.durationSeconds) {
+      object.hp = 0;
+    }
+    if (object.wreck.released || object.wreck.age < timing.releaseSeconds) {
       continue;
     }
-    object.hp = 0;
-    const drop = rollEnemyDrop(
-      ECONOMY,
-      ownedForSave(flight),
-      object.wreck.archetype,
-      dropRandom(flight.seed, object.id),
+    object.wreck.released = true;
+    const next = dropRandom(flight.seed, object.id);
+    const drop = rollEnemyDrop(ECONOMY, ownedForSave(flight), object.wreck.archetype, next);
+    releaseStardust(
+      object,
+      timing.spread,
+      next,
+      ECONOMY.pickupCap[object.wreck.archetype],
+      drop.stardust,
+      flight,
     );
-    releaseStardust(object, ECONOMY.pickupCap[object.wreck.archetype], drop.stardust, flight);
     if (drop.weapon) {
       flight.objects.push({
         hp: 1,

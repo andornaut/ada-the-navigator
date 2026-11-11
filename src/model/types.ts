@@ -29,6 +29,13 @@ export interface WreckState {
   archetype: EnemyArchetype;
   age: number;
   facing: Vec;
+  /** Whether the wreck has released its drops; it stays until its destruction ends. */
+  released?: boolean;
+}
+/** Where and when a released pickup left its wreck, for the view's settle. */
+export interface PickupRelease {
+  at: number;
+  from: Vec;
 }
 export interface SpaceObject extends Vec {
   id: string;
@@ -46,6 +53,7 @@ export interface SpaceObject extends Vec {
   /** Stardust carried by a Stardust pickup. */
   amount?: number;
   wreck?: WreckState;
+  release?: PickupRelease;
 }
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";

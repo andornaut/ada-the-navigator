@@ -5,6 +5,8 @@ export interface ShipAsset {
   displayHeight?: number;
   displayWidth?: number;
   id: string;
+  /** The paint scheme of a painted idle frame; Classic frames have none. */
+  paint?: string;
   pivot: Vec;
 }
 
@@ -51,4 +53,33 @@ export function selectShipAsset<T extends ShipAsset>(
     (thrust ? assets.find((asset) => asset.id === "ship-thrust") : undefined) ??
     assets.find((asset) => asset.id === "ship")
   );
+}
+
+/** A paint scheme's idle frames, which load only while that scheme is in use. */
+export function paintFrames<T extends ShipAsset>(assets: readonly T[], paint: string): T[] {
+  return assets.filter((asset) => asset.paint === paint);
+}
+
+/**
+ * The frame for the scheme in use: a painted scheme's idle frame at the heading, else the
+ * Classic selection. Painted schemes have no thrust frames, and a frame not yet loaded falls
+ * back to Classic.
+ */
+export function selectPaintedShipAsset<T extends ShipAsset>(
+  assets: readonly T[],
+  paint: string | null,
+  thrust: boolean,
+  facing: Vec,
+): T | undefined {
+  const classic = assets.filter((asset) => asset.paint === undefined);
+  const painted = paint === null ? [] : paintFrames(assets, paint);
+  const count = shipDirectionCount(classic);
+  if (painted.length && count > 0) {
+    const direction = shipDirection(count, facing);
+    const frame = painted.find((asset) => asset.directionIndex === direction);
+    if (frame) {
+      return frame;
+    }
+  }
+  return selectShipAsset(classic, thrust, facing);
 }

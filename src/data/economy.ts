@@ -17,6 +17,12 @@ export interface PaintScheme {
   price: number;
 }
 
+export interface Destruction {
+  durationSeconds: number;
+  releaseSeconds: number;
+  spread: number;
+}
+
 export interface EconomyCatalog {
   /** Stardust released by each destroyed enemy archetype. */
   enemyStardust: Readonly<Record<EnemyArchetype, number>>;
@@ -51,8 +57,11 @@ export interface EconomyCatalog {
   jumpFee: number;
   /** Seconds weapon changes stay locked after combat ends. */
   weaponLockSeconds: number;
-  /** Seconds a destroyed enemy breaks apart before releasing its drops. */
-  breakApartSeconds: number;
+  /**
+   * Each archetype's destruction, from Art's destruction.json: the wreck releases its drops
+   * at `releaseSeconds`, spread up to `spread` world units, and is gone at `durationSeconds`.
+   */
+  destruction: Readonly<Record<EnemyArchetype, Destruction>>;
   /** Most pickups a destroyed enemy's drop splits into; asteroids release one per Stardust. */
   pickupCap: Readonly<Record<EnemyArchetype, number>>;
   stardustPickupRadius: number;
@@ -82,8 +91,17 @@ const small = { fighter: 0.02, interceptor: 0.02, retaliator: 0.02, swarm: 0.02 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   asteroidStardust: [1, 3],
-  breakApartSeconds: 0.6,
   defaultPaint: "classic",
+  // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart.
+  destruction: {
+    capital: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 40 },
+    fighter: { durationSeconds: 0.45, releaseSeconds: 0.15, spread: 19.2 },
+    frigate: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 30 },
+    interceptor: { durationSeconds: 0.44, releaseSeconds: 0.15, spread: 18 },
+    oversizedCapital: { durationSeconds: 0.6, releaseSeconds: 0.6, spread: 40 },
+    retaliator: { durationSeconds: 0.6, releaseSeconds: 0.19, spread: 33.6 },
+    swarm: { durationSeconds: 0.43, releaseSeconds: 0.14, spread: 16.8 },
+  },
   discoveryStardust: 25,
   effects: {
     engineSeconds: -0.1,
@@ -126,9 +144,11 @@ export const ECONOMY: EconomyCatalog = {
     cellSize: 12000,
     chance: 0.5,
     destinationClearance: 1200,
-    dockOffset: { x: 0, y: 0 },
-    dockOutward: { x: 0, y: 1 },
-    dockRadius: 48,
+    // station-a's dock entrance, 27.2 display px below the pivot, in world units.
+    dockOffset: { x: 27.223, y: 27.223 },
+    dockOutward: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
+    // Half the dock mouth plus Ada's radius, so her ship docks as it enters the mouth.
+    dockRadius: 18,
     jitter: 4000,
     originClearance: 3000,
     radius: 40,

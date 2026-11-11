@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
@@ -183,7 +185,7 @@ describe("Stardust drops", () => {
     value.objects.push(target);
     value.shots.push(killShot(target));
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
-    stepFlight(PROTOTYPE, ECONOMY.breakApartSeconds, idle, value);
+    stepFlight(PROTOTYPE, 0.6, idle, value);
     const drop = rollEnemyDrop(
       ECONOMY,
       [],
@@ -205,9 +207,34 @@ describe("Stardust drops", () => {
     const wreck = value.objects.find((object) => object.kind === "wreck");
     expect(wreck?.wreck?.archetype).toBe("fighter");
     expect(pickups(value)).toEqual([]);
-    stepFlight(PROTOTYPE, ECONOMY.breakApartSeconds, idle, value);
+    // Art's fighter timing: drops leave at 150 ms and the wreck is gone at 450 ms.
+    stepFlight(PROTOTYPE, 0.15, idle, value);
+    expect(total(pickups(value))).toBe(5);
+    expect(value.objects.some((object) => object.kind === "wreck")).toBe(true);
+    for (const pickup of pickups(value)) {
+      expect(pickup.release?.from).toEqual({ x: wreck!.x, y: wreck!.y });
+      const offset = Math.hypot(pickup.x - wreck!.x, pickup.y - wreck!.y);
+      expect(offset).toBeGreaterThan(0);
+      expect(offset).toBeLessThanOrEqual(19.2 * 1.6);
+    }
+    stepFlight(PROTOTYPE, 0.3, idle, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
     expect(total(pickups(value))).toBe(5);
+  });
+
+  it("times each shard-drawn destruction from Art's destruction data", () => {
+    const art = JSON.parse(
+      readFileSync(new URL("../../public/art/enemies/destruction.json", import.meta.url), "utf8"),
+    ) as {
+      archetypes: Record<string, { durationMs: number; releaseMs: number; spread: number }>;
+    };
+    for (const [archetype, timing] of Object.entries(art.archetypes)) {
+      expect(ECONOMY.destruction[archetype as EnemyArchetype]).toEqual({
+        durationSeconds: timing.durationMs / 1000,
+        releaseSeconds: timing.releaseMs / 1000,
+        spread: timing.spread,
+      });
+    }
   });
 
   it("destroys a multipart ship once all its required parts are disabled", () => {
@@ -219,7 +246,7 @@ describe("Stardust drops", () => {
     value.objects.push(frigate);
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
-    stepFlight(PROTOTYPE, ECONOMY.breakApartSeconds, idle, value);
+    stepFlight(PROTOTYPE, 0.6, idle, value);
     // A frigate drop is at least its 40 Stardust; a weapon drop adds a weapon pickup.
     expect(total(pickups(value))).toBeGreaterThanOrEqual(40);
   });

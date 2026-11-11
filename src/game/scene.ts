@@ -32,6 +32,15 @@ import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createStardustCounter, createStationView, type StationRow } from "../ui/station.ts";
 import {
+  type DestructionData,
+  flashAt,
+  readDestruction,
+  readShards,
+  reducedAt,
+  type ShardData,
+  shardPolygons,
+} from "./destruction-art.ts";
+import {
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
@@ -44,7 +53,12 @@ import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
-import { selectShipAsset, type ShipAsset, shipDirectionCount } from "./ship-art.ts";
+import {
+  paintFrames,
+  selectPaintedShipAsset,
+  type ShipAsset,
+  shipDirectionCount,
+} from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import {
   FALLBACK_SPACE_PALETTE,
@@ -52,7 +66,19 @@ import {
   spaceColorCss,
   spaceObjectColor,
 } from "./space-palette.ts";
+import {
+  readStardustArt,
+  releaseSettle,
+  type StardustArt,
+  stardustFrame,
+  stardustPhase,
+} from "./stardust-art.ts";
+import { readStationArt, type StationArt, type StationFrame, stationFrame } from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
+
+// Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
+const DESTRUCTION_PATH = "/art/enemies/destruction.json";
+const FLASH_SUFFIX = ":flash";
 
 interface Asset extends ShipAsset, EnemyFrame {
   path: string;
@@ -60,6 +86,10 @@ interface Asset extends ShipAsset, EnemyFrame {
   height: number;
   frameWidth?: number;
   frameHeight?: number;
+  dock?: NonNullable<StationFrame["dock"]>;
+  frameMs?: number;
+  frames?: Readonly<Record<string, number>>;
+  loop?: readonly { readonly frame: number; readonly ms: number }[];
 }
 
 /** World axes project diagonally; controls continue to follow screen directions. */
@@ -87,6 +117,14 @@ export class PrototypeScene extends Phaser.Scene {
   private enemyJets!: Phaser.GameObjects.Graphics;
   private enemyArt = new Map<string, EnemyArt<Asset>>();
   private enemySprites = new Map<string, Phaser.GameObjects.Image>();
+  private stationArt: StationArt<Asset> | undefined;
+  private stardustArt: StardustArt<Asset> | undefined;
+  private destruction: DestructionData | undefined;
+  private shards = new Map<string, ShardData>();
+  private reducedMotion = false;
+  // Painted ship frames load only for the scheme in use.
+  private paintAssets: Asset[] = [];
+  private paintLoads = new Set<string>();
   private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
   private startShown = false;
@@ -117,6 +155,10 @@ export class PrototypeScene extends Phaser.Scene {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
       }
       for (const asset of manifest.assets) {
+        // Painted ship frames load on demand, only for the scheme in use.
+        if (asset.paint !== undefined) {
+          continue;
+        }
         if (asset.path.endsWith(".svg")) {
           this.load.svg(asset.id, asset.path);
         } else if (asset.frameWidth && asset.frameHeight) {
@@ -127,7 +169,18 @@ export class PrototypeScene extends Phaser.Scene {
         }
       }
     });
+    this.load.once("filecomplete-json-destruction", () => {
+      const data = readDestruction(this.cache.json.get("destruction"));
+      if (!data) {
+        return;
+      }
+      this.load.svg("destruction-flash", data.flash.path);
+      for (const archetype of Object.keys(data.archetypes)) {
+        this.load.json(`shards-${archetype}`, `/art/enemies/${archetype}-shards.json`);
+      }
+    });
     this.load.json("art-manifest", "/art/manifest.json");
+    this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
     preloadTouchChrome(this);
   }
@@ -172,6 +225,17 @@ export class PrototypeScene extends Phaser.Scene {
       (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),
       enemyFrameSets(this.shipAssets),
     );
+    // Art without its loaded textures or data keeps the placeholders.
+    this.stationArt = readStationArt(this.shipAssets);
+    this.stardustArt = readStardustArt(this.shipAssets);
+    this.destruction = readDestruction(this.cache.json.get("destruction"));
+    for (const archetype of Object.keys(this.destruction?.archetypes ?? {})) {
+      const shards = readShards(this.cache.json.get(`shards-${archetype}`));
+      if (shards) {
+        this.shards.set(archetype, shards);
+      }
+    }
+    this.paintAssets = (manifest?.assets ?? []).filter((asset) => asset.paint !== undefined);
     const ship = this.shipAssets.find((asset) => asset.id === "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
@@ -233,6 +297,7 @@ export class PrototypeScene extends Phaser.Scene {
       onFeedbackChange: (settings) => {
         this.feedbackSound.enabled = settings.sound;
         this.screenShake = screenShakes(settings);
+        this.reducedMotion = settings.reducedMotion;
         if (!this.screenShake) {
           this.cameras.main.shakeEffect.reset();
         }
@@ -473,6 +538,32 @@ export class PrototypeScene extends Phaser.Scene {
     this.shell.render(state);
   }
 
+  /**
+   * The painted scheme in use, or null for Classic. A scheme's idle frames load the first
+   * time it is used; until then the ship keeps Classic's frames.
+   */
+  private paintInUse(): string | null {
+    const paint = this.model.state.economy.paint;
+    if (paint === ECONOMY.defaultPaint) {
+      return null;
+    }
+    if (!this.paintLoads.has(paint)) {
+      this.paintLoads.add(paint);
+      const frames = paintFrames(this.paintAssets, paint);
+      for (const frame of frames) {
+        this.load.svg(frame.id, frame.path);
+      }
+      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+        this.shipAssets = [
+          ...this.shipAssets,
+          ...frames.filter((frame) => this.textures.exists(frame.id)),
+        ];
+      });
+      this.load.start();
+    }
+    return paint;
+  }
+
   // Back stays on the game except on the start screen with nothing open, where it is the browser's.
   private armBack(): void {
     setBackArmed(!backReleased(this.startShown, this.settingsOpen));
@@ -570,7 +661,12 @@ export class PrototypeScene extends Phaser.Scene {
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
     const speed = thrusting ? shipSpeedFraction(PROTOTYPE, flight) : 0;
-    const ship = selectShipAsset(this.shipAssets, !this.shipJets && speed > 0, flight.facing);
+    const ship = selectPaintedShipAsset(
+      this.shipAssets,
+      this.paintInUse(),
+      !this.shipJets && speed > 0,
+      flight.facing,
+    );
     this.ship.setTexture(ship?.id ?? "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
@@ -602,7 +698,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const [id, sprite] of this.enemySprites) {
-      if (!activeIds.has(id)) {
+      if (!activeIds.has(id.endsWith(FLASH_SUFFIX) ? id.slice(0, -FLASH_SUFFIX.length) : id)) {
         sprite.destroy();
         this.enemySprites.delete(id);
       }
@@ -922,8 +1018,38 @@ export class PrototypeScene extends Phaser.Scene {
     label.setPosition(point.x, point.y + radius + 8).setVisible(true);
   }
 
-  /** PLACEHOLDER (Art): a station as a ring hull, its dock and its safe-area outline. */
+  /** A reusable sprite for an object, reset to opaque and untinted each frame. */
+  private objectSprite(id: string, texture: string, frame?: number): Phaser.GameObjects.Image {
+    let sprite = this.enemySprites.get(id);
+    if (!sprite) {
+      sprite = this.add.image(0, 0, texture, frame).setDepth(2);
+      this.enemySprites.set(id, sprite);
+    }
+    return sprite
+      .setTexture(texture, frame)
+      .setAlpha(1)
+      .clearTint()
+      .setRotation(0)
+      .setVisible(true);
+  }
+
+  /** Art's station blinks between frames A and B; reduced motion holds A. */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
+    const art = this.stationArt;
+    if (!art) {
+      this.drawStationPlaceholder(object, point, radius);
+      return;
+    }
+    const frame = stationFrame(art, this.reducedMotion, this.time.now);
+    this.objectSprite(object.id, frame.id)
+      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y);
+    this.drawDestinationLabel(object, point, frame.displayHeight! * (1 - frame.pivot.y));
+  }
+
+  /** Fallback without the station art: a ring hull, its dock and its safe-area outline. */
+  private drawStationPlaceholder(object: SpaceObject, point: Vec, radius: number): void {
     const safe = ECONOMY.station.safeRadius;
     const dock = ECONOMY.station.dockRadius;
     this.ink.lineStyle(1, this.palette.pointOfInterest, 0.35);
@@ -932,7 +1058,6 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.lineStyle(2, this.palette.pointOfInterest);
     this.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
     this.ink.strokeEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
-    this.ink.strokeEllipse(point.x, point.y, radius * 1.2, radius * 0.6);
     const dockAt = this.project(stationDock(object));
     this.ink.lineStyle(1.5, this.palette.active, 0.8);
     this.ink.strokeEllipse(dockAt.x, dockAt.y, dock * 2, dock);
@@ -940,37 +1065,114 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * PLACEHOLDER (Art): a glinting Stardust pickup drawn as a small four-point star. Each
-   * pickup's glint starts at a phase taken from its id, as the sprite's loop will.
+   * Art's Stardust gem with its glint loop from a per-pickup phase. A released pickup settles
+   * out from its wreck; reduced motion shows the rest frame where it lands.
    */
   private drawStardust(object: SpaceObject, point: Vec, radius: number): void {
-    const phase = sceneryDetail(object.id).outline[0]?.x ?? 0;
-    const glint = 0.6 + 0.4 * Math.sin(this.time.now / 140 + phase * Math.PI * 2);
-    this.ink.fillStyle(this.palette.active, glint);
-    for (const [dx, dy] of [
-      [0, -1],
-      [0, 1],
-      [-1, 0],
-      [1, 0],
-    ] as const) {
-      this.ink.fillTriangle(
-        point.x + dx * radius,
-        point.y + dy * radius,
-        point.x - 2 * Math.abs(dy),
-        point.y - 2 * Math.abs(dx),
-        point.x + 2 * Math.abs(dy),
-        point.y + 2 * Math.abs(dx),
-      );
+    const art = this.stardustArt;
+    const flight = this.model.state.flight;
+    if (!art || !flight) {
+      this.ink.fillStyle(this.palette.active);
+      this.ink.fillCircle(point.x, point.y, radius / 2);
+      return;
     }
+    let at = point;
+    if (object.release && !this.reducedMotion) {
+      const settle = releaseSettle(
+        this.destruction?.pickups.settleMs ?? 110,
+        (flight.time - object.release.at) * 1000,
+      );
+      const from = this.project(object.release.from);
+      at = { x: from.x + (point.x - from.x) * settle, y: from.y + (point.y - from.y) * settle };
+    }
+    const frame = stardustFrame(
+      art,
+      this.reducedMotion,
+      stardustPhase(object.id, art.loopMs),
+      this.time.now,
+    );
+    this.objectSprite(object.id, art.asset.id, frame)
+      .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
+      .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
+      .setPosition(at.x, at.y);
   }
 
-  /** PLACEHOLDER (Art): a destroyed ship's break-apart, hull fragments flying outward. */
+  /**
+   * Art's destruction: shards and a flash, or under reduced motion the idle frame tinting,
+   * shrinking and fading. Frigates and capitals, without shard art, keep the placeholder.
+   */
   private drawWreck(object: SpaceObject, point: Vec): void {
     const wreck = object.wreck;
     if (!wreck) {
       return;
     }
-    const progress = Math.min(1, wreck.age / ECONOMY.breakApartSeconds);
+    const data = this.destruction;
+    const shards = this.shards.get(wreck.archetype);
+    const timing = data?.archetypes[wreck.archetype];
+    const art = this.enemyArt.get(wreck.archetype);
+    if (!data || !shards || !timing || !art) {
+      this.drawWreckPlaceholder(wreck, point);
+      return;
+    }
+    const time = wreck.age * 1000;
+    const frame = selectEnemyFrame(art, wreck.facing);
+    const width = frame.width ?? 96;
+    const height = frame.height ?? 96;
+    const scale = (frame.displayWidth ?? 42) / width;
+    if (this.reducedMotion) {
+      const state = reducedAt(data, timing, time);
+      if (state) {
+        this.objectSprite(object.id, frame.id)
+          .setDisplaySize(
+            (frame.displayWidth ?? 42) * state.scale,
+            (frame.displayHeight ?? 42) * state.scale,
+          )
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setAlpha(state.alpha)
+          .setTint(state.tint);
+      }
+      return;
+    }
+    const pivot = { x: frame.pivot.x * width, y: frame.pivot.y * height };
+    for (const polygon of shardPolygons(
+      data,
+      shards,
+      timing.durationMs,
+      frame.directionIndex ?? 0,
+      time,
+    )) {
+      if (polygon.alpha <= 0) {
+        continue;
+      }
+      const points: Phaser.Math.Vector2[] = [];
+      for (let index = 0; index + 1 < polygon.points.length; index += 2) {
+        points.push(
+          new Phaser.Math.Vector2(
+            point.x + (polygon.points[index]! - pivot.x) * scale,
+            point.y + (polygon.points[index + 1]! - pivot.y) * scale,
+          ),
+        );
+      }
+      this.overlay.fillStyle(polygon.color, polygon.alpha);
+      this.overlay.fillPoints(points, true);
+    }
+    const flash = flashAt(data, timing, time);
+    if (flash && this.textures.exists("destruction-flash")) {
+      const flashWidth = flash.width * scale;
+      this.objectSprite(`${object.id}${FLASH_SUFFIX}`, "destruction-flash")
+        .setDisplaySize(flashWidth, (flashWidth * data.flash.height) / data.flash.width)
+        .setOrigin(0.5, 0.5)
+        .setPosition(point.x, point.y)
+        .setAlpha(flash.alpha)
+        .setDepth(4);
+    }
+  }
+
+  /** Fallback without shard art: hull fragments flying outward. */
+  private drawWreckPlaceholder(wreck: NonNullable<SpaceObject["wreck"]>, point: Vec): void {
+    const timing = ECONOMY.destruction[wreck.archetype];
+    const progress = Math.min(1, wreck.age / timing.durationSeconds);
     const size = Math.max(6, enemyCatalog[wreck.archetype].sizeRatio * 10);
     this.ink.lineStyle(1.5, this.palette.obstacle, 1 - progress);
     for (let i = 0; i < 6; i++) {

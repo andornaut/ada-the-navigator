@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
-import { selectShipAsset, type ShipAsset, shipDirection, shipDirectionCount } from "./ship-art.ts";
+import {
+  paintFrames,
+  selectPaintedShipAsset,
+  selectShipAsset,
+  type ShipAsset,
+  shipDirection,
+  shipDirectionCount,
+} from "./ship-art.ts";
 
 const asset = (id: string, directionIndex: number): ShipAsset => ({
   directionIndex,
@@ -106,5 +113,34 @@ describe("authored ship headings", () => {
     expect(selectShipAsset([idle, thrust], true, { x: 1, y: 0 })).toBe(thrust);
     expect(selectShipAsset([idle], true, { x: 1, y: 0 })).toBe(idle);
     expect(selectShipAsset([], false, { x: 1, y: 0 })).toBeUndefined();
+  });
+});
+
+describe("ship paint schemes", () => {
+  const shipped = manifest.assets as ShipAsset[];
+
+  it("keeps Classic on the unpainted frames, skipping painted entries", () => {
+    const classic = selectPaintedShipAsset(shipped, null, false, at(22.5));
+    expect(classic?.id).toBe("ship-1");
+    expect(classic?.paint).toBeUndefined();
+  });
+
+  it.each(["cobalt", "seafoam", "graphite", "iris"])(
+    "selects %s idle frames by heading and keeps them for thrust",
+    (paint) => {
+      expect(paintFrames(shipped, paint)).toHaveLength(16);
+      for (let index = 0; index < 16; index++) {
+        for (const thrust of [false, true]) {
+          const frame = selectPaintedShipAsset(shipped, paint, thrust, at(index * 22.5));
+          expect(frame?.id).toBe(`ship-${paint}-${index}`);
+          expect(frame?.paint).toBe(paint);
+        }
+      }
+    },
+  );
+
+  it("falls back to Classic while a scheme's frames are not loaded", () => {
+    const loaded = shipped.filter((asset) => asset.paint === undefined);
+    expect(selectPaintedShipAsset(loaded, "iris", false, at(22.5))?.id).toBe("ship-1");
   });
 });

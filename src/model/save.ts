@@ -139,7 +139,8 @@ function wreckState(value: unknown): boolean {
     typeof value.archetype === "string" &&
     Object.hasOwn(enemyCatalog, value.archetype) &&
     nonnegative(value.age) &&
-    vector(value.facing)
+    vector(value.facing) &&
+    (value.released === undefined || typeof value.released === "boolean")
   );
 }
 const OBJECT_KINDS = [
@@ -167,6 +168,11 @@ function spaceObject(
     OBJECT_KINDS.includes(String(value.kind)) &&
     (value.kind !== "station" || stationById(ECONOMY, sector, value.id) !== null) &&
     (value.kind === "wreck" ? wreckState(value.wreck) : value.wreck === undefined) &&
+    (value.release === undefined ||
+      (value.kind === "pickup" &&
+        record(value.release) &&
+        nonnegative(value.release.at) &&
+        vector(value.release.from))) &&
     (value.amount === undefined ||
       (value.kind === "pickup" &&
         Number.isSafeInteger(value.amount) &&

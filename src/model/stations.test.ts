@@ -5,7 +5,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { createEnemy } from "./enemy-ai.ts";
-import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
+import { createFlight, ensureDestination, stationDock, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationById, stationInCell, type StationSite, stationsNear } from "./stations.ts";
@@ -29,11 +29,15 @@ function sites(sector: SectorId, span = 15): StationSite[] {
   return found;
 }
 const site = sites(1, 3)[0]!;
+const dock = stationDock(site);
+const { dockOutward } = ECONOMY.station;
+// Ada approaches the dock moving against its outward direction, 200 units out.
+const approach = { x: dock.x + dockOutward.x * 200, y: dock.y + dockOutward.y * 200 };
 
 /** A flight parked inside a station's safe area with nothing else nearby. */
 function atStation(seed = 5): FlightState {
   const flight = createFlight(PROTOTYPE, 1, seed, { known: [] });
-  flight.player = { x: site.x, y: site.y + 200 };
+  flight.player = { ...approach };
   stepFlight(PROTOTYPE, 1 / 60, idle, flight);
   flight.objects = flight.objects.filter((object) => object.kind === "station");
   flight.shots = [];
@@ -44,7 +48,7 @@ function launched(): GameModel {
   model.startSector(1);
   playOpening(model);
   const flight = model.state.flight!;
-  flight.player = { x: site.x, y: site.y + 200 };
+  flight.player = { ...approach };
   model.step(1 / 60, idle);
   flight.objects = flight.objects.filter((object) => object.kind === "station");
   flight.shots = [];
@@ -155,20 +159,20 @@ describe("station discovery and docking", () => {
     model.step(1 / 60, idle);
     flight.dangerFor = 0;
     model.teleport(site.id);
-    expect(flight.player).toEqual({ x: site.x, y: site.y + dockRadius + 40 });
+    expect(distance(flight.player, dock)).toBeCloseTo(dockRadius + 40, 9);
     model.step(0.1, idle);
     expect(model.state.docked).toBeNull();
   });
 
   it("docks when Ada flies into the dock and pauses action like a conversation", () => {
     const model = launched();
-    const up = { ...idle, move: { x: 0, y: -1 } };
+    const up = { ...idle, move: { x: -dockOutward.x, y: -dockOutward.y } };
     for (let step = 0; step < 120 && !model.state.docked; step++) {
       model.step(1 / 30, up);
     }
     expect(model.state.docked).toBe(site.id);
     const flight = model.state.flight!;
-    expect(distance(flight.player, site)).toBeLessThanOrEqual(dockRadius);
+    expect(distance(flight.player, dock)).toBeLessThanOrEqual(dockRadius);
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
     const time = flight.time;
     const position = { ...flight.player };
@@ -182,8 +186,8 @@ describe("station discovery and docking", () => {
     expect(model.state.docked).toBeNull();
     // Undocking places Ada at rest just outside the dock, along its outward direction.
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
-    expect(distance(flight.player, site)).toBeCloseTo(dockRadius + 1, 9);
-    expect(flight.player.y).toBeGreaterThan(site.y);
+    expect(distance(flight.player, dock)).toBeCloseTo(dockRadius + 1, 9);
+    expect(flight.player.y).toBeGreaterThan(dock.y);
     model.step(1 / 30, idle);
     expect(model.state.docked).toBeNull();
     // Flying straight back in docks again.
