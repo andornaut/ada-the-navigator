@@ -54,11 +54,13 @@ function insertion(model: GameModel): [string, string][] {
   }
   return panels;
 }
-/** Returns home and reads the resolution scene through its closing. */
+/** Returns home and reads the resolution scene through its branch page and closing. */
 function resolveAtHome(model: GameModel) {
   model.returnHome();
   expect(model.storyView?.page.id).toBe("resolution");
   model.storyChoose(0);
+  expect(model.storyView?.page.id).toBe("resolution:branch:0");
+  model.storyNext();
   expect(model.storyView?.page.id).toBe("closing");
   model.storyNext();
 }

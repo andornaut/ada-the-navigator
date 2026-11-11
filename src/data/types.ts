@@ -8,8 +8,12 @@ export type Weapon = "basic" | "missiles" | "tripleLaser" | "scattershot";
 export interface ChapterContent {
   name: string;
   opening: string;
+  /** One branch page per opening choice, in choice order, before the story rejoins. */
+  openingBranches: readonly [string, string];
   openingChoices: readonly [string, string];
   resolution: string;
+  /** One branch page per resolution choice, in choice order, before the closing. */
+  resolutionBranches: readonly [string, string];
   resolutionChoices: readonly [string, string];
   closing: string;
   objectives: readonly string[];

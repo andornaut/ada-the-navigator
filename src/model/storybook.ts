@@ -140,26 +140,36 @@ export function skip(position: StoryPosition): StoryPosition | null {
   return here;
 }
 
-/** A chapter's home opening: its narration and choices, which rejoin as the scene ends. */
+/** A chapter's home opening: its narration and choices, each with a branch page before the story
+ * rejoins as the scene ends. */
 export function openingScene(content: PrototypeContent, galaxy: SectorId): Scene {
   const chapter = content.chapters[galaxy];
   return {
     effect: { galaxy, kind: "opened" },
     id: `opening:${galaxy}`,
-    last: "opening",
+    last: "opening:branch:0",
     lead: "home",
     pages: [
       {
         background: CHAPTER_BACKGROUNDS[galaxy].opening,
-        choices: chapter.openingChoices.map((label) => ({ label })),
+        choices: chapter.openingChoices.map((label, index) => ({
+          label,
+          next: `opening:branch:${index}`,
+        })),
         id: "opening",
         text: chapter.opening,
       },
+      ...chapter.openingBranches.map((text, index): StoryPage => ({
+        background: CHAPTER_BACKGROUNDS[galaxy].opening,
+        id: `opening:branch:${index}`,
+        text,
+      })),
     ],
   };
 }
 
-/** A chapter's home resolution: its narration and choices, rejoining at the closing. */
+/** A chapter's home resolution: its narration and choices, each with a branch page before the
+ * closing. */
 export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Scene {
   const chapter = content.chapters[galaxy];
   const backgrounds = CHAPTER_BACKGROUNDS[galaxy];
@@ -171,10 +181,19 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
     pages: [
       {
         background: backgrounds.resolution,
-        choices: chapter.resolutionChoices.map((label) => ({ label, next: "closing" })),
+        choices: chapter.resolutionChoices.map((label, index) => ({
+          label,
+          next: `resolution:branch:${index}`,
+        })),
         id: "resolution",
         text: chapter.resolution,
       },
+      ...chapter.resolutionBranches.map((text, index): StoryPage => ({
+        background: backgrounds.resolution,
+        id: `resolution:branch:${index}`,
+        next: "closing",
+        text,
+      })),
       { background: backgrounds.closing, id: "closing", text: chapter.closing },
     ],
   };

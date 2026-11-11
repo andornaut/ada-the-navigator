@@ -303,12 +303,17 @@ try {
   await page.screenshot({ path: `${output}/story-opening.png` });
   const launchPages = await readStory();
   assert.equal(launchPages[0]?.background, "grandmaGarden", "Start opens galaxy one's opening");
-  assert.equal(launchPages[1]?.background, "park", "The prologue begins in the park");
-  assert.equal(launchPages[1]?.text, PROTOTYPE.premise.prologue[0].text);
-  assert.equal(launchPages[2]?.background, "adaRoom", "The rock glows in Ada's room");
-  assert.equal(launchPages[2]?.text, PROTOTYPE.premise.roomRock);
+  assert.equal(
+    launchPages[1]?.text,
+    PROTOTYPE.chapters[1].openingBranches[0],
+    "The default choice's branch page follows the opening",
+  );
+  assert.equal(launchPages[2]?.background, "park", "The prologue begins in the park");
+  assert.equal(launchPages[2]?.text, PROTOTYPE.premise.prologue[0].text);
+  assert.equal(launchPages[3]?.background, "adaRoom", "The rock glows in Ada's room");
+  assert.equal(launchPages[3]?.text, PROTOTYPE.premise.roomRock);
   assert.ok(
-    launchPages.slice(3).every(({ background }) => background === "cockpit"),
+    launchPages.slice(4).every(({ background }) => background === "cockpit"),
     "The rest of the prologue plays in the cockpit",
   );
   // Each optional question's answer returns to the list until Continue.
@@ -1216,6 +1221,8 @@ try {
   assert.equal(await choices.count(), 2, "home resolution must offer both real choices");
   await page.screenshot({ path: `${output}/resolution.png` });
   await choices.nth(1).click();
+  await page.getByText(PROTOTYPE.chapters[1].resolutionBranches[1], { exact: true }).waitFor();
+  await page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]').click();
   await page.getByText(PROTOTYPE.chapters[1].closing, { exact: true }).waitFor();
   assert.equal(await choices.count(), 0, "The closing is an ordinary page");
   const homePages = await readStory();

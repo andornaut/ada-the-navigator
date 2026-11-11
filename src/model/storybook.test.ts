@@ -138,18 +138,25 @@ describe("home visits", () => {
     const pages = readStory(model, 1);
     expect(pages.map(({ background, id }) => `${id}@${background}`)).toEqual([
       "resolution@gardenLot",
+      "resolution:branch:1@gardenLot",
       "closing@gardenLot",
       "opening@schoolHallway",
+      "opening:branch:1@schoolHallway",
       "room@adaRoom",
       "boarding:0@adaRoom",
       "boarding:1@cockpit",
     ]);
-    expect(pages[3]).toMatchObject({
+    expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1].resolutionBranches[1]);
+    expect(pages[4]?.text).toBe(PROTOTYPE.chapters[2].openingBranches[1]);
+    expect(pages[5]).toMatchObject({
       action: "Pick up the rock.",
       text: "Ada's rock glows softly on her desk.",
     });
     // Narration pages have no name tab; Astra's line has hers.
-    expect(pages.map(({ speaker }) => speaker ?? "")).toEqual(["", "", "", "", "", "Astra"]);
+    expect(pages.map(({ speaker }) => speaker ?? "")).toEqual([
+      ...Array<string>(7).fill(""),
+      "Astra",
+    ]);
     expect(pages.at(-1)?.text).toBe("Welcome back, Navigator. A new galaxy is ready.");
     expect(model.state.progress[1].resolved).toBe(true);
     expect(model.state.progress[2].opened).toBe(true);
@@ -245,6 +252,7 @@ describe("start flow", () => {
     expect(reloaded.storyView?.page.id).toBe("opening");
     expect(readStory(reloaded).map(({ id }) => id)).toEqual([
       "opening",
+      "opening:branch:0",
       "room",
       "boarding:0",
       "boarding:1",

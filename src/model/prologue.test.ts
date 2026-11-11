@@ -21,6 +21,9 @@ function started(choice = 0): GameModel {
   model.start();
   expect(model.storyView?.page.id).toBe("opening");
   model.storyChoose(choice);
+  // The choice's branch page, then the story rejoins at the prologue.
+  expect(model.storyView?.page.text).toBe(PROTOTYPE.chapters[1].openingBranches[choice]);
+  model.storyNext();
   return model;
 }
 
