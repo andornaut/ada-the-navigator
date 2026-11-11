@@ -43,7 +43,8 @@ Stations are rare points of interest, each with a shop. They are placed by the
 galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. A station is a safe
-area. Flying into its dock opens the station card, which pauses action like a
+area. Undocking places Ada at rest just outside the dock, so flying back in docks
+again. Flying into its dock opens the station card, which pauses action like a
 conversation. The card shows the Stardust balance, a welcome line, Undock and Shop.
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
 undock. Station quests are part of the station concept; their content is

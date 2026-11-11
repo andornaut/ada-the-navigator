@@ -286,7 +286,8 @@ requirements and repeatable-task content remain to be specified.
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
 Nearby optional discoveries show a direction indicator; this does not add a map.
-Discovery rewards use existing cargo, weapon and Stardust pickups. Stations are rare
+Discovery rewards use cargo and Stardust pickups; a discovery cache holds 25
+Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
 
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
