@@ -9,7 +9,7 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
 const MOUTH_Z = 2;
 
-function svg(craft: Craft, yaw: number): string {
+export function svg(craft: Craft, yaw: number): string {
   const centre = craft.frame / 2;
   const polygons = drawOrder(yaw, craft.parts[0]!.z1, craft.parts)
     .flatMap((part) => faces(yaw, part))
@@ -27,7 +27,7 @@ function svg(craft: Craft, yaw: number): string {
   ].join("\n");
 }
 
-function jets(craft: Craft): string {
+export function jets(craft: Craft): string {
   const centre = craft.frame / 2;
   const half = craft.mouthWidth / 2;
   return jetsFile(craft.frame, (yaw) =>
@@ -39,18 +39,24 @@ function jets(craft: Craft): string {
   );
 }
 
-mkdirSync(output, { recursive: true });
-for (const craft of crafts) {
-  writeFileSync(`${output}${craft.name}-jets.json`, jets(craft));
-  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-    writeFileSync(`${output}${craft.name}-${yaw}.svg`, svg(craft, yaw));
+function main() {
+  mkdirSync(output, { recursive: true });
+  for (const craft of crafts) {
+    writeFileSync(`${output}${craft.name}-jets.json`, jets(craft));
+    for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
+      writeFileSync(`${output}${craft.name}-${yaw}.svg`, svg(craft, yaw));
+    }
   }
+
+  // Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
+  const names = crafts.map(({ name }) => name).join("|");
+  const hull = new RegExp(`^enemy-(${names})-\\d+$`);
+  replaceEntries(
+    (id) => hull.test(id),
+    crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
+  );
 }
 
-// Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
-const names = crafts.map(({ name }) => name).join("|");
-const hull = new RegExp(`^enemy-(${names})-\\d+$`);
-replaceEntries(
-  (id) => hull.test(id),
-  crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
-);
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

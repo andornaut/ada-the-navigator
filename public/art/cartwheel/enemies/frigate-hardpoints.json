@@ -1,0 +1,415 @@
+{
+  "version": 1,
+  "archetype": "frigate",
+  "frame": 384,
+  "hardpoints": [
+    {
+      "id": "engine",
+      "role": "engine",
+      "states": ["intact", "destroyed"],
+      "top": null
+    },
+    {
+      "id": "port",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "gun"
+    },
+    {
+      "id": "starboard",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "gun"
+    }
+  ],
+  "headings": [
+    {
+      "index": 0,
+      "order": ["hull", "port", "engine", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [147.438, 152.272]
+        },
+        {
+          "id": "port",
+          "anchor": [236.562, 158.272],
+          "pivot": [236.562, 156.772]
+        },
+        {
+          "id": "starboard",
+          "anchor": [147.438, 209.728],
+          "pivot": [147.438, 208.228]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "order": ["hull", "engine", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [167.883, 144.385]
+        },
+        {
+          "id": "port",
+          "anchor": [250.223, 170.076],
+          "pivot": [250.223, 168.576]
+        },
+        {
+          "id": "starboard",
+          "anchor": [133.777, 197.924],
+          "pivot": [133.777, 196.424]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "order": ["hull", "engine", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [192, 141.615]
+        },
+        {
+          "id": "port",
+          "anchor": [255.02, 184],
+          "pivot": [255.02, 182.5]
+        },
+        {
+          "id": "starboard",
+          "anchor": [128.98, 184],
+          "pivot": [128.98, 182.5]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "order": ["hull", "engine", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [216.117, 144.385]
+        },
+        {
+          "id": "port",
+          "anchor": [250.223, 197.924],
+          "pivot": [250.223, 196.424]
+        },
+        {
+          "id": "starboard",
+          "anchor": [133.777, 170.076],
+          "pivot": [133.777, 168.576]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "order": ["hull", "starboard", "engine", "port"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [236.562, 152.272]
+        },
+        {
+          "id": "port",
+          "anchor": [236.562, 209.728],
+          "pivot": [236.562, 208.228]
+        },
+        {
+          "id": "starboard",
+          "anchor": [147.438, 158.272],
+          "pivot": [147.438, 156.772]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "order": ["hull", "starboard", "engine", "port"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [250.223, 164.076]
+        },
+        {
+          "id": "port",
+          "anchor": [216.117, 217.615],
+          "pivot": [216.117, 216.115]
+        },
+        {
+          "id": "starboard",
+          "anchor": [167.883, 150.385],
+          "pivot": [167.883, 148.885]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "order": ["hull", "starboard", "engine", "port"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [255.02, 178]
+        },
+        {
+          "id": "port",
+          "anchor": [192, 220.385],
+          "pivot": [192, 218.885]
+        },
+        {
+          "id": "starboard",
+          "anchor": [192, 147.615],
+          "pivot": [192, 146.115]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "order": ["hull", "starboard", "engine", "port"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [250.223, 191.924]
+        },
+        {
+          "id": "port",
+          "anchor": [167.883, 217.615],
+          "pivot": [167.883, 216.115]
+        },
+        {
+          "id": "starboard",
+          "anchor": [216.117, 150.385],
+          "pivot": [216.117, 148.885]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "order": ["hull", "starboard", "port", "engine"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [236.562, 203.728]
+        },
+        {
+          "id": "port",
+          "anchor": [147.438, 209.728],
+          "pivot": [147.438, 208.228]
+        },
+        {
+          "id": "starboard",
+          "anchor": [236.562, 158.272],
+          "pivot": [236.562, 156.772]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "order": ["hull", "starboard", "port", "engine"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [216.117, 211.615]
+        },
+        {
+          "id": "port",
+          "anchor": [133.777, 197.924],
+          "pivot": [133.777, 196.424]
+        },
+        {
+          "id": "starboard",
+          "anchor": [250.223, 170.076],
+          "pivot": [250.223, 168.576]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "order": ["hull", "starboard", "port", "engine"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [192, 214.385]
+        },
+        {
+          "id": "port",
+          "anchor": [128.98, 184],
+          "pivot": [128.98, 182.5]
+        },
+        {
+          "id": "starboard",
+          "anchor": [255.02, 184],
+          "pivot": [255.02, 182.5]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "order": ["hull", "port", "starboard", "engine"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [167.883, 211.615]
+        },
+        {
+          "id": "port",
+          "anchor": [133.777, 170.076],
+          "pivot": [133.777, 168.576]
+        },
+        {
+          "id": "starboard",
+          "anchor": [250.223, 197.924],
+          "pivot": [250.223, 196.424]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "order": ["hull", "port", "starboard", "engine"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [147.438, 203.728]
+        },
+        {
+          "id": "port",
+          "anchor": [147.438, 158.272],
+          "pivot": [147.438, 156.772]
+        },
+        {
+          "id": "starboard",
+          "anchor": [236.562, 209.728],
+          "pivot": [236.562, 208.228]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "order": ["hull", "port", "engine", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [133.777, 191.924]
+        },
+        {
+          "id": "port",
+          "anchor": [167.883, 150.385],
+          "pivot": [167.883, 148.885]
+        },
+        {
+          "id": "starboard",
+          "anchor": [216.117, 217.615],
+          "pivot": [216.117, 216.115]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "order": ["hull", "port", "engine", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [128.98, 178]
+        },
+        {
+          "id": "port",
+          "anchor": [192, 147.615],
+          "pivot": [192, 146.115]
+        },
+        {
+          "id": "starboard",
+          "anchor": [192, 220.385],
+          "pivot": [192, 218.885]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "order": ["hull", "port", "engine", "starboard"],
+      "hardpoints": [
+        {
+          "id": "engine",
+          "anchor": [133.777, 164.076]
+        },
+        {
+          "id": "port",
+          "anchor": [216.117, 150.385],
+          "pivot": [216.117, 148.885]
+        },
+        {
+          "id": "starboard",
+          "anchor": [167.883, 217.615],
+          "pivot": [167.883, 216.115]
+        }
+      ]
+    }
+  ],
+  "tops": {
+    "gun": [
+      {
+        "index": 0,
+        "muzzles": [[29.098, 15]]
+      },
+      {
+        "index": 1,
+        "muzzles": [[15.748, 20.15]]
+      },
+      {
+        "index": 2,
+        "muzzles": [[0, 21.959]]
+      },
+      {
+        "index": 3,
+        "muzzles": [[-15.748, 20.15]]
+      },
+      {
+        "index": 4,
+        "muzzles": [[-29.098, 15]]
+      },
+      {
+        "index": 5,
+        "muzzles": [[-38.019, 7.292]]
+      },
+      {
+        "index": 6,
+        "muzzles": [[-41.151, -1.8]]
+      },
+      {
+        "index": 7,
+        "muzzles": [[-38.019, -10.892]]
+      },
+      {
+        "index": 8,
+        "muzzles": [[-29.098, -18.6]]
+      },
+      {
+        "index": 9,
+        "muzzles": [[-15.748, -23.75]]
+      },
+      {
+        "index": 10,
+        "muzzles": [[0, -25.559]]
+      },
+      {
+        "index": 11,
+        "muzzles": [[15.748, -23.75]]
+      },
+      {
+        "index": 12,
+        "muzzles": [[29.098, -18.6]]
+      },
+      {
+        "index": 13,
+        "muzzles": [[38.019, -10.892]]
+      },
+      {
+        "index": 14,
+        "muzzles": [[41.151, -1.8]]
+      },
+      {
+        "index": 15,
+        "muzzles": [[38.019, 7.292]]
+      }
+    ]
+  }
+}

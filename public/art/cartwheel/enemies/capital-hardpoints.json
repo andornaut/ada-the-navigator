@@ -1,0 +1,919 @@
+{
+  "version": 1,
+  "archetype": "capital",
+  "frame": 480,
+  "hardpoints": [
+    {
+      "id": "command",
+      "role": "command",
+      "states": ["intact", "destroyed"],
+      "top": null
+    },
+    {
+      "id": "engine-left",
+      "role": "engine",
+      "states": ["intact", "destroyed"],
+      "top": null
+    },
+    {
+      "id": "engine-right",
+      "role": "engine",
+      "states": ["intact", "destroyed"],
+      "top": null
+    },
+    {
+      "id": "weapon-left",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    },
+    {
+      "id": "weapon-right",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    },
+    {
+      "id": "weapon-rear-left",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    },
+    {
+      "id": "weapon-rear-right",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    }
+  ],
+  "headings": [
+    {
+      "index": 0,
+      "order": [
+        "engine-left",
+        "engine-right",
+        "hull",
+        "weapon-rear-left",
+        "weapon-left",
+        "command",
+        "weapon-rear-right",
+        "weapon-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [212.149, 155.32]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [119.311, 208.92]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [360.689, 222.64],
+          "pivot": [360.689, 221.14]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [230.716, 297.68],
+          "pivot": [230.716, 296.18]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [303.13, 174.4],
+          "pivot": [303.13, 172.9]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [147.162, 264.448],
+          "pivot": [147.162, 262.948]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "order": [
+        "engine-left",
+        "engine-right",
+        "hull",
+        "weapon-rear-left",
+        "command",
+        "weapon-rear-right",
+        "weapon-left",
+        "weapon-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [260.454, 154.471]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [139.156, 183.479]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [355.055, 249.713],
+          "pivot": [355.055, 248.213]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [185.237, 290.325],
+          "pivot": [185.237, 288.825]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [333.852, 192.428],
+          "pivot": [333.852, 190.928]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [130.07, 241.162],
+          "pivot": [130.07, 239.662]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "order": [
+        "engine-left",
+        "engine-right",
+        "hull",
+        "weapon-rear-left",
+        "weapon-rear-right",
+        "command",
+        "weapon-left",
+        "weapon-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [305.646, 164.359]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [174.354, 164.359]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [331.905, 273.481],
+          "pivot": [331.905, 271.981]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [148.095, 273.481],
+          "pivot": [148.095, 271.981]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [350.286, 215.872],
+          "pivot": [350.286, 214.372]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [129.714, 215.872],
+          "pivot": [129.714, 214.372]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "order": [
+        "engine-right",
+        "engine-left",
+        "hull",
+        "weapon-rear-right",
+        "command",
+        "weapon-rear-left",
+        "weapon-right",
+        "weapon-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [340.844, 183.479]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [219.546, 154.471]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [294.763, 290.325],
+          "pivot": [294.763, 288.825]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [124.945, 249.713],
+          "pivot": [124.945, 248.213]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [349.93, 241.162],
+          "pivot": [349.93, 239.662]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [146.148, 192.428],
+          "pivot": [146.148, 190.928]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "order": [
+        "engine-right",
+        "engine-left",
+        "hull",
+        "weapon-rear-right",
+        "weapon-right",
+        "command",
+        "weapon-rear-left",
+        "weapon-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [360.689, 208.92]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [267.851, 155.32]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [249.284, 297.68],
+          "pivot": [249.284, 296.18]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [119.311, 222.64],
+          "pivot": [119.311, 221.14]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [332.838, 264.448],
+          "pivot": [332.838, 262.948]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [176.87, 174.4],
+          "pivot": [176.87, 172.9]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "order": [
+        "engine-right",
+        "hull",
+        "engine-left",
+        "weapon-rear-right",
+        "weapon-right",
+        "command",
+        "weapon-rear-left",
+        "weapon-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [362.161, 236.809]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [311.917, 166.778]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [202.391, 294.427],
+          "pivot": [202.391, 292.927]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [132.05, 196.383],
+          "pivot": [132.05, 194.883]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [301.612, 282.185],
+          "pivot": [301.612, 280.685]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [217.203, 164.532],
+          "pivot": [217.203, 163.032]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "order": [
+        "engine-right",
+        "hull",
+        "engine-left",
+        "weapon-rear-right",
+        "weapon-right",
+        "command",
+        "weapon-left",
+        "weapon-rear-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [345.034, 262.901]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [345.034, 187.099]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [161.224, 281.061],
+          "pivot": [161.224, 279.561]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [161.224, 174.939],
+          "pivot": [161.224, 173.439]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [261.007, 291.674],
+          "pivot": [261.007, 290.174]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [261.007, 164.326],
+          "pivot": [261.007, 162.826]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "order": [
+        "engine-right",
+        "hull",
+        "engine-left",
+        "weapon-right",
+        "weapon-rear-right",
+        "command",
+        "weapon-left",
+        "weapon-rear-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [311.917, 283.222]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [362.161, 213.191]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [132.05, 259.617],
+          "pivot": [132.05, 258.117]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [202.391, 161.573],
+          "pivot": [202.391, 160.073]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [217.203, 291.468],
+          "pivot": [217.203, 289.968]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [301.612, 173.815],
+          "pivot": [301.612, 172.315]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "order": [
+        "hull",
+        "engine-right",
+        "engine-left",
+        "weapon-right",
+        "weapon-rear-right",
+        "weapon-left",
+        "command",
+        "weapon-rear-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [267.851, 294.68]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [360.689, 241.08]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [119.311, 233.36],
+          "pivot": [119.311, 231.86]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [249.284, 158.32],
+          "pivot": [249.284, 156.82]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [176.87, 281.6],
+          "pivot": [176.87, 280.1]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [332.838, 191.552],
+          "pivot": [332.838, 190.052]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "order": [
+        "hull",
+        "engine-right",
+        "engine-left",
+        "weapon-right",
+        "weapon-left",
+        "weapon-rear-right",
+        "command",
+        "weapon-rear-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [219.546, 295.529]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [340.844, 266.521]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [124.945, 206.287],
+          "pivot": [124.945, 204.787]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [294.763, 165.675],
+          "pivot": [294.763, 164.175]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [146.148, 263.572],
+          "pivot": [146.148, 262.072]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [349.93, 214.838],
+          "pivot": [349.93, 213.338]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "order": [
+        "hull",
+        "engine-right",
+        "engine-left",
+        "weapon-right",
+        "weapon-left",
+        "command",
+        "weapon-rear-right",
+        "weapon-rear-left"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [174.354, 285.641]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [305.646, 285.641]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [148.095, 182.519],
+          "pivot": [148.095, 181.019]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [331.905, 182.519],
+          "pivot": [331.905, 181.019]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [129.714, 240.128],
+          "pivot": [129.714, 238.628]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [350.286, 240.128],
+          "pivot": [350.286, 238.628]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "order": [
+        "hull",
+        "engine-left",
+        "engine-right",
+        "weapon-left",
+        "weapon-right",
+        "weapon-rear-left",
+        "command",
+        "weapon-rear-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [139.156, 266.521]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [260.454, 295.529]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [185.237, 165.675],
+          "pivot": [185.237, 164.175]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [355.055, 206.287],
+          "pivot": [355.055, 204.787]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [130.07, 214.838],
+          "pivot": [130.07, 213.338]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [333.852, 263.572],
+          "pivot": [333.852, 262.072]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "order": [
+        "hull",
+        "engine-left",
+        "engine-right",
+        "weapon-left",
+        "weapon-rear-left",
+        "weapon-right",
+        "command",
+        "weapon-rear-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [119.311, 241.08]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [212.149, 294.68]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [230.716, 158.32],
+          "pivot": [230.716, 156.82]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [360.689, 233.36],
+          "pivot": [360.689, 231.86]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [147.162, 191.552],
+          "pivot": [147.162, 190.052]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [303.13, 281.6],
+          "pivot": [303.13, 280.1]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "order": [
+        "engine-left",
+        "hull",
+        "engine-right",
+        "weapon-left",
+        "weapon-rear-left",
+        "command",
+        "weapon-right",
+        "weapon-rear-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [117.839, 213.191]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [168.083, 283.222]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [277.609, 161.573],
+          "pivot": [277.609, 160.073]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [347.95, 259.617],
+          "pivot": [347.95, 258.117]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [178.388, 173.815],
+          "pivot": [178.388, 172.315]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [262.797, 291.468],
+          "pivot": [262.797, 289.968]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "order": [
+        "engine-left",
+        "hull",
+        "engine-right",
+        "weapon-rear-left",
+        "weapon-left",
+        "command",
+        "weapon-right",
+        "weapon-rear-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [134.966, 187.099]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [134.966, 262.901]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [318.776, 174.939],
+          "pivot": [318.776, 173.439]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [318.776, 281.061],
+          "pivot": [318.776, 279.561]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [218.993, 164.326],
+          "pivot": [218.993, 162.826]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [218.993, 291.674],
+          "pivot": [218.993, 290.174]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "order": [
+        "engine-left",
+        "hull",
+        "engine-right",
+        "weapon-rear-left",
+        "weapon-left",
+        "command",
+        "weapon-rear-right",
+        "weapon-right"
+      ],
+      "hardpoints": [
+        {
+          "id": "command",
+          "anchor": [240, 215]
+        },
+        {
+          "id": "engine-left",
+          "anchor": [168.083, 166.778]
+        },
+        {
+          "id": "engine-right",
+          "anchor": [117.839, 236.809]
+        },
+        {
+          "id": "weapon-left",
+          "anchor": [347.95, 196.383],
+          "pivot": [347.95, 194.883]
+        },
+        {
+          "id": "weapon-right",
+          "anchor": [277.609, 294.427],
+          "pivot": [277.609, 292.927]
+        },
+        {
+          "id": "weapon-rear-left",
+          "anchor": [262.797, 164.532],
+          "pivot": [262.797, 163.032]
+        },
+        {
+          "id": "weapon-rear-right",
+          "anchor": [178.388, 282.185],
+          "pivot": [178.388, 280.685]
+        }
+      ]
+    }
+  ],
+  "tops": {
+    "turret": [
+      {
+        "index": 0,
+        "muzzles": [
+          [29.722, 11.04],
+          [22.24, 15.36]
+        ]
+      },
+      {
+        "index": 1,
+        "muzzles": [
+          [18.949, 16.629],
+          [9.173, 18.967]
+        ]
+      },
+      {
+        "index": 2,
+        "muzzles": [
+          [5.291, 19.413],
+          [-5.291, 19.413]
+        ]
+      },
+      {
+        "index": 3,
+        "muzzles": [
+          [-9.173, 18.967],
+          [-18.949, 16.629]
+        ]
+      },
+      {
+        "index": 4,
+        "muzzles": [
+          [-22.24, 15.36],
+          [-29.722, 11.04]
+        ]
+      },
+      {
+        "index": 5,
+        "muzzles": [
+          [-31.921, 9.14],
+          [-35.97, 3.496]
+        ]
+      },
+      {
+        "index": 6,
+        "muzzles": [
+          [-36.742, 1.255],
+          [-36.742, -4.855]
+        ]
+      },
+      {
+        "index": 7,
+        "muzzles": [
+          [-35.97, -7.096],
+          [-31.921, -12.74]
+        ]
+      },
+      {
+        "index": 8,
+        "muzzles": [
+          [-29.722, -14.64],
+          [-22.24, -18.96]
+        ]
+      },
+      {
+        "index": 9,
+        "muzzles": [
+          [-18.949, -20.229],
+          [-9.173, -22.567]
+        ]
+      },
+      {
+        "index": 10,
+        "muzzles": [
+          [-5.291, -23.013],
+          [5.291, -23.013]
+        ]
+      },
+      {
+        "index": 11,
+        "muzzles": [
+          [9.173, -22.567],
+          [18.949, -20.229]
+        ]
+      },
+      {
+        "index": 12,
+        "muzzles": [
+          [22.24, -18.96],
+          [29.722, -14.64]
+        ]
+      },
+      {
+        "index": 13,
+        "muzzles": [
+          [31.921, -12.74],
+          [35.97, -7.096]
+        ]
+      },
+      {
+        "index": 14,
+        "muzzles": [
+          [36.742, -4.855],
+          [36.742, 1.255]
+        ]
+      },
+      {
+        "index": 15,
+        "muzzles": [
+          [35.97, 3.496],
+          [31.921, 9.14]
+        ]
+      }
+    ]
+  }
+}

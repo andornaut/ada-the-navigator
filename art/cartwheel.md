@@ -13,6 +13,8 @@
   and speed jets schema from [art/tools/crafts.ts](tools/crafts.ts).
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
+- Cartwheel's hostile craft, the claim jumpers and the turret platform, follow
+  the [heavies](heavies.md#cartwheel-claim-jumpers) contract.
 
 ## Sizes and frames
 
@@ -126,17 +128,18 @@ through them, so they have no hit circle.
 - Groups draw far to near, and a group resting on the hull or cab top draws
   after every group below that level.
 
-| Craft      | Length, span (model units) | Shape                                                                     |
-| ---------- | -------------------------- | ------------------------------------------------------------------------- |
-| `miner`    | 82.5, 31.6                 | Sand hauler: forward cab, dark cradle rails, two open bins of ore teal    |
-| `visitor1` | 40.1, 32                   | Sage shuttle with swept wings, a cab and tail lights                      |
-| `visitor2` | 40.1, 32                   | The same shuttle in periwinkle                                            |
-| `blocker`  | 53, 38.6                   | Magenta wedge, oversized graphite engine pods, a wide ram bar, high beams |
+| Craft      | Length, span (model units) | Shape                                                                        |
+| ---------- | -------------------------- | ---------------------------------------------------------------------------- |
+| `miner`    | 82.5, 31.6                 | Sand hauler: forward cab, dark cradle rails, two open bins of ore teal       |
+| `visitor1` | 40.1, 32                   | Sage shuttle with swept wings, a cab and tail lights                         |
+| `visitor2` | 40.1, 32                   | The same shuttle in periwinkle                                               |
+| `blocker`  | 53, 38.6                   | Chartreuse wedge, oversized graphite engine pods, a wide ram bar, high beams |
 
 Ada's wingspan is 42.88 model units. The blocking pilot reads as pushy (a loud
 hot rod with a ram bar and white high beams) without General Gadget's coral,
-forward pincers, dark visor or insignia, and outside the claim-jumpers' rust
-and ember.
+forward pincers, dark visor or insignia. Its chartreuse stays clear of the
+holodisk magenta `#E868C8`, the coral drones and the
+[claim jumpers](heavies.md#cartwheel-claim-jumpers)' rust and ember.
 
 ### Speed jets
 
@@ -172,11 +175,11 @@ lists top colours, which carry each silhouette.
 | Miner     | Bins, rails          | `#6e7482` |   3.15:1 |
 | Visitor 1 | Sage hull            | `#a7c49a` |   7.74:1 |
 | Visitor 2 | Periwinkle hull      | `#aab0e6` |   7.08:1 |
-| Blocker   | Magenta hull         | `#e070b0` |   5.00:1 |
+| Blocker   | Chartreuse hull      | `#b6dd30` |   9.41:1 |
 | Blocker   | Graphite pods, ram   | `#7d7a92` |   3.57:1 |
 | Blocker   | High beams           | `#fffbea` |  14.24:1 |
 
 Sides use the darker partner of each top: slate `#6a7c9e`, sand `#a8916a`
 (rear `#8a7656`), sage `#728f66` (rear `#5a7351`), periwinkle `#7379b4` (rear
-`#5b6093`), magenta `#a8508a` (rear `#7c3b66`), graphite `#5e5b72`. No craft is
+`#5b6093`), chartreuse `#84a41e` (rear `#617c18`), graphite `#5e5b72`. No craft is
 coral, amber or Ada's blue.

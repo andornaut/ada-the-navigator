@@ -190,3 +190,83 @@ The coral hull is 5.41:1 on the Sunflower field `#332712` and 5.44:1 on the
 default field `#292734`. Scorch is 1.46:1 and 1.47:1 on those fields, so deck
 wrecks read against the coral hull; a destroyed nacelle reads by its ember,
 6.96:1 and 6.99:1 on the fields.
+
+## Cartwheel claim jumpers
+
+Cartwheel's drones and heavies are one family: the four sector one drones, the
+frigate and the capital recoloured into rust, steel and ember, plus the turret
+platform. Sunflower keeps the coral originals.
+
+- Rebuild with `node art/tools/claim-jumpers.ts`, which takes the same
+  `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
+  process, writes `public/art/cartwheel/enemies/` and replaces its own manifest
+  entries in place, after the heavies and before Cartwheel's story craft.
+- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
+  coral family; only fills change. Every SVG and shards file goes through the
+  colour swap below, and the tool stops on any colour outside the family.
+- The jets and hardpoints files are the coral family's, unchanged: the jets keep
+  Gadget's family jet colours. Destruction uses the shared `destruction.json`
+  timing and flash with the claim shards.
+
+### Claim files and entries
+
+- File names are the coral names in `public/art/cartwheel/enemies/`:
+  `{a}-{k}.svg`, `{a}-jets.json` and `{a}-shards.json` for `swarm`, `fighter`,
+  `interceptor` and `retaliator`; every [file](#files) of the frigate and the
+  capital; and the platform's files. Each data file sits beside its frames as
+  `{a}-{name}.json`.
+- Ids are the coral ids with `enemy-claim-` in place of `enemy-`, such as
+  `enemy-claim-frigate-3` and `enemy-claim-capital-turret-top-9`. Each entry has
+  the coral entry's fields, its own `path`, the coral `archetype` and `family`
+  `claim`. No claim id matches `enemy-{archetype}-{index}`, so the coral heading
+  sets stay complete.
+
+### Claim palette
+
+Contrast is WCAG against Cartwheel's field `#39221E`.
+
+| Role                  | Coral                | Claim     | Contrast |
+| --------------------- | -------------------- | --------- | -------: |
+| Hull top              | `#d68b72`            | `#bd7042` |   3.91:1 |
+| Hull side             | `#a8654f`            | `#924e28` |   2.35:1 |
+| Hull rear             | `#7f4b3d`            | `#703921` |   1.62:1 |
+| Plates                | `#e6a890`            | `#b5a998` |   6.40:1 |
+| Guns, lights, disc    | `#f0bd68`            | `#fa6d38` |   5.14:1 |
+| Gun side              | `#b98a40`            | `#bc4524` |   2.82:1 |
+| Turret top            | `#c27a62`            | `#a95e30` |   3.05:1 |
+| Visor, hatch          | `#2a2433`            | `#2b1d1c` |   1.10:1 |
+| Visor side, breach    | `#1e1a26`            | `#1f1514` |   1.21:1 |
+| Scorch top            | `#5c3a31`            | `#452f28` |   1.19:1 |
+| Scorch side           | `#42291f`            | `#33211b` |   1.03:1 |
+| Burn (deck paint)     | `#6e4436`            | `#613e30` |   1.58:1 |
+| Claw ink, wreck ember | `#181425`, `#f0a07c` | unchanged |          |
+
+The platform adds deep rust `#7d4427` (painted spokes, 1.92:1) and steel side
+`#85786a` (3.44:1). Claim scorch is 3.29:1 on rust, so wrecks read on the hull;
+the wreck ember is 5.93:1 on claim scorch. Steel turret heads are 3.96:1 on the
+platform's rail track `#703921`.
+
+### Turret platform
+
+A fixed ore-field guard: a rust wheel deck 3 Ada widths across (128.6 model
+units) with a steel-toothed rim, ember work lights on every other tooth, painted
+spokes, Gadget's claw on a steel hopper hub and a dark rail track. Two
+twin-barrel steel turrets ride the rail.
+
+- Archetype `platform`, `sizeRatio` 3, hull frame 176 (display 77). Hardpoints
+  `port` and `starboard`, role `turret`, offsets `[-0.29, 0]` and `[0.29, 0]`:
+  37.3 model units from the centre, on the rail between radii 24 and 50.
+- The hull never turns. One frame, `platform.svg` (`enemy-claim-platform`,
+  `facing` `fixed`, no `directionIndex`), is the `hull` layer for every seeded
+  facing `k`; `headings[k]` of `platform-hardpoints.json` places the turrets and
+  orders the layers.
+- Bases `platform-{port,starboard}-{intact,destroyed}-{k}.svg` have frame 64
+  (display 28); the shared top `platform-turret-top-{i}.svg` has frame 96
+  (display 42) and two muzzles per aim. No jets file: the platform has no
+  engines.
+- Intact: a steel pad 1 unit high on the deck, a rust collar to 2.5 and the
+  aimed top, its head to 6 with the barrels just above. Destroyed: a scorched
+  pad, a soot stump with a breach and one ember, and burn paint on the deck.
+- `tools/enemy-hardpoints.json` has no `platform` entry yet, so the tool uses
+  its proposed entry (the offsets above). A catalog `platform` entry takes
+  precedence.

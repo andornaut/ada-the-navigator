@@ -5,7 +5,8 @@ Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
 sector one enemy ships and their [destruction](destruction.md), the galaxy one
 [heavies](heavies.md) with destructible hardpoints and aimed turrets, the
 [station](station.md), the [outposts and discovery cache](outposts.md),
-Cartwheel's [hub, mooring buoy and story craft](cartwheel.md),
+Cartwheel's [hub, mooring buoy and story craft](cartwheel.md) and its
+[claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers),
 [asteroids, resource rocks and backdrop rocks](asteroids.md), the
 [Cartwheel props](cartwheel-props.md) (traveling debris, the ore nugget,
 stranded craft and the tow line), [Stardust](stardust.md),
@@ -68,7 +69,8 @@ debris SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemi
 `art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/cartwheel.ts`,
 `art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`, `art/tools/whales.ts` and
 `art/tools/whirlpool.ts`, with the heavies' layered
-sprites from `art/tools/heavies.ts`; edit the generators and
+sprites from `art/tools/heavies.ts` and Cartwheel's claim jumpers from
+`art/tools/claim-jumpers.ts`; edit the generators and
 regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the

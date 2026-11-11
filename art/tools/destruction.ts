@@ -157,7 +157,7 @@ function groups(craft: Craft): Group[] {
 const halfSpan = (craft: Craft) => Math.max(...craft.parts[0]!.plan.map(([x]) => Math.abs(x)));
 const px = (value: number) => Math.round(value * 100) / 100 + 0;
 
-function shards(craft: Craft): string {
+export function shards(craft: Craft): string {
   const centre = craft.frame / 2;
   const half = halfSpan(craft);
   const hullTop = craft.parts[0]!.z1;
@@ -279,13 +279,19 @@ function spec(): string {
 }
 
 // Long point lists wrap the way Prettier fills them, so the files stay Prettier-clean.
-async function writeJson(path: string, text: string): Promise<void> {
+export async function writeJson(path: string, text: string): Promise<void> {
   const options = await resolveConfig(path);
   writeFileSync(path, await format(text, { ...options, filepath: path }));
 }
 
-for (const craft of crafts) {
-  await writeJson(`${output}${craft.name}-shards.json`, shards(craft));
+async function main() {
+  for (const craft of crafts) {
+    await writeJson(`${output}${craft.name}-shards.json`, shards(craft));
+  }
+  await writeJson(`${output}destruction.json`, spec());
+  writeFileSync(`${output}destruction-flash.svg`, flash());
 }
-await writeJson(`${output}destruction.json`, spec());
-writeFileSync(`${output}destruction-flash.svg`, flash());
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await main();
+}

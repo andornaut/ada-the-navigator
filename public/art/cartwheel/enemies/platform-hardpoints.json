@@ -1,0 +1,393 @@
+{
+  "version": 1,
+  "archetype": "platform",
+  "frame": 176,
+  "hardpoints": [
+    {
+      "id": "port",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    },
+    {
+      "id": "starboard",
+      "role": "turret",
+      "states": ["intact", "destroyed"],
+      "top": "turret"
+    }
+  ],
+  "headings": [
+    {
+      "index": 0,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [120.308, 63.347],
+          "pivot": [120.308, 60.847]
+        },
+        {
+          "id": "starboard",
+          "anchor": [55.692, 100.653],
+          "pivot": [55.692, 98.153]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [130.212, 71.905],
+          "pivot": [130.212, 69.405]
+        },
+        {
+          "id": "starboard",
+          "anchor": [45.788, 92.095],
+          "pivot": [45.788, 89.595]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [133.69, 82],
+          "pivot": [133.69, 79.5]
+        },
+        {
+          "id": "starboard",
+          "anchor": [42.31, 82],
+          "pivot": [42.31, 79.5]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [130.212, 92.095],
+          "pivot": [130.212, 89.595]
+        },
+        {
+          "id": "starboard",
+          "anchor": [45.788, 71.905],
+          "pivot": [45.788, 69.405]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [120.308, 100.653],
+          "pivot": [120.308, 98.153]
+        },
+        {
+          "id": "starboard",
+          "anchor": [55.692, 63.347],
+          "pivot": [55.692, 60.847]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [105.485, 106.371],
+          "pivot": [105.485, 103.871]
+        },
+        {
+          "id": "starboard",
+          "anchor": [70.515, 57.629],
+          "pivot": [70.515, 55.129]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [88, 108.379],
+          "pivot": [88, 105.879]
+        },
+        {
+          "id": "starboard",
+          "anchor": [88, 55.621],
+          "pivot": [88, 53.121]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [70.515, 106.371],
+          "pivot": [70.515, 103.871]
+        },
+        {
+          "id": "starboard",
+          "anchor": [105.485, 57.629],
+          "pivot": [105.485, 55.129]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [55.692, 100.653],
+          "pivot": [55.692, 98.153]
+        },
+        {
+          "id": "starboard",
+          "anchor": [120.308, 63.347],
+          "pivot": [120.308, 60.847]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [45.788, 92.095],
+          "pivot": [45.788, 89.595]
+        },
+        {
+          "id": "starboard",
+          "anchor": [130.212, 71.905],
+          "pivot": [130.212, 69.405]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "order": ["hull", "starboard", "port"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [42.31, 82],
+          "pivot": [42.31, 79.5]
+        },
+        {
+          "id": "starboard",
+          "anchor": [133.69, 82],
+          "pivot": [133.69, 79.5]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [45.788, 71.905],
+          "pivot": [45.788, 69.405]
+        },
+        {
+          "id": "starboard",
+          "anchor": [130.212, 92.095],
+          "pivot": [130.212, 89.595]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [55.692, 63.347],
+          "pivot": [55.692, 60.847]
+        },
+        {
+          "id": "starboard",
+          "anchor": [120.308, 100.653],
+          "pivot": [120.308, 98.153]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [70.515, 57.629],
+          "pivot": [70.515, 55.129]
+        },
+        {
+          "id": "starboard",
+          "anchor": [105.485, 106.371],
+          "pivot": [105.485, 103.871]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [88, 55.621],
+          "pivot": [88, 53.121]
+        },
+        {
+          "id": "starboard",
+          "anchor": [88, 108.379],
+          "pivot": [88, 105.879]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "order": ["hull", "port", "starboard"],
+      "hardpoints": [
+        {
+          "id": "port",
+          "anchor": [105.485, 57.629],
+          "pivot": [105.485, 55.129]
+        },
+        {
+          "id": "starboard",
+          "anchor": [70.515, 106.371],
+          "pivot": [70.515, 103.871]
+        }
+      ]
+    }
+  ],
+  "tops": {
+    "turret": [
+      {
+        "index": 0,
+        "muzzles": [
+          [35.724, 12.225],
+          [25.331, 18.225]
+        ]
+      },
+      {
+        "index": 1,
+        "muzzles": [
+          [23.31, 19.005],
+          [9.732, 22.252]
+        ]
+      },
+      {
+        "index": 2,
+        "muzzles": [
+          [7.348, 22.526],
+          [-7.348, 22.526]
+        ]
+      },
+      {
+        "index": 3,
+        "muzzles": [
+          [-9.732, 22.252],
+          [-23.31, 19.005]
+        ]
+      },
+      {
+        "index": 4,
+        "muzzles": [
+          [-25.331, 18.225],
+          [-35.724, 12.225]
+        ]
+      },
+      {
+        "index": 5,
+        "muzzles": [
+          [-37.074, 11.058],
+          [-42.698, 3.219]
+        ]
+      },
+      {
+        "index": 6,
+        "muzzles": [
+          [-43.172, 1.843],
+          [-43.172, -6.643]
+        ]
+      },
+      {
+        "index": 7,
+        "muzzles": [
+          [-42.698, -8.019],
+          [-37.074, -15.858]
+        ]
+      },
+      {
+        "index": 8,
+        "muzzles": [
+          [-35.724, -17.025],
+          [-25.331, -23.025]
+        ]
+      },
+      {
+        "index": 9,
+        "muzzles": [
+          [-23.31, -23.805],
+          [-9.732, -27.052]
+        ]
+      },
+      {
+        "index": 10,
+        "muzzles": [
+          [-7.348, -27.326],
+          [7.348, -27.326]
+        ]
+      },
+      {
+        "index": 11,
+        "muzzles": [
+          [9.732, -27.052],
+          [23.31, -23.805]
+        ]
+      },
+      {
+        "index": 12,
+        "muzzles": [
+          [25.331, -23.025],
+          [35.724, -17.025]
+        ]
+      },
+      {
+        "index": 13,
+        "muzzles": [
+          [37.074, -15.858],
+          [42.698, -8.019]
+        ]
+      },
+      {
+        "index": 14,
+        "muzzles": [
+          [43.172, -6.643],
+          [43.172, 1.843]
+        ]
+      },
+      {
+        "index": 15,
+        "muzzles": [
+          [42.698, 3.219],
+          [37.074, 11.058]
+        ]
+      }
+    ]
+  }
+}

@@ -743,11 +743,12 @@ const visitor3 = shuttle(
   "#8f877a",
 );
 
-// Blocking pilot, design A: a magenta wedge with a wide graphite ram bar, white high beams and
-// oversized engine pods. Pushy without Gadget's coral, pincers, visor or insignia.
-const magenta = "#e070b0";
-const magentaSide = "#a8508a";
-const magentaRear = "#7c3b66";
+// Blocking pilot, design A: a chartreuse wedge with a wide graphite ram bar, white high beams and
+// oversized graphite engine pods. Pushy without Gadget's coral, pincers, visor or insignia, and
+// clear of the holodisk magenta and the claim-jumpers' rust.
+const chartreuse = "#b6dd30";
+const chartreuseSide = "#84a41e";
+const chartreuseRear = "#617c18";
 const graphite = "#7d7a92";
 const graphiteSide = "#5e5b72";
 const beam = "#fffbea";
@@ -783,11 +784,17 @@ const blockerRam: Craft = {
     const groups: Part[][] = [
       ...[-1, 1].map((s): Part[] => [
         { plan: craftBox(-14, s * 15, 24, 8), z0: 2.5, z1: 11, top: graphite, side: graphiteSide },
-        { plan: craftBox(-14, s * 15, 6, 8.6), z0: 2.2, z1: 11.3, top: magenta, side: magentaSide },
+        {
+          plan: craftBox(-14, s * 15, 6, 8.6),
+          z0: 2.2,
+          z1: 11.3,
+          top: chartreuse,
+          side: chartreuseSide,
+        },
       ]),
-      [{ plan: hull, z0: 2, z1: 9.5, top: magenta, side: magentaSide, rear: magentaRear }],
+      [{ plan: hull, z0: 2, z1: 9.5, top: chartreuse, side: chartreuseSide, rear: chartreuseRear }],
       [
-        { plan: cab, z0: 9.5, z1: 14, top: magenta, side: magentaSide, rear: magentaRear },
+        { plan: cab, z0: 9.5, z1: 14, top: chartreuse, side: chartreuseSide, rear: chartreuseRear },
         ...wallWindows((nx, ny) => visible(nx, ny) && ny < -0.5, 10.3, 13, 1, 6, cab),
       ],
       [{ plan: craftBox(-16, 0, 12, 2), z0: 9.5, z1: 17, top: graphite, side: graphiteSide }],

@@ -95,14 +95,14 @@ export type InputHardpoint = { id: string; role: Role; offset: [number, number];
 export type InputCraft = { sizeRatio: number; hardpoints: InputHardpoint[] };
 export type Offsets = { version: 1; archetypes: Record<string, InputCraft> };
 
-const ring = (cx: number, cy: number, r: number, sides: number, phase = 0): Plan =>
+export const ring = (cx: number, cy: number, r: number, sides: number, phase = 0): Plan =>
   Array.from({ length: sides }, (_, i) => {
     const a = phase + (i / sides) * 2 * Math.PI;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const;
   });
 // A ragged star outline for scorch paint and breaches; fixed radii keep frames stable.
 const RAGGED = [1, 0.62, 0.95, 0.55, 0.88, 0.7, 1, 0.5, 0.9, 0.66];
-const ragged = (cx: number, cy: number, r: number, phase: number): Plan =>
+export const ragged = (cx: number, cy: number, r: number, phase: number): Plan =>
   RAGGED.map((k, i) => {
     const a = phase + (i / RAGGED.length) * 2 * Math.PI;
     return [cx + r * k * Math.cos(a), cy + r * k * Math.sin(a)] as const;
@@ -115,7 +115,7 @@ const hosted = (key: string, parts: readonly Part[]): HeavyPart[] =>
   parts.map(({ plan, side, top, z0, z1 }) => ({ plan, side, top, z0, z1, on: key }));
 
 // Wreck dressing: optional hull scorch paint, then a breach and an ember on the host's top.
-function wreck(
+export function wreck(
   cx: number,
   cy: number,
   r: number,
