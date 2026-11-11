@@ -21,6 +21,8 @@ describe("storybook page", () => {
     expect(panel).not.toMatch(/(^|[\s;{])top:/u);
     expect(panel).not.toContain("translateY");
     expect(panel).not.toContain("translate(");
+    // Tall pages stop a gap below the HUD row, clear of Skip and the settings button.
+    expect(panel).toContain(fromHudEdge("top", HUD_BUTTON.target + SPACING.gap));
   });
 
   it("puts Previous at the inner left and Next or the named action at the inner right", () => {

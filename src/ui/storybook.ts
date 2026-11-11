@@ -1,6 +1,6 @@
 import type { Background } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { STORY_SKIP } from "./layout/playView.ts";
+import { HUD_BUTTON, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -49,7 +49,8 @@ const AVAILABLE_WIDTH = `calc(100% - ${safeEdge("left", SPACING.pageInset)} - ${
   "right",
   SPACING.pageInset,
 )})`;
-const AVAILABLE_HEIGHT = `calc(100% - ${safeEdge("top", SPACING.pageInset)} - ${safeEdge(
+// The panel grows up to a gap below the HUD row, so it never covers Skip or the settings button.
+const AVAILABLE_HEIGHT = `calc(100% - ${fromHudEdge("top", HUD_BUTTON.target + SPACING.gap)} - ${safeEdge(
   "bottom",
   SPACING.pageInset,
 )})`;
@@ -151,7 +152,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
   panel.append(text, choices, controls);
   layer.append(background, panel, skip);
-  root.append(style, layer);
+  // First in the controls layer, so the HUD's settings button draws and presses above the page.
+  root.prepend(style, layer);
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
