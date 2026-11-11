@@ -22,10 +22,19 @@ A galaxy's space quest, its resolution at home and its recovered holodisk unlock
 the next galaxy. Completed galaxies remain replayable. Galaxy four's conclusion is deferred and has no
 playable story. See [dialogue and objectives](gameplay/prototype-copy.md).
 
-The flight target includes independent movement and aim, a rechargeable shield,
-basic fire and limited-ammo upgrades, contextual interactions and travel to
-known destinations outside danger. Space uses monochrome placeholders apart
-from Ada's compact white-and-blue ship.
+Flight has independent movement and aim, a rechargeable shield and contextual
+interactions; the status pill shows the shield and Ada's Stardust. Ada has six
+weapons: Basic, always available, and five upgrades (Rapid Missile, Multi-Laser,
+Heavy Missile, Scattershot and Phaser). Each has three levels and fires from the
+ship's nose without ammunition. Enemies, asteroids and discovery caches release
+Stardust, which station shops exchange for weapons, weapon levels, ship upgrades
+and paint schemes; enemies also drop weapons rarely. The Paused card's Travel
+reaches known destinations and discovered stations outside danger. Space draws
+authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
+discovery caches, the holodisk and its beacon, Stardust, weapon pickups, missiles,
+blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,
+galaxy three's whale and family, mining deposits, cargo, hazards and traveling
+debris keep simple placeholders. See [economy](gameplay/economy.md).
 
 ## Controls
 
@@ -36,15 +45,20 @@ to the visible frame. Rendering uses nearest-neighbor scaling.
 
 Prototype input mappings:
 
-| Input                    | Action                                            |
-| ------------------------ | ------------------------------------------------- |
-| WASD                     | Move                                              |
-| Arrow keys               | Aim and fire while held                           |
-| Space                    | Use the available contextual action               |
-| Esc                      | Open or close settings                            |
-| Left touch joystick      | Move                                              |
-| Right touch joystick     | Aim and fire while deflected                      |
-| Contextual action button | Talk, deliver, deposit or continue when available |
+| Input                    | Action                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| WASD                     | Move                                                                           |
+| Arrow keys               | Aim and fire while held                                                        |
+| Space                    | Use the available contextual action                                            |
+| Esc                      | Close the open card; with none open, pause in flight or open Settings at start |
+| Back                     | Close the open card; with none open, pause in flight                           |
+| Weapon buttons           | Equip an owned weapon                                                          |
+| Pause button (touch)     | Pause in flight                                                                |
+| Left touch joystick      | Move                                                                           |
+| Right touch joystick     | Aim and fire while deflected                                                   |
+| Contextual action button | Talk, deliver or deposit when available                                        |
+
+The Paused card offers Resume, Travel, Settings and Return home.
 
 Mobile uses independent twin joysticks. Centering the aim stick stops firing;
 without aim input, the ship faces its movement direction.
@@ -53,11 +67,14 @@ without aim input, the ship faces its movement direction.
 
 The persistence contract distinguishes an interrupted flight from leaving a galaxy:
 
-- Closing and reopening should resume the exact flight, including layout seed,
-  cargo, ammunition and shield state.
-- Leaving and re-entering should generate a new layout seed and reset carried
-  cargo and weapon pickups. Story progress, known destinations, deposited
-  resources and activity counters persist.
+- Closing and reopening resumes the exact flight, including its layout seed,
+  position, cargo, shield and equipped weapon.
+- Leaving a galaxy ends its flight: re-entering generates a new layout seed and
+  starts without carried cargo. Story progress, known destinations, discovered
+  stations, deposited resources, activity counters, Stardust, owned weapons, levels,
+  ship upgrades and paint schemes persist.
+- Shield depletion jumps Ada home: she loses the equipped weapon and its levels
+  unless it is Basic, and pays a recharging fee in Stardust.
 
 Combat includes data-defined solo ships and packs, independent large-ship
 hardpoints and straight-flying missiles. Required approach encounters stay outside
@@ -71,7 +88,8 @@ after a successful write; failed writes preserve the last persisted snapshot.
 
 The production build writes `/sw.js`, a service worker scoped to `/` that
 precaches the game page at `/play/`, the build output it loads, the web app
-manifest and its icons, and every file under `public/art/` except `app-icon/`.
+manifest and its icons, every file under `public/art/` except `app-icon/`, and
+the galaxy selector previews under `public/previews/`.
 The precache version is a hash of that content, so any change installs a new
 worker. Hashed `/assets/` files are served cache-first; the page, art and
 manifest are network-first, so an online load shows the latest deploy and an
@@ -116,7 +134,8 @@ retains assets. `npm run check` combines scratch-owned hook verification,
 TypeScript, lint, tests, build and both packaging dry runs.
 
 `make check` enters the canonical container launcher. This repository also keeps
-optional `make lint`, `make test` and `make build` aliases. Its custom Dockerfile
+optional `make lint`, `make test` and `make build` aliases, and `make previews`
+rebuilds and recaptures the galaxy selector previews. Its custom Dockerfile
 is required by CI, which runs `make lint` for `Lint` and `make test build` for
 `Test`. `AI attributions` remains a separate required check.
 
@@ -127,7 +146,7 @@ adapter and browser artifact proof remain available.
 ## Delivery
 
 `delivery-kit.json` schedules Ada departures hourly at :00 America/Toronto using
-pinned delivery-kit 2.1.1. Only the existing bus deploys, after the isolated gate
+pinned delivery-kit 3.0.0. Only the existing bus deploys, after the isolated gate
 and required CI pass for the exact commit. The monitor schedule is unchanged.
 Desired control remains paused; game-dev enables only Ada after READY review.
 

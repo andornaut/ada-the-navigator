@@ -73,7 +73,7 @@ available on the delivery host. Config changes require separate operational
 approval and do not start or restart the runner.
 
 The shared Dockerfile supplies Node 24.22.2, ShellCheck 0.11.0 and the locked
-dependencies. Its empty entrypoint permits delivery-kit 2.1.1 to start
+dependencies. Its empty entrypoint permits delivery-kit 3.0.0 to start
 `sleep infinity`; Make selects `/bin/sh` explicitly and dispatches the same inner
 checks. The kit copies the read-only checkout into `/tmp/work`, installs locked
 dependencies as UID 19001, disconnects networking and runs the three configured
@@ -172,7 +172,7 @@ entrypoint or build command. This route needs the gated `dist/` and locked
 `node_modules/`, without Cloudflare's hidden output or a deployment rebuild.
 Both dry runs are included in the isolated `all` and `test` gates.
 
-Only delivery-kit 2.1.1 deploys the admitted gated artifact after exact-commit CI
+Only delivery-kit 3.0.0 deploys the admitted gated artifact after exact-commit CI
 passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
 America/Toronto with `deploy.mode` set to `wrangler`. Desired control remains
 paused; game-dev enables only Ada after READY review. The monitor schedule is
