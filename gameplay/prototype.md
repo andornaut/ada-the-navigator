@@ -69,8 +69,17 @@ two or three choices; each leads to one or two branch pages and then rejoins the
 main story, so choices never change a chapter's resolution. The first choice is
 the default. Locations include Grandma's house and garden, the community garden
 lot, Ada's room, the school hallway, the schoolyard, the front door at home and
-the park where Ada finds the rock. A scene that leads aboard ends on Ada's room
-with the rock.
+the park where Ada finds the rock. A scene that leads aboard ends on Ada's room,
+with the narration "Ada's rock glows softly on her desk." and the named action.
+Backgrounds by scene: galaxy one opens in Grandma's garden and resolves and closes
+at the community garden lot; galaxy two opens in the school hallway and resolves
+and closes in the schoolyard; galaxy three opens at the front door and resolves
+and closes in the park; the prologue moves from the park to Ada's room. Narration
+pages show no name tab; dialogue pages show the speaker's. Back on a storybook
+page acts as Previous. An optional-question page returns to its question list
+until Continue, so Ada can ask every question. Continue lands in the cockpit with
+Astra's boarding line, then galaxy selection. Story position within a scene is not
+saved in the prototype: a scene interrupted midway restarts from its first page.
 
 ### Cockpit and galaxy selection
 
@@ -90,7 +99,7 @@ galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
 background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
 number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. A Home button beside Jump, and closing galaxy selection
+galaxy one is unlocked. A Home button, between Previous and Jump, and closing galaxy selection
 (its close X, an outside tap, back or Escape), leave the cockpit and return Ada to
 her room without a jump.
 Galaxies are named after real galaxies' nicknames:
