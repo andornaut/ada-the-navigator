@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { loadavg, tmpdir } from "node:os";
-import { join, resolve, sep } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -233,7 +233,7 @@ function prepareImage() {
 }
 
 const program = `
-const {cpSync,mkdirSync,writeFileSync,openSync,existsSync} = await import('node:fs');
+const {cpSync,mkdirSync,writeFileSync,openSync,existsSync,readFileSync} = await import('node:fs');
 const {dirname} = await import('node:path');
 const {spawnSync} = await import('node:child_process');
 mkdirSync('/tmp/work',{recursive:true});
@@ -241,7 +241,7 @@ mkdirSync('/tmp/evidence',{recursive:true});
 const log = openSync('/tmp/evidence/check.log','w');
 let code = 0;
 try {
-  for (const name of JSON.parse(Buffer.from(process.env.SOURCE_FILES,'base64').toString())) {
+  for (const name of JSON.parse(readFileSync('/checkout/'+process.env.SOURCE_LIST,'utf8'))) {
     if (!existsSync('/checkout/'+name)) continue;
     mkdirSync(dirname('/tmp/work/'+name),{recursive:true});
     cpSync('/checkout/'+name,'/tmp/work/'+name,{dereference:false});
@@ -292,6 +292,10 @@ function start(mode, ci) {
     receipt.stage = "create";
     saveReceipt();
     guard(ci);
+    // The file list goes in a file beside the receipt: as an argument it outgrows the kernel's
+    // per-argument limit.
+    const sourceList = resolve(directory, "source-files.json");
+    writeFileSync(sourceList, JSON.stringify(source.files));
     const containerId = run("docker", [
       "create",
       "--name",
@@ -321,7 +325,7 @@ function start(mode, ci) {
       "--env",
       "CI=true",
       "--env",
-      `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
+      `SOURCE_LIST=${relative(root, sourceList)}`,
       "--env",
       `CHECK_STEPS=${JSON.stringify(steps)}`,
       image,
