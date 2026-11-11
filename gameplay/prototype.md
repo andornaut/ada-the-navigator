@@ -89,7 +89,9 @@ view all around. It resembles a convertible's interior: two seats side by side
 for Ada and Penny, with a little room to walk around behind them. Ada pilots
 from the port seat, with Penny on the starboard seat. Every quantum jump uses one
 jump effect; Astra's emergency jump when the shield fails tints it red. Jumping
-home arrives in Ada's room. The holodisk
+home, the emergency jump included, arrives in Ada's room; an emergency jump
+first shows its jump-home page there, then any waiting home scene plays as on
+any arrival home. The holodisk
 drive looks like a CD or cassette player.
 
 Every launch, including a replay of a resolved galaxy, boards and shows the
