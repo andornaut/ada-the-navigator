@@ -5,11 +5,13 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { ENEMY_HEADINGS } from "./enemy-art.ts";
 import {
   hasShipHeadings,
+  loadsOnDemand,
   paintFrames,
   selectPaintedShipAsset,
   selectShipAsset,
   type ShipAsset,
   shipDirection,
+  thrustFrames,
 } from "./ship-art.ts";
 
 const asset = (id: string, directionIndex: number): ShipAsset => ({
@@ -136,6 +138,33 @@ describe("authored ship headings", () => {
     expect(selectShipAsset([idle, thrust], true, { x: 1, y: 0 })).toBe(thrust);
     expect(selectShipAsset([idle], true, { x: 1, y: 0 })).toBe(idle);
     expect(selectShipAsset([], false, { x: 1, y: 0 })).toBeUndefined();
+  });
+});
+
+describe("ship frames loaded on demand", () => {
+  const shipped = manifest.assets as ShipAsset[];
+
+  it("loads Art's 32 thrust frames and their alias only without valid jets", () => {
+    const thrust = thrustFrames(shipped);
+    expect(thrust.map((frame) => frame.id).sort()).toEqual(
+      ["ship-thrust", ...Array.from({ length: 32 }, (_, index) => `ship-thrust-${index}`)].sort(),
+    );
+    expect(thrust.every(loadsOnDemand)).toBe(true);
+  });
+
+  it("preloads the idle headings and their alias, and leaves painted frames for their scheme", () => {
+    const preloaded = shipped.filter((frame) => !loadsOnDemand(frame));
+    expect(hasShipHeadings(preloaded)).toBe(true);
+    expect(preloaded.some((frame) => frame.id === "ship")).toBe(true);
+    expect(preloaded.some((frame) => frame.paint !== undefined)).toBe(false);
+    expect(preloaded.some((frame) => frame.id.startsWith("ship-thrust"))).toBe(false);
+    expect(paintFrames(shipped, "iris").every(loadsOnDemand)).toBe(true);
+  });
+
+  it("draws the idle heading while thrusting until the thrust frames load", () => {
+    const preloaded = shipped.filter((frame) => !loadsOnDemand(frame));
+    expect(selectShipAsset(preloaded, true, at(11.25))?.id).toBe("ship-1");
+    expect(selectShipAsset(shipped, true, at(11.25))?.id).toBe("ship-thrust-1");
   });
 });
 

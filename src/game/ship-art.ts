@@ -73,6 +73,21 @@ export function paintFrames<T extends ShipAsset>(assets: readonly T[], paint: st
   return assets.filter((asset) => asset.paint === paint);
 }
 
+const THRUST = /^ship-thrust(?:-\d+)?$/;
+
+/** The thrust frames and their alias, drawn only when the speed jets are missing or invalid. */
+export function thrustFrames<T extends { readonly id: string }>(assets: readonly T[]): T[] {
+  return assets.filter((asset) => THRUST.test(asset.id));
+}
+
+/**
+ * Ship frames the scene loads on demand instead of in preload: painted frames while their
+ * scheme is in use, thrust frames only without valid jets.
+ */
+export function loadsOnDemand(asset: { readonly id: string; readonly paint?: string }): boolean {
+  return asset.paint !== undefined || THRUST.test(asset.id);
+}
+
 /**
  * The frame for the scheme in use: a painted scheme's idle frame at the heading, else the
  * Classic selection. Painted schemes have no thrust frames, and a frame not yet loaded falls

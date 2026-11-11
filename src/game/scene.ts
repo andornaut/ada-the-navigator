@@ -90,9 +90,11 @@ import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
   hasShipHeadings,
+  loadsOnDemand,
   paintFrames,
   selectPaintedShipAsset,
   type ShipAsset,
+  thrustFrames,
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
@@ -282,8 +284,8 @@ export class PrototypeScene extends Phaser.Scene {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
       }
       for (const asset of manifest.assets) {
-        // Painted ship frames load on demand, only for the scheme in use.
-        if (asset.paint !== undefined) {
+        // Painted ship frames load for the scheme in use; thrust frames only without valid jets.
+        if (loadsOnDemand(asset)) {
           continue;
         }
         if (asset.path.endsWith(".svg")) {
@@ -357,12 +359,15 @@ export class PrototypeScene extends Phaser.Scene {
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
     this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
     // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
-    // the authored thrust frames.
+    // the authored thrust frames, which load only then; until they do, the idle frames draw.
     const jets = readShipJets(this.cache.json.get("ship-jets"));
     this.shipJets =
       jets?.headings.length === SHIP_HEADINGS && hasShipHeadings(this.shipAssets)
         ? jets
         : undefined;
+    if (!this.shipJets) {
+      this.loadShipFrames(thrustFrames(manifest?.assets ?? []));
+    }
     // Archetypes without a complete loaded frame set keep their vector placeholders.
     this.enemyArt = enemyArt(
       (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),
@@ -980,19 +985,26 @@ export class PrototypeScene extends Phaser.Scene {
     }
     if (!this.paintLoads.has(paint)) {
       this.paintLoads.add(paint);
-      const frames = paintFrames(this.paintAssets, paint);
-      for (const frame of frames) {
-        this.load.svg(frame.id, frame.path);
-      }
-      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-        this.shipAssets = [
-          ...this.shipAssets,
-          ...frames.filter((frame) => this.textures.exists(frame.id)),
-        ];
-      });
-      this.load.start();
+      this.loadShipFrames(paintFrames(this.paintAssets, paint));
     }
     return paint;
+  }
+
+  /** Loads ship frames after preload; each joins the selectable frames once its texture exists. */
+  private loadShipFrames(frames: readonly Asset[]): void {
+    if (!frames.length) {
+      return;
+    }
+    for (const frame of frames) {
+      this.load.svg(frame.id, frame.path);
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      this.shipAssets = [
+        ...this.shipAssets,
+        ...frames.filter((frame) => this.textures.exists(frame.id)),
+      ];
+    });
+    this.load.start();
   }
 
   // Back stays on the game except on the start screen with nothing open, where it is the browser's.
