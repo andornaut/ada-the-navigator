@@ -1,7 +1,7 @@
-// Galaxy one heavies (frigate and capital) and the retaliator's aimed turret: hull frames,
-// per-hardpoint state sprites, aimed turret tops, `{craft}-hardpoints.json` and
-// `{craft}-jets.json`. Hardpoint positions come only from the offsets input (Gameplay's catalog);
-// each hardpoint model is drawn around its own origin. Contract: art/heavies.md.
+// Galaxy one heavies (frigate and capital): hull frames, per-hardpoint state sprites, shared
+// aimed turret tops, `{craft}-hardpoints.json` and `{craft}-jets.json`. Hardpoint positions come
+// only from Gameplay's catalog export, tools/enemy-hardpoints.json; each hardpoint model is drawn
+// around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir>]
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -31,6 +31,7 @@ import {
   visor,
   visorSide,
 } from "./crafts.ts";
+import { replaceEntries } from "./manifest.ts";
 import {
   anchor,
   depth,
@@ -54,21 +55,22 @@ export const burn = "#6e4436";
 export const breach = visorSide;
 export const ember = "#f0a07c";
 
-export type HardpointKind = "command" | "engine" | "weapon";
+export type Role = "command" | "engine" | "turret";
 export type State = "intact" | "destroyed";
 // `key` names a host part; a part with `on` draws straight after its host.
 export type HeavyPart = Part & { key?: string; on?: string };
 
 // One hardpoint's drawing around its origin, with absolute heights.
 export type Model = {
-  kind: HardpointKind;
+  role: Role;
   // Height of the sprite anchor, model units.
   z: number;
   intact: HeavyPart[];
   // Absent: the hardpoint is not destructible (the retaliator turret).
   destroyed?: HeavyPart[];
   // The aimed top at aim 0 (forward is negative Y), drawn by world aim with its pivot at height z.
-  top?: { z: number; parts: HeavyPart[]; muzzles: Point[] };
+  // Hardpoints whose tops share a `name` share one sprite set, so their parts must be identical.
+  top?: { name: string; z: number; parts: HeavyPart[]; muzzles: Point[] };
   // Engine jet mouths around the origin.
   jets?: { mouths: [number, number][]; width: number; z: number };
 };
@@ -85,15 +87,11 @@ export type HeavyCraft = {
   hardpoints: { id: string; model: Model }[];
 };
 
-// Offsets input: Gameplay's catalog values, or a JSON file in the same shape.
-export type InputHardpoint = { id: string; kind: HardpointKind; offset: { x: number; y: number } };
+// Offsets input: tools/enemy-hardpoints.json, which Tech exports from Gameplay's catalog.
+// `offset` is [x, y] in fractions of hull width; `order` is the catalog order.
+export type InputHardpoint = { id: string; role: Role; offset: [number, number]; order: number };
 export type InputCraft = { sizeRatio: number; hardpoints: InputHardpoint[] };
-export type Offsets = {
-  version: 1;
-  // Mock-up fixture values: the tool then writes only to an explicit --out directory.
-  placeholder: boolean;
-  crafts: Record<string, InputCraft>;
-};
+export type Offsets = { version: 1; archetypes: Record<string, InputCraft> };
 
 const ring = (cx: number, cy: number, r: number, sides: number, phase = 0): Plan =>
   Array.from({ length: sides }, (_, i) => {
@@ -152,7 +150,7 @@ function wreck(
 
 // A deck turret: a fixed collar and an aimed top (head, amber barrels, hatch). Destroyed: a low
 // scorched stump with a breach, no top.
-function turret(r: number, deck: number, barrels: 1 | 2): Model {
+function turret(name: string, r: number, deck: number, barrels: 1 | 2): Model {
   const mount = deck + 1.5;
   const crown = deck + 4;
   const head: Plan = [
@@ -171,7 +169,7 @@ function turret(r: number, deck: number, barrels: 1 | 2): Model {
   const collar = ring(0, 0, r * 0.85, 8, Math.PI / 8);
   const stump = { key: "stump", z: deck + 1.6 };
   return {
-    kind: "weapon",
+    role: "turret",
     z: deck,
     intact: [{ plan: collar, z0: deck, z1: mount, top: turretTop, side: coralRear }],
     destroyed: [
@@ -179,6 +177,7 @@ function turret(r: number, deck: number, barrels: 1 | 2): Model {
       ...wreck(0, 0, r, deck, stump, true),
     ],
     top: {
+      name,
       z: mount,
       parts: [
         { plan: head, z0: mount, z1: crown, top: turretTop, side: coralRear, key: "head" },
@@ -207,7 +206,7 @@ function turret(r: number, deck: number, barrels: 1 | 2): Model {
 // Frigate: a long hunter with twin prow tines, broadside guns and a stern engine block.
 const FRIGATE_Z = 8;
 const frigateEngine: Model = {
-  kind: "engine",
+  role: "engine",
   z: FRIGATE_Z + 6,
   intact: [
     {
@@ -276,8 +275,8 @@ export const frigate: HeavyCraft = {
         [70, 14],
         [62, 30],
         [38, 36],
-        [30, 62],
-        [27, 96],
+        [30, 52],
+        [27, 68.5],
       ]),
       z0: 0,
       z1: FRIGATE_Z,
@@ -285,8 +284,8 @@ export const frigate: HeavyCraft = {
       side: coralSide,
       rear: coralRear,
     },
-    // Salvage plates: a dorsal spine and two sponson patches.
-    { plan: box(-8, -6, 8, 58), z0: FRIGATE_Z, z1: FRIGATE_Z + 1.5, top: plate, side: coralSide },
+    // Salvage plates: a dorsal spine ahead of the engine block and two sponson patches.
+    { plan: box(-8, -6, 8, 32), z0: FRIGATE_Z, z1: FRIGATE_Z + 1.5, top: plate, side: coralSide },
     { plan: box(-60, 20, -44, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
     { plan: box(44, 20, 60, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
     {
@@ -300,9 +299,9 @@ export const frigate: HeavyCraft = {
     ...insignia(0, -36, 9, FRIGATE_Z),
   ],
   hardpoints: [
-    { id: "gunLeft", model: turret(12, FRIGATE_Z, 1) },
-    { id: "gunRight", model: turret(12, FRIGATE_Z, 1) },
     { id: "engine", model: frigateEngine },
+    { id: "port", model: turret("gun", 12, FRIGATE_Z, 1) },
+    { id: "starboard", model: turret("gun", 12, FRIGATE_Z, 1) },
   ],
 };
 
@@ -320,7 +319,7 @@ const TOWER: Plan = [
   [-22, -11],
 ];
 const command: Model = {
-  kind: "command",
+  role: "command",
   z: CAPITAL_Z + 13,
   intact: [
     {
@@ -403,7 +402,7 @@ function nacelle(port: boolean): Model {
   const z1 = 15;
   const wreckZ = 9;
   return {
-    kind: "engine",
+    role: "engine",
     z: z1,
     intact: [
       { plan: side(POD), z0: 0, z1, top: coral, side: coralSide, rear: coralRear, key: "pod" },
@@ -444,13 +443,16 @@ export const capital: HeavyCraft = {
         [12, -106],
         [22, -120],
         [44, -110],
-        [58, -80],
-        [62, -64],
-        [96, -32],
-        [107, 6],
-        [100, 38],
-        [70, 44],
-        [44, 48],
+        [58, -86],
+        [84, -80],
+        [94, -66],
+        [98, -40],
+        [108, 6],
+        [104, 40],
+        [70, 50],
+        [60, 55.5],
+        [43, 55.5],
+        [40.5, 66],
         [38, 84],
         [0, 90],
       ]),
@@ -460,25 +462,27 @@ export const capital: HeavyCraft = {
       side: coralSide,
       rear: coralRear,
     },
-    // Salvage plates: a keel strip and two wing patches.
-    { plan: box(-9, -34, 9, 4), z0: CAPITAL_Z, z1: CAPITAL_Z + 1.5, top: plate, side: coralSide },
-    { plan: box(-94, 12, -64, 30), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
-    { plan: box(64, 12, 94, 30), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
+    // Salvage plates: a keel strip ahead of the tower and two wing patches inboard of the turrets.
+    { plan: box(-8, -38, 8, -27), z0: CAPITAL_Z, z1: CAPITAL_Z + 1.5, top: plate, side: coralSide },
+    { plan: box(-74, 14, -52, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
+    { plan: box(52, 14, 74, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
   ],
   hardpoints: [
     { id: "command", model: command },
-    { id: "engineLeft", model: nacelle(true) },
-    { id: "engineRight", model: nacelle(false) },
-    ...["turretForeLeft", "turretForeRight", "turretAftLeft", "turretAftRight"].map((id) => ({
+    { id: "engine-left", model: nacelle(true) },
+    { id: "engine-right", model: nacelle(false) },
+    // Bolt and missile turrets share one design and one top set.
+    ...["weapon-left", "weapon-right", "weapon-rear-left", "weapon-rear-right"].map((id) => ({
       id,
-      model: turret(12, CAPITAL_Z, 2),
+      model: turret("turret", 12, CAPITAL_Z, 2),
     })),
   ],
 };
 
-// Retaliator: enemies.ts keeps the hull frames and jets without the turret parts; the turret
-// top here aims independently of the hull and is not destructible.
-function retaliatorCraft(): HeavyCraft {
+// Retaliator: its gun is the hull weapon's aim mount, not a hardpoint. Held out of the export
+// until Tech supplies the mount offset; enemies.ts then draws the hull frames without the
+// `turret` parts, and this top aims independently of the hull.
+export function retaliatorCraft(): HeavyCraft {
   const source = crafts.find(({ name }) => name === "retaliator")!;
   const deck = source.parts[0]!.z1;
   const mount = deck + 1.5;
@@ -502,7 +506,7 @@ function retaliatorCraft(): HeavyCraft {
       {
         id: "turret",
         model: {
-          kind: "weapon",
+          role: "turret",
           z: deck,
           intact: [
             {
@@ -513,67 +517,52 @@ function retaliatorCraft(): HeavyCraft {
               side: coralRear,
             },
           ],
-          top: { z: mount, parts: top, muzzles },
+          top: { name: "turret", z: mount, parts: top, muzzles },
         },
       },
     ],
   };
 }
 
-export const heavies: HeavyCraft[] = [frigate, capital, retaliatorCraft()];
+export const heavies: HeavyCraft[] = [frigate, capital];
 
 // ---------------------------------------------------------------- offsets input
 
-const KINDS: readonly HardpointKind[] = ["command", "engine", "weapon"];
+const ROLES: readonly Role[] = ["command", "engine", "turret"];
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-// Validates a parsed offsets file; throws on the first problem.
+// Validates a parsed tools/enemy-hardpoints.json; throws on the first problem.
 export function readOffsets(value: unknown): Offsets {
   const root = value as Partial<Offsets> | null;
-  if (!root || root.version !== 1 || typeof root.crafts !== "object" || root.crafts === null) {
-    throw new Error("offsets: expected { version: 1, crafts: { ... } }");
+  if (!root || root.version !== 1 || typeof root.archetypes !== "object" || !root.archetypes) {
+    throw new Error("offsets: expected { version: 1, archetypes: { ... } }");
   }
-  for (const [name, craft] of Object.entries(root.crafts)) {
+  for (const [name, craft] of Object.entries(root.archetypes)) {
     if (!finite(craft.sizeRatio) || craft.sizeRatio <= 0 || !Array.isArray(craft.hardpoints)) {
       throw new Error(`offsets: ${name} needs a positive sizeRatio and a hardpoints list`);
     }
-    for (const { id, kind, offset } of craft.hardpoints) {
-      if (
-        typeof id !== "string" ||
-        !KINDS.includes(kind) ||
-        !finite(offset?.x) ||
-        !finite(offset.y)
-      ) {
-        throw new Error(`offsets: ${name} hardpoint ${String(id)} needs id, kind and offset`);
+    for (const { id, offset, order, role } of craft.hardpoints) {
+      const point = Array.isArray(offset) && offset.length === 2 && offset.every(finite);
+      if (typeof id !== "string" || !ROLES.includes(role) || !point || !finite(order)) {
+        throw new Error(`offsets: ${name} hardpoint ${String(id)} needs id, role, offset, order`);
       }
     }
   }
-  return { version: 1, placeholder: root.placeholder === true, crafts: root.crafts };
-}
-
-// The offsets input from Gameplay's catalog object (src/data/enemy-catalog.ts).
-export function fromCatalog(
-  catalog: Record<string, { sizeRatio: number; hardpoints: readonly InputHardpoint[] }>,
-): Offsets {
-  const entries = Object.entries(catalog).map(([name, { hardpoints, sizeRatio }]) => [
-    name,
-    { sizeRatio, hardpoints: hardpoints.map(({ id, kind, offset }) => ({ id, kind, offset })) },
-  ]);
-  return readOffsets({ version: 1, crafts: Object.fromEntries(entries) });
+  return { version: 1, archetypes: root.archetypes };
 }
 
 // Catalog offset (fractions of hull width, -y forward, +x starboard) to plan model units.
-export function planOffset(sizeRatio: number, offset: { x: number; y: number }): [number, number] {
+export function planOffset(sizeRatio: number, [x, y]: readonly [number, number]): [number, number] {
   const width = sizeRatio * ADA_WIDTH;
-  return [offset.x * width, offset.y * width];
+  return [x * width, y * width];
 }
 
 export type Placed = { id: string; model: Model; origin: [number, number] };
 
-// Each art hardpoint at its catalog origin. The id sets and kinds must match exactly.
+// Each art hardpoint at its catalog origin, in catalog order. Ids and roles must match exactly.
 export function place(input: Offsets, craft: HeavyCraft): Placed[] {
-  const entry = input.crafts[craft.name];
+  const entry = input.archetypes[craft.name];
   if (!entry) {
     throw new Error(`offsets: no ${craft.name} entry`);
   }
@@ -584,13 +573,15 @@ export function place(input: Offsets, craft: HeavyCraft): Placed[] {
       `offsets: ${craft.name} hardpoints ${given.join()} differ from art ${art.join()}`,
     );
   }
-  return craft.hardpoints.map(({ id, model }) => {
-    const { kind, offset } = entry.hardpoints.find((hardpoint) => hardpoint.id === id)!;
-    if (kind !== model.kind) {
-      throw new Error(`offsets: ${craft.name} ${id} is ${kind}, art draws ${model.kind}`);
-    }
-    return { id, model, origin: planOffset(entry.sizeRatio, offset) };
-  });
+  return entry.hardpoints
+    .toSorted((a, b) => a.order - b.order)
+    .map(({ id, offset, role }) => {
+      const { model } = craft.hardpoints.find((hardpoint) => hardpoint.id === id)!;
+      if (role !== model.role) {
+        throw new Error(`offsets: ${craft.name} ${id} is ${role}, art draws ${model.role}`);
+      }
+      return { id, model, origin: planOffset(entry.sizeRatio, offset) };
+    });
 }
 
 // ---------------------------------------------------------------- projection and order
@@ -761,17 +752,17 @@ export function build(
         sprite(file, size, { facing: `world-${yaw}`, directionIndex: yaw, hardpoint: id, state });
       }
     }
-    if (model.top) {
-      const { parts, z } = model.top;
-      const byAim = yaws.map((aim) =>
-        partOrder(aim, hullTop, parts).flatMap((part) => faces(aim, part)),
-      );
-      const topSize = spriteSize(z, byAim);
-      for (const aim of yaws) {
-        const file = `${name}-${id}-top-${aim}`;
-        files.set(`${file}.svg`, svg(topSize, z, `${title} ${id} top ${aim}`, byAim[aim]!));
-        sprite(file, topSize, { facing: `world-${aim}`, aimIndex: aim, hardpoint: id });
-      }
+  }
+
+  for (const top of sharedTops(craft.name, placed)) {
+    const byAim = yaws.map((aim) =>
+      partOrder(aim, hullTop, top.parts).flatMap((part) => faces(aim, part)),
+    );
+    const topSize = spriteSize(top.z, byAim);
+    for (const aim of yaws) {
+      const file = `${name}-${top.name}-top-${aim}`;
+      files.set(`${file}.svg`, svg(topSize, top.z, `${title} ${top.name} top ${aim}`, byAim[aim]!));
+      sprite(file, topSize, { facing: `world-${aim}`, aimIndex: aim, top: top.name });
     }
   }
 
@@ -780,6 +771,22 @@ export function build(
 }
 
 const minus = ([x, y, z]: Point, [px, py, pz]: Point): Point => [x - px, y - py, z - pz];
+
+// One entry per top design, in first-use order; designs sharing a name must be identical.
+export function sharedTops(craft: string, placed: readonly Placed[]): NonNullable<Model["top"]>[] {
+  const tops = new Map<string, NonNullable<Model["top"]>>();
+  for (const { id, model } of placed) {
+    if (!model.top) {
+      continue;
+    }
+    const seen = tops.get(model.top.name);
+    if (seen && JSON.stringify(seen) !== JSON.stringify(model.top)) {
+      throw new Error(`${craft} ${id}: top ${model.top.name} differs from its shared design`);
+    }
+    tops.set(model.top.name, model.top);
+  }
+  return [...tops.values()];
+}
 
 // Engine jet mouths for one heading, each tagged with its engine hardpoint.
 export function jetMouths(frame: number, yaw: number, placed: readonly Placed[]): JetMouth[] {
@@ -794,18 +801,17 @@ export function jetMouths(frame: number, yaw: number, placed: readonly Placed[])
 }
 
 // `{craft}-hardpoints.json` version 1: ids, per-heading anchors, pivots and layer order, and
-// per-aim muzzles relative to each top's pivot.
+// per-aim muzzles relative to each shared top's pivot.
 export function hardpointsFile(craft: HeavyCraft, placed: readonly Placed[]): string {
-  const aimed = placed.filter(({ model }) => model.top);
   return json({
     version: 1,
     archetype: craft.name,
     frame: craft.frame,
     hardpoints: placed.map(({ id, model }) => ({
       id,
-      kind: model.kind,
+      role: model.role,
       states: states(model),
-      aimed: model.top !== undefined,
+      top: model.top?.name ?? null,
     })),
     headings: yaws.map((yaw) => ({
       index: yaw,
@@ -817,23 +823,19 @@ export function hardpointsFile(craft: HeavyCraft, placed: readonly Placed[]): st
       })),
     })),
     tops: Object.fromEntries(
-      aimed.map(({ id, model }) => [
-        id,
+      sharedTops(craft.name, placed).map((top) => [
+        top.name,
         yaws.map((aim) => ({
           index: aim,
-          muzzles: model.top!.muzzles.map((muzzle) => relative(aim, model.top!.z, muzzle)),
+          muzzles: top.muzzles.map((muzzle) => relative(aim, top.z, muzzle)),
         })),
       ]),
     ),
   });
 }
 
-// Manifest ids this tool owns for one craft.
-function owns(craft: HeavyCraft, id: string): boolean {
-  const ids = craft.hardpoints.map((hardpoint) => hardpoint.id).join("|");
-  const hull = craft.source === "heavies" ? "\\d+|" : "";
-  return new RegExp(`^enemy-${craft.name}-(${hull}(${ids})-.+)$`).test(id);
-}
+// Manifest ids this tool owns: every `enemy-{craft}-` entry of the crafts it draws.
+const owns = (id: string) => heavies.some(({ name }) => id.startsWith(`enemy-${name}-`));
 
 async function main() {
   const args = process.argv.slice(2);
@@ -841,16 +843,11 @@ async function main() {
     const at = args.indexOf(name);
     return at === -1 ? undefined : args[at + 1];
   };
-  const offsetsPath = flag("--offsets");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const offsetsPath = flag("--offsets") ?? `${root}tools/enemy-hardpoints.json`;
   const out = flag("--out");
-  const offsets = offsetsPath
-    ? readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")))
-    : fromCatalog((await import("../../src/data/enemy-catalog.ts")).enemyCatalog);
-  if (offsets.placeholder && out === undefined) {
-    throw new Error("placeholder offsets write only to an explicit --out directory");
-  }
-  const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-  const dir = out === undefined ? `${art}enemies/` : `${out}/`;
+  const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
+  const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
   const results = heavies.map((craft) => build(craft, place(offsets, craft)));
   mkdirSync(dir, { recursive: true });
@@ -861,18 +858,11 @@ async function main() {
     }
     entries.push(...result.entries);
   }
-  if (out !== undefined) {
+  if (out === undefined) {
+    replaceEntries(owns, entries);
+  } else {
     writeFileSync(`${dir}manifest-entries.json`, json(entries));
-    return;
   }
-  // Heavies entries follow the other assets, replacing this tool's earlier entries.
-  const manifestPath = `${art}manifest.json`;
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-  manifest.assets = [
-    ...manifest.assets.filter(({ id }) => !heavies.some((craft) => owns(craft, id))),
-    ...entries,
-  ];
-  writeFileSync(manifestPath, json(manifest));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

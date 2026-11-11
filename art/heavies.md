@@ -1,91 +1,80 @@
 # Galaxy one heavies
 
 The frigate and the capital are a hull plus destructible hardpoints, and every
-gun and turret aims at Ada independently of the hull. The retaliator's
-three-barrel gun follows the same turret contract. Tech composes each frame from
-layers; Gameplay owns hardpoint ids, positions, hit radii and the rules for
-damage, speed and defeat.
+turret aims at Ada independently of the hull. Tech composes each frame from
+layers; Gameplay owns hardpoint ids, positions, hit areas and the rules for
+damage, speed and defeat. Hit areas are flat circles in the world plane, so
+art heights never affect collision.
 
-- Rebuild with `node art/tools/heavies.ts`. It reads Gameplay's catalog
-  (`src/data/enemy-catalog.ts`), writes `public/art/enemies/` and replaces its
-  own entries at the end of the root manifest. `--offsets <file.json>` reads
-  the offsets from a file instead; `--out <dir>` writes the files and a
-  `manifest-entries.json` to that directory and leaves the manifest alone.
-- [art/tools/heavies-placeholder.json](tools/heavies-placeholder.json) holds
-  the approved mock-up's offsets. It is marked `placeholder`, so the tool
-  writes it only with `--out`.
-- Not yet exported: the files below are the contract for the first export.
+- Rebuild with `node art/tools/heavies.ts`. It reads
+  `tools/enemy-hardpoints.json`, writes `public/art/enemies/` and replaces its
+  own manifest entries in place, after the sector one enemies.
+  `--offsets <file.json>` reads another file in the same format; `--out <dir>`
+  writes the files and a `manifest-entries.json` to that directory and leaves
+  the manifest alone.
 - Models, projection and part order are shared with the
   [sector one enemies](enemies.md) through `art/tools/crafts.ts` and
-  `art/tools/projection.ts`.
+  `art/tools/projection.ts`. `art/tools/enemies.ts` replaces only its own hull
+  entries, `enemy-{swarm,fighter,interceptor,retaliator}-{k}`.
 
 ## Crafts
 
 `display = frame * 0.4375`, as for every enemy. Spans and lengths are the drawn
-hull in Ada widths of 42.88 model units.
+craft in Ada widths of 42.88 model units.
 
-| Archetype    | Frame | Display | `sizeRatio` | Span x length | Hardpoints                                                                                                             |
-| ------------ | ----: | ------: | ----------: | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `frigate`    |   384 |     168 |           4 | 3.27 x 4.90   | `gunLeft`, `gunRight` (aimed), `engine`                                                                                |
-| `capital`    |   480 |     210 |           5 | 4.99 x 5.27   | `command`, `engineLeft`, `engineRight`, `turretForeLeft`, `turretForeRight`, `turretAftLeft`, `turretAftRight` (aimed) |
-| `retaliator` |   192 |      84 |           2 | 2.01 x 1.59   | `turret` (aimed, not destructible)                                                                                     |
+| Archetype | Frame | Display | `sizeRatio` | Span x length | Files |
+| --------- | ----: | ------: | ----------: | ------------- | ----: |
+| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |   130 |
+| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |   258 |
 
-- Frigate: long hunter with twin prow tines, a broadside gun on each sponson and
-  a raised stern engine block with two jet mouths, which is one hardpoint.
-- Capital: broad flagship with a great claw prow, a command tower, a nacelle on
-  each side of the stern and four twin-barrel deck turrets. Its four escorts are
-  the existing `fighter` frames.
+- Frigate: long hunter with twin prow tines, a single-barrel gun turret on each
+  sponson (`port`, `starboard`) and a raised `engine` block that caps the
+  stern, with two jet mouths.
+- Capital: broad flagship with a great claw prow, a `command` tower at the
+  centre, a nacelle on each side of the stern (`engine-left`, `engine-right`)
+  and four twin-barrel deck turrets: `weapon-left` and `weapon-right` on the
+  shoulders, `weapon-rear-left` and `weapon-rear-right` on the wings. Its four
+  escorts are the existing `fighter` frames.
 
 ## Offsets input
 
-Positions have one source. The tool places each hardpoint's drawing at the
-catalog offset and projects it per heading; no art file authors a hardpoint
-position or a hit radius.
+Positions have one source: `tools/enemy-hardpoints.json`, which Tech exports
+from Gameplay's catalog. The tool places each hardpoint's drawing at its offset
+and projects it per heading; no art file authors a hardpoint position or a hit
+radius.
 
-- Per archetype: `sizeRatio` and `hardpoints`, each `{ id, kind, offset }`.
-  `kind` is `command`, `engine` or `weapon`. `offset` is `{ x, y }` in fractions
-  of the hull width (`sizeRatio` Ada widths) in the hull's local frame: `-y`
-  forward, `+x` starboard. Model units are `offset * sizeRatio * 42.88`.
-- A file input has this shape; the catalog object reads into the same shape,
-  and archetypes the tool does not draw are ignored.
-
-```json
-{
-  "version": 1,
-  "placeholder": false,
-  "crafts": {
-    "frigate": {
-      "sizeRatio": 4,
-      "hardpoints": [{ "id": "engine", "kind": "engine", "offset": { "x": 0, "y": 0.4606 } }]
-    }
-  }
-}
-```
-
-- For each drawn archetype, the hardpoint id set and every `kind` must match the
-  art exactly, or the tool stops without writing.
-- Art owns the heights (`z`), the drawing around each origin, the jet mouths
-  around an engine's origin and the barrel muzzles around a turret's pivot.
+- `version` 1; `archetypes[a]` has `sizeRatio` and `hardpoints`, each with
+  `id`, `role` (`command`, `engine` or `turret`), `offset` and `order`. Other
+  fields are ignored.
+- `offset` is `[x, y]` in fractions of the hull width (`sizeRatio` Ada widths)
+  in the hull's local frame: `-y` forward, `+x` starboard. Model units are
+  `offset * sizeRatio * 42.88`.
+- Each drawn archetype's id set and every `role` must match the art exactly, or
+  the tool stops without writing. Output lists hardpoints in `order`.
+- Art owns the heights, the drawing around each origin, the jet mouths around an
+  engine's origin and the barrel muzzles around a turret's pivot. The hulls are
+  shaped so every hardpoint sits on the deck or against the hull edge at the
+  catalog positions.
 
 ## Files
 
 All in `public/art/enemies/`. `{a}` is the archetype, `{h}` a hardpoint id
-exactly as in the catalog, `{k}` a hull heading and `{i}` an aim index, each
-`0..15`.
+exactly as in the catalog, `{t}` a turret top design, `{k}` a hull heading and
+`{i}` an aim index, each `0..15`.
 
-| File                      | One per                   | Content                                                     |
-| ------------------------- | ------------------------- | ----------------------------------------------------------- |
-| `{a}-{k}.svg`             | heading                   | Hull with no hardpoints, frame and pivot as the table above |
-| `{a}-{h}-{state}-{k}.svg` | hardpoint, state, heading | The hardpoint base, centred on its anchor                   |
-| `{a}-{h}-top-{i}.svg`     | aimed hardpoint, aim      | The turret top, centred on its pivot                        |
-| `{a}-hardpoints.json`     | archetype                 | Anchors, pivots, layer order and muzzles                    |
-| `{a}-jets.json`           | frigate, capital          | Speed jets, each mouth tagged by its engine                 |
+| File                      | One per                   | Content                                     |
+| ------------------------- | ------------------------- | ------------------------------------------- |
+| `{a}-{k}.svg`             | heading                   | Hull with no hardpoints                     |
+| `{a}-{h}-{state}-{k}.svg` | hardpoint, state, heading | The hardpoint base, centred on its anchor   |
+| `{a}-{t}-top-{i}.svg`     | top design, aim           | The turret top, centred on its pivot        |
+| `{a}-hardpoints.json`     | archetype                 | Anchors, pivots, layer order and muzzles    |
+| `{a}-jets.json`           | archetype                 | Speed jets, each mouth tagged by its engine |
 
-The retaliator's hull frames and jets stay with `art/tools/enemies.ts`; this
-tool adds its turret files and `retaliator-hardpoints.json`.
+Turrets with identical drawings share one top set: the frigate's two guns use
+`gun` and the capital's four turrets, bolt and missile alike, use `turret`.
 
 Sprite frames are square, a multiple of 8 px, and hold every heading and state
-of that hardpoint around a centred pivot. From the mock-up geometry:
+of that hardpoint around a centred pivot:
 
 | Sprite                     | Base frame | Top frame |
 | -------------------------- | ---------: | --------: |
@@ -94,7 +83,6 @@ of that hardpoint around a centred pivot. From the mock-up geometry:
 | Capital command            |         72 |           |
 | Capital engine (each side) |         88 |           |
 | Capital turret             |         48 |        80 |
-| Retaliator turret          |         24 |       104 |
 
 ## Manifest entries
 
@@ -103,8 +91,9 @@ of that hardpoint around a centred pivot. From the mock-up geometry:
   `displayWidth`, `displayHeight` (frame times 0.4375), `facing` `world-{k}`,
   `directionIndex` `k`, `hardpoint`, `state`, `pivot` `{ 0.5, 0.5 }` and
   `archetype`.
-- Turret top: `enemy-{a}-{h}-top-{i}` with the same fields except `aimIndex`
-  `i` and `facing` `world-{i}` in place of `directionIndex`, and no `state`.
+- Turret top: `enemy-{a}-{t}-top-{i}` with the same fields except `aimIndex`
+  `i` and `facing` `world-{i}` in place of `directionIndex`, and `top` `t` in
+  place of `hardpoint` and `state`.
 - Hardpoint and top ids never match the hull pattern `enemy-{archetype}-{index}`,
   so hull heading sets stay complete and separate.
 
@@ -115,14 +104,14 @@ of that hardpoint around a centred pivot. From the mock-up geometry:
 like the hull frame.
 
 - `archetype`, `frame`: the hull archetype and frame size.
-- `hardpoints[]`: `id`, `kind`, `states` (`["intact", "destroyed"]`, or
-  `["intact"]` for the retaliator turret) and `aimed` (has a top).
+- `hardpoints[]`, in catalog order: `id`, `role`, `states`
+  (`["intact", "destroyed"]`) and `top` (the top design, or `null`).
 - `headings[k]`: `index`; `order`, the layer ids for hull heading `k` far to
   near, with `hull` among them; `hardpoints[]` with `id`, `anchor` (the
   projected hardpoint origin at its anchor height, where that hardpoint's base
-  sprite centre goes) and, for aimed hardpoints, `pivot` (the projected top
-  pivot, where the top sprite centre goes).
-- `tops[h][i]`: `index` (aim `i`) and `muzzles`, one `[x, y]` per barrel tip in
+  sprite centre goes) and, for turrets, `pivot` (the projected top pivot, where
+  the top sprite centre goes).
+- `tops[t][i]`: `index` (aim `i`) and `muzzles`, one `[x, y]` per barrel tip in
   frame px relative to the pivot.
 
 ## Composing a frame
@@ -130,7 +119,7 @@ like the hull frame.
 1. Pick hull heading `k` from the hull facing with the existing enemy rule.
 2. For each id in `headings[k].order`: `hull` draws `{a}-{k}`; a hardpoint
    draws its base for its current state with the sprite centre at `anchor`.
-   An intact aimed hardpoint then draws its top at `pivot`.
+   An intact turret then draws its top `{a}-{t}-top-{i}` at `pivot`.
 3. Pick each top's aim index `i` from that turret's world aim angle with the
    same rule as hull headings: index `i` faces world angle `i * 22.5` degrees,
    whatever the hull heading. Tech turns each aim with the ship's
@@ -149,7 +138,7 @@ straight after it.
 - `intact` and `destroyed` per hardpoint. A destroyed turret is a low scorched
   stump with a breach and no top. A destroyed engine or command is a scorched
   wreck of its block, pod or tower with a breach and one ember; parts on the
-  hull also leave ragged scorch paint on the deck.
+  deck also leave ragged scorch paint around them.
 - Intact turrets stand on a fixed collar 1.5 units high (`{h}-intact`); the
   aimed top carries the head, barrels and hatch.
 - Hit flash is a tint over the hardpoint's base and top. There are no flash
@@ -161,23 +150,20 @@ straight after it.
 frame. Each mouth also has `hardpoint`, the id of the engine that drives it.
 Draw a mouth only while that engine is intact.
 
-| Archetype | Mouths | Engine                                 | Width | Height |
-| --------- | -----: | -------------------------------------- | ----: | -----: |
-| `frigate` |      2 | `engine` (both)                        |    10 |     11 |
-| `capital` |      2 | `engineLeft`, `engineRight` (one each) |    12 |      6 |
+| Archetype | Mouths | Engine                                   | Width | Height |
+| --------- | -----: | ---------------------------------------- | ----: | -----: |
+| `frigate` |      2 | `engine` (both)                          |    10 |     11 |
+| `capital` |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
 
-Mouth width and height are model units. The retaliator's jets file is unchanged
-and its mouths have no `hardpoint`.
+Mouth width and height are model units.
 
 ## Retaliator turret
 
-The turret head and the three barrels leave the hull frames
-`retaliator-{k}.svg`, which keep their ids, size and pivot. They become
-`retaliator-turret-top-{i}`, over the fixed collar `retaliator-turret-intact-{k}`.
-The barrels keep the -0.2, 0 and 0.2 radian spread about the turret's aim, so
-`tops.turret[i].muzzles` lists three tips. The turret is hardpoint `turret`,
-`kind` `weapon`, at the catalog offset; the placeholder puts it at the hull
-centre, `(0, 0)`.
+The retaliator's gun is its hull weapon's aim mount, not a hardpoint, and
+destroying the hull defeats it. Its turret head and barrels are flagged
+`turret` in `art/tools/crafts.ts`, and `art/tools/heavies.ts` models them as a
+top over a fixed collar, but the retaliator export is unchanged: it ships with
+Tech's mount offset and turret-top renderer.
 
 ## Palette
 

@@ -1,8 +1,9 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { type Craft, crafts, drawOrder, faces, hullEntries, jetsFile } from "./crafts.ts";
-import { anchor, ENEMY_HEADINGS, json, project, vector } from "./projection.ts";
+import { replaceEntries } from "./manifest.ts";
+import { anchor, ENEMY_HEADINGS, project, vector } from "./projection.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
@@ -46,11 +47,10 @@ for (const craft of crafts) {
   }
 }
 
-// Enemy entries follow the other assets, whose order is unchanged.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-manifest.assets = [
-  ...manifest.assets.filter(({ id }) => !id.startsWith("enemy-")),
-  ...crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
-];
-writeFileSync(manifestPath, json(manifest));
+// Only this tool's hull frames, in place; heavies.ts owns the other `enemy-` entries.
+const names = crafts.map(({ name }) => name).join("|");
+const hull = new RegExp(`^enemy-(${names})-\\d+$`);
+replaceEntries(
+  (id) => hull.test(id),
+  crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
+);

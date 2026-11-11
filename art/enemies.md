@@ -1,7 +1,8 @@
 # Sector one enemies
 
 - Rebuild with `node art/tools/enemies.ts`. It writes `public/art/enemies/` and
-  replaces the `enemy-*` entries at the end of the root manifest.
+  replaces its own `enemy-{archetype}-{index}` entries in place in the root
+  manifest.
   [art/tools/crafts.ts](tools/crafts.ts) holds the craft models, shared with the
   [destruction effect](destruction.md).
   [art/tools/projection.ts](tools/projection.ts) holds the rotation, culling,
@@ -9,8 +10,8 @@
 - Enemy craft and their destruction shards use 16 headings (`ENEMY_HEADINGS`)
   in 22.5 degree world steps; enemy heading `k` faces ship heading `2k` of
   Ada's 32.
-- The frigate, the capital and the retaliator's aimed turret follow the
-  [galaxy one heavies](heavies.md) contract.
+- The frigate and the capital follow the [galaxy one heavies](heavies.md)
+  contract.
 - Exports per archetype: `{archetype}-{0..15}.svg` idle frames and
   `{archetype}-jets.json`. Manifest ids are `enemy-{archetype}-{index}` with
   `archetype`, `directionIndex` and `facing` `world-{index}`.

@@ -18,3 +18,15 @@ export function placeEntries(group: (typeof GROUPS)[number], entries: readonly {
   manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
   writeFileSync(path, json(manifest));
 }
+
+// Replaces the entries `owns` selects at the position of the first of them, or appends them.
+// Generators sharing a group (`enemy-`) keep their own entries in place.
+export function replaceEntries(owns: (id: string) => boolean, entries: readonly { id: string }[]) {
+  const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };
+  const first = manifest.assets.findIndex(({ id }) => owns(id));
+  const at = first === -1 ? manifest.assets.length : first;
+  const before = manifest.assets.slice(0, at);
+  const after = manifest.assets.slice(at).filter(({ id }) => !owns(id));
+  manifest.assets = [...before, ...entries, ...after];
+  writeFileSync(path, json(manifest));
+}
