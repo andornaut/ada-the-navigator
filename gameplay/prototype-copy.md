@@ -83,6 +83,13 @@ Choices:
 - "What kind of help do they need?"
 - "I'd like to meet the organizer."
 
+Branch pages, then the story rejoins:
+
+- "What kind of help do they need?": "Grandma smiles. 'Planting, watering, tools...
+  more than one person can manage.'"
+- "I'd like to meet the organizer.": "'They'd love that,' Grandma says. 'Most
+  people only offer help when someone asks them.'"
+
 Space dialogue, in story order:
 
 Grower: "A visitor! We grow food here, but our equipment needs repairs. There's a
@@ -112,6 +119,15 @@ Choices:
 - "Ask what each person can offer."
 - "Divide the work into smaller jobs."
 
+Branch pages, then the story rejoins:
+
+- "Ask what each person can offer.": "A neighbor can water on weekends. Another has
+  spare tools. Grandma will teach. Nobody can do everything, but everyone can do
+  something."
+- "Divide the work into smaller jobs.": "Ada writes each job on a card: plant, water,
+  fetch tools, teach. Small jobs are easier to say yes to, and soon every card has
+  a name."
+
 Closing: "On planting day, neighbors bring tools, plants and time. They don't all
 have to do the same thing. The garden has begun."
 
@@ -136,6 +152,13 @@ Choices:
 
 - "Notice who might help."
 - "Think about how to offer support."
+
+Branch pages, then the story rejoins:
+
+- "Notice who might help.": "A few children look uncomfortable, not amused. Ada
+  guesses they don't like it either. They just don't know what to do yet."
+- "Think about how to offer support.": "Ada thinks about what she would want:
+  someone beside her, and an invitation to join in. No speeches, just company."
 
 Space dialogue, in story order:
 
@@ -169,6 +192,14 @@ Choices:
 - "Make room in the game."
 - "Sit together and invite friends over."
 
+Branch pages, then the story rejoins:
+
+- "Make room in the game.": "Ada's friends shuffle over and make a gap. The child
+  steps in. When someone laughs, nobody laughs along."
+- "Sit together and invite friends over.": "At lunch, Ada and the child sit
+  together. One by one, Ada's friends join them, and the table gets louder and
+  happier."
+
 Closing: "Ada and her friends include the child. When the behavior happens again,
 they stay supportive instead of leaving them alone."
 
@@ -186,14 +217,21 @@ Objectives, in order:
 
 Panel title: The Whale Family.
 
-Opening: "The dog waits by the door. It's time for a walk, but Ada would rather
-keep playing. 'Nobody has to take me for a walk,' she complains. She loves her
-dog, but hasn't considered how much it depends on her."
+Opening: "Penny waits by the door. It's time for a walk, but Ada would rather keep
+playing. 'Nobody has to take me for a walk,' she complains. She loves Penny, but
+hasn't considered how much Penny depends on her."
 
 Choices:
 
 - "Wonder why walks matter so much."
-- "Think about what the dog can choose."
+- "Think about what Penny can choose."
+
+Branch pages, then the story rejoins:
+
+- "Wonder why walks matter so much.": "Penny can't open the door, read a map or
+  choose a path. Every walk is her chance to explore."
+- "Think about what Penny can choose.": "Ada can go anywhere she likes, even other
+  galaxies. Penny can only go where Ada takes her."
 
 Space dialogue, in story order:
 
@@ -216,14 +254,21 @@ They're safe? Please share our coordinates so they can find us."
 Whale, on return: "You found my family! Now I know where to go. Thank you for
 listening. The whale departs, and soon the family is traveling together again."
 
-Home resolution: "Ada returns to the same moment. The dog is still waiting. She
-remembers the whale's wish to move, explore and find its family. Her dog needs
+Home resolution: "Ada returns to the same moment. Penny is still waiting. She
+remembers the whale's wish to move, explore and find its family. Penny needs
 opportunities to experience the world too."
 
 Choices:
 
 - "Get the lead."
 - "Let's go exploring."
+
+Branch pages, then the story rejoins:
+
+- "Get the lead.": "Penny's tail goes wild as Ada clips on the lead. 'Come on,
+  girl. Let's see what's out there today.'"
+- "Let's go exploring.": "Ada lets Penny choose the way. They take a new path
+  through the park, and Penny sniffs every exciting thing."
 
 Closing: "Ada takes the dog out and gives it time to stop, sniff and explore.
 Caring means making time for what the dog needs."
