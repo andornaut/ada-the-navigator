@@ -17,6 +17,8 @@ export interface PrototypeContent {
   labels: Readonly<Record<string, string>>;
   /** Install steps for browsers that install only from their own menu. */
   installSteps: Readonly<Record<"firefoxAndroid" | "ios", { title: string; steps: string }>>;
+  /** The start screen's update offer. */
+  update: { accept: string; cancel: string; title: string };
   tuning: {
     chunkSize: number;
     maxSpeed: number;

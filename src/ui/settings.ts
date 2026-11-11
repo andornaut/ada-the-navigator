@@ -6,6 +6,7 @@ import {
   readDeviceSettings,
   writeSetting,
 } from "./device-settings.ts";
+import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -14,6 +15,9 @@ export const FONT_ROLES = { body: "font-body", heading: "font-title" } as const;
 export interface SettingsLabels {
   readonly aimControls: string;
   readonly close: string;
+  readonly install: string;
+  readonly installButton: string;
+  readonly installNote: string;
   readonly motionNote: string;
   readonly moveControls: string;
   readonly reducedMotion: string;
@@ -27,7 +31,13 @@ export interface FeedbackSettings {
   readonly sound: boolean;
 }
 
+export type InstallSteps = Readonly<
+  Record<"firefoxAndroid" | "ios", { readonly steps: string; readonly title: string }>
+>;
+
 export interface SettingsOptions {
+  // The Install row's install functions and each menu browser's steps; without them no row.
+  readonly install?: { readonly port: InstallPort; readonly steps: InstallSteps } | undefined;
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onOpenChange: (open: boolean) => void;
@@ -273,6 +283,33 @@ const STYLE = `
   opacity:0.75
 }
 
+.ada-controls .ada-install-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  min-height:48px
+}
+
+.ada-controls .ada-card p{
+  margin:0 0 16px;
+  line-height:20px;
+  max-width:36em
+}
+
+.ada-controls .ada-actions{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:8px
+}
+
+.ada-controls .ada-card .ada-primary{
+  background:#262b44;
+  border-color:#181425;
+  color:#ead4aa
+}
+
 .ada-controls input{
   width:32px;
   height:20px;
@@ -365,24 +402,104 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     element.append(text, toggle);
     return element;
   };
-  const rows: HTMLElement[] = [
+  const rows = document.createElement("div");
+  rows.className = "ada-rows";
+  rows.append(
     switchRow("move", options.labels.moveControls),
     switchRow("aim", options.labels.aimControls),
     switchRow("sound", options.labels.sound, options.labels.soundNote),
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
-  ];
-  card.append(header, ...rows);
+  );
+  card.append(header, rows);
+  // The Install row, as in Archie: its label and note, and a button that asks for the browser's
+  // prompt or opens that browser's menu steps in the Settings card's place.
+  const installRow = document.createElement("div");
+  installRow.className = "ada-install-row";
+  installRow.hidden = true;
+  const installText = document.createElement("span");
+  installText.className = "ada-setting-text";
+  const installCaption = document.createElement("span");
+  installCaption.textContent = options.labels.install;
+  const installNote = document.createElement("span");
+  installNote.className = "ada-setting-note";
+  installNote.textContent = options.labels.installNote;
+  installText.append(installCaption, installNote);
+  const installButton = document.createElement("button");
+  installButton.dataset.action = "install";
+  installButton.textContent = options.labels.installButton;
+  installButton.setAttribute("aria-label", options.labels.install);
+  installRow.append(installText, installButton);
+  rows.append(installRow);
+  const stepsCard = document.createElement("section");
+  stepsCard.className = "ada-card";
+  stepsCard.hidden = true;
+  stepsCard.dataset.dialog = "install-steps";
+  stepsCard.setAttribute("role", "dialog");
+  stepsCard.setAttribute("aria-modal", "true");
+  const stepsHeader = document.createElement("header");
+  const stepsTitle = document.createElement("h2");
+  stepsTitle.dataset.fontRole = FONT_ROLES.heading;
+  const stepsX = document.createElement("button");
+  stepsX.className = "ada-close";
+  stepsX.dataset.action = "close-install-steps";
+  stepsX.setAttribute("aria-label", options.labels.close);
+  stepsHeader.append(document.createElement("span"), stepsTitle, stepsX);
+  const stepsText = document.createElement("p");
+  const stepsClose = document.createElement("button");
+  stepsClose.dataset.action = "close-install-steps";
+  stepsClose.textContent = options.labels.close;
+  stepsCard.append(stepsHeader, stepsText, stepsClose);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
-  modal.append(card);
+  modal.append(card, stepsCard);
   root.append(style, ...joystickTargets, openButton, useButton, modal);
   parent.append(root);
   let disposed = false;
   let open = false;
   let previousFocus: HTMLElement | undefined;
+  const stepsOpen = () => !stepsCard.hidden;
+  const closeSteps = () => {
+    if (stepsOpen()) {
+      stepsCard.hidden = true;
+      card.hidden = false;
+      installButton.focus();
+    }
+  };
+  const openSteps = (browser: keyof InstallSteps) => {
+    const words = options.install?.steps[browser];
+    if (!words) {
+      return;
+    }
+    stepsTitle.textContent = words.title;
+    stepsText.textContent = words.steps;
+    stepsCard.setAttribute("aria-label", words.title);
+    card.hidden = true;
+    stepsCard.hidden = false;
+    stepsClose.focus();
+  };
+  const stopInstallRow = options.install
+    ? watchInstallRow(options.install.port, (shown) => {
+        installRow.hidden = !shown;
+        if (!shown) {
+          closeSteps();
+        }
+      })
+    : () => undefined;
+  installButton.addEventListener("click", () => {
+    if (options.install) {
+      void startInstall(options.install.port, openSteps, () => open && !disposed);
+    }
+  });
+  for (const button of [stepsX, stepsClose]) {
+    button.addEventListener("click", closeSteps);
+  }
   const setOpen = (value: boolean) => {
     if (disposed || value === open) {
       return;
+    }
+    if (!value) {
+      stepsCard.hidden = true;
+      card.hidden = false;
     }
     open = value;
     modal.hidden = !open;
@@ -415,13 +532,20 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       event.target === modal &&
       Math.hypot(event.clientX - outsidePress.x, event.clientY - outsidePress.y) <= 10
     ) {
-      setOpen(false);
+      if (stepsOpen()) {
+        closeSteps();
+      } else {
+        setOpen(false);
+      }
     }
     outsidePress = undefined;
   });
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
-      const targets = [...card.querySelectorAll<HTMLElement>("button,input")];
+      const shown = stepsOpen() ? stepsCard : card;
+      const targets = [...shown.querySelectorAll<HTMLElement>("button,input")].filter(
+        (target) => target.offsetParent !== null,
+      );
       const first = targets[0];
       const last = targets.at(-1);
       if (event.shiftKey && document.activeElement === first) {
@@ -436,12 +560,14 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   return {
     card,
     close: () => setOpen(false),
+    closeSteps,
     dispose(): void {
       if (disposed) {
         return;
       }
       setOpen(false);
       disposed = true;
+      stopInstallRow();
       root.remove();
     },
     isOpen: () => open,
@@ -449,6 +575,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     open: () => setOpen(true),
     openButton,
     root,
+    stepsOpen,
     useButton,
   };
 }

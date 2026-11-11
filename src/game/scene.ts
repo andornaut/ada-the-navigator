@@ -10,6 +10,17 @@ import { grantAllWeapons } from "../model/cheats.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
+import {
+  beginStartUpdateVisit,
+  coverStartScreen,
+  installApp,
+  installState,
+  menuBrowser,
+  offersInstall,
+  onInstallStateChange,
+  startScreenShown,
+  updateOffer,
+} from "../pwa/index.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
@@ -52,6 +63,7 @@ export class PrototypeScene extends Phaser.Scene {
   private shipAssets: readonly ShipAsset[] = [];
   private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
+  private startShown = false;
   private enabled: boolean | undefined;
   private durable = "";
   private savedAt = 0;
@@ -158,9 +170,22 @@ export class PrototypeScene extends Phaser.Scene {
         onSave: () => apply(() => {}),
         run: () => (this.model.state.mode === "space" ? this.model.state.flight : null),
       },
+      install: {
+        port: {
+          install: installApp,
+          menuBrowser,
+          offers: offersInstall,
+          onChange: onInstallStateChange,
+          state: installState,
+        },
+        steps: PROTOTYPE.installSteps,
+      },
       labels: {
         aimControls: PROTOTYPE.labels.aimControls ?? "",
         close: PROTOTYPE.labels.close ?? "",
+        install: PROTOTYPE.labels.install ?? "",
+        installButton: PROTOTYPE.labels.installButton ?? "",
+        installNote: PROTOTYPE.labels.installNote ?? "",
         motionNote: PROTOTYPE.labels.motionNote ?? "",
         moveControls: PROTOTYPE.labels.moveControls ?? "",
         reducedMotion: PROTOTYPE.labels.reducedMotion ?? "",
@@ -179,12 +204,22 @@ export class PrototypeScene extends Phaser.Scene {
         this.settingsOpen = paused;
         this.flush();
       },
+      onStartCover: coverStartScreen,
       onWeaponSelect: (weapon) => {
         if (!this.settingsOpen && this.model.state.mode === "space" && !this.model.state.dialogue) {
           apply(() => this.model.selectWeapon(weapon));
         }
       },
       shieldLabel: PROTOTYPE.labels.shield ?? "",
+      update: {
+        labels: {
+          accept: PROTOTYPE.update.accept,
+          cancel: PROTOTYPE.update.cancel,
+          close: PROTOTYPE.labels.close ?? "",
+          title: PROTOTYPE.update.title,
+        },
+        offer: updateOffer,
+      },
       weaponLabels: {
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
@@ -270,6 +305,15 @@ export class PrototypeScene extends Phaser.Scene {
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.controls.setWeapons(this.model.weapons());
     this.controls.setShield(PROTOTYPE.tuning.shieldMax, state.flight?.shield ?? 0);
+    // The start screen: the home screen with no dialogue. Each arrival begins an update visit.
+    const start = state.mode === "home" && !state.dialogue;
+    if (start !== this.startShown) {
+      this.startShown = start;
+      if (start) {
+        beginStartUpdateVisit();
+      }
+      startScreenShown(start);
+    }
     this.shell.render(state, {
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,

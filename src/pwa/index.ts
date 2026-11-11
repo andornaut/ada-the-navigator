@@ -1,10 +1,9 @@
-// The game as an installable app that plays offline: the service worker, persistent storage and
-// the install offer. setupPhoneApp runs once from main.ts as the page loads; the Settings Install
-// row reads the install functions below.
+// The game as an installable app that plays offline: the service worker, persistent storage, the
+// install offer and the update offer. setupPhoneApp runs once from main.ts as the page loads; the
+// Settings Install row reads the install functions below, and the start screen the update offer.
 //
-// Waiting updates activate only on a later launch, after every page the old version controls has
-// closed. The game has no update offer, and the page and art are served network-first, so an
-// online load always shows the latest deploy.
+// Waiting updates activate only through the start screen's update offer, never automatically
+// before input or during play.
 import {
   type InstallFlow,
   type InstallOutcome,
@@ -20,6 +19,13 @@ import type { InstallState, MenuInstallBrowser } from "@andornaut/game-kit/web/p
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
+import {
+  createUpdateOffer,
+  type StartCover,
+  type StartScreen,
+  trackStartScreen,
+} from "./updateOffer.ts";
+
 export type { InstallOutcome } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 export {
   type InstallState,
@@ -33,6 +39,14 @@ const BOOT_WAIT_MS = 4000;
 
 let flow: InstallFlow | undefined;
 let offlinePlay: OfflinePlay | undefined;
+let startScreen: StartScreen | undefined;
+
+// The start screen's update offer: Update now switches to the waiting version and reloads; a
+// defer keeps the current one until the next start-screen visit.
+export const updateOffer = createUpdateOffer(
+  () => offlinePlay?.flow.accept(),
+  () => offlinePlay?.flow.dismissOffer(),
+);
 
 // The page's install flow, created on first use. setupPhoneApp uses it as the page loads, since
 // the browser's install prompt can come before anything is drawn.
@@ -50,15 +64,17 @@ function setupOfflinePlay(): void {
   if (page === undefined) {
     return;
   }
-  offlinePlay = startOfflinePlay(
+  const play = startOfflinePlay(
     {
       activationPolicy: "manual",
       bootWaitMs: BOOT_WAIT_MS,
-      onUpdateShown: () => undefined,
+      onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
     },
     page,
   );
+  offlinePlay = play;
+  startScreen = trackStartScreen(play.flow.setOfferVisible);
 }
 
 // Sets up offline play, the install offer and persistent storage.
@@ -99,4 +115,19 @@ export function installApp(): Promise<InstallOutcome> {
 // The browser that installs only from its own menu, whose steps installApp's "menuSteps" calls for.
 export function menuBrowser(): MenuInstallBrowser | undefined {
   return installFlow().menuBrowser;
+}
+
+// A new start-screen visit, as the start screen appears: a deferred offer may show again.
+export function beginStartUpdateVisit(): void {
+  offlinePlay?.flow.beginOfferVisit();
+}
+
+// Whether the start screen shows; the update offer appears only there.
+export function startScreenShown(shown: boolean): void {
+  startScreen?.shown(shown);
+}
+
+// Settings or the cheats card covering the start screen suppress the offer without deferring it.
+export function coverStartScreen(what: StartCover, covering: boolean): void {
+  startScreen?.cover(what, covering);
 }

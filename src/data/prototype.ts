@@ -308,4 +308,5 @@ export const PROTOTYPE: PrototypeContent = {
     speedCurveExponent: 2.5,
     whaleDebris: { count: 3, hp: 3, radius: 24, spacing: 60 },
   },
+  update: { accept: "Update now", cancel: "Cancel", title: "Update available" },
 };

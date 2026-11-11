@@ -9,12 +9,19 @@ import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
 import { createTouchChrome, showTouchChrome } from "../game/touch-chrome.ts";
+import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
-import { createSettings, type FeedbackSettings, type SettingsLabels } from "../ui/settings.ts";
+import {
+  createSettings,
+  type FeedbackSettings,
+  type SettingsLabels,
+  type SettingsOptions,
+} from "../ui/settings.ts";
 import { createShieldMeter } from "../ui/shield.ts";
 import { stickRestCentres, stickViews } from "../ui/sticks.ts";
 import { TOUCH_CHROME_FRAME } from "../ui/touch-chrome.ts";
+import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
 import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
@@ -29,9 +36,13 @@ export interface ControlsOptions {
     readonly onSave: () => void;
     readonly run: () => object | null;
   };
+  readonly install?: SettingsOptions["install"];
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
+  // Settings or the cheats card opening or closing over the start screen.
+  readonly onStartCover?: (what: StartCover, covering: boolean) => void;
+  readonly update?: { readonly labels: UpdateLabels; readonly offer: UpdateOffer };
   readonly onWeaponSelect: (weapon: Weapon) => void;
   readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;
@@ -80,11 +91,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let contextLabel: string | undefined;
   let visibility = { aim: true, move: true };
   const settings = createSettings(parent, {
+    install: options.install,
     labels: options.labels,
     onFeedbackChange(value) {
       options.onFeedbackChange?.(value);
     },
-    onOpenChange() {
+    onOpenChange(open) {
+      options.onStartCover?.("settings", open);
       syncModal();
     },
     onVisibilityChange(value) {
@@ -94,10 +107,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const cheats = createCheats(settings.root, settings.card, {
     ...options.cheats,
     beforeOpen: () => settings.close(),
-    onOpenChange: () => syncModal(),
+    onOpenChange: (open) => {
+      options.onStartCover?.("cheats", open);
+      syncModal();
+    },
     restoreFocus: () => settings.openButton.focus(),
   });
-  const modalOpen = (): boolean => settings.isOpen() || cheats.isOpen();
+  const modalOpen = (): boolean =>
+    settings.isOpen() || cheats.isOpen() || (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
     if (open) {
@@ -117,6 +134,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   const shield = createShieldMeter(options.shieldLabel, settings.root);
+  const update = options.update
+    ? createUpdateDialog(settings.root, options.update.labels, options.update.offer, () =>
+        syncModal(),
+      )
+    : undefined;
   const sticks = {
     aim: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "aim") },
     move: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "move") },
@@ -208,8 +230,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
-        if (cheats.isOpen()) {
+        if (update?.isOpen()) {
+          update.defer();
+        } else if (cheats.isOpen()) {
           cheats.close();
+        } else if (settings.stepsOpen()) {
+          settings.closeSteps();
         } else if (settings.isOpen()) {
           settings.close();
         } else {
@@ -296,6 +322,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       shield.dispose();
       weapons.dispose();
       cheats.dispose();
+      update?.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
       scene.cameras.remove(camera);

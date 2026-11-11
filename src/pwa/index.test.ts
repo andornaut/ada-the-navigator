@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const offline = vi.hoisted(() => {
-  const play = { bootable: Promise.resolve(), flow: {}, registrationReady: vi.fn() };
+  const flow = {
+    accept: vi.fn(),
+    beginOfferVisit: vi.fn(),
+    dismissOffer: vi.fn(),
+    setOfferVisible: vi.fn(),
+  };
+  const play = { bootable: Promise.resolve(), flow, registrationReady: vi.fn() };
   return {
     play,
     start: vi.fn((options: { activationPolicy?: string; serviceWorkerUrl: string }) => {
@@ -69,6 +75,29 @@ describe("offline play", () => {
     expect(offline.play.registrationReady).not.toHaveBeenCalled();
     pwa.gameShown();
     expect(offline.play.registrationReady).toHaveBeenCalledOnce();
+  });
+
+  it("wires the start screen and update offer to the kit's update flow", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const options = offline.start.mock.calls[0]![0] as unknown as {
+      onUpdateShown: (shown: boolean) => void;
+    };
+    const { flow } = offline.play;
+    pwa.beginStartUpdateVisit();
+    pwa.startScreenShown(true);
+    expect(flow.beginOfferVisit).toHaveBeenCalledOnce();
+    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(true);
+    pwa.coverStartScreen("settings", true);
+    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(false);
+    pwa.coverStartScreen("settings", false);
+    options.onUpdateShown(true);
+    pwa.updateOffer.defer();
+    expect(flow.dismissOffer).toHaveBeenCalledOnce();
+    options.onUpdateShown(true);
+    pwa.updateOffer.accept();
+    expect(flow.accept).toHaveBeenCalledOnce();
   });
 
   it("starts no service worker outside the production build", async () => {
