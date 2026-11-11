@@ -379,8 +379,7 @@ Black Eye:
   adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
-- Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title,
-  Return to Earth. On Ada's room page: Settings, Back to title.
+- Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings.
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
@@ -391,7 +390,7 @@ Black Eye:
   - Galaxy 2, Cartwheel: "A busy mining hub where every rock is worth something."
   - Galaxy 3, Whirlpool: "Swirling debris, and a song somewhere in the dark."
   - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
-- Map: Map; {percent}% mapped; Travel here. With nothing discovered yet: No
+- Map: Map; {percent}% mapped; Travel here; Return to Earth. With nothing discovered yet: No
   destinations mapped yet.
 - Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
 - Map place panel: under the place's name, a line naming its kind: Station,

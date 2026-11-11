@@ -281,8 +281,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape: "Resume" (primary), "Map", "Settings", "Back to title" and "Return
-  to Earth".
+  one shape: "Resume" (primary), "Map", "Settings" and "Back to title".
   Above the buttons, the card shows the current story objective and, when a
   station job is held, its "Job:" line. Space shows no objective text.
   Map shows the current galaxy: Ada's position, discovered destinations and
@@ -296,11 +295,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   places; the station stands for them. Only chunks inside the charting circle
   enter the explored record. The
   explored area persists per galaxy across flights and clears on Restart. Choosing
-  a discovered destination or station offers "Travel here", which teleports there. Return
-  to Earth ends the flight and takes Ada to her room, with story progress saved
+  a discovered destination or station offers "Travel here", which teleports there. The Map
+  also has "Return to Earth" on every galaxy's Map, with no confirm, as for
+  Travel here. Unlike Travel here it stays available while towing; the towed craft
+  returns to where it was stranded. Return to Earth ends the flight and takes Ada to her room, with story progress saved
   and no quantum jump cost. Back to title ends the flight the same way and opens
   the start screen; it stays available in danger. While Ada is in danger, Travel
-  here and Return to Earth stay visible but disabled, refuse with the shared refusal feedback, and the card
+  here and Return to Earth stay visible but disabled, refuse with the shared refusal feedback, and the Map
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   On the start screen, Settings opens from its own button, as in Chibi, and
@@ -430,7 +431,7 @@ still, teleporting and revisiting chunks do not advance fresh-exploration pacing
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
-available only outside immediate danger. Ada can return to Earth voluntarily from the pause card.
+available only outside immediate danger. Ada can return to Earth voluntarily from the Map.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
 
