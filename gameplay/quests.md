@@ -181,8 +181,10 @@ Achievements cover story, map charting, helping, donations, Penny's finds and
 collections. The start screen and the pause card have an Achievements button
 that opens an Achievements card, as in Chibi. Achievements and their progress
 survive Restart. None needs a missable dialogue choice. Unlocking one shows the
-notice "Achievement: {name}". A Penny find is a point of interest Penny sensed
-that Ada then reaches within 160 world units.
+notice "Achievement: {name}"; one earned at home is announced at the start of
+the next flight. A Penny find is a point of interest Penny sensed that Ada then
+reaches within 160 world units, counted once per point. Restart keeps the find
+count and starts a new list of found points.
 
 | Name               | Condition                                           |
 | ------------------ | --------------------------------------------------- |
@@ -206,21 +208,23 @@ shows its full name and condition in muted grey with a grey badge; an unlocked
 entry has an ink name and a coloured badge, as in Chibi. A locked counted
 achievement also shows its progress as `{have}/{need}`:
 
-| Name               | Counts                                                  |
-| ------------------ | ------------------------------------------------------- |
-| Cartographer       | Landmarks charted in the galaxy with the most charted   |
-| Astra's Atlas      | Landmarks charted across all four galaxies              |
-| Good Neighbor      | Station jobs and repeatable activities completed, of 25 |
-| Friends Everywhere | Optional allies made                                    |
-| Community Builder  | Community projects funded                               |
-| Good Nose          | Penny finds, of 10                                      |
-| Full Palette       | Ship paints owned, Classic included                     |
+| Name               | Counts                                                    |
+| ------------------ | --------------------------------------------------------- |
+| Cartographer       | Landmarks charted in the galaxy with the most charted     |
+| Astra's Atlas      | Landmarks charted across all four galaxies                |
+| Good Neighbor      | Station jobs and repeatable activities completed, of 25   |
+| Friends Everywhere | Optional allies made                                      |
+| Community Builder  | Community projects funded                                 |
+| Good Nose          | Penny finds, of 10                                        |
+| Full Palette       | Ship paints ever owned, Classic included; kept on Restart |
 
 The other achievements show no count. When the list is longer than the card, it
-pages with Previous, the page count and Next, as in Chibi.
+pages with Previous, the page count and Next, as in Chibi. The pause card's
+buttons are Resume, Map, Settings, Achievements and Return home.
 
 | Key                   | Text                |
 | --------------------- | ------------------- |
 | `achievements`        | Achievements        |
 | `achievement`         | Achievement: {name} |
 | `achievementProgress` | {have}/{need}       |
+| `achievementsPage`    | {page}/{pages}      |
