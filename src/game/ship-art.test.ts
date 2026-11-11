@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import manifest from "../../public/art/manifest.json";
 import { selectShipAsset, type ShipAsset, shipDirection, shipDirectionCount } from "./ship-art.ts";
 
 const asset = (id: string, directionIndex: number): ShipAsset => ({
@@ -66,6 +67,20 @@ describe("authored ship headings", () => {
     expect(selectShipAsset(assets, false, at(22.5))?.id).toBe("ship-1");
     expect(selectShipAsset(assets, true, at(22.5))?.id).toBe("ship-thrust-1");
     expect(selectShipAsset(assets, false, { x: -1, y: -1 })?.id).toBe("ship-10");
+  });
+
+  it("selects the quantized heading from Art's manifest for all 16 headings, with up at 10", () => {
+    const assets = manifest.assets as ShipAsset[];
+    expect(shipDirectionCount(assets)).toBe(16);
+    for (let index = 0; index < 16; index++) {
+      for (const thrust of [false, true]) {
+        const selected = selectShipAsset(assets, thrust, at(index * 22.5));
+        expect(selected?.directionIndex).toBe(index);
+        expect(selected?.id).toBe(thrust ? `ship-thrust-${index}` : `ship-${index}`);
+      }
+    }
+    expect(selectShipAsset(assets, false, { x: -1, y: -1 })?.id).toBe("ship-10");
+    expect(assets.find((asset) => asset.id === "ship")?.directionIndex).toBe(10);
   });
 
   it("uses manifest direction metadata rather than array order or the legacy alias heading", () => {

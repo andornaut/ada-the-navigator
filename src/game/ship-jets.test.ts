@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
+import { shipDirectionCount } from "./ship-art.ts";
 import {
   type JetDisplay,
   jetLength,
@@ -18,7 +20,7 @@ const framePixels: JetDisplay = { displayHeight: 96, displayWidth: 96, pivot: { 
 const shipDisplay: JetDisplay = { displayHeight: 42, displayWidth: 42, pivot: { x: 0.5, y: 0.5 } };
 const single: ShipJets = {
   ...jets,
-  headings: Array.from({ length: 8 }, () => [
+  headings: Array.from({ length: 16 }, () => [
     { anchor: { x: 50, y: 60 }, axis: { x: 0, y: 1 }, half: { x: 2, y: 0 } },
   ]),
 };
@@ -29,21 +31,24 @@ const withHeading = (heading: unknown) => ({
 });
 
 describe("ship jet metadata", () => {
-  it("reads eight headings of two mouths and three layers from Art's file", () => {
+  it("reads sixteen headings of two mouths and three layers from Art's file", () => {
     expect(jets.frame).toBe(96);
-    expect(jets.headings).toHaveLength(8);
+    expect(jets.headings).toHaveLength(16);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(jets.layers).toHaveLength(3);
     expect(jets.headings[0]![0]!.anchor).toEqual({ x: 47.302, y: 26.637 });
   });
 
   it("takes the heading count from the file", () => {
-    const sixteen = art.headings.flatMap((heading) => [
-      { ...heading, index: heading.index * 2 },
-      { ...heading, index: heading.index * 2 + 1 },
-    ]);
-    expect(readShipJets({ ...art, headings: sixteen })?.headings).toHaveLength(16);
+    const eight = art.headings
+      .filter((heading) => heading.index % 2 === 0)
+      .map((heading) => ({ ...heading, index: heading.index / 2 }));
+    expect(readShipJets({ ...art, headings: eight })?.headings).toHaveLength(8);
     expect(readShipJets({ ...art, headings: [] })).toBeUndefined();
+  });
+
+  it("matches the manifest's directional ship frame count", () => {
+    expect(jets.headings).toHaveLength(shipDirectionCount(manifest.assets));
   });
 
   it("places headings by their declared index", () => {
@@ -138,7 +143,7 @@ describe("jet triangles", () => {
     expect(outerTriangle!.points[1].y).toBeCloseTo((72 - 48) * scale);
   });
 
-  it("matches Art's jet mock-up for heading 3 at full speed", () => {
+  it("matches Art's 8-heading jet mock-up for its heading 3 (now 6) at full speed", () => {
     // Mock-up polygons are drawn in a 128px canvas with a 16px pad around the 96px frame.
     const reference = [
       [89.55, 77.99, 128.62, 75.41, 86.87, 72.83],
@@ -148,7 +153,7 @@ describe("jet triangles", () => {
       [89.1, 46.87, 124.95, 48.59, 87.31, 50.31],
       [88.66, 47.73, 108.42, 48.59, 87.76, 49.45],
     ];
-    const triangles = jetTriangles(jets, framePixels, 3, 1);
+    const triangles = jetTriangles(jets, framePixels, 6, 1);
     expect(triangles).toHaveLength(reference.length);
     triangles.forEach((triangle, index) => {
       const points = triangle.points.flatMap(({ x, y }) => [x + 16, y + 16]);
