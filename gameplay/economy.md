@@ -122,15 +122,36 @@ Projects give no combat power outside the finale.
 | Nursery beacon     | Whirlpool |   500 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
 | Current-map buoys  | Whirlpool |   400 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
 
-Projects is a shop tab beside Weapons and Ship, shown once the galaxy's projects
-are offered, and lists only that galaxy's projects. A row shows the project name,
-its progress as `{paid} of {price}` and Donate; a funded row shows Funded. Each
-Donate press pays `min(100, remaining)` with no confirm, so a project is funded
-in parts and its progress persists across flights. A press Ada cannot afford
+Projects is the third shop tab, after Weapons and Ship, shown once the galaxy's
+projects are offered. It lists only that galaxy's projects, in table order, so a
+station never funds another galaxy's projects. A row shows the project name, its
+effect line until something is paid and then its progress as `{paid} of
+{price}`, and a price showing what remains; a funded row shows Funded.
+
+Activating a row opens a donation confirm in the shop's buy confirm pattern: the
+project's description, the amount this donation pays, the balance left after
+and, when part stays unpaid, the amount still needed after. The donation pays
+`min(balance, remaining)`, so a short balance makes a part payment that
+persists across flights. A row is unaffordable only at a balance of 0, and then
 refuses with the shared refusal feedback. Funding the last part closes the card
 and plays the thank-you line as a space conversation. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
 funding changes nothing in the world.
+
+| Project            | Id               | Effect line                | Description                                     |
+| ------------------ | ---------------- | -------------------------- | ----------------------------------------------- |
+| Greenhouse ring    | `greenhouseRing` | Domes for more crops       | A ring of greenhouse domes around the growers.  |
+| Workshop crane     | `workshopCrane`  | A crane for heavy lifts    | A big gantry crane for the workshop.            |
+| Salvage beacons    | `salvageBeacons` | Helps find lost things     | Bright beacons so lost things are easy to find. |
+| Second docking bay | `dockingBay`     | No miner waits alone       | A second docking bay at the mining hub.         |
+| Hub repairs        | `hubRepairs`     | Repairs the mining hub     | Patches and new lights for the mining hub.      |
+| Nursery beacon     | `nurseryBeacon`  | A light for resting calves | A soft light where whale calves can rest.       |
+| Current-map buoys  | `currentBuoys`   | Marks the currents         | Humming buoys that map the whales' current.     |
+
+Effect lines use the keys `projectEffectGreenhouse`, `projectEffectCrane`,
+`projectEffectBeacons`, `projectEffectDockingBay`, `projectEffectHubRepairs`,
+`projectEffectNursery` and `projectEffectCurrentBuoys`; descriptions use the
+same suffixes after `projectAbout`.
 
 ## Quantum jump home
 
@@ -166,6 +187,8 @@ The shield shop row reuses the existing `shield` label.
 | `donate`            | Donate                                                             |
 | `projectFunded`     | Funded                                                             |
 | `projectProgress`   | {paid} of {price}                                                  |
+| `donateTitle`       | Donate to {name}?                                                  |
+| `donateStillNeeded` | {amount} still needed after                                        |
 | `undock`            | Undock                                                             |
 | `stationWelcome`    | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
 | `inUse`             | In use                                                             |
