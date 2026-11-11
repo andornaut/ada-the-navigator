@@ -92,7 +92,10 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   and braking stay direct. Provisional movement turn response is 0.10 seconds.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 20 CSS pixels with a 2.4 CSS pixel deadzone;
-  the visual thumb follows that travel.
+  the visual thumb follows that travel so its position shows the requested speed.
+  The aim knob moves at most 12 CSS pixels, as in Chibi, because aim deflection
+  sets only direction. The move ring lights its left or right marker only when the
+  move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
   deflection gives maximum speed. With deflection `m` from 0 just past the deadzone
@@ -112,7 +115,9 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
-    control hides only its drawing; its input still works.
+    control hides only its drawing; its input still works. As in Chibi, on-screen
+    joysticks appear only when the primary pointer is coarse (a touch screen).
+  - Each row has its icon and a switch, as in Archie and Chibi.
   - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
     sound effects".
   - Reduced motion, as in Archie: a switch, on when motion is reduced, with the
