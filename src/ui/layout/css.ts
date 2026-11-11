@@ -1,4 +1,4 @@
-import { CONTROL_EDGE, noticeReserve, type Side } from "./playView.ts";
+import { CONTROL_EDGE, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
@@ -12,8 +12,6 @@ export const HUD_SIDES: readonly HudSide[] = ["top", "right", "left"];
 export const VIEW_PROPERTIES = {
   // The HUD rect's top, left and right edges in from the view's (playView.ts hudRect).
   hud: (side: HudSide) => `--ada-hud-${side}`,
-  // How far a centred notice keeps in from the HUD rect's sides (playView.ts noticeReserve).
-  noticeReserve: "--ada-notice-reserve",
   safe: (side: Side) => `--ada-safe-${side}`,
   slice: (edge: number) => `--ada-slice-${edge}`,
   unit: "--ada-unit",
@@ -66,7 +64,6 @@ export function viewStyle(edges: readonly number[]): string {
   return `
 #${VIEW_HOST_ID}{
   ${VIEW_PROPERTIES.unit}:1;
-  ${VIEW_PROPERTIES.noticeReserve}:${units(noticeReserve(0))};
   ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(CONTROL_EDGE)};`).join("\n  ")}
   ${(["top", "right", "bottom", "left"] as const).map((side) => `${VIEW_PROPERTIES.safe(side)}:0px;`).join("\n  ")}
   ${edges.map((edge) => `${VIEW_PROPERTIES.slice(edge)}:${edge}px;`).join("\n  ")}

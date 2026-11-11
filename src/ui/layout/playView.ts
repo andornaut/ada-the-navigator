@@ -1,10 +1,9 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
 import { SCREEN } from "../../data/screen.ts";
-import { PILL, TEXT_BUTTON } from "./controls.ts";
+import { PILL } from "./controls.ts";
 import { HIT_RULE, hitAround } from "./hitAreas.ts";
-import { STORY_PANEL } from "./storyPage.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { SPACING } from "./tokens.ts";
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
 // and "Page bounds"), and the HUD's anchors ("HUD and overlays"). Phaser's EXPAND mode draws the
@@ -166,25 +165,4 @@ export function statusPillWidth(countWidth: number): number {
   const { bar, divider, dividerGap, icon, markGap, pill, stardustIcon } = STATUS_PILL;
   const fixed = 2 * pill.padding + icon + markGap + bar.width + 2 * dividerGap + divider.width;
   return fixed + stardustIcon + markGap + countWidth;
-}
-
-// A notice: a compact strip of body text on an ink panel, compact height (growing per wrapped
-// line), inset like an action, at most the story panel's measure wide; its top on the HUD rect's
-// top, centred on it, clear of the pause and weapon press areas and the status pill by a gap;
-// notices stack a gap apart.
-export const NOTICE = {
-  gap: SPACING.gap,
-  height: TEXT_BUTTON.compactHeight,
-  inset: TEXT_BUTTON.inset,
-  maxWidth: STORY_PANEL.maxWidth,
-  text: TYPE.body,
-} as const;
-
-// How far a centred notice keeps in from each side of the HUD rect: past the pause press area and
-// a pillWidth status pill (0 when hidden) on the left, past weaponCount weapon targets on the
-// right, plus a gap, whichever is further.
-export function noticeReserve(weaponCount: number, pillWidth = 0): number {
-  const pause = PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width;
-  const left = pillWidth > 0 ? STATUS_PILL.x + pillWidth : pause;
-  return Math.max(left, hudRowWidth(weaponCount)) + NOTICE.gap;
 }

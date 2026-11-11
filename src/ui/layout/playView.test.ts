@@ -14,7 +14,6 @@ import {
   type Insets,
   logicalView,
   NO_INSETS,
-  noticeReserve,
   PAUSE_BUTTON,
   playView,
   SAFE_MARGIN,
@@ -256,12 +255,6 @@ describe("HUD anchors", () => {
     const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(162.25);
     const leftmost = hud.x + hud.width + hudButtonTarget(3).x;
     expect(leftmost - pillRight).toBe(SPACING.pageInset);
-  });
-
-  it("keep a notice clear of the pause press area or the pill, and the weapon targets, by a gap", () => {
-    expect(noticeReserve(0)).toBe(PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap);
-    expect(noticeReserve(4)).toBe(4 * 48 + 3 * 8 + SPACING.gap);
-    expect(noticeReserve(2, 215.7)).toBeCloseTo(50.75 + 215.7 + SPACING.gap, 9);
   });
 });
 

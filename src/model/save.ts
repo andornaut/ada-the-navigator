@@ -1,3 +1,4 @@
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { SectorId } from "../data/types.ts";
@@ -406,6 +407,34 @@ function pastStart(state: GameState): boolean {
 function begun(p: GameState["progress"][1]): boolean {
   return p.stage > 0 || p.introduced || p.questComplete || p.resolved || p.known.length > 0;
 }
+/**
+ * Saves from before conversations count what was already played as heard: the first flight's
+ * lessons once past the start, each begun galaxy's arrival, each known group's meeting and, with
+ * anything mapped, the mapped reaction.
+ */
+function playedConversations(state: GameState): string[] {
+  const heard = new Set<string>();
+  if (pastStart(state)) {
+    for (const lesson of ["move", "aim", "stardust", "dock"]) {
+      heard.add(`lesson:${lesson}`);
+    }
+  }
+  for (const id of [1, 2, 3] as const) {
+    const p = state.progress[id];
+    if (p.stage > 0 || p.introduced || p.resolved || p.known.length > 0) {
+      heard.add(`arrival:${id}`);
+    }
+    for (const known of p.known) {
+      heard.add(`meeting:${id}:${known}`);
+    }
+    if (p.known.length > 0 || (p.stations ?? []).length > 0) {
+      heard.add("reaction:mapped");
+    }
+  }
+  return CONVERSATIONS.flatMap((conversation) =>
+    heard.has(conversation.id) ? [conversation.id] : [],
+  );
+}
 /** Saves from before the announcement announce a later galaxy unlocked but not yet begun. */
 function unvisitedUnlock(state: GameState): boolean {
   const latest = Math.max(...state.unlocked) as SectorId;
@@ -565,7 +594,8 @@ export function restoreSave(saved: unknown): GameState | null {
       typeof value.notice !== "string" ||
       (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean") ||
       (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean") ||
-      (value.started !== undefined && typeof value.started !== "boolean")
+      (value.started !== undefined && typeof value.started !== "boolean") ||
+      (value.seenConversations !== undefined && !strings(value.seenConversations))
     ) {
       return null;
     }
@@ -765,6 +795,9 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (typeof value.announceGalaxy !== "boolean") {
       restored.announceGalaxy = unvisitedUnlock(restored);
+    }
+    if (!Array.isArray(value.seenConversations)) {
+      restored.seenConversations = playedConversations(restored);
     }
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);

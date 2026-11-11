@@ -19,8 +19,7 @@ import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
-import { units, VIEW_HOST_ID, VIEW_PROPERTIES } from "../ui/layout/css.ts";
-import { noticeReserve } from "../ui/layout/playView.ts";
+import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { stickTargets } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
@@ -200,15 +199,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     reducedMotion: () => reducedMotion,
     shieldLabel: options.shieldLabel,
   });
-  let pillWidth = 0;
-  let weaponCount = 0;
-  // A notice keeps clear of the status pill and the weapon row's press areas.
-  const reserveNotice = () => {
-    host.style.setProperty(
-      VIEW_PROPERTIES.noticeReserve,
-      units(noticeReserve(weaponCount, pillWidth)),
-    );
-  };
   const update = options.update
     ? createUpdateDialog(settings.root, options.update.labels, options.update.offer, () =>
         syncModal(),
@@ -467,20 +457,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.openButton.hidden = !shown;
       settings.root.classList.toggle("ada-no-settings-button", !shown);
     },
-    setStatus(view) {
-      status.setStatus(view, performance.now());
-      const width = status.width();
-      if (width !== pillWidth) {
-        pillWidth = width;
-        reserveNotice();
-      }
-    },
+    setStatus: (view) => status.setStatus(view, performance.now()),
     setTravel: (travel) => pause.setState(travel),
     setWeapons(choices) {
-      if (choices.length !== weaponCount) {
-        weaponCount = choices.length;
-        reserveNotice();
-      }
       weapons.setWeapons(choices);
     },
   };

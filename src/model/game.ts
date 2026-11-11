@@ -1,6 +1,9 @@
+import { CONVERSATION_TUNING, CONVERSATIONS, SPEAKERS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
+import { ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
+import { carriesStardust } from "./drops.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -89,6 +92,7 @@ export function newGameState(): GameState {
     notice: "",
     progress: { 1: progress(), 2: progress(), 3: progress() },
     prologueSeen: false,
+    seenConversations: [],
     selectedSector: 1,
     started: false,
     unlocked: [1],
@@ -113,11 +117,25 @@ const required: Record<SectorId, readonly string[]> = {
 };
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
+/** The conversation line the box shows, with its speaker's name tab and portrait side. */
+export interface ConversationView {
+  /** Changes with each line, so the box can restart its entrance. */
+  readonly key: string;
+  readonly name: string;
+  readonly side: "left" | "right";
+  readonly speaker: keyof typeof SPEAKERS;
+  readonly text: string;
+  readonly desktop?: string;
+}
+
 export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: readonly FlightEvent[] = [];
   private readonly content: PrototypeContent;
+  private readonly talk: ConversationDirector;
+  private noticeShownFor = 0;
+  private saveNotice = "";
   private previousSeed = 0;
   // The home half's place is not saved: a launch at home shows the start screen, and Continue
   // rebuilds any waiting scene from story progress.
@@ -128,6 +146,50 @@ export class GameModel {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
     this.startShown = this.state.mode === "home";
+    this.talk = new ConversationDirector(CONVERSATIONS, this.state.seenConversations);
+    if (this.state.mode === "space" && this.state.flight) {
+      this.beginConversations();
+    }
+  }
+  /**
+   * A notice shows at once in the conversation box's slot, ahead of conversation lines, which
+   * wait under it and resume after. A game notice clears after a line's time in flight.
+   */
+  private notify(text: string): void {
+    this.state.notice = text;
+    this.noticeShownFor = 0;
+  }
+  /** The save status, which the scene reports, also holds the box while it shows. */
+  setSaveNotice(text: string): void {
+    this.saveNotice = text;
+  }
+  private get noticeShowing(): boolean {
+    return this.state.notice !== "" || this.saveNotice !== "";
+  }
+  /** The line the conversation box shows now, if any; none while a notice shows. */
+  get conversation(): ConversationView | null {
+    const showing = this.talk.showing;
+    if (!showing || this.state.mode !== "space" || this.noticeShowing) {
+      return null;
+    }
+    const { desktop, speaker, text } = showing.line;
+    return {
+      ...(desktop === undefined ? {} : { desktop }),
+      key: `${showing.instance}:${showing.lineIndex}`,
+      name: speakerName(this.state.progress, speaker),
+      side: SPEAKERS[speaker].side,
+      speaker,
+      text,
+    };
+  }
+  /** A tap on the conversation box: the next line, or the box closes after the last. */
+  advanceConversation(): void {
+    this.talk.advance();
+  }
+  private beginConversations(): void {
+    this.talk.beginFlight(this.state.selectedSector, {
+      stardust: this.state.economy.stardust > 0,
+    });
   }
   /** Which half and screen shows now. */
   get screen(): Screen {
@@ -228,7 +290,7 @@ export class GameModel {
       weaponsLocked(flight) &&
       ownedWeapons(flight).some((choice) => choice.id === weapon)
     ) {
-      this.state.notice = this.label("weaponLocked");
+      this.notify(this.label("weaponLocked"));
       return false;
     }
     const selected = selectFlightWeapon(weapon, flight);
@@ -367,6 +429,7 @@ export class GameModel {
       ensureDestination(this.content, id, this.state.flight);
     }
     this.ensureWhaleDebris();
+    this.beginConversations();
   }
   /** Jumps to an unlocked galaxy's flight. */
   startSector(id: SectorId): void {
@@ -382,12 +445,13 @@ export class GameModel {
   }
   private home(forced: boolean): void {
     if (!forced && this.inDanger) {
-      this.state.notice = this.label("travelUnavailable");
+      this.notify(this.label("travelUnavailable"));
       return;
     }
     this.current.questItem = null;
     this.pullLoadout();
     this.previousSeed = this.state.flight?.seed ?? this.previousSeed;
+    this.talk.endFlight();
     this.state.mode = "home";
     this.state.flight = null;
     this.state.dialogue = null;
@@ -410,7 +474,7 @@ export class GameModel {
       return;
     }
     if (this.inDanger) {
-      this.state.notice = this.label("travelUnavailable");
+      this.notify(this.label("travelUnavailable"));
       return;
     }
     if (station) {
@@ -438,22 +502,24 @@ export class GameModel {
     const fee = Math.min(ECONOMY.jumpFee, economy.stardust);
     economy.stardust -= fee;
     this.home(true);
-    this.state.notice = [
-      this.label("jumpHome"),
-      lost && !granted
-        ? fill(this.label("jumpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
-        : "",
-      fee > 0 ? fill(this.label("jumpRecharge"), { amount: fee }) : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    this.notify(
+      [
+        this.label("jumpHome"),
+        lost && !granted
+          ? fill(this.label("jumpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
+          : "",
+        fee > 0 ? fill(this.label("jumpRecharge"), { amount: fee }) : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
     // The jump lands in Ada's room on its own page; the visit's waiting scenes follow it.
     this.showScene(jumpHomeScene(this.state.notice));
   }
   private complete(): void {
     this.current.questComplete = true;
     if (this.current.holodisk) {
-      this.state.notice = this.label("chapterComplete");
+      this.notify(this.label("chapterComplete"));
     }
   }
   /** Unlocks the next galaxy once its holodisk, space quest and home resolution are done. */
@@ -487,7 +553,7 @@ export class GameModel {
     }
     this.unlockNext();
     if (p.questComplete) {
-      this.state.notice = this.label("chapterComplete");
+      this.notify(this.label("chapterComplete"));
     }
     if (giver) {
       this.panel("holodiskHandover", this.content.premise.holodisk.handover, giver);
@@ -559,6 +625,8 @@ export class GameModel {
     const events = stepFlight(this.content, dt, input, f);
     this.flightEvents = events;
     this.pullLoadout();
+    const mapped: string[] = [];
+    let newStation = false;
     for (const event of events) {
       if (event.type === "depleted") {
         this.jumpHome();
@@ -569,6 +637,7 @@ export class GameModel {
       }
       if (event.type === "stationDiscovered" && !this.current.stations.includes(event.id)) {
         this.current.stations.push(event.id);
+        newStation = true;
       }
       if (event.type === "docked") {
         this.state.docked = event.id;
@@ -587,6 +656,7 @@ export class GameModel {
       if (event.type === "discovered" && !this.current.known.includes(event.id)) {
         this.current.known.push(event.id);
         this.current.discoveries++;
+        mapped.push(event.id);
       }
       if (
         event.type === "debrisCleared" &&
@@ -597,6 +667,35 @@ export class GameModel {
         this.current.stage = 2;
       }
     }
+    const near = (range: number) => (object: { x: number; y: number }) =>
+      Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
+    const held = this.noticeShowing;
+    if (this.state.notice) {
+      this.noticeShownFor += dt;
+      if (this.noticeShownFor >= CONVERSATION_TUNING.lineSeconds - 1e-9) {
+        this.state.notice = "";
+      }
+    }
+    this.talk.step(dt, held, {
+      aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
+      capitalInSight: f.objects.some(
+        (object) =>
+          object.enemy?.archetype === "capital" &&
+          object.hp > 0 &&
+          near(CONVERSATION_TUNING.capitalSightRange)(object),
+      ),
+      collectedStardust: events.some((event) => event.type === "stardust"),
+      docked: events.some((event) => event.type === "docked"),
+      inDanger: this.inDanger,
+      moved: Math.hypot(input.move.x, input.move.y) > 0,
+      newStation,
+      newlyMapped: mapped,
+      pennyPoints: pennyPoints(this.current, this.holodiskWaypoint, f),
+      shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
+      stardustInSight: f.objects.some(
+        (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
+      ),
+    });
     if (!this.current.introduced && f.freshDistance >= this.content.tuning.introFreshDistance) {
       ensureDestination(this.content, first[f.sector], f);
       if (

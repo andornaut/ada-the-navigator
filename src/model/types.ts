@@ -182,6 +182,8 @@ export interface GameState {
   announceGalaxy: boolean;
   /** The first flight has begun, so the start screen offers Continue and Restart. */
   started: boolean;
+  /** In-flight conversations already shown, which do not repeat (data/conversations.ts). */
+  seenConversations: string[];
 }
 export type FlightEvent =
   | { type: "depleted" }

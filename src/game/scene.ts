@@ -12,6 +12,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { carriesStardust } from "../model/drops.ts";
@@ -41,6 +42,7 @@ import {
   updateOffer,
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
+import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
@@ -250,6 +252,7 @@ export class PrototypeScene extends Phaser.Scene {
   private storybook!: ReturnType<typeof createStorybook>;
   private galaxies!: ReturnType<typeof createGalaxySelect>;
   private restartCard!: ReturnType<typeof createRestartCard>;
+  private conversationBox!: ConversationBox;
 
   constructor() {
     super("prototype");
@@ -531,6 +534,11 @@ export class PrototypeScene extends Phaser.Scene {
     const label = (key: string): string => labels[key] ?? "";
     const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
     const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
+    // The conversation box never pauses play; a tap moves it on.
+    this.conversationBox = createConversationBox(() => {
+      this.model.advanceConversation();
+      this.renderConversation();
+    });
     this.station = createStationView(this.controls.overlay, {
       balance: () => ({
         amount: this.model.state.economy.stardust,
@@ -696,6 +704,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.galaxies.dispose();
       this.restartCard.dispose();
       this.station.dispose();
+      this.conversationBox.dispose();
       this.controls.dispose();
       this.shell.dispose();
       this.labels.clear();
@@ -816,6 +825,8 @@ export class PrototypeScene extends Phaser.Scene {
       this.refresh();
       this.draw();
     }
+    // The box follows the model even while a jump holds its source frame.
+    this.renderConversation();
     const durable = JSON.stringify([
       state.mode,
       state.selectedSector,
@@ -824,6 +835,7 @@ export class PrototypeScene extends Phaser.Scene {
       state.dialogue,
       state.docked,
       state.economy,
+      state.seenConversations,
     ]);
     if (durable !== this.durable || time - this.savedAt >= 1000) {
       this.flush();
@@ -851,6 +863,11 @@ export class PrototypeScene extends Phaser.Scene {
         });
       }
     }
+  }
+
+  /** The conversation box, in the desktop wording without a coarse pointer. */
+  private renderConversation(): void {
+    this.conversationBox.render(this.model.conversation, !coarsePointer(window));
   }
 
   private observeFeedback(): void {
@@ -970,7 +987,10 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   private flush(): void {
-    this.shell.setSavingAvailable(writeSave(this.model.save()));
+    const available = writeSave(this.model.save());
+    this.shell.setSavingAvailable(available);
+    // The save status shows in the conversation box's slot, so the box waits under it.
+    this.model.setSaveNotice(available ? "" : (PROTOTYPE.labels.savingUnavailable ?? ""));
   }
 
   private project(point: Vec): Vec {
