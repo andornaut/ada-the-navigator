@@ -194,8 +194,17 @@ one optional task slot, shared with station jobs: while it is active, that
 galaxy's job boards offer no job, and an active job keeps the activity from
 being offered. An accepted activity, its galaxy and its progress persist across
 flights like a job; a supply run's carried item uses the job carried-item slot.
-It pays at completion with the job completion notice and can be repeated without
-limit. Black Eye has no repeatable activity yet.
+It pays at completion with the job completion notice alone, with no lore line,
+and is offered again on the next Talk. Black Eye has no repeatable activity yet.
+
+- While an activity is active, the galaxy's boards show their jobs, and Accept
+  refuses with "Finish your activity first." The activity shows at the top of
+  every board in its galaxy, marked Active, with Drop, as a held job does; Talk
+  at its offering place also offers Drop. Drop asks "Drop this activity?" and
+  loses its progress.
+- While a job holds the slot, Talk plays the activity line, and Accept refuses
+  with "Finish or drop your current job first."
+- The pause card shows an active activity as its "Job:" line.
 
 | Galaxy    | Activity        | Offered by          | Goal                                                     | Reward |
 | --------- | --------------- | ------------------- | -------------------------------------------------------- | -----: |
@@ -203,15 +212,28 @@ limit. Black Eye has no repeatable activity yet.
 | Cartwheel | Mining contract | The hub             | Deposit 30 resources at the hub; partial loads count.    |     35 |
 | Whirlpool | Guide a calf    | The whale family    | Lead a whale calf 5000 to 8000 world units home to them. |     50 |
 
-- **Supply run**: uses the job carried-item slot and the delivery rules.
-- **Mining contract**: counts only deposits made after accepting. At most half of
+- **Supply run**: uses the job carried-item slot and the delivery rules, except
+  the 3000 minimum: each outpost names its destination (growers to salvagers,
+  workshop to growers, salvagers to workshop). The items are fresh food,
+  repaired tools and spare parts; a lost item is replaced through Talk at the
+  issuing outpost.
+- **Mining contract**: counts only deposits made after accepting, from 0; the
+  hub's story deposit total keeps counting alongside. At most half of
   ore fields have a platform guarding them, so unguarded ore is always available.
-- **Guide a calf**: the calf waits at a seeded spot with at least one current
-  between it and its family. Within 400 world units of Ada it follows her,
-  moving like `chase` without firing, stopping 120 short, at most 0.8 of Ada's
-  base top speed. Beyond 700 it waits. It drifts with currents like Ada. One
-  hunter pack waits along the way. The calf takes no damage, and drones ignore
-  it. Reaching within 400 world units of the family completes the activity.
+- **Guide a calf**: the calf waits at a spot chosen by the galaxy seed and a
+  count of guides, saved relative to the family, 5000 to 8000 world units away
+  with the straight line to the family crossing a current. If no spot
+  qualifies, the family makes no offer that flight. A waiting calf starts following when Ada is
+  within 400 world units, moving like `chase` without firing, stopping 120
+  short, at most 0.8 of Ada's base top speed with no upgrades; a following calf
+  keeps following out to 700, then waits. Travel here ends the follow, and the
+  calf waits where it is. It drifts with currents like Ada. One
+  hunter pack of 3 to 4 fighters waits at the midpoint of the straight line,
+  placed again whenever the calf resets. The calf takes no damage, and drones ignore
+  it. The calf reaching within 400 world units of the family completes the activity.
+  While the calf is away, the family shows one calf fewer. The indicator points
+  to the calf until it follows, then to the family. Closing the game resumes the
+  guide exactly, as for a tow.
   Return to Earth, Back to title or a shield-depletion jump returns the calf to its start.
 
 Activity lines:
@@ -223,10 +245,16 @@ Activity lines:
 - Whale family: "One of our young ones swam off to play. Could you guide them
   home? Stay close. They follow friends."
 
-| Key            | Text    |
-| -------------- | ------- |
-| `activityTake` | Accept  |
-| `activitySkip` | Not now |
+| Key                 | Text                                        |
+| ------------------- | ------------------------------------------- |
+| `activityTake`      | Accept                                      |
+| `activitySkip`      | Not now                                     |
+| `activityBusy`      | Finish your activity first.                 |
+| `activityDrop`      | Drop this activity?                         |
+| `supplyObjective`   | Carry {item} to the {destination}.          |
+| `contractObjective` | Deposit resources at the hub: {have} of 30. |
+| `calfFind`          | Find the whale calf.                        |
+| `calfGuide`         | Guide the calf home.                        |
 
 ## Achievements
 
