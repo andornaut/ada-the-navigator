@@ -22,6 +22,7 @@ import { playOpening } from "./test-launch.ts";
 const ECONOMY_DOC = readFileSync(new URL("../../gameplay/economy.md", import.meta.url), "utf8");
 
 const sunflower = PROJECTS[1];
+const cost = (id: string) => sunflower.find((project) => project.id === id)!.cost;
 const progress = (resolved = true, donated: Record<string, number> = {}): ProjectProgress => ({
   donated,
   resolved,
@@ -61,13 +62,13 @@ describe("community projects", () => {
     });
     expect(paid.donated).toEqual({ salvageBeacons: 120 });
     expect(donate(sunflower, paid, 1000, "salvageBeacons")).toEqual({
-      amount: 30,
+      amount: cost("salvageBeacons") - 120,
       funded: true,
       kind: "paid",
     });
     expect(projectViews(sunflower, paid).find(({ id }) => id === "salvageBeacons")).toMatchObject({
       funded: true,
-      paid: 150,
+      paid: cost("salvageBeacons"),
       remaining: 0,
     });
   });
@@ -77,18 +78,27 @@ describe("community projects", () => {
       amount: 120,
       kind: "confirm",
       left: 0,
-      stillNeeded: 130,
+      stillNeeded: cost("greenhouseRing") - 120,
     });
-    expect(
-      donationRequest(sunflower, progress(true, { workshopCrane: 150 }), 1000, "workshopCrane"),
-    ).toEqual({ amount: 50, kind: "confirm", left: 950, stillNeeded: 0 });
+    const crane = progress(true, { workshopCrane: cost("workshopCrane") - 50 });
+    expect(donationRequest(sunflower, crane, 1000, "workshopCrane")).toEqual({
+      amount: 50,
+      kind: "confirm",
+      left: 950,
+      stillNeeded: 0,
+    });
   });
 
   it("refuse only at a balance of 0, for a funded project, and before the chapter is complete", () => {
     expect(donate(sunflower, progress(), 0, "greenhouseRing")).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(), 1, "greenhouseRing").kind).toBe("paid");
     expect(
-      donate(sunflower, progress(true, { salvageBeacons: 150 }), 999, "salvageBeacons"),
+      donate(
+        sunflower,
+        progress(true, { salvageBeacons: cost("salvageBeacons") }),
+        999,
+        "salvageBeacons",
+      ),
     ).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(false), 999, "salvageBeacons")).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(), 999, "hubRepairs")).toEqual({ kind: "refused" });
@@ -116,7 +126,11 @@ describe("community projects", () => {
   });
 
   it("make one ally and one world change per funded project, at its site", () => {
-    const funded = progress(true, { greenhouseRing: 250, salvageBeacons: 120, workshopCrane: 200 });
+    const funded = progress(true, {
+      greenhouseRing: cost("greenhouseRing"),
+      salvageBeacons: 120,
+      workshopCrane: cost("workshopCrane"),
+    });
     expect(projectAllies(sunflower, funded)).toEqual([
       { ally: "escort", project: "greenhouseRing" },
       { ally: "chase", project: "workshopCrane" },
@@ -168,7 +182,7 @@ describe("donating at a station", () => {
     const model = docked(100);
     expect(model.donationRequest("salvageBeacons")).toMatchObject({
       amount: 100,
-      stillNeeded: 50,
+      stillNeeded: cost("salvageBeacons") - 100,
     });
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: false, kind: "paid" });
     expect(model.state.economy.stardust).toBe(0);
@@ -176,7 +190,7 @@ describe("donating at a station", () => {
     expect(model.donationRequest("salvageBeacons")).toEqual({ kind: "refused" });
     model.state.economy.stardust = 1000;
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: true, kind: "paid" });
-    expect(model.state.economy.stardust).toBe(950);
+    expect(model.state.economy.stardust).toBe(1000 - (cost("salvageBeacons") - 100));
     expect(model.state.docked).toBeNull();
     const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
     const thanks = sunflower.find(({ id }) => id === "salvageBeacons")!.thanks;
@@ -195,7 +209,7 @@ describe("donating at a station", () => {
     model.donate("greenhouseRing");
     const saved = JSON.parse(model.save()) as { progress: Record<string, Record<string, unknown>> };
     expect(new GameModel(PROTOTYPE, model.save()).state.progress[1].donated).toEqual({
-      greenhouseRing: 250,
+      greenhouseRing: cost("greenhouseRing"),
     });
     delete saved.progress["1"]!.donated;
     expect(restoreSave(saved)?.progress[1].donated).toEqual({});
@@ -203,7 +217,11 @@ describe("donating at a station", () => {
 
   it("rejects a save paying an unknown project or more than its price", () => {
     const model = docked(1000);
-    for (const donated of [{ hubRepairs: 100 }, { greenhouseRing: 251 }, { greenhouseRing: 1.5 }]) {
+    for (const donated of [
+      { hubRepairs: 100 },
+      { greenhouseRing: cost("greenhouseRing") + 1 },
+      { greenhouseRing: 1.5 },
+    ]) {
       const saved = JSON.parse(model.save()) as {
         progress: Record<string, Record<string, unknown>>;
       };
