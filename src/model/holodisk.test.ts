@@ -14,6 +14,14 @@ const inserted = [
   "Ada slides the holodisk into Astra's drive.",
   "Memory restored. I've found new coordinates.",
 ];
+/** Astra's memory line after each galaxy's insertion. */
+const memories = {
+  1: "I remember now. I once had a navigator. And I hid my holodisks on purpose. But why?",
+  2: "General Gadget. I helped him map the universe. I thought he was good.",
+  3:
+    "He wants to rule everything. Together, the holodisks make a highway for his fleet. " +
+    "That's why I scattered them.",
+};
 
 /** A flight in `galaxy` whose space quest is complete and holodisk not yet recovered. */
 function questDone(galaxy: SectorId, known: string[]): GameModel {
@@ -80,6 +88,7 @@ describe("galaxy one's holodisk", () => {
       ["Salvager", handover],
       ["The Outposts", inserted[0]],
       ["Astra", inserted[1]],
+      ["Astra", memories[1]],
     ]);
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[1].holodisk).toBe(true);
@@ -254,6 +263,7 @@ describe("galaxy two's holodisk", () => {
     expect(insertion(model)).toEqual([
       ["The Mining Hub", inserted[0]],
       ["Astra", inserted[1]],
+      ["Astra", memories[2]],
     ]);
     expect(model.state.progress[2].holodisk).toBe(true);
     expect(model.objective).toBe("Return home when ready.");
@@ -295,6 +305,7 @@ describe("galaxy three's holodisk", () => {
     expect(insertion(model)).toEqual([
       ["The Whale Family", inserted[0]],
       ["Astra", inserted[1]],
+      ["Astra", memories[3]],
     ]);
     expect(model.state.progress[3].holodisk).toBe(true);
     expect(model.state.progress[3].known).not.toContain("holodisk");

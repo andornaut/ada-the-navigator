@@ -420,8 +420,13 @@ export class GameModel {
       this.insertion(0);
     }
   }
+  /** The insertion panels, then Astra's memory line for the current galaxy. */
   private insertion(index: number): void {
-    const line = this.content.premise.holodisk.inserted[index];
+    const { inserted, memories } = this.content.premise.holodisk;
+    // Astra, who speaks the last insertion line, continues with the memory.
+    const memory = { speaker: inserted.at(-1)?.speaker, text: memories[this.state.selectedSector] };
+    const lines = [...inserted, memory];
+    const line = lines[index];
     if (line) {
       this.panel(`holodisk:${index}`, line.text, line.speaker);
     } else {

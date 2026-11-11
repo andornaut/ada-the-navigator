@@ -13,6 +13,14 @@ export const PREMISE: PremiseContent = {
       { text: "Ada slides the holodisk into Astra's drive." },
       { speaker: "Astra", text: "Memory restored. I've found new coordinates." },
     ],
+    memories: {
+      1: "I remember now. I once had a navigator. And I hid my holodisks on purpose. But why?",
+      2: "General Gadget. I helped him map the universe. I thought he was good.",
+      3: [
+        "He wants to rule everything. Together, the holodisks make a highway for his fleet. ",
+        "That's why I scattered them.",
+      ].join(""),
+    },
     name: "Holodisk",
   },
   prologue: [
