@@ -200,27 +200,17 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
 }
 
 /**
- * The prologue: the park where Ada finds the rock, Ada's room with its glow, then the cockpit,
- * where Astra's optional questions return to their list until Continue.
+ * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
+ * then the cockpit, where Astra's optional questions return to their list until Continue.
  */
 export function prologueScene(content: PrototypeContent, labels: StoryLabels): Scene {
-  const { prologue, roomRock } = content.premise;
-  const [found, ...aboard] = prologue;
-  const pages: StoryPage[] = [
-    { background: "park", id: "prologue:park", next: "prologue:room", text: found?.text ?? "" },
-    {
-      action: found?.choice ?? labels.pickUpRock,
-      background: "adaRoom",
-      id: "prologue:room",
-      ...(aboard.length ? { next: "prologue:1" } : {}),
-      text: roomRock,
-    },
-  ];
-  aboard.forEach((step, offset) => {
-    const id = `prologue:${offset + 1}`;
-    const following = offset + 1 < aboard.length ? `prologue:${offset + 2}` : undefined;
+  const { prologue } = content.premise;
+  const pages: StoryPage[] = [];
+  prologue.forEach((step, index) => {
+    const id = `prologue:${index}`;
+    const following = index + 1 < prologue.length ? `prologue:${index + 1}` : undefined;
     const line = {
-      background: "cockpit" as const,
+      background: step.background ?? "cockpit",
       ...(step.speaker ? { speaker: step.speaker } : {}),
     };
     if (step.questions) {
@@ -229,14 +219,14 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
         action: labels.continue,
         id,
         ...(following ? { next: following } : {}),
-        questions: step.questions.map(({ question }, index) => ({
+        questions: step.questions.map(({ question }, choice) => ({
           label: question,
-          next: `${id}:answer:${index}`,
+          next: `${id}:answer:${choice}`,
         })),
         text: step.text,
       });
-      step.questions.forEach(({ answer }, index) => {
-        pages.push({ ...line, id: `${id}:answer:${index}`, next: id, text: answer });
+      step.questions.forEach(({ answer }, choice) => {
+        pages.push({ ...line, id: `${id}:answer:${choice}`, next: id, text: answer });
       });
       return;
     }
@@ -251,7 +241,7 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
   return {
     effect: { kind: "prologue" },
     id: "prologue",
-    last: pages.at(-1)?.id ?? "prologue:room",
+    last: pages.at(-1)?.id ?? "prologue:0",
     lead: "select",
     pages,
   };

@@ -27,7 +27,24 @@ export interface PremiseLine {
   text: string;
 }
 /** A prologue panel. Its choice replaces Continue; its optional questions never gate progress. */
+/**
+ * A storybook page's location: Art's Earth backgrounds (Ada's room also before the rock is
+ * polished) and the cockpit.
+ */
+export type Background =
+  | "adaRoom"
+  | "adaRoomUnpolished"
+  | "cockpit"
+  | "frontDoor"
+  | "gardenLot"
+  | "grandmaGarden"
+  | "park"
+  | "schoolHallway"
+  | "schoolyard";
+
 export interface PrologueStep extends PremiseLine {
+  /** Where the page is; the cockpit unless given. */
+  background?: Background;
   choice?: string;
   questions?: readonly { question: string; answer: string }[];
 }

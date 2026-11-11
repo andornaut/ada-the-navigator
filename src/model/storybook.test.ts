@@ -316,7 +316,7 @@ describe("start flow", () => {
     expect(reloaded.state).toEqual(new GameModel(PROTOTYPE).state);
     reloaded.start();
     expect(reloaded.storyView?.page.id).toBe("opening");
-    expect(readStory(reloaded).some(({ id }) => id === "prologue:park")).toBe(true);
+    expect(readStory(reloaded).some(({ id }) => id === "prologue:0")).toBe(true);
   });
 });
 

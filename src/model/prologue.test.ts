@@ -34,14 +34,14 @@ describe("prologue", () => {
     const model = started();
     const pages = readStory(model);
     expect(pages.map(summary)).toEqual([
+      ["park", "", "On a walk with Penny, Ada digs up an unusual rock.", "Next"],
       [
-        "park",
+        "adaRoomUnpolished",
         "",
-        "On a walk with Penny, Ada digs up an unusual rock. At home, she polishes it " +
-          "until a faint pattern begins to glow.",
+        "At home, she polishes it until a faint pattern begins to glow.",
         "Next",
       ],
-      ["adaRoom", "", "Ada's rock glows softly on her desk.", "Touch the glow."],
+      ["adaRoom", "", "", "Touch the glow."],
       [
         "cockpit",
         "",
@@ -83,6 +83,29 @@ describe("prologue", () => {
     expect(model.state.started).toBe(false);
     expect(model.jump()).toBe(true);
     expect(model.state.started).toBe(true);
+  });
+
+  it("splits its opening across the park, the unpolished room and the glowing room", () => {
+    const model = started();
+    const earth = readStory(model)
+      .filter(({ background }) => background !== "cockpit")
+      .map(({ action, background, text }) => [background, text, action ?? "Next"]);
+    expect(earth).toEqual([
+      ["park", "On a walk with Penny, Ada digs up an unusual rock.", "Next"],
+      [
+        "adaRoomUnpolished",
+        "At home, she polishes it until a faint pattern begins to glow.",
+        "Next",
+      ],
+      ["adaRoom", "", "Touch the glow."],
+    ]);
+    // Every later Ada's-room page keeps the glowing room.
+    model.leaveCockpit();
+    expect(readStory(model).map(({ background }) => background)).toEqual([
+      "adaRoom",
+      "adaRoom",
+      "cockpit",
+    ]);
   });
 
   it("returns each answer to the question list without that question, until Continue", () => {

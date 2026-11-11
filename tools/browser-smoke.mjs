@@ -308,12 +308,13 @@ try {
     PROTOTYPE.chapters[1].openingBranches[0],
     "The default choice's branch page follows the opening",
   );
-  assert.equal(launchPages[2]?.background, "park", "The prologue begins in the park");
-  assert.equal(launchPages[2]?.text, PROTOTYPE.premise.prologue[0].text);
-  assert.equal(launchPages[3]?.background, "adaRoom", "The rock glows in Ada's room");
-  assert.equal(launchPages[3]?.text, PROTOTYPE.premise.roomRock);
+  assert.deepEqual(
+    launchPages.slice(2, 5).map(({ background, text }) => [background, text]),
+    PROTOTYPE.premise.prologue.slice(0, 3).map(({ background, text }) => [background, text]),
+    "The prologue begins in the park, then Ada polishes the rock and it glows in her room",
+  );
   assert.ok(
-    launchPages.slice(4).every(({ background }) => background === "cockpit"),
+    launchPages.slice(5).every(({ background }) => background === "cockpit"),
     "The rest of the prologue plays in the cockpit",
   );
   // Each optional question's answer returns to the list until Continue.

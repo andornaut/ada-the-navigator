@@ -22,13 +22,13 @@ export const PREMISE: PremiseContent = {
     name: "Holodisk",
   },
   prologue: [
+    { background: "park", text: "On a walk with Penny, Ada digs up an unusual rock." },
     {
-      choice: "Touch the glow.",
-      text: [
-        "On a walk with Penny, Ada digs up an unusual rock. At home, she polishes it ",
-        "until a faint pattern begins to glow.",
-      ].join(""),
+      background: "adaRoomUnpolished",
+      text: "At home, she polishes it until a faint pattern begins to glow.",
     },
+    // Ada's room with the rock glowing: only the choice.
+    { background: "adaRoom", choice: "Touch the glow.", text: "" },
     {
       text: [
         "Light swirls around Ada and Penny. They are standing in a tiny cockpit. ",

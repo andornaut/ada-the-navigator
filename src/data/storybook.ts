@@ -1,15 +1,6 @@
-import type { SectorId } from "./types.ts";
+import type { Background, SectorId } from "./types.ts";
 
-/** A storybook page's location: Art's seven Earth backgrounds and the cockpit. */
-export type Background =
-  | "adaRoom"
-  | "cockpit"
-  | "frontDoor"
-  | "gardenLot"
-  | "grandmaGarden"
-  | "park"
-  | "schoolHallway"
-  | "schoolyard";
+export type { Background } from "./types.ts";
 
 /** Each chapter's Earth scenes and their locations. */
 export const CHAPTER_BACKGROUNDS: Readonly<

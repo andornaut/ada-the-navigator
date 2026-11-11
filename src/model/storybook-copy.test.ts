@@ -40,7 +40,7 @@ const scenes: readonly Scene[] = [
 describe("storybook text", () => {
   it("shows every page as the player copy has it, with its speaker or as narration", () => {
     for (const { pages } of scenes) {
-      for (const { speaker, text } of pages) {
+      for (const { speaker, text } of pages.filter(({ text }) => text !== "")) {
         const source = text === PROTOTYPE.premise.roomRock ? CONTRACT : COPY;
         expect(source).toContain(`"${text}"`);
         if (speaker) {
@@ -48,6 +48,39 @@ describe("storybook text", () => {
         }
       }
     }
+  });
+
+  it("shows narration without a name tab", () => {
+    for (const { pages } of scenes) {
+      for (const { speaker, text } of pages) {
+        if (COPY.includes(`Narration: "${text}"`) || speaker === undefined) {
+          expect(speaker).toBeUndefined();
+        } else {
+          expect(COPY).toContain(`${speaker}: "${text}"`);
+        }
+      }
+    }
+    const narration = scenes.flatMap(({ pages }) => pages).filter(({ speaker }) => !speaker);
+    expect(narration.map(({ text }) => text)).toEqual(
+      expect.arrayContaining([
+        PROTOTYPE.chapters[1].opening,
+        PROTOTYPE.premise.roomRock,
+        PROTOTYPE.premise.emptyHome,
+        "Ada holds Penny close and touches the rock's glow.",
+      ]),
+    );
+  });
+
+  it("splits the prologue's opening as the copy's page breaks", () => {
+    const [park, polish, glow] = PROTOTYPE.premise.prologue;
+    expect(COPY).toContain(`Park page: "${park?.text}"`);
+    expect(COPY).toContain(`Ada's room, rock unpolished: "${polish?.text}"`);
+    expect(COPY).toContain(`Ada's room, rock glowing. Choice: "${glow?.choice}"`);
+    expect([park, polish, glow].map((step) => step?.background)).toEqual([
+      "park",
+      "adaRoomUnpolished",
+      "adaRoom",
+    ]);
   });
 
   it("follows each chapter choice with its own branch page", () => {

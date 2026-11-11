@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fromHudEdge, safeEdge } from "./layout/css.ts";
-import { HUD_BUTTON, STORY_SKIP } from "./layout/playView.ts";
+import { HUD_BUTTON, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { STORYBOOK_STYLE } from "./storybook.ts";
@@ -33,6 +33,25 @@ describe("storybook page", () => {
     const skip = rule(".ada-controls .ada-story-skip");
     expect(skip).toContain(`top:${fromHudEdge("top", STORY_SKIP.top)};`);
     expect(skip).toContain(`right:${fromHudEdge("right", STORY_SKIP.right)}`);
-    expect(STORY_SKIP.right).toBe(HUD_BUTTON.target + HUD_BUTTON.gap);
+    expect(STORY_SKIP.right).toBe(HUD_BUTTON.target + SPACING.gap);
+  });
+
+  it("keeps the panel's top a gap below the HUD row, clear of Skip and Settings", () => {
+    expect(STORY_PANEL_TOP).toBe(56);
+    expect(STORY_PANEL_TOP).toBe(HUD_BUTTON.target + SPACING.gap);
+    expect(rule(".ada-controls .ada-story-panel")).toContain(
+      `max-height:calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - ${safeEdge(
+        "bottom",
+        SPACING.pageInset,
+      )});`,
+    );
+  });
+
+  it("scrolls the text and the choices as one group with the page controls fixed", () => {
+    const scroll = rule(".ada-controls .ada-story-scroll");
+    expect(scroll).toContain("overflow-y:auto");
+    expect(scroll).toContain("min-height:0");
+    expect(rule(".ada-controls .ada-story-text")).not.toContain("overflow");
+    expect(rule(".ada-controls .ada-story-controls")).toContain("flex:none");
   });
 });

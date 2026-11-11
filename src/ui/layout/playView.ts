@@ -107,13 +107,17 @@ export const HUD_BUTTON = {
 } as const;
 
 // Where a disc and a glyph sit inside their target.
-// PROVISIONAL (Art): Skip's spot awaits Art's confirmation. A compact secondary control apart
-// from page navigation, at the top right: in the HUD row, a gap left of the settings button so
-// the two never overlap, centred on the row's 48 targets.
+// Storybook Skip: a compact secondary control apart from page navigation, in the top-right HUD
+// row one gap left of the settings button, centred on the row's 48 targets. Offsets from the HUD
+// rect's top-right corner.
 export const STORY_SKIP = {
-  right: HUD_BUTTON.target + HUD_BUTTON.gap,
+  right: HUD_BUTTON.target + SPACING.gap,
   top: (HUD_BUTTON.target - TEXT_BUTTON.compactHeight) / 2,
 } as const;
+
+// The storybook panel's highest top: the HUD row's bottom plus a gap, from the HUD rect's top, so
+// the panel never runs under Skip or the settings button.
+export const STORY_PANEL_TOP = HUD_BUTTON.target + SPACING.gap;
 
 export const HUD_BUTTON_INSET = {
   disc: (HUD_BUTTON.target - HUD_BUTTON.disc) / 2,

@@ -1,6 +1,6 @@
 import type { Background } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { STORY_SKIP } from "./layout/playView.ts";
+import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -35,6 +35,7 @@ export interface StoryOptions {
 // land; each page names its background by key, so the art drops in by key.
 export const BACKGROUND_PLACEHOLDERS: Readonly<Record<Background, string>> = {
   adaRoom: "#5b4a6b",
+  adaRoomUnpolished: "#4f4a5c",
   cockpit: "#26304a",
   frontDoor: "#6b5a4a",
   gardenLot: "#4f6447",
@@ -49,9 +50,8 @@ const AVAILABLE_WIDTH = `calc(100% - ${safeEdge("left", SPACING.pageInset)} - ${
   "right",
   SPACING.pageInset,
 )})`;
-// The panel grows up to the page safe rect's top. PROVISIONAL (Art): a page taller than the view
-// below the HUD row (a question page on a phone) reaches under Skip's corner.
-const AVAILABLE_HEIGHT = `calc(100% - ${safeEdge("top", SPACING.pageInset)} - ${safeEdge(
+// The panel grows from the available bottom up to its highest top, below the HUD row.
+const AVAILABLE_HEIGHT = `calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - ${safeEdge(
   "bottom",
   SPACING.pageInset,
 )})`;
@@ -75,13 +75,28 @@ export const STORYBOOK_STYLE = `
   pointer-events:auto
 }
 
-.ada-controls .ada-story-text{
+/* The scroll group: the text column and the choices scroll as one when the page is taller than the
+   panel's room, as a card's do; the page controls stay fixed below. */
+.ada-controls .ada-story-scroll{
   flex:0 1 auto;
   min-height:0;
   overflow-y:auto;
+  overscroll-behavior:contain;
+  display:flex;
+  flex-direction:column;
+  gap:${units(STORY_PANEL.gap)};
+  scrollbar-color:#9690b4 #2f2d3d
+}
+
+.ada-controls .ada-story-text{
+  flex:none;
   display:flex;
   flex-direction:column;
   gap:${units(STORY_PANEL.speakerGap)}
+}
+
+.ada-controls .ada-story-choices{
+  flex:none
 }
 
 .ada-controls .ada-story-panel .ada-story-speaker{
@@ -103,8 +118,7 @@ export const STORYBOOK_STYLE = `
   gap:${units(STORY_PANEL.gap)}
 }
 
-/* PROVISIONAL (Art): Skip, apart from page navigation, at the top right left of the settings
-   button (STORY_SKIP). */
+/* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP). */
 .ada-controls .ada-story-skip{
   position:absolute;
   top:${fromHudEdge("top", STORY_SKIP.top)};
@@ -151,7 +165,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   next.dataset.action = "story-next";
   const pageButtons = { next, previous };
   controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
-  panel.append(text, choices, controls);
+  const scroll = document.createElement("div");
+  scroll.className = "ada-story-scroll";
+  scroll.append(text, choices);
+  panel.append(scroll, controls);
   layer.append(background, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
   // above it; its style goes last, after the shared card styles it refines.
