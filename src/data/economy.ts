@@ -1,5 +1,5 @@
 import type { EnemyArchetype } from "./enemy-catalog.ts";
-import type { Weapon } from "./types.ts";
+import type { SectorId, Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "basic">;
 export type UpgradeTrack = "shield" | "shieldRecharge" | "engine" | "tractor";
@@ -33,8 +33,8 @@ export interface EconomyCatalog {
   enemyStardust: Readonly<Record<EnemyArchetype, number>>;
   /** Inclusive Stardust range released by a destroyed asteroid. */
   asteroidStardust: readonly [number, number];
-  /** Chance that a destroyed enemy drops a random upgrade weapon. */
-  weaponDropChance: Readonly<Record<EnemyArchetype, number>>;
+  /** Chance per galaxy that a destroyed enemy drops a random upgrade weapon. */
+  weaponDropChance: Readonly<Record<SectorId, Readonly<Record<EnemyArchetype, number>>>>;
   /** Stardust given instead of a dropped weapon Ada already owns. */
   ownedWeaponStardust: number;
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
@@ -198,7 +198,7 @@ export const ECONOMY: EconomyCatalog = {
     // station-a's dock entrance, 27.2 display px below the pivot, in world units.
     dockOffset: { x: 27.223, y: 27.223 },
     dockOutward: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
-    indicatorRange: 1500,
+    indicatorRange: 2000,
     jitter: 4000,
     originClearance: 3000,
     radius: 40,
@@ -212,7 +212,12 @@ export const ECONOMY: EconomyCatalog = {
   },
   tractorRadius: { base: 100, levels: [150, 200] },
   tractorSpeed: { base: 150, levels: [220, 300] },
-  weaponDropChance: { ...small, capital: 0.1, frigate: 0.05 },
+  // Galaxy one drops weapons more rarely, so its first weapon is usually bought.
+  weaponDropChance: {
+    1: { ...small, capital: 0.05, frigate: 0.02 },
+    2: { ...small, capital: 0.1, frigate: 0.05 },
+    3: { ...small, capital: 0.1, frigate: 0.05 },
+  },
   weaponLockSeconds: 5,
   weaponPrices: {
     heavyMissile: 300,

@@ -7,8 +7,9 @@
  * fights encounters met in passing, shoots some asteroids and collects pickups inside
  * tractor range. Every behavioural assumption is a named, overridable parameter.
  *
- * Usage: node tools/pacing-sim.ts [--sector 1|2] [--seeds 50] [--minutes 90]
- *   [--scenario current|drops|mixed|...] [--set key=value ...] [--json]
+ * Usage: node tools/pacing-sim.ts [--sector 1|2|3] [--seeds 50] [--minutes 90]
+ *   [--scenario name] [--set key=value ...] [--json] [--real] [--weapons]
+ * --weapons prints each weapon's single-target output and kill times per level.
  * Values given to --set are JSON; dotted keys reach nested parameters or overrides,
  * for example --set behaviour.hitRate=0.4 or --set economy.discoveryStardust=5.
  */
@@ -99,7 +100,7 @@ export interface EconomyOverrides {
   asteroidStardust?: [number, number];
   discoveryStardust?: number;
   ownedWeaponStardust?: number;
-  weaponDropChance?: Partial<Record<EnemyArchetype, number>>;
+  weaponDropChance?: Partial<Record<SectorId, Partial<Record<EnemyArchetype, number>>>>;
   jumpFee?: number;
   station?: Partial<
     Pick<EconomyCatalog["station"], "cellSize" | "chance" | "indicatorRange" | "jitter">
@@ -293,7 +294,11 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
     jumpFee: overrides.jumpFee ?? ECONOMY.jumpFee,
     ownedWeaponStardust: overrides.ownedWeaponStardust ?? ECONOMY.ownedWeaponStardust,
-    weaponDropChance: { ...ECONOMY.weaponDropChance, ...overrides.weaponDropChance },
+    weaponDropChance: {
+      1: { ...ECONOMY.weaponDropChance[1], ...overrides.weaponDropChance?.[1] },
+      2: { ...ECONOMY.weaponDropChance[2], ...overrides.weaponDropChance?.[2] },
+      3: { ...ECONOMY.weaponDropChance[3], ...overrides.weaponDropChance?.[3] },
+    },
     station: { ...ECONOMY.station, ...overrides.station },
   };
 }
@@ -410,16 +415,65 @@ const ON_TARGET: Readonly<Record<Weapon, number>> = {
   rapidMissile: 1,
   scattershot: 2.5,
 };
-function volleySeconds(behaviour: Behaviour, weapon: Weapon, hp: number): number {
-  const definition = weaponAt(weapon, 1);
-  const perVolley = DAMAGE * definition.damageRatio * ON_TARGET[weapon];
+/** Projectiles of a volley at `level` that reach one small target; fans keep their share. */
+function onTarget(weapon: Weapon, level: number): number {
+  const count = weaponAt(weapon, level).anglesDegrees.length;
+  return (ON_TARGET[weapon] * count) / weaponAt(weapon, 1).anglesDegrees.length;
+}
+/** Seconds of firing to deal `hp` to one target at the behaviour's hit rate. */
+function volleySeconds(behaviour: Behaviour, weapon: Weapon, hp: number, level = 1): number {
+  const definition = weaponAt(weapon, level);
+  const perVolley = DAMAGE * definition.damageRatio * onTarget(weapon, level);
   return (Math.ceil(hp / perVolley - 1e-9) * definition.intervalSeconds) / behaviour.hitRate;
 }
-function totalHp(archetype: EnemyArchetype): number {
+
+export interface WeaponStanding {
+  weapon: Weapon;
+  level: number;
+  /** Damage per second on one small target when every volley hits. */
+  singleTargetDps: number;
+  /** Seconds to destroy one of each archetype at the behaviour's hit rate. */
+  killSeconds: Partial<Record<EnemyArchetype, number>>;
+}
+
+/** Every weapon at every level against one target: the check that no level 3 dominates. */
+export function weaponStandings(behaviour: Behaviour): WeaponStanding[] {
+  const archetypes = [...SMALL, "frigate", "capital", "oversizedCapital"] as const;
+  return (Object.keys(ON_TARGET) as Weapon[]).flatMap((weapon) =>
+    [1, 2, 3].map((level) => {
+      const definition = weaponAt(weapon, level);
+      return {
+        killSeconds: Object.fromEntries(
+          archetypes.map((archetype) => [
+            archetype,
+            killSeconds(behaviour, weapon, archetype, level),
+          ]),
+        ),
+        level,
+        singleTargetDps:
+          (DAMAGE * definition.damageRatio * onTarget(weapon, level)) / definition.intervalSeconds,
+        weapon,
+      };
+    }),
+  );
+}
+/**
+ * Seconds of firing to destroy one ship: a multipart ship's hardpoints are shot down one at a
+ * time, so surplus damage on one part never carries to the next.
+ */
+function killSeconds(
+  behaviour: Behaviour,
+  weapon: Weapon,
+  archetype: EnemyArchetype,
+  level = 1,
+): number {
   const definition = enemyCatalog[archetype];
   return definition.hardpoints.length
-    ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
-    : definition.hp;
+    ? definition.hardpoints.reduce(
+        (sum, part) => sum + volleySeconds(behaviour, weapon, part.hp, level),
+        0,
+      )
+    : volleySeconds(behaviour, weapon, definition.hp, level);
 }
 /** Hull damage after which a ship flees on its own, or null when it never does. */
 function fleeAfter(archetype: EnemyArchetype): number | null {
@@ -527,7 +581,7 @@ export function simulate(input: SimulationInput): RunResult {
   /** Destroys one enemy and collects its drop with the player's collection efficiency. */
   const loot = (archetype: EnemyArchetype, id: string, source: Source) => {
     const next = dropRandom(flightSeed, wreckId(id));
-    const drop = rollEnemyDrop(catalog, owned, archetype, next);
+    const drop = rollEnemyDrop(catalog, sector, owned, archetype, next);
     const base = catalog.enemyStardust[archetype];
     const pieces = splitStardust(catalog.pickupCap[archetype], drop.stardust);
     const collected = pieces.reduce(
@@ -575,8 +629,7 @@ export function simulate(input: SimulationInput): RunResult {
         continue;
       }
       advance(
-        volleySeconds(behaviour, weapon, totalHp(archetype)) +
-          (fleeing ? behaviour.fleeChaseSeconds : 0),
+        killSeconds(behaviour, weapon, archetype) + (fleeing ? behaviour.fleeChaseSeconds : 0),
       );
       lost++;
       add(result.destroyed, archetype);
@@ -623,7 +676,7 @@ export function simulate(input: SimulationInput): RunResult {
     ) {
       advance(behaviour.guardSeconds);
       guards.forEach((archetype, index) => {
-        advance(volleySeconds(behaviour, weapon, totalHp(archetype)));
+        advance(killSeconds(behaviour, weapon, archetype));
         add(result.destroyed, archetype);
         loot(archetype, `route:guard-${guard}:${index}`, "guards");
       });
@@ -1167,6 +1220,7 @@ function main(argv: readonly string[]): void {
     json: false,
     minutes: 90,
     real: false,
+    weapons: false,
     scenario: "current",
     sector: 1 as SectorId,
     seeds: 50,
@@ -1178,6 +1232,8 @@ function main(argv: readonly string[]): void {
     const value = argv[index + 1];
     if (flag === "--json") {
       options.json = true;
+    } else if (flag === "--weapons") {
+      options.weapons = true;
     } else if (flag === "--real") {
       options.real = true;
     } else if (flag === "--sector" && value) {
@@ -1205,10 +1261,14 @@ function main(argv: readonly string[]): void {
     } else {
       console.error(
         "Usage: node tools/pacing-sim.ts [--sector 1|2] [--seeds N] [--minutes N] " +
-          "[--scenario name] [--set key=json ...] [--json] [--real]",
+          "[--scenario name] [--set key=json ...] [--json] [--real] [--weapons]",
       );
       process.exit(2);
     }
+  }
+  if (options.weapons) {
+    console.log(JSON.stringify(weaponStandings(behaviour as unknown as Behaviour), null, 1));
+    return;
   }
   if (options.real) {
     const results = Array.from({ length: options.seeds }, (_, index) =>

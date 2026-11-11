@@ -90,11 +90,17 @@ describe("Phaser hitscan beam", () => {
 
   it.each([
     [1, 320, 4],
-    [2, 384, 5],
-    [3, 460.8, 6.25],
+    [2, 384, 6],
+    [3, 460.8, 9],
   ])("reaches %i: range %f, damage %f", (level, range, damage) => {
     const edge = range + reach(20) - 0.5;
-    expect(hp(beam([retaliator("enemy", edge, 0)], level), "enemy")).toBe(8 - damage);
+    const struck = beam([retaliator("enemy", edge, 0)], level);
+    // A retaliator has 8 hit points, so level 3 destroys it in one shot.
+    if (damage < 8) {
+      expect(hp(struck, "enemy")).toBe(8 - damage);
+    } else {
+      expect(alive(struck, "enemy")).toBe(false);
+    }
     expect(hp(beam([retaliator("enemy", edge + 1, 0)], level), "enemy")).toBe(8);
   });
 

@@ -1745,7 +1745,13 @@ function stepWrecks(
     }
     object.wreck.released = true;
     const next = dropRandom(flight.seed, object.id);
-    const drop = rollEnemyDrop(ECONOMY, ownedForSave(flight), object.wreck.archetype, next);
+    const drop = rollEnemyDrop(
+      ECONOMY,
+      flight.sector,
+      ownedForSave(flight),
+      object.wreck.archetype,
+      next,
+    );
     releaseStardust(
       object,
       timing.spread,

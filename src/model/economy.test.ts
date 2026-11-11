@@ -92,7 +92,7 @@ describe("Stardust drops", () => {
     };
     for (const [archetype, amount] of Object.entries(expected)) {
       // A roll of 0.999 never meets a weapon drop chance.
-      expect(rollEnemyDrop(ECONOMY, [], archetype as EnemyArchetype, () => 0.999)).toEqual({
+      expect(rollEnemyDrop(ECONOMY, 1, [], archetype as EnemyArchetype, () => 0.999)).toEqual({
         stardust: amount,
         weapon: null,
       });
@@ -124,35 +124,44 @@ describe("Stardust drops", () => {
   });
 
   it.each([
-    ["swarm", 0.005],
-    ["fighter", 0.005],
-    ["interceptor", 0.005],
-    ["retaliator", 0.005],
-    ["frigate", 0.05],
-    ["capital", 0.1],
-  ] as const)("drops a random upgrade weapon from %s at its chance", (archetype, chance) => {
-    const draws = chance < 0.01 ? 200000 : 40000;
-    const weapons = new Map<string, number>();
-    for (let index = 0; index < draws; index++) {
-      const drop = rollEnemyDrop(ECONOMY, [], archetype, dropRandom(11, `wreck:${index}`));
-      if (drop.weapon) {
-        weapons.set(drop.weapon, (weapons.get(drop.weapon) ?? 0) + 1);
+    [1, "swarm", 0.005],
+    [1, "fighter", 0.005],
+    [1, "interceptor", 0.005],
+    [1, "retaliator", 0.005],
+    [1, "frigate", 0.02],
+    [1, "capital", 0.05],
+    [2, "swarm", 0.005],
+    [2, "frigate", 0.05],
+    [2, "capital", 0.1],
+    [3, "frigate", 0.05],
+    [3, "capital", 0.1],
+  ] as const)(
+    "in galaxy %i drops a random upgrade weapon from %s at %f",
+    (sector, archetype, chance) => {
+      const draws = chance < 0.01 ? 200000 : 40000;
+      const weapons = new Map<string, number>();
+      for (let index = 0; index < draws; index++) {
+        const next = dropRandom(11, `wreck:${index}`);
+        const drop = rollEnemyDrop(ECONOMY, sector, [], archetype, next);
+        if (drop.weapon) {
+          weapons.set(drop.weapon, (weapons.get(drop.weapon) ?? 0) + 1);
+        }
       }
-    }
-    const dropped = [...weapons.values()].reduce((sum, count) => sum + count, 0);
-    expect(Math.abs(dropped / draws - chance)).toBeLessThan(chance * 0.15);
-    // The pool is every shop weapon, the Phaser included.
-    expect([...weapons.keys()].sort()).toEqual([...UPGRADE_WEAPONS].sort());
-    for (const count of weapons.values()) {
-      expect(Math.abs(count / dropped - 1 / 5)).toBeLessThan(0.06);
-    }
-  });
+      const dropped = [...weapons.values()].reduce((sum, count) => sum + count, 0);
+      expect(Math.abs(dropped / draws - chance)).toBeLessThan(chance * 0.15);
+      // The pool is every shop weapon, the Phaser included.
+      expect([...weapons.keys()].sort()).toEqual([...UPGRADE_WEAPONS].sort());
+      for (const count of weapons.values()) {
+        expect(Math.abs(count / dropped - 1 / 5)).toBeLessThan(0.06);
+      }
+    },
+  );
 
   it("gives 25 Stardust instead of a dropped weapon Ada already owns", () => {
     const owned = UPGRADE_WEAPONS;
     let replaced = 0;
     for (let index = 0; index < 8000; index++) {
-      const drop = rollEnemyDrop(ECONOMY, owned, "capital", dropRandom(3, `w:${index}`));
+      const drop = rollEnemyDrop(ECONOMY, 2, owned, "capital", dropRandom(3, `w:${index}`));
       expect(drop.weapon).toBeNull();
       expect([9, 34]).toContain(drop.stardust);
       replaced += drop.stardust === 34 ? 1 : 0;
@@ -194,6 +203,7 @@ describe("Stardust drops", () => {
     stepFlight(PROTOTYPE, 0.6, idle, value);
     const drop = rollEnemyDrop(
       ECONOMY,
+      value.sector,
       [],
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),

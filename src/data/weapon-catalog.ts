@@ -37,7 +37,8 @@ const fan = (count: number, spread: number) =>
 /**
  * Provisional tuning: speed and damage ratios multiply the existing base values. Each level
  * multiplies effective output (damage x fire rate x hits per volley) by 1.5, so level 3 is
- * 2.25 times level 1; gameplay/prototype.md gives each weapon's growth dimensions.
+ * 2.25 times level 1; gameplay/prototype.md gives each weapon's growth dimensions. A fan's
+ * extra bolts or dots count as hits; blast and beam range growth is a bonus on top.
  */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5.
@@ -64,8 +65,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       projectileKind: "bolt",
     },
   ],
-  // Blast 60, 72, 85 grows the catch radius (blast plus a 10-unit hull) 82/70 then 95/70 times;
-  // damage makes up the rest of each 1.5 step.
+  // Damage alone makes each single-target 1.5 step; the blast's growth to 72 and 85 is a bonus
+  // against groups.
   heavyMissile: [
     {
       ...projectile,
@@ -80,7 +81,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 72,
-      damageRatio: 10.25,
+      damageRatio: 12,
       intervalSeconds: 1.2,
       projectileKind: "missile",
       speedRatio: 0.6,
@@ -89,7 +90,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 85,
-      damageRatio: 13.25,
+      damageRatio: 18,
       intervalSeconds: 1.2,
       projectileKind: "missile",
       speedRatio: 0.6,
@@ -119,8 +120,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       projectileKind: "bolt",
     },
   ],
-  // 4x Basic damage at a 4x Basic interval matches Basic's single-target output; range grows
-  // 1.2 then 1.44 times and damage 1.25 then 1.5625 times.
+  // 4x Basic damage at a 4x Basic interval matches Basic's single-target output. Damage alone
+  // makes each single-target 1.5 step; range growth to 384 and 460.8 is a bonus.
   phaser: [
     {
       ...projectile,
@@ -134,7 +135,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       beamRange: 384,
-      damageRatio: 5,
+      damageRatio: 6,
       intervalSeconds: 1.12,
       projectileKind: "beam",
     },
@@ -142,7 +143,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       beamRange: 460.8,
-      damageRatio: 6.25,
+      damageRatio: 9,
       intervalSeconds: 1.12,
       projectileKind: "beam",
     },

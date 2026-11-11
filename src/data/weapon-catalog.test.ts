@@ -3,20 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { Weapon } from "./types.ts";
 import { WEAPON_CATALOG, weaponAt, type WeaponDefinition } from "./weapon-catalog.ts";
 
-/** The hull radius a blast must reach past, for its catch radius. */
-const HULL = 10;
-
 /**
- * Hits per volley that grow with a level: every bolt or dot of a fan (up close every
- * Scattershot dot hits), a missile blast's catch radius and the Phaser's reach.
+ * Hits per volley on a single target: every bolt or dot of a fan (up close every Scattershot
+ * dot hits). A missile or beam hits one target once; blast and range growth are bonuses.
  */
 function hits(definition: WeaponDefinition): number {
-  if (definition.beamRange !== null) {
-    return definition.beamRange;
-  }
-  if (definition.blastRadius !== null) {
-    return definition.blastRadius + HULL;
-  }
   return definition.anglesDegrees.length;
 }
 /** Effective output: damage x fire rate x hits per volley. */
@@ -25,13 +16,20 @@ const output = (definition: WeaponDefinition) =>
 
 describe("weapon levels", () => {
   it.each(Object.keys(WEAPON_CATALOG) as Weapon[])(
-    "grows %s's effective output about 1.5 times per level",
+    "grows %s's single-target output 1.5 times per level",
     (weapon) => {
       const [first, second, third] = WEAPON_CATALOG[weapon].map(output) as [number, number, number];
-      expect(second / first).toBeCloseTo(1.5, 2);
-      expect(third / first).toBeCloseTo(2.25, 2);
+      expect(second / first).toBeCloseTo(1.5, 9);
+      expect(third / first).toBeCloseTo(2.25, 9);
     },
   );
+
+  it("grows the Heavy Missile's blast and the Phaser's range as a bonus", () => {
+    const blasts = WEAPON_CATALOG.heavyMissile.map((level) => level.blastRadius);
+    const ranges = WEAPON_CATALOG.phaser.map((level) => level.beamRange);
+    expect(blasts).toEqual([60, 72, 85]);
+    expect(ranges).toEqual([320, 384, 460.8]);
+  });
 
   it("sets Gameplay's level 1 values", () => {
     const basic = weaponAt("basic", 1);

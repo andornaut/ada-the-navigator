@@ -124,7 +124,7 @@ describe("pacing simulation runs", () => {
         },
         seeds: 4,
       }).runs.reduce((sum, run) => sum + run.stationSeconds.length, 0);
-    expect(ECONOMY.station.indicatorRange).toBe(1500);
+    expect(ECONOMY.station.indicatorRange).toBe(2000);
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
