@@ -24,7 +24,8 @@
   and approach lights keep the outposts' sizes.
 - Frames are multiples of 16 px. Each SVG's intrinsic `width` and `height` are
   its display size (`frame * 0.4375`, whole px) and its `viewBox` is the frame
-  in frame px. Tech rasterizes at display size times `min(devicePixelRatio, 2)`.
+  in frame px. Tech rasterizes at the on-screen device size
+  ([Layout](layout.md#coordinates-and-scale)).
 - Manifest `width` and `height` are the frame (the `viewBox`), so pivots, docks,
   berths, moorings and jets are frame px, as for the station and the outposts.
   `displayWidth` and `displayHeight` equal the SVG's intrinsic size.

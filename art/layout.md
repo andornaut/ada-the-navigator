@@ -29,19 +29,27 @@ the value currently lives, in CSS px.
   transform-scaled, so text stays crisp and hit testing stays native. Layout
   code reads and writes logical px only.
 - Sampling follows the asset kind:
-  - The WebGL backing store is `min(devicePixelRatio, 2)` times the CSS size;
-    above a ratio of 2 the canvas upscales with CSS
+  - The WebGL backing is `r = min(devicePixelRatio, 2)` times the canvas's CSS
+    size; above a ratio of 2 the canvas upscales with CSS
     `image-rendering: pixelated`.
-  - SVG and vector textures rasterize at display size times
-    `min(devicePixelRatio, 2)` and draw with linear filtering.
+  - The camera zoom is `r` times the fit scale and may be fractional; there is
+    no integer world zoom or letterbox.
+  - SVG and other vector textures rasterize at their on-screen device size:
+    logical display size times the camera's fit scale times `r`, never at
+    logical size times `devicePixelRatio`. Each axis is capped at 4 texels per
+    logical px for memory, and every SVG rasterizes again when a resize moves
+    that scale more than 1.25 times either way. They draw with linear
+    filtering. At 1280x720 with a ratio of 1 the scale is 1.78, so desktop
+    vectors stay sharp; 844x390 at a ratio of 3 gives `1.083 * 2` = 2.17;
+    1440x900 at 2 reaches the cap (`2 * 2` = 4).
   - Authored pixel sprites, world and UI alike (portraits, icons, HUD glyphs),
     draw with nearest-neighbour filtering at their fractional scale.
-  - The camera zoom is `min(devicePixelRatio, 2)` times the fit scale and may
-    be fractional; there is no integer world zoom or letterbox.
-  - UI text and chrome are HTML over the canvas, at device resolution.
+  - UI text and chrome are HTML over the canvas, at device resolution; the
+    browser rasterizes DOM SVGs (pause, the HUD glyph masks) at device
+    resolution itself.
   - Line widths, keylines and outlines stay in logical px at every ratio.
-- `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
-  narrower, 779 on an 844x390 phone). The game area is the centred 2:1 play
+- The logical width varies with aspect (720 at 2:1 or narrower, 779 on an
+  844x390 phone), as `Scale.EXPAND` did. The game area is the centred 2:1 play
   view; wider or taller screens show bands outside it. Every control (pause,
   the status pill, weapons, Skip, Settings, the sticks and Use) is placed
   relative to the game area, clamped by the safe insets: the top controls
