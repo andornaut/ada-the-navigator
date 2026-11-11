@@ -178,6 +178,19 @@ describe("enemy art fallback", () => {
     expect(enemyFrameSets(unsized).has("interceptor")).toBe(false);
   });
 
+  it("requires exactly sixteen headings, so a missing last or an extra frame falls back", () => {
+    const lastMissing = assets.filter((asset) => asset.id !== "enemy-retaliator-15");
+    expect(enemyFrameSets(lastMissing).has("retaliator")).toBe(false);
+    expect(enemyFrameSets(lastMissing).has("swarm")).toBe(true);
+    const sixteenth = assets.find((asset) => asset.id === "enemy-fighter-15")!;
+    const extra = [
+      ...assets,
+      { ...sixteenth, directionIndex: 16, id: "enemy-fighter-16" } satisfies EnemyFrame,
+    ];
+    expect(enemyFrameSets(extra).has("fighter")).toBe(false);
+    expect(enemyFrameSets(extra).has("interceptor")).toBe(true);
+  });
+
   it("draws frames without jets when the jets file is missing or mismatched", () => {
     const sets = new Map([["swarm", swarmFrames]]);
     const absent = enemyArt(() => undefined, sets).get("swarm")!;

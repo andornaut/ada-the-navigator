@@ -20,10 +20,13 @@ export interface EnemyArt<T extends EnemyFrame = EnemyFrame> {
 }
 
 const FRAME = /^enemy-([a-z][a-zA-Z]*)-(\d+)$/;
+/** Art exports every framed enemy in sixteen headings, as Gameplay requires. */
+export const ENEMY_HEADINGS = 16;
 
 /**
- * Complete heading sets per archetype from `enemy-{archetype}-{index}` entries. An archetype
- * with a missing, duplicate or unsized frame is left out and keeps its vector placeholder.
+ * Complete sixteen-heading sets per archetype from `enemy-{archetype}-{index}` entries. An
+ * archetype with a missing, extra, duplicate or unsized frame is left out and keeps its vector
+ * placeholder.
  */
 export function enemyFrameSets<T extends EnemyFrame>(assets: readonly T[]): Map<string, T[]> {
   const groups = new Map<string, T[]>();
@@ -51,8 +54,8 @@ export function enemyFrameSets<T extends EnemyFrame>(assets: readonly T[]): Map<
   }
   for (const [archetype, frames] of groups) {
     // Array methods skip holes, so check each heading index.
-    const complete = Array.from({ length: frames.length }, (_, index) => index in frames);
-    if (broken.has(archetype) || !frames.length || complete.includes(false)) {
+    const complete = Array.from({ length: ENEMY_HEADINGS }, (_, index) => index in frames);
+    if (broken.has(archetype) || frames.length !== ENEMY_HEADINGS || complete.includes(false)) {
       groups.delete(archetype);
     }
   }
@@ -65,7 +68,7 @@ export function enemyJetsPath(archetype: string, frame: Pick<EnemyFrame, "path">
   return `${path.slice(0, path.lastIndexOf("/") + 1)}${archetype}-jets.json`;
 }
 
-/** Jets apply only when the file is valid and lists one entry per heading frame. */
+/** Jets apply only when the file is valid and lists all sixteen headings. */
 export function enemyArt<T extends EnemyFrame>(
   jets: (archetype: string) => unknown,
   sets: ReadonlyMap<string, readonly T[]>,
@@ -75,7 +78,7 @@ export function enemyArt<T extends EnemyFrame>(
     const parsed = readShipJets(jets(archetype));
     result.set(archetype, {
       frames,
-      jets: parsed?.headings.length === frames.length ? parsed : undefined,
+      jets: parsed?.headings.length === ENEMY_HEADINGS ? parsed : undefined,
     });
   }
   return result;
