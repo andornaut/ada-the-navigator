@@ -135,7 +135,7 @@ against the card, and 5.91:1 and 4.84:1 against the page background.
 ## Conversation box
 
 The in-flight conversation box is not modal: it draws no dim and leaves the
-HUD visible and live. Geometry is `CONVERSATION` in
+HUD visible and live. Geometry is `CONVERSATION_BOX` in
 [Layout](layout.md#conversation-box).
 
 | Token              | Colour    | Use                                           |
@@ -276,10 +276,12 @@ references.
 
 ## Touch sticks
 
-Both sticks draw a speed line from the ring centre to the knob centre: 2px cream
-`#ead4aa` with a 1px ink `#181425` fringe on each side, at the rings' 85%
-opacity, under the knob. Its length is proportional to stick deflection and it
-is absent at rest. See [touch joystick sheets](touch-joystick.md).
+Only the move stick draws a speed line, from the stick's origin to the thumb's
+actual position: 2px cream `#ead4aa` with a 1px ink `#181425` fringe on each
+side, at the rings' 85% opacity, under the knob. It is not clamped to the ring
+and may run past it; the drawn knob stays inside the ring. The line is absent
+at rest. The aim stick draws no line. See
+[touch joystick sheets](touch-joystick.md).
 
 ## Landing page
 

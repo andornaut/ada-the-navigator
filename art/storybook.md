@@ -59,6 +59,24 @@ and the scene's subject stays clearest above it.
 
 Full palettes are in the generator. Colours are before treatment d.
 
+The game names each page's location by a background key
+(`Background` in `src/data/storybook.ts`):
+
+| Key                 | Asset id                                         |
+| ------------------- | ------------------------------------------------ |
+| `grandmaGarden`     | `story-grandma-garden`                           |
+| `gardenLot`         | `story-community-garden`                         |
+| `schoolHallway`     | `story-school-hallway`                           |
+| `schoolyard`        | `story-schoolyard`                               |
+| `frontDoor`         | `story-front-door`                               |
+| `park`              | `story-park`                                     |
+| `adaRoom`           | `story-ada-room`                                 |
+| `adaRoomUnpolished` | `story-ada-room-unpolished` (the rock as dug up) |
+| `cockpit`           | `cockpit` ([cockpit](cockpit.md))                |
+
+`Background` has no key for the unpolished room yet; `adaRoomUnpolished` is the
+name to add for it.
+
 ## Pages
 
 Gameplay owns the page sequence and copy. Each page names one background; the

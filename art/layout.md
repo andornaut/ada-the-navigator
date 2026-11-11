@@ -174,16 +174,16 @@ out of every inset. Other HUD elements anchor to
 | 1280x720       | None              | 720x405      | 0           | 8, 712, 8                 |
 | 1920x1080      | None              | 720x405      | 0           | 8, 712, 8                 |
 
-| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                  | Constant                                                             |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                                        | `PAUSE_BUTTON`, `playView.ts`                                        |
-| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                                                                                                                               | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                |
-| Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75), centred on the pause disc (`PAUSE_BUTTON.art` centre = HUD rect top + 16.5, so the pill top is HUD rect top + 2.5); grows rightward with the count; keeps its place while the pause button is hidden. Parts and states in [Status pill](#status-pill) | `STATUS_PILL`, `playView.ts`, to implement                           |
-| Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 24 above the bottom safe edge (`inset + 24` from the view bottom); drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line                                                                          | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`     |
-| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (24 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                       |
-| Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                          |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one `TYPE.body` cream line centred in the box, no portrait or name tab; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                           | `NOTICE` (shares `CONVERSATION`), `conversationBox.ts`, to implement |
-| Conversation | In-flight dialogue box below the weapon row: top `SPACING.gap` below the weapon press areas, centred, `min(availableWidth, 640)` wide, 64 high, one portrait and one line; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                   | `CONVERSATION`, `conversationBox.ts`, to implement                   |
+| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                  | Constant                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                                        | `PAUSE_BUTTON`, `playView.ts`                                                |
+| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                                                                                                                               | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                        |
+| Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75), centred on the pause disc (`PAUSE_BUTTON.art` centre = HUD rect top + 16.5, so the pill top is HUD rect top + 2.5); grows rightward with the count; keeps its place while the pause button is hidden. Parts and states in [Status pill](#status-pill) | `STATUS_PILL`, `playView.ts`, to implement                                   |
+| Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 24 above the bottom safe edge (`inset + 24` from the view bottom); drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line                                                                          | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`             |
+| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (24 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                               |
+| Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                                  |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one `TYPE.body` cream line centred in the box, no portrait or name tab; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                           | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
+| Conversation | In-flight dialogue box below the weapon row: top `SPACING.gap` below the weapon press areas, centred, `min(availableWidth, 640)` wide, 64 high, one portrait and one line; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                   | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                       |
 
 Overlap rules:
 
@@ -293,34 +293,38 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 
 ### Storybook page
 
-Earth scenes. Constants: `STORY_PANEL`, `storyPage.ts`, to implement.
+Earth scenes. Constants: `STORY_PANEL`, `storyPage.ts`; `STORY_SKIP`,
+`playView.ts`, to implement.
 
-| Token         | Value                                                    | Rule                                                                                   |
-| ------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md)) | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets |
-| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640     | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                     |
-| Panel anchor  | Bottom edge on the available rect's bottom               | The scene's subject stays visible above                                                |
-| Panel padding | `SPACING.panelPadding`                                   | `ui-settings-card` face, no dim behind it                                              |
-| Portrait      | 64 in a 68 frame (2 inset)                               | Ada on the left, other speakers on the right; never mirrored                           |
-| Portrait gap  | `SPACING.gap`                                            | Frame to text column; frame top on the column top                                      |
+| Token         | Value                                                                                                                                                                                                                                                                      | Rule                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md))                                                                                                                                                                                                                   | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets     |
+| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640                                                                                                                                                                                                                       | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                         |
+| Panel anchor  | Bottom edge on the available rect's bottom (`STORY_PANEL.anchor`)                                                                                                                                                                                                          | The scene's subject stays visible above                                                    |
+| Panel height  | The content's height, at most from the panel's bottom up to the HUD row's bottom plus `SPACING.gap` (HUD rect top + 48 + 8)                                                                                                                                                | The panel never runs under Skip or Settings; past that, the text column and choices scroll |
+| Panel padding | `SPACING.panelPadding`                                                                                                                                                                                                                                                     | `ui-settings-card` face, no dim behind it                                                  |
+| Portrait      | 64 in a 68 frame (2 inset)                                                                                                                                                                                                                                                 | Ada on the left, other speakers on the right; never mirrored                               |
+| Portrait gap  | `SPACING.gap`                                                                                                                                                                                                                                                              | Frame to text column; frame top on the column top                                          |
+| Skip          | `STORY_SKIP`, `playView.ts`, to implement: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's 48 targets; `SPACING.gap` left of the Settings target when Settings shows, otherwise on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                |
 
 Panel groups, `SPACING.gap` apart:
 
 1. Text column: the speaker name (`TYPE.label`, dialogue only), then the
-   paragraph (`TYPE.body`) `SPACING.rowGap` below. Narration has no portrait
-   and fills the inner width.
+   paragraph (`TYPE.body`) `SPACING.rowGap` below. Narration pages show no
+   speaker name and no portrait; the paragraph fills the inner width.
 2. Choices (choice page only): an action stack of two or three secondary
    buttons; labels wrap and grow the face. Focus starts on the first, the
    default.
-3. Page controls: Skip (secondary, always visible) at the inner left edge;
-   Previous (secondary) and Next (primary) right-aligned, `SPACING.gap` apart.
-   All three share one width. A choice page has no Next. Previous uses the
-   disabled face on a scene's first page. A page whose primary action is named
-   ("Pick up the rock.") uses that label in Next's slot.
+3. Page controls (`STORY_PANEL.pageControls`): Previous (secondary) at the
+   inner left edge; Next (primary) at the inner right edge. Both share one
+   width. A choice page has no Next. Previous uses the disabled face on a
+   scene's first page. A page whose primary action is named ("Pick up the
+   rock.") uses that label in Next's slot. Skip is not a page control: it sits
+   in the HUD row (Skip, above).
 
-Each page sizes its own panel to its content, up to the available height;
-beyond that the text column scrolls and the choices and page controls stay
-fixed. Ordinary pages keep a short panel so the background stays visible; only
+Each page sizes its own panel to its content, up to the panel height above;
+beyond that the text column and the choices form one scroll group, as cards
+scroll, and the page controls stay fixed. Ordinary pages keep a short panel so the background stays visible; only
 a choice page grows to fit its choices. The panel's width, bottom edge and
 page-control row stay fixed across pages. A space story page that pauses
 flight uses the same panel over the paused, dimmed space view, without a
@@ -330,23 +334,23 @@ which neither pauses nor dims.
 ### Conversation box
 
 In-flight dialogue: one line at a time from one speaker, over live flight.
-Constants: `CONVERSATION`, `conversationBox.ts`, to implement. Colours are in
+Constants: `CONVERSATION_BOX`, `conversationBox.ts`, to implement. Colours are in
 [Controls](controls.md#conversation-box); portraits are in
 [Conversation portraits](conversation.md).
 
-| Token          | Value                                                        | Rule                                                                                    |
-| -------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| Width          | `min(availableWidth, CONVERSATION.maxWidth)`, max 640        | Centred on the available rect; 634 at 720 with phone insets, 640 otherwise              |
-| Top            | Weapon press-area bottom plus `SPACING.gap`                  | HUD rect top + 48 target (the target is the press area) = 56, so 64 without a top inset |
-| Height         | `CONVERSATION.frame + 2 * SPACING.gap` = 64                  | Fixed; the box never grows                                                              |
-| Padding        | `SPACING.gap` on every side                                  | Frame and text column sit 8 inside the panel                                            |
-| Panel          | Ink `#181425` at alpha 0.70, square corners                  | No border, nine-slice or dim; the tab, line and portrait draw fully opaque over it      |
-| Portrait frame | `CONVERSATION.frame` 48x48: 2 ink edge, navy `#262b44` face  | Ada at the inner left, every other speaker at the inner right; never mirrored           |
-| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, inset 2 | Fills the face; integer scale at every `s`                                              |
-| Text column    | `SPACING.gap` from the frame, the rest of the inner width    | 562 wide at 634, 568 at 640                                                             |
-| Text block     | Tab 20, `SPACING.rowGap`, line 20: 44 high                   | Centred on the frame: block top 2 below the frame top                                   |
-| Name tab       | 20 high, label width plus `2 * SPACING.markGap`              | `TYPE.label` in ink on the speaker's opaque tab colour, at the column's left edge       |
-| Line           | `TYPE.body`, cream, left-aligned, one line                   | Never wraps or shrinks; every Gameplay line fits the 562 column                         |
+| Token          | Value                                                                | Rule                                                                                    |
+| -------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 640            | Centred on the available rect; 634 at 720 with phone insets, 640 otherwise              |
+| Top            | Weapon press-area bottom plus `SPACING.gap` (`CONVERSATION_BOX.top`) | HUD rect top + 48 target (the target is the press area) = 56, so 64 without a top inset |
+| Height         | `CONVERSATION_BOX.height` = portrait 48 + `2 * SPACING.gap` = 64     | Fixed; the box never grows                                                              |
+| Padding        | `SPACING.gap` on every side                                          | Frame and text column sit 8 inside the panel                                            |
+| Panel          | Ink `#181425` at alpha 0.70, square corners                          | No border, nine-slice or dim; the tab, line and portrait draw fully opaque over it      |
+| Portrait frame | `CONVERSATION_BOX.portrait` 48x48: 2 ink edge, navy `#262b44` face   | Ada at the inner left, every other speaker at the inner right; never mirrored           |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, inset 2         | Fills the face; integer scale at every `s`                                              |
+| Text column    | `SPACING.gap` from the frame, the rest of the inner width            | 562 wide at 634, 568 at 640                                                             |
+| Text block     | Tab 20, `SPACING.rowGap`, line 20: 44 high                           | Centred on the frame: block top 2 below the frame top                                   |
+| Name tab       | 20 high, label width plus `2 * SPACING.markGap`                      | `TYPE.label` in ink on the speaker's opaque tab colour, at the column's left edge       |
+| Line           | `TYPE.body`, cream, left-aligned, one line                           | Never wraps or shrinks; every Gameplay line fits the 562 column                         |
 
 - The box takes no input and holds no controls. It shows only during flight;
   one box shows at a time, and the next line replaces the current one in
@@ -363,15 +367,16 @@ Constants: `CONVERSATION`, `conversationBox.ts`, to implement. Colours are in
 ### Galaxy selector
 
 A modal card over the cockpit, one galaxy per page, after Chibi's stage cards.
-Constants: `GALAXY_CARD`, `galaxySelectCard.ts`, to implement.
+Constants: `GALAXY_CARD`, `galaxySelectCard.ts`.
 
 1. Header: `Galaxy {number}`.
 2. Galaxy group, rows `SPACING.rowGap` apart: the 180x90 screenshot (a half-scale
    360x180 crop, [selector preview](galaxies.md#selector-preview)), the name (`TYPE.label`), the
    flavour line (`TYPE.body` prose).
-3. Action row: Previous (secondary), Jump (primary), Next (secondary), one
-   shared width. Previous uses the disabled face on the first page, Next on the
-   last.
+3. Action row (`GALAXY_CARD.actions`): Previous (secondary), Home
+   (secondary), Jump (primary), Next (secondary), one shared width. Home
+   returns Ada to her room without a jump. Previous uses the disabled face on
+   the first page, Next on the last.
 4. Exits: the close X, an outside tap, back and Escape leave the cockpit and
    return Ada to her room without a jump.
 
@@ -395,7 +400,7 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Settings draws `settings.svg` as a mask with smooth sampling                                               | `icon-settings-nav` PNG mask                                                        |
 | Cards scroll one scroll group with the header and close fixed                                              | The whole card scrolls                                                              |
 | Prose never widens a card; cheats headings and notes use group and row gaps                                | 36em prose cap; 16 and 4 margins                                                    |
-| Notices use `TYPE.body` and `NOTICE` placement                                                             | 14 px text at fixed offsets                                                         |
+| Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                           | A `NOTICE` strip on the HUD rect's top                                              |
 | Story pages use `STORY_PANEL`                                                                              | `.story-panel` clamp and rem sizes                                                  |
 | Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                      | 16; a 24 line                                                                       |
 
