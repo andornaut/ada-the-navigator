@@ -93,12 +93,27 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 20 CSS pixels with a 2.4 CSS pixel deadzone;
   the visual thumb follows that travel.
+- Speed rises steeply with stick deflection so the difference is clearly
+  noticeable: small deflections give slow, controlled maneuvering and full
+  deflection gives maximum speed. With deflection `m` from 0 just past the deadzone
+  to 1 at full reach, target speed is
+  `maxSpeed * (minSpeedFraction + (1 - minSpeedFraction) * m ^ speedCurveExponent)`.
+  Provisional values are `minSpeedFraction` 0.04 and `speedCurveExponent` 2.5:
+  about 8 world units per second just past the deadzone, 14 at a quarter, 42 at
+  half, 102 at three quarters and 200 at full. Keyboard movement is full deflection.
+- The ship's thrust jets scale with current speed as a fraction of maximum speed,
+  not with stick deflection.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with light damping (provisional response 0.045 seconds). Shots follow the
   ship's current facing and start immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
 - Settings use Chibi's gear control. Weapon and settings controls use icons inspired
   by Chibi, with accessible labels.
+- Like Chibi, the control rows in Settings only show or hide the on-screen controls:
+  Move controls (left joystick) and Aim controls (right joystick). Each is shown
+  unless the player hides it, and the choice persists on that device. Hiding a
+  control hides only its drawing; its input still works, and keyboard input is
+  unchanged. Settings shows no keyboard binding text.
 - Do not show a top-left information or status panel. Objectives, deposits and
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
