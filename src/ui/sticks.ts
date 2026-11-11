@@ -32,6 +32,10 @@ export interface StickView {
   readonly ringPose: TouchChromePose;
 }
 
+// The move ring lights its left or right marker only while the move direction is within 67.5
+// degrees of that side: the unit direction's x is at least sin(22.5 degrees) that way.
+export const MARKER_THRESHOLD = Math.sin(Math.PI / 8);
+
 // The aim knob moves at most this many game pixels from its ring's centre, as Chibi's knob does.
 export const AIM_KNOB_REACH = 12;
 
@@ -101,7 +105,14 @@ export function stickViews(
         x: centre.x + Math.round((sampled.x * reach) / scale.x),
         y: centre.y + Math.round((sampled.y * reach) / scale.y),
       };
-      ringPose = sampled.x < 0 ? "held-left" : sampled.x > 0 ? "held-right" : "rest";
+      const strength = Math.hypot(sampled.x, sampled.y);
+      const across = strength ? sampled.x / strength : 0;
+      ringPose =
+        across <= -MARKER_THRESHOLD
+          ? "held-left"
+          : across >= MARKER_THRESHOLD
+            ? "held-right"
+            : "rest";
     } else {
       const dx = stick ? stick.position.x - stick.origin.x : 0;
       const dy = stick ? stick.position.y - stick.origin.y : 0;

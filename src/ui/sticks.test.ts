@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ControlState } from "../input/state.ts";
-import { centredAt, stickRestCentres, stickViews } from "./sticks.ts";
+import { centredAt, MARKER_THRESHOLD, stickRestCentres, stickViews } from "./sticks.ts";
 import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "./touch-chrome.ts";
 
 const layout = {
@@ -93,5 +93,37 @@ describe("right stick display", () => {
     expect(view.ringPose).toBe("rest");
     expect(view.knobPose).toBe("held");
     expect(state.sample().aim).toEqual({ x: 1, y: 0 });
+  });
+});
+
+describe("move ring markers", () => {
+  const poseAt = (degrees: number) => {
+    const state = new ControlState();
+    state.down("move", 1, { x: 100, y: 100 });
+    const radians = (degrees * Math.PI) / 180;
+    state.move(1, { x: 100 + 15 * Math.cos(radians), y: 100 - 15 * Math.sin(radians) });
+    return stickViews(layout, state).move?.ringPose;
+  };
+
+  it("lights neither marker for a pure vertical push", () => {
+    expect(poseAt(90)).toBe("rest");
+    expect(poseAt(-90)).toBe("rest");
+  });
+
+  it.each([
+    [67, "held-right"],
+    [68, "rest"],
+    [-67, "held-right"],
+    [-68, "rest"],
+    [113, "held-left"],
+    [112, "rest"],
+    [-113, "held-left"],
+    [-112, "rest"],
+  ])("at %s degrees from the right shows %s", (degrees, pose) => {
+    expect(poseAt(degrees)).toBe(pose);
+  });
+
+  it("puts the boundary at sin(22.5 degrees) of the unit direction", () => {
+    expect(MARKER_THRESHOLD).toBeCloseTo(0.3827, 4);
   });
 });
