@@ -26,7 +26,7 @@ range; their strokes and timings do not change by level.
 - Units are logical screen px at the base view, except where marked world units
   (wu). Tech's projection is `P(x, y) = (x - y, (x + y) / 2)`.
 - Each shot is a screen-space vector shape rotated to its projected heading:
-  `angle = atan2(P(v).y, P(v).x)` for world velocity `v`. No direction frames.
+  `angle = atan2(P(vel).y, P(vel).x)` for world velocity `vel`. No direction frames.
 - `u` runs forward along that angle from the head point (the projectile's
   projected position), `v` sideways. Shapes are symmetric in `v`.
 - Missile bodies keep a fixed screen size. Trail lengths follow the projection:
@@ -101,10 +101,10 @@ projected blast point, half-width `r x 1.414` and half-height `r x 0.707`.
 Stroke widths and dash lengths are screen px and do not scale with `R`; radii
 in world units do.
 
-| Blast | `R` (wu)   | Ellipse at the base view (px)  | `T`    | `G`    | Flash steps    | `k_f` | Ring stroke | Tint | Debris |
-| ----- | ---------- | ------------------------------ | ------ | ------ | -------------- | ----- | ----------- | ---- | ------ |
-| Rapid | 25         | 71 x 35                        | 220 ms | 110 ms | 0-20, 20-40 ms | 0.42  | 2.5 to 1.0  | 0.14 | none   |
-| Heavy | 60, 72, 85 | 170 x 85, 204 x 102, 240 x 120 | 340 ms | 180 ms | 0-30, 30-60 ms | 0.34  | 4.0 to 1.5  | 0.16 | 8      |
+| Blast | `R` (wu)   | Ellipse at the base view (px)  | `T`    | `G`    | Flash steps    | `k_f` | Ring stroke (px) | Tint | Debris |
+| ----- | ---------- | ------------------------------ | ------ | ------ | -------------- | ----- | ---------------- | ---- | ------ |
+| Rapid | 25         | 71 x 35                        | 220 ms | 110 ms | 0-20, 20-40 ms | 0.42  | 2.5 to 1.0       | 0.14 | none   |
+| Heavy | 60, 72, 85 | 170 x 85, 204 x 102, 240 x 120 | 340 ms | 180 ms | 0-30, 30-60 ms | 0.34  | 4.0 to 1.5       | 0.16 | 8      |
 
 Rapid uses `R` 25 at every level; Heavy takes 60, 72 and 85 at levels 1 to 3.
 At time `t` from detonation, with `g = min(1, t / G)`:
@@ -116,9 +116,9 @@ At time `t` from detonation, with `g = min(1, t / G)`:
   to the second ring stroke value over `T`.
 - Inner line: when `r > 6`, the ellipse at `r - 2.2` wu stroked cream, 1 px,
   alpha `0.8 a`.
-- Debris (Heavy only, to `G + 40` = 220 ms): for `i` 0 to 7, `th = 2 pi i / 8 +
-0.3`, ellipse direction `e = (1.414 cos th, 0.707 sin th)` and its unit `n`;
-  a cream line from `centre + r e + 3 n` for 6 px along `n`, 1.5 px, round caps,
+- Debris (Heavy only, to `G + 40` = 220 ms): for `i` 0 to 7, angle
+  `th = 2 pi i / 8 + 0.3`, ellipse direction
+  `e = (1.414 cos th, 0.707 sin th)` and its unit `n`; a cream line from `centre + r e + 3 n` for 6 px along `n`, 1.5 px, round caps,
   alpha `1 - t / (G + 40)`.
 - Flash, drawn last: four filled ellipses of world radius `fr = R x k_f x s`,
   scaled `1.25 fr` amber 0.3, `fr` amber 0.85, `0.66 fr` cream 1, `0.36 fr`
