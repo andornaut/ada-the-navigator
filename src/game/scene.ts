@@ -81,6 +81,8 @@ import {
   enemyJetsPath,
   enemyJetTriangles,
   enemyPartFrame,
+  enemyRasterSize,
+  enemySvg,
   HitFlashes,
   type PartPose,
   selectEnemyFrame,
@@ -346,7 +348,9 @@ export class PrototypeScene extends Phaser.Scene {
         if (loadsOnDemand(asset) || enemyPartFrame(asset) || whaleFrameAsset(asset)) {
           continue;
         }
-        if (asset.path.endsWith(".svg")) {
+        if (enemySvg(asset)) {
+          this.loadEnemySvg(asset);
+        } else if (asset.path.endsWith(".svg")) {
           this.load.svg(asset.id, asset.path);
         } else if (asset.frameWidth && asset.frameHeight) {
           this.load.spritesheet(asset.id, asset.path, {
@@ -1186,7 +1190,11 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     for (const part of parts) {
-      this.load.svg(part.id, part.path);
+      if (enemySvg(part)) {
+        this.loadEnemySvg(part);
+      } else {
+        this.load.svg(part.id, part.path);
+      }
     }
     this.load.once(Phaser.Loader.Events.COMPLETE, () => {
       this.shipAssets = [
@@ -1210,6 +1218,11 @@ export class PrototypeScene extends Phaser.Scene {
       fog: fogColor(palette.environment, palette.environmentDetail),
       name: GALAXIES[sector - 1]?.name ?? "",
     };
+  }
+
+  /** Queues an enemy SVG at its display size times min(devicePixelRatio, 2) (enemy-art.ts). */
+  private loadEnemySvg(asset: Asset & { displayHeight: number; displayWidth: number }): void {
+    this.load.svg(asset.id, asset.path, enemyRasterSize(window.devicePixelRatio, asset));
   }
 
   /**

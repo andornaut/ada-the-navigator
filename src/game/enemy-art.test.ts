@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import capitalHardpoints from "../../public/art/enemies/capital-hardpoints.json";
@@ -16,6 +18,7 @@ import {
   aimIndex,
   composedArchetypes,
   composeEnemy,
+  ENEMY_RASTER_MAX_DPR,
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
@@ -24,6 +27,8 @@ import {
   enemyJetsPath,
   enemyJetTriangles,
   enemyPartFrame,
+  enemyRasterSize,
+  enemySvg,
   HIT_FLASH_MS,
   HitFlashes,
   type PartPose,
@@ -420,5 +425,56 @@ describe("composed heavies", () => {
     expect(flashes.observe("a#port", 2, 16 + HIT_FLASH_MS)).toBe(false);
     flashes.retain(new Set(), (key) => key.split("#")[0]!);
     expect(flashes.observe("a#port", 1, 500)).toBe(false);
+  });
+});
+
+describe("enemy raster size", () => {
+  const frigate = { displayHeight: 168, displayWidth: 168 };
+
+  it("rasterises at the display size times the device pixel ratio, at most 2", () => {
+    expect(ENEMY_RASTER_MAX_DPR).toBe(2);
+    expect(enemyRasterSize(1, frigate)).toEqual({ height: 168, width: 168 });
+    expect(enemyRasterSize(1.5, frigate)).toEqual({ height: 252, width: 252 });
+    expect(enemyRasterSize(2, frigate)).toEqual({ height: 336, width: 336 });
+    expect(enemyRasterSize(3, frigate)).toEqual({ height: 336, width: 336 });
+    expect(enemyRasterSize(2.625, { displayHeight: 35, displayWidth: 35 })).toEqual({
+      height: 70,
+      width: 70,
+    });
+  });
+
+  it("rounds up to whole pixels and treats an unknown ratio as 1", () => {
+    expect(enemyRasterSize(1.3, { displayHeight: 10.5, displayWidth: 33.6 })).toEqual({
+      height: 14,
+      width: 44,
+    });
+    expect(enemyRasterSize(Number.NaN, frigate)).toEqual({ height: 168, width: 168 });
+    expect(enemyRasterSize(0, frigate)).toEqual({ height: 168, width: 168 });
+  });
+
+  it("covers every enemy SVG in the manifest, and nothing else", () => {
+    const assets = manifest.assets as (EnemyFrame & { path: string })[];
+    const enemies = assets.filter((asset) => asset.path.startsWith("/art/enemies/"));
+    expect(enemies.length).toBeGreaterThan(400);
+    expect(enemies.every((asset) => enemySvg(asset))).toBe(true);
+    expect(assets.filter((asset) => enemySvg(asset))).toHaveLength(enemies.length);
+  });
+
+  it("finds every heavy SVG declared at its display size, its viewBox in frame px", () => {
+    const heavies = (
+      manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
+    ).filter(({ archetype }) => archetype === "frigate" || archetype === "capital");
+    expect(heavies).toHaveLength(384);
+    for (const asset of heavies) {
+      const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
+      const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
+      const size = (name: string) =>
+        Number(new RegExp(`\\b${name}="([\\d.]+)"`, "u").exec(root)?.[1]);
+      expect([size("width"), size("height")], asset.path).toEqual([
+        asset.displayWidth,
+        asset.displayHeight,
+      ]);
+      expect(root, asset.path).toContain(`viewBox="0 0 ${asset.width} ${asset.height}"`);
+    }
   });
 });

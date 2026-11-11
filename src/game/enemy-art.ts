@@ -17,6 +17,37 @@ export interface EnemyFrame {
   top?: string;
 }
 
+/**
+ * Every enemy SVG rasterises at its display size times the device pixel ratio, at most this, so
+ * DPR 2 and 3 phones draw sharp hulls and parts at a bounded texture cost.
+ */
+export const ENEMY_RASTER_MAX_DPR = 2;
+
+/** An enemy SVG frame's raster size: its display size times min(devicePixelRatio, 2), whole. */
+export function enemyRasterSize(
+  devicePixelRatio: number,
+  frame: { readonly displayHeight: number; readonly displayWidth: number },
+): { height: number; width: number } {
+  const scale = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;
+  const ratio = Math.min(scale, ENEMY_RASTER_MAX_DPR);
+  return {
+    height: Math.ceil(frame.displayHeight * ratio),
+    width: Math.ceil(frame.displayWidth * ratio),
+  };
+}
+
+/** Whether a manifest asset is enemy SVG art: a hull heading, hardpoint base or turret top. */
+export function enemySvg(
+  asset: EnemyFrame & { readonly path: string },
+): asset is EnemyFrame & { displayHeight: number; displayWidth: number; path: string } {
+  return (
+    asset.archetype !== undefined &&
+    asset.path.endsWith(".svg") &&
+    asset.displayWidth !== undefined &&
+    asset.displayHeight !== undefined
+  );
+}
+
 /** One hardpoint in a hull heading: its base sprite centre and, for a turret, its top pivot. */
 export interface HeadingPart {
   anchor: Vec;
