@@ -2,12 +2,18 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { BACKGROUND_ART } from "../data/storybook.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import { BACKGROUND_ART, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import type { Background } from "../data/types.ts";
+import { boardingScene, prologueScene } from "../model/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 import {
   type ArtAsset,
+  astraSpeaks,
+  framePosition,
+  readAstraSpeaking,
   readStoryTransitions,
+  speakingFrames,
   storyBackgrounds,
   transitionSteps,
 } from "./story-art.ts";
@@ -24,6 +30,8 @@ const transitionData: unknown = JSON.parse(
 const backgrounds = storyBackgrounds(manifest.assets);
 const transitions = readStoryTransitions(manifest.assets, transitionData);
 const asset = (id: string) => manifest.assets.find((entry) => entry.id === id);
+
+const LABELS = { continue: "Continue", pickUpRock: "Pick up the rock." };
 
 // Every key the Background type allows.
 const KEYS = Object.keys(BACKGROUND_ART) as Background[];
@@ -42,32 +50,42 @@ describe("storybook art", () => {
     }
   });
 
-  it("joins Ada's room to the cockpit with the rock glow frames", () => {
-    const steps = transitionSteps(transitions, backgrounds.adaRoom, backgrounds.cockpit, false);
-    expect(steps?.map(({ url }) => url)).toEqual([
-      asset("story-ada-room-glow-1")?.path,
-      asset("story-ada-room-glow-2")?.path,
-      asset("story-ada-room-glow-3")?.path,
-      backgrounds.cockpit,
-    ]);
-    expect(steps?.map(({ fadeMs, holdMs }) => [fadeMs, holdMs])).toEqual([
-      [160, 0],
-      [160, 0],
-      [200, 240],
-      [0, 0],
-    ]);
+  // Each cockpit Ada's room leads into: the empty one in the prologue, the seated one at boarding.
+  const COCKPITS = ["cockpit", "cockpitSeated"] as const;
+
+  it("joins Ada's room to either cockpit with the rock glow frames", () => {
+    for (const cockpit of COCKPITS) {
+      const steps = transitionSteps(transitions, backgrounds.adaRoom, backgrounds[cockpit], false);
+      expect(
+        steps?.map(({ url }) => url),
+        cockpit,
+      ).toEqual([
+        asset("story-ada-room-glow-1")?.path,
+        asset("story-ada-room-glow-2")?.path,
+        asset("story-ada-room-glow-3")?.path,
+        backgrounds[cockpit],
+      ]);
+      expect(steps?.map(({ fadeMs, holdMs }) => [fadeMs, holdMs])).toEqual([
+        [160, 0],
+        [160, 0],
+        [200, 240],
+        [0, 0],
+      ]);
+    }
   });
 
   it("replaces the glow frames with one cross-fade under reduced motion", () => {
-    expect(transitionSteps(transitions, backgrounds.adaRoom, backgrounds.cockpit, true)).toEqual([
-      { fadeMs: 400, holdMs: 0, url: backgrounds.cockpit },
-    ]);
+    for (const cockpit of COCKPITS) {
+      expect(transitionSteps(transitions, backgrounds.adaRoom, backgrounds[cockpit], true)).toEqual(
+        [{ fadeMs: 400, holdMs: 0, url: backgrounds[cockpit] }],
+      );
+    }
   });
 
   it("cuts between every other pair of pages, and back from the cockpit", () => {
     for (const from of KEYS) {
       for (const to of KEYS) {
-        if (from !== "adaRoom" || to !== "cockpit") {
+        if (from !== "adaRoom" || !(COCKPITS as readonly Background[]).includes(to)) {
           expect(
             transitionSteps(transitions, backgrounds[from], backgrounds[to], false),
             `${from} to ${to}`,
@@ -75,6 +93,22 @@ describe("storybook art", () => {
         }
       }
     }
+  });
+
+  it("picks each transition by its first and final images, whatever its key", () => {
+    const entry = (to: string) => ({
+      from: "story-ada-room",
+      reducedMotion: [{ background: to, fadeMs: 400, holdMs: 0 }],
+      steps: [{ background: to, fadeMs: 0, holdMs: 0 }],
+    });
+    const joined = readStoryTransitions(manifest.assets, {
+      anyName: entry("cockpit-seated"),
+      version: 1,
+    });
+    expect(transitionSteps(joined, backgrounds.adaRoom, backgrounds.cockpitSeated, false)).toEqual([
+      { fadeMs: 0, holdMs: 0, url: backgrounds.cockpitSeated },
+    ]);
+    expect(transitionSteps(joined, backgrounds.adaRoom, backgrounds.cockpit, false)).toBeNull();
   });
 
   it("leaves out a transition that names an image the manifest lacks", () => {
@@ -100,5 +134,75 @@ describe("storybook art", () => {
     expect(art).toContain("top:50%;");
     expect(art).toContain("transform:translate(-50%, -50%);");
     expect(art).toContain("image-rendering:pixelated");
+  });
+
+  it("uses the empty cockpit until Ada sits, then the seated one, and seats boarding at once", () => {
+    const prologue = prologueScene(PROTOTYPE, LABELS).pages;
+    const sits = prologue.findIndex(({ text }) => text.startsWith("Ada sits in the pilot's chair"));
+    const hub = prologue.findIndex(({ questions }) => questions);
+    expect(sits).toBeGreaterThan(hub);
+    const arrival = prologue.findIndex(({ background }) => background === "cockpit");
+    expect(prologue[arrival]?.text).toMatch(/^Light swirls around Ada and Penny/u);
+    // The question hub's answer pages follow it in the list, so they stand too.
+    for (const [index, page] of prologue.entries()) {
+      if (index >= arrival) {
+        expect(page.background, page.id).toBe(index < sits ? "cockpit" : "cockpitSeated");
+      }
+    }
+    expect(prologue.slice(arrival, sits).some(({ id }) => id.includes(":answer:"))).toBe(true);
+    for (const fromRoom of [true, false]) {
+      for (const announce of [false, true]) {
+        const cockpit = boardingScene(PROTOTYPE, announce, fromRoom)
+          .pages.filter(({ speaker }) => speaker)
+          .map(({ background }) => background);
+        expect(cockpit.length).toBeGreaterThan(0);
+        expect(new Set(cockpit)).toEqual(new Set(["cockpitSeated"]));
+      }
+    }
+    expect(SELECTOR_BACKDROP).toBe("cockpitSeated");
+  });
+
+  describe("Astra speaking", () => {
+    const astra = readAstraSpeaking(manifest.assets)!;
+
+    it("places the 39 by 40 patch at (530, 169) on the 960 by 540 canvas", () => {
+      expect(astra.url).toBe(asset("cockpit-astra")?.path);
+      expect(astra.box).toEqual({
+        height: (40 / 540) * 100,
+        left: (530 / 960) * 100,
+        top: (169 / 540) * 100,
+        width: (39 / 960) * 100,
+      });
+      expect(astra.frameCount).toBe(4);
+    });
+
+    it("loops speak1 to speak4 at 120 ms each, and holds speak1 under reduced motion", () => {
+      expect(speakingFrames(astra, false)).toEqual(
+        [0, 1, 2, 3].map((frame) => ({ frame, ms: 120 })),
+      );
+      expect(speakingFrames(astra, true)).toEqual([{ frame: 0, ms: 120 }]);
+      const positions = [0, 1, 2, 3].map((frame) => framePosition(astra, frame));
+      expect(positions.every((position) => position.endsWith("%"))).toBe(true);
+      [0, 100 / 3, 200 / 3, 100].forEach((expected, frame) =>
+        expect(Number.parseFloat(positions[frame]!)).toBeCloseTo(expected, 6),
+      );
+    });
+
+    it("animates on the cockpit pages Astra speaks and on no other page", () => {
+      const pages = [
+        ...prologueScene(PROTOTYPE, LABELS).pages,
+        ...boardingScene(PROTOTYPE, false).pages,
+      ];
+      const speaking = pages.filter(astraSpeaks);
+      expect(speaking.length).toBeGreaterThan(0);
+      for (const page of pages) {
+        expect(astraSpeaks(page), page.id).toBe(
+          page.speaker === "Astra" && page.background.startsWith("cockpit"),
+        );
+      }
+      expect(pages.some((page) => page.speaker === "Ada" && !astraSpeaks(page))).toBe(true);
+      expect(astraSpeaks({ background: "park", speaker: "Astra" })).toBe(false);
+      expect(astraSpeaks({ background: "cockpit" })).toBe(false);
+    });
   });
 });

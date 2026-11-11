@@ -72,8 +72,13 @@ describe("prologue", () => {
         "Continue",
         questions,
       ],
-      ["cockpit", "", "Ada sits in the pilot's chair and buckles Penny in beside her.", "Next"],
-      ["cockpit", "Astra", "Quantum jump ready.", "Let's find your holodisk."],
+      [
+        "cockpitSeated",
+        "",
+        "Ada sits in the pilot's chair and buckles Penny in beside her.",
+        "Next",
+      ],
+      ["cockpitSeated", "Astra", "Quantum jump ready.", "Let's find your holodisk."],
     ]);
     expect(model.screen).toBe("selector");
     expect(model.selectedGalaxy).toBe(1);
@@ -88,7 +93,7 @@ describe("prologue", () => {
   it("splits its opening across the park, the unpolished room and the glowing room", () => {
     const model = started();
     const earth = readStory(model)
-      .filter(({ background }) => background !== "cockpit")
+      .filter(({ background }) => !background.startsWith("cockpit"))
       .map(({ action, background, text }) => [background, text, action ?? "Next"]);
     expect(earth).toEqual([
       ["park", "On a walk with Penny, Ada digs up an unusual rock.", "Next"],
@@ -104,7 +109,7 @@ describe("prologue", () => {
     expect(readStory(model).map(({ background }) => background)).toEqual([
       "adaRoom",
       "adaRoom",
-      "cockpit",
+      "cockpitSeated",
     ]);
   });
 
@@ -119,6 +124,8 @@ describe("prologue", () => {
       const remaining = model.storyView!.choices.map(({ label }) => label);
       model.storyChoose(index);
       answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
+      // Ada and Penny still stand while Astra answers.
+      expect(model.storyView?.page.background).toBe("cockpit");
       model.storyNext();
       expect(model.storyView?.page.id).toBe(hub);
       expect(model.storyView?.choices.map(({ label }) => label)).not.toContain(remaining[index]);
@@ -144,7 +151,7 @@ describe("prologue", () => {
     expect(pages.map(summary)).toEqual([
       ["adaRoom", "", "Penny thumps her tail. Time for another adventure?", "Pick up the rock."],
       ["adaRoom", "", "Ada holds Penny close and touches the rock's glow.", "Next"],
-      ["cockpit", "Astra", "Welcome back, Navigator.", "Next"],
+      ["cockpitSeated", "Astra", "Welcome back, Navigator.", "Next"],
     ]);
     expect(model.screen).toBe("selector");
   });

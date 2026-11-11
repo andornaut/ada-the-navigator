@@ -292,6 +292,10 @@
       }
     },
     "storyPage.ts": {
+      "STORY_BACKGROUND": {
+        "height": 540,
+        "width": 960
+      },
       "STORY_PANEL": {
         "anchor": "bottom",
         "gap": 8,

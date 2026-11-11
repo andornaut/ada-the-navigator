@@ -144,7 +144,7 @@ describe("home visits", () => {
       "opening:branch:1@schoolHallway",
       "room@adaRoom",
       "boarding:0@adaRoom",
-      "boarding:1@cockpit",
+      "boarding:1@cockpitSeated",
     ]);
     expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1].resolutionBranches[1]);
     expect(pages[4]?.text).toBe(PROTOTYPE.chapters[2].openingBranches[1]);
@@ -273,7 +273,7 @@ describe("start flow", () => {
     // The room and rock are skipped, never Astra's boarding line.
     expect(
       readStory(reloaded).map(({ background, speaker, text }) => [background, speaker, text]),
-    ).toEqual([["cockpit", "Astra", "Welcome back, Navigator."]]);
+    ).toEqual([["cockpitSeated", "Astra", "Welcome back, Navigator."]]);
     expect(reloaded.screen).toBe("selector");
     expect(reloaded.selectedGalaxy).toBe(2);
   });

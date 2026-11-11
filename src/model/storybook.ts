@@ -265,7 +265,8 @@ export function roomScene(content: PrototypeContent, labels: StoryLabels, empty:
 }
 
 /**
- * Boarding: the narration in Ada's room as she touches the glow, then Astra's line in the cockpit;
+ * Boarding: the narration in Ada's room as she touches the glow, then Astra's line in the cockpit
+ * with Ada and Penny seated;
  * once after a galaxy unlocks, Astra announces it instead. Continue from the start screen lands in
  * the cockpit and plays only Astra's line.
  */
@@ -281,7 +282,7 @@ export function boardingScene(
   const shown = fromRoom ? lines : lines.filter(({ speaker }) => speaker !== undefined);
   const pages = shown.map((line, index): StoryPage => ({
     ...("announces" in line ? { announces: true } : {}),
-    background: line.speaker === undefined ? "adaRoom" : "cockpit",
+    background: line.speaker === undefined ? "adaRoom" : "cockpitSeated",
     id: `boarding:${index}`,
     ...(index + 1 < shown.length ? { next: `boarding:${index + 1}` } : {}),
     ...(line.speaker ? { speaker: line.speaker } : {}),

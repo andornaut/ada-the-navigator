@@ -5,7 +5,15 @@ import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
-import { loadStoryArt, type StoryArt, type TransitionStep, transitionSteps } from "./story-art.ts";
+import {
+  astraSpeaks,
+  framePosition,
+  loadStoryArt,
+  speakingFrames,
+  type StoryArt,
+  type TransitionStep,
+  transitionSteps,
+} from "./story-art.ts";
 
 export interface StoryLabels {
   readonly next: string;
@@ -71,6 +79,13 @@ export const STORYBOOK_STYLE = `
   aspect-ratio:${STORY_BACKGROUND.width} / ${STORY_BACKGROUND.height};
   transform:translate(-50%, -50%);
   background:center / 100% 100% no-repeat;
+  image-rendering:pixelated
+}
+
+/* Astra's speaking frame over the lens, placed on the canvas by the manifest's at. */
+.ada-controls .ada-story-astra{
+  position:absolute;
+  background-repeat:no-repeat;
   image-rendering:pixelated
 }
 
@@ -165,6 +180,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     return image;
   }) as [HTMLDivElement, HTMLDivElement];
   incoming.style.opacity = "0";
+  const astra = document.createElement("div");
+  astra.className = "ada-story-astra";
+  astra.hidden = true;
+  base.append(astra);
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
@@ -200,18 +219,53 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
-  let art: StoryArt = { backgrounds: {}, transitions: [] };
+  let art: StoryArt = { astra: null, backgrounds: {}, transitions: [] };
   // What the layer last showed; re-rendering only on a change keeps each button across frames.
   let shown = "";
   let shownKey: Background | null = null;
   let lastPage: StoryPageView | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let fade: Animation | undefined;
+  let speaking: ReturnType<typeof setTimeout> | undefined;
+  let rendered: StoryPageView | null = null;
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
   const setBackground = (key: Background) => {
     shownKey = key;
     background.dataset.background = key;
     base.style.backgroundImage = image(art.backgrounds[key]);
+  };
+  const stopSpeaking = () => {
+    clearTimeout(speaking);
+    speaking = undefined;
+    astra.hidden = true;
+  };
+  // Astra's lens on a cockpit page she speaks: each frame for its ms, looping; reduced motion
+  // holds the first.
+  const speak = (page: StoryPageView | null) => {
+    stopSpeaking();
+    const sheet = art.astra;
+    if (!sheet || !page || !astraSpeaks(page)) {
+      return;
+    }
+    const { box } = sheet;
+    Object.assign(astra.style, {
+      backgroundImage: image(sheet.url),
+      backgroundSize: `${sheet.frameCount * 100}% 100%`,
+      height: `${box.height}%`,
+      left: `${box.left}%`,
+      top: `${box.top}%`,
+      width: `${box.width}%`,
+    });
+    astra.hidden = false;
+    const frames = speakingFrames(sheet, options.reducedMotion());
+    const showFrame = (index: number) => {
+      const frame = frames[index % frames.length]!;
+      astra.style.backgroundPositionX = framePosition(sheet, frame.frame);
+      if (frames.length > 1) {
+        speaking = setTimeout(() => showFrame(index + 1), frame.ms);
+      }
+    };
+    showFrame(0);
   };
   // Ends a running transition step, leaving the base image as it stands.
   const stop = () => {
@@ -243,6 +297,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }, step.fadeMs + step.holdMs);
   };
   const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
+    rendered = page;
+    speak(page);
     layer.hidden = page === null && backdrop === null;
     panel.hidden = page === null;
     skip.hidden = page === null;
@@ -300,6 +356,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
     stop();
+    stopSpeaking();
     const from = lastPage;
     lastPage = page;
     const steps =
@@ -331,10 +388,14 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     if (shownKey) {
       setBackground(shownKey);
     }
+    if (timer === undefined) {
+      speak(rendered);
+    }
   });
   return {
     dispose(): void {
       stop();
+      stopSpeaking();
       style.remove();
       layer.remove();
     },

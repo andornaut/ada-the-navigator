@@ -69,8 +69,16 @@ export const PREMISE: PremiseContent = {
         "Will you be mine?",
       ].join(""),
     },
-    { text: "Ada sits in the pilot's chair and buckles Penny in beside her." },
-    { choice: "Let's find your holodisk.", speaker: "Astra", text: "Quantum jump ready." },
+    {
+      background: "cockpitSeated",
+      text: "Ada sits in the pilot's chair and buckles Penny in beside her.",
+    },
+    {
+      background: "cockpitSeated",
+      choice: "Let's find your holodisk.",
+      speaker: "Astra",
+      text: "Quantum jump ready.",
+    },
   ],
   roomRock: "Ada's rock glows softly on her desk.",
 };

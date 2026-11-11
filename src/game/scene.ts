@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { GALAXIES } from "../data/storybook.ts";
+import { GALAXIES, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import { BEAM, weaponAt } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
@@ -633,7 +633,7 @@ export class PrototypeScene extends Phaser.Scene {
         ...(story.page.action ? { action: story.page.action } : {}),
         next: !story.page.choices,
       },
-      selected === null ? null : "cockpit",
+      selected === null ? null : SELECTOR_BACKDROP,
     );
     const galaxy = selected === null ? undefined : GALAXIES[selected - 1];
     this.galaxies.show(

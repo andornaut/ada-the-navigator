@@ -19,6 +19,7 @@ export const BACKGROUND_ART: Readonly<Record<Background, string>> = {
   adaRoom: "story-ada-room",
   adaRoomUnpolished: "story-ada-room-unpolished",
   cockpit: "cockpit",
+  cockpitSeated: "cockpit-seated",
   frontDoor: "story-front-door",
   gardenLot: "story-community-garden",
   grandmaGarden: "story-grandma-garden",
@@ -26,6 +27,12 @@ export const BACKGROUND_ART: Readonly<Record<Background, string>> = {
   schoolHallway: "story-school-hallway",
   schoolyard: "story-schoolyard",
 };
+
+/** Galaxy selection's backdrop: Ada and Penny in their seats. */
+export const SELECTOR_BACKDROP: Background = "cockpitSeated";
+
+/** Astra's speaker name; her lens animates on cockpit pages she speaks. */
+export const ASTRA = "Astra";
 
 /** One galaxy in galaxy selection, after Chibi's stage cards. */
 export interface GalaxyCard {

@@ -295,7 +295,11 @@ try {
         .locator(".ada-story-art")
         .first()
         .evaluate((art) => art.style.backgroundImage),
+      astra: await page.locator(".ada-story-astra").evaluate((patch) => !patch.hidden),
       background: await page.locator(".ada-story-background").getAttribute("data-background"),
+      speaker: await panel.evaluate(
+        (node) => node.querySelector(".ada-story-speaker:not([hidden])")?.textContent ?? "",
+      ),
       text: (await panel.locator(".ada-story-paragraph").textContent()) ?? "",
     });
     const choice = panel.locator('[data-action="story-choice"]');
@@ -330,9 +334,16 @@ try {
     PROTOTYPE.premise.prologue.slice(0, 3).map(({ background, text }) => [background, text]),
     "The prologue begins in the park, then Ada polishes the rock and it glows in her room",
   );
-  assert.ok(
-    launchPages.slice(5).every(({ background }) => background === "cockpit"),
-    "The rest of the prologue plays in the cockpit",
+  // The rest plays in the cockpit: empty while Ada and Penny stand, seated once Ada sits.
+  const seatedText = PROTOTYPE.premise.prologue.find(
+    ({ background }) => background === "cockpitSeated",
+  )?.text;
+  const seatedAt = launchPages.findIndex(({ text }) => text === seatedText);
+  assert.ok(seatedAt > 5, "Ada sits after the cockpit's first pages");
+  assert.deepEqual(
+    launchPages.slice(5).map(({ background }) => background),
+    launchPages.slice(5).map((_, index) => (index + 5 < seatedAt ? "cockpit" : "cockpitSeated")),
+    "The prologue's cockpit is empty until Ada sits, then seated",
   );
   // Every page shows its location's image from Art's manifest; only the glowing room's press into
   // the cockpit plays the rock glow, hiding the panel as its first frame fades in.
@@ -358,9 +369,20 @@ try {
     launchPages.slice(1).map(() => ""),
     "Every other page change cuts",
   );
+  // Astra's lens animates on the cockpit pages she speaks, and on no other.
+  assert.deepEqual(
+    launchPages.map(({ astra }) => astra),
+    launchPages.map(
+      ({ background, speaker }) => speaker === "Astra" && background.startsWith("cockpit"),
+    ),
+  );
+  assert.ok(
+    launchPages.some(({ astra }) => astra),
+    "Astra speaks in the prologue's cockpit",
+  );
   events.checks.push(
-    "Storybook pages show Art's backgrounds, and the glowing room plays the rock glow into the " +
-      "cockpit",
+    "Storybook pages show Art's backgrounds, the glowing room plays the rock glow into the " +
+      "cockpit, and Astra's lens animates while she speaks there",
   );
   // Each optional question's answer returns to the list until Continue.
   for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)
@@ -371,6 +393,18 @@ try {
     );
   }
   await selector.waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator(".ada-story-background").getAttribute("data-background"),
+    "cockpitSeated",
+    "Galaxy selection shows Ada and Penny seated",
+  );
+  assert.equal(
+    await page
+      .locator(".ada-story-art")
+      .first()
+      .evaluate((art) => art.style.backgroundImage),
+    artUrl("cockpit-seated"),
+  );
   assert.equal(
     (await selector.locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
