@@ -228,6 +228,40 @@ describe("landmarks", () => {
 });
 
 describe("job boards", () => {
+  it("never send a delivery to a story place that takes none, only to stations and outposts", () => {
+    const station = firstStation(3);
+    // The whale family, the whale and the hub's buoy-held miner and visitors, nearer than any
+    // station and past the delivery minimum: none takes a delivery.
+    const story = ["family", "whale", "miner", "visitors"].map((id, index) => ({
+      id,
+      x: station.x + 3200 + index * 10,
+      y: station.y,
+    }));
+    // A known station farther off, so boards still offer deliveries.
+    const far = stationsNear(ECONOMY, 3, 40_000, station).find(
+      (site) => site.id !== station.id && distance(site, station) >= 3000,
+    )!;
+    const known = { ...context(3), progress: { charted: [], stations: [far.id] } };
+    const deliveries = [];
+    for (let made = 0; made < 40; made++) {
+      const board = stationBoard({ ...known, outposts: story }, emptyBook(made), station);
+      deliveries.push(...board.filter(({ type }) => type === "delivery"));
+    }
+    expect(deliveries.length).toBeGreaterThan(0);
+    for (const offer of deliveries) {
+      expect(offer.target.id).toBe(far.id);
+    }
+    // An outpost there takes one.
+    const sunflower = firstStation();
+    const growers = { id: "growers", x: sunflower.x + 3100, y: sunflower.y };
+    const boards = Array.from({ length: 40 }, (_, made) =>
+      stationBoard({ ...context(), outposts: [growers] }, emptyBook(made), sunflower),
+    );
+    expect(
+      boards.flat().some(({ target, type }) => type === "delivery" && target.id === "growers"),
+    ).toBe(true);
+  });
+
   it("offer three jobs of distinct types with targets in their ranges and table rewards", () => {
     const station = firstStation();
     const book = emptyBook();
@@ -478,7 +512,7 @@ describe("jobs in play", () => {
     model.undock();
     // Without the item, Ada goes back to the issuing station, which the Map marks.
     expect(model.map?.places.find(({ id }) => id === station.id)?.job).toBe(true);
-    expect(model.jobObjective).toBe("Deliver seeds to Grower");
+    expect(model.jobObjective).toBe("Deliver seeds to the growers' outpost");
   });
 
   it("tow a rescue: Tow within 120, Travel refused, the tow saved and returned on Return home", () => {
@@ -608,7 +642,7 @@ describe("jobs in play", () => {
       type: "delivery",
     };
     model.undock();
-    expect(model.jobObjective).toBe("Deliver seeds to station");
+    expect(model.jobObjective).toBe("Deliver seeds to the station");
     model.state.flight!.dangerFor = 0;
     model.returnHome();
     expect(model.state.tasks[1]?.carrying).toBe(false);

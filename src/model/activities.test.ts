@@ -277,7 +277,7 @@ describe("repeatable activities", () => {
       target: { id: site.id, x: site.x, y: site.y },
       type: "delivery",
     } as const;
-    expect(model.jobText(delivery).title).toBe("Deliver seeds to station");
+    expect(model.jobText(delivery).title).toBe("Deliver seeds to the station");
     expect(model.map?.places.find(({ id }) => id === site.id)?.label).toBe("Station");
     expect(model.indicatorTargets).toContainEqual(
       expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),

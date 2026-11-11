@@ -1,3 +1,4 @@
+import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   JOB_POOL,
@@ -126,10 +127,11 @@ function jobTarget(
     return site ? { item: site.kind, target: { id: site.id, x: site.x, y: site.y } } : null;
   }
   if (type === "delivery") {
-    // The nearest other known station or outpost at least the minimum away, with no upper limit.
+    // The nearest other known station or outpost at least the minimum away, with no upper limit;
+    // other story places never take deliveries.
     const place = [
       ...context.progress.stations.flatMap((id) => stationById(ECONOMY, context.sector, id) ?? []),
-      ...context.outposts,
+      ...context.outposts.filter(({ id }) => deliveryDestination(id)),
     ]
       .filter(
         (place) => place.id !== station.id && distance(place, station) >= JOB_TUNING.delivery.min,

@@ -8,6 +8,7 @@ import {
   type Mood,
   SPEAKERS,
 } from "../data/conversations.ts";
+import { DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
@@ -1471,14 +1472,15 @@ export class GameModel {
     return stationById(ECONOMY, this.state.selectedSector, job.station);
   }
   /**
-   * A place's name inside a sentence, as job titles and objectives use it: a station's sentence
-   * form ("station"), else its Map name.
+   * A place's name inside a sentence, as job titles and objectives use it, with its article: a
+   * station's or a story destination's sentence name (data/destinations.ts), else its Map name.
    */
   private placeLabel(id: string): string {
     if (id.startsWith("station:")) {
-      return this.label("stationInSentence");
+      return STATION_SENTENCE;
     }
     return (
+      DESTINATIONS[id]?.sentence ??
       this.destinations().find((place) => place.id === id)?.label ??
       this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ??
       this.chapter.name

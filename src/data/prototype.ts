@@ -501,11 +501,9 @@ export const PROTOTYPE: PrototypeContent = {
     stardustAmount: "{amount} Stardust",
     start: "Start",
     station: "Station",
-    // A station named inside a sentence, as job titles and objectives do; the Map keeps Station.
-    stationInSentence: "station",
     stationWelcome: "Welcome aboard. Trade your Stardust, or take a job.",
     supplyGoal: "Carry supplies to a station.",
-    supplyObjective: "Carry {item} to the {destination}.",
+    supplyObjective: "Carry {item} to {destination}.",
     surveyAbout: "Astra's map has a gap here. Fly close.",
     surveyTitle: "Chart the {landmark}",
     talk: "Talk",

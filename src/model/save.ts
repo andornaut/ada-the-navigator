@@ -1,5 +1,6 @@
 import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
+import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
@@ -599,6 +600,41 @@ function migrateLegacyObjects(objects: unknown): void {
 }
 
 /** Renames Missiles and Triple Laser and maps bought levels onto levels 1 to 3, in place. */
+/**
+ * CLEANUP (added 2026-11-11): deliveries once reached story destinations that take none, such
+ * as the whale family. Such a held delivery is dropped, freeing its slot as Drop would, and such
+ * board offers leave their boards to be made again; the rest of the save loads. Remove once saves
+ * holding them have converged.
+ */
+function dropStoryDeliveries(value: Record<string, unknown>): void {
+  const storyDelivery = (job: unknown): boolean =>
+    record(job) &&
+    job.type === "delivery" &&
+    record(job.target) &&
+    typeof job.target.id === "string" &&
+    !job.target.id.startsWith("station:") &&
+    !deliveryDestination(job.target.id);
+  if (record(value.tasks)) {
+    for (const [sector, task] of Object.entries(value.tasks)) {
+      if (record(task) && task.kind === "job" && storyDelivery(task)) {
+        delete value.tasks[sector];
+      }
+    }
+  }
+  const boards = record(value.jobs) ? value.jobs.boards : undefined;
+  if (record(boards)) {
+    for (const stations of Object.values(boards)) {
+      if (!record(stations)) {
+        continue;
+      }
+      for (const [station, offers] of Object.entries(stations)) {
+        if (Array.isArray(offers)) {
+          stations[station] = offers.filter((offer) => !storyDelivery(offer));
+        }
+      }
+    }
+  }
+}
 function migrateLegacyWeapons(value: Record<string, unknown>): void {
   for (const holder of [value.economy, value.flight]) {
     if (!record(holder)) {
@@ -709,7 +745,7 @@ function jobOffer(sector: SectorId, value: unknown): boolean {
     return (
       target !== value.station &&
       (stationById(ECONOMY, sector, target) !== null ||
-        (target !== "holodisk" && (destinationIds[sector] ?? []).includes(target)))
+        ((destinationIds[sector] ?? []).includes(target) && deliveryDestination(target)))
     );
   }
   return target === "" && (value.type === "rescue" || vector(value.spot));
@@ -776,6 +812,7 @@ export function restoreSave(saved: unknown): GameState | null {
     );
     if (record(value)) {
       migrateLegacyWeapons(value);
+      dropStoryDeliveries(value);
     }
     if (
       !record(value) ||

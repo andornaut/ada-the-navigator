@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
+import { stationsNear } from "./stations.ts";
 import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
@@ -679,5 +681,41 @@ describe("current generation save boundary", () => {
     expect(relaunch(PROTOTYPE, old).state.mode).toBe("home");
     expect(relaunch(PROTOTYPE, old).state.flight).toBeNull();
     expect(old.flight).not.toHaveProperty("world");
+  });
+});
+
+// CLEANUP (added 2026-11-11): remove with the save loader's story-delivery drop.
+describe("deliveries to story places in older saves", () => {
+  it("drops a held delivery or board offer to a story place that takes none, keeping the save", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked = [1, 2, 3];
+    model.startSector(3);
+    playOpening(model);
+    model.state.dialogue = null;
+    const station = stationsNear(ECONOMY, 3, 40_000, { x: 0, y: 0 })[0]!;
+    const job = (id: string, target: string) => ({
+      id,
+      item: "song shells",
+      reward: 30,
+      station: station.id,
+      target: { id: target, x: 100, y: 200 },
+      type: "delivery" as const,
+    });
+    const saved = JSON.parse(model.save()) as GameState;
+    // The older shape: a held delivery to the whale family, and one on offer to the whale.
+    saved.tasks[3] = { ...job("job:7", "family"), carrying: true, kind: "job" };
+    saved.jobs.boards[3] = { [station.id]: [job("job:8", "whale"), job("job:9", "family")] };
+    saved.economy.stardust = 123;
+    const restored = restoreSave(JSON.stringify(saved));
+    expect(restored).not.toBeNull();
+    expect(restored!.tasks[3]).toBeUndefined();
+    expect(restored!.jobs.boards[3]![station.id]).toEqual([]);
+    expect(restored!.economy.stardust).toBe(123);
+    // A delivery to a station still loads as it was.
+    const kept = structuredClone(saved);
+    const other = stationsNear(ECONOMY, 3, 40_000, { x: 0, y: 0 })[1]!;
+    kept.tasks[3] = { ...job("job:7", other.id), carrying: true, kind: "job" };
+    kept.jobs.boards[3] = {};
+    expect(restoreSave(JSON.stringify(kept))!.tasks[3]).toMatchObject({ target: { id: other.id } });
   });
 });
