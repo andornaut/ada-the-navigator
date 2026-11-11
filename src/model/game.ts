@@ -1078,9 +1078,13 @@ export class GameModel {
           .map(({ id, kind, name, x, y }) => ({ id, kind, label: this.label(name), x, y })),
         total: landmarkSites(f.sector).length,
       },
-      lines: { job: this.jobObjective, objective: this.objective },
       objective: this.objectiveId(f.sector),
       progress: this.current,
+      quests: {
+        job: this.jobObjective,
+        story: this.objective,
+        storyComplete: this.current.resolved,
+      },
     });
   }
   /** The current objective's destination in a galaxy, if it has one (indicators.ts). */

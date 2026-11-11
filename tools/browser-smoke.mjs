@@ -987,11 +987,12 @@ try {
     const box = (selector) => screen.querySelector(selector).getBoundingClientRect();
     const header = screen.querySelector(".ada-map-header");
     const pips = screen.querySelector(".ada-map-pips");
-    while (pips.children.length < 15) {
+    while (pips.children.length < 18) {
       pips.append(pips.firstElementChild.cloneNode(true));
     }
     const result = {
       earth: box('[data-action="map-returnHome"]'),
+      quests: box('[data-action="map-quests"]'),
       fits: header.scrollWidth <= header.clientWidth,
       header: box(".ada-map-header"),
       tools: box(".ada-map-tools"),
@@ -1011,8 +1012,16 @@ try {
     `Return to Earth is 148.5 by 48 on the HUD row, 16 left of the tools: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
-    hudRow.fits && hudRow.header.right <= hudRow.earth.left - 8 * hudRow.unit + 0.5,
-    `The header holds 15 pips within its cap: ${JSON.stringify(hudRow)}`,
+    // Device-pixel snapping puts the 86.25 width within 0.1 either side.
+    Math.abs(hudRow.quests.width / hudRow.unit - 86.25) <= 0.1 &&
+      logical(hudRow.quests.height) === 48 &&
+      Math.abs(logical(hudRow.earth.left - hudRow.quests.right) - 8) <= 0.1 &&
+      Math.abs(hudRow.quests.top - hudRow.earth.top) <= 0.5,
+    `Quests is 86.25 by 48, 8 left of Return to Earth: ${JSON.stringify(hudRow)}`,
+  );
+  assert.ok(
+    hudRow.fits && hudRow.header.right <= hudRow.quests.left - 8 * hudRow.unit + 0.5,
+    `The header holds 18 pips within its cap: ${JSON.stringify(hudRow)}`,
   );
   assert.equal(await mapEarth.getAttribute("aria-disabled"), "true", "It is disabled in danger");
   const reasonOnly = await mapScreen.evaluate((screen) => {
@@ -1060,10 +1069,46 @@ try {
   };
   const tabbed = await tabThrough(5);
   assert.deepEqual(
-    tabbed.slice(0, 4),
-    ["zoomIn", "zoomOut", "recentre", "map-returnHome"],
-    `Tab moves through the tools, then Return to Earth: ${tabbed}`,
+    tabbed.slice(0, 5),
+    ["zoomIn", "zoomOut", "recentre", "map-quests", "map-returnHome"],
+    `Tab moves through the tools, then Quests and Return to Earth: ${tabbed}`,
   );
+  // Quests: the card under a dim over the whole map, focus on its first line button or its X;
+  // Escape closes it back to the map, and a mapped line selects its chip.
+  const questsCard = page.locator('[data-dialog="quests"]');
+  const openQuests = async () => {
+    await mapScreen.locator('[data-action="map-quests"]').click();
+    await questsCard.waitFor({ state: "visible" });
+  };
+  await openQuests();
+  const questLines = await questsCard.evaluate((card) => ({
+    buttons: [...card.querySelectorAll(".ada-map-quest")].map((button) => button.dataset.target),
+    focused: document.activeElement?.dataset.action ?? document.activeElement?.className ?? "",
+    lines: [...card.querySelectorAll(".ada-map-quest-lines > *")].map((line) => line.textContent),
+  }));
+  assert.ok(
+    questLines.lines.length > 0 &&
+      (questLines.buttons.length > 0
+        ? questLines.focused.includes("ada-map-quest")
+        : questLines.focused === "close-quests"),
+    `Quests lists its lines with focus on the first line button or the X: ${JSON.stringify(questLines)}`,
+  );
+  await page.screenshot({ path: `${output}/map-quests.png` });
+  await page.keyboard.press("Escape");
+  await questsCard.waitFor({ state: "hidden" });
+  assert.ok(await mapScreen.isVisible(), "Escape closes Quests back to the map");
+  if (questLines.buttons.length > 0) {
+    await openQuests();
+    await questsCard.locator(".ada-map-quest").first().click();
+    await questsCard.waitFor({ state: "hidden" });
+    assert.equal(
+      await mapScreen
+        .locator(`.ada-map-places [data-place="${questLines.buttons[0]}"]`)
+        .getAttribute("aria-pressed"),
+      "true",
+      "A mapped Quests line closes the modal and selects its chip",
+    );
+  }
   await mapScreen.locator('[data-tool="close"]').focus();
   // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
   await mapEarth.click({ force: true });

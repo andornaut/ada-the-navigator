@@ -21,6 +21,7 @@ import {
   mapHeaderCap,
   mapHeaderWidth,
   mapProjection,
+  mapQuestsRect,
   openingView,
   panelMaxWidth,
   panLimit,
@@ -58,9 +59,10 @@ describe("map screen tokens", () => {
         nameTop: 10,
         padding: 16,
         pip: 6,
-        pipGap: 8,
         pipPitch: 8,
         radius: 4,
+        stackGap: 4,
+        stackTop: 9,
       },
       minBox: { height: 6000, width: 12000 },
       tools: { pitch: 56 },
@@ -116,21 +118,54 @@ describe("map projection and fit", () => {
     expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04683);
   });
 
-  it("puts Return to Earth on the HUD row, 16 left of the tools, and caps the header", () => {
+  it("puts Quests then Return to Earth on the HUD row, 16 left of the tools, capping the header", () => {
     // 720 logical with phone insets of 43 at each side.
     const phone = { bottom: 0, left: 43, right: 43, top: 0 };
-    expect(MAP_SCREEN.earth).toEqual({ height: 48, width: 148.5 });
-    expect(mapEarthRect(NO_INSETS, BASE)).toEqual({ height: 48, width: 148.5, x: 499.5, y: 8 });
-    const earth = mapEarthRect(phone, BASE);
-    expect([earth.x, earth.x + earth.width]).toEqual([464.5, 613]);
-    expect(earth.x + earth.width).toBe(toolColumnLeft(phone, BASE) - SPACING.pageInset);
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(483.5);
-    expect(mapHeaderCap(phone, BASE)).toBe(413.5);
-    // Art's widest header, Sunflower at 100% with 12 pips, is 381.8: 15 pips still fit the cap.
-    const widest = 381.8 - mapHeaderWidth(0, 0, 12);
-    expect(mapHeaderWidth(0, 0, 12) + widest).toBeCloseTo(381.8, 9);
-    expect(mapHeaderWidth(0, 0, 15) + widest).toBeLessThanOrEqual(mapHeaderCap(phone, BASE));
-    expect(mapHeaderWidth(0, 0, 15) - mapHeaderWidth(0, 0, 12)).toBe(24);
+    expect(MAP_SCREEN.hudRow).toEqual({
+      earth: { width: 148.5 },
+      gap: 8,
+      height: 48,
+      quests: { width: 86.25 },
+    });
+    const span = (rect: { width: number; x: number }) => [rect.x, rect.x + rect.width];
+    // Art's table: Quests 405.3 to 491.5 and Return to Earth 499.5 to 648 at the base, 370.3 to
+    // 456.5 and 464.5 to 613 with phone insets.
+    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([405.25, 491.5]);
+    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([499.5, 648]);
+    expect(span(mapQuestsRect(phone, BASE))).toEqual([370.25, 456.5]);
+    expect(span(mapEarthRect(phone, BASE))).toEqual([464.5, 613]);
+    expect(mapEarthRect(phone, BASE).x + 148.5).toBe(
+      toolColumnLeft(phone, BASE) - SPACING.pageInset,
+    );
+    expect(mapQuestsRect(phone, BASE).y).toBe(mapEarthRect(phone, BASE).y);
+    // The header reaches Quests less SPACING.gap: 389.3 at the base, 319.3 with phone insets.
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(389.25);
+    expect(mapHeaderCap(phone, BASE)).toBe(319.25);
+  });
+
+  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 18 pips", () => {
+    const { header } = MAP_SCREEN;
+    expect([header.stackTop, header.stackGap, header.labelTop]).toEqual([9, 4, 14]);
+    // The column tops at stackTop: 6 pips, the gap and the 20 line centre on the 48 row.
+    expect(header.stackTop).toBe((header.height - (header.pip + header.stackGap + 20)) / 2);
+    // "Sunflower" (116.0), "100% mapped" (106.8) and 12 pips (94).
+    expect(mapHeaderWidth(116, 106.8, 12)).toBeCloseTo(279.8, 9);
+    expect(mapHeaderWidth(116, 0, 12)).toBe(32 + 116 + 25 + 94);
+    expect(mapHeaderWidth(116, 106.8, 0)).toBeCloseTo(279.8, 9);
+    const cap = mapHeaderCap({ bottom: 0, left: 43, right: 43, top: 0 }, BASE);
+    expect(mapHeaderWidth(116, 106.8, 18)).toBeLessThanOrEqual(cap);
+    expect(mapHeaderWidth(116, 106.8, 19)).toBeGreaterThan(cap);
+  });
+
+  it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {
+    expect(MAP_SCREEN.quests).toEqual({
+      chip: MAP_SYMBOL.chip,
+      lineGap: 8,
+      markGap: 6,
+      overhang: (MAP_SYMBOL.chip - 20) / 2,
+      ring: 1,
+      textColumn: 50,
+    });
   });
 
   it("keeps the centred place panel a gap clear of the tool column: 592 at the 720 base", () => {

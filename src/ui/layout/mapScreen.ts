@@ -17,11 +17,6 @@ export const MAP_SCREEN = {
   chartRadius: CHARTING_RADIUS,
   /** Movement past this pans and never selects (SCROLL.dragThreshold). */
   dragThreshold: SCROLL.dragThreshold,
-  /**
-   * Return to Earth: a secondary TEXT_BUTTON on the HUD row, its "Return to Earth" label (116.5)
-   * plus TEXT_BUTTON.inset each side.
-   */
-  earth: { height: TEXT_BUTTON.height, width: 116.5 + 2 * TEXT_BUTTON.inset },
   /** Chip radius plus SPACING.gap: symbols keep this far inside the fit region. */
   fitMargin: 22,
   fog: {
@@ -39,27 +34,53 @@ export const MAP_SCREEN = {
     alpha: 0.65,
     /** The divider between the name and the percent. */
     divider: { height: 16, width: 1 },
-    /** Name, this gap, the divider, this gap, percent. */
+    /** Name, this gap, the divider, this gap, the column of the pips over the percent. */
     dividerGap: 12,
     /** The HUD row: HUD_BUTTON.target. */
     height: HUD_BUTTON.target,
-    /** The percent's 20 line box top. */
+    /** The percent's 20 line box top when the galaxy has no landmarks. */
     labelTop: 14,
     /** The name's 28 line box top. */
     nameTop: 10,
     padding: 16,
-    /** Pip diameter, centred on the row. */
+    /** Pip diameter. */
     pip: 6,
-    /** Percent to the first pip. */
-    pipGap: 8,
     /** Pip centre to centre. */
     pipPitch: 8,
     /** An uncharted pip's ring. */
     pipRing: 1,
     radius: 4,
+    /** The pips to the percent's line box (SPACING.rowGap). */
+    stackGap: SPACING.rowGap,
+    /** The column's top: (48 - 30) / 2 for the 6 pips, the gap and the 20 line. */
+    stackTop: 9,
+  },
+  /**
+   * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Return to Earth, each its
+   * label plus TEXT_BUTTON.inset each side (Quests 54.25, Return to Earth 116.5), SPACING.gap
+   * apart.
+   */
+  hudRow: {
+    earth: { width: 116.5 + 2 * TEXT_BUTTON.inset },
+    gap: SPACING.gap,
+    height: TEXT_BUTTON.height,
+    quests: { width: 54.25 + 2 * TEXT_BUTTON.inset },
   },
   /** The opening box is at least this many projected units across and down. */
   minBox: { height: 6000, width: 12000 },
+  /**
+   * The Quests modal's lines (art/map.md "Quests modal"): a mapped line's chip (MAP_SYMBOL.chip)
+   * overhanging its label's 20 line box by 4 each way, markGap to the label, lines lineGap apart,
+   * plain text from textColumn, and an unmapped line's hollow ring.
+   */
+  quests: {
+    chip: 28,
+    lineGap: SPACING.gap,
+    markGap: SPACING.markGap,
+    overhang: 4,
+    ring: 1,
+    textColumn: TEXT_BUTTON.inset + 28 + SPACING.markGap,
+  },
   tools: {
     /** Tool targets top to top: HUD_BUTTON.target + HUD_BUTTON.gap. */
     pitch: HUD_BUTTON.target + HUD_BUTTON.gap,
@@ -218,28 +239,36 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
 }
 
 /**
- * Return to Earth on the HUD row (art/map.md "Return to Earth"): its top on the HUD rect's top
- * and its right edge SPACING.pageInset left of the tool column; it never moves with the header.
+ * Return to Earth on the HUD row (art/map.md "Quests and Return to Earth"): its top on the HUD
+ * rect's top and its right edge SPACING.pageInset left of the tool column; it never moves with
+ * the header.
  */
 export function mapEarthRect(insets: Insets, view: Size): Rect {
   const right = toolColumnLeft(insets, view) - SPACING.pageInset;
-  const { height, width } = MAP_SCREEN.earth;
-  return { height, width, x: right - width, y: hudRect(insets, view).y };
+  const { earth, height } = MAP_SCREEN.hudRow;
+  return { height, width: earth.width, x: right - earth.width, y: hudRect(insets, view).y };
 }
 
-/** The header's cap: the HUD row from its left to SPACING.gap short of Return to Earth. */
+/** Quests on the HUD row: ending hudRow.gap left of Return to Earth, at the same top. */
+export function mapQuestsRect(insets: Insets, view: Size): Rect {
+  const earth = mapEarthRect(insets, view);
+  const { gap, height, quests } = MAP_SCREEN.hudRow;
+  return { height, width: quests.width, x: earth.x - gap - quests.width, y: earth.y };
+}
+
+/** The header's cap: the HUD row from its left to SPACING.gap short of Quests. */
 export function mapHeaderCap(insets: Insets, view: Size): number {
-  return mapEarthRect(insets, view).x - SPACING.gap - hudRect(insets, view).x;
+  return mapQuestsRect(insets, view).x - SPACING.gap - hudRect(insets, view).x;
 }
 
 /**
- * The header's width: its padding, the name, the divider and its gaps, the percent, then the
- * pips one pitch apart.
+ * The header's width: its padding, the name, the divider and its gaps, then the column of the
+ * pips (one pitch apart) over the percent, as wide as the wider of the two.
  */
 export function mapHeaderWidth(nameWidth: number, percentWidth: number, pips: number): number {
-  const { divider, dividerGap, padding, pip, pipGap, pipPitch } = MAP_SCREEN.header;
-  const pipRow = pips > 0 ? pipGap + pip + (pips - 1) * pipPitch : 0;
-  return 2 * padding + nameWidth + 2 * dividerGap + divider.width + percentWidth + pipRow;
+  const { divider, dividerGap, padding, pip, pipPitch } = MAP_SCREEN.header;
+  const pipRow = pips > 0 ? pip + (pips - 1) * pipPitch : 0;
+  return 2 * padding + nameWidth + 2 * dividerGap + divider.width + Math.max(percentWidth, pipRow);
 }
 
 /** The fit region inset by fitMargin on every side. */

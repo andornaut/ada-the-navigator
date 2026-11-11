@@ -336,6 +336,7 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
     call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
     call("mapScreen.ts", "mapEarthRect", mapScreen.mapEarthRect, insets, view);
+    call("mapScreen.ts", "mapQuestsRect", mapScreen.mapQuestsRect, insets, view);
     call("mapScreen.ts", "mapHeaderCap", mapScreen.mapHeaderCap, insets, view);
     for (const places of [
       [],

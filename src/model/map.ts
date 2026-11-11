@@ -180,14 +180,14 @@ export interface MapPlace {
 }
 
 /**
- * One of the Map's objective lines (gameplay/rules.md "Pause"): its text, and the place it is
- * tied to, the id of its target's chip once that target is mapped, else null. Art designs where
- * the lines show; the model only reports them.
+ * One of the Quests modal's lines (gameplay/rules.md "Pause"), in its order: the story objective,
+ * or the chapter's story complete; then the held job's objective (shown as "Job: {objective}"),
+ * or, with no job held and a station discovered, the job boards' hint. A story or job line is tied
+ * to its target, the id of the target's chip once mapped, else null.
  */
-export interface MapLine {
-  readonly target: string | null;
-  readonly text: string;
-}
+export type QuestLine =
+  | { readonly kind: "job" | "story"; readonly target: string | null; readonly text: string }
+  | { readonly kind: "jobBoards" | "storyComplete" };
 
 export interface GalaxyMap {
   /**
@@ -199,15 +199,12 @@ export interface GalaxyMap {
   readonly facing: Vec;
   /** The galaxy's landmarks for the header's pips: how many are charted, of how many. */
   readonly landmarks: { readonly charted: number; readonly total: number };
-  /**
-   * The story objective's line, tied to the objective's destination once mapped, and the held
-   * job's objective (shown as "Job: {objective}"), tied to its target; null where there is none.
-   */
-  readonly lines: { readonly job: MapLine | null; readonly objective: MapLine | null };
   /** Whole percent of the charted area's places discovered or charted, rounded down. */
   readonly mapped: number;
   readonly places: readonly MapPlace[];
   readonly player: Vec;
+  /** The Quests modal's lines; empty with nothing to do. */
+  readonly quests: readonly QuestLine[];
 }
 
 export interface MapContext {
@@ -229,11 +226,18 @@ export interface MapContext {
   /** Each discovered destination's, station's and the holodisk waypoint's label, by id. */
   readonly label: (id: string, kind: "destination" | "holodisk" | "station") => string;
   readonly landmarks: LandmarkChart;
-  /** The story objective's text, or empty, and the held job's objective, or null without one. */
-  readonly lines: { readonly job: string | null; readonly objective: string };
   /** The current objective's destination, shown once it is mapped. */
   readonly objective: string | null;
   readonly progress: { readonly known: readonly string[]; readonly stations: readonly string[] };
+  /**
+   * The quests to list: the story objective's text (or empty), whether the chapter is resolved,
+   * and the held job's objective, or null without one.
+   */
+  readonly quests: {
+    readonly job: string | null;
+    readonly story: string;
+    readonly storyComplete: boolean;
+  };
 }
 
 /**
@@ -347,18 +351,26 @@ export function galaxyMap(context: MapContext): GalaxyMap {
       : [];
   const { chunkSize } = context;
   const shown = [...marked, ...spot];
-  const line = (text: string | null, tied: (place: MapPlace) => boolean): MapLine | null =>
-    text ? { target: shown.find(tied)?.id ?? null, text } : null;
+  const target = (tied: (place: MapPlace) => boolean) => shown.find(tied)?.id ?? null;
+  const { quests } = context;
+  const story: QuestLine[] = quests.storyComplete
+    ? [{ kind: "storyComplete" }]
+    : quests.story
+      ? [{ kind: "story", target: target((place) => place.objective), text: quests.story }]
+      : [];
+  const jobLine: QuestLine[] =
+    quests.job !== null
+      ? [{ kind: "job", target: target((place) => place.job), text: quests.job }]
+      : stations.length > 0
+        ? [{ kind: "jobBoards" }]
+        : [];
   return {
     explored: exploredCentres(chunkSize, context.explored),
     facing: { x: flight.facing.x, y: flight.facing.y },
     landmarks: { charted: landmarks.charted.length, total: landmarks.total },
-    lines: {
-      job: line(context.lines.job, (place) => place.job),
-      objective: line(context.lines.objective, (place) => place.objective),
-    },
     mapped: total > 0 ? Math.floor((100 * Math.min(found, total)) / total) : 0,
     places: shown,
     player: { x: flight.player.x, y: flight.player.y },
+    quests: [...story, ...jobLine],
   };
 }

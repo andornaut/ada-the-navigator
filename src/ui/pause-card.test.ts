@@ -89,10 +89,10 @@ const MAP: GalaxyMap = {
   explored: [],
   facing: { x: 0, y: -1 },
   landmarks: { charted: 0, total: 12 },
-  lines: { job: null, objective: null },
   mapped: 25,
   places: [],
   player: { x: 0, y: 0 },
+  quests: [],
 };
 const state = (change: Partial<PauseState> = {}): PauseState => ({
   field: null,

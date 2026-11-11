@@ -51,10 +51,10 @@ const NO_MAP: GalaxyMap = {
   explored: [],
   facing: { x: 0, y: -1 },
   landmarks: { charted: 0, total: 0 },
-  lines: { job: null, objective: null },
   mapped: 0,
   places: [],
   player: { x: 0, y: 0 },
+  quests: [],
 };
 
 // An action stack: full-width actions a gap apart, filling the card's inner width.
@@ -209,7 +209,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     button.addEventListener("click", () => act(id));
   }
   paused.close.addEventListener("click", () => setOpen(false));
+  // Back and Escape close the Quests modal first, then the map.
   function closeMap(): void {
+    if (mapOpen() && mapScreen.questsOpen()) {
+      mapScreen.closeQuests();
+      return;
+    }
     if (mapOpen()) {
       show("paused");
       buttons.get("map")?.focus();

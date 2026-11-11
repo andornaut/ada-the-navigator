@@ -39,7 +39,8 @@ time the outpost is on screen.
 The Paused card's Map shows
 the galaxy's discovered destinations and stations and how much of it is mapped;
 Travel here reaches a chosen one outside danger, and Return to Earth ends the
-flight outside danger, towing or not. Space draws
+flight outside danger, towing or not. Its Quests card lists the story objective
+and the held job; a line whose target is mapped selects that place. Space draws
 authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
 discovery caches, the holodisk and its beacon, Stardust, weapon pickups, missiles,
 blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,

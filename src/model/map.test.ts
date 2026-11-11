@@ -48,7 +48,7 @@ function context(
   landmarks: LandmarkChart = NO_LANDMARKS,
   objective: string | null = null,
   job: MapContext["job"] = null,
-  lines: MapContext["lines"] = { job: null, objective: "" },
+  quests: MapContext["quests"] = { job: null, story: "", storyComplete: false },
 ): MapContext {
   return {
     catalog: ECONOMY,
@@ -60,9 +60,9 @@ function context(
     job,
     label: (id, kind) => `${kind}:${id}`,
     landmarks,
-    lines,
     objective,
     progress,
+    quests,
   };
 }
 
@@ -196,37 +196,56 @@ describe("galaxy map", () => {
     expect(spot.mapped).toBe(onPlace.mapped);
   });
 
-  it("ties the objective and job lines to their targets' chips once mapped, else to none", () => {
+  it("lists the Quests lines in order, each story and job line tied to its mapped target", () => {
     const model = flying();
     const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
     const job = { id: "growers", label: "Deliver seeds to Grower", x: growers.x, y: growers.y };
-    const lines = { job: "Deliver seeds to Grower", objective: "Find the growers." };
+    const quests = {
+      job: "Deliver seeds to Grower",
+      story: "Find the growers.",
+      storyComplete: false,
+    };
     const unmapped = galaxyMap(
-      context(model, { known: [], stations: [] }, NO_LANDMARKS, "growers", null, lines),
+      context(model, { known: [], stations: [] }, NO_LANDMARKS, "growers", null, quests),
     );
-    expect(unmapped.lines).toEqual({
-      job: { target: null, text: "Deliver seeds to Grower" },
-      objective: { target: null, text: "Find the growers." },
-    });
+    expect(unmapped.quests).toEqual([
+      { kind: "story", target: null, text: "Find the growers." },
+      { kind: "job", target: null, text: "Deliver seeds to Grower" },
+    ]);
     const mapped = galaxyMap(
-      context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "growers", job, lines),
+      context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "growers", job, quests),
     );
-    expect(mapped.lines).toEqual({
-      job: { target: "growers", text: "Deliver seeds to Grower" },
-      objective: { target: "growers", text: "Find the growers." },
-    });
-    // A job's own spot is its line's target; no job and no objective give no lines.
+    expect(mapped.quests).toEqual([
+      { kind: "story", target: "growers", text: "Find the growers." },
+      { kind: "job", target: "growers", text: "Deliver seeds to Grower" },
+    ]);
+    // A job's own spot is its line's target.
     const spot = { id: "job:7", label: "Find a lost toolbox", x: 5000, y: 0 };
     expect(
       galaxyMap(
         context(model, { known: [], stations: [] }, NO_LANDMARKS, null, spot, {
           job: "Find a lost toolbox",
-          objective: "",
+          story: "",
+          storyComplete: false,
         }),
-      ).lines,
-    ).toEqual({ job: { target: "job:7", text: "Find a lost toolbox" }, objective: null });
-    expect(model.map?.lines.job).toBeNull();
-    expect(model.map?.lines.objective?.text).toBe(model.objective);
+      ).quests,
+    ).toEqual([{ kind: "job", target: "job:7", text: "Find a lost toolbox" }]);
+  });
+
+  it("says the story is complete once resolved, hints at job boards and lists nothing else", () => {
+    const model = flying();
+    const station = [inside[0]!.id];
+    const done = { job: null, story: "Return to Earth when ready.", storyComplete: true };
+    expect(
+      galaxyMap(context(model, { known: [], stations: station }, NO_LANDMARKS, null, null, done))
+        .quests,
+    ).toEqual([{ kind: "storyComplete" }, { kind: "jobBoards" }]);
+    // No job board hint without a discovered station; nothing to do lists no lines.
+    const none = { job: null, story: "", storyComplete: false };
+    expect(
+      galaxyMap(context(model, { known: [], stations: [] }, NO_LANDMARKS, null, null, none)).quests,
+    ).toEqual([]);
+    expect(model.map?.quests).toEqual([{ kind: "story", target: null, text: model.objective }]);
   });
 
   it("gives each place its symbol and keeps Ada's facing, the landmark pips and explored chunks", () => {
@@ -480,9 +499,9 @@ describe("galaxy map", () => {
       job: null,
       label: (id: string) => id,
       landmarks: NO_LANDMARKS,
-      lines: { job: null, objective: "" },
       objective: "miner",
       progress: { known: ["hub", "miner", "visitors"], stations: [] },
+      quests: { job: null, story: "", storyComplete: false },
     } satisfies MapContext;
     const map = galaxyMap(context);
     expect(map.places.map(({ id, objective }) => [id, objective])).toEqual([["hub", true]]);

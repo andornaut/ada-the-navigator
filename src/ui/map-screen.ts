@@ -1,6 +1,12 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { type GalaxyMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
+import {
+  type GalaxyMap,
+  type MapPlace,
+  type MapPlaceType,
+  placeType,
+  type QuestLine,
+} from "../model/map.ts";
 import type { Vec } from "../model/types.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
@@ -37,7 +43,7 @@ import {
 import { HUD_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
 import { mapShowsEmpty, returnToEarthAvailable } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
@@ -60,6 +66,10 @@ export interface MapScreenLabels {
   readonly map: string;
   /** "{percent}% mapped". */
   readonly mapPercent: string;
+  readonly quests: string;
+  readonly questsEmpty: string;
+  readonly questsJobBoards: string;
+  readonly questsStoryComplete: string;
   readonly returnHome: string;
   readonly towTravel: string;
   readonly travelEmpty: string;
@@ -84,6 +94,10 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     jobObjective: label("jobObjective"),
     map: label("map"),
     mapPercent: label("mapPercent"),
+    quests: label("quests"),
+    questsEmpty: label("questsEmpty"),
+    questsJobBoards: label("questsJobBoards"),
+    questsStoryComplete: label("questsStoryComplete"),
     returnHome: label("returnHome"),
     towTravel: label("towTravel"),
     travelEmpty: label("travelEmpty"),
@@ -339,8 +353,8 @@ export const MAP_SCREEN_STYLE = `
 }
 
 /* The HUD row, from the HUD rect's left to SPACING.pageInset short of the tool column
-   (layout/mapScreen.ts mapEarthRect): the header on its left and Return to Earth, a secondary
-   text button MAP_SCREEN.earth wide, on its right, SPACING.gap apart at least, which caps the
+   (layout/mapScreen.ts mapEarthRect): the header on its left, then Quests and Return to Earth,
+   secondary text buttons MAP_SCREEN.hudRow sets, on its right, SPACING.gap apart, which caps the
    header (mapHeaderCap). */
 .ada-controls .ada-map-hud-row{
   position:absolute;
@@ -357,16 +371,22 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-hud-row .ada-button{
   flex:none;
   box-sizing:border-box;
-  width:${units(MAP_SCREEN.earth.width)};
-  height:${units(MAP_SCREEN.earth.height)};
+  height:${units(MAP_SCREEN.hudRow.height)};
   padding-left:0;
   padding-right:0;
   white-space:nowrap;
   pointer-events:auto
 }
+.ada-controls .ada-map-hud-row [data-action="map-quests"]{
+  margin-left:auto;
+  width:${units(MAP_SCREEN.hudRow.quests.width)}
+}
+.ada-controls .ada-map-hud-row [data-action="map-returnHome"]{
+  width:${units(MAP_SCREEN.hudRow.earth.width)}
+}
 
-/* The header: one ink panel with the galaxy name, a divider, the percent mapped and one pip per
-   landmark. It takes no input. */
+/* The header: one ink panel with the galaxy name, a divider, then the column of one pip per
+   landmark over the percent mapped. It takes no input. */
 .ada-controls .ada-map-header{
   min-width:0;
   overflow:hidden;
@@ -390,14 +410,26 @@ export const MAP_SCREEN_STYLE = `
   margin:0 ${units(MAP_SCREEN.header.dividerGap)};
   background:${MAP_COLORS.divider}
 }
+/* The column tops at stackTop, the pips stackGap over the percent; with no landmarks the percent
+   alone tops at labelTop. */
+.ada-controls .ada-map-column{
+  align-self:flex-start;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:${units(MAP_SCREEN.header.stackGap)};
+  padding-top:${units(MAP_SCREEN.header.stackTop)}
+}
+.ada-controls .ada-map-column:has(.ada-map-pips:empty){
+  padding-top:${units(MAP_SCREEN.header.labelTop)}
+}
 .ada-controls .ada-map-percent{
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
 }
 .ada-controls .ada-map-pips{
   display:flex;
-  gap:${units(MAP_SCREEN.header.pipPitch - MAP_SCREEN.header.pip)};
-  margin-left:${units(MAP_SCREEN.header.pipGap)}
+  gap:${units(MAP_SCREEN.header.pipPitch - MAP_SCREEN.header.pip)}
 }
 .ada-controls .ada-map-pips:empty{
   display:none
@@ -426,6 +458,61 @@ export const MAP_SCREEN_STYLE = `
 ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-tool[data-tool="close"]{
   color:${MAP_COLORS.cream}
+}
+
+/* The Quests modal (art/map.md "Quests modal"): the standard card under the modal dim, which
+   covers the whole map. Its lines stack lineGap apart across the inner width: a mapped line is a
+   secondary button with its target's chip, overhanging the label's line box, markGap before the
+   label; a plain line is supporting prose from the text column, with a hollow ring in the chip
+   slot while its target is unmapped; with no lines, the centred empty note. */
+.ada-controls .ada-map-quests{
+  z-index:3
+}
+.ada-controls .ada-map-quest-lines{
+  align-self:stretch;
+  display:flex;
+  flex-direction:column;
+  gap:${units(MAP_SCREEN.quests.lineGap)}
+}
+.ada-controls .ada-map-quest-lines .ada-button.ada-map-quest{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:${units(MAP_SCREEN.quests.markGap)};
+  text-align:left;
+  white-space:normal;
+  font:${font(TYPE.label)}
+}
+.ada-controls .ada-map-quest .ada-map-place{
+  position:relative;
+  flex:none;
+  margin:${units(-MAP_SCREEN.quests.overhang)} 0
+}
+.ada-controls .ada-map-quest-text,
+.ada-controls .ada-map-quest-empty{
+  position:relative;
+  margin:0;
+  font:${font(TYPE.body)};
+  color:${TEXT_TOKENS.supporting}
+}
+.ada-controls .ada-map-quest-text{
+  padding-left:${units(MAP_SCREEN.quests.textColumn)}
+}
+.ada-controls .ada-map-quest-text[data-ring]::before{
+  content:"";
+  position:absolute;
+  left:${units(TEXT_BUTTON.inset)};
+  top:50%;
+  box-sizing:border-box;
+  width:${units(MAP_SCREEN.quests.chip)};
+  height:${units(MAP_SCREEN.quests.chip)};
+  transform:translateY(-50%);
+  border:${units(MAP_SCREEN.quests.ring)} solid ${MAP_COLORS.supporting};
+  border-radius:50%
+}
+.ada-controls .ada-map-quest-empty{
+  text-align:center
 }
 
 /* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
@@ -608,7 +695,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const pips = document.createElement("span");
   pips.className = "ada-map-pips";
   pips.setAttribute("aria-hidden", "true");
-  header.append(galaxy, divider, percent, pips);
+  const column = document.createElement("span");
+  column.className = "ada-map-column";
+  column.append(pips, percent);
+  header.append(galaxy, divider, column);
   // The tools.
   const tools = document.createElement("div");
   tools.className = "ada-map-tools";
@@ -666,13 +756,31 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
   panel.append(row, reason, empty);
-  // Return to Earth on the HUD row, with no confirm, as for Travel here.
+  // Quests, then Return to Earth, on the HUD row; Return to Earth has no confirm, as for Travel here.
   const hudRow = document.createElement("div");
   hudRow.className = "ada-map-hud-row";
+  const questsButton = createButton(labels.quests, "secondary");
+  questsButton.dataset.action = "map-quests";
+  questsButton.setAttribute("aria-haspopup", "dialog");
   const returnHome = createButton(labels.returnHome, "secondary");
   returnHome.dataset.action = "map-returnHome";
-  hudRow.append(header, returnHome);
-  screen.append(fog, placesLayer, adaLayer, hudRow, tools, panel);
+  hudRow.append(header, questsButton, returnHome);
+  // The Quests modal over the whole map.
+  const questsModal = document.createElement("div");
+  questsModal.className = "ada-modal ada-map-quests";
+  questsModal.hidden = true;
+  const questsCard = createCard({
+    closeAction: "close-quests",
+    closeLabel: labels.close,
+    title: labels.quests,
+  });
+  questsCard.card.dataset.dialog = "quests";
+  const questLines = document.createElement("div");
+  questLines.className = "ada-map-quest-lines";
+  questLines.dataset.inkTop = "0";
+  questsCard.body.append(questLines);
+  questsModal.append(questsCard.frame);
+  screen.append(fog, placesLayer, adaLayer, hudRow, tools, panel, questsModal);
   root.append(screen);
 
   let state: MapScreenState | null = null;
@@ -944,6 +1052,87 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     options.onTravel(place.id);
   });
+  // The Quests modal: each line, built as it opens; a mapped line's press centres and selects its
+  // chip. The X, an outside tap, back and Escape close it, leaving the view and selection.
+  const questsOpen = () => !questsModal.hidden;
+  const questText = (line: QuestLine): string => {
+    if (line.kind === "job") {
+      return labels.jobObjective.replace("{objective}", line.text);
+    }
+    if (line.kind === "story") {
+      return line.text;
+    }
+    return line.kind === "jobBoards" ? labels.questsJobBoards : labels.questsStoryComplete;
+  };
+  const closeQuests = () => {
+    if (questsOpen()) {
+      questsModal.hidden = true;
+      questsButton.focus();
+    }
+  };
+  const goTo = (place: MapPlace) => {
+    closeQuests();
+    if (view) {
+      view = recentreView(layout().inner, limit(), place, view);
+    }
+    select(place.id);
+    chips.get(place.id)?.focus();
+  };
+  const openQuests = () => {
+    const lines = state?.map.quests ?? [];
+    questLines.replaceChildren(
+      ...lines.map((line) => {
+        const target =
+          "target" in line && line.target !== null
+            ? places().find(({ id }) => id === line.target)
+            : undefined;
+        if (target) {
+          const button = createButton("", "secondary");
+          button.classList.add("ada-map-quest");
+          button.dataset.target = target.id;
+          const chip = document.createElement("span");
+          dressChip(chip, target);
+          chip.setAttribute("aria-hidden", "true");
+          const label = document.createElement("span");
+          label.textContent = questText(line);
+          button.replaceChildren(chip, label);
+          button.addEventListener("click", () => goTo(target));
+          return button;
+        }
+        const text = document.createElement("p");
+        text.className = "ada-map-quest-text ada-prose";
+        text.textContent = questText(line);
+        text.toggleAttribute("data-ring", "target" in line);
+        return text;
+      }),
+    );
+    if (lines.length === 0) {
+      const note = document.createElement("p");
+      note.className = "ada-map-quest-empty ada-prose";
+      note.textContent = labels.questsEmpty;
+      questLines.append(note);
+    }
+    questsModal.hidden = false;
+    questsCard.fit();
+    (questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close).focus();
+  };
+  questsButton.addEventListener("click", openQuests);
+  questsCard.close.addEventListener("click", closeQuests);
+  // A full outside tap closes it.
+  let outside: Point | undefined;
+  questsModal.addEventListener("pointerdown", (event) => {
+    outside = event.target === questsModal ? { x: event.clientX, y: event.clientY } : undefined;
+  });
+  questsModal.addEventListener("click", (event) => {
+    if (
+      outside &&
+      event.target === questsModal &&
+      isTap(readViewUnit(questsModal), outside, { x: event.clientX, y: event.clientY })
+    ) {
+      closeQuests();
+    }
+    outside = undefined;
+  });
   returnHome.addEventListener("click", () => {
     if (!returnToEarthAvailable(state?.inDanger ?? false)) {
       refuse(returnHome, options.reducedMotion());
@@ -964,7 +1153,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   const onChrome = (event: Event) =>
     event.target instanceof Element &&
-    event.target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
+    event.target.closest(
+      ".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel,.ada-map-quests",
+    ) !== null;
   const pinchOf = (): { distance: number; mid: Point } | null => {
     const [a, b] = [...pointers.values()];
     return a && b
@@ -1050,24 +1241,32 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     "wheel",
     (event) => {
       event.preventDefault();
+      if (questsOpen()) {
+        return;
+      }
       const delta =
         event.deltaMode === 1 ? (event.deltaY * MAP_SCREEN.wheelStep) / 3 : event.deltaY;
       zoom(MAP_SCREEN.zoomStep ** (-delta / MAP_SCREEN.wheelStep), local(event));
     },
     { passive: false },
   );
-  // Tab stays on the screen in art/map.md's order: the tools, Return to Earth, the places in
-  // reading order, then Travel here, wrapping at either end.
+  // Tab stays on the screen in art/map.md's order: the tools, Quests, Return to Earth, the places
+  // in reading order, then Travel here; on the Quests card, its line buttons then its X. It wraps
+  // at either end.
   screen.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
     }
-    const targets = [
-      ...tools.querySelectorAll<HTMLButtonElement>("button"),
-      returnHome,
-      ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
-      travel,
-    ].filter((button) => !button.closest("[hidden]") && !button.hidden);
+    const order = questsOpen()
+      ? [...questLines.querySelectorAll<HTMLButtonElement>("button"), questsCard.close]
+      : [
+          ...tools.querySelectorAll<HTMLButtonElement>("button"),
+          questsButton,
+          returnHome,
+          ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
+          travel,
+        ];
+    const targets = order.filter((button) => !button.closest("[hidden]") && !button.hidden);
     if (targets.length === 0) {
       return;
     }
@@ -1088,14 +1287,18 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
 
   return {
     close(): void {
+      questsModal.hidden = true;
       screen.hidden = true;
       selected = null;
       view = null;
       pointers.clear();
       press = null;
     },
+    /** Closes the Quests modal, back to the map. */
+    closeQuests,
     dispose(): void {
       window.removeEventListener("resize", refit);
+      questsCard.dispose();
       screen.remove();
     },
     element: screen,
@@ -1108,6 +1311,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       render();
       toolButtons.get("close")!.focus();
     },
+    questsOpen,
     setState(next: MapScreenState): void {
       state = next;
       if (selected !== null && !places().some(({ id }) => id === selected)) {

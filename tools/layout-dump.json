@@ -240,10 +240,6 @@
       "MAP_SCREEN": {
         "chartRadius": 25000,
         "dragThreshold": 8,
-        "earth": {
-          "height": 48,
-          "width": 148.5
-        },
         "fitMargin": 22,
         "fog": {
           "feather": 0.16,
@@ -263,14 +259,33 @@
           "nameTop": 10,
           "padding": 16,
           "pip": 6,
-          "pipGap": 8,
           "pipPitch": 8,
           "pipRing": 1,
-          "radius": 4
+          "radius": 4,
+          "stackGap": 4,
+          "stackTop": 9
+        },
+        "hudRow": {
+          "earth": {
+            "width": 148.5
+          },
+          "gap": 8,
+          "height": 48,
+          "quests": {
+            "width": 86.25
+          }
         },
         "minBox": {
           "height": 6000,
           "width": 12000
+        },
+        "quests": {
+          "chip": 28,
+          "lineGap": 8,
+          "markGap": 6,
+          "overhang": 4,
+          "ring": 1,
+          "textColumn": 50
         },
         "tools": {
           "pitch": 56
@@ -8564,7 +8579,7 @@
               "width": 720
             }
           ],
-          "result": 483.5
+          "result": 389.25
         },
         {
           "args": [
@@ -8579,7 +8594,7 @@
               "width": 720
             }
           ],
-          "result": 483.5
+          "result": 389.25
         },
         {
           "args": [
@@ -8594,7 +8609,7 @@
               "width": 779
             }
           ],
-          "result": 472.5
+          "result": 378.25
         }
       ],
       "mapHeaderWidth": [
@@ -8612,7 +8627,7 @@
             100,
             12
           ],
-          "result": 379
+          "result": 277
         },
         {
           "args": [
@@ -8620,7 +8635,7 @@
             100,
             15
           ],
-          "result": 403
+          "result": 295
         }
       ],
       "mapProjection": [
@@ -8670,6 +8685,68 @@
           "result": {
             "x": -6500,
             "y": 750
+          }
+        }
+      ],
+      "mapQuestsRect": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 86.25,
+            "x": 405.25,
+            "y": 8
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 86.25,
+            "x": 405.25,
+            "y": 8
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 19,
+              "left": 43,
+              "right": 43,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 86.25,
+            "x": 429.25,
+            "y": 8
           }
         }
       ],
