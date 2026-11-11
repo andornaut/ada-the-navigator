@@ -93,8 +93,9 @@ describe("enemy frame sets", () => {
     });
   });
 
-  it("frames every catalog archetype, with parts only for the composed heavies", () => {
-    expect(Object.keys(enemyCatalog).filter((name) => !art.has(name))).toEqual([]);
+  it("frames every catalog archetype but the platform, with parts only for the heavies", () => {
+    // CLEANUP (added 2026-11-11): the platform draws its vector placeholder until Art lands.
+    expect(Object.keys(enemyCatalog).filter((name) => !art.has(name))).toEqual(["platform"]);
     expect([...art].filter(([, set]) => set.parts).map(([name]) => name)).toEqual([
       "frigate",
       "capital",

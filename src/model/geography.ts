@@ -54,7 +54,7 @@ export function persistentObject(object: SpaceObject): boolean {
     (object.persistent !== false &&
       object.kind === "enemy" &&
       object.enemy !== undefined &&
-      ["frigate", "capital"].includes(object.enemy.archetype))
+      ["frigate", "capital", "platform"].includes(object.enemy.archetype))
   );
 }
 function account(

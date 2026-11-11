@@ -90,6 +90,7 @@ describe("Stardust drops", () => {
       fighter: 2,
       frigate: 5,
       interceptor: 1,
+      platform: 6,
       retaliator: 4,
       swarm: 1,
     };

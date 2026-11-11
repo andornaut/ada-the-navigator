@@ -7,6 +7,8 @@ export interface Point {
 }
 export interface FireProfile {
   angles: number[];
+  /** Bolts per volley fired `gap` seconds apart; a volley starts every `interval`. */
+  burst?: { count: number; gap: number };
   id: string;
   interval: number;
   projectile: "bolt" | "missile";
@@ -85,9 +87,15 @@ const command: HardpointDefinition = {
   offset: { x: 0, y: 0 },
   required: true,
 };
-const weapon = (fire: FireProfile, id: string, x: number, y: number): HardpointDefinition => ({
+const weapon = (
+  fire: FireProfile,
+  id: string,
+  x: number,
+  y: number,
+  hp = 3,
+): HardpointDefinition => ({
   fire,
-  hp: 3,
+  hp,
   id,
   kind: "weapon",
   offset: { x, y },
@@ -108,6 +116,17 @@ const base: Omit<EnemyDefinition, "physics"> = {
   steering: { separation: 70, wobble: 0 },
 };
 const siege: Behaviour = { kind: "siege", speedFraction: 0.5 };
+/**
+ * Cartwheel's fixed ore-field guard: two required turrets, each firing two-bolt bursts with
+ * the base bolt. CLEANUP (added 2026-11-11): placeholder turret mounts until Art draws the
+ * platform; then mounts, hit areas and muzzles come from Art's hardpoints, as for the heavies.
+ */
+const platformBurst: FireProfile = {
+  ...bolt,
+  burst: { count: 2, gap: 0.15 },
+  id: "platform-burst",
+  interval: 1.4,
+};
 
 /** Provisional tuning in world units and seconds, not user-selected values. */
 export const enemyCatalog = {
@@ -157,6 +176,21 @@ export const enemyCatalog = {
     physics: SHIP_PHYSICS.interceptor,
     sizeRatio: 0.75,
   },
+  platform: {
+    ...base,
+    behaviour: { kind: "siege", speedFraction: 0 },
+    engagement: 520,
+    hardpoints: [
+      weapon(platformBurst, "turret-left", -0.3, 0, 6),
+      weapon(platformBurst, "turret-right", 0.3, 0, 6),
+    ],
+    // The hull has no HP of its own: hits land only on its turrets.
+    hp: 12,
+    morale: { individualHpRatio: 0, packLossRatio: 1 },
+    perception: 520,
+    physics: SHIP_PHYSICS.platform,
+    sizeRatio: 3,
+  },
   retaliator: {
     ...base,
     aggression: "retaliate",
@@ -190,11 +224,6 @@ export interface EncounterEntry {
   weight: number;
 }
 
-/** Equal weights in this order preserve the unthemed sectors' seeded encounters. */
-const sharedEncounters: readonly EncounterEntry[] = (
-  ["fighter", "swarm", "interceptor", "retaliator"] as const
-).map((archetype) => ({ archetype, groupSize: [1, 4], weight: 0.25 }));
-
 /** Open-space encounter tables per sector; frigates and capitals also keep their route roles. */
 export const sectorEncounters: Readonly<Record<SectorId, readonly EncounterEntry[]>> = {
   1: [
@@ -210,8 +239,55 @@ export const sectorEncounters: Readonly<Record<SectorId, readonly EncounterEntry
       weight: 0.03,
     },
   ],
-  2: sharedEncounters,
-  3: sharedEncounters,
+  2: [
+    { archetype: "swarm", groupSize: [5, 7], weight: 0.25 },
+    { archetype: "fighter", groupSize: [2, 4], weight: 0.4 },
+    { archetype: "interceptor", groupSize: [1, 2], weight: 0.12 },
+    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+    { archetype: "frigate", groupSize: [1, 1], weight: 0.1 },
+    {
+      archetype: "capital",
+      escorts: { archetype: "fighter", count: 4 },
+      groupSize: [1, 1],
+      weight: 0.03,
+    },
+  ],
+  3: [
+    { archetype: "swarm", groupSize: [5, 8], weight: 0.25 },
+    { archetype: "fighter", groupSize: [3, 4], weight: 0.3 },
+    { archetype: "interceptor", groupSize: [1, 2], weight: 0.15 },
+    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+    { archetype: "frigate", groupSize: [1, 1], weight: 0.15 },
+    {
+      archetype: "capital",
+      escorts: { archetype: "fighter", count: 4 },
+      groupSize: [1, 1],
+      weight: 0.05,
+    },
+  ],
+};
+
+/** Per-galaxy archetype changes: hull HP and movement behaviour (gameplay/ships.md). */
+export const sectorArchetypes: Readonly<
+  Record<
+    SectorId,
+    Partial<Record<EnemyArchetype, Partial<Pick<EnemyDefinition, "behaviour" | "hp">>>>
+  >
+> = {
+  1: {},
+  2: {
+    fighter: { hp: 5 },
+    frigate: { hp: 12 },
+    interceptor: { behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 } },
+    retaliator: { hp: 9 },
+  },
+  3: {
+    fighter: { behaviour: { kind: "chase" }, hp: 5 },
+    frigate: { hp: 12 },
+    interceptor: { behaviour: { kind: "chase" }, hp: 4 },
+    retaliator: { hp: 10 },
+    swarm: { hp: 3 },
+  },
 };
 
 /** Capital battle escorts, in world units. */
@@ -233,8 +309,8 @@ export interface SectorEnemyTuning {
 }
 export const sectorEnemyTuning: Readonly<Record<SectorId, SectorEnemyTuning>> = {
   1: { encounterRate: 1.2, fireRate: 1.15, perception: 1.2 },
-  2: { encounterRate: 1, fireRate: 1, perception: 1 },
-  3: { encounterRate: 1, fireRate: 1, perception: 1 },
+  2: { encounterRate: 1.3, fireRate: 1.3, perception: 1.3 },
+  3: { encounterRate: 1.35, fireRate: 1.45, perception: 1.4 },
 };
 
 /** Quiet travel and time between encounters shorten with the galaxy's encounter rate. */
@@ -247,13 +323,19 @@ export function encounterQuiet(sector: SectorId): { distance: number; seconds: n
 }
 
 const scaled = new Map<string, EnemyDefinition>();
-/** The catalog definition with the galaxy's perception and fire-rate multipliers applied. */
+/**
+ * The catalog definition with the galaxy's archetype changes and its perception and fire-rate
+ * multipliers applied.
+ */
 export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): EnemyDefinition {
   const key = `${sector}:${archetype}`;
   let definition = scaled.get(key);
   if (!definition) {
     const { fireRate, perception } = sectorEnemyTuning[sector];
-    const catalog: EnemyDefinition = enemyCatalog[archetype];
+    const catalog: EnemyDefinition = {
+      ...enemyCatalog[archetype],
+      ...sectorArchetypes[sector][archetype],
+    };
     const faster = (fire: FireProfile): FireProfile => ({
       ...fire,
       interval: fire.interval / fireRate,

@@ -207,7 +207,8 @@ describe("pacing simulation runs", () => {
       sector: 3,
     });
     for (const run of runs) {
-      expect(run.destroyed.capital).toBe(2);
+      // Both route guards, plus any capital battle met in open space.
+      expect(run.destroyed.capital).toBeGreaterThanOrEqual(2);
       expect(run.stardust.guards).toBeGreaterThan(0);
     }
   });

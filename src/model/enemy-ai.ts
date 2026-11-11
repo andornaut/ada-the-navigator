@@ -21,6 +21,8 @@ import {
 export interface HardpointState {
   /** Smoothed weapon aim; null until the weapon first has a target direction. */
   aim: Point | null;
+  /** Bolts already fired in the current burst, for a weapon that fires bursts. */
+  burst?: number;
   cooldown: number;
   hp: number;
   id: string;
@@ -572,21 +574,31 @@ export function stepEnemy(
       turret === null ? undefined : muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
     return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
   };
+  /**
+   * Fires each volley due this step and returns the next cooldown and burst position. A
+   * burst's bolts follow `gap` apart and its next burst starts `interval` after its first.
+   */
   const cycle = (
     profile: FireProfile,
     origin: Point,
     muzzleAim: Point,
     hardpointId: string | null,
     cooldown: number,
-  ): number => {
+    burst = 0,
+  ): { burst: number; cooldown: number } => {
     const interval = Math.max(0.01, profile.interval);
+    const count = Math.max(1, profile.burst?.count ?? 1);
+    const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
     if (!canFire) {
-      return Math.max(0, cooldown - context.dt);
+      return { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
     }
     let delay = Math.max(0, cooldown);
+    let bolt = Math.min(burst, count - 1);
     while (delay < context.dt) {
-      volleys++;
-      const volley = Math.floor((state.age + delay) / interval);
+      if (bolt === 0) {
+        volleys++;
+      }
+      const volley = Math.floor((state.age + delay) / interval) * count + bolt;
       const from = spawn(origin, hardpointId, muzzleAim, volley);
       for (const angle of profile.angles) {
         fire.push({
@@ -602,15 +614,21 @@ export function stepEnemy(
           speed: context.adaSpeed * profile.projectileSpeedRatio,
         });
       }
-      delay += interval;
+      bolt++;
+      if (bolt < count) {
+        delay += gap;
+      } else {
+        delay += interval - gap * (count - 1);
+        bolt = 0;
+      }
     }
-    return delay - context.dt;
+    return { burst: bolt, cooldown: delay - context.dt };
   };
   next.aim = track(state.position, state.aim);
   const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0
-    : cycle(definition.fire, state.position, hullAim, null, state.primaryCooldown);
+    : cycle(definition.fire, state.position, hullAim, null, state.primaryCooldown).cooldown;
   for (const part of definition.hardpoints) {
     const value = next.hardpoints.find((entry) => entry.id === part.id);
     if (part.kind === "weapon" && value && value.hp > 0) {
@@ -618,13 +636,18 @@ export function stepEnemy(
       const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
       const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
       value.aim = track(origin, value.aim);
-      value.cooldown = cycle(
+      const fired = cycle(
         part.fire,
         origin,
         value.aim ?? { x: 0, y: 0 },
         part.id,
         value.cooldown,
+        value.burst,
       );
+      value.cooldown = fired.cooldown;
+      if (part.fire.burst) {
+        value.burst = fired.burst;
+      }
     }
   }
   if (next.tactic.phase === "attack") {

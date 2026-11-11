@@ -332,7 +332,10 @@ it("counts dormant pack survivors for morale without exposing hidden positions t
 });
 
 describe("enemy ship physics and hull rotation", () => {
-  const archetypes = Object.keys(enemyCatalog) as EnemyArchetype[];
+  // The fixed platform never moves; its own tests cover it.
+  const archetypes = (Object.keys(enemyCatalog) as EnemyArchetype[]).filter(
+    (archetype) => enemyCatalog[archetype].physics.speedRatio > 0,
+  );
   const degreesBetween = (a: { x: number; y: number }, b: { x: number; y: number }) =>
     (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
 

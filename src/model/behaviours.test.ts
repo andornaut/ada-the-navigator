@@ -312,29 +312,52 @@ describe("no standoff", () => {
   });
 });
 
-describe("galaxy one difficulty", () => {
-  it("raises perception 20% and fire rate 15% in galaxy one only", () => {
-    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-      const base = enemyCatalog[archetype];
-      const first = enemyDefinition(1, archetype);
-      expect(first.perception).toBeCloseTo(base.perception * 1.2, 9);
-      expect(1 / first.fire.interval).toBeCloseTo((1 / base.fire.interval) * 1.15, 9);
-      first.hardpoints.forEach((part, index) => {
-        const original = base.hardpoints[index]!;
-        if (part.kind === "weapon" && original.kind === "weapon") {
-          expect(part.fire.interval).toBeCloseTo(original.fire.interval / 1.15, 9);
-        }
-      });
-      for (const sector of [2, 3] as const) {
-        expect(enemyDefinition(sector, archetype)).toEqual(base);
+describe("galaxy difficulty", () => {
+  it.each([
+    [1, 1.2, 1.15],
+    [2, 1.3, 1.3],
+    [3, 1.4, 1.45],
+  ] as const)(
+    "scales galaxy %i's perception by %f and fire rate by %f",
+    (sector, perception, fireRate) => {
+      for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+        const base = enemyCatalog[archetype];
+        const scaled = enemyDefinition(sector, archetype);
+        expect(scaled.perception).toBeCloseTo(base.perception * perception, 9);
+        expect(1 / scaled.fire.interval).toBeCloseTo((1 / base.fire.interval) * fireRate, 9);
+        scaled.hardpoints.forEach((part, index) => {
+          const original = base.hardpoints[index]!;
+          if (part.kind === "weapon" && original.kind === "weapon") {
+            expect(part.fire.interval).toBeCloseTo(original.fire.interval / fireRate, 9);
+          }
+        });
       }
-    }
+    },
+  );
+
+  it("gives Cartwheel and Whirlpool their roster HP and behaviours", () => {
+    const hp = (sector: 1 | 2 | 3) =>
+      Object.fromEntries(
+        (["swarm", "fighter", "interceptor", "retaliator", "frigate"] as const).map((archetype) => [
+          archetype,
+          enemyDefinition(sector, archetype).hp,
+        ]),
+      );
+    expect(hp(1)).toEqual({ fighter: 4, frigate: 10, interceptor: 3, retaliator: 8, swarm: 2 });
+    expect(hp(2)).toEqual({ fighter: 5, frigate: 12, interceptor: 3, retaliator: 9, swarm: 2 });
+    expect(hp(3)).toEqual({ fighter: 5, frigate: 12, interceptor: 4, retaliator: 10, swarm: 3 });
+    expect(enemyDefinition(2, "fighter").behaviour.kind).toBe("hitAndRun");
+    expect(enemyDefinition(2, "interceptor").behaviour.kind).toBe("hitAndRun");
+    expect(enemyDefinition(3, "fighter").behaviour.kind).toBe("chase");
+    expect(enemyDefinition(3, "interceptor").behaviour.kind).toBe("chase");
+    expect(enemyDefinition(1, "interceptor").behaviour.kind).toBe("strafe");
   });
 
   it("shortens quiet travel and time 20% and raises encounter density 20% in galaxy one", () => {
     expect(encounterQuiet(1)).toEqual({ distance: 1500, seconds: 10 });
-    expect(encounterQuiet(2)).toEqual({ distance: 1800, seconds: 12 });
-    expect(encounterSpacing(PROTOTYPE, 2)).toBe(4);
+    expect(encounterQuiet(2).distance).toBeCloseTo(1800 / 1.3, 9);
+    expect(encounterQuiet(3).seconds).toBeCloseTo(12 / 1.35, 9);
+    expect(encounterSpacing(PROTOTYPE, 3)).toBeCloseTo(4 / Math.sqrt(1.35), 9);
     const spacing = encounterSpacing(PROTOTYPE, 1);
     const hosts = (value: number) =>
       Array.from({ length: 20000 }, (_, index) => index - 10000).filter((index) =>

@@ -39,7 +39,7 @@ describe("calm launches", () => {
         const flight = createFlight(PROTOTYPE, sector, seed, progress);
         near = Math.max(near, closest(flight, { x: 0, y: 0 }) < calm ? 1 : 0);
         // Encounters still appear beyond the calm radius, and none inside it on the way back.
-        flight.player = { x: 3500, y: 0 };
+        flight.player = { x: 4500, y: 0 };
         stepFlight(PROTOTYPE, 0.001, idle, flight);
         elsewhere += encounterShips(flight).length;
         flight.player = { x: 0, y: 0 };

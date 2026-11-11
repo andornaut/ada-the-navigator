@@ -10,6 +10,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
+import { ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -59,6 +60,7 @@ import {
 } from "./drops.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
+import { oreFieldsNear } from "./ore-fields.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
@@ -390,6 +392,70 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
           existing.add(object.id);
         }
       }
+      placeOreFields(content, x, y, existing, flight);
+    }
+  }
+}
+
+/**
+ * Cartwheel's seeded ore fields whose centres fall in chunk (x, y): their resource rocks and,
+ * at a guarded field, a retained platform with its seeded fixed facing. A field within the
+ * ore-field clearance of a station, the hub or a quantum jump arrival is left out.
+ */
+function placeOreFields(
+  content: PrototypeContent,
+  x: number,
+  y: number,
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const size = content.tuning.chunkSize;
+  const centre = { x: (x + 0.5) * size, y: (y + 0.5) * size };
+  const tuning = content.tuning.flight;
+  for (const field of oreFieldsNear(flight.sector, size, centre)) {
+    if (Math.floor(field.x / size) !== x || Math.floor(field.y / size) !== y) {
+      continue;
+    }
+    const reach = ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2;
+    const hub = flight.objects.find(
+      (object) => object.kind === "destination" && object.id === "hub",
+    );
+    if (
+      stationsNear(ECONOMY, flight.sector, reach, field).length ||
+      (hub && distance(hub, field) < reach) ||
+      (flight.arrivals ?? []).some((arrival) => distance(arrival, field) < reach)
+    ) {
+      continue;
+    }
+    field.rocks.forEach((rock, index) => {
+      const object: SpaceObject = {
+        ...rock,
+        hp: tuning.rockHp,
+        id: `${field.id}:${index}`,
+        kind: "resource",
+        radius: tuning.rockRadius,
+        role: "discovery",
+      };
+      if (
+        !existing.has(object.id) &&
+        !Object.hasOwn(flight.world.notables, object.id) &&
+        clearOf(content.tuning.safeRadius, flight.player, object) &&
+        clearOfSafeAreas(content, object, flight) &&
+        flight.objects.every(
+          (other) =>
+            other.kind !== "rock" || distance(other, object) > other.radius + object.radius,
+        )
+      ) {
+        flight.objects.push(object);
+        existing.add(object.id);
+      }
+    });
+    const id = `platform:${field.id}`;
+    if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
+      const platform = spawnEnemy(content, flight.sector, "platform", id, field.guard);
+      platform.enemy!.facing = { ...field.guard.facing };
+      flight.objects.push(platform);
+      existing.add(id);
     }
   }
 }
@@ -398,8 +464,10 @@ function combat(flight: FlightState) {
   return (flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
 }
 
+/** A new enemy with its galaxy's archetype changes, hit points and hardpoints. */
 function spawnEnemy(
   content: PrototypeContent,
+  sector: SectorId,
   archetype: EnemyArchetype,
   id: string,
   point: Vec,
@@ -407,7 +475,7 @@ function spawnEnemy(
   phase = 0,
   escortOf: string | null = null,
 ): SpaceObject {
-  const definition = enemyCatalog[archetype];
+  const definition = enemyDefinition(sector, archetype);
   return {
     ...point,
     enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase }, point),
@@ -555,6 +623,19 @@ function generateRegion(
     countRoll,
     next(),
   );
+  // Half of Cartwheel's claim jumpers gather at the nearest ore field within this cell's reach.
+  if (ORE_FIELDS.sectors.includes(flight.sector) && archetype === "fighter") {
+    const reach = (spacing * size) / 2;
+    const field = oreFieldsNear(flight.sector, reach, center).sort(
+      (a, b) => distance(a, center) - distance(b, center),
+    )[0];
+    const angle = next() * Math.PI * 2;
+    if (field && next() < ORE_FIELDS.jumperShare) {
+      const edge = ORE_FIELDS.diameter / 2;
+      center.x = field.x + Math.cos(angle) * edge;
+      center.y = field.y + Math.sin(angle) * edge;
+    }
+  }
   // Launches and jump arrivals begin calm: the whole encounter stays clear of them.
   if (nearArrival(content, flight, encounterReach(content, archetype, count, escorts), center)) {
     return;
@@ -603,6 +684,7 @@ function admitGroup(
     const phase = next() * Math.PI * 2;
     const object = spawnEnemy(
       content,
+      flight.sector,
       archetype,
       `${packId}:${i}`,
       place(i, phase),
@@ -788,6 +870,7 @@ function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState):
     const angle = (i * Math.PI * 2) / packSize;
     const member = spawnEnemy(
       content,
+      flight.sector,
       pack,
       `${packId}:${i}`,
       { x: leader.x + Math.cos(angle) * 90, y: leader.y + Math.sin(angle) * 90 },
@@ -838,7 +921,7 @@ export function ensureRouteEncounter(
   const approach = length(heading) ? heading : { x: 0, y: 1 };
   const offset = content.tuning.safeRadius + radius + 120;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
-  const object = spawnEnemy(content, archetype, `route:${id}`, point);
+  const object = spawnEnemy(content, flight.sector, archetype, `route:${id}`, point);
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
   clearLayoutObjects(

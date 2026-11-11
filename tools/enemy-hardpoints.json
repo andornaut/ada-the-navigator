@@ -98,6 +98,27 @@
         }
       ],
       "sizeRatio": 2
+    },
+    "platform": {
+      "hardpoints": [
+        {
+          "fire": "bolt",
+          "id": "turret-left",
+          "offset": [-0.3, 0],
+          "order": 0,
+          "required": true,
+          "role": "turret"
+        },
+        {
+          "fire": "bolt",
+          "id": "turret-right",
+          "offset": [0.3, 0],
+          "order": 1,
+          "required": true,
+          "role": "turret"
+        }
+      ],
+      "sizeRatio": 3
     }
   },
   "version": 1

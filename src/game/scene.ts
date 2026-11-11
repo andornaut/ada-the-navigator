@@ -1655,41 +1655,49 @@ export class PrototypeScene extends Phaser.Scene {
     const large = enemy.archetype === "capital";
     const frigate = enemy.archetype === "frigate";
     const pack = enemy.packId !== null;
-    const hull: [number, number][] = large
-      ? [
-          [-0.28, -0.5],
-          [0.28, -0.5],
-          [0.5, -0.25],
-          [0.5, 0.4],
-          [0.25, 0.5],
-          [-0.25, 0.5],
-          [-0.5, 0.4],
-          [-0.5, -0.25],
-        ]
-      : frigate
+    // CLEANUP (added 2026-11-11): the platform's octagonal vector hull stands in until Art
+    // draws the platform; then it composes from Art's frames like the frigate and capital.
+    const platform = enemy.archetype === "platform";
+    const hull: [number, number][] = platform
+      ? Array.from({ length: 8 }, (_, index): [number, number] => {
+          const angle = ((index + 0.5) * Math.PI) / 4;
+          return [Math.cos(angle) * 0.48, Math.sin(angle) * 0.48];
+        })
+      : large
         ? [
-            [0, -0.6],
-            [0.42, -0.25],
-            [0.42, 0.4],
-            [0, 0.55],
-            [-0.42, 0.4],
-            [-0.42, -0.25],
+            [-0.28, -0.5],
+            [0.28, -0.5],
+            [0.5, -0.25],
+            [0.5, 0.4],
+            [0.25, 0.5],
+            [-0.25, 0.5],
+            [-0.5, 0.4],
+            [-0.5, -0.25],
           ]
-        : pack
+        : frigate
           ? [
               [0, -0.6],
-              [0.5, 0],
-              [0.32, 0.4],
-              [0, 0.2],
-              [-0.32, 0.4],
-              [-0.5, 0],
+              [0.42, -0.25],
+              [0.42, 0.4],
+              [0, 0.55],
+              [-0.42, 0.4],
+              [-0.42, -0.25],
             ]
-          : [
-              [0, -0.6],
-              [0.5, 0.45],
-              [0, 0.2],
-              [-0.5, 0.45],
-            ];
+          : pack
+            ? [
+                [0, -0.6],
+                [0.5, 0],
+                [0.32, 0.4],
+                [0, 0.2],
+                [-0.32, 0.4],
+                [-0.5, 0],
+              ]
+            : [
+                [0, -0.6],
+                [0.5, 0.45],
+                [0, 0.2],
+                [-0.5, 0.45],
+              ];
     const polygon = hull.map(([x, y]) => {
       const point = local(x, y);
       return new Phaser.Math.Vector2(point.x, point.y);

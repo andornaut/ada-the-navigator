@@ -125,6 +125,8 @@ function enemyState(value: unknown): boolean {
         record(part) &&
         nonnegative(part.hp) &&
         nonnegative(part.cooldown) &&
+        (part.burst === undefined ||
+          (Number.isInteger(part.burst) && (part.burst as number) >= 0)) &&
         optionalDirection(part.aim),
     )
   );

@@ -359,12 +359,16 @@ describe("galaxy one encounters", () => {
   });
 
   it.each([
-    [1, true],
-    [2, false],
-  ] as const)("in galaxy %i, notices Ada 700 units away: %s", (sector, engaged) => {
+    [1, 700, true],
+    [1, 800, false],
+    [2, 800, true],
+    [2, 900, false],
+    [3, 900, true],
+    [3, 950, false],
+  ] as const)("in galaxy %i, notices Ada %i units away: %s", (sector, away, engaged) => {
     const flight = empty();
     flight.sector = sector;
-    const fighter = ship("fighter", { x: flight.player.x + 700, y: flight.player.y });
+    const fighter = ship("fighter", { x: flight.player.x + away, y: flight.player.y });
     flight.objects.push(fighter);
     stepFlight(PROTOTYPE, 1 / 60, idle, flight);
     expect(fighter.enemy!.engaged).toBe(engaged);
@@ -443,19 +447,48 @@ describe("sector encounter tables", () => {
     expect([...escorts]).toEqual(["capital:fighter:4"]);
   });
 
-  it.each([2, 3] as const)("keeps sector %i's shared table and seeded results", (sector) => {
-    const legacy: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
+  it.each([
+    [
+      2,
+      {
+        capital: [1, 1, 0.03],
+        fighter: [2, 4, 0.4],
+        frigate: [1, 1, 0.1],
+        interceptor: [1, 2, 0.12],
+        retaliator: [1, 1, 0.1],
+        swarm: [5, 7, 0.25],
+      },
+    ],
+    [
+      3,
+      {
+        capital: [1, 1, 0.05],
+        fighter: [3, 4, 0.3],
+        frigate: [1, 1, 0.15],
+        interceptor: [1, 2, 0.15],
+        retaliator: [1, 1, 0.1],
+        swarm: [5, 8, 0.25],
+      },
+    ],
+  ] as const)("rolls galaxy %i's roster groups and weights", (sector, roster) => {
+    const table = Object.fromEntries(
+      sectorEncounters[sector].map((entry) => [
+        entry.archetype,
+        [...entry.groupSize, entry.weight],
+      ]),
+    );
+    expect(table).toEqual(roster);
+    expect(sectorEncounters[sector].find((entry) => entry.escorts)?.escorts).toEqual({
+      archetype: "fighter",
+      count: 4,
+    });
+    // Every roll lands in the chosen archetype's group range.
     const next = rolls(sector * 7919);
-    const edges = [0, 0.25, 0.5, 0.75, 1 - 2 ** -32];
-    const samples = [...edges.map((edge) => [edge, edge]), ...edges.map((edge) => [0.6, edge])];
-    for (let i = 0; i < 5000; i++) {
-      samples.push([next(), next()]);
-    }
-    for (const [count, archetype] of samples) {
-      expect(rollEncounter(sectorEncounters[sector], count!, archetype!)).toEqual({
-        archetype: legacy[Math.floor(archetype! * 4)],
-        count: 1 + Math.floor(count! * 4),
-      });
+    for (let i = 0; i < 2000; i++) {
+      const { archetype, count } = rollEncounter(sectorEncounters[sector], next(), next());
+      const [low, high] = roster[archetype as keyof typeof roster];
+      expect(count).toBeGreaterThanOrEqual(low);
+      expect(count).toBeLessThanOrEqual(high);
     }
   });
 

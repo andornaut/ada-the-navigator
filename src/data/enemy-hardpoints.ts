@@ -16,6 +16,7 @@ export const HARDPOINT_ARCHETYPES = [
   "frigate",
   "capital",
   "retaliator",
+  "platform",
 ] as const satisfies EnemyArchetype[];
 
 /**
