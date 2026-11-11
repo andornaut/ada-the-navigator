@@ -46,13 +46,26 @@ function model(yaw: number, thrust: boolean): Face[] {
       points: sign === 1 ? mouth : mouth.toReversed(),
     });
     if (thrust) {
+      // Long pale outer flame with a shorter white core stays legible at 42px.
+      const mx = (a[0] + b[0]) / 2;
+      const my = (a[1] + b[1]) / 2;
       faces.push({
         color: "#b9ecff",
+        layer: -2,
+        points: [
+          [mx + (a[0] - mx) * 1.6, my + (a[1] - my) * 1.6, 2],
+          [mx, my + 16, 2],
+          [mx + (b[0] - mx) * 1.6, my + (b[1] - my) * 1.6, 2],
+        ],
+        twoSided: true,
+      });
+      faces.push({
+        color: white,
         layer: -1,
         points: [
-          [a[0], a[1], 2],
-          [sign * 18.96, 26.3, 2],
-          [b[0], b[1], 2],
+          [mx + (a[0] - mx) * 0.8, my + (a[1] - my) * 0.8, 2],
+          [mx, my + 9, 2],
+          [mx + (b[0] - mx) * 0.8, my + (b[1] - my) * 0.8, 2],
         ],
         twoSided: true,
       });

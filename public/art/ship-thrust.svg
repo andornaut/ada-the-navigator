@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
   <title>Ship 5 thrust</title>
-  <polygon fill="#b9ecff" points="22.92,60.30 24.78,64.60 26.64,59.65"/>
-  <polygon fill="#b9ecff" points="73.08,60.30 71.22,64.60 69.36,59.65"/>
+  <polygon fill="#b9ecff" points="21.80,60.49 24.78,71.29 27.76,59.46"/>
+  <polygon fill="#b9ecff" points="74.20,60.49 71.22,71.29 68.24,59.46"/>
+  <polygon fill="#ffffff" points="23.29,60.23 24.78,66.34 26.27,59.72"/>
+  <polygon fill="#ffffff" points="72.71,60.23 71.22,66.34 69.73,59.72"/>
   <polygon fill="#abbfce" points="48.00,21.37 21.74,58.48 21.74,62.48 48.00,25.37"/>
   <polygon fill="#d4dfe9" points="74.26,58.48 48.00,21.37 48.00,25.37 74.26,62.48"/>
   <polygon fill="#ffffff" points="74.26,58.48 54.66,55.09 48.00,61.20 41.34,55.09 21.74,58.48 48.00,21.37"/>

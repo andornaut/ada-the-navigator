@@ -21,7 +21,8 @@
   a flat roof 3.5 units above the hull and darker blue vertical sides. No interior,
   seams or panel detail. The canopy size follows the selected profile directly.
 - Twin subtle blue mouths follow the rear wing edges near their outer corners.
-  Thrust adds short pale blue flames. Hull sides precede the continuous hull top;
+  Thrust adds pale blue flames 16 units long with 9-unit white cores, readable at
+  42px display. Hull sides precede the continuous hull top;
   canopy sides precede its roof. The tail draws before or after the canopy
   according to heading. All faces use one projection and outward-normal culling;
   depth orders faces within each component layer.
