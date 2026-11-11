@@ -109,6 +109,9 @@ const [classic] = SCHEMES;
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // UP projects straight up.
 const UP = 20;
+// Frame and display size in px.
+const FRAME = 96;
+const DISPLAY = 42;
 
 // Swapping plan axes reverses winding; reverse to retain upward-facing tops.
 function plan(z: number, points: readonly (readonly [number, number])[]): Point[] {
@@ -123,16 +126,32 @@ function mouthEdge(sign: number): [Point, Point] {
   ];
 }
 
-function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
-  const faces: Face[] = [];
-  const hull = plan(4, [
+// Hull: plan outline and top height. The frames, speed jets and nose all derive from the
+// model definitions in this module, so a model swap regenerates them together.
+const HULL = {
+  plan: [
     [-100, 0],
     [64, -67],
     [49, -17],
     [76, 0],
     [49, 17],
     [64, 67],
-  ]);
+  ],
+  top: 4,
+} as const;
+
+// Nose: the midpoint of the hull top's forward-most vertices (local forward is negative Y).
+function nose(): Point {
+  const hull = plan(HULL.top, HULL.plan);
+  const front = Math.min(...hull.map(([, y]) => y));
+  const tip = hull.filter(([, y]) => y === front);
+  const mean = (axis: number) => tip.reduce((sum, point) => sum + point[axis]!, 0) / tip.length;
+  return [mean(0), mean(1), mean(2)];
+}
+
+function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
+  const faces: Face[] = [];
+  const hull = plan(HULL.top, HULL.plan);
   // One continuous concave delta top includes both rear wing corners.
   faces.push({ color: paint.top, layer: 3, points: hull });
   for (let i = 0; i < hull.length; i++) {
@@ -424,8 +443,21 @@ function jets(): string {
   return json(contract);
 }
 
+// Nose per heading in frame px, projected like the frames; shots leave from here.
+function noses(): string {
+  return json({
+    version: 1,
+    frame: FRAME,
+    displayScale: DISPLAY / FRAME,
+    noses: Array.from({ length: SHIP_HEADINGS }, (_, yaw) =>
+      anchor(SHIP_HEADINGS, FRAME / 2, yaw, nose()),
+    ),
+  });
+}
+
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}ship-jets.json`, jets());
+writeFileSync(`${output}ship-nose.json`, noses());
 for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
   for (const thrust of [false, true]) {
     writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
@@ -461,10 +493,10 @@ writeFileSync(
 const entry = (id: string, path: string, yaw: number) => ({
   id,
   path,
-  width: 96,
-  height: 96,
-  displayWidth: 42,
-  displayHeight: 42,
+  width: FRAME,
+  height: FRAME,
+  displayWidth: DISPLAY,
+  displayHeight: DISPLAY,
   facing: `world-${yaw}`,
   directionIndex: yaw,
   pivot: { x: 0.5, y: 0.5 },
@@ -485,8 +517,12 @@ const entries = [
   ),
 ];
 const manifestPath = `${output}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+  assets: { id: string }[];
+  shipNose?: string;
+};
 const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
 const others = manifest.assets.filter((asset) => !isShip(asset));
 manifest.assets = [...entries, ...others];
+manifest.shipNose = "/art/ship-nose.json";
 writeFileSync(manifestPath, json(manifest));

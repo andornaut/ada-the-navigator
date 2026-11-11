@@ -3,7 +3,9 @@
 - Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
 - Exports: `ship-{0..31}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
-  and the [paint schemes](#paint-schemes).
+  `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
+  nose all derive from the one model in the module, so a model change
+  regenerates them together.
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 20 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
@@ -108,7 +110,8 @@ Classic frame.
 - `art/tools/ship.ts` writes the frames, `ship-paint.json` and every `ship`
   and `ship-*` manifest entry at the start of the manifest, in order: `ship`,
   `ship-thrust`, then `ship-N` and `ship-thrust-N` per heading, then the paint
-  entries. It replaces any earlier ship entries.
+  entries. It replaces any earlier ship entries and sets the manifest's
+  `shipNose` link.
 
 ## Speed jets
 
@@ -128,3 +131,15 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
   alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
   are opaque.
+
+## Nose
+
+`ship-nose.json` (version 1) gives the point shots leave from. The manifest
+links it as `shipNose`.
+
+- `frame` is the frame size in px (96) and `displayScale` the display px per
+  frame px (0.4375, 42 / 96).
+- `noses[k]` is `[x, y]` in frame px for heading `k`, 32 entries: the hull top's
+  forward tip, local (0, -32, 4), projected like the frames, so it is the drawn
+  tip vertex of `ship-k`. Its offset from the pivot (48, 48) times
+  `displayScale` gives display px from the ship's position.

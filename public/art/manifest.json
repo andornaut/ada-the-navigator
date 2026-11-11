@@ -4784,5 +4784,6 @@
   "quantumJump": "/art/quantum-jump.json",
   "storyTransition": "/art/story-transition.json",
   "galaxies": "/art/galaxies.json",
-  "asteroids": "/art/asteroids.json"
+  "asteroids": "/art/asteroids.json",
+  "shipNose": "/art/ship-nose.json"
 }
