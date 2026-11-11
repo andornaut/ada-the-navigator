@@ -87,17 +87,22 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 ## Flight and combat
 
 - Isometric sprite-based presentation with independently controlled movement and aim.
-- Very gentle acceleration and braking, without strong momentum.
+- Very gentle acceleration and braking, without strong momentum. Changing direction
+  while moving drifts slightly before settling on the new course; starting from rest
+  and braking stay direct. Provisional movement turn response is 0.10 seconds.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 20 CSS pixels with a 2.4 CSS pixel deadzone;
   the visual thumb follows that travel.
-- Right joystick aims and fires continuously while deflected.
+- Right joystick aims and fires continuously while deflected. The ship turns toward
+  the aim with light damping (provisional response 0.045 seconds). Shots follow the
+  ship's current facing and start immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
 - Settings use Chibi's gear control. Weapon and settings controls use icons inspired
   by Chibi, with accessible labels.
 - Do not show a top-left information or status panel. Objectives, deposits and
   progression remain part of the game.
-- With no aim input, the ship faces movement. Centered aim does not fire.
+- With no aim input, the ship turns toward its movement direction with the same aim
+  damping. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
 - Basic is the starter weapon. Upgrades are Missiles, Triple Laser and Scattershot.
   Icon pickups, presented like Chibi's power-ups, automatically equip their upgrade
