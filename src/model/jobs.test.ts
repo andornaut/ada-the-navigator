@@ -29,7 +29,7 @@ const emptyBook = (made = 0): JobBook => ({ jobs: { boards: {}, made }, tasks: {
 const context = (sector: SectorId = 1, charted: string[] = []): BoardContext => ({
   hostiles: [],
   outposts: [],
-  progress: { charted },
+  progress: { charted, stations: [] },
   sector,
 });
 /** Galaxy one's station nearest the world origin. */
@@ -135,9 +135,8 @@ describe("job boards", () => {
       expect(offer.station).toBe(station.id);
       const reach = distance(offer.target, station);
       if (offer.type === "delivery") {
-        expect(reach).toBeGreaterThanOrEqual(3000);
-        expect(reach).toBeLessThanOrEqual(9000);
-        expect(offer.reward).toBe(JOB_REWARDS[1][reach >= 6000 ? "deliveryLong" : "deliveryShort"]);
+        expect(offer.target.id).toBe("growers");
+        expect(offer.reward).toBe(JOB_REWARDS[1].deliveryShort);
       } else if (offer.type === "survey") {
         expect(landmarkSites(1).some(({ id }) => id === offer.target.id)).toBe(true);
         expect(offer.reward).toBe(JOB_REWARDS[1].survey);
@@ -152,6 +151,38 @@ describe("job boards", () => {
     }
     // Offers stay until taken.
     expect(stationBoard(context(), book, station)).toEqual(board);
+  });
+
+  it("deliver to the nearest known station or outpost at least 3000 away, with no upper limit", () => {
+    const station = firstStation();
+    const deliveryTo = (stations: string[], outposts: BoardContext["outposts"]) => {
+      for (let made = 0; made < 40; made++) {
+        const offer = stationBoard(
+          { ...context(), outposts, progress: { charted: [], stations } },
+          emptyBook(made),
+          station,
+        ).find(({ type }) => type === "delivery");
+        if (offer) {
+          return offer;
+        }
+      }
+      return undefined;
+    };
+    const near = { id: "growers", x: station.x + 2999, y: station.y };
+    const far = { id: "workshop", x: station.x, y: station.y + 20_000 };
+    const farther = { id: "salvagers", x: station.x, y: station.y - 30_000 };
+    // Nothing known at 3000 or more: no delivery.
+    expect(deliveryTo([station.id], [near])).toBeUndefined();
+    const offer = deliveryTo([station.id], [near, farther, far]);
+    expect(offer?.target).toEqual(far);
+    expect(offer?.reward).toBe(JOB_REWARDS[1].deliveryLong);
+    // A discovered station nearer than the outposts is preferred; undiscovered ones never count.
+    // Station sites are at least 8000 apart, so a neighbour sits between 3000 and the outpost.
+    const [other] = stationsNear(ECONOMY, 1, 19_000, station)
+      .filter(({ id }) => id !== station.id)
+      .sort((a, b) => distance(a, station) - distance(b, station));
+    expect(deliveryTo([], [far])?.target.id).toBe("workshop");
+    expect(deliveryTo([station.id, other!.id], [far])?.target.id).toBe(other!.id);
   });
 
   it("keep rescue and hunt targets 1000 from frigates and capitals", () => {
@@ -308,6 +339,8 @@ describe("jobs in play", () => {
     expect(flight.tow).toEqual({ x: held.target.x, y: held.target.y });
     expect(model.towing).toBe(true);
     expect(model.jobScenery).toMatchObject({ craft: flight.tow, towing: true });
+    // Out of danger, so towing alone refuses Travel.
+    flight.dangerFor = 0;
     model.teleport(station.id);
     expect(model.state.notice).toBe("Unavailable while towing.");
     expect(distance(flight.player, held.target)).toBeLessThan(200);
@@ -427,13 +460,13 @@ describe("jobs in play", () => {
     const { model } = docked();
     const held = take(model, "hunt");
     const spot = held.spot!;
-    // An uncharted landmark 600 away is an ordinary Penny point, which starts her 60 s rest.
+    // Near an uncharted landmark Penny senses an ordinary point (it or a cache beside it), which
+    // starts her 60 s rest.
     const landmark = landmarkSites(1).find(
       (site) => distance(site, spot) > 5000 && distance(site, held.target) > 5000,
     )!;
-    expect(listen(model, { x: landmark.x + 600, y: landmark.y }, 2)).toContain(
-      `penny:1:${landmark.id}`,
-    );
+    const sensed = listen(model, { x: landmark.x + 600, y: landmark.y }, 2);
+    expect(sensed.filter((instance) => instance.startsWith("penny:1:"))).toHaveLength(1);
     expect(listen(model, { x: spot.x + 340, y: spot.y }, 30)).toContain(`penny:1:job:${held.id}`);
   });
 });

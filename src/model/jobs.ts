@@ -10,7 +10,7 @@ import {
 import type { SectorId } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { type StationSite, stationsNear } from "./stations.ts";
+import { stationById, type StationSite } from "./stations.ts";
 import type {
   FlightState,
   GameState,
@@ -33,7 +33,8 @@ export type JobBook = Pick<GameState, "jobs" | "tasks">;
 /** What a board draws on when it makes offers. */
 export interface BoardContext {
   readonly sector: SectorId;
-  readonly progress: Pick<SectorProgress, "charted">;
+  /** Charted landmarks, and discovered stations: delivery destinations. */
+  readonly progress: Pick<SectorProgress, "charted" | "stations">;
   /** Known outposts in the flight: delivery destinations and tow safe places. */
   readonly outposts: readonly JobTarget[];
   /** Live frigates and capitals, which job targets keep clear of. */
@@ -125,17 +126,15 @@ function jobTarget(
     return site ? { item: site.kind, target: { id: site.id, x: site.x, y: site.y } } : null;
   }
   if (type === "delivery") {
-    const { max, min } = JOB_TUNING.delivery;
-    const places = [
-      ...stationsNear(ECONOMY, context.sector, max, station).filter(
-        (site) => site.id !== station.id,
-      ),
+    // The nearest other known station or outpost at least the minimum away, with no upper limit.
+    const place = [
+      ...context.progress.stations.flatMap((id) => stationById(ECONOMY, context.sector, id) ?? []),
       ...context.outposts,
-    ].filter((place) => {
-      const length = distance(place, station);
-      return length >= min && length <= max;
-    });
-    const place = pick(next, places);
+    ]
+      .filter(
+        (place) => place.id !== station.id && distance(place, station) >= JOB_TUNING.delivery.min,
+      )
+      .sort((a, b) => distance(a, station) - distance(b, station))[0];
     const item = pick(next, pool.delivery);
     return place && item ? { item, target: { id: place.id, x: place.x, y: place.y } } : null;
   }

@@ -13,8 +13,11 @@ export type JobRewardKind = "survey" | "hunt" | "deliveryShort" | "deliveryLong"
 export const JOB_TUNING = {
   /** Offers on each board. */
   boardSize: 3,
-  /** A delivery's destination, in world units from the issuing station. */
-  delivery: { longFrom: 6000, max: 9000, min: 3000 },
+  /**
+   * A delivery's destination, in world units from the issuing station: the nearest known place
+   * at least min away, long from longFrom.
+   */
+  delivery: { longFrom: 6000, min: 3000 },
   /** Job targets keep this far from retained frigates, capitals and platforms. */
   hostileClearance: 1000,
   /**
