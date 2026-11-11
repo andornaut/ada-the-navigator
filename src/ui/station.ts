@@ -272,7 +272,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       node.className = "ada-station-row";
       node.dataset.item = row.key;
       node.dataset.state = row.state;
-      node.setAttribute("aria-disabled", String(row.state === "unaffordable"));
       const name = document.createElement("span");
       name.textContent = row.name;
       if (row.detail) {
@@ -283,7 +282,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       const status = document.createElement("span");
       status.textContent = row.status;
       node.append(name, status);
-      // Unaffordable rows look disabled but stay focusable and tappable, so a tap refuses.
+      // Unaffordable rows look disabled but stay enabled, focusable and tappable, so a tap
+      // refuses; aria-disabled would announce them as unusable.
       node.addEventListener("click", () => {
         const action = rowAction(row.state);
         if (action === "select") {

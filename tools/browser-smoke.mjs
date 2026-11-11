@@ -331,7 +331,7 @@ try {
   await page.reload();
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const resumed = await readSave();
-  for (const field of ["seed", "cargo", "ammo", "shield", "player", "world", "visited"]) {
+  for (const field of ["seed", "cargo", "shield", "player", "world", "visited"]) {
     assert.deepEqual(
       resumed.flight[field],
       persisted.flight[field],
@@ -736,7 +736,6 @@ try {
   const equipment = new GameModel(PROTOTYPE, safeSerialized);
   equipment.state.flight.ownedWeapons = ["missiles", "tripleLaser"];
   equipment.state.flight.weapon = "basic";
-  equipment.state.flight.ammo = 0;
   const equipmentSave = equipment.save();
   assert.deepEqual(new GameModel(PROTOTYPE, equipmentSave).state, equipment.state);
   save("equipment-fixture.json", {
@@ -812,7 +811,7 @@ try {
   assert.equal(
     (await readSave()).flight.weapon,
     "tripleLaser",
-    "Zero legacy ammo must not consume an upgrade",
+    "Firing must not consume an upgrade",
   );
   const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
   assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
@@ -842,10 +841,9 @@ try {
     false,
     "Play shows no settings button; Settings opens from the Paused card",
   );
-  assert.equal(
-    (await readSave()).flight.ammo,
-    0,
-    "Actual firing must retain zero legacy ammo without consuming the unlimited upgrade",
+  assert.ok(
+    !("ammo" in (await readSave()).flight),
+    "Saves carry no ammunition count; upgrades are unlimited",
   );
   save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
@@ -853,7 +851,6 @@ try {
     "Owned unlimited weapons support accessible selection, reload, modal guards and a full-width shield meter",
   );
 
-  const { stepFlight } = await import(new URL("../src/model/flight.ts", import.meta.url));
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
   assert.ok(damaged.selectWeapon("missiles"));
   // Damage is meaningful only outside the friendly destination's protected region.
@@ -880,19 +877,12 @@ try {
     piercing: false,
     velocity: { x: 0, y: 0 },
   });
-  stepFlight(
-    PROTOTYPE,
-    0.01,
-    { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false },
-    damaged.state.flight,
-  );
-  assert.equal(
-    damaged.state.flight.weapon,
-    "basic",
-    "Real projectile damage must remove the selected upgrade",
-  );
-  assert.deepEqual(damaged.state.flight.ownedWeapons, ["tripleLaser"]);
-  assert.equal(damaged.state.flight.shield, PROTOTYPE.tuning.shieldMax);
+  damaged.state.economy.stardust = 30;
+  damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+  assert.equal(damaged.state.mode, "home", "Shield depletion must warp Ada home");
+  assert.deepEqual(damaged.state.economy.ownedWeapons, ["tripleLaser"]);
+  assert.equal(damaged.state.economy.weapon, "basic", "The equipped upgrade must be lost");
+  assert.equal(damaged.state.economy.stardust, 20, "Recharging must cost 10 Stardust");
   const damageSave = damaged.save();
   assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
@@ -900,22 +890,17 @@ try {
     state: JSON.parse(damageSave),
   });
   await seedOnce(damageSave, "ada-browser.shield-break.v1");
-  await page.waitForFunction(
-    () => document.querySelector('[data-weapon="basic"]')?.getAttribute("aria-pressed") === "true",
+  await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+  const warpNotice = await page.locator("#game-status").textContent();
+  assert.ok(
+    warpNotice.includes(PROTOTYPE.labels.warpHome) &&
+      warpNotice.includes("Your Missiles was lost.") &&
+      warpNotice.includes("Recharging cost 10 Stardust."),
+    `The warp home notice must name the loss and the fee: ${warpNotice}`,
   );
   assert.equal(await page.locator('[data-weapon="missiles"]').count(), 0);
-  assert.equal(
-    await page.locator('[data-weapon="tripleLaser"]').getAttribute("aria-pressed"),
-    "false",
-  );
-  assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
-  await page.locator('[data-weapon="tripleLaser"]').click();
-  await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "tripleLaser",
-    storageKey,
-  );
   events.checks.push(
-    "Canonical shield-break damage restores Basic and shield while retaining only other upgrades for manual selection",
+    "Canonical shield depletion warps Ada home, losing the equipped upgrade and charging the recharge fee",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
