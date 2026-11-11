@@ -40,7 +40,8 @@ capital 24, and one per Stardust for asteroids. With the values above, every
 drop is below its cap, so each pickup carries 1 Stardust.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
-ships, 5% of frigates and 10% of capitals drop a random upgrade weapon. A dropped weapon
+ships, 5% of frigates and 10% of capitals drop a random upgrade weapon; in galaxy
+one, frigates drop one 2% of the time and capitals 5%. A dropped weapon
 Ada already owns becomes 25 Stardust instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
@@ -50,7 +51,7 @@ Stations are rare points of interest, each with a shop. They are placed by the
 galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
-within 1500 world units of Ada is marked by the direction indicator, so stations
+within 2000 world units of Ada is marked by the direction indicator, so stations
 stay rare but findable. A station is a safe
 area. The dock is the station sprite's visible entrance. Ada docks when her
 hull circle overlaps the mouth circle: half the drawn mouth width in world units,

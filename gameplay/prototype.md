@@ -265,7 +265,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   automatically equip their weapon outside combat and retain other owned weapons.
 - Every weapon and the shield have three levels. Each level multiplies effective
   output (damage times fire rate times how often it hits) by about 1.5, so level 3
-  is about 2.25 times level 1. Each weapon grows along its own dimensions:
+  is about 2.25 times level 1. Single-target output meets those steps on its own;
+  range, blast and spread growth add to them. Each weapon grows along its own
+  dimensions:
   - Basic: damage and fire rate.
   - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
     basic damage) with a large blast; levels grow its blast radius (60, 72, 85)
