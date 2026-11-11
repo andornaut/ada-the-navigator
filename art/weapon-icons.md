@@ -15,11 +15,12 @@ at least 2 px padding. Laser strokes and scatter dots are 2 px thick.
 
 ## HUD glyphs
 
-The top-right weapon selector draws 24 × 24 px versions with heavier strokes,
-`public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`, in the same
-cream. Shapes follow the 20 px icons with 4 px dots and exhaust, 3 px laser
-strokes and a larger bolt head. [Controls](controls.md#top-right-hud-icon-buttons)
-defines their states and colours. The 20 px icons remain the shop row glyphs.
+The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
+[Controls](controls.md#top-right-hud-icon-buttons) defines their states and
+colours. The 20 px icons are also the shop row glyphs. The 24 × 24 px versions,
+`public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`, follow the
+20 px shapes with 4 px dots and exhaust, 3 px laser strokes and a larger bolt
+head, and stay published for existing references.
 
 Filename case matches the direct DOM URL `weapon-${id}.svg`. Legacy rapid, spread
 and pierce icons remain available for existing references.

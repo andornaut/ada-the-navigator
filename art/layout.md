@@ -32,7 +32,8 @@ the value currently lives, in CSS px.
   stays at the logical size with nearest-neighbour upscaling.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
   narrower, 779 on an 844x390 phone). Anchor every element from the safe
-  rect's edges, never from the base 720 view or a centred sub-view.
+  rect's edges, except the HUD's top controls, which anchor to the centred base
+  view through `hudRect` ([HUD and overlays](#hud-and-overlays)).
 - Nine-slice edges are whole CSS px: each slice edge is `round(edge * s)`, set
   as a variable for `border-image-width` and outset, so edges never blur while
   the body scales freely. Review at native and fractional scales (1.083 and
@@ -56,7 +57,7 @@ becomes logical px, so UI now grows with the canvas:
 | Group gap        | 8     | Between card groups, buttons in an action row or stack, row parts | `SPACING.gap`, `tokens.ts`, to implement; now `CARD.gap`                      |
 | Column gap       | 8     | Between columns of controls (shop item columns)                   | `SPACING.columnGap`, `tokens.ts`, to implement                                |
 | Mark gap         | 6     | From an inline icon to its label inside one control or pill       | `SPACING.markGap`, `tokens.ts`, to implement                                  |
-| Control edge     | 8     | HUD controls from the view edge                                   | `CONTROL_EDGE`, `playView.ts`, to implement; now `PAUSE_BUTTON.edge`          |
+| Control edge     | 8     | HUD controls from the view edge, and HUD buttons apart            | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
 | Page inset       | 16    | Modals and page content from the view edge                        | `SPACING.pageInset`, `tokens.ts`, to implement; now `.ada-modal` padding      |
 | Panel padding    | 16    | Inside cards and the story panel, including the 2 px frame        | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
 | Body line box    | 20    | 16 px text (body, labels, supporting)                             | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
@@ -68,7 +69,8 @@ or scroll. Colours per role are in [Controls](controls.md#colour-tokens).
 
 ## Page bounds
 
-- HUD controls sit in `safeRect(insets, CONTROL_EDGE, view)`.
+- HUD top controls sit in `hudRect(insets, view)`; the other HUD controls sit
+  in `safeRect(insets, CONTROL_EDGE, view)`.
 - Modals and page content (story panel, notices) fit in
   `safeRect(insets, SPACING.pageInset, view)`, the available rect.
 - Backgrounds and the modal dim cover the whole logical view, under the insets.
@@ -109,7 +111,7 @@ space nor a gap.
 | Switch               | 32x16                                                                   | `ui-switch` frame                                                     | `CONTROL_ROW.switch`; now `ROW.action.switch`                         |
 | Row icon             | 16x16                                                                   | Settings and install-step icons                                       | `CONTROL_ROW.icon`; now `ROW.icon`                                    |
 | Minimum press target | 48x48                                                                   | Every discrete control                                                | `HIT_RULE.minTarget`, `hitAreas.ts`, to implement                     |
-| Press-area growth    | `clamp(6, 16, 0.25 * shorter side)` per side, then grown to 48 per axis | HUD controls; nearest drawn centre wins an overlap                    | `hitAround`, `pressedArea`, `HIT_RULE`, `hitAreas.ts`, to implement   |
+| Press-area growth    | `clamp(6, 16, 0.25 * shorter side)` per side, then grown to 48 per axis | Pause, Use and the close X; nearest drawn centre wins an overlap      | `hitAround`, `pressedArea`, `HIT_RULE`, `hitAreas.ts`, to implement   |
 | Focus ring outset    | 4                                                                       | `ui-focus` outside the drawn face, every state                        | `FOCUS_RING.outset`, `controls.ts`, to implement                      |
 | Selection ring       | 2 band, 2 outside the face                                              | Shares the focus outset; focus may overlap it                         | `FOCUS_RING`, `controls.ts`, to implement                             |
 | Pill                 | 28 high, radius 4, 8 side padding                                       | Price pills and the HUD Stardust pill                                 | `PILL`, `controls.ts`, to implement                                   |
@@ -151,19 +153,38 @@ the face of each state, never the press area.
 
 ## HUD and overlays
 
-HUD elements anchor to `safeRect(insets, CONTROL_EDGE, view)` corners, except
-where stated.
+The HUD's top controls (pause, weapons, Stardust pill, the start screen's
+Settings and notices) anchor to the HUD rect, as Chibi anchors its pause button
+and skill row (`chibis-way-home` `src/ui/layout/playView.ts` `playView`,
+`topShift` and `CONTROL_EDGE`; `src/ui/layout/skillHud.ts`). The rect moves
+with the centred base view, so on screens wider than 2:1 the controls sit
+inside it, clear of curved screen corners; the safe-rect clamp still keeps them
+out of every inset. Other HUD elements anchor to
+`safeRect(insets, CONTROL_EDGE, view)` corners, as stated.
+
+| Token      | Value                                                                                             | Rule                                                                         | Constant                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                    | The base view centred across the logical view, at its top                    | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)        |
+| HUD rect   | `playView(view)` inset by `CONTROL_EDGE`, intersected with `safeRect(insets, CONTROL_EDGE, view)` | Corners of the top controls; only its top, left and right edges anchor       | `hudRect(insets, view)`, `playView.ts`, to implement (Chibi `topShift`) |
+| HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8                                           | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE` | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`   |
+
+| Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
+| -------------- | ----------------- | ------------ | ----------- | ------------------------- |
+| 844x390        | None              | 779x360      | 29          | 37, 741, 8                |
+| 844x390        | Left and right 43 | 779x360      | 29          | 43, 736.08, 8             |
+| 1280x720       | None              | 720x405      | 0           | 8, 712, 8                 |
+| 1920x1080      | None              | 720x405      | 0           | 8, 712, 8                 |
 
 | Element    | Geometry                                                                                                                                                                                                                                                                                                                           | Constant                                                         |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Pause      | 35x35 frame, 33 disc, drawn edge on the top-left corner (frame 1 outside it); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                      | `PAUSE_BUTTON`, `playView.ts`; now `PAUSE_BUTTON`, `pause.ts`    |
-| Weapons    | 48x48 faces, radius 8, 2 ink border, 24 glyph, `SPACING.gap` apart, right-aligned on the top-right corner; press `hitAround(face)` = 72, nearest centre wins                                                                                                                                                                       | `HUD_BUTTON`, `playView.ts`, to implement                        |
-| Stardust   | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon, centred on the weapon row; grows leftward                                                                                                                                                    | `STARDUST_PILL`, `playView.ts`, to implement                     |
+| Pause      | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                 | `PAUSE_BUTTON`, `playView.ts`                                    |
+| Weapons    | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                        | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`            |
+| Stardust   | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon target (the HUD rect's right without weapons), centred on the row (`top + 10`); grows leftward                                                                                                | `STARDUST_PILL`, `playView.ts`                                   |
 | Shield bar | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                                                                                                                                 | `SHIELD_BAR`, `playView.ts`, to implement                        |
 | Sticks     | 75 frames; ring drawn edge `max(85, inset)` from the left (move) or right (aim) and `max(20, inset)` above the bottom; knob reach 12                                                                                                                                                                                               | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts` |
-| Use        | Context action: a `TEXT_BUTTON.height` face with `HUD_BUTTON` border and radius, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (`max(20, inset)`); press `hitAround(face)`; shown only while an interaction is available | `USE_BUTTON`, `touchControls.ts`, to implement                   |
-| Settings   | Start screen only: a `HUD_BUTTON` with `icon-settings-nav-24` on the top-right corner                                                                                                                                                                                                                                              | `HUD_BUTTON`, `playView.ts`, to implement                        |
-| Notice     | A compact strip: `TYPE.body` on an ink panel, `TEXT_BUTTON.compactHeight` high (grows per wrapped line), content inset `TEXT_BUTTON.inset`; top edge on `safeRect(insets, CONTROL_EDGE, view)`, centred, clear of the pause and weapon press areas by `SPACING.gap`; shown briefly; notices stack `SPACING.gap` apart              | `NOTICE`, `playView.ts`, to implement                            |
+| Use        | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (`max(20, inset)`); press `hitAround(face)`; shown only while an interaction is available    | `USE_BUTTON`, `touchControls.ts`, to implement                   |
+| Settings   | Start screen only: a `HUD_BUTTON` in the idle state with `icon-settings-nav` (20) as its glyph, on the HUD rect's top-right corner                                                                                                                                                                                                 | `HUD_BUTTON`, `playView.ts`                                      |
+| Notice     | A compact strip: `TYPE.body` on an ink panel, `TEXT_BUTTON.compactHeight` high (grows per wrapped line), content inset `TEXT_BUTTON.inset`; top edge on the HUD rect's top, centred on it, clear of the pause and weapon press areas and the Stardust pill by `SPACING.gap`; each shown briefly; notices stack `SPACING.gap` apart | `NOTICE`, `noticeReserve`, `playView.ts`                         |
 
 Overlap rules:
 
@@ -280,7 +301,9 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Sticks anchor from the safe rect's edges                                                                   | From the centred 720 view               |
 | Every action stack fills the inner width with `SPACING.gap`                                                | Generic stacks 4 apart                  |
 | Stardust pill: 28 high, radius 4, padding 8, mark gap 6, count 16 bold, 8 from the weapons                 | 26, 6, 7, 4, 15, 6                      |
-| Weapon buttons use the shared focus ring and `hitAround` press areas (72)                                  | 3 px outline at 4; 48 press area        |
+| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                      | The HUD safe rect's corners             |
+| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area     | 48 squares, 24 glyph, cream ring        |
+| Pause draws `pause.svg` with smooth sampling                                                               | `ui-pause` PNG, nearest neighbour       |
 | Cards scroll one scroll group with the header and close fixed                                              | The whole card scrolls                  |
 | Prose never widens a card; cheats headings and notes use group and row gaps                                | 36em prose cap; 16 and 4 margins        |
 | Shield bar sits on the bottom safe edge                                                                    | Bottom view edge                        |
@@ -325,6 +348,9 @@ Tests:
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
   `SPACING.pageInset` apart.
+- `hudRect` matches the HUD rect table at 844x390 (with and without insets),
+  1280x720 and 1920x1080; the pause frame and every weapon target lie inside
+  `playView` inset by `CONTROL_EDGE`.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The galaxy card and the story panel keep one size across pages.

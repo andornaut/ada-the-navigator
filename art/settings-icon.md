@@ -20,8 +20,9 @@ Source files remain untouched. Reuse is explicitly authorized by the project own
 
 ## 24px gear
 
-The top-right settings button draws `icon-settings-nav-24`, a 24 by 24 redraw
-of the same gear for the 24px HUD glyph size: a ring around an 8-pixel centre
+`icon-settings-nav-24` is a 24 by 24 redraw of the same gear, published for
+existing references (the start screen's Settings button draws the 20px
+`icon-settings-nav`): a ring around an 8-pixel centre
 hole, with four 4-pixel-wide orthogonal teeth reaching the frame edges and four
 diagonal teeth, in cream `#ead4aa`. This sheet is authored for Ada and is not
 pinned to Chibi. One untrimmed, unrotated frame, `rest` index 0, duration

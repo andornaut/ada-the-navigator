@@ -44,12 +44,27 @@ underneath.
 
 ## Pause
 
-- Pause button: `ui-pause`, tags `rest`, `press` (once) and `held`, 35x35 frames.
-  A 33px disc with an ink edge, a 2px cream ring and a navy face holds two 4x13
-  bars 3px apart; press swells it to 35px for the first 60ms frame only. Its
+- Pause button: vector art, 35x35 logical, drawn with smooth sampling (never
+  `image-rendering: pixelated`), so it stays sharp at every view scale. Its
   placement and press area are `PAUSE_BUTTON` in
   [Layout](layout.md#hud-and-overlays). It is a touch control, hidden on
   desktop (Escape pauses) and while dialogue is open.
+- Geometry is Chibi's `pauseChromeLayers` (`chibis-way-home`
+  `src/ui/chrome/pauseChrome.ts`): circles centred at 17.5,17.5 and two 4x13
+  bars at 12,11 and 19,11 (3 apart), in the ring colour.
+
+| File                                  | Pose                   | Ink edge | Ring                | Face                 |
+| ------------------------------------- | ---------------------- | -------- | ------------------- | -------------------- |
+| `public/art/ui/icons/pause.svg`       | Rest                   | r 16.5   | Cream, r 15.5, 2 px | Navy `#262b44`, 13.5 |
+| `public/art/ui/icons/pause-press.svg` | Press frame 0 (swell)  | r 17.5   | White, r 16.5, 3 px | `#3a4466`, 13.5      |
+| `public/art/ui/icons/pause-held.svg`  | Press frame 1 and held | r 16.5   | White, r 15.5, 3 px | `#3a4466`, 12.5      |
+
+- Timing stays in the `ui-pause` sheet's JSON, as in Chibi: tags `rest`
+  (frame 0, 100ms), `press` (frames 1 and 2, 60ms each, once) and `held`
+  (frame 3, 100ms). Frame 0 shows `pause.svg`, frame 1 `pause-press.svg`,
+  frames 2 and 3 `pause-held.svg`. The sheet's PNG is no longer drawn.
+- Contrast: cream bars and ring 9.59:1 on the navy face and 10.11:1 on the
+  space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
 - Pause card: its groups are in [Layout screens](layout.md#cards). While Ada
   is in danger, Travel and Return home are unavailable and the note
   "Unavailable while you are in danger." shows below the stack in supporting
@@ -118,35 +133,50 @@ against the card, and 5.91:1 and 4.84:1 against the page background.
 
 ## Top-right HUD icon buttons
 
-The weapon selector buttons draw a 24px `weapon-<id>-24.svg` glyph on a face
-with an ink `#181425` border. Their size, radius, spacing and press areas are
-`HUD_BUTTON` in [Layout](layout.md#hud-and-overlays). The space screen has no
-settings button; Settings opens from the pause card. `icon-settings-nav-24`
-serves screens outside space play, such as the start screen.
+The weapon selector buttons follow Chibi's skill buttons (`chibis-way-home`
+`art/style-guide.md` "Skills and room rewards", `src/scenes/skillButton.ts`):
+a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
+glyph centred on it. Sizes and placement are `HUD_BUTTON` in
+[Layout](layout.md#hud-and-overlays). The space screen has no settings button;
+Settings opens from the pause card. The start screen's Settings button uses
+the idle state with `icon-settings-nav`.
 
-| Weapon state | Face      | Glyph                    | Ring |
-| ------------ | --------- | ------------------------ | ---- |
-| Idle         | `#262b44` | `#ead4aa`                | None |
-| Selected     | `#f0bd68` | `#181425`                | Yes  |
-| Locked       | `#1d2032` | `#6f7891`                | None |
-| Refused      | `#1d2032` | `#e4574e` during the cue | None |
+| Weapon state | Face                 | Edge                          | Glyph                    | Glyph contrast |
+| ------------ | -------------------- | ----------------------------- | ------------------------ | -------------- |
+| Idle         | Navy `#262b44`       | 1 ink `#181425`               | `#b8b3c9`                | 6.83:1         |
+| Selected     | `#bfa06f`, 25 across | 4 ink annulus inside the disc | Ink `#181425`            | 7.27:1         |
+| Locked       | Navy `#262b44`       | 1 ink `#181425`               | `#6f7891`                | 3.16:1         |
+| Refused      | Navy `#262b44`       | 1 ink `#181425`               | `#e4574e` during the cue | 3.82:1         |
 
-- Selected follows Chibi's power-up face: amber with an ink glyph, plus the
-  cream `#ead4aa` selection ring (`FOCUS_RING` in
-  [Layout](layout.md#controls-and-targets)). The ring's corner radius follows
-  the face.
+- Selection is Chibi's dark annulus inside the fixed disc, with no light outer
+  ring. Selection, lock and refusal never resize the disc or glyph.
+- Brightness: the selected face is the primary button's muted gold, 5.91:1
+  against the space background `#292734` (the amber face was 8.50:1, its cream
+  ring 10.11:1). The idle glyph is the supporting-text lavender, softer than
+  cream (9.59:1) and above 4.5:1. The locked glyph is dimmer still and holds
+  3:1.
+- The ink edge on idle and locked discs is the pause disc's edge: navy is
+  1.05:1 on the space background and ink 1.23:1, so the edge outlines the
+  disc; the glyph carries the essential contrast.
 - Locked applies to every unselected weapon in combat and through the 5 seconds
   after it ends, until weapon changes unlock; the selected weapon keeps its
   selected look. The locked look is fully opaque, with no ring.
 - A tap on a locked weapon plays the [refusal cue](#refusal-cue) with the
   glyph as its label.
-- Focus-visible is the shared focus ring, over any state.
-- Contrast: idle glyph 9.59:1, selected glyph 10.45:1, locked glyph 3.66:1 and
-  refused glyph 4.42:1 on their faces.
+- Focus-visible is the shared focus ring, `FOCUS_RING.outset` outside the disc
+  and round with it, over any state.
 
-Weapon glyphs are single-colour SVGs; draw each state's glyph colour by using
-the SVG as a CSS mask (`mask: url(...) center / 24px 24px no-repeat`) over a
-background in that colour. The 20px weapon SVGs stay published for existing
+Draw the chrome in CSS at logical units so it stays sharp at any scale
+(`u` is `var(--ada-unit)`):
+
+| Part          | CSS                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink |
+| Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                   |
+| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(weapon-<id>.svg) center / 100% 100% no-repeat`             |
+
+Weapon glyphs are single-colour SVGs, so the mask takes each state's colour and
+the refusal cue's red. The 24px weapon SVGs stay published for existing
 references.
 
 ## Touch sticks

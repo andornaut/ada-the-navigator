@@ -26,7 +26,9 @@ The [24px gear](settings-icon.md#24px-gear) supplies `icon-settings-nav-24` the 
 unchanged with Prettier whitespace (source
 `054c38c2cbfa6662c2fc94aa8b01ca431a206c9dcf6bbb6686fa4687452c2469`, destination
 `78a3dd1952a8466f104ffd0a932f7218bb51c28d4133eb44bfd7fdb9dd96406c`). Its navy,
-cream and ink already match Ada's HUD buttons, so it is not recoloured.
+cream and ink already match Ada's HUD buttons, so it is not recoloured. Ada
+draws the button from the [pause SVGs](controls.md#pause); the sheet supplies
+its tags and frame timing.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 
