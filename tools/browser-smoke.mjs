@@ -23,7 +23,7 @@ try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
   browser = await chromium.launch({ channel: "chromium", headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({
+  let context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     hasTouch: true,
   });
@@ -88,12 +88,13 @@ try {
   }
   observe(page);
   // No outside requests are needed to render the built prototype.
-  await context.route("**/*", (route) => {
+  function previewOnly(route) {
     if (new URL(route.request().url()).origin === "http://ada-preview:4173") {
       return route.continue();
     }
     return route.abort("blockedbyclient");
-  });
+  }
+  await context.route("**/*", previewOnly);
   async function iconLinks() {
     assert.equal(
       await page.locator('link[rel="manifest"]').getAttribute("href"),
@@ -316,7 +317,8 @@ try {
     });
     return readStory(remaining - 1, pages);
   }
-  const selector = page.locator('[data-dialog="galaxies"]');
+  // Resolved on the current page, which each fixture replaces.
+  const selector = () => page.locator('[data-dialog="galaxies"]');
   // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
   // galaxy selection on galaxy one.
   await page.locator('[data-action="start"]').click();
@@ -392,7 +394,7 @@ try {
       `The prologue answers "${answer}"`,
     );
   }
-  await selector.waitFor({ state: "visible" });
+  await selector().waitFor({ state: "visible" });
   assert.equal(
     await page.locator(".ada-story-background").getAttribute("data-background"),
     "cockpitSeated",
@@ -406,7 +408,7 @@ try {
     artUrl("cockpit-seated"),
   );
   // Galaxy one is unlocked, so its preview is the tinted capture; it must be served.
-  const preview = await selector
+  const preview = await selector()
     .locator(".ada-galaxy-shot")
     .evaluate((shot) => shot.style.backgroundImage);
   assert.equal(preview, 'url("/previews/galaxy-sunflower.png")');
@@ -415,7 +417,7 @@ try {
   );
   assert.equal(previewResponse.status(), 200, "Galaxy previews must be served");
   assert.equal(
-    (await selector.locator("h2").textContent())?.trim(),
+    (await selector().locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
   );
   await page.screenshot({ path: `${output}/galaxy-select.png` });
@@ -469,18 +471,48 @@ try {
   }
   events.checks.push("Settings pause movement and clear held input on resume");
 
+  // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
+  // settings over: a reloaded tab keeps every earlier load's images alive until the context
+  // closes, which the container's memory ceiling cannot hold across the run.
   async function seedOnce(value, marker) {
-    // The old app's pagehide save runs before this one-shot seed on the new document.
-    await page.addInitScript(
-      ({ key, once, serialized }) => {
+    const fixture = await openFixture(await leaveFixture(), value, marker);
+    context = fixture.context;
+    page = fixture.page;
+    await page.goto(fixture.url);
+  }
+  // The current page's URL, viewport and stored entries, then its context closed.
+  async function leaveFixture() {
+    const url = page.url();
+    const viewport = page.viewportSize();
+    const { origins } = await context.storageState();
+    const stored =
+      origins
+        .find(({ origin }) => origin === "http://ada-preview:4173")
+        ?.localStorage.map(({ name, value: entry }) => [name, entry]) ?? [];
+    await context.close();
+    return { stored, url, viewport };
+  }
+  async function openFixture({ stored, url, viewport }, value, marker) {
+    const opened = await browser.newContext({ viewport, hasTouch: true });
+    await opened.route("**/*", previewOnly);
+    // One-shot per tab, so a later reload in the fixture resumes the game's own save.
+    await opened.addInitScript(
+      ({ entries, key, once, serialized }) => {
         if (!sessionStorage.getItem(once)) {
+          for (const [name, entry] of entries) {
+            localStorage.setItem(name, entry);
+          }
           localStorage.setItem(key, serialized);
           sessionStorage.setItem(once, "1");
         }
       },
-      { key: storageKey, serialized: value, once: marker },
+      { entries: stored, key: storageKey, once: marker, serialized: value },
     );
-    await page.reload();
+    const fresh = await opened.newPage();
+    fresh.setDefaultTimeout(10000);
+    fresh.setDefaultNavigationTimeout(15000);
+    observe(fresh);
+    return { context: opened, page: fresh, url };
   }
   // The launched world comes from a random seed, so an encounter can open fire during a reload.
   // Persistence checks use that same world with its hostiles removed: shield then changes only
@@ -1345,9 +1377,9 @@ try {
   const homePages = await readStory();
   assert.equal(homePages[0]?.text, PROTOTYPE.chapters[1].closing);
   assert.equal(homePages[1]?.text, PROTOTYPE.chapters[2].opening, "Galaxy two's opening follows");
-  await selector.waitFor({ state: "visible" });
+  await selector().waitFor({ state: "visible" });
   assert.equal(
-    (await selector.locator("h2").textContent())?.trim(),
+    (await selector().locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
     "Galaxy selection opens on the farthest unlocked galaxy",
   );
