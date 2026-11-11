@@ -20,7 +20,6 @@ provenance are in [UI assets](ui.md).
 | Focus           | Ring 4px outside the face, independent of pressed, selected or checked state |
 | Press target    | At least 48 per axis                                                         |
 | Paired actions  | Secondary on the left, primary on the right                                  |
-| Group placement | Action groups, including a single action, centre horizontally in the card    |
 | Hover           | No hover-only styling; hover never changes size or role colour               |
 | Sheets          | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled |
 | Nine-slice      | 16x28 frames, margins left/top/right/bottom 2/4/2/6                          |
@@ -39,11 +38,32 @@ a 2px cream outline at 1px offset over 1px and 4px ink shadows.
 
 ## Cards and modals
 
+Every modal uses one content-fitted card layout. Settings, install steps, update
+offers, cheats, the station card, the shop and confirms differ only in their
+groups.
+
 - Card padding: 16 on every side.
+- Card width: `min(availableWidth, max(contentWidth + 32, viewportWidth * 0.5))`.
+  `contentWidth` is the widest group (or the reserved title width); the safe
+  available width is only the final cap. Height fits the content, with no
+  minimum and no reserved empty space.
+- Placement: the card centres horizontally and vertically in the view.
+- Groups stack top to bottom with 8px between them. Each group keeps its own
+  measured width and centres horizontally in the card's inner width.
+- Header: the title centres across the whole card, reserving the close press
+  target plus 8px (50px) on both sides. The gap from the title's ink to the
+  first group equals the gap from the frame's inner top edge to the title's ink.
 - Close: a 24x24 face 6px from the card's top and right edges, centred in a
   48x48 press target that may extend past the card.
-- Control rows: 48 high, holding the icon, label and switch; the whole row
-  activates.
+- Control rows: one group, as wide as its widest row and centred, with 4px
+  between rows. Each row is 48 high: a 16px icon, 8px, the label, 8px, then the
+  switch or row action placed at the row's right end, both centred vertically.
+  The whole row activates. A row with supporting text grows to fit it at 16px.
+- Row actions (Install in Settings) sit at the right end of their row inside
+  the row group, never as a separate full-width button.
+- Action groups: a row of buttons sharing one width (the widest label plus 16px
+  insets) with 8px gaps, or a stack with 4px gaps; the group centres in the
+  card. A single action is a one-button group, centred.
 - Every modal dims the background behind it and receives input exclusively.
   Outside taps never activate controls underneath.
 
