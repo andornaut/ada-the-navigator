@@ -152,10 +152,13 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
 }
 
 function stateCases(call: ReturnType<typeof recorder>): void {
+  // Count widths: none, "125", "12,500" and the widest the four-weapon clearance allows.
+  for (const countWidth of [0, 26.7, 48.94, 162.25]) {
+    call("playView.ts", "statusPillWidth", playView.statusPillWidth, countWidth);
+  }
   for (const count of COUNTS) {
     call("playView.ts", "hudButtonTarget", playView.hudButtonTarget, count);
     call("playView.ts", "hudRowWidth", playView.hudRowWidth, count);
-    call("playView.ts", "stardustPillRight", playView.stardustPillRight, count);
     for (const pill of [undefined, 0, 64]) {
       call("playView.ts", "noticeReserve", playView.noticeReserve, count, pill);
     }

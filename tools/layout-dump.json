@@ -195,12 +195,25 @@
         "hud": 8,
         "page": 16
       },
-      "SHIELD_BAR": {
-        "height": 3,
-        "margin": 0
-      },
-      "STARDUST_PILL": {
+      "STATUS_PILL": {
+        "bar": {
+          "fill": {
+            "height": 8,
+            "width": 92
+          },
+          "height": 12,
+          "inset": 2,
+          "rim": 1,
+          "width": 96
+        },
+        "divider": {
+          "height": 16,
+          "width": 1
+        },
+        "dividerGap": 12,
+        "edge": 2,
         "icon": 20,
+        "low": 0.25,
         "markGap": 6,
         "pill": {
           "height": 28,
@@ -212,7 +225,14 @@
             "weight": 700
           }
         },
-        "top": 10
+        "stardustIcon": 20,
+        "tick": {
+          "outline": 1,
+          "rise": 4,
+          "top": 32
+        },
+        "x": 50.75,
+        "y": 2.5
       },
       "STORY_PANEL_TOP": 56,
       "STORY_SKIP": {
@@ -4983,7 +5003,7 @@
             0,
             64
           ],
-          "result": 72
+          "result": 122.75
         },
         {
           "args": [
@@ -5004,7 +5024,7 @@
             1,
             64
           ],
-          "result": 128
+          "result": 122.75
         },
         {
           "args": [
@@ -5025,7 +5045,7 @@
             2,
             64
           ],
-          "result": 184
+          "result": 122.75
         },
         {
           "args": [
@@ -5046,7 +5066,7 @@
             3,
             64
           ],
-          "result": 240
+          "result": 168
         },
         {
           "args": [
@@ -5067,7 +5087,7 @@
             4,
             64
           ],
-          "result": 296
+          "result": 224
         },
         {
           "args": [
@@ -5088,7 +5108,7 @@
             5,
             64
           ],
-          "result": 352
+          "result": 280
         }
       ],
       "playView": [
@@ -6789,42 +6809,30 @@
           }
         }
       ],
-      "stardustPillRight": [
+      "statusPillWidth": [
         {
           "args": [
             0
           ],
-          "result": 0
+          "result": 189
         },
         {
           "args": [
-            1
+            26.7
           ],
-          "result": 56
+          "result": 215.7
         },
         {
           "args": [
-            2
+            48.94
           ],
-          "result": 112
+          "result": 237.94
         },
         {
           "args": [
-            3
+            162.25
           ],
-          "result": 168
-        },
-        {
-          "args": [
-            4
-          ],
-          "result": 224
-        },
-        {
-          "args": [
-            5
-          ],
-          "result": 280
+          "result": 351.25
         }
       ],
       "viewScale": [

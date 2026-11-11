@@ -136,27 +136,41 @@ export function hudRowWidth(count: number): number {
   return count > 0 ? count * HUD_BUTTON.target + (count - 1) * HUD_BUTTON.gap : 0;
 }
 
-// The Stardust pill: a PILL with the 20 Stardust icon, a mark gap and the count as a label; its
-// right edge a gap left of the leftmost of weaponCount weapon targets (on the HUD rect's right
-// without weapons), centred on the row; it grows leftward. Offsets from the HUD rect's top-right
-// corner.
-export const STARDUST_PILL = {
-  icon: 20,
+// The status pill (art/layout.md "Status pill"): one PILL holding the shield bar and the Stardust
+// count. Its left edge is a gap right of the pause press area and it centres on the pause disc,
+// relative to the HUD rect's top-left corner, whether or not the pause button shows; it grows
+// rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
+// (a 1 rim, 1 ink, then the 92x8 fill area), the divider (12, 1x16, 12), the 20 Stardust icon, a
+// mark gap and the count. The +N tick's line box sits a row gap below the pill.
+const PAUSE_DISC_CENTRE = PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2;
+export const STATUS_PILL = {
+  bar: { fill: { height: 8, width: 92 }, height: 12, inset: 2, rim: 1, width: 96 },
+  divider: { height: 16, width: 1 },
+  dividerGap: 12,
+  // The leading edge inside the fill's right end while the shield regenerates.
+  edge: 2,
+  icon: HUD_BUTTON.glyph,
+  // Below this share of capacity the shield is low.
+  low: 0.25,
   markGap: SPACING.markGap,
   pill: PILL,
-  top: (HUD_BUTTON.target - PILL.height) / 2,
+  stardustIcon: 20,
+  tick: { outline: 1, rise: 4, top: PILL.height + SPACING.rowGap },
+  x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
+  y: PAUSE_DISC_CENTRE - PILL.height / 2,
 } as const;
 
-export function stardustPillRight(weaponCount: number): number {
-  return weaponCount > 0 ? hudRowWidth(weaponCount) + SPACING.gap : 0;
+// The pill's width for a countWidth count: the padding, both icons and mark gaps, the bar and the
+// divider with its gaps, plus the count.
+export function statusPillWidth(countWidth: number): number {
+  const { bar, divider, dividerGap, icon, markGap, pill, stardustIcon } = STATUS_PILL;
+  const fixed = 2 * pill.padding + icon + markGap + bar.width + 2 * dividerGap + divider.width;
+  return fixed + stardustIcon + markGap + countWidth;
 }
-
-// The shield bar: 3 high, across the shield safe rect, its bottom on that rect's bottom.
-export const SHIELD_BAR = { height: 3, margin: SAFE_MARGIN.edge } as const;
 
 // A notice: a compact strip of body text on an ink panel, compact height (growing per wrapped
 // line), inset like an action, at most the story panel's measure wide; its top on the HUD rect's
-// top, centred on it, clear of the pause and weapon press areas and the Stardust pill by a gap;
+// top, centred on it, clear of the pause and weapon press areas and the status pill by a gap;
 // notices stack a gap apart.
 export const NOTICE = {
   gap: SPACING.gap,
@@ -166,12 +180,11 @@ export const NOTICE = {
   text: TYPE.body,
 } as const;
 
-// How far a centred notice keeps in from each side of the HUD rect: past the pause press area,
-// and past weaponCount weapon targets and a pillWidth Stardust pill (0 when hidden), plus a gap,
-// whichever is further.
+// How far a centred notice keeps in from each side of the HUD rect: past the pause press area and
+// a pillWidth status pill (0 when hidden) on the left, past weaponCount weapon targets on the
+// right, plus a gap, whichever is further.
 export function noticeReserve(weaponCount: number, pillWidth = 0): number {
   const pause = PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width;
-  const right =
-    pillWidth > 0 ? stardustPillRight(weaponCount) + pillWidth : hudRowWidth(weaponCount);
-  return Math.max(pause, right) + NOTICE.gap;
+  const left = pillWidth > 0 ? STATUS_PILL.x + pillWidth : pause;
+  return Math.max(left, hudRowWidth(weaponCount)) + NOTICE.gap;
 }

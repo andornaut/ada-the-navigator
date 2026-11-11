@@ -10,7 +10,7 @@ import {
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, NINE_SLICE_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, fromSafeEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
-import { SAFE_MARGIN, SHIELD_BAR } from "./layout/playView.ts";
+import { SAFE_MARGIN } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -26,9 +26,9 @@ import {
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
-import { STARDUST_COUNTER_STYLE } from "./stardust-counter.ts";
 import { START_STYLE } from "./start-card.ts";
 import { STATION_STYLE } from "./station.ts";
+import { STATUS_PILL_STYLE } from "./status-pill.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
 import { hudDiscStyle, WEAPON_STYLE } from "./weapons.ts";
 
@@ -131,25 +131,6 @@ ${viewStyle(NINE_SLICE_EDGES)}
 }
 ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 
-/* The shield bar across the shield safe rect, on its bottom edge. */
-.ada-controls .ada-shield-meter{
-  position:absolute;
-  left:${safeEdge("left", SHIELD_BAR.margin)};
-  right:${safeEdge("right", SHIELD_BAR.margin)};
-  bottom:${safeEdge("bottom", SHIELD_BAR.margin)};
-  height:${units(SHIELD_BAR.height)};
-  background:#525252;
-  pointer-events:none
-}
-
-.ada-controls .ada-shield-meter span{
-  display:block;
-  height:100%;
-  width:100%;
-  background:#fff;
-  transform-origin:left center
-}
-
 /* Each joystick's pointer target, placed over its rest ring (touchControls.ts). */
 .ada-controls [data-control]{
   position:absolute;
@@ -209,7 +190,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
   style.textContent =
-    STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE + STARDUST_COUNTER_STYLE;
+    STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE + STATUS_PILL_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";

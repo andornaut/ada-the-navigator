@@ -40,7 +40,6 @@ import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
-import { createStardustCounter } from "../ui/stardust-counter.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
 import { asteroidArt, type AsteroidOutline, cellTint, tinted } from "./asteroid-art.ts";
@@ -162,7 +161,6 @@ export class PrototypeScene extends Phaser.Scene {
   private storybook!: ReturnType<typeof createStorybook>;
   private galaxies!: ReturnType<typeof createGalaxySelect>;
   private restartCard!: ReturnType<typeof createRestartCard>;
-  private stardust!: ReturnType<typeof createStardustCounter>;
 
   constructor() {
     super("prototype");
@@ -394,7 +392,6 @@ export class PrototypeScene extends Phaser.Scene {
     const label = (key: string): string => labels[key] ?? "";
     const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
     const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
-    this.stardust = createStardustCounter(this.controls.overlay);
     this.station = createStationView(this.controls.overlay, {
       balance: () => ({
         amount: this.model.state.economy.stardust,
@@ -520,7 +517,6 @@ export class PrototypeScene extends Phaser.Scene {
       this.galaxies.dispose();
       this.restartCard.dispose();
       this.station.dispose();
-      this.stardust.dispose();
       this.controls.dispose();
       this.shell.dispose();
       this.labels.clear();
@@ -589,13 +585,16 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.controls.setWeapons(this.model.weapons());
-    this.controls.setShield(this.model.shieldMax, state.flight?.shield ?? 0);
+    this.controls.setStatus({
+      capacity: this.model.shieldMax,
+      recharging: this.model.shieldRecharging,
+      shield: state.flight?.shield ?? 0,
+      stardust: state.economy.stardust,
+      stardustLabel: fill(PROTOTYPE.labels.stardustAmount ?? "", {
+        amount: state.economy.stardust,
+      }),
+    });
     this.station.setOpen(state.mode === "space" && Boolean(state.docked));
-    this.stardust.set(
-      state.mode === "space"
-        ? fill(PROTOTYPE.labels.stardustAmount ?? "", { amount: state.economy.stardust })
-        : null,
-    );
     // Each arrival at the start screen begins an update visit.
     const screen = this.model.screen;
     const start = screen === "start";

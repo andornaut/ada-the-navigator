@@ -32,7 +32,7 @@ import {
   type SettingsLabels,
   type SettingsOptions,
 } from "../ui/settings.ts";
-import { createShieldMeter } from "../ui/shield.ts";
+import { createStatusPill, type StatusView } from "../ui/status-pill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
@@ -83,7 +83,8 @@ export interface Controls {
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
   setTravel(state: PauseState): void;
-  setShield(maximum: number, shield: number): void;
+  // The status pill's shield and Stardust count.
+  setStatus(view: StatusView): void;
   setWeapons(weapons: readonly WeaponChoice[]): void;
 }
 
@@ -195,7 +196,19 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     reducedMotion: () => reducedMotion,
   });
-  const shield = createShieldMeter(options.shieldLabel, settings.root);
+  const status = createStatusPill(settings.root, {
+    reducedMotion: () => reducedMotion,
+    shieldLabel: options.shieldLabel,
+  });
+  let pillWidth = 0;
+  let weaponCount = 0;
+  // A notice keeps clear of the status pill and the weapon row's press areas.
+  const reserveNotice = () => {
+    host.style.setProperty(
+      VIEW_PROPERTIES.noticeReserve,
+      units(noticeReserve(weaponCount, pillWidth)),
+    );
+  };
   const update = options.update
     ? createUpdateDialog(settings.root, options.update.labels, options.update.offer, () =>
         syncModal(),
@@ -346,6 +359,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     cheats.refresh();
     const touch = touchControlsActive(window, enabled, modalOpen());
     pauseButton.hidden = !pauseButtonShown(coarsePointer(window), enabled, modalOpen());
+    // The pill shows in flight and hides with the pause button under a card; on desktop, where the
+    // pause button is hidden, it keeps its place.
+    status.setShown(enabled && !modalOpen());
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
@@ -394,7 +410,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       disposed = true;
       stopPointers();
       state.setEnabled(false);
-      shield.dispose();
+      status.dispose();
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
@@ -443,7 +459,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       enabled = value;
       state.setEnabled(value);
       weapons.setEnabled(value && !modalOpen());
-      shield.setEnabled(value);
+
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
     setSettingsButton(shown) {
@@ -451,11 +467,20 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.openButton.hidden = !shown;
       settings.root.classList.toggle("ada-no-settings-button", !shown);
     },
-    setShield: (maximum, value) => shield.setShield(maximum, value),
+    setStatus(view) {
+      status.setStatus(view, performance.now());
+      const width = status.width();
+      if (width !== pillWidth) {
+        pillWidth = width;
+        reserveNotice();
+      }
+    },
     setTravel: (travel) => pause.setState(travel),
     setWeapons(choices) {
-      // A notice keeps clear of the weapon row's press areas.
-      host.style.setProperty(VIEW_PROPERTIES.noticeReserve, units(noticeReserve(choices.length)));
+      if (choices.length !== weaponCount) {
+        weaponCount = choices.length;
+        reserveNotice();
+      }
       weapons.setWeapons(choices);
     },
   };

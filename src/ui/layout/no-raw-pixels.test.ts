@@ -17,8 +17,6 @@ interface Allowed {
 
 const ALLOWED: readonly Allowed[] = [
   { file: "touch-chrome.ts", reason: "Procedural stick chrome draws in its frames' own px" },
-  // CLEANUP (added 2026-11-11): remove once the shield pill beside pause holds the Stardust count
-  { file: "stardust-counter.ts", reason: "The placeholder Stardust count awaits Art's shield pin" },
   {
     file: "settings.ts",
     reason: "The base button under the weapon buttons",

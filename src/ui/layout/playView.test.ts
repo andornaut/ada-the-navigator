@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
-import { TEXT_BUTTON } from "./controls.ts";
+import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { fromSafeEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./css.ts";
 import { HIT_RULE, hitAround } from "./hitAreas.ts";
 import {
@@ -20,9 +20,8 @@ import {
   SAFE_MARGIN,
   safeInsets,
   safeRect,
-  SHIELD_BAR,
-  STARDUST_PILL,
-  stardustPillRight,
+  STATUS_PILL,
+  statusPillWidth,
   viewScale,
 } from "./playView.ts";
 import { SPACING, TYPE } from "./tokens.ts";
@@ -107,7 +106,7 @@ describe("safe-margin clamp", () => {
       x: 43,
       y: 16,
     });
-    expect(safeRect(phone, SHIELD_BAR.margin, view)).toEqual({
+    expect(safeRect(phone, SAFE_MARGIN.edge, view)).toEqual({
       height: 341,
       width: 634,
       x: 43,
@@ -221,17 +220,44 @@ describe("HUD anchors", () => {
     expect(hudRowWidth(3)).toBe(3 * 48 + 2 * 8);
   });
 
-  it("put the Stardust pill a gap left of the weapon targets, centred on their row", () => {
-    expect(stardustPillRight(3)).toBe(3 * 48 + 2 * 8 + 8);
-    expect(stardustPillRight(0)).toBe(0);
-    expect(STARDUST_PILL.top).toBe(10);
-    expect(STARDUST_PILL.pill).toMatchObject({ height: 28, padding: 8, radius: 4 });
+  it("put the status pill a gap right of the pause press area, centred on the pause disc", () => {
+    const pauseRight = PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width;
+    expect(STATUS_PILL.x).toBe(pauseRight + SPACING.gap);
+    expect(STATUS_PILL.x).toBe(50.75);
+    const discCentre = PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2;
+    expect(STATUS_PILL.y + STATUS_PILL.pill.height / 2).toBe(discCentre);
+    expect(STATUS_PILL.y).toBe(2.5);
+    expect(STATUS_PILL.pill).toEqual(PILL);
+    // The +N tick's line box a row gap below the pill: HUD rect top + 34.5.
+    expect(STATUS_PILL.y + STATUS_PILL.tick.top).toBe(34.5);
   });
 
-  it("keep a notice clear of the pause press area, the weapon targets and the pill by a gap", () => {
+  it("measure the pill as 189 plus the count, 215.70 at 125 and 237.94 at 12,500", () => {
+    expect(statusPillWidth(0)).toBe(189);
+    expect(statusPillWidth(26.7)).toBeCloseTo(215.7, 9);
+    expect(statusPillWidth(48.94)).toBeCloseTo(237.94, 9);
+    expect(STATUS_PILL.bar).toEqual({
+      fill: { height: 8, width: 92 },
+      height: 12,
+      inset: 2,
+      rim: 1,
+      width: 96,
+    });
+    expect(STATUS_PILL.bar.width - 2 * STATUS_PILL.bar.inset).toBe(STATUS_PILL.bar.fill.width);
+  });
+
+  it("keep the pill at a 162.25 count a page inset from four weapons at 720 with phone insets", () => {
+    const view = { height: 360, width: 720 };
+    const hud = hudRect({ bottom: 19, left: 43, right: 43, top: 0 }, view);
+    const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(162.25);
+    const leftmost = hud.x + hud.width + hudButtonTarget(3).x;
+    expect(leftmost - pillRight).toBe(SPACING.pageInset);
+  });
+
+  it("keep a notice clear of the pause press area or the pill, and the weapon targets, by a gap", () => {
     expect(noticeReserve(0)).toBe(PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap);
     expect(noticeReserve(4)).toBe(4 * 48 + 3 * 8 + SPACING.gap);
-    expect(noticeReserve(2, 60)).toBe(2 * 48 + 8 + 8 + 60 + SPACING.gap);
+    expect(noticeReserve(2, 215.7)).toBeCloseTo(50.75 + 215.7 + SPACING.gap, 9);
   });
 });
 
@@ -273,11 +299,14 @@ describe("touch controls", () => {
   it.each([
     ["no insets", NO_INSETS],
     ["phone insets", phone],
-  ] as const)("clear the shield bar by 17 with %s", (_, insets) => {
-    const shieldTop = view.height - insets.bottom - SHIELD_BAR.height;
-    const { move } = stickRestCentres(view, insets);
-    expect(shieldTop - ringEdges(move).bottom).toBe(17);
-  });
+  ] as const)(
+    "rest both rings 20 above the bottom safe edge, which no bar holds, with %s",
+    (_, insets) => {
+      const { aim, move } = stickRestCentres(view, insets);
+      expect(view.height - insets.bottom - ringEdges(move).bottom).toBe(TOUCH_STICK.bottom);
+      expect(view.height - insets.bottom - ringEdges(aim).bottom).toBe(TOUCH_STICK.bottom);
+    },
+  );
 
   it.each([
     ["the 720 view", view, NO_INSETS],

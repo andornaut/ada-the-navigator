@@ -246,6 +246,19 @@ export class GameModel {
     const levels = this.state.flight?.levels ?? this.state.economy.levels;
     return shipTuning(ECONOMY, this.content, levels).shieldMax;
   }
+  /** Whether the shield is regenerating: the recharge delay has passed and it is below capacity. */
+  get shieldRecharging(): boolean {
+    const flight = this.state.flight;
+    if (!flight) {
+      return false;
+    }
+    const ship = shipTuning(ECONOMY, this.content, flight.levels);
+    return (
+      flight.shield > 0 &&
+      flight.shield < ship.shieldMax &&
+      flight.sinceDamage >= ship.shieldRechargeDelay
+    );
+  }
   /** During a flight its loadout is authoritative; the economy mirrors it. */
   private pullLoadout(): void {
     const flight = this.state.flight;

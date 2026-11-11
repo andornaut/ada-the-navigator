@@ -1011,18 +1011,28 @@ try {
   const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
   assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
   const bar = await meter.boundingBox();
-  const gameFrame = await page.locator("#game-canvas").boundingBox();
+  const pill = await page.locator(".ada-status").boundingBox();
+  const pauseBox = await page.locator('[data-action="pause"]').boundingBox();
   // The DOM UI is sized in logical px: --ada-unit CSS px each.
   const unit = await page
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
   assert.ok(
     bar &&
-      gameFrame &&
-      Math.abs(bar.width - gameFrame.width) < 2 &&
-      Math.abs(bar.height - 3 * unit) <= 1,
-    "Shield meter must span the bottom of the game frame at three logical px",
+      pill &&
+      Math.abs(bar.width - 96 * unit) <= 1 &&
+      Math.abs(bar.height - 12 * unit) <= 1 &&
+      Math.abs(pill.height - 28 * unit) <= 1 &&
+      bar.x > pill.x &&
+      bar.x + bar.width < pill.x + pill.width,
+    "The shield meter must be the status pill's 96x12 bar",
   );
+  if (pauseBox && (await page.locator('[data-action="pause"]').isVisible())) {
+    assert.ok(
+      Math.abs(pill.x - (pauseBox.x + pauseBox.width + 8 * unit)) <= 1,
+      "The status pill must sit a gap right of the pause press area",
+    );
+  }
   const pauseButton = page.locator('[data-action="pause"]');
   assert.equal(await pauseButton.getAttribute("aria-label"), PROTOTYPE.labels.pause);
   const pauseImage = await pauseButton.evaluate(
@@ -1049,7 +1059,7 @@ try {
   save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
-    "Owned unlimited weapons support accessible selection, reload, modal guards and a full-width shield meter",
+    "Owned unlimited weapons support accessible selection, reload, modal guards and the status pill's shield meter",
   );
 
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
