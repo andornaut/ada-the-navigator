@@ -1,4 +1,5 @@
 import { type CheatAction, createCheatSession } from "./cheat-actions.ts";
+import { createButton, createCard } from "./modal.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -33,9 +34,7 @@ export function createCheats(
     canExecute: () => open && options.canExecute(),
     host: window,
   });
-  const launcher = document.createElement("button");
-  launcher.type = "button";
-  launcher.textContent = options.labels.open;
+  const launcher = createButton(options.labels.open);
   launcher.dataset.action = "cheats";
   launcher.setAttribute("aria-haspopup", "dialog");
   launcher.setAttribute("aria-expanded", "false");
@@ -43,21 +42,11 @@ export function createCheats(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = document.createElement("section");
-  card.className = "ada-card";
-  card.setAttribute("role", "dialog");
-  card.setAttribute("aria-modal", "true");
-  card.setAttribute("aria-label", options.labels.title);
-  const header = document.createElement("header");
-  const title = document.createElement("h2");
-  title.textContent = options.labels.title;
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "ada-close";
-  close.dataset.action = "close-cheats";
-  close.setAttribute("aria-label", options.labels.close);
-  header.append(document.createElement("span"), title, close);
-  card.append(header);
+  const { card, close, frame } = createCard({
+    closeAction: "close-cheats",
+    closeLabel: options.labels.close,
+    title: options.labels.title,
+  });
   const buttons: HTMLButtonElement[] = [];
   for (const scope of ["save", "run"] as const) {
     const section = document.createElement("section");
@@ -75,10 +64,8 @@ export function createCheats(
       section.append(empty);
     }
     for (const action of actions) {
-      const button = document.createElement("button");
-      button.type = "button";
+      const button = createButton(action.label);
       button.dataset.cheat = action.id;
-      button.textContent = action.label;
       const description = document.createElement("p");
       description.textContent = action.description;
       description.id = `cheat-description-${action.id}`;
@@ -98,7 +85,7 @@ export function createCheats(
     }
     card.append(section);
   }
-  modal.append(card);
+  modal.append(frame);
   parent.append(modal);
   let open = false;
   let disposed = false;
@@ -164,7 +151,7 @@ export function createCheats(
       setOpen(false);
     }
     if (event.key === "Tab") {
-      const targets = [...card.querySelectorAll<HTMLButtonElement>("button")].filter(
+      const targets = [...frame.querySelectorAll<HTMLButtonElement>("button")].filter(
         (button) => !button.disabled,
       );
       const first = targets[0];

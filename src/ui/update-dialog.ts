@@ -1,4 +1,5 @@
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
+import { createActions, createButton, createCard } from "./modal.ts";
 import { FONT_ROLES } from "./settings.ts";
 
 export interface UpdateLabels {
@@ -22,33 +23,24 @@ export function createUpdateDialog(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = document.createElement("section");
-  card.className = "ada-card";
+  const { card, close, frame } = createCard({
+    closeAction: "close-update",
+    closeLabel: labels.close,
+    fontRole: FONT_ROLES.heading,
+    title: labels.title,
+  });
   card.dataset.dialog = "update";
-  card.setAttribute("role", "dialog");
-  card.setAttribute("aria-modal", "true");
-  card.setAttribute("aria-label", labels.title);
-  const header = document.createElement("header");
-  const title = document.createElement("h2");
-  title.textContent = labels.title;
-  title.dataset.fontRole = FONT_ROLES.heading;
-  const close = document.createElement("button");
-  close.className = "ada-close";
-  close.dataset.action = "close-update";
-  close.setAttribute("aria-label", labels.close);
-  header.append(document.createElement("span"), title, close);
-  const actions = document.createElement("div");
-  actions.className = "ada-actions";
-  const cancel = document.createElement("button");
+  const cancel = createButton(labels.cancel);
   cancel.dataset.action = "cancel-update";
-  cancel.textContent = labels.cancel;
-  const accept = document.createElement("button");
-  accept.className = "ada-primary";
+  const accept = createButton(labels.accept, "primary");
   accept.dataset.action = "accept-update";
-  accept.textContent = labels.accept;
-  actions.append(cancel, accept);
-  card.append(header, actions);
-  modal.append(card);
+  card.append(
+    createActions([
+      { button: accept, role: "primary" },
+      { button: cancel, role: "secondary" },
+    ]),
+  );
+  modal.append(frame);
   root.append(modal);
   let open = false;
   const stop = offer.subscribe((visible) => {

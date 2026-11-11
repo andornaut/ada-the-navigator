@@ -1,8 +1,7 @@
 import type { DeviceSetting } from "./device-settings.ts";
 
 // Art's Settings icons (art/settings-icons.md): 16 by 16 single-frame sheets in the UI manifest,
-// drawn at 1.5 times so their 2-pixel strokes stay whole.
-export const SETTINGS_ICON_SIZE = 24;
+// drawn at their own size as Chibi's rows draw them.
 
 export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> = {
   aim: "icon-aim-controls",

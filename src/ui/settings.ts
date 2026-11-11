@@ -7,13 +7,9 @@ import {
   writeSetting,
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
-import {
-  SETTING_ICONS,
-  SETTINGS_ICON_SIZE,
-  settingsIcon,
-  showIcon,
-  STEPS_GLYPHS,
-} from "./settings-icons.ts";
+import { createActions, createButton, createCard, createSwitchRow, MODAL_STYLE } from "./modal.ts";
+import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
+import { applyButtonSkin } from "./ui-skin.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -93,7 +89,7 @@ const STYLE = `
   padding:8px 16px
 }
 
-.ada-controls button:focus-visible,.ada-controls input:focus-visible{
+.ada-controls button:focus-visible{
   outline:3px solid #5078b4;
   outline-offset:4px
 }
@@ -206,148 +202,7 @@ const STYLE = `
   max-width:calc(100% - 32px)
 }
 
-.ada-controls .ada-modal{
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  background:#101926b3;
-  pointer-events:auto;
-  padding:16px;
-  box-sizing:border-box
-}
-
-.ada-controls [hidden]{
-  display:none!important
-}
-
-.ada-controls .ada-card{
-  box-sizing:border-box;
-  width:max-content;
-  min-width:min(50%,480px);
-  max-width:100%;
-  max-height:100%;
-  overflow:auto;
-  padding:16px;
-  background:#fff8e6;
-  border:2px solid #172335;
-  border-radius:0;
-  border-image:url('/art/ui/sprites/ui-settings-card.png') 2 fill / 2px stretch
-}
-
-.ada-controls .ada-card header{
-  display:grid;
-  grid-template-columns:48px minmax(0,1fr) 48px;
-  align-items:center;
-  gap:8px;
-  margin-bottom:8px
-}
-
-.ada-controls h2{
-  font-size:24px;
-  line-height:28px;
-  text-align:center;
-  margin:0;
-  font-weight:700;
-  overflow-wrap:anywhere
-}
-
-.ada-controls .ada-close{
-  padding:0;
-  border:0;
-  background:transparent;
-  display:grid;
-  place-items:center
-}
-.ada-controls .ada-close::before{
-  content:"";
-  width:24px;
-  height:24px;
-  background:url('/art/ui/sprites/ui-close.png') 0 0 / 48px 24px
-}
-.ada-controls .ada-close:active::before{
-  background-position:-24px 0
-}
-
-.ada-controls label{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  min-height:48px;
-  line-height:20px;
-  cursor:pointer
-}
-
-.ada-controls label span{
-  overflow-wrap:anywhere
-}
-
-.ada-controls .ada-icon{
-  flex:none;
-  width:${SETTINGS_ICON_SIZE}px;
-  height:${SETTINGS_ICON_SIZE}px;
-  background:center / ${SETTINGS_ICON_SIZE}px ${SETTINGS_ICON_SIZE}px no-repeat;
-  image-rendering:pixelated
-}
-
-.ada-controls .ada-steps{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:0 0 16px
-}
-
-.ada-controls .ada-steps p{
-  margin:0 0 0 4px
-}
-
-.ada-controls .ada-setting-text{
-  flex:1;
-  display:grid;
-  gap:2px;
-  padding:4px 0
-}
-
-.ada-controls .ada-setting-note{
-  font-size:13px;
-  line-height:16px;
-  opacity:0.75
-}
-
-.ada-controls .ada-install-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  min-height:48px
-}
-
-.ada-controls .ada-card p{
-  margin:0 0 16px;
-  line-height:20px;
-  max-width:36em
-}
-
-.ada-controls .ada-actions{
-  display:flex;
-  justify-content:space-between;
-  gap:16px;
-  margin-top:8px
-}
-
-.ada-controls .ada-card .ada-primary{
-  background:#262b44;
-  border-color:#181425;
-  color:#ead4aa
-}
-
-.ada-controls input{
-  width:32px;
-  height:20px;
-  flex:none;
-  accent-color:#36764f
-}
+${MODAL_STYLE}
 
 `;
 
@@ -381,21 +236,16 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const card = document.createElement("section");
-  card.className = "ada-card";
-  card.setAttribute("role", "dialog");
-  card.setAttribute("aria-modal", "true");
-  card.setAttribute("aria-label", options.labels.settings);
-  const header = document.createElement("header");
-  const spacer = document.createElement("span");
-  const title = document.createElement("h2");
-  title.textContent = options.labels.settings;
-  title.dataset.fontRole = FONT_ROLES.heading;
-  const closeButton = document.createElement("button");
-  closeButton.className = "ada-close";
-  closeButton.dataset.action = "close-settings";
-  closeButton.setAttribute("aria-label", options.labels.close);
-  header.append(spacer, title, closeButton);
+  const {
+    card,
+    close: closeButton,
+    frame: cardFrame,
+  } = createCard({
+    closeAction: "close-settings",
+    closeLabel: options.labels.close,
+    fontRole: FONT_ROLES.heading,
+    title: options.labels.settings,
+  });
   // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
   // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
   // Install joins last, shown only while the game can be installed.
@@ -403,37 +253,27 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const settings = { ...readDeviceSettings(storage, prefersReducedMotion(window)) };
   const visibility = () => ({ aim: settings.aim, move: settings.move });
   const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });
+  // A control row, as in Chibi: icon, label (and note) and switch; the whole row is the switch.
   const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
-    const element = document.createElement("label");
-    const text = document.createElement("span");
-    text.className = "ada-setting-text";
-    const caption = document.createElement("span");
-    caption.textContent = label;
-    text.append(caption);
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.setAttribute("aria-label", label);
-    if (note) {
-      const noteText = document.createElement("span");
-      noteText.className = "ada-setting-note";
-      noteText.id = `ada-setting-note-${setting}`;
-      noteText.textContent = note;
-      text.append(noteText);
-      toggle.setAttribute("aria-describedby", noteText.id);
-    }
-    toggle.checked = settings[setting];
-    element.append(settingsIcon(SETTING_ICONS[setting]));
-    toggle.addEventListener("change", () => {
-      settings[setting] = toggle.checked;
-      writeSetting(storage, setting, toggle.checked);
+    const { row, show } = createSwitchRow({
+      icon: settingsIcon(SETTING_ICONS[setting]),
+      id: setting,
+      label,
+      note,
+    });
+    row.dataset.setting = setting;
+    show(settings[setting]);
+    row.addEventListener("click", () => {
+      settings[setting] = !settings[setting];
+      show(settings[setting]);
+      writeSetting(storage, setting, settings[setting]);
       if (setting === "aim" || setting === "move") {
         options.onVisibilityChange(visibility());
       } else {
         options.onFeedbackChange?.(feedback());
       }
     });
-    element.append(text, toggle);
-    return element;
+    return row;
   };
   const rows = document.createElement("div");
   rows.className = "ada-rows";
@@ -443,11 +283,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     switchRow("sound", options.labels.sound, options.labels.soundNote),
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );
-  card.append(header, rows);
+  card.append(rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.
   const installRow = document.createElement("div");
-  installRow.className = "ada-install-row";
+  installRow.className = "ada-row ada-install-row";
   installRow.hidden = true;
   const installText = document.createElement("span");
   installText.className = "ada-setting-text";
@@ -457,49 +297,53 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installNote.className = "ada-setting-note";
   installNote.textContent = options.labels.installNote;
   installText.append(installCaption, installNote);
-  const installButton = document.createElement("button");
+  const installButton = createButton(options.labels.installButton);
   installButton.dataset.action = "install";
-  installButton.textContent = options.labels.installButton;
   installButton.setAttribute("aria-label", options.labels.install);
   installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
+  // The whole row presses its button, as every control row does.
+  installRow.addEventListener("click", (event) => {
+    if (event.target !== installButton) {
+      installButton.click();
+    }
+  });
   rows.append(installRow);
-  const stepsCard = document.createElement("section");
-  stepsCard.className = "ada-card";
-  stepsCard.hidden = true;
+  const {
+    card: stepsCard,
+    close: stepsX,
+    frame: stepsFrame,
+    title: stepsTitle,
+  } = createCard({
+    closeAction: "close-install-steps",
+    closeLabel: options.labels.close,
+    fontRole: FONT_ROLES.heading,
+    title: "",
+  });
+  stepsFrame.hidden = true;
   stepsCard.dataset.dialog = "install-steps";
-  stepsCard.setAttribute("role", "dialog");
-  stepsCard.setAttribute("aria-modal", "true");
-  const stepsHeader = document.createElement("header");
-  const stepsTitle = document.createElement("h2");
-  stepsTitle.dataset.fontRole = FONT_ROLES.heading;
-  const stepsX = document.createElement("button");
-  stepsX.className = "ada-close";
-  stepsX.dataset.action = "close-install-steps";
-  stepsX.setAttribute("aria-label", options.labels.close);
-  stepsHeader.append(document.createElement("span"), stepsTitle, stepsX);
   // Chibi's steps glyphs: the browser's own button for the first step, then Install.
   const stepsLine = document.createElement("div");
   stepsLine.className = "ada-steps";
   const stepsGlyph = settingsIcon(STEPS_GLYPHS.ios);
   const stepsText = document.createElement("p");
   stepsLine.append(stepsGlyph, settingsIcon(SETTING_ICONS.install), stepsText);
-  const stepsClose = document.createElement("button");
+  const stepsClose = createButton(options.labels.close);
   stepsClose.dataset.action = "close-install-steps";
-  stepsClose.textContent = options.labels.close;
-  stepsCard.append(stepsHeader, stepsLine, stepsClose);
+  stepsCard.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
-  modal.append(card, stepsCard);
+  modal.append(cardFrame, stepsFrame);
   root.append(style, ...joystickTargets, openButton, useButton, modal);
   parent.append(root);
+  void applyButtonSkin(root).catch(() => undefined);
   let disposed = false;
   let open = false;
   let previousFocus: HTMLElement | undefined;
-  const stepsOpen = () => !stepsCard.hidden;
+  const stepsOpen = () => !stepsFrame.hidden;
   const closeSteps = () => {
     if (stepsOpen()) {
-      stepsCard.hidden = true;
-      card.hidden = false;
+      stepsFrame.hidden = true;
+      cardFrame.hidden = false;
       installButton.focus();
     }
   };
@@ -512,8 +356,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     stepsText.textContent = words.steps;
     showIcon(stepsGlyph, STEPS_GLYPHS[browser]);
     stepsCard.setAttribute("aria-label", words.title);
-    card.hidden = true;
-    stepsCard.hidden = false;
+    cardFrame.hidden = true;
+    stepsFrame.hidden = false;
     stepsClose.focus();
   };
   const stopInstallRow = options.install
@@ -537,8 +381,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       return;
     }
     if (!value) {
-      stepsCard.hidden = true;
-      card.hidden = false;
+      stepsFrame.hidden = true;
+      cardFrame.hidden = false;
     }
     open = value;
     modal.hidden = !open;
@@ -581,8 +425,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   });
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
-      const shown = stepsOpen() ? stepsCard : card;
-      const targets = [...shown.querySelectorAll<HTMLElement>("button,input")].filter(
+      const shown = stepsOpen() ? stepsFrame : cardFrame;
+      const targets = [...shown.querySelectorAll<HTMLElement>("button")].filter(
         (target) => target.offsetParent !== null,
       );
       const first = targets[0];

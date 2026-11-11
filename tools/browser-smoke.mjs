@@ -1338,7 +1338,7 @@ try {
   async function toggleSetting(key) {
     const label = PROTOTYPE.labels[key];
     assert.equal(typeof label, "string", `Canonical ${key} settings label must exist`);
-    const checkbox = page.getByRole("checkbox", { name: label, exact: true });
+    const checkbox = page.getByRole("switch", { name: label, exact: true });
     await checkbox.waitFor({ state: "visible" });
     const initial = await checkbox.isChecked();
     await checkbox.setChecked(!initial);
@@ -1353,7 +1353,7 @@ try {
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="settings"]').click();
   async function restoreSetting({ initial, key, toggled }) {
-    const checkbox = page.getByRole("checkbox", { name: PROTOTYPE.labels[key], exact: true });
+    const checkbox = page.getByRole("switch", { name: PROTOTYPE.labels[key], exact: true });
     assert.equal(await checkbox.isChecked(), toggled, `${key} survives dialog reopening`);
     await checkbox.setChecked(initial);
   }
@@ -1512,10 +1512,10 @@ try {
   );
   await page.locator('[data-action="settings"]').click();
   await page
-    .getByRole("checkbox", { name: PROTOTYPE.labels.sound, exact: true })
+    .getByRole("switch", { name: PROTOTYPE.labels.sound, exact: true })
     .waitFor({ state: "visible" });
   await page
-    .getByRole("checkbox", { name: PROTOTYPE.labels.reducedMotion, exact: true })
+    .getByRole("switch", { name: PROTOTYPE.labels.reducedMotion, exact: true })
     .waitFor({ state: "visible" });
   await page.screenshot({ path: `${output}/portrait-settings.png` });
   await page.locator('[data-action="close-settings"]').click();
