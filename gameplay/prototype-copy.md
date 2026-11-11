@@ -16,7 +16,7 @@ polishes it until a faint pattern begins to glow."
 Choice: "Touch the glow."
 
 Narration: "Light swirls around Ada and Penny. They are standing in a tiny
-cockpit. Outside, colours shimmer like nowhere at all."
+cockpit. Outside, colors shimmer like nowhere at all."
 
 Astra: "Navigator detected. Hello. I am Astra, this ship's mind."
 Ada: "Where are we?"
