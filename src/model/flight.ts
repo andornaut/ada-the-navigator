@@ -21,6 +21,7 @@ import {
   reflectDirection,
   sceneryBlocksSegment,
   sceneryContact,
+  sceneryShape,
 } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import {
@@ -1577,6 +1578,32 @@ export function rayCircle(
  * within range and damages only that enemy. Its flash ends at the hit point, or at full range
  * on a miss. A multipart ship blocks it only at a live hardpoint.
  */
+/**
+ * Where a beam first meets a scenery object's shape (its asteroid polygon, else its circle),
+ * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
+ */
+function sceneryEntry(
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  object: SpaceObject,
+): number | null {
+  const shape = sceneryShape(object);
+  const bound = (shape?.radius ?? object.radius) + BEAM.halfWidth;
+  const entry = rayCircle(origin, direction, range, object, bound);
+  if (entry === null || !shape) {
+    return entry;
+  }
+  const exit = Math.min(range, entry + 2 * bound);
+  for (let at = entry; at <= exit; at += 2) {
+    const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
+    if (sceneryContact(object, point, BEAM.halfWidth)) {
+      return at;
+    }
+  }
+  return null;
+}
+
 function fireBeam(
   content: PrototypeContent,
   definition: WeaponDefinition,
@@ -1592,18 +1619,19 @@ function fireBeam(
   const direction = { x: aim.x / span, y: aim.y / span };
   const origin = { ...flight.player };
   let first: { object: SpaceObject; part: string | null; at: number } | null = null;
-  const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) => {
-    const at = rayCircle(origin, direction, range, center, radius + BEAM.halfWidth);
+  const nearer = (object: SpaceObject, part: string | null, at: number | null) => {
     if (at !== null && (!first || at < first.at)) {
       first = { at, object, part };
     }
   };
+  const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) =>
+    nearer(object, part, rayCircle(origin, direction, range, center, radius + BEAM.halfWidth));
   for (const object of flight.objects) {
     if (object.hp <= 0) {
       continue;
     }
-    if (["rock", "resource", "debris"].includes(object.kind)) {
-      consider(object, null, object, object.radius);
+    if (SCENERY.includes(object.kind)) {
+      nearer(object, null, sceneryEntry(origin, direction, range, object));
     } else if (object.kind === "enemy" && object.enemy) {
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
         for (const part of liveParts(content, object)) {

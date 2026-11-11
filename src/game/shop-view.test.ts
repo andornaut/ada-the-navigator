@@ -58,9 +58,9 @@ describe("shop rows on the station view", () => {
     expect(rows[0]).toMatchObject({
       glyph: { key: "icon-shop-shield", kind: "sprite" },
       group: "items",
-      level: "Level 0 of 3",
+      level: "Level 1 of 3",
       name: "Shield",
-      price: 100,
+      price: 150,
       state: "unaffordable",
     });
     expect(rows[3]).toMatchObject({ name: "Tractor beam", price: 80, state: "forSale" });

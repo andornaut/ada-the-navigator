@@ -14,7 +14,7 @@
  */
 import { pathToFileURL } from "node:url";
 
-import { CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
   type EncounterEntry,
@@ -28,6 +28,7 @@ import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { SectorId, Weapon } from "../src/data/types.ts";
 import { weaponAt } from "../src/data/weapon-catalog.ts";
+import { ASTEROID_SHAPES, orbitMotion } from "../src/model/asteroids.ts";
 import { planChunk } from "../src/model/chunk-templates.ts";
 import {
   dropRandom,
@@ -354,6 +355,7 @@ export function generateChunk(
     }
   }
   const plan = planChunk(CHUNK_CATALOG, {
+    asteroids: { field: ASTEROID_FIELDS[sector], shapes: [...ASTEROID_SHAPES.values()] },
     clearance: flight.shipRadius,
     objectsPerChunk: flight.objectsPerChunk,
     rockRadius: flight.rockRadius,
@@ -366,18 +368,29 @@ export function generateChunk(
     y,
   });
   for (const placement of plan.placements) {
-    if (distance(placement, player) <= tuning.safeRadius || stationSafe(placement)) {
+    // A drifting asteroid keeps clear of Ada and safe areas over its whole path.
+    const reach =
+      (placement.kind === "pickup" ? flight.pickupRadius : placement.radius) +
+      (placement.orbit?.radius ?? 0);
+    const clear =
+      distance(placement, player) - reach > tuning.safeRadius &&
+      stationsNear(catalog, sector, catalog.station.safeRadius + reach, placement).length === 0;
+    if (!clear) {
       continue;
     }
+    // Positions are taken at flight time 0; the sim does not move drifting asteroids.
+    const at = placement.orbit
+      ? orbitMotion(0, { ...placement.orbit, x: placement.x, y: placement.y }).position
+      : placement;
     if (placement.kind === "rock") {
-      chunk.rocks.push({ id: placement.id, x: placement.x, y: placement.y });
+      chunk.rocks.push({ id: placement.id, x: at.x, y: at.y });
     } else if (placement.kind === "pickup") {
       chunk.caches.push({
         amount: catalog.discoveryStardust,
         id: placement.id,
         source: "caches",
-        x: placement.x,
-        y: placement.y,
+        x: at.x,
+        y: at.y,
       });
     }
   }
