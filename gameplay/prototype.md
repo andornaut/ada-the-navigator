@@ -62,7 +62,8 @@ view all around. It resembles a convertible's interior: two seats side by side
 for Ada and Penny, with a little room to walk around behind them. The holodisk
 drive looks like a CD or cassette player.
 
-Boarding shows the cockpit with galaxy selection on top. Galaxies are paged one
+Every launch, including a replay of a resolved galaxy, boards and shows the
+cockpit with galaxy selection on top. Galaxies are paged one
 per page, in order, with Previous and Next, like Chibi's stage cards. An unlocked
 galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
