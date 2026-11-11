@@ -51,54 +51,64 @@ function pickup(flight: FlightState, weapon: "rapidMissile" | "multiLaser" | "sc
   });
 }
 
-describe("weapon lock", () => {
-  it("refuses weapon changes in combat with the weaponLocked notice and disabled icons", () => {
+describe("weapon switching", () => {
+  it("switches in combat, then refuses the next switch for the wait without a notice", () => {
     const model = launched();
     const flight = model.state.flight!;
     flight.ownedWeapons = ["rapidMissile", "multiLaser"];
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
-      { id: "basic", locked: false, selected: true },
-      { id: "rapidMissile", locked: true, selected: false },
-      { id: "multiLaser", locked: true, selected: false },
+      { id: "basic", selected: true },
+      { id: "rapidMissile", selected: false },
+      { id: "multiLaser", selected: false },
     ]);
-    expect(model.selectWeapon("rapidMissile")).toBe(false);
-    expect(flight.weapon).toBe("basic");
-    expect(model.state.notice).toBe("Weapons can't be changed in combat.");
-  });
-
-  it("keeps the lock and its icon treatment for 5 seconds after combat ends", () => {
-    const model = launched();
-    const flight = model.state.flight!;
-    flight.ownedWeapons = ["rapidMissile"];
-    flight.dangerFor = 0.5;
-    stepFlight(PROTOTYPE, 0.6, idle, flight);
-    flight.objects = [];
-    // Combat ended about 0.1 s ago.
-    expect(flight.dangerFor).toBe(0);
-    expect(flight.weaponLockFor).toBeGreaterThan(ECONOMY.weaponLockSeconds - 0.15);
-    stepFlight(PROTOTYPE, ECONOMY.weaponLockSeconds - 0.25, idle, flight);
-    expect(model.weapons()[1]).toEqual({ id: "rapidMissile", locked: true, selected: false });
-    expect(model.selectWeapon("rapidMissile")).toBe(false);
-    stepFlight(PROTOTYPE, 0.3, idle, flight);
-    expect(flight.weaponLockFor).toBe(0);
-    expect(model.weapons()[1]).toEqual({ id: "rapidMissile", locked: false, selected: false });
     expect(model.selectWeapon("rapidMissile")).toBe(true);
+    expect(flight.weapon).toBe("rapidMissile");
+    expect(flight.weaponSwitchFor).toBe(ECONOMY.weaponSwitchSeconds);
+    expect(model.selectWeapon("multiLaser")).toBe(false);
+    expect(flight.weapon).toBe("rapidMissile");
+    expect(model.state.notice).toBeFalsy();
+    // Choosing the equipped weapon is never refused and does not restart the wait.
+    stepFlight(PROTOTYPE, 0.4, idle, flight);
+    expect(model.selectWeapon("rapidMissile")).toBe(true);
+    expect(flight.weaponSwitchFor).toBeCloseTo(ECONOMY.weaponSwitchSeconds - 0.4);
   });
 
-  it("auto-equips a found weapon only outside the lock", () => {
+  it("waits 1 second after a switch, in or out of danger", () => {
+    expect(ECONOMY.weaponSwitchSeconds).toBe(1);
+    for (const dangerFor of [0, 1]) {
+      const model = launched();
+      const flight = model.state.flight!;
+      flight.ownedWeapons = ["rapidMissile"];
+      expect(model.selectWeapon("rapidMissile")).toBe(true);
+      flight.objects = [];
+      flight.dangerFor = dangerFor;
+      stepFlight(PROTOTYPE, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
+      expect(model.selectWeapon("basic")).toBe(false);
+      stepFlight(PROTOTYPE, 0.06, idle, flight);
+      expect(flight.weaponSwitchFor).toBe(0);
+      expect(model.selectWeapon("basic")).toBe(true);
+      expect(flight.weapon).toBe("basic");
+    }
+  });
+
+  it("auto-equips a found weapon at any time, unless the switch wait runs", () => {
     const model = launched();
     const flight = model.state.flight!;
     flight.dangerFor = 1;
     pickup(flight, "rapidMissile");
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
-    expect(flight.weapon).toBe("basic");
-    flight.dangerFor = 0;
-    flight.weaponLockFor = 0;
+    expect(flight.weapon).toBe("rapidMissile");
+    // Equipping is a switch, so a second find during the wait joins the roster unequipped.
     pickup(flight, "multiLaser");
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.weapon).toBe("multiLaser");
+    expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
+    expect(flight.weapon).toBe("rapidMissile");
+    flight.weaponSwitchFor = 0;
+    pickup(flight, "scattershot");
+    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    expect(flight.weapon).toBe("scattershot");
   });
 });
 
@@ -332,7 +342,7 @@ describe("shop through the model", () => {
 });
 
 describe("economy save", () => {
-  it("round-trips Stardust, purchases, levels, stations and the weapon lock", () => {
+  it("round-trips Stardust, purchases, levels, stations and the switch wait", () => {
     const model = launched();
     const economy = model.state.economy;
     economy.stardust = 321;
@@ -342,7 +352,7 @@ describe("economy save", () => {
     flight.ownedWeapons = ["scattershot"];
     flight.levels = { ...noLevels(), engine: 2, tractor: 1 };
     flight.levels.weapons.scattershot = 3;
-    flight.weaponLockFor = 2.5;
+    flight.weaponSwitchFor = 0.5;
     const site = anyStation();
     model.state.progress[1].stations = [site.id];
     const restored = new GameModel(PROTOTYPE, model.save());
@@ -355,7 +365,7 @@ describe("economy save", () => {
     expect(restored.state.economy.levels.weapons.scattershot).toBe(3);
   });
 
-  it("migrates older saves to an empty economy and drops the ammunition count", () => {
+  it("migrates older saves to an empty economy and drops the ammunition count and lock", () => {
     const model = launched();
     model.state.flight!.ownedWeapons = ["multiLaser"];
     model.state.flight!.weapon = "multiLaser";
@@ -369,9 +379,10 @@ describe("economy save", () => {
       delete progress.stations;
     }
     delete legacy.flight.levels;
-    delete legacy.flight.weaponLockFor;
+    delete legacy.flight.weaponSwitchFor;
     delete legacy.flight.dockId;
     legacy.flight.ammo = 7;
+    legacy.flight.weaponLockFor = 2.5;
     const restored = restoreSave(legacy)!;
     expect(restored).not.toBeNull();
     expect(restored.economy).toEqual({
@@ -384,8 +395,9 @@ describe("economy save", () => {
     });
     expect(restored.docked).toBeNull();
     expect(restored.progress[1].stations).toEqual([]);
-    expect(restored.flight).toMatchObject({ dockId: null, levels: noLevels(), weaponLockFor: 0 });
+    expect(restored.flight).toMatchObject({ dockId: null, levels: noLevels(), weaponSwitchFor: 0 });
     expect("ammo" in restored.flight!).toBe(false);
+    expect("weaponLockFor" in restored.flight!).toBe(false);
     const home = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     delete home.economy;
     expect(restoreSave(home)?.economy.stardust).toBe(0);
@@ -466,7 +478,11 @@ describe("economy save", () => {
     ["a paint not owned", (save: GameState) => (save.economy.paint = "iris")],
     ["an unowned weapon", (save: GameState) => (save.economy.weapon = "rapidMissile")],
     ["an unknown station", (save: GameState) => save.progress[1].stations.push("station:bad")],
-    ["a negative lock", (save: GameState) => (save.flight!.weaponLockFor = -1)],
+    ["a negative switch wait", (save: GameState) => (save.flight!.weaponSwitchFor = -1)],
+    [
+      "a negative legacy lock",
+      (save: GameState) => Object.assign(save.flight!, { weaponLockFor: -1 }),
+    ],
     [
       "docking at home",
       (save: GameState) => Object.assign(save, { docked: "x", flight: null, mode: "home" }),

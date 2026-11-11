@@ -110,8 +110,8 @@ export interface FlightState {
   grantedWeapons?: Exclude<Weapon, "basic">[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
-  /** Seconds weapon changes stay locked after combat ends. */
-  weaponLockFor: number;
+  /** Seconds until Ada can switch weapons again; 0 when she can. */
+  weaponSwitchFor: number;
   /** The station whose dock Ada is inside; docking again needs her to leave it first. */
   dockId: string | null;
   fireCooldown: number;

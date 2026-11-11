@@ -60,7 +60,8 @@ export interface ControlsOptions {
   // Settings or the cheats card opening or closing over the start screen.
   readonly onStartCover?: (what: StartCover, covering: boolean) => void;
   readonly update?: { readonly labels: UpdateLabels; readonly offer: UpdateOffer };
-  readonly onWeaponSelect: (weapon: Weapon) => void;
+  // Returns whether the switch was refused.
+  readonly onWeaponSelect: (weapon: Weapon) => boolean;
   readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;
 }
@@ -188,11 +189,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   const weapons = createWeaponSelector(settings.root, {
     labels: options.weaponLabels,
-    onSelect(weapon) {
-      if (state.accepts()) {
-        options.onWeaponSelect(weapon);
-      }
-    },
+    onSelect: (weapon) => state.accepts() && options.onWeaponSelect(weapon),
     reducedMotion: () => reducedMotion,
   });
   const status = createStatusPill(settings.root, {

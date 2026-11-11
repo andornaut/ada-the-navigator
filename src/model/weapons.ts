@@ -1,12 +1,10 @@
-import type { UpgradeWeapon } from "../data/economy.ts";
+import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import type { FlightState } from "./types.ts";
 
 export interface WeaponChoice {
   id: Weapon;
   selected: boolean;
-  /** Changing to this weapon is refused while weapon changes are locked. */
-  locked: boolean;
 }
 /** Shop order, cheapest first; the drop pool and the cheat grant use the same list. */
 export const UPGRADE_WEAPONS = [
@@ -17,9 +15,15 @@ export const UPGRADE_WEAPONS = [
   "phaser",
 ] as const;
 
-/** Weapon changes lock during combat (the danger state) and while the post-combat timer runs. */
-export function weaponsLocked(flight: Pick<FlightState, "dangerFor" | "weaponLockFor">): boolean {
-  return flight.dangerFor > 0 || flight.weaponLockFor > 0;
+/** Whether a recent switch makes the next one wait (economy.weaponSwitchSeconds). */
+export function switchWaiting(flight: Pick<FlightState, "weaponSwitchFor">): boolean {
+  return flight.weaponSwitchFor > 0;
+}
+
+/** Equips weapon, which starts the wait before the next switch. */
+function switchTo(weapon: Weapon, flight: FlightState): void {
+  flight.weapon = weapon;
+  flight.weaponSwitchFor = ECONOMY.weaponSwitchSeconds;
 }
 
 /** Selection participates in the owned upgrade roster. */
@@ -38,31 +42,36 @@ export function ownedForSave(flight: FlightState): UpgradeWeapon[] {
 }
 
 export function ownedWeapons(flight: FlightState): WeaponChoice[] {
-  const locked = weaponsLocked(flight);
   const choices: WeaponChoice[] = [];
   for (const id of ["basic", ...UPGRADE_WEAPONS] as const) {
     if (id === "basic" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
-      const selected = flight.weapon === id;
-      choices.push({ id, locked: locked && !selected, selected });
+      choices.push({ id, selected: flight.weapon === id });
     }
   }
   return choices;
 }
 
+/**
+ * Switches to an owned weapon at any time, including in combat. Refused, changing nothing,
+ * while the wait after the last switch runs; choosing the equipped weapon always succeeds.
+ */
 export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean {
   if (!ownedWeapons(flight).some((choice) => choice.id === weapon)) {
     return false;
   }
-  if (weapon !== flight.weapon && weaponsLocked(flight)) {
+  if (weapon === flight.weapon) {
+    return true;
+  }
+  if (switchWaiting(flight)) {
     return false;
   }
   ensureOwnedWeapons(flight);
-  flight.weapon = weapon;
+  switchTo(weapon, flight);
   return true;
 }
 
 /**
- * Adds a found weapon to the roster and equips it outside the weapon lock. Returns
+ * Adds a found weapon to the roster and equips it unless the switch wait runs. Returns
  * false, changing nothing, when Ada already owns it.
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
@@ -76,8 +85,8 @@ export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boole
     return false;
   }
   owned.push(weapon);
-  if (!weaponsLocked(flight)) {
-    flight.weapon = weapon;
+  if (!switchWaiting(flight)) {
+    switchTo(weapon, flight);
   }
   return true;
 }

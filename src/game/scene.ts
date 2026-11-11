@@ -550,9 +550,13 @@ export class PrototypeScene extends Phaser.Scene {
       onStartCover: coverStartScreen,
       onWeaponSelect: (weapon) => {
         const state = this.model.state;
+        let refused = false;
         if (!this.settingsOpen && state.mode === "space" && !state.dialogue && !state.docked) {
-          apply(() => this.model.selectWeapon(weapon));
+          apply(() => {
+            refused = !this.model.selectWeapon(weapon);
+          });
         }
+        return refused;
       },
       // Navigation lives in the Paused card; both refuse while Ada is in danger.
       pause: {

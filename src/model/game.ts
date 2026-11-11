@@ -81,13 +81,7 @@ import {
 } from "./storybook.ts";
 import type { FlightEvent, FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
-import {
-  ownedForSave,
-  ownedWeapons,
-  selectFlightWeapon,
-  type WeaponChoice,
-  weaponsLocked,
-} from "./weapons.ts";
+import { ownedForSave, ownedWeapons, selectFlightWeapon, type WeaponChoice } from "./weapons.ts";
 
 export function newProgress(): SectorProgress {
   return {
@@ -332,18 +326,10 @@ export class GameModel {
   weapons(): WeaponChoice[] {
     return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];
   }
-  /** A change refused by the weapon lock shows the weaponLocked notice. */
+  /** False when the switch is refused, as during the wait after the last switch. */
   selectWeapon(weapon: Weapon): boolean {
     const flight = this.state.flight;
     if (this.state.mode !== "space" || this.state.dialogue || this.state.docked || !flight) {
-      return false;
-    }
-    if (
-      weapon !== flight.weapon &&
-      weaponsLocked(flight) &&
-      ownedWeapons(flight).some((choice) => choice.id === weapon)
-    ) {
-      this.notify(this.label("weaponLocked"));
       return false;
     }
     const selected = selectFlightWeapon(weapon, flight);

@@ -404,7 +404,6 @@ export const PROTOTYPE: PrototypeContent = {
     weapon: "Weapon",
     weaponBasic: "Basic",
     weaponHeavyMissile: "Heavy Missile",
-    weaponLocked: "Weapons can't be changed in combat.",
     weaponMultiLaser: "Multi-Laser",
     weaponPhaser: "Phaser",
     weaponRapidMissile: "Rapid Missile",

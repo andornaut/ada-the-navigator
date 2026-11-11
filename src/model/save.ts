@@ -377,7 +377,7 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
 
 /** Completes economy fields absent from older saves; validation has already run. */
 function migrateEconomy(state: GameState): void {
-  const flight = state.flight as (FlightState & { ammo?: number }) | null;
+  const flight = state.flight as (FlightState & { ammo?: number; weaponLockFor?: number }) | null;
   if (!state.economy) {
     state.economy = newEconomy(ECONOMY);
     if (flight) {
@@ -393,7 +393,8 @@ function migrateEconomy(state: GameState): void {
   if (flight) {
     delete flight.ammo;
     flight.levels ??= structuredClone(state.economy.levels);
-    flight.weaponLockFor ??= 0;
+    delete flight.weaponLockFor;
+    flight.weaponSwitchFor ??= 0;
     flight.dockId ??= null;
   }
 }
@@ -585,7 +586,8 @@ function stationIds(sector: SectorId, value: unknown): boolean {
 /**
  * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
  * from before the economy gain an empty economy (or their flight's weapons), no
- * discovered stations and no weapon lock; their unused ammunition count is dropped.
+ * discovered stations and no switch wait; their unused ammunition count and weapon lock
+ * timer are dropped.
  * Saves from before the prologue count it as seen once play has begun, and saves from before
  * holodisks count the holodisks of galaxies before the last unlocked one as recovered. A later
  * galaxy unlocked but not begun is announced at the next boarding.
@@ -691,6 +693,7 @@ export function restoreSave(saved: unknown): GameState | null {
         ].every((k) => nonnegative(f[k])) ||
         (f.ammo !== undefined && !nonnegative(f.ammo)) ||
         (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
+        (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
         (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||
         (f.levels !== undefined && !upgradeLevels(f.levels))
       ) {

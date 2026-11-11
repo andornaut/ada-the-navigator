@@ -939,7 +939,7 @@ export function createFlight(
     velocity: { x: 0, y: 0 },
     visited: {},
     weapon: loadout.weapon,
-    weaponLockFor: 0,
+    weaponSwitchFor: 0,
     world: { notables: {}, version: 1 },
   };
   markVisited(flight.visited, "0,0");
@@ -1967,10 +1967,9 @@ export function stepFlight(
       : threat || underFire
         ? content.tuning.dangerReleaseSeconds
         : Math.max(0, flight.dangerFor - slice);
-    // Snap the post-combat lock to zero within float error of its end.
-    const lock = flight.weaponLockFor - slice;
-    flight.weaponLockFor =
-      flight.dangerFor > 0 ? ECONOMY.weaponLockSeconds : lock > 1e-9 ? lock : 0;
+    // Snap the switch wait to zero within float error of its end.
+    const wait = flight.weaponSwitchFor - slice;
+    flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
     if (flight.sinceDamage >= ship.shieldRechargeDelay) {
       flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
     }

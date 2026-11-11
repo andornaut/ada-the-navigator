@@ -65,8 +65,8 @@ export interface EconomyCatalog {
   defaultPaint: string;
   /** Stardust in a discovery cache. */
   discoveryStardust: number;
-  /** Seconds weapon changes stay locked after combat ends. */
-  weaponLockSeconds: number;
+  /** Seconds after a weapon switch before Ada can switch again (provisional). */
+  weaponSwitchSeconds: number;
   /**
    * Each archetype's destruction, from Art's destruction.json: the wreck releases its drops
    * at `releaseSeconds`, spread up to `spread` world units, and is gone at `durationSeconds`.
@@ -223,7 +223,6 @@ export const ECONOMY: EconomyCatalog = {
     2: { ...small, capital: 0.05, frigate: 0.05 },
     3: { ...small, capital: 0.05, frigate: 0.05 },
   },
-  weaponLockSeconds: 5,
   weaponPrices: {
     heavyMissile: 300,
     multiLaser: 250,
@@ -231,5 +230,6 @@ export const ECONOMY: EconomyCatalog = {
     rapidMissile: 150,
     scattershot: 350,
   },
+  weaponSwitchSeconds: 1,
   weaponUpgradePrices: [150, 300],
 };

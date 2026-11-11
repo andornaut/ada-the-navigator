@@ -984,11 +984,23 @@ try {
     "An unowned upgrade must not be offered",
   );
   await missileButton.click();
+  // The next switch waits after this one: an immediate second switch plays the refusal cue.
+  await page.locator('[data-weapon="multiLaser"]').click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-weapon="multiLaser"]')?.style.color !== "",
+    null,
+    { timeout: 2000 },
+  );
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "rapidMissile",
     storageKey,
   );
   assert.equal(await missileButton.getAttribute("aria-pressed"), "true");
+  assert.equal(
+    await page.locator('[data-weapon="multiLaser"]').getAttribute("aria-pressed"),
+    "false",
+    "A switch during the wait after the last one must be refused",
+  );
   assert.equal(
     await page.locator(".flight-hud").count(),
     0,
@@ -1048,6 +1060,8 @@ try {
     "A disabled weapon must not change selection behind the modal",
   );
   await closeSettings();
+  // The saved switch wait from the Rapid Missile switch runs out in play first.
+  await page.waitForTimeout(1200);
   await page.locator('[data-weapon="multiLaser"]').click();
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "multiLaser",
@@ -1118,7 +1132,8 @@ try {
   save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
-    "Owned unlimited weapons support accessible selection, reload, modal guards and the status pill's shield meter",
+    "Owned unlimited weapons support accessible selection, the switch wait's refusal, reload, " +
+      "modal guards and the status pill's shield meter",
   );
 
   const damaged = new GameModel(PROTOTYPE, equipmentSave);

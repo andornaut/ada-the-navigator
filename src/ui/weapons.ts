@@ -8,8 +8,6 @@ import { refuse } from "./refusal.ts";
 export interface WeaponChoice {
   readonly id: Weapon;
   readonly selected: boolean;
-  /** Locked choices stay visible, look locked and refuse a press. */
-  readonly locked: boolean;
 }
 
 export interface WeaponLabels {
@@ -19,25 +17,22 @@ export interface WeaponLabels {
 
 interface WeaponSelectorOptions {
   readonly labels: WeaponLabels;
-  readonly onSelect: (weapon: Weapon) => void;
+  /** Returns whether the switch was refused, so the pressed icon plays the refusal cue. */
+  readonly onSelect: (weapon: Weapon) => boolean;
   readonly reducedMotion: () => boolean;
 }
 
-export type WeaponButtonState = "idle" | "locked" | "selected";
+export type WeaponButtonState = "idle" | "selected";
 
-/** Art's HUD button states: the selected weapon keeps its look while the others lock. */
+/** Art's HUD button states: the selected weapon, and every other owned weapon idle. */
 export function weaponButtonState(choice: WeaponChoice): WeaponButtonState {
-  if (choice.selected) {
-    return "selected";
-  }
-  return choice.locked ? "locked" : "idle";
+  return choice.selected ? "selected" : "idle";
 }
 
 // Each state's disc face, its ink edge (an annulus when selected) and glyph colour
 // (art/controls.md "Top-right HUD icon buttons").
 export const HUD_DISC_STATES = {
   idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
-  locked: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#6f7891" },
   selected: { edge: HUD_BUTTON.annulus, face: "#bfa06f", glyph: "#181425" },
 } as const satisfies Record<WeaponButtonState, unknown>;
 
@@ -126,10 +121,6 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon[data-state=selected] .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
 }
-.ada-controls .ada-weapon[data-state=locked]{
-  color:${HUD_DISC_STATES.locked.glyph};
-  cursor:default
-}
 .ada-controls .ada-weapon:disabled{
   cursor:default
 }
@@ -168,12 +159,9 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         disc.setAttribute("aria-hidden", "true");
         button.append(disc);
         button.addEventListener("click", () => {
-          if (enabled && !button.disabled) {
-            if (button.dataset.state === "locked") {
-              refuse(button, options.reducedMotion());
-            }
-            // The model refuses a locked change and shows why.
-            options.onSelect(choice.id);
+          // A switch during the wait after the last one is refused with the shared cue.
+          if (enabled && !button.disabled && options.onSelect(choice.id)) {
+            refuse(button, options.reducedMotion());
           }
         });
         root.append(button);
@@ -183,7 +171,6 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       const name = options.labels.names[choice.id];
       entry.setAttribute("aria-label", name);
       entry.setAttribute("aria-pressed", String(choice.selected));
-      entry.setAttribute("aria-disabled", String(choice.locked));
       entry.dataset.state = weaponButtonState(choice);
       entry.title = name;
       entry.disabled = !enabled;

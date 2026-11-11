@@ -8,20 +8,14 @@ import { HUD_BUTTON } from "./layout/playView.ts";
 import { HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState } from "./weapons.ts";
 
 describe("HUD weapon buttons", () => {
-  it("shows the selected weapon as selected even while weapon changes are locked", () => {
-    expect(weaponButtonState({ id: "basic", locked: false, selected: true })).toBe("selected");
-    expect(weaponButtonState({ id: "basic", locked: true, selected: true })).toBe("selected");
-  });
-
-  it("locks every other weapon in combat and through the 5 seconds after", () => {
-    expect(weaponButtonState({ id: "rapidMissile", locked: true, selected: false })).toBe("locked");
-    expect(weaponButtonState({ id: "rapidMissile", locked: false, selected: false })).toBe("idle");
+  it("shows the selected weapon as selected and every other owned weapon idle", () => {
+    expect(weaponButtonState({ id: "basic", selected: true })).toBe("selected");
+    expect(weaponButtonState({ id: "rapidMissile", selected: false })).toBe("idle");
   });
 
   it("colours each state as Art's Chibi skill buttons, with no cream ring or amber", () => {
     expect(HUD_DISC_STATES).toEqual({
       idle: { edge: 1, face: "#262b44", glyph: "#b8b3c9" },
-      locked: { edge: 1, face: "#262b44", glyph: "#6f7891" },
       selected: { edge: 4, face: "#bfa06f", glyph: "#181425" },
     });
     // The 33 disc less the 4 annulus on each side leaves the 25 gold face.

@@ -46,19 +46,23 @@ describe("owned unlimited weapons", () => {
   it("keeps collected upgrades selectable without spending ownership or resetting fire cooldown", () => {
     const model = launched();
     const flight = model.state.flight!;
-    expect(model.weapons()).toEqual([{ id: "basic", locked: false, selected: true }]);
+    expect(model.weapons()).toEqual([{ id: "basic", selected: true }]);
     pickup(model, "rapidMissile");
     pickup(model, "multiLaser");
     flight.fireCooldown = 0.25;
+    // Each switch waits out the one before it.
+    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.fireCooldown).toBe(0.25);
+    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("basic")).toBe(true);
+    flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     expect(model.weapons()).toEqual([
-      { id: "basic", locked: false, selected: false },
-      { id: "rapidMissile", locked: false, selected: false },
-      { id: "multiLaser", locked: false, selected: true },
+      { id: "basic", selected: false },
+      { id: "rapidMissile", selected: false },
+      { id: "multiLaser", selected: true },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -81,6 +85,7 @@ describe("owned unlimited weapons", () => {
   it("does not duplicate ownership when collecting the same upgrade repeatedly", () => {
     const model = launched();
     pickup(model, "rapidMissile");
+    model.state.flight!.weaponSwitchFor = 0;
     expect(model.selectWeapon("basic")).toBe(true);
     pickup(model, "rapidMissile");
     pickup(model, "rapidMissile");
@@ -102,8 +107,7 @@ describe("owned unlimited weapons", () => {
   it("jumps home on basic depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
     const model = launched();
     pickup(model, "multiLaser");
-    model.state.flight!.dangerFor = 0;
-    model.state.flight!.weaponLockFor = 0;
+    model.state.flight!.weaponSwitchFor = 0;
     expect(model.selectWeapon("basic")).toBe(true);
     const flight = model.state.flight!;
     const seed = flight.seed;
@@ -118,8 +122,8 @@ describe("owned unlimited weapons", () => {
     playOpening(model);
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
-      { id: "basic", locked: false, selected: true },
-      { id: "multiLaser", locked: false, selected: false },
+      { id: "basic", selected: true },
+      { id: "multiLaser", selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
   });
@@ -150,11 +154,14 @@ describe("owned unlimited weapons", () => {
     const saved = source.save();
     const model = new GameModel(PROTOTYPE, saved);
     expect(model.save()).toBe(saved);
-    expect(model.weapons()).toContainEqual({ id: "scattershot", locked: false, selected: true });
+    expect(model.weapons()).toContainEqual({ id: "scattershot", selected: true });
     expect(model.save()).toBe(saved);
     expect(model.selectWeapon("basic")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
+    // The switch wait is saved, so the resumed flight waits it out before switching back.
     const resumed = new GameModel(PROTOTYPE, model.save());
+    expect(resumed.selectWeapon("scattershot")).toBe(false);
+    resumed.state.flight!.weaponSwitchFor = 0;
     expect(resumed.selectWeapon("scattershot")).toBe(true);
     expect(restoreSave(resumed.save())).toEqual(resumed.state);
   });
