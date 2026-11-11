@@ -9,6 +9,7 @@ class FakeElement {
   className = "";
   readonly classList = {
     add: (name: string) => this.classes.add(name),
+    remove: (name: string) => this.classes.delete(name),
     toggle: (name: string, on: boolean) =>
       on ? this.classes.add(name) : this.classes.delete(name),
   };
@@ -28,6 +29,9 @@ class FakeElement {
   }
   querySelector(): null {
     return null;
+  }
+  querySelectorAll(): FakeElement[] {
+    return [];
   }
   remove(): void {}
   removeAttribute(name: string): void {

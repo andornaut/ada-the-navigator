@@ -160,13 +160,16 @@ export const MODAL_STYLE = `
   margin-top:var(--body-gap,0);
   scrollbar-color:#9690b4 #2f2d3d
 }
-.ada-controls .ada-card-body::-webkit-scrollbar{
+.ada-controls .ada-card-body::-webkit-scrollbar,
+.ada-controls .ada-scroll::-webkit-scrollbar{
   width:${units(SCROLL.gap + SCROLL.track)}
 }
-.ada-controls .ada-card-body::-webkit-scrollbar-track{
+.ada-controls .ada-card-body::-webkit-scrollbar-track,
+.ada-controls .ada-scroll::-webkit-scrollbar-track{
   background:linear-gradient(to right,transparent ${units(SCROLL.gap)},#2f2d3d ${units(SCROLL.gap)})
 }
-.ada-controls .ada-card-body::-webkit-scrollbar-thumb{
+.ada-controls .ada-card-body::-webkit-scrollbar-thumb,
+.ada-controls .ada-scroll::-webkit-scrollbar-thumb{
   background:#9690b4;
   background-clip:padding-box;
   border:solid transparent;
@@ -186,6 +189,18 @@ export const MODAL_STYLE = `
 .ada-controls .ada-card-body > *{
   flex:none;
   max-width:100%
+}
+
+/* A card with a named scroll group scrolls only that group; its other groups stay in view. */
+.ada-controls .ada-card-body.ada-has-scroll{
+  overflow-y:hidden
+}
+.ada-controls .ada-card-body > .ada-scroll{
+  flex:0 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-color:#9690b4 #2f2d3d
 }
 
 /* Prose never widens a card: it wraps to the inner width the other groups and the floor set. */
@@ -363,12 +378,13 @@ export const MODAL_STYLE = `
   margin:0
 }
 
-/* Control rows form one group as wide as its widest row, rows a row gap apart. */
+/* Control rows: measured at their widest label row, then filling the inner width so their notes
+   wrap there; rows a row gap apart. */
 .ada-controls .ada-rows{
   display:grid;
+  grid-auto-rows:max-content;
   gap:${units(CARD_CONTENT.rowGap)};
-  width:max-content;
-  max-width:100%
+  align-self:stretch
 }
 
 /* Chibi's compact exception for a button inside a control row: a 72x28 face, wider when its label
@@ -600,6 +616,15 @@ export function createCard(options: {
     header,
     title,
   };
+}
+
+// Makes group the card's scroll group: only it scrolls when the card is taller than its rect.
+export function setScrollGroup(parts: Pick<CardParts, "body">, group: HTMLElement): void {
+  for (const other of parts.body.querySelectorAll(".ada-scroll")) {
+    other.classList.remove("ada-scroll");
+  }
+  group.classList.add("ada-scroll");
+  parts.body.classList.add("ada-has-scroll");
 }
 
 // Whether a press that began at from and ended at to is a tap: it moved no further than the

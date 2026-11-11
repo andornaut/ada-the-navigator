@@ -1,5 +1,5 @@
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, createCard, isTap } from "./modal.ts";
+import { createButton, createCard, isTap, setScrollGroup } from "./modal.ts";
 import { type PauseAction, pauseActions, travelShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 
@@ -95,6 +95,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   empty.dataset.inkTop = "0";
   empty.textContent = labels.travelEmpty;
   travel.body.append(places, empty);
+  setScrollGroup(travel, places);
   modal.append(paused.frame, travel.frame);
   root.append(modal);
   let open = false;

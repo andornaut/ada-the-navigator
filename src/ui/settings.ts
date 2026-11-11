@@ -21,6 +21,7 @@ import {
   FOCUS_STYLE,
   isTap,
   MODAL_STYLE,
+  setScrollGroup,
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
@@ -285,6 +286,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );
   card.append(rows);
+  setScrollGroup(settingsCard, rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.
   const installRow = document.createElement("div");
@@ -329,6 +331,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const stepsClose = createButton(options.labels.close);
   stepsClose.dataset.action = "close-install-steps";
   stepsBody.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
+  setScrollGroup(stepsParts, stepsLine);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
   modal.append(cardFrame, stepsFrame);

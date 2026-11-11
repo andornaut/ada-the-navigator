@@ -131,7 +131,7 @@ describe("modal buttons", () => {
     expect(rule(".ada-controls .ada-card")).toContain("overflow:hidden");
     expect(rule(".ada-controls .ada-actions")).toContain("width:max-content");
     const rows = rule(".ada-controls .ada-rows");
-    expect(rows).toContain("width:max-content");
+    expect(rows).toContain("align-self:stretch");
     expect(rows).toContain(`gap:${units(SPACING.rowGap)}`);
   });
 
