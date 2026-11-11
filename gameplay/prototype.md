@@ -277,10 +277,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     then 9, then 11, each level reaching a little farther. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. Dots do not apply
     damage over time.
-  - Phaser: a long beam bolt, 4 times the length of a laser bolt, that damages
-    every enemy it touches anywhere along its length, including side contact, once
-    per enemy per shot, and continues past them. It fires 4 times slower than
-    basic fire and deals 4 times basic damage per contact; levels grow its length and
+  - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
+    out to a set range (provisionally 320 world units), damaging every enemy the
+    beam touches, then shows briefly as a visible beam. Asteroids and other scenery
+    stop the beam. It fires intermittently, 4 times slower than basic fire, and
+    deals 4 times basic damage to each enemy it touches; levels grow its range and
     damage.
 - A missile's blast damages every enemy within its radius, never Ada.
 - Fan angles are measured in the projected aim plane. Rotate there before
@@ -290,7 +291,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing or reload is added; only the Phaser
-  passes through what it hits.
+  beam passes through enemies.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
   ownership of the other upgrades. Weapons cannot be changed during combat or for 5
   seconds after it.
