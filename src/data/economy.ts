@@ -214,7 +214,14 @@ export const ECONOMY: EconomyCatalog = {
   tractorSpeed: { base: 150, levels: [220, 300] },
   // Galaxy one drops weapons more rarely, so its first weapon is usually bought.
   weaponDropChance: {
-    1: { ...small, capital: 0.05, frigate: 0.02 },
+    1: {
+      capital: 0.05,
+      fighter: 0.0025,
+      frigate: 0.02,
+      interceptor: 0.0025,
+      retaliator: 0.0025,
+      swarm: 0.0025,
+    },
     2: { ...small, capital: 0.1, frigate: 0.05 },
     3: { ...small, capital: 0.1, frigate: 0.05 },
   },

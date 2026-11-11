@@ -25,6 +25,11 @@ describe("weapon levels", () => {
   );
 
   it("grows the Heavy Missile's blast and the Phaser's range as a bonus", () => {
+    // The Heavy Missile's levels are felt through fire rate, with damage keeping the 1.5 steps.
+    expect(WEAPON_CATALOG.heavyMissile.map((level) => level.intervalSeconds)).toEqual([
+      1.2, 1, 0.8,
+    ]);
+    expect(WEAPON_CATALOG.heavyMissile.map((level) => level.damageRatio)).toEqual([8, 10, 12]);
     const blasts = WEAPON_CATALOG.heavyMissile.map((level) => level.blastRadius);
     const ranges = WEAPON_CATALOG.phaser.map((level) => level.beamRange);
     expect(blasts).toEqual([60, 72, 85]);
@@ -66,7 +71,11 @@ describe("weapon levels", () => {
     };
     expect(changed("basic").sort()).toEqual(["damageRatio", "intervalSeconds"]);
     expect(changed("rapidMissile").sort()).toEqual(["damageRatio", "intervalSeconds"]);
-    expect(changed("heavyMissile").sort()).toEqual(["blastRadius", "damageRatio"]);
+    expect(changed("heavyMissile").sort()).toEqual([
+      "blastRadius",
+      "damageRatio",
+      "intervalSeconds",
+    ]);
     expect(changed("multiLaser").sort()).toEqual(["anglesDegrees", "damageRatio"]);
     expect(changed("scattershot").sort()).toEqual([
       "anglesDegrees",

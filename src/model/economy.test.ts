@@ -124,10 +124,10 @@ describe("Stardust drops", () => {
   });
 
   it.each([
-    [1, "swarm", 0.005],
-    [1, "fighter", 0.005],
-    [1, "interceptor", 0.005],
-    [1, "retaliator", 0.005],
+    [1, "swarm", 0.0025],
+    [1, "fighter", 0.0025],
+    [1, "interceptor", 0.0025],
+    [1, "retaliator", 0.0025],
     [1, "frigate", 0.02],
     [1, "capital", 0.05],
     [2, "swarm", 0.005],

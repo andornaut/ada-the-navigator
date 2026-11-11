@@ -119,6 +119,8 @@ export interface Scenario {
   encounterRate?: Partial<Record<SectorId, number>>;
   /** Multiplier on every enemy's perception reach. */
   perceptionScale?: Partial<Record<SectorId, number>>;
+  /** Weapons owned at the start, as carried over from earlier galaxies. */
+  startWeapons?: UpgradeWeapon[];
   prices: Partial<Prices>;
   behaviour: Partial<Behaviour>;
 }
@@ -497,6 +499,8 @@ export interface SimulationInput {
   encounters: readonly SimEncounterEntry[];
   encounterRate: number;
   perceptionScale: number;
+  /** Weapons owned at the start, from earlier galaxies. */
+  startWeapons: readonly UpgradeWeapon[];
 }
 
 export function simulate(input: SimulationInput): RunResult {
@@ -540,8 +544,9 @@ export function simulate(input: SimulationInput): RunResult {
   let nextTurn = 0;
   let target: Target | null = null;
   let bucket = 0;
-  let weapon: Weapon = "basic";
-  const owned: UpgradeWeapon[] = [];
+  // A starting loadout carries over from earlier galaxies; its first weapon is equipped.
+  const owned: UpgradeWeapon[] = [...input.startWeapons];
+  let weapon: Weapon = owned[0] ?? "basic";
   const declined = new Set<string>();
   const stations = new Set<string>();
   let guard = 0;
@@ -1013,6 +1018,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       encounterRate: scenario.encounterRate?.[options.sector] ?? 1,
       encounters: scenario.encounters?.[options.sector] ?? sectorEncounters[options.sector],
       perceptionScale: scenario.perceptionScale?.[options.sector] ?? 1,
+      startWeapons: scenario.startWeapons ?? [],
       sector: options.sector,
       seed: index + 1,
       spawnWeights,
@@ -1319,6 +1325,9 @@ function main(argv: readonly string[]): void {
     ...(scenario.encounterRate === undefined
       ? {}
       : { encounterRate: scenario.encounterRate as NonNullable<Scenario["encounterRate"]> }),
+    ...(scenario.startWeapons === undefined
+      ? {}
+      : { startWeapons: scenario.startWeapons as UpgradeWeapon[] }),
     ...(scenario.perceptionScale === undefined
       ? {}
       : { perceptionScale: scenario.perceptionScale as NonNullable<Scenario["perceptionScale"]> }),

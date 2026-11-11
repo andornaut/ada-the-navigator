@@ -65,8 +65,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       projectileKind: "bolt",
     },
   ],
-  // Damage alone makes each single-target 1.5 step; the blast's growth to 72 and 85 is a bonus
-  // against groups.
+  // Fire rate (1.2, 1.0, 0.8 s) and damage make each single-target 1.5 step; the blast's growth
+  // to 72 and 85 is a bonus against groups.
   heavyMissile: [
     {
       ...projectile,
@@ -81,8 +81,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 72,
-      damageRatio: 12,
-      intervalSeconds: 1.2,
+      damageRatio: 10,
+      intervalSeconds: 1,
       projectileKind: "missile",
       speedRatio: 0.6,
     },
@@ -90,8 +90,8 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       blastRadius: 85,
-      damageRatio: 18,
-      intervalSeconds: 1.2,
+      damageRatio: 12,
+      intervalSeconds: 0.8,
       projectileKind: "missile",
       speedRatio: 0.6,
     },
