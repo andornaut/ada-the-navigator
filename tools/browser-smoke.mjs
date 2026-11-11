@@ -1863,6 +1863,8 @@ try {
   events.checks.push(
     "Canonical joystick, sound and reduced-motion controls toggle and retain dialog state",
   );
+  // One renderer at a time keeps the run inside the container's memory ceiling.
+  await context.close();
   const portraitContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
     isMobile: true,
