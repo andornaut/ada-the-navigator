@@ -30,7 +30,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "escort",
       copy: "Greenhouse",
-      cost: 500,
+      cost: 250,
       icon: "icon-project-greenhouse-ring",
       id: "greenhouseRing",
       name: "Greenhouse ring",
@@ -41,7 +41,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "chase",
       copy: "Crane",
-      cost: 400,
+      cost: 200,
       icon: "icon-project-workshop-crane",
       id: "workshopCrane",
       name: "Workshop crane",
@@ -52,7 +52,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "escort",
       copy: "Beacons",
-      cost: 300,
+      cost: 150,
       icon: "icon-project-salvage-beacons",
       id: "salvageBeacons",
       name: "Salvage beacons",
@@ -65,7 +65,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "chase",
       copy: "DockingBay",
-      cost: 600,
+      cost: 300,
       icon: "icon-project-docking-bay",
       id: "dockingBay",
       name: "Second docking bay",
@@ -76,7 +76,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "escort",
       copy: "HubRepairs",
-      cost: 400,
+      cost: 200,
       icon: "icon-project-hub-repairs",
       id: "hubRepairs",
       name: "Hub repairs",
@@ -89,7 +89,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "current",
       copy: "Nursery",
-      cost: 500,
+      cost: 250,
       icon: "icon-project-nursery-beacon",
       id: "nurseryBeacon",
       name: "Nursery beacon",
@@ -100,7 +100,7 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     {
       ally: "escort",
       copy: "CurrentBuoys",
-      cost: 400,
+      cost: 200,
       icon: "icon-project-current-buoys",
       id: "currentBuoys",
       name: "Current-map buoys",

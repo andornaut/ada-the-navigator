@@ -61,13 +61,13 @@ describe("community projects", () => {
     });
     expect(paid.donated).toEqual({ salvageBeacons: 120 });
     expect(donate(sunflower, paid, 1000, "salvageBeacons")).toEqual({
-      amount: 180,
+      amount: 30,
       funded: true,
       kind: "paid",
     });
     expect(projectViews(sunflower, paid).find(({ id }) => id === "salvageBeacons")).toMatchObject({
       funded: true,
-      paid: 300,
+      paid: 150,
       remaining: 0,
     });
   });
@@ -77,10 +77,10 @@ describe("community projects", () => {
       amount: 120,
       kind: "confirm",
       left: 0,
-      stillNeeded: 380,
+      stillNeeded: 130,
     });
     expect(
-      donationRequest(sunflower, progress(true, { workshopCrane: 350 }), 1000, "workshopCrane"),
+      donationRequest(sunflower, progress(true, { workshopCrane: 150 }), 1000, "workshopCrane"),
     ).toEqual({ amount: 50, kind: "confirm", left: 950, stillNeeded: 0 });
   });
 
@@ -88,7 +88,7 @@ describe("community projects", () => {
     expect(donate(sunflower, progress(), 0, "greenhouseRing")).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(), 1, "greenhouseRing").kind).toBe("paid");
     expect(
-      donate(sunflower, progress(true, { salvageBeacons: 300 }), 999, "salvageBeacons"),
+      donate(sunflower, progress(true, { salvageBeacons: 150 }), 999, "salvageBeacons"),
     ).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(false), 999, "salvageBeacons")).toEqual({ kind: "refused" });
     expect(donate(sunflower, progress(), 999, "hubRepairs")).toEqual({ kind: "refused" });
@@ -116,7 +116,7 @@ describe("community projects", () => {
   });
 
   it("make one ally and one world change per funded project, at its site", () => {
-    const funded = progress(true, { greenhouseRing: 500, salvageBeacons: 120, workshopCrane: 400 });
+    const funded = progress(true, { greenhouseRing: 250, salvageBeacons: 120, workshopCrane: 200 });
     expect(projectAllies(sunflower, funded)).toEqual([
       { ally: "escort", project: "greenhouseRing" },
       { ally: "chase", project: "workshopCrane" },
@@ -165,10 +165,10 @@ describe("donating at a station", () => {
   });
 
   it("spends the Stardust, and funding the last part closes the card and thanks Ada", () => {
-    const model = docked(200);
+    const model = docked(100);
     expect(model.donationRequest("salvageBeacons")).toMatchObject({
-      amount: 200,
-      stillNeeded: 100,
+      amount: 100,
+      stillNeeded: 50,
     });
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: false, kind: "paid" });
     expect(model.state.economy.stardust).toBe(0);
@@ -176,7 +176,7 @@ describe("donating at a station", () => {
     expect(model.donationRequest("salvageBeacons")).toEqual({ kind: "refused" });
     model.state.economy.stardust = 1000;
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: true, kind: "paid" });
-    expect(model.state.economy.stardust).toBe(900);
+    expect(model.state.economy.stardust).toBe(950);
     expect(model.state.docked).toBeNull();
     const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
     const thanks = sunflower.find(({ id }) => id === "salvageBeacons")!.thanks;
@@ -195,7 +195,7 @@ describe("donating at a station", () => {
     model.donate("greenhouseRing");
     const saved = JSON.parse(model.save()) as { progress: Record<string, Record<string, unknown>> };
     expect(new GameModel(PROTOTYPE, model.save()).state.progress[1].donated).toEqual({
-      greenhouseRing: 500,
+      greenhouseRing: 250,
     });
     delete saved.progress["1"]!.donated;
     expect(restoreSave(saved)?.progress[1].donated).toEqual({});
@@ -203,7 +203,7 @@ describe("donating at a station", () => {
 
   it("rejects a save paying an unknown project or more than its price", () => {
     const model = docked(1000);
-    for (const donated of [{ hubRepairs: 100 }, { greenhouseRing: 501 }, { greenhouseRing: 1.5 }]) {
+    for (const donated of [{ hubRepairs: 100 }, { greenhouseRing: 251 }, { greenhouseRing: 1.5 }]) {
       const saved = JSON.parse(model.save()) as {
         progress: Record<string, Record<string, unknown>>;
       };
