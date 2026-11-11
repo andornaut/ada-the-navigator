@@ -65,8 +65,10 @@ not yet designed, so the station card shows no quest board until it is.
 
 Enemy speed ratios stay relative to Ada's base speed, so engine tuning lets Ada
 outrun the fastest enemies. The shop follows Archie's Pet shop pattern: tabs, owned
-items marked Owned, and a purchase confirm with Buy and Cancel. An item Ada cannot
-afford stays visible with a flat disabled face and refuses with Archie's shared
+items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
+outside tap, back and Escape return to the station card. An item Ada cannot
+afford stays visible with a flat disabled face, stays focusable and tappable,
+and refuses with Archie's shared
 refusal feedback; reduced motion shows the red tint without shaking. A levelled
 row shows Ada's current level ("Level 0 of 3" before the first purchase) and the
 price of the next level; a maxed row shows Owned. The buy confirm shows a weapon's
