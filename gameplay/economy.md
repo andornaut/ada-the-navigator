@@ -26,9 +26,10 @@ its Stardust. A multipart ship is defeated when all its required parts are disab
 | `interceptor`   |        1 |
 | `retaliator`    |        4 |
 | `frigate`       |        5 |
-| `capital`       |        9 |
+| `capital`       |       12 |
 
-An enemy's Stardust is half its hit points, rounded down, and at least 1.
+An enemy's Stardust is half its hit points, rounded down, and at least 1; a
+multipart ship counts all its parts' hit points.
 Discovery caches are rare. These values come from a pacing simulation of typical
 play against the targets above; rerun it after changing any earning value.
 
@@ -40,8 +41,8 @@ capital 24, and one per Stardust for asteroids. With the values above, every
 drop is below its cap, so each pickup carries 1 Stardust.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
-ships, 5% of frigates and 10% of capitals drop a random upgrade weapon; in galaxy
-one, small ships drop one 0.25% of the time, frigates 2% and capitals 5%. A dropped weapon
+ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; in galaxy
+one, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
 Ada already owns becomes 25 Stardust instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
