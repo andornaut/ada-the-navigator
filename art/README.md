@@ -1,9 +1,10 @@
 # Art
 
 Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
-Gameplay supplies semantic requirements. Prototype art covers Ada's ship and
-character portraits. Other space objects use simple runtime shapes with the
-[space palette](space-palette.md): muted surroundings and stronger active signals.
+Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
+sector one enemy ships and character portraits. Other space objects use simple
+runtime shapes with the [space palette](space-palette.md): muted surroundings and
+stronger active signals.
 
 ## Published toolkit
 
@@ -38,12 +39,13 @@ Ship textures use sixteen isometric headings with a centered pivot and a 96 by 9
 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
 Choose the projected heading without rotating the image; draw speed jets from
 `ship-jets.json` behind the idle texture. Thrust textures remain a fallback when
-the jets file is unavailable. [Ship geometry](ship.md) and
-[portrait provenance](portraits.md) describe the authored and reused assets.
+the jets file is unavailable. [Ship geometry](ship.md),
+[sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
+the authored and reused assets.
 
-Ship SVGs are deterministic exports from `art/tools/ship.ts`; edit the generator
-and regenerate the matching outputs. Portrait PNGs remain byte-identical
-to their documented source exports. Sprite
+Ship and enemy SVGs are deterministic exports from `art/tools/ship.ts` and
+`art/tools/enemies.ts`; edit the generators and regenerate the matching outputs.
+Portrait PNGs remain byte-identical to their documented source exports. Sprite
 metadata changes only the local image filename. No generated kit source or assets
 from another game's build pipeline are required.
 

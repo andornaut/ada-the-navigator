@@ -566,6 +566,966 @@
         "neutral": 1,
         "upset": 2
       }
+    },
+    {
+      "id": "enemy-swarm-0",
+      "path": "/art/enemies/swarm-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-1",
+      "path": "/art/enemies/swarm-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-2",
+      "path": "/art/enemies/swarm-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-3",
+      "path": "/art/enemies/swarm-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-4",
+      "path": "/art/enemies/swarm-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-5",
+      "path": "/art/enemies/swarm-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-6",
+      "path": "/art/enemies/swarm-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-7",
+      "path": "/art/enemies/swarm-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-8",
+      "path": "/art/enemies/swarm-8.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-9",
+      "path": "/art/enemies/swarm-9.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-10",
+      "path": "/art/enemies/swarm-10.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-11",
+      "path": "/art/enemies/swarm-11.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-12",
+      "path": "/art/enemies/swarm-12.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-13",
+      "path": "/art/enemies/swarm-13.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-14",
+      "path": "/art/enemies/swarm-14.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-swarm-15",
+      "path": "/art/enemies/swarm-15.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "swarm"
+    },
+    {
+      "id": "enemy-fighter-0",
+      "path": "/art/enemies/fighter-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-1",
+      "path": "/art/enemies/fighter-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-2",
+      "path": "/art/enemies/fighter-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-3",
+      "path": "/art/enemies/fighter-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-4",
+      "path": "/art/enemies/fighter-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-5",
+      "path": "/art/enemies/fighter-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-6",
+      "path": "/art/enemies/fighter-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-7",
+      "path": "/art/enemies/fighter-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-8",
+      "path": "/art/enemies/fighter-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-9",
+      "path": "/art/enemies/fighter-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-10",
+      "path": "/art/enemies/fighter-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-11",
+      "path": "/art/enemies/fighter-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-12",
+      "path": "/art/enemies/fighter-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-13",
+      "path": "/art/enemies/fighter-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-14",
+      "path": "/art/enemies/fighter-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-fighter-15",
+      "path": "/art/enemies/fighter-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "fighter"
+    },
+    {
+      "id": "enemy-interceptor-0",
+      "path": "/art/enemies/interceptor-0.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-1",
+      "path": "/art/enemies/interceptor-1.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-2",
+      "path": "/art/enemies/interceptor-2.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-3",
+      "path": "/art/enemies/interceptor-3.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-4",
+      "path": "/art/enemies/interceptor-4.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-5",
+      "path": "/art/enemies/interceptor-5.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-6",
+      "path": "/art/enemies/interceptor-6.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-7",
+      "path": "/art/enemies/interceptor-7.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-8",
+      "path": "/art/enemies/interceptor-8.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-9",
+      "path": "/art/enemies/interceptor-9.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-10",
+      "path": "/art/enemies/interceptor-10.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-11",
+      "path": "/art/enemies/interceptor-11.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-12",
+      "path": "/art/enemies/interceptor-12.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-13",
+      "path": "/art/enemies/interceptor-13.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-14",
+      "path": "/art/enemies/interceptor-14.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-interceptor-15",
+      "path": "/art/enemies/interceptor-15.svg",
+      "width": 88,
+      "height": 88,
+      "displayWidth": 38.5,
+      "displayHeight": 38.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "interceptor"
+    },
+    {
+      "id": "enemy-retaliator-0",
+      "path": "/art/enemies/retaliator-0.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-1",
+      "path": "/art/enemies/retaliator-1.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-2",
+      "path": "/art/enemies/retaliator-2.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-3",
+      "path": "/art/enemies/retaliator-3.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-4",
+      "path": "/art/enemies/retaliator-4.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-5",
+      "path": "/art/enemies/retaliator-5.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-6",
+      "path": "/art/enemies/retaliator-6.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-7",
+      "path": "/art/enemies/retaliator-7.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-8",
+      "path": "/art/enemies/retaliator-8.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-9",
+      "path": "/art/enemies/retaliator-9.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-10",
+      "path": "/art/enemies/retaliator-10.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-11",
+      "path": "/art/enemies/retaliator-11.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-12",
+      "path": "/art/enemies/retaliator-12.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-13",
+      "path": "/art/enemies/retaliator-13.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-14",
+      "path": "/art/enemies/retaliator-14.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
+    },
+    {
+      "id": "enemy-retaliator-15",
+      "path": "/art/enemies/retaliator-15.svg",
+      "width": 192,
+      "height": 192,
+      "displayWidth": 84,
+      "displayHeight": 84,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "retaliator"
     }
   ],
   "spacePalette": "/art/space-palette.json"
