@@ -86,10 +86,11 @@ Row states:
 - **Unaffordable**: the tile's disabled frame, a flat `#2f2d3d` face over the
   full height with no lip and no press displacement, content centred on it. The
   well face is `#2f2d3d`, the glyph uses its disabled colour `#9a96ad`, and the
-  name, level and price use disabled text `#9a96ad`; the Stardust icon and the
-  ink pill are unchanged. Unlike a disabled control, the row stays focusable and
-  activatable: activation plays the [refusal cue](controls.md#refusal-cue) on
-  the row, tinting the name and the price.
+  name, level or pack line and price use disabled text `#9a96ad`; the Stardust
+  icon and the ink pill are unchanged. Unlike a disabled control, the row stays
+  focusable and activatable: activation plays the
+  [refusal cue](controls.md#refusal-cue) on the row, tinting the name and the
+  price.
 
 Focus draws `ui-focus` outside the row in every state; it may overlap the
 selection ring. Contrast: names 6.59:1 and level lines 4.69:1 on the `#46425e`
@@ -111,30 +112,35 @@ the weapon rows, so the repeat purchase shows without scrolling.
 | Part       | Art                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------- |
 | Glyph      | The weapon's ammunition-kind icon alone, 20x20 at 8 in the well: `icon-shop-ammo-<kind>` |
-| Name       | `ammoPack` ("{weapon} ammo ×{count}", the pack size), cream                              |
+| Name       | `ammoPack` ("{weapon} ammo"), cream                                                      |
+| Pack line  | `ammoPackCount` ("×{count}", the pack size), supporting text, as the level line          |
 | Price pill | The pack price, as every price pill                                                      |
 
-| Weapon        | Kind      | Glyph                    | Name                      | Name width |
-| ------------- | --------- | ------------------------ | ------------------------- | ---------- |
-| Rapid Missile | `missile` | `icon-shop-ammo-missile` | "Rapid Missile ammo ×200" | 184.52     |
-| Multi-Laser   | `energy`  | `icon-shop-ammo-energy`  | "Multi-Laser ammo ×200"   | 168.52     |
-| Heavy Missile | `missile` | `icon-shop-ammo-missile` | "Heavy Missile ammo ×50"  | 179.17     |
-| Scattershot   | `shell`   | `icon-shop-ammo-shell`   | "Scattershot ammo ×130"   | 170.31     |
-| Phaser        | `energy`  | `icon-shop-ammo-energy`  | "Phaser ammo ×55"         | 131.18     |
+| Weapon        | Kind      | Glyph                    | Name                 | Pack line | Name width |
+| ------------- | --------- | ------------------------ | -------------------- | --------- | ---------- |
+| Rapid Missile | `missile` | `icon-shop-ammo-missile` | "Rapid Missile ammo" | "×200"    | 144.04     |
+| Multi-Laser   | `energy`  | `icon-shop-ammo-energy`  | "Multi-Laser ammo"   | "×200"    | 128.03     |
+| Heavy Missile | `missile` | `icon-shop-ammo-missile` | "Heavy Missile ammo" | "×50"     | 147.59     |
+| Scattershot   | `shell`   | `icon-shop-ammo-shell`   | "Scattershot ammo"   | "×130"    | 129.83     |
+| Phaser        | `energy`  | `icon-shop-ammo-energy`  | "Phaser ammo"        | "×55"     | 99.59      |
 
 - Ammunition rows draw the ammunition-kind sheet, never the weapon's sheet or
   an upgrade-style composite.
 - The row name names the weapon, so the glyph shows only the kind: upright
   stock, distinct from the weapon glyphs' rightward fire and from the upgrade
   composite.
+- The name block is two 20 lines, the name over the pack line, as a levelled
+  row's name over its level line. The pack line is `#b8b3c9`, 4.69:1 on the
+  `#46425e` face, and `#9a96ad` in an unaffordable row.
 - An ammunition row is never Owned: it is Buy, or Unaffordable with the
   disabled tile, the glyph's `disabled` frame and the shared refusal cue.
 - The buy confirm draws the ammunition glyph at 2x (40) in the confirm well,
-  with `confirmTitle` ("Buy Rapid Missile ammo ×200?") and no description line.
-- Row width: the widest ammunition name makes rows 323.86 wide (slot 71.34,
-  Owned). Two columns then need 701.72 of available width, so the list keeps
-  two columns at 779 logical wide (747 available) and takes one column at 720
-  (688 available) while Rapid Missile or Heavy Missile ammunition shows.
+  with `confirmTitle` ("Buy Rapid Missile ammo?"); `ammoPackCount` ("×200")
+  takes the description's place, body text, centred.
+- Row width: the widest ammunition line, "Heavy Missile ammo" (147.59), is
+  narrower than the widest upgrade name, "Heavy Missile upgrade" (161.85), so
+  ammunition rows never widen the shop. Rows stay 301.19 wide (slot 71.34,
+  Owned) and two columns need 656.38, inside the 688 available at 720 logical.
 
 ### Scrolling
 
