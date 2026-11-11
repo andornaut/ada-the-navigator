@@ -109,10 +109,11 @@ power-ups.
 ## Quantum jump home
 
 When the shield is depleted, Astra quantum jumps the ship home to Earth so it can
-recharge. The flight ends and story progress is saved. The jump
-permanently loses the equipped weapon and its upgrade levels unless it is Basic,
-so a weapon bought or found again starts at level 1. Recharging costs a flat 10
-Stardust, never taking Stardust below zero.
+recharge overnight. The cost is only the inconvenience: the flight ends, the
+galaxy's layout regenerates on the next flight, and open-space enemies, pickups,
+carried cargo and a towed pod are lost. Accepted quests stay open to retry. Ada
+keeps every weapon, upgrade level, Stardust, purchase, charted landmark and story
+progress.
 
 ## Player strings
 
@@ -150,8 +151,6 @@ The shield shop row reuses the existing `shield` label.
 | `aboutPhaser`       | An instant beam that strikes the first thing in its path.          |
 | `weaponLocked`      | Weapons can't be changed in combat.                                |
 | `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
-| `jumpWeaponLost`    | Your {weapon} was lost.                                            |
-| `jumpRecharge`      | Recharging cost {amount} Stardust.                                 |
 | `shieldRecharge`    | Shield recharge                                                    |
 | `engineTuning`      | Engine tuning                                                      |
 | `tractorBeam`       | Tractor beam                                                       |

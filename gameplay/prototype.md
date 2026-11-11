@@ -90,9 +90,11 @@ view all around. It resembles a convertible's interior: two seats side by side
 for Ada and Penny, with a little room to walk around behind them. Ada pilots
 from the port seat, with Penny on the starboard seat. Every quantum jump uses one
 jump effect; Astra's emergency jump when the shield fails tints it red. Jumping
-home, the emergency jump included, arrives in Ada's room; an emergency jump
-first shows its jump-home page there, then any waiting home scene plays as on
-any arrival home. The holodisk
+home, the emergency jump included, arrives in Ada's room. An emergency jump
+lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
+asleep with Penny curled up, the rock glowing softly) that a tap skips after a
+moment, then morning, when any waiting home scene plays as on any arrival home. A
+voluntary Return home has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every launch, including a replay of a resolved galaxy, boards and shows the
@@ -311,10 +313,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.
-- Shield depletion makes Astra quantum jump Ada home to Earth and galaxy
-  selection to recharge. The equipped weapon is lost unless it is Basic, and
-  recharging costs a flat Stardust fee. Story progress persists; the next flight
-  generates a new layout.
+- Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
+  flight is lost; weapons, levels, Stardust, purchases and story progress persist,
+  and the next flight generates a new layout. See [Economy](economy.md).
 - The shield and Stardust share one status pill at the top left, beside the pause
   button: a shield icon and bar, a divider and the Stardust count. The bar is blue,
   turning red when the shield is low (below 25%) or empty, and shows hits, the
@@ -407,7 +408,7 @@ leaving at least 24 logical pixels clear above Ada's ship. The speaker's name si
 in a tab above the box, with one portrait per line for its speaker: Ada's on the
 left, Astra's, Penny's and the General's on the right. Each line wraps to at most
 two lines. The box never pauses play, and the pause button and weapon icons stay
-live while it shows. Its background is an ink #181425 panel at 0.70 alpha, so it
+live while it shows. Its background is an ink #181425 panel at 0.65 alpha, the opacity of every panel, so it
 stays readable over the brightest space signals; text, tab and portrait stay
 opaque. Each line shows for 5 seconds or until the box (tab included) is tapped; a
 tap moves to the next line, and the last tap closes the conversation. Tapping a

@@ -105,7 +105,14 @@ All art is one shared asset bank. Each galaxy's data references shared asset ids
 rather than owning its art, so an asset can move between galaxies where it suits
 that galaxy's field; story-bound content such as Sunflower's three outposts stays
 with its galaxy. Each galaxy still gives its enemy ships one coherent visual
-family. Shapes stay simple and
+family. Placement: Sunflower keeps the coral drones and its three
+outposts; the current trading station, discovery cache, frigate and capital art is
+tuned for Cartwheel. Sunflower's gameplay still has stations, caches, frigates and
+its capital battle, drawn with pastel-tuned versions that read on its yellow field,
+and reusing the shared Cartwheel-tuned assets until those exist. Asteroid sprites
+match the collision radii: small 12 to 18, medium 24 to 34, large 52 to 70 and huge
+84 to 104 world units; large and huge rocks keep their radius plus 160 clear of
+stations, destinations and launch points. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
