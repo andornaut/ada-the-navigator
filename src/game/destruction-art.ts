@@ -2,6 +2,8 @@
 // spin, shrink, cool and fade behind a brief flash; under reduced motion the idle frame
 // tints, shrinks and fades instead.
 
+import { ENEMY_HEADINGS } from "./enemy-art.ts";
+
 export interface DestructionTiming {
   readonly durationMs: number;
   readonly flashWidth: number;
@@ -70,12 +72,12 @@ export function readDestruction(value: unknown): DestructionData | undefined {
     : undefined;
 }
 
-/** An archetype's shard file, version 1, with all sixteen headings. */
+/** An enemy archetype's shard file, version 1, with all sixteen enemy headings. */
 export function readShards(value: unknown): ShardData | undefined {
   return record(value) &&
     value.version === 1 &&
     Array.isArray(value.headings) &&
-    value.headings.length === 16 &&
+    value.headings.length === ENEMY_HEADINGS &&
     Array.isArray(value.shards)
     ? (value as unknown as ShardData)
     : undefined;

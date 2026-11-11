@@ -45,9 +45,9 @@ describe("shop rows on the station view", () => {
     }
   });
 
-  it("draws each paint scheme's swatch from its idle frame 12", () => {
-    expect(paintSwatchPath("classic", "classic")).toBe("/art/ship-12.svg");
-    expect(paintSwatchPath("iris", "classic")).toBe("/art/paint/iris/ship-12.svg");
+  it("draws each paint scheme's swatch from its idle frame 24", () => {
+    expect(paintSwatchPath("classic", "classic")).toBe("/art/ship-24.svg");
+    expect(paintSwatchPath("iris", "classic")).toBe("/art/paint/iris/ship-24.svg");
     for (const scheme of Object.keys(ECONOMY.paints)) {
       expect(existsSync(publicFile(paintSwatchPath(scheme, ECONOMY.defaultPaint)))).toBe(true);
     }

@@ -88,10 +88,11 @@ import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
+  hasShipHeadings,
   paintFrames,
   selectPaintedShipAsset,
+  SHIP_HEADINGS,
   type ShipAsset,
-  shipDirectionCount,
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
@@ -359,7 +360,9 @@ export class PrototypeScene extends Phaser.Scene {
     // the authored thrust frames.
     const jets = readShipJets(this.cache.json.get("ship-jets"));
     this.shipJets =
-      jets?.headings.length === shipDirectionCount(this.shipAssets) ? jets : undefined;
+      jets?.headings.length === SHIP_HEADINGS && hasShipHeadings(this.shipAssets)
+        ? jets
+        : undefined;
     // Archetypes without a complete loaded frame set keep their vector placeholders.
     this.enemyArt = enemyArt(
       (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),

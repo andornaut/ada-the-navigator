@@ -10,17 +10,28 @@ export interface ShipAsset {
   pivot: Vec;
 }
 
-const DIRECTIONAL = /^ship-(?:thrust-)?\d+$/;
+/** Art exports Ada's ship in 32 headings; ship heading 2k faces enemy heading k. */
+export const SHIP_HEADINGS = 32;
 
-/** Heading count from the manifest's directional ship frames; zero for legacy-only manifests. */
-export function shipDirectionCount(assets: readonly ShipAsset[]): number {
-  let count = 0;
+const DIRECTIONAL = /^ship-(?:thrust-)?\d+$/;
+const IDLE = /^ship-\d+$/;
+
+/**
+ * Whether every one of the 32 idle headings is present, so the sprite can snap to the nearest.
+ * Thrust frames are optional; painted entries and legacy aliases do not count.
+ */
+export function hasShipHeadings(assets: readonly ShipAsset[]): boolean {
+  const indices = new Set<number>();
   for (const asset of assets) {
-    if (DIRECTIONAL.test(asset.id) && Number.isInteger(asset.directionIndex)) {
-      count = Math.max(count, asset.directionIndex! + 1);
+    if (
+      IDLE.test(asset.id) &&
+      asset.paint === undefined &&
+      Number.isInteger(asset.directionIndex)
+    ) {
+      indices.add(asset.directionIndex!);
     }
   }
-  return count;
+  return Array.from({ length: SHIP_HEADINGS }, (_, index) => indices.has(index)).every(Boolean);
 }
 
 /** Quantize the world heading into `count` equal steps before the authored isometric projection. */
@@ -29,14 +40,17 @@ export function shipDirection(count: number, facing: Vec): number {
   return ((index % count) + count) % count;
 }
 
-/** A missing thrust frame falls back to the matching idle view before legacy aliases. */
+/**
+ * The nearest of the 32 headings: aim and movement stay continuous and only the sprite snaps.
+ * A missing thrust frame falls back to the matching idle view, and an incomplete heading set
+ * to the legacy aliases.
+ */
 export function selectShipAsset<T extends ShipAsset>(
   assets: readonly T[],
   thrust: boolean,
   facing: Vec,
 ): T | undefined {
-  const count = shipDirectionCount(assets);
-  const direction = count > 0 ? shipDirection(count, facing) : undefined;
+  const direction = hasShipHeadings(assets) ? shipDirection(SHIP_HEADINGS, facing) : undefined;
   const directional = (prefix: string) =>
     direction === undefined
       ? undefined
@@ -73,9 +87,8 @@ export function selectPaintedShipAsset<T extends ShipAsset>(
 ): T | undefined {
   const classic = assets.filter((asset) => asset.paint === undefined);
   const painted = paint === null ? [] : paintFrames(assets, paint);
-  const count = shipDirectionCount(classic);
-  if (painted.length && count > 0) {
-    const direction = shipDirection(count, facing);
+  if (painted.length && hasShipHeadings(classic)) {
+    const direction = shipDirection(SHIP_HEADINGS, facing);
     const frame = painted.find((asset) => asset.directionIndex === direction);
     if (frame) {
       return frame;
