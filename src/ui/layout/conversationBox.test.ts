@@ -70,6 +70,28 @@ describe("conversation box", () => {
     expect(right.text.x + right.text.width).toBe(right.portrait.x - CONVERSATION_BOX.inset);
   });
 
+  it.each(["left", "right"] as const)(
+    "starts the %s speaker's name tab and line at the text column's left edge, left-aligned",
+    (side) => {
+      const { line, nameTab, text } = conversationSpeakerLayout(side, 640);
+      expect(nameTab).toEqual({ x: text.x, y: text.y });
+      expect(line).toEqual({
+        align: "left",
+        x: text.x,
+        y: text.y + CONVERSATION_BOX.name.lineHeight + CONVERSATION_BOX.rowGap,
+      });
+    },
+  );
+
+  it("keeps the right-side tab and line where the left side's text column would start", () => {
+    const left = conversationSpeakerLayout("left", 640);
+    const right = conversationSpeakerLayout("right", 640);
+    expect(right.nameTab.x).toBe(CONVERSATION_BOX.inset);
+    expect(right.line.x).toBe(CONVERSATION_BOX.inset);
+    expect(left.nameTab.x).toBe(2 * CONVERSATION_BOX.inset + CONVERSATION_BOX.portrait);
+    expect(right.text.width).toBe(left.text.width);
+  });
+
   it("measures the ship at its display size", () => {
     const manifest = JSON.parse(
       readFileSync(new URL("../../../public/art/manifest.json", import.meta.url), "utf8"),

@@ -86,21 +86,12 @@ export const CONVERSATION_STYLE = `
   gap:${units(rowGap)}
 }
 
-.ada-conversation[data-side="right"] .ada-conversation-text{
-  align-items:flex-end;
-  text-align:right
-}
-
 .ada-conversation-name{
   align-self:flex-start;
   padding:0 ${units(tabInset)};
   font:${font(CONVERSATION_BOX.name)};
   color:${panel.ink};
   background:#ead4aa
-}
-
-.ada-conversation[data-side="right"] .ada-conversation-name{
-  align-self:flex-end
 }
 
 .ada-conversation-line{

@@ -8,9 +8,10 @@ import { SPACING, TYPE } from "./tokens.ts";
 // The in-flight conversation box (gameplay/prototype.md "Astra and Penny in flight"), in logical
 // px. One compact line: a 48 portrait a gap inside the panel's side, and beside it a text column
 // holding the speaker's name tab over the line, a row gap apart. Ada's portrait is on the left;
-// Astra's, Penny's and the General's on the right, with the text column on the other side. The
-// box is centred below the HUD row, at most the story panel's measure wide within the page safe
-// rect, and keeps clear of Ada's ship.
+// Astra's, Penny's and the General's on the right, with the text column on the other side. Only
+// the portrait changes side: for every speaker the name tab sits on the text column's left edge
+// and the line starts there, left-aligned. The box is centred below the HUD row, at most the story
+// panel's measure wide within the page safe rect, and keeps clear of Ada's ship.
 
 const PORTRAIT = 48;
 
@@ -56,15 +57,26 @@ export function conversationShipClearance(insets: Insets, view: Size): number {
   return centreY - display / 2 - (box.y + box.height);
 }
 
-/** The portrait and the text column inside a box width wide, for the speaker's side. */
+/**
+ * The portrait and the text column inside a box width wide, for the speaker's side, with the name
+ * tab's and the line's left-aligned origins in the text column.
+ */
 export function conversationSpeakerLayout(
   side: "left" | "right",
   width: number,
-): { readonly portrait: Rect; readonly text: Rect } {
-  const { height, inset, portrait } = CONVERSATION_BOX;
+): {
+  readonly line: { readonly align: "left"; readonly x: number; readonly y: number };
+  readonly nameTab: { readonly x: number; readonly y: number };
+  readonly portrait: Rect;
+  readonly text: Rect;
+} {
+  const { height, inset, name, portrait, rowGap } = CONVERSATION_BOX;
   const textWidth = width - portrait - 3 * inset;
   const left = side === "left";
+  const textX = left ? 2 * inset + portrait : inset;
   return {
+    line: { align: "left", x: textX, y: inset + name.lineHeight + rowGap },
+    nameTab: { x: textX, y: inset },
     portrait: {
       height: portrait,
       width: portrait,
@@ -74,7 +86,7 @@ export function conversationSpeakerLayout(
     text: {
       height: height - 2 * inset,
       width: textWidth,
-      x: left ? 2 * inset + portrait : inset,
+      x: textX,
       y: inset,
     },
   };
