@@ -5,6 +5,7 @@ import type {
   HardpointDefinition,
   Point,
 } from "../data/enemy-catalog.ts";
+import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
   direction,
   hullOffset,
@@ -362,10 +363,16 @@ export function stepEnemy(
     );
     next.velocity = motion.velocity;
     next.heading = motion.heading;
-    // The hull faces its movement and keeps its facing at rest; the heading starts from
-    // the hull, so velocity turns with turnSeconds into the direction the hull points.
+    // The hull turns toward its velocity with the short shared hullTurnSeconds, so
+    // collision slides do not snap it, and keeps its facing at rest. The heading starts
+    // from the hull, so velocity and hull swing round together.
     if (magnitude(motion.velocity)) {
-      next.facing = direction(motion.velocity);
+      next.facing = turnToward(
+        context.dt,
+        SHARED_SHIP_PHYSICS.hullTurnSeconds,
+        motion.velocity,
+        state.facing,
+      );
     }
   }
   const velocitySize = magnitude(next.velocity);

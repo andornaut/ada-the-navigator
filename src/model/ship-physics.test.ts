@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
-import { SHIP_PHYSICS } from "../data/ship-physics.ts";
+import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
   direction,
   hullOffset,
@@ -38,6 +38,10 @@ describe("ship physics data", () => {
       retaliator: [0.45, 1.2, 1.5, 0.9, 0.35],
       swarm: [0.9, 0.2, 0.25, 0.12, 0.1],
     });
+  });
+
+  it("defines the shared hull turn and rest threshold", () => {
+    expect(SHARED_SHIP_PHYSICS).toEqual({ hullTurnSeconds: 0.08, restSpeedFraction: 0.01 });
   });
 
   it("applies each ship's own physics entry to Ada and every archetype", () => {

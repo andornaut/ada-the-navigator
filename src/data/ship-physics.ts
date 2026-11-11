@@ -26,8 +26,19 @@ const physics = (
   turnSeconds,
 });
 
-/** A ship with no movement request comes to rest below this fraction of its maximum speed. */
-export const REST_SPEED_FRACTION = 0.01;
+/** Movement tuning shared by every ship. */
+export interface SharedShipPhysics {
+  /** Time constant for an enemy hull to turn toward its velocity direction. */
+  hullTurnSeconds: number;
+  /** A ship with no movement request comes to rest below this fraction of its maximum speed. */
+  restSpeedFraction: number;
+}
+
+/** Provisional shared tuning. */
+export const SHARED_SHIP_PHYSICS: SharedShipPhysics = {
+  hullTurnSeconds: 0.08,
+  restSpeedFraction: 0.01,
+};
 
 /** Provisional tuning for Ada's ship and every enemy archetype. */
 export const SHIP_PHYSICS = {

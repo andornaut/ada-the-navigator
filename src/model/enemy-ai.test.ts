@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
   createEnemy,
   damageEnemy,
@@ -430,11 +431,39 @@ describe("enemy ship physics and hull rotation", () => {
       velocity: { x: 0, y: -speed },
     };
     const context = { ...observation(state), visibility: "unknown" as const };
+    let slip = 0;
     for (let i = 0; i < 600; i++) {
       state = stepEnemy(definition, context, state).state;
-      expect(degreesBetween(state.velocity, state.facing)).toBeLessThan(1e-9);
+      slip = Math.max(slip, degreesBetween(state.velocity, state.facing));
     }
+    // hullTurnSeconds trails the velocity direction by only a few degrees.
+    expect(slip).toBeLessThan(5);
     expect(degreesBetween(state.facing, { x: 1, y: 0 })).toBeLessThan(0.5);
+  });
+
+  it("turns the hull by at most about 25 degrees in one slice when a collision redirects it", () => {
+    const definition = enemyCatalog.fighter;
+    const speed = 100 * definition.physics.speedRatio;
+    const diagonal = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
+    // Moving north-east into a wall that the adapter resolves by zeroing x velocity.
+    const sliding: EnemyState = {
+      ...spawn("fighter"),
+      facing: diagonal,
+      heading: diagonal,
+      home: { x: 5000, y: -5000 },
+      returning: true,
+      velocity: { x: 0, y: -speed * Math.SQRT1_2 },
+    };
+    const context = { ...observation(sliding), visibility: "unknown" as const };
+    const result = stepEnemy(definition, context, sliding);
+    const turned = degreesBetween(result.state.facing, diagonal);
+    expect(turned).toBeGreaterThan(0);
+    expect(turned).toBeLessThanOrEqual(25);
+    expect(turned).toBeCloseTo(
+      degreesBetween(result.velocity, diagonal) *
+        (1 - Math.exp(-context.dt / SHARED_SHIP_PHYSICS.hullTurnSeconds)),
+      6,
+    );
   });
 
   it("brings a heavy archetype to rest below 1% of its maximum speed without creeping", () => {

@@ -1,4 +1,4 @@
-import { REST_SPEED_FRACTION, type ShipPhysics } from "../data/ship-physics.ts";
+import { SHARED_SHIP_PHYSICS, type ShipPhysics } from "../data/ship-physics.ts";
 
 export interface Vector {
   x: number;
@@ -62,7 +62,7 @@ export interface ShipLimits {
  * requested direction with `turnSeconds`; from rest it starts on the request, or turns
  * from `restHeading` when given. Velocity approaches `heading * speed` with
  * `accelerationSeconds`, or zero with `brakingSeconds` when nothing is requested, and
- * comes to rest below `REST_SPEED_FRACTION` of the maximum speed. The midpoint heading
+ * comes to rest below the shared `restSpeedFraction` of the maximum speed. The midpoint heading
  * drives velocity so results barely depend on frame rate.
  */
 export function stepShipMotion(
@@ -91,7 +91,7 @@ export function stepShipMotion(
     x: motion.velocity.x + (applied.x * speed - motion.velocity.x) * blend,
     y: motion.velocity.y + (applied.y * speed - motion.velocity.y) * blend,
   };
-  if (!moving && length(velocity) < REST_SPEED_FRACTION * ship.maxSpeed) {
+  if (!moving && length(velocity) < SHARED_SHIP_PHYSICS.restSpeedFraction * ship.maxSpeed) {
     return { heading, velocity: { x: 0, y: 0 } };
   }
   return { heading, velocity };
