@@ -6,6 +6,7 @@ import {
   type Insets,
   logicalView,
   NO_INSETS,
+  playView,
   safeInsets,
   type Side,
   type Size,
@@ -64,6 +65,8 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
     right: layout.view.width - hud.x - hud.width,
     top: hud.y,
   };
+  const area = playView(layout.view);
+  const areaBottom = Math.max(0, layout.view.height - area.y - area.height);
   return [
     [VIEW_PROPERTIES.unit, String(layout.s)],
     ...HUD_SIDES.map(
@@ -73,6 +76,7 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
     ...WHOLE_PX_EDGES.map(
       (edge) => [VIEW_PROPERTIES.slice(edge), `${layout.slices[edge]}px`] as const,
     ),
+    [VIEW_PROPERTIES.areaBottom, `${areaBottom * layout.s}px`],
   ];
 }
 

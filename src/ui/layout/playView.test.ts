@@ -258,6 +258,113 @@ describe("HUD anchors", () => {
   });
 });
 
+// Every screen the game draws on, CSS px: the user's wide phone (about 2000x899 device px at DPR
+// 2.6), 2.22:1 (2400x1080), 2:1, 16:9 at 1280x720 and 1920x1080, a notched phone and 4:3.
+const SCREENS = [
+  { height: 346, width: 769 },
+  { height: 1080, width: 2400 },
+  { height: 360, width: 720 },
+  { height: 720, width: 1280 },
+  { height: 1080, width: 1920 },
+  { height: 390, width: 844 },
+  { height: 768, width: 1024 },
+] as const;
+const contains = (outer: Rect, rect: Rect) =>
+  rect.x >= outer.x - 1e-9 &&
+  rect.y >= outer.y - 1e-9 &&
+  rect.x + rect.width <= outer.x + outer.width + 1e-9 &&
+  rect.y + rect.height <= outer.y + outer.height + 1e-9;
+
+describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
+  const view = logicalView(screen);
+  const area = playView(view);
+  // Insets in logical px: none, and a notched phone held landscape.
+  for (const [name, insets] of [
+    ["no insets", NO_INSETS],
+    ["phone insets", { bottom: 19, left: 43, right: 43, top: 0 }],
+  ] as const) {
+    const hud = hudRect(insets, view);
+    const fromLeft = (rect: Rect): Rect => ({ ...rect, x: hud.x + rect.x, y: hud.y + rect.y });
+    const fromRight = (rect: Rect): Rect => ({
+      ...rect,
+      x: hud.x + hud.width + rect.x,
+      y: hud.y + rect.y,
+    });
+    // A ring's drawn rect: its frame is drawn 1 inside the 75 frame.
+    const ring = (centre: { x: number; y: number }): Rect => ({
+      height: 73,
+      width: 73,
+      x: centre.x - 36,
+      y: centre.y - 36,
+    });
+    const sticksBottom = Math.floor(
+      Math.min(area.y + area.height - TOUCH_STICK.bottom, view.height - insets.bottom - 20),
+    );
+
+    it(`with ${name}, keeps the 720x360 game area centred across the view at its top`, () => {
+      expect(area).toMatchObject({ height: 360, width: 720, y: 0 });
+      expect(area.x).toBe(Math.floor((Math.floor(view.width) - 720) / 2));
+    });
+
+    it(`with ${name}, puts the pause disc, the status pill and four weapon targets in it`, () => {
+      const inside = (rect: Rect) => contains(area, rect) && contains(hud, rect);
+      expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }))).toBe(true);
+      const pill = { height: 28, width: statusPillWidth(40), x: STATUS_PILL.x, y: STATUS_PILL.y };
+      expect(contains(area, fromLeft(pill))).toBe(true);
+      for (const index of [0, 1, 2, 3]) {
+        expect(inside(fromRight(hudButtonTarget(index)))).toBe(true);
+      }
+    });
+
+    it(`with ${name}, rests the sticks 24 from the game area's sides and 20 above its bottom`, () => {
+      const { aim, move } = stickRestCentres(view, insets);
+      const width = Math.floor(view.width);
+      const rightGap = width - (area.x + area.width);
+      // max(playView side + 24, inset) from the view edge: an inset replaces the 24.
+      expect(ring(move).x).toBe(Math.ceil(Math.max(area.x + TOUCH_STICK.side, insets.left)));
+      expect(width - (ring(aim).x + 73)).toBe(
+        Math.ceil(Math.max(rightGap + TOUCH_STICK.side, insets.right)),
+      );
+      // min(playView bottom - 20, view bottom - inset - 20): a bottom inset adds to the 20.
+      expect(ring(move).y + 73).toBe(sticksBottom);
+      expect(aim.y).toBe(move.y);
+      for (const stick of [move, aim]) {
+        expect(contains(area, ring(stick))).toBe(true);
+        expect(contains(safeRect(insets, SAFE_MARGIN.edge, view), ring(stick))).toBe(true);
+      }
+    });
+
+    it(`with ${name}, centres Use on the HUD rect, its bottom level with the sticks`, () => {
+      const centre = hud.x + hud.width / 2;
+      // Symmetric insets clamp the HUD rect within a pixel of the game area's centre.
+      expect(Math.abs(centre - (area.x + area.width / 2))).toBeLessThan(1);
+      // The Use bottom, max(band below the game area, bottom inset) + 20 from the view bottom.
+      const useBottom =
+        view.height - (Math.max(view.height - (area.y + area.height), insets.bottom) + 20);
+      expect(Math.floor(useBottom)).toBe(sticksBottom);
+    });
+  }
+});
+
+describe("stick insets", () => {
+  const view = { height: 360, width: 720 };
+
+  it("let a side inset replace the 24 and a bottom inset add to the 20", () => {
+    const { aim, move } = stickRestCentres(view, { bottom: 19, left: 47, right: 10, top: 0 });
+    expect(move.x - 36).toBe(47);
+    expect(720 - (aim.x + 37)).toBe(24);
+    expect(move.y + 37).toBe(360 - 19 - 20);
+  });
+
+  it("keep 24 from a wide view's game area, which a phone's 43 inset does not reach", () => {
+    // 844x390 CSS is 779.08x360 logical: the game area spans 29 to 749.
+    const wide = logicalView({ height: 390, width: 844 });
+    const { aim, move } = stickRestCentres(wide, { bottom: 0, left: 43, right: 43, top: 0 });
+    expect(move.x - 36).toBe(29 + 24);
+    expect(779 - (aim.x + 37)).toBe(30 + 24);
+  });
+});
+
 describe("touch controls", () => {
   const view = { height: 360, width: 720 };
   const phone: Insets = { bottom: 19, left: 43, right: 43, top: 0 };
@@ -269,15 +376,15 @@ describe("touch controls", () => {
     right: centre.x + 37,
   });
 
-  it("rest the rings' drawn edges max(24, inset) from the sides and 20 above the safe bottom", () => {
+  it("rest the rings' drawn edges 24 in from the game area's sides and 20 above its bottom", () => {
     expect(stickRestCentres(view, NO_INSETS)).toEqual({
       aim: { x: 659, y: 303 },
       move: { x: 60, y: 303 },
     });
-    // A wider, deeper view keeps them on its own edges, not a centred 720 view.
+    // A wider, deeper view keeps them in its centred 720x360 game area, not in the bands.
     expect(stickRestCentres({ height: 400, width: 900 }, NO_INSETS)).toEqual({
-      aim: { x: 839, y: 343 },
-      move: { x: 60, y: 343 },
+      aim: { x: 749, y: 303 },
+      move: { x: 150, y: 303 },
     });
     const clear = stickRestCentres(view, { bottom: 30, left: 90, right: 100, top: 0 });
     expect(ringEdges(clear.move).left).toBe(90);
@@ -310,17 +417,17 @@ describe("touch controls", () => {
     ["the 720 view with phone insets", view, phone],
     ["a wider, deeper view", { height: 400, width: 900 }, NO_INSETS],
     ["a fractional view with fractional insets", { height: 360, width: 779.2 }, phone],
-  ] as const)("mirror the rings' drawn edges across %s", (_, size, insets) => {
+  ] as const)("mirror the rings' drawn edges across the game area of %s", (_, size, insets) => {
     const { aim, move } = stickRestCentres(size, insets);
-    const width = Math.floor(size.width);
-    expect(width - ringEdges(aim).right).toBe(ringEdges(move).left);
+    const area = playView(size);
+    expect(area.x + area.width - ringEdges(aim).right).toBe(ringEdges(move).left - area.x);
     expect(ringEdges(aim).bottom).toBe(ringEdges(move).bottom);
   });
 
   it("keep the Use button's press area clear of both rings at the 720 minimum width", () => {
     for (const insets of [NO_INSETS, phone]) {
       const { aim, move } = stickRestCentres(view, insets);
-      const rect = safeRect(insets, USE_BUTTON.margin, view);
+      const rect = hudRect(insets, view);
       const centre = rect.x + rect.width / 2;
       // The widest Use face whose press area still clears both rings.
       const widest =

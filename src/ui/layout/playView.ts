@@ -65,7 +65,9 @@ export const CONTROL_EDGE = 8;
 // controls; modals and page content.
 export const SAFE_MARGIN = { edge: 0, hud: CONTROL_EDGE, page: SPACING.pageInset } as const;
 
-// Chibi's play view: the 720x360 base view centred across the logical view, at its top.
+// Chibi's play view, the game area: the 720x360 base view centred across the logical view, at
+// its top. The camera draws only it; screens of other aspects show bands outside it, and every
+// control sits inside it.
 export function playView(view: Size): Rect {
   return {
     height: SCREEN.height,
@@ -76,8 +78,8 @@ export function playView(view: Size): Rect {
 }
 
 // The HUD rect (Chibi's topShift): the play view inset by CONTROL_EDGE, intersected with the HUD
-// safe rect. The top controls anchor to its top, left and right edges, so on screens wider than
-// 2:1 they sit inside the centred base view, clear of curved corners and every inset.
+// safe rect. The top controls anchor to its top, left and right edges, so at every aspect they sit
+// inside the game area, clear of the bands, curved corners and every inset.
 export function hudRect(insets: Insets, view: Size): Rect {
   const play = playView(view);
   const safe = safeRect(insets, CONTROL_EDGE, view);

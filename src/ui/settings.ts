@@ -9,8 +9,7 @@ import {
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
-import { font, fromHudEdge, fromSafeEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
-import { SAFE_MARGIN } from "./layout/playView.ts";
+import { font, fromAreaBottom, fromHudEdge, hudCentreX, units, viewStyle } from "./layout/css.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -148,17 +147,11 @@ ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
   border-style:solid;
   color:#ead4aa;
   position:absolute;
-  left:calc((${safeEdge("left", USE_BUTTON.margin)} + 100% - ${safeEdge(
-    "right",
-    USE_BUTTON.margin,
-  )}) / 2);
-  bottom:${fromSafeEdge("bottom", SAFE_MARGIN.edge, USE_BUTTON.bottom)};
+  left:${hudCentreX()};
+  bottom:${fromAreaBottom(USE_BUTTON.bottom)};
   transform:translateX(-50%);
   box-sizing:border-box;
-  max-width:calc(100% - ${safeEdge("left", USE_BUTTON.margin)} - ${safeEdge(
-    "right",
-    USE_BUTTON.margin,
-  )});
+  max-width:calc(100% - ${fromHudEdge("left")} - ${fromHudEdge("right")});
   min-width:${units(USE_BUTTON.minWidth)};
   height:${units(USE_BUTTON.height)};
   min-height:${units(USE_BUTTON.height)};

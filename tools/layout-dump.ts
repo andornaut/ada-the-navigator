@@ -62,6 +62,11 @@ export const VIEWPORTS: readonly playView.Size[] = [
   { height: 390, width: 844 },
   { height: 844, width: 390 },
   { height: 375.25, width: 812.5 },
+  // Wider than 2:1 (a 2000x899 phone at DPR 2.6, and 2400x1080), 1920x1080 and 4:3.
+  { height: 346, width: 769 },
+  { height: 1080, width: 2400 },
+  { height: 1080, width: 1920 },
+  { height: 768, width: 1024 },
 ];
 
 /** CSS px safe-area insets: none, and a notched phone held landscape and portrait. */
@@ -292,6 +297,10 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     for (const offset of [undefined, 0, 8, -6]) {
       call("css.ts", "fromHudEdge", css.fromHudEdge, side, offset);
     }
+  }
+  call("css.ts", "hudCentreX", css.hudCentreX);
+  for (const offset of [0, 20, -4]) {
+    call("css.ts", "fromAreaBottom", css.fromAreaBottom, offset);
   }
   for (const role of Object.values(tokens.TYPE)) {
     call("css.ts", "font", css.font, role);
