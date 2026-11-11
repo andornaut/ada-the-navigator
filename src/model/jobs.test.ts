@@ -355,6 +355,10 @@ describe("tow handling", () => {
       const { flight, model } = docked();
       model.state.docked = null;
       flight.player = { x: 0, y: 0 };
+      // Each launch draws a random flight seed, so scenery near the origin could slow either
+      // run; clear space leaves the tow as the only difference.
+      flight.objects = [];
+      flight.shots = [];
       if (tow) {
         flight.tow = { x: 0, y: 0 };
       }
