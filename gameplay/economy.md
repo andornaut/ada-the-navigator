@@ -117,6 +117,9 @@ Stardust, never taking Stardust below zero.
 
 ## Player strings
 
+The status pill shows the Stardust count as a bare number with en-US grouping
+("12,500"); its accessible label is `stardustAmount`. Pickup ticks read "+N".
+
 The shield shop row reuses the existing `shield` label. `jumpHome` replaces
 `shieldDepleted`.
 
