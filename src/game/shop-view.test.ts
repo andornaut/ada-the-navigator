@@ -13,7 +13,13 @@ const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.
 describe("shop rows on the station view", () => {
   it("maps items to Art's shop glyphs", () => {
     // Basic is never for sale; its sheet draws in its upgrade composite.
-    for (const weapon of ["rapidMissile", "multiLaser", "heavyMissile", "phaser"] as const) {
+    for (const weapon of [
+      "rapidMissile",
+      "multiLaser",
+      "heavyMissile",
+      "scattershot",
+      "phaser",
+    ] as const) {
       const key = `icon-shop-weapon-${weapon}`;
       expect(itemGlyph(ECONOMY, { kind: "weapon", weapon })).toEqual({ key, kind: "sprite" });
       expect(existsSync(publicFile(`/art/ui/sprites/${key}.png`))).toBe(true);
@@ -24,11 +30,6 @@ describe("shop rows on the station view", () => {
         "disabled",
       ]);
     }
-    // Scattershot has no sheet, so its row draws its HUD glyph as a mask.
-    expect(itemGlyph(ECONOMY, { kind: "weapon", weapon: "scattershot" })).toEqual({
-      kind: "weapon",
-      weapon: "scattershot",
-    });
     expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "basic" })).toEqual({
       kind: "upgrade",
       weapon: "basic",

@@ -1,5 +1,5 @@
 import type { Weapon } from "../data/types.ts";
-import { weaponGlyphPath, weaponShopSheet } from "../data/weapon-glyphs.ts";
+import { weaponShopSheet } from "../data/weapon-glyphs.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -209,11 +209,6 @@ export const STATION_STYLE = `
 .ada-controls [data-state=unaffordable] .ada-glyph-badge{
   background-position:100% 0
 }
-.ada-controls .ada-glyph-weapon{
-  background:currentColor;
-  -webkit-mask:var(--sheet) center / 100% 100% no-repeat;
-  mask:var(--sheet) center / 100% 100% no-repeat
-}
 .ada-controls .ada-glyph-upgrade{
   position:relative;
   width:${scaled(SHOP_ROW.glyph.upgrade)};
@@ -352,7 +347,6 @@ export type StationRowState = "forSale" | "unaffordable" | "selectable" | "owned
 /** An item's glyph (art/shop-icons.md). */
 export type ItemGlyph =
   | { readonly kind: "sprite"; readonly key: string }
-  | { readonly kind: "weapon"; readonly weapon: Weapon }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
 
@@ -412,10 +406,9 @@ export function rowAction(state: StationRowState): "request" | "select" | "none"
   return state === "owned" || state === "inUse" ? "none" : "request";
 }
 
-/** A weapon's shop glyph: its two-frame shop sheet, or its HUD glyph as a mask without one. */
+/** A weapon's shop glyph: its two-frame shop sheet. */
 export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
-  const key = weaponShopSheet(weapon);
-  return key ? { key, kind: "sprite" } : { kind: "weapon", weapon };
+  return { key: weaponShopSheet(weapon), kind: "sprite" };
 }
 
 function glyphElement(glyph: ItemGlyph): HTMLElement {
@@ -436,14 +429,8 @@ function glyphElement(glyph: ItemGlyph): HTMLElement {
     node.append(glyphElement(weaponItemGlyph(glyph.weapon)), badge);
     return node;
   }
-  node.className =
-    glyph.kind === "sprite" ? "ada-glyph ada-glyph-sprite" : "ada-glyph ada-glyph-weapon";
-  node.style.setProperty(
-    "--sheet",
-    glyph.kind === "sprite"
-      ? `url('${SPRITES}${glyph.key}.png')`
-      : `url('${weaponGlyphPath(glyph.weapon)}')`,
-  );
+  node.className = "ada-glyph ada-glyph-sprite";
+  node.style.setProperty("--sheet", `url('${SPRITES}${glyph.key}.png')`);
   return node;
 }
 

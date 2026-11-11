@@ -28,16 +28,24 @@ describe("shop row taps", () => {
 });
 
 describe("weapon shop glyphs", () => {
-  it("draws a weapon's two-frame shop sheet, or its HUD glyph as a mask without one", () => {
-    expect(weaponItemGlyph("basic")).toEqual({ key: "icon-shop-weapon-basic", kind: "sprite" });
-    expect(weaponItemGlyph("heavyMissile")).toEqual({
-      key: "icon-shop-weapon-heavyMissile",
-      kind: "sprite",
-    });
-    expect(weaponItemGlyph("scattershot")).toEqual({ kind: "weapon", weapon: "scattershot" });
+  it("draws every weapon's two-frame shop sheet", () => {
+    for (const weapon of [
+      "basic",
+      "rapidMissile",
+      "multiLaser",
+      "heavyMissile",
+      "scattershot",
+      "phaser",
+    ] as const) {
+      expect(weaponItemGlyph(weapon)).toEqual({
+        key: `icon-shop-weapon-${weapon}`,
+        kind: "sprite",
+      });
+    }
+    expect(STATION_STYLE).not.toContain("ada-glyph-weapon");
   });
 
-  it("places an upgrade composite's weapon glyph, sheet or mask, at (0, 4) under its badge", () => {
+  it("places an upgrade composite's weapon sheet at (0, 4) under its badge", () => {
     expect(STATION_STYLE).toContain(".ada-controls .ada-glyph-upgrade > .ada-glyph{");
     expect(STATION_STYLE).not.toContain(".ada-glyph-upgrade .ada-glyph-weapon{");
   });

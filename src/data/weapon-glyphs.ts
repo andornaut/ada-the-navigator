@@ -5,19 +5,12 @@ export function weaponGlyphPath(weapon: Weapon): string {
   return `/art/ui/icons/weapon-${weapon}.svg`;
 }
 
-// The weapons with a two-frame shop sheet (normal, then disabled) drawn from their HUD glyph's
-// pixel grid (art/shop-icons.md); Scattershot's shop row draws its SVG as a mask instead.
-const SHOP_SHEET_WEAPONS: ReadonlySet<Weapon> = new Set([
-  "basic",
-  "rapidMissile",
-  "multiLaser",
-  "heavyMissile",
-  "phaser",
-]);
-
-/** The weapon's shop sheet key, or undefined for a weapon without one. */
-export function weaponShopSheet(weapon: Weapon): string | undefined {
-  return SHOP_SHEET_WEAPONS.has(weapon) ? `icon-shop-weapon-${weapon}` : undefined;
+/**
+ * The weapon's two-frame shop sheet (normal, then disabled), drawn from its HUD glyph's pixel
+ * grid (art/shop-icons.md); every weapon has one.
+ */
+export function weaponShopSheet(weapon: Weapon): string {
+  return `icon-shop-weapon-${weapon}`;
 }
 
 /**
