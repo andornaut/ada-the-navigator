@@ -27,6 +27,9 @@ radius 7.5 with a centre hole of radius 4), cream `#ead4aa`, drawn as a CSS
 mask in the HUD button's glyph colour with smooth sampling, so it stays sharp
 at fractional scales. At 20 px it differs from `icon-settings-nav` only in edge
 pixels. The PNG stays published for existing references.
+`art/tools/settings-icons.ts` writes it with the
+[Achievements trophy](achievements-icon.md#vector-trophy); the two buttons share
+the [nav disc states](achievements-icon.md#states).
 
 ## 24px gear
 

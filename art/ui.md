@@ -19,6 +19,7 @@ The [touch joystick sheets](touch-joystick.md) supply `ui-move-hint` and
 one `icon-*` sheet per Settings row and the install steps glyphs the same way.
 The [shop icons](shop-icons.md) supply the `icon-shop-*` sheets the same way.
 The [24px gear](settings-icon.md#24px-gear) supplies `icon-settings-nav-24` the same way.
+The [Achievements navigation icon](achievements-icon.md) supplies `icon-achievements` the same way.
 [Stardust](stardust.md#hud-icon) supplies `icon-stardust` and `icon-stardust-20` the same way.
 [The rock](rock.md#sheets) supplies `icon-rock`, `icon-rock-24`, `icon-rock-32` and `rock-closeup` the same way.
 [The holodisk](holodisk.md) supplies `icon-holodisk`, `icon-holodisk-20`, `icon-holodisk-24` and `holodisk-insert` the same way.

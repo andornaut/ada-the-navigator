@@ -19,6 +19,12 @@
       "once": ["insert"]
     },
     {
+      "key": "icon-achievements",
+      "png": "sprites/icon-achievements.png",
+      "json": "sprites/icon-achievements.json",
+      "once": []
+    },
+    {
       "key": "icon-aim-controls",
       "png": "sprites/icon-aim-controls.png",
       "json": "sprites/icon-aim-controls.json",

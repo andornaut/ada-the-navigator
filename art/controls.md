@@ -277,8 +277,10 @@ The weapon selector buttons follow Chibi's skill buttons (`chibis-way-home`
 a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
 glyph centred on it. Sizes and placement are `HUD_BUTTON` in
 [Layout](layout.md#hud-and-overlays). The space screen has no settings button;
-Settings opens from the pause card. The start screen's Settings button uses
-the idle state with the vector gear `settings.svg`.
+Settings opens from the pause card. The start screen's Achievements and
+Settings buttons draw the vector trophy `achievements.svg` and gear
+`settings.svg` in the [nav disc states](achievements-icon.md#states): idle,
+and white on `#3a4466` while pressed.
 
 | Weapon state | Face                 | Edge                          | Glyph                    | Glyph contrast |
 | ------------ | -------------------- | ----------------------------- | ------------------------ | -------------- |
