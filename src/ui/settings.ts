@@ -7,6 +7,13 @@ import {
   writeSetting,
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
+import {
+  SETTING_ICONS,
+  SETTINGS_ICON_SIZE,
+  settingsIcon,
+  showIcon,
+  STEPS_GLYPHS,
+} from "./settings-icons.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -276,7 +283,27 @@ const STYLE = `
   overflow-wrap:anywhere
 }
 
+.ada-controls .ada-icon{
+  flex:none;
+  width:${SETTINGS_ICON_SIZE}px;
+  height:${SETTINGS_ICON_SIZE}px;
+  background:center / ${SETTINGS_ICON_SIZE}px ${SETTINGS_ICON_SIZE}px no-repeat;
+  image-rendering:pixelated
+}
+
+.ada-controls .ada-steps{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 16px
+}
+
+.ada-controls .ada-steps p{
+  margin:0 0 0 4px
+}
+
 .ada-controls .ada-setting-text{
+  flex:1;
   display:grid;
   gap:2px;
   padding:4px 0
@@ -395,6 +422,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       toggle.setAttribute("aria-describedby", noteText.id);
     }
     toggle.checked = settings[setting];
+    element.append(settingsIcon(SETTING_ICONS[setting]));
     toggle.addEventListener("change", () => {
       settings[setting] = toggle.checked;
       writeSetting(storage, setting, toggle.checked);
@@ -433,7 +461,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installButton.dataset.action = "install";
   installButton.textContent = options.labels.installButton;
   installButton.setAttribute("aria-label", options.labels.install);
-  installRow.append(installText, installButton);
+  installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);
   rows.append(installRow);
   const stepsCard = document.createElement("section");
   stepsCard.className = "ada-card";
@@ -449,11 +477,16 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   stepsX.dataset.action = "close-install-steps";
   stepsX.setAttribute("aria-label", options.labels.close);
   stepsHeader.append(document.createElement("span"), stepsTitle, stepsX);
+  // Chibi's steps glyphs: the browser's own button for the first step, then Install.
+  const stepsLine = document.createElement("div");
+  stepsLine.className = "ada-steps";
+  const stepsGlyph = settingsIcon(STEPS_GLYPHS.ios);
   const stepsText = document.createElement("p");
+  stepsLine.append(stepsGlyph, settingsIcon(SETTING_ICONS.install), stepsText);
   const stepsClose = document.createElement("button");
   stepsClose.dataset.action = "close-install-steps";
   stepsClose.textContent = options.labels.close;
-  stepsCard.append(stepsHeader, stepsText, stepsClose);
+  stepsCard.append(stepsHeader, stepsLine, stepsClose);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
   modal.append(card, stepsCard);
@@ -477,6 +510,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     stepsTitle.textContent = words.title;
     stepsText.textContent = words.steps;
+    showIcon(stepsGlyph, STEPS_GLYPHS[browser]);
     stepsCard.setAttribute("aria-label", words.title);
     card.hidden = true;
     stepsCard.hidden = false;
