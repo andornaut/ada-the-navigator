@@ -27,6 +27,7 @@ const calm: ConversationFacts = {
   capitalInSight: false,
   collectedStardust: false,
   docked: false,
+  dronesNear: false,
   inCurrent: false,
   inDanger: false,
   jobMoments: [],
@@ -64,6 +65,8 @@ function tapThrough(talk: ConversationDirector): string[] {
   return lines;
 }
 const lessonsHeard = ["lesson:move", "lesson:aim", "lesson:stardust", "lesson:dock"];
+// Drones pressing Ada, which puts her in danger.
+const drones = { dronesNear: true, inDanger: true };
 // Galaxy one's quiet pool, heard, so a quiet minute brings no line.
 const quietHeard = ["quiet:1:lonely", "quiet:1:tail", "quiet:1:name"];
 
@@ -84,9 +87,10 @@ describe("conversation schedule", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, 0.05, { capitalInSight: true });
     expect(tapThrough(talk)).toEqual(["arrival:1:0", "arrival:1:1"]);
-    run(talk, cooldownSeconds - 0.1);
+    // The capital stays in sight, so its reaction still holds when the cooldown ends.
+    run(talk, cooldownSeconds - 0.1, { capitalInSight: true });
     expect(talk.showing).toBeNull();
-    run(talk, 0.15);
+    run(talk, 0.15, { capitalInSight: true });
     expect(showing(talk)).toBe("reaction:capital:0");
   });
 
@@ -139,10 +143,10 @@ describe("conversation schedule", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, 0.05);
     expect(showing(talk)).toBe("arrival:1:0");
-    run(talk, 0.05, { inDanger: true });
+    run(talk, 0.05, drones);
     expect(showing(talk)).toBe("warning:drones:0");
     tapThrough(talk);
-    run(talk, 0.05, { inDanger: true });
+    run(talk, 0.05, drones);
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 1, { inDanger: true, shieldFraction: 0.2 });
     expect(showing(talk)).toBe("warning:shieldLow:0");
@@ -285,31 +289,60 @@ describe("conversation triggers", () => {
 
   it("call out drones once per flight", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
-    run(talk, 0.05, { inDanger: true });
+    run(talk, 0.05, drones);
     expect(showing(talk)).toBe("warning:drones:0");
     tapThrough(talk);
     run(talk, 0.05);
-    run(talk, 0.05, { inDanger: true });
+    run(talk, 0.05, drones);
     expect(talk.showing).toBeNull();
     talk.beginFlight(1);
-    run(talk, 0.05, { inDanger: true });
+    run(talk, 0.05, drones);
+    expect(showing(talk)).toBe("warning:drones:0");
+  });
+
+  it("call out drones only once they are near, never for danger from debris or hazards alone", () => {
+    const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    run(talk, 2, { inDanger: true });
+    expect(talk.showing).toBeNull();
+    // Drones arriving later in the same danger are called out then.
+    run(talk, 0.05, drones);
     expect(showing(talk)).toBe("warning:drones:0");
   });
 
   it("broadcast the General when his drones first engage Ada from Cartwheel on", () => {
     const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
-    run(sunflower.talk, 0.05, { inDanger: true });
+    run(sunflower.talk, 0.05, drones);
     expect(showing(sunflower.talk)).toBe("warning:drones:0");
     for (const sector of [2, 3] as const) {
       const { heard, talk } = director(sector, lessonsHeard);
-      run(talk, 0.05, { inDanger: true });
+      run(talk, 0.05, drones);
       expect(tapThrough(talk)).toEqual([`general:${sector}:0`, `general:${sector}:1`]);
       expect(heard).toContain(`general:${sector}`);
       run(talk, 0.05);
-      run(talk, 0.05, { inDanger: true });
+      run(talk, 0.05, drones);
       expect(showing(talk)).toBe("warning:drones:0");
     }
   });
+
+  it.each([
+    ["drop", null, "arrival:1:0"],
+    ["play", "job:lost", "penny:1:job:lost:0"],
+  ] as const)(
+    "%s a queued line when its turn comes, as its trigger has lapsed or holds",
+    (_, after, shown) => {
+      const { heard, talk } = director(1, [], { aim: true });
+      run(talk, 0.05);
+      expect(talk.showing?.instance).toBe("lesson:move");
+      // Penny senses the lost item under the higher lesson, so her line waits its turn.
+      run(talk, 0.05, { lostItemNear: "job:lost" });
+      expect(talk.showing?.instance).toBe("lesson:move");
+      tapThrough(talk);
+      // Ada has left the item's range, or stays in it, when the cooldown ends.
+      run(talk, cooldownSeconds + 0.1, { lostItemNear: after });
+      expect(showing(talk)).toBe(shown);
+      expect(heard.includes("penny:1:job:lost")).toBe(after !== null);
+    },
+  );
 
   it("draw an unseen lore line from the galaxy's pool after a quiet minute", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
@@ -684,13 +717,14 @@ describe("conversations in the game", () => {
     model.step(0.05, idle);
     expect(model.conversation?.key).toBe("lesson:move:0");
     const flight = model.state.flight!;
-    // Far from any friendly place with danger running, as in a fight.
+    // Far from any friendly place with danger running and the shield low, as in a fight.
     flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
     flight.dangerFor = 5;
+    flight.shield = (model.shieldMax * CONVERSATION_TUNING.shieldLowFraction) / 2;
     model.returnHome();
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
     model.step(0.05, idle);
-    expect(model.conversation?.key).toBe("warning:drones:0");
+    expect(model.conversation?.key).toBe("warning:shieldLow:0");
     expect(model.warningShowing).toBe(true);
     for (let i = 0; i < 60; i++) {
       model.step(0.05, idle);

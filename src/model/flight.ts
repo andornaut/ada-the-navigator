@@ -1522,6 +1522,34 @@ function move(
     flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
   }
 }
+/**
+ * Whether an enemy presses Ada (gameplay/enemies.md: only actual targeting threats extend
+ * danger): engaged, neither returning nor fleeing, within its perception, with targetable saying
+ * neither it nor Ada is inside a friendly safe zone.
+ */
+function presses(targetable: boolean, flight: FlightState, object: SpaceObject): boolean {
+  const state = object.enemy;
+  return (
+    targetable &&
+    state !== undefined &&
+    state.engaged &&
+    !state.returning &&
+    !state.fleeing &&
+    distance(object, flight.player) <= enemyDefinition(flight.sector, state.archetype).perception
+  );
+}
+
+/** Whether drones are near: a live enemy presses Ada, as the danger it sets measures. */
+export function dronesNear(content: PrototypeContent, flight: FlightState): boolean {
+  const adaSafe = safe(content, flight.player, flight);
+  return flight.objects.some(
+    (object) =>
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      presses(!adaSafe && !safe(content, object, flight), flight, object),
+  );
+}
+
 function enemies(
   content: PrototypeContent,
   dt: number,
@@ -1619,12 +1647,7 @@ function enemies(
     }
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
-    threatening ||=
-      targetable &&
-      intent.state.engaged &&
-      !intent.state.returning &&
-      !intent.state.fleeing &&
-      distance(object, flight.player) <= definition.perception;
+    threatening ||= presses(targetable, flight, object);
     for (const fire of intent.fire) {
       const id = `shot:${flight.nextId++}`;
       shotDelays.set(id, fire.delay);

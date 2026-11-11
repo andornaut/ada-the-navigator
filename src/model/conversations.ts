@@ -14,9 +14,11 @@ import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
-// one showing, which resumes after it if still relevant. Ordinary ones wait out a cooldown after
-// the last one ends; warnings skip it. Each line shows for its time or until tapped. The director
-// only advances while the flight runs, so pausing, a story panel or a station card freezes it.
+// one showing, which resumes after it if still relevant. Each request carries its trigger, which
+// it re-checks against the current facts whenever it could show, and a request whose trigger no
+// longer holds is dropped. Ordinary ones wait out a cooldown after the last one ends; warnings
+// skip it. Each line shows for its time or until tapped. The director only advances while the
+// flight runs, so pausing, a story panel or a station card freezes it.
 
 /** What the flight did and what is around Ada this step. */
 export interface ConversationFacts {
@@ -25,6 +27,8 @@ export interface ConversationFacts {
   readonly capitalInSight: boolean;
   readonly collectedStardust: boolean;
   readonly docked: boolean;
+  /** A live enemy presses Ada (flight.ts dronesNear); damage from debris or hazards is not one. */
+  readonly dronesNear: boolean;
   /** Ada is inside a space current. */
   readonly inCurrent: boolean;
   readonly inDanger: boolean;
@@ -56,10 +60,15 @@ export interface ShowingConversation {
   readonly lineIndex: number;
 }
 
+/** Whether a request's trigger still holds in this step's facts. */
+type Holds = (facts: ConversationFacts) => boolean;
+
 interface Request {
   readonly conversation: Conversation;
+  /** Its trigger, re-checked whenever it could show; a request whose trigger lapsed is dropped. */
+  readonly holds: Holds;
   readonly instance: string;
-  /** Penny's point of interest, which must still be undiscovered to show. */
+  /** Penny's point of interest; one waits at a time. */
   readonly point?: string;
   /** Where an interrupted conversation resumes. */
   readonly resume?: { readonly elapsed: number; readonly line: number };
@@ -71,6 +80,11 @@ interface Active extends Request {
 }
 
 const rank = (conversation: Conversation) => CONVERSATION_PRIORITIES.indexOf(conversation.priority);
+
+/** An event's trigger, such as an arrival or a newly mapped place, which keeps holding. */
+const always: Holds = () => true;
+/** Drones pressing Ada in danger: the drone warning's and the General's broadcast's trigger. */
+const dronesPress: Holds = (facts) => facts.inDanger && facts.dronesNear;
 
 // Timers sum many frame slices, so a deadline counts as reached within float error.
 const EPSILON = 1e-9;
@@ -158,8 +172,10 @@ export class ConversationDirector {
   private cooldown = 0;
   private readonly conversations: readonly Conversation[];
   private done: Record<Lesson, boolean> = { aim: false, dock: false, move: false, stardust: false };
+  /** Danger since it last cleared: a fight, which a low shield warns of once. */
   private inFight = false;
-  private pennyPoints: readonly string[] = [];
+  /** This fight's drones were called out. */
+  private dronesCalled = false;
   /** Seconds until Penny can sense another point. */
   private pennyWait = 0;
   private playedThisFlight = new Set<string>();
@@ -234,7 +250,7 @@ export class ConversationDirector {
     this.pennyWait = Math.max(0, this.pennyWait - dt);
     this.observe(sector, facts);
     if (notice && !this.warningShowing) {
-      this.queue = this.queue.filter((request) => this.valid(request));
+      this.queue = this.queue.filter((request) => this.valid(facts, request));
       const warning = this.queue.find((request) => request.conversation.priority === "warning");
       if (warning) {
         this.start(warning);
@@ -259,10 +275,10 @@ export class ConversationDirector {
           !this.seen.includes(conversation.id),
       );
       if (pool) {
-        this.enqueue({ conversation: pool, instance: pool.id });
+        this.enqueue({ conversation: pool, holds: (now) => !now.inDanger, instance: pool.id });
       }
     }
-    this.schedule();
+    this.schedule(facts);
   }
 
   private observe(sector: SectorId, facts: ConversationFacts): void {
@@ -270,12 +286,14 @@ export class ConversationDirector {
     this.done.aim ||= facts.aimed;
     this.done.stardust ||= facts.collectedStardust;
     this.done.dock ||= facts.docked;
-    this.pennyPoints = facts.pennyPoints;
     if (this.seen.includes("lesson:move")) {
       this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "aim");
     }
     if (facts.stardustInSight) {
-      this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "stardust");
+      this.request(
+        (trigger) => trigger.kind === "lesson" && trigger.lesson === "stardust",
+        (now) => now.stardustInSight,
+      );
     }
     if (facts.newStation) {
       this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "dock");
@@ -291,14 +309,27 @@ export class ConversationDirector {
       this.request((trigger) => trigger.kind === "mapped");
     }
     if (facts.capitalInSight) {
-      this.request((trigger) => trigger.kind === "capital");
+      this.request(
+        (trigger) => trigger.kind === "capital",
+        (now) => now.capitalInSight,
+      );
     }
     if (facts.inCurrent) {
-      this.request((trigger) => trigger.kind === "current");
+      this.request(
+        (trigger) => trigger.kind === "current",
+        (now) => now.inCurrent,
+      );
     }
     if (facts.inDanger && !this.inFight) {
       this.inFight = true;
+      this.dronesCalled = false;
       this.shieldWarned = false;
+    } else if (!facts.inDanger) {
+      this.inFight = false;
+    }
+    // Only drones pressing Ada call them out; damage from debris or hazards alone sets danger.
+    if (this.inFight && !this.dronesCalled && dronesPress(facts)) {
+      this.dronesCalled = true;
       const general = this.conversations.find(
         (conversation) =>
           conversation.trigger.kind === "general" &&
@@ -307,12 +338,10 @@ export class ConversationDirector {
       );
       // The General's first broadcast in a galaxy speaks for that engagement's drones.
       if (general) {
-        this.enqueue({ conversation: general, instance: general.id });
+        this.enqueue({ conversation: general, holds: dronesPress, instance: general.id });
       } else {
-        this.request((trigger) => trigger.kind === "drones");
+        this.request((trigger) => trigger.kind === "drones", dronesPress);
       }
-    } else if (!facts.inDanger) {
-      this.inFight = false;
     }
     if (
       this.inFight &&
@@ -320,7 +349,10 @@ export class ConversationDirector {
       facts.shieldFraction <= CONVERSATION_TUNING.shieldLowFraction
     ) {
       this.shieldWarned = true;
-      this.request((trigger) => trigger.kind === "shieldLow");
+      this.request(
+        (trigger) => trigger.kind === "shieldLow",
+        (now) => now.inDanger,
+      );
     }
     this.observeJob(sector, facts);
     const unsensed = facts.pennyPoints.filter(
@@ -336,7 +368,12 @@ export class ConversationDirector {
     const [point] = unsensed;
     const penny = this.conversations.find((conversation) => conversation.trigger.kind === "penny");
     if (point !== undefined && penny && !this.queue.some((entry) => entry.point !== undefined)) {
-      this.enqueue({ conversation: penny, instance: pennyInstance(sector, point), point });
+      this.enqueue({
+        conversation: penny,
+        holds: (now) => now.pennyPoints.includes(point),
+        instance: pennyInstance(sector, point),
+        point,
+      });
     }
   }
 
@@ -357,19 +394,28 @@ export class ConversationDirector {
           !this.queue.some((entry) => entry.instance === id),
       );
       if (lore) {
-        this.enqueue({ conversation: lore, instance: lore.id });
+        this.enqueue({ conversation: lore, holds: always, instance: lore.id });
       }
     }
     const penny = this.conversations.find((conversation) => conversation.trigger.kind === "penny");
-    if (facts.lostItemNear !== null && penny) {
-      this.enqueue({ conversation: penny, instance: pennyInstance(sector, facts.lostItemNear) });
+    const item = facts.lostItemNear;
+    if (item !== null && penny) {
+      this.enqueue({
+        conversation: penny,
+        holds: (now) => now.lostItemNear === item,
+        instance: pennyInstance(sector, item),
+      });
     }
   }
 
-  private request(matches: (trigger: Conversation["trigger"]) => boolean): void {
+  /** Each conversation whose trigger matches, held by holds (an event's by default). */
+  private request(
+    matches: (trigger: Conversation["trigger"]) => boolean,
+    holds: Holds = always,
+  ): void {
     for (const conversation of this.conversations) {
       if (matches(conversation.trigger)) {
-        this.enqueue({ conversation, instance: conversation.id });
+        this.enqueue({ conversation, holds, instance: conversation.id });
       }
     }
   }
@@ -387,17 +433,17 @@ export class ConversationDirector {
     this.queue.push(request);
   }
 
-  /** Whether a queued request may still show now; a lesson already acted on is spent instead. */
-  private valid(request: Request): boolean {
+  /**
+   * Whether a queued request may still show now: its trigger holds in facts. A lesson already
+   * acted on is spent instead.
+   */
+  private valid(facts: ConversationFacts, request: Request): boolean {
     const { trigger } = request.conversation;
     if (trigger.kind === "lesson" && this.done[trigger.lesson]) {
       this.markSeen(request);
       return false;
     }
-    if (trigger.kind === "shieldLow" || trigger.kind === "drones") {
-      return this.inFight;
-    }
-    return request.point === undefined || this.pennyPoints.includes(request.point);
+    return request.holds(facts);
   }
 
   /**
@@ -405,8 +451,8 @@ export class ConversationDirector {
    * nothing showing, an interrupted one resumes at once, a warning starts at once, and any other
    * waits out the cooldown.
    */
-  private schedule(): void {
-    this.queue = this.queue.filter((request) => this.valid(request));
+  private schedule(facts: ConversationFacts): void {
+    this.queue = this.queue.filter((request) => this.valid(facts, request));
     // By rank, interrupted ones first within a rank, then in request order (a stable sort).
     const [next] = [...this.queue].sort(
       (a, b) =>
@@ -488,8 +534,8 @@ export class ConversationDirector {
   private reset(): void {
     this.active = null;
     this.cooldown = 0;
+    this.dronesCalled = false;
     this.inFight = false;
-    this.pennyPoints = [];
     this.pennyWait = 0;
     this.playedThisFlight = new Set();
     this.queue = [];

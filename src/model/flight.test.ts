@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import type { PrototypeContent } from "../data/types.ts";
@@ -8,6 +8,7 @@ import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import {
   createFlight,
+  dronesNear,
   ensureDestination,
   movementSpeedFraction,
   placeDestinationAhead,
@@ -269,6 +270,51 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
   syncFlightRegion(PROTOTYPE, flight);
   expect(flight.objects).toContain(first);
   expect(flight.objects).toContain(second);
+});
+
+describe("drones near", () => {
+  it("leave a debris hit's danger without drones near, which an engaged drone in perception sets", () => {
+    const flight = empty();
+    flight.player = { x: 100, y: 100 };
+    flight.objects = [
+      {
+        hp: PROTOTYPE.tuning.flight.rockHp,
+        id: "debris",
+        kind: "debris",
+        radius: PROTOTYPE.tuning.flight.rockRadius,
+        velocity: { x: 1, y: 0 },
+        x: 100,
+        y: 100,
+      },
+    ];
+    stepFlight(PROTOTYPE, 0.05, idle, flight);
+    expect(flight.shield).toBeLessThan(PROTOTYPE.tuning.shieldMax);
+    expect(flight.dangerFor).toBeGreaterThan(0);
+    expect(dronesNear(PROTOTYPE, flight)).toBe(false);
+    const { perception } = enemyDefinition(1, "fighter");
+    const drone = (x: number, engaged: boolean) => {
+      const at = { x, y: flight.player.y };
+      const enemy = createEnemy(
+        enemyCatalog.fighter,
+        { archetype: "fighter", id: "drone", packId: null, phase: 0 },
+        at,
+      );
+      return {
+        ...at,
+        enemy: { ...enemy, engaged },
+        hp: 1,
+        id: "drone",
+        kind: "enemy" as const,
+        radius: 10,
+      };
+    };
+    flight.objects = [drone(flight.player.x + perception - 1, false)];
+    expect(dronesNear(PROTOTYPE, flight)).toBe(false);
+    flight.objects = [drone(flight.player.x + perception + 1, true)];
+    expect(dronesNear(PROTOTYPE, flight)).toBe(false);
+    flight.objects = [drone(flight.player.x + perception - 1, true)];
+    expect(dronesNear(PROTOTYPE, flight)).toBe(true);
+  });
 });
 
 describe("directional handling", () => {

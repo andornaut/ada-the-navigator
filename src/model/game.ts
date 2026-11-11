@@ -32,6 +32,7 @@ import { carriesStardust } from "./drops.ts";
 import {
   activateRouteEncounter,
   createFlight,
+  dronesNear,
   ensureDestination,
   ensureHuntingPacks,
   ensureRouteEncounter,
@@ -940,6 +941,7 @@ export class GameModel {
       capitalInSight: capitalInSight(SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: events.some((event) => event.type === "docked"),
+      dronesNear: dronesNear(this.content, f),
       inCurrent: inCurrent(f.sector, 0, f.player),
       inDanger: this.inDanger,
       jobMoments,
