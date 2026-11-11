@@ -64,8 +64,6 @@ export const GENERAL_NAMED = { name: "General Gadget", sector: 3 } as const;
 
 /** Provisional timing and ranges, to be tuned through playtesting. */
 export const CONVERSATION_TUNING = {
-  /** A capital ship within this many world units counts as sighted. */
-  capitalSightRange: 450,
   /** Seconds between ordinary conversations; warnings bypass it. */
   cooldownSeconds: 20,
   /** Seconds each line shows unless tapped. */

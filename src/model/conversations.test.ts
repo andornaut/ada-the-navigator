@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
+import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
 import {
+  capitalInSight,
   ConversationDirector,
   type ConversationFacts,
   pennyInstance,
   pennyPoints,
   speakerName,
 } from "./conversations.ts";
+import { createEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { playOpening } from "./test-launch.ts";
@@ -370,6 +374,97 @@ describe("Penny's points of interest", () => {
       "holodisk",
       "workshop",
     ]);
+  });
+});
+
+describe("capital sightings", () => {
+  const enemy = (
+    id: string,
+    archetype: EnemyArchetype,
+    x: number,
+    state: Partial<SpaceObject["enemy"] & object> = {},
+  ): SpaceObject => ({
+    enemy: {
+      ...createEnemy(
+        enemyCatalog[archetype],
+        { archetype, id, packId: null, phase: 0 },
+        { x, y: 0 },
+      ),
+      ...state,
+    },
+    hp: enemyCatalog[archetype].hp,
+    id,
+    kind: "enemy",
+    radius: enemyCatalog[archetype].sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+    x,
+    y: 0,
+  });
+  const sighted = (objects: SpaceObject[]) =>
+    capitalInSight(SCREEN, { objects, player: { x: 0, y: 0 } });
+
+  it("count a live capital on screen, hull and all", () => {
+    expect(sighted([enemy("capital", "capital", 300)])).toBe(true);
+    expect(sighted([enemy("capital", "capital", 5000)])).toBe(false);
+    expect(sighted([{ ...enemy("capital", "capital", 300), hp: 0 }])).toBe(false);
+    expect(sighted([enemy("fighter", "fighter", 100)])).toBe(false);
+  });
+
+  it("cover the capital battle while its escorts or the capital engage Ada off screen", () => {
+    const capital = enemy("capital", "capital", 5000);
+    expect(sighted([capital, enemy("escort", "fighter", 400, { escortOf: "capital" })])).toBe(
+      false,
+    );
+    expect(
+      sighted([capital, enemy("escort", "fighter", 400, { engaged: true, escortOf: "capital" })]),
+    ).toBe(true);
+    expect(sighted([enemy("capital", "capital", 5000, { engaged: true })])).toBe(true);
+  });
+});
+
+describe("drone engagements in flight", () => {
+  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  /** A flight in sector far from any friendly place, with a pack of drones near Ada. */
+  function engaged(sector: SectorId, archetype: EnemyArchetype, count: number): GameModel {
+    const model = new GameModel(PROTOTYPE);
+    model.state.prologueSeen = true;
+    model.state.unlocked = [1, 2, 3];
+    model.startSector(sector);
+    const flight = model.state.flight!;
+    flight.player = { x: flight.player.x + 6000, y: flight.player.y };
+    flight.objects = Array.from({ length: count }, (_, index) => {
+      const definition = enemyCatalog[archetype];
+      const at = {
+        x: flight.player.x + 150 * Math.cos((index * 2 * Math.PI) / count),
+        y: flight.player.y + 150 * Math.sin((index * 2 * Math.PI) / count),
+      };
+      const id = `drone:${index}`;
+      return {
+        ...at,
+        enemy: createEnemy(definition, { archetype, id, packId: null, phase: index }, at),
+        hp: definition.hp,
+        id,
+        kind: "enemy" as const,
+        radius: definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+      };
+    });
+    flight.shots = [];
+    for (let step = 0; step < 60 && !model.inDanger; step++) {
+      model.step(0.05, idle);
+    }
+    expect(model.inDanger).toBe(true);
+    return model;
+  }
+
+  it("call out a large pack once its drones engage Ada", () => {
+    const model = engaged(1, "swarm", 6);
+    expect(model.conversation?.key).toBe("warning:drones:0");
+  });
+
+  it("broadcast the General when his drones first engage Ada in Cartwheel and Whirlpool", () => {
+    expect(engaged(2, "swarm", 6).conversation?.key).toBe("general:2:0");
+    const whirlpool = engaged(3, "fighter", 4).conversation;
+    expect(whirlpool?.key).toBe("general:3:0");
+    expect(whirlpool?.name).toBe("Unknown voice");
   });
 });
 

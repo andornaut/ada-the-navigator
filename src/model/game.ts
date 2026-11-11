@@ -1,8 +1,9 @@
 import { CONVERSATION_TUNING, CONVERSATIONS, SPEAKERS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
-import { ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
+import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
 import { carriesStardust } from "./drops.ts";
 import {
   activateRouteEncounter,
@@ -695,12 +696,7 @@ export class GameModel {
     }
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
-      capitalInSight: f.objects.some(
-        (object) =>
-          object.enemy?.archetype === "capital" &&
-          object.hp > 0 &&
-          near(CONVERSATION_TUNING.capitalSightRange)(object),
-      ),
+      capitalInSight: capitalInSight(SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: events.some((event) => event.type === "docked"),
       inDanger: this.inDanger,

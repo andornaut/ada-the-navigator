@@ -79,6 +79,40 @@ export function speakerName(
 }
 
 /**
+ * Whether a capital ship's battle is in sight: a live capital on screen (the view's isometric
+ * projection around Ada, with its hull), or a capital or one of its escorts engaging Ada, so a
+ * battle that opens with its escorts still counts. The view is the 720x360 play view.
+ */
+export function capitalInSight(
+  view: { readonly height: number; readonly width: number },
+  flight: Pick<FlightState, "objects" | "player">,
+): boolean {
+  const capitals = flight.objects.filter(
+    (object) => object.kind === "enemy" && object.hp > 0 && object.enemy?.archetype === "capital",
+  );
+  const ids = new Set(capitals.map((object) => object.id));
+  const onScreen = (object: SpaceObject) => {
+    const dx = object.x - flight.player.x;
+    const dy = object.y - flight.player.y;
+    return (
+      Math.abs(dx - dy) <= view.width / 2 + object.radius &&
+      Math.abs((dx + dy) / 2) <= view.height / 2 + object.radius
+    );
+  };
+  return (
+    capitals.some((object) => onScreen(object) || object.enemy?.engaged === true) ||
+    flight.objects.some(
+      (object) =>
+        object.kind === "enemy" &&
+        object.hp > 0 &&
+        object.enemy?.engaged === true &&
+        object.enemy.escortOf !== null &&
+        ids.has(object.enemy.escortOf),
+    )
+  );
+}
+
+/**
  * Undiscovered points of interest within Penny's range of Ada, even off screen, nearest first:
  * unmapped destinations, the guarded holodisk while its waypoint shows, undiscovered stations and
  * discovery caches.
