@@ -465,6 +465,13 @@ describe("drone engagements in flight", () => {
     const whirlpool = engaged(3, "fighter", 4).conversation;
     expect(whirlpool?.key).toBe("general:3:0");
     expect(whirlpool?.name).toBe("Unknown voice");
+    expect(whirlpool?.named).toBe(false);
+  });
+
+  it("switch the General to his named frames once the Whirlpool holodisk is in", () => {
+    const model = engaged(3, "fighter", 4);
+    model.state.progress[3].holodisk = true;
+    expect(model.conversation).toMatchObject({ name: "General Gadget", named: true });
   });
 });
 
@@ -482,9 +489,11 @@ describe("conversations in the game", () => {
    * Galaxy one's first flight with no drones and nothing for Penny near the start, so neither a
    * warning nor Penny comes before the first lesson.
    */
-  function flying(): GameModel {
+  // A first flight, with the heard conversations already heard.
+  function flying(heard: readonly string[] = []): GameModel {
     const model = new GameModel(PROTOTYPE);
     model.state.prologueSeen = true;
+    model.state.seenConversations.push(...heard);
     model.startSector(1);
     playOpening(model);
     expect(model.state.mode).toBe("space");
@@ -511,10 +520,46 @@ describe("conversations in the game", () => {
     model.step(0.05, idle);
     expect(model.conversation).toMatchObject({
       desktop: "Use WASD to fly.",
+      mood: "neutral",
       name: "Astra",
+      named: false,
       side: "right",
       speaker: "astra",
       text: "Use the left stick to fly.",
+    });
+  });
+
+  it("time each line from its start, for the speaking loop", () => {
+    const model = flying();
+    model.step(0.05, idle);
+    expect(model.conversation?.elapsed).toBeCloseTo(0, 9);
+    for (let i = 0; i < 10; i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.conversation?.elapsed).toBeCloseTo(0.5, 9);
+    expect(model.conversation?.key).toBe("lesson:move:0");
+  });
+
+  it("carry a line's mood: Ada's happy reply to the Stardust lesson", () => {
+    const model = flying(["lesson:move", "lesson:aim"]);
+    const { player } = model.state.flight!;
+    model.state.flight!.objects.push({
+      amount: 1,
+      hp: 1,
+      id: "test:stardust",
+      kind: "pickup",
+      radius: 4,
+      x: player.x + 300,
+      y: player.y,
+    });
+    model.step(0.05, idle);
+    expect(model.conversation).toMatchObject({ key: "lesson:stardust:0", mood: "neutral" });
+    model.advanceConversation();
+    expect(model.conversation).toMatchObject({
+      key: "lesson:stardust:1",
+      mood: "happy",
+      speaker: "ada",
+      text: "Like a magnet!",
     });
   });
 
@@ -583,19 +628,6 @@ describe("conversations in the game", () => {
     model.step(0.05, idle);
     expect(model.state.notice).toBe("");
     expect(model.conversation?.key).toBe("lesson:move:0");
-  });
-
-  it("hold the box under the save status until saving works again", () => {
-    const model = flying();
-    model.step(0.05, idle);
-    const key = model.conversation?.key;
-    model.setSaveNotice(PROTOTYPE.labels.savingUnavailable ?? "");
-    for (let i = 0; i < 200; i++) {
-      model.step(0.05, idle);
-    }
-    expect(model.conversation).toBeNull();
-    model.setSaveNotice("");
-    expect(model.conversation?.key).toBe(key);
   });
 
   it("freeze under a story panel and resume with the flight", () => {

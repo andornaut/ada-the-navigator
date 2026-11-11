@@ -1,4 +1,4 @@
-import { GENERAL_NAMED } from "../data/conversations.ts";
+import type { Mood } from "../data/conversations.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { FOCUS_STYLE } from "./modal.ts";
@@ -9,26 +9,80 @@ import { CONVERSATION_SLOT, PANEL_BACKGROUND } from "./notice.ts";
 // panel and the name tab are one press area: a tap or click moves to the next line.
 
 export interface ConversationLineView {
+  /** Seconds the line has shown. */
+  readonly elapsed: number;
   /** Changes with each line. */
   readonly key: string;
+  readonly mood: Mood;
   readonly name: string;
+  /** Whether the General's tab reads his name. */
+  readonly named: boolean;
   readonly side: "left" | "right";
-  readonly speaker: string;
+  readonly speaker: keyof typeof COMPACT_PORTRAITS;
   readonly text: string;
   readonly desktop?: string;
 }
 
 const { name: label, padding, panel, portrait, tab, text, textGap } = CONVERSATION_BOX;
 
-// Each speaker's compact portrait sheet (art/conversation.md), its frame count and the frame the
-// box shows: a mood or the first frame of the speaking loop. The General's sheet holds an unknown
-// set of frames, then a named set once his tab reads his name.
+// Each speaker's compact portrait sheet (art/conversation.md) and its frames. Astra and the
+// General loop their speaking frames while their line shows, the General's unknown set until his
+// tab reads his name, then his named set; Ada and Penny have no loop and show the line's mood.
+// Idle frames are for a silent speaker, such as the storybook panel, so the box never shows them.
 export const COMPACT_PORTRAITS = {
-  ada: { frame: 1, frames: 2, url: "/art/portraits/ada-compact.png" },
-  astra: { frame: 1, frames: 5, url: "/art/portraits/astra-compact.png" },
-  general: { frame: 1, frames: 10, named: 6, url: "/art/portraits/gadget-compact.png" },
-  penny: { frame: 1, frames: 3, url: "/art/portraits/penny-compact.png" },
+  ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },
+  astra: { frames: 5, speaking: [1, 2, 3, 4], url: "/art/portraits/astra-compact.png" },
+  general: {
+    frames: 10,
+    speaking: { named: [6, 7, 8, 9], unknown: [1, 2, 3, 4] },
+    url: "/art/portraits/gadget-compact.png",
+  },
+  penny: {
+    frames: 3,
+    moods: { happy: 0, neutral: 1, upset: 2 },
+    url: "/art/portraits/penny-compact.png",
+  },
 } as const;
+
+/** Each speaking frame's time. */
+export const SPEAKING_FRAME_MS = 120;
+
+/**
+ * The sheet frame the box shows for line: Ada's or Penny's mood (neutral where the sheet has no
+ * such mood), or Astra's or the General's speaking loop timed from the line's start, held on its
+ * first frame under reduced motion.
+ */
+export function portraitFrame(
+  reducedMotion: boolean,
+  line: Pick<ConversationLineView, "elapsed" | "mood" | "named" | "speaker">,
+): number {
+  const loop = (frames: readonly number[]): number =>
+    frames[
+      reducedMotion
+        ? 0
+        : Math.floor((line.elapsed * 1000) / SPEAKING_FRAME_MS + 1e-9) % frames.length
+    ]!;
+  if (line.speaker === "ada" || line.speaker === "penny") {
+    const moods: Readonly<Partial<Record<Mood, number>>> = COMPACT_PORTRAITS[line.speaker].moods;
+    return moods[line.mood] ?? moods.neutral!;
+  }
+  if (line.speaker === "astra") {
+    return loop(COMPACT_PORTRAITS.astra.speaking);
+  }
+  return loop(COMPACT_PORTRAITS.general.speaking[line.named ? "named" : "unknown"]);
+}
+
+// Each speaker's sheet, sized so one frame fills the portrait; portraitFrame picks the frame.
+const PORTRAIT_RULES = Object.entries(COMPACT_PORTRAITS)
+  .map(
+    ([speaker, sheet]) => `
+.ada-conversation-portrait[data-speaker="${speaker}"]{
+  background:url('${sheet.url}') 0 0 / ${units(sheet.frames * portrait.art)} ${units(
+    portrait.art,
+  )} no-repeat
+}`,
+  )
+  .join("");
 
 // Each speaker's name tab fill (art/controls.md "Conversation box").
 export const TAB_COLOURS = {
@@ -38,25 +92,6 @@ export const TAB_COLOURS = {
   generalNamed: "#d68b72",
   penny: "#feae34",
 } as const;
-
-function portraitRule(selector: string, url: string, frames: number, frame: number): string {
-  const size = portrait.art;
-  return `
-${selector}{
-  background:url('${url}') ${units(-frame * size)} 0 / ${units(frames * size)} ${units(size)} no-repeat
-}`;
-}
-
-const PORTRAIT_RULES = Object.entries(COMPACT_PORTRAITS)
-  .map(([speaker, sheet]) =>
-    portraitRule(
-      `.ada-conversation-portrait[data-speaker="${speaker}"]`,
-      sheet.url,
-      sheet.frames,
-      sheet.frame,
-    ),
-  )
-  .join("");
 
 const TAB_RULES = Object.entries(TAB_COLOURS)
   .map(([speaker, colour]) =>
@@ -122,12 +157,6 @@ export const CONVERSATION_STYLE = `
   image-rendering:pixelated
 }
 ${PORTRAIT_RULES}
-${portraitRule(
-  '.ada-conversation[data-named] .ada-conversation-portrait[data-speaker="general"]',
-  COMPACT_PORTRAITS.general.url,
-  COMPACT_PORTRAITS.general.frames,
-  COMPACT_PORTRAITS.general.named,
-)}
 
 /* A gap from the frame, and a gap from the far edge: the padding plus the rest of the gap. */
 .ada-conversation-text{
@@ -183,7 +212,8 @@ ${TAB_RULES}
 
 export interface ConversationBox {
   dispose(): void;
-  render(line: ConversationLineView | null, desktop: boolean): void;
+  /** Shows line, or hides the box for null; call it every frame so a speaking loop runs. */
+  render(line: ConversationLineView | null, desktop: boolean, reducedMotion: boolean): void;
 }
 
 export function createConversationBox(onAdvance: () => void): ConversationBox {
@@ -213,27 +243,33 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
   document.head.append(style);
   document.getElementById(VIEW_HOST_ID)?.append(root);
   let shown = "";
+  let shownFrame = -1;
   return {
     dispose: () => {
       root.remove();
       style.remove();
     },
-    render(line, desktop) {
+    render(line, desktop, reducedMotion) {
       const key = line ? `${line.key}:${desktop}:${line.name}` : "";
-      if (key === shown) {
-        return;
+      if (key !== shown) {
+        shown = key;
+        root.hidden = line === null;
+        if (line) {
+          root.dataset.side = line.side;
+          root.dataset.speaker = line.speaker;
+          root.toggleAttribute("data-named", line.named);
+          face.dataset.speaker = line.speaker;
+          name.textContent = line.name;
+          words.textContent = desktop && line.desktop !== undefined ? line.desktop : line.text;
+        }
+        shownFrame = -1;
       }
-      shown = key;
-      root.hidden = line === null;
-      if (!line) {
-        return;
+      const frame = line ? portraitFrame(reducedMotion, line) : -1;
+      if (frame !== shownFrame) {
+        shownFrame = frame;
+        face.dataset.frame = String(frame);
+        face.style.backgroundPositionX = frame > 0 ? units(-frame * portrait.art) : "0px";
       }
-      root.dataset.side = line.side;
-      root.dataset.speaker = line.speaker;
-      root.toggleAttribute("data-named", line.name === GENERAL_NAMED.name);
-      face.dataset.speaker = line.speaker;
-      name.textContent = line.name;
-      words.textContent = desktop && line.desktop !== undefined ? line.desktop : line.text;
     },
   };
 }

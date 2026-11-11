@@ -38,6 +38,8 @@ export interface ConversationFacts {
 
 export interface ShowingConversation {
   readonly conversation: Conversation;
+  /** Seconds the current line has shown. */
+  readonly elapsed: number;
   /** The instance that was marked seen: the id, or Penny's per point of interest. */
   readonly instance: string;
   readonly line: ConversationLine;
@@ -168,6 +170,7 @@ export class ConversationDirector {
     return active && line
       ? {
           conversation: active.conversation,
+          elapsed: active.elapsed,
           instance: active.instance,
           line,
           lineIndex: active.line,

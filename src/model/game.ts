@@ -1,4 +1,10 @@
-import { CONVERSATION_TUNING, CONVERSATIONS, SPEAKERS } from "../data/conversations.ts";
+import {
+  CONVERSATION_TUNING,
+  CONVERSATIONS,
+  GENERAL_NAMED,
+  type Mood,
+  SPEAKERS,
+} from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -132,9 +138,15 @@ const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "sa
 
 /** The conversation line the box shows, with its speaker's name tab and portrait side. */
 export interface ConversationView {
+  /** Seconds the line has shown, which times a speaking loop. */
+  readonly elapsed: number;
   /** Changes with each line, so the box can restart its entrance. */
   readonly key: string;
+  /** Ada's or Penny's portrait mood; neutral when the line names none. */
+  readonly mood: Mood;
   readonly name: string;
+  /** Whether the General's tab reads his name, which switches his portrait's frame set. */
+  readonly named: boolean;
   readonly side: "left" | "right";
   readonly speaker: keyof typeof SPEAKERS;
   readonly text: string;
@@ -148,7 +160,6 @@ export class GameModel {
   private readonly content: PrototypeContent;
   private readonly talk: ConversationDirector;
   private noticeShownFor = 0;
-  private saveNotice = "";
   private previousSeed = 0;
   // The home half's place is not saved: a launch at home shows the start screen, and Continue
   // rebuilds any waiting scene from story progress.
@@ -177,12 +188,8 @@ export class GameModel {
   dismissNotice(): void {
     this.state.notice = "";
   }
-  /** The save status, which the scene reports, ranks as a notice while it shows. */
-  setSaveNotice(text: string): void {
-    this.saveNotice = text;
-  }
   private get noticeShowing(): boolean {
-    return this.state.notice !== "" || this.saveNotice !== "";
+    return this.state.notice !== "";
   }
   /** A warning shows in the box, over any notice. */
   get warningShowing(): boolean {
@@ -198,11 +205,15 @@ export class GameModel {
     ) {
       return null;
     }
-    const { desktop, speaker, text } = showing.line;
+    const { desktop, mood = "neutral", speaker, text } = showing.line;
+    const name = speakerName(this.state.progress, speaker);
     return {
       ...(desktop === undefined ? {} : { desktop }),
+      elapsed: showing.elapsed,
       key: `${showing.instance}:${showing.lineIndex}`,
-      name: speakerName(this.state.progress, speaker),
+      mood,
+      name,
+      named: speaker === "general" && name === GENERAL_NAMED.name,
       side: SPEAKERS[speaker].side,
       speaker,
       text,

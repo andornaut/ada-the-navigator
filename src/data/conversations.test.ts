@@ -16,6 +16,35 @@ const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.u
   .replace(/\s+/gu, " ")
   .trim();
 
+// A copy passage from its heading or lead-in up to until, by default the next heading.
+function passage(start: string, until = " ## "): string {
+  const from = COPY.indexOf(start);
+  const end = COPY.indexOf(until, from + start.length);
+  if (from < 0 || end < 0) {
+    throw new Error(`No copy passage from "${start}" to "${until}"`);
+  }
+  return COPY.slice(from, end);
+}
+
+// Every speaker line in passage, with the mood marker that may follow it; a desktop wording
+// follows its line as (desktop: "...") and has no speaker of its own.
+function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
+  return Array.from(
+    text.matchAll(/(Astra|Ada|Penny|Unknown voice): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu),
+    ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
+  );
+}
+
+const IN_FLIGHT = passage("## In-flight conversations");
+const BROADCASTS = passage("General's broadcasts", "Outposts handing over");
+
+// The data's lines as the copy names their speakers, with any mood.
+const DATA_LINES = CONVERSATIONS.flatMap(({ lines }) =>
+  lines.map(({ mood, speaker, text }) =>
+    mood ? { mood, name: SPEAKERS[speaker].name, text } : { name: SPEAKERS[speaker].name, text },
+  ),
+);
+
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
     for (const { lines } of CONVERSATIONS) {
@@ -27,6 +56,38 @@ describe("in-flight conversations", () => {
       }
     }
     expect(COPY).toContain(`then "${GENERAL_NAMED.name}"`);
+  });
+
+  it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
+    expect(copied.length).toBeGreaterThan(30);
+    expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
+    expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
+    expect(copied).toHaveLength(DATA_LINES.length);
+  });
+
+  it("give Ada's and Penny's lines the copy's moods, neutral when unmarked", () => {
+    const happy = DATA_LINES.filter(({ mood }) => mood === "happy").map(({ name, text }) => [
+      name,
+      text,
+    ]);
+    expect(happy).toEqual([
+      ["Ada", "Like a magnet!"],
+      ["Ada", "Shopping in space!"],
+      ["Penny", "Woof! Woof!"],
+      ["Ada", "Penny, did you sense something, girl?"],
+      ["Ada", "Our map is growing!"],
+      ["Ada", "Then let's make new memories."],
+      ["Ada", "Maybe they can fix you too, Astra!"],
+      ["Ada", "She thinks you're fun."],
+    ]);
+    for (const { lines } of CONVERSATIONS) {
+      for (const { mood, speaker } of lines) {
+        if (mood !== undefined) {
+          expect(["ada", "penny"]).toContain(speaker);
+        }
+      }
+    }
   });
 
   it("have one to three lines and distinct ids", () => {

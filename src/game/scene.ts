@@ -44,7 +44,7 @@ import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
-import { NOTICE_UNDER_WARNING } from "../ui/notice.ts";
+import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
@@ -232,6 +232,9 @@ export class PrototypeScene extends Phaser.Scene {
     startedMs: number;
   }[] = [];
   private reducedMotion = false;
+  /** Whether the last save failed, so the save status waits for a free box. */
+  private savingUnavailable = false;
+  private boxOccupant: BoxOccupant | null = null;
   // Art's quantum jump: the overlay, whether a jump is playing (flight pauses), whether the
   // presentation holds the source scene, and the last drawn space scene's specks.
   private quantum: ReturnType<typeof createJumpOverlay> | null = null;
@@ -887,11 +890,31 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** The conversation box, in the desktop wording without a coarse pointer. */
   private renderConversation(): void {
-    this.conversationBox.render(this.model.conversation, !coarsePointer(window));
-    // A warning shows over a notice, which waits under it (notice.ts).
-    document
-      .getElementById(VIEW_HOST_ID)
-      ?.toggleAttribute(NOTICE_UNDER_WARNING, this.model.warningShowing);
+    this.conversationBox.render(
+      this.model.conversation,
+      !coarsePointer(window),
+      this.reducedMotion,
+    );
+    // One box at a time: a line, else the game notice, else the save status (notice.ts). A card
+    // over the play view covers the line or notice under it, which frees the slot for the save
+    // status, drawn above cards.
+    const { dialogue, docked, notice } = this.model.state;
+    const covered = this.settingsOpen || Boolean(dialogue) || Boolean(docked);
+    const occupant = boxOccupant({
+      line: this.model.conversation !== null && !covered,
+      notice: notice !== "" && !covered,
+      saveStatus: this.savingUnavailable,
+    });
+    // Written only on a change: an attribute write restyles the whole play area.
+    if (occupant !== this.boxOccupant) {
+      this.boxOccupant = occupant;
+      const host = document.getElementById(VIEW_HOST_ID);
+      if (occupant) {
+        host?.setAttribute(BOX_OCCUPANT, occupant);
+      } else {
+        host?.removeAttribute(BOX_OCCUPANT);
+      }
+    }
   }
 
   private observeFeedback(): void {
@@ -1055,8 +1078,7 @@ export class PrototypeScene extends Phaser.Scene {
   private flush(): void {
     const available = writeSave(this.model.save());
     this.shell.setSavingAvailable(available);
-    // The save status shows in the conversation box's slot, so the box waits under it.
-    this.model.setSaveNotice(available ? "" : (PROTOTYPE.labels.savingUnavailable ?? ""));
+    this.savingUnavailable = !available;
   }
 
   private project(point: Vec): Vec {

@@ -1,20 +1,30 @@
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
-import { SPACING } from "./layout/tokens.ts";
 
 // Notices: the game's status line (#game-status) and the save status (#save-status). Each shows in
 // the conversation box's slot and style (layout/conversationBox.ts) without a portrait or tab, up
-// to two lines centred a gap inside each side, while it has text; lower lines wait under a notice.
-// The game notice's box is its press area: a tap dismisses it. The save status persists and takes
-// no input. With both shown, the save status sits a gap below the game notice.
+// to two lines centred a gap inside each side. One box shows at a time: a conversation line (a
+// warning's even over a notice, which waits under it), else the game notice, else the save status.
+// The game notice's box is its press area: a tap dismisses it. The save status persists, takes no
+// input and is lowest: it yields the slot to any line or notice and returns when they clear.
 
-/** The play area attribute set while a warning line shows over the notices. */
-export const NOTICE_UNDER_WARNING = "data-warning-showing";
+/** The play area attribute naming what the box slot shows. */
+export const BOX_OCCUPANT = "data-box";
+
+export type BoxOccupant = "line" | "notice" | "save";
+
+/** What the slot shows: a line, else a game notice, else the save status, else nothing. */
+export function boxOccupant(showing: {
+  readonly line: boolean;
+  readonly notice: boolean;
+  readonly saveStatus: boolean;
+}): BoxOccupant | null {
+  return showing.line ? "line" : showing.notice ? "notice" : showing.saveStatus ? "save" : null;
+}
 
 const { noticeInset, panel } = CONVERSATION_BOX;
 const TOP = fromHudEdge("top", CONVERSATION_BOX.top);
-const SECOND = CONVERSATION_BOX.height + SPACING.gap;
 
 // The page rect's width, which a notice keeps within, as the box does.
 const PAGE_WIDTH = `calc(100% - 2 * max(var(${VIEW_PROPERTIES.safe("left")}),var(${VIEW_PROPERTIES.safe(
@@ -62,15 +72,14 @@ export const NOTICE_STYLE = `
   z-index:21
 }
 
-#game-status:not(:empty) ~ #save-status,
-[${NOTICE_UNDER_WARNING}] #save-status{
-  top:calc(${TOP} + ${units(SECOND)})
+/* A warning line shows in the slot while the game notice waits under it. */
+[${BOX_OCCUPANT}="line"] #game-status{
+  visibility:hidden
 }
 
-/* A warning line shows in the slot; the game notice waits under it, and the save status, which
-   stays readable, moves to the second slot. */
-[${NOTICE_UNDER_WARNING}] #game-status{
-  visibility:hidden
+/* The save status shows only while the slot is free of lines and notices. */
+[${BOX_OCCUPANT}]:not([${BOX_OCCUPANT}="save"]) #save-status{
+  display:none
 }
 
 #game-status:empty,

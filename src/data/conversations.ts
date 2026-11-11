@@ -30,11 +30,16 @@ export type ConversationTrigger =
   | { readonly kind: "quiet"; readonly sector: SectorId }
   | { readonly kind: "penny" };
 
+/** Ada's and Penny's portrait moods; a line that names none shows neutral. */
+export type Mood = "happy" | "neutral" | "upset";
+
 export interface ConversationLine {
   readonly speaker: Speaker;
   /** The touch wording, and every device's when no desktop wording is given. */
   readonly text: string;
   readonly desktop?: string;
+  /** Ada's or Penny's portrait mood for the line, neutral when absent. */
+  readonly mood?: Mood;
 }
 
 export interface Conversation {
@@ -82,6 +87,11 @@ export const CONVERSATION_TUNING = {
 
 const line = (speaker: Speaker, text: string, desktop?: string): ConversationLine =>
   desktop === undefined ? { speaker, text } : { desktop, speaker, text };
+const happy = (speaker: "ada" | "penny", text: string): ConversationLine => ({
+  mood: "happy",
+  speaker,
+  text,
+});
 
 export const CONVERSATIONS: readonly Conversation[] = [
   {
@@ -104,7 +114,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "lesson:stardust",
     lines: [
       line("astra", "That's Stardust. Fly close and I'll pull it in."),
-      line("ada", "Like a magnet!"),
+      happy("ada", "Like a magnet!"),
     ],
     priority: "lesson",
     repeat: "never",
@@ -114,7 +124,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "lesson:dock",
     lines: [
       line("astra", "A station! Fly into the dock to trade."),
-      line("ada", "Shopping in space!"),
+      happy("ada", "Shopping in space!"),
     ],
     priority: "lesson",
     repeat: "never",
@@ -136,14 +146,14 @@ export const CONVERSATIONS: readonly Conversation[] = [
   },
   {
     id: "penny",
-    lines: [line("penny", "Woof! Woof!"), line("ada", "Penny, did you sense something, girl?")],
+    lines: [happy("penny", "Woof! Woof!"), happy("ada", "Penny, did you sense something, girl?")],
     priority: "penny",
     repeat: "never",
     trigger: { kind: "penny" },
   },
   {
     id: "reaction:mapped",
-    lines: [line("astra", "New place mapped."), line("ada", "Our map is growing!")],
+    lines: [line("astra", "New place mapped."), happy("ada", "Our map is growing!")],
     priority: "lore",
     repeat: "never",
     trigger: { kind: "mapped" },
@@ -162,7 +172,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "arrival:1",
     lines: [
       line("astra", "Sunflower. It's the only place I remember."),
-      line("ada", "Then let's make new memories."),
+      happy("ada", "Then let's make new memories."),
     ],
     priority: "lore",
     repeat: "never",
@@ -182,7 +192,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "meeting:1:workshop",
     lines: [
       line("astra", "The workshop can fix almost anything."),
-      line("ada", "Maybe they can fix you too, Astra!"),
+      happy("ada", "Maybe they can fix you too, Astra!"),
     ],
     priority: "lore",
     repeat: "never",
@@ -212,7 +222,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "quiet:1:tail",
     lines: [
       line("astra", "Penny's tail is wagging at my console lights."),
-      line("ada", "She thinks you're fun."),
+      happy("ada", "She thinks you're fun."),
     ],
     priority: "lore",
     repeat: "never",

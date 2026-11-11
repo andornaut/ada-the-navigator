@@ -3,9 +3,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { SPEAKERS } from "../data/conversations.ts";
-import { COMPACT_PORTRAITS, CONVERSATION_STYLE, TAB_COLOURS } from "./conversation.ts";
+import {
+  COMPACT_PORTRAITS,
+  CONVERSATION_STYLE,
+  portraitFrame,
+  SPEAKING_FRAME_MS,
+  TAB_COLOURS,
+} from "./conversation.ts";
 import { units } from "./layout/css.ts";
-import { NOTICE_STYLE } from "./notice.ts";
+import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "./notice.ts";
 
 // The box's rules, by selector, from its stylesheet.
 function rules(css: string): Map<string, string> {
@@ -76,20 +82,131 @@ describe("conversation box style", () => {
       );
       expect(COMPACT_PORTRAITS).toHaveProperty(speaker);
     }
-    const manifest = JSON.parse(
-      readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-    ) as { assets: { frameWidth?: number; id: string; path: string; width: number }[] };
     for (const sheet of Object.values(COMPACT_PORTRAITS)) {
-      const asset = manifest.assets.find(({ path }) => path === sheet.url);
+      const asset = MANIFEST.assets.find(({ path }) => path === sheet.url);
       expect(asset, sheet.url).toBeDefined();
       expect(asset!.width / (asset!.frameWidth ?? 1)).toBe(sheet.frames);
-      expect(sheet.frame).toBeLessThan(sheet.frames);
     }
+  });
+});
+
+const MANIFEST = JSON.parse(
+  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+) as {
+  assets: {
+    frameWidth?: number;
+    frames?: Record<string, number>;
+    id: string;
+    path: string;
+    width: number;
+  }[];
+};
+
+// A compact sheet's named frames, from the manifest.
+function frames(id: string): Record<string, number> {
+  return MANIFEST.assets.find((asset) => asset.id === `${id}-portrait-compact`)?.frames ?? {};
+}
+
+const speaking = (prefix: string): number[] =>
+  [1, 2, 3, 4].map((n) => frames(prefix === "" ? "astra" : "gadget")[`${prefix}speaking-${n}`]!);
+
+describe("conversation portraits", () => {
+  const line = { elapsed: 0, mood: "neutral", named: false } as const;
+
+  it("name the manifest's frames: Ada's and Penny's moods, Astra's and the General's loops", () => {
+    expect(COMPACT_PORTRAITS.ada.moods).toEqual({
+      happy: frames("ada").happy,
+      neutral: frames("ada").neutral,
+    });
+    expect(COMPACT_PORTRAITS.penny.moods).toEqual({
+      happy: frames("penny").happy,
+      neutral: frames("penny").neutral,
+      upset: frames("penny").upset,
+    });
+    expect(COMPACT_PORTRAITS.astra.speaking).toEqual(speaking(""));
+    expect(COMPACT_PORTRAITS.general.speaking).toEqual({
+      named: speaking("named-"),
+      unknown: speaking("unknown-"),
+    });
+  });
+
+  it("loop Astra's speaking frames at 120 ms each for as long as her line shows", () => {
+    const at = (elapsed: number) => portraitFrame(false, { ...line, elapsed, speaker: "astra" });
+    expect(SPEAKING_FRAME_MS).toBe(120);
+    expect([0, 0.12, 0.24, 0.36, 0.48, 4.99].map(at)).toEqual([1, 2, 3, 4, 1, 2]);
+    expect(
+      [0, 0.12, 0.36].map((elapsed) => portraitFrame(true, { ...line, elapsed, speaker: "astra" })),
+    ).toEqual([1, 1, 1]);
+  });
+
+  it("loop the General's unknown frames, then his named ones once his tab reads his name", () => {
+    const general = { ...line, elapsed: 0.25, speaker: "general" } as const;
+    expect(portraitFrame(false, general)).toBe(frames("gadget")["unknown-speaking-3"]);
+    expect(portraitFrame(false, { ...general, named: true })).toBe(
+      frames("gadget")["named-speaking-3"],
+    );
+    expect(portraitFrame(true, { ...general, named: true })).toBe(
+      frames("gadget")["named-speaking-1"],
+    );
+  });
+
+  it("show Ada's and Penny's mood without a loop, neutral where the sheet has none", () => {
+    for (const elapsed of [0, 0.12, 3]) {
+      expect(portraitFrame(false, { ...line, elapsed, mood: "happy", speaker: "ada" })).toBe(0);
+      expect(portraitFrame(false, { ...line, elapsed, speaker: "ada" })).toBe(1);
+      expect(portraitFrame(false, { ...line, elapsed, mood: "happy", speaker: "penny" })).toBe(0);
+      expect(portraitFrame(false, { ...line, elapsed, mood: "upset", speaker: "penny" })).toBe(2);
+    }
+    // Ada's sheet has no upset frame.
+    expect(portraitFrame(false, { ...line, mood: "upset", speaker: "ada" })).toBe(1);
+  });
+
+  it("never show an idle frame in the box", () => {
+    const idle = [
+      frames("astra").idle,
+      frames("gadget")["unknown-idle"],
+      frames("gadget")["named-idle"],
+    ];
+    for (let ms = 0; ms < 1000; ms += 10) {
+      for (const speaker of ["astra", "general"] as const) {
+        for (const named of [false, true]) {
+          const frame = portraitFrame(false, { ...line, elapsed: ms / 1000, named, speaker });
+          expect(idle).not.toContain(frame);
+        }
+      }
+    }
+  });
+});
+
+describe("box slot", () => {
+  it("shows a line, else the game notice, else the save status", () => {
+    const shows = (line: boolean, notice: boolean, saveStatus: boolean) =>
+      boxOccupant({ line, notice, saveStatus });
+    expect(shows(true, true, true)).toBe("line");
+    expect(shows(true, false, false)).toBe("line");
+    expect(shows(false, true, true)).toBe("notice");
+    expect(shows(false, false, true)).toBe("save");
+    expect(shows(false, false, false)).toBeNull();
   });
 });
 
 describe("notice style", () => {
   const css = rules(NOTICE_STYLE);
+
+  it("keep one box: the save status yields the slot, and a warning line covers the notice", () => {
+    expect(css.get(`[${BOX_OCCUPANT}]:not([${BOX_OCCUPANT}="save"]) #save-status`)).toBe(
+      "display:none",
+    );
+    expect(css.get(`[${BOX_OCCUPANT}="line"] #game-status`)).toBe("visibility:hidden");
+    // No second slot: no rule of the save status's own moves it below the box.
+    const own = [...css].filter(
+      ([selector]) => selector.includes("#save-status") && !selector.includes("#game-status,"),
+    );
+    expect(own.length).toBeGreaterThan(0);
+    for (const [, body] of own) {
+      expect(body).not.toContain("top:");
+    }
+  });
 
   it("lets a tap on the game notice dismiss it, and passes presses through the save status", () => {
     expect(css.get("#game-status")).toContain("pointer-events:auto");
