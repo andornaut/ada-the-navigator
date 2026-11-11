@@ -20,6 +20,7 @@ one `icon-*` sheet per Settings row and the install steps glyphs the same way.
 The [shop icons](shop-icons.md) supply the `icon-shop-*` sheets the same way.
 The [24px gear](settings-icon.md#24px-gear) supplies `icon-settings-nav-24` the same way.
 [Stardust](stardust.md#hud-icon) supplies `icon-stardust` and `icon-stardust-20` the same way.
+[The rock](rock.md#sheets) supplies `icon-rock`, `icon-rock-24`, `icon-rock-32` and `rock-closeup` the same way.
 `ui-pause` is Chibi's pause button sheet from commit
 `9fb52cec066eba6801912e66c9e37b549d864647`, PNG bytes unchanged (SHA-256
 `dffc046021eda682de667121948a69d39c24ae30dd6f41373db35f3d123eb46c`), JSON data

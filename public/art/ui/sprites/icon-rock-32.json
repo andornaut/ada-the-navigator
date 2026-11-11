@@ -1,0 +1,49 @@
+{
+  "frames": {
+    "icon-rock-32 0.aseprite": {
+      "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+      "sourceSize": { "w": 32, "h": 32 },
+      "duration": 100
+    },
+    "icon-rock-32 1.aseprite": {
+      "frame": { "x": 32, "y": 0, "w": 32, "h": 32 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+      "sourceSize": { "w": 32, "h": 32 },
+      "duration": 100
+    },
+    "icon-rock-32 2.aseprite": {
+      "frame": { "x": 64, "y": 0, "w": 32, "h": 32 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+      "sourceSize": { "w": 32, "h": 32 },
+      "duration": 700
+    },
+    "icon-rock-32 3.aseprite": {
+      "frame": { "x": 96, "y": 0, "w": 32, "h": 32 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+      "sourceSize": { "w": 32, "h": 32 },
+      "duration": 700
+    }
+  },
+  "meta": {
+    "app": "http://www.aseprite.org/",
+    "version": "1.2.30-x64",
+    "image": "icon-rock-32.png",
+    "format": "RGBA8888",
+    "size": { "w": 128, "h": 32 },
+    "scale": "1",
+    "frameTags": [
+      { "name": "raw", "from": 0, "to": 0, "direction": "forward" },
+      { "name": "polished", "from": 1, "to": 1, "direction": "forward" },
+      { "name": "glow", "from": 2, "to": 3, "direction": "forward" }
+    ]
+  }
+}

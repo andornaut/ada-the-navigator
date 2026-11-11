@@ -25,3 +25,14 @@ their existing meaning and introduces no mechanics.
 Preserve the selected ship's white body and opaque blue canopy. Hardpoint color
 is an accent, not a replacement hull palette. This palette is for space visuals;
 the borrowed UI palette remains separate.
+
+## In-between
+
+`inBetween` holds the in-between dimension's ramp, darkest to lightest, and its
+shimmer. It colours the rock's glow, the cockpit's surroundings and the quantum
+jump. The roles above do not read it.
+
+| Key       | Value                                                 |
+| --------- | ----------------------------------------------------- |
+| `ramp`    | `#1F1A38`, `#3A2F6B`, `#5F4FA3`, `#9B82D4`, `#DCC3F2` |
+| `shimmer` | `#8FE0F2`                                             |

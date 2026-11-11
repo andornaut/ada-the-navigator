@@ -1,0 +1,49 @@
+{
+  "frames": {
+    "rock-closeup 0.aseprite": {
+      "frame": { "x": 0, "y": 0, "w": 70, "h": 70 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 70, "h": 70 },
+      "sourceSize": { "w": 70, "h": 70 },
+      "duration": 100
+    },
+    "rock-closeup 1.aseprite": {
+      "frame": { "x": 70, "y": 0, "w": 70, "h": 70 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 70, "h": 70 },
+      "sourceSize": { "w": 70, "h": 70 },
+      "duration": 100
+    },
+    "rock-closeup 2.aseprite": {
+      "frame": { "x": 140, "y": 0, "w": 70, "h": 70 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 70, "h": 70 },
+      "sourceSize": { "w": 70, "h": 70 },
+      "duration": 700
+    },
+    "rock-closeup 3.aseprite": {
+      "frame": { "x": 210, "y": 0, "w": 70, "h": 70 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 70, "h": 70 },
+      "sourceSize": { "w": 70, "h": 70 },
+      "duration": 700
+    }
+  },
+  "meta": {
+    "app": "http://www.aseprite.org/",
+    "version": "1.2.30-x64",
+    "image": "rock-closeup.png",
+    "format": "RGBA8888",
+    "size": { "w": 280, "h": 70 },
+    "scale": "1",
+    "frameTags": [
+      { "name": "raw", "from": 0, "to": 0, "direction": "forward" },
+      { "name": "polished", "from": 1, "to": 1, "direction": "forward" },
+      { "name": "glow", "from": 2, "to": 3, "direction": "forward" }
+    ]
+  }
+}
