@@ -2,6 +2,7 @@
 // points in the station family's schema. Contract: art/needle.md.
 import { fileURLToPath } from "node:url";
 
+import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { fillPolygon, rgba } from "./paint.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import { DISPLAY_SCALE, type Face } from "./solid.ts";
@@ -218,4 +219,12 @@ export function edgeContrast(
     median: values[Math.floor(values.length / 2)] ?? 0,
     share: values.filter((v) => v >= 3).length / Math.max(1, values.length),
   };
+}
+
+// A colour ramp lifted by `dl` in Oklab L, hue and chroma kept.
+export function lift(ramp: readonly string[], dl: number): string[] {
+  return ramp.map((colour) => {
+    const [L, a, b] = toOklab(rgb(colour));
+    return hex(fromOklab(L + dl, a, b)).toUpperCase();
+  });
 }

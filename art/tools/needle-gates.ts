@@ -9,6 +9,7 @@ import { linkData, replaceEntries } from "./manifest.ts";
 import {
   edgeContrast,
   lamp,
+  lift,
   OUT,
   type Polygon,
   PUBLIC,
@@ -16,7 +17,6 @@ import {
   squareFrame,
   svgFile,
 } from "./needle-common.ts";
-import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, json, type Point, projectAt, round } from "./projection.ts";
 import { DISPLAY_SCALE } from "./solid.ts";
 
@@ -61,13 +61,6 @@ const tone = (ramp: readonly string[], face: readonly Point[]) => {
   const i = STEPS.findIndex((s) => dot(unit(normal(face)), LIGHT) >= s);
   return ramp[i < 0 ? ramp.length - 1 : i]!;
 };
-
-export function lift(ramp: readonly string[], dl: number): string[] {
-  return ramp.map((colour) => {
-    const [L, a, b] = toOklab(rgb(colour));
-    return hex(fromOklab(L + dl, a, b)).toUpperCase();
-  });
-}
 
 type Layer = "back" | "front";
 type Quad = {

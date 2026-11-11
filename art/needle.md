@@ -1,6 +1,6 @@
 # Needle
 
-Needle's space art: the Weavers' station and its Loom hall and the ring gates. Everything here is
+Needle's space art. Everything here is
 in [Needle's manifest](../public/art/needle/manifest.json) and under
 `public/art/needle/`, drawn in the shared solid-model projection
 ([ship geometry](ship.md)) with the station family's parts
@@ -134,3 +134,69 @@ like scenery.
 - `rim` gives `inner` 33, `outer` 40 and `depth` 7 in world units: on the
   world plane the rim is two blocks across the channel, 33 to 40 from the
   centre on each side and 7 deep along the axis, for the bump.
+
+## Channels
+
+Rebuild with `node art/tools/needle-channels.ts`. It writes the debris frames,
+[channels.json](../public/art/needle/channels.json) and
+[eye.json](../public/art/needle/eye.json) and replaces its `needle-debris-`
+entries; Needle's manifest links the data as `needleChannels` and `needleEye`.
+Channels are 210 world units wide, the Eye 150 (Gameplay).
+
+### Edge stitch
+
+Tech draws each channel edge at runtime from `stitch`; there are no edge
+sprites. The edges are the centre line offset by half the width each side, on
+the world plane through the view projection.
+
+| Part   | Rule                                                                                                                        |
+| ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Colour | `#CFC5BD` (`color`, Needle's marker) at alpha 0.38 (`alpha`): `#66605B`, 2.55:1                                             |
+| Dashes | 6 on, 4 off (`dash`), logical px measured along the projected edge from the channel's start                                 |
+| Stroke | 1 px (`width`), scaled by `s` like every other space stroke, butt caps                                                      |
+| Inset  | 0 (`inset`): on the edge itself                                                                                             |
+| Motion | None: the stitch is static, so reduced motion needs no change                                                               |
+| Depth  | On the field, above specks, the band and backdrop rocks, below every play object, pickup and effect, as Whirlpool's streaks |
+
+### Debris
+
+Channel debris bumps Ada aside without damage, as scenery does, so it reads as
+harmless matter: no coral contour (coral keeps meaning damage), and the
+[asteroid drift cue](asteroids.md#drift-cue)'s stone chips in place of the
+coral dashes (`cue` `asteroid`).
+
+- The shared [debris models](tools/debris.ts), the bent plate and the girder,
+  at 0.8 scale, tumbling about a tilted axis through 8 frames:
+  `needle-debris-plate-{k}` and `needle-debris-girder-{k}`, `k` 0 to 7,
+  `tumbleIndex` `k`. Frame 80 (display 35), pivot `(0.5, 0.5)`. Frame `k` shows
+  the piece turned `45k` degrees; show frame `floor(angle / 45) mod 8` at a
+  tumble rate in `tumble.degPerSecond` (60 to 120) per piece. Reduced motion
+  shows frame 0; drift still happens.
+- Body, lit to shadow: `#B2AAA0`, `#9D968C`, `#8A8179`, `#787068`, `#686058`
+  (`body`; 6.87 to 2.56:1). It is the play stone ramp lifted in Oklab L by the
+  least step (0.13) that puts each piece's edge median at display size at 3:1
+  or more (3.02:1); the build fails under 3:1. Faces are flat-shaded from the
+  world light, with a 1.2 frame px seam stroke in their own fill.
+- `pieces[i]` lists `id`, `frame`, `display`, `pivot`, `radius` (frame px from
+  the pivot to the farthest drawn point over all frames) and `frames[k]` with
+  `file` and `bounds` (`[minX, minY, maxX, maxY]` in frame px), as Whirlpool's
+  debris does. Collision radius is Gameplay's.
+
+### The Eye
+
+`eye.json` is Art's layout of the Eye, accepted by Gameplay. World units from
+the Eye's entry; Gameplay places it in the galaxy.
+
+- `path`: the centre line, 61 points: an S-curve of amplitude 90 (`swing`)
+  along a 2600-long axis at 20 degrees on the world plane. `width` 150.
+- `gates`: the eight gates at 312 to 2132 along the axis, 260 apart, each with
+  its `point`, unit `tangent` and degrees off screen horizontal: 33.4 to 60.2,
+  every one at least the 30 Gameplay requires (the build fails otherwise).
+- `holodisk`: 60 beyond the path's end on the axis; `pack`: the drone pack's
+  point, 420 beyond the end and 60 to one side, outside the exit.
+- `eyelids`: two belts of dense debris either side of the channel forming an
+  almond: half-width `base` 70 plus `swell` 260 times `sin(pi t)` along the
+  axis, with a normal spread of 25.
+- `debris`: three rows outside each edge, pieces about 34 apart along it, the
+  first row 12 past the edge and each next 26 farther, drifting along the
+  channel at 6 to 12 world units per second.

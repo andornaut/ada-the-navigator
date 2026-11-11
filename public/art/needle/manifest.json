@@ -466,7 +466,249 @@
       "gate": "lit",
       "orientation": 4,
       "layer": "front"
+    },
+    {
+      "id": "needle-debris-plate-0",
+      "path": "/art/needle/debris-plate-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-1",
+      "path": "/art/needle/debris-plate-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-2",
+      "path": "/art/needle/debris-plate-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-3",
+      "path": "/art/needle/debris-plate-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-4",
+      "path": "/art/needle/debris-plate-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-5",
+      "path": "/art/needle/debris-plate-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-6",
+      "path": "/art/needle/debris-plate-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-plate-7",
+      "path": "/art/needle/debris-plate-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-plate"
+    },
+    {
+      "id": "needle-debris-girder-0",
+      "path": "/art/needle/debris-girder-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-1",
+      "path": "/art/needle/debris-girder-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-2",
+      "path": "/art/needle/debris-girder-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-3",
+      "path": "/art/needle/debris-girder-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-4",
+      "path": "/art/needle/debris-girder-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-5",
+      "path": "/art/needle/debris-girder-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-6",
+      "path": "/art/needle/debris-girder-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
+    },
+    {
+      "id": "needle-debris-girder-7",
+      "path": "/art/needle/debris-girder-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "front",
+      "tumbleIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "debris": "needle-debris-girder"
     }
   ],
-  "needleGates": "/art/needle/gates.json"
+  "needleGates": "/art/needle/gates.json",
+  "needleChannels": "/art/needle/channels.json",
+  "needleEye": "/art/needle/eye.json"
 }
