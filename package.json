@@ -21,6 +21,7 @@
     "internal:types": "tsc --noEmit",
     "internal:lint": "shellcheck --version && shellcheck -- tests/container/run tests/container/check tests/container/admit && shellcheck --shell=sh -- .husky/pre-commit && prettier --check . && eslint --max-warnings 0 . && markdownlint-cli2",
     "internal:test": "vitest run",
+    "internal:worlds": "node tools/test-worlds.mjs",
     "internal:build": "vite build && node tools/retain-assets.mjs",
     "internal:hooks": "node tools/hooks-smoke.mjs",
     "internal:cloudflare": "cf deploy --prebuilt --mode production --dry-run",

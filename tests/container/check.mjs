@@ -20,7 +20,7 @@ if (
 const [category, ...args] = process.argv.slice(2);
 const categories = {
   lint: ["internal:hooks", "internal:types", "internal:lint"],
-  test: ["internal:test"],
+  test: ["internal:test", "internal:worlds"],
   build: ["internal:build", "internal:cloudflare", "internal:wrangler"],
 };
 if (!Object.hasOwn(categories, category) || (category !== "test" && args.length)) {

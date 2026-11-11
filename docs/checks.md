@@ -22,6 +22,12 @@ evidence; the default output remains in owned scratch. Normal staged-file
 formatting and fixes are unchanged. `internal:*` scripts retain the direct
 commands used by the delivery runner and inner dispatcher.
 
+Tests launch flights from one pinned seed sequence (`src/test-setup.ts`), so a
+flight's world is the same on every run. The container's test category also
+runs `internal:worlds` (`tools/test-worlds.mjs`), which repeats the suite under
+three further sequences through `ADA_LAUNCH_SEED`, so a test that passes only in
+the default world fails there. `ADA_LAUNCH_SEED=<n> npm test` replays one world.
+
 ## Container profile and CI
 
 The byte-identical canonical `tests/container/run` has SHA-256

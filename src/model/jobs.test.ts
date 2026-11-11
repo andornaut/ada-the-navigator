@@ -107,10 +107,26 @@ function flyTo(model: GameModel, point: Vec, input = idle): void {
   model.state.dialogue = null;
   model.step(0.05, input);
 }
-/** Holds Ada at a point for seconds, tapping through each line; returns the instances heard. */
+/** Removes the flight's drones, their shots, hazards and moving debris: everything that damages. */
+function calm(flight: FlightState): void {
+  flight.objects = flight.objects.filter(
+    (object) => object.kind !== "enemy" && object.kind !== "hazard" && object.kind !== "debris",
+  );
+  flight.shots = flight.shots.filter((shot) => !shot.enemy);
+  flight.dangerFor = 0;
+}
+/**
+ * Holds Ada at a point for seconds in calm space, tapping through each line; returns the
+ * instances heard. The space around the point is generated first and its drones cleared, so a
+ * drone warning in the launch's world never takes the box's slot from the line listened for.
+ */
 function listen(model: GameModel, point: Vec, seconds: number): string[] {
+  const flight = model.state.flight!;
+  flight.player = { ...point };
+  stepFlight(PROTOTYPE, 0.05, idle, flight);
   const heard: string[] = [];
   for (let step = 0; step < seconds / 0.05; step++) {
+    calm(flight);
     flyTo(model, point);
     const line = model.conversation;
     if (line) {

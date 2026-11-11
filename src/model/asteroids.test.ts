@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
@@ -20,7 +20,7 @@ import { createFlight, ensureDestination, ensureStation, stepFlight } from "./fl
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, seedLaunches } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const progress: SectorProgress = {
@@ -307,23 +307,14 @@ describe("rock start frames", () => {
 });
 
 describe("asteroids in flight", () => {
-  // Launches draw their world seed from crypto; a fixed seed makes the explored chunks, and so
-  // the huge and drifting asteroids these tests rely on, the same on every run.
+  // The explored chunks, and so the huge and drifting asteroids these tests rely on, come from
+  // this launch seed.
   const LAUNCH_SEED = 173;
   function launched() {
-    const random = vi
-      .spyOn(globalThis.crypto, "getRandomValues")
-      .mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
-        (array as unknown as Uint32Array).fill(LAUNCH_SEED);
-        return array;
-      });
+    seedLaunches(LAUNCH_SEED);
     const model = new GameModel(PROTOTYPE);
-    try {
-      model.startSector(1);
-      playOpening(model);
-    } finally {
-      random.mockRestore();
-    }
+    model.startSector(1);
+    playOpening(model);
     const flight = model.state.flight!;
     expect(flight.seed).toBe(LAUNCH_SEED);
     flight.objects = flight.objects.filter((object) => object.kind !== "rock");
