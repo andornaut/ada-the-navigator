@@ -13,6 +13,12 @@
   ],
   "sprites": [
     {
+      "key": "holodisk-insert",
+      "png": "sprites/holodisk-insert.png",
+      "json": "sprites/holodisk-insert.json",
+      "once": ["insert"]
+    },
+    {
       "key": "icon-aim-controls",
       "png": "sprites/icon-aim-controls.png",
       "json": "sprites/icon-aim-controls.json",
@@ -22,6 +28,24 @@
       "key": "icon-browser-menu",
       "png": "sprites/icon-browser-menu.png",
       "json": "sprites/icon-browser-menu.json",
+      "once": []
+    },
+    {
+      "key": "icon-holodisk",
+      "png": "sprites/icon-holodisk.png",
+      "json": "sprites/icon-holodisk.json",
+      "once": []
+    },
+    {
+      "key": "icon-holodisk-20",
+      "png": "sprites/icon-holodisk-20.png",
+      "json": "sprites/icon-holodisk-20.json",
+      "once": []
+    },
+    {
+      "key": "icon-holodisk-24",
+      "png": "sprites/icon-holodisk-24.png",
+      "json": "sprites/icon-holodisk-24.json",
       "once": []
     },
     {

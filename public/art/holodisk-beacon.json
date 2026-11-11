@@ -1,0 +1,29 @@
+{
+  "frames": {
+    "holodisk-beacon 0.aseprite": {
+      "frame": { "x": 0, "y": 0, "w": 19, "h": 19 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 19, "h": 19 },
+      "sourceSize": { "w": 19, "h": 19 },
+      "duration": 600
+    },
+    "holodisk-beacon 1.aseprite": {
+      "frame": { "x": 19, "y": 0, "w": 19, "h": 19 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 19, "h": 19 },
+      "sourceSize": { "w": 19, "h": 19 },
+      "duration": 600
+    }
+  },
+  "meta": {
+    "app": "http://www.aseprite.org/",
+    "version": "1.2.30-x64",
+    "image": "holodisk-beacon.png",
+    "format": "RGBA8888",
+    "size": { "w": 38, "h": 19 },
+    "scale": "1",
+    "frameTags": [{ "name": "pulse", "from": 0, "to": 1, "direction": "forward" }]
+  }
+}

@@ -77,19 +77,6 @@ export function polyline(
   }
 }
 
-// A polyline with a round cap of the line's width on every point.
-export function roundLine(
-  image: RgbaImage,
-  points: readonly Xy[],
-  colour: Rgba,
-  width: number,
-): void {
-  polyline(image, points, colour, width, true);
-  for (const point of points) {
-    disc(image, point, width / 2, colour);
-  }
-}
-
 // Filled rounded rectangle; with `ring`, only the band `ring` px inside its edge.
 export function roundedRect(
   image: RgbaImage,

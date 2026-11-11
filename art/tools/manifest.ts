@@ -7,7 +7,7 @@ const path = fileURLToPath(new URL("../../public/art/manifest.json", import.meta
 
 // Root manifest groups after the ship and portraits, in order. A generator replaces its own
 // group in place, so each group stays contiguous and independent of the others.
-const GROUPS = ["cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"] as const;
+const GROUPS = ["cockpit", "holodisk", "quantum-jump", "stardust", "station-", "enemy-"] as const;
 
 export function placeEntries(group: (typeof GROUPS)[number], entries: readonly { id: string }[]) {
   const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };

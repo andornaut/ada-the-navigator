@@ -4,9 +4,9 @@ Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
 Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
 sector one enemy ships and their [destruction](destruction.md), the
 [station](station.md), [Stardust](stardust.md), [the rock](rock.md), the
-[cockpit background](cockpit.md) and character portraits. Other space objects
-use simple runtime shapes with the [space palette](space-palette.md): muted
-surroundings and stronger active signals.
+[cockpit background](cockpit.md), the [holodisk](holodisk.md) and character
+portraits. Other space objects use simple runtime shapes with the
+[space palette](space-palette.md): muted surroundings and stronger active signals.
 
 ## Published toolkit
 

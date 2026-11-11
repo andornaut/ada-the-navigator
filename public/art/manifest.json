@@ -1601,6 +1601,80 @@
       }
     },
     {
+      "id": "holodisk",
+      "path": "/art/holodisk.png",
+      "width": 44,
+      "height": 11,
+      "displayWidth": 11,
+      "displayHeight": 11,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 11,
+      "frameHeight": 11,
+      "frames": {
+        "rest": 0,
+        "turn1": 1,
+        "edge": 2,
+        "turn2": 3
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "rest",
+          "ms": 600
+        },
+        {
+          "frame": 1,
+          "name": "turn1",
+          "ms": 70
+        },
+        {
+          "frame": 2,
+          "name": "edge",
+          "ms": 70
+        },
+        {
+          "frame": 3,
+          "name": "turn2",
+          "ms": 70
+        }
+      ]
+    },
+    {
+      "id": "holodisk-beacon",
+      "path": "/art/holodisk-beacon.png",
+      "width": 38,
+      "height": 19,
+      "displayWidth": 19,
+      "displayHeight": 19,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 19,
+      "frameHeight": 19,
+      "frames": {
+        "base": 0,
+        "bright": 1
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "base",
+          "ms": 600
+        },
+        {
+          "frame": 1,
+          "name": "bright",
+          "ms": 600
+        }
+      ]
+    },
+    {
       "id": "stardust",
       "path": "/art/stardust.png",
       "width": 36,
