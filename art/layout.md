@@ -22,24 +22,24 @@ the value currently lives, in CSS px.
 | Safe rect      | Edge moved in by `max(m, inset)` | The shared safe-margin clamp: margin `m` from the view edge, never inside an inset | `safeRect(insets, m, view)`, `playView.ts`, to implement |
 
 - Measure all UI in logical px. The Phaser canvas draws the logical view
-  (`Scale.EXPAND`) with its backing store at device px. The DOM overlay root
+  (`Scale.EXPAND`) at the backing resolution below. The DOM overlay root
   carries the same factor `s` as the CSS variable `--ada-unit` (one logical px
   in CSS px), updated on resize and orientation change; every size is
   `calc(var(--ada-unit) * N)` through the layout helpers. The root is not
   transform-scaled, so text stays crisp and hit testing stays native. Layout
   code reads and writes logical px only.
 - Sampling follows the asset kind:
+  - The WebGL backing store is `min(devicePixelRatio, 2)` times the CSS size;
+    above a ratio of 2 the canvas upscales with CSS
+    `image-rendering: pixelated`.
   - SVG and vector textures rasterize at display size times
     `min(devicePixelRatio, 2)` and draw with linear filtering.
-  - Authored pixel sprites keep nearest-neighbour filtering per texture.
-    Small static UI pixel art (portraits, the Stardust icon, PNG HUD, weapon
-    and shop glyphs, the `ui-pause` fallback) draws at the largest whole
-    device scale that fits its slot, at least 1, centred in the slot. World
-    sprites under the camera zoom and full-screen rooms and backgrounds keep
-    their fractional scale.
+  - Authored pixel sprites, world and UI alike (portraits, icons, HUD glyphs),
+    draw with nearest-neighbour filtering at their fractional scale.
   - The camera zoom is `min(devicePixelRatio, 2)` times the fit scale and may
     be fractional; there is no integer world zoom or letterbox.
-  - Text renders at device resolution.
+  - Text and chrome render through the shared full-ratio overlay canvas from
+    game-kit, not Phaser Text, with linear filtering.
   - Line widths, keylines and outlines stay in logical px at every ratio.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
   narrower, 779 on an 844x390 phone). The game area is the centred 2:1 play
