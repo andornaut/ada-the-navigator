@@ -125,33 +125,7 @@ button:disabled {
 #game-status:empty {
   display: none;
 }
-.travel-panel {
-  position: absolute;
-  z-index: 3;
-  top: 155px;
-  right: max(12px, var(--inset-right));
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: min(210px, 45%);
-  max-height: 40%;
-  overflow-y: auto;
-  font-size: 13px;
-  padding: 6px;
-  background: #101010c9;
-}
-.travel-panel span {
-  margin-top: 8px;
-}
-.travel-panel p {
-  margin: 0;
-  line-height: 1.4;
-}
 @container (max-height: 500px) {
-  .travel-panel {
-    top: 85px;
-    max-height: 30%;
-  }
   #game-status {
     top: 70px;
   }

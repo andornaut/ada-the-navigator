@@ -74,7 +74,7 @@ describe("prototype story and persistence", () => {
     talk(resumed, "growers");
     expect(resumed.state.progress[1].questItem).toBe("food");
   });
-  it("completes the delivery chain at the workshop and converges both Toronto responses", () => {
+  it("completes the delivery chain at the workshop and converges both responses at home", () => {
     for (const choice of ["0", "1"]) {
       const model = new GameModel(PROTOTYPE);
       model.startSector(1);

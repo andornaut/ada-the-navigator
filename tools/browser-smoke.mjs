@@ -30,6 +30,38 @@ try {
   page = await context.newPage();
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
+  // Settings: its own button on the start screen; in play it opens from the Paused card, which
+  // the pause button (a touch control) or Escape opens.
+  async function openPause() {
+    const button = page.locator('[data-action="pause"]');
+    if (await button.isVisible()) {
+      await button.click();
+    } else {
+      await page.keyboard.press("Escape");
+    }
+    await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  }
+  async function openSettings() {
+    const own = page.locator('[data-action="settings"]');
+    if (await own.isVisible()) {
+      await own.click();
+    } else {
+      await openPause();
+      await page.locator('[data-action="pause-settings"]').click();
+    }
+    await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
+  }
+  // Settings opened in play closes back to the Paused card; Resume returns to play.
+  async function resumeIfPaused() {
+    const resume = page.locator('[data-action="pause-resume"]');
+    if (await resume.isVisible()) {
+      await resume.click();
+    }
+  }
+  async function closeSettings() {
+    await closeSettings();
+    await resumeIfPaused();
+  }
   function observe(observed) {
     observed.on("pageerror", (error) => events.errors.push(error.message));
     observed.on("console", (message) => {
@@ -269,12 +301,12 @@ try {
 
   await page.keyboard.down("d");
   try {
-    await page.locator('[data-action="settings"]').click();
+    await openSettings();
     await page.locator('[data-action="close-settings"]').waitFor({ state: "visible" });
     const paused = await position();
     await page.waitForTimeout(250);
     assert.deepEqual(await position(), paused, "Settings must pause movement");
-    await page.locator('[data-action="close-settings"]').click();
+    await closeSettings();
     await waitForRest(await position());
   } finally {
     await page.keyboard.up("d");
@@ -379,7 +411,7 @@ try {
   const { CHEAT_COPY } = await import(new URL("../src/data/cheat-copy.ts", import.meta.url));
   await page.keyboard.down("d");
   try {
-    await page.locator('[data-action="settings"]').click();
+    await openSettings();
     await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
     const cheatDialog = page.getByRole("dialog", { name: CHEAT_COPY.title, exact: true });
     await cheatDialog.waitFor({ state: "visible" });
@@ -423,12 +455,13 @@ try {
     }
     await page.screenshot({ path: `${output}/cheats.png` });
     await cheatDialog.getByRole("button", { name: CHEAT_COPY.close, exact: true }).click();
+    await resumeIfPaused();
   } finally {
     await page.keyboard.up("d");
   }
   await waitForRest(await position());
   await seedOnce(safeSerialized, "ada-browser.before-installed-guard.v1");
-  await page.locator('[data-action="settings"]').click();
+  await openSettings();
   await page.getByRole("button", { name: CHEAT_COPY.open, exact: true }).click();
   // Exercise the iOS installed-window signal without installing or launching a PWA.
   await page.evaluate(() => {
@@ -479,14 +512,14 @@ try {
     return saved;
   }, storageKey);
   try {
-    await page.locator('[data-action="settings"]').click();
+    await openSettings();
     const warning = page
       .getByRole("status")
       .filter({ hasText: PROTOTYPE.labels.savingUnavailable });
     await warning.waitFor({ state: "visible" });
     assert.equal(await warning.count(), 1, "Save failure must have one accessible status");
     assert.equal(await warning.getAttribute("id"), "save-status");
-    await page.locator('[data-action="close-settings"]').click();
+    await closeSettings();
     const blockedPosition = await position();
     await page.keyboard.down("d");
     try {
@@ -528,7 +561,7 @@ try {
       delete window.__adaOriginalSetItem;
     });
   }
-  await page.locator('[data-action="settings"]').click();
+  await openSettings();
   await page.waitForFunction((key) => {
     const saved = JSON.parse(localStorage.getItem(key));
     const status = document.querySelector("#game-status");
@@ -538,7 +571,7 @@ try {
       saved?.flight?.player.y === Number(status.dataset.y)
     );
   }, storageKey);
-  await page.locator('[data-action="close-settings"]').click();
+  await closeSettings();
   await contextControlProof(1, "recovered flight");
   events.checks.push(
     "Blocked browser storage preserves gameplay and last save; " +
@@ -554,7 +587,25 @@ try {
   dangerInput.state.flight.objects = [];
   dangerInput.state.flight.shots = [];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
-  await page.locator('[data-action="return-home"]:disabled').waitFor({ state: "visible" });
+  await openPause();
+  const refused = await Promise.all(
+    ["travel", "returnHome"].map((action) =>
+      page.locator(`[data-action="pause-${action}"]`).getAttribute("aria-disabled"),
+    ),
+  );
+  assert.deepEqual(refused, ["true", "true"], "Travel and Return home refuse in danger");
+  await page
+    .locator('[data-dialog="pause"]')
+    .getByText(PROTOTYPE.labels.travelUnavailable, { exact: true })
+    .waitFor({ state: "visible" });
+  await page.locator('[data-action="pause-returnHome"]').click();
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator('#game-status[data-mode="space"]').count(),
+    1,
+    "A refused Return home keeps the flight",
+  );
+  await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
     "Danger blocks travel and exposes no inapplicable or duplicate contextual control",
@@ -728,7 +779,7 @@ try {
       document.querySelector('[data-weapon="missiles"]')?.getAttribute("aria-pressed") === "true",
   );
   assert.deepEqual((await readSave()).flight.ownedWeapons, ["missiles", "tripleLaser"]);
-  await page.locator('[data-action="settings"]').click();
+  await openSettings();
   assert.ok(await missileButton.isDisabled(), "Settings must disable weapon selection");
   const pausedWeapon = (await readSave()).flight.weapon;
   await page.locator('[data-weapon="tripleLaser"]').evaluate((button) => button.click());
@@ -737,7 +788,7 @@ try {
     pausedWeapon,
     "A disabled weapon must not change selection behind the modal",
   );
-  await page.locator('[data-action="close-settings"]').click();
+  await closeSettings();
   await page.locator('[data-weapon="tripleLaser"]').click();
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "tripleLaser",
@@ -769,25 +820,28 @@ try {
       bar.height <= 4,
     "Shield meter must span the bottom of the game frame at about three CSS pixels",
   );
-  const gear = page.locator('[data-action="settings"]');
-  assert.ok((await gear.getAttribute("aria-label"))?.length, "Gear requires an accessible name");
-  const gearImage = await gear.evaluate(
+  const pauseButton = page.locator('[data-action="pause"]');
+  assert.equal(await pauseButton.getAttribute("aria-label"), PROTOTYPE.labels.pause);
+  const pauseImage = await pauseButton.evaluate(
     (node) => getComputedStyle(node, "::before").backgroundImage,
   );
-  assert.ok(gearImage.includes("/art/ui/sprites/icon-settings-nav.png"));
+  assert.ok(pauseImage.includes("/art/ui/sprites/ui-pause.png"));
   assert.equal(
-    (
-      await page.request.get("http://ada-preview:4173/art/ui/sprites/icon-settings-nav.png")
-    ).status(),
+    (await page.request.get("http://ada-preview:4173/art/ui/sprites/ui-pause.png")).status(),
     200,
-    "The real settings icon resource must be served",
+    "The real pause button resource must be served",
+  );
+  assert.equal(
+    await page.locator('[data-action="settings"]').isVisible(),
+    false,
+    "Play shows no settings button; Settings opens from the Paused card",
   );
   assert.equal(
     (await readSave()).flight.ammo,
     0,
     "Actual firing must retain zero legacy ammo without consuming the unlimited upgrade",
   );
-  save("weapon-icons-proof.json", { weaponImages, gearImage });
+  save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
     "Owned unlimited weapons support accessible selection, reload, modal guards and a full-width shield meter",
@@ -1046,7 +1100,7 @@ try {
   const serialized = fixture.save();
   assert.deepEqual(new GameModel(PROTOTYPE, serialized).state, fixture.state);
   save("resolution-fixture.json", {
-    scope: "Completed-quest save fixture for Toronto resolution UI boundary only",
+    scope: "Completed-quest save fixture for home resolution UI boundary only",
     state: JSON.parse(serialized),
   });
   await seedOnce(serialized, "ada-browser.resolution-fixture.v1");
@@ -1054,7 +1108,7 @@ try {
   await contextControlProof(0, "home resolution");
   const choices = page.locator('[data-action="dialogue-choice"]');
   await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
-  assert.equal(await choices.count(), 2, "Toronto resolution must offer both real choices");
+  assert.equal(await choices.count(), 2, "home resolution must offer both real choices");
   await page.screenshot({ path: `${output}/resolution.png` });
   await choices.nth(1).click();
   await page.getByText(PROTOTYPE.chapters[1].closing, { exact: true }).waitFor();
@@ -1063,12 +1117,12 @@ try {
   await choices.first().click();
   const nextSector = page.locator('[data-action="start-sector"][data-sector="2"]');
   await nextSector.waitFor({ state: "visible" });
-  assert.ok(await nextSector.isEnabled(), "Toronto resolution must unlock sector two");
+  assert.ok(await nextSector.isEnabled(), "home resolution must unlock sector two");
   await page.waitForFunction((key) => {
     const state = JSON.parse(localStorage.getItem(key));
     return state?.progress[1].resolved && state.unlocked.includes(2);
   }, storageKey);
-  events.checks.push("Fixture-based Toronto resolution and closing unlock the next sector UI");
+  events.checks.push("Fixture-based home resolution and closing unlock the next sector UI");
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
     import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
@@ -1333,7 +1387,7 @@ try {
       "and missile with renderer screenshots",
   );
 
-  await page.locator('[data-action="settings"]').click();
+  await openSettings();
   const toggles = [];
   async function toggleSetting(key) {
     const label = PROTOTYPE.labels[key];
@@ -1350,8 +1404,8 @@ try {
   await toggleSetting("sound");
   await toggleSetting("reducedMotion");
   await page.screenshot({ path: `${output}/combat-settings.png` });
-  await page.locator('[data-action="close-settings"]').click();
-  await page.locator('[data-action="settings"]').click();
+  await closeSettings();
+  await openSettings();
   async function restoreSetting({ initial, key, toggled }) {
     const checkbox = page.getByRole("switch", { name: PROTOTYPE.labels[key], exact: true });
     assert.equal(await checkbox.isChecked(), toggled, `${key} survives dialog reopening`);
@@ -1361,7 +1415,7 @@ try {
   await restoreSetting(toggles[1]);
   await restoreSetting(toggles[2]);
   await restoreSetting(toggles[3]);
-  await page.locator('[data-action="close-settings"]').click();
+  await closeSettings();
   save("combat-settings-proof.json", {
     scope:
       "Checkbox interaction and dialog-state proof only; audio output and shake intensity unmeasured",
@@ -1419,17 +1473,17 @@ try {
   await portraitWeapon.waitFor({ state: "visible" });
   const turnedControls = await page.evaluate(() => {
     const weapon = document.querySelector('button[data-weapon="basic"]').getBoundingClientRect();
-    const gear = document.querySelector('[data-action="settings"]').getBoundingClientRect();
+    const pause = document.querySelector('[data-action="pause"]').getBoundingClientRect();
     const canvas = document.querySelector("canvas").getBoundingClientRect();
     const inverse = new DOMMatrixReadOnly(getComputedStyle(document.body).transform).inverse();
     const relative = new DOMPoint(
-      weapon.x + weapon.width / 2 - gear.x - gear.width / 2,
-      weapon.y + weapon.height / 2 - gear.y - gear.height / 2,
+      weapon.x + weapon.width / 2 - pause.x - pause.width / 2,
+      weapon.y + weapon.height / 2 - pause.y - pause.height / 2,
       0,
       0,
     ).matrixTransform(inverse);
     return {
-      leftOfGear: relative.x,
+      rightOfPause: relative.x,
       rowOffset: relative.y,
       insideCanvas:
         weapon.left >= canvas.left - 1 &&
@@ -1442,8 +1496,8 @@ try {
     };
   });
   assert.ok(
-    turnedControls.leftOfGear < 0 && Math.abs(turnedControls.rowOffset) < 16,
-    "Turned weapon selector must remain left of the gear on the same landscape row",
+    turnedControls.rightOfPause > 0 && Math.abs(turnedControls.rowOffset) < 16,
+    "Turned weapon selector must sit right of the pause button on the same landscape row",
   );
   assert.ok(
     turnedControls.insideCanvas,
@@ -1510,7 +1564,7 @@ try {
     portraitRest,
     "Portrait touch release cancels mapped movement",
   );
-  await page.locator('[data-action="settings"]').click();
+  await openSettings();
   await page
     .getByRole("switch", { name: PROTOTYPE.labels.sound, exact: true })
     .waitFor({ state: "visible" });
@@ -1518,7 +1572,7 @@ try {
     .getByRole("switch", { name: PROTOTYPE.labels.reducedMotion, exact: true })
     .waitFor({ state: "visible" });
   await page.screenshot({ path: `${output}/portrait-settings.png` });
-  await page.locator('[data-action="close-settings"]').click();
+  await closeSettings();
   save("portrait-proof.json", {
     scope:
       "Real mobile context, landscape frame rotation and mapped twin-touch input " +

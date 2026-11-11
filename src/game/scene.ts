@@ -178,17 +178,7 @@ export class PrototypeScene extends Phaser.Scene {
     };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
-      home: () => {
-        if (!this.model.inDanger) {
-          apply(() => this.model.returnHome());
-        }
-      },
       start: (sector) => apply(() => this.model.startSector(sector)),
-      teleport: (id) => {
-        if (!this.model.inDanger) {
-          apply(() => this.model.teleport(id));
-        }
-      },
     });
     this.controls = createControls(this, {
       cheats: {
@@ -250,6 +240,30 @@ export class PrototypeScene extends Phaser.Scene {
         if (!this.settingsOpen && this.model.state.mode === "space" && !this.model.state.dialogue) {
           apply(() => this.model.selectWeapon(weapon));
         }
+      },
+      // Navigation lives in the Paused card; both refuse while Ada is in danger.
+      pause: {
+        buttonLabel: PROTOTYPE.labels.pause ?? "",
+        labels: {
+          close: PROTOTYPE.labels.close ?? "",
+          destinations: PROTOTYPE.labels.destinations ?? "",
+          resume: PROTOTYPE.labels.resume ?? "",
+          returnHome: PROTOTYPE.labels.returnHome ?? "",
+          settings: PROTOTYPE.labels.settings ?? "",
+          title: PROTOTYPE.labels.pauseTitle ?? "",
+          travel: PROTOTYPE.labels.travel ?? "",
+          travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
+        },
+        onReturnHome: () => {
+          if (!this.model.inDanger) {
+            apply(() => this.model.returnHome());
+          }
+        },
+        onTravel: (id) => {
+          if (!this.model.inDanger) {
+            apply(() => this.model.teleport(id));
+          }
+        },
       },
       shieldLabel: PROTOTYPE.labels.shield ?? "",
       update: {
@@ -356,11 +370,12 @@ export class PrototypeScene extends Phaser.Scene {
       startScreenShown(start);
     }
     this.armBack();
-    this.shell.render(state, {
+    this.controls.setSettingsButton(state.mode !== "space");
+    this.controls.setTravel({
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,
-      objective: this.model.objective,
     });
+    this.shell.render(state);
   }
 
   // Back stays on the game except on the start screen with nothing open, where it is the browser's.

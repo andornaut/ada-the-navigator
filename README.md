@@ -1,7 +1,7 @@
 # Ada the Navigator
 
-A browser-game prototype combining space exploration with interactive Toronto
-stories. Built with Phaser, TypeScript and Vite using the shared art-kit,
+A browser-game prototype combining space exploration with interactive stories
+at home. Built with Phaser, TypeScript and Vite using the shared art-kit,
 game-kit and delivery-kit.
 
 ## Prototype scope
@@ -12,13 +12,13 @@ rules. This is an untuned prototype for gameplay testing.
 Three story sectors are designed:
 
 - Cooperating outposts: connect growers, a workshop and salvagers, then help start
-  a community garden in Toronto.
+  a community garden at home.
 - Mining hub: collect and deposit resources, support a miner facing intimidation,
   then help Ada and her friends include a child at school.
 - Whale family: clear debris, locate the whale's family and relay coordinates,
   then help Ada understand her dog's need to explore.
 
-Space quests and their Toronto resolutions unlock sectors in order. Completed
+Space quests and their resolutions at home unlock sectors in order. Completed
 sectors remain replayable. Sector four's conclusion is deferred and has no
 playable story. See [dialogue and objectives](gameplay/prototype-copy.md).
 

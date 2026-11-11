@@ -136,6 +136,11 @@ const STYLE = `
   gap:4px
 }
 
+/* Without the settings button (in play) the weapon buttons keep the top-right corner. */
+.ada-controls.ada-no-settings-button .ada-weapon-selector{
+  right:max(8px,var(--inset-right))
+}
+
 .ada-controls .ada-weapon-selector button{
   width:48px;
   height:48px;

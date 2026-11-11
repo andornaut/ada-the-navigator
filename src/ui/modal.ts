@@ -1,4 +1,5 @@
 import { CARD, cardHeaderLayout, cardTitleReserve, cardWidth } from "./card-layout.ts";
+import { PAUSE_BUTTON, pauseButtonPlacement } from "./pause.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
 // the dark lavender palette): Settings, the install steps, the update offer, the cheats card and
@@ -212,6 +213,74 @@ export const MODAL_STYLE = `
 }
 .ada-controls .ada-button.ada-primary:disabled{
   border-image-source:var(--ui-button-primary-disabled)
+}
+
+/* An unavailable action keeps the disabled face but stays pressable, so it can refuse. */
+.ada-controls .ada-button.ada-unavailable,
+.ada-controls .ada-button.ada-unavailable:active{
+  padding:2px 14px 0;
+  color:${TEXT_TOKENS.disabledLabel};
+  background:#2f2d3d;
+  border-color:#2f2d3d;
+  border-image-source:var(--ui-button-disabled);
+  cursor:default
+}
+
+/* The shared refusal cue: a short sideways shake. */
+@keyframes ada-refuse{
+  0%,100%{transform:none}
+  25%{transform:translateX(-3px)}
+  75%{transform:translateX(3px)}
+}
+.ada-controls .ada-refuse{
+  animation:ada-refuse 90ms 2
+}
+@media (prefers-reduced-motion:reduce){
+  .ada-controls .ada-refuse{
+    animation:none
+  }
+}
+
+/* A stacked action group fills the card's body width, its faces 8px apart. */
+.ada-controls .ada-actions.ada-stack{
+  grid-auto-flow:row;
+  width:100%;
+  gap:${CARD.gap}px
+}
+
+.ada-controls .ada-card .ada-card-note{
+  margin:0;
+  text-align:center
+}
+
+/* Chibi's pause button: a 35px frame, its disc edge 8px in from the view's corner, in a 52.5px
+   press area. */
+.ada-controls .ada-pause{
+  position:absolute;
+  left:calc(max(0px,var(--inset-left)) + ${pauseButtonPlacement().press}px);
+  top:calc(max(0px,var(--inset-top)) + ${pauseButtonPlacement().press}px);
+  width:${PAUSE_BUTTON.press}px;
+  height:${PAUSE_BUTTON.press}px;
+  min-width:0;
+  min-height:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  pointer-events:auto;
+  touch-action:none
+}
+.ada-controls .ada-pause::before{
+  content:"";
+  width:${PAUSE_BUTTON.frame}px;
+  height:${PAUSE_BUTTON.frame}px;
+  background:url('/art/ui/sprites/ui-pause.png') var(--pause-frame,0px) 0;
+  background-size:${4 * PAUSE_BUTTON.frame}px ${PAUSE_BUTTON.frame}px;
+  image-rendering:pixelated
+}
+.ada-controls .ada-pause:focus-visible{${FOCUS}
 }
 
 /* Action groups sit centred in the card, one shared width per group. */

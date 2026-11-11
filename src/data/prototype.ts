@@ -57,7 +57,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Take food from the growers to the workshop.",
         "Take the workshop's tool kit to the salvagers.",
         "Bring spare parts from the salvagers to the workshop.",
-        "Return to Toronto when ready.",
+        "Return home when ready.",
       ],
       opening: [
         "Ada has gardened with her grandmother since she was little. Today, ",
@@ -67,7 +67,7 @@ export const PROTOTYPE: PrototypeContent = {
       ].join(""),
       openingChoices: ["What kind of help do they need?", "I'd like to meet the organizer."],
       resolution: [
-        "Back in Toronto, Ada asks which jobs need doing. The organizer lists ",
+        "Back home, Ada asks which jobs need doing. The organizer lists ",
         "planting, finding tools, watering and teaching new gardeners. Her ",
         "grandmother offers to help people learn.",
       ].join(""),
@@ -129,7 +129,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Keep depositing resources and talk with the miner.",
         "Speak with regular visitors about approaching together.",
         "Join the miner's approach at the hub.",
-        "Return to Toronto when ready.",
+        "Return home when ready.",
       ],
       opening: [
         "At school, Ada sees a child being pushed out of a playground game. ",
@@ -199,7 +199,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Talk with the freed whale.",
         "Explore to find the whale's family.",
         "Return to the whale and share the coordinates.",
-        "Return to Toronto when ready.",
+        "Return home when ready.",
       ],
       opening: [
         "The dog waits by the door. It's time for a walk, but Ada would ",
@@ -243,8 +243,11 @@ export const PROTOTYPE: PrototypeContent = {
     moveControls: "Move controls",
     nearbyDiscovery: "Nearby discovery",
     objective: "Objective",
+    pause: "Pause",
+    pauseTitle: "Paused",
     reducedMotion: "Reduced motion",
     resume: "Resume",
+    returnHome: "Return home",
     savingUnavailable: [
       "Couldn't save progress. You can keep playing, but recent progress may be lost ",
       "if you close the game.",
@@ -256,9 +259,8 @@ export const PROTOTYPE: PrototypeContent = {
     soundNote: "Mutes sound effects",
     start: "Begin",
     talk: "Talk",
-    toronto: "Toronto",
     travel: "Travel",
-    travelUnavailable: "Travel is unavailable while you are in danger.",
+    travelUnavailable: "Unavailable while you are in danger.",
     use: "Use",
     weapon: "Weapon",
     weaponBasic: "Basic",

@@ -5,8 +5,6 @@ import type { GameState } from "../model/types.ts";
 export interface ShellActions {
   start: (sector: SectorId) => void;
   choose: (id: string) => void;
-  home: () => void;
-  teleport: (id: string) => void;
 }
 
 function button(label: string, action: () => void): HTMLButtonElement {
@@ -17,17 +15,10 @@ function button(label: string, action: () => void): HTMLButtonElement {
   return node;
 }
 
-export interface ShellView {
-  objective: string;
-  inDanger: boolean;
-  destinations: { id: string; label: string }[];
-}
-
 export class StoryShell {
   private readonly savingStatus = document.createElement("div");
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
-  private readonly travel = document.createElement("nav");
   private signature = "";
 
   private readonly actions: ShellActions;
@@ -42,12 +33,10 @@ export class StoryShell {
     this.status.setAttribute("role", "status");
     this.status.setAttribute("aria-live", "polite");
     this.panel.className = "story-panel";
-    this.travel.className = "travel-panel";
-    this.travel.setAttribute("aria-label", PROTOTYPE.labels.destinations ?? "");
-    document.getElementById("app")?.append(this.status, this.savingStatus, this.panel, this.travel);
+    document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
   }
 
-  render(state: GameState, view: ShellView): void {
+  render(state: GameState): void {
     const { flight } = state;
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
@@ -58,8 +47,6 @@ export class StoryShell {
       state.selectedSector,
       state.unlocked,
       state.dialogue,
-      view.destinations,
-      view.inDanger,
     ]);
     if (nextSignature === this.signature) {
       return;
@@ -69,9 +56,7 @@ export class StoryShell {
     const focusedAction = active?.dataset.action;
     const focusedChoice = active?.dataset.choice;
     this.panel.replaceChildren();
-    this.travel.replaceChildren();
     this.panel.hidden = state.mode === "space" && !state.dialogue;
-    this.travel.hidden = state.mode !== "space" || Boolean(state.dialogue);
     if (state.dialogue) {
       const heading = document.createElement("h2");
       heading.textContent = state.dialogue.title;
@@ -105,26 +90,6 @@ export class StoryShell {
       deferred.textContent = PROTOTYPE.labels.deferred ?? "";
       this.panel.append(deferred);
     }
-    if (!this.travel.hidden) {
-      const home = button(PROTOTYPE.labels.toronto ?? "", this.actions.home);
-      home.dataset.action = "return-home";
-      home.disabled = view.inDanger;
-      this.travel.append(home);
-      const title = document.createElement("span");
-      title.textContent = PROTOTYPE.labels.destinations ?? "";
-      this.travel.append(title);
-      for (const { id, label } of view.destinations) {
-        const node = button(label, () => this.actions.teleport(id));
-        node.disabled = view.inDanger;
-        node.dataset.destination = id;
-        this.travel.append(node);
-      }
-      if (view.inDanger) {
-        const hint = document.createElement("p");
-        hint.textContent = PROTOTYPE.labels.travelUnavailable ?? "";
-        this.travel.append(hint);
-      }
-    }
     const restore = [...this.panel.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
       focusedChoice
         ? node.dataset.choice === focusedChoice
@@ -148,6 +113,5 @@ export class StoryShell {
     this.savingStatus.remove();
     this.status.remove();
     this.panel.remove();
-    this.travel.remove();
   }
 }

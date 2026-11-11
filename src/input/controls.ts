@@ -19,6 +19,9 @@ import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
+import { createPauseButton } from "../ui/pause-button.ts";
+import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pause-card.ts";
 import {
   createSettings,
   type FeedbackSettings,
@@ -47,6 +50,12 @@ export interface ControlsOptions {
   readonly labels: SettingsLabels;
   readonly onFeedbackChange?: (settings: FeedbackSettings) => void;
   readonly onPauseChange?: (paused: boolean) => void;
+  readonly pause: {
+    readonly buttonLabel: string;
+    readonly labels: PauseLabels;
+    readonly onReturnHome: () => void;
+    readonly onTravel: (destination: string) => void;
+  };
   // Settings or the cheats card opening or closing over the start screen.
   readonly onStartCover?: (what: StartCover, covering: boolean) => void;
   readonly update?: { readonly labels: UpdateLabels; readonly offer: UpdateOffer };
@@ -65,6 +74,9 @@ export interface Controls {
   sample(): ControlSample;
   setContext(label: string | undefined): void;
   setEnabled(enabled: boolean): void;
+  // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
+  setSettingsButton(shown: boolean): void;
+  setTravel(state: PauseState): void;
   setShield(maximum: number, shield: number): void;
   setWeapons(weapons: readonly WeaponChoice[]): void;
 }
@@ -107,23 +119,53 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     onOpenChange(open) {
       options.onStartCover?.("settings", open);
+      if (!open && returnToPause && !cheatsOpening) {
+        returnToPause = false;
+        pause.open();
+      }
       syncModal();
     },
     onVisibilityChange(value) {
       visibility = value;
     },
   });
+  // Settings opened from the Paused card, and the cheats card opened from that Settings, return
+  // to the Paused card when they close.
+  let returnToPause = false;
+  let cheatsOpening = false;
   const cheats = createCheats(settings.root, settings.card, {
     ...options.cheats,
-    beforeOpen: () => settings.close(),
+    beforeOpen: () => {
+      cheatsOpening = true;
+      settings.close();
+      cheatsOpening = false;
+    },
     onOpenChange: (open) => {
       options.onStartCover?.("cheats", open);
+      if (!open && returnToPause) {
+        returnToPause = false;
+        pause.open();
+      }
       syncModal();
     },
     restoreFocus: () => settings.openButton.focus(),
   });
+  const pause = createPauseCards(settings.root, {
+    labels: options.pause.labels,
+    onOpenChange: () => syncModal(),
+    onReturnHome: () => options.pause.onReturnHome(),
+    onSettings: () => {
+      returnToPause = true;
+      settings.open();
+    },
+    onTravel: (destination) => options.pause.onTravel(destination),
+  });
+  const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
+    pause.open(),
+  );
+  let settingsButton = true;
   const modalOpen = (): boolean =>
-    settings.isOpen() || cheats.isOpen() || (update?.isOpen() ?? false);
+    settings.isOpen() || cheats.isOpen() || pause.isOpen() || (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
     settings.root.classList.toggle("ada-modal-open", open);
@@ -241,6 +283,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // through registerBack.
   const backStack = createBackStack();
   const leaveBack = [
+    backStack.register({
+      back: () => pause.close(),
+      isOpen: () => pause.isOpen() && !pause.travelOpen(),
+    }),
+    backStack.register({ back: () => pause.closeTravel(), isOpen: () => pause.travelOpen() }),
     backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
     backStack.register({
       back: () => settings.close(),
@@ -251,9 +298,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   if (update) {
     leaveBack.push(backStack.register({ back: update.defer, isOpen: update.isOpen }));
   }
-  // Back during flight with nothing open pauses, which Settings does.
+  // Back during flight with nothing open opens the Paused card.
   const onBack = () => {
-    pressBack(backStack, enabled, () => settings.open());
+    pressBack(backStack, enabled, () => pause.open());
   };
   const reset = () => state.reset();
   const keyDown = (event: KeyboardEvent) => {
@@ -261,7 +308,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       event.preventDefault();
       if (!event.repeat) {
         if (!backStack.back()) {
-          settings.open();
+          const target = escapeTarget(enabled, settingsButton);
+          if (target === "pause") {
+            pause.open();
+          } else if (target === "settings") {
+            settings.open();
+          }
         }
       }
       return;
@@ -296,6 +348,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const draw = () => {
     cheats.refresh();
     const touch = touchControlsActive(window, enabled, modalOpen());
+    pauseButton.hidden = !pauseButtonShown(coarsePointer(window), enabled, modalOpen());
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
@@ -347,6 +400,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
+      pause.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
       scene.cameras.remove(camera);
@@ -391,7 +445,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       shield.setEnabled(value);
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
+    setSettingsButton(shown) {
+      settingsButton = shown;
+      settings.openButton.hidden = !shown;
+      settings.root.classList.toggle("ada-no-settings-button", !shown);
+    },
     setShield: (maximum, value) => shield.setShield(maximum, value),
+    setTravel: (travel) => pause.setState(travel),
     setWeapons: (choices) => weapons.setWeapons(choices),
   };
   scene.events.once("shutdown", controls.dispose);
