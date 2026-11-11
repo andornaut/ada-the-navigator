@@ -22,6 +22,9 @@ export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
       return weaponItemGlyph(item.weapon);
     case "weaponUpgrade":
       return { kind: "upgrade", weapon: item.weapon };
+    // Until Art draws ammunition glyphs, a pack row shows its weapon's glyph.
+    case "ammo":
+      return weaponItemGlyph(item.weapon);
     case "track":
       return { key: TRACK_ICONS[item.track], kind: "sprite" };
     default:

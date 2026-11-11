@@ -107,6 +107,11 @@ export const HUD_BUTTON = {
   target: HIT_RULE.minTarget,
 } as const;
 
+// The ammunition count below each non-Basic weapon disc, provisional until Art places it: one
+// TYPE.label line centred on the target, its line box from 38 below the target's top (inside the
+// disc's lower edge) to 58, where the conversation box's name tab may start.
+export const HUD_AMMO_COUNT = { top: 38 } as const;
+
 // Where a disc and a glyph sit inside their target.
 // Storybook Skip: a compact secondary control apart from page navigation, in the top-right HUD
 // row centred on the row's 48 targets, one gap left of the settings button's target when it

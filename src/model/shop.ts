@@ -1,11 +1,13 @@
 import type { EconomyCatalog, UpgradeTrack, UpgradeWeapon } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import type { EconomyState } from "./types.ts";
-import { UPGRADE_WEAPONS } from "./weapons.ts";
+import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
 
 export type ShopItem =
   | { kind: "weapon"; weapon: UpgradeWeapon }
   | { kind: "weaponUpgrade"; weapon: Weapon }
+  /** One pack of an owned upgrade weapon's ammunition. */
+  | { kind: "ammo"; weapon: UpgradeWeapon }
   | { kind: "track"; track: UpgradeTrack }
   | { kind: "paint"; scheme: string };
 export type ShopTab = "weapons" | "ship";
@@ -88,6 +90,17 @@ export function shopRow(catalog: EconomyCatalog, economy: EconomyState, item: Sh
       price: owned ? null : catalog.weaponPrices[item.weapon],
     };
   }
+  if (item.kind === "ammo") {
+    // Packs never sell out; only an owned weapon's ammunition is for sale.
+    const owned = economy.ownedWeapons.includes(item.weapon);
+    return {
+      inUse: false,
+      item,
+      level: null,
+      owned: false,
+      price: owned ? catalog.ammo.packPrice : null,
+    };
+  }
   if (item.kind === "paint") {
     const scheme = catalog.paints[item.scheme];
     const owned = economy.paints.includes(item.scheme) || item.scheme === catalog.defaultPaint;
@@ -123,7 +136,8 @@ export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
 
 /**
  * A tab's rows. Weapons lists the upgrade weapons, then an upgrade row for Basic and
- * each owned upgrade weapon. Ship lists the upgrade tracks, then the paint schemes.
+ * each owned upgrade weapon, then an ammunition row for each owned upgrade weapon. Ship
+ * lists the upgrade tracks, then the paint schemes.
  */
 export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: ShopTab): ShopRow[] {
   const items: ShopItem[] =
@@ -133,6 +147,9 @@ export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: Sh
           ...(["basic", ...UPGRADE_WEAPONS] as const)
             .filter((weapon) => weaponOwned(economy, weapon))
             .map((weapon): ShopItem => ({ kind: "weaponUpgrade", weapon })),
+          ...UPGRADE_WEAPONS.filter((weapon) => weaponOwned(economy, weapon)).map(
+            (weapon): ShopItem => ({ kind: "ammo", weapon }),
+          ),
         ]
       : [
           ...SHIP_TRACKS.map((track): ShopItem => ({ kind: "track", track })),
@@ -171,6 +188,11 @@ export function buy(
   switch (item.kind) {
     case "weapon":
       economy.ownedWeapons.push(item.weapon);
+      // A new weapon includes its packs, on top of any ammunition kept from before.
+      addPacks(catalog, item.weapon, catalog.ammo.grantPacks, economy.ammo);
+      break;
+    case "ammo":
+      addPacks(catalog, item.weapon, 1, economy.ammo);
       break;
     case "weaponUpgrade":
       economy.levels.weapons[item.weapon]++;
@@ -249,6 +271,11 @@ export function itemName(
       return weaponName(labels, item.weapon);
     case "weaponUpgrade":
       return fill(labels.weaponUpgrade ?? "", { weapon: weaponName(labels, item.weapon) });
+    case "ammo":
+      return fill(labels.ammoPack ?? "", {
+        count: catalog.ammo.pack[item.weapon],
+        weapon: weaponName(labels, item.weapon),
+      });
     case "track":
       return labels[TRACK_LABELS[item.track]] ?? "";
     default:

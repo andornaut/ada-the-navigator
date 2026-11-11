@@ -1,13 +1,16 @@
 import type { Weapon } from "../data/types.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
-import { fromHudEdge, units } from "./layout/css.ts";
-import { HUD_BUTTON } from "./layout/playView.ts";
+import { font, fromHudEdge, units } from "./layout/css.ts";
+import { HUD_AMMO_COUNT, HUD_BUTTON } from "./layout/playView.ts";
+import { TYPE } from "./layout/tokens.ts";
 import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
   readonly id: Weapon;
   readonly selected: boolean;
+  /** Shots left; null for Basic, which shows no count. */
+  readonly ammo: number | null;
 }
 
 export interface WeaponLabels {
@@ -22,19 +25,41 @@ interface WeaponSelectorOptions {
   readonly reducedMotion: () => boolean;
 }
 
-export type WeaponButtonState = "idle" | "selected";
+export type WeaponButtonState = "empty" | "idle" | "selected";
 
-/** Art's HUD button states: the selected weapon, and every other owned weapon idle. */
+/**
+ * Art's HUD button states: the selected weapon, an unselected weapon with no ammunition left,
+ * and every other owned weapon idle.
+ */
 export function weaponButtonState(choice: WeaponChoice): WeaponButtonState {
-  return choice.selected ? "selected" : "idle";
+  if (choice.selected) {
+    return "selected";
+  }
+  return choice.ammo === 0 ? "empty" : "idle";
+}
+
+/**
+ * A weapon's ammunition count in at most four characters: the exact number to 9999, then
+ * whole thousands from 10k to 999k, then whole millions from 1m to 999m.
+ */
+export function ammoCount(shots: number): string {
+  const whole = Math.max(0, Math.floor(shots));
+  if (whole <= 9999) {
+    return String(whole);
+  }
+  if (whole < 1_000_000) {
+    return `${Math.floor(whole / 1000)}k`;
+  }
+  return `${Math.min(999, Math.floor(whole / 1_000_000))}m`;
 }
 
 // Each state's disc face, its ink edge (an annulus when selected) and glyph colour
-// (art/controls.md "Top-right HUD icon buttons").
+// (art/controls.md "Top-right HUD icon buttons"). The empty state draws as idle until Art
+// specifies it; its count reads 0.
 export const HUD_DISC_STATES = {
   idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
   selected: { edge: HUD_BUTTON.annulus, face: "#bfa06f", glyph: "#181425" },
-} as const satisfies Record<WeaponButtonState, unknown>;
+} as const satisfies Record<Exclude<WeaponButtonState, "empty">, unknown>;
 
 const INK = "#181425";
 
@@ -114,6 +139,19 @@ export const WEAPON_STYLE = `
   gap:${units(HUD_BUTTON.gap)}
 }
 ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
+.ada-controls .ada-weapon{
+  position:relative
+}
+.ada-controls .ada-ammo{
+  position:absolute;
+  left:50%;
+  top:${units(HUD_AMMO_COUNT.top)};
+  transform:translateX(-50%);
+  font:${font(TYPE.label)};
+  white-space:nowrap;
+  color:${HUD_DISC_STATES.idle.glyph};
+  pointer-events:none
+}
 .ada-controls .ada-weapon[data-state=selected]{
   color:${HUD_DISC_STATES.selected.glyph};
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
@@ -158,6 +196,12 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         disc.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
         disc.setAttribute("aria-hidden", "true");
         button.append(disc);
+        if (choice.ammo !== null) {
+          const count = document.createElement("span");
+          count.className = "ada-ammo";
+          count.setAttribute("aria-hidden", "true");
+          button.append(count);
+        }
         button.addEventListener("click", () => {
           // A switch during the wait after the last one is refused with the shared cue.
           if (enabled && !button.disabled && options.onSelect(choice.id)) {
@@ -169,6 +213,10 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         buttons.set(choice.id, entry);
       }
       const name = options.labels.names[choice.id];
+      const count = entry.querySelector(".ada-ammo");
+      if (count && choice.ammo !== null) {
+        count.textContent = ammoCount(choice.ammo);
+      }
       entry.setAttribute("aria-label", name);
       entry.setAttribute("aria-pressed", String(choice.selected));
       entry.dataset.state = weaponButtonState(choice);

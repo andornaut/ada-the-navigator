@@ -69,6 +69,7 @@ describe("prototype story and persistence", () => {
     model.state.flight!.cargo = 3;
     model.state.flight!.shield = 43;
     model.state.flight!.weapon = "rapidMissile";
+    model.state.flight!.ammo.rapidMissile = 200;
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
     const saved = model.save();

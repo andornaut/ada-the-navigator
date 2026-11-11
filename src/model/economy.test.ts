@@ -19,13 +19,14 @@ import {
   itemName,
   requestPurchase,
   selectPaint,
+  shopRow,
   shopRows,
   shopRowState,
   weaponName,
 } from "./shop.ts";
 import type { EconomyState, FlightEvent, FlightInput, FlightState, SpaceObject } from "./types.ts";
 import { newEconomy, noLevels, shipTuning } from "./upgrades.ts";
-import { UPGRADE_WEAPONS } from "./weapons.ts";
+import { noAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const length = (v: { x: number; y: number }) => Math.hypot(v.x, v.y);
@@ -93,7 +94,7 @@ describe("Stardust drops", () => {
     };
     for (const [archetype, amount] of Object.entries(expected)) {
       // A roll of 0.999 never meets a weapon drop chance.
-      expect(rollEnemyDrop(ECONOMY, 1, [], archetype as EnemyArchetype, () => 0.999)).toEqual({
+      expect(rollEnemyDrop(ECONOMY, 1, archetype as EnemyArchetype, () => 0.999)).toEqual({
         stardust: amount,
         weapon: null,
       });
@@ -153,7 +154,7 @@ describe("Stardust drops", () => {
       const weapons = new Map<string, number>();
       for (let index = 0; index < draws; index++) {
         const next = dropRandom(11, `wreck:${index}`);
-        const drop = rollEnemyDrop(ECONOMY, sector, [], archetype, next);
+        const drop = rollEnemyDrop(ECONOMY, sector, archetype, next);
         if (drop.weapon) {
           weapons.set(drop.weapon, (weapons.get(drop.weapon) ?? 0) + 1);
         }
@@ -168,16 +169,14 @@ describe("Stardust drops", () => {
     },
   );
 
-  it("gives 25 Stardust instead of a dropped weapon Ada already owns", () => {
-    const owned = UPGRADE_WEAPONS;
-    let replaced = 0;
+  it("drops a weapon pickup whether or not Ada owns it, never extra Stardust", () => {
+    let dropped = 0;
     for (let index = 0; index < 8000; index++) {
-      const drop = rollEnemyDrop(ECONOMY, 2, owned, "capital", dropRandom(3, `w:${index}`));
-      expect(drop.weapon).toBeNull();
-      expect([12, 37]).toContain(drop.stardust);
-      replaced += drop.stardust === 37 ? 1 : 0;
+      const drop = rollEnemyDrop(ECONOMY, 2, "capital", dropRandom(3, `w:${index}`));
+      expect(drop.stardust).toBe(ECONOMY.enemyStardust.capital);
+      dropped += drop.weapon ? 1 : 0;
     }
-    expect(Math.abs(replaced / 8000 - 0.05)).toBeLessThan(0.01);
+    expect(Math.abs(dropped / 8000 - 0.05)).toBeLessThan(0.01);
   });
 
   it("splits every enemy drop below its cap into pickups of 1 Stardust", () => {
@@ -195,12 +194,12 @@ describe("Stardust drops", () => {
     expect(splitStardust(16, 40)).toEqual([3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2]);
   });
 
-  it("splits an asteroid into one pickup per Stardust and keeps owned-weapon bonuses whole", () => {
+  it("splits an asteroid into one pickup per Stardust and a capped drop into whole pieces", () => {
     expect(splitStardust(0, 0)).toEqual([]);
     expect(splitStardust(1, 1)).toEqual([1]);
-    const bonus = splitStardust(ECONOMY.pickupCap.swarm, 1 + ECONOMY.ownedWeaponStardust);
-    expect(bonus).toHaveLength(8);
-    expect(bonus.reduce((sum, piece) => sum + piece, 0)).toBe(26);
+    const capped = splitStardust(ECONOMY.pickupCap.swarm, 26);
+    expect(capped).toHaveLength(8);
+    expect(capped.reduce((sum, piece) => sum + piece, 0)).toBe(26);
   });
 
   it("releases a destroyed retaliator as four pickups carrying 4 Stardust", () => {
@@ -215,7 +214,6 @@ describe("Stardust drops", () => {
     const drop = rollEnemyDrop(
       ECONOMY,
       value.sector,
-      [],
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),
     );
@@ -500,9 +498,10 @@ describe("tractor beam and pickup reach", () => {
     expect(value.ownedWeapons).toEqual([]);
   });
 
-  it("turns a found weapon Ada already owns into 25 Stardust", () => {
+  it("turns a found weapon Ada already owns into one pack of its ammunition", () => {
     const value = flight();
     value.ownedWeapons = ["rapidMissile"];
+    value.ammo.rapidMissile = 7;
     value.objects.push({
       hp: 1,
       id: "w",
@@ -513,7 +512,8 @@ describe("tractor beam and pickup reach", () => {
       y: 0,
     });
     const events = stepFlight(PROTOTYPE, 0.01, idle, value);
-    expect(gained(events)).toBe(25);
+    expect(gained(events)).toBe(0);
+    expect(value.ammo.rapidMissile).toBe(7 + 200);
     expect(value.weapon).toBe("basic");
   });
 });
@@ -564,6 +564,7 @@ describe("upgrade effects", () => {
       77,
       { known: [] },
       {
+        ammo: noAmmo(),
         levels,
         ownedWeapons: [],
         weapon: "basic",
@@ -613,7 +614,7 @@ describe("upgrade effects", () => {
 describe("shop purchases", () => {
   const rich = (stardust = 5000): EconomyState => ({ ...newEconomy(ECONOMY), stardust });
 
-  it("lists weapons with prices and an upgrade row for Basic and each owned weapon", () => {
+  it("lists weapons, an upgrade row for Basic and each owned weapon, and owned ammunition", () => {
     const economy = rich();
     expect(shopRows(ECONOMY, economy, "weapons")).toEqual([
       {
@@ -665,9 +666,44 @@ describe("shop purchases", () => {
     });
     const rows = shopRows(ECONOMY, economy, "weapons");
     expect(rows[1]).toMatchObject({ owned: true, price: null });
-    expect(rows.at(-1)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
+    expect(rows.at(-2)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
+    expect(rows.at(-1)).toEqual({
+      inUse: false,
+      item: { kind: "ammo", weapon: "multiLaser" },
+      level: null,
+      owned: false,
+      price: ECONOMY.ammo.packPrice,
+    });
     expect(economy.stardust).toBe(4750);
     expect(economy.ownedWeapons).toEqual(["multiLaser"]);
+    // A bought weapon includes three packs.
+    expect(economy.ammo.multiLaser).toBe(3 * 200);
+  });
+
+  it("sells packs of an owned weapon's ammunition, never sold out, and none for others", () => {
+    const economy = rich();
+    expect(ECONOMY.ammo.pack).toEqual({
+      heavyMissile: 50,
+      multiLaser: 200,
+      phaser: 55,
+      rapidMissile: 200,
+      scattershot: 130,
+    });
+    const pack = { kind: "ammo", weapon: "phaser" } as const;
+    expect(requestPurchase(ECONOMY, economy, pack)).toEqual({
+      kind: "refused",
+      reason: "notForSale",
+    });
+    economy.ownedWeapons.push("phaser");
+    for (let count = 1; count <= 3; count++) {
+      expect(buy(ECONOMY, pack, economy)).toEqual({
+        kind: "bought",
+        price: ECONOMY.ammo.packPrice,
+      });
+      expect(economy.ammo.phaser).toBe(count * 55);
+    }
+    expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 6 });
+    expect(itemName(ECONOMY, PROTOTYPE.labels, pack)).toBe("Phaser ammo ×55");
   });
 
   it.each([

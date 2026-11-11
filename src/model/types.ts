@@ -110,6 +110,8 @@ export interface FlightState {
   grantedWeapons?: Exclude<Weapon, "basic">[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
+  /** Shots left per upgrade weapon, mirrored from the economy; granted weapons keep their own. */
+  ammo: AmmoCounts;
   /** Seconds until Ada can switch weapons again; 0 when she can. */
   weaponSwitchFor: number;
   /** The station whose dock Ada is inside; docking again needs her to leave it first. */
@@ -141,6 +143,8 @@ export interface SectorProgress {
   /** Stardust paid toward each of the galaxy's community projects, by project id. */
   donated: Record<string, number>;
 }
+/** Shots left for each upgrade weapon; Basic is unlimited. No cap. */
+export type AmmoCounts = Record<UpgradeWeapon, number>;
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
   shield: number;
@@ -154,6 +158,7 @@ export interface EconomyState {
   ownedWeapons: UpgradeWeapon[];
   weapon: Weapon;
   levels: UpgradeLevels;
+  ammo: AmmoCounts;
   paints: string[];
   paint: string;
 }
@@ -192,6 +197,8 @@ export interface GameState {
 }
 export type FlightEvent =
   | { type: "depleted" }
+  /** The equipped weapon ran out of ammunition and Ada switched to Basic. */
+  | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }
   | { type: "docked"; id: string }

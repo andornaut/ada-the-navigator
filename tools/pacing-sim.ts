@@ -5,7 +5,9 @@
  * (asteroids and discovery caches), encounter cells and their sector tables, station
  * sites, enemy and asteroid drops and pickup splitting. A scripted player explores,
  * fights encounters met in passing, shoots some asteroids and collects pickups inside
- * tractor range. Every behavioural assumption is a named, overridable parameter.
+ * tractor range. An upgrade weapon spends one shot per volley; the player tops up each owned
+ * weapon's ammunition at every station reached. Every behavioural assumption is a named,
+ * overridable parameter.
  *
  * Usage: node tools/pacing-sim.ts [--sector 1|2|3] [--seeds 50] [--minutes 90]
  *   [--scenario name] [--set key=value ...] [--json] [--real] [--weapons]
@@ -50,6 +52,7 @@ import {
 } from "../src/model/flight.ts";
 import { stationsNear } from "../src/model/stations.ts";
 import type { FlightState } from "../src/model/types.ts";
+import { addPacks, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
   /** Cruise speed while exploring, as a fraction of Ada's 200 world units per second. */
@@ -99,6 +102,11 @@ export interface Behaviour {
   guardMinutes: number[];
   /** Seconds of manoeuvring per route guard fight on top of the time spent shooting. */
   guardSeconds: number;
+  /**
+   * Packs of each owned upgrade weapon's ammunition the player tops up to at each station
+   * reached, while the balance allows; 0 never buys ammunition.
+   */
+  restockPacks: number;
 }
 
 export interface Prices {
@@ -118,7 +126,7 @@ export interface EconomyOverrides {
   enemyStardust?: Partial<Record<EnemyArchetype, number>>;
   asteroidStardust?: Partial<Record<AsteroidSize, [number, number]>>;
   discoveryStardust?: number;
-  ownedWeaponStardust?: number;
+  ammoPackPrice?: number;
   weaponDropChance?: Partial<Record<SectorId, Partial<Record<EnemyArchetype, number>>>>;
   station?: Partial<
     Pick<EconomyCatalog["station"], "cellSize" | "chance" | "indicatorRange" | "jitter">
@@ -159,11 +167,18 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   depletionChance: 0.02,
   guardMinutes: [3, 6, 9],
   guardSeconds: 8,
+  restockPacks: 3,
 };
 
 /** Named value sets for comparison; `current` changes nothing. */
 export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "name">>> = {
   current: { description: "Current data", economy: {}, prices: {} },
+  armed: {
+    description: "Typical use of the stronger weapons: Heavy Missile, Scattershot and Phaser owned",
+    economy: {},
+    prices: {},
+    startWeapons: ["heavyMissile", "scattershot", "phaser"],
+  },
 };
 
 /**
@@ -183,8 +198,8 @@ const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[
   ],
 };
 
-type Source = "enemies" | "asteroids" | "caches" | "duplicates" | "guards";
-const SOURCES: readonly Source[] = ["enemies", "asteroids", "caches", "duplicates", "guards"];
+type Source = "enemies" | "asteroids" | "caches" | "guards";
+const SOURCES: readonly Source[] = ["enemies", "asteroids", "caches", "guards"];
 const SMALL: readonly EnemyArchetype[] = ["swarm", "fighter", "interceptor", "retaliator"];
 
 interface Pickup {
@@ -249,6 +264,13 @@ export interface RunResult {
   /** Seconds at which the first upgrade weapon was found, or null. */
   weaponFoundSeconds: number | null;
   jumps: number;
+  /** Stardust spent on ammunition packs, and the packs bought. */
+  ammoSpent: number;
+  packsBought: number;
+  /** Packs gained from dropped weapons Ada already owned. */
+  duplicatePacks: number;
+  /** Times the equipped weapon ran out of ammunition. */
+  emptied: number;
   /** Balance at the end of each minute. */
   balance: number[];
 }
@@ -285,7 +307,7 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
-    ownedWeaponStardust: overrides.ownedWeaponStardust ?? ECONOMY.ownedWeaponStardust,
+    ammo: { ...ECONOMY.ammo, packPrice: overrides.ammoPackPrice ?? ECONOMY.ammo.packPrice },
     weaponDropChance: {
       1: { ...ECONOMY.weaponDropChance[1], ...overrides.weaponDropChance?.[1] },
       2: { ...ECONOMY.weaponDropChance[2], ...overrides.weaponDropChance?.[2] },
@@ -522,11 +544,14 @@ export function simulate(input: SimulationInput): RunResult {
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng())) * Math.cos(2 * Math.PI * rng());
   const result: RunResult = {
     asteroidSeconds: 0,
+    ammoSpent: 0,
     asteroidSizes: { seen: noSizes(), shot: noSizes() },
     asteroidsShot: 0,
     balance: [],
     cachesCollected: 0,
     destroyed: {},
+    duplicatePacks: 0,
+    emptied: 0,
     enemyStardust: {},
     firstWeaponSeconds: null,
     fought: {},
@@ -534,10 +559,11 @@ export function simulate(input: SimulationInput): RunResult {
     jumps: 0,
     met: {},
     minutes: input.minutes,
+    packsBought: 0,
     projectsSeconds: prices.projects.map(() => null),
     sector,
     seed: input.seed,
-    stardust: { asteroids: 0, caches: 0, duplicates: 0, enemies: 0, guards: 0 },
+    stardust: { asteroids: 0, caches: 0, enemies: 0, guards: 0 },
     stationSeconds: [],
     weaponFoundSeconds: null,
     weaponsFound: [],
@@ -559,9 +585,50 @@ export function simulate(input: SimulationInput): RunResult {
   let nextTurn = 0;
   let target: Target | null = null;
   let bucket = 0;
-  // A starting loadout carries over from earlier galaxies; its first weapon is equipped.
+  // A starting loadout carries over from earlier galaxies with a new weapon's packs each; its
+  // first weapon is equipped.
   const owned: UpgradeWeapon[] = [...input.startWeapons];
   let weapon: Weapon = owned[0] ?? "basic";
+  const ammo = noAmmo();
+  for (const each of owned) {
+    addPacks(catalog, each, catalog.ammo.grantPacks, ammo);
+  }
+  /**
+   * Spends a volley's shot for each interval of `seconds` fired with the equipped weapon. An
+   * emptied weapon switches to Basic, and the player re-equips the first owned weapon with
+   * ammunition left. A fight's remaining time keeps the weapon it started with.
+   */
+  const spend = (seconds: number) => {
+    if (weapon === "basic") {
+      return;
+    }
+    ammo[weapon] = Math.max(0, ammo[weapon] - seconds / weaponAt(weapon, 1).intervalSeconds);
+    if (ammo[weapon] === 0) {
+      result.emptied++;
+      weapon = owned.find((each) => ammo[each] > 0) ?? "basic";
+    }
+  };
+  /** Fires for `seconds` with the equipped weapon, advancing time. */
+  const shoot = (seconds: number) => {
+    spend(seconds);
+    advance(seconds);
+  };
+  /** Tops each owned weapon up to the behaviour's packs while the balance allows. */
+  const restock = () => {
+    const price = catalog.ammo.packPrice;
+    for (const each of owned) {
+      const target = behaviour.restockPacks * catalog.ammo.pack[each];
+      while (ammo[each] < target && balance >= price) {
+        balance -= price;
+        ammo[each] += catalog.ammo.pack[each];
+        result.ammoSpent += price;
+        result.packsBought++;
+      }
+    }
+    if (weapon === "basic") {
+      weapon = owned.find((each) => ammo[each] > 0) ?? "basic";
+    }
+  };
   const declined = new Set<string>();
   const stations = new Set<string>();
   let guard = 0;
@@ -605,27 +672,28 @@ export function simulate(input: SimulationInput): RunResult {
   /** Destroys one enemy and collects its drop with the player's collection efficiency. */
   const loot = (archetype: EnemyArchetype, id: string, source: Source) => {
     const next = dropRandom(flightSeed, wreckId(id));
-    const drop = rollEnemyDrop(catalog, sector, owned, archetype, next);
-    const base = catalog.enemyStardust[archetype];
+    const drop = rollEnemyDrop(catalog, sector, archetype, next);
     const pieces = splitStardust(catalog.pickupCap[archetype], drop.stardust);
     const collected = pieces.reduce(
       (sum, piece) => sum + (rng() < behaviour.dropCollection ? piece : 0),
       0,
     );
-    const share = drop.stardust ? collected / drop.stardust : 0;
-    const duplicate = (drop.stardust - base) * share;
-    earn(source, collected - duplicate);
-    if (duplicate) {
-      earn("duplicates", duplicate);
-    }
+    earn(source, collected);
     if (source === "enemies") {
-      add(result.enemyStardust, archetype, collected - duplicate);
+      add(result.enemyStardust, archetype, collected);
     }
     if (drop.weapon && rng() < behaviour.dropCollection) {
-      owned.push(drop.weapon);
-      result.weaponsFound.push(drop.weapon);
-      result.weaponFoundSeconds ??= time;
-      weapon = drop.weapon;
+      if (owned.includes(drop.weapon)) {
+        // A weapon Ada already owns gives a pack of its ammunition.
+        addPacks(catalog, drop.weapon, catalog.ammo.duplicatePacks, ammo);
+        result.duplicatePacks += catalog.ammo.duplicatePacks;
+      } else {
+        owned.push(drop.weapon);
+        addPacks(catalog, drop.weapon, catalog.ammo.grantPacks, ammo);
+        result.weaponsFound.push(drop.weapon);
+        result.weaponFoundSeconds ??= time;
+        weapon = drop.weapon;
+      }
     }
   };
   // A jump home costs only the flight: weapons and Stardust stay.
@@ -643,12 +711,11 @@ export function simulate(input: SimulationInput): RunResult {
       const packFlees = count > 1 && lost / count >= definition.morale.packLossRatio;
       const fleeing = packFlees || flee !== null;
       if (fleeing && rng() >= behaviour.fleeKillChance) {
-        advance(packFlees ? 0 : volleySeconds(behaviour, weapon, flee ?? 0));
+        shoot(packFlees ? 0 : volleySeconds(behaviour, weapon, flee ?? 0));
         continue;
       }
-      advance(
-        killSeconds(behaviour, weapon, archetype) + (fleeing ? behaviour.fleeChaseSeconds : 0),
-      );
+      shoot(killSeconds(behaviour, weapon, archetype));
+      advance(fleeing ? behaviour.fleeChaseSeconds : 0);
       lost++;
       add(result.destroyed, archetype);
       loot(archetype, `${id}:${member}`, "enemies");
@@ -698,7 +765,7 @@ export function simulate(input: SimulationInput): RunResult {
     ) {
       advance(behaviour.guardSeconds);
       guards.forEach((archetype, index) => {
-        advance(killSeconds(behaviour, weapon, archetype));
+        shoot(killSeconds(behaviour, weapon, archetype));
         add(result.destroyed, archetype);
         loot(archetype, `route:guard-${guard}:${index}`, "guards");
       });
@@ -715,6 +782,7 @@ export function simulate(input: SimulationInput): RunResult {
       if (gap <= catalog.station.safeRadius) {
         stations.add(site.id);
         result.stationSeconds.push(time);
+        restock();
         if (target?.id === site.id) {
           target = null;
         }
@@ -786,7 +854,7 @@ export function simulate(input: SimulationInput): RunResult {
         best.chunk.rocks.splice(best.chunk.rocks.indexOf(best.rock), 1);
         const seconds = asteroidKillSeconds(behaviour, sector, weapon, best.rock.size);
         result.asteroidSeconds += seconds;
-        advance(seconds);
+        shoot(seconds);
         const amount = rollAsteroidStardust(
           catalog,
           best.rock.size,
@@ -938,9 +1006,22 @@ export interface Summary {
   /** Runs that found an upgrade weapon within the first 20 and 40 minutes. */
   weaponFoundBy: { 20: number; 40: number };
   jumpsPerHour: number;
+  /** The ammunition pack price in effect. */
+  packPrice: number;
+  /** Stardust spent on ammunition per minute, and as a share of all Stardust earned. */
+  ammoSpentPerMinute: number;
+  ammoShareOfIncome: number;
+  packsPerHour: number;
+  emptiedPerHour: number;
+  duplicatePacksPerHour: number;
 }
 
-export function summarise(scenario: string, prices: Prices, runs: readonly RunResult[]): Summary {
+export function summarise(
+  scenario: string,
+  prices: Prices,
+  packPrice: number,
+  runs: readonly RunResult[],
+): Summary {
   const minutes = runs[0]?.minutes ?? 0;
   const perMinute = (values: number) => values / (runs.length * minutes);
   const times = (pick: (run: RunResult) => number | null) =>
@@ -982,13 +1063,20 @@ export function summarise(scenario: string, prices: Prices, runs: readonly RunRe
   const gaps = runs.flatMap((run) =>
     run.stationSeconds.slice(1).map((value, index) => (value - run.stationSeconds[index]!) / 60),
   );
+  const ammoSpent = runs.reduce((sum, run) => sum + run.ammoSpent, 0);
+  const perHour = (pick: (run: RunResult) => number) =>
+    perMinute(runs.reduce((sum, run) => sum + pick(run), 0)) * 60;
   return {
+    ammoShareOfIncome: income ? ammoSpent / income : 0,
+    ammoSpentPerMinute: perMinute(ammoSpent),
     asteroidSizeShare: { seen: sizeShare("seen"), shot: sizeShare("shot") },
     asteroidTimeShare:
       runs.reduce((sum, run) => sum + run.asteroidSeconds, 0) / (runs.length * minutes * 60 || 1),
     asteroidsPerMinute: perMinute(runs.reduce((sum, run) => sum + run.asteroidsShot, 0)),
     cachesPerMinute: perMinute(runs.reduce((sum, run) => sum + run.cachesCollected, 0)),
     destroyedPerMinute: byArchetype((run) => run.destroyed),
+    duplicatePacksPerHour: perHour((run) => run.duplicatePacks),
+    emptiedPerHour: perHour((run) => run.emptied),
     enemyStardustPerMinute: byArchetype((run) => run.enemyStardust),
     firstStationMinutes: distribution(times((run) => run.stationSeconds[0] ?? null)),
     firstWeaponMinutes: distribution(times((run) => run.firstWeaponSeconds)),
@@ -1000,6 +1088,8 @@ export function summarise(scenario: string, prices: Prices, runs: readonly RunRe
     jumpsPerHour: perMinute(runs.reduce((sum, run) => sum + run.jumps, 0)) * 60,
     metPerMinute: byArchetype((run) => run.met),
     minutes,
+    packPrice,
+    packsPerHour: perHour((run) => run.packsBought),
     prices,
     projectsMinutes: prices.projects.map((_, index) =>
       distribution(times((run) => run.projectsSeconds[index] ?? null)),
@@ -1079,7 +1169,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       spawnWeights,
     }),
   );
-  return { runs, summary: summarise(scenario.name, prices, runs) };
+  return { runs, summary: summarise(scenario.name, prices, catalog.ammo.packPrice, runs) };
 }
 
 export interface RealLoopResult {
@@ -1243,7 +1333,8 @@ export function formatSummary(summary: Summary): string {
   const lines = [
     `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
     `Prices: first weapon ${summary.prices.firstWeapon}, holodisk ${summary.prices.holodisk}, ` +
-      `projects ${summary.prices.projects.join(", ")} (cumulative)`,
+      `projects ${summary.prices.projects.join(", ")} (cumulative), ` +
+      `ammunition pack ${summary.packPrice}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}`,
     `Minutes to holodisk: ${formatDistribution(summary.holodiskMinutes)}; ` +
@@ -1274,6 +1365,10 @@ export function formatSummary(summary: Summary): string {
       `minutes to first found weapon: ${formatDistribution(summary.weaponFoundMinutes)}`,
     `Runs with a weapon found by 20 min: ${summary.weaponFoundBy[20]}, by 40 min: ${summary.weaponFoundBy[40]}`,
     `Jumps home/hour: ${round(summary.jumpsPerHour, 2)}`,
+    `Ammunition: ${round(summary.ammoSpentPerMinute, 2)} Stardust/min, ` +
+      `${round(summary.ammoShareOfIncome * 100, 1)}% of income; packs bought/hour ` +
+      `${round(summary.packsPerHour, 1)}, weapons emptied/hour ${round(summary.emptiedPerHour, 1)}, ` +
+      `duplicate packs/hour ${round(summary.duplicatePacksPerHour, 2)}`,
   ];
   return lines.join("\n");
 }

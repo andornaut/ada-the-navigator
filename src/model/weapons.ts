@@ -1,10 +1,12 @@
-import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
+import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
-import type { FlightState } from "./types.ts";
+import type { AmmoCounts, FlightState } from "./types.ts";
 
 export interface WeaponChoice {
   id: Weapon;
   selected: boolean;
+  /** Shots left; null for Basic, which is unlimited. An empty weapon refuses selection. */
+  ammo: number | null;
 }
 /** Shop order, cheapest first; the drop pool and the cheat grant use the same list. */
 export const UPGRADE_WEAPONS = [
@@ -14,6 +16,52 @@ export const UPGRADE_WEAPONS = [
   "scattershot",
   "phaser",
 ] as const;
+
+/** No ammunition for any upgrade weapon. */
+export function noAmmo(): AmmoCounts {
+  return { heavyMissile: 0, multiLaser: 0, phaser: 0, rapidMissile: 0, scattershot: 0 };
+}
+
+/** Adds packs of weapon's ammunition to ammo. */
+export function addPacks(
+  catalog: Pick<EconomyCatalog, "ammo">,
+  weapon: UpgradeWeapon,
+  packs: number,
+  ammo: AmmoCounts,
+): void {
+  ammo[weapon] += packs * catalog.ammo.pack[weapon];
+}
+
+/** The ammunition a new weapon includes, for each weapon in owned and none for the rest. */
+export function grantedAmmo(owned: readonly UpgradeWeapon[]): AmmoCounts {
+  const ammo = noAmmo();
+  for (const weapon of owned) {
+    addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, ammo);
+  }
+  return ammo;
+}
+
+/** Shots left for weapon, or null for Basic. */
+export function shotsLeft(weapon: Weapon, flight: Pick<FlightState, "ammo">): number | null {
+  return weapon === "basic" ? null : flight.ammo[weapon];
+}
+
+/**
+ * Spends one shot of the equipped weapon. When that empties it, Ada switches to Basic at once,
+ * ignoring the switch wait, and this returns true.
+ */
+export function spendShot(flight: FlightState): boolean {
+  if (flight.weapon === "basic") {
+    return false;
+  }
+  const left = Math.max(0, flight.ammo[flight.weapon] - 1);
+  flight.ammo[flight.weapon] = left;
+  if (left > 0) {
+    return false;
+  }
+  flight.weapon = "basic";
+  return true;
+}
 
 /** Whether a recent switch makes the next one wait (economy.weaponSwitchSeconds). */
 export function switchWaiting(flight: Pick<FlightState, "weaponSwitchFor">): boolean {
@@ -45,7 +93,7 @@ export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const choices: WeaponChoice[] = [];
   for (const id of ["basic", ...UPGRADE_WEAPONS] as const) {
     if (id === "basic" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
-      choices.push({ id, selected: flight.weapon === id });
+      choices.push({ ammo: shotsLeft(id, flight), id, selected: flight.weapon === id });
     }
   }
   return choices;
@@ -53,7 +101,8 @@ export function ownedWeapons(flight: FlightState): WeaponChoice[] {
 
 /**
  * Switches to an owned weapon at any time, including in combat. Refused, changing nothing,
- * while the wait after the last switch runs; choosing the equipped weapon always succeeds.
+ * for an empty weapon or while the wait after the last switch runs; choosing the equipped
+ * weapon always succeeds.
  */
 export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean {
   if (!ownedWeapons(flight).some((choice) => choice.id === weapon)) {
@@ -62,7 +111,7 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
   if (weapon === flight.weapon) {
     return true;
   }
-  if (switchWaiting(flight)) {
+  if (switchWaiting(flight) || shotsLeft(weapon, flight) === 0) {
     return false;
   }
   ensureOwnedWeapons(flight);
@@ -71,20 +120,23 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
 }
 
 /**
- * Adds a found weapon to the roster and equips it unless the switch wait runs. Returns
- * false, changing nothing, when Ada already owns it.
+ * Adds a found weapon to the roster with its included packs and equips it unless the switch
+ * wait runs. A weapon Ada already owns gives one pack instead; this then returns false.
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
   const owned = ensureOwnedWeapons(flight);
   // Finding a run-only granted weapon makes it really owned.
   if (flight.grantedWeapons?.includes(weapon)) {
     flight.grantedWeapons = flight.grantedWeapons.filter((entry) => entry !== weapon);
+    addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, flight.ammo);
     return true;
   }
   if (owned.includes(weapon)) {
+    addPacks(ECONOMY, weapon, ECONOMY.ammo.duplicatePacks, flight.ammo);
     return false;
   }
   owned.push(weapon);
+  addPacks(ECONOMY, weapon, ECONOMY.ammo.grantPacks, flight.ammo);
   if (!switchWaiting(flight)) {
     switchTo(weapon, flight);
   }

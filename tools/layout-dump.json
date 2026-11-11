@@ -212,6 +212,9 @@
     },
     "playView.ts": {
       "CONTROL_EDGE": 8,
+      "HUD_AMMO_COUNT": {
+        "top": 38
+      },
       "HUD_BUTTON": {
         "annulus": 4,
         "disc": 33,

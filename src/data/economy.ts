@@ -36,8 +36,17 @@ export interface EconomyCatalog {
   asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
   /** Chance per galaxy that a destroyed enemy drops a random upgrade weapon. */
   weaponDropChance: Readonly<Record<SectorId, Readonly<Record<EnemyArchetype, number>>>>;
-  /** Stardust given instead of a dropped weapon Ada already owns. */
-  ownedWeaponStardust: number;
+  /**
+   * Ammunition for every upgrade weapon (Basic is unlimited): each pack's shots, about a minute
+   * of steady fire at level 1; one shot uses one. A new weapon includes `grantPacks` packs and a
+   * found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack (provisional).
+   */
+  ammo: {
+    duplicatePacks: number;
+    grantPacks: number;
+    pack: Readonly<Record<UpgradeWeapon, number>>;
+    packPrice: number;
+  };
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
   /**
    * Prices of levels 2 and up; level 1 is the base, so the level count is each list's
@@ -105,6 +114,14 @@ const small = { fighter: 0.005, interceptor: 0.005, retaliator: 0.005, swarm: 0.
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
+  ammo: {
+    duplicatePacks: 1,
+    grantPacks: 3,
+    pack: { heavyMissile: 50, multiLaser: 200, phaser: 55, rapidMissile: 200, scattershot: 130 },
+    // The pacing sim's armed scenario: typical use of the stronger weapons costs about a sixth
+    // of Stardust income at 6.
+    packPrice: 6,
+  },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,
@@ -166,7 +183,6 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 4,
     swarm: 1,
   },
-  ownedWeaponStardust: 25,
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
     classic: { label: "paintClassic", price: 0 },

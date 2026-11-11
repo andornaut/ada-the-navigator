@@ -7,6 +7,7 @@ import {
   onScreen,
   runScenario,
   scenarioEconomy,
+  SCENARIOS,
 } from "../../tools/pacing-sim.ts";
 import { ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
@@ -222,5 +223,33 @@ describe("pacing simulation runs", () => {
     expect(summary.metPerMinute.capital ?? 0).toBeGreaterThan(0);
     // Each capital battle brings four escort fighters.
     expect(summary.destroyedPerMinute.fighter ?? 0).toBeGreaterThan(0);
+  });
+  it("spends Stardust on ammunition for upgrade weapons, in proportion to the pack price", () => {
+    const armed = (ammoPackPrice: number, restockPacks = DEFAULT_BEHAVIOUR.restockPacks) =>
+      runScenario({
+        ...options,
+        behaviour: { ...DEFAULT_BEHAVIOUR, restockPacks },
+        minutes: 45,
+        scenario: { ...SCENARIOS.armed!, behaviour: {}, economy: { ammoPackPrice }, name: "armed" },
+        seeds: 4,
+      }).summary;
+    expect(SCENARIOS.armed!.startWeapons).toEqual(["heavyMissile", "scattershot", "phaser"]);
+    const base = armed(ECONOMY.ammo.packPrice);
+    expect(base.packPrice).toBe(6);
+    expect(base.packsPerHour).toBeGreaterThan(0);
+    expect(base.ammoSpentPerMinute).toBeCloseTo(
+      (base.packsPerHour / 60) * ECONOMY.ammo.packPrice,
+      6,
+    );
+    // Typical use of the stronger weapons costs about a sixth of income.
+    expect(base.ammoShareOfIncome).toBeGreaterThan(0.1);
+    expect(base.ammoShareOfIncome).toBeLessThan(0.25);
+    expect(armed(ECONOMY.ammo.packPrice * 2).ammoSpentPerMinute).toBeGreaterThan(
+      base.ammoSpentPerMinute * 1.5,
+    );
+    // A player who never restocks spends nothing and runs out to Basic.
+    const unstocked = armed(ECONOMY.ammo.packPrice, 0);
+    expect(unstocked.ammoSpentPerMinute).toBe(0);
+    expect(unstocked.emptiedPerHour).toBeGreaterThan(0);
   });
 });

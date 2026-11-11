@@ -967,6 +967,8 @@ try {
 
   const equipment = new GameModel(PROTOTYPE, safeSerialized);
   equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
+  // Each with a new weapon's three packs.
+  Object.assign(equipment.state.flight.ammo, { multiLaser: 600, rapidMissile: 600 });
   equipment.state.flight.weapon = "basic";
   const equipmentSave = equipment.save();
   assert.deepEqual(new GameModel(PROTOTYPE, equipmentSave).state, equipment.state);
@@ -1125,15 +1127,16 @@ try {
     false,
     "Play shows no settings button; Settings opens from the Paused card",
   );
+  const savedAmmo = (await readSave()).flight.ammo;
   assert.ok(
-    !("ammo" in (await readSave()).flight),
-    "Saves carry no ammunition count; upgrades are unlimited",
+    savedAmmo.rapidMissile === 600 && savedAmmo.multiLaser < 600,
+    `Saves carry each upgrade's ammunition, one shot spent per volley: ${JSON.stringify(savedAmmo)}`,
   );
   save("weapon-icons-proof.json", { pauseImage, weaponImages });
   await page.screenshot({ path: `${output}/weapon-shield.png` });
   events.checks.push(
-    "Owned unlimited weapons support accessible selection, the switch wait's refusal, reload, " +
-      "modal guards and the status pill's shield meter",
+    "Owned upgrade weapons support accessible selection, the switch wait's refusal, saved " +
+      "ammunition, reload, modal guards and the status pill's shield meter",
   );
 
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
@@ -1191,6 +1194,11 @@ try {
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
   const weaponModel = new GameModel(PROTOTYPE, safeSerialized);
   weaponModel.state.flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
+  Object.assign(weaponModel.state.flight.ammo, {
+    multiLaser: 600,
+    rapidMissile: 600,
+    scattershot: 390,
+  });
   weaponModel.state.flight.weapon = "basic";
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];

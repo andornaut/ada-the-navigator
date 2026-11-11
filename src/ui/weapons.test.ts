@@ -5,12 +5,31 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { HUD_BUTTON } from "./layout/playView.ts";
-import { HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState } from "./weapons.ts";
+import { ammoCount, HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState } from "./weapons.ts";
 
 describe("HUD weapon buttons", () => {
-  it("shows the selected weapon as selected and every other owned weapon idle", () => {
-    expect(weaponButtonState({ id: "basic", selected: true })).toBe("selected");
-    expect(weaponButtonState({ id: "rapidMissile", selected: false })).toBe("idle");
+  it("shows the selected weapon as selected, an empty one as empty and the rest idle", () => {
+    expect(weaponButtonState({ ammo: null, id: "basic", selected: true })).toBe("selected");
+    expect(weaponButtonState({ ammo: 0, id: "rapidMissile", selected: true })).toBe("selected");
+    expect(weaponButtonState({ ammo: 12, id: "rapidMissile", selected: false })).toBe("idle");
+    expect(weaponButtonState({ ammo: null, id: "basic", selected: false })).toBe("idle");
+    expect(weaponButtonState({ ammo: 0, id: "phaser", selected: false })).toBe("empty");
+  });
+
+  it.each([
+    [0, "0"],
+    [7, "7"],
+    [9999, "9999"],
+    [10000, "10k"],
+    [10999, "10k"],
+    [999999, "999k"],
+    [1000000, "1m"],
+    [42_500_000, "42m"],
+    [999_999_999, "999m"],
+    [5_000_000_000, "999m"],
+  ])("counts %i shots as %s, in at most four characters", (shots, text) => {
+    expect(ammoCount(shots)).toBe(text);
+    expect(text.length).toBeLessThanOrEqual(4);
   });
 
   it("colours each state as Art's Chibi skill buttons, with no cream ring or amber", () => {

@@ -10,6 +10,7 @@ import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-a
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { stationById } from "./stations.ts";
 import type {
+  AmmoCounts,
   EconomyState,
   FlightState,
   GameState,
@@ -19,7 +20,7 @@ import type {
 } from "./types.ts";
 import { newEconomy } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
-import { UPGRADE_WEAPONS } from "./weapons.ts";
+import { grantedAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** Storage access can fail in private browsing or when quotas are exhausted. */
 export function readSave(storage: Pick<Storage, "getItem">, key: string): unknown {
@@ -377,21 +378,35 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
 
 /** Completes economy fields absent from older saves; validation has already run. */
 function migrateEconomy(state: GameState): void {
-  const flight = state.flight as (FlightState & { ammo?: number; weaponLockFor?: number }) | null;
+  const flight = state.flight as
+    (Omit<FlightState, "ammo"> & { ammo?: AmmoCounts | number; weaponLockFor?: number }) | null;
   if (!state.economy) {
     state.economy = newEconomy(ECONOMY);
     if (flight) {
       state.economy.ownedWeapons = [...(flight.ownedWeapons ?? [])];
       state.economy.weapon = flight.weapon;
     }
+    state.economy.ammo = grantedAmmo(state.economy.ownedWeapons);
   }
+  // Weapons owned before ammunition start with a new weapon's packs.
+  state.economy.ammo ??= grantedAmmo(state.economy.ownedWeapons);
   state.docked ??= null;
   for (const progress of Object.values(state.progress)) {
     progress.stations ??= [];
     progress.donated ??= {};
   }
   if (flight) {
-    delete flight.ammo;
+    if (typeof flight.ammo !== "object") {
+      // Granted weapons get the same packs for the flight; they stay out of the economy.
+      flight.ammo = {
+        ...grantedAmmo(flight.grantedWeapons ?? []),
+        ...Object.fromEntries(
+          UPGRADE_WEAPONS.filter((weapon) => !flight.grantedWeapons?.includes(weapon)).map(
+            (weapon) => [weapon, state.economy.ammo[weapon]],
+          ),
+        ),
+      };
+    }
     flight.levels ??= structuredClone(state.economy.levels);
     delete flight.weaponLockFor;
     flight.weaponSwitchFor ??= 0;
@@ -448,6 +463,16 @@ function unvisitedUnlock(state: GameState): boolean {
 /** Levels run from 1, the base, to one more than the number of priced levels. */
 function boundedLevel(value: unknown, prices: number): boolean {
   return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= prices + 1;
+}
+/** Every upgrade weapon's shots left, each a whole number, none negative. */
+function ammoCounts(value: unknown): value is AmmoCounts {
+  return (
+    record(value) &&
+    Object.keys(value).length === UPGRADE_WEAPONS.length &&
+    UPGRADE_WEAPONS.every(
+      (weapon) => Number.isSafeInteger(value[weapon]) && nonnegative(value[weapon]),
+    )
+  );
 }
 function upgradeLevels(value: unknown): value is UpgradeLevels {
   return (
@@ -551,6 +576,7 @@ function economyState(value: unknown): value is EconomyState {
     Object.hasOwn(WEAPON_CATALOG, String(value.weapon)) &&
     weaponOwnership(value.ownedWeapons, value.weapon) &&
     upgradeLevels(value.levels) &&
+    (value.ammo === undefined || ammoCounts(value.ammo)) &&
     strings(value.paints) &&
     Array.isArray(value.paints) &&
     new Set(value.paints).size === value.paints.length &&
@@ -691,7 +717,8 @@ export function restoreSave(saved: unknown): GameState | null {
           "freshDistance",
           "nextId",
         ].every((k) => nonnegative(f[k])) ||
-        (f.ammo !== undefined && !nonnegative(f.ammo)) ||
+        // Before per-weapon ammunition, a flight kept one unused ammunition count.
+        (f.ammo !== undefined && !nonnegative(f.ammo) && !ammoCounts(f.ammo)) ||
         (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
         (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
         (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||

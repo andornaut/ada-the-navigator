@@ -26,9 +26,12 @@ Flight has independent movement and aim, a rechargeable shield and contextual
 interactions; the status pill shows the shield and Ada's Stardust. Ada has six
 weapons: Basic, always available, and five upgrades (Rapid Missile, Multi-Laser,
 Heavy Missile, Scattershot and Phaser). Each has three levels and fires from the
-ship's nose without ammunition. Enemies, asteroids and discovery caches release
-Stardust, which station shops exchange for weapons, weapon levels, ship upgrades
-and paint schemes; enemies also drop weapons rarely. Once a galaxy's chapter is
+ship's nose. Basic is unlimited; each upgrade has its own ammunition count, shown
+under its icon, and Ada switches to Basic when the equipped one runs out. Enemies,
+asteroids and discovery caches release Stardust, which station shops exchange for
+weapons, weapon levels, ammunition packs, ship upgrades and paint schemes; enemies
+also drop weapons rarely, and a dropped weapon Ada owns gives a pack of its
+ammunition. Once a galaxy's chapter is
 complete, its stations' Projects tab takes donations toward community projects:
 each confirmed donation pays what the balance covers, and part payments persist.
 The Paused card's Map shows

@@ -74,15 +74,18 @@ describe("flight boundaries", () => {
     expect(flight.freshDistance).toBe(before);
   });
 
-  it("keeps movement independent of aim and fires an upgrade only while aiming with unlimited ammo", () => {
+  it("keeps movement independent of aim and fires an upgrade only while aiming, one shot per volley", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     stepFlight(PROTOTYPE, 0.4, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
     flight.weapon = "multiLaser";
+    flight.ammo.multiLaser = 5;
     stepFlight(PROTOTYPE, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
+    // A three-bolt fan is one shot.
     expect(flight.shots).toHaveLength(3);
+    expect(flight.ammo.multiLaser).toBe(4);
     expect(flight.weapon).toBe("multiLaser");
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);

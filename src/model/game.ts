@@ -81,7 +81,13 @@ import {
 } from "./storybook.ts";
 import type { FlightEvent, FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
-import { ownedForSave, ownedWeapons, selectFlightWeapon, type WeaponChoice } from "./weapons.ts";
+import {
+  ownedForSave,
+  ownedWeapons,
+  selectFlightWeapon,
+  UPGRADE_WEAPONS,
+  type WeaponChoice,
+} from "./weapons.ts";
 
 export function newProgress(): SectorProgress {
   return {
@@ -379,6 +385,12 @@ export class GameModel {
       economy.weapon = "basic";
     }
     economy.levels = structuredClone(flight.levels);
+    // A granted weapon's flight ammunition stays out of the economy.
+    for (const weapon of UPGRADE_WEAPONS) {
+      if (!flight.grantedWeapons?.includes(weapon)) {
+        economy.ammo[weapon] = flight.ammo[weapon];
+      }
+    }
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
   private pushLoadout(): void {
@@ -399,6 +411,11 @@ export class GameModel {
       delete flight.grantedWeapons;
     }
     flight.levels = structuredClone(economy.levels);
+    for (const weapon of UPGRADE_WEAPONS) {
+      if (!granted.includes(weapon)) {
+        flight.ammo[weapon] = economy.ammo[weapon];
+      }
+    }
     // A bought shield level adds its capacity to the current charge.
     const after = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
     flight.shield = Math.min(after, flight.shield + Math.max(0, after - before));
@@ -706,6 +723,9 @@ export class GameModel {
       }
       if (event.type === "stardust") {
         this.state.economy.stardust += event.amount;
+      }
+      if (event.type === "outOfAmmo") {
+        this.notify(this.label("outOfAmmo"));
       }
       if (event.type === "stationDiscovered" && !this.current.stations.includes(event.id)) {
         this.current.stations.push(event.id);

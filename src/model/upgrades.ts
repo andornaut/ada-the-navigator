@@ -2,6 +2,7 @@ import type { EconomyCatalog, LeveledValue } from "../data/economy.ts";
 import type { ShipPhysics } from "../data/ship-physics.ts";
 import type { PrototypeContent } from "../data/types.ts";
 import type { EconomyState, UpgradeLevels } from "./types.ts";
+import { noAmmo } from "./weapons.ts";
 
 /** Ada's effective ship values after bought upgrades. Enemy tuning never reads these. */
 export interface ShipTuning {
@@ -16,6 +17,7 @@ export interface ShipTuning {
 /** A new save's economy: no Stardust, Basic only and the free paint scheme. */
 export function newEconomy(catalog: EconomyCatalog): EconomyState {
   return {
+    ammo: noAmmo(),
     levels: noLevels(),
     ownedWeapons: [],
     paint: catalog.defaultPaint,

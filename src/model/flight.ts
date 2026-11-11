@@ -73,7 +73,7 @@ import type {
 } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { collectWeapon, ensureOwnedWeapons, ownedForSave } from "./weapons.ts";
+import { collectWeapon, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -906,17 +906,23 @@ export function placeDestinationAhead(
   return existing;
 }
 
-export type Loadout = Pick<EconomyState, "levels" | "ownedWeapons" | "weapon">;
+export type Loadout = Pick<EconomyState, "ammo" | "levels" | "ownedWeapons" | "weapon">;
 
 export function createFlight(
   content: PrototypeContent,
   sector: SectorId,
   seed: number,
   progress: Pick<SectorProgress, "known">,
-  loadout: Loadout = { levels: noLevels(), ownedWeapons: [], weapon: "basic" },
+  loadout: Loadout = {
+    ammo: grantedAmmo([]),
+    levels: noLevels(),
+    ownedWeapons: [],
+    weapon: "basic",
+  },
 ): FlightState {
   const levels = structuredClone(loadout.levels);
   const flight: FlightState = {
+    ammo: { ...loadout.ammo },
     cargo: 0,
     chunks: [],
     dangerFor: 0,
@@ -938,7 +944,8 @@ export function createFlight(
     time: 0,
     velocity: { x: 0, y: 0 },
     visited: {},
-    weapon: loadout.weapon,
+    // An empty saved selection starts the flight on Basic.
+    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "basic" : loadout.weapon,
     weaponSwitchFor: 0,
     world: { notables: {}, version: 1 },
   };
@@ -1000,6 +1007,10 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
+  // One shot uses one; emptying the weapon switches to Basic after this shot.
+  if (spendShot(flight)) {
+    events.push({ type: "outOfAmmo" });
+  }
   // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
   const origin = nosePoint(flight.facing, flight.player);
   if (definition.projectileKind === "beam") {
@@ -1829,13 +1840,7 @@ function stepWrecks(
     }
     object.wreck.released = true;
     const next = dropRandom(flight.seed, object.id);
-    const drop = rollEnemyDrop(
-      ECONOMY,
-      flight.sector,
-      ownedForSave(flight),
-      object.wreck.archetype,
-      next,
-    );
+    const drop = rollEnemyDrop(ECONOMY, flight.sector, object.wreck.archetype, next);
     releaseStardust(
       object,
       timing.spread,
@@ -1946,10 +1951,8 @@ export function stepFlight(
         events.push({ amount: object.amount ?? 0, type: "stardust" });
         object.hp = 0;
       } else if (object.weapon) {
-        // A found weapon Ada already owns becomes Stardust instead.
-        if (!collectWeapon(object.weapon, flight)) {
-          events.push({ amount: ECONOMY.ownedWeaponStardust, type: "stardust" });
-        }
+        // A found weapon Ada already owns gives a pack of its ammunition instead.
+        collectWeapon(object.weapon, flight);
         object.hp = 0;
       }
     }
