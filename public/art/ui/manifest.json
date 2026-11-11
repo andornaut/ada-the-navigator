@@ -55,6 +55,54 @@
       "once": []
     },
     {
+      "key": "icon-shop-check",
+      "png": "sprites/icon-shop-check.png",
+      "json": "sprites/icon-shop-check.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-engine-tuning",
+      "png": "sprites/icon-shop-engine-tuning.png",
+      "json": "sprites/icon-shop-engine-tuning.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-shield",
+      "png": "sprites/icon-shop-shield.png",
+      "json": "sprites/icon-shop-shield.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-shield-recharge",
+      "png": "sprites/icon-shop-shield-recharge.png",
+      "json": "sprites/icon-shop-shield-recharge.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-ship-paint",
+      "png": "sprites/icon-shop-ship-paint.png",
+      "json": "sprites/icon-shop-ship-paint.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-tractor-beam",
+      "png": "sprites/icon-shop-tractor-beam.png",
+      "json": "sprites/icon-shop-tractor-beam.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-upgrade-badge",
+      "png": "sprites/icon-shop-upgrade-badge.png",
+      "json": "sprites/icon-shop-upgrade-badge.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-weapon-upgrade",
+      "png": "sprites/icon-shop-weapon-upgrade.png",
+      "json": "sprites/icon-shop-weapon-upgrade.json",
+      "once": []
+    },
+    {
       "key": "icon-sound",
       "png": "sprites/icon-sound.png",
       "json": "sprites/icon-sound.json",

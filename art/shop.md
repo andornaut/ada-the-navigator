@@ -16,7 +16,7 @@ string keys.
 | Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                           |
 | Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                        |
 | Stardust            | `icon-stardust`, 16px in price pills, 20px in balances and the confirm price           |
-| Item glyphs         | `icon-shop-*` sheets and `weapon-<id>.svg`; see Shop icons                             |
+| Item glyphs         | `icon-shop-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md)            |
 | Owned and In use    | `icon-shop-check`, 12x8                                                                |
 | Ship paint swatches | The scheme's `ship-12` frame: `ship-12` for Classic, `ship-<scheme>-12` for the others |
 
