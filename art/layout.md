@@ -284,7 +284,7 @@ which neither pauses nor dims.
 In-flight dialogue: one line at a time from one speaker, over live flight.
 Constants: `CONVERSATION`, `conversationBox.ts`, to implement. Colours are in
 [Controls](controls.md#conversation-box); portraits are in
-[Portraits](portraits.md).
+[Conversation portraits](conversation.md).
 
 | Token          | Value                                                        | Rule                                                                                    |
 | -------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |

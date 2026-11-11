@@ -1528,6 +1528,297 @@
       }
     },
     {
+      "id": "astra-portrait",
+      "path": "/art/portraits/astra.png",
+      "width": 160,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "idle": 0,
+        "speaking-1": 1,
+        "speaking-2": 2,
+        "speaking-3": 3,
+        "speaking-4": 4
+      },
+      "loops": {
+        "speaking": [
+          {
+            "frame": 1,
+            "name": "speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 2,
+            "name": "speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 3,
+            "name": "speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 4,
+            "name": "speaking-4",
+            "ms": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "gadget-portrait",
+      "path": "/art/portraits/gadget.png",
+      "width": 320,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "unknown-idle": 0,
+        "unknown-speaking-1": 1,
+        "unknown-speaking-2": 2,
+        "unknown-speaking-3": 3,
+        "unknown-speaking-4": 4,
+        "named-idle": 5,
+        "named-speaking-1": 6,
+        "named-speaking-2": 7,
+        "named-speaking-3": 8,
+        "named-speaking-4": 9
+      },
+      "loops": {
+        "unknown-speaking": [
+          {
+            "frame": 1,
+            "name": "unknown-speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 2,
+            "name": "unknown-speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 3,
+            "name": "unknown-speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 4,
+            "name": "unknown-speaking-4",
+            "ms": 120
+          }
+        ],
+        "named-speaking": [
+          {
+            "frame": 6,
+            "name": "named-speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 7,
+            "name": "named-speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 8,
+            "name": "named-speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 9,
+            "name": "named-speaking-4",
+            "ms": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "penny-portrait",
+      "path": "/art/portraits/penny.png",
+      "width": 96,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "upset": 2
+      }
+    },
+    {
+      "id": "ada-portrait-compact",
+      "path": "/art/portraits/ada-compact.png",
+      "width": 44,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
+    },
+    {
+      "id": "astra-portrait-compact",
+      "path": "/art/portraits/astra-compact.png",
+      "width": 110,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "idle": 0,
+        "speaking-1": 1,
+        "speaking-2": 2,
+        "speaking-3": 3,
+        "speaking-4": 4
+      },
+      "loops": {
+        "speaking": [
+          {
+            "frame": 1,
+            "name": "speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 2,
+            "name": "speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 3,
+            "name": "speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 4,
+            "name": "speaking-4",
+            "ms": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "gadget-portrait-compact",
+      "path": "/art/portraits/gadget-compact.png",
+      "width": 220,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "unknown-idle": 0,
+        "unknown-speaking-1": 1,
+        "unknown-speaking-2": 2,
+        "unknown-speaking-3": 3,
+        "unknown-speaking-4": 4,
+        "named-idle": 5,
+        "named-speaking-1": 6,
+        "named-speaking-2": 7,
+        "named-speaking-3": 8,
+        "named-speaking-4": 9
+      },
+      "loops": {
+        "unknown-speaking": [
+          {
+            "frame": 1,
+            "name": "unknown-speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 2,
+            "name": "unknown-speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 3,
+            "name": "unknown-speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 4,
+            "name": "unknown-speaking-4",
+            "ms": 120
+          }
+        ],
+        "named-speaking": [
+          {
+            "frame": 6,
+            "name": "named-speaking-1",
+            "ms": 120
+          },
+          {
+            "frame": 7,
+            "name": "named-speaking-2",
+            "ms": 120
+          },
+          {
+            "frame": 8,
+            "name": "named-speaking-3",
+            "ms": 120
+          },
+          {
+            "frame": 9,
+            "name": "named-speaking-4",
+            "ms": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "penny-portrait-compact",
+      "path": "/art/portraits/penny-compact.png",
+      "width": 66,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "upset": 2
+      }
+    },
+    {
       "id": "cockpit",
       "path": "/art/cockpit.png",
       "width": 1920,

@@ -52,8 +52,10 @@ the authored and reused assets.
 
 Ship, enemy and station SVGs are deterministic exports from `art/tools/ship.ts`,
 `art/tools/enemies.ts` and `art/tools/station.ts`; edit the generators and
-regenerate the matching outputs. Portrait PNGs remain byte-identical to their documented source exports. Sprite
-metadata changes only the local image filename. No generated kit source or assets
+regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
+and their sprite metadata changes only the local image filename.
+`art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
+compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
 from another game's build pipeline are required.
 
 The toolkit's `buildCommand(options, argv)` supports `check.paths`, optional
