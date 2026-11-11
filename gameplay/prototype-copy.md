@@ -8,12 +8,12 @@ completion. The text can be split across short dialogue panels.
 
 Plays once, after chapter one's home opening.
 
-Narration: "On a walk with Archie, Ada digs up an unusual rock. At home, she
+Narration: "On a walk with Penny, Ada digs up an unusual rock. At home, she
 polishes it until a faint pattern begins to glow."
 
 Choice: "Touch the glow."
 
-Narration: "Light swirls around Ada and Archie. They are standing in a tiny
+Narration: "Light swirls around Ada and Penny. They are standing in a tiny
 cockpit. Outside, colours shimmer like nowhere at all."
 
 Astra: "Navigator detected. Hello. I am Astra, this ship's mind."
@@ -27,11 +27,11 @@ you be mine?"
 Optional questions:
 
 - "How did you get to Earth?" Astra: "I don't remember. The holodisk may help."
-- "Can Archie come?" Astra: "There are two seats. Please strap him in."
+- "Can Penny come?" Astra: "There are two seats. Please strap Penny in."
 - "How do I get home?" Astra: "Ask me any time you're safe. I'll jump you back to
   the moment you left."
 
-Narration: "Ada sits in the pilot's chair and buckles Archie in beside her."
+Narration: "Ada sits in the pilot's chair and buckles Penny in beside her."
 Astra: "Quantum jump ready."
 Choice: "Let's find your holodisk."
 

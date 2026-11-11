@@ -15,7 +15,7 @@ Its sprite is white and blue, an elongated triangle with one front point, two
 rear points, twin thrusters at those rear points, a small tail and a compact
 canopy with room for Ada and her dog. Keep the ship small relative to the viewport.
 In these documents, Archie and Chibi name the sibling games Archie's Dog Walks
-and Chibi's Way Home unless the text says Ada's dog Archie. Home characters and
+and Chibi's Way Home. Home characters and
 Ada may reuse Archie's sprites wholesale. Ada is a
 brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply
@@ -31,9 +31,9 @@ complete its space quest and complete its home resolution to unlock the next
 galaxy.
 
 On first launch, galaxy one's home opening is followed by the prologue: Ada digs
-up the rock, polishes it, touches its glow and arrives aboard with Archie. Astra
+up the rock, polishes it, touches its glow and arrives aboard with her dog Penny. Astra
 introduces itself, its corrupted memory, the time rule and the holodisk, and asks
-Ada to be its navigator. Ada straps Archie in, and Astra quantum jumps to galaxy
+Ada to be its navigator. Ada straps Penny in, and Astra quantum jumps to galaxy
 one. The prologue plays once. Later chapters go from their home opening to a
 brief boarding line, then the jump. Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate

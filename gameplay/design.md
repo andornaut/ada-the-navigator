@@ -6,7 +6,7 @@ outside the current version. These documents describe intended behavior; they do
 not claim that features are implemented.
 
 Ada is a curious, intelligent and kind 12-year-old girl living at home on Earth with
-her mom, dad, two cats and her dog Archie. She enjoys finding, digging up and
+her mom, dad, two cats and her dog Penny. She enjoys finding, digging up and
 polishing rocks.
 
 ## The rock, the ship and Astra
@@ -14,7 +14,7 @@ polishing rocks.
 Ada digs up an unusual rock. Polishing it reveals a faint pattern that glows, and
 touching the glow brings her, with anyone she is holding, aboard a small spaceship.
 The canopy has room for two: Ada can stand, take a few steps and sit in the
-pilot's chair, with Archie strapped in beside her. Touching the rock's glow always
+pilot's chair, with Penny strapped in beside her. Touching the rock's glow always
 brings her aboard, and jumping home returns her, holding the rock, to the moment
 she left.
 
