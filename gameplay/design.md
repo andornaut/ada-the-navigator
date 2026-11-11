@@ -20,12 +20,13 @@ she left.
 
 The ship's AI is Astra, who presents as female. She is warm and curious, a
 little formal, delighted by new places, and learns human expressions from Ada.
-She is very intelligent but is
-made to work with a navigator and does not act on her own; without one, the ship
-stays still. Her mission is to explore and map the universe. Her memory is
-corrupted: she does not know how she came to Earth and knows only one galaxy. Her
-memory is stored on holodisks, and she can sense roughly where a missing holodisk
-is, but no more. Ada becomes her navigator.
+Her mission is to explore and map the universe. Her holodisks hold the coordinates
+and data needed for quantum jumps, and also parts of her mind: memories and
+abilities. Whole, she navigates on her own. With all but one of her holodisks
+missing, she keeps her intelligence but has lost her ability to navigate and much
+of her memory: she does not know how she came to Earth and knows only one galaxy.
+Without a navigator the ship stays still. She can sense roughly where a missing
+holodisk is, but no more. Ada becomes her navigator.
 
 The ship waits in a dimension between dimensions. While Ada is aboard, no time
 passes on Earth for her; Earth's time resumes only when she steps out. Observers
@@ -48,28 +49,34 @@ restores part of her memory and reveals the next galaxy's coordinates.
 ## General Gadget
 
 General Gadget leads a fleet of uncrewed drones; destroying them hurts no one.
-Astra once believed he was good and helped him, as his navigator ship, to map the
-universe, until she realized he wanted to rule over all of it. She used her
-quantum jump to scatter all but one of her holodisks across different galaxies.
-The jump damaged her memory and her ship and stranded her near Earth, and without
-a navigator she could no longer fly. Gadget's drones search every galaxy for the
-same holodisks: together they would form an intergalactic highway for the troop
-movements and communication he needs to rule the universe. Astra has forgotten
-all of this.
+Astra once believed he was good. She was his fleet's only jump navigator and
+jumped his drones from galaxy to galaxy while mapping the universe, until she
+realized he wanted to rule over all of it. She scattered all but one of her
+holodisks across different galaxies so he could not have them. That jump damaged
+her memory and her ship and stranded her near Earth.
 
-Holodisks restore her story in steps:
+Since she fled, Gadget's drones are stranded in each galaxy: galaxies are too far
+apart to fly between. With all the holodisks he could copy Astra's navigation
+mind into obedient navigator AIs and move his fleet anywhere instantly. Astra has
+a will of her own; the copies would not. His drones search every galaxy for the
+holodisks. Astra has forgotten all of this.
 
-1. Sunflower: Astra remembers she once had a navigator, and that she hid her
-   holodisks on purpose.
-2. Cartwheel: she remembers General Gadget and helping him map the universe.
-3. Whirlpool: she remembers why she fled, and that Gadget's fleet is hunting the
-   holodisks to build his highway.
-4. Black Eye: Gadget holds the last holodisk.
+Each holodisk restores a jump ability and a memory, and the hints grow:
 
-Through her adventures Astra learns that she does not need to run or hide the
-holodisks. Ada makes friends and allies across the galaxies, and they help her
-defeat General Gadget in Black Eye. Ada shows him that there are infinitely many
-galaxies, so the universe cannot be controlled, and the General relents.
+1. Sunflower: Astra remembers a fleet, and someone giving orders.
+2. Cartwheel: she remembers carrying that fleet from galaxy to galaxy. A faceless
+   voice starts broadcasting to the drones, and it frightens her without her
+   knowing why.
+3. Whirlpool: she names him. She was General Gadget's navigator, and she scattered
+   her holodisks to keep them from him.
+4. Black Eye: Gadget holds the last holodisk. Astra remembers what he wants and
+   fears that making her whole puts her at risk. She trusts Ada, takes it and no
+   longer needs to run or hide.
+
+Ada makes friends and allies across the galaxies, and they help her defeat General
+Gadget in Black Eye. Ada shows him that there are infinitely many galaxies, so the
+universe cannot be controlled, and the General relents. With all four holodisks
+Astra can navigate on her own again, but she chooses to keep flying with Ada.
 
 The interactive story at home and procedural space adventures continue together
 throughout the game. The first three chapters concern a community garden,

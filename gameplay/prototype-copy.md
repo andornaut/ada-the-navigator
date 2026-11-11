@@ -24,7 +24,7 @@ Ada: "Where are we?"
 Astra: "Between dimensions. While you are aboard, Earth's time waits for you."
 Astra: "My memory is damaged. I know only one galaxy. A holodisk holding part of
 my memory is somewhere there."
-Astra: "I was made to explore and map, but I cannot fly without a navigator. Will
+Astra: "I was made to explore and map, but I can no longer fly without a navigator. Will
 you be mine?"
 
 Optional questions:
@@ -46,13 +46,20 @@ Astra: "Memory restored. I've found new coordinates."
 
 Then Astra's memory line for that galaxy:
 
-- Sunflower: "I remember now. I once had a navigator. And I hid my holodisks on
-  purpose. But why?"
-- Cartwheel: "General Gadget. I helped him map the universe. I thought he was
-  good."
-- Whirlpool: "He wants to rule everything. Together, the holodisks make a highway
-  for his fleet. That's why I scattered them."
+- Sunflower: "I remember a fleet... and someone giving orders."
+- Cartwheel: "I carried that fleet from galaxy to galaxy. But whose fleet?"
+- Whirlpool: "General Gadget. I was his navigator. I scattered my holodisks to
+  keep them from him."
 - Black Eye: written with the finale.
+
+General's broadcasts, in the conversation box when his drones first engage Ada in
+each galaxy from Cartwheel on. His name tab reads "Unknown voice" until the
+Whirlpool holodisk is inserted, then "General Gadget":
+
+- Cartwheel: Unknown voice: "All drones: find the holodisks. Bring them to me."
+  Astra: "That voice... I don't know why it scares me."
+- Whirlpool: Unknown voice: "Someone is collecting my holodisks. Stop them." Ada:
+  "Your holodisks? They're Astra's!"
 
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
 "We found this drifting near our outposts. Take it, with our thanks."
