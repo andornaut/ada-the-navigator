@@ -218,6 +218,9 @@ Objectives, in order:
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.
+- Storybook pages: Next, Back, Skip. Boarding from Ada's room: Pick up the rock.
+- Galaxy selection: Galaxy {number}, Jump, Next, Back. A locked galaxy's name and
+  text: ...
 - Travel card: Discovered destinations. With none yet: No destinations mapped yet.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is

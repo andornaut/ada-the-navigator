@@ -31,11 +31,41 @@ complete its space quest and complete its home resolution to unlock the next
 galaxy.
 
 On first launch, galaxy one's home opening is followed by the prologue: Ada digs
-up the rock, polishes it, touches its glow and arrives aboard with her dog Penny. Astra
-introduces itself, its corrupted memory, the time rule and the holodisk, and asks
-Ada to be its navigator. Ada straps Penny in, and Astra quantum jumps to galaxy
-one. The prologue plays once. Later chapters go from their home opening to a
-brief boarding line, then the jump. Unlocked galaxies remain
+up the rock, polishes it, touches its glow and arrives aboard with her dog Penny.
+Astra introduces herself, her corrupted memory, the time rule and the holodisk,
+and asks Ada to be her navigator. Ada straps Penny in and chooses galaxy one. The
+prologue plays once. Later, Ada boards from her room with "Pick up the rock." and
+a brief boarding line, then chooses a galaxy.
+
+### Earth scenes
+
+Earth scenes are storybook pages. Each page has a full background of a place,
+colorful but low contrast, with no landmarks or signs naming the city, and its
+text or dialogue in a readable panel on top. Next turns the page and Back returns
+to the previous page in the scene. Skip is always available and goes to the end
+of the scene, taking the default path through any choices. A choice page offers
+two or three choices; each leads to one or two branch pages and then rejoins the
+main story, so choices never change a chapter's resolution. The first choice is
+the default. Locations include Grandma's house and garden, the community garden
+lot, Ada's room, the school hallway, the schoolyard, the front door at home and
+the park where Ada finds the rock. A scene that leads aboard ends on Ada's room
+with the rock.
+
+### Cockpit and galaxy selection
+
+The cockpit is retro-futurist: 1960s ideas of the future with 1980s and 1990s
+technology details, about the size of a closet, under a large glass canopy with a
+view all around. It resembles a convertible's interior: two seats side by side
+for Ada and Penny, with a little room to walk around behind them. The holodisk
+drive looks like a CD or cassette player.
+
+Boarding shows the cockpit with galaxy selection on top. Galaxies are paged one
+per page, in order, with Next and Back, like Chibi's stage cards. An unlocked
+galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
+hue and one line of flavor text, with Jump. Every galaxy has its own main
+background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
+number, a greyscale screenshot, and "..." for its name and text. At first only
+galaxy one is unlocked. Galaxy names and flavor text are pending. Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate
 exit from space.
 
@@ -132,7 +162,7 @@ finale, enemies and resolution remain undesigned.
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, stacked: "Resume" (primary), "Travel", "Settings" and "Return home".
   Travel opens the discovered destinations; choosing one teleports there. Return
-  home ends the flight and takes Ada home to Earth and galaxy selection, with story
+  home ends the flight and takes Ada home to Earth, with story
   progress saved and no quantum jump cost. While Ada is in danger, Travel and Return home
   stay visible but disabled, refuse with the shared refusal feedback, and the card
   shows "Unavailable while you are in danger." The close X, an outside tap, back

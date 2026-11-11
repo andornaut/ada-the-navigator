@@ -18,12 +18,12 @@ pilot's chair, with Penny strapped in beside her. Touching the rock's glow alway
 brings her aboard, and jumping home returns her, holding the rock, to the moment
 she left.
 
-The ship's AI is Astra. Astra is very intelligent but is made to work with a
-navigator and does not act on its own; without one, the ship stays still. Its
-mission is to explore and map the universe. Astra's memory is corrupted: it does
-not know how it came to Earth and knows only one galaxy. Its memory is stored on
-holodisks, and Astra can sense roughly where a missing holodisk is, but no more.
-Ada becomes its navigator.
+The ship's AI is Astra, who presents as female. She is very intelligent but is
+made to work with a navigator and does not act on her own; without one, the ship
+stays still. Her mission is to explore and map the universe. Her memory is
+corrupted: she does not know how she came to Earth and knows only one galaxy. Her
+memory is stored on holodisks, and she can sense roughly where a missing holodisk
+is, but no more. Ada becomes her navigator.
 
 The ship waits in a dimension between dimensions. While Ada is aboard, no time
 passes on Earth for her; Earth's time resumes only when she steps out. Observers
@@ -31,17 +31,17 @@ see no absence, and she does not age through her travels, but she keeps her
 experiences and knowledge, which help her respond to problems at home. Whether
 other physical things can return to Earth remains unspecified.
 
-Astra's quantum jump instantly moves the ship anywhere it has mapped: home, and
+Astra's quantum jump instantly moves the ship anywhere she has mapped: home, and
 destinations Ada has discovered in a galaxy. Galaxies are too far apart to fly
 between, so jumping to a new galaxy needs quantum coordinates computed from a
-holodisk's data. When the shield fails, Astra jumps home on its own to protect
-its navigator.
+holodisk's data. When the shield fails, Astra jumps home on her own to protect
+her navigator.
 
 In each galaxy, Ada explores, meets aliens who need help, helps them and learns a
 lesson that she applies at home. She also recovers that galaxy's holodisk, which
 the aliens may give her as a reward, sell for a price, point her toward through a
 fight, or which she must take by force. Inserting it into Astra's disk drive
-restores part of its memory and reveals the next galaxy's coordinates. Holodisks
+restores part of her memory and reveals the next galaxy's coordinates. Holodisks
 gradually reveal how Astra reached Earth; the full answer belongs to the
 undesigned conclusion.
 
