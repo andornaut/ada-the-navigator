@@ -608,7 +608,7 @@ describe("jobs in play", () => {
       type: "delivery",
     };
     model.undock();
-    expect(model.jobObjective).toBe("Deliver seeds to Station");
+    expect(model.jobObjective).toBe("Deliver seeds to station");
     model.state.flight!.dangerFor = 0;
     model.returnHome();
     expect(model.state.tasks[1]?.carrying).toBe(false);

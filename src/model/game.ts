@@ -1470,13 +1470,18 @@ export class GameModel {
   private jobStation(job: HeldJob): StationSite | null {
     return stationById(ECONOMY, this.state.selectedSector, job.station);
   }
-  /** A place's name in job titles: its Map name. */
+  /**
+   * A place's name inside a sentence, as job titles and objectives use it: a station's sentence
+   * form ("station"), else its Map name.
+   */
   private placeLabel(id: string): string {
+    if (id.startsWith("station:")) {
+      return this.label("stationInSentence");
+    }
     return (
       this.destinations().find((place) => place.id === id)?.label ??
-      (id.startsWith("station:")
-        ? this.label("station")
-        : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name))
+      this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ??
+      this.chapter.name
     );
   }
   /** A job's title and one line of detail (gameplay/quests.md "Player strings"). */

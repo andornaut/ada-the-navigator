@@ -52,11 +52,14 @@ export const SUPPLY_ITEMS: Readonly<Record<string, string>> = {
 export const CALF = {
   /** Its start, from the family. */
   distance: [5000, 8000] as const,
-  /** A waiting calf follows once Ada is this close; a following one waits beyond `release`. */
-  follow: 400,
+  /**
+   * A waiting calf follows once Ada is this close, inside the view's 180 vertical half-height so
+   * it is on screen; a following one waits beyond `release`, about the view's edge.
+   */
+  follow: 160,
   /** The calf within this of the family completes the guide. */
   home: 400,
-  release: 700,
+  release: 340,
   /** At most this fraction of Ada's base maxSpeed, with no upgrades. */
   speedFraction: 0.8,
   /** It stops this far short of Ada. */

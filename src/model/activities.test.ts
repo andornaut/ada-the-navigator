@@ -267,7 +267,18 @@ describe("repeatable activities", () => {
       reward,
       target: { id: site.id, x: site.x, y: site.y },
     });
-    expect(model.jobObjective).toBe("Carry fresh food to the Station.");
+    expect(model.jobObjective).toBe("Carry fresh food to the station.");
+    // Sentences name a known station in lower case, as delivery titles do; the Map keeps Station.
+    const delivery = {
+      id: "job:x",
+      item: "seeds",
+      reward: 15,
+      station: site.id,
+      target: { id: site.id, x: site.x, y: site.y },
+      type: "delivery",
+    } as const;
+    expect(model.jobText(delivery).title).toBe("Deliver seeds to station");
+    expect(model.map?.places.find(({ id }) => id === site.id)?.label).toBe("Station");
     expect(model.indicatorTargets).toContainEqual(
       expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),
     );
@@ -379,7 +390,7 @@ describe("Guide a calf", () => {
     expect(calfStart(1, { x: 0, y: 0 }, 0)).toBeNull();
   });
 
-  it("waits with its pack, follows Ada from 400 to 700, and completes home with the family", () => {
+  it("waits with its pack, follows Ada from 160 to 340, and completes home with the family", () => {
     const { family, flight, model } = atFamily();
     model.interact();
     model.choose("take");
@@ -406,9 +417,9 @@ describe("Guide a calf", () => {
         HUNTING_PACKS.spread + 1,
       );
     }
-    // Ada within 400 starts the follow; the indicator turns to the family.
+    // Ada within 160 starts the follow; the indicator turns to the family.
     flight.objects = flight.objects.filter((o) => o.kind !== "enemy");
-    flight.player = { x: flight.calf!.x + 390, y: flight.calf!.y };
+    flight.player = { x: flight.calf!.x + CALF.follow - 10, y: flight.calf!.y };
     model.state.dialogue = null;
     model.step(0.05, idle);
     expect(flight.calf!.following).toBe(true);
@@ -416,11 +427,11 @@ describe("Guide a calf", () => {
     expect(model.indicatorTargets).toContainEqual(
       expect.objectContaining({ id: "family", kind: "job", x: family.x, y: family.y }),
     );
-    // It keeps following out to 700, then waits.
-    flight.player = { x: flight.calf!.x + 690, y: flight.calf!.y };
+    // It keeps following out to 340, then waits.
+    flight.player = { x: flight.calf!.x + CALF.release - 10, y: flight.calf!.y };
     model.step(0.05, idle);
     expect(flight.calf!.following).toBe(true);
-    flight.player = { x: flight.calf!.x + 710, y: flight.calf!.y };
+    flight.player = { x: flight.calf!.x + CALF.release + 10, y: flight.calf!.y };
     model.step(0.05, idle);
     expect(flight.calf!.following).toBe(false);
     // Home with the family completes the guide, paying 50 with the notice alone.

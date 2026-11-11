@@ -14,7 +14,7 @@ const step = (calf: GuidedCalf, player: { x: number; y: number }, seconds = 1 / 
   stepCalf(1, ship, seconds, player, calf);
 
 describe("the guided calf", () => {
-  it("follows from 400, keeps following to 700 and waits beyond", () => {
+  it("follows from 160, keeps following to 340 and waits beyond", () => {
     const calf = placedCalf({ x: 0, y: 0 }, { x: 0, y: 0 });
     step(calf, { x: CALF.follow + 10, y: 0 });
     expect(calf.following).toBe(false);
@@ -27,7 +27,8 @@ describe("the guided calf", () => {
   });
 
   it("moves at most 0.8 of Ada's base top speed and stops 120 short of her", () => {
-    const calf = placedCalf({ x: 0, y: 0 }, { x: 0, y: 0 });
+    // A following calf 300 off, inside the 340 it keeps following to.
+    const calf = { ...placedCalf({ x: 0, y: 0 }, { x: 0, y: 0 }), following: true };
     const player = { x: 300, y: 0 };
     let fastest = 0;
     for (let frame = 0; frame < 60 * 20; frame++) {
