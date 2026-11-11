@@ -45,17 +45,20 @@ layout regeneration like stations. Restart clears jobs and boards.
   [Landmarks](#landmarks)). The indicator marks the landmark, and charting
   it completes the job.
 - **Delivery**: carry cargo or a message from the issuing station to another
-  station or outpost in the galaxy, 3000 to 9000 world units away. Accepting
+  known station or outpost in the galaxy at least 3000 world units away,
+  preferring the nearest, with no upper limit. The job names the destination by
+  its Map name. An outpost destination keeps its id and reward when the layout
+  regenerates, and the indicator points to its current position. Accepting
   loads the item into a job carried-item slot, separate from story items and
   mining cargo. Deliver at the destination completes the job. A lost item is
   replaced at the issuing station, as for story deliveries. Travel here from the
   Map is allowed outside danger.
 - **Rescue and tow**: find a stranded pod or small ship 3000 to 7000 world units
-  away and tow it to safety at the issuing station or the nearest outpost. See
+  away and tow it to safety at the issuing station or any known outpost. See
   [Tow handling](#tow-handling).
 - **Lost-item hunt**: search a marked area, 900 world units in radius, for a lost
-  item. The indicator points to the area's centre until Ada enters it, then
-  hides. Penny's sense helps: when the item is within 350 world units, Penny's
+  item. The indicator points to the area's centre while Ada is outside it and
+  hides while she is inside. Penny's sense helps: when the item is within 350 world units, Penny's
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
   collected on contact.
@@ -149,7 +152,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 | `huntTitle`     | Find a lost {item}                         |
 | `huntAbout`     | It's in the marked area. Ask Penny.        |
 
-In-flight lines:
+In-flight lines, each played once per save:
 
 - Tow attached: Astra: "Tow line attached. We'll be slow and heavy." Ada: "Hold
   on, we've got you!" (happy)
