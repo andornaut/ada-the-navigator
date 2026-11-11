@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.22.0/art-kit-0.22.0.tgz",
-    "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v2.1.1/delivery-kit-2.1.1.tgz",
+    "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v3.0.0/delivery-kit-3.0.0.tgz",
     "@cloudflare/vite-plugin": "2.0.0-beta.v.14",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
