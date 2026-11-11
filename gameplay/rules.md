@@ -160,9 +160,11 @@ near the hub that plays without Ada steering it. At the first deposit milestone
 the blocking pilot cuts across the miner's approach and the miner turns away. At
 the final milestone the miner and the visitors fly in together and dock, and the
 blocking pilot flies off. Between scenes the miner and visitors wait at
-holding points near the hub, which are their story destinations; these have no
+holding points near the hub, inside the view while Ada is docked, which are
+their story destinations; these have no
 route guards, since Cartwheel's danger is at the ore fields. Each scene plays
-first, and its dialogue line follows when the scene ends. The hub looks worn but working until its Hub repairs project is funded.
+first, and its dialogue line follows when the scene ends. A scene cut short by
+the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
 
 Resource rocks come in medium and large classes, colliding on Art's footprints
 like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
