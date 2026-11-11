@@ -159,8 +159,10 @@ shots pass through and which never fight. Each scene is a short scripted path
 near the hub that plays without Ada steering it. At the first deposit milestone
 the blocking pilot cuts across the miner's approach and the miner turns away. At
 the final milestone the miner and the visitors fly in together and dock, and the
-blocking pilot flies off. Between scenes the miner and visitors wait near the
-hub. The hub looks worn but working until its Hub repairs project is funded.
+blocking pilot flies off. Between scenes the miner and visitors wait at
+holding points near the hub, which are their story destinations; these have no
+route guards, since Cartwheel's danger is at the ore fields. Each scene plays
+first, and its dialogue line follows when the scene ends. The hub looks worn but working until its Hub repairs project is funded.
 
 Resource rocks come in medium and large classes, colliding on Art's footprints
 like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
@@ -176,9 +178,9 @@ quickly from Sunflower; the roster is in [Ships](ships.md#galaxy-two-roster).
 Ada loves her dog but resents walking it and overlooks its dependence on her for
 movement and exploration. Her space experience changes her understanding of care.
 
-Ada encounters an intelligent space whale trapped by debris: 3 rocks of radius
-24 and 3 HP, evenly spaced on a ring 76 world units from the whale's centre, clear
-of its footprint. She shoots the
+Ada encounters an intelligent space whale trapped by debris: 3 medium stone
+rocks of 3 HP, evenly spaced on a ring 86 world units from the whale's centre,
+clear of its footprint. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
 A short departure scene confirms reunion. The whale's family gives Ada a waypoint
@@ -216,8 +218,8 @@ them. All values are provisional tuning:
 - Projectiles, missiles and beams ignore currents, so aim stays readable.
 - Stardust and weapon pickups drift with the flow until they leave the current;
   the tractor beam pulls them as usual.
-- A debris river is traveling debris that follows its current at the local flow
-  speed, entering at one end and leaving at the other. This is Whirlpool's one
+- A debris river is traveling debris that follows its current's centre line at
+  the peak flow speed, entering at one end and leaving at the other. This is Whirlpool's one
   exception to constant-velocity moving obstacles; debris still never chases Ada.
   About a third of currents carry one.
 - Currents show as flowing teal streaks whose direction reads at a glance,
