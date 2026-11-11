@@ -29,13 +29,13 @@ describe("prologue", () => {
     }
     expect(shown).toEqual([
       [
-        "Ada the Navigator",
+        "The Glowing Rock",
         "On a walk with Penny, Ada digs up an unusual rock. At home, she polishes it " +
           "until a faint pattern begins to glow.",
         ["Touch the glow."],
       ],
       [
-        "Ada the Navigator",
+        "The Glowing Rock",
         "Light swirls around Ada and Penny. They are standing in a tiny cockpit. " +
           "Outside, colors shimmer like nowhere at all.",
         ["Continue"],
@@ -58,7 +58,7 @@ describe("prologue", () => {
         ["How did you get to Earth?", "Can Penny come?", "How do I get home?", "Continue"],
       ],
       [
-        "Ada the Navigator",
+        "The Glowing Rock",
         "Ada sits in the pilot's chair and buckles Penny in beside her.",
         ["Continue"],
       ],
@@ -109,7 +109,7 @@ describe("prologue", () => {
     expect(resumed.state.prologueSeen).toBe(true);
   });
 
-  it("shows later openings the boarding line before the jump", () => {
+  it("shows later openings Penny boarding and Astra's welcome before the jump", () => {
     const model = new GameModel(PROTOTYPE);
     openGalaxyOne(model);
     playOpening(model, "continue");
@@ -119,6 +119,10 @@ describe("prologue", () => {
       model.startSector(galaxy);
       expect(model.state.dialogue?.context).toBe("opening");
       model.choose("1");
+      expect(model.state.mode).toBe("home");
+      expect(panel(model)).toEqual({ choices: ["Continue"], title: "The Glowing Rock" });
+      expect(model.state.dialogue!.text).toBe("Ada holds Penny close and touches the rock's glow.");
+      model.choose("continue");
       expect(model.state.mode).toBe("home");
       expect(panel(model)).toEqual({ choices: ["Continue"], title: "Astra" });
       expect(model.state.dialogue!.text).toBe("Welcome back, Navigator.");

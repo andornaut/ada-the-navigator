@@ -2,7 +2,10 @@ import type { PremiseContent } from "./types.ts";
 
 // Narration has no speaker. Astra and the cockpit are text-only until Art supplies their visuals.
 export const PREMISE: PremiseContent = {
-  boarding: { speaker: "Astra", text: "Welcome back, Navigator." },
+  boarding: [
+    { text: "Ada holds Penny close and touches the rock's glow." },
+    { speaker: "Astra", text: "Welcome back, Navigator." },
+  ],
   prologue: [
     {
       choice: "Touch the glow.",
@@ -51,4 +54,5 @@ export const PREMISE: PremiseContent = {
     { text: "Ada sits in the pilot's chair and buckles Penny in beside her." },
     { choice: "Let's find your holodisk.", speaker: "Astra", text: "Quantum jump ready." },
   ],
+  title: "The Glowing Rock",
 };

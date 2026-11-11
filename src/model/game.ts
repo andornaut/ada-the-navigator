@@ -637,15 +637,15 @@ export class GameModel {
     }
     if (dialogue.context === "opening") {
       if (this.state.prologueSeen) {
-        const { speaker, text } = this.content.premise.boarding;
-        this.panel("boarding", text, speaker);
+        this.boarding(0);
       } else {
         this.prologue(0, 0);
       }
       return;
     }
-    if (dialogue.context === "boarding") {
-      this.launch();
+    const boarding = /^boarding:(\d+)$/.exec(dialogue.context);
+    if (boarding) {
+      this.boarding(Number(boarding[1]) + 1);
       return;
     }
     const prologue = /^prologue(-answer)?:(\d+):(\d+)$/.exec(dialogue.context);
@@ -680,8 +680,17 @@ export class GameModel {
       choices: [...questions, { id: "continue", label: step.choice ?? this.label("continue") }],
       context: `prologue:${index}:${asked}`,
       text: step.text,
-      title: step.speaker ?? this.label("home"),
+      title: step.speaker ?? this.content.premise.title,
     };
+  }
+  /** Shows boarding panel `index`, then jumps after the last. */
+  private boarding(index: number): void {
+    const line = this.content.premise.boarding[index];
+    if (line) {
+      this.panel(`boarding:${index}`, line.text, line.speaker ?? this.content.premise.title);
+    } else {
+      this.launch();
+    }
   }
   private continuePrologue(answer: boolean, index: number, asked: number, id: string): void {
     const steps = this.content.premise.prologue;
@@ -697,7 +706,7 @@ export class GameModel {
         choices: [{ id: "continue", label: this.label("continue") }],
         context: `prologue-answer:${index}:${asked | (1 << Number(question[1]))}`,
         text: answered.answer,
-        title: step.speaker ?? this.label("home"),
+        title: step.speaker ?? this.content.premise.title,
       };
     } else if (index + 1 < steps.length) {
       this.prologue(index + 1, 0);

@@ -26,10 +26,12 @@ export interface PrologueStep extends PremiseLine {
 }
 /** Ada, Astra and the ship between chapters. */
 export interface PremiseContent {
-  /** The boarding line before each later chapter's jump. */
-  boarding: Required<PremiseLine>;
+  /** The boarding panels before each later chapter's jump. */
+  boarding: readonly PremiseLine[];
   /** Plays once, after galaxy one's home opening and before the first flight. */
   prologue: readonly PrologueStep[];
+  /** The title of narration panels in the prologue and boarding. */
+  title: string;
 }
 
 export interface PrototypeContent {
