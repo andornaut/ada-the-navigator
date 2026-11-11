@@ -106,20 +106,31 @@ like Chibi's power-ups.
 
 ## Donations
 
-Once a galaxy's story is complete, its outposts and stations offer community
-projects that Ada can fund with Stardust. A funded project visibly changes the
-galaxy, plays a thank-you line, counts toward achievements and makes an ally who
-joins the Black Eye finale. Projects give no combat power. Each galaxy has two or
-three projects, provisionally 300 to 800 Stardust each:
+Once a galaxy's chapter is complete (its space story and its home page), every
+station in that galaxy offers its community projects, which Ada funds with
+Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
+counts toward achievements and makes one ally who joins the Black Eye finale.
+Projects give no combat power outside the finale.
 
-- Sunflower: a greenhouse ring for the growers (500); a crane for the workshop
-  (400); a salvage beacon network (300).
-- Cartwheel: a second docking bay so no miner waits alone (600); hub repairs (400).
-- Whirlpool: a nursery beacon for whale calves (500); a current-map buoy chain
-  (400).
+| Project            | Galaxy    | Price | Speaker      | Thank-you line                                                             | World change                                                 | Ally in the finale                                  |
+| ------------------ | --------- | ----: | ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
+| Greenhouse ring    | Sunflower |   500 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                        |
+| Workshop crane     | Sunflower |   400 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
+| Salvage beacons    | Sunflower |   300 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
+| Second docking bay | Cartwheel |   600 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
+| Hub repairs        | Cartwheel |   400 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
+| Nursery beacon     | Whirlpool |   500 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
+| Current-map buoys  | Whirlpool |   400 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
 
-A project's donation can be paid in parts; progress persists across flights.
-The station card shows a Projects tab beside the shop once projects are offered.
+Projects is a shop tab beside Weapons and Ship, shown once the galaxy's projects
+are offered, and lists only that galaxy's projects. A row shows the project name,
+its progress as `{paid} of {price}` and Donate; a funded row shows Funded. Each
+Donate press pays `min(100, remaining)` with no confirm, so a project is funded
+in parts and its progress persists across flights. A press Ada cannot afford
+refuses with the shared refusal feedback. Funding the last part closes the card
+and plays the thank-you line as a space conversation. A world change is Art's
+sprite placed at its site and shows on every later flight; until its art lands,
+funding changes nothing in the world.
 
 ## Quantum jump home
 
@@ -154,6 +165,7 @@ The shield shop row reuses the existing `shield` label.
 | `projects`          | Projects                                                           |
 | `donate`            | Donate                                                             |
 | `projectFunded`     | Funded                                                             |
+| `projectProgress`   | {paid} of {price}                                                  |
 | `undock`            | Undock                                                             |
 | `stationWelcome`    | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
 | `inUse`             | In use                                                             |
