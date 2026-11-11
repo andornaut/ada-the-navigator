@@ -1,15 +1,28 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { depth, facesViewer, json, type Point, projectAt, round } from "./projection.ts";
-
-type Plan = readonly (readonly [number, number])[];
-type Part = { plan: Plan; z0: number; z1: number; top: string; side: string };
+import { json, projectAt, round } from "./projection.ts";
+import {
+  BLINK_MS,
+  blue,
+  blueDim,
+  box,
+  cream,
+  creamSide,
+  DISPLAY_SCALE,
+  DOCK,
+  mouth,
+  mouthInner,
+  ngon,
+  orientedBox,
+  type Part,
+  type Plan,
+  polygons as draw,
+  wallWindows,
+  warm,
+} from "./solid.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-// Frame px to logical display px, shared with Ada and the enemies.
-const DISPLAY_SCALE = 0.4375;
-const BLINK_MS = 700;
 const PAD = 4;
 
 const lavender = "#c4afcc";
@@ -18,87 +31,17 @@ const lavenderDark = "#6f5f7d";
 const spoke = "#b5a2c0";
 const hub = "#dccfe2";
 const hubSide = "#a08cad";
-const cream = "#efe4cf";
-const creamSide = "#bfae94";
 const craneTop = "#d9cbb1";
 const glass = "#7fd6cc";
 const glassSide = "#4fa59d";
 const glassCap = "#c4efe8";
-const blue = "#70ace8";
 const blueSide = "#5687ba";
-const blueDim = "#3f5878";
 const blueDimSide = "#33475f";
-const warm = "#ffe9b8";
-const mouth = "#1e1a26";
-const mouthInner = "#35304a";
 
 const R_IN = 54;
 const R_OUT = 65;
-// The dock axis (+x, +y) projects straight down the screen.
-const DOCK = Math.PI / 4;
 const DOCK_FACE = 88;
 const DOCK_MOUTH = 31;
-
-const box = (x0: number, y0: number, x1: number, y1: number): Plan => [
-  [x0, y0],
-  [x1, y0],
-  [x1, y1],
-  [x0, y1],
-];
-
-function ngon(n: number, r: number, cx = 0, cy = 0, phase = 0): Plan {
-  return Array.from({ length: n }, (_, i) => {
-    const a = phase + (2 * Math.PI * i) / n;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const;
-  });
-}
-
-// Box centred at (cx, cy); `along` runs in direction `angle`.
-function orientedBox(cx: number, cy: number, angle: number, along: number, across: number): Plan {
-  const [ux, uy] = [Math.cos(angle), Math.sin(angle)];
-  const [vx, vy] = [-uy, ux];
-  return (
-    [
-      [-along / 2, -across / 2],
-      [along / 2, -across / 2],
-      [along / 2, across / 2],
-      [-along / 2, across / 2],
-    ] as const
-  ).map(([a, b]) => [cx + ux * a + vx * b, cy + uy * a + vy * b] as const);
-}
-
-// Small protruding window boxes on each wall of a convex plan whose outward normal passes `visible`.
-function wallWindows(
-  visible: (nx: number, ny: number) => boolean,
-  z0: number,
-  z1: number,
-  count: number,
-  width: number,
-  plan: Plan,
-): Part[] {
-  const out: Part[] = [];
-  const cx = plan.reduce((sum, [x]) => sum + x, 0) / plan.length;
-  const cy = plan.reduce((sum, [, y]) => sum + y, 0) / plan.length;
-  for (const [i, a] of plan.entries()) {
-    const b = plan[(i + 1) % plan.length]!;
-    const [ex, ey] = [b[0] - a[0], b[1] - a[1]];
-    const length = Math.hypot(ex, ey);
-    let [nx, ny] = [ey / length, -ex / length];
-    if (nx * ((a[0] + b[0]) / 2 - cx) + ny * ((a[1] + b[1]) / 2 - cy) < 0) {
-      [nx, ny] = [-nx, -ny];
-    }
-    if (!visible(nx, ny)) {
-      continue;
-    }
-    for (let k = 0; k < count; k++) {
-      const f = (k + 1) / (count + 1);
-      const [px, py] = [a[0] + ex * f + nx * 0.3, a[1] + ey * f + ny * 0.3];
-      const pane = orientedBox(px, py, Math.atan2(ey, ex), width, 0.6);
-      out.push({ plan: pane, z0, z1, top: warm, side: warm });
-    }
-  }
-  return out;
-}
 
 // Groups draw far to near by their first part; parts inside a group keep list order.
 function model(lit: boolean): Part[][] {
@@ -238,34 +181,7 @@ function model(lit: boolean): Part[][] {
   return groups;
 }
 
-// Visible sides in plan order, then the top.
-function faces(part: Part): { color: string; points: Point[] }[] {
-  const top = (plan: Plan) => plan.map(([x, y]): Point => [x, y, part.z1]);
-  const plan = facesViewer(top(part.plan)) ? part.plan : part.plan.toReversed();
-  const result: { color: string; points: Point[] }[] = [];
-  for (const [i, a] of plan.entries()) {
-    const b = plan[(i + 1) % plan.length]!;
-    const points: Point[] = [
-      [b[0], b[1], part.z1],
-      [a[0], a[1], part.z1],
-      [a[0], a[1], part.z0],
-      [b[0], b[1], part.z0],
-    ];
-    if (facesViewer(points)) {
-      result.push({ color: part.side, points });
-    }
-  }
-  result.push({ color: part.top, points: top(plan) });
-  return result;
-}
-
-function polygons(lit: boolean) {
-  const centre = (part: Part) => part.plan.map(([x, y]): Point => [x, y, (part.z0 + part.z1) / 2]);
-  return model(lit)
-    .map((group) => ({ group, depth: depth(centre(group[0]!)) }))
-    .sort((a, b) => b.depth - a.depth)
-    .flatMap(({ group }) => group.flatMap(faces));
-}
+const polygons = (lit: boolean) => draw(model(lit));
 
 // Frame bounds over both blink frames, with the pivot (hub base) on the vertical centre line.
 const all = [...polygons(true), ...polygons(false)].flatMap(({ points }) => points);

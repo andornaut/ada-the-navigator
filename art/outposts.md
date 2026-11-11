@@ -3,8 +3,9 @@
 - Rebuild the outposts with `node art/tools/outposts.ts`. It writes
   `public/art/outposts/<outpost>-a.svg` and `<outpost>-b.svg`, the
   [community project](projects.md) frames and overlays beside them and
-  `public/art/projects.json`, and replaces the `outpost-*` manifest entries,
-  which follow the `station-*` entries.
+  `public/art/projects.json`, and replaces its own outpost and project manifest
+  entries, which follow the `station-*` entries and precede Cartwheel's
+  [hub](cartwheel.md).
 - Rebuild the cache with `node art/tools/discovery-cache.ts`. It writes
   `public/art/discovery-cache.png` with its Aseprite data
   `discovery-cache.json` and replaces the `discovery-cache` manifest entry,

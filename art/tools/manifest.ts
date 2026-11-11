@@ -27,12 +27,18 @@ export function placeEntries(group: (typeof GROUPS)[number], entries: readonly {
   writeFileSync(path, json(manifest));
 }
 
-// Replaces the entries `owns` selects at the position of the first of them, or appends them.
-// Generators sharing a group (`enemy-`) keep their own entries in place.
-export function replaceEntries(owns: (id: string) => boolean, entries: readonly { id: string }[]) {
+// Replaces the entries `owns` selects at the position of the first of them. Without any, they
+// go before the first other entry `placeBefore` selects, or last. Generators sharing a group
+// (`enemy-`, `outpost-`) keep their own entries in place.
+export function replaceEntries(
+  owns: (id: string) => boolean,
+  entries: readonly { id: string }[],
+  placeBefore: (id: string) => boolean = () => false,
+) {
   const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };
   const first = manifest.assets.findIndex(({ id }) => owns(id));
-  const at = first === -1 ? manifest.assets.length : first;
+  const next = manifest.assets.findIndex(({ id }) => !owns(id) && placeBefore(id));
+  const at = first !== -1 ? first : next !== -1 ? next : manifest.assets.length;
   const before = manifest.assets.slice(0, at);
   const after = manifest.assets.slice(at).filter(({ id }) => !owns(id));
   manifest.assets = [...before, ...entries, ...after];

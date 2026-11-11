@@ -324,16 +324,24 @@ export type JetMouth = {
   hardpoint?: string;
 };
 
+// Outer and core colour ramps, slow to fast.
+export type JetColors = { outer: [string, string]; core: [string, string] };
+const gadgetJets: JetColors = { outer: ["#b8644c", "#f0a07c"], core: ["#d68b72", "#ffe2c8"] };
+
 // Family speed jets (version 1): Tech draws outer and core triangles per mouth behind the frame.
-export function jetsFile(frame: number, mouths: (yaw: number) => JetMouth[]): string {
+export function jetsFile(
+  frame: number,
+  mouths: (yaw: number) => JetMouth[],
+  colors: JetColors = gadgetJets,
+): string {
   const scale = Math.sqrt(frame / 96);
   return json({
     version: 1,
     frame,
     length: { base: round(6 * scale), scale: round(24 * scale), exponent: 2 },
     layers: [
-      { name: "outer", colors: ["#b8644c", "#f0a07c"], width: 1.6, length: 1 },
-      { name: "core", colors: ["#d68b72", "#ffe2c8"], width: 0.8, length: 0.55 },
+      { name: "outer", colors: colors.outer, width: 1.6, length: 1 },
+      { name: "core", colors: colors.core, width: 0.8, length: 0.55 },
     ],
     headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
       index: yaw,

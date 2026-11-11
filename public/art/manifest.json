@@ -19584,6 +19584,1224 @@
       },
       "kind": "youngCalf",
       "loopFrame": 7
+    },
+    {
+      "id": "outpost-hub-a",
+      "path": "/art/cartwheel/hub-a.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 120,
+        "y": 216.317,
+        "outward": [0, 1],
+        "width": 48.99
+      },
+      "berths": [
+        {
+          "x": 21.374,
+          "y": 175.72,
+          "outward": [-0.924, 0.382],
+          "width": 28.169
+        },
+        {
+          "x": 218.626,
+          "y": 175.72,
+          "outward": [0.924, 0.382],
+          "width": 28.169
+        }
+      ],
+      "destination": "hub",
+      "variant": "worn"
+    },
+    {
+      "id": "outpost-hub-b",
+      "path": "/art/cartwheel/hub-b.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 120,
+        "y": 216.317,
+        "outward": [0, 1],
+        "width": 48.99
+      },
+      "berths": [
+        {
+          "x": 21.374,
+          "y": 175.72,
+          "outward": [-0.924, 0.382],
+          "width": 28.169
+        },
+        {
+          "x": 218.626,
+          "y": 175.72,
+          "outward": [0.924, 0.382],
+          "width": 28.169
+        }
+      ],
+      "destination": "hub",
+      "variant": "worn"
+    },
+    {
+      "id": "outpost-hub-repaired-a",
+      "path": "/art/cartwheel/hub-repaired-a.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 120,
+        "y": 216.317,
+        "outward": [0, 1],
+        "width": 48.99
+      },
+      "berths": [
+        {
+          "x": 21.374,
+          "y": 175.72,
+          "outward": [-0.924, 0.382],
+          "width": 28.169
+        },
+        {
+          "x": 218.626,
+          "y": 175.72,
+          "outward": [0.924, 0.382],
+          "width": 28.169
+        }
+      ],
+      "destination": "hub",
+      "variant": "repaired",
+      "project": "hub-repairs"
+    },
+    {
+      "id": "outpost-hub-repaired-b",
+      "path": "/art/cartwheel/hub-repaired-b.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 120,
+        "y": 216.317,
+        "outward": [0, 1],
+        "width": 48.99
+      },
+      "berths": [
+        {
+          "x": 21.374,
+          "y": 175.72,
+          "outward": [-0.924, 0.382],
+          "width": 28.169
+        },
+        {
+          "x": 218.626,
+          "y": 175.72,
+          "outward": [0.924, 0.382],
+          "width": 28.169
+        }
+      ],
+      "destination": "hub",
+      "variant": "repaired",
+      "project": "hub-repairs"
+    },
+    {
+      "id": "outpost-hub-bay-a",
+      "path": "/art/cartwheel/hub-bay-a.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "destination": "hub",
+      "project": "second-docking-bay",
+      "berths": [
+        {
+          "x": 50.084,
+          "y": 225.391,
+          "outward": [-0.612, 0.791],
+          "width": 36.742
+        }
+      ]
+    },
+    {
+      "id": "outpost-hub-bay-b",
+      "path": "/art/cartwheel/hub-bay-b.svg",
+      "width": 240,
+      "height": 240,
+      "displayWidth": 105,
+      "displayHeight": 105,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "overlay": true,
+      "destination": "hub",
+      "project": "second-docking-bay",
+      "berths": [
+        {
+          "x": 50.084,
+          "y": 225.391,
+          "outward": [-0.612, 0.791],
+          "width": 36.742
+        }
+      ]
+    },
+    {
+      "id": "mooring-buoy-a",
+      "path": "/art/cartwheel/mooring-buoy-a.svg",
+      "width": 96,
+      "height": 80,
+      "displayWidth": 42,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "moorings": [
+        {
+          "x": 10.033,
+          "y": 45,
+          "outward": [-1, 0]
+        },
+        {
+          "x": 85.967,
+          "y": 45,
+          "outward": [1, 0]
+        },
+        {
+          "x": 61.019,
+          "y": 24.409,
+          "outward": [0.534, -0.845]
+        }
+      ]
+    },
+    {
+      "id": "mooring-buoy-b",
+      "path": "/art/cartwheel/mooring-buoy-b.svg",
+      "width": 96,
+      "height": 80,
+      "displayWidth": 42,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "moorings": [
+        {
+          "x": 10.033,
+          "y": 45,
+          "outward": [-1, 0]
+        },
+        {
+          "x": 85.967,
+          "y": 45,
+          "outward": [1, 0]
+        },
+        {
+          "x": 61.019,
+          "y": 24.409,
+          "outward": [0.534, -0.845]
+        }
+      ]
+    },
+    {
+      "id": "craft-miner-0",
+      "path": "/art/cartwheel/miner-0.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-1",
+      "path": "/art/cartwheel/miner-1.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-2",
+      "path": "/art/cartwheel/miner-2.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-3",
+      "path": "/art/cartwheel/miner-3.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-4",
+      "path": "/art/cartwheel/miner-4.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-5",
+      "path": "/art/cartwheel/miner-5.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-6",
+      "path": "/art/cartwheel/miner-6.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-7",
+      "path": "/art/cartwheel/miner-7.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-8",
+      "path": "/art/cartwheel/miner-8.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-9",
+      "path": "/art/cartwheel/miner-9.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-10",
+      "path": "/art/cartwheel/miner-10.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-11",
+      "path": "/art/cartwheel/miner-11.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-12",
+      "path": "/art/cartwheel/miner-12.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-13",
+      "path": "/art/cartwheel/miner-13.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-14",
+      "path": "/art/cartwheel/miner-14.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-miner-15",
+      "path": "/art/cartwheel/miner-15.svg",
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "miner"
+    },
+    {
+      "id": "craft-visitor1-0",
+      "path": "/art/cartwheel/visitor1-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-1",
+      "path": "/art/cartwheel/visitor1-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-2",
+      "path": "/art/cartwheel/visitor1-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-3",
+      "path": "/art/cartwheel/visitor1-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-4",
+      "path": "/art/cartwheel/visitor1-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-5",
+      "path": "/art/cartwheel/visitor1-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-6",
+      "path": "/art/cartwheel/visitor1-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-7",
+      "path": "/art/cartwheel/visitor1-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-8",
+      "path": "/art/cartwheel/visitor1-8.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-9",
+      "path": "/art/cartwheel/visitor1-9.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-10",
+      "path": "/art/cartwheel/visitor1-10.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-11",
+      "path": "/art/cartwheel/visitor1-11.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-12",
+      "path": "/art/cartwheel/visitor1-12.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-13",
+      "path": "/art/cartwheel/visitor1-13.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-14",
+      "path": "/art/cartwheel/visitor1-14.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor1-15",
+      "path": "/art/cartwheel/visitor1-15.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor1"
+    },
+    {
+      "id": "craft-visitor2-0",
+      "path": "/art/cartwheel/visitor2-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-1",
+      "path": "/art/cartwheel/visitor2-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-2",
+      "path": "/art/cartwheel/visitor2-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-3",
+      "path": "/art/cartwheel/visitor2-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-4",
+      "path": "/art/cartwheel/visitor2-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-5",
+      "path": "/art/cartwheel/visitor2-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-6",
+      "path": "/art/cartwheel/visitor2-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-7",
+      "path": "/art/cartwheel/visitor2-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-8",
+      "path": "/art/cartwheel/visitor2-8.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-9",
+      "path": "/art/cartwheel/visitor2-9.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-10",
+      "path": "/art/cartwheel/visitor2-10.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-11",
+      "path": "/art/cartwheel/visitor2-11.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-12",
+      "path": "/art/cartwheel/visitor2-12.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-13",
+      "path": "/art/cartwheel/visitor2-13.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-14",
+      "path": "/art/cartwheel/visitor2-14.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-visitor2-15",
+      "path": "/art/cartwheel/visitor2-15.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "visitor2"
+    },
+    {
+      "id": "craft-blocker-0",
+      "path": "/art/cartwheel/blocker-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-1",
+      "path": "/art/cartwheel/blocker-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-2",
+      "path": "/art/cartwheel/blocker-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-3",
+      "path": "/art/cartwheel/blocker-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-4",
+      "path": "/art/cartwheel/blocker-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-5",
+      "path": "/art/cartwheel/blocker-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-6",
+      "path": "/art/cartwheel/blocker-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-7",
+      "path": "/art/cartwheel/blocker-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-8",
+      "path": "/art/cartwheel/blocker-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-9",
+      "path": "/art/cartwheel/blocker-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-10",
+      "path": "/art/cartwheel/blocker-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-11",
+      "path": "/art/cartwheel/blocker-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-12",
+      "path": "/art/cartwheel/blocker-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-13",
+      "path": "/art/cartwheel/blocker-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-14",
+      "path": "/art/cartwheel/blocker-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
+    },
+    {
+      "id": "craft-blocker-15",
+      "path": "/art/cartwheel/blocker-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "blocker"
     }
   ],
   "spacePalette": "/art/space-palette.json",

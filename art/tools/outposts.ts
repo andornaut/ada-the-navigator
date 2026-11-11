@@ -1,6 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { replaceEntries } from "./manifest.ts";
 import { depth, facesViewer, json, type Point, projectAt, round } from "./projection.ts";
 
 type Plan = readonly (readonly [number, number])[];
@@ -926,14 +927,15 @@ const manifestEntries = [
   ...Object.entries(overlays).flatMap(([name, overlay]) => overlayEntries(name, overlay)),
 ];
 
-// Outpost entries follow the station and precede the discovery cache and the enemies.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-const kept = manifest.assets.filter(({ id }) => !id.startsWith("outpost-"));
-const later = kept.findIndex(({ id }) => id === "discovery-cache" || id.startsWith("enemy-"));
-const insert = later === -1 ? kept.length : later;
-manifest.assets = [...kept.slice(0, insert), ...manifestEntries, ...kept.slice(insert)];
-writeFileSync(manifestPath, json(manifest));
+// This tool owns only its own outpost and project entries; Cartwheel's hub follows them.
+const own = new RegExp(
+  `^outpost-(${[...Object.keys(outposts), ...Object.keys(overlays)].join("|")})-[ab]$`,
+);
+replaceEntries(
+  (id) => own.test(id),
+  manifestEntries,
+  (id) => id.startsWith("outpost-hub-") || id === "discovery-cache" || id.startsWith("enemy-"),
+);
 
 // World changes keyed by Gameplay's project id: a replacement frame pair for the outpost, or an
 // overlay at anchors offset from the outpost's pivot in frame px.
