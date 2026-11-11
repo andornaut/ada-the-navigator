@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
+import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
+import { landmarkSites } from "./landmarks.ts";
 import {
   CHARTING_RADIUS,
   galaxyMap,
@@ -183,5 +185,48 @@ describe("galaxy map", () => {
     expect(model.map?.places.map(({ label }) => label)).toEqual([PROTOTYPE.labels.station]);
     model.returnHome();
     expect(model.map).toBeNull();
+  });
+
+  it("shows a landmark once Ada flies close, counts it and never travels there", () => {
+    const model = flying();
+    const flight = model.state.flight!;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.velocity = { x: 0, y: 0 };
+    const landmark = landmarkSites(1)[0]!;
+    flight.player = { x: landmark.x + LANDMARK_TUNING.chart / 2, y: landmark.y };
+    model.step(0.05, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(model.state.progress[1].charted).toContain(landmark.id);
+    // The landmark's own name, from its player-string key.
+    const label = PROTOTYPE.labels[landmark.name];
+    expect(label).toBeTruthy();
+    expect(model.map?.places).toEqual([
+      {
+        id: landmark.id,
+        job: false,
+        kind: "landmark",
+        label,
+        objective: false,
+        travel: false,
+        x: landmark.x,
+        y: landmark.y,
+      },
+    ]);
+    const total = galaxyRoute(1).length + inside.length + landmarkSites(1).length;
+    expect(model.map?.mapped).toBe(Math.floor(100 / total));
+    const at = { ...flight.player };
+    model.teleport(landmark.id);
+    expect(model.state.flight!.player).toEqual(at);
+  });
+
+  it("places every landmark inside the charted area, so the whole galaxy can be mapped", () => {
+    expect(LANDMARK_TUNING.radius).toBeLessThanOrEqual(CHARTING_RADIUS);
+    for (const sector of [1, 2, 3] as const) {
+      const sites = landmarkSites(sector);
+      expect(sites, `galaxy ${sector}`).toHaveLength(LANDMARK_TUNING.count);
+      for (const site of sites) {
+        expect(Math.hypot(site.x, site.y), site.id).toBeLessThanOrEqual(CHARTING_RADIUS);
+      }
+    }
   });
 });
