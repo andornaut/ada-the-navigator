@@ -38,8 +38,7 @@ the value currently lives, in CSS px.
     draw with nearest-neighbour filtering at their fractional scale.
   - The camera zoom is `min(devicePixelRatio, 2)` times the fit scale and may
     be fractional; there is no integer world zoom or letterbox.
-  - Text and chrome render through the shared full-ratio overlay canvas from
-    game-kit, not Phaser Text, with linear filtering.
+  - UI text and chrome are HTML over the canvas, at device resolution.
   - Line widths, keylines and outlines stay in logical px at every ratio.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
   narrower, 779 on an 844x390 phone). The game area is the centred 2:1 play
