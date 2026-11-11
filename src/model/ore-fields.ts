@@ -1,19 +1,17 @@
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
-import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
+import { oreFieldLayout } from "../data/ore-field-layouts.ts";
+import type { ResourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
-import { ASTEROID_SHAPES, resourceShapes } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 
 /** One seeded ore field: its centre, rock positions and whether a platform guards it. */
 export interface OreField extends Vec {
-  /** The guard's position and fixed hull facing, or null for an unguarded field. */
-  guard: (Vec & { facing: Vec }) | null;
+  /** The guard's position, or null for an unguarded field. */
+  guard: Vec | null;
   id: string;
-  /** Each rock's class and the plain asteroid shape it collides on. */
-  rocks: readonly (Vec & { asteroid: string; resource: ResourceClass })[];
+  /** Each rock's class, the plain asteroid shape it collides on and its start spin frame. */
+  rocks: readonly (Vec & { asteroid: string; resource: ResourceClass; spinStart: number })[];
 }
-
-const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 
 /** Fixed per-sector seeds, so ore fields are the same on every flight. */
 const SECTOR_SEEDS: Readonly<Record<SectorId, number>> = {
@@ -54,32 +52,25 @@ export function oreFieldInCell(sector: SectorId, cell: Vec): OreField | null {
     return null;
   }
   const total = count[0] + Math.floor(roll(0x51ed) * (count[1] - count[0] + 1));
-  const rocks: OreField["rocks"][number][] = [];
-  // Rocks fill rings on a sunflower spiral, evenly spread across the field.
-  const turn = Math.PI * (3 - Math.sqrt(5));
-  const start = roll(0x2b3c) * Math.PI * 2;
-  const pattern = Math.floor(roll(0x7f4a) * RESOURCE_ROCKS.largeEvery);
-  for (let index = 0; index < total; index++) {
-    const radius = (diameter / 2) * Math.sqrt((index + 0.5) / total);
-    const angle = start + index * turn;
-    const resource = resourceClass(pattern + index);
-    const variants = resourceShapes(ASTEROID_SHAPE_LIST, resource);
-    rocks.push({
-      asteroid: variants[Math.floor(roll(0x5a11 + index) * variants.length)]!.id,
-      resource,
-      x: x + Math.cos(angle) * radius,
-      y: y + Math.sin(angle) * radius,
-    });
-  }
+  // Art's layout for the count, turned about the field centre by the field's seed, which keeps
+  // every footprint gap and the field radius.
+  const turn = roll(0x2b3c) * Math.PI * 2;
+  const cos = Math.cos(turn);
+  const sin = Math.sin(turn);
+  const rocks = oreFieldLayout(total).map((rock) => ({
+    asteroid: rock.asteroid,
+    resource: rock.resource,
+    spinStart: rock.frame,
+    x: x + rock.position.x * cos - rock.position.y * sin,
+    y: y + rock.position.x * sin + rock.position.y * cos,
+  }));
   // A checkerboard keeps guarded fields to at most half; the seed picks among them.
   const eligible = (((cell.x + cell.y) % 2) + 2) % 2 === 0;
   let guard: OreField["guard"] = null;
   if (eligible && roll(0x6a09) < guardChance) {
     const angle = roll(0x3c6e) * Math.PI * 2;
     const reach = diameter / 2 + guardGap;
-    const facingAngle = roll(0xa54f) * Math.PI * 2;
     guard = {
-      facing: { x: Math.cos(facingAngle), y: Math.sin(facingAngle) },
       x: x + Math.cos(angle) * reach,
       y: y + Math.sin(angle) * reach,
     };

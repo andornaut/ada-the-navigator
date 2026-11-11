@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -16,6 +16,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
   aimIndex,
+  CLAIM,
   composedArchetypes,
   composeEnemy,
   ENEMY_RASTER_MAX_DPR,
@@ -31,6 +32,7 @@ import {
   enemySvg,
   HIT_FLASH_MS,
   HitFlashes,
+  hullHeading,
   type PartPose,
   readHardpointLayout,
   selectEnemyFrame,
@@ -39,6 +41,10 @@ import {
 import { jetLength } from "./ship-jets.ts";
 
 const assets = manifest.assets as EnemyFrame[];
+const json = (path: string): unknown => {
+  const url = new URL(`../../public${path}`, import.meta.url);
+  return existsSync(url) ? JSON.parse(readFileSync(url, "utf8")) : undefined;
+};
 const files: Record<string, unknown> = {
   capital: capitalJets,
   fighter: fighterJets,
@@ -104,8 +110,25 @@ describe("enemy frame sets", () => {
 
   it("tells the heavies' part frames, which load after the scene starts, from hull headings", () => {
     const parts = assets.filter(enemyPartFrame);
-    // Frigate: 3 hardpoints x 2 states + 1 top set; capital: 7 x 2 + 1; 16 frames each.
-    expect(parts).toHaveLength((6 + 1 + 14 + 1) * 16);
+    // Each composed archetype of each family has 16 frames per hardpoint state and top design,
+    // as its hardpoints file lists them.
+    const sets = new Set(
+      parts.map(
+        (asset) => `${asset.path!.slice(0, asset.path!.lastIndexOf("/") + 1)}|${asset.archetype}`,
+      ),
+    );
+    const expected = [...sets].reduce((sum, key) => {
+      const [dir, archetype] = key.split("|") as [string, string];
+      const file = json(`${dir}${archetype}-hardpoints.json`) as {
+        hardpoints: { states: string[]; top: string | null }[];
+      };
+      const tops = new Set(file.hardpoints.flatMap((part) => part.top ?? []));
+      return (
+        sum + (file.hardpoints.reduce((n, part) => n + part.states.length, 0) + tops.size) * 16
+      );
+    }, 0);
+    expect(parts).toHaveLength(expected);
+    expect(expected).toBe(784);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -477,5 +500,63 @@ describe("enemy raster size", () => {
       ]);
       expect(root, asset.path).toContain(`viewBox="0 0 ${asset.width} ${asset.height}"`);
     }
+  });
+});
+
+describe("claim jumper art", () => {
+  const sets = enemyFrameSets(assets, CLAIM);
+  const claim = enemyArt(
+    (archetype) => json(`/art/cartwheel/enemies/${archetype}-jets.json`),
+    (archetype) => json(`/art/cartwheel/enemies/${archetype}-hardpoints.json`),
+    composedArchetypes(assets.filter((asset) => asset.family === "claim")),
+    assets,
+    sets,
+    CLAIM,
+  );
+
+  it("reads the claim family apart from the coral one, with ember jets", () => {
+    expect([...sets.keys()].sort()).toEqual(
+      ["capital", "fighter", "frigate", "interceptor", "platform", "retaliator", "swarm"].sort(),
+    );
+    for (const name of ["swarm", "fighter", "interceptor", "retaliator"]) {
+      expect(sets.get(name)!.every((frame) => frame.id.startsWith(`enemy-claim-${name}-`))).toBe(
+        true,
+      );
+      expect(claim.get(name)!.jets?.headings).toHaveLength(16);
+    }
+    expect(enemyFrameSets(assets).get("fighter")![0]!.id).toBe("enemy-fighter-0");
+    expect(enemyFrameSets(assets).has("platform")).toBe(false);
+  });
+
+  it("draws the platform's one fixed hull for every facing, its turrets on heading 0", () => {
+    const platform = claim.get("platform")!;
+    expect(platform.frames.map((frame) => frame.id)).toEqual(["enemy-claim-platform"]);
+    expect(platform.jets).toBeUndefined();
+    const pose: PartPose = { aim: () => ({ x: 0, y: 1 }), intact: () => true };
+    for (const degrees of [0, 90, 200, 315]) {
+      const hull = selectEnemyFrame(platform, at(degrees));
+      expect(hull.id).toBe("enemy-claim-platform");
+      expect(hullHeading(platform, hull)).toBe(0);
+      const sprites = composeEnemy(platform, pose, hull);
+      expect(sprites.map((sprite) => sprite.frame.id).sort()).toEqual(
+        [
+          "enemy-claim-platform",
+          "enemy-claim-platform-port-intact-0",
+          "enemy-claim-platform-starboard-intact-0",
+          `enemy-claim-platform-turret-top-${aimIndex({ x: 0, y: 1 })}`,
+          `enemy-claim-platform-turret-top-${aimIndex({ x: 0, y: 1 })}`,
+        ].sort(),
+      );
+      expect(turretMuzzles(platform, pose, hull, "port").length).toBeGreaterThan(0);
+    }
+    // Each turret aims on its own.
+    const split: PartPose = {
+      aim: (id) => (id === "port" ? { x: -1, y: 0 } : { x: 1, y: 0 }),
+      intact: () => true,
+    };
+    const tops = composeEnemy(platform, split, platform.frames[0]!)
+      .filter((sprite) => sprite.layer === "top")
+      .map((sprite) => sprite.frame.id);
+    expect(new Set(tops).size).toBe(2);
   });
 });

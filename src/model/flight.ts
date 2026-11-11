@@ -95,7 +95,14 @@ const reducedMotions = new WeakMap<FlightState, boolean>();
 function frameOf(flight: FlightState, object: SpaceObject): number {
   const shape = sceneryShape(object);
   return shape
-    ? rockFrame(shape, flight.seed, reducedMotions.get(flight) ?? false, object.id, flight.time)
+    ? rockFrame(
+        shape,
+        flight.seed,
+        reducedMotions.get(flight) ?? false,
+        object.id,
+        flight.time,
+        object.spinStart,
+      )
     : 0;
 }
 function hash(seed: number, x: number, y: number): number {
@@ -481,8 +488,14 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
 }
 
 /**
+ * The platform's hull never turns: Art draws it once, as heading 0, which faces world +x, so
+ * its turret mounts and muzzles take heading 0 too.
+ */
+export const PLATFORM_FACING: Readonly<Vec> = { x: 1, y: 0 };
+
+/**
  * Cartwheel's seeded ore fields whose centres fall in chunk (x, y): their resource rocks and,
- * at a guarded field, a retained platform with its seeded fixed facing. A field within the
+ * at a guarded field, a retained platform facing `PLATFORM_FACING`. A field within the
  * ore-field clearance of a station, the hub or a quantum jump arrival is left out.
  */
 function placeOreFields(
@@ -535,7 +548,7 @@ function placeOreFields(
     const id = `platform:${field.id}`;
     if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
       const platform = spawnEnemy(content, flight.sector, "platform", id, field.guard);
-      platform.enemy!.facing = { ...field.guard.facing };
+      platform.enemy!.facing = { ...PLATFORM_FACING };
       flight.objects.push(platform);
       existing.add(id);
     }

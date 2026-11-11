@@ -37,7 +37,6 @@ import {
   type HeavyPart,
   heavies,
   type Model,
-  type Offsets,
   place,
   readOffsets,
   ring,
@@ -137,8 +136,6 @@ const HUB = 13;
 // The turret rail, inner and outer radius: every seeded facing puts both turrets on it. The dark
 // track lets the steel turret heads stand off the deck.
 const RAIL = [24, 50] as const;
-// Turret offset in hull widths: 37.3 model units from the centre, on the rail.
-const TURRET_OFFSET = 0.29;
 const TEETH = 16;
 
 // A sector of the annulus r0..r1 between angles a0..a1 (radians).
@@ -319,21 +316,6 @@ export const platform: HeavyCraft = {
   ],
 };
 
-// CLEANUP (added 2026-11-11): the proposed catalog entry for the platform. Remove once
-// tools/enemy-hardpoints.json carries a `platform` archetype, which then takes precedence.
-export const platformProposal: Offsets = {
-  version: 1,
-  archetypes: {
-    platform: {
-      sizeRatio: SIZE,
-      hardpoints: [
-        { id: "port", role: "turret", offset: [-TURRET_OFFSET, 0], order: 0 },
-        { id: "starboard", role: "turret", offset: [TURRET_OFFSET, 0], order: 1 },
-      ],
-    },
-  },
-};
-
 // ---------------------------------------------------------------- export
 
 type Entry = Record<string, unknown> & { id: string; path?: string };
@@ -367,7 +349,6 @@ async function main() {
   const root = fileURLToPath(new URL("../../", import.meta.url));
   const offsetsPath = at === -1 ? `${root}tools/enemy-hardpoints.json` : args[at + 1]!;
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
-  const platformOffsets = offsets.archetypes.platform ? offsets : platformProposal;
 
   const files = new Map<string, string>();
   const entries: Entry[] = [];
@@ -386,7 +367,7 @@ async function main() {
     }
     entries.push(...result.entries.map(claimEntry));
   }
-  const built = build(platform, place(platformOffsets, platform));
+  const built = build(platform, place(offsets, platform));
   const turning = /^platform-\d+$/;
   for (const [file, content] of built.files) {
     if (file === "platform-0.svg") {
@@ -428,11 +409,7 @@ async function main() {
     entries,
     (id) => id.startsWith("craft-"),
   );
-  console.log(
-    `${files.size} files, ${entries.length} entries; platform offsets from ${
-      platformOffsets === offsets ? offsetsPath : "the proposal in art/tools/claim-jumpers.ts"
-    }`,
-  );
+  console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

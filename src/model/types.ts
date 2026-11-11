@@ -57,6 +57,8 @@ export interface SpaceObject extends Vec {
   orbit?: Vec & { phase: number; radius: number; rate: number };
   /** A debris river rock's current and its arc position along the centre line at time 0. */
   river?: { arc: number; current: string };
+  /** The spin frame an ore field rock starts on (art/cartwheel-props.md "Ore field"). */
+  spinStart?: number;
   /** A resource rock's class; a rock saved without one is medium. */
   resource?: ResourceClass;
   radius: number;

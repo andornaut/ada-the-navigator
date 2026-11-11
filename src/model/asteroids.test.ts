@@ -291,6 +291,21 @@ describe("asteroid chunk fields", () => {
   });
 });
 
+describe("rock start frames", () => {
+  it("begin a spinning rock on its start frame and hold it under reduced motion", () => {
+    const medium = [...ASTEROID_SHAPES.values()].find((shape) => shape.size === "medium")!;
+    for (const start of [0, 5, 23]) {
+      expect(rockFrame(medium, 9, false, "ore:1,2:0", 0, start)).toBe(start);
+      expect(rockFrame(medium, 9, true, "ore:1,2:0", 40, start)).toBe(start);
+    }
+    expect(rockFrame(medium, 9, true, "ore:1,2:0", 40)).toBe(0);
+    const later = new Set(
+      Array.from({ length: 60 }, (_, i) => rockFrame(medium, 9, false, "ore:1,2:0", i * 4, 5)),
+    );
+    expect(later.size).toBeGreaterThan(1);
+  });
+});
+
 describe("asteroids in flight", () => {
   // Launches draw their world seed from crypto; a fixed seed makes the explored chunks, and so
   // the huge and drifting asteroids these tests rely on, the same on every run.

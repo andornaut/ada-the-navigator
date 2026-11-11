@@ -123,17 +123,23 @@ describe("drawn muzzles", () => {
   });
 
   it("reads every hardpoints file Art exports, at Art's enemy display scale", () => {
-    const files = readdirSync(new URL("../../public/art/enemies/", import.meta.url)).filter(
-      (name) => name.endsWith("-hardpoints.json"),
+    // The claim family shares the coral hardpoints files and adds the platform's.
+    const files = ["../../public/art/enemies/", "../../public/art/cartwheel/enemies/"].flatMap(
+      (dir) =>
+        readdirSync(new URL(dir, import.meta.url)).filter((name) =>
+          name.endsWith("-hardpoints.json"),
+        ),
     );
     expect(Object.keys(MUZZLE_LAYOUTS).sort()).toEqual(
-      files.map((name) => name.replace("-hardpoints.json", "")).sort(),
+      [...new Set(files.map((name) => name.replace("-hardpoints.json", "")))].sort(),
     );
     const manifest = JSON.parse(
       readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
     ) as { assets: { displayWidth?: number; id: string; width: number }[] };
     for (const archetype of Object.keys(MUZZLE_LAYOUTS)) {
-      const hull = manifest.assets.find((asset) => asset.id === `enemy-${archetype}-0`)!;
+      const hull = manifest.assets.find((asset) =>
+        [`enemy-${archetype}-0`, `enemy-claim-${archetype}`].includes(asset.id),
+      )!;
       expect(hull.displayWidth! / hull.width).toBe(ENEMY_DISPLAY_SCALE);
     }
   });

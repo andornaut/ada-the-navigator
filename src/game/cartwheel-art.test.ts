@@ -44,7 +44,8 @@ describe("Cartwheel art", () => {
         "cartwheel-debris-7",
       ]),
     );
-    expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 1 + 8);
+    // Hub, buoy, four story craft, the nugget, debris and the claim family's 97 hull frames.
+    expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 1 + 8 + 6 * 16 + 1);
     expect(sets.get("unused")!.every((id) => id.startsWith("craft-stranded-"))).toBe(true);
     expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id))).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);

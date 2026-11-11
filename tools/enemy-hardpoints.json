@@ -103,16 +103,16 @@
       "hardpoints": [
         {
           "fire": "bolt",
-          "id": "turret-left",
-          "offset": [-0.3, 0],
+          "id": "port",
+          "offset": [-0.29, 0],
           "order": 0,
           "required": true,
           "role": "turret"
         },
         {
           "fire": "bolt",
-          "id": "turret-right",
-          "offset": [0.3, 0],
+          "id": "starboard",
+          "offset": [0.29, 0],
           "order": 1,
           "required": true,
           "role": "turret"

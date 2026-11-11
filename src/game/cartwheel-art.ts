@@ -1,5 +1,5 @@
 import type { SectorId } from "../data/types.ts";
-import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame } from "./enemy-art.ts";
+import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame, enemyPartFrame } from "./enemy-art.ts";
 import { readShipJets } from "./ship-jets.ts";
 import type { StationArt, StationFrame } from "./station-art.ts";
 import { whaleFrameAsset } from "./whale-art.ts";
@@ -25,7 +25,8 @@ export const STORY_CRAFT_FRAME = /^craft-([a-z][a-z0-9]*)-(\d+)$/;
 
 /**
  * The galaxy whose flights load an asset, or null for the boot set: Cartwheel's hub, buoy,
- * story craft, ore nugget and traveling debris, and Whirlpool's whale frames and river debris. The stranded
+ * story craft, ore nugget, traveling debris and claim jumper hulls, and Whirlpool's whale
+ * frames and river debris. Claim part frames load when their craft first appears. The stranded
  * craft load with the tow jobs that draw them, so neither set holds them yet.
  */
 export function galaxyAsset(asset: CartwheelAsset): SectorId | "unused" | null {
@@ -37,7 +38,8 @@ export function galaxyAsset(asset: CartwheelAsset): SectorId | "unused" | null {
     asset.id.startsWith("mooring-buoy-") ||
     STORY_CRAFT_FRAME.test(asset.id) ||
     asset.id === "ore-nugget" ||
-    asset.id.startsWith("cartwheel-debris-")
+    asset.id.startsWith("cartwheel-debris-") ||
+    (asset.family === "claim" && !enemyPartFrame(asset))
   ) {
     return 2;
   }

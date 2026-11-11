@@ -9,6 +9,9 @@ export interface EnemyFrame {
   directionIndex?: number;
   displayHeight?: number;
   displayWidth?: number;
+  /** `fixed` for a hull drawn once that never turns. */
+  facing?: string;
+  family?: string;
   hardpoint?: string;
   id: string;
   path?: string;
@@ -83,20 +86,51 @@ export interface EnemyArt<T extends EnemyFrame = EnemyFrame> {
   parts?: PartArt<T>;
 }
 
-const FRAME = /^enemy-([a-z][a-zA-Z]*)-(\d+)$/;
-/** Art exports every framed enemy in sixteen headings, as Gameplay requires. */
+/** Art exports every turning enemy in sixteen headings, as Gameplay requires. */
 export const ENEMY_HEADINGS = 16;
 
+/** The id prefix of Gadget's coral family; Cartwheel's claim jumpers use `enemy-claim-`. */
+export const CORAL = "enemy-";
+export const CLAIM = "enemy-claim-";
+
 /**
- * Complete sixteen-heading sets per archetype from `enemy-{archetype}-{index}` entries. An
- * archetype with a missing, extra, duplicate or unsized frame is left out and keeps its vector
- * placeholder.
+ * The claim archetypes Cartwheel draws in the claim family. Its frigate and capital join when
+ * they compose from the heavies' raster reader; until then they draw in coral.
  */
-export function enemyFrameSets<T extends EnemyFrame>(assets: readonly T[]): Map<string, T[]> {
+export const CLAIM_WIRED: ReadonlySet<string> = new Set([
+  "fighter",
+  "interceptor",
+  "platform",
+  "retaliator",
+  "swarm",
+]);
+
+/**
+ * Hull frames per archetype for one family's id prefix: complete sixteen-heading sets from
+ * `{prefix}{archetype}-{index}` entries, or one `{prefix}{archetype}` frame with facing `fixed`
+ * for a hull that never turns. An archetype with a missing, extra, duplicate or unsized frame
+ * is left out and keeps its vector placeholder.
+ */
+export function enemyFrameSets<T extends EnemyFrame>(
+  assets: readonly T[],
+  prefix = CORAL,
+): Map<string, T[]> {
+  const frame = new RegExp(`^${prefix}([a-z][a-zA-Z]*)-(\\d+)$`);
   const groups = new Map<string, T[]>();
   const broken = new Set<string>();
+  const fixed = new Map<string, T>();
   for (const asset of assets) {
-    const match = FRAME.exec(asset.id);
+    if (
+      asset.facing === "fixed" &&
+      asset.archetype &&
+      asset.id === `${prefix}${asset.archetype}` &&
+      asset.displayWidth! > 0 &&
+      asset.displayHeight! > 0
+    ) {
+      fixed.set(asset.archetype, asset);
+      continue;
+    }
+    const match = frame.exec(asset.id);
     if (!match) {
       continue;
     }
@@ -121,7 +155,20 @@ export function enemyFrameSets<T extends EnemyFrame>(assets: readonly T[]): Map<
       groups.delete(archetype);
     }
   }
+  for (const [archetype, hull] of fixed) {
+    if (!groups.has(archetype)) {
+      groups.set(archetype, [hull]);
+    }
+  }
   return groups;
+}
+
+/**
+ * The hardpoints file's heading for a hull frame: its own heading, or 0 for a single fixed
+ * hull, which Art draws as heading 0 and which never turns.
+ */
+export function hullHeading(art: Pick<EnemyArt, "frames">, hull: EnemyFrame): number | undefined {
+  return hull.directionIndex ?? (art.frames.length === 1 ? 0 : undefined);
 }
 
 /** Exactly sixteen entries with no holes; array methods skip holes, so check each index. */
@@ -156,6 +203,10 @@ export function enemyJetsPath(archetype: string, frame: Pick<EnemyFrame, "path">
 /** A composed archetype's layout sits beside its frames as `{archetype}-hardpoints.json`. */
 export function enemyHardpointsPath(archetype: string, frame: Pick<EnemyFrame, "path">): string {
   return besideFrames("hardpoints", archetype, frame);
+}
+
+export function enemyShardsPath(archetype: string, frame: Pick<EnemyFrame, "path">): string {
+  return besideFrames("shards", archetype, frame);
 }
 
 type Fields = Record<string, unknown>;
@@ -291,6 +342,7 @@ export function readPartArt<T extends EnemyFrame>(
   archetype: string,
   layout: HardpointLayout,
   assets: readonly T[],
+  prefix = CORAL,
 ): PartArt<T> | undefined {
   const own = assets.filter((asset) => asset.archetype === archetype);
   const bases = new Map<string, Map<string, T[]>>();
@@ -299,7 +351,7 @@ export function readPartArt<T extends EnemyFrame>(
     for (const state of part.states) {
       const frames = partSet(
         own,
-        (index) => `enemy-${archetype}-${part.id}-${state}-${index}`,
+        (index) => `${prefix}${archetype}-${part.id}-${state}-${index}`,
         (asset, index) =>
           asset.hardpoint === part.id && asset.state === state && asset.directionIndex === index,
       );
@@ -314,7 +366,7 @@ export function readPartArt<T extends EnemyFrame>(
   for (const design of layout.tops.keys()) {
     const frames = partSet(
       own,
-      (index) => `enemy-${archetype}-${design}-top-${index}`,
+      (index) => `${prefix}${archetype}-${design}-top-${index}`,
       (asset, index) => asset.top === design && asset.aimIndex === index,
     );
     if (!frames) {
@@ -336,6 +388,7 @@ export function enemyArt<T extends EnemyFrame>(
   composed: ReadonlySet<string>,
   assets: readonly T[],
   sets: ReadonlyMap<string, readonly T[]>,
+  prefix = CORAL,
 ): Map<string, EnemyArt<T>> {
   const result = new Map<string, EnemyArt<T>>();
   for (const [archetype, frames] of sets) {
@@ -346,7 +399,7 @@ export function enemyArt<T extends EnemyFrame>(
     };
     if (composed.has(archetype)) {
       const layout = readHardpointLayout(archetype, layouts(archetype));
-      const parts = layout && readPartArt(archetype, layout, assets);
+      const parts = layout && readPartArt(archetype, layout, assets, prefix);
       if (!parts) {
         continue;
       }
@@ -401,11 +454,12 @@ export function composeEnemy<T extends EnemyFrame>(
   hull: T,
 ): PartSprite<T>[] {
   const parts = art.parts;
-  if (!parts || hull.directionIndex === undefined) {
+  const index = hullHeading(art, hull);
+  if (!parts || index === undefined) {
     return [{ frame: hull, hardpoint: null, layer: "base", offset: { x: 0, y: 0 } }];
   }
   const { frame, hardpoints, headings } = parts.layout;
-  const heading = headings[hull.directionIndex]!;
+  const heading = headings[index]!;
   const sprites: PartSprite<T>[] = [];
   for (const id of heading.order) {
     if (id === "hull") {
@@ -415,7 +469,7 @@ export function composeEnemy<T extends EnemyFrame>(
     const definition = hardpoints.find((part) => part.id === id)!;
     const placed = heading.parts.get(id)!;
     const intact = pose.intact(id);
-    const base = parts.bases.get(id)?.get(intact ? "intact" : "destroyed")?.[hull.directionIndex];
+    const base = parts.bases.get(id)?.get(intact ? "intact" : "destroyed")?.[index];
     if (base) {
       sprites.push({
         frame: base,
@@ -448,7 +502,7 @@ export function turretMuzzles(
 ): Vec[] {
   const parts = art.parts;
   const definition = parts?.layout.hardpoints.find((part) => part.id === hardpoint);
-  const pivot = parts?.layout.headings[hull.directionIndex ?? -1]?.parts.get(hardpoint)?.pivot;
+  const pivot = parts?.layout.headings[hullHeading(art, hull) ?? -1]?.parts.get(hardpoint)?.pivot;
   if (!parts || !definition?.top || !pivot || !pose.intact(hardpoint)) {
     return [];
   }

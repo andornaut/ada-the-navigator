@@ -61,8 +61,8 @@ function unit(seed: number, id: string, salt: string): number {
 /**
  * The frame a rock shows and collides with at `seconds` of flight (art/asteroids.md
  * "Classes"): one rate per rock within its spin range and one direction, both from the level
- * seed, so frame floor(angle / step) mod count plays ascending or descending. Still rocks and
- * reduced motion show frame 0.
+ * seed, so frame floor(angle / step) mod count plays ascending or descending. A rock with a
+ * start frame begins on it. Still rocks show frame 0; reduced motion holds the start frame, or 0.
  */
 export function rockFrame(
   shape: { readonly frames: readonly unknown[]; readonly spin: AsteroidShape["spin"] },
@@ -70,14 +70,22 @@ export function rockFrame(
   reducedMotion: boolean,
   id: string,
   seconds: number,
+  start?: number,
 ): number {
-  if (!shape.spin || reducedMotion || shape.frames.length < 2) {
+  if (!shape.spin || shape.frames.length < 2) {
     return 0;
+  }
+  const count = shape.frames.length;
+  if (reducedMotion) {
+    return start === undefined ? 0 : ((start % count) + count) % count;
   }
   const [slow, fast] = shape.spin.degPerSecond;
   const rate = slow + unit(seed, id, "spin-rate") * (fast - slow);
   const direction = unit(seed, id, "spin-direction") < 0.5 ? -1 : 1;
-  const angle = unit(seed, id, "spin-phase") * 360 + direction * rate * seconds;
+  // A start frame begins the turn mid-frame, so it shows that frame at time 0.
+  const phase =
+    start === undefined ? unit(seed, id, "spin-phase") * 360 : ((start + 0.5) * 360) / count;
+  const angle = phase + direction * rate * seconds;
   const turned = ((angle % 360) + 360) % 360;
   return Math.floor(turned / (360 / shape.frames.length)) % shape.frames.length;
 }

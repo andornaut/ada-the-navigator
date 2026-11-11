@@ -1,3 +1,4 @@
+import platform from "../../public/art/cartwheel/enemies/platform-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/capital-hardpoints.json" with { type: "json" };
 import frigate from "../../public/art/enemies/frigate-hardpoints.json" with { type: "json" };
 import type { EnemyArchetype, Point } from "./enemy-catalog.ts";
@@ -56,4 +57,5 @@ export function readMuzzleLayout(file: HardpointsFile): MuzzleLayout {
 export const MUZZLE_LAYOUTS: Partial<Record<EnemyArchetype, MuzzleLayout>> = {
   capital: readMuzzleLayout(capital),
   frigate: readMuzzleLayout(frigate),
+  platform: readMuzzleLayout(platform),
 };

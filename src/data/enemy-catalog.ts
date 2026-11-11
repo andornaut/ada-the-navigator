@@ -118,8 +118,8 @@ const base: Omit<EnemyDefinition, "physics"> = {
 const siege: Behaviour = { kind: "siege", speedFraction: 0.5 };
 /**
  * Cartwheel's fixed ore-field guard: two required turrets, each firing two-bolt bursts with
- * the base bolt. CLEANUP (added 2026-11-11): placeholder turret mounts until Art draws the
- * platform; then mounts, hit areas and muzzles come from Art's hardpoints, as for the heavies.
+ * the base bolt. The turrets' offsets are Art's (art/heavies.md "Turret platform"), as in
+ * tools/enemy-hardpoints.json.
  */
 const platformBurst: FireProfile = {
   ...bolt,
@@ -181,8 +181,8 @@ export const enemyCatalog = {
     behaviour: { kind: "siege", speedFraction: 0 },
     engagement: 520,
     hardpoints: [
-      weapon(platformBurst, "turret-left", -0.3, 0, 6),
-      weapon(platformBurst, "turret-right", 0.3, 0, 6),
+      weapon(platformBurst, "port", -0.29, 0, 6),
+      weapon(platformBurst, "starboard", 0.29, 0, 6),
     ],
     // The hull has no HP of its own: hits land only on its turrets.
     hp: 12,

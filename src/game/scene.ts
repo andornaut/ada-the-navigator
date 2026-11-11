@@ -95,6 +95,8 @@ import {
   wreckFlashAt,
 } from "./destruction-art.ts";
 import {
+  CLAIM,
+  CLAIM_WIRED,
   composedArchetypes,
   composeEnemy,
   type EnemyArt,
@@ -107,6 +109,7 @@ import {
   enemyPartFrame,
   enemyRasterSize,
   enemySvg,
+  enemyShardsPath,
   HitFlashes,
   type PartPose,
   selectEnemyFrame,
@@ -309,6 +312,10 @@ export class PrototypeScene extends Phaser.Scene {
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
+  // Cartwheel's claim jumpers; a claim archetype without loaded art draws the coral family's.
+  private claimArt = new Map<string, EnemyArt<Asset>>();
+  private claimShards = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
+  private claimPartAssets: readonly Asset[] = [];
   private debrisArt: ReadonlyMap<SectorId, DebrisArt> = new Map();
   private streakSpec: StreakSpec | undefined;
   private resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
@@ -510,7 +517,12 @@ export class PrototypeScene extends Phaser.Scene {
     if (!this.shipJets) {
       this.loadShipFrames(thrustFrames(manifest?.assets ?? []));
     }
-    this.partAssets = (manifest?.assets ?? []).filter(enemyPartFrame);
+    this.partAssets = (manifest?.assets ?? []).filter(
+      (asset) => enemyPartFrame(asset) && asset.family === undefined,
+    );
+    this.claimPartAssets = (manifest?.assets ?? []).filter(
+      (asset) => enemyPartFrame(asset) && asset.family === "claim",
+    );
     this.readEnemyArt();
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
@@ -1014,6 +1026,18 @@ export class PrototypeScene extends Phaser.Scene {
     for (const [craft, frames] of craftFrameSets(assets)) {
       this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
     }
+    for (const [archetype, frames] of enemyFrameSets(assets, CLAIM)) {
+      if (!CLAIM_WIRED.has(archetype)) {
+        continue;
+      }
+      if (frames.length > 1) {
+        this.load.json(`claim-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+        this.load.json(`claim-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
+      }
+      if (composedArchetypes(this.claimPartAssets).has(archetype)) {
+        this.load.json(`claim-hardpoints-${archetype}`, enemyHardpointsPath(archetype, frames[0]!));
+      }
+    }
     const data = {
       2: [
         ["resource-rocks", this.manifest.resourceRocks],
@@ -1036,6 +1060,13 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** Reads the galaxy art whose textures and data have loaded. */
   private readGalaxyArt(): void {
+    this.readEnemyArt();
+    for (const archetype of CLAIM_WIRED) {
+      const shards = readShards(this.cache.json.get(`claim-shards-${archetype}`));
+      if (shards) {
+        this.claimShards.set(archetype, shards);
+      }
+    }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
     this.hubArt = readHubArt(loaded);
     this.buoyArt = readBuoyArt(loaded);
@@ -1379,6 +1410,28 @@ export class PrototypeScene extends Phaser.Scene {
       this.shipAssets,
       enemyFrameSets(this.shipAssets),
     );
+    const loaded = this.manifest.assets.filter(
+      (asset) => asset.family === "claim" && this.textures.exists(asset.id),
+    );
+    const claim = enemyArt(
+      (archetype) => this.cache.json.get(`claim-jets-${archetype}`),
+      (archetype) => this.cache.json.get(`claim-hardpoints-${archetype}`),
+      composedArchetypes(this.claimPartAssets),
+      loaded,
+      enemyFrameSets(loaded, CLAIM),
+      CLAIM,
+    );
+    this.claimArt = new Map([...claim].filter(([archetype]) => CLAIM_WIRED.has(archetype)));
+  }
+
+  /** The family a galaxy's craft are drawn in: Cartwheel's claim jumpers, else Gadget's coral. */
+  private claimed(archetype: string): boolean {
+    return this.model.state.flight?.sector === 2 && CLAIM_WIRED.has(archetype);
+  }
+
+  /** A craft's art in its galaxy's family, while that family's frames are loaded. */
+  private familyArt(archetype: string): EnemyArt<Asset> | undefined {
+    return this.claimed(archetype) ? this.claimArt.get(archetype) : this.enemyArt.get(archetype);
   }
 
   /**
@@ -1387,8 +1440,9 @@ export class PrototypeScene extends Phaser.Scene {
    * keeps its vector placeholder.
    */
   private loadEnemyParts(archetype: string): void {
-    this.partLoads.add(archetype);
-    const parts = this.partAssets.filter(
+    const claim = this.claimed(archetype);
+    this.partLoads.add(`${claim ? "claim" : "coral"}:${archetype}`);
+    const parts = (claim ? this.claimPartAssets : this.partAssets).filter(
       (asset) => asset.archetype === archetype && !this.textures.exists(asset.id),
     );
     if (parts.length === 0) {
@@ -1832,7 +1886,7 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     const definition = enemyCatalog[enemy.archetype];
-    const art = this.enemyArt.get(enemy.archetype);
+    const art = this.familyArt(enemy.archetype);
     if (art) {
       this.drawEnemySprite(art, point, object.id, enemy);
       return;
@@ -1846,49 +1900,41 @@ export class PrototypeScene extends Phaser.Scene {
     const large = enemy.archetype === "capital";
     const frigate = enemy.archetype === "frigate";
     const pack = enemy.packId !== null;
-    // CLEANUP (added 2026-11-11): the platform's octagonal vector hull stands in until Art
-    // draws the platform; then it composes from Art's frames like the frigate and capital.
-    const platform = enemy.archetype === "platform";
-    const hull: [number, number][] = platform
-      ? Array.from({ length: 8 }, (_, index): [number, number] => {
-          const angle = ((index + 0.5) * Math.PI) / 4;
-          return [Math.cos(angle) * 0.48, Math.sin(angle) * 0.48];
-        })
-      : large
+    const hull: [number, number][] = large
+      ? [
+          [-0.28, -0.5],
+          [0.28, -0.5],
+          [0.5, -0.25],
+          [0.5, 0.4],
+          [0.25, 0.5],
+          [-0.25, 0.5],
+          [-0.5, 0.4],
+          [-0.5, -0.25],
+        ]
+      : frigate
         ? [
-            [-0.28, -0.5],
-            [0.28, -0.5],
-            [0.5, -0.25],
-            [0.5, 0.4],
-            [0.25, 0.5],
-            [-0.25, 0.5],
-            [-0.5, 0.4],
-            [-0.5, -0.25],
+            [0, -0.6],
+            [0.42, -0.25],
+            [0.42, 0.4],
+            [0, 0.55],
+            [-0.42, 0.4],
+            [-0.42, -0.25],
           ]
-        : frigate
+        : pack
           ? [
               [0, -0.6],
-              [0.42, -0.25],
-              [0.42, 0.4],
-              [0, 0.55],
-              [-0.42, 0.4],
-              [-0.42, -0.25],
+              [0.5, 0],
+              [0.32, 0.4],
+              [0, 0.2],
+              [-0.32, 0.4],
+              [-0.5, 0],
             ]
-          : pack
-            ? [
-                [0, -0.6],
-                [0.5, 0],
-                [0.32, 0.4],
-                [0, 0.2],
-                [-0.32, 0.4],
-                [-0.5, 0],
-              ]
-            : [
-                [0, -0.6],
-                [0.5, 0.45],
-                [0, 0.2],
-                [-0.5, 0.45],
-              ];
+          : [
+              [0, -0.6],
+              [0.5, 0.45],
+              [0, 0.2],
+              [-0.5, 0.45],
+            ];
     const polygon = hull.map(([x, y]) => {
       const point = local(x, y);
       return new Phaser.Math.Vector2(point.x, point.y);
@@ -2766,9 +2812,11 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     const data = this.destruction;
-    const shards = this.shards.get(wreck.archetype);
+    const shards = (this.claimed(wreck.archetype) ? this.claimShards : this.shards).get(
+      wreck.archetype,
+    );
     const timing = data?.archetypes[wreck.archetype];
-    const art = this.enemyArt.get(wreck.archetype);
+    const art = this.familyArt(wreck.archetype);
     if (!data || !shards || !timing || !art) {
       this.drawWreckPlaceholder(wreck, point);
       return;
@@ -2850,7 +2898,8 @@ export class PrototypeScene extends Phaser.Scene {
 
   private drawObject(object: SpaceObject): void {
     // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
-    if (object.enemy && !this.partLoads.has(object.enemy.archetype)) {
+    const family = object.enemy && this.claimed(object.enemy.archetype) ? "claim" : "coral";
+    if (object.enemy && !this.partLoads.has(`${family}:${object.enemy.archetype}`)) {
       this.loadEnemyParts(object.enemy.archetype);
     }
     const point = this.project(object);
@@ -2989,7 +3038,14 @@ export class PrototypeScene extends Phaser.Scene {
    */
   private drawAsteroidSprite(object: SpaceObject, point: Vec, art: AsteroidArt): void {
     const flight = this.model.state.flight!;
-    const frame = rockFrame(art, flight.seed, this.reducedMotion, object.id, flight.time);
+    const frame = rockFrame(
+      art,
+      flight.seed,
+      this.reducedMotion,
+      object.id,
+      flight.time,
+      object.spinStart,
+    );
     const texture = this.rockFrameTexture(art, frame);
     if (!texture) {
       this.drawAsteroid(point, footprintOutline(art, frame));

@@ -303,6 +303,11 @@ function spaceObject(
         nonnegative(value.orbit.radius) &&
         finite(value.orbit.rate) &&
         finite(value.orbit.phase))) &&
+    (value.spinStart === undefined ||
+      (typeof value.asteroid === "string" &&
+        Number.isInteger(value.spinStart) &&
+        nonnegative(value.spinStart) &&
+        (value.spinStart as number) < (ASTEROID_SHAPES.get(value.asteroid)?.frames.length ?? 0))) &&
     (value.resource === undefined ||
       (value.kind === "resource" &&
         typeof value.resource === "string" &&
