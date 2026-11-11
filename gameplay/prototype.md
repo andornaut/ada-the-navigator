@@ -270,8 +270,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   dimensions:
   - Basic: damage and fire rate.
   - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
-    basic damage) with a large blast; levels grow its blast radius (60, 72, 85)
-    and damage.
+    basic damage) with a large blast; levels shorten its interval (1.2, 1.0, 0.8 s) and grow its
+    blast radius (60, 72, 85).
   - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
     basic damage) with a small blast (25); levels grow its fire rate and damage.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
