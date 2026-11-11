@@ -11,7 +11,7 @@ import {
 import type { SectorId } from "../data/types.ts";
 import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 
-// The in-flight conversation box's schedule (gameplay/prototype.md "Astra and Penny in flight"):
+// The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
 // one showing, which resumes after it if still relevant. Ordinary ones wait out a cooldown after
 // the last one ends; warnings skip it. Each line shows for its time or until tapped. The director

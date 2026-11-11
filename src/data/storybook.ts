@@ -40,7 +40,7 @@ export const PLACEHOLDER_BACKGROUNDS: Readonly<Record<PlaceholderBackground, str
 };
 
 /**
- * The overnight recharge's sleep scene (gameplay/prototype.md): 2 to 3 seconds that a tap skips
+ * The overnight recharge's sleep scene (gameplay/rules.md): 2 to 3 seconds that a tap skips
  * after a moment. Provisional values within Gameplay's range.
  */
 export const OVERNIGHT_SLEEP = { seconds: 2.5, skipAfterSeconds: 0.5 } as const;

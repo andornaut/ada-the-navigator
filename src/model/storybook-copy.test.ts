@@ -12,13 +12,13 @@ import {
   type Scene,
 } from "./storybook.ts";
 
-// Gameplay's player copy and contract, with their line wrapping undone.
+// Gameplay's player copy and rules, with their line wrapping undone.
 const read = (name: string) =>
   readFileSync(new URL(`../../gameplay/${name}`, import.meta.url), "utf8")
     .replace(/\s+/gu, " ")
     .trim();
-const COPY = read("prototype-copy.md");
-const CONTRACT = read("prototype.md");
+const COPY = read("player-copy.md");
+const CONTRACT = read("rules.md");
 
 const labels = {
   continue: PROTOTYPE.labels.continue ?? "",

@@ -4,10 +4,10 @@ A browser-game prototype combining space exploration with interactive stories
 at home. Built with Phaser, TypeScript and Vite using the shared art-kit,
 game-kit and delivery-kit.
 
-## Prototype scope
+## Version one scope
 
-The [prototype contract](gameplay/prototype.md) defines the scope and approved
-rules. This is an untuned prototype for gameplay testing.
+The [version one rules](gameplay/rules.md) define the scope and approved rules.
+Balance values are provisional and tuned through playtesting.
 
 Three story galaxies are designed:
 
@@ -20,7 +20,7 @@ Three story galaxies are designed:
 
 A galaxy's space quest, its resolution at home and its recovered holodisk unlock
 the next galaxy. Completed galaxies remain replayable. Galaxy four's conclusion is deferred and has no
-playable story. See [dialogue and objectives](gameplay/prototype-copy.md).
+playable story. See [dialogue and objectives](gameplay/player-copy.md).
 
 Flight has independent movement and aim, a rechargeable shield and contextual
 interactions; the status pill shows the shield and Ada's Stardust. Ada has six

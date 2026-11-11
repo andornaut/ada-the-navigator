@@ -40,7 +40,7 @@ const fan = (count: number, spread: number) =>
 /**
  * Provisional tuning: speed and damage ratios multiply the existing base values. Each level
  * multiplies effective output (damage x fire rate x hits per volley) by 1.5, so level 3 is
- * 2.25 times level 1; gameplay/prototype.md gives each weapon's growth dimensions. A fan's
+ * 2.25 times level 1; gameplay/rules.md gives each weapon's growth dimensions. A fan's
  * extra bolts or dots count as hits; blast and beam range growth is a bonus on top.
  */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {

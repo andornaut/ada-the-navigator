@@ -1,7 +1,7 @@
 import type { SectorId } from "./types.ts";
 
-// In-flight conversations (gameplay/prototype.md "Astra and Penny in flight"; words from
-// gameplay/prototype-copy.md "In-flight conversations" and the General's broadcasts).
+// In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
+// gameplay/player-copy.md "In-flight conversations" and the General's broadcasts).
 
 export type Speaker = "ada" | "astra" | "general" | "penny";
 

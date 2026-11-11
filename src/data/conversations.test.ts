@@ -12,7 +12,7 @@ import {
 } from "./conversations.ts";
 
 // The player copy, with its line wrapping undone.
-const COPY = readFileSync(new URL("../../gameplay/prototype-copy.md", import.meta.url), "utf8")
+const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8")
   .replace(/\s+/gu, " ")
   .trim();
 

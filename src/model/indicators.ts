@@ -3,7 +3,7 @@ import type { SectorId } from "../data/types.ts";
 import { stationIndicatorTarget } from "./stations.ts";
 import type { FlightState, SectorProgress } from "./types.ts";
 
-// Direction indicators (gameplay/prototype.md "Space encounters and feedback"): rare arrows that
+// Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
 // waypoint and an undiscovered station within range, at any distance while off screen. Ordinary
 // enemies and optional discoveries get none; Penny senses those instead. Each kind is one source
