@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
+import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import { shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
@@ -26,6 +27,15 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import {
+  type EnemyArt,
+  enemyArt,
+  type EnemyFrame,
+  enemyFrameSets,
+  enemyJetsPath,
+  enemyJetTriangles,
+  selectEnemyFrame,
+} from "./enemy-art.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { sceneryDetail } from "./scenery.ts";
@@ -40,7 +50,7 @@ import {
 } from "./space-palette.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 
-interface Asset extends ShipAsset {
+interface Asset extends ShipAsset, EnemyFrame {
   path: string;
   width: number;
   height: number;
@@ -68,6 +78,11 @@ export class PrototypeScene extends Phaser.Scene {
   private shipAssets: readonly Asset[] = [];
   private jets!: Phaser.GameObjects.Graphics;
   private shipJets: ShipJets | undefined;
+  /** Shots and feedback draw above enemy sprites. */
+  private overlay!: Phaser.GameObjects.Graphics;
+  private enemyJets!: Phaser.GameObjects.Graphics;
+  private enemyArt = new Map<string, EnemyArt<Asset>>();
+  private enemySprites = new Map<string, Phaser.GameObjects.Image>();
   private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
   private startShown = false;
@@ -91,6 +106,9 @@ export class PrototypeScene extends Phaser.Scene {
       };
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
+      }
+      for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
+        this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
       }
       for (const asset of manifest.assets) {
         if (asset.path.endsWith(".svg")) {
@@ -131,6 +149,9 @@ export class PrototypeScene extends Phaser.Scene {
       this.scale.off(Phaser.Scale.Events.RESIZE, fit),
     );
     this.ink = this.add.graphics();
+    // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
+    this.enemyJets = this.add.graphics().setDepth(1);
+    this.overlay = this.add.graphics().setDepth(3);
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
@@ -140,6 +161,11 @@ export class PrototypeScene extends Phaser.Scene {
     const jets = readShipJets(this.cache.json.get("ship-jets"));
     this.shipJets =
       jets?.headings.length === shipDirectionCount(this.shipAssets) ? jets : undefined;
+    // Archetypes without a complete loaded frame set keep their vector placeholders.
+    this.enemyArt = enemyArt(
+      (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),
+      enemyFrameSets(this.shipAssets),
+    );
     const ship = this.shipAssets.find((asset) => asset.id === "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
@@ -357,6 +383,11 @@ export class PrototypeScene extends Phaser.Scene {
     const flight = this.model.state.flight;
     this.ink.clear();
     this.jets.clear();
+    this.overlay.clear();
+    this.enemyJets.clear();
+    for (const sprite of this.enemySprites.values()) {
+      sprite.setVisible(false);
+    }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     for (const label of this.labels.values()) {
       label.setVisible(false);
@@ -391,36 +422,36 @@ export class PrototypeScene extends Phaser.Scene {
       });
       const alpha = shot.fade ? projectileOpacity(shot.fade, shot.life) : 1;
       if (shot.projectile === "dot") {
-        this.ink.fillStyle(color, alpha);
-        this.ink.fillCircle(point.x, point.y, 1.5);
+        this.overlay.fillStyle(color, alpha);
+        this.overlay.fillCircle(point.x, point.y, 1.5);
       } else if (shot.projectile === "missile") {
         const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
         const dx = Math.cos(angle);
         const dy = Math.sin(angle);
-        this.ink.lineStyle(3, shot.enemy ? color : 0xffffff, alpha);
-        this.ink.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
-        this.ink.lineStyle(1, color, alpha);
-        this.ink.lineBetween(
+        this.overlay.lineStyle(3, shot.enemy ? color : 0xffffff, alpha);
+        this.overlay.lineBetween(point.x - dx * 9, point.y - dy * 9, point.x, point.y);
+        this.overlay.lineStyle(1, color, alpha);
+        this.overlay.lineBetween(
           point.x - dx * 17,
           point.y - dy * 17,
           point.x - dx * 11,
           point.y - dy * 11,
         );
-        this.ink.lineBetween(
+        this.overlay.lineBetween(
           point.x - dx * 7 - dy * 4,
           point.y - dy * 7 + dx * 4,
           point.x,
           point.y,
         );
-        this.ink.lineBetween(
+        this.overlay.lineBetween(
           point.x - dx * 7 + dy * 4,
           point.y - dy * 7 - dx * 4,
           point.x,
           point.y,
         );
       } else {
-        this.ink.lineStyle(1.5, color, alpha);
-        this.ink.lineBetween(tail.x, tail.y, point.x, point.y);
+        this.overlay.lineStyle(1.5, color, alpha);
+        this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
     this.drawDiscovery();
@@ -460,6 +491,12 @@ export class PrototypeScene extends Phaser.Scene {
       }
     }
     const activeIds = new Set(flight.objects.map((object) => object.id));
+    for (const [id, sprite] of this.enemySprites) {
+      if (!activeIds.has(id)) {
+        sprite.destroy();
+        this.enemySprites.delete(id);
+      }
+    }
     for (const [id, label] of this.labels) {
       if (!activeIds.has(id)) {
         label.destroy();
@@ -482,6 +519,11 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     const definition = enemyCatalog[enemy.archetype];
+    const art = this.enemyArt.get(enemy.archetype);
+    if (art) {
+      this.drawEnemySprite(art, point, object.id, enemy);
+      return;
+    }
     const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     // Hull and hardpoints share the hull's rotating local frame.
     const local = (x: number, y: number): Vec => {
@@ -601,6 +643,45 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /** Authored frames already include perspective; jets are not clipped to the frame. */
+  private drawEnemySprite(
+    art: EnemyArt<Asset>,
+    point: Vec,
+    id: string,
+    enemy: NonNullable<SpaceObject["enemy"]>,
+  ): void {
+    const frame = selectEnemyFrame(art, enemy.facing);
+    let sprite = this.enemySprites.get(id);
+    if (!sprite) {
+      sprite = this.add.image(0, 0, frame.id).setDepth(2);
+      this.enemySprites.set(id, sprite);
+    }
+    sprite
+      .setTexture(frame.id)
+      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y)
+      .setRotation(0)
+      .setVisible(true);
+    const speed = enemySpeedFraction(
+      enemyCatalog[enemy.archetype],
+      PROTOTYPE.tuning.maxSpeed,
+      enemyEncounterTuning.speedCapRatio,
+      enemy,
+    );
+    for (const { alpha, color, points } of enemyJetTriangles(art, frame, speed)) {
+      this.enemyJets.fillStyle(color, alpha);
+      this.enemyJets.fillTriangle(
+        point.x + points[0].x,
+        point.y + points[0].y,
+        point.x + points[1].x,
+        point.y + points[1].y,
+        point.x + points[2].x,
+        point.y + points[2].y,
+      );
+    }
+  }
+
   private drawDiscovery(): void {
     const flight = this.model.state.flight;
     if (!flight) {
@@ -634,8 +715,8 @@ export class PrototypeScene extends Phaser.Scene {
     const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
     const x = cx + dx * Math.max(0, scale);
     const y = cy + dy * Math.max(0, scale);
-    this.ink.lineStyle(2, this.palette.pointOfInterest, 0.8);
-    this.ink.strokeTriangle(
+    this.overlay.lineStyle(2, this.palette.pointOfInterest, 0.8);
+    this.overlay.strokeTriangle(
       x + ux * 8,
       y + uy * 8,
       x - ux * 5 - uy * 5,
@@ -643,14 +724,14 @@ export class PrototypeScene extends Phaser.Scene {
       x - ux * 5 + uy * 5,
       y - uy * 5 - ux * 5,
     );
-    this.ink.strokeCircle(x - ux * 13, y - uy * 13, 3);
+    this.overlay.strokeCircle(x - ux * 13, y - uy * 13, 3);
   }
 
   private drawFeedback(): void {
     for (const pulse of this.feedback.pulses) {
       const at = this.project(pulse);
       const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
-      this.ink.lineStyle(
+      this.overlay.lineStyle(
         pulse.kind === "damage" ? 3 : 1.5,
         pulse.kind === "damage"
           ? this.palette.obstacle
@@ -664,7 +745,7 @@ export class PrototypeScene extends Phaser.Scene {
       if (pulse.kind === "hit" || pulse.kind === "disabled") {
         for (let i = 0; i < 6; i++) {
           const angle = (i * Math.PI) / 3;
-          this.ink.lineBetween(
+          this.overlay.lineBetween(
             at.x + Math.cos(angle) * radius,
             at.y + Math.sin(angle) * radius,
             at.x + Math.cos(angle) * (radius + 7),
@@ -672,10 +753,10 @@ export class PrototypeScene extends Phaser.Scene {
           );
         }
         if (pulse.kind === "disabled") {
-          this.ink.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
+          this.overlay.strokeRect(at.x - radius, at.y - radius, radius * 2, radius * 2);
         }
       } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
-        this.ink.strokePoints(
+        this.overlay.strokePoints(
           [
             new Phaser.Math.Vector2(at.x, at.y - radius),
             new Phaser.Math.Vector2(at.x + radius, at.y),
@@ -685,18 +766,18 @@ export class PrototypeScene extends Phaser.Scene {
           true,
         );
         if (pulse.kind === "deposit") {
-          this.ink.strokeCircle(at.x, at.y, radius * 0.65);
+          this.overlay.strokeCircle(at.x, at.y, radius * 0.65);
         }
       } else {
-        this.ink.strokeCircle(at.x, at.y, radius);
+        this.overlay.strokeCircle(at.x, at.y, radius);
         if (pulse.kind === "damage") {
-          this.ink.lineBetween(
+          this.overlay.lineBetween(
             at.x - radius,
             at.y - radius,
             at.x - radius * 0.65,
             at.y - radius * 0.65,
           );
-          this.ink.lineBetween(
+          this.overlay.lineBetween(
             at.x + radius,
             at.y + radius,
             at.x + radius * 0.65,
@@ -704,7 +785,7 @@ export class PrototypeScene extends Phaser.Scene {
           );
         }
         if (pulse.kind === "teleport") {
-          this.ink.strokeCircle(at.x, at.y, radius * 0.6);
+          this.overlay.strokeCircle(at.x, at.y, radius * 0.6);
         }
       }
     }

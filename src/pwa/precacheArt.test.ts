@@ -63,6 +63,16 @@ describe("artUrls", () => {
     expect(named.filter((url) => !urls.includes(url))).toEqual([]);
   });
 
+  it("lists every enemy heading frame and jets file", () => {
+    const urls = artUrls(artFiles);
+    for (const archetype of ["swarm", "fighter", "interceptor", "retaliator"]) {
+      expect(urls).toContain(`/art/enemies/${archetype}-jets.json`);
+      for (let index = 0; index < 16; index++) {
+        expect(urls).toContain(`/art/enemies/${archetype}-${index}.svg`);
+      }
+    }
+  });
+
   it("leaves out the icon review sheet", () => {
     expect(artUrls(artFiles).filter((url) => url.includes("contact-sheet"))).toEqual([]);
   });
