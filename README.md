@@ -9,7 +9,7 @@ game-kit and delivery-kit.
 The [prototype contract](gameplay/prototype.md) defines the scope and approved
 rules. This is an untuned prototype for gameplay testing.
 
-Three story sectors are designed:
+Three story galaxies are designed:
 
 - Cooperating outposts: connect growers, a workshop and salvagers, then help start
   a community garden at home.
@@ -18,8 +18,8 @@ Three story sectors are designed:
 - Whale family: clear debris, locate the whale's family and relay coordinates,
   then help Ada understand her dog's need to explore.
 
-Space quests and their resolutions at home unlock sectors in order. Completed
-sectors remain replayable. Sector four's conclusion is deferred and has no
+Space quests and their resolutions at home unlock galaxies in order. Completed
+galaxies remain replayable. Galaxy four's conclusion is deferred and has no
 playable story. See [dialogue and objectives](gameplay/prototype-copy.md).
 
 The flight target includes independent movement and aim, a rechargeable shield,
@@ -51,7 +51,7 @@ without aim input, the ship faces its movement direction.
 
 ## Saving
 
-The persistence contract distinguishes an interrupted flight from leaving a sector:
+The persistence contract distinguishes an interrupted flight from leaving a galaxy:
 
 - Closing and reopening should resume the exact flight, including layout seed,
   cargo, ammunition and shield state.

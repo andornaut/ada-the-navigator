@@ -53,7 +53,7 @@ export const PROTOTYPE: PrototypeContent = {
       },
       name: "The Outposts",
       objectives: [
-        "Explore the sector.",
+        "Explore the galaxy.",
         "Take food from the growers to the workshop.",
         "Take the workshop's tool kit to the salvagers.",
         "Bring spare parts from the salvagers to the workshop.",
@@ -124,7 +124,7 @@ export const PROTOTYPE: PrototypeContent = {
       },
       name: "The Mining Hub",
       objectives: [
-        "Explore the sector.",
+        "Explore the galaxy.",
         "Mine resource rocks and deposit cargo at the hub.",
         "Keep depositing resources and talk with the miner.",
         "Speak with regular visitors about approaching together.",
@@ -194,7 +194,7 @@ export const PROTOTYPE: PrototypeContent = {
       },
       name: "The Whale Family",
       objectives: [
-        "Explore the sector.",
+        "Explore the galaxy.",
         "Shoot the debris blocking the whale.",
         "Talk with the freed whale.",
         "Explore to find the whale's family.",
@@ -237,7 +237,7 @@ export const PROTOTYPE: PrototypeContent = {
     confirmLeft: "{amount} left after",
     confirmTitle: "Buy {name}?",
     continue: "Continue",
-    deferred: "Sector four: story in development",
+    deferred: "Galaxy four: Story in development.",
     deliver: "Deliver",
     deposit: "Deposit",
     destinations: "Discovered destinations",
