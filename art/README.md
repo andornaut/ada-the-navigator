@@ -18,7 +18,9 @@ the [holodisk](holodisk.md), the
 [Whirlpool whales](whales.md), the
 [Whirlpool current streaks, river debris and project world changes](whirlpool.md),
 Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
-its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze), character portraits, and the
+its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze),
+[Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
+Loom's glider and portrait and the crimson drones, character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
@@ -66,7 +68,10 @@ and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves,
 river debris, project frames and the `whales`, `whirlpoolCurrents`,
 `whirlpoolDebris` and `whirlpoolProjects` links; Andromeda the settlers'
 station, the settlements, the guide beacons, their project frames, the garnet
-drones, the Munix portraits, the backdrop haze and the `backdropHaze` link.
+drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
+Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
+Channel lights, Elder Loom's glider and portrait, the crimson drones and the
+`needleGates`, `needleChannels`, `needleEye` and `needleBand` links.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget and `tow` serve every galaxy and stay in core, as do the
@@ -110,7 +115,9 @@ debris, project and Andromeda SVGs are deterministic exports from `art/tools/shi
 `art/tools/whales.ts`, `art/tools/whirlpool.ts` and `art/tools/andromeda.ts`, with the
 heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers from
 `art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
-`art/tools/garnet-drones.ts`; edit the generators and
+`art/tools/garnet-drones.ts`. Needle's art comes from `art/tools/needle-station.ts`,
+`needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
+`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the
@@ -122,7 +129,8 @@ the pickups ([Stardust](stardust.md#pickup), the
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
-`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, and
+`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits,
+`art/tools/needle-portraits.ts` adapts Elder Loom's from Archie sources in `art/sources/`, and
 `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and `cartwheel-portraits.ts`
 each galaxy's cast, from the bust parts in `art/tools/bust.ts`. `art/tools/portraits.ts`
 draws the Astra, General Gadget and Grandma portraits and the compact conversation sheets

@@ -1,7 +1,13 @@
 # Needle
 
-Needle's space art. Everything here is
-in [Needle's manifest](../public/art/needle/manifest.json) and under
+Needle's space art: the [Weavers' station](#weavers-station) and its Loom
+hall, the [ring gates](#ring-gates), the [channels](#channels) with their
+stitched edges, harmless debris and the Eye's layout, the
+[edge-on band](#space-look), [Elder Loom's glider](#elder-looms-glider) and
+[portrait](#elder-looms-portrait), the [crimson drones](#needle-drones) and the
+[world changes](#world-changes). Everything here is in
+[Needle's manifest](../public/art/needle/manifest.json) (except the
+`projects.json` entries) and under
 `public/art/needle/`, drawn in the shared solid-model projection
 ([ship geometry](ship.md)) with the station family's parts
 ([art/tools/solid.ts](tools/solid.ts)). Shared generator parts and the Weaver
