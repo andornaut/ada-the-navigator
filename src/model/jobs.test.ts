@@ -540,6 +540,17 @@ describe("jobs in play", () => {
     expect(launched.towing).toBe(true);
     expect(launched.inDanger).toBe(true);
     expect(launched.state.notice).toBe("Unavailable while towing.");
+    // Restart from that start screen clears the held flight with the rest of the story.
+    const restarted = new GameModel(PROTOTYPE, saved);
+    restarted.restart();
+    expect(restarted.screen).toBe("start");
+    expect(JSON.parse(restarted.save())).toMatchObject({
+      flight: null,
+      mode: "home",
+      notice: "",
+      started: false,
+      tasks: {},
+    });
   });
 
   it("complete a rescue once the craft is within 400 of the issuing station", () => {
