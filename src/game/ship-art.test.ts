@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
+import { SHIP_HEADINGS } from "../model/nose.ts";
 import { ENEMY_HEADINGS } from "./enemy-art.ts";
 import {
   hasShipHeadings,
   paintFrames,
   selectPaintedShipAsset,
   selectShipAsset,
-  SHIP_HEADINGS,
   type ShipAsset,
   shipDirection,
 } from "./ship-art.ts";

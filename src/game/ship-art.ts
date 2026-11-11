@@ -1,3 +1,4 @@
+import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 
 export interface ShipAsset {
@@ -10,9 +11,7 @@ export interface ShipAsset {
   pivot: Vec;
 }
 
-/** Art exports Ada's ship in 32 headings; ship heading 2k faces enemy heading k. */
-export const SHIP_HEADINGS = 32;
-
+// Ship heading 2k of SHIP_HEADINGS (32) faces enemy heading k of ENEMY_HEADINGS (16).
 const DIRECTIONAL = /^ship-(?:thrust-)?\d+$/;
 const IDLE = /^ship-\d+$/;
 

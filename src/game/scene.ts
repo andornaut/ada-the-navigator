@@ -24,6 +24,7 @@ import {
   stationDock,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
+import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
@@ -91,7 +92,6 @@ import {
   hasShipHeadings,
   paintFrames,
   selectPaintedShipAsset,
-  SHIP_HEADINGS,
   type ShipAsset,
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";

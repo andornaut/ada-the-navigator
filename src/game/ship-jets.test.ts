@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
-import { hasShipHeadings, SHIP_HEADINGS } from "./ship-art.ts";
+import { SHIP_HEADINGS } from "../model/nose.ts";
+import { hasShipHeadings } from "./ship-art.ts";
 import {
   type JetDisplay,
   jetLength,
