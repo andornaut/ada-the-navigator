@@ -5,6 +5,14 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
+
+// A PNG's width x height from its IHDR chunk.
+function pngSize(file: Buffer): string {
+  expect(file.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  expect(file.subarray(12, 16).toString()).toBe("IHDR");
+  return `${file.readUInt32BE(16)}x${file.readUInt32BE(20)}`;
+}
+
 interface ManifestIcon {
   purpose: string;
   sizes: string;
@@ -43,10 +51,7 @@ it("declares correctly sized local any and maskable PNGs", () => {
   for (const icon of icons) {
     expect(icon.src.startsWith("/art/app-icon/")).toBe(true);
     expect(icon.type).toBe("image/png");
-    const file = readFileSync(resolve(root, "public", `.${icon.src}`));
-    expect(file.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
-    expect(file.subarray(12, 16).toString()).toBe("IHDR");
-    expect(`${file.readUInt32BE(16)}x${file.readUInt32BE(20)}`).toBe(icon.sizes);
+    expect(pngSize(readFileSync(resolve(root, "public", `.${icon.src}`)))).toBe(icon.sizes);
   }
   const favicon = readFileSync(resolve(root, "public/art/app-icon/favicon.ico"));
   expect(favicon.readUInt16LE(0)).toBe(0);
@@ -57,3 +62,31 @@ it("declares correctly sized local any and maskable PNGs", () => {
   });
   expect(sizes.sort()).toEqual(["16x16", "32x32"]);
 });
+
+it.each(["pages/index.html", "pages/play/index.html"])(
+  "links %s to the favicon and sized PNG icons that exist",
+  (page) => {
+    const html = readFileSync(resolve(root, page), "utf8");
+    const links = Array.from(
+      html.matchAll(/<link\s+rel="(icon|apple-touch-icon)"[^>]*>/gu),
+      ([tag]) => ({
+        href: /href="([^"]+)"/u.exec(tag)?.[1] ?? "",
+        rel: /rel="([^"]+)"/u.exec(tag)?.[1] ?? "",
+        sizes: /sizes="([^"]+)"/u.exec(tag)?.[1] ?? "",
+      }),
+    );
+    expect(links.map(({ rel, sizes }) => `${rel}:${sizes}`)).toEqual([
+      "icon:any",
+      "icon:32x32",
+      "icon:16x16",
+      "apple-touch-icon:180x180",
+    ]);
+    for (const { href, sizes } of links) {
+      expect(href.startsWith("/art/app-icon/")).toBe(true);
+      const file = readFileSync(resolve(root, "public", `.${href}`));
+      if (sizes !== "any") {
+        expect(pngSize(file), href).toBe(sizes);
+      }
+    }
+  },
+);

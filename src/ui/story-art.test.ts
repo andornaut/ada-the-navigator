@@ -165,14 +165,23 @@ describe("storybook art", () => {
   describe("Astra speaking", () => {
     const astra = readAstraSpeaking(manifest.assets)!;
 
-    it("places the 39 by 40 patch at (530, 169) on the 960 by 540 canvas", () => {
-      expect(astra.url).toBe(asset("cockpit-astra")?.path);
+    it("places the patch at its manifest position and display size on the 960 by 540 canvas", () => {
+      const entry = manifest.assets.find(({ id }) => id === "cockpit-astra") as {
+        at: { x: number; y: number };
+        displayHeight: number;
+        displayWidth: number;
+        path: string;
+      };
+      expect(astra.url).toBe(entry.path);
       expect(astra.box).toEqual({
-        height: (40 / 540) * 100,
-        left: (530 / 960) * 100,
-        top: (169 / 540) * 100,
-        width: (39 / 960) * 100,
+        height: (entry.displayHeight / 540) * 100,
+        left: (entry.at.x / 960) * 100,
+        top: (entry.at.y / 540) * 100,
+        width: (entry.displayWidth / 960) * 100,
       });
+      // The patch lies wholly on the canvas.
+      expect(entry.at.x + entry.displayWidth).toBeLessThanOrEqual(960);
+      expect(entry.at.y + entry.displayHeight).toBeLessThanOrEqual(540);
       expect(astra.frameCount).toBe(4);
     });
 
