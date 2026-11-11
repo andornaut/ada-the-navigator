@@ -219,7 +219,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, stacked: "Resume" (primary), "Map", "Settings" and "Return home".
+  one shape, stacked: "Resume" (primary), "Map", "Settings", "Achievements" and
+  "Return home".
   Above the buttons, the card shows the current story objective and, when a
   station job is held, its "Job:" line. Space shows no objective text.
   Map shows the current galaxy: Ada's position, discovered destinations and
