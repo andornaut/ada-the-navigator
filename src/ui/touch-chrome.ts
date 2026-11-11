@@ -117,6 +117,31 @@ export function touchChromeLayers(
   return layers;
 }
 
+// The speed line from a ring's centre to its knob's centre: a cream stroke SPEED_LINE_WIDTH wide
+// with an ink fringe 1 pixel wide on each side. It is drawn in a frame SPEED_LINE_FRAME square
+// whose centre pixel sits on the ring's, long enough for the farthest knob.
+export const SPEED_LINE_WIDTH = 2;
+export const SPEED_LINE_FRAME = 29;
+
+// The line's layers for a knob offset in whole pixels, or none for a knob at rest.
+export function speedLineLayers(
+  colours: TouchChromeColours,
+  offset: Point,
+): readonly TouchChromeLayer[] {
+  if (offset.x === 0 && offset.y === 0) {
+    return [];
+  }
+  const centre = SPEED_LINE_FRAME / 2;
+  const path = [
+    { x: centre, y: centre },
+    { x: centre + offset.x, y: centre + offset.y },
+  ];
+  return [
+    { colour: colours.ink, kind: "stroke", path, width: SPEED_LINE_WIDTH + 2 },
+    { colour: colours.cream, kind: "stroke", path, width: SPEED_LINE_WIDTH },
+  ];
+}
+
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 function segmentDistance(point: Point, from: Point, to: Point): number {

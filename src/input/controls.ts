@@ -8,7 +8,12 @@ import {
 import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
-import { createTouchChrome, showTouchChrome } from "../game/touch-chrome.ts";
+import {
+  createSpeedLine,
+  createTouchChrome,
+  showSpeedLine,
+  showTouchChrome,
+} from "../game/touch-chrome.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
@@ -21,7 +26,7 @@ import {
   type SettingsOptions,
 } from "../ui/settings.ts";
 import { createShieldMeter } from "../ui/shield.ts";
-import { stickRestCentres, stickViews } from "../ui/sticks.ts";
+import { STICK_DEPTHS, stickRestCentres, stickViews } from "../ui/sticks.ts";
 import { TOUCH_CHROME_FRAME } from "../ui/touch-chrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
@@ -144,15 +149,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         syncModal(),
       )
     : undefined;
-  const sticks = {
-    aim: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "aim") },
-    move: { knob: createTouchChrome(scene, "knob"), ring: createTouchChrome(scene, "move") },
-  };
-  const stickParts = [sticks.move.ring, sticks.move.knob, sticks.aim.ring, sticks.aim.knob].filter(
-    (part) => part !== undefined,
-  );
+  const stick = (kind: "aim" | "move") => ({
+    knob: createTouchChrome(scene, "knob")?.setDepth(STICK_DEPTHS.knob),
+    line: createSpeedLine(scene).setDepth(STICK_DEPTHS.line),
+    ring: createTouchChrome(scene, kind)?.setDepth(STICK_DEPTHS.ring),
+  });
+  const sticks = { aim: stick("aim"), move: stick("move") };
+  const stickParts = [sticks.move, sticks.aim]
+    .flatMap(({ knob, line, ring }) => [ring, line, knob])
+    .filter((part) => part !== undefined);
   for (const part of stickParts) {
-    part.setScrollFactor(0).setDepth(10000).setVisible(false);
+    part.setScrollFactor(0).setVisible(false);
   }
   scene.cameras.main.ignore(stickParts);
   const stickSet = new Set<GameObjects.GameObject>(stickParts);
@@ -303,7 +310,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     );
     for (const side of ["move", "aim"] as const) {
       const view = views[side];
-      const { knob, ring } = sticks[side];
+      const { knob, line, ring } = sticks[side];
+      showSpeedLine(line, view?.line);
       if (ring) {
         ring.setVisible(view !== undefined);
         if (view) {

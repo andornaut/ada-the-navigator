@@ -1,14 +1,24 @@
 import { describe, expect, it } from "vitest";
 
 import { ControlState } from "../input/state.ts";
-import { centredAt, MARKER_THRESHOLD, stickRestCentres, stickViews } from "./sticks.ts";
+import {
+  centredAt,
+  MARKER_THRESHOLD,
+  STICK_DEPTHS,
+  stickRestCentres,
+  stickViews,
+} from "./sticks.ts";
 import {
   KNOB_OUTER_RADIUS,
   MARKER_INK_WIDTH,
   MOVE_KNOB_REACH,
   MOVE_MARKERS,
+  SPEED_LINE_FRAME,
+  speedLineLayers,
+  TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
+  touchChromePixel,
 } from "./touch-chrome.ts";
 
 const layout = {
@@ -184,5 +194,57 @@ describe("move knob travel", () => {
     expect(MOVE_KNOB_REACH).toBe(11);
     expect(at(1)).toBe(MOVE_KNOB_REACH);
     expect(at(0.5)).toBe(Math.round(MOVE_KNOB_REACH / 2));
+  });
+});
+
+describe("speed line", () => {
+  // Where the line ends, in the view: its frame's centre pixel plus the offset.
+  const lineEnd = (line: { at: { x: number; y: number }; offset: { x: number; y: number } }) => ({
+    x: line.at.x + (SPEED_LINE_FRAME - 1) / 2 + line.offset.x,
+    y: line.at.y + (SPEED_LINE_FRAME - 1) / 2 + line.offset.y,
+  });
+
+  it("is absent at rest and inside the dead zone", () => {
+    const state = new ControlState();
+    expect(stickViews(layout, state).move?.line).toBeUndefined();
+    expect(stickViews(layout, state).aim?.line).toBeUndefined();
+    state.down("move", 1, { x: 100, y: 100 });
+    state.move(1, { x: 101, y: 100 });
+    expect(stickViews(layout, state).move?.line).toBeUndefined();
+    expect(speedLineLayers(TOUCH_CHROME_COLOURS, { x: 0, y: 0 })).toEqual([]);
+  });
+
+  it.each([0.25, 0.5, 1])("ends at the move knob's centre at %s deflection", (strength) => {
+    const state = new ControlState();
+    state.down("move", 1, { x: 100, y: 100 });
+    state.move(1, { x: 100 + 2.4 + strength * 17.6, y: 100 });
+    const view = stickViews(layout, state).move!;
+    expect(lineEnd(view.line!)).toEqual(knobCentre(view.knob));
+    expect(view.line!.at).toEqual(centredAt({ x: 100, y: 100 }, SPEED_LINE_FRAME));
+  });
+
+  it("ends at the aim knob's centre", () => {
+    const state = new ControlState();
+    state.down("aim", 2, { x: 500, y: 100 });
+    state.move(2, { x: 490, y: 92 });
+    const view = stickViews(layout, state).aim!;
+    expect(lineEnd(view.line!)).toEqual(knobCentre(view.knob));
+  });
+
+  it("lies over the ring and under the knob", () => {
+    expect(STICK_DEPTHS.ring).toBeLessThan(STICK_DEPTHS.line);
+    expect(STICK_DEPTHS.line).toBeLessThan(STICK_DEPTHS.knob);
+  });
+
+  it("draws a cream core with an ink fringe on each side, fitting its frame", () => {
+    const centre = SPEED_LINE_FRAME / 2;
+    const layers = speedLineLayers(TOUCH_CHROME_COLOURS, { x: 12, y: 0 });
+    const cream = [234, 212, 170, 255];
+    const ink = [24, 20, 37, 255];
+    expect(touchChromePixel(layers, { x: centre + 6, y: centre })).toEqual(cream);
+    expect(touchChromePixel(layers, { x: centre + 6, y: centre + 1.5 })).toEqual(ink);
+    expect(touchChromePixel(layers, { x: centre + 6, y: centre - 1.5 })).toEqual(ink);
+    expect(touchChromePixel(layers, { x: centre + 6, y: centre + 2.5 })[3]).toBe(0);
+    expect(centre + 12 + 2).toBeLessThanOrEqual(SPEED_LINE_FRAME);
   });
 });

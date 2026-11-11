@@ -8,6 +8,9 @@ import Phaser from "phaser";
 
 import {
   isTouchChromePose,
+  type Point,
+  SPEED_LINE_FRAME,
+  speedLineLayers,
   TOUCH_CHROME_ALPHA,
   TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
@@ -144,5 +147,45 @@ export function showTouchChrome(sprite: Phaser.GameObjects.Sprite, tag: TouchChr
   const key = animationKey(sprite.texture.key, tag);
   if (sprite.anims.currentAnim?.key !== key && sprite.scene.anims.exists(key)) {
     sprite.play(key);
+  }
+}
+
+// The speed line's texture for a knob offset in whole pixels, made on first use and kept for the
+// game; there are at most a few hundred offsets.
+function speedLineTexture(scene: Phaser.Scene, offset: Point): string {
+  const key = `touch-chrome-line-${offset.x}_${offset.y}`;
+  if (!scene.textures.exists(key)) {
+    createChromeTexture(
+      scene,
+      key,
+      SPEED_LINE_FRAME,
+      new Map([["line", speedLineLayers(TOUCH_CHROME_COLOURS, offset)]]),
+    );
+  }
+  return key;
+}
+
+// A joystick's speed line, hidden until showSpeedLine places it.
+export function createSpeedLine(scene: Phaser.Scene): Phaser.GameObjects.Sprite {
+  return scene.add
+    .sprite(0, 0, speedLineTexture(scene, { x: 1, y: 0 }), "line")
+    .setOrigin(0)
+    .setDisplaySize(SPEED_LINE_FRAME, SPEED_LINE_FRAME)
+    .setAlpha(TOUCH_CHROME_ALPHA)
+    .setVisible(false);
+}
+
+// Draws the line from the ring's centre to the knob's, or hides it while the knob is centred.
+export function showSpeedLine(
+  sprite: Phaser.GameObjects.Sprite,
+  line: { readonly at: Point; readonly offset: Point } | undefined,
+): void {
+  sprite.setVisible(line !== undefined);
+  if (line) {
+    const key = speedLineTexture(sprite.scene, line.offset);
+    if (sprite.texture.key !== key) {
+      sprite.setTexture(key, "line").setDisplaySize(SPEED_LINE_FRAME, SPEED_LINE_FRAME);
+    }
+    sprite.setPosition(line.at.x, line.at.y);
   }
 }

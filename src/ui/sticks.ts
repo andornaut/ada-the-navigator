@@ -9,6 +9,7 @@ import type { ControlVisibility } from "./device-settings.ts";
 import {
   MOVE_KNOB_REACH,
   type Point,
+  SPEED_LINE_FRAME,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromePose,
@@ -29,9 +30,15 @@ interface StickLayout extends Size {
 export interface StickView {
   readonly knob: Point;
   readonly knobPose: TouchChromePose;
+  // The speed line, from the ring's centre to the knob's, while the knob is off centre: its
+  // frame's top-left and the knob's offset from the ring's centre.
+  readonly line?: { readonly at: Point; readonly offset: Point };
   readonly ring: Point;
   readonly ringPose: TouchChromePose;
 }
+
+// Drawing order, bottom to top: the speed line lies over the ring and under the knob.
+export const STICK_DEPTHS = { knob: 10002, line: 10001, ring: 10000 } as const;
 
 // The move ring lights its left or right marker only while the move direction is within 67.5
 // degrees of that side: the unit direction's x is at least sin(22.5 degrees) that way.
@@ -121,9 +128,13 @@ export function stickViews(
       const divisor = Math.max(1, Math.hypot(dx, dy) / AIM_KNOB_REACH);
       knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
+    const offset = { x: knob.x - centre.x, y: knob.y - centre.y };
     views[side] = {
       knob: centredAt(knob, TOUCH_KNOB_FRAME),
       knobPose: stick ? "held" : "rest",
+      ...(offset.x !== 0 || offset.y !== 0
+        ? { line: { at: centredAt(centre, SPEED_LINE_FRAME), offset } }
+        : {}),
       ring: centredAt(centre, TOUCH_CHROME_FRAME),
       ringPose,
     };
