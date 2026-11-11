@@ -283,7 +283,6 @@ function ensureDebrisRivers(content: PrototypeContent, point: Vec, flight: Fligh
       const river = {
         arc: ((index + next() * 0.6) / count) * current.length,
         current: current.id,
-        offset: (next() - 0.5) * current.width * 0.5,
       };
       const object: SpaceObject = {
         hp: content.tuning.flight.rockHp,
@@ -302,8 +301,8 @@ function ensureDebrisRivers(content: PrototypeContent, point: Vec, flight: Fligh
 }
 
 /**
- * A debris river rock's place: it follows its current at the peak flow speed, entering at one
- * end and leaving at the other, then re-entering at the start.
+ * A debris river rock's place: it follows its current's centre line at the peak flow speed,
+ * entering at one end and leaving at the other, then re-entering at the start.
  */
 function placeRiverRock(flight: FlightState, object: SpaceObject): void {
   const river = object.river!;
@@ -320,8 +319,8 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
     current.length;
   const { point, tangent } = pointOnCurrent(current, arc);
   // Adding 0 turns -0 into 0, so a saved and restored rock compares equal.
-  object.x = point.x - tangent.y * river.offset + 0;
-  object.y = point.y + tangent.x * river.offset + 0;
+  object.x = point.x + 0;
+  object.y = point.y + 0;
   object.velocity = {
     x: tangent.x * CURRENTS.peakFlow + 0,
     y: tangent.y * CURRENTS.peakFlow + 0,

@@ -195,14 +195,15 @@ describe("space currents", () => {
     }
   });
 
-  it("carry debris rivers along their path at the flow speed, re-entering at the start", () => {
+  it("carry debris rivers along their centre line at the peak flow, re-entering at the start", () => {
     const current = currents.find((entry) => entry.debris)!;
     const flight = emptyFlight({ x: current.points[0]!.x + 900, y: current.points[0]!.y + 900 });
     stepFlight(PROTOTYPE, 0.001, idle, flight);
     const rock = flight.objects.find((object) => object.river?.current === current.id)!;
     expect(rock.kind).toBe("debris");
     const start = nearestOnCurrent(current, rock).arc;
-    expect(nearestOnCurrent(current, rock).distance).toBeLessThan(current.width / 2);
+    expect(nearestOnCurrent(current, rock).distance).toBeLessThan(1e-6);
+    expect(Math.hypot(rock.velocity!.x, rock.velocity!.y)).toBeCloseTo(CURRENTS.peakFlow, 9);
     for (let step = 0; step < 60; step++) {
       stepFlight(PROTOTYPE, 1 / 60, idle, flight);
     }

@@ -55,8 +55,8 @@ export interface SpaceObject extends Vec {
   asteroid?: string;
   /** Seeded drift path of an asteroid around its anchor `x`, `y`. */
   orbit?: Vec & { phase: number; radius: number; rate: number };
-  /** A debris river rock's current, its arc position at flight time 0 and offset across. */
-  river?: { arc: number; current: string; offset: number };
+  /** A debris river rock's current and its arc position along the centre line at time 0. */
+  river?: { arc: number; current: string };
   /** A resource rock's class; a rock saved without one is medium. */
   resource?: ResourceClass;
   radius: number;
