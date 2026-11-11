@@ -334,6 +334,56 @@ try {
   }
   events.checks.push("Settings pause movement and clear held input on resume");
 
+  const [
+    { GameModel },
+    { PROTOTYPE },
+    { ensureDestination },
+    { playOpening },
+    { restoreSave: restoreCalm },
+  ] = await Promise.all([
+    import(new URL("../src/model/game.ts", import.meta.url)),
+    import(new URL("../src/data/prototype.ts", import.meta.url)),
+    import(new URL("../src/model/flight.ts", import.meta.url)),
+    import(new URL("../src/model/test-launch.ts", import.meta.url)),
+    import(new URL("../src/model/save.ts", import.meta.url)),
+  ]);
+  async function seedOnce(value, marker) {
+    // The old app's pagehide save runs before this one-shot seed on the new document.
+    await page.addInitScript(
+      ({ key, once, serialized }) => {
+        if (!sessionStorage.getItem(once)) {
+          localStorage.setItem(key, serialized);
+          sessionStorage.setItem(once, "1");
+        }
+      },
+      { key: storageKey, serialized: value, once: marker },
+    );
+    await page.reload();
+  }
+  // The launched world comes from a random seed, so an encounter can open fire during a reload.
+  // Persistence checks use that same world with its hostiles removed: shield then changes only
+  // through recharge, which a full shield never shows.
+  const launched = await readSave();
+  const calm = structuredClone(launched);
+  calm.flight.objects = calm.flight.objects.filter(
+    (object) => !["enemy", "debris", "hazard"].includes(object.kind),
+  );
+  calm.flight.shots = [];
+  for (const [id, object] of Object.entries(calm.flight.world.notables)) {
+    if (object?.kind === "enemy") {
+      delete calm.flight.world.notables[id];
+    }
+  }
+  if (calm.flight.combat) {
+    calm.flight.combat.initialPackSizes = {};
+    delete calm.flight.combat.unloadedPackMembers;
+  }
+  calm.flight.shield = PROTOTYPE.tuning.shieldMax;
+  calm.flight.dangerFor = 0;
+  assert.ok(restoreCalm(calm), "The calm launched world must remain a canonical save");
+  await seedOnce(JSON.stringify(calm), "ada-browser.calm-launch.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+
   await page.waitForFunction((key) => {
     const status = document.querySelector("#game-status");
     const saved = JSON.parse(localStorage.getItem(key));
@@ -383,25 +433,6 @@ try {
   assert.deepEqual(returned.progress, onLanding.progress);
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
-  const [{ GameModel }, { PROTOTYPE }, { ensureDestination }, { playOpening }] = await Promise.all([
-    import(new URL("../src/model/game.ts", import.meta.url)),
-    import(new URL("../src/data/prototype.ts", import.meta.url)),
-    import(new URL("../src/model/flight.ts", import.meta.url)),
-    import(new URL("../src/model/test-launch.ts", import.meta.url)),
-  ]);
-  async function seedOnce(value, marker) {
-    // The old app's pagehide save runs before this one-shot seed on the new document.
-    await page.addInitScript(
-      ({ key, once, serialized }) => {
-        if (!sessionStorage.getItem(once)) {
-          localStorage.setItem(key, serialized);
-          sessionStorage.setItem(once, "1");
-        }
-      },
-      { key: storageKey, serialized: value, once: marker },
-    );
-    await page.reload();
-  }
   const safeInput = new GameModel(PROTOTYPE);
   safeInput.startSector(1);
   playOpening(safeInput);
