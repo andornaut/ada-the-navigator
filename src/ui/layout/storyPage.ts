@@ -15,3 +15,7 @@ export const STORY_PANEL = {
   portrait: { frame: 68, image: 64, inset: 2 },
   speakerGap: SPACING.rowGap,
 } as const;
+
+// A storybook background's canvas in logical px (art/storybook.md): drawn at this size centred on
+// the view under the insets, scaled by max(1, viewW / width, viewH / height) so it always covers.
+export const STORY_BACKGROUND = { height: 540, width: 960 } as const;

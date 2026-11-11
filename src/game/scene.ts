@@ -457,6 +457,7 @@ export class PrototypeScene extends Phaser.Scene {
       onNext: () => apply(() => this.model.storyNext()),
       onPrevious: () => apply(() => this.model.storyPrevious()),
       onSkip: () => apply(() => this.model.storySkip()),
+      reducedMotion: () => this.controls.reducedMotion(),
     });
     this.galaxies = createGalaxySelect(this.controls.overlay, {
       flavors: GALAXIES.map(({ flavor }) => flavor),

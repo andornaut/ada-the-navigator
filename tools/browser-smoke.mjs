@@ -272,7 +272,8 @@ try {
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
   // Reads storybook pages (the default choice, else Next or its named action) until galaxy
-  // selection opens or flight begins, and returns each page's background and text.
+  // selection opens or flight begins, and returns each page's background, its image and text,
+  // and, just after its press, the transition frame fading in and whether the panel hid.
   async function readStory(remaining = 30, pages = []) {
     await page.waitForFunction(
       () =>
@@ -285,14 +286,30 @@ try {
       return pages;
     }
     assert.ok(remaining > 0, "Storybook pages must reach galaxy selection");
+    // The art loads once, after the manifest.
+    await page.waitForFunction(
+      () => document.querySelector(".ada-story-art")?.style.backgroundImage,
+    );
     pages.push({
+      art: await page
+        .locator(".ada-story-art")
+        .first()
+        .evaluate((art) => art.style.backgroundImage),
       background: await page.locator(".ada-story-background").getAttribute("data-background"),
       text: (await panel.locator(".ada-story-paragraph").textContent()) ?? "",
     });
     const choice = panel.locator('[data-action="story-choice"]');
-    await (
-      (await choice.count()) ? choice.first() : panel.locator('[data-action="story-next"]')
-    ).click();
+    const press = (await choice.count())
+      ? choice.first()
+      : panel.locator('[data-action="story-next"]');
+    await press.waitFor({ state: "visible" });
+    pages.at(-1).after = await press.evaluate((button) => {
+      button.click();
+      return {
+        incoming: document.querySelectorAll(".ada-story-art")[1]?.style.backgroundImage ?? "",
+        panelHidden: document.querySelector(".ada-story-panel")?.hidden ?? false,
+      };
+    });
     return readStory(remaining - 1, pages);
   }
   const selector = page.locator('[data-dialog="galaxies"]');
@@ -316,6 +333,34 @@ try {
   assert.ok(
     launchPages.slice(5).every(({ background }) => background === "cockpit"),
     "The rest of the prologue plays in the cockpit",
+  );
+  // Every page shows its location's image from Art's manifest; only the glowing room's press into
+  // the cockpit plays the rock glow, hiding the panel as its first frame fades in.
+  const { BACKGROUND_ART } = await import(new URL("../src/data/storybook.ts", import.meta.url));
+  const artManifest = await (
+    await page.request.get("http://ada-preview:4173/art/manifest.json")
+  ).json();
+  const artUrl = (id) => `url("${artManifest.assets.find((entry) => entry.id === id)?.path}")`;
+  for (const { art, background } of launchPages) {
+    assert.equal(art, artUrl(BACKGROUND_ART[background]), `${background} shows its art`);
+  }
+  const glow = launchPages.findIndex(
+    ({ background }, index) =>
+      background === "adaRoom" && launchPages[index + 1]?.background === "cockpit",
+  );
+  assert.ok(glow >= 0, "The prologue leaves Ada's room for the cockpit");
+  assert.deepEqual(launchPages[glow].after, {
+    incoming: artUrl("story-ada-room-glow-1"),
+    panelHidden: true,
+  });
+  assert.deepEqual(
+    launchPages.filter((_, index) => index !== glow).map(({ after }) => after.incoming),
+    launchPages.slice(1).map(() => ""),
+    "Every other page change cuts",
+  );
+  events.checks.push(
+    "Storybook pages show Art's backgrounds, and the glowing room plays the rock glow into the " +
+      "cockpit",
   );
   // Each optional question's answer returns to the list until Continue.
   for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)

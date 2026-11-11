@@ -1,10 +1,11 @@
 import type { Background } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
-import { STORY_PANEL } from "./layout/storyPage.ts";
+import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
+import { loadStoryArt, type StoryArt, type TransitionStep, transitionSteps } from "./story-art.ts";
 
 export interface StoryLabels {
   readonly next: string;
@@ -29,21 +30,9 @@ export interface StoryOptions {
   readonly onNext: () => void;
   readonly onPrevious: () => void;
   readonly onSkip: () => void;
+  /** Whether a story transition plays as its reduced-motion steps. */
+  readonly reducedMotion: () => boolean;
 }
-
-// PLACEHOLDER (Art): flat low-contrast fills until Art's seven Earth backgrounds and the cockpit
-// land; each page names its background by key, so the art drops in by key.
-export const BACKGROUND_PLACEHOLDERS: Readonly<Record<Background, string>> = {
-  adaRoom: "#5b4a6b",
-  adaRoomUnpolished: "#4f4a5c",
-  cockpit: "#26304a",
-  frontDoor: "#6b5a4a",
-  gardenLot: "#4f6447",
-  grandmaGarden: "#5e6b4a",
-  park: "#4a6b5e",
-  schoolHallway: "#5a5a6b",
-  schoolyard: "#6b6450",
-};
 
 // The available rect: the page inset from each safe edge.
 const AVAILABLE_WIDTH = `calc(100% - ${safeEdge("left", SPACING.pageInset)} - ${safeEdge(
@@ -56,11 +45,33 @@ const AVAILABLE_HEIGHT = `calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - $
   SPACING.pageInset,
 )})`;
 
+// The background canvas's width: display size, or the view's width or its height at the canvas's
+// aspect, whichever is largest.
+const ART_WIDTH = `max(${units(STORY_BACKGROUND.width)}, 100cqw, calc(100cqh * ${
+  STORY_BACKGROUND.width
+} / ${STORY_BACKGROUND.height}))`;
+
 export const STORYBOOK_STYLE = `
 .ada-controls .ada-story-background{
   position:absolute;
   inset:0;
+  overflow:hidden;
+  container-type:size;
   pointer-events:auto
+}
+
+/* Art's canvas at display size, centred on the view under the insets and scaled up only to cover
+   a view past it, nearest neighbour (art/layout.md "Storybook page"). The second image is a
+   transition's incoming frame, faded in over the first. */
+.ada-controls .ada-story-art{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:${ART_WIDTH};
+  aspect-ratio:${STORY_BACKGROUND.width} / ${STORY_BACKGROUND.height};
+  transform:translate(-50%, -50%);
+  background:center / 100% 100% no-repeat;
+  image-rendering:pixelated
 }
 
 .ada-controls .ada-story-panel{
@@ -135,7 +146,8 @@ export const STORYBOOK_STYLE = `
  * page controls, with Skip apart at the top right on every page. Previous (left) uses the
  * disabled face on a scene's first page; Next (right) is absent on a choice page and shows a
  * page's named action in its slot. A question page shows its
- * remaining questions with Continue in Next's slot.
+ * remaining questions with Continue in Next's slot. Between two pages whose images Art's story
+ * transition joins (Ada's room to the cockpit), the panel hides while its frames play.
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const { labels } = options;
@@ -146,6 +158,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   layer.hidden = true;
   const background = document.createElement("div");
   background.className = "ada-story-background";
+  const [base, incoming] = [0, 1].map(() => {
+    const image = document.createElement("div");
+    image.className = "ada-story-art";
+    background.append(image);
+    return image;
+  }) as [HTMLDivElement, HTMLDivElement];
+  incoming.style.opacity = "0";
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
@@ -181,20 +200,49 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
+  let art: StoryArt = { backgrounds: {}, transitions: [] };
   // What the layer last showed; re-rendering only on a change keeps each button across frames.
   let shown = "";
+  let shownKey: Background | null = null;
+  let lastPage: StoryPageView | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let fade: Animation | undefined;
+  const image = (url: string | undefined) => (url ? `url('${url}')` : "");
   const setBackground = (key: Background) => {
+    shownKey = key;
     background.dataset.background = key;
-    background.style.background = BACKGROUND_PLACEHOLDERS[key];
+    base.style.backgroundImage = image(art.backgrounds[key]);
   };
-  // Shows a page, or only a background (the cockpit behind galaxy selection), or nothing.
-  const show = (page: StoryPageView | null, backdrop: Background | null = null): void => {
-    const signature = JSON.stringify([page, backdrop]);
-    if (signature === shown) {
+  // Ends a running transition step, leaving the base image as it stands.
+  const stop = () => {
+    clearTimeout(timer);
+    timer = undefined;
+    fade?.cancel();
+    fade = undefined;
+    incoming.style.backgroundImage = "";
+  };
+  // Each step cross-fades linearly to its image over fadeMs (0 cuts), then holds for holdMs.
+  const play = (steps: readonly TransitionStep[], done: () => void, index = 0): void => {
+    const step = steps[index];
+    if (!step) {
+      done();
       return;
     }
-    const focusFirst = shown !== "" && page !== null;
-    shown = signature;
+    if (step.fadeMs > 0) {
+      incoming.style.backgroundImage = image(step.url);
+      fade = incoming.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: step.fadeMs,
+        easing: "linear",
+        fill: "forwards",
+      });
+    }
+    timer = setTimeout(() => {
+      base.style.backgroundImage = image(step.url);
+      stop();
+      play(steps, done, index + 1);
+    }, step.fadeMs + step.holdMs);
+  };
+  const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
     layer.hidden = page === null && backdrop === null;
     panel.hidden = page === null;
     skip.hidden = page === null;
@@ -242,8 +290,51 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       (buttons[0] ?? next).focus();
     }
   };
+  // Shows a page, or only a background (the cockpit behind galaxy selection), or nothing. A new
+  // state ends any transition still playing and shows at once.
+  const show = (page: StoryPageView | null, backdrop: Background | null = null): void => {
+    const signature = JSON.stringify([page, backdrop]);
+    if (signature === shown) {
+      return;
+    }
+    const focusFirst = shown !== "" && page !== null;
+    shown = signature;
+    stop();
+    const from = lastPage;
+    lastPage = page;
+    const steps =
+      from && page
+        ? transitionSteps(
+            art.transitions,
+            art.backgrounds[from.background],
+            art.backgrounds[page.background],
+            options.reducedMotion(),
+          )
+        : null;
+    if (!steps) {
+      render(page, backdrop, focusFirst);
+      return;
+    }
+    panel.hidden = true;
+    skip.hidden = true;
+    play(steps, () => render(page, backdrop, focusFirst));
+  };
+  void loadStoryArt().then((loaded) => {
+    art = loaded;
+    // Preloads every image, so a page or transition frame draws without a blank.
+    for (const url of new Set([
+      ...Object.values(art.backgrounds),
+      ...art.transitions.flatMap(({ steps }) => steps.map((step) => step.url)),
+    ])) {
+      new Image().src = url;
+    }
+    if (shownKey) {
+      setBackground(shownKey);
+    }
+  });
   return {
     dispose(): void {
+      stop();
       style.remove();
       layer.remove();
     },
