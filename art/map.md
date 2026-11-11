@@ -7,9 +7,9 @@ landmarks, the objective once mapped, and how much of the galaxy is mapped
 appear. Every distance and size comes from [Layout](layout.md) or the tokens
 below; states and colours of shared controls are in [Controls](controls.md).
 
-Constants: `MAP_SCREEN`, `MAP_PANEL` and `MAP_SYMBOL` in
-`src/ui/layout/mapScreen.ts`, to implement. They replace the provisional
-`MAP_CARD` (`mapCard.ts`) and the marker faces in `map-chart.ts`.
+Constants: `MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`, `MAP_FACES` and
+`MAP_GLYPHS` in `src/ui/layout/mapScreen.ts`; the panel's height is
+`panelHeight` in `src/ui/map-screen.ts`.
 
 ## Screen
 
@@ -79,9 +79,12 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
 - At `maxScale`, zoom in plays the [refusal cue](controls.md#refusal-cue) with
   its glyph as the label and does not zoom; zoom out does the same at
   `minScale`. Neither changes face.
-- The column ends at HUD rect top + 216 (224 at a top of 8), at least
-  `SPACING.gap` above the tallest panel's top at the 360-high view (233 with
-  phone insets).
+- The column ends at HUD rect top + 216 (224 at a top of 8). At the 360-high
+  view a two-line panel with the reason line (108) tops at 236 (233 with phone
+  insets), at least `SPACING.gap` below it. The three-line panel with the
+  reason line (128) tops at 216 (213), level with the column, so the two stay
+  apart only across: at the 720 base the centred panel clears the column's
+  left edge (664) while it is at most 608 wide.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
 ### Place panel
@@ -94,33 +97,44 @@ dim.
 | --------------------- | ----- | ------------------------------------------------------ |
 | `MAP_PANEL.padding`   | 16    | `SPACING.panelPadding`, including the 2 frame          |
 | `MAP_PANEL.minWidth`  | 360   | The card floor: half the 720 base width                |
-| `MAP_PANEL.markGap`   | 8     | Chip to the text block (`SPACING.gap`)                 |
-| `MAP_PANEL.actionGap` | 16    | Text block to Travel here, at least                    |
-| `MAP_PANEL.textTop`   | 4     | The two 20 lines' top inside the 48 row, centring them |
+| `MAP_PANEL.markGap`   | 8     | Chip to the text block, and text block to the button   |
+| `MAP_PANEL.actionGap` | 16    | Text block to Travel here: an 8 margin plus `markGap`  |
+| `MAP_PANEL.row`       | 48    | The row's minimum height (`TEXT_BUTTON.height`)        |
+| `MAP_PANEL.textTop`   | 4     | Padding above and below the text block's 20 line pitch |
 | `MAP_PANEL.reasonGap` | 8     | Row to the reason line (`SPACING.gap`)                 |
 
-The row, 48 high (`TEXT_BUTTON.height`), left to right:
+The row, left to right, every part centred on it:
 
-1. The place's chip, 28, centred on the row, drawn as on the field without the
-   selection ring or objective indicator.
-2. The text block: the place's name (`TYPE.label`, cream `#ead4aa`) over
-   "{type} · {distance}" (`TYPE.body`, supporting `#b8b3c9`), each on a 20
-   line.
-3. Travel here: a primary `TEXT_BUTTON`, label width plus
+1. The place's chip, 28, drawn as on the field without the selection ring or
+   objective indicator.
+2. The text block, one 20 line each (`TYPE.label` and `TYPE.body` line
+   height): the place's name (`TYPE.label`, cream `#ead4aa`), then
+   "{type} · {distance}" (`TYPE.body`, supporting `#b8b3c9`), then, when the
+   place is the held job's target, "Job: {objective}" (`TYPE.body`,
+   supporting). A job's own spot shows its name only.
+3. Travel here: a primary `TEXT_BUTTON`, 48 high, label width plus
    `2 * TEXT_BUTTON.inset`, at the row's right end. Only destinations and
-   stations offer it (`MapPlace.travel`); a landmark or the holodisk waypoint
-   shows the chip and text block only.
+   stations offer it (`MapPlace.travel`); a landmark, the holodisk waypoint or
+   a job's own spot shows the chip and text block only.
 
 Below the row, `reasonGap` apart, one reason line (`TYPE.body`, supporting,
 left-aligned at the inner left) shows while Travel here is unavailable.
 
-- Width: `min(availableWidth, max(row + 32, reason + 32, minWidth))`. `row` is
-  `28 + markGap + text block + actionGap + button`; `reason` is the widest
-  reason string, shown or not, so the width never changes with the state.
-- Height: `16 + 48 + 16` = 80, plus `reasonGap + 20` = 108 with the reason line.
+- Row height: `max(row, 2 * textTop + 20 * lines)` for `lines` counting the
+  name: 48 with one or two lines, 68 with the job line. Travel here and the
+  chip stay centred, so in a 68 row the button's top is 10 below the row's
+  top and the chip's 20.
+- Height: `2 * padding + row height`, plus `reasonGap + 20` with the reason
+  line: 80 or 108 with two lines, 100 or 128 with the job line.
+- Width: the panel sizes to its content,
+  `clamp(minWidth, maxWidth, 2 * padding + max(row, reason))`. `row` is
+  `28 + markGap + text + 8`, plus `markGap + button` when Travel here shows;
+  `text` is the widest of its lines. `reason` is the widest reason string
+  while a reason shows (both share one cell), and absent otherwise. `maxWidth`
+  is the width of `safeRect(insets, SPACING.pageInset, view)`.
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
   line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
-  width `max(text + 32, minWidth)`.
+  width `clamp(minWidth, maxWidth, text + 32)`.
 - Travel here unavailable: the disabled face, focusable; activation plays the
   refusal cue ([Controls](controls.md#buttons)). The reason is "Unavailable
   while you are in danger." or "Unavailable while towing." (Gameplay). One
@@ -130,9 +144,12 @@ left-aligned at the inner left) shows while Travel here is unavailable.
 
 ## Symbols
 
-Every place is a round chip: a `chip` disc in the type's face colour with a 1
-ink edge inside it, and the type's 20 glyph in ink, centred. Ada is her arrow.
-The objective carries the flight's direction indicator.
+Every place carries a symbol key (`MapPlace.symbol`, the table below), the
+holodisk waypoint included; `src/model/map.test.ts` covers every key and its
+type line. Each place but a job's own spot is a round chip: a `chip` disc in
+the symbol's face colour with a 1 ink edge inside it, and the symbol's 20 glyph
+in ink, centred. Ada is her arrow. The objective carries the flight's direction
+indicator.
 
 | Token                         | Value | Rule                                                                 |
 | ----------------------------- | ----- | -------------------------------------------------------------------- |
@@ -160,10 +177,16 @@ The objective carries the flight's direction indicator.
 | `nebula`      | A nebula landmark           | `#EAD4AA` | `map-nebula.svg`      | Nebula      |
 | `wreck`       | A wreck landmark            | `#EAD4AA` | `map-wreck.svg`       | Wreck       |
 | `beacon`      | A beacon landmark           | `#EAD4AA` | `map-beacon.svg`      | Beacon      |
+| `job`         | A held job's own spot       | `#FEAE34` | None                  | None        |
 
 - Faces are the in-world key colours: lavender `pointOfInterest` for
   stations, each outpost's own colour, mint `active` for destinations, the
   holodisk's pink; landmarks share cream, so their glyph tells them apart.
+- Job marks: the current marks from main's jobs code, which Art's job board
+  art will replace. The held job's target keeps its own symbol and glyph on an
+  orange `#FEAE34` face (`MAP_JOB_FACE`). A job's own spot, a target that is
+  no other place, takes the `job` symbol: an orange diamond, the chip square
+  rotated 45 degrees at 0.78 scale, with the ink edge and no glyph.
 - Selected: the selection ring around the chip. Focus-visible: the shared
   focus ring, `FOCUS_RING.outset` outside the face and round with it; the two
   may overlap.
@@ -226,6 +249,7 @@ farm-yellow field `#D8C994`; the others are dark.
 | Destination face          | `#65C9BF` | 1.19                | 7.49                | 7.34                | 8.80                |
 | Holodisk face             | `#E868C8` | 1.75                | 5.09                | 4.99                | 5.98                |
 | Landmark face             | `#EAD4AA` | 1.14                | 10.19               | 9.99                | 11.97               |
+| Job face                  | `#FEAE34` | 1.12                | 7.96                | 7.80                | 9.34                |
 | Ada hull                  | `#ffffff` | 1.65                | 14.77               | 14.47               | 17.34               |
 | Objective stroke          | `#C4AFCC` | 1.22                | 7.28                | 7.13                | 8.55                |
 | Ring band                 | `#ead4aa` | 1.14                | 10.19               | 9.99                | 11.97               |
@@ -239,7 +263,8 @@ farm-yellow field `#D8C994`; the others are dark.
   or more) and the ink parts are outlines. Every mark draws its ink parts on
   every field, so a mark has one look across galaxies; a map mark with no ink
   edge is not allowed.
-- Glyphs are ink on the face: 6.21:1 (holodisk) to 12.43:1 (landmarks).
+- Glyphs are ink on the face: 6.21:1 (holodisk) to 12.43:1 (landmarks);
+  9.71:1 on the job face.
 - Tool glyphs on the navy disc: supporting 6.83:1, cream 9.59:1, as in flight.
   On dark fields the disc is 1.04 to 1.24:1 and its glyph carries it.
 - Header, ink at 0.65 over the field: cream text 5.20:1 on Sunflower (composite
@@ -247,8 +272,8 @@ farm-yellow field `#D8C994`; the others are dark.
   16.89:1 or more; the uncharted pip ring `#b8b3c9` 3.70:1 and 8.30:1 or more.
   Over fog: cream 5.80:1 on Sunflower, 10.84:1 or more on the dark fields.
   The divider is decorative.
-- Panel: the card face `#3b3850`; cream name 7.76:1, supporting type line and
-  reason 5.53:1, Travel here as the primary button.
+- Panel: the card face `#3b3850`; cream name 7.76:1, supporting type line, job
+  line and reason 5.53:1, Travel here as the primary button.
 
 ## Fog
 
@@ -313,12 +338,16 @@ innerHeight / (sqrt(2) R))` for `R = chartRadius`.
 - Opening fit: the bounding box of Ada and every discovered place, projected,
   grown about its centre to at least `minBox`; `scale = clamp(min(innerWidth /
 box width, innerHeight / box height), minScale, maxScale)`; the box centre at
-  the inner region's centre. When `minScale` clamps it (a station far outside
-  the disc), pan the least distance that brings Ada inside the inner region.
+  the inner region's centre. When `minScale` clamps it (a discovered station
+  far outside the disc), pan the least distance that brings Ada inside the
+  inner region.
   Nothing is selected on opening.
 - Pan limit: the inner region's centre stays within the projected bounding box
   of the charting disc and every discovered place, so a far station stays
   reachable and the map never drifts into empty space.
+- Stations exist outside the charting disc in every galaxy (the station
+  catalog fills every cell). Once discovered, each is a place, and the opening
+  fit and pan limit reach it.
 
 | View, CSS px    | Fit region   | Inner region | `maxScale` | `minScale` | Zoom steps between |
 | --------------- | ------------ | ------------ | ---------- | ---------- | ------------------ |
@@ -378,16 +407,18 @@ presses first; a chip under them takes no press there.
 
 ## States
 
-| State                 | Field and symbols                               | Panel                                                           |
-| --------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| Nothing mapped        | Ada only, fog except around her path            | Empty note, "No destinations mapped yet."                       |
-| Places, none selected | Chips; the objective's indicator once mapped    | None                                                            |
-| Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                    |
-| Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                |
-| In danger             | Unchanged                                       | Travel here unavailable, "Unavailable while you are in danger." |
-| Towing                | Unchanged                                       | Travel here unavailable, "Unavailable while towing."            |
-| Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                       |
-| No explored record    | Plain field, no fog                             | Unchanged                                                       |
+| State                 | Field and symbols                               | Panel                                                                           |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| Nothing mapped        | Ada only, fog except around her path            | Empty note, "No destinations mapped yet."                                       |
+| Places, none selected | Chips; the objective's indicator once mapped    | None                                                                            |
+| Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                                    |
+| Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                                |
+| Job target selected   | Selection ring on the orange-faced chip         | Row grows to 68: name, type line, "Job: {objective}"; Travel here where offered |
+| Job spot selected     | Selection ring on the orange diamond            | Diamond and the job's name; no action                                           |
+| In danger             | Unchanged                                       | Travel here unavailable, "Unavailable while you are in danger."                 |
+| Towing                | Unchanged                                       | Travel here unavailable, "Unavailable while towing."                            |
+| Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                                       |
+| No explored record    | Plain field, no fog                             | Unchanged                                                                       |
 
 ## Pause card
 
@@ -402,7 +433,8 @@ is unavailable instead.
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
 here; "No destinations mapped yet."; "Unavailable while you are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
-and the type line:
+"Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
+type line of the held job's target; and the type line:
 
 - Types: Station, Outpost, Story place, Holodisk, Nebula, Wreck, Beacon.
   Outposts say "Outpost" without their name.
@@ -410,11 +442,3 @@ and the type line:
   divided by 1000, in light-years: one decimal below 10 ("0.4 light-years"),
   whole numbers from 10 ("12 light-years"), en-US grouping, and "1 light-year"
   when it rounds to 1.
-
-## Open questions
-
-- Tech: a symbol key per `MapPlace` (the table above), and whether stations
-  far outside the charting disc exist, which the opening pan and pan limit
-  cover.
-- Tech: this page assumes the 0.65 HUD panel alpha and Sunflower's light field
-  from the light-field change; merge that first or together.
