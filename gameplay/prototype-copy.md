@@ -16,7 +16,8 @@ Park page: "On a walk with Penny, Ada digs up an unusual rock."
 Ada's room, rock unpolished: "At home, she polishes it until a faint pattern begins
 to glow."
 
-Ada's room, rock glowing. Choice: "Touch the glow."
+Ada's room, rock glowing: "The pattern pulses softly, as if it is waiting for
+her." Choice: "Touch the glow."
 
 Narration: "Light swirls around Ada and Penny. They are standing in a tiny
 cockpit. Outside, colors shimmer like nowhere at all."
