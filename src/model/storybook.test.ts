@@ -305,7 +305,7 @@ describe("start flow", () => {
   it("restarts from Start, clearing story, galaxies, holodisks, Stardust and purchases", () => {
     const model = questDone(2);
     model.state.economy.stardust = 500;
-    model.state.economy.ownedWeapons = ["missiles"];
+    model.state.economy.ownedWeapons = ["rapidMissile"];
     model.returnHome();
     // Restart acts only from the start screen.
     model.restart();
