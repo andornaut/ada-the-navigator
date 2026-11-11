@@ -4,7 +4,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { SCROLL } from "./contentCard.ts";
 import { TEXT_BUTTON } from "./controls.ts";
-import { HUD_BUTTON, hudRect, type Insets, safeRect, type Size } from "./playView.ts";
+import { HUD_BUTTON, HUD_ROW, hudRect, type Insets, safeRect, type Size } from "./playView.ts";
 import { SPACING } from "./tokens.ts";
 
 // The pause menu's full-screen map (art/map.md): the screen's header, tools, fog and fit
@@ -214,18 +214,28 @@ export function mapProjection(world: Point): Point {
  */
 export function fitRegion(insets: Insets, view: Size): Rect {
   const page = safeRect(insets, SPACING.pageInset, view);
-  const hud = hudRect(insets, view);
   const left = page.x;
-  const top = hud.y + MAP_SCREEN.header.height + SPACING.gap;
+  const top = mapRowTop(insets, view) + MAP_SCREEN.header.height + SPACING.gap;
   const right = toolColumnLeft(insets, view) - SPACING.gap;
   const bottom = page.y + page.height;
   return { height: bottom - top, width: right - left, x: left, y: top };
 }
 
-/** The tool column's left edge: one HUD button target in from the HUD rect's right. */
+/**
+ * The Map's HUD row top: the header, Quests and Return to Earth share the tool targets' row box,
+ * reaching HUD_ROW.reach above the HUD rect, so everything on it centres on the tool discs.
+ */
+export function mapRowTop(insets: Insets, view: Size): number {
+  return hudRect(insets, view).y - HUD_ROW.reach;
+}
+
+/**
+ * The tool column's left edge: its targets reach HUD_ROW.reach past the HUD rect's right, so this
+ * is one target in from there.
+ */
 export function toolColumnLeft(insets: Insets, view: Size): number {
   const hud = hudRect(insets, view);
-  return hud.x + hud.width - HUD_BUTTON.target;
+  return hud.x + hud.width + HUD_ROW.reach - HUD_BUTTON.target;
 }
 
 /**
@@ -239,14 +249,14 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
 }
 
 /**
- * Return to Earth on the HUD row (art/map.md "Quests and Return to Earth"): its top on the HUD
- * rect's top and its right edge SPACING.pageInset left of the tool column; it never moves with
+ * Return to Earth on the HUD row (art/map.md "Quests and Return to Earth"): its top on the Map's HUD
+ * row (mapRowTop) and its right edge SPACING.pageInset left of the tool column; it never moves with
  * the header.
  */
 export function mapEarthRect(insets: Insets, view: Size): Rect {
   const right = toolColumnLeft(insets, view) - SPACING.pageInset;
   const { earth, height } = MAP_SCREEN.hudRow;
-  return { height, width: earth.width, x: right - earth.width, y: hudRect(insets, view).y };
+  return { height, width: earth.width, x: right - earth.width, y: mapRowTop(insets, view) };
 }
 
 /** Quests on the HUD row: ending hudRow.gap left of Return to Earth, at the same top. */

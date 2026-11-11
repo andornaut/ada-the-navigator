@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { SPEAKING_FRAME_MS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { HUD_BUTTON, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import { HUD_BUTTON, HUD_ROW, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING } from "./layout/tokens.ts";
 import {
@@ -42,7 +42,8 @@ describe("storybook page", () => {
     const skip = rule(".ada-controls .ada-story-skip");
     expect(skip).toContain(`top:${fromHudEdge("top", STORY_SKIP.top)};`);
     expect(skip).toContain(`right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}`);
-    expect(STORY_SKIP.right.besideSettings).toBe(HUD_BUTTON.target + SPACING.gap);
+    // The settings target reaches HUD_ROW.reach past the corner; Skip ends a gap left of it.
+    expect(STORY_SKIP.right.besideSettings).toBe(HUD_BUTTON.target - HUD_ROW.reach + SPACING.gap);
   });
 
   it("puts Skip on the HUD rect's top-right corner while the settings button is hidden", () => {
@@ -53,13 +54,14 @@ describe("storybook page", () => {
     expect(alone).not.toContain("top:");
   });
 
-  it("centres the compact Skip on the HUD row's 48 targets", () => {
-    expect(STORY_SKIP.top * 2 + TEXT_BUTTON.compactHeight).toBe(HUD_BUTTON.target);
+  it("centres the compact Skip on the HUD row's centre line, the discs' centre", () => {
+    expect(STORY_SKIP.top + TEXT_BUTTON.compactHeight / 2).toBe(HUD_ROW.centre);
+    expect(STORY_SKIP.top).toBe(2.5);
   });
 
   it("keeps the panel's top a gap below the HUD row, clear of Skip and Settings", () => {
-    expect(STORY_PANEL_TOP).toBe(56);
-    expect(STORY_PANEL_TOP).toBe(HUD_BUTTON.target + SPACING.gap);
+    expect(STORY_PANEL_TOP).toBe(48.5);
+    expect(STORY_PANEL_TOP).toBe(HUD_ROW.bottom + SPACING.gap);
     expect(rule(".ada-controls .ada-story-panel")).toContain(
       `max-height:calc(100% - ${fromHudEdge("top", STORY_PANEL_TOP)} - ${safeEdge(
         "bottom",

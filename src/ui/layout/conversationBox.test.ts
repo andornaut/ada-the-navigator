@@ -14,6 +14,7 @@ import {
 } from "./conversationBox.ts";
 import {
   HUD_BUTTON,
+  hudButtonTarget,
   hudRect,
   logicalView,
   NO_INSETS,
@@ -72,22 +73,22 @@ describe("conversation box", () => {
     },
   );
 
-  it("spans 120, 76 to 600, 136 on the base view, its tab from 66", () => {
-    expect(conversationBoxRect(NO_INSETS, BASE)).toEqual({ height: 60, width: 480, x: 120, y: 76 });
-    expect(conversationTabTop(NO_INSETS, BASE)).toBe(66);
+  it("spans 120, 80 to 600, 140 on the base view, its tab from 70", () => {
+    expect(conversationBoxRect(NO_INSETS, BASE)).toEqual({ height: 60, width: 480, x: 120, y: 80 });
+    expect(conversationTabTop(NO_INSETS, BASE)).toBe(70);
   });
 
-  it("clears the weapon press areas by 10, pause by 15.25 and the +N label by 3.5", () => {
+  it("clears the weapon press areas by 17.5, pause by 15.25 and the +N label by 3.5", () => {
     const hud = hudRect(NO_INSETS, BASE);
     const tabTop = conversationTabTop(NO_INSETS, BASE);
-    const weaponsBottom = hud.y + HUD_BUTTON.target;
+    const weaponsBottom = hud.y + hudButtonTarget(0).y + HUD_BUTTON.target;
     const pauseBottom = hud.y + PAUSE_BUTTON.hit.y + PAUSE_BUTTON.hit.height;
     const tickBottom = hud.y + STATUS_PILL.y + STATUS_PILL.tick.top + TYPE.body.lineHeight;
-    expect(weaponsBottom).toBe(56);
-    expect(tabTop - weaponsBottom).toBe(10);
-    expect(pauseBottom).toBe(50.75);
+    expect(weaponsBottom).toBe(52.5);
+    expect(tabTop - weaponsBottom).toBe(17.5);
+    expect(pauseBottom).toBe(54.75);
     expect(tabTop - pauseBottom).toBe(15.25);
-    expect(tickBottom).toBe(62.5);
+    expect(tickBottom).toBe(66.5);
     expect(tabTop - tickBottom).toBe(3.5);
   });
 
@@ -117,11 +118,11 @@ describe("conversation box", () => {
     expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });
 
-  it("keeps 32.17 clear above Ada's ship at the 360 high view and 54.67 at 405", () => {
-    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(32.17, 9);
+  it("keeps 28.17 clear above Ada's ship at the 360 high view and 50.67 at 405", () => {
+    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(28.17, 9);
     // At 405 high the pivot sits at 202.5 and the hull top at 190.67.
     const box = conversationBoxRect(NO_INSETS, BASE);
-    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(54.67, 9);
+    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(50.67, 9);
   });
 
   it.each(VIEWS)("keeps at least 24 clear above Ada's ship on %s", (_name, view, insets) => {

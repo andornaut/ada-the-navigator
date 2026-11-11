@@ -2,7 +2,7 @@ import type { Weapon } from "../data/types.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
-import { HUD_AMMO_COUNT, HUD_BUTTON } from "./layout/playView.ts";
+import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { refuse } from "./refusal.ts";
 
@@ -152,14 +152,15 @@ ${button} ${disc}::before{
 }
 
 // The top-right weapon buttons (art/controls.md "Top-right HUD icon buttons"), Chibi's skill
-// buttons: HUD_BUTTON targets packed against the HUD rect's top-right corner, a gap apart. Each
+// buttons: HUD_BUTTON targets a gap apart in the HUD row, reaching HUD_ROW.reach past the HUD
+// rect's top-right corner so the outermost disc's drawn edge and the discs' drawn tops sit on it. Each
 // glyph is a mask over currentColor, so a state's colour, and the refusal cue's red text colour,
 // tint it; selection, lock and refusal never resize the disc or glyph.
 export const WEAPON_STYLE = `
 .ada-controls .ada-weapon-selector{
   position:absolute;
-  right:${fromHudEdge("right")};
-  top:${fromHudEdge("top")};
+  right:${fromHudEdge("right", -HUD_ROW.reach)};
+  top:${fromHudEdge("top", -HUD_ROW.reach)};
   display:flex;
   gap:${units(HUD_BUTTON.gap)}
 }

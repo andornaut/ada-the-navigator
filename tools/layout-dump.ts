@@ -75,6 +75,8 @@ export const VIEWPORTS: readonly playView.Size[] = [
 export const VIEWPORT_INSETS: Readonly<Record<string, playView.Insets>> = {
   none: playView.NO_INSETS,
   "phone landscape": { bottom: 21, left: 47, right: 47, top: 0 },
+  // A one-sided notch: both sides keep the larger inset.
+  "phone notch left": { bottom: 21, left: 47, right: 0, top: 0 },
   "phone portrait": { bottom: 34, left: 0, right: 0, top: 47 },
 };
 
@@ -141,6 +143,9 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
         call("playView.ts", "safeRect", playView.safeRect, logical, margin, view);
       }
       call("playView.ts", "playView", playView.playView, view);
+      call("playView.ts", "gameAreaGap", playView.gameAreaGap, view);
+      call("playView.ts", "mirroredSideInset", playView.mirroredSideInset, logical);
+      call("playView.ts", "mirroredSide", playView.mirroredSide, logical, playView.HUD_EDGE, view);
       call("playView.ts", "hudRect", playView.hudRect, logical, view);
       call(
         "conversationBox.ts",
@@ -340,6 +345,7 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit) as Rect;
     call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner);
     call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
+    call("mapScreen.ts", "mapRowTop", mapScreen.mapRowTop, insets, view);
     call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
     call("mapScreen.ts", "mapEarthRect", mapScreen.mapEarthRect, insets, view);
     call("mapScreen.ts", "mapQuestsRect", mapScreen.mapQuestsRect, insets, view);

@@ -40,7 +40,7 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { HUD_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
+import { HUD_BUTTON, HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
@@ -352,15 +352,15 @@ export const MAP_SCREEN_STYLE = `
   overflow:visible
 }
 
-/* The HUD row, from the HUD rect's left to SPACING.pageInset short of the tool column
-   (layout/mapScreen.ts mapEarthRect): the header on its left, then Quests and Return to Earth,
-   secondary text buttons MAP_SCREEN.hudRow sets, on its right, SPACING.gap apart, which caps the
-   header (mapHeaderCap). */
+/* The HUD row, on the tool targets' row box (layout/mapScreen.ts mapRowTop), from the HUD rect's
+   left to SPACING.pageInset short of the tool column (mapEarthRect): the header on its left, then
+   Quests and Return to Earth, secondary text buttons MAP_SCREEN.hudRow sets, on its right,
+   SPACING.gap apart, which caps the header (mapHeaderCap). */
 .ada-controls .ada-map-hud-row{
   position:absolute;
   left:var(${VIEW_PROPERTIES.hud("left")});
-  top:var(${VIEW_PROPERTIES.hud("top")});
-  right:${fromHudEdge("right", HUD_BUTTON.target + SPACING.pageInset)};
+  top:${fromHudEdge("top", -HUD_ROW.reach)};
+  right:${fromHudEdge("right", HUD_BUTTON.target - HUD_ROW.reach + SPACING.pageInset)};
   height:${units(MAP_SCREEN.header.height)};
   display:flex;
   align-items:center;
@@ -446,11 +446,12 @@ export const MAP_SCREEN_STYLE = `
   background:${MAP_COLORS.cream}
 }
 
-/* The tools: HUD disc buttons in a column on the HUD rect's top-right corner. */
+/* The tools: HUD disc buttons in a column on the HUD rect's top-right corner, reaching
+   HUD_ROW.reach past it so the discs' drawn right edges and the top disc's drawn top sit on it. */
 .ada-controls .ada-map-tools{
   position:absolute;
-  right:var(${VIEW_PROPERTIES.hud("right")});
-  top:var(${VIEW_PROPERTIES.hud("top")});
+  right:${fromHudEdge("right", -HUD_ROW.reach)};
+  top:${fromHudEdge("top", -HUD_ROW.reach)};
   display:flex;
   flex-direction:column;
   gap:${units(MAP_SCREEN.tools.pitch - TEXT_BUTTON.height)}

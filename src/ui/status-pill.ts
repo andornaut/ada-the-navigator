@@ -193,6 +193,10 @@ export const STATUS_PILL_STYLE = `
   --shield-mark:${STATUS_COLOURS.shield};
   --shield-rim:${STATUS_COLOURS.rim}
 }
+/* With the pause button hidden the pill is the leftmost art, on the HUD rect's left edge. */
+.ada-controls .ada-pause[hidden] ~ .ada-status{
+  left:${fromHudEdge("left", STATUS_PILL.xAlone)}
+}
 .ada-controls .ada-status-mark{
   flex:none;
   display:flex;

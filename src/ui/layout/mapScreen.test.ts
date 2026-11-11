@@ -107,15 +107,15 @@ describe("map screen tokens", () => {
 describe("map projection and fit", () => {
   it("fits the regions and zoom range of Art's table", () => {
     const base = regionsAt(BASE);
-    expect([base.fit.width, base.fit.height]).toEqual([640, 280]);
-    expect([base.inner.width, base.inner.height]).toEqual([596, 236]);
+    expect([base.fit.width, base.fit.height]).toEqual([643.5, 283.5]);
+    expect([base.inner.width, base.inner.height]).toEqual([599.5, 239.5]);
     const limits = scaleLimits(base.inner);
-    expect(round(limits.max, 5)).toBe(0.03933);
-    expect(round(limits.min, 5)).toBe(0.00668);
+    expect(round(limits.max, 5)).toBe(0.03992);
+    expect(round(limits.min, 5)).toBe(0.00677);
     expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(4.37);
     const wide = regionsAt({ height: 720, width: 1280 });
-    expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([640, 325]);
-    expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04683);
+    expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([643.5, 328.5]);
+    expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04742);
   });
 
   it("puts Quests then Return to Earth on the HUD row, 16 left of the tools, capping the header", () => {
@@ -130,20 +130,20 @@ describe("map projection and fit", () => {
     const span = (rect: { width: number; x: number }) => [rect.x, rect.x + rect.width];
     // Art's table: Quests 405.3 to 491.5 and Return to Earth 499.5 to 648 at the base, 370.3 to
     // 456.5 and 464.5 to 613 with phone insets.
-    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([405.25, 491.5]);
-    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([499.5, 648]);
-    expect(span(mapQuestsRect(phone, BASE))).toEqual([370.25, 456.5]);
-    expect(span(mapEarthRect(phone, BASE))).toEqual([464.5, 613]);
+    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([408.75, 495]);
+    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([503, 651.5]);
+    expect(span(mapQuestsRect(phone, BASE))).toEqual([377.75, 464]);
+    expect(span(mapEarthRect(phone, BASE))).toEqual([472, 620.5]);
     expect(mapEarthRect(phone, BASE).x + 148.5).toBe(
       toolColumnLeft(phone, BASE) - SPACING.pageInset,
     );
     expect(mapQuestsRect(phone, BASE).y).toBe(mapEarthRect(phone, BASE).y);
     // The header reaches Quests less SPACING.gap: 389.3 at the base, 319.3 with phone insets.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(389.25);
-    expect(mapHeaderCap(phone, BASE)).toBe(319.25);
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(388.75);
+    expect(mapHeaderCap(phone, BASE)).toBe(326.75);
   });
 
-  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 18 pips", () => {
+  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 19 pips", () => {
     const { header } = MAP_SCREEN;
     expect([header.stackTop, header.stackGap, header.labelTop]).toEqual([9, 4, 14]);
     // The column tops at stackTop: 6 pips, the gap and the 20 line centre on the 48 row.
@@ -153,8 +153,8 @@ describe("map projection and fit", () => {
     expect(mapHeaderWidth(116, 0, 12)).toBe(32 + 116 + 25 + 94);
     expect(mapHeaderWidth(116, 106.8, 0)).toBeCloseTo(279.8, 9);
     const cap = mapHeaderCap({ bottom: 0, left: 43, right: 43, top: 0 }, BASE);
-    expect(mapHeaderWidth(116, 106.8, 18)).toBeLessThanOrEqual(cap);
-    expect(mapHeaderWidth(116, 106.8, 19)).toBeGreaterThan(cap);
+    expect(mapHeaderWidth(116, 106.8, 19)).toBeLessThanOrEqual(cap);
+    expect(mapHeaderWidth(116, 106.8, 20)).toBeGreaterThan(cap);
   });
 
   it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {
@@ -168,9 +168,9 @@ describe("map projection and fit", () => {
     });
   });
 
-  it("keeps the centred place panel a gap clear of the tool column: 592 at the 720 base", () => {
-    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(664);
-    expect(panelMaxWidth(NO_INSETS, BASE)).toBe(592);
+  it("keeps the centred place panel a gap clear of the tool column: 599 at the 720 base", () => {
+    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(667.5);
+    expect(panelMaxWidth(NO_INSETS, BASE)).toBe(599);
     for (const [css, cssInsets] of [
       [
         { height: 390, width: 844 },

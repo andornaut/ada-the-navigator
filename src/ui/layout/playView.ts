@@ -58,8 +58,12 @@ export function safeRect(insets: Insets, margin: number, view: Size): Rect {
   };
 }
 
-// HUD controls' safe-rect margin.
+// HUD controls' safe-rect margin, and the gap between HUD buttons.
 export const CONTROL_EDGE = 8;
+
+// The HUD edge: from the game area's top and side edges to the drawn art (never a press area) of
+// the outermost element on each top corner, the same on both sides and the top, as in Chibi.
+export const HUD_EDGE = 12;
 
 // Margins of the safe rects: the bare safe edge (the shield bar and the sticks' bottom); HUD
 // controls; modals and page content.
@@ -77,17 +81,36 @@ export function playView(view: Size): Rect {
   };
 }
 
-// The HUD rect (Chibi's topShift): the play view inset by CONTROL_EDGE, intersected with the HUD
-// safe rect. The top controls anchor to its top, left and right edges, so at every aspect they sit
-// inside the game area, clear of the bands, curved corners and every inset.
+// The game area's gap from each side of the view: the left one, used for the right side too, so
+// sides mirror even when the bands differ by a pixel.
+export function gameAreaGap(view: Size): number {
+  return playView(view).x;
+}
+
+// The side inset both sides keep clear: the larger of the two, so a one-sided notch moves both
+// sides in alike.
+export function mirroredSideInset(insets: Insets): number {
+  return Math.max(insets.left, insets.right);
+}
+
+// How far a control sits in from each side of the view: offset from the game area's edge, or the
+// mirrored side inset where that is farther, on a whole pixel.
+export function mirroredSide(insets: Insets, offset: number, view: Size): number {
+  return Math.ceil(Math.max(gameAreaGap(view) + offset, mirroredSideInset(insets)));
+}
+
+// The HUD rect (Chibi's topShift): the lines the HUD's drawn art meets, HUD_EDGE in from the game
+// area's top and sides, each clamped by the safe inset on whole pixels, with both sides mirrored
+// (mirroredSide). The top controls anchor to its top, left and right edges, so at every aspect
+// they sit inside the game area, clear of the bands, curved corners and every inset.
 export function hudRect(insets: Insets, view: Size): Rect {
-  const play = playView(view);
-  const safe = safeRect(insets, CONTROL_EDGE, view);
-  const left = Math.max(play.x + CONTROL_EDGE, safe.x);
-  const top = Math.max(play.y + CONTROL_EDGE, safe.y);
-  const right = Math.min(play.x + play.width - CONTROL_EDGE, safe.x + safe.width);
-  const bottom = Math.min(play.y + play.height - CONTROL_EDGE, safe.y + safe.height);
-  return { height: bottom - top, width: right - left, x: left, y: top };
+  const side = mirroredSide(insets, HUD_EDGE, view);
+  const top = Math.ceil(Math.max(HUD_EDGE, insets.top));
+  const bottom = Math.min(
+    SCREEN.height - HUD_EDGE,
+    view.height - Math.ceil(Math.max(HUD_EDGE, insets.bottom)),
+  );
+  return { height: bottom - top, width: view.width - 2 * side, x: side, y: top };
 }
 
 // The pause button on the HUD rect's top-left corner: the 35 frame, its 33 disc drawn 1 inside it
@@ -114,28 +137,42 @@ export const HUD_BUTTON = {
 export const HUD_AMMO_COUNT = { clearance: 4, height: 14, padding: 4, radius: 4, top: 40 } as const;
 
 // Where a disc and a glyph sit inside their target.
-// Storybook Skip: a compact secondary control apart from page navigation, in the top-right HUD
-// row centred on the row's 48 targets, one gap left of the settings button's target when it
-// shows, otherwise on the HUD rect's top-right corner. Offsets from that corner.
-export const STORY_SKIP = {
-  right: { besideSettings: HUD_BUTTON.target + SPACING.gap, corner: 0 },
-  top: (HUD_BUTTON.target - TEXT_BUTTON.compactHeight) / 2,
-} as const;
-
-// The storybook panel's highest top: the HUD row's bottom plus a gap, from the HUD rect's top, so
-// the panel never runs under Skip or the settings button.
-export const STORY_PANEL_TOP = HUD_BUTTON.target + SPACING.gap;
-
 export const HUD_BUTTON_INSET = {
   disc: (HUD_BUTTON.target - HUD_BUTTON.disc) / 2,
   glyph: (HUD_BUTTON.target - HUD_BUTTON.glyph) / 2,
 } as const;
 
+// The HUD button row, from the HUD rect's top-right corner: its targets reach the disc inset past
+// the corner, so the outermost disc's drawn edge and every disc's drawn top sit on the rect, and
+// each disc centres on the row's centre line, the pause disc's centre. bottom is the targets'.
+export const HUD_ROW = {
+  bottom: HUD_BUTTON.target - HUD_BUTTON_INSET.disc,
+  centre: HUD_BUTTON.disc / 2,
+  reach: HUD_BUTTON_INSET.disc,
+} as const;
+
+// Storybook Skip: a compact secondary control apart from page navigation, centred on the HUD
+// row's centre line, one gap left of the settings button's target when it shows, otherwise with
+// its drawn right edge on the HUD rect's top-right corner. Offsets from that corner.
+export const STORY_SKIP = {
+  right: { besideSettings: HUD_BUTTON.target - HUD_ROW.reach + SPACING.gap, corner: 0 },
+  top: HUD_ROW.centre - TEXT_BUTTON.compactHeight / 2,
+} as const;
+
+// The storybook panel's highest top: the HUD row's bottom plus a gap, from the HUD rect's top, so
+// the panel never runs under Skip or the settings button.
+export const STORY_PANEL_TOP = HUD_ROW.bottom + SPACING.gap;
+
 // The target of the HUD button index places from the right (0 rightmost), relative to the HUD
-// rect's top-right corner, x growing rightward.
+// rect's top-right corner, x growing rightward: the row reaches HUD_ROW.reach past the corner.
 export function hudButtonTarget(index: number): Rect {
   const { gap, target } = HUD_BUTTON;
-  return { height: target, width: target, x: -target - (target + gap) * index, y: 0 };
+  return {
+    height: target,
+    width: target,
+    x: HUD_ROW.reach - target - (target + gap) * index,
+    y: -HUD_ROW.reach,
+  };
 }
 
 // A HUD row of count buttons' width.
@@ -144,12 +181,12 @@ export function hudRowWidth(count: number): number {
 }
 
 // The status pill (art/layout.md "Status pill"): one PILL holding the shield bar and the Stardust
-// count. Its left edge is a gap right of the pause press area and it centres on the pause disc,
-// relative to the HUD rect's top-left corner, whether or not the pause button shows; it grows
-// rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
+// count. Its left edge is a gap right of the pause press area while the pause button shows, and
+// on the HUD rect's left edge (xAlone) while it is hidden, so the leftmost drawn art always sits
+// HUD_EDGE in; it centres on the HUD row's centre line, relative to the HUD rect's top-left
+// corner, and grows rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
 // (a 1 rim, 1 ink, then the 92x8 fill area), the divider (12, 1x16, 12), the 20 Stardust icon, a
 // mark gap and the count. The +N tick's line box sits a row gap below the pill.
-const PAUSE_DISC_CENTRE = PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2;
 export const STATUS_PILL = {
   bar: { fill: { height: 8, width: 92 }, height: 12, inset: 2, rim: 1, width: 96 },
   divider: { height: 16, width: 1 },
@@ -164,7 +201,8 @@ export const STATUS_PILL = {
   stardustIcon: 20,
   tick: { outline: 1, rise: 4, top: PILL.height + SPACING.rowGap },
   x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
-  y: PAUSE_DISC_CENTRE - PILL.height / 2,
+  xAlone: 0,
+  y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
 // The pill's width for a countWidth count: the padding, both icons and mark gaps, the bar and the

@@ -48,7 +48,9 @@ export const CONVERSATION_BOX = {
   text: TYPE.body,
   // The text column's gap from the portrait frame and from the panel's far edge.
   textGap: SPACING.gap,
-  // From the HUD rect's top: the HUD button row, the tab clearance, then the tab's overhang.
+  // From the HUD rect's top: a HUD button target, the tab clearance, then the tab's overhang. The
+  // tab clears the status pill's +N tick by 3.5, the pause press area by 15.25 and the weapon
+  // row, which reaches HUD_ROW.reach above the HUD rect, by 17.5.
   top: HUD_BUTTON.target + TAB.clearance + TAB.overhang,
 } as const;
 

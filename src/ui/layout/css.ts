@@ -1,4 +1,4 @@
-import { CONTROL_EDGE, type Side } from "./playView.ts";
+import { HUD_EDGE, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
@@ -91,7 +91,7 @@ export function viewStyle(edges: readonly number[]): string {
   ${VIEW_PROPERTIES.unit}:1;
   ${VIEW_PROPERTIES.areaBottom}:0px;
   ${VIEW_PROPERTIES.areaLeft}:0px;
-  ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(CONTROL_EDGE)};`).join("\n  ")}
+  ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(HUD_EDGE)};`).join("\n  ")}
   ${(["top", "right", "bottom", "left"] as const).map((side) => `${VIEW_PROPERTIES.safe(side)}:0px;`).join("\n  ")}
   ${edges.map((edge) => `${VIEW_PROPERTIES.slice(edge)}:${edge}px;`).join("\n  ")}
 }

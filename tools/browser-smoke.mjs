@@ -2144,11 +2144,14 @@ try {
   assert.equal(startScreens["saved-720"].focused, "continue", "Continue is the default");
   assert.equal(startScreens["new-844"].x0, 29, "The 844x390 phone's game area starts at 29");
   // Insets move the nav discs, never the start screen's parts (Art's table).
-  assert.equal(
-    Math.round(
-      startScreens["saved-720-insets"].achievements[0] + startScreens["saved-720-insets"].x0,
-    ),
-    573,
+  // The HUD rect's right is 720 - 43 = 677; Achievements' target is one pitch left of Settings,
+  // whose target reaches HUD_ROW.reach (7.5) past it: 677 + 7.5 - 48 - 56.
+  assert.ok(
+    Math.abs(
+      startScreens["saved-720-insets"].achievements[0] +
+        startScreens["saved-720-insets"].x0 -
+        580.5,
+    ) < 0.1,
     "Achievements clears the right inset",
   );
   // Tab order: Continue, Restart, Achievements, Settings.

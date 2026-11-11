@@ -57,15 +57,21 @@ describe("start screen layout", () => {
   });
 
   it.each([
-    ["720x360", { height: 360, width: 720 }, NO_INSETS, [608, 656], [664, 712]],
-    ["720x360 with insets", { height: 360, width: 720 }, PHONE_INSETS, [573, 621], [629, 677]],
-    ["844x390", { height: 390, width: 844 }, NO_INSETS, [637, 685], [693, 741]],
+    ["720x360", { height: 360, width: 720 }, NO_INSETS, [611.5, 659.5], [667.5, 715.5]],
+    [
+      "720x360 with insets",
+      { height: 360, width: 720 },
+      PHONE_INSETS,
+      [580.5, 628.5],
+      [636.5, 684.5],
+    ],
+    ["844x390", { height: 390, width: 844 }, NO_INSETS, [641.58, 689.58], [697.58, 745.58]],
     [
       "844x390 with insets",
       { height: 390, width: 844 },
       PHONE_INSETS,
-      [632.08, 680.08],
-      [688.08, 736.08],
+      [639.58, 687.58],
+      [695.58, 743.58],
     ],
   ] as const)(
     "at %s keeps Achievements and Settings on the HUD row, clear of the wordmark and the note",

@@ -140,7 +140,7 @@ ${viewStyle(WHOLE_PX_EDGES)}
 .ada-controls .ada-settings-open{
   position:absolute;
   right:${navRight(0)};
-  top:${fromHudEdge("top")};
+  top:${fromHudEdge("top", hudButtonTarget(0).y)};
   --glyph:url('${SETTINGS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
@@ -150,7 +150,7 @@ ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 .ada-controls .ada-achievements-open{
   position:absolute;
   right:${navRight(1)};
-  top:${fromHudEdge("top")};
+  top:${fromHudEdge("top", hudButtonTarget(1).y)};
   --glyph:url('${ACHIEVEMENTS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}

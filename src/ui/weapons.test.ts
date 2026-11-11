@@ -5,8 +5,20 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
-import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { HUD_AMMO_COUNT, HUD_BUTTON } from "./layout/playView.ts";
+import { conversationTabTop } from "./layout/conversationBox.ts";
+import {
+  HUD_AMMO_COUNT,
+  HUD_BUTTON,
+  HUD_BUTTON_INSET,
+  hudButtonTarget,
+  hudRect,
+  type Insets,
+  logicalView,
+  NO_INSETS,
+  safeInsets,
+  type Size,
+  viewScale,
+} from "./layout/playView.ts";
 import {
   AMMO_COUNT_TEXT,
   ammoCount,
@@ -81,14 +93,30 @@ describe("HUD weapon buttons", () => {
   it("draws each count in an opaque ink pill on the disc's lower edge, clear of the name tab", () => {
     expect(HUD_AMMO_COUNT).toEqual({ clearance: 4, height: 14, padding: 4, radius: 4, top: 40 });
     expect(AMMO_COUNT_TEXT).toEqual({ empty: "#e4574e", normal: "#ead4aa" });
-    // The pill overlaps the disc's lower edge (7.5 + 33 = 40.5) and ends clearance above the
-    // conversation box's name tab.
-    expect(HUD_AMMO_COUNT.top).toBeLessThan(
-      (HUD_BUTTON.target - HUD_BUTTON.disc) / 2 + HUD_BUTTON.disc,
-    );
-    expect(HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + HUD_AMMO_COUNT.clearance).toBe(
-      HUD_BUTTON.target + CONVERSATION_BOX.tab.clearance,
-    );
+    // The pill overlaps the disc's lower edge, 7.5 + 33 = 40.5 below the target's top.
+    expect(HUD_AMMO_COUNT.top).toBeLessThan(HUD_BUTTON_INSET.disc + HUD_BUTTON.disc);
+    // In the view, the pill ends at least clearance above the conversation box's name tab.
+    const cases: readonly (readonly [Size, Insets])[] = [
+      [{ height: 360, width: 720 }, NO_INSETS],
+      [
+        { height: 390, width: 844 },
+        { bottom: 21, left: 47, right: 47, top: 0 },
+      ],
+      [{ height: 720, width: 1280 }, NO_INSETS],
+      [
+        { height: 390, width: 844 },
+        { bottom: 0, left: 0, right: 0, top: 47 },
+      ],
+    ];
+    for (const [css, cssInsets] of cases) {
+      const view = logicalView(css);
+      const insets = safeInsets(cssInsets, viewScale(css));
+      const pillBottom =
+        hudRect(insets, view).y + hudButtonTarget(0).y + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height;
+      expect(conversationTabTop(insets, view) - pillBottom).toBeGreaterThanOrEqual(
+        HUD_AMMO_COUNT.clearance,
+      );
+    }
     expect(WEAPON_STYLE).toContain("background:#181425");
   });
 

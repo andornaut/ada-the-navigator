@@ -4,7 +4,7 @@ import type { StickSide } from "../../input/state.ts";
 import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
 import { TEXT_BUTTON } from "./controls.ts";
 import { hitMargin } from "./hitAreas.ts";
-import { CONTROL_EDGE, type Insets, playView, type Size } from "./playView.ts";
+import { CONTROL_EDGE, type Insets, mirroredSide, playView, type Size } from "./playView.ts";
 import { TYPE } from "./tokens.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
@@ -13,44 +13,31 @@ import { TYPE } from "./tokens.ts";
 // moves at most knobReach from the ring's centre. Move input reaches full speed moveReach from
 // the stick's origin, past a moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 20,
+  bottom: 30,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 24,
+  side: 40,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn
 // edge on each side.
 const DRAWN_HALF = (TOUCH_STICK.frame - 1) / 2 - 1;
 
-// The game area's bottom-left and right edges for the sticks: its sides, and its bottom clamped by
-// the bottom safe inset, in logical px from the view's left, right and top. The right edge is
-// measured from the view's whole-pixel width.
-function stickArea(
-  view: Size,
-  insets: Insets,
-): { readonly bottom: number; readonly left: number; readonly right: number } {
-  const area = playView(view);
-  return {
-    bottom: Math.min(area.y + area.height, view.height - insets.bottom),
-    left: area.x,
-    right: Math.floor(view.width) - (area.x + area.width),
-  };
-}
-
 // Each joystick's ring centre at rest in a logical view view big with insets, on whole pixels, so
-// the drawn ring and its DOM target share one centre. Each ring's drawn edge sits side in from the
-// game area's left (move) or right (aim) edge, clamped by that side's safe inset, and bottom above
-// the game area's bottom, clamped by the bottom safe inset.
+// the drawn ring and its DOM target share one centre. The rings mirror: each drawn edge sits
+// TOUCH_STICK.side in from the game area's edge on its side, using the left gap and the larger
+// side inset on both sides (mirroredSide), measured from the view's whole-pixel width; and bottom
+// above the game area's bottom, clamped by the bottom safe inset.
 export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<StickSide, Point>> {
-  const area = stickArea(view, insets);
-  const y = Math.floor(area.bottom) - 1 - TOUCH_STICK.bottom - DRAWN_HALF;
-  const side = (gap: number, inset: number) => Math.ceil(Math.max(gap + TOUCH_STICK.side, inset));
+  const area = playView(view);
+  const bottom = Math.min(area.y + area.height, view.height - insets.bottom);
+  const y = Math.floor(bottom) - 1 - TOUCH_STICK.bottom - DRAWN_HALF;
+  const side = mirroredSide(insets, TOUCH_STICK.side, view);
   return {
-    aim: { x: Math.floor(view.width) - 1 - side(area.right, insets.right) - DRAWN_HALF, y },
-    move: { x: side(area.left, insets.left) + DRAWN_HALF, y },
+    aim: { x: Math.floor(view.width) - 1 - side - DRAWN_HALF, y },
+    move: { x: side + DRAWN_HALF, y },
   };
 }
 
