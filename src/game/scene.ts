@@ -7,6 +7,7 @@ import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
+import { shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
@@ -26,7 +27,8 @@ import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
-import { selectShipAsset, type ShipAsset } from "./ship-art.ts";
+import { selectShipAsset, type ShipAsset, shipDirectionCount } from "./ship-art.ts";
+import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import {
   FALLBACK_SPACE_PALETTE,
   readSpacePalette,
@@ -60,7 +62,9 @@ export class PrototypeScene extends Phaser.Scene {
   private controls!: ReturnType<typeof createControls>;
   private ink!: Phaser.GameObjects.Graphics;
   private ship!: Phaser.GameObjects.Image;
-  private shipAssets: readonly ShipAsset[] = [];
+  private shipAssets: readonly Asset[] = [];
+  private jets!: Phaser.GameObjects.Graphics;
+  private shipJets: ShipJets | undefined;
   private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
   private startShown = false;
@@ -97,6 +101,7 @@ export class PrototypeScene extends Phaser.Scene {
       }
     });
     this.load.json("art-manifest", "/art/manifest.json");
+    this.load.json("ship-jets", "/art/ship-jets.json");
     preloadTouchChrome(this);
   }
 
@@ -123,9 +128,15 @@ export class PrototypeScene extends Phaser.Scene {
       this.scale.off(Phaser.Scale.Events.RESIZE, fit),
     );
     this.ink = this.add.graphics();
+    this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
     this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
+    // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
+    // the authored thrust frames.
+    const jets = readShipJets(this.cache.json.get("ship-jets"));
+    this.shipJets =
+      jets?.headings.length === shipDirectionCount(this.shipAssets) ? jets : undefined;
     const ship = this.shipAssets.find((asset) => asset.id === "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
@@ -335,6 +346,7 @@ export class PrototypeScene extends Phaser.Scene {
   private draw(): void {
     const flight = this.model.state.flight;
     this.ink.clear();
+    this.jets.clear();
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     for (const label of this.labels.values()) {
       label.setVisible(false);
@@ -404,13 +416,39 @@ export class PrototypeScene extends Phaser.Scene {
     this.drawDiscovery();
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
-    const thrust = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
-    const ship = selectShipAsset(this.shipAssets, thrust, flight.facing);
+    // Jets and thrust frames share the 1 unit/s thrust threshold.
+    const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
+    const speed = thrusting ? shipSpeedFraction(PROTOTYPE.tuning, flight) : 0;
+    const ship = selectShipAsset(this.shipAssets, !this.shipJets && speed > 0, flight.facing);
     this.ship.setTexture(ship?.id ?? "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
     // Authored direction frames already include perspective and must not rotate in screen space.
     this.ship.setRotation(0);
+    if (this.shipJets && ship?.directionIndex !== undefined) {
+      this.jets.setPosition(this.ship.x, this.ship.y);
+      const display = {
+        displayHeight: ship.displayHeight ?? 42,
+        displayWidth: ship.displayWidth ?? 42,
+        pivot: ship.pivot,
+      };
+      for (const { alpha, color, points } of jetTriangles(
+        this.shipJets,
+        display,
+        ship.directionIndex,
+        speed,
+      )) {
+        this.jets.fillStyle(color, alpha);
+        this.jets.fillTriangle(
+          points[0].x,
+          points[0].y,
+          points[1].x,
+          points[1].y,
+          points[2].x,
+          points[2].y,
+        );
+      }
+    }
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const [id, label] of this.labels) {
       if (!activeIds.has(id)) {
