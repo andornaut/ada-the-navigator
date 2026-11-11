@@ -21,15 +21,21 @@ the value currently lives, in CSS px.
 | Safe insets    | `env(safe-area-inset-*) / s`     | Per edge, in logical px, in the turned frame's orientation                         | `safeInsets()`, `playView.ts`, to implement              |
 | Safe rect      | Edge moved in by `max(m, inset)` | The shared safe-margin clamp: margin `m` from the view edge, never inside an inset | `safeRect(insets, m, view)`, `playView.ts`, to implement |
 
-- Measure all UI in logical px. The Phaser canvas already draws the logical
-  view (`Scale.EXPAND`, `pixelArt`). The DOM overlay root carries the same
-  factor `s` as the CSS variable `--ada-unit` (one logical px in CSS px),
-  updated on resize and orientation change; every size is
+- Measure all UI in logical px. The Phaser canvas draws the logical view
+  (`Scale.EXPAND`) with its backing store at device px. The DOM overlay root
+  carries the same factor `s` as the CSS variable `--ada-unit` (one logical px
+  in CSS px), updated on resize and orientation change; every size is
   `calc(var(--ada-unit) * N)` through the layout helpers. The root is not
   transform-scaled, so text stays crisp and hit testing stays native. Layout
   code reads and writes logical px only.
-  CSS px reach device px through `devicePixelRatio`; the canvas backing store
-  stays at the logical size with nearest-neighbour upscaling.
+- Sampling follows the asset kind:
+  - SVG and vector textures rasterize at display size times
+    `min(devicePixelRatio, 2)` and draw with linear filtering.
+  - Authored pixel sprites (Ada, the room, characters, portraits and glyph
+    PNGs) keep nearest-neighbour filtering per texture, at integer scale steps
+    where the layout allows.
+  - Text renders at device resolution.
+  - Line widths, keylines and outlines stay in logical px at every ratio.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
   narrower, 779 on an 844x390 phone). The game area is the centred 2:1 play
   view; wider or taller screens show bands outside it. Every control (pause,
