@@ -15,6 +15,7 @@ const progress: SectorProgress = {
   questItem: null,
   resolved: false,
   stage: 0,
+  stations: [],
 };
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

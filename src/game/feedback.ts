@@ -14,7 +14,7 @@ interface Snapshot {
   shield: number;
   cargo: number;
   weapon: string;
-  ammo: number;
+  stardust: number;
   deposited: number;
   disabledEnemies: number;
   impacts: Set<string>;
@@ -46,7 +46,6 @@ export class ModelFeedback {
       return [];
     }
     const next: Snapshot = {
-      ammo: flight.ammo,
       cargo: flight.cargo,
       deposited: state.progress[flight.sector].deposited,
       disabledEnemies: state.progress[flight.sector].disabledEnemies,
@@ -66,6 +65,7 @@ export class ModelFeedback {
       sector: flight.sector,
       seed: flight.seed,
       shield: flight.shield,
+      stardust: state.economy.stardust,
       weapon: flight.weapon,
     };
     this.previous = next;
@@ -88,7 +88,7 @@ export class ModelFeedback {
     }
     if (
       next.cargo > previous.cargo ||
-      next.ammo > previous.ammo ||
+      next.stardust > previous.stardust ||
       (next.weapon !== "basic" && next.weapon !== previous.weapon)
     ) {
       emit("pickup", next.player);

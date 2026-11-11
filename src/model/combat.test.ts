@@ -28,6 +28,7 @@ const progress: SectorProgress = {
   questItem: null,
   resolved: false,
   stage: 0,
+  stations: [],
 };
 function empty(): FlightState {
   const flight = createFlight(PROTOTYPE, 1, 173, progress);

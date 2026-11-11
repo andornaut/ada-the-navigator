@@ -1,3 +1,5 @@
+import type { UpgradeWeapon } from "../data/economy.ts";
+import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { SectorId, Weapon } from "../data/types.ts";
 import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
@@ -13,7 +15,21 @@ export interface FlightInput {
   viewportWidth?: number;
 }
 export type ObjectKind =
-  "rock" | "resource" | "enemy" | "hazard" | "pickup" | "destination" | "debris";
+  | "rock"
+  | "resource"
+  | "enemy"
+  | "hazard"
+  | "pickup"
+  | "destination"
+  | "debris"
+  | "station"
+  | "wreck";
+/** A destroyed enemy breaking apart before it releases its drops. */
+export interface WreckState {
+  archetype: EnemyArchetype;
+  age: number;
+  facing: Vec;
+}
 export interface SpaceObject extends Vec {
   id: string;
   kind: ObjectKind;
@@ -27,6 +43,9 @@ export interface SpaceObject extends Vec {
   behavior?: "pursue" | "shoot" | "guard";
   weapon?: Exclude<Weapon, "basic">;
   cooldown?: number;
+  /** Stardust carried by a Stardust pickup. */
+  amount?: number;
+  wreck?: WreckState;
 }
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";
@@ -64,7 +83,12 @@ export interface FlightState {
   cargo: number;
   weapon: Weapon;
   ownedWeapons?: Exclude<Weapon, "basic">[];
-  ammo: number;
+  /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
+  levels: UpgradeLevels;
+  /** Seconds weapon changes stay locked after combat ends. */
+  weaponLockFor: number;
+  /** The station whose dock Ada is inside; docking again needs her to leave it first. */
+  dockId: string | null;
   fireCooldown: number;
   objects: SpaceObject[];
   shots: Shot[];
@@ -83,6 +107,24 @@ export interface SectorProgress {
   questItem: string | null;
   discoveries: number;
   disabledEnemies: number;
+  /** Discovered station ids, which are travel destinations. */
+  stations: string[];
+}
+export interface UpgradeLevels {
+  weapons: Record<Weapon, number>;
+  shield: number;
+  shieldRecharge: number;
+  engine: number;
+  tractor: number;
+}
+/** Stardust and purchases, kept across flights with story progress. */
+export interface EconomyState {
+  stardust: number;
+  ownedWeapons: UpgradeWeapon[];
+  weapon: Weapon;
+  levels: UpgradeLevels;
+  paints: string[];
+  paint: string;
 }
 export interface DialogueChoice {
   id: string;
@@ -102,10 +144,16 @@ export interface GameState {
   progress: Record<SectorId, SectorProgress>;
   flight: FlightState | null;
   dialogue: DialogueState | null;
+  /** The station whose card is open; action pauses as in a conversation. */
+  docked: string | null;
+  economy: EconomyState;
   notice: string;
 }
 export type FlightEvent =
   | { type: "depleted" }
+  | { type: "stardust"; amount: number }
+  | { type: "stationDiscovered"; id: string }
+  | { type: "docked"; id: string }
   | { type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
   | { type: "discovered"; id: string };

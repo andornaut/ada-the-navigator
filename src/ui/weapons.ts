@@ -1,9 +1,11 @@
 import type { Weapon } from "../data/types.ts";
+import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
-  readonly ammo: null;
   readonly id: Weapon;
   readonly selected: boolean;
+  /** Locked choices stay visible, look disabled and refuse a press. */
+  readonly locked: boolean;
 }
 
 export interface WeaponLabels {
@@ -14,6 +16,7 @@ export interface WeaponLabels {
 interface WeaponSelectorOptions {
   readonly labels: WeaponLabels;
   readonly onSelect: (weapon: Weapon) => void;
+  readonly reducedMotion: () => boolean;
 }
 
 export function createWeaponSelector(parent: HTMLElement, options: WeaponSelectorOptions) {
@@ -52,6 +55,10 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         button.append(glyph);
         button.addEventListener("click", () => {
           if (enabled && !button.disabled) {
+            if (button.getAttribute("aria-disabled") === "true") {
+              refuse(button, options.reducedMotion());
+            }
+            // The model refuses a locked change and shows why.
             options.onSelect(choice.id);
           }
         });
@@ -62,6 +69,9 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       const name = options.labels.names[choice.id];
       entry.setAttribute("aria-label", name);
       entry.setAttribute("aria-pressed", String(choice.selected));
+      entry.setAttribute("aria-disabled", String(choice.locked));
+      // PLACEHOLDER (Art): the selected icon's power-up treatment; see ada-weapon-selected.
+      entry.classList.toggle("ada-weapon-selected", choice.selected);
       entry.title = name;
       entry.disabled = !enabled;
     }

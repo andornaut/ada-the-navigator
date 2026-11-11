@@ -1,8 +1,19 @@
+import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { enemyEffects, restoreEnemyOrientation, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
-import type { FlightState, GameState, PersistentWorldState, SpaceObject } from "./types.ts";
+import { stationById } from "./stations.ts";
+import type {
+  EconomyState,
+  FlightState,
+  GameState,
+  PersistentWorldState,
+  SpaceObject,
+  UpgradeLevels,
+} from "./types.ts";
+import { newEconomy } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -122,16 +133,44 @@ function combatState(
     (value.routeEncounters as string[]).every((id) => routes.includes(id))
   );
 }
-function spaceObject(routes: readonly string[], value: unknown): value is SpaceObject {
+function wreckState(value: unknown): boolean {
+  return (
+    record(value) &&
+    typeof value.archetype === "string" &&
+    Object.hasOwn(enemyCatalog, value.archetype) &&
+    nonnegative(value.age) &&
+    vector(value.facing)
+  );
+}
+const OBJECT_KINDS = [
+  "rock",
+  "resource",
+  "enemy",
+  "hazard",
+  "pickup",
+  "destination",
+  "debris",
+  "station",
+  "wreck",
+];
+function spaceObject(
+  sector: SectorId,
+  routes: readonly string[],
+  value: unknown,
+): value is SpaceObject {
   return (
     record(value) &&
     vector(value) &&
     typeof value.id === "string" &&
     value.id.length > 0 &&
     !["__proto__", "prototype", "constructor"].includes(value.id) &&
-    ["rock", "resource", "enemy", "hazard", "pickup", "destination", "debris"].includes(
-      String(value.kind),
-    ) &&
+    OBJECT_KINDS.includes(String(value.kind)) &&
+    (value.kind !== "station" || stationById(ECONOMY, sector, value.id) !== null) &&
+    (value.kind === "wreck" ? wreckState(value.wreck) : value.wreck === undefined) &&
+    (value.amount === undefined ||
+      (value.kind === "pickup" &&
+        Number.isSafeInteger(value.amount) &&
+        nonnegative(value.amount))) &&
     (value.routeId === undefined ||
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
@@ -151,6 +190,7 @@ function spaceObject(routes: readonly string[], value: unknown): value is SpaceO
   );
 }
 function persistentWorld(
+  sector: SectorId,
   routes: readonly string[],
   active: readonly SpaceObject[],
   value: unknown,
@@ -176,7 +216,7 @@ function persistentWorld(
       continue;
     }
     if (
-      !spaceObject(routes, object) ||
+      !spaceObject(sector, routes, object) ||
       object.id !== id ||
       !persistentObject(object) ||
       object.hp <= 0 ||
@@ -232,7 +272,76 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
   );
 }
 
-/** Accept only complete snapshots; a partial restore can invalidate quest state. */
+/** Completes economy fields absent from older saves; validation has already run. */
+function migrateEconomy(state: GameState): void {
+  const flight = state.flight as (FlightState & { ammo?: number }) | null;
+  if (!state.economy) {
+    state.economy = newEconomy(ECONOMY);
+    if (flight) {
+      state.economy.ownedWeapons = [...(flight.ownedWeapons ?? [])];
+      state.economy.weapon = flight.weapon;
+    }
+  }
+  state.docked ??= null;
+  for (const progress of Object.values(state.progress)) {
+    progress.stations ??= [];
+  }
+  if (flight) {
+    delete flight.ammo;
+    flight.levels ??= structuredClone(state.economy.levels);
+    flight.weaponLockFor ??= 0;
+    flight.dockId ??= null;
+  }
+}
+function boundedLevel(value: unknown, max: number): boolean {
+  return Number.isInteger(value) && nonnegative(value) && Number(value) <= max;
+}
+function upgradeLevels(value: unknown): value is UpgradeLevels {
+  return (
+    record(value) &&
+    record(value.weapons) &&
+    Object.keys(value.weapons).length === Object.keys(WEAPON_CATALOG).length &&
+    Object.keys(WEAPON_CATALOG).every((weapon) =>
+      boundedLevel(
+        (value.weapons as Record<string, unknown>)[weapon],
+        ECONOMY.weaponUpgradePrices.length,
+      ),
+    ) &&
+    (Object.keys(ECONOMY.trackPrices) as UpgradeTrack[]).every((track) =>
+      boundedLevel(value[track], ECONOMY.trackPrices[track].length),
+    )
+  );
+}
+function economyState(value: unknown): value is EconomyState {
+  return (
+    record(value) &&
+    Number.isSafeInteger(value.stardust) &&
+    nonnegative(value.stardust) &&
+    Object.hasOwn(WEAPON_CATALOG, String(value.weapon)) &&
+    weaponOwnership(value.ownedWeapons, value.weapon) &&
+    upgradeLevels(value.levels) &&
+    strings(value.paints) &&
+    Array.isArray(value.paints) &&
+    new Set(value.paints).size === value.paints.length &&
+    value.paints.includes(ECONOMY.defaultPaint) &&
+    value.paints.every((scheme) => Object.hasOwn(ECONOMY.paints, scheme)) &&
+    value.paints.includes(value.paint)
+  );
+}
+function stationIds(sector: SectorId, value: unknown): boolean {
+  return (
+    strings(value) &&
+    Array.isArray(value) &&
+    new Set(value).size === value.length &&
+    value.every((id) => stationById(ECONOMY, sector, String(id)) !== null)
+  );
+}
+
+/**
+ * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
+ * from before the economy gain an empty economy (or their flight's weapons), no
+ * discovered stations and no weapon lock; their unused ammunition count is dropped.
+ */
 export function restoreSave(saved: unknown): GameState | null {
   try {
     const value: unknown = typeof saved === "string" ? JSON.parse(saved) : saved;
@@ -272,10 +381,21 @@ export function restoreSave(saved: unknown): GameState | null {
       }
       if (
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
-        !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k]))
+        !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
+        (p.stations !== undefined && !stationIds(id as SectorId, p.stations))
       ) {
         return null;
       }
+    }
+    if (value.economy !== undefined && !economyState(value.economy)) {
+      return null;
+    }
+    if (
+      value.docked !== undefined &&
+      value.docked !== null &&
+      (typeof value.docked !== "string" || value.mode !== "space")
+    ) {
+      return null;
     }
     if (value.dialogue !== null) {
       const d = value.dialogue;
@@ -303,11 +423,14 @@ export function restoreSave(saved: unknown): GameState | null {
           "sinceDamage",
           "dangerFor",
           "cargo",
-          "ammo",
           "fireCooldown",
           "freshDistance",
           "nextId",
-        ].every((k) => nonnegative(f[k]))
+        ].every((k) => nonnegative(f[k])) ||
+        (f.ammo !== undefined && !nonnegative(f.ammo)) ||
+        (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
+        (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||
+        (f.levels !== undefined && !upgradeLevels(f.levels))
       ) {
         return null;
       }
@@ -343,11 +466,13 @@ export function restoreSave(saved: unknown): GameState | null {
       }
       if (
         !Array.isArray(f.objects) ||
-        !Array.from(f.objects).every((object) => spaceObject(routes, object))
+        !Array.from(f.objects).every((object) =>
+          spaceObject(value.selectedSector as SectorId, routes, object),
+        )
       ) {
         return null;
       }
-      if (!persistentWorld(routes, f.objects, f.world)) {
+      if (!persistentWorld(value.selectedSector as SectorId, routes, f.objects, f.world)) {
         return null;
       }
       if (f.combat !== undefined && !unloadedPackState(f.objects, f.world, f.combat)) {
@@ -390,6 +515,7 @@ export function restoreSave(saved: unknown): GameState | null {
       return null;
     }
     const restored = structuredClone(value) as unknown as GameState;
+    migrateEconomy(restored);
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);
       Object.values(restored.flight.world.notables).forEach(restoreOrientation);

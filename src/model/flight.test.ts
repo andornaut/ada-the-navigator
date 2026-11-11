@@ -27,6 +27,7 @@ const progress: SectorProgress = {
   questItem: null,
   resolved: false,
   stage: 0,
+  stations: [],
 };
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function empty(): FlightState {
@@ -76,11 +77,9 @@ describe("flight boundaries", () => {
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
     flight.weapon = "tripleLaser";
-    flight.ammo = 1;
     stepFlight(PROTOTYPE, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(3);
     expect(flight.weapon).toBe("tripleLaser");
-    expect(flight.ammo).toBe(1);
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);
     expect(degrees(flight.shots[1]!.velocity, flight.facing)).toBeLessThan(1e-9);
@@ -138,7 +137,6 @@ describe("flight boundaries", () => {
     const flight = empty();
     flight.cargo = 500;
     flight.weapon = "missiles";
-    flight.ammo = 1;
     flight.objects.push(
       { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
       {

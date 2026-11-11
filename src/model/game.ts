@@ -1,9 +1,11 @@
+import { ECONOMY } from "../data/economy.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
   activateRouteEncounter,
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
+  ensureStation,
   placeDestinationAhead,
   routeBlocked,
   settleRouteEncounters,
@@ -12,10 +14,31 @@ import {
   teleport as teleportFlight,
 } from "./flight.ts";
 import { restoreSave } from "./save.ts";
+import {
+  buy,
+  fill,
+  type PurchaseRequest,
+  type PurchaseResult,
+  requestPurchase,
+  selectPaint,
+  type ShopItem,
+  type ShopRow,
+  shopRows,
+  type ShopTab,
+  weaponName,
+} from "./shop.ts";
 import type { FlightInput, GameState, SectorProgress } from "./types.ts";
-import { ownedWeapons, selectFlightWeapon, type WeaponChoice } from "./weapons.ts";
+import { newEconomy, shipTuning } from "./upgrades.ts";
+import {
+  ensureOwnedWeapons,
+  loseEquippedWeapon,
+  ownedWeapons,
+  selectFlightWeapon,
+  type WeaponChoice,
+  weaponsLocked,
+} from "./weapons.ts";
 
-function progress(): SectorProgress {
+export function newProgress(): SectorProgress {
   return {
     deposited: 0,
     disabledEnemies: 0,
@@ -26,8 +49,10 @@ function progress(): SectorProgress {
     questItem: null,
     resolved: false,
     stage: 0,
+    stations: [],
   };
 }
+const progress = newProgress;
 const first = { 1: "growers", 2: "hub", 3: "whale" } as const;
 const required: Record<SectorId, readonly string[]> = {
   1: ["growers", "workshop", "salvagers", "workshop"],
@@ -44,6 +69,8 @@ export class GameModel {
     this.content = content;
     this.state = restoreSave(saved) ?? {
       dialogue: null,
+      docked: null,
+      economy: newEconomy(ECONOMY),
       flight: null,
       mode: "home",
       notice: "",
@@ -112,17 +139,87 @@ export class GameModel {
   weapons(): WeaponChoice[] {
     return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];
   }
+  /** A change refused by the weapon lock shows the weaponLocked notice. */
   selectWeapon(weapon: Weapon): boolean {
     const flight = this.state.flight;
-    return this.state.mode === "space" && !this.state.dialogue && flight !== null
-      ? selectFlightWeapon(weapon, flight)
-      : false;
+    if (this.state.mode !== "space" || this.state.dialogue || this.state.docked || !flight) {
+      return false;
+    }
+    if (
+      weapon !== flight.weapon &&
+      weaponsLocked(flight) &&
+      ownedWeapons(flight).some((choice) => choice.id === weapon)
+    ) {
+      this.state.notice = this.label("weaponLocked");
+      return false;
+    }
+    const selected = selectFlightWeapon(weapon, flight);
+    this.pullLoadout();
+    return selected;
   }
   destinations(): { id: string; label: string }[] {
-    return this.current.known.map((id) => ({
-      id,
-      label: this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name,
-    }));
+    return [
+      ...this.current.known.map((id) => ({
+        id,
+        label: this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name,
+      })),
+      ...this.current.stations.map((id) => ({ id, label: this.label("station") })),
+    ];
+  }
+  /** Ada's shield capacity with bought upgrades. */
+  get shieldMax(): number {
+    const levels = this.state.flight?.levels ?? this.state.economy.levels;
+    return shipTuning(ECONOMY, this.content, levels).shieldMax;
+  }
+  /** During a flight its loadout is authoritative; the economy mirrors it. */
+  private pullLoadout(): void {
+    const flight = this.state.flight;
+    if (!flight) {
+      return;
+    }
+    const economy = this.state.economy;
+    economy.ownedWeapons = [...ensureOwnedWeapons(flight)];
+    economy.weapon = flight.weapon;
+    economy.levels = structuredClone(flight.levels);
+  }
+  /** Purchases change the economy, which then refreshes the flight's loadout. */
+  private pushLoadout(): void {
+    const flight = this.state.flight;
+    if (!flight) {
+      return;
+    }
+    const economy = this.state.economy;
+    const before = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
+    flight.ownedWeapons = [...economy.ownedWeapons];
+    flight.weapon = economy.weapon;
+    flight.levels = structuredClone(economy.levels);
+    // A bought shield level adds its capacity to the current charge.
+    const after = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
+    flight.shield = Math.min(after, flight.shield + Math.max(0, after - before));
+  }
+  shopRows(tab: ShopTab): ShopRow[] {
+    this.pullLoadout();
+    return shopRows(ECONOMY, this.state.economy, tab);
+  }
+  requestPurchase(item: ShopItem): PurchaseRequest {
+    this.pullLoadout();
+    return requestPurchase(ECONOMY, this.state.economy, item);
+  }
+  /** Purchases happen only while docked. */
+  buy(item: ShopItem): PurchaseResult {
+    if (!this.state.docked) {
+      return { kind: "refused", reason: "notForSale" };
+    }
+    this.pullLoadout();
+    const result = buy(ECONOMY, item, this.state.economy);
+    this.pushLoadout();
+    return result;
+  }
+  selectPaint(scheme: string): boolean {
+    return selectPaint(ECONOMY, scheme, this.state.economy);
+  }
+  undock(): void {
+    this.state.docked = null;
   }
   private panel(context: string, text: string, title = this.chapter.name): void {
     this.state.dialogue = {
@@ -147,9 +244,16 @@ export class GameModel {
     const randomSeed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
     const seed = randomSeed === this.previousSeed ? (randomSeed + 1) >>> 0 : randomSeed;
     this.previousSeed = seed;
-    this.state.flight = createFlight(this.content, this.state.selectedSector, seed, this.current);
+    this.state.flight = createFlight(
+      this.content,
+      this.state.selectedSector,
+      seed,
+      this.current,
+      this.state.economy,
+    );
     this.state.mode = "space";
     this.state.dialogue = null;
+    this.state.docked = null;
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
@@ -177,10 +281,12 @@ export class GameModel {
       return;
     }
     this.current.questItem = null;
+    this.pullLoadout();
     this.previousSeed = this.state.flight?.seed ?? this.previousSeed;
     this.state.mode = "home";
     this.state.flight = null;
     this.state.dialogue = null;
+    this.state.docked = null;
     if (this.current.questComplete && !this.current.resolved) {
       this.state.dialogue = {
         choices: this.chapter.resolutionChoices.map((label, i) => ({ id: String(i), label })),
@@ -195,11 +301,13 @@ export class GameModel {
   }
   teleport(id: string): void {
     const f = this.state.flight;
+    const station = this.current.stations.includes(id);
     if (
       !f ||
       this.state.mode !== "space" ||
       this.state.dialogue ||
-      !this.current.known.includes(id)
+      this.state.docked ||
+      !(this.current.known.includes(id) || station)
     ) {
       return;
     }
@@ -207,8 +315,37 @@ export class GameModel {
       this.state.notice = this.label("travelUnavailable");
       return;
     }
-    ensureDestination(this.content, id, f);
+    if (station) {
+      ensureStation(this.content, id, f);
+    } else {
+      ensureDestination(this.content, id, f);
+    }
     teleportFlight(this.content, id, f);
+  }
+  /**
+   * Shield depletion quantum warps Ada home: the flight ends, the equipped weapon and
+   * its levels are lost unless it is Basic, and recharging costs a flat fee.
+   */
+  private warpHome(): void {
+    const flight = this.state.flight;
+    if (!flight) {
+      return;
+    }
+    const lost = loseEquippedWeapon(flight);
+    this.pullLoadout();
+    const economy = this.state.economy;
+    const fee = Math.min(ECONOMY.warpFee, economy.stardust);
+    economy.stardust -= fee;
+    this.home(true);
+    this.state.notice = [
+      this.label("warpHome"),
+      lost
+        ? fill(this.label("warpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
+        : "",
+      fee > 0 ? fill(this.label("warpRecharge"), { amount: fee }) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
   private complete(): void {
     this.current.questComplete = true;
@@ -220,6 +357,7 @@ export class GameModel {
       !f ||
       this.state.mode !== "space" ||
       this.state.dialogue ||
+      this.state.docked ||
       !Number.isFinite(dt) ||
       dt <= 0
     ) {
@@ -227,11 +365,21 @@ export class GameModel {
     }
     this.ensureRequiredApproaches();
     const previousFreshDistance = f.freshDistance;
-    for (const event of stepFlight(this.content, dt, input, f)) {
+    const events = stepFlight(this.content, dt, input, f);
+    this.pullLoadout();
+    for (const event of events) {
       if (event.type === "depleted") {
-        this.home(true);
-        this.state.notice = this.label("shieldDepleted");
+        this.warpHome();
         return;
+      }
+      if (event.type === "stardust") {
+        this.state.economy.stardust += event.amount;
+      }
+      if (event.type === "stationDiscovered" && !this.current.stations.includes(event.id)) {
+        this.current.stations.push(event.id);
+      }
+      if (event.type === "docked") {
+        this.state.docked = event.id;
       }
       if (event.type === "enemyDisabled") {
         this.current.disabledEnemies++;
@@ -480,6 +628,7 @@ export class GameModel {
     this.state.dialogue = null;
   }
   save(): string {
+    this.pullLoadout();
     return JSON.stringify(this.state);
   }
 }

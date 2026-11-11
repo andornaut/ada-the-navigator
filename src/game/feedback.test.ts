@@ -43,14 +43,19 @@ describe("model feedback", () => {
     expect(feedback.observe(100, state)).toEqual([]);
   });
 
-  it("does not report exhausted special weapons as pickups", () => {
+  it("does not report switching back to basic fire as a pickup", () => {
     const { feedback, flight, state } = launched();
     flight.weapon = "missiles";
-    flight.ammo = 2;
     feedback.observe(100, state);
     flight.weapon = "basic";
-    flight.ammo = 0;
     expect(feedback.observe(100, state)).not.toContain("pickup");
+  });
+
+  it("reports collected Stardust as a pickup", () => {
+    const { feedback, state } = launched();
+    feedback.observe(100, state);
+    state.economy.stardust += 5;
+    expect(feedback.observe(100, state)).toEqual(["pickup"]);
   });
 
   it("ignores object streaming removals without recorded combat evidence", () => {

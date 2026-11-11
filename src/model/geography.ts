@@ -47,6 +47,7 @@ export function persistentObject(object: SpaceObject): boolean {
   return (
     object.persistent === true ||
     object.kind === "destination" ||
+    object.kind === "station" ||
     object.id.startsWith("whale-debris:") ||
     object.routeId !== undefined ||
     (object.kind === "enemy" &&

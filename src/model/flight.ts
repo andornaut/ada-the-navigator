@@ -1,4 +1,5 @@
 import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
   type EnemyArchetype,
@@ -20,6 +21,7 @@ import {
 } from "./enemy-ai.ts";
 import {
   activateFlightRegion,
+  ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
   persistentObject,
   prunePackState,
@@ -31,9 +33,12 @@ import {
 } from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
+import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
+import { stationById, stationsNear } from "./stations.ts";
 import type {
+  EconomyState,
   FlightEvent,
   FlightInput,
   FlightState,
@@ -41,13 +46,9 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
+import { noLevels, shipTuning, upgradedWeapon } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import {
-  collectWeapon,
-  ensureOwnedWeapons,
-  loseSelectedWeapon,
-  UPGRADE_WEAPONS,
-} from "./weapons.ts";
+import { collectWeapon, ensureOwnedWeapons, UPGRADE_WEAPONS } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -71,9 +72,69 @@ function random(seed: number): () => number {
 function chunk(content: PrototypeContent, point: Vec): string {
   return `${Math.floor(point.x / content.tuning.chunkSize)},${Math.floor(point.y / content.tuning.chunkSize)}`;
 }
+/** Destinations and stations are safe areas; other objects protect nothing. */
+function protectedRadius(content: PrototypeContent, object: SpaceObject): number | null {
+  return object.kind === "destination"
+    ? content.tuning.safeRadius
+    : object.kind === "station"
+      ? ECONOMY.station.safeRadius
+      : null;
+}
 function safe(content: PrototypeContent, point: Vec, flight: FlightState): boolean {
-  return flight.objects.some(
-    (o) => o.kind === "destination" && distance(point, o) <= content.tuning.safeRadius,
+  return flight.objects.some((o) => {
+    const radius = protectedRadius(content, o);
+    return radius !== null && distance(point, o) <= radius;
+  });
+}
+/** Station sites within the active region become persistent station objects. */
+function ensureStations(content: PrototypeContent, point: Vec, flight: FlightState): void {
+  const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
+  for (const site of stationsNear(ECONOMY, flight.sector, reach, point)) {
+    if (
+      !flight.objects.some((object) => object.id === site.id) &&
+      !Object.hasOwn(flight.world.notables, site.id)
+    ) {
+      placeStation(site, flight);
+    }
+  }
+}
+function placeStation(site: Vec & { id: string }, flight: FlightState): SpaceObject {
+  const station: SpaceObject = {
+    hp: 1,
+    id: site.id,
+    kind: "station",
+    radius: ECONOMY.station.radius,
+    x: site.x,
+    y: site.y,
+  };
+  flight.objects.push(station);
+  // A station's safe area holds no layout objects from chunks generated before it.
+  clearLayoutObjects(
+    (object) =>
+      object === station ||
+      object.kind === "destination" ||
+      distance(object, station) > ECONOMY.station.safeRadius,
+    flight,
+  );
+  return station;
+}
+/** Ensures a discovered station is present, for travel. */
+export function ensureStation(
+  content: PrototypeContent,
+  id: string,
+  flight: FlightState,
+): SpaceObject | null {
+  const existing = flight.objects.find((o) => o.id === id && o.kind === "station");
+  if (existing) {
+    return existing;
+  }
+  const site = stationById(ECONOMY, flight.sector, id);
+  if (!site) {
+    return null;
+  }
+  activateFlightRegion(content, site, flight);
+  return (
+    flight.objects.find((o) => o.id === id && o.kind === "station") ?? placeStation(site, flight)
   );
 }
 const chunkIndexes = new WeakMap<
@@ -91,6 +152,7 @@ function generatedChunks(flight: FlightState): Set<string> {
 
 function generate(content: PrototypeContent, point: Vec, flight: FlightState): void {
   activateFlightRegion(content, point, flight);
+  ensureStations(content, point, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
@@ -365,7 +427,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
 
 /** Plan all guard positions before applying layout changes to their persistent state. */
 function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: FlightState): void {
-  const destinations = flight.objects.filter((object) => object.kind === "destination");
+  const destinations = flight.objects.filter((object) => protectedRadius(content, object) !== null);
   const positions = new Map<SpaceObject, Vec>();
   const maxRadius = flight.objects.reduce(
     (radius, object) => Math.max(radius, object.radius),
@@ -375,7 +437,8 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
   // A capital ignores unplaced capital guards; each of those is placed against it afterward.
   const blocked = (guard: SpaceObject, point: Vec): boolean =>
     destinations.some(
-      (object) => distance(object, point) < content.tuning.safeRadius + guard.radius + 120,
+      (object) =>
+        distance(object, point) < (protectedRadius(content, object) ?? 0) + guard.radius + 120,
     ) ||
     flight.objects.some(
       (object) =>
@@ -503,10 +566,12 @@ export function ensureDestination(
     x: flight.player.x + heading.x * span - heading.y * offset,
     y: flight.player.y + heading.y * span + heading.x * offset,
   };
+  // Story destinations keep clear of each other and of the sector's fixed stations.
   while (
     flight.objects.some(
       (o) => o.kind === "destination" && distance(o, target) < content.tuning.safeRadius * 2,
-    )
+    ) ||
+    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, target).length > 0
   ) {
     target.x -= heading.y * content.tuning.safeRadius * 2.5;
     target.y += heading.x * content.tuning.safeRadius * 2.5;
@@ -539,33 +604,40 @@ export function placeDestinationAhead(
   return existing;
 }
 
+export type Loadout = Pick<EconomyState, "levels" | "ownedWeapons" | "weapon">;
+
 export function createFlight(
   content: PrototypeContent,
   sector: SectorId,
   seed: number,
-  progress: SectorProgress,
+  progress: Pick<SectorProgress, "known">,
+  loadout: Loadout = { levels: noLevels(), ownedWeapons: [], weapon: "basic" },
 ): FlightState {
+  const levels = structuredClone(loadout.levels);
   const flight: FlightState = {
-    ammo: 0,
     cargo: 0,
     chunks: [],
     dangerFor: 0,
+    dockId: null,
     facing: { x: 0, y: -1 },
     fireCooldown: 0,
     freshChunk: "0,0",
     freshDistance: 0,
+    levels,
     nextId: 0,
     objects: [],
+    ownedWeapons: [...loadout.ownedWeapons],
     player: { x: 0, y: 0 },
     sector,
     seed,
-    shield: content.tuning.shieldMax,
+    shield: shipTuning(ECONOMY, content, levels).shieldMax,
     shots: [],
     sinceDamage: content.tuning.shieldRechargeDelay,
     time: 0,
     velocity: { x: 0, y: 0 },
     visited: {},
-    weapon: "basic",
+    weapon: loadout.weapon,
+    weaponLockFor: 0,
     world: { notables: {}, version: 1 },
   };
   markVisited(flight.visited, "0,0");
@@ -581,13 +653,19 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   if (flight.dangerFor > 0) {
     return false;
   }
-  const object = flight.objects.find((o) => o.kind === "destination" && o.id === id);
+  const object = flight.objects.find(
+    (o) => (o.kind === "destination" || o.kind === "station") && o.id === id,
+  );
   if (!object) {
     return false;
   }
   beginFlightStep(flight);
   generate(content, object, flight);
-  flight.player = { x: object.x, y: object.y };
+  // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
+  flight.player =
+    object.kind === "station"
+      ? { x: object.x, y: object.y + ECONOMY.station.dockRadius + 40 }
+      : { x: object.x, y: object.y };
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
   const key = chunk(content, object);
@@ -606,7 +684,12 @@ function fire(
   flight: FlightState,
 ): void {
   ensureOwnedWeapons(flight);
-  const volley = planPlayerVolley(WEAPON_CATALOG[flight.weapon], {
+  const definition = upgradedWeapon(
+    ECONOMY,
+    flight.levels.weapons[flight.weapon],
+    WEAPON_CATALOG[flight.weapon],
+  );
+  const volley = planPlayerVolley(definition, {
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
@@ -631,9 +714,6 @@ function damage(content: PrototypeContent, flight: FlightState): void {
     return;
   }
   flight.shield = Math.max(0, flight.shield - content.tuning.enemyDamage);
-  if (flight.shield === 0 && loseSelectedWeapon(flight)) {
-    flight.shield = content.tuning.shieldMax;
-  }
   flight.sinceDamage = 0;
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
@@ -669,13 +749,17 @@ function move(
   flight: FlightState,
 ): void {
   const magnitude = Math.min(1, length(input.move));
+  // Engine tuning changes only Ada's physics; enemies keep reading the base maxSpeed.
+  const physics = shipTuning(ECONOMY, content, flight.levels).physics;
   const motion = stepShipMotion(
-    content.tuning.physics,
+    physics,
     dt,
     { maxSpeed: adaMaxSpeed(content.tuning) },
     {
       direction: input.move,
-      speed: movementSpeedFraction(content.tuning, magnitude) * adaMaxSpeed(content.tuning),
+      speed:
+        movementSpeedFraction(content.tuning, magnitude) *
+        adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics }),
     },
     { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
   );
@@ -718,12 +802,7 @@ function move(
     distance(start, flight.player) > 0.001 &&
     length(flight.velocity)
   ) {
-    flight.facing = turnToward(
-      dt,
-      content.tuning.physics.aimTurnSeconds,
-      flight.velocity,
-      flight.facing,
-    );
+    flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
   }
 }
 function enemies(
@@ -774,7 +853,7 @@ function enemies(
     );
     object.enemy = intent.state;
     if (intent.effects.defeated) {
-      object.hp = 0;
+      destroyEnemy(object, flight);
       events.push({ type: "enemyDisabled" });
       continue;
     }
@@ -786,8 +865,8 @@ function enemies(
         const blocked = flight.objects.some(
           (other) =>
             other !== object &&
-            (other.kind === "destination"
-              ? distance(other, point) < content.tuning.safeRadius + object.radius
+            (protectedRadius(content, other) !== null
+              ? distance(other, point) < (protectedRadius(content, other) ?? 0) + object.radius
               : ["rock", "resource", "debris", "enemy"].includes(other.kind) &&
                 other.hp > 0 &&
                 distance(other, point) < enemySpacing(object, other)),
@@ -852,12 +931,12 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
     // Protected regions absorb traveling debris without changing its ballistic heading.
     if (
-      flight.objects.some(
-        (destination) =>
-          destination.kind === "destination" &&
-          segmentDistance(destination, object, next.position) <
-            content.tuning.safeRadius + object.radius,
-      )
+      flight.objects.some((area) => {
+        const radius = protectedRadius(content, area);
+        return (
+          radius !== null && segmentDistance(area, object, next.position) < radius + object.radius
+        );
+      })
     ) {
       object.hp = 0;
       continue;
@@ -961,7 +1040,13 @@ function shots(
         }
         if (object.hp <= 0) {
           if (object.kind === "enemy") {
+            destroyEnemy(object, flight);
             events.push({ type: "enemyDisabled" });
+          }
+          if (object.kind === "rock") {
+            const next = dropRandom(flight.seed, object.id);
+            const amount = rollAsteroidStardust(ECONOMY, next);
+            releaseStardust(object, amount, amount, flight);
           }
           if (object.kind === "debris") {
             events.push({ id: object.id, type: "debrisCleared" });
@@ -996,6 +1081,101 @@ function shots(
   flight.objects = flight.objects.filter((o) => o.hp > 0);
 }
 
+/** A defeated enemy is replaced by a wreck that breaks apart, then releases its drops. */
+function destroyEnemy(object: SpaceObject, flight: FlightState): void {
+  object.hp = 0;
+  const id = `wreck:${object.id}`;
+  if (flight.objects.some((other) => other.id === id)) {
+    return;
+  }
+  flight.objects.push({
+    hp: 1,
+    id,
+    kind: "wreck",
+    radius: object.radius,
+    wreck: {
+      age: 0,
+      archetype: object.enemy?.archetype ?? "fighter",
+      facing: { ...(object.enemy?.facing ?? { x: 0, y: -1 }) },
+    },
+    x: object.x,
+    y: object.y,
+  });
+}
+
+/** Scatters Stardust pickups in a small ring around a destroyed object. */
+function releaseStardust(
+  at: Vec & { radius?: number },
+  cap: number,
+  amount: number,
+  flight: FlightState,
+) {
+  const pieces = splitStardust(cap, amount);
+  const ring = pieces.length > 1 ? Math.min(40, 8 + (at.radius ?? 0) * 0.5) : 0;
+  pieces.forEach((value, index) => {
+    const angle = (index / pieces.length) * Math.PI * 2;
+    flight.objects.push({
+      amount: value,
+      hp: 1,
+      id: `stardust:${flight.nextId++}`,
+      kind: "pickup",
+      radius: ECONOMY.stardustPickupRadius,
+      role: "stardust",
+      x: at.x + Math.cos(angle) * ring,
+      y: at.y + Math.sin(angle) * ring,
+    });
+  });
+}
+
+function stepWrecks(content: PrototypeContent, dt: number, flight: FlightState): void {
+  for (const object of [...flight.objects]) {
+    if (object.kind !== "wreck" || !object.wreck || object.hp <= 0) {
+      continue;
+    }
+    object.wreck.age += dt;
+    if (object.wreck.age < ECONOMY.breakApartSeconds) {
+      continue;
+    }
+    object.hp = 0;
+    const drop = rollEnemyDrop(
+      ECONOMY,
+      ensureOwnedWeapons(flight),
+      object.wreck.archetype,
+      dropRandom(flight.seed, object.id),
+    );
+    releaseStardust(object, ECONOMY.pickupCap[object.wreck.archetype], drop.stardust, flight);
+    if (drop.weapon) {
+      flight.objects.push({
+        hp: 1,
+        id: `drop:${flight.nextId++}`,
+        kind: "pickup",
+        radius: content.tuning.flight.pickupRadius,
+        role: "drop",
+        weapon: drop.weapon,
+        x: object.x,
+        y: object.y,
+      });
+    }
+  }
+}
+
+/** The tractor beam draws Stardust inside its pull radius toward Ada at its pull speed. */
+function pullStardust(
+  radius: number,
+  speed: number,
+  dt: number,
+  object: SpaceObject,
+  flight: FlightState,
+) {
+  const gap = distance(object, flight.player);
+  if (object.role !== "stardust" || gap > radius || gap === 0) {
+    return;
+  }
+  const step = Math.min(gap, speed * dt);
+  object.x += ((flight.player.x - object.x) / gap) * step;
+  object.y += ((flight.player.y - object.y) / gap) * step;
+}
+
 export function stepFlight(
   content: PrototypeContent,
   dt: number,
@@ -1010,6 +1190,7 @@ export function stepFlight(
   syncFlightRegion(content, flight);
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
+  const ship = shipTuning(ECONOMY, content, flight.levels);
   let remaining = dt;
   while (remaining > 1e-9 && flight.shield > 0) {
     const slice = Math.min(remaining, 1 / 60);
@@ -1036,6 +1217,7 @@ export function stepFlight(
     const shotDelays = new Map<string, number>();
     const threat = enemies(content, slice, flight, events, shotDelays);
     shots(content, slice, flight, events, shotDelays);
+    stepWrecks(content, slice, flight);
     for (const object of flight.objects) {
       if (
         object.kind === "hazard" &&
@@ -1047,17 +1229,24 @@ export function stepFlight(
           object.cooldown = content.tuning.flight.damageInterval;
         }
       }
-      if (
-        object.kind !== "pickup" ||
-        distance(object, flight.player) > object.radius + content.tuning.flight.pickupReach
-      ) {
+      if (object.kind !== "pickup" || object.hp <= 0) {
+        continue;
+      }
+      pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
+      if (distance(object, flight.player) > object.radius + content.tuning.flight.pickupReach) {
         continue;
       }
       if (object.role === "cargo") {
         flight.cargo++;
         object.hp = 0;
+      } else if (object.role === "stardust") {
+        events.push({ amount: object.amount ?? 0, type: "stardust" });
+        object.hp = 0;
       } else if (object.weapon) {
-        collectWeapon(object.weapon, flight);
+        // A found weapon Ada already owns becomes Stardust instead.
+        if (!collectWeapon(object.weapon, flight)) {
+          events.push({ amount: ECONOMY.ownedWeaponStardust, type: "stardust" });
+        }
         object.hp = 0;
       }
     }
@@ -1075,11 +1264,12 @@ export function stepFlight(
       : threat || underFire
         ? content.tuning.dangerReleaseSeconds
         : Math.max(0, flight.dangerFor - slice);
-    if (flight.sinceDamage >= content.tuning.shieldRechargeDelay) {
-      flight.shield = Math.min(
-        content.tuning.shieldMax,
-        flight.shield + content.tuning.shieldRechargeRate * slice,
-      );
+    // Snap the post-combat lock to zero within float error of its end.
+    const lock = flight.weaponLockFor - slice;
+    flight.weaponLockFor =
+      flight.dangerFor > 0 ? ECONOMY.weaponLockSeconds : lock > 1e-9 ? lock : 0;
+    if (flight.sinceDamage >= ship.shieldRechargeDelay) {
+      flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
     }
     if (flight.shield <= 0) {
       events.push({ type: "depleted" });
@@ -1094,6 +1284,24 @@ export function stepFlight(
     ) {
       events.push({ id: object.id, type: "discovered" });
     }
+    if (
+      object.kind === "station" &&
+      distance(object, flight.player) <= ECONOMY.station.safeRadius
+    ) {
+      events.push({ id: object.id, type: "stationDiscovered" });
+    }
+  }
+  // Flying into a dock docks once; Ada must leave the dock before it docks her again.
+  const dock = flight.objects.find(
+    (object) =>
+      object.kind === "station" && distance(object, flight.player) <= ECONOMY.station.dockRadius,
+  );
+  if (!dock) {
+    flight.dockId = null;
+  } else if (flight.dockId !== dock.id && flight.shield > 0) {
+    flight.dockId = dock.id;
+    flight.velocity = { x: 0, y: 0 };
+    events.push({ id: dock.id, type: "docked" });
   }
   return events;
 }

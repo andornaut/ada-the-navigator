@@ -53,7 +53,6 @@ describe("prototype story and persistence", () => {
     model.state.flight!.cargo = 3;
     model.state.flight!.shield = 43;
     model.state.flight!.weapon = "missiles";
-    model.state.flight!.ammo = 7;
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
     const saved = model.save();
@@ -67,7 +66,9 @@ describe("prototype story and persistence", () => {
     launch(resumed);
     expect(resumed.state.flight!.seed).not.toBe(seed);
     expect(resumed.state.flight!.cargo).toBe(0);
-    expect(resumed.state.flight!.weapon).toBe("basic");
+    // The equipped weapon is a purchase kept with story progress across flights.
+    expect(resumed.state.flight!.weapon).toBe("missiles");
+    expect(resumed.state.flight!.shield).toBe(PROTOTYPE.tuning.shieldMax);
     expect(resumed.state.progress[1].introduced).toBe(true);
     expect(resumed.state.progress[1].questItem).toBeNull();
     expect(resumed.state.dialogue).toBeNull();

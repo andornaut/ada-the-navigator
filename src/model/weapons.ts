@@ -1,14 +1,21 @@
+import type { UpgradeWeapon } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import type { FlightState } from "./types.ts";
 
 export interface WeaponChoice {
   id: Weapon;
-  ammo: null;
   selected: boolean;
+  /** Changing to this weapon is refused while weapon changes are locked. */
+  locked: boolean;
 }
 export const UPGRADE_WEAPONS = ["missiles", "tripleLaser", "scattershot"] as const;
 
-/** Selection participates in the owned upgrade roster without spending ammunition. */
+/** Weapon changes lock during combat (the danger state) and while the post-combat timer runs. */
+export function weaponsLocked(flight: Pick<FlightState, "dangerFor" | "weaponLockFor">): boolean {
+  return flight.dangerFor > 0 || flight.weaponLockFor > 0;
+}
+
+/** Selection participates in the owned upgrade roster. */
 export function ensureOwnedWeapons(flight: FlightState) {
   const owned = (flight.ownedWeapons ??= []);
   if (flight.weapon !== "basic" && !owned.includes(flight.weapon)) {
@@ -18,12 +25,12 @@ export function ensureOwnedWeapons(flight: FlightState) {
 }
 
 export function ownedWeapons(flight: FlightState): WeaponChoice[] {
-  const choices: WeaponChoice[] = [
-    { ammo: null, id: "basic", selected: flight.weapon === "basic" },
-  ];
-  for (const id of UPGRADE_WEAPONS) {
-    if (flight.weapon === id || flight.ownedWeapons?.includes(id)) {
-      choices.push({ ammo: null, id, selected: flight.weapon === id });
+  const locked = weaponsLocked(flight);
+  const choices: WeaponChoice[] = [];
+  for (const id of ["basic", ...UPGRADE_WEAPONS] as const) {
+    if (id === "basic" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
+      const selected = flight.weapon === id;
+      choices.push({ id, locked: locked && !selected, selected });
     }
   }
   return choices;
@@ -33,29 +40,41 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
   if (!ownedWeapons(flight).some((choice) => choice.id === weapon)) {
     return false;
   }
-  ensureOwnedWeapons(flight);
-  flight.weapon = weapon;
-  flight.ammo = 0;
-  return true;
-}
-
-export function collectWeapon(weapon: Exclude<Weapon, "basic">, flight: FlightState): void {
-  const owned = ensureOwnedWeapons(flight);
-  if (!owned.includes(weapon)) {
-    owned.push(weapon);
-  }
-  flight.weapon = weapon;
-  flight.ammo = 0;
-}
-
-export function loseSelectedWeapon(flight: FlightState): boolean {
-  if (flight.weapon === "basic") {
+  if (weapon !== flight.weapon && weaponsLocked(flight)) {
     return false;
   }
-  const selected = flight.weapon;
-  const owned = ensureOwnedWeapons(flight);
-  flight.ownedWeapons = owned.filter((weapon) => weapon !== selected);
-  flight.weapon = "basic";
-  flight.ammo = 0;
+  ensureOwnedWeapons(flight);
+  flight.weapon = weapon;
   return true;
+}
+
+/**
+ * Adds a found weapon to the roster and equips it outside the weapon lock. Returns
+ * false, changing nothing, when Ada already owns it.
+ */
+export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
+  const owned = ensureOwnedWeapons(flight);
+  if (owned.includes(weapon)) {
+    return false;
+  }
+  owned.push(weapon);
+  if (!weaponsLocked(flight)) {
+    flight.weapon = weapon;
+  }
+  return true;
+}
+
+/**
+ * The quantum warp loses the equipped upgrade weapon and its upgrade levels; Basic is
+ * never lost. Returns the lost weapon, or null.
+ */
+export function loseEquippedWeapon(flight: FlightState): UpgradeWeapon | null {
+  if (flight.weapon === "basic") {
+    return null;
+  }
+  const lost = flight.weapon;
+  flight.ownedWeapons = ensureOwnedWeapons(flight).filter((weapon) => weapon !== lost);
+  flight.levels.weapons[lost] = 0;
+  flight.weapon = "basic";
+  return lost;
 }

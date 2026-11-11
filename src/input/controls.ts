@@ -187,6 +187,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         options.onWeaponSelect(weapon);
       }
     },
+    reducedMotion: () => reducedMotion,
   });
   const shield = createShieldMeter(options.shieldLabel, settings.root);
   const update = options.update

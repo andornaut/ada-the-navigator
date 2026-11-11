@@ -24,6 +24,7 @@ const progress: SectorProgress = {
   questItem: null,
   resolved: false,
   stage: 0,
+  stations: [],
 };
 function fixture() {
   const content = structuredClone(PROTOTYPE);
