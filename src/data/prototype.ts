@@ -226,9 +226,7 @@ export const PROTOTYPE: PrototypeContent = {
       title: "Install app",
     },
     chromiumDesktop: {
-      steps:
-        "Choose Install in the address bar, or open the browser menu and choose Install. " +
-        "If it offers Open in app, the game is already installed.",
+      steps: "Choose Install in the address bar or the browser menu.",
       title: "Install app",
     },
     firefoxAndroid: {
@@ -236,14 +234,12 @@ export const PROTOTYPE: PrototypeContent = {
       title: "Add app to Home screen",
     },
     firefoxDesktop: {
-      steps:
-        "Firefox can't install this game as an app. Open this page in Chrome or Edge to install it.",
+      steps: "Firefox can't install this game. Open it in Chrome or Edge to install.",
       title: "Not available in Firefox",
     },
     ios: { steps: "Tap Share, then Add to Home Screen.", title: "Add to Home Screen" },
     other: {
-      steps:
-        "Open this page in your device's browser and use its menu to install it or add it to your home screen.",
+      steps: "Use your browser's menu to install it or add it to your home screen.",
       title: "Install",
     },
     safariMac: { steps: "Choose File, then Add to Dock.", title: "Add to Dock" },

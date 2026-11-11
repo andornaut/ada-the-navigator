@@ -93,6 +93,17 @@ describe("install steps words", () => {
       steps: "Choose File, then Add to Dock.",
       title: "Add to Dock",
     });
-    expect(PROTOTYPE.installSteps.firefoxDesktop.title).toBe("Not available in Firefox");
+    expect(PROTOTYPE.installSteps.chromiumDesktop).toEqual({
+      steps: "Choose Install in the address bar or the browser menu.",
+      title: "Install app",
+    });
+    expect(PROTOTYPE.installSteps.firefoxDesktop).toEqual({
+      steps: "Firefox can't install this game. Open it in Chrome or Edge to install.",
+      title: "Not available in Firefox",
+    });
+    expect(PROTOTYPE.installSteps.other).toEqual({
+      steps: "Use your browser's menu to install it or add it to your home screen.",
+      title: "Install",
+    });
   });
 });
