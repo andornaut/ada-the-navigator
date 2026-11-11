@@ -16,6 +16,8 @@ export interface StoryPageView {
   readonly speaker?: string;
   readonly text: string;
   readonly choices?: readonly { readonly label: string }[];
+  /** Whether Next (or its named action) shows: every page but a choice page. */
+  readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
 }
@@ -107,7 +109,8 @@ const STYLE = `
 /**
  * A storybook page: the full location background with its bottom panel of text, choices and
  * page controls. Skip is always shown; Previous uses the disabled face on a scene's first page;
- * a choice page has no Next; a named action takes Next's slot.
+ * a choice page has no Next; a named action takes Next's slot. A question page shows its
+ * remaining questions with Continue in Next's slot.
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const { labels } = options;
@@ -187,7 +190,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     choices.replaceChildren(...buttons);
     choices.hidden = buttons.length === 0;
     previous.disabled = !page.canGoBack;
-    next.hidden = buttons.length > 0;
+    next.hidden = !page.next;
     next.textContent = page.action ?? labels.next;
     // Skip, Previous and Next share the widest one's width, in logical px.
     const pageControls = [skip, previous, next];

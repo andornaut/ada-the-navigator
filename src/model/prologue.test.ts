@@ -6,11 +6,12 @@ import { restoreSave } from "./save.ts";
 import type { StoryPage } from "./storybook.ts";
 import { readStory } from "./test-launch.ts";
 
-const summary = ({ action, background, choices, speaker, text }: StoryPage) => [
+const summary = ({ action, background, choices, questions, speaker, text }: StoryPage) => [
   background,
   speaker ?? "",
   text,
   action ?? (choices ? choices.map(({ label }) => label) : "Next"),
+  ...(questions ? [questions.map(({ label }) => label)] : []),
 ];
 
 /** A first launch: Start, then galaxy one's opening read with choice `choice`. */
@@ -23,21 +24,24 @@ function started(choice = 0): GameModel {
   return model;
 }
 
+const questions = ["How did you get to Earth?", "Can Penny come?", "How do I get home?"];
+
 describe("prologue", () => {
-  it("follows galaxy one's opening in Ada's room, then the cockpit, then galaxy selection", () => {
+  it("moves from the park to Ada's room, then the cockpit, then galaxy selection", () => {
     const model = started();
     const pages = readStory(model);
     expect(pages.map(summary)).toEqual([
       [
-        "adaRoom",
-        "The Glowing Rock",
+        "park",
+        "",
         "On a walk with Penny, Ada digs up an unusual rock. At home, she polishes it " +
           "until a faint pattern begins to glow.",
-        "Touch the glow.",
+        "Next",
       ],
+      ["adaRoom", "", "Ada's rock glows softly on her desk.", "Touch the glow."],
       [
         "cockpit",
-        "The Glowing Rock",
+        "",
         "Light swirls around Ada and Penny. They are standing in a tiny cockpit. " +
           "Outside, colors shimmer like nowhere at all.",
         "Next",
@@ -62,15 +66,10 @@ describe("prologue", () => {
         "Astra",
         "I was made to explore and map, but I can no longer fly without a navigator. " +
           "Will you be mine?",
-        ["How did you get to Earth?", "Can Penny come?", "How do I get home?"],
+        "Continue",
+        questions,
       ],
-      ["cockpit", "Astra", "I don't remember. The holodisk may help.", "Next"],
-      [
-        "cockpit",
-        "The Glowing Rock",
-        "Ada sits in the pilot's chair and buckles Penny in beside her.",
-        "Next",
-      ],
+      ["cockpit", "", "Ada sits in the pilot's chair and buckles Penny in beside her.", "Next"],
       ["cockpit", "Astra", "Quantum jump ready.", "Let's find your holodisk."],
     ]);
     expect(model.screen).toBe("selector");
@@ -83,35 +82,42 @@ describe("prologue", () => {
     expect(model.state.started).toBe(true);
   });
 
-  it("answers each optional question on its own branch page, then rejoins", () => {
-    for (const [choice, answer] of [
-      [0, "I don't remember. The holodisk may help."],
-      [1, "There are two seats. Please strap Penny in."],
-      [2, "Ask me any time you're safe. I'll jump you back to the moment you left."],
-    ] as const) {
-      const model = started();
-      const texts = readStory(model, choice).map(({ text }) => text);
-      const asked = texts.findIndex((text) => text.startsWith("I was made to explore"));
-      expect(texts.slice(asked + 1, asked + 3)).toEqual([
-        answer,
-        "Ada sits in the pilot's chair and buckles Penny in beside her.",
-      ]);
+  it("returns each answer to the question list without that question, until Continue", () => {
+    const model = started();
+    while (!model.storyView?.page.questions) {
+      model.storyNext();
     }
+    const hub = model.storyView.page.id;
+    const answers: string[] = [];
+    for (const index of [1, 0, 0]) {
+      const remaining = model.storyView!.choices.map(({ label }) => label);
+      model.storyChoose(index);
+      answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
+      model.storyNext();
+      expect(model.storyView?.page.id).toBe(hub);
+      expect(model.storyView?.choices.map(({ label }) => label)).not.toContain(remaining[index]);
+    }
+    expect(answers).toEqual([
+      "Can Penny come? There are two seats. Please strap Penny in.",
+      "How did you get to Earth? I don't remember. The holodisk may help.",
+      "How do I get home? Ask me any time you're safe. I'll jump you back to the moment you left.",
+    ]);
+    expect(model.storyView?.choices).toEqual([]);
+    expect(model.state.prologueSeen).toBe(false);
+    model.storyNext();
+    expect(model.storyView?.page.text).toBe(
+      "Ada sits in the pilot's chair and buckles Penny in beside her.",
+    );
   });
 
   it("is replaced by Ada's room with the rock and the boarding lines once seen", () => {
     const model = started();
     readStory(model);
     model.leaveCockpit();
-    expect(model.storyView?.page).toMatchObject({
-      action: "Pick up the rock.",
-      background: "adaRoom",
-      text: "Penny thumps her tail. Time for another adventure?",
-    });
     const pages = readStory(model);
     expect(pages.map(summary)).toEqual([
       ["adaRoom", "", "Penny thumps her tail. Time for another adventure?", "Pick up the rock."],
-      ["cockpit", "The Glowing Rock", "Ada holds Penny close and touches the rock's glow.", "Next"],
+      ["adaRoom", "", "Ada holds Penny close and touches the rock's glow.", "Next"],
       ["cockpit", "Astra", "Welcome back, Navigator.", "Next"],
     ]);
     expect(model.screen).toBe("selector");

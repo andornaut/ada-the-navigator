@@ -69,5 +69,5 @@ export const PREMISE: PremiseContent = {
     { text: "Ada sits in the pilot's chair and buckles Penny in beside her." },
     { choice: "Let's find your holodisk.", speaker: "Astra", text: "Quantum jump ready." },
   ],
-  title: "The Glowing Rock",
+  roomRock: "Ada's rock glows softly on her desk.",
 };

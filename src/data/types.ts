@@ -46,8 +46,8 @@ export interface PremiseContent {
   };
   /** Plays once, after galaxy one's home opening and before the first flight. */
   prologue: readonly PrologueStep[];
-  /** The title of narration panels in the prologue and boarding. */
-  title: string;
+  /** Ada's room before a named action that takes her aboard. */
+  roomRock: string;
 }
 
 export interface PrototypeContent {

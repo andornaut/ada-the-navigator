@@ -475,6 +475,11 @@ export class PrototypeScene extends Phaser.Scene {
       onRestart: () => apply(() => this.model.restart()),
     });
     const homeLayers = [
+      // Back on a storybook page acts as Previous, and does nothing on a scene's first page.
+      this.controls.registerBack({
+        back: () => apply(() => this.model.storyPrevious()),
+        isOpen: () => this.model.screen === "story" && !this.settingsOpen,
+      }),
       this.controls.registerBack({
         back: () => apply(() => this.model.leaveCockpit()),
         isOpen: () => this.galaxies.isOpen() && !this.settingsOpen,
@@ -614,8 +619,9 @@ export class PrototypeScene extends Phaser.Scene {
         canGoBack: story.canGoBack,
         text: story.page.text,
         ...(story.page.speaker ? { speaker: story.page.speaker } : {}),
-        ...(story.page.choices ? { choices: story.page.choices } : {}),
+        ...(story.choices.length ? { choices: story.choices } : {}),
         ...(story.page.action ? { action: story.page.action } : {}),
+        next: !story.page.choices,
       },
       selected === null ? null : "cockpit",
     );

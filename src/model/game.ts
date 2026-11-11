@@ -40,7 +40,10 @@ import {
   resolutionScene,
   roomScene,
   type Scene,
+  shownChoices,
   skip,
+  type StoryChoice,
+  type StoryLabels,
   type StoryPage,
   type StoryPosition,
   storyStart,
@@ -98,6 +101,8 @@ export type Screen = "selector" | "space" | "start" | "story";
 export interface StoryView {
   readonly page: StoryPage;
   readonly canGoBack: boolean;
+  /** The choices shown: a choice page's, or the optional questions not yet asked. */
+  readonly choices: readonly StoryChoice[];
 }
 const first = { 1: "growers", 2: "hub", 3: "whale" } as const;
 const required: Record<SectorId, readonly string[]> = {
@@ -134,7 +139,11 @@ export class GameModel {
   /** The storybook page on show, with whether Previous can act. */
   get storyView(): StoryView | null {
     return this.story && this.screen === "story"
-      ? { canGoBack: canGoBack(this.story), page: currentPage(this.story) }
+      ? {
+          canGoBack: canGoBack(this.story),
+          choices: shownChoices(this.story),
+          page: currentPage(this.story),
+        }
       : null;
   }
   /** The galaxy on show in galaxy selection, 1 to 4. */
@@ -820,16 +829,17 @@ export class GameModel {
     this.startShown = false;
     this.beginVisit();
   }
-  /** Continue: any waiting home scene, then galaxy selection in the cockpit. */
+  /** Continue: any waiting home scene, else the cockpit and Astra's line; then galaxy selection. */
   continueGame(): void {
     if (this.screen !== "start" || !this.state.started) {
       return;
     }
     this.startShown = false;
-    if (this.waitingScene()) {
+    if (this.waitingScene() || !this.state.prologueSeen) {
       this.beginVisit();
     } else {
-      this.openSelection();
+      // Nothing waiting: the cockpit, Astra's boarding line, then galaxy selection.
+      this.showScene(boardingScene(this.content, this.state.announceGalaxy, false));
     }
   }
   /**
@@ -853,8 +863,8 @@ export class GameModel {
   }
   /** A choice page's choice, by its index. */
   storyChoose(index: number): void {
-    const choices = this.story && this.screen === "story" ? currentPage(this.story).choices : null;
-    if (this.story && choices && index >= 0 && index < choices.length) {
+    const choices = this.story && this.screen === "story" ? shownChoices(this.story) : [];
+    if (this.story && index >= 0 && index < choices.length) {
       this.moveStory(advance(this.story, index));
     }
   }
@@ -906,8 +916,11 @@ export class GameModel {
   /** After Earth scenes: the prologue the first time, else Ada's room with the rock. */
   private roomScene(empty: boolean): Scene {
     return this.state.prologueSeen
-      ? roomScene(this.content, { pickUpRock: this.label("pickUpRock") }, empty)
-      : prologueScene(this.content);
+      ? roomScene(this.content, this.storyLabels, empty)
+      : prologueScene(this.content, this.storyLabels);
+  }
+  private get storyLabels(): StoryLabels {
+    return { continue: this.label("continue"), pickUpRock: this.label("pickUpRock") };
   }
   /** A home visit: waiting scenes, then Ada's room; an empty visit adds Penny's line. */
   private beginVisit(): void {

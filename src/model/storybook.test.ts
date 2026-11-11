@@ -11,6 +11,7 @@ import {
   currentPage,
   goBack,
   type Scene,
+  shownChoices,
   skip,
   storyStart,
 } from "./storybook.ts";
@@ -41,7 +42,40 @@ const branching: Scene = {
   ],
 };
 
+// An optional-question page whose answers return to it.
+const asking: Scene = {
+  id: "asking",
+  last: "end",
+  lead: "home",
+  pages: [
+    {
+      action: "Continue",
+      background: "cockpit",
+      id: "ask",
+      next: "end",
+      questions: [
+        { label: "One?", next: "one" },
+        { label: "Two?", next: "two" },
+      ],
+      text: "Ask?",
+    },
+    { background: "cockpit", id: "one", next: "ask", text: "One." },
+    { background: "cockpit", id: "two", next: "ask", text: "Two." },
+    { background: "cockpit", id: "end", text: "End." },
+  ],
+};
+
 describe("storybook pages", () => {
+  it("keeps a question page's unasked questions, and Skip and Next take Continue", () => {
+    let position = storyStart(asking);
+    position = advance(position, 1)!;
+    expect(currentPage(position).id).toBe("two");
+    position = advance(position)!;
+    expect(shownChoices(position).map(({ label }) => label)).toEqual(["One?"]);
+    expect(currentPage(advance(position)!).id).toBe("end");
+    expect(currentPage(skip(storyStart(asking))!).id).toBe("end");
+  });
+
   it("disables Previous on a scene's first page and returns along the pages read", () => {
     let position = storyStart(branching);
     expect(canGoBack(position)).toBe(false);
@@ -103,14 +137,19 @@ describe("home visits", () => {
     model.returnHome();
     const pages = readStory(model, 1);
     expect(pages.map(({ background, id }) => `${id}@${background}`)).toEqual([
-      "resolution@grandmaGarden",
+      "resolution@gardenLot",
       "closing@gardenLot",
-      "opening@schoolyard",
+      "opening@schoolHallway",
       "room@adaRoom",
-      "boarding:0@cockpit",
+      "boarding:0@adaRoom",
       "boarding:1@cockpit",
     ]);
-    expect(pages[3]).toMatchObject({ action: "Pick up the rock.", text: "" });
+    expect(pages[3]).toMatchObject({
+      action: "Pick up the rock.",
+      text: "Ada's rock glows softly on her desk.",
+    });
+    // Narration pages have no name tab; Astra's line has hers.
+    expect(pages.map(({ speaker }) => speaker ?? "")).toEqual(["", "", "", "", "", "Astra"]);
     expect(pages.at(-1)?.text).toBe("Welcome back, Navigator. A new galaxy is ready.");
     expect(model.state.progress[1].resolved).toBe(true);
     expect(model.state.progress[2].opened).toBe(true);
@@ -214,7 +253,7 @@ describe("start flow", () => {
     expect(new GameModel(PROTOTYPE, reloaded.save()).state.started).toBe(true);
   });
 
-  it("continues to galaxy selection on the farthest unlocked galaxy", () => {
+  it("continues in the cockpit with Astra's line, then the farthest unlocked galaxy", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
@@ -223,8 +262,25 @@ describe("start flow", () => {
     reloaded.start();
     expect(reloaded.screen).toBe("start");
     reloaded.continueGame();
+    // The room and rock are skipped, never Astra's boarding line.
+    expect(
+      readStory(reloaded).map(({ background, speaker, text }) => [background, speaker, text]),
+    ).toEqual([["cockpit", "Astra", "Welcome back, Navigator."]]);
     expect(reloaded.screen).toBe("selector");
     expect(reloaded.selectedGalaxy).toBe(2);
+  });
+
+  it("plays a pending new galaxy announcement on Continue, once", () => {
+    const model = questDone(2);
+    model.state.progress[2].questComplete = false;
+    model.state.announceGalaxy = true;
+    model.returnHome();
+    const reloaded = new GameModel(PROTOTYPE, model.save());
+    reloaded.continueGame();
+    expect(readStory(reloaded).map(({ text }) => text)).toEqual([
+      "Welcome back, Navigator. A new galaxy is ready.",
+    ]);
+    expect(reloaded.state.announceGalaxy).toBe(false);
   });
 
   it("plays a waiting home scene before galaxy selection", () => {
@@ -252,7 +308,7 @@ describe("start flow", () => {
     expect(reloaded.state).toEqual(new GameModel(PROTOTYPE).state);
     reloaded.start();
     expect(reloaded.storyView?.page.id).toBe("opening");
-    expect(readStory(reloaded).some(({ id }) => id === "prologue:0")).toBe(true);
+    expect(readStory(reloaded).some(({ id }) => id === "prologue:park")).toBe(true);
   });
 });
 

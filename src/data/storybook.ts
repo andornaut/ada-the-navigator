@@ -11,16 +11,16 @@ export type Background =
   | "schoolHallway"
   | "schoolyard";
 
-/** Each chapter's Earth scenes and their locations. Provisional until Gameplay sets them. */
+/** Each chapter's Earth scenes and their locations. */
 export const CHAPTER_BACKGROUNDS: Readonly<
   Record<
     SectorId,
     { readonly closing: Background; readonly opening: Background; readonly resolution: Background }
   >
 > = {
-  1: { closing: "gardenLot", opening: "grandmaGarden", resolution: "grandmaGarden" },
-  2: { closing: "schoolyard", opening: "schoolyard", resolution: "schoolHallway" },
-  3: { closing: "park", opening: "frontDoor", resolution: "frontDoor" },
+  1: { closing: "gardenLot", opening: "grandmaGarden", resolution: "gardenLot" },
+  2: { closing: "schoolyard", opening: "schoolHallway", resolution: "schoolyard" },
+  3: { closing: "park", opening: "frontDoor", resolution: "park" },
 };
 
 /** One galaxy in galaxy selection, after Chibi's stage cards. */

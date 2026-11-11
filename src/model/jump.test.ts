@@ -111,6 +111,7 @@ describe("quantum jump home", () => {
     flight.levels.weapons.tripleLaser = 1;
     model.state.economy.stardust = 30;
     model.state.progress[1].opened = true;
+    model.state.prologueSeen = true;
     deplete(model);
     expect(model.state.mode).toBe("home");
     expect(model.state.flight).toBeNull();

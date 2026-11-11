@@ -303,12 +303,22 @@ try {
   await page.screenshot({ path: `${output}/story-opening.png` });
   const launchPages = await readStory();
   assert.equal(launchPages[0]?.background, "grandmaGarden", "Start opens galaxy one's opening");
-  assert.equal(launchPages[1]?.background, "adaRoom", "The prologue begins in Ada's room");
+  assert.equal(launchPages[1]?.background, "park", "The prologue begins in the park");
   assert.equal(launchPages[1]?.text, PROTOTYPE.premise.prologue[0].text);
+  assert.equal(launchPages[2]?.background, "adaRoom", "The rock glows in Ada's room");
+  assert.equal(launchPages[2]?.text, PROTOTYPE.premise.roomRock);
   assert.ok(
-    launchPages.slice(2).every(({ background }) => background === "cockpit"),
+    launchPages.slice(3).every(({ background }) => background === "cockpit"),
     "The rest of the prologue plays in the cockpit",
   );
+  // Each optional question's answer returns to the list until Continue.
+  for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)
+    .questions) {
+    assert.ok(
+      launchPages.some(({ text }) => text === answer),
+      `The prologue answers "${answer}"`,
+    );
+  }
   await selector.waitFor({ state: "visible" });
   assert.equal(
     (await selector.locator("h2").textContent())?.trim(),

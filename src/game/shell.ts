@@ -91,7 +91,11 @@ export class StoryShell {
       // Restart, as the shared card's action stack.
       const actions = state.started
         ? [
-            { action: "continue", label: PROTOTYPE.labels.continue, run: this.actions.continueGame },
+            {
+              action: "continue",
+              label: PROTOTYPE.labels.continue,
+              run: this.actions.continueGame,
+            },
             { action: "restart", label: PROTOTYPE.labels.restart, run: this.actions.restart },
           ]
         : [{ action: "start", label: PROTOTYPE.labels.start, run: this.actions.start }];
