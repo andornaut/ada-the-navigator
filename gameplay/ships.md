@@ -40,9 +40,9 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | Ship               | Size (Ada widths) | `speedRatio` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------------ | ----------------: | -----------: | --------------------: | ---------------: | ------------: | ---------------: |
 | Ada                |                 1 |            1 |                  0.30 |             0.45 |          0.18 |             0.07 |
-| `swarm`            |               0.6 |          0.9 |                  0.20 |             0.25 |          0.12 |             0.10 |
+| `swarm`            |              0.65 |          0.9 |                  0.20 |             0.25 |          0.12 |             0.10 |
 | `fighter`          |                 1 |          0.8 |                  0.40 |             0.50 |          0.30 |             0.15 |
-| `interceptor`      |               0.9 |          1.1 |                  0.90 |             1.20 |          0.60 |             0.12 |
+| `interceptor`      |              0.75 |          1.1 |                  0.90 |             1.20 |          0.60 |             0.12 |
 | `retaliator`       |                 2 |         0.45 |                  1.20 |             1.50 |          0.90 |             0.35 |
 | `frigate`          |                 3 |          0.4 |                   1.5 |              2.0 |           1.2 |             0.40 |
 | `capital`          |                10 |          0.2 |                   2.5 |              3.0 |           2.0 |             0.50 |
@@ -77,4 +77,7 @@ Each sector themes its enemy ships as one visual family. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
-blue ship. Display size follows the size column relative to Ada's ship.
+blue ship. Sector-one craft are drawn with 16 heading frames: the model facing
+stays continuous and the nearest frame is drawn. A ship drawn with frames and
+hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles. The size column sets the hit circle's diameter: the mean of the drawn sprite's
+length and width, so hits match what is drawn. Sprites keep their drawn sizes.
