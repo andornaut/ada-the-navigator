@@ -1,0 +1,92 @@
+# Andromeda
+
+Andromeda's art: the settlers' station, the settlements, the guide beacons,
+Pip's mail scooter and the two project world changes.
+
+- Rebuild with `node art/tools/andromeda.ts`. It writes
+  `public/art/andromeda/` and replaces its own entries in place in
+  [Andromeda's manifest](../public/art/andromeda/manifest.json).
+- [art/tools/andromeda-models.ts](tools/andromeda-models.ts) holds the solid
+  models in the [station](station.md) projection, culling and family: the
+  station's dock collar, mouth, lit floor strip, blue corner lights and
+  approach lights, and warm lit windows `#ffe9b8`.
+- Nothing is labelled: no text, signs or letters are drawn on or beside any
+  asset.
+
+## Sizes and frames
+
+As for [Cartwheel](cartwheel.md#sizes-and-frames): frames are multiples of
+16 px with the pivot on the vertical centre line at an exact five-decimal
+fraction; each SVG's intrinsic `width` and `height` are its display size
+(`frame * 0.4375`) and its `viewBox` is the frame in frame px. Manifest `width`
+and `height` are the frame, so pivots and docks are frame px; `displayWidth`
+and `displayHeight` equal the SVG's intrinsic size.
+
+| Asset             | Ids                                        | Frame px | Display  | Pivot        |
+| ----------------- | ------------------------------------------ | -------- | -------- | ------------ |
+| Settlers' station | `station-settlers-a`, `station-settlers-b` | 144, 176 | 63 by 77 | `(0.5, 0.5)` |
+
+## Settlers' station
+
+Every Andromeda station is a settlers' station: Tech draws
+`station-settlers-a` and `-b` in place of the trading station's `station-a`
+and `-b` for every station in Andromeda, with the trading station's dock,
+shop and blink. Entries carry `station` `settlers`.
+
+A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
+
+- Pearl deck `#e4e2ef` (sides `#a9a6c2`) with a lighter inset top `#d6d3e6`
+  and warm rim lamps on the facing rim.
+- Six cottages around the deck, clear of the dock axis: cream walls `#efe4cf`
+  (sides `#bfae94`) with warm windows and two-step slate-blue roofs `#8d94c4`
+  (sides `#5f6594`).
+- A striped lighthouse at the centre: a pearl tower with two marker-dark bands
+  `#6f78b8` (sides `#4a5080`), a cream gallery, the marker lantern `#b8c1ff`
+  with a white core, a slate-blue cap and a mast with the blue beacon.
+- A cream post depot with a periwinkle sign band, and two slate tanks
+  `#8d9bb0` behind.
+- The family dock arm toward the viewer ending in a cream collar, as on the
+  trading station.
+
+### Dock and blink
+
+| Field              | Value                                       |
+| ------------------ | ------------------------------------------- |
+| `facing`           | `fixed`                                     |
+| `frameMs`          | 700                                         |
+| `dock.x`, `dock.y` | Dock entrance in frame px: `(72, 151.64)`   |
+| `dock.outward`     | `[0, 1]`: the dock opens toward screen-down |
+| `dock.width`       | Mouth width in frame px: 36.742             |
+
+- The dock is live, in the trading station's schema: the mouth's centre on
+  the world plane, 90 units along the dock axis, 63.64 frame px (27.84
+  display px) below the pivot. Ada enters moving screen-up, opposite
+  `dock.outward`. Scale frame px by the display size like any other manifest
+  value.
+- Frame A lights the dock corner lights, the mast beacon and the rim lamps, and
+  the lantern shows `#b8c1ff` with its white core; frame B lights the
+  approach-light pairs, dims the lantern to `#8f9cf0` and the rim lamps to
+  `#a08f78`. Unlit blue lights use `#3f5878`. Reduced motion shows frame A.
+
+## Palette
+
+Contrast is WCAG against Andromeda's field background `#232641`; the table
+lists top colours, which carry each silhouette.
+
+| Asset   | Role                | Colour    | Contrast |
+| ------- | ------------------- | --------- | -------: |
+| Station | Pearl structure     | `#e4e2ef` |  11.53:1 |
+| Station | Pearl side          | `#a9a6c2` |   6.26:1 |
+| Station | Cream walls, collar | `#efe4cf` |  11.70:1 |
+| Station | Slate-blue roofs    | `#8d94c4` |   5.03:1 |
+| Station | Lighthouse band     | `#6f78b8` |   3.55:1 |
+| Station | Lantern, frame A    | `#b8c1ff` |   8.50:1 |
+| Station | Lantern, frame B    | `#8f9cf0` |   5.74:1 |
+| Station | Tanks               | `#8d9bb0` |   5.23:1 |
+| All     | Warm windows        | `#ffe9b8` |  12.35:1 |
+| All     | Blue lights         | `#70ace8` |   6.14:1 |
+
+The lantern takes the galaxy's marker `#b8c1ff`
+([Markers](galaxies.md#markers)), the field's own hue at Oklab L 0.83, so
+Andromeda's lights read as its own; it sits 1.17:1 from the
+`pointOfInterest` lavender.

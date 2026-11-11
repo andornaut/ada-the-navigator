@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "station-settlers-a",
+      "path": "/art/andromeda/settlers-station-a.svg",
+      "width": 144,
+      "height": 176,
+      "displayWidth": 63,
+      "displayHeight": 77,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 72,
+        "y": 151.64,
+        "outward": [0, 1],
+        "width": 36.742
+      },
+      "station": "settlers"
+    },
+    {
+      "id": "station-settlers-b",
+      "path": "/art/andromeda/settlers-station-b.svg",
+      "width": 144,
+      "height": 176,
+      "displayWidth": 63,
+      "displayHeight": 77,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 72,
+        "y": 151.64,
+        "outward": [0, 1],
+        "width": 36.742
+      },
+      "station": "settlers"
+    }
+  ]
+}

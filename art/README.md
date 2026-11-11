@@ -51,6 +51,7 @@ route order is the game's and needs no manifest change:
 | `sunflower` | [`/art/sunflower/manifest.json`](../public/art/sunflower/manifest.json) |
 | `cartwheel` | [`/art/cartwheel/manifest.json`](../public/art/cartwheel/manifest.json) |
 | `whirlpool` | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
+| `andromeda` | [`/art/andromeda/manifest.json`](../public/art/andromeda/manifest.json) |
 
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,
@@ -59,7 +60,8 @@ Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
 and `oreField` links; Whirlpool the whales, river debris, project frames and the
-`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links. The station, discovery cache,
+`whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
+Andromeda the settlers' station. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 

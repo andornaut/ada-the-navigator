@@ -112,19 +112,20 @@ All art is one shared bank; Gameplay places content per galaxy
 ([Presentation](../gameplay/ships.md#presentation)). Art's record of the bank
 and where each asset sits:
 
-| Asset                                                         | Placement                                               |
-| ------------------------------------------------------------- | ------------------------------------------------------- |
-| Trading station                                               | Shared, keylined on Sunflower                           |
-| Discovery cache                                               | Shared, keylined on Sunflower                           |
-| Coral frigate and capital                                     | Shared, keylined on Sunflower                           |
-| Sunflower's outposts (growers, workshop, salvagers)           | Sunflower, keylined                                     |
-| Coral drone family (swarm, fighter, interceptor, retaliator)  | Shared, keylined on Sunflower                           |
-| [Claim-jumper family and turret platform](heavies.md)         | Cartwheel                                               |
-| Play asteroids                                                | Shared                                                  |
-| Stardust                                                      | Shared                                                  |
-| [Current streaks and river debris](whirlpool.md)              | Whirlpool                                               |
-| Backdrop rocks                                                | Shared, tinted per galaxy (`tints` in `asteroids.json`) |
-| Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`) | `bank`, no galaxy: a field for a later dark galaxy      |
+| Asset                                                                                                  | Placement                                                       |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Trading station                                                                                        | Every galaxy without its own station art, keylined on Sunflower |
+| Station art per galaxy: [mining hub](cartwheel.md), [settlers' station](andromeda.md#settlers-station) | Cartwheel, Andromeda: every station there                       |
+| Discovery cache                                                                                        | Shared, keylined on Sunflower                                   |
+| Coral frigate and capital                                                                              | Shared, keylined on Sunflower                                   |
+| Sunflower's outposts (growers, workshop, salvagers)                                                    | Sunflower, keylined                                             |
+| Coral drone family (swarm, fighter, interceptor, retaliator)                                           | Shared, keylined on Sunflower                                   |
+| [Claim-jumper family and turret platform](heavies.md)                                                  | Cartwheel                                                       |
+| Play asteroids                                                                                         | Shared                                                          |
+| Stardust                                                                                               | Shared                                                          |
+| [Current streaks and river debris](whirlpool.md)                                                       | Whirlpool                                                       |
+| Backdrop rocks                                                                                         | Shared, tinted per galaxy (`tints` in `asteroids.json`)         |
+| Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`)                                          | `bank`, no galaxy: a field for a later dark galaxy              |
 
 ## Markers
 

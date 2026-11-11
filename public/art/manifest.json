@@ -7,7 +7,8 @@
   "galaxies": {
     "sunflower": "/art/sunflower/manifest.json",
     "cartwheel": "/art/cartwheel/manifest.json",
-    "whirlpool": "/art/whirlpool/manifest.json"
+    "whirlpool": "/art/whirlpool/manifest.json",
+    "andromeda": "/art/andromeda/manifest.json"
   },
   "assets": [
     {
