@@ -1819,6 +1819,110 @@
       }
     },
     {
+      "id": "story-park",
+      "path": "/art/story/park.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-ada-room-unpolished",
+      "path": "/art/story/ada-room-unpolished.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-ada-room",
+      "path": "/art/story/ada-room.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-grandma-garden",
+      "path": "/art/story/grandma-garden.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-community-garden",
+      "path": "/art/story/community-garden.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-schoolyard",
+      "path": "/art/story/schoolyard.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-school-hallway",
+      "path": "/art/story/school-hallway.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-front-door",
+      "path": "/art/story/front-door.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "id": "cockpit",
       "path": "/art/cockpit.png",
       "width": 1920,

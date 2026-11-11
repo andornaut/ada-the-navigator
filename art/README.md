@@ -5,9 +5,10 @@ Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
 sector one enemy ships and their [destruction](destruction.md), the
 [station](station.md), [Stardust](stardust.md), [the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
-[quantum jump](quantum-jump.md) and character portraits. Other space objects
-use simple runtime shapes with the [space palette](space-palette.md): muted
-surroundings and stronger active signals.
+[quantum jump](quantum-jump.md), character portraits and the
+[storybook](storybook.md) Earth backgrounds. Other space objects use simple
+runtime shapes with the [space palette](space-palette.md): muted surroundings
+and stronger active signals.
 
 ## Published toolkit
 

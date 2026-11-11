@@ -247,14 +247,14 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 
 Earth scenes. Constants: `STORY_PANEL`, `storyPage.ts`, to implement.
 
-| Token         | Value                                                | Rule                                                                                   |
-| ------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Background    | 960x540 logical canvas, 2 image px per logical px    | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets |
-| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640 | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                     |
-| Panel anchor  | Bottom edge on the available rect's bottom           | The scene's subject stays visible above                                                |
-| Panel padding | `SPACING.panelPadding`                               | `ui-settings-card` face, no dim behind it                                              |
-| Portrait      | 64 in a 68 frame (2 inset)                           | Ada on the left, other speakers on the right; never mirrored                           |
-| Portrait gap  | `SPACING.gap`                                        | Frame to text column; frame top on the column top                                      |
+| Token         | Value                                                    | Rule                                                                                   |
+| ------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md)) | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets |
+| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640     | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                     |
+| Panel anchor  | Bottom edge on the available rect's bottom               | The scene's subject stays visible above                                                |
+| Panel padding | `SPACING.panelPadding`                                   | `ui-settings-card` face, no dim behind it                                              |
+| Portrait      | 64 in a 68 frame (2 inset)                               | Ada on the left, other speakers on the right; never mirrored                           |
+| Portrait gap  | `SPACING.gap`                                            | Frame to text column; frame top on the column top                                      |
 
 Panel groups, `SPACING.gap` apart:
 
