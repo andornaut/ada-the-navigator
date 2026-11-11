@@ -22,7 +22,7 @@ import {
   steelDarkSide,
 } from "./cartwheel-craft.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
-import { replaceEntries } from "./manifest.ts";
+import { linkData, replaceEntries } from "./manifest.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import {
   depth,
@@ -589,9 +589,4 @@ replaceEntries(
 );
 
 // The root manifest names the debris and tow data next to the other data files.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-const links = { cartwheelDebris: "/art/cartwheel/debris.json", tow: "/art/cartwheel/tow.json" };
-if (Object.entries(links).some(([key, path]) => manifest[key] !== path)) {
-  writeFileSync(manifestPath, json({ ...manifest, ...links }));
-}
+linkData({ cartwheelDebris: "/art/cartwheel/debris.json", tow: "/art/cartwheel/tow.json" });

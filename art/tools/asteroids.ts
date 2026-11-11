@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { contrast } from "@andornaut/art-kit/colour";
 import { format, resolveConfig } from "prettier";
 
+import { linkData } from "./manifest.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, json, type Point, projectAt } from "./projection.ts";
 
@@ -494,6 +495,38 @@ function silhouette(tris: readonly V2[][], w: number, h: number): V2[] {
   return simplifyClosed(pts, 0.75);
 }
 
+// A notch narrower than NOTCH_ANGLE tapers into a hairline of background that a raster closes
+// at a different depth from the drawing. Its tip, up to where the notch is NOTCH_WIDTH frame px
+// wide, is filled in the drawing (under the facets) and cut from the outline, so both end at the
+// same chord.
+const NOTCH_ANGLE = 30;
+const NOTCH_WIDTH = 0.6;
+
+function fillNotches(outline: readonly V2[]): { outline: V2[]; tips: V2[][] } {
+  const sign = Math.sign(area(outline));
+  const out: V2[] = [];
+  const tips: V2[][] = [];
+  for (const [i, v] of outline.entries()) {
+    const a = outline[(i + outline.length - 1) % outline.length]!;
+    const b = outline[(i + 1) % outline.length]!;
+    const [la, lb] = [dist(a, v), dist(b, v)];
+    const ua: V2 = [(a[0] - v[0]) / la, (a[1] - v[1]) / la];
+    const ub: V2 = [(b[0] - v[0]) / lb, (b[1] - v[1]) / lb];
+    const opening = Math.acos(Math.max(-1, Math.min(1, ua[0] * ub[0] + ua[1] * ub[1])));
+    if (cross(a, v, b) * sign >= 0 || (opening * 180) / Math.PI >= NOTCH_ANGLE) {
+      out.push(v);
+      continue;
+    }
+    // Along each wall to the chord NOTCH_WIDTH wide, kept short of the neighbouring vertices.
+    const s = Math.min(NOTCH_WIDTH / (2 * Math.sin(opening / 2)), la / 2, lb / 2);
+    const pa: V2 = [v[0] + ua[0] * s, v[1] + ua[1] * s];
+    const pb: V2 = [v[0] + ub[0] * s, v[1] + ub[1] * s];
+    out.push(pa, pb);
+    tips.push([pa, v, pb]);
+  }
+  return { outline: out, tips };
+}
+
 function simplifyClosed(pts: V2[], tol: number): V2[] {
   // Split at the point farthest from the first and Douglas-Peucker each half.
   let far = 0;
@@ -527,6 +560,15 @@ function segDist(p: V2, a: V2, b: V2): number {
 
 const cross = (o: V2, a: V2, b: V2) =>
   (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+// Whether a convex polygon covers a point, within SEAM / 2 of its edges.
+function covers(poly: readonly V2[], p: V2): boolean {
+  const sign = Math.sign(area(poly));
+  return poly.every((a, i) => {
+    const b = poly[(i + 1) % poly.length]!;
+    return cross(a, b, p) * sign >= 0 || segDist(p, a, b) <= SEAM / 2;
+  });
+}
 
 function area(poly: readonly V2[]): number {
   let s = 0;
@@ -623,13 +665,18 @@ function svgFrame(
   h: number,
   polys: { pts: V2[]; fill: string }[],
   declared: Declared,
+  tips: readonly { pts: V2[]; fill: string }[] = [],
 ) {
-  const body = polys
-    .map(({ fill, pts }) => {
-      const points = pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
-      return `  <polygon fill="${fill}" stroke="${fill}" stroke-width="${SEAM}" stroke-linejoin="round" points="${points}"/>`;
-    })
-    .join("\n");
+  const points = (pts: readonly V2[]) =>
+    pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+  // Notch tips sit under the facets with no seam, so they fill only the gap.
+  const body = [
+    ...tips.map(({ fill, pts }) => `  <polygon fill="${fill}" points="${points(pts)}"/>`),
+    ...polys.map(
+      ({ fill, pts }) =>
+        `  <polygon fill="${fill}" stroke="${fill}" stroke-width="${SEAM}" stroke-linejoin="round" points="${points(pts)}"/>`,
+    ),
+  ].join("\n");
   const k = declared === "display" ? DISPLAY : 1;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w * k}" height="${h * k}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
 }
@@ -717,12 +764,19 @@ function build(
     const polys = projected(faces, pivot);
     const file = frames > 1 ? `${id}-${k}.svg` : `${id}.svg`;
     const fills = polys.map(({ face, pts, ramp: own }) => ({ fill: tone(face, own), pts }));
-    writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared));
-    const outline = silhouette(
-      polys.map((p) => p.pts),
-      w,
-      h,
+    const { outline, tips } = fillNotches(
+      silhouette(
+        polys.map((p) => p.pts),
+        w,
+        h,
+      ),
     );
+    // A tip takes the colour of the topmost facet over its apex.
+    const filled = tips.map((pts) => ({
+      fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
+      pts: pts.map(([x, y]) => [r2(x), r2(y)] as V2),
+    }));
+    writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared, filled));
     const collision = convexParts(outline).map((part) =>
       part.map(([x, y]) => [r2(x), r2(y)] as V2),
     );
@@ -907,9 +961,4 @@ writeFileSync(
 );
 
 // The root manifest names the asteroid and resource rock data next to the other data files.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-const links = { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" };
-if (Object.entries(links).some(([key, path]) => manifest[key] !== path)) {
-  writeFileSync(manifestPath, json({ ...manifest, ...links }));
-}
+linkData({ asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });

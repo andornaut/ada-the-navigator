@@ -1,8 +1,9 @@
 # Cartwheel props
 
 Cartwheel's traveling debris, ore nugget cargo piece, the two stranded craft a
-tow job brings home and the tow line. The resource rocks are in
-[Asteroids](asteroids.md#resource-rocks). Cartwheel has no damaging hazards.
+tow job brings home, the tow line and the [ore field](#ore-field) layouts. The
+resource rocks are in [Asteroids](asteroids.md#resource-rocks). Cartwheel has
+no damaging hazards.
 
 - Rebuild with `node art/tools/cartwheel-props.ts`. It writes the SVGs, the
   nugget sheet, [debris.json](../public/art/cartwheel/debris.json) and
@@ -122,3 +123,50 @@ logical px):
   sags `sqrt(3 d (L - d) / 8)` world units from the chord (control point twice
   that), on the side away from Ada's sideways velocity, or screen-down when
   she has none. Compute it on the world plane and project each point.
+
+## Ore field
+
+An ore field is a cluster of crystal resource rocks and nothing else: no ore
+dust or other field marks, so the teal crystals alone set it apart from plain
+rock clusters, and no field speck can read as a nugget or Stardust.
+
+- Rebuild with `node art/tools/ore-field.ts` after `node art/tools/asteroids.ts`.
+  It reads the footprints from
+  [resource-rocks.json](../public/art/resource-rocks.json), writes
+  [ore-field.json](../public/art/cartwheel/ore-field.json) and links it from
+  the root manifest as `oreField`. Reruns are byte-identical.
+- One layout per rock count from 6 to 10, each from the first seed from 23 up
+  that draws that count (Python's `random.Random` sequence, `art/tools/random.ts`).
+  Seed 23, 8 rocks, is the approved field.
+- Large rocks: `round(count / 3)`, so two of every three are medium. Each rock
+  is a seeded pick of its class's shapes; large rocks are placed first.
+- Each rock's centre is a uniform point of the disc of radius `450 - footprint
+radius`, outside its innermost 2% by area, so every footprint stays inside the
+  450 world unit field radius. A try is kept when its footprint stays at least
+  55 world units (`gap`) from every placed footprint, by footprint radius; the
+  build fails if a rock finds no room in 4000 tries or if a rounded position
+  breaks a clearance.
+- Medium rocks start on a seeded spin frame; large rocks show their one frame.
+
+Field counts, size, spacing and guards are Gameplay values
+([Ships](../gameplay/ships.md)). Tech places a field's layout
+for its rock count with the layout centre at the field centre, and may turn it
+about the centre by a seeded angle, which keeps every clearance. Positions are
+rest positions; drift is the rocks' class data.
+
+`ore-field.json`, version 1, world units:
+
+- `rocks`: the resource rock catalog the ids name.
+- `radius` (450), `gap` (55) and `count` (`[6, 10]`).
+- `layouts[i]`: `count`, `large` (its large rocks), `seed`, `reach` (the
+  farthest footprint edge from the centre) and `rocks`, each with `id`,
+  `position` (`[x, y]` from the field centre on the world plane) and `frame`
+  (the start frame).
+
+| Rocks | Seed | Large |  Reach |
+| ----: | ---: | ----: | -----: |
+|     6 |   28 |     2 | 418.45 |
+|     7 |   26 |     2 | 441.06 |
+|     8 |   23 |     3 | 446.42 |
+|     9 |   24 |     3 | 440.27 |
+|    10 |   29 |     3 | 441.48 |

@@ -45,3 +45,12 @@ export function replaceEntries(
   manifest.assets = [...before, ...entries, ...after];
   writeFileSync(path, json(manifest));
 }
+
+// Links data files from the root manifest by key, after the existing links. Rewrites the
+// manifest only when a link is missing or differs, so reruns leave it byte-identical.
+export function linkData(links: Readonly<Record<string, string>>) {
+  const manifest = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  if (Object.entries(links).some(([key, url]) => manifest[key] !== url)) {
+    writeFileSync(path, json({ ...manifest, ...links }));
+  }
+}

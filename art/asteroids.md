@@ -287,7 +287,13 @@ itself:
    and grow it by half the 1.2 px seam stroke.
 2. Trace the outer boundary along cell edges and simplify it by Douglas-Peucker
    at 0.75 frame px.
-3. Ear-clip the outline into triangles and merge neighbours while the result
+3. Fill the tip of every notch narrower than 30 degrees, up to the chord where
+   it is 0.6 frame px wide: the frame draws the tip triangle under its facets,
+   with no seam, in the colour of the topmost facet over the apex, and the
+   outline cuts the tip off along the chord. A narrower tip tapers into a
+   background hairline that a raster closes at a different depth from the
+   drawing.
+4. Ear-clip the outline into triangles and merge neighbours while the result
    stays convex (Hertel-Mehlhorn).
 
 Checked against the rendered SVGs at 4 px per frame px: every part is convex,
@@ -342,9 +348,9 @@ The drawn silhouettes follow [Collision](#collision). Checked against the
 rendered SVGs at 4 px per frame px, with enclosed background between crossing
 crystals (at most 1.31 frame px²) filled as the traced outline drops it:
 intersection over union 0.991 or more, and no boundary more than 1 frame px
-from the drawing except one 1.35 px pocket between two crystals in
-`resource-m3` frame 14. The drawn silhouette is for drawing bounds only; hits
-use the footprints.
+from the drawing. Six frames fill a notch tip between crystals: `resource-m1`
+frames 1 and 6 and `resource-m3` frames 1, 6, 7 and 14; no plain rock has one.
+The drawn silhouette is for drawing bounds only; hits use the footprints.
 
 `resource-rocks.json`, version 1: `displayScale`, `stone`, `ore` and `rocks`.
 Each `rocks[i]` has the `asteroids[i]` schema ([Data](#data)), so the asteroid

@@ -31257,5 +31257,6 @@
   "cartwheelDebris": "/art/cartwheel/debris.json",
   "tow": "/art/cartwheel/tow.json",
   "whirlpoolCurrents": "/art/whirlpool/currents.json",
-  "whirlpoolDebris": "/art/whirlpool/debris.json"
+  "whirlpoolDebris": "/art/whirlpool/debris.json",
+  "oreField": "/art/cartwheel/ore-field.json"
 }
