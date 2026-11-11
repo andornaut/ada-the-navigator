@@ -66,10 +66,13 @@ becomes logical px, so UI now grows with the canvas:
 | Panel padding    | 16    | Inside cards and the story panel, including the 2 px frame        | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
 | Body line box    | 20    | 16 px text (body, labels, supporting)                             | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
 | Heading line box | 28    | 24 px bold titles                                                 | `TYPE.heading.lineHeight`, `tokens.ts`, to implement                          |
+| Count line box   | 14    | 12 px bold HUD weapon counts                                      | `TYPE.count.lineHeight`, `tokens.ts`, to implement                            |
 
 Type roles: `TYPE.heading` 24 bold on 28; `TYPE.body` 16 regular on 20;
-`TYPE.label` 16 bold on 20. Text never shrinks: wrap, grow the region, reflow
-or scroll. Colours per role are in [Controls](controls.md#colour-tokens).
+`TYPE.label` 16 bold on 20; `TYPE.count` 12 bold on 14, for the HUD weapon
+counts only (the one role below 16). Text never shrinks: wrap, grow the region,
+reflow or scroll. Colours per role are in
+[Controls](controls.md#colour-tokens).
 
 ## Page bounds
 
@@ -165,11 +168,12 @@ inside the game area, clear of curved screen corners and the bands; the
 safe-rect clamp still keeps them out of every inset. The sticks and Use are
 placed relative to the same game area (see their rows), in Ada and Chibi alike.
 
-| Token      | Value                                                                                             | Rule                                                                                                                    | Constant                                                                |
-| ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                    | The game area: the base view centred across the logical view, at its top; bands outside it                              | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)        |
-| HUD rect   | `playView(view)` inset by `CONTROL_EDGE`, intersected with `safeRect(insets, CONTROL_EDGE, view)` | The rect for the top controls (its top corners); the sticks and Use anchor to the same game area with their own offsets | `hudRect(insets, view)`, `playView.ts`, to implement (Chibi `topShift`) |
-| HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8                                           | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE`                                            | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`   |
+| Token      | Value                                                                                             | Rule                                                                                                                    | Constant                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                    | The game area: the base view centred across the logical view, at its top; bands outside it                              | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)                              |
+| HUD rect   | `playView(view)` inset by `CONTROL_EDGE`, intersected with `safeRect(insets, CONTROL_EDGE, view)` | The rect for the top controls (its top corners); the sticks and Use anchor to the same game area with their own offsets | `hudRect(insets, view)`, `playView.ts`, to implement (Chibi `topShift`)                       |
+| HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8                                           | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE`                                            | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
+| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 4                            | Opaque ink pill under the disc; bottom 4 above the conversation name tab                                                | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
 
 | Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
 | -------------- | ----------------- | ------------ | ----------- | ------------------------- |
@@ -181,7 +185,7 @@ placed relative to the same game area (see their rows), in Ada and Chibi alike.
 | Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Constant                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                                                                                                                                                                       | `PAUSE_BUTTON`, `playView.ts`                                                |
-| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                        |
+| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`); each non-Basic weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                                                                           | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                        |
 | Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75), centred on the pause disc (`PAUSE_BUTTON.art` centre = HUD rect top + 16.5, so the pill top is HUD rect top + 2.5); grows rightward with the count; keeps its place while the pause button is hidden. Parts and states in [Status pill](#status-pill)                                                                                                                                | `STATUS_PILL`, `playView.ts`, to implement                                   |
 | Sticks       | 75 frames; ring drawn edges 24 from the game area's left (move) or right (aim) side, `max(playView side + 24, inset)` from the view edge (an inset replaces the 24), and 20 above the game area's bottom, `min(playView bottom - 20, view bottom - inset - 20)` (the bottom inset adds to the 20, clearing the home bar), so the two sticks mirror each other; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`             |
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the HUD rect, bottom level with the sticks' drawn bottom; press `hitAround(face)`; shown only while an interaction is available                                                                                                                                                                                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                               |
@@ -197,6 +201,9 @@ Overlap rules:
   view (720 logical, with phone insets 43/43/19): with four weapons the pill
   may reach 351.25 wide, a count up to 162.25 wide ("999,999,999" is 89), and
   "1,234,567" leaves 107.07.
+- The weapon count pills end at HUD rect top + 54 (62), 4 above the name tab
+  top; they stay inside their targets' columns (the widest, "999m", is 38.69
+  of 48), so they add nothing to the clusters' horizontal clearance.
 - The Stardust `+N` label stays above the conversation box: its 20 line ends
   at HUD rect top + 54.5 (62.5), the name tab top is HUD rect top + 58 (66)
   and the box top HUD rect top + 68 (76).
@@ -253,6 +260,30 @@ with fractional widths.
   it keeps its place, so the HUD never shifts with the input mode.
 - The pill takes no input. The shield bar is a meter (Gameplay's shield label,
   value and capacity) and the count a status; both icons are decorative.
+
+### Weapon count pill
+
+Constants: `HUD_AMMO_COUNT`, `playView.ts`, to implement; it replaces the
+placeholder count label (idle lavender, 38 to 58 below the target top).
+Colours, states and contrast are in [Controls](controls.md#ammunition-count).
+Each owned non-Basic weapon's `HUD_BUTTON` carries one pill showing Gameplay's
+ammunition count string; Basic shows none.
+
+| Part     | Geometry                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel    | Opaque ink, `HUD_AMMO_COUNT.height` 14, radius 4, `HUD_AMMO_COUNT.padding` 4 at each end, no border                                                                 |
+| Width    | The count's width plus 8, sized to its text: 14.67 at "0", 34.70 at "9999", 38.69 at "999m" (the widest)                                                            |
+| Text     | The count in `TYPE.count` (12 bold) on its 14 line, centred in the pill                                                                                             |
+| Position | Centred on the disc horizontally; top `HUD_AMMO_COUNT.top` 40 below the target top (HUD rect top + 40)                                                              |
+| Box      | Relative to the target's top-left: `x = 24 - w / 2`, `y = 40`, `w` = count width + 8, `h = 14`; so `x` 16.66 and `w` 14.67 at "0", `x` 4.65 and `w` 38.69 at "999m" |
+| Vertical | Spans HUD rect top + 40 to + 54; overlaps the disc's lower edge (+ 40.5) by 0.5; digit ink from + 42.8 to + 51.3, wholly below the disc                             |
+| Layer    | A child of the weapon button, drawn over the disc; it takes no input and moves with the button's shake                                                              |
+
+- Position rule: the lowest pill that keeps `HUD_AMMO_COUNT.clearance` (4)
+  above the conversation name tab. Its bottom is the tab top (HUD rect top + 58) minus 4, so HUD rect top + 54, and its top is 14 higher. Its lower 6 lie
+  below the target, outside the press area.
+- Count strings fit one line at every value: the widest pill (38.69) leaves
+  9.31 inside the 48 target and 17.31 between neighbouring pills.
 
 ## Screens
 
@@ -380,8 +411,9 @@ values with its own sprites and fonts.
   (Gameplay's rule).
 - Both sides use the same left-aligned text column; the frame and the tab
   change ends with the speaker.
-- The tab top (66) clears the weapon press areas (56) by 10, the pause press
-  area (50.75) by 15.25 and the Stardust `+N` label (62.5) by 3.5.
+- The tab top (66) clears the weapon press areas (56) by 10, the weapon count
+  pills (62) by 4, the pause press area (50.75) by 15.25 and the Stardust `+N`
+  label (62.5) by 3.5.
 - Clearance at the 360-high view: the box bottom is at 136. The ship's pivot
   sits at the view centre (180) with a 42 display frame; its highest drawn hull
   point across the 32 headings is 167.2 (heading 4), 31.2 below the box. The
@@ -414,6 +446,7 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 
 | Change                                                                                                                         | Was                                                                                 |
 | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                     | CSS px at 1x, independent of the canvas                                             |
 | Safe insets clamp HUD controls, cards and page content                                                                         | Insets not read                                                                     |
 | Sticks and Use anchor to the game area: 24 from its sides (an inset replaces it) and 20 above its bottom (a bottom inset adds) | From the view's safe edges                                                          |
@@ -422,6 +455,7 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                               | Panels at 0.70; opaque ink track                                                    |
 | HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                                          | The HUD safe rect's corners                                                         |
 | Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area                         | 48 squares, 24 glyph, cream ring                                                    |
+| Ammunition counts: an ink count pill under each non-Basic weapon disc                                                          | No counts; ammunition was unlimited                                                 |
 | Pause draws `pause.svg` with smooth sampling                                                                                   | `ui-pause` PNG, nearest neighbour                                                   |
 | Settings draws `settings.svg` as a mask with smooth sampling                                                                   | `icon-settings-nav` PNG mask                                                        |
 | Cards scroll one scroll group with the header and close fixed                                                                  | The whole card scrolls                                                              |
@@ -473,6 +507,9 @@ Tests:
   pause button shown; with four weapons at 720x360 and phone insets, the pill
   at a 162.25-wide count keeps `SPACING.pageInset` from the leftmost weapon
   target.
+- `HUD_AMMO_COUNT`'s bottom equals the conversation name tab top minus
+  `HUD_AMMO_COUNT.clearance` at every HUD rect top; the "999m" pill is narrower
+  than the target and centred on the disc.
 - `hudRect` matches the HUD rect table at 844x390 (with and without insets),
   1280x720 and 1920x1080; the pause frame and every weapon target lie inside
   `playView` inset by `CONTROL_EDGE`.

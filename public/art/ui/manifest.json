@@ -145,6 +145,24 @@
       "once": []
     },
     {
+      "key": "icon-shop-ammo-energy",
+      "png": "sprites/icon-shop-ammo-energy.png",
+      "json": "sprites/icon-shop-ammo-energy.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-ammo-missile",
+      "png": "sprites/icon-shop-ammo-missile.png",
+      "json": "sprites/icon-shop-ammo-missile.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-ammo-shell",
+      "png": "sprites/icon-shop-ammo-shell.png",
+      "json": "sprites/icon-shop-ammo-shell.json",
+      "once": []
+    },
+    {
       "key": "icon-shop-check",
       "png": "sprites/icon-shop-check.png",
       "json": "sprites/icon-shop-check.json",

@@ -14,6 +14,7 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Scattershot        | `icon-shop-weapon-scattershot`               | 20x20 |
 | Phaser             | `icon-shop-weapon-phaser`                    | 20x20 |
 | `{weapon}` upgrade | Upgrade composite of that weapon's glyph     | 24x24 |
+| `{weapon}` ammo    | `icon-shop-ammo-<kind>` for that weapon      | 20x20 |
 | Generic upgrade    | `icon-shop-weapon-upgrade`                   | 20x20 |
 | Shield             | `icon-shop-shield`                           | 20x20 |
 | Shield recharge    | `icon-shop-shield-recharge`                  | 20x20 |
@@ -32,7 +33,10 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Current-map buoys  | `icon-project-current-buoys`                 | 20x20 |
 
 Each weapon sheet is the same pixel grid as its [weapon icon](weapon-icons.md),
-written by `art/tools/weapon-icons.ts`. The plain double
+and each ammunition sheet the same grid as its
+[ammunition icon](weapon-icons.md#ammunition-icons), written by
+`art/tools/weapon-icons.ts`: `missile` for Rapid Missile and Heavy Missile,
+`energy` for Multi-Laser and Phaser, `shell` for Scattershot. The plain double
 chevron is the generic upgrade glyph, for any place that names upgrades without
 a weapon.
 
@@ -71,6 +75,9 @@ run Prettier on the written JSON.
 
 | PNG                                 | SHA-256                                                            |
 | ----------------------------------- | ------------------------------------------------------------------ |
+| `icon-shop-ammo-energy.png`         | `3d1cda8ba36de4069bf310b662b9276880372f287b165cc741215089f19fff9a` |
+| `icon-shop-ammo-missile.png`        | `b2830979f4bec10fe08e2df534ed3fd5097242e72f84ce4989cb1f4fdfcb15d4` |
+| `icon-shop-ammo-shell.png`          | `b6e9725afc78907e5a68e4e22f9c44e326aaa927f90ab8ca1c48b45750bdf93a` |
 | `icon-project-current-buoys.png`    | `5506bbcad2512bfde4a81aff6de192c0323362489c7328d38a94affbbf60f5ef` |
 | `icon-project-docking-bay.png`      | `e095d8686977f4106b3c0ad2411463f69f882db4a5b232229226d6782cd049f7` |
 | `icon-project-greenhouse-ring.png`  | `ba3f3a641b967036222e6b50524be3565e5d62abe5e3d7244bf5662148436542` |
@@ -112,3 +119,5 @@ run Prettier on the written JSON.
 - `icon-project-hub-repairs`: an open-ended wrench.
 - `icon-project-nursery-beacon`: a lantern with a lit core over a cradle.
 - `icon-project-current-buoys`: buoys along a current that ends in an arrow.
+- `icon-shop-ammo-missile`, `icon-shop-ammo-energy` and `icon-shop-ammo-shell`:
+  the ammunition kind's HUD glyph, upright stock.

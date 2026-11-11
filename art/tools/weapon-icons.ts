@@ -7,9 +7,10 @@ import { format, resolveConfig } from "prettier";
 
 import { json } from "./projection.ts";
 
-// Weapon glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per weapon writes
-// both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
-// (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled. A weapon in
+// Weapon and ammunition glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per
+// weapon writes both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
+// (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled; one grid per
+// ammunition kind writes ammo-<kind>.svg and icon-shop-ammo-<kind> the same way. A weapon in
 // HAND_AUTHORED keeps its hand-authored SVG: its grid must match that SVG's rectangles, and only
 // the sheet is written.
 const CREAM = "ead4aa";
@@ -158,6 +159,79 @@ const GLYPHS: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
+// Ammunition kinds stand upright as stock; every weapon glyph is fire travelling right.
+const AMMO: Readonly<Record<string, readonly string[]>> = {
+  // An upright energy cell: terminal cap, 2 px case, three charge bars.
+  energy: [
+    E,
+    E,
+    "........####........",
+    "........####........",
+    "....############....",
+    "....############....",
+    "....##........##....",
+    "....##.######.##....",
+    "....##.######.##....",
+    "....##........##....",
+    "....##.######.##....",
+    "....##.######.##....",
+    "....##........##....",
+    "....##.######.##....",
+    "....##.######.##....",
+    "....##........##....",
+    "....############....",
+    "....############....",
+    E,
+    E,
+  ],
+  // Two upright missiles on a rack bar: pointed noses, a warhead seam, side fins.
+  missile: [
+    E,
+    E,
+    "....##........##....",
+    "....##........##....",
+    "...####......####...",
+    E,
+    "...####......####...",
+    "...####......####...",
+    "...####......####...",
+    "...####......####...",
+    "...####......####...",
+    "..######....######..",
+    "..######....######..",
+    "..##..##....##..##..",
+    "..##..##....##..##..",
+    E,
+    "..################..",
+    "..################..",
+    E,
+    E,
+  ],
+  // Two upright shotgun shells: crimped tops, a hull seam over the brass, wide rims.
+  shell: [
+    E,
+    E,
+    E,
+    "....###......###....",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    "...#####....#####...",
+    E,
+    "...#####....#####...",
+    "...#####....#####...",
+    "..#######..#######..",
+    "..#######..#######..",
+    E,
+    E,
+    E,
+  ],
+};
+
 const HAND_AUTHORED: ReadonlySet<string> = new Set(["scattershot"]);
 
 interface Sprite {
@@ -218,17 +292,13 @@ async function prettify(file: string): Promise<void> {
   writeFileSync(file, await format(readFileSync(file, "utf8"), { ...options, filepath: file }));
 }
 
-for (const [id, rows] of Object.entries(GLYPHS)) {
+function check(name: string, rows: readonly string[]): void {
   if (rows.length !== 20 || rows.some((row) => row.length !== 20 || /[^#.]/.test(row))) {
-    throw new Error(`${id}: the glyph must be 20 rows of 20 "#" or "." cells`);
+    throw new Error(`${name}: the glyph must be 20 rows of 20 "#" or "." cells`);
   }
-  const file = `${ui}icons/weapon-${id}.svg`;
-  if (!HAND_AUTHORED.has(id)) {
-    writeFileSync(file, svg(rows));
-  } else if (rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")) {
-    throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
-  }
-  const key = `icon-shop-weapon-${id}`;
+}
+
+async function writeSheet(key: string, rows: readonly string[]): Promise<void> {
   await writeSpriteSheet(
     { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },
     { key },
@@ -240,10 +310,30 @@ for (const [id, rows] of Object.entries(GLYPHS)) {
   await prettify(`${ui}sprites/${key}.json`);
 }
 
+for (const [id, rows] of Object.entries(GLYPHS)) {
+  check(id, rows);
+  const file = `${ui}icons/weapon-${id}.svg`;
+  if (!HAND_AUTHORED.has(id)) {
+    writeFileSync(file, svg(rows));
+  } else if (rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")) {
+    throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
+  }
+  await writeSheet(`icon-shop-weapon-${id}`, rows);
+}
+
+for (const [kind, rows] of Object.entries(AMMO)) {
+  check(`ammo ${kind}`, rows);
+  writeFileSync(`${ui}icons/ammo-${kind}.svg`, svg(rows));
+  await writeSheet(`icon-shop-ammo-${kind}`, rows);
+}
+
 // Register the shop sheets in the UI subset manifest, sorted by key.
 const manifestPath = `${ui}manifest.json`;
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { sprites: Sprite[] };
-const keys = new Set(Object.keys(GLYPHS).map((id) => `icon-shop-weapon-${id}`));
+const keys = new Set([
+  ...Object.keys(GLYPHS).map((id) => `icon-shop-weapon-${id}`),
+  ...Object.keys(AMMO).map((kind) => `icon-shop-ammo-${kind}`),
+]);
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.has(key)),
   ...[...keys].map((key) => ({

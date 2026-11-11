@@ -45,11 +45,12 @@ No quest board until station quests are designed.
    list; switching tabs resets the list scroll to the top.
 4. Item list: the selected tab's row groups, in a vertical scroll viewport.
 
-The Weapons tab holds one row group. The Projects tab holds the galaxy's
-project rows ([Community projects](projects.md)). The Ship tab holds the upgrade row group,
-then the paint group: the paint heading (`icon-shop-ship-paint`, then
-`shipPaint` in white) and the paint row group. The heading is left-aligned to
-the paint row group.
+The Weapons tab holds the [ammunition row group](#ammunition-rows), when Ada
+owns any non-Basic weapon, then its item row group. The Projects tab holds the
+galaxy's project rows ([Community projects](projects.md)). The Ship tab holds the
+upgrade row group, then the paint group: the paint heading
+(`icon-shop-ship-paint`, then `shipPaint` in white) and the paint row group.
+The heading is left-aligned to the paint row group.
 
 ### Row group
 
@@ -100,6 +101,40 @@ face, disabled text 4.69:1 on `#2f2d3d`, the price 12.44:1 and a disabled price
 A weapon upgrade row draws a 24x24 composite: the weapon's 20px glyph at (0, 4)
 and the 12x12 `icon-shop-upgrade-badge` at (12, 0), drawn over the glyph. In an
 unaffordable row both use their disabled colour.
+
+### Ammunition rows
+
+One row per owned non-Basic weapon, in the HUD order (Rapid Missile,
+Multi-Laser, Heavy Missile, Scattershot, Phaser), in its own row group before
+the weapon rows, so the repeat purchase shows without scrolling.
+
+| Part       | Art                                                                                      |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| Glyph      | The weapon's ammunition-kind icon alone, 20x20 at 8 in the well: `icon-shop-ammo-<kind>` |
+| Name       | `ammoPack` ("{weapon} ammo ×{count}", the pack size), cream                              |
+| Price pill | The pack price, as every price pill                                                      |
+
+| Weapon        | Kind      | Glyph                    | Name                      | Name width |
+| ------------- | --------- | ------------------------ | ------------------------- | ---------- |
+| Rapid Missile | `missile` | `icon-shop-ammo-missile` | "Rapid Missile ammo ×200" | 184.52     |
+| Multi-Laser   | `energy`  | `icon-shop-ammo-energy`  | "Multi-Laser ammo ×200"   | 168.52     |
+| Heavy Missile | `missile` | `icon-shop-ammo-missile` | "Heavy Missile ammo ×50"  | 179.17     |
+| Scattershot   | `shell`   | `icon-shop-ammo-shell`   | "Scattershot ammo ×130"   | 170.31     |
+| Phaser        | `energy`  | `icon-shop-ammo-energy`  | "Phaser ammo ×55"         | 131.18     |
+
+- Ammunition rows draw the ammunition-kind sheet, never the weapon's sheet or
+  an upgrade-style composite.
+- The row name names the weapon, so the glyph shows only the kind: upright
+  stock, distinct from the weapon glyphs' rightward fire and from the upgrade
+  composite.
+- An ammunition row is never Owned: it is Buy, or Unaffordable with the
+  disabled tile, the glyph's `disabled` frame and the shared refusal cue.
+- The buy confirm draws the ammunition glyph at 2x (40) in the confirm well,
+  with `confirmTitle` ("Buy Rapid Missile ammo ×200?") and no description line.
+- Row width: the widest ammunition name makes rows 323.86 wide (slot 71.34,
+  Owned). Two columns then need 701.72 of available width, so the list keeps
+  two columns at 779 logical wide (747 available) and takes one column at 720
+  (688 available) while Rapid Missile or Heavy Missile ammunition shows.
 
 ### Scrolling
 

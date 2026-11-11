@@ -22,14 +22,18 @@ direct DOM URL `weapon-${id}.svg`.
 
 ## Pixel grids
 
-Every weapon glyph is a 20 × 20 pixel grid in `art/tools/weapon-icons.ts`.
-Each grid writes its shop sheet and registers it in the UI manifest. Five grids
-also write their HUD SVG as one path of whole-pixel runs; Scattershot's SVG is
+Every weapon and ammunition glyph is a 20 × 20 pixel grid in
+`art/tools/weapon-icons.ts`. Each grid writes its shop sheet and registers it
+in the UI manifest. The ammunition grids and five weapon grids also write their
+HUD SVG as one path of whole-pixel runs; Scattershot's SVG is
 hand-authored, and the tool checks that its grid matches that SVG's rectangles.
 Rebuild with `node art/tools/weapon-icons.ts`.
 
 | SVG                       | SHA-256                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
+| `ammo-energy.svg`         | `e6708a0245b46f5a0b30861f8e7563fcd7da2f24cdf60e0fd8a12bbe47740701` |
+| `ammo-missile.svg`        | `4b206ed8131c1699b460d8a6eae65f53f2a49a3490d03a4f00f489494928e836` |
+| `ammo-shell.svg`          | `14108bd554451ee974486a4a053a6e2525ac8afc8c3820ab520947c5e886f16c` |
 | `weapon-basic.svg`        | `94d4d1eae303b381f8d76baeba70e1cd0622a0d9c6fab3bb5998aacd60da6907` |
 | `weapon-heavyMissile.svg` | `2ad7a6243bba7c6adea5f73c012fd1def43f4b5560f5f7532a42f8685408c829` |
 | `weapon-multiLaser.svg`   | `1075f62fb2856d21b711c9d78f2c048b1c5a513302b6921e3cabe26dc198e247` |
@@ -37,13 +41,32 @@ Rebuild with `node art/tools/weapon-icons.ts`.
 | `weapon-rapidMissile.svg` | `9ec61fa0a35c711877e64fce082ed87f267bc2328e295c585d9d6122fd0dda24` |
 | `weapon-scattershot.svg`  | `e580a47402045f782c4d43b51060d8c096186455f45f5cd8312dea4d694920fd` |
 
+## Ammunition icons
+
+Three ammunition kinds, each a 20 px mask SVG and a [shop sheet](shop-icons.md)
+`icon-shop-ammo-<kind>`, on the same grid rules. Ammunition stands upright as
+stock; every weapon glyph is fire travelling right, so the two never read alike.
+
+| Kind      | Path                                   | Weapons                      | Icon semantics                                                   |
+| --------- | -------------------------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| `missile` | `public/art/ui/icons/ammo-missile.svg` | Rapid Missile, Heavy Missile | Two upright missiles on a rack bar: noses, warhead seam, fins    |
+| `energy`  | `public/art/ui/icons/ammo-energy.svg`  | Multi-Laser, Phaser          | An upright cell: terminal cap, 2 px case, three charge bars      |
+| `shell`   | `public/art/ui/icons/ammo-shell.svg`   | Scattershot                  | Two upright shells: crimped tops, hull seam over the brass, rims |
+
+Each grid is centred with 2 px padding and is symmetric about the vertical
+centre line. The shop's [ammunition rows](shop.md#ammunition-rows) draw the
+sheet alone in the item well; the SVGs are the masks for any DOM or HUD use, in
+the state colours of [Controls](controls.md#top-right-hud-icon-buttons).
+
 ## HUD glyphs
 
 The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
 [Controls](controls.md#top-right-hud-icon-buttons) defines their states and
 colours. It shows owned weapons only, left to right in the order Basic, Rapid
 Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser. The same 20 px SVGs draw at 14 px in amber inside
-[weapon pickups](weapons.md#pickups).
+[weapon pickups](weapons.md#pickups). Each non-Basic disc
+carries its ammunition [count pill](controls.md#ammunition-count), and an empty
+weapon's glyph dims to `#75748c`.
 
 ## Projectiles
 

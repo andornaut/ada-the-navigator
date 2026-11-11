@@ -283,6 +283,7 @@ the idle state with the vector gear `settings.svg`.
 | Idle         | Navy `#262b44`       | 1 ink `#181425`               | `#b8b3c9`                | 6.83:1         |
 | Selected     | `#bfa06f`, 25 across | 4 ink annulus inside the disc | Ink `#181425`            | 7.27:1         |
 | Refused      | Navy `#262b44`       | 1 ink `#181425`               | `#e4574e` during the cue | 3.82:1         |
+| Empty        | Navy `#262b44`       | 1 ink `#181425`               | `#75748c`                | 3.07:1         |
 
 - Selection is Chibi's dark annulus inside the fixed disc, with no light outer
   ring. Selection and refusal never resize the disc or glyph.
@@ -299,15 +300,54 @@ the idle state with the vector gear `settings.svg`.
   the selected weapon keeps its selected look throughout.
 - Focus-visible is the shared focus ring, `FOCUS_RING.outset` outside the disc
   and round with it, over any state.
+- Empty applies to a non-Basic weapon with no ammunition left. It is never
+  selected: when the selected weapon fires its last shot, Basic is selected in
+  the same frame, ignoring the switch wait, and the empty disc takes the Empty
+  look. A tap on an empty weapon plays the refusal cue with the glyph as its
+  label until ammunition is bought. The empty glyph is the idle lavender mixed
+  toward the navy face, so it reads as spent beside idle discs and holds 3:1.
+
+### Ammunition count
+
+Each owned non-Basic weapon shows its ammunition count in an opaque ink pill
+on the disc's lower edge; Basic shows none. Geometry is `HUD_AMMO_COUNT` in
+[Layout](layout.md#weapon-count-pill).
+
+| State          | Pill          | Count text                  | Contrast |
+| -------------- | ------------- | --------------------------- | -------- |
+| Idle, selected | Ink `#181425` | Cream `#ead4aa`             | 12.44:1  |
+| Refused        | Ink `#181425` | Cream `#ead4aa`, not tinted | 12.44:1  |
+| Empty          | Ink `#181425` | "0" in red `#e4574e`        | 4.95:1   |
+
+- The count is Gameplay's count string in at most four characters: the exact
+  number up to 9999 with no separator, then whole thousands "10k" to "999k",
+  then whole millions "1m" to "999m".
+- The pill is opaque, so the count reads the same on every field: ink is
+  1.23:1 on the dark field `#292734` and 10.90:1 on a light field such as
+  Sunflower's `#D8C994`, where the pill's edge alone outlines it; the text
+  carries the contrast on the pill.
+- The pill is the same in every disc state. On the selected disc it overlaps
+  the ink annulus, so pill and annulus join into one ink shape.
+- The refusal cue tints only the glyph; the count never tints, and the pill
+  shakes with the button.
+- The count updates on every shot with no animation. The pill is decorative
+  (`aria-hidden`); the weapon button's accessible label carries the count in
+  Gameplay's strings.
+- Out of ammunition: the emptied disc shows Empty and its red "0", Basic is
+  selected at once, and Gameplay's `outOfAmmo` notice ("Out of ammo.") shows
+  in the conversation slot as a [notice](layout.md#hud-and-overlays): no
+  portrait or tab, a tap dismisses it, and an interrupted conversation line
+  resumes after it.
 
 Draw the chrome in CSS at logical units so it stays sharp at any scale
 (`u` is `var(--ada-unit)`):
 
-| Part          | CSS                                                                                                                         |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink |
-| Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                   |
-| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                 |
+| Part          | CSS                                                                                                                                                                                                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink                                                                                                                                                                         |
+| Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                                                                                                                                                                                           |
+| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                                                                                                                                                                                         |
+| Count pill    | A child of the button: `position: absolute`, `top: calc(u * 40)`, `left: 50%`, `transform: translateX(-50%)`, `height` and `line-height` `calc(u * 14)`, `padding: 0 calc(u * 4)`, `border-radius: calc(u * 4)`, `background` ink, `TYPE.count` text, `white-space: nowrap`, `pointer-events: none` |
 
 Weapon glyphs and the Settings gear are single-colour SVGs
 (`weapon-<id>.svg`, `settings.svg`), so the mask takes each state's colour and
