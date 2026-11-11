@@ -22,6 +22,7 @@ modal it takes input exclusively; nothing of the flight HUD shows.
 | Field  | The whole logical view, in the galaxy's `background` with the fog over it                 |
 | Header | Top-left corner on the HUD rect's top-left (`hudRect`)                                    |
 | Tools  | One column of `HUD_BUTTON` targets, top on the HUD rect's top-right corner, `pitch` apart |
+| Earth  | Return to Earth on the HUD row, right edge `SPACING.pageInset` left of the tool column    |
 | Panel  | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom      |
 | Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                |
 
@@ -50,9 +51,10 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- At the smallest view (720 logical, phone insets 43) the header may reach the
-  tool column less `SPACING.pageInset`: 570 wide. "Black Eye" and "100% mapped"
-  leave room for 35 pips; each galaxy has 12 landmarks, 4 of each kind.
+- The header may reach Return to Earth less `SPACING.gap`: 413.5 wide at the
+  smallest view (720 logical, phone insets 43), 483.5 at the 720 base.
+  "Sunflower", the widest name, and "100% mapped" leave room for 15 pips; each
+  galaxy has 12 landmarks, 4 of each kind. The widest header is 381.8.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
 
@@ -88,11 +90,31 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
   (`2 * (664 - 8 - 360)`), so it always clears the column.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
+### Return to Earth
+
+A secondary `TEXT_BUTTON` labelled "Return to Earth" (Gameplay), on every
+galaxy's Map. Constant: `MAP_SCREEN.earth`, to implement.
+
+- Geometry: 48 high, the label plus `2 * TEXT_BUTTON.inset` wide (116.5 + 32 =
+  148.5), top on the HUD rect's top, right edge at the tool column's left
+  (`toolColumnLeft`) less `SPACING.pageInset`. At the 720 base it spans 499.5
+  to 648; at 720 with phone insets 464.5 to 613. It never moves with the
+  header's width.
+- The button is its press area (48, `HIT_RULE.minTarget`). The fit region,
+  the tool column and the place panel are unchanged by it: it sits in the HUD
+  row above the fit region's top.
+- Action: Gameplay's Return to Earth, with no confirm. It ends the flight and
+  takes Ada to her room. It stays available while towing; the towed craft
+  returns to where it was stranded.
+- In danger: the unavailable face (disabled face, focusable); activation plays
+  the [refusal cue](controls.md#refusal-cue). The panel shows the danger
+  reason (below).
+
 ### Place panel
 
-Shows while a place is selected, and holds the empty note while the map has no
-places. A `ui-settings-card` face (the card nine-slice) with no close X and no
-dim.
+Shows while a place is selected, holds the empty note while the map has no
+places, and holds the danger reason while Ada is in danger. A
+`ui-settings-card` face (the card nine-slice) with no close X and no dim.
 
 | Token                 | Value | Rule                                                   |
 | --------------------- | ----- | ------------------------------------------------------ |
@@ -119,7 +141,8 @@ The row, left to right, every part centred on it:
    a job's own spot shows the chip and text block only.
 
 Below the row, `reasonGap` apart, one reason line (`TYPE.body`, supporting,
-left-aligned at the inner left) shows while Travel here is unavailable.
+left-aligned at the inner left) shows while Travel here or Return to Earth is
+unavailable.
 
 - Row height: `max(row, 2 * textTop + 20 * lines)` for `lines` counting the
   name: 48 with one or two lines, 68 with the job line. Travel here and the
@@ -138,10 +161,17 @@ left-aligned at the inner left) shows while Travel here is unavailable.
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
   line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
   width `clamp(minWidth, maxWidth, text + 32)`.
+- Reason-only panel, in danger with nothing selected: the danger line alone,
+  left-aligned, height `16 + 20 + 16` = 52, width
+  `clamp(minWidth, maxWidth, reason + 32)` = 360. With no places it follows
+  the empty note, `reasonGap` apart: 80 high.
 - Travel here unavailable: the disabled face, focusable; activation plays the
   refusal cue ([Controls](controls.md#buttons)). The reason is "Unavailable
   while you are in danger." or "Unavailable while towing." (Gameplay). One
-  reason shows at a time.
+  reason shows at a time; danger wins over towing.
+- In danger the danger line shows with every selection, whether or not the
+  place offers Travel here, because Return to Earth is unavailable too. The
+  towing line shows only while a place offering Travel here is selected.
 - The panel's chip and text are decorative to the pointer: a press on the panel
   outside Travel here does nothing and never reaches the field.
 
@@ -402,39 +432,40 @@ presses first; a chip under them takes no press there.
 - Every zoom clamps to `minScale`..`maxScale`; every pan clamps to the pan
   limit.
 - Keyboard: Tab moves through the tools (close, zoom in, zoom out, recentre),
-  then the places in reading order (drawn centre top to bottom, then left to
-  right), then Travel here. Enter or Space on a place selects it; focusing a
+  then Return to Earth, then the places in reading order (drawn centre top to
+  bottom, then left to right), then Travel here. Enter or Space on a place selects it; focusing a
   place pans it clear by the keep-clear rule. Focus starts on close.
-- Travel here: Gameplay's teleport. While Ada is in danger it is unavailable,
-  with the reason line; activation plays the refusal cue.
+- Travel here: Gameplay's teleport. While Ada is in danger or towing it is
+  unavailable, with the reason line; activation plays the refusal cue.
+- Return to Earth: see [Return to Earth](#return-to-earth).
 
 ## States
 
 | State                 | Field and symbols                               | Panel                                                                           |
 | --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- |
 | Nothing mapped        | Ada only, fog except around her path            | Empty note, "No destinations mapped yet."                                       |
-| Places, none selected | Chips; the objective's indicator once mapped    | None                                                                            |
+| Places, none selected | Chips; the objective's indicator once mapped    | None; in danger, the reason-only panel                                          |
 | Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                                    |
 | Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                                |
 | Job target selected   | Selection ring on the orange-faced chip         | Row grows to 68: name, type line, "Job: {objective}"; Travel here where offered |
 | Job spot selected     | Selection ring on the orange diamond            | Diamond and the job's name; no action                                           |
-| In danger             | Unchanged                                       | Travel here unavailable, "Unavailable while you are in danger."                 |
-| Towing                | Unchanged                                       | Travel here unavailable, "Unavailable while towing."                            |
+| In danger             | Return to Earth unavailable                     | Travel here unavailable, "Unavailable while you are in danger."                 |
+| Towing                | Return to Earth available                       | Travel here unavailable, "Unavailable while towing."                            |
 | Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                                       |
 | No explored record    | Plain field, no fog                             | Unchanged                                                                       |
 
 ## Pause card
 
-The Paused card's action stack is Resume (primary), Map, Settings,
-Achievements, Return home ([Layout screens](layout.md#cards)). Map always
-opens. While Ada is in danger, Return home is unavailable and the card shows
-"Unavailable while you are in danger." below the stack; on the map, Travel here
-is unavailable instead.
+The Paused card's action stack is Resume (primary), Map, Settings and Back to
+title ([Layout screens](layout.md#cards)). Map always opens, in danger too.
+Return to Earth is on the map, not on the card; in danger it and Travel here
+are unavailable on the map.
 
 ## Strings
 
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
-here; "No destinations mapped yet."; "Unavailable while you are in danger.";
+here; Return to Earth; "No destinations mapped yet."; "Unavailable while you
+are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
 "Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
 type line of the held job's target; and the type line:

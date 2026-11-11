@@ -210,8 +210,9 @@ Overlap rules:
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
 - Press areas inside one cluster may overlap; `pressedArea` gives the press to
   the nearest drawn centre.
-- While a modal card or storybook page shows, the pause button hides and the
-  HUD takes no input under the dim. The conversation box is not modal: the
+- While a modal card or storybook page shows, the flight pause button hides
+  and the HUD takes no input under the dim. Ada's room page shows its own
+  pause button ([Storybook page](#storybook-page)). The conversation box is not modal: the
   pause button, weapons and sticks stay visible and live beside it.
 - The conversation box's bottom sits at least 24 above the ship's drawn top at
   the 360-high view.
@@ -298,16 +299,24 @@ token above; strings are Gameplay's.
 | Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart, height fits text (not controls)                                                                                                             | Steps        |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused        | Header, close. Action stack: Resume (primary), Map, Settings, Achievements, Return home. Danger note (supporting prose) when shown                                                                                                             | None         |
+| Paused        | Header, close. Action stack: Resume (primary), Map, Settings, Back to title                                                                                                                                                                    | None         |
+| Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
 | Station card  | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Shop                                                                                                                                                          | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 
+The Paused card shows no objective or job lines. At 720x360 with phone insets
+the flight card is `58 + 216 + 16` = 290 high (four buttons, `4 * 48 + 3 * 8`)
+and the room card `58 + 104 + 16` = 178, both 360 wide, inside the 325
+available. Ada's room page opens the room card from its pause button
+([Storybook page](#storybook-page)).
+
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, a header panel on the HUD rect's top-left, a
 column of `HUD_BUTTON` tools on its top-right and the place panel on the
-available rect's bottom. Its tokens (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`),
-fit, press areas and states are in [Map](map.md). Close, back and Escape return
+available rect's bottom, with Return to Earth on the HUD row. Its tokens
+(`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
+[Map](map.md). Close, back and Escape return
 to Paused.
 
 The balance is one centred group: `icon-stardust-20`, `SPACING.markGap`, the
@@ -348,6 +357,7 @@ Earth scenes. Constants: `STORY_PANEL`, `storyPage.ts`; `STORY_SKIP`,
 | Portrait      | 64 in a 68 frame (2 inset)                                                                                                                                                                                                                                                 | Ada on the left, other speakers on the right; never mirrored                               |
 | Portrait gap  | `SPACING.gap`                                                                                                                                                                                                                                                              | Frame to text column; frame top on the column top                                          |
 | Skip          | `STORY_SKIP`, `playView.ts`, to implement: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's 48 targets; `SPACING.gap` left of the Settings target when Settings shows, otherwise on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                |
+| Pause         | Ada's room page only: `PAUSE_BUTTON` on the HUD rect's top-left corner, as in flight; its press area ends at HUD rect top + 42.75, above the panel's highest top (+ 56). It opens the room's Paused card (Settings, Back to title)                                         | The top-left of the HUD row; Skip and Settings keep the top-right                          |
 
 Panel groups, `SPACING.gap` apart:
 
@@ -436,9 +446,9 @@ Constants: `GALAXY_CARD`, `galaxySelectCard.ts`.
 2. Galaxy group, rows `SPACING.rowGap` apart: the 180x90 screenshot (a half-scale
    360x180 crop, [selector preview](galaxies.md#selector-preview)), the name (`TYPE.label`), the
    flavour line (`TYPE.body` prose).
-3. Action row (`GALAXY_CARD.actions`): Previous (secondary), Home
-   (secondary), Jump (primary), Next (secondary), one shared width. Home
-   returns Ada to her room without a jump. Previous uses the disabled face on
+3. Action row (`GALAXY_CARD.actions`): Previous (secondary), Earth
+   (secondary), Jump (primary), Next (secondary), one shared width (99.6, set
+   by Previous). Earth returns Ada to her room without a jump. Previous uses the disabled face on
    the first page, Next on the last.
 4. Exits: the close X, an outside tap, back and Escape leave the cockpit and
    return Ada to her room without a jump.
@@ -446,7 +456,9 @@ Constants: `GALAXY_CARD`, `galaxySelectCard.ts`.
 Locked: the number shows, the screenshot is greyscale, the name and flavour
 are "..." in disabled text, and Jump is unavailable (disabled face, refusal
 cue). The card keeps the largest width and height of all pages. At 720x360 the
-card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
+card is 454.4 wide and `58 + 160 + 8 + 48 + 16` = 290 high, inside the 325
+available with phone insets: the galaxy group is the 92 framed screenshot, 4,
+the 20 name, 4 and the flavour's two 20 lines.
 
 ## Changes from current values
 
