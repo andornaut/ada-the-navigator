@@ -36,8 +36,9 @@ the value currently lives, in CSS px.
   the status pill, weapons, Skip, Settings, the sticks and Use) is placed
   relative to the game area, clamped by the safe insets: the top controls
   through `hudRect`, the sticks and Use by their own offsets
-  ([HUD and overlays](#hud-and-overlays)). Cards and page content keep the
-  available rect.
+  ([HUD and overlays](#hud-and-overlays)). Both sides use the left game-area
+  gap and the larger side inset, so the HUD and the sticks mirror exactly,
+  notches included. Cards and page content keep the available rect.
 - Nine-slice edges are whole CSS px: each slice edge is `round(edge * s)`, set
   as a variable for `border-image-width` and outset, so edges never blur while
   the body scales freely. Review at native and fractional scales (1.083 and
@@ -61,7 +62,8 @@ becomes logical px, so UI now grows with the canvas:
 | Group gap        | 8     | Between card groups, buttons in an action row or stack, row parts | `SPACING.gap`, `tokens.ts`, to implement; now `CARD.gap`                      |
 | Column gap       | 8     | Between columns of controls (shop item columns)                   | `SPACING.columnGap`, `tokens.ts`, to implement                                |
 | Mark gap         | 6     | From an inline icon to its label inside one control or pill       | `SPACING.markGap`, `tokens.ts`, to implement                                  |
-| Control edge     | 8     | HUD controls from the view edge, and HUD buttons apart            | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
+| HUD edge         | 12    | Game area edge to the drawn art of the HUD's outermost elements   | `HUD_EDGE`, `playView.ts` (Chibi's value)                                     |
+| Control edge     | 8     | HUD buttons apart; the HUD safe-rect margin                       | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
 | Page inset       | 16    | Modals and page content from the view edge                        | `SPACING.pageInset`, `tokens.ts`, to implement; now `.ada-modal` padding      |
 | Panel padding    | 16    | Inside cards and the story panel, including the 2 px frame        | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
 | Body line box    | 20    | 16 px text (body, labels, supporting)                             | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
@@ -168,55 +170,77 @@ inside the game area, clear of curved screen corners and the bands; the
 safe-rect clamp still keeps them out of every inset. The sticks and Use are
 placed relative to the same game area (see their rows), in Ada and Chibi alike.
 
-| Token      | Value                                                                                             | Rule                                                                                                                    | Constant                                                                                      |
-| ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                    | The game area: the base view centred across the logical view, at its top; bands outside it                              | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)                              |
-| HUD rect   | `playView(view)` inset by `CONTROL_EDGE`, intersected with `safeRect(insets, CONTROL_EDGE, view)` | The rect for the top controls (its top corners); the sticks and Use anchor to the same game area with their own offsets | `hudRect(insets, view)`, `playView.ts`, to implement (Chibi `topShift`)                       |
-| HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8; pitch 56                                 | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE`; pitch = target + gap, between neighbours  | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
-| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 4                            | Opaque ink pill under the disc; bottom 4 above the conversation name tab                                                | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
+Symmetry: one `HUD_EDGE` (12, as in Chibi) runs from the game area's side to
+the drawn art of the outermost visible element in each top corner, and from
+the top edge to both rows' drawn tops. It measures drawn art, never a press
+area. The leftmost visible element sits at `HUD_EDGE` whether or not the pause
+button shows. Each side is `ceil(max(left game-area gap + offset, max(inset
+left, inset right)))` from its view edge (`mirroredSide`), so a one-sided notch
+moves both sides in alike and the HUD and the sticks mirror exactly.
+
+| Token      | Value                                                                                                                                                             | Rule                                                                                                                                           | Constant                                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Play view  | 720x360 at `x = floor((floor(view.width) - 720) / 2)`, `y = 0`                                                                                                    | The game area: the base view centred across the logical view, at its top; bands outside it                                                     | `playView(view)`, `playView.ts`, to implement (Chibi `playView`)                              |
+| HUD rect   | Sides `mirroredSide(insets, HUD_EDGE, view)` in from each view edge; top `ceil(max(12, inset top))`; bottom `min(348, view bottom - ceil(max(12, inset bottom)))` | The lines the top controls' drawn art meets (its top corners); the sticks and Use anchor to the same game area with their own offsets          | `hudRect(insets, view)`, `HUD_EDGE`, `playView.ts` (Chibi `topShift`)                         |
+| HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8; pitch 56                                                                                                 | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE`; pitch = target + gap, between neighbours                         | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
+| HUD row    | Targets reach 7.5 (the disc inset) past the HUD rect's top and right; centre line HUD rect top + 16.5; targets' bottom HUD rect top + 40.5                        | The outermost disc's drawn edge and every disc's drawn top sit on the rect; the pause disc, the discs, the pill and Skip share the centre line | `HUD_ROW` = `{ reach, centre, bottom }`, `playView.ts`                                        |
+| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 4                                                                                            | Opaque ink pill on the disc's lower edge; at least 4 above the conversation name tab (11.5)                                                    | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
 
 | Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
 | -------------- | ----------------- | ------------ | ----------- | ------------------------- |
-| 844x390        | None              | 779x360      | 29          | 37, 741, 8                |
-| 844x390        | Left and right 43 | 779x360      | 29          | 43, 736.08, 8             |
-| 1280x720       | None              | 720x405      | 0           | 8, 712, 8                 |
-| 1920x1080      | None              | 720x405      | 0           | 8, 712, 8                 |
+| 720x360        | None              | 720x360      | 0           | 12, 708, 12               |
+| 720x360        | Left and right 43 | 720x360      | 0           | 43, 677, 12               |
+| 844x390        | None              | 779x360      | 29          | 41, 738.08, 12            |
+| 844x390        | Left and right 43 | 779x360      | 29          | 43, 736.08, 12            |
+| 844x390        | Left 47, right 0  | 779x360      | 29          | 47, 732.08, 12            |
+| 1280x720       | None              | 720x405      | 0           | 12, 708, 12               |
+| 1920x1080      | None              | 720x405      | 0           | 12, 708, 12               |
 
-| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Constant                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                                                                                                                                                                       | `PAUSE_BUTTON`, `playView.ts`                                                       |
-| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`); each non-Basic weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                                                                           | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                               |
-| Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75), centred on the pause disc (`PAUSE_BUTTON.art` centre = HUD rect top + 16.5, so the pill top is HUD rect top + 2.5); grows rightward with the count; keeps its place while the pause button is hidden. Parts and states in [Status pill](#status-pill)                                                                                                                                | `STATUS_PILL`, `playView.ts`, to implement                                          |
-| Sticks       | 75 frames; ring drawn edges 24 from the game area's left (move) or right (aim) side, `max(playView side + 24, inset)` from the view edge (an inset replaces the 24), and 20 above the game area's bottom, `min(playView bottom - 20, view bottom - inset - 20)` (the bottom inset adds to the 20, clearing the home bar), so the two sticks mirror each other; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`                    |
-| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the HUD rect, bottom level with the sticks' drawn bottom; press `hitAround(face)`; shown only while an interaction is available                                                                                                                                                                                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                                      |
-| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                  | `HUD_BUTTON`, `playView.ts`                                                         |
-| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)`, one pitch (56) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                             | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                   | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`        |
-| Conversation | In-flight dialogue box below the weapon row: name tab top `CONVERSATION_BOX.tab.clearance` (10) below the HUD button row, box top 10 lower, centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                              | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                              |
+The right side is measured from the exact view width (779.08 at 844x390), so
+the right edge sits as far from the view's right as the left edge from its
+left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
+(749) because the right band is 30.08 and the left 29.
+
+| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Constant                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Pause        | Touch only (desktop pauses with Escape): 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it), so the disc spans 12 to 45 on both axes at the 720 base; vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5, HUD rect left and top - 9.75 to + 42.75                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `PAUSE_BUTTON`, `playView.ts`                                                       |
+| Weapons      | One `HUD_ROW` of `HUD_BUTTON` targets, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right + 7.5 - 48 - 56 * i`, `y = top - 7.5`; disc and glyph centred in it (disc at 7.5, glyph at 14), so the rightmost disc's drawn right edge and every disc's drawn top sit on the HUD rect (disc 675 to 708, 12 to 45 at the 720 base); the target is the press area (48, `HIT_RULE.minTarget`), 4.5 to 52.5 at a top of 12; each non-Basic weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                                                                                                                                                                                                           | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                               |
+| Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5); grows rightward with the count. Parts and states in [Status pill](#status-pill)                                                                                                                                                                                                                                                                                                        | `STATUS_PILL`, `playView.ts`, to implement                                          |
+| Sticks       | 75 frames; ring drawn edges 40 in from the game area's side (`TOUCH_STICK.side`), `mirroredSide(insets, 40, view)` from each view edge (the larger side inset replaces the 40 on both sides), measured from the view's whole-pixel width, and 30 above the game area's bottom (`TOUCH_STICK.bottom`), `min(playView bottom - 30, view bottom - inset - 30)` (the bottom inset adds to the 30, clearing the home bar), so the two sticks mirror each other: rings 40 to 113 and 607 to 680, 257 to 330, at the 720 base; 43 to 116 and 604 to 677, 238 to 311, with phone insets (43, 43, 19); 69 to 142 and 637 to 710 at 844x390; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`                    |
+| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the HUD rect (the view's centre, as the rect mirrors), bottom level with the sticks' drawn bottom, `USE_BUTTON.bottom` = `TOUCH_STICK.bottom` 30 above the game area's bottom (face 282 to 330 at the 720 base, 263 to 311 with phone insets); press `hitAround(face)`; shown only while an interaction is available                                                                                                                                                                                                                                                                                                                                             | `USE_BUTTON`, `touchControls.ts`, to implement                                      |
+| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `HUD_BUTTON`, `playView.ts`                                                         |
+| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)`, one pitch (56) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`        |
+| Conversation | In-flight dialogue box below the weapon row: name tab top HUD rect top + 58 (`HUD_BUTTON.target` + `CONVERSATION_BOX.tab.clearance`, 70 at a top of 12, 17.5 below the weapon targets' bottom), box top 10 lower (80), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                       | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                              |
 
 Overlap rules:
 
 - The top-left cluster is the pause button and the status pill; the top-right
   cluster is the weapons only. The pill's drawn rect and the pause press area
   keep at least `SPACING.pageInset` from the weapon press areas at the smallest
-  view (720 logical, with phone insets 43/43/19): with four weapons the pill
-  may reach 351.25 wide, a count up to 162.25 wide ("999,999,999" is 89), and
-  "1,234,567" leaves 107.07.
-- The weapon count pills end at HUD rect top + 54 (62), 4 above the name tab
-  top; they stay inside their targets' columns (the widest, "999m", is 38.69
-  of 48), so they add nothing to the clusters' horizontal clearance.
+  view (720 logical, with phone insets 43/43/19): the leftmost of four weapon
+  targets starts at `677 + 7.5 - 48 - 168` = 468.5 and the pill at 93.75, so
+  the pill may reach 358.75 wide, a count up to 169.75 wide ("999,999,999" is
+  89), and "1,234,567" leaves 114.57. With the pause button hidden the pill
+  starts at 43 and may reach 409.5.
+- The weapon count pills end at HUD rect top + 46.5 (58.5), 11.5 above the
+  name tab top; they stay inside their targets' columns (the widest, "999m",
+  is 38.69 of 48), so they add nothing to the clusters' horizontal clearance.
 - The Stardust `+N` label stays above the conversation box: its 20 line ends
-  at HUD rect top + 54.5 (62.5), the name tab top is HUD rect top + 58 (66)
-  and the box top HUD rect top + 68 (76).
+  at HUD rect top + 54.5 (66.5), the name tab top is HUD rect top + 58 (70)
+  and the box top HUD rect top + 68 (80).
+- Press areas may reach past the HUD rect into a side inset (the pause press
+  area 9.75, the outermost weapon target 7.5); drawn art never does.
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
 - Press areas inside one cluster may overlap; `pressedArea` gives the press to
   the nearest drawn centre.
-- While a modal card or storybook page shows, the flight pause button hides
-  and the HUD takes no input under the dim. Ada's room page shows its own
-  pause button ([Storybook page](#storybook-page)). The conversation box is not modal: the
+- The pause buttons, in flight and on Ada's room page
+  ([Storybook page](#storybook-page)), are touch only; desktop pauses with
+  Escape. While a modal card or storybook page shows, the flight pause button
+  hides and the HUD takes no input under the dim. The conversation box is not modal: the
   pause button, weapons and sticks stay visible and live beside it.
-- The conversation box's bottom sits at least 24 above the ship's drawn top at
-  the 360-high view.
+- The conversation box's bottom (140) sits at least 24 above the ship's drawn
+  top at the 360-high view (28.17).
 
 ### Status pill
 
@@ -255,11 +279,12 @@ with fractional widths.
 | Pickup | The Stardust count increases              | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline shows under the count | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms. A pickup while it shows adds to N and restarts the hold | No bump or rise; the label holds 450 ms and fades over 150 ms |
 
 - The `+N` label centres on the count; its line box top is `SPACING.rowGap`
-  below the pill (HUD rect top + 34.5). The bump is a transform: it never
+  below the pill (HUD rect top + 34.5, so 46.5). The bump is a transform: it never
   reflows the pill.
 - The pill shows during flight. It hides with the pause button while a modal
-  card or storybook page shows; on desktop, where the pause button is hidden,
-  it keeps its place, so the HUD never shifts with the input mode.
+  card or storybook page shows. On desktop, where the pause button is hidden,
+  the pill is the leftmost art and moves to the HUD rect's left edge, so the
+  left side keeps `HUD_EDGE` in both input modes.
 - The pill takes no input. The shield bar is a meter (Gameplay's shield label,
   value and capacity) and the count a status; both icons are decorative.
 
@@ -276,14 +301,15 @@ ammunition count string; Basic shows none.
 | Panel    | Opaque ink, `HUD_AMMO_COUNT.height` 14, radius 4, `HUD_AMMO_COUNT.padding` 4 at each end, no border                                                                 |
 | Width    | The count's width plus 8, sized to its text: 14.67 at "0", 34.70 at "9999", 38.69 at "999m" (the widest)                                                            |
 | Text     | The count in `TYPE.count` (12 bold) on its 14 line, centred in the pill                                                                                             |
-| Position | Centred on the disc horizontally; top `HUD_AMMO_COUNT.top` 40 below the target top (HUD rect top + 40)                                                              |
+| Position | Centred on the disc horizontally; top `HUD_AMMO_COUNT.top` 40 below the target top (HUD rect top + 32.5, so 44.5)                                                   |
 | Box      | Relative to the target's top-left: `x = 24 - w / 2`, `y = 40`, `w` = count width + 8, `h = 14`; so `x` 16.66 and `w` 14.67 at "0", `x` 4.65 and `w` 38.69 at "999m" |
-| Vertical | Spans HUD rect top + 40 to + 54; overlaps the disc's lower edge (+ 40.5) by 0.5; digit ink from + 42.8 to + 51.3, wholly below the disc                             |
+| Vertical | Spans HUD rect top + 32.5 to + 46.5 (44.5 to 58.5); overlaps the disc's lower edge (+ 33) by 0.5; digit ink from + 35.3 to + 43.8, wholly below the disc            |
 | Layer    | A child of the weapon button, drawn over the disc; it takes no input and moves with the button's shake                                                              |
 
-- Position rule: the lowest pill that keeps `HUD_AMMO_COUNT.clearance` (4)
-  above the conversation name tab. Its bottom is the tab top (HUD rect top + 58) minus 4, so HUD rect top + 54, and its top is 14 higher. Its lower 6 lie
-  below the target, outside the press area.
+- Position rule: the pill overlaps the disc's lower edge by 0.5 and keeps at
+  least `HUD_AMMO_COUNT.clearance` (4) above the conversation name tab. Its
+  bottom is HUD rect top + 46.5, 11.5 above the tab top (HUD rect top + 58).
+  Its lower 6 lie below the target, outside the press area.
 - Count strings fit one line at every value: the widest pill (38.69) leaves
   9.31 inside the 48 target and 17.31 between neighbouring pills.
 
@@ -313,9 +339,9 @@ available. Ada's room page opens the room card from its pause button
 ([Storybook page](#storybook-page)).
 
 Map, from the Paused card, is a full-screen map rather than a card: the
-galaxy's field under the insets, a header panel on the HUD rect's top-left
-(the name, then the pips over the percent), Quests and Return to Earth on the
-HUD row, a column of `HUD_BUTTON` tools on its top-right and the place panel
+galaxy's field under the insets, a header panel on the Map's HUD row at the
+HUD rect's left (the name, then the pips over the percent), Quests and Return
+to Earth on the same row, a column of `HUD_BUTTON` tools on its top-right and the place panel
 on the available rect's bottom. Quests opens a Quests modal card over it. Its tokens
 (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
 [Map](map.md). Close, back and Escape return
@@ -364,35 +390,39 @@ every aspect.
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
 
-| Part           | 720x360                 | 720x360, insets         | 844x390                 | 844x390, insets           |
-| -------------- | ----------------------- | ----------------------- | ----------------------- | ------------------------- |
-| HUD rect       | 8 to 712, top 8         | 43 to 677, top 8        | 37 to 741, top 8        | 43 to 736.08, top 8       |
-| Available rect | 16 to 704, 16 to 344    | 43 to 677, 16 to 341    | 16 to 763.08, 16 to 344 | 43 to 736.08, 16 to 341   |
-| Field          | -120 to 840, 0 to 540   | -120 to 840, 0 to 540   | -91 to 869, 0 to 540    | -91 to 869, 0 to 540      |
-| Ship frame     | 238 to 518, -56 to 224  | 238 to 518, -56 to 224  | 267 to 547, -56 to 224  | 267 to 547, -56 to 224    |
-| Ship ink       | 226.3 to 484, 48 to 141 | 226.3 to 484, 48 to 141 | 255.3 to 513, 48 to 141 | 255.3 to 513, 48 to 141   |
-| Wordmark       | 225 to 495, 148 to 250  | 225 to 495, 148 to 250  | 254 to 524, 148 to 250  | 254 to 524, 148 to 250    |
-| Start          | 264 to 456, 264 to 312  | 264 to 456, 264 to 312  | 293 to 485, 264 to 312  | 293 to 485, 264 to 312    |
-| Restart        | 164 to 356, 264 to 312  | 164 to 356, 264 to 312  | 193 to 385, 264 to 312  | 193 to 385, 264 to 312    |
-| Continue       | 364 to 556, 264 to 312  | 364 to 556, 264 to 312  | 393 to 585, 264 to 312  | 393 to 585, 264 to 312    |
-| Note line box  | Centre 360, 320 to 340  | Centre 360, 320 to 340  | Centre 389, 320 to 340  | Centre 389, 320 to 340    |
-| Achievements   | 608 to 656, 8 to 56     | 573 to 621, 8 to 56     | 637 to 685, 8 to 56     | 632.08 to 680.08, 8 to 56 |
-| Settings       | 664 to 712, 8 to 56     | 629 to 677, 8 to 56     | 693 to 741, 8 to 56     | 688.08 to 736.08, 8 to 56 |
+| Part           | 720x360                     | 720x360, insets             | 844x390                       | 844x390, insets               |
+| -------------- | --------------------------- | --------------------------- | ----------------------------- | ----------------------------- |
+| HUD rect       | 12 to 708, top 12           | 43 to 677, top 12           | 41 to 738.08, top 12          | 43 to 736.08, top 12          |
+| Available rect | 16 to 704, 16 to 344        | 43 to 677, 16 to 341        | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
+| Field          | -120 to 840, 0 to 540       | -120 to 840, 0 to 540       | -91 to 869, 0 to 540          | -91 to 869, 0 to 540          |
+| Ship frame     | 238 to 518, -56 to 224      | 238 to 518, -56 to 224      | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
+| Ship ink       | 226.3 to 484, 48 to 141     | 226.3 to 484, 48 to 141     | 255.3 to 513, 48 to 141       | 255.3 to 513, 48 to 141       |
+| Wordmark       | 225 to 495, 148 to 250      | 225 to 495, 148 to 250      | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
+| Start          | 264 to 456, 264 to 312      | 264 to 456, 264 to 312      | 293 to 485, 264 to 312        | 293 to 485, 264 to 312        |
+| Restart        | 164 to 356, 264 to 312      | 164 to 356, 264 to 312      | 193 to 385, 264 to 312        | 193 to 385, 264 to 312        |
+| Continue       | 364 to 556, 264 to 312      | 364 to 556, 264 to 312      | 393 to 585, 264 to 312        | 393 to 585, 264 to 312        |
+| Note line box  | Centre 360, 320 to 340      | Centre 360, 320 to 340      | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
+| Achievements   | 611.5 to 659.5, 4.5 to 52.5 | 580.5 to 628.5, 4.5 to 52.5 | 641.58 to 689.58, 4.5 to 52.5 | 639.58 to 687.58, 4.5 to 52.5 |
+| Settings       | 667.5 to 715.5, 4.5 to 52.5 | 636.5 to 684.5, 4.5 to 52.5 | 697.58 to 745.58, 4.5 to 52.5 | 695.58 to 743.58, 4.5 to 52.5 |
 
 Clearances, smallest at 720x360 with insets:
 
-| Pair                              | Arithmetic  | Result                                 |
-| --------------------------------- | ----------- | -------------------------------------- |
-| Ship ink to Achievements          | `573 - 484` | 89, beside the HUD row, never under it |
-| Wordmark to Achievements          | `573 - 495` | 78 (108.08 at 844x390 with insets)     |
-| Ship ink to wordmark              | `148 - 141` | 7                                      |
-| Wordmark to the action row        | `264 - 250` | 14                                     |
-| Action row to the note            | `320 - 312` | 8, `SPACING.gap`                       |
-| Note to the available rect bottom | `341 - 340` | 1 (4 without a bottom inset)           |
-| Restart to the available rect     | `164 - 43`  | 121                                    |
+| Pair                              | Arithmetic    | Result                                   |
+| --------------------------------- | ------------- | ---------------------------------------- |
+| Ship ink to Achievements          | `580.5 - 484` | 96.5, beside the HUD row, never under it |
+| Wordmark to Achievements          | `580.5 - 495` | 85.5 (115.58 at 844x390 with insets)     |
+| Ship ink to wordmark              | `148 - 141`   | 7                                        |
+| Wordmark to the action row        | `264 - 250`   | 14                                       |
+| Action row to the note            | `320 - 312`   | 8, `SPACING.gap`                         |
+| Note to the available rect bottom | `341 - 340`   | 1 (4 without a bottom inset)             |
+| Restart to the available rect     | `164 - 43`    | 121                                      |
 
 - The focus ring (4 outside a face) stays inside the 8 gap and the 14 above
   the row; the press areas of the nav discs are their targets, 8 apart.
+- The nav targets are `hudButtonTarget`s: Settings's disc has its drawn right
+  edge and top on the HUD rect's corner, and its target reaches 7.5 past it
+  (into the 43 inset with phone insets). The start screen has no pause button,
+  so its top-left corner is empty.
 
 ### Shop item row
 
@@ -418,17 +448,17 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 Earth scenes. Constants: `STORY_PANEL`, `storyPage.ts`; `STORY_SKIP`,
 `playView.ts`, to implement.
 
-| Token         | Value                                                                                                                                                                                                                                                                      | Rule                                                                                       |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md))                                                                                                                                                                                                                   | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets     |
-| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640                                                                                                                                                                                                                       | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                         |
-| Panel anchor  | Bottom edge on the available rect's bottom (`STORY_PANEL.anchor`)                                                                                                                                                                                                          | The scene's subject stays visible above                                                    |
-| Panel height  | The content's height, at most from the panel's bottom up to the HUD row's bottom plus `SPACING.gap` (HUD rect top + 48 + 8)                                                                                                                                                | The panel never runs under Skip or Settings; past that, the text column and choices scroll |
-| Panel padding | `SPACING.panelPadding`                                                                                                                                                                                                                                                     | `ui-settings-card` face, no dim behind it                                                  |
-| Portrait      | 64 in a 68 frame (2 inset)                                                                                                                                                                                                                                                 | Ada on the left, other speakers on the right; never mirrored                               |
-| Portrait gap  | `SPACING.gap`                                                                                                                                                                                                                                                              | Frame to text column; frame top on the column top                                          |
-| Skip          | `STORY_SKIP`, `playView.ts`, to implement: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's 48 targets; `SPACING.gap` left of the Settings target when Settings shows, otherwise on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                |
-| Pause         | Ada's room page only: `PAUSE_BUTTON` on the HUD rect's top-left corner, as in flight; its press area ends at HUD rect top + 42.75, above the panel's highest top (+ 56). It opens the room's Paused card (Settings, Back to title)                                         | The top-left of the HUD row; Skip and Settings keep the top-right                          |
+| Token         | Value                                                                                                                                                                                                                                                                                                                                                                           | Rule                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md))                                                                                                                                                                                                                                                                                                                        | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets     |
+| Panel width   | `min(availableWidth, STORY_PANEL.maxWidth)`, max 640                                                                                                                                                                                                                                                                                                                            | Centred; 640 is the measure for 16 px prose (Chibi's dialogue box)                         |
+| Panel anchor  | Bottom edge on the available rect's bottom (`STORY_PANEL.anchor`)                                                                                                                                                                                                                                                                                                               | The scene's subject stays visible above                                                    |
+| Panel height  | The content's height, at most from the panel's bottom up to the HUD row's bottom plus `SPACING.gap` (`STORY_PANEL_TOP`: HUD rect top + 40.5 + 8 = + 48.5, so 60.5)                                                                                                                                                                                                              | The panel never runs under Skip or Settings; past that, the text column and choices scroll |
+| Panel padding | `SPACING.panelPadding`                                                                                                                                                                                                                                                                                                                                                          | `ui-settings-card` face, no dim behind it                                                  |
+| Portrait      | 64 in a 68 frame (2 inset)                                                                                                                                                                                                                                                                                                                                                      | Ada on the left, other speakers on the right; never mirrored                               |
+| Portrait gap  | `SPACING.gap`                                                                                                                                                                                                                                                                                                                                                                   | Frame to text column; frame top on the column top                                          |
+| Skip          | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SPACING.gap` left of the Settings target (48.5 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                |
+| Pause         | Ada's room page only, touch only (desktop pauses with Escape): `PAUSE_BUTTON` on the HUD rect's top-left corner, as in flight; its press area ends at HUD rect top + 42.75, 5.75 above the panel's highest top (+ 48.5). It opens the room's Paused card (Settings, Back to title)                                                                                              | The top-left of the HUD row; Skip and Settings keep the top-right                          |
 
 Panel groups, `SPACING.gap` apart:
 
@@ -462,22 +492,22 @@ Constants: `CONVERSATION_BOX`, `conversationBox.ts`, to implement. Colours are i
 [Conversation portraits](conversation.md). Chibi's dialogue panel uses the same
 values with its own sprites and fonts.
 
-| Token          | Value                                                                                          | Rule                                                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                         |
-| Tab top        | HUD button row bottom plus `CONVERSATION_BOX.tab.clearance` (10)                               | HUD rect top + 48 target + 10 = 58, so 66 without a top inset; the same rule in both games, whose top buttons stay live |
-| Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 68, so 76 without a top inset                                                                            |
-| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                              |
-| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                                |
-| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                                     |
-| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                                     |
-| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                           |
-| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                              |
-| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                                              |
-| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                                                |
-| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                                              |
-| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                                  |
-| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end                     |
+| Token          | Value                                                                                          | Rule                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                  |
+| Tab top        | HUD rect top plus `HUD_BUTTON.target` plus `CONVERSATION_BOX.tab.clearance` (10)               | HUD rect top + 48 + 10 = 58, so 70 without a top inset; the same rule in both games, whose top buttons stay live |
+| Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 68, so 80 without a top inset                                                                     |
+| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                       |
+| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                         |
+| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                              |
+| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                              |
+| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                    |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                       |
+| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                                       |
+| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                                         |
+| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                                       |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                           |
+| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end              |
 
 - The tab draws over the panel's top edge. Its 10 inside the panel sit above
   the text block's top line box, so it never covers text.
@@ -498,15 +528,15 @@ values with its own sprites and fonts.
   (Gameplay's rule).
 - Both sides use the same left-aligned text column; the frame and the tab
   change ends with the speaker.
-- The tab top (66) clears the weapon press areas (56) by 10, the weapon count
-  pills (62) by 4, the pause press area (50.75) by 15.25 and the Stardust `+N`
-  label (62.5) by 3.5.
-- Clearance at the 360-high view: the box bottom is at 136. The ship's pivot
+- The tab top (70) clears the weapon press areas (52.5) by 17.5, the weapon
+  count pills (58.5) by 11.5, the pause press area (54.75) by 15.25 and the
+  Stardust `+N` label (66.5) by 3.5.
+- Clearance at the 360-high view: the box bottom is at 140. The ship's pivot
   sits at the view centre (180) with a 42 display frame; its highest drawn hull
-  point across the 32 headings is 168.2 (heading 4, the apex), 32.2 below the box. The
-  rule is at least 24.
-- At the 1280x720 view (720x405 logical) the box bottom is still 136 and the
-  hull top 190.7, 54.7 below.
+  point across the 32 headings is 168.17 (heading 4, the apex), 28.17 below the
+  box. The rule is at least 24.
+- At the 1280x720 view (720x405 logical) the box bottom is still 140 and the
+  hull top 190.67, 50.67 below.
 
 ### Galaxy selector
 
@@ -533,30 +563,30 @@ the 20 name, 4 and the flavour's two 20 lines.
 
 ## Changes from current values
 
-| Change                                                                                                                                                  | Was                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ------------------------------------------------------------------------------------------------------------------------------                          | -----------------------------------------------------------------------------------  |
-| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                                              | CSS px at 1x, independent of the canvas                                              |
-| Safe insets clamp HUD controls, cards and page content                                                                                                  | Insets not read                                                                      |
-| Sticks and Use anchor to the game area: 24 from its sides (an inset replaces it) and 20 above its bottom (a bottom inset adds)                          | From the view's safe edges                                                           |
-| Every action stack fills the inner width with `SPACING.gap`                                                                                             | Generic stacks 4 apart                                                               |
-| Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                                                                   | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons  |
-| Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                                                        | Panels at 0.70; opaque ink track                                                     |
-| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                                                                   | The HUD safe rect's corners                                                          |
-| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area                                                  | 48 squares, 24 glyph, cream ring                                                     |
-| Ammunition counts: an ink count pill under each non-Basic weapon disc                                                                                   | No counts; ammunition was unlimited                                                  |
-| Pause draws `pause.svg` with smooth sampling                                                                                                            | `ui-pause` PNG, nearest neighbour                                                    |
-| Settings draws `settings.svg` as a mask with smooth sampling                                                                                            | `icon-settings-nav` PNG mask                                                         |
-| Start screen Achievements: a `HUD_BUTTON` with `achievements.svg`, one pitch left of Settings; the action row keeps only Start, or Restart and Continue | A secondary button at the end of the start card's action stack                       |
-| Start screen: ship, wordmark and an action row of 192-wide buttons over the title field, Start and Continue primary (`START_SCREEN`)                    | A page card with a heading, the Ada and Penny portraits and a secondary action stack |
-| Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                            | Idle in every state                                                                  |
-| Cards scroll one scroll group with the header and close fixed                                                                                           | The whole card scrolls                                                               |
-| Prose never widens a card; cheats headings and notes use group and row gaps                                                                             | 36em prose cap; 16 and 4 margins                                                     |
-| Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                        | A `NOTICE` strip on the HUD rect's top                                               |
-| Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                  | 640x64, 48 frame, name tab inside over one line                                      |
-| Story pages use `STORY_PANEL`                                                                                                                           | `.story-panel` clamp and rem sizes                                                   |
-| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                   | 16; a 24 line                                                                        |
-| Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                              | A 288x160 chart in a Map card (`MAP_CARD`)                                           |
+| Change                                                                                                                                                                                       | Was                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------------------------------------------------------------------------------                                                               | -----------------------------------------------------------------------------------                                           |
+| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                                                                                   | CSS px at 1x, independent of the canvas                                                                                       |
+| Safe insets clamp HUD controls, cards and page content                                                                                                                                       | Insets not read                                                                                                               |
+| Sticks and Use anchor to the game area: 40 from its sides (the larger side inset replaces it on both sides) and 30 above its bottom (a bottom inset adds)                                    | 24 from its sides, each side's own inset replacing it, and 20 above its bottom                                                |
+| Every action stack fills the inner width with `SPACING.gap`                                                                                                                                  | Generic stacks 4 apart                                                                                                        |
+| Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                                                                                                        | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons                                           |
+| Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                                                                                             | Panels at 0.70; opaque ink track                                                                                              |
+| HUD top controls anchor to `hudRect`: drawn art `HUD_EDGE` 12 in from the game area's top and sides, mirrored with the larger side inset; the pill takes the left edge while pause is hidden | Press targets `CONTROL_EDGE` 8 in, each side clamped by its own inset; the pill kept its place beside the hidden pause button |
+| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area                                                                                       | 48 squares, 24 glyph, cream ring                                                                                              |
+| Ammunition counts: an ink count pill under each non-Basic weapon disc                                                                                                                        | No counts; ammunition was unlimited                                                                                           |
+| Pause draws `pause.svg` with smooth sampling                                                                                                                                                 | `ui-pause` PNG, nearest neighbour                                                                                             |
+| Settings draws `settings.svg` as a mask with smooth sampling                                                                                                                                 | `icon-settings-nav` PNG mask                                                                                                  |
+| Start screen Achievements: a `HUD_BUTTON` with `achievements.svg`, one pitch left of Settings; the action row keeps only Start, or Restart and Continue                                      | A secondary button at the end of the start card's action stack                                                                |
+| Start screen: ship, wordmark and an action row of 192-wide buttons over the title field, Start and Continue primary (`START_SCREEN`)                                                         | A page card with a heading, the Ada and Penny portraits and a secondary action stack                                          |
+| Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                                                                 | Idle in every state                                                                                                           |
+| Cards scroll one scroll group with the header and close fixed                                                                                                                                | The whole card scrolls                                                                                                        |
+| Prose never widens a card; cheats headings and notes use group and row gaps                                                                                                                  | 36em prose cap; 16 and 4 margins                                                                                              |
+| Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                                                             | A `NOTICE` strip on the HUD rect's top                                                                                        |
+| Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                                                       | 640x64, 48 frame, name tab inside over one line                                                                               |
+| Story pages use `STORY_PANEL`                                                                                                                                                                | `.story-panel` clamp and rem sizes                                                                                            |
+| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                                                        | 16; a 24 line                                                                                                                 |
+| Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                                                                   | A 288x160 chart in a Map card (`MAP_CARD`)                                                                                    |
 
 ## Exceptions
 
@@ -595,23 +625,29 @@ Tests:
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
   `SPACING.pageInset` apart.
+- At every view and inset case, one-sided notches included, the leftmost drawn
+  art (the pause disc, or the pill with pause hidden) and the rightmost disc's
+  drawn edge sit the same whole-pixel distance in from their view edges,
+  `HUD_EDGE` from the game area without insets; the pause disc and every weapon
+  disc share one drawn top; the stick rings mirror across the view at one
+  height.
 - `STATUS_PILL`'s left edge equals the pause press area's right plus
-  `SPACING.gap` and its centre the pause disc's centre, with and without the
-  pause button shown; with four weapons at 720x360 and phone insets, the pill
-  at a 162.25-wide count keeps `SPACING.pageInset` from the leftmost weapon
-  target.
-- `HUD_AMMO_COUNT`'s bottom equals the conversation name tab top minus
-  `HUD_AMMO_COUNT.clearance` at every HUD rect top; the "999m" pill is narrower
-  than the target and centred on the disc.
-- `hudRect` matches the HUD rect table at 844x390 (with and without insets),
-  1280x720 and 1920x1080; the pause frame and every weapon target lie inside
-  `playView` inset by `CONTROL_EDGE`.
+  `SPACING.gap` while the pause button shows and the HUD rect's left while it
+  is hidden; its centre is the HUD row's centre line; with four weapons at
+  720x360 and phone insets, the pill at a 169.75-wide count keeps
+  `SPACING.pageInset` from the leftmost weapon target.
+- `HUD_AMMO_COUNT`'s bottom keeps at least `HUD_AMMO_COUNT.clearance` above the
+  conversation name tab top at every HUD rect top (11.5); the "999m" pill is
+  narrower than the target and centred on the disc.
+- `hudRect` matches the HUD rect table at 720x360, 844x390 (without insets,
+  with both insets and with a left notch), 1280x720 and 1920x1080; the pause
+  disc and every weapon disc lie inside `playView` inset by `HUD_EDGE`.
 - On the start screen at 720x360 with phone insets, the Achievements target
-  is `hudButtonTarget(1)` (573 to 621, top 8), `HUD_BUTTON.gap` left of the
-  Settings target, and keeps 78 from the wordmark and 89 from the ship's ink;
-  the action row (top 264), the note (320 to 340) and every rect in the
-  [Start screen](#start-screen) table match at 720x360 and 844x390, with and
-  without insets.
+  is `hudButtonTarget(1)` (580.5 to 628.5, top 4.5), `HUD_BUTTON.gap` left of
+  the Settings target, and keeps 85.5 from the wordmark and 96.5 from the
+  ship's ink; the action row (top 264), the note (320 to 340) and every rect in
+  the [Start screen](#start-screen) table match at 720x360 and 844x390, with
+  and without insets.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The galaxy card keeps one size across pages. The story panel keeps its width,

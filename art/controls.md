@@ -71,8 +71,9 @@ underneath.
   available in danger. Map always opens the [map](map.md), which holds Return
   to Earth; in danger Travel here and Return to Earth are unavailable there.
   Settings opens over the same dim; one card or the map shows at a time.
-- Ada's room page has the same pause button at the top left; its Paused card
-  holds Settings and Back to title.
+- Ada's room page has the same pause button at the top left, also touch only
+  (on desktop Escape opens the room's Paused card); its Paused card holds
+  Settings and Back to title.
 - The space screen shows no navigation or destination panel; navigation lives in
   the pause card.
 
@@ -275,8 +276,10 @@ glyph; at 20 px the two differ only in edge pixels.
 The weapon selector buttons follow Chibi's skill buttons (`chibis-way-home`
 `art/style-guide.md` "Skills and room rewards", `src/scenes/skillButton.ts`):
 a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
-glyph centred on it. Sizes and placement are `HUD_BUTTON` in
-[Layout](layout.md#hud-and-overlays). The space screen has no settings button;
+glyph centred on it. Sizes and placement are `HUD_BUTTON` and `HUD_ROW` in
+[Layout](layout.md#hud-and-overlays): the rightmost disc's drawn edge and
+every disc's drawn top sit `HUD_EDGE` (12) in from the game area, mirroring
+the pause disc on the left. The space screen has no settings button;
 Settings opens from the pause card. The start screen's Achievements and
 Settings buttons draw the vector trophy `achievements.svg` and gear
 `settings.svg` in the [nav disc states](achievements-icon.md#states): idle,
@@ -358,6 +361,11 @@ Weapon glyphs and the Settings gear are single-colour SVGs
 the refusal cue's red, and stays sharp at fractional scales such as 1.78.
 
 ## Touch sticks
+
+Placement is `TOUCH_STICK` in [Layout](layout.md#hud-and-overlays): each ring's
+drawn edge sits 40 in from the game area's side and 30 above its bottom,
+clamped by the safe insets and mirrored; the Use button's bottom follows the
+sticks' bottom.
 
 Only the move stick draws a speed line, from the stick's origin to the thumb's
 actual position: 2px cream `#ead4aa` with a 1px ink `#181425` fringe on each

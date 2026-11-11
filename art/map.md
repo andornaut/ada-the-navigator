@@ -17,15 +17,21 @@ The map is a screen, not a card: the field fills the whole logical view, under
 the insets, and the header, the tools and the place panel float on it. Like a
 modal it takes input exclusively; nothing of the flight HUD shows.
 
-| Part   | Anchor                                                                                     |
-| ------ | ------------------------------------------------------------------------------------------ |
-| Field  | The whole logical view, in the galaxy's `background` with the fog over it                  |
-| Header | Top-left corner on the HUD rect's top-left (`hudRect`)                                     |
-| Tools  | One column of `HUD_BUTTON` targets, top on the HUD rect's top-right corner, `pitch` apart  |
-| Row    | Quests, then Return to Earth, on the HUD row, ending `SPACING.pageInset` left of the tools |
-| Panel  | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom       |
-| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                 |
-| Quests | A modal card over the map: see [Quests modal](#quests-modal)                               |
+| Part   | Anchor                                                                                                                                          |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                                       |
+| Header | Left on the HUD rect's left (`hudRect`), top on the Map's HUD row (`mapRowTop`)                                                                 |
+| Tools  | One column of `HUD_BUTTON` targets, `pitch` apart, the discs' drawn right edges and the top disc's drawn top on the HUD rect's top-right corner |
+| Row    | Quests, then Return to Earth, on the Map's HUD row, ending `SPACING.pageInset` left of the tools                                                |
+
+The Map's HUD row (`mapRowTop`) is the tool targets' row box: HUD rect top -
+7.5 (`HUD_ROW.reach`), so 4.5 at a top of 12, 48 high, centred on the tool
+discs' centre line (HUD rect top + 16.5). The header, Quests and Return to
+Earth draw their 48 boxes on it, so their drawn tops are at 4.5, 7.5 above
+`HUD_EDGE`; the tool discs' drawn tops are at 12.
+| Panel | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom |
+| Fit | The region left for the map: see [Projection and fit](#projection-and-fit) |
+| Quests | A modal card over the map: see [Quests modal](#quests-modal) |
 
 ### Header
 
@@ -57,10 +63,10 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Quests less `SPACING.gap`: 319.3 wide at the smallest
-  view (720 logical, phone insets 43), 389.3 at the 720 base. At 319.3 the
-  column may be 146.3 wide, room for 18 pips; each galaxy has 12 landmarks, 4
-  of each kind.
+- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 326.75
+  wide at the smallest view (720 logical, phone insets 43), 388.75 at the 720
+  base. At 326.75 the column may be 153.75 wide, room for 19 pips; each galaxy
+  has 12 landmarks, 4 of each kind.
 - The header keeps the 48 row, so the fit region's top, `maxScale` and the
   1020 separation are unchanged.
 - The header takes no input. Its accessible text is the name and the percent;
@@ -70,7 +76,10 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 
 Four `HUD_BUTTON` targets in the idle state, top to bottom from the HUD rect's
 top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
-`x = hudRect.right - 48`, `y = hudRect.top + MAP_SCREEN.tools.pitch * i`.
+`x = hudRect.right + 7.5 - 48`, `y = hudRect.top - 7.5 + MAP_SCREEN.tools.pitch * i`,
+so the discs span `hudRect.right - 33` to `hudRect.right` and the close disc's
+drawn top is the HUD rect's top. The column's left (`toolColumnLeft`) is
+`hudRect.right - 40.5`: 667.5 at the 720 base, 636.5 with phone insets.
 
 | Token                    | Value | Rule                                 |
 | ------------------------ | ----- | ------------------------------------ |
@@ -89,13 +98,15 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
 - At `maxScale`, zoom in plays the [refusal cue](controls.md#refusal-cue) with
   its glyph as the label and does not zoom; zoom out does the same at
   `minScale`. Neither changes face.
-- The column ends at HUD rect top + 216 (224 at a top of 8). At the 360-high
-  view a two-line panel with the reason line (108) tops at 236 (233 with phone
-  insets), at least `SPACING.gap` below it. The three-line panel with the
-  reason line (128) tops at 216 (213), level with the column, so the two stay
-  apart only across. The panel's width is capped at
-  `2 * (column left - SPACING.gap - view centre)`, 592 at the 720 base
-  (`2 * (664 - 8 - 360)`), so it always clears the column.
+- The column's targets end at HUD rect top + 208.5 (220.5 at a top of 12); the
+  last disc's drawn bottom is at + 201 (213). At the 360-high view a two-line
+  panel with the reason line (108) tops at 236 (233 with phone insets), 15.5
+  (12.5) below the targets. The three-line panel with the reason line (128)
+  tops at 216 (213), 4.5 (7.5) above the targets' end, so the two stay apart
+  only across. The panel's width is capped at
+  `2 * (column left - SPACING.gap - view centre)`, 599 at the 720 base
+  (`2 * (667.5 - 8 - 360)`), 537 with phone insets, so it always clears the
+  column.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
 ### Quests and Return to Earth
@@ -104,19 +115,20 @@ Two secondary `TEXT_BUTTON`s on the HUD row of every galaxy's Map, left to
 right: "Quests", then "Return to Earth" (Gameplay). Constant:
 `MAP_SCREEN.hudRow`, to implement.
 
-- Geometry: 48 high, top on the HUD rect's top. Each is its own label plus
+- Geometry: 48 high, top on the Map's HUD row (`mapRowTop`, HUD rect top -
+  7.5). Each is its own label plus
   `2 * TEXT_BUTTON.inset` wide: Quests 54.3 + 32 = 86.3, Return to Earth
   116.5 + 32 = 148.5. They are separate controls, not an action row: one
-  shared width (148.5 each) would reach 592.9 of the 570 available with phone
-  insets.
+  shared width (148.5 each) would reach 592.9 of the 577.5 available with
+  phone insets.
 - Return to Earth's right edge is the tool column's left (`toolColumnLeft`)
   less `SPACING.pageInset`; Quests ends `SPACING.gap` left of Return to Earth.
   Neither moves with the header's width.
 
-| View, logical            | Header, up to | Quests         | Return to Earth | Tool column left |
-| ------------------------ | ------------- | -------------- | --------------- | ---------------- |
-| 720x360                  | 8 to 397.3    | 405.3 to 491.5 | 499.5 to 648    | 664              |
-| 720x360, phone insets 43 | 43 to 362.3   | 370.3 to 456.5 | 464.5 to 613    | 629              |
+| View, logical            | Header, up to | Quests        | Return to Earth | Tool column left |
+| ------------------------ | ------------- | ------------- | --------------- | ---------------- |
+| 720x360                  | 12 to 400.75  | 408.75 to 495 | 503 to 651.5    | 667.5            |
+| 720x360, phone insets 43 | 43 to 369.75  | 377.75 to 464 | 472 to 620.5    | 636.5            |
 
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
   the tool column and the place panel are unchanged: the row sits above the
@@ -447,9 +459,10 @@ symbol and the chrome.
   (`chartProjection`), times the map's `scale` in logical px per projected
   unit. Up on the map is up in flight, and Ada's arrow points where her ship
   faces.
-- Fit region: left `safeRect(16).left`, top `hudRect.top + 48 + SPACING.gap`
-  (below the header row), right `hudRect.right - 48 - SPACING.gap` (left of the
-  tool column), bottom `safeRect(16).bottom`. Inset by `fitMargin` on every
+- Fit region: left `safeRect(16).left`, top `mapRowTop + 48 + SPACING.gap` =
+  `hudRect.top + 48.5` (below the header row), right
+  `toolColumnLeft - SPACING.gap` = `hudRect.right - 48.5` (left of the tool
+  column), bottom `safeRect(16).bottom`. Inset by `fitMargin` on every
   side it is the inner region. The panel floats over its lower part.
 - `maxScale = min(innerWidth / minBox.width, innerHeight / minBox.height)`.
 - `minScale` fits the charting disc: `min(innerWidth / (2 sqrt(2) R),
@@ -468,11 +481,11 @@ box width, innerHeight / box height), minScale, maxScale)`; the box centre at
   catalog fills every cell). Once discovered, each is a place, and the opening
   fit and pan limit reach it.
 
-| View, CSS px    | Fit region   | Inner region | `maxScale` | `minScale` | Zoom steps between |
-| --------------- | ------------ | ------------ | ---------- | ---------- | ------------------ |
-| 844x390, insets | 637.08 x 277 | 593.08 x 233 | 0.03883    | 0.00659    | 4.37               |
-| 720x360 (base)  | 640 x 280    | 596 x 236    | 0.03933    | 0.00668    | 4.37               |
-| 1280x720        | 640 x 325    | 596 x 281    | 0.04683    | 0.00795    | 4.37               |
+| View, CSS px    | Fit region     | Inner region   | `maxScale` | `minScale` | Zoom steps between |
+| --------------- | -------------- | -------------- | ---------- | ---------- | ------------------ |
+| 844x390, insets | 644.58 x 280.5 | 600.58 x 236.5 | 0.03942    | 0.00669    | 4.37               |
+| 720x360 (base)  | 643.5 x 283.5  | 599.5 x 239.5  | 0.03992    | 0.00677    | 4.37               |
+| 1280x720        | 643.5 x 328.5  | 599.5 x 284.5  | 0.04742    | 0.00805    | 4.37               |
 
 ### Close places
 
@@ -485,8 +498,8 @@ close places' chips then overlap. Two rules keep each one reachable:
    chip is therefore selectable by pressing its own visible centre, however
    its area overlaps a neighbour's. Exact ties go to the chip drawn on top.
 2. Scale rule. Zoom always reaches `maxScale`, where two chips stop
-   overlapping once their places are 721 projected units apart at the phone
-   view (598 at 1280x720). The projection shrinks a world distance by at most
+   overlapping once their places are 710 projected units apart at the phone
+   view (591 at 1280x720). The projection shrinks a world distance by at most
    `sqrt(2)`, so places at least 1020 world units apart are always separable
    at full zoom. At `minScale` the same holds from about 6000 world units.
    Gameplay keeps every mapped place at least 1020 world units apart.
