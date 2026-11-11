@@ -8,6 +8,8 @@ export interface JetMouth {
   axis: Vec;
   /** Projected half mouth-width vector. */
   half: Vec;
+  /** The engine hardpoint that drives this mouth, on a composed craft. */
+  hardpoint?: string;
 }
 
 export interface JetLayer {
@@ -102,10 +104,19 @@ function readMouths(value: unknown): JetMouth[] | undefined {
     const anchor = readVec(mouth?.anchor);
     const axis = readVec(mouth?.axis);
     const half = readVec(mouth?.half);
-    if (!anchor || !axis || !half) {
+    if (
+      !anchor ||
+      !axis ||
+      !half ||
+      (mouth!.hardpoint !== undefined && typeof mouth!.hardpoint !== "string")
+    ) {
       return undefined;
     }
-    mouths.push({ anchor, axis, half });
+    mouths.push(
+      typeof mouth!.hardpoint === "string"
+        ? { anchor, axis, half, hardpoint: mouth!.hardpoint }
+        : { anchor, axis, half },
+    );
   }
   return mouths;
 }

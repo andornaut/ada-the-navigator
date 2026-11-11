@@ -69,12 +69,18 @@ import {
   wreckFlashAt,
 } from "./destruction-art.ts";
 import {
+  composedArchetypes,
+  composeEnemy,
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
   enemyFrameSets,
+  enemyHardpointsPath,
   enemyJetsPath,
   enemyJetTriangles,
+  enemyPartFrame,
+  HitFlashes,
+  type PartPose,
   selectEnemyFrame,
 } from "./enemy-art.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
@@ -144,14 +150,17 @@ import {
 
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
-const FLASH_SUFFIX = ":flash";
+const FLASH_SUFFIX = "#flash";
 // The holodisk's beacon sprite shares its id plus this suffix.
-const BEACON_SUFFIX = ":beacon";
+const BEACON_SUFFIX = "#beacon";
 
-/** The object an extra sprite belongs to: a flash or a beacon keeps its owner's id. */
+/**
+ * The object an extra sprite belongs to. A flash, a beacon or a composed craft's part sprite
+ * keeps its owner's id before a `#`, which object ids never contain.
+ */
 function spriteOwner(id: string): string {
-  const suffix = [FLASH_SUFFIX, BEACON_SUFFIX].find((end) => id.endsWith(end));
-  return suffix ? id.slice(0, -suffix.length) : id;
+  const mark = id.indexOf("#");
+  return mark < 0 ? id : id.slice(0, mark);
 }
 
 interface Asset extends ShipAsset, EnemyFrame {
@@ -192,6 +201,10 @@ export class PrototypeScene extends Phaser.Scene {
   private enemyJets!: Phaser.GameObjects.Graphics;
   private enemyArt = new Map<string, EnemyArt<Asset>>();
   private enemySprites = new Map<string, Phaser.GameObjects.Image>();
+  private hitFlashes = new HitFlashes();
+  // A heavy's part frames load on demand, once per archetype.
+  private partAssets: Asset[] = [];
+  private partLoads = new Set<string>();
   private stationArt: StationArt<Asset> | undefined;
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   private stardustArt: StardustArt<Asset> | undefined;
@@ -271,12 +284,20 @@ export class PrototypeScene extends Phaser.Scene {
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
       }
+      const composed = composedArchetypes(manifest.assets);
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+        if (composed.has(archetype)) {
+          this.load.json(
+            `enemy-hardpoints-${archetype}`,
+            enemyHardpointsPath(archetype, frames[0]!),
+          );
+        }
       }
       for (const asset of manifest.assets) {
-        // Painted ship frames load for the scheme in use; thrust frames only without valid jets.
-        if (loadsOnDemand(asset)) {
+        // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
+        // and a heavy's part frames when that craft first appears.
+        if (loadsOnDemand(asset) || enemyPartFrame(asset)) {
           continue;
         }
         if (asset.path.endsWith(".svg")) {
@@ -359,11 +380,8 @@ export class PrototypeScene extends Phaser.Scene {
     if (!this.shipJets) {
       this.loadShipFrames(thrustFrames(manifest?.assets ?? []));
     }
-    // Archetypes without a complete loaded frame set keep their vector placeholders.
-    this.enemyArt = enemyArt(
-      (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),
-      enemyFrameSets(this.shipAssets),
-    );
+    this.partAssets = (manifest?.assets ?? []).filter(enemyPartFrame);
+    this.readEnemyArt();
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
     this.outpostArt = readOutpostArt(this.shipAssets);
@@ -961,6 +979,43 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /** Archetypes without a complete loaded frame set keep their vector placeholders. */
+  private readEnemyArt(): void {
+    this.enemyArt = enemyArt(
+      (archetype) => this.cache.json.get(`enemy-jets-${archetype}`),
+      (archetype) => this.cache.json.get(`enemy-hardpoints-${archetype}`),
+      composedArchetypes(this.partAssets),
+      this.shipAssets,
+      enemyFrameSets(this.shipAssets),
+    );
+  }
+
+  /**
+   * A heavy's hardpoint bases and turret tops load the first time that archetype is in flight, so
+   * their hundreds of frames never delay a screen that shows none. Until they load, the craft
+   * keeps its vector placeholder.
+   */
+  private loadEnemyParts(archetype: string): void {
+    this.partLoads.add(archetype);
+    const parts = this.partAssets.filter(
+      (asset) => asset.archetype === archetype && !this.textures.exists(asset.id),
+    );
+    if (parts.length === 0) {
+      return;
+    }
+    for (const part of parts) {
+      this.load.svg(part.id, part.path);
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      this.shipAssets = [
+        ...this.shipAssets,
+        ...parts.filter((part) => this.textures.exists(part.id)),
+      ];
+      this.readEnemyArt();
+    });
+    this.load.start();
+  }
+
   /**
    * The painted scheme in use, or null for Classic. A scheme's idle frames load the first
    * time it is used; until then the ship keeps Classic's frames.
@@ -1169,6 +1224,7 @@ export class PrototypeScene extends Phaser.Scene {
       }
     }
     const activeIds = new Set(flight.objects.map((object) => object.id));
+    this.hitFlashes.retain(activeIds, spriteOwner);
     for (const [id, sprite] of this.enemySprites) {
       if (!activeIds.has(spriteOwner(id))) {
         sprite.destroy();
@@ -1315,7 +1371,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
-  /** Authored frames already include perspective; jets are not clipped to the frame. */
+  /**
+   * Authored frames already include perspective; jets are not clipped to the frame. A composed
+   * craft draws its hull and hardpoint bases in the heading's layer order with intact turret
+   * tops at their aim, a hit hardpoint flashing white, and jets only from intact engines.
+   */
   private drawEnemySprite(
     art: EnemyArt<Asset>,
     point: Vec,
@@ -1323,26 +1383,36 @@ export class PrototypeScene extends Phaser.Scene {
     enemy: NonNullable<SpaceObject["enemy"]>,
   ): void {
     const frame = selectEnemyFrame(art, enemy.facing);
-    let sprite = this.enemySprites.get(id);
-    if (!sprite) {
-      sprite = this.add.image(0, 0, frame.id).setDepth(2);
-      this.enemySprites.set(id, sprite);
-    }
-    sprite
-      .setTexture(frame.id)
-      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
-      .setOrigin(frame.pivot.x, frame.pivot.y)
-      .setPosition(point.x, point.y)
-      .setRotation(0)
-      .setDepth(playDepth(point.y))
-      .setVisible(true);
+    const state = (hardpoint: string) => enemy.hardpoints.find((part) => part.id === hardpoint);
+    // A turret mount without hardpoint state, such as the retaliator's, aims with the hull
+    // weapon and stands while the hull does.
+    const pose: PartPose = {
+      aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
+      intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
+    };
+    composeEnemy(art, pose, frame).forEach((part, index) => {
+      const key = part.hardpoint === null ? id : `${id}#${part.layer}:${part.hardpoint}`;
+      const sprite = this.objectSprite(key, part.frame.id)
+        .setDisplaySize(part.frame.displayWidth!, part.frame.displayHeight!)
+        .setOrigin(part.frame.pivot.x, part.frame.pivot.y)
+        .setPosition(point.x + part.offset.x, point.y + part.offset.y)
+        // Parts keep the heading's layer order within the hull's screen depth.
+        .setDepth(playDepth(point.y) + index * 1e-7);
+      const hp = part.hardpoint === null ? undefined : state(part.hardpoint)?.hp;
+      if (
+        hp !== undefined &&
+        this.hitFlashes.observe(`${id}#${part.layer}:${part.hardpoint}`, hp, this.time.now)
+      ) {
+        sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+      }
+    });
     const speed = enemySpeedFraction(
       enemyCatalog[enemy.archetype],
       PROTOTYPE.tuning.maxSpeed,
       enemyEncounterTuning.speedCapRatio,
       enemy,
     );
-    for (const { alpha, color, points } of enemyJetTriangles(art, frame, speed)) {
+    for (const { alpha, color, points } of enemyJetTriangles(art, frame, speed, pose.intact)) {
       this.enemyJets.fillStyle(color, alpha);
       this.enemyJets.fillTriangle(
         point.x + points[0].x,
@@ -1742,6 +1812,10 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   private drawObject(object: SpaceObject): void {
+    // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
+    if (object.enemy && !this.partLoads.has(object.enemy.archetype)) {
+      this.loadEnemyParts(object.enemy.archetype);
+    }
     const point = this.project(object);
     const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
     const radius = definition

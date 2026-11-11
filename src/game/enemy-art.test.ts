@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import capitalHardpoints from "../../public/art/enemies/capital-hardpoints.json";
+import capitalJets from "../../public/art/enemies/capital-jets.json";
 import fighterJets from "../../public/art/enemies/fighter-jets.json";
+import frigateHardpoints from "../../public/art/enemies/frigate-hardpoints.json";
+import frigateJets from "../../public/art/enemies/frigate-jets.json";
 import interceptorJets from "../../public/art/enemies/interceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/retaliator-jets.json";
 import swarmJets from "../../public/art/enemies/swarm-jets.json";
@@ -9,24 +13,48 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
+  aimIndex,
+  composedArchetypes,
+  composeEnemy,
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
   enemyFrameSets,
+  enemyHardpointsPath,
   enemyJetsPath,
   enemyJetTriangles,
+  enemyPartFrame,
+  HIT_FLASH_MS,
+  HitFlashes,
+  type PartPose,
+  readHardpointLayout,
   selectEnemyFrame,
+  turretMuzzles,
 } from "./enemy-art.ts";
 import { jetLength } from "./ship-jets.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const files: Record<string, unknown> = {
+  capital: capitalJets,
   fighter: fighterJets,
+  frigate: frigateJets,
   interceptor: interceptorJets,
   retaliator: retaliatorJets,
   swarm: swarmJets,
 };
-const art = enemyArt((archetype) => files[archetype], enemyFrameSets(assets));
+const layouts: Record<string, unknown> = {
+  capital: capitalHardpoints,
+  frigate: frigateHardpoints,
+};
+const build = (frames: readonly EnemyFrame[], layout = (name: string) => layouts[name]) =>
+  enemyArt(
+    (archetype) => files[archetype],
+    layout,
+    composedArchetypes(assets),
+    frames,
+    enemyFrameSets(frames),
+  );
+const art = build(assets);
 const sector = (name: string) => art.get(name)!;
 const at = (degrees: number) => ({
   x: Math.cos((degrees * Math.PI) / 180),
@@ -35,7 +63,14 @@ const at = (degrees: number) => ({
 
 describe("enemy frame sets", () => {
   it("reads sixteen sized headings for each sector one archetype from Art's manifest", () => {
-    expect([...art.keys()].sort()).toEqual(["fighter", "interceptor", "retaliator", "swarm"]);
+    expect([...art.keys()].sort()).toEqual([
+      "capital",
+      "fighter",
+      "frigate",
+      "interceptor",
+      "retaliator",
+      "swarm",
+    ]);
     const sizes = Object.fromEntries(
       [...art].map(([name, set]) => {
         expect(set.frames).toHaveLength(16);
@@ -43,19 +78,43 @@ describe("enemy frame sets", () => {
         return [name, set.frames[0]!.displayWidth];
       }),
     );
-    expect(sizes).toEqual({ fighter: 42, interceptor: 38.5, retaliator: 84, swarm: 35 });
+    expect(sizes).toEqual({
+      capital: 210,
+      fighter: 42,
+      frigate: 168,
+      interceptor: 38.5,
+      retaliator: 84,
+      swarm: 35,
+    });
   });
 
-  it("leaves vector-only archetypes and non-enemy assets out", () => {
-    for (const name of ["frigate", "capital"]) {
-      expect(art.has(name)).toBe(false);
+  it("frames every catalog archetype, with parts only for the composed heavies", () => {
+    expect(Object.keys(enemyCatalog).filter((name) => !art.has(name))).toEqual([]);
+    expect([...art].filter(([, set]) => set.parts).map(([name]) => name)).toEqual([
+      "frigate",
+      "capital",
+    ]);
+  });
+
+  it("tells the heavies' part frames, which load after the scene starts, from hull headings", () => {
+    const parts = assets.filter(enemyPartFrame);
+    // Frigate: 3 hardpoints x 2 states + 1 top set; capital: 7 x 2 + 1; 16 frames each.
+    expect(parts).toHaveLength((6 + 1 + 14 + 1) * 16);
+    expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
+  });
+
+  it("keeps hardpoint bases and turret tops out of the hull heading sets", () => {
+    for (const set of art.values()) {
+      expect(set.frames.every((frame) => /^enemy-[a-z]+-\d+$/i.test(frame.id))).toBe(true);
     }
-    expect(Object.keys(enemyCatalog).filter((name) => art.has(name))).toHaveLength(4);
   });
 
   it("finds each archetype's jets file beside its frames", () => {
     expect(enemyJetsPath("fighter", sector("fighter").frames[3]!)).toBe(
       "/art/enemies/fighter-jets.json",
+    );
+    expect(enemyHardpointsPath("capital", sector("capital").frames[3]!)).toBe(
+      "/art/enemies/capital-hardpoints.json",
     );
   });
 });
@@ -82,6 +141,8 @@ describe("enemy jets", () => {
     ["fighter", 2, 96],
     ["interceptor", 1, 88],
     ["retaliator", 3, 192],
+    ["frigate", 2, 384],
+    ["capital", 2, 480],
   ] as const)("draws %s with %i mouths of two haloless layers", (name, mouths, frame) => {
     const set = sector(name);
     expect(set.jets?.frame).toBe(frame);
@@ -95,7 +156,7 @@ describe("enemy jets", () => {
     }
   });
 
-  it.each(["swarm", "fighter", "interceptor", "retaliator"])(
+  it.each(["swarm", "fighter", "interceptor", "retaliator", "frigate", "capital"])(
     "maps %s mouth geometry from frame pixels to display pixels about the pivot",
     (name) => {
       const set = sector(name);
@@ -193,12 +254,171 @@ describe("enemy art fallback", () => {
 
   it("draws frames without jets when the jets file is missing or mismatched", () => {
     const sets = new Map([["swarm", swarmFrames]]);
-    const absent = enemyArt(() => undefined, sets).get("swarm")!;
+    const none = () => undefined;
+    const absent = enemyArt(none, none, new Set(), swarmFrames, sets).get("swarm")!;
     expect(absent.jets).toBeUndefined();
     expect(enemyJetTriangles(absent, absent.frames[0]!, 1)).toEqual([]);
     const short = { ...swarmJets, headings: swarmJets.headings.slice(0, 8) };
-    expect(enemyArt(() => short, sets).get("swarm")!.jets).toBeUndefined();
-    const set: EnemyArt = enemyArt(() => swarmJets, sets).get("swarm")!;
+    expect(
+      enemyArt(() => short, none, new Set(), swarmFrames, sets).get("swarm")!.jets,
+    ).toBeUndefined();
+    const set: EnemyArt = enemyArt(() => swarmJets, none, new Set(), swarmFrames, sets).get(
+      "swarm",
+    )!;
     expect(set.jets?.headings).toHaveLength(16);
+  });
+
+  it("keeps a heavy's vector placeholder without a valid layout or every part frame", () => {
+    expect(build(assets, () => undefined).has("frigate")).toBe(false);
+    expect(build(assets, () => undefined).has("swarm")).toBe(true);
+    const noTop = assets.filter((asset) => asset.id !== "enemy-capital-turret-top-9");
+    expect(build(noTop).has("capital")).toBe(false);
+    expect(build(noTop).has("frigate")).toBe(true);
+    const noStump = assets.filter((asset) => asset.id !== "enemy-frigate-port-destroyed-4");
+    expect(build(noStump).has("frigate")).toBe(false);
+    // Before its part frames load, a heavy keeps its placeholder rather than a bare hull.
+    const unloaded = assets.filter((asset) => !enemyPartFrame(asset));
+    expect(build(unloaded).has("capital")).toBe(false);
+    expect(build(unloaded).has("fighter")).toBe(true);
+  });
+
+  it("rejects a layout whose heading order or turret pivots disagree with its hardpoints", () => {
+    expect(readHardpointLayout("frigate", frigateHardpoints)).toBeDefined();
+    expect(readHardpointLayout("capital", frigateHardpoints)).toBeUndefined();
+    const copy = () => JSON.parse(JSON.stringify(frigateHardpoints)) as typeof frigateHardpoints;
+    const reordered = copy();
+    reordered.headings[3]!.order = ["hull", "port", "engine"];
+    expect(readHardpointLayout("frigate", reordered)).toBeUndefined();
+    const unpivoted = copy();
+    delete (unpivoted.headings[3]!.hardpoints[1] as { pivot?: number[] }).pivot;
+    expect(readHardpointLayout("frigate", unpivoted)).toBeUndefined();
+    const fewerAims = copy();
+    fewerAims.tops.gun = fewerAims.tops.gun.slice(0, 15);
+    expect(readHardpointLayout("frigate", fewerAims)).toBeUndefined();
+  });
+});
+
+const world = (degrees: number) => at(degrees);
+const pose = (destroyed: readonly string[] = [], aim = world(0)): PartPose => ({
+  aim: () => aim,
+  intact: (hardpoint) => !destroyed.includes(hardpoint),
+});
+
+describe("composed heavies", () => {
+  const frigate = sector("frigate");
+  const capital = sector("capital");
+
+  it.each([2, 6, 10, 14])("draws frigate heading %i in its layer order", (heading) => {
+    const hull = frigate.frames[heading]!;
+    const layout = frigateHardpoints.headings[heading]!;
+    const sprites = composeEnemy(frigate, pose(), hull);
+    // Every hardpoint's base in the heading's order, with each gun's top straight after it.
+    const expected = layout.order.flatMap((id) =>
+      id === "hull" ? ["hull"] : id === "engine" ? [`${id}:base`] : [`${id}:base`, `${id}:top`],
+    );
+    expect(
+      sprites.map((part) => (part.hardpoint ? `${part.hardpoint}:${part.layer}` : "hull")),
+    ).toEqual(expected);
+    expect(sprites.find((part) => part.hardpoint === null)!.frame.id).toBe(
+      `enemy-frigate-${heading}`,
+    );
+  });
+
+  it("centres each base on its anchor and each top on its pivot, in display px", () => {
+    const hull = capital.frames[4]!;
+    const scale = 210 / 480;
+    const placed = capitalHardpoints.headings[4]!.hardpoints.find(
+      (part) => part.id === "weapon-left",
+    )!;
+    const sprites = composeEnemy(capital, pose(), hull);
+    const base = sprites.find((part) => part.hardpoint === "weapon-left" && part.layer === "base")!;
+    const top = sprites.find((part) => part.hardpoint === "weapon-left" && part.layer === "top")!;
+    expect(base.frame.id).toBe("enemy-capital-weapon-left-intact-4");
+    expect(base.offset.x).toBeCloseTo((placed.anchor[0]! - 240) * scale, 9);
+    expect(base.offset.y).toBeCloseTo((placed.anchor[1]! - 240) * scale, 9);
+    expect(top.offset.y).toBeCloseTo((placed.pivot![1]! - 240) * scale, 9);
+  });
+
+  it("aims each top by world angle, whatever the hull heading", () => {
+    expect(aimIndex(world(0))).toBe(0);
+    expect(aimIndex(world(22.5 * 5))).toBe(5);
+    expect(aimIndex(world(-22.5))).toBe(15);
+    for (const heading of [0, 7, 12]) {
+      const tops = composeEnemy(capital, pose([], world(22.5 * 9)), capital.frames[heading]!)
+        .filter((part) => part.layer === "top")
+        .map((part) => part.frame.id);
+      expect(tops).toEqual(Array(4).fill("enemy-capital-turret-top-9"));
+    }
+  });
+
+  it("draws a destroyed hardpoint's stump with no turret top", () => {
+    const sprites = composeEnemy(frigate, pose(["port"]), frigate.frames[6]!);
+    expect(
+      sprites.filter((part) => part.hardpoint === "port").map((part) => part.frame.id),
+    ).toEqual(["enemy-frigate-port-destroyed-6"]);
+    expect(sprites.filter((part) => part.layer === "top")).toHaveLength(1);
+  });
+
+  it("places each barrel tip at the pivot plus the top's muzzle at its aim", () => {
+    const hull = capital.frames[2]!;
+    const scale = 210 / 480;
+    const pivot = capitalHardpoints.headings[2]!.hardpoints.find(
+      (part) => part.id === "weapon-right",
+    )!.pivot!;
+    const muzzles = capitalHardpoints.tops.turret[3]!.muzzles;
+    const tips = turretMuzzles(capital, pose([], world(22.5 * 3)), hull, "weapon-right");
+    expect(tips).toHaveLength(2);
+    expect(tips[1]!.x).toBeCloseTo((pivot[0]! + muzzles[1]![0]! - 240) * scale, 9);
+    expect(tips[1]!.y).toBeCloseTo((pivot[1]! + muzzles[1]![1]! - 240) * scale, 9);
+    expect(turretMuzzles(capital, pose(["weapon-right"]), hull, "weapon-right")).toEqual([]);
+    expect(turretMuzzles(capital, pose(), hull, "command")).toEqual([]);
+  });
+
+  it("draws each jet mouth only while its engine is intact", () => {
+    const hull = capital.frames[2]!;
+    const intact = (destroyed: string[]) => (id: string) => !destroyed.includes(id);
+    expect(enemyJetTriangles(capital, hull, 1, intact([]))).toHaveLength(4);
+    expect(enemyJetTriangles(capital, hull, 1, intact(["engine-left"]))).toHaveLength(2);
+    expect(enemyJetTriangles(frigate, frigate.frames[0]!, 1, intact(["engine"]))).toEqual([]);
+  });
+
+  it("composes a hull plus an aimed top for a turret mount without hardpoint state", () => {
+    // A retaliator-like craft: one turret top over the hull, aimed with the hull weapon.
+    const hull = sector("retaliator").frames[0]!;
+    const top = { ...hull, aimIndex: 0, top: "gun" };
+    const tops = Array.from({ length: 16 }, (_, index) => ({
+      ...top,
+      aimIndex: index,
+      id: `top-${index}`,
+    }));
+    const mounted: EnemyArt = {
+      ...sector("retaliator"),
+      parts: {
+        bases: new Map([["turret", new Map()]]),
+        layout: {
+          frame: 192,
+          hardpoints: [{ id: "turret", role: "turret", states: [], top: "gun" }],
+          headings: Array.from({ length: 16 }, () => ({
+            order: ["hull", "turret"],
+            parts: new Map([["turret", { anchor: { x: 96, y: 96 }, pivot: { x: 96, y: 90 } }]]),
+          })),
+          tops: new Map([["gun", Array.from({ length: 16 }, () => [{ x: 0, y: 10 }])]]),
+        },
+        tops: new Map([["gun", tops]]),
+      },
+    };
+    const sprites = composeEnemy(mounted, pose([], world(22.5 * 4)), hull);
+    expect(sprites.map((part) => part.frame.id)).toEqual(["enemy-retaliator-0", "top-4"]);
+    expect(sprites[1]!.offset.y).toBeCloseTo(-6 * (84 / 192), 9);
+  });
+
+  it(`flashes a hit hardpoint for ${HIT_FLASH_MS} ms after its hit points drop`, () => {
+    const flashes = new HitFlashes();
+    expect(flashes.observe("a#port", 3, 0)).toBe(false);
+    expect(flashes.observe("a#port", 2, 16)).toBe(true);
+    expect(flashes.observe("a#port", 2, 16 + HIT_FLASH_MS - 1)).toBe(true);
+    expect(flashes.observe("a#port", 2, 16 + HIT_FLASH_MS)).toBe(false);
+    flashes.retain(new Set(), (key) => key.split("#")[0]!);
+    expect(flashes.observe("a#port", 1, 500)).toBe(false);
   });
 });
