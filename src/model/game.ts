@@ -37,6 +37,8 @@ import {
 import { type GalaxyMap, galaxyMap, NO_LANDMARKS } from "./map.ts";
 import {
   donate,
+  type DonationRequest,
+  donationRequest,
   type DonationResult,
   projectAllies,
   projectsOffered,
@@ -444,9 +446,22 @@ export class GameModel {
     }
     return projectViews(PROJECTS[sector], this.state.progress[sector]);
   }
+  /** The donation confirm for a docked galaxy's project (projects.ts). */
+  donationRequest(id: string): DonationRequest {
+    const sector = this.state.flight?.sector;
+    if (!this.state.docked || !sector) {
+      return { kind: "refused" };
+    }
+    return donationRequest(
+      PROJECTS[sector],
+      this.state.progress[sector],
+      this.state.economy.stardust,
+      id,
+    );
+  }
   /**
-   * One Donate press toward a docked galaxy's project. Funding the last part closes the station
-   * card and queues the speaker's thank-you line in the conversation box.
+   * A confirmed donation toward a docked galaxy's project. Funding the last part closes the
+   * station card and queues the speaker's thank-you line in the conversation box.
    */
   donate(id: string): DonationResult {
     const sector = this.state.flight?.sector;

@@ -7,8 +7,12 @@ export type ProjectAlly = "chase" | "current" | "escort";
 /** A community project Ada can fund with Stardust once its galaxy's chapter is complete. */
 export interface CommunityProject {
   readonly ally: ProjectAlly;
+  /** The suffix of its effect line's and description's label keys (projectEffect, projectAbout). */
+  readonly copy: string;
   /** Stardust to fund it in full, paid in parts. */
   readonly cost: number;
+  /** Its shop glyph in the UI manifest (art/projects.md). */
+  readonly icon: string;
   readonly id: string;
   readonly name: string;
   /** Where its world change shows: the site's destination or landmark. */
@@ -25,7 +29,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
   1: [
     {
       ally: "escort",
+      copy: "Greenhouse",
       cost: 500,
+      icon: "icon-project-greenhouse-ring",
       id: "greenhouseRing",
       name: "Greenhouse ring",
       site: "growers",
@@ -34,7 +40,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     },
     {
       ally: "chase",
+      copy: "Crane",
       cost: 400,
+      icon: "icon-project-workshop-crane",
       id: "workshopCrane",
       name: "Workshop crane",
       site: "workshop",
@@ -43,7 +51,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     },
     {
       ally: "escort",
+      copy: "Beacons",
       cost: 300,
+      icon: "icon-project-salvage-beacons",
       id: "salvageBeacons",
       name: "Salvage beacons",
       site: "salvagers",
@@ -54,7 +64,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
   2: [
     {
       ally: "chase",
+      copy: "DockingBay",
       cost: 600,
+      icon: "icon-project-docking-bay",
       id: "dockingBay",
       name: "Second docking bay",
       site: "hub",
@@ -63,7 +75,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     },
     {
       ally: "escort",
+      copy: "HubRepairs",
       cost: 400,
+      icon: "icon-project-hub-repairs",
       id: "hubRepairs",
       name: "Hub repairs",
       site: "hub",
@@ -74,7 +88,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
   3: [
     {
       ally: "current",
+      copy: "Nursery",
       cost: 500,
+      icon: "icon-project-nursery-beacon",
       id: "nurseryBeacon",
       name: "Nursery beacon",
       site: "family",
@@ -83,7 +99,9 @@ export const PROJECTS: Readonly<Record<SectorId, readonly CommunityProject[]>> =
     },
     {
       ally: "escort",
+      copy: "CurrentBuoys",
       cost: 400,
+      icon: "icon-project-current-buoys",
       id: "currentBuoys",
       name: "Current-map buoys",
       site: "whalesCurrent",

@@ -6,25 +6,35 @@ import type { SectorProgress } from "./types.ts";
 // flights. A funded project plays its thank-you line, changes the world at its site, counts
 // toward achievements and makes one ally for the finale. No project changes combat outside it.
 
-/** What one Donate press pays at most. */
-export const DONATION_STEP = 100;
-
 export type ProjectProgress = Pick<SectorProgress, "donated" | "resolved">;
 
 /** A project as the station shows it: what is paid, what remains, and whether it is funded. */
 export interface ProjectView {
+  /** Its effect line's and description's label key suffix. */
+  readonly copy: string;
   readonly cost: number;
   readonly funded: boolean;
+  readonly icon: string;
   readonly id: string;
   readonly name: string;
   readonly paid: number;
   readonly remaining: number;
 }
 
-/** A Donate press: refused, or paid, with whether that payment funded the project. */
+/** A donation: refused, or paid, with whether that payment funded the project. */
 export type DonationResult =
   | { readonly kind: "refused" }
   | { readonly amount: number; readonly funded: boolean; readonly kind: "paid" };
+
+/** What the donation confirm shows: the amount it pays, and what is left and still needed after. */
+export type DonationRequest =
+  | { readonly kind: "refused" }
+  | {
+      readonly amount: number;
+      readonly kind: "confirm";
+      readonly left: number;
+      readonly stillNeeded: number;
+    };
 
 /** Projects are offered once the galaxy's chapter is complete: its space story and home page. */
 export function projectsOffered(progress: ProjectProgress): boolean {
@@ -36,20 +46,38 @@ export function projectViews(
   projects: readonly CommunityProject[],
   progress: ProjectProgress,
 ): ProjectView[] {
-  return projects.map(({ cost, id, name }) => {
+  return projects.map(({ copy, cost, icon, id, name }) => {
     const paid = Math.min(cost, progress.donated[id] ?? 0);
-    return { cost, funded: paid >= cost, id, name, paid, remaining: cost - paid };
+    return { copy, cost, funded: paid >= cost, icon, id, name, paid, remaining: cost - paid };
   });
 }
 
-/** What one Donate press costs: the step, or less when less remains. */
-export function donationAmount(view: ProjectView): number {
-  return Math.min(DONATION_STEP, view.remaining);
+/** What a donation pays: as much of the remaining cost as the balance covers. */
+export function donationAmount(view: ProjectView, balance: number): number {
+  return Math.max(0, Math.min(view.remaining, Math.floor(balance)));
 }
 
 /**
- * One Donate press toward a project, paid from balance when it covers the press. Refused when
- * projects are not offered, the project is unknown or funded, or the balance falls short.
+ * The confirm for a donation toward a project, or refused when projects are not offered, the
+ * project is unknown or funded, or the balance is empty.
+ */
+export function donationRequest(
+  projects: readonly CommunityProject[],
+  progress: ProjectProgress,
+  balance: number,
+  id: string,
+): DonationRequest {
+  const view = projectViews(projects, progress).find((entry) => entry.id === id);
+  const amount =
+    view && !view.funded && projectsOffered(progress) ? donationAmount(view, balance) : 0;
+  return view && amount > 0
+    ? { amount, kind: "confirm", left: balance - amount, stillNeeded: view.remaining - amount }
+    : { kind: "refused" };
+}
+
+/**
+ * A confirmed donation toward a project: it pays min(balance, remaining), so a short balance
+ * makes a part payment that persists. Refused as donationRequest refuses.
  */
 export function donate(
   projects: readonly CommunityProject[],
@@ -57,16 +85,12 @@ export function donate(
   balance: number,
   id: string,
 ): DonationResult {
-  const view = projectViews(projects, progress).find((entry) => entry.id === id);
-  if (!view || view.funded || !projectsOffered(progress)) {
-    return { kind: "refused" };
+  const request = donationRequest(projects, progress, balance, id);
+  if (request.kind === "refused") {
+    return request;
   }
-  const amount = donationAmount(view);
-  if (amount > balance) {
-    return { kind: "refused" };
-  }
-  progress.donated[id] = view.paid + amount;
-  return { amount, funded: amount === view.remaining, kind: "paid" };
+  progress.donated[id] = (progress.donated[id] ?? 0) + request.amount;
+  return { amount: request.amount, funded: request.stillNeeded === 0, kind: "paid" };
 }
 
 /** The galaxy's funded projects, which count toward achievements. */

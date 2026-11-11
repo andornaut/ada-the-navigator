@@ -304,15 +304,6 @@ export const STATION_STYLE = `
   background:url('${SPRITES}icon-shop-check.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
-/* A project's Donate is an action, not a held item: no check, in the label colour. Funded keeps
-   the check. */
-.ada-controls .ada-donate{
-  color:${TEXT_TOKENS.label}
-}
-.ada-controls .ada-donate::before{
-  display:none
-}
-
 /* Measuring: rows at their natural widths, off screen. */
 .ada-controls .ada-shop-measure{
   position:absolute;
@@ -333,7 +324,6 @@ export interface StationLabels {
   readonly close: string;
   readonly confirmBuy: string;
   readonly confirmCancel: string;
-  readonly donate: string;
   readonly inUse: string;
   readonly owned: string;
   readonly projectFunded: string;
@@ -357,18 +347,14 @@ export type StationRowState = "forSale" | "unaffordable" | "selectable" | "owned
 
 /** An item's glyph (art/shop-icons.md). */
 export type ItemGlyph =
-  | { readonly kind: "blank" }
   | { readonly kind: "sprite"; readonly key: string }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
 
 /** One shop row as shown; `key` names the item to the caller. */
 export interface StationRow {
-  /**
-   * A community project's row: Donate pays a part at each press with no confirm, and a funded
-   * one (owned) shows Funded.
-   */
-  readonly donate?: boolean;
+  /** A community project's row, whose owned state reads Funded (art/projects.md). */
+  readonly project?: boolean;
   readonly glyph: ItemGlyph;
   /** The paint group follows the item group on the Ship tab. */
   readonly group: "items" | "paint";
@@ -382,9 +368,13 @@ export interface StationRow {
 export type StationRequest =
   | {
       readonly about: string;
+      /** The primary action's label: Buy, or Donate for a project. */
+      readonly action: string;
       readonly kind: "confirm";
       readonly left: string;
       readonly price: number;
+      /** A donation leaving part unpaid: "{amount} still needed after". */
+      readonly stillNeeded?: string;
       readonly title: string;
     }
   | { readonly kind: "refused" };
@@ -393,8 +383,6 @@ export interface StationOptions {
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
-  /** One Donate press toward a project row; a refused press plays the refusal cue. */
-  readonly donate: (key: string) => "paid" | "refused";
   /** Whether the Projects tab shows: once the galaxy's projects are offered. */
   readonly projectsShown: () => boolean;
   readonly labels: StationLabels;
@@ -433,13 +421,6 @@ export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
 }
 
 function glyphElement(glyph: ItemGlyph): HTMLElement {
-  // CLEANUP (added 2026-11-11): a project's well is blank until Art draws project icons.
-  if (glyph.kind === "blank") {
-    const node = document.createElement("span");
-    node.className = "ada-glyph";
-    node.setAttribute("aria-hidden", "true");
-    return node;
-  }
   if (glyph.kind === "swatch") {
     const image = document.createElement("img");
     image.className = "ada-glyph-swatch";
@@ -611,12 +592,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const slot = document.createElement("span");
     slot.className = "ada-shop-slot";
     const trailing = document.createElement("span");
-    if (row.donate) {
-      trailing.className = row.state === "owned" ? "ada-owned" : "ada-owned ada-donate";
-      trailing.textContent = row.state === "owned" ? labels.projectFunded : labels.donate;
-    } else if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
+    if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
       trailing.className = "ada-owned";
-      trailing.textContent = row.state === "inUse" ? labels.inUse : labels.owned;
+      trailing.textContent =
+        row.state === "inUse" ? labels.inUse : row.project ? labels.projectFunded : labels.owned;
     } else {
       trailing.className = "ada-price";
       trailing.textContent = row.price === null ? "" : String(row.price);
@@ -628,16 +607,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [row.name, row.level, trailing.textContent].filter(Boolean).join(", "),
     );
     node.addEventListener("click", () => {
-      if (row.donate) {
-        if (row.state === "owned") {
-          return;
-        }
-        if (options.donate(row.key) === "refused") {
-          refuse(node, options.reducedMotion());
-        }
-        render();
-        return;
-      }
       const action = rowAction(row.state);
       if (action === "select") {
         options.select(row.key);
@@ -761,7 +730,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (request.about) {
       parts.push(prose("ada-confirm-about", request.about));
     }
-    parts.push(price, prose("ada-confirm-left", request.left), confirmActions);
+    parts.push(price, prose("ada-confirm-left", request.left));
+    if (request.stillNeeded) {
+      parts.push(prose("ada-confirm-left", request.stillNeeded));
+    }
+    parts.push(confirmActions);
+    buy.textContent = request.action;
     confirmCard.body.replaceChildren(...parts);
     confirmModal.hidden = false;
     confirmCard.fit();

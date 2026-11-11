@@ -208,6 +208,11 @@ function screenToWorld(vector: Vec): Vec {
     : { x: (x / magnitude) * strength, y: (y / magnitude) * strength };
 }
 
+/** A Projects row's project id from its shop key, "project:<id>"; null for a shop item. */
+function projectId(key: string): string | null {
+  return key.startsWith("project:") ? key.slice("project:".length) : null;
+}
+
 export class PrototypeScene extends Phaser.Scene {
   private model = new GameModel(PROTOTYPE, readSave());
   private shell!: StoryShell;
@@ -611,20 +616,18 @@ export class PrototypeScene extends Phaser.Scene {
         amount: this.model.state.economy.stardust,
         text: amount(this.model.state.economy.stardust),
       }),
-      buy: (key) => apply(() => this.model.buy(item(key))),
-      // A project row's key is its project id after "project:".
-      donate: (key) => {
-        let result: "paid" | "refused" = "refused";
+      buy: (key) =>
         apply(() => {
-          result = this.model.donate(key.slice("project:".length)).kind;
-        });
-        return result;
-      },
+          if (projectId(key)) {
+            this.model.donate(projectId(key)!);
+          } else {
+            this.model.buy(item(key));
+          }
+        }),
       labels: {
         close: label("close"),
         confirmBuy: label("confirmBuy"),
         confirmCancel: label("confirmCancel"),
-        donate: label("donate"),
         inUse: label("inUse"),
         owned: label("owned"),
         projectFunded: label("projectFunded"),
@@ -640,11 +643,34 @@ export class PrototypeScene extends Phaser.Scene {
       projectsShown: () => this.model.projects !== null,
       reducedMotion: () => this.controls.reducedMotion(),
       request: (key) => {
+        const project = projectId(key);
+        if (project) {
+          const view = this.model.projects?.find(({ id }) => id === project);
+          const donation = this.model.donationRequest(project);
+          return donation.kind === "refused" || !view
+            ? { kind: "refused" }
+            : {
+                about: label(`projectAbout${view.copy}`),
+                action: label("donate"),
+                kind: "confirm",
+                left: fill(label("confirmLeft"), { amount: amount(donation.left) }),
+                price: donation.amount,
+                ...(donation.stillNeeded > 0
+                  ? {
+                      stillNeeded: fill(label("donateStillNeeded"), {
+                        amount: amount(donation.stillNeeded),
+                      }),
+                    }
+                  : {}),
+                title: fill(label("donateTitle"), { name: view.name }),
+              };
+        }
         const request = this.model.requestPurchase(item(key));
         return request.kind === "refused"
           ? request
           : {
               about: itemAbout(labels, item(key)),
+              action: label("confirmBuy"),
               kind: "confirm",
               left: fill(label("confirmLeft"), { amount: amount(request.left) }),
               price: request.price,
@@ -653,15 +679,24 @@ export class PrototypeScene extends Phaser.Scene {
       },
       rows: (tab) =>
         tab === "projects"
-          ? (this.model.projects ?? []).map((project) => ({
-              donate: true,
-              glyph: { kind: "blank" },
+          ? // A project row: its effect line until something is paid, then its progress, and a
+            // price showing what remains; unaffordable only at a balance of 0 (art/projects.md).
+            (this.model.projects ?? []).map((project) => ({
+              glyph: { key: project.icon, kind: "sprite" },
               group: "items",
               key: `project:${project.id}`,
-              level: fill(label("projectProgress"), { paid: project.paid, price: project.cost }),
+              level:
+                project.paid > 0
+                  ? fill(label("projectProgress"), { paid: project.paid, price: project.cost })
+                  : label(`projectEffect${project.copy}`),
               name: project.name,
-              price: null,
-              state: project.funded ? "owned" : "forSale",
+              price: project.funded ? null : project.remaining,
+              project: true,
+              state: project.funded
+                ? "owned"
+                : this.model.state.economy.stardust > 0
+                  ? "forSale"
+                  : "unaffordable",
             }))
           : this.model
               .shopRows(tab)

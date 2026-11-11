@@ -29,8 +29,9 @@ Heavy Missile, Scattershot and Phaser). Each has three levels and fires from the
 ship's nose without ammunition. Enemies, asteroids and discovery caches release
 Stardust, which station shops exchange for weapons, weapon levels, ship upgrades
 and paint schemes; enemies also drop weapons rarely. Once a galaxy's chapter is
-complete, its stations' Projects tab takes donations toward community projects,
-100 Stardust a press. The Paused card's Map shows
+complete, its stations' Projects tab takes donations toward community projects:
+each confirmed donation pays what the balance covers, and part payments persist.
+The Paused card's Map shows
 the galaxy's discovered destinations and stations and how much of it is mapped;
 Travel here reaches a chosen one outside danger. Space draws
 authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
