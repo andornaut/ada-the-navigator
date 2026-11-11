@@ -50,7 +50,7 @@ Optional questions:
 - "What do you find?" Salvager: "Things people have lost or left behind. Plenty
   can be used again."
 
-Toronto resolution:
+Home resolution:
 
 Ada: "What jobs would help the garden get started?"
 Organizer: "Planting, finding tools, watering... and showing new gardeners what to do."
@@ -72,7 +72,7 @@ Objectives, in order:
 2. Take food to the workshop.
 3. Take the tool kit to the salvagers.
 4. Bring spare parts to the workshop.
-5. Return to Toronto when ready.
+5. Return home when ready.
 
 ## Chapter two: the mining hub
 
@@ -112,7 +112,7 @@ Visitor: "There's room for everyone here. Let them dock."
 Closing: "The other ships stay nearby. The miner docks and unloads."
 Miner: "Thank you for staying. I'll see you here next trip."
 
-Toronto resolution:
+Home resolution:
 
 Ada, privately: "I saw what happened. Would you like to join us?"
 Child: "I'd like that."
@@ -137,7 +137,7 @@ Objectives:
 - Keep mining; get to know the miners when you return.
 - Speak with the miner and regular visitors.
 - Use the station interaction to join the approach when everyone is ready.
-- Return to Toronto when ready.
+- Return home when ready.
 
 ## Chapter three: the whale
 
@@ -177,7 +177,7 @@ Ada: "I found your family. Here are their coordinates."
 Whale: "Now I know where to go. Thank you for listening."
 Closing: "The whale departs. Soon, the family is traveling together again."
 
-Toronto resolution:
+Home resolution:
 
 Closing: "Ada returns. The dog is still by the door."
 
@@ -196,13 +196,14 @@ Objectives, in order:
 3. Talk with the whale.
 4. Explore to find its family.
 5. Return to the whale and share the coordinates.
-6. Return to Toronto when ready.
+6. Return home when ready.
 
 ## Shared interface text
 
 - Use actions: Talk, Deliver, Deposit, Continue.
-- Travel: Travel, Toronto, Discovered destinations.
-- Travel unavailable: Travel is unavailable while you are in danger.
+- Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.
+- Travel card: Discovered destinations.
+- Unavailable in danger: Unavailable while you are in danger.
 - Cargo: Cargo full. Deposit at the station when ready.
 - Shield depletion: Your ship warped you home to recharge. Your story progress is saved.
 - Sector four: Story in development.
@@ -210,3 +211,13 @@ Objectives, in order:
 
 Sector four has no playable story or invented finale in this prototype. Keep its
 unfinished status explicit in development builds.
+
+## Landing page
+
+- Pitch: Explore space. Bring new ideas home.
+- Subline and meta description: Join Ada on space adventures and help her community
+  back home with what she learns.
+- Mobile: Move with the left stick. Aim and fire with the right stick. Tap Use to
+  interact.
+- Desktop: Move with WASD. Aim and fire with the arrow keys. Press Space to
+  interact and Escape to pause.

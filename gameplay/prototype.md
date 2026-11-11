@@ -14,17 +14,18 @@ Space uses monochrome shapes and basic placeholders except Ada's small ship.
 Its sprite is white and blue, an elongated triangle with one front point, two
 rear points, twin thrusters at those rear points, a small tail and a compact
 canopy with room for Ada and her dog. Keep the ship small relative to the viewport.
-Toronto characters and Ada may reuse Archie's sprites wholesale. Ada is a
+Home characters and Ada may reuse Archie's sprites wholesale. Ada is a
 brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply
 to the prototype; do not modify the source games.
 
 ## Story progression
 
-Toronto is an interactive story styled after choose-your-own-adventure books.
+Home is an interactive story styled after choose-your-own-adventure books.
+Player-visible text calls Ada's home "home" or "Earth" and never names her city.
 Different responses and approaches converge on each chapter's resolution;
 choices cannot cause permanent failure. Complete the current space quest and
-its Toronto resolution to unlock the next sector. Unlocked sectors remain
+its home resolution to unlock the next sector. Unlocked sectors remain
 replayable. Completing a quest invites a return home without forcing immediate
 exit from space.
 
@@ -80,7 +81,7 @@ is expressed through her actions rather than a speech.
 
 ### Sector four: deferred conclusion
 
-A concluding Toronto chapter draws on the first three experiences without adding
+A concluding home chapter draws on the first three experiences without adding
 another community problem. The recurring hostile faction is confronted in this
 sector, but its motives, finale, enemies and resolution remain undesigned.
 
@@ -110,8 +111,20 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
-- Settings use Chibi's gear control. Weapon and settings controls use icons inspired
-  by Chibi, with accessible labels.
+- The space screen shows only essentials: the joysticks, weapon icons, shield bar,
+  Stardust count and a pause button. There is no travel or destinations panel and
+  no settings gear in space.
+- Pause, as in Chibi: the pause button at the top left opens a card titled
+  "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
+  one shape, stacked: "Resume" (primary), "Travel", "Settings" and "Return home".
+  Travel opens the discovered destinations; choosing one teleports there. Return
+  home ends the flight and takes Ada home to Earth and sector selection, with story
+  progress saved and no warp cost. While Ada is in danger, Travel and Return home
+  stay visible but disabled, refuse with the shared refusal feedback, and the card
+  shows "Unavailable while you are in danger." The close X, an outside tap, back
+  and Escape resume. Settings opened from the pause card returns to it when closed.
+  On the start screen, Settings opens from its own button, as in Chibi.
+- Weapon and pause controls use icons inspired by Chibi, with accessible labels.
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
@@ -139,7 +152,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   install steps covering the start screen suppress the offer.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
   the cheats card, the station card or shop) or defers the update offer; during
-  flight with nothing open it pauses, and with the pause card open it resumes.
+  flight with nothing open it opens the pause card, and with the pause card open it
+  resumes.
   On the start screen with nothing open, and where the browser cannot hand back to
   the game, back is the browser's own.
 - The landing page, as in Archie, shows an "Install" button beside Play while the
@@ -174,7 +188,7 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.
-- Shield depletion makes Ada's ship quantum warp her home to Toronto and sector
+- Shield depletion makes Ada's ship quantum warp her home to Earth and sector
   selection to recharge. The equipped weapon is lost unless it is Basic, and
   recharging costs a flat Stardust fee. Story progress persists; the next flight
   generates a new layout.
@@ -197,7 +211,7 @@ still, teleporting and revisiting chunks do not advance fresh-exploration pacing
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
-available only outside immediate danger. Ada can return voluntarily to Toronto.
+available only outside immediate danger. Ada can return home voluntarily from the pause card.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
 
@@ -295,7 +309,7 @@ does not define sector four's story or conclusion.
 Check independent move/aim controls, shield recharge, both shield-depletion outcomes,
 safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
-interrupted-flight resume. Verify the three Toronto resolutions unlock sectors
+interrupted-flight resume. Verify the three home resolutions unlock sectors
 in order and completed stories remain resolved on replay.
 
 Use rudimentary visuals to evaluate these behaviors before polishing graphics.
