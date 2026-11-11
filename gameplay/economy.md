@@ -69,7 +69,8 @@ power-ups.
 
 When the shield is depleted, Ada's ship uses its quantum warp to escape to Toronto
 so it can recharge. The flight ends and story progress is saved. The warp
-permanently loses the equipped weapon unless it is Basic, and recharging costs a
+permanently loses the equipped weapon unless it is Basic; its upgrade levels are
+kept and return if Ada buys or finds that weapon again, and recharging costs a
 flat 10 Stardust, never taking Stardust below zero.
 
 ## Player strings
