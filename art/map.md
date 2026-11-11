@@ -83,8 +83,9 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
   view a two-line panel with the reason line (108) tops at 236 (233 with phone
   insets), at least `SPACING.gap` below it. The three-line panel with the
   reason line (128) tops at 216 (213), level with the column, so the two stay
-  apart only across: at the 720 base the centred panel clears the column's
-  left edge (664) while it is at most 608 wide.
+  apart only across. The panel's width is capped at
+  `2 * (column left - SPACING.gap - view centre)`, 592 at the 720 base
+  (`2 * (664 - 8 - 360)`), so it always clears the column.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
 ### Place panel
@@ -131,7 +132,9 @@ left-aligned at the inner left) shows while Travel here is unavailable.
   `28 + markGap + text + 8`, plus `markGap + button` when Travel here shows;
   `text` is the widest of its lines. `reason` is the widest reason string
   while a reason shows (both share one cell), and absent otherwise. `maxWidth`
-  is the width of `safeRect(insets, SPACING.pageInset, view)`.
+  is `min(safe width, column cap)`: the width of
+  `safeRect(insets, SPACING.pageInset, view)` and the column cap above. Text
+  wraps inside it and the panel's measured height grows with it.
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
   line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
   width `clamp(minWidth, maxWidth, text + 32)`.
