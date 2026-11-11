@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  asteroidKillSeconds,
   DEFAULT_BEHAVIOUR,
   generateChunk,
   onScreen,
   runScenario,
   scenarioEconomy,
 } from "../../tools/pacing-sim.ts";
+import { ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { sectorEncounters } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
+import { weaponAt } from "../data/weapon-catalog.ts";
+import { ASTEROID_SHAPES, asteroidSize } from "../model/asteroids.ts";
+import { planChunk } from "../model/chunk-templates.ts";
 import { createFlight } from "../model/flight.ts";
 
 const spawnWeights = PROTOTYPE.tuning.flight.spawnWeights;
@@ -32,7 +38,9 @@ describe("pacing simulation world", () => {
         for (let x = -2; x <= 2; x++) {
           for (let y = -2; y <= 2; y++) {
             const chunk = generateChunk(world, { x: 0, y: 0 }, x, y);
-            expected.rocks.push(...chunk.rocks.map((rock) => `${rock.id}@${rock.x},${rock.y}`));
+            expected.rocks.push(
+              ...chunk.rocks.map((rock) => `${rock.id}:${rock.size}@${rock.x},${rock.y}`),
+            );
             expected.caches.push(
               ...chunk.caches.map((cache) => `${cache.id}@${cache.x},${cache.y}=${cache.amount}`),
             );
@@ -43,7 +51,7 @@ describe("pacing simulation world", () => {
         }
         const rocks = flight.objects
           .filter((object) => object.kind === "rock")
-          .map((object) => `${object.id}@${object.x},${object.y}`);
+          .map((object) => `${object.id}:${asteroidSize(object)}@${object.x},${object.y}`);
         const caches = flight.objects
           .filter((object) => object.kind === "pickup" && object.amount !== undefined)
           .map((object) => `${object.id}@${object.x},${object.y}=${object.amount}`);
@@ -80,6 +88,71 @@ describe("pacing simulation runs", () => {
     expect(runScenario({ ...options, scenario }).runs).toEqual(
       runScenario({ ...options, scenario }).runs,
     );
+  });
+
+  it("spends firing time on each asteroid in proportion to its size's hit points", () => {
+    const hp = ASTEROID_FIELDS[1].hp;
+    const basic = weaponAt("basic", 1);
+    // Basic deals one hit point per volley, so each hit point costs one interval over the hit rate.
+    for (const size of ASTEROID_SIZES) {
+      expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", size)).toBeCloseTo(
+        (hp[size] * basic.intervalSeconds) / DEFAULT_BEHAVIOUR.hitRate,
+      );
+    }
+    const halfAim = { ...DEFAULT_BEHAVIOUR, hitRate: DEFAULT_BEHAVIOUR.hitRate / 2 };
+    expect(asteroidKillSeconds(halfAim, 1, "basic", "huge")).toBeCloseTo(
+      2 * asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", "huge"),
+    );
+    expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "heavyMissile", "huge")).toBeLessThan(
+      asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", "huge"),
+    );
+    const { runs, summary } = runScenario({
+      ...options,
+      scenario: { behaviour: {}, description: "", economy: {}, name: "time", prices: {} },
+    });
+    expect(summary.asteroidTimeShare).toBeGreaterThan(0);
+    for (const run of runs) {
+      const shot = ASTEROID_SIZES.reduce((sum, size) => sum + run.asteroidSizes.shot[size], 0);
+      expect(shot).toBe(run.asteroidsShot);
+      expect(run.asteroidSeconds > 0).toBe(shot > 0);
+    }
+  });
+
+  it("meets large and huge asteroids at the generated world's share", () => {
+    const world = { large: 0, rocks: 0 };
+    for (let seed = 1; seed <= 4; seed++) {
+      for (let x = -20; x < 20; x++) {
+        for (let y = -20; y < 20; y++) {
+          const plan = planChunk(CHUNK_CATALOG, {
+            asteroids: { field: ASTEROID_FIELDS[1], shapes: [...ASTEROID_SHAPES.values()] },
+            clearance: PROTOTYPE.tuning.flight.shipRadius,
+            objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
+            rockRadius: PROTOTYPE.tuning.flight.rockRadius,
+            sector: 1,
+            seed,
+            shipRadius: PROTOTYPE.tuning.flight.shipRadius,
+            size: PROTOTYPE.tuning.chunkSize,
+            spawnWeights,
+            x,
+            y,
+          });
+          for (const placement of plan.placements.filter((at) => at.kind === "rock")) {
+            const size = ASTEROID_SHAPES.get(placement.asteroid!)!.size;
+            world.rocks++;
+            world.large += size === "large" || size === "huge" ? 1 : 0;
+          }
+        }
+      }
+    }
+    const { summary } = runScenario({
+      ...options,
+      minutes: 60,
+      scenario: { behaviour: {}, description: "", economy: {}, name: "sizes", prices: {} },
+      seeds: 4,
+    });
+    const seen = summary.asteroidSizeShare.seen;
+    expect(world.large / world.rocks).toBeGreaterThan(0.05);
+    expect(seen.large + seen.huge).toBeCloseTo(world.large / world.rocks, 1);
   });
 
   it("applies value overrides to drops and caches", () => {

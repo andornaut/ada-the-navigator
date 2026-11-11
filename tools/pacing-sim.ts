@@ -15,7 +15,7 @@
  */
 import { pathToFileURL } from "node:url";
 
-import type { AsteroidSize } from "../src/data/asteroid-catalog.ts";
+import { ASTEROID_SIZES, type AsteroidSize } from "../src/data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
@@ -80,7 +80,10 @@ export interface Behaviour {
   dropCollection: number;
   /** Seconds spent collecting after a fight. */
   collectSeconds: number;
-  /** Most asteroids shot per minute; asteroids are shot in passing while on screen. */
+  /**
+   * Most asteroids shot per minute while on screen. Each costs the firing time its size's hit
+   * points take with the current weapon at the hit rate.
+   */
   asteroidsPerMinute: number;
   /** Farthest asteroid the player shoots at, world units. */
   asteroidRange: number;
@@ -228,6 +231,10 @@ export interface RunResult {
   fought: Partial<Record<EnemyArchetype, number>>;
   destroyed: Partial<Record<EnemyArchetype, number>>;
   asteroidsShot: number;
+  /** Asteroids by size: generated in the chunks the run visited, and shot. */
+  asteroidSizes: { seen: Record<AsteroidSize, number>; shot: Record<AsteroidSize, number> };
+  /** Seconds spent shooting asteroids. */
+  asteroidSeconds: number;
   cachesCollected: number;
   stationSeconds: number[];
   weaponsFound: UpgradeWeapon[];
@@ -464,6 +471,18 @@ function killSeconds(
       )
     : volleySeconds(behaviour, weapon, definition.hp, level);
 }
+/**
+ * Seconds of firing to destroy one asteroid: bigger sizes hold more hit points and so cost
+ * proportionally more firing time.
+ */
+export function asteroidKillSeconds(
+  behaviour: Behaviour,
+  sector: SectorId,
+  weapon: Weapon,
+  size: AsteroidSize,
+): number {
+  return volleySeconds(behaviour, weapon, ASTEROID_FIELDS[sector].hp[size]);
+}
 /** Hull damage after which a ship flees on its own, or null when it never does. */
 function fleeAfter(archetype: EnemyArchetype): number | null {
   const { hp, morale } = enemyCatalog[archetype];
@@ -488,11 +507,16 @@ export interface SimulationInput {
   startWeapons: readonly UpgradeWeapon[];
 }
 
+const noSizes = () =>
+  Object.fromEntries(ASTEROID_SIZES.map((size) => [size, 0])) as Record<AsteroidSize, number>;
+
 export function simulate(input: SimulationInput): RunResult {
   const { behaviour, catalog, prices, sector } = input;
   const rng = mulberry(cellHash(0x51ed, input.seed, sector));
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng())) * Math.cos(2 * Math.PI * rng());
   const result: RunResult = {
+    asteroidSeconds: 0,
+    asteroidSizes: { seen: noSizes(), shot: noSizes() },
     asteroidsShot: 0,
     balance: [],
     cachesCollected: 0,
@@ -647,7 +671,11 @@ export function simulate(input: SimulationInput): RunResult {
       for (let y = cy - 2; y <= cy + 2; y++) {
         const key = `${x},${y}`;
         if (!chunks.has(key)) {
-          chunks.set(key, generateChunk(world, position, x, y));
+          const chunk = generateChunk(world, position, x, y);
+          for (const rock of chunk.rocks) {
+            result.asteroidSizes.seen[rock.size]++;
+          }
+          chunks.set(key, chunk);
         }
       }
     }
@@ -749,7 +777,11 @@ export function simulate(input: SimulationInput): RunResult {
       if (best) {
         bucket = 0;
         result.asteroidsShot++;
+        result.asteroidSizes.shot[best.rock.size]++;
         best.chunk.rocks.splice(best.chunk.rocks.indexOf(best.rock), 1);
+        const seconds = asteroidKillSeconds(behaviour, sector, weapon, best.rock.size);
+        result.asteroidSeconds += seconds;
+        advance(seconds);
         const amount = rollAsteroidStardust(
           catalog,
           best.rock.size,
@@ -883,6 +915,10 @@ export interface Summary {
   foughtPerMinute: Partial<Record<EnemyArchetype, number>>;
   destroyedPerMinute: Partial<Record<EnemyArchetype, number>>;
   asteroidsPerMinute: number;
+  /** Share of asteroids by size: generated in visited chunks, and shot. */
+  asteroidSizeShare: { seen: Record<AsteroidSize, number>; shot: Record<AsteroidSize, number> };
+  /** Share of play time spent shooting asteroids. */
+  asteroidTimeShare: number;
   cachesPerMinute: number;
   stationsPerHour: Distribution;
   /** Minutes from flight start to the first station, and between later stations. */
@@ -922,10 +958,26 @@ export function summarise(scenario: string, prices: Prices, runs: readonly RunRe
       (sum, source) => sum + run.stardust[source],
       0,
     );
+  const sizeShare = (kind: "seen" | "shot") => {
+    const counts = noSizes();
+    for (const run of runs) {
+      for (const size of ASTEROID_SIZES) {
+        counts[size] += run.asteroidSizes[kind][size];
+      }
+    }
+    const all = ASTEROID_SIZES.reduce((sum, size) => sum + counts[size], 0) || 1;
+    for (const size of ASTEROID_SIZES) {
+      counts[size] /= all;
+    }
+    return counts;
+  };
   const gaps = runs.flatMap((run) =>
     run.stationSeconds.slice(1).map((value, index) => (value - run.stationSeconds[index]!) / 60),
   );
   return {
+    asteroidSizeShare: { seen: sizeShare("seen"), shot: sizeShare("shot") },
+    asteroidTimeShare:
+      runs.reduce((sum, run) => sum + run.asteroidSeconds, 0) / (runs.length * minutes * 60 || 1),
     asteroidsPerMinute: perMinute(runs.reduce((sum, run) => sum + run.asteroidsShot, 0)),
     cachesPerMinute: perMinute(runs.reduce((sum, run) => sum + run.cachesCollected, 0)),
     destroyedPerMinute: byArchetype((run) => run.destroyed),
@@ -1165,6 +1217,8 @@ function assign(target: Record<string, unknown>, path: string, value: unknown): 
 }
 
 const round = (value: number, digits = 1) => Number(value.toFixed(digits));
+const formatShare = (share: Record<AsteroidSize, number>) =>
+  ASTEROID_SIZES.map((size) => `${size} ${round(share[size] * 100)}%`).join(", ");
 function formatDistribution(value: Distribution, digits = 1): string {
   return `${round(value.median, digits)} (p10 ${round(value.p10, digits)}, p90 ${round(value.p90, digits)})`;
 }
@@ -1187,6 +1241,9 @@ export function formatSummary(summary: Summary): string {
     `Enemies destroyed/min: ${formatRecord(summary.destroyedPerMinute, 3)}`,
     `Asteroids shot/min: ${round(summary.asteroidsPerMinute, 2)}; ` +
       `caches collected/min: ${round(summary.cachesPerMinute, 2)}`,
+    `Asteroid sizes seen: ${formatShare(summary.asteroidSizeShare.seen)}; ` +
+      `shot: ${formatShare(summary.asteroidSizeShare.shot)}; ` +
+      `time shooting asteroids: ${round(summary.asteroidTimeShare * 100, 1)}%`,
     `Stations/hour: ${formatDistribution(summary.stationsPerHour)}`,
     `Minutes to first station: ${formatDistribution(summary.firstStationMinutes)}`,
     `Minutes between stations: ${formatDistribution(summary.stationGapMinutes)}`,
