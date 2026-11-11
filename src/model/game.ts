@@ -2,6 +2,7 @@ import { CONVERSATION_TUNING, CONVERSATIONS, SPEAKERS } from "../data/conversati
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
+import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
 import { carriesStardust } from "./drops.ts";
@@ -38,7 +39,6 @@ import {
   type ShopRow,
   shopRows,
   type ShopTab,
-  weaponName,
 } from "./shop.ts";
 import {
   advance,
@@ -63,7 +63,6 @@ import {
 import type { FlightEvent, FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
-  loseEquippedWeapon,
   ownedForSave,
   ownedWeapons,
   selectFlightWeapon,
@@ -511,36 +510,17 @@ export class GameModel {
     teleportFlight(this.content, id, f);
   }
   /**
-   * Shield depletion quantum jumps Ada home: the flight ends, the equipped weapon and
-   * its levels are lost unless it is Basic, and recharging costs a flat fee.
+   * Shield depletion quantum jumps Ada home and costs only the flight: its layout, open-space
+   * enemies, pickups and carried cargo. Weapons, levels, Stardust, purchases, accepted quests
+   * and story progress stay. She lands at night and sleeps while Astra recharges overnight.
    */
   private jumpHome(): void {
-    const flight = this.state.flight;
-    if (!flight) {
+    if (!this.state.flight) {
       return;
     }
-    // Losing a run-only granted weapon loses nothing saved, so the notice omits it.
-    const equipped = flight.weapon;
-    const granted = equipped !== "basic" && (flight.grantedWeapons ?? []).includes(equipped);
-    const lost = loseEquippedWeapon(flight);
-    this.pullLoadout();
-    const economy = this.state.economy;
-    const fee = Math.min(ECONOMY.jumpFee, economy.stardust);
-    economy.stardust -= fee;
     this.home(true);
-    this.notify(
-      [
-        this.label("jumpHome"),
-        lost && !granted
-          ? fill(this.label("jumpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
-          : "",
-        fee > 0 ? fill(this.label("jumpRecharge"), { amount: fee }) : "",
-      ]
-        .filter(Boolean)
-        .join(" "),
-    );
-    // The jump lands in Ada's room on its own page; the visit's waiting scenes follow it.
-    this.showScene(jumpHomeScene(this.state.notice));
+    this.notify(this.label("jumpHome"));
+    this.showScene(jumpHomeScene(this.state.notice, this.label("morningRecharge")));
   }
   private complete(): void {
     this.current.questComplete = true;
@@ -1026,8 +1006,11 @@ export class GameModel {
     this.selection = null;
     this.startShown = true;
   }
-  /** Next, or the page's named action. */
+  /** Next, or the page's named action; on the sleep scene, a tap once its skip delay passes. */
   storyNext(): void {
+    if (this.sleeping && this.slept < OVERNIGHT_SLEEP.skipAfterSeconds) {
+      return;
+    }
     if (this.story && this.screen === "story" && !currentPage(this.story).choices) {
       this.moveStory(advance(this.story));
     }
@@ -1044,9 +1027,9 @@ export class GameModel {
       this.story = goBack(this.story);
     }
   }
-  /** Skip: the scene's end by the default path. */
+  /** Skip: the scene's end by the default path; the sleep scene shows no Skip. */
   storySkip(): void {
-    if (this.story && this.screen === "story") {
+    if (this.story && this.screen === "story" && !this.sleeping) {
       this.moveStory(skip(this.story));
     }
   }
@@ -1104,8 +1087,24 @@ export class GameModel {
     this.showPage();
   }
   private showPage(): void {
+    this.slept = 0;
     if (this.story && currentPage(this.story).announces) {
       this.state.announceGalaxy = false;
+    }
+  }
+  /** Seconds the sleep scene on show has played; any other page resets it. */
+  private slept = 0;
+  private get sleeping(): boolean {
+    return Boolean(this.story && this.screen === "story" && currentPage(this.story).sleep);
+  }
+  /** Plays the sleep scene on, moving to morning once its seconds are up. */
+  storyTick(seconds: number): void {
+    if (!this.sleeping || !Number.isFinite(seconds) || seconds <= 0) {
+      return;
+    }
+    this.slept += seconds;
+    if (this.slept >= OVERNIGHT_SLEEP.seconds) {
+      this.moveStory(advance(this.story!));
     }
   }
   /** Moves to a page, or past a scene's end to what the scene leads to. */

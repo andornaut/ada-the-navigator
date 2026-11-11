@@ -81,23 +81,3 @@ export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boole
   }
   return true;
 }
-
-/**
- * The quantum jump loses the equipped upgrade weapon and its upgrade levels; Basic is
- * never lost. Returns the lost weapon, or null.
- */
-export function loseEquippedWeapon(flight: FlightState): UpgradeWeapon | null {
-  if (flight.weapon === "basic") {
-    return null;
-  }
-  const lost = flight.weapon;
-  flight.ownedWeapons = ensureOwnedWeapons(flight).filter((weapon) => weapon !== lost);
-  if (flight.grantedWeapons?.includes(lost)) {
-    // A run-only granted weapon costs nothing beyond the flight.
-    flight.grantedWeapons = flight.grantedWeapons.filter((weapon) => weapon !== lost);
-  } else {
-    flight.levels.weapons[lost] = 1;
-  }
-  flight.weapon = "basic";
-  return lost;
-}

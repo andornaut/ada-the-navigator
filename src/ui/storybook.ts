@@ -1,4 +1,4 @@
-import type { Background } from "../data/storybook.ts";
+import { type Background, PLACEHOLDER_BACKGROUNDS } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
@@ -30,6 +30,22 @@ export interface StoryPageView {
   readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
+  /** The overnight sleep scene: no panel or Skip, and a tap anywhere moves on. */
+  readonly sleep?: boolean;
+}
+
+/**
+ * The sleep scene's placeholder rock glow: a slow pulse, held steady under reduced motion.
+ * CLEANUP (added 2026-11-11): remove with PLACEHOLDER_BACKGROUNDS once Art's sleep scene lands.
+ */
+export const SLEEP_GLOW = {
+  keyframes: [{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }],
+  periodMs: 1600,
+} as const;
+
+/** The glow's looping keyframes, or none to hold it at full under reduced motion. */
+export function sleepGlowKeyframes(reducedMotion: boolean): readonly Keyframe[] | null {
+  return reducedMotion ? null : SLEEP_GLOW.keyframes;
 }
 
 export interface StoryOptions {
@@ -80,6 +96,19 @@ export const STORYBOOK_STYLE = `
   transform:translate(-50%, -50%);
   background:center / 100% 100% no-repeat;
   image-rendering:pixelated
+}
+
+/* The sleep scene's placeholder rock glow on the night room (CLEANUP with its colours). */
+.ada-controls .ada-story-glow{
+  position:absolute;
+  left:46%;
+  top:62%;
+  width:9%;
+  aspect-ratio:1;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  background:radial-gradient(circle, #f0bd68 0, rgb(240 189 104 / 0) 70%);
+  pointer-events:none
 }
 
 /* Astra's speaking frame over the lens, placed on the canvas by the manifest's at. */
@@ -184,6 +213,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   astra.className = "ada-story-astra";
   astra.hidden = true;
   base.append(astra);
+  const glow = document.createElement("div");
+  glow.className = "ada-story-glow";
+  glow.hidden = true;
+  base.append(glow);
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
@@ -219,6 +252,12 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
+  // On the sleep scene a tap anywhere moves on; the model ignores one before its skip delay.
+  background.addEventListener("click", () => {
+    if (rendered?.sleep) {
+      options.onNext();
+    }
+  });
   let art: StoryArt = { astra: null, backgrounds: {}, transitions: [] };
   // What the layer last showed; re-rendering only on a change keeps each button across frames.
   let shown = "";
@@ -233,6 +272,23 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     shownKey = key;
     background.dataset.background = key;
     base.style.backgroundImage = image(art.backgrounds[key]);
+    base.style.backgroundColor =
+      key in PLACEHOLDER_BACKGROUNDS
+        ? PLACEHOLDER_BACKGROUNDS[key as keyof typeof PLACEHOLDER_BACKGROUNDS]
+        : "";
+  };
+  let glowing: Animation | undefined;
+  const showGlow = (on: boolean) => {
+    glowing?.cancel();
+    glowing = undefined;
+    glow.hidden = !on;
+    const keyframes = on ? sleepGlowKeyframes(options.reducedMotion()) : null;
+    if (keyframes) {
+      glowing = glow.animate([...keyframes], {
+        duration: SLEEP_GLOW.periodMs,
+        iterations: Infinity,
+      });
+    }
   };
   const stopSpeaking = () => {
     clearTimeout(speaking);
@@ -299,9 +355,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
     rendered = page;
     speak(page);
+    showGlow(page?.sleep === true);
     layer.hidden = page === null && backdrop === null;
-    panel.hidden = page === null;
-    skip.hidden = page === null;
+    panel.hidden = page === null || page.sleep === true;
+    skip.hidden = page === null || page.sleep === true;
     if (!page) {
       if (backdrop) {
         setBackground(backdrop);

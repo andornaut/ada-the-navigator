@@ -113,7 +113,6 @@ export interface EconomyOverrides {
   discoveryStardust?: number;
   ownedWeaponStardust?: number;
   weaponDropChance?: Partial<Record<SectorId, Partial<Record<EnemyArchetype, number>>>>;
-  jumpFee?: number;
   station?: Partial<
     Pick<EconomyCatalog["station"], "cellSize" | "chance" | "indicatorRange" | "jitter">
   >;
@@ -241,7 +240,6 @@ export interface RunResult {
   /** Seconds at which the first upgrade weapon was found, or null. */
   weaponFoundSeconds: number | null;
   jumps: number;
-  feesPaid: number;
   /** Balance at the end of each minute. */
   balance: number[];
 }
@@ -278,7 +276,6 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
-    jumpFee: overrides.jumpFee ?? ECONOMY.jumpFee,
     ownedWeaponStardust: overrides.ownedWeaponStardust ?? ECONOMY.ownedWeaponStardust,
     weaponDropChance: {
       1: { ...ECONOMY.weaponDropChance[1], ...overrides.weaponDropChance?.[1] },
@@ -522,7 +519,6 @@ export function simulate(input: SimulationInput): RunResult {
     cachesCollected: 0,
     destroyed: {},
     enemyStardust: {},
-    feesPaid: 0,
     firstWeaponSeconds: null,
     fought: {},
     holodiskSeconds: null,
@@ -617,15 +613,9 @@ export function simulate(input: SimulationInput): RunResult {
       weapon = drop.weapon;
     }
   };
+  // A jump home costs only the flight: weapons and Stardust stay.
   const jumpHome = () => {
-    const fee = Math.min(catalog.jumpFee, balance);
-    balance -= fee;
-    result.feesPaid += fee;
     result.jumps++;
-    if (weapon !== "basic") {
-      owned.splice(owned.indexOf(weapon), 1);
-      weapon = "basic";
-    }
     newFlight();
   };
   /** Fights one pack, destroying members as morale allows and advancing time as it goes. */

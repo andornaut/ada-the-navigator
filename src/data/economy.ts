@@ -65,8 +65,6 @@ export interface EconomyCatalog {
   defaultPaint: string;
   /** Stardust in a discovery cache. */
   discoveryStardust: number;
-  /** Flat Stardust fee for recharging after a quantum jump home. */
-  jumpFee: number;
   /** Seconds weapon changes stay locked after combat ends. */
   weaponLockSeconds: number;
   /**
@@ -168,7 +166,6 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 4,
     swarm: 1,
   },
-  jumpFee: 10,
   ownedWeaponStardust: 25,
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {

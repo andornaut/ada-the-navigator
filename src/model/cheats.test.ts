@@ -67,7 +67,7 @@ describe("grant all weapons", () => {
     expect(model.weapons().map((choice) => choice.id)).toEqual(["basic"]);
   });
 
-  it("costs nothing saved when a granted weapon is lost in a quantum jump", () => {
+  it("keeps every saved weapon and Stardust when a granted weapon is equipped in a jump", () => {
     const model = launched();
     const flight = model.state.flight!;
     flight.levels.weapons.multiLaser = 2;
@@ -87,9 +87,9 @@ describe("grant all weapons", () => {
     });
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
-    expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 20 });
+    expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 30 });
     expect(model.state.economy.levels.weapons.multiLaser).toBe(2);
-    expect(model.state.notice).not.toContain("was lost");
+    expect(model.state.notice).toBe(PROTOTYPE.labels.jumpHome);
   });
 
   it("makes a granted weapon really owned when it is found or bought", () => {

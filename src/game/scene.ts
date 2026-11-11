@@ -805,6 +805,10 @@ export class PrototypeScene extends Phaser.Scene {
       this.observeFeedback();
       this.startRockBreaks(time);
     }
+    // The overnight sleep scene plays on while the page shows, as flight does.
+    if (!this.jumping && !this.settingsOpen && !document.hidden) {
+      this.model.storyTick(Math.min(milliseconds / 1000, 0.05));
+    }
     // A failed shield already sent Ada home; hold the last drawn flight as the source scene
     // until Astra's emergency jump covers it.
     if (wasInSpace && this.model.state.mode !== "space" && !this.jumping && this.quantum) {
@@ -938,6 +942,7 @@ export class PrototypeScene extends Phaser.Scene {
         ...(story.page.speaker ? { speaker: story.page.speaker } : {}),
         ...(story.choices.length ? { choices: story.choices } : {}),
         ...(story.page.action ? { action: story.page.action } : {}),
+        ...(story.page.sleep ? { sleep: true } : {}),
         next: !story.page.choices,
       },
       selected === null ? null : SELECTOR_BACKDROP,

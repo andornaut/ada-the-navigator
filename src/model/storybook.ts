@@ -27,6 +27,11 @@ export interface StoryPage {
   readonly action?: string;
   /** Showing this page uses up the once-only new galaxy announcement. */
   readonly announces?: boolean;
+  /**
+   * The overnight recharge's sleep scene: no panel, moving on by itself after OVERNIGHT_SLEEP's
+   * seconds, or at a tap once its skip delay has passed.
+   */
+  readonly sleep?: boolean;
 }
 export type SceneEffect =
   | { readonly kind: "opened"; readonly galaxy: SectorId }
@@ -248,13 +253,20 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
   };
 }
 
-/** The emergency jump's page in Ada's room: the jump-home line, then the loss and fee lines. */
-export function jumpHomeScene(text: string): Scene {
+/**
+ * The emergency jump's overnight recharge in Ada's room: night with the jump-home line, the sleep
+ * scene, then morning with its narration; the visit's waiting scenes follow.
+ */
+export function jumpHomeScene(jumpHome: string, morning: string): Scene {
   return {
     id: "jumpHome",
-    last: "jumpHome",
+    last: "morning",
     lead: "visit",
-    pages: [{ background: "adaRoom", id: "jumpHome", text }],
+    pages: [
+      { background: "adaRoomNight", id: "jumpHome", next: "sleep", text: jumpHome },
+      { background: "adaRoomSleep", id: "sleep", next: "morning", sleep: true, text: "" },
+      { background: "adaRoomMorning", id: "morning", text: morning },
+    ],
   };
 }
 

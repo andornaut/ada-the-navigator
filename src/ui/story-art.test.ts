@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import { BACKGROUND_ART, SELECTOR_BACKDROP } from "../data/storybook.ts";
-import type { Background } from "../data/types.ts";
+import type { ArtBackground } from "../data/types.ts";
 import { boardingScene, prologueScene } from "../model/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 import {
@@ -33,8 +33,8 @@ const asset = (id: string) => manifest.assets.find((entry) => entry.id === id);
 
 const LABELS = { continue: "Continue", pickUpRock: "Pick up the rock." };
 
-// Every key the Background type allows.
-const KEYS = Object.keys(BACKGROUND_ART) as Background[];
+// Every background drawn from Art's assets.
+const KEYS = Object.keys(BACKGROUND_ART) as ArtBackground[];
 
 describe("storybook art", () => {
   it("resolves every background key to a manifest image on Art's 960 by 540 canvas", () => {
@@ -85,7 +85,7 @@ describe("storybook art", () => {
   it("cuts between every other pair of pages, and back from the cockpit", () => {
     for (const from of KEYS) {
       for (const to of KEYS) {
-        if (from !== "adaRoom" || !(COCKPITS as readonly Background[]).includes(to)) {
+        if (from !== "adaRoom" || !(COCKPITS as readonly ArtBackground[]).includes(to)) {
           expect(
             transitionSteps(transitions, backgrounds[from], backgrounds[to], false),
             `${from} to ${to}`,

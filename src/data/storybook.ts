@@ -1,6 +1,6 @@
-import type { Background, SectorId } from "./types.ts";
+import type { ArtBackground, Background, PlaceholderBackground, SectorId } from "./types.ts";
 
-export type { Background } from "./types.ts";
+export type { ArtBackground, Background, PlaceholderBackground } from "./types.ts";
 
 /** Each chapter's Earth scenes and their locations. */
 export const CHAPTER_BACKGROUNDS: Readonly<
@@ -15,7 +15,7 @@ export const CHAPTER_BACKGROUNDS: Readonly<
 };
 
 /** Each location's background in Art's root manifest, by asset id (art/storybook.md). */
-export const BACKGROUND_ART: Readonly<Record<Background, string>> = {
+export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   adaRoom: "story-ada-room",
   adaRoomUnpolished: "story-ada-room-unpolished",
   cockpit: "cockpit",
@@ -27,6 +27,23 @@ export const BACKGROUND_ART: Readonly<Record<Background, string>> = {
   schoolHallway: "story-school-hallway",
   schoolyard: "story-schoolyard",
 };
+
+/**
+ * Ada's room through the overnight recharge, as flat colours: night on landing, asleep, morning.
+ * CLEANUP (added 2026-11-11): remove once Art supplies these backgrounds and BACKGROUND_ART maps
+ * adaRoomNight, adaRoomSleep and adaRoomMorning to their asset ids.
+ */
+export const PLACEHOLDER_BACKGROUNDS: Readonly<Record<PlaceholderBackground, string>> = {
+  adaRoomMorning: "#e8c98f",
+  adaRoomNight: "#1d2140",
+  adaRoomSleep: "#141733",
+};
+
+/**
+ * The overnight recharge's sleep scene (gameplay/prototype.md): 2 to 3 seconds that a tap skips
+ * after a moment. Provisional values within Gameplay's range.
+ */
+export const OVERNIGHT_SLEEP = { seconds: 2.5, skipAfterSeconds: 0.5 } as const;
 
 /** Galaxy selection's backdrop: Ada and Penny in their seats. */
 export const SELECTOR_BACKDROP: Background = "cockpitSeated";

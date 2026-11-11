@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -102,48 +103,114 @@ describe("weapon lock", () => {
 });
 
 describe("quantum jump home", () => {
-  it("ends the flight, loses the equipped weapon and its levels, and charges the fee", () => {
+  // Depletes the shield with the flight's objects in place.
+  function depleteHere(model: GameModel): void {
+    const flight = model.state.flight!;
+    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    incoming(flight);
+    model.step(0.01, idle);
+  }
+  function seenHome(model: GameModel): void {
+    // Seen, as after a real first launch: the opening never replays.
+    model.state.progress[1].opened = true;
+    model.state.prologueSeen = true;
+  }
+
+  it("costs only the flight: weapons, their levels and Stardust stay, with no fee", () => {
     const model = launched();
     const flight = model.state.flight!;
     flight.ownedWeapons = ["rapidMissile", "multiLaser"];
     flight.weapon = "rapidMissile";
     flight.levels.weapons.rapidMissile = 3;
     flight.levels.weapons.multiLaser = 2;
+    flight.levels.weapons.basic = 2;
     model.state.economy.stardust = 30;
-    model.state.progress[1].opened = true;
-    model.state.prologueSeen = true;
+    seenHome(model);
     deplete(model);
     expect(model.state.mode).toBe("home");
     expect(model.state.flight).toBeNull();
-    // The jump arrives in Ada's room, not galaxy selection.
-    expect(model.screen).toBe("story");
-    expect(model.storyView?.page.background).toBe("adaRoom");
     expect(model.state.economy).toMatchObject({
-      ownedWeapons: ["multiLaser"],
-      stardust: 20,
-      weapon: "basic",
+      ownedWeapons: ["rapidMissile", "multiLaser"],
+      stardust: 30,
+      weapon: "rapidMissile",
     });
-    expect(model.state.economy.levels.weapons).toMatchObject({ multiLaser: 2, rapidMissile: 1 });
-    expect(model.state.notice).toBe(
-      "Astra jumped you home to recharge. Your story progress is saved. " +
-        "Your Rapid Missile was lost. Recharging cost 10 Stardust.",
-    );
+    expect(model.state.economy.levels.weapons).toMatchObject({
+      basic: 2,
+      multiLaser: 2,
+      rapidMissile: 3,
+    });
+    expect(model.state.notice).toBe(PROTOTYPE.labels.jumpHome);
+    expect(PROTOTYPE.labels).not.toHaveProperty("jumpWeaponLost");
+    expect(PROTOTYPE.labels).not.toHaveProperty("jumpRecharge");
+    expect(ECONOMY).not.toHaveProperty("jumpFee");
+    // The next flight still has the weapon at its level.
+    model.startSector(1);
+    playOpening(model);
+    expect(model.state.flight).toMatchObject({ weapon: "rapidMissile" });
+    expect(model.state.flight!.levels.weapons.rapidMissile).toBe(3);
   });
 
-  it("lands the emergency jump in Ada's room on its page, then the empty-home line", () => {
+  it("loses the flight's layout, enemies, pickups and carried cargo, keeping quests open", () => {
     const model = launched();
-    model.state.flight!.weapon = "basic";
-    model.state.economy.stardust = 30;
-    // Seen, as after a real first launch: the opening never replays.
-    model.state.progress[1].opened = true;
-    model.state.prologueSeen = true;
+    const flight = model.state.flight!;
+    const seed = flight.seed;
+    flight.objects = [
+      { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, weapon: "multiLaser", x: 900, y: 0 },
+      {
+        hp: 3,
+        id: "lost:rock",
+        kind: "rock",
+        radius: 10,
+        x: -900,
+        y: 0,
+      },
+    ];
+    flight.cargo = 3;
+    const progress = model.state.progress[1];
+    progress.stage = 2;
+    progress.questItem = "toolkit";
+    progress.known = ["growers", "workshop"];
+    progress.deposited = 4;
+    seenHome(model);
+    depleteHere(model);
+    // The carried quest item goes with the flight; the quest stays open at its stage.
+    expect(progress).toMatchObject({
+      deposited: 4,
+      known: ["growers", "workshop"],
+      questComplete: false,
+      questItem: null,
+      stage: 2,
+    });
+    expect(model.state.flight).toBeNull();
+    model.startSector(1);
+    playOpening(model);
+    const next = model.state.flight!;
+    expect(next.seed).not.toBe(seed);
+    expect(next.cargo).toBe(0);
+    expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);
+  });
+
+  it("lands at night, sleeps while Astra recharges, then wakes to morning and the room", () => {
+    const model = launched();
+    seenHome(model);
     deplete(model);
+    expect(model.storyView).toMatchObject({
+      canGoBack: false,
+      page: { background: "adaRoomNight", id: "jumpHome", text: PROTOTYPE.labels.jumpHome },
+    });
+    model.storyNext();
     expect(model.storyView?.page).toMatchObject({
-      background: "adaRoom",
-      id: "jumpHome",
-      text:
-        "Astra jumped you home to recharge. Your story progress is saved. " +
-        "Recharging cost 10 Stardust.",
+      background: "adaRoomSleep",
+      id: "sleep",
+      sleep: true,
+    });
+    model.storyTick(OVERNIGHT_SLEEP.seconds - 0.1);
+    expect(model.storyView?.page.id).toBe("sleep");
+    model.storyTick(0.1);
+    expect(model.storyView?.page).toMatchObject({
+      background: "adaRoomMorning",
+      id: "morning",
+      text: "Astra recharges overnight. In the morning, the rock is warm again.",
     });
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({
@@ -153,62 +220,61 @@ describe("quantum jump home", () => {
     });
   });
 
-  it("plays a genuinely waiting home scene after the jump page", () => {
+  it("lets a tap skip the sleep only after its moment, and shows no Skip there", () => {
     const model = launched();
-    model.state.progress[1].opened = true;
-    model.state.prologueSeen = true;
-    model.state.progress[1].questComplete = true;
+    seenHome(model);
     deplete(model);
+    model.storyNext();
+    expect(OVERNIGHT_SLEEP.seconds).toBeGreaterThanOrEqual(2);
+    expect(OVERNIGHT_SLEEP.seconds).toBeLessThanOrEqual(3);
+    model.storyNext();
+    model.storySkip();
+    expect(model.storyView?.page.id).toBe("sleep");
+    model.storyTick(OVERNIGHT_SLEEP.skipAfterSeconds - 0.05);
+    model.storyNext();
+    expect(model.storyView?.page.id).toBe("sleep");
+    model.storyTick(0.05);
+    model.storyNext();
+    expect(model.storyView?.page.id).toBe("morning");
+    // Time only plays the sleep scene on; it never moves other pages.
+    model.storyTick(10);
+    expect(model.storyView?.page.id).toBe("morning");
+  });
+
+  it("restarts the sleep's timing when the sleep scene is shown again", () => {
+    const model = launched();
+    seenHome(model);
+    deplete(model);
+    model.storyNext();
+    model.storyTick(OVERNIGHT_SLEEP.skipAfterSeconds);
+    model.storyPrevious();
     expect(model.storyView?.page.id).toBe("jumpHome");
     model.storyNext();
+    model.storyNext();
+    expect(model.storyView?.page.id).toBe("sleep");
+  });
+
+  it("plays a genuinely waiting home scene after the morning", () => {
+    const model = launched();
+    seenHome(model);
+    model.state.progress[1].questComplete = true;
+    deplete(model);
+    model.storySkip();
+    expect(model.storyView?.page.id).toBe("morning");
+    model.storyNext();
     expect(model.storyView?.page.background).toBe("gardenLot");
-    expect(model.storyView?.page.background).not.toBe("grandmaGarden");
   });
 
-  it("starts a lost weapon at level 1 when it is bought or found again", () => {
+  it("has no night or sleep after a voluntary Return home", () => {
     const model = launched();
-    const flight = model.state.flight!;
-    flight.ownedWeapons = ["rapidMissile"];
-    flight.weapon = "rapidMissile";
-    flight.levels.weapons.rapidMissile = 3;
-    deplete(model);
-    model.startSector(1);
-    playOpening(model);
-    model.state.flight!.objects = [];
-    expect(model.state.flight!.levels.weapons.rapidMissile).toBe(1);
-    pickup(model.state.flight!, "rapidMissile");
-    model.step(0.01, idle);
-    expect(model.state.flight!.weapon).toBe("rapidMissile");
-    expect(model.state.economy.levels.weapons.rapidMissile).toBe(1);
-    expect(model.shopRows("weapons").at(-1)).toMatchObject({
-      item: { kind: "weaponUpgrade", weapon: "rapidMissile" },
-      level: { current: 1, max: 3 },
+    seenHome(model);
+    model.returnHome();
+    expect(model.storyView?.page).toMatchObject({
+      action: PROTOTYPE.labels.pickUpRock,
+      background: "adaRoom",
+      text: PROTOTYPE.premise.emptyHome,
     });
-  });
-
-  it("keeps Basic and its upgrade level through a jump", () => {
-    const model = launched();
-    model.state.flight!.levels.weapons.basic = 2;
-    model.state.economy.stardust = 100;
-    deplete(model);
-    expect(model.state.economy.levels.weapons.basic).toBe(2);
-    expect(model.state.economy.weapon).toBe("basic");
-    expect(model.state.notice).toBe(
-      "Astra jumped you home to recharge. Your story progress is saved. " +
-        "Recharging cost 10 Stardust.",
-    );
-  });
-
-  it.each([
-    [4, 0, true],
-    [0, 0, false],
-    [10, 0, true],
-  ])("never takes %i Stardust below zero (leaves %i)", (before, after, shown) => {
-    const model = launched();
-    model.state.economy.stardust = before;
-    deplete(model);
-    expect(model.state.economy.stardust).toBe(after);
-    expect(model.state.notice.includes("Recharging cost")).toBe(shown);
+    expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
   });
 });
 

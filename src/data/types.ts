@@ -28,10 +28,10 @@ export interface PremiseLine {
 }
 /** A prologue panel. Its choice replaces Continue; its optional questions never gate progress. */
 /**
- * A storybook page's location: Art's Earth backgrounds (Ada's room also before the rock is
- * polished) and the cockpit, empty while Ada and Penny stand and seated once they sit.
+ * A storybook location with Art's background: the Earth scenes (Ada's room also before the rock
+ * is polished) and the cockpit, empty while Ada and Penny stand and seated once they sit.
  */
-export type Background =
+export type ArtBackground =
   | "adaRoom"
   | "adaRoomUnpolished"
   | "cockpit"
@@ -42,6 +42,10 @@ export type Background =
   | "park"
   | "schoolHallway"
   | "schoolyard";
+/** Ada's room through the overnight recharge, drawn as flat placeholders until Art's land. */
+export type PlaceholderBackground = "adaRoomMorning" | "adaRoomNight" | "adaRoomSleep";
+/** A storybook page's location. */
+export type Background = ArtBackground | PlaceholderBackground;
 
 export interface PrologueStep extends PremiseLine {
   /** Where the page is; the cockpit unless given. */

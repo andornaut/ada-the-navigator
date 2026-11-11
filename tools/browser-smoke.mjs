@@ -1100,9 +1100,10 @@ try {
   damaged.state.economy.stardust = 30;
   damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
   assert.equal(damaged.state.mode, "home", "Shield depletion must jump Ada home");
-  assert.deepEqual(damaged.state.economy.ownedWeapons, ["multiLaser"]);
-  assert.equal(damaged.state.economy.weapon, "basic", "The equipped upgrade must be lost");
-  assert.equal(damaged.state.economy.stardust, 20, "Recharging must cost 10 Stardust");
+  assert.equal(damaged.state.flight, null, "The jump home must lose only the flight");
+  assert.deepEqual(damaged.state.economy.ownedWeapons, ["rapidMissile", "multiLaser"]);
+  assert.equal(damaged.state.economy.weapon, "rapidMissile", "The equipped weapon must stay");
+  assert.equal(damaged.state.economy.stardust, 30, "The jump home must cost no Stardust");
   const damageSave = damaged.save();
   assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
@@ -1114,13 +1115,12 @@ try {
   const jumpNotice = await page.locator("#game-status").textContent();
   assert.ok(
     jumpNotice.includes(PROTOTYPE.labels.jumpHome) &&
-      jumpNotice.includes("Your Rapid Missile was lost.") &&
-      jumpNotice.includes("Recharging cost 10 Stardust."),
-    `The jump home notice must name the loss and the fee: ${jumpNotice}`,
+      !jumpNotice.includes("lost") &&
+      !jumpNotice.includes("cost"),
+    `The jump home notice must name no loss or fee: ${jumpNotice}`,
   );
-  assert.equal(await page.locator('[data-weapon="rapidMissile"]').count(), 0);
   events.checks.push(
-    "Canonical shield depletion jumps Ada home, losing the equipped upgrade and charging the recharge fee",
+    "Canonical shield depletion jumps Ada home, costing only the flight and keeping weapons and Stardust",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
