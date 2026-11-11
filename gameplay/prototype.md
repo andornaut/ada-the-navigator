@@ -185,8 +185,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   doubled for finer low-speed control. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks sit 24 logical pixels from their side edge and 24 from the
-  bottom safe edge. The move ring lights its left or right marker only when the
+  drag. Both joysticks' drawn rings sit 24 logical pixels in from their side edge and 20
+  above the bottom safe edge, symmetric, with the Use button level with them. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
