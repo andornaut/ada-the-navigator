@@ -65,10 +65,8 @@ export interface SettingsOptions {
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
 }
 
-// The start screen's Settings glyph until the 24 HUD glyph is published.
-// CLEANUP (added 2026-11-11): draw icon-settings-nav-24 at HUD_BUTTON.glyph once Art's 24 HUD
-// glyphs are on main, and drop this.
-const SETTINGS_GLYPH = { key: "icon-settings-nav", size: 20 } as const;
+// The start screen's Settings glyph, drawn at the HUD glyph size.
+const SETTINGS_GLYPH = { key: "icon-settings-nav-24", size: HUD_BUTTON.glyph } as const;
 
 const STYLE = `
 @font-face{
