@@ -2,41 +2,56 @@
 
 Native SVG source, 20 × 20 px, `viewBox="0 0 20 20"`, transparent background.
 Warm cream (`#ead4aa`) paths follow Chibi's compact navigation icon style, with
-at least 2 px padding. Laser strokes and scatter dots are 2 px thick.
+at least 2 px padding; Rapid Missile's lower trail dash runs to the left edge.
+Laser strokes and scatter dots are 2 px thick.
 
 ## Current roster
 
-| ID            | Path                                         | Icon semantics                          |
-| ------------- | -------------------------------------------- | --------------------------------------- |
-| `basic`       | `public/art/ui/icons/weapon-basic.svg`       | Single rightward bolt, starter weapon   |
-| `missiles`    | `public/art/ui/icons/weapon-missiles.svg`    | Pointed solid body, fins and exhaust    |
-| `tripleLaser` | `public/art/ui/icons/weapon-tripleLaser.svg` | Three long thin bolts in a tight fan    |
-| `scattershot` | `public/art/ui/icons/weapon-scattershot.svg` | Seven separate solid dots in a wide fan |
+IDs match Tech's weapon IDs. Filename case matches the direct DOM URL
+`weapon-${id}.svg`.
+
+| ID             | Path                                          | Icon semantics                                        |
+| -------------- | --------------------------------------------- | ----------------------------------------------------- |
+| `basic`        | `public/art/ui/icons/weapon-basic.svg`        | Single rightward bolt, starter weapon                 |
+| `rapidMissile` | `public/art/ui/icons/weapon-rapidMissile.svg` | Two slim staggered darts, each with a trail dash      |
+| `multiLaser`   | `public/art/ui/icons/weapon-multiLaser.svg`   | Three 2 px bolts fanning from one origin              |
+| `heavyMissile` | `public/art/ui/icons/weapon-heavyMissile.svg` | One deep body, warhead seam, rear fins, heavy exhaust |
+| `scattershot`  | `public/art/ui/icons/weapon-scattershot.svg`  | Seven separate solid dots in a wide fan               |
+| `phaser`       | None yet                                      | Being redesigned with `basic`                         |
+
+`weapon-multiLaser.svg` replaces `weapon-tripleLaser.svg` for the `multiLaser`
+ID. The `missiles` and `tripleLaser` icons, the legacy spread and pierce icons
+and the 24 px set stay published for existing references.
+
+## Pixel grids
+
+The Rapid Missile, Multi-Laser and Heavy Missile glyphs are 20 × 20 pixel grids
+in `art/tools/weapon-icons.ts`. Each grid writes both its HUD SVG, one path of
+whole-pixel runs, and its [shop sheet](shop-icons.md)
+`icon-shop-weapon-<id>`, and registers the sheet in the UI manifest. Rebuild
+with `node art/tools/weapon-icons.ts`. The other weapon SVGs are hand-authored.
+
+| SVG                       | SHA-256                                                            |
+| ------------------------- | ------------------------------------------------------------------ |
+| `weapon-heavyMissile.svg` | `2ad7a6243bba7c6adea5f73c012fd1def43f4b5560f5f7532a42f8685408c829` |
+| `weapon-multiLaser.svg`   | `1075f62fb2856d21b711c9d78f2c048b1c5a513302b6921e3cabe26dc198e247` |
+| `weapon-rapidMissile.svg` | `9ec61fa0a35c711877e64fce082ed87f267bc2328e295c585d9d6122fd0dda24` |
 
 ## HUD glyphs
 
 The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
 [Controls](controls.md#top-right-hud-icon-buttons) defines their states and
-colours. The 20 px icons are also the shop row glyphs. The 24 × 24 px versions,
-`public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`, follow the
-20 px shapes with 4 px dots and exhaust, 3 px laser strokes and a larger bolt
-head, and stay published for existing references.
+colours. It shows owned weapons only, left to right in the order Basic, Rapid
+Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser. The 24 × 24 px
+versions, `public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`,
+follow the 20 px shapes with 4 px dots and exhaust, 3 px laser strokes and a
+larger bolt head.
 
-Filename case matches the direct DOM URL `weapon-${id}.svg`. Legacy rapid, spread
-and pierce icons remain available for existing references.
+## Projectiles
 
-## Projectile visual specification
-
-- Missiles: compact white projectile with an amber trail. Automatic fire, slow
-  travel and cadence, high power. No manual trigger, homing or splash.
-- Triple Laser: three thin amber bolts, centred at 0° with side bolts at ±20°.
-- Scattershot: many small amber dot pellets in a shotgun fan, fading and vanishing
-  by roughly half the projected screen width. Dots describe pellet shapes, not
-  damage over time.
-
-The logical screen is 720 × 360. Scattershot range follows projected screen width;
-these assets do not define runtime projectile geometry or timing. Gameplay owns
-weapon labels, including Missiles, Triple Laser and Scattershot.
+[Weapons](weapons.md) specifies every projectile, blast, the Multi-Laser fan
+and the Phaser beam. These icons do not define runtime geometry or timing.
+Gameplay owns weapon labels.
 
 ## Integration
 

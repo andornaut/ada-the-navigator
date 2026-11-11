@@ -6,9 +6,11 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 
 | Item               | Glyph                                        | Size  |
 | ------------------ | -------------------------------------------- | ----- |
-| Missiles           | `/art/ui/icons/weapon-missiles.svg`          | 20x20 |
-| Triple Laser       | `/art/ui/icons/weapon-tripleLaser.svg`       | 20x20 |
+| Rapid Missile      | `icon-shop-weapon-rapidMissile`              | 20x20 |
+| Multi-Laser        | `icon-shop-weapon-multiLaser`                | 20x20 |
+| Heavy Missile      | `icon-shop-weapon-heavyMissile`              | 20x20 |
 | Scattershot        | `/art/ui/icons/weapon-scattershot.svg`       | 20x20 |
+| Phaser             | None yet, being redesigned                   | 20x20 |
 | `{weapon}` upgrade | Upgrade composite of that weapon's glyph     | 24x24 |
 | Generic upgrade    | `icon-shop-weapon-upgrade`                   | 20x20 |
 | Shield             | `icon-shop-shield`                           | 20x20 |
@@ -20,7 +22,9 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Owned and In use   | `icon-shop-check`                            | 12x8  |
 | Upgrade badge      | `icon-shop-upgrade-badge`, inside composites | 12x12 |
 
-Weapons reuse the shipped [weapon icons](weapon-icons.md). The plain double
+The Rapid Missile, Multi-Laser and Heavy Missile sheets are the same pixel
+grids as their [weapon icons](weapon-icons.md), written by
+`art/tools/weapon-icons.ts`; Scattershot reuses its SVG. The plain double
 chevron is the generic upgrade glyph, for any place that names upgrades without
 a weapon.
 
@@ -38,7 +42,8 @@ separate from the glyph it overlaps.
 - The other `icon-shop-*` sheets have tags `normal` (frame 0, cream) and
   `disabled` (frame 1, `#9a96ad`) for unaffordable rows. They are not tinted at
   runtime. The badge keeps its ink edge and chevron in both.
-- Weapon SVGs are one colour. In an unaffordable row, draw the SVG as a CSS
+- Weapon SVGs are one colour. In an unaffordable row, use the weapon's sheet
+  `disabled` frame, or draw the SVG as a CSS
   mask (`mask: url(...) center / 20px 20px no-repeat`) over a `#9a96ad`
   background; the integer-grid paths stay crisp at any device pixel ratio.
 
@@ -56,20 +61,25 @@ separate from the glyph it overlaps.
 art-kit's `writeSpriteSheet`. Rebuild with `node art/tools/shop-icons.ts`, then
 run Prettier on the written JSON.
 
-| PNG                             | SHA-256                                                            |
-| ------------------------------- | ------------------------------------------------------------------ |
-| `icon-shop-check.png`           | `50000ad861883d7612f0fdf2e40d633f9a71e36599074e7653f2580da6e4c148` |
-| `icon-shop-engine-tuning.png`   | `63a5f882e0e1bc130c65a206a6f290b5eb66f94f1b4a0043a9ab02cbdc5dab7a` |
-| `icon-shop-shield.png`          | `2a65f554935484920101167705269f0fe9c47295badac9c01970d80cfc561f67` |
-| `icon-shop-shield-recharge.png` | `cbe31a9dae468c403ca3e8bb999d87a0df52f5ec20a7b78c6eb42fa14bef57ce` |
-| `icon-shop-ship-paint.png`      | `c798f5f6f86b8edca627d14353e4f58363a7eb5618254cd6be72e42c59176417` |
-| `icon-shop-tractor-beam.png`    | `106fdb4bc10757c00527dfc8182b130e0c2c6c8e0eec736e00f64afecf97ba97` |
-| `icon-shop-upgrade-badge.png`   | `7db5eb19cbea06e1d3d2e187584c3c2a4139743c42e4e512f2842eb7823152ab` |
-| `icon-shop-weapon-upgrade.png`  | `bbb8df92ae714b76ccc4e144b9e67ab752f8d71579ad24fa8f95d7b25d4496aa` |
+| PNG                                 | SHA-256                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `icon-shop-check.png`               | `50000ad861883d7612f0fdf2e40d633f9a71e36599074e7653f2580da6e4c148` |
+| `icon-shop-engine-tuning.png`       | `63a5f882e0e1bc130c65a206a6f290b5eb66f94f1b4a0043a9ab02cbdc5dab7a` |
+| `icon-shop-shield.png`              | `2a65f554935484920101167705269f0fe9c47295badac9c01970d80cfc561f67` |
+| `icon-shop-shield-recharge.png`     | `cbe31a9dae468c403ca3e8bb999d87a0df52f5ec20a7b78c6eb42fa14bef57ce` |
+| `icon-shop-ship-paint.png`          | `c798f5f6f86b8edca627d14353e4f58363a7eb5618254cd6be72e42c59176417` |
+| `icon-shop-tractor-beam.png`        | `106fdb4bc10757c00527dfc8182b130e0c2c6c8e0eec736e00f64afecf97ba97` |
+| `icon-shop-upgrade-badge.png`       | `7db5eb19cbea06e1d3d2e187584c3c2a4139743c42e4e512f2842eb7823152ab` |
+| `icon-shop-weapon-heavyMissile.png` | `65cd8c674398fba99112d3cbb768d6da1e2dbc296a13981ac51b266517c696e5` |
+| `icon-shop-weapon-multiLaser.png`   | `b18e753142fa429b19cdda8161bdbe759508ca50f2c2bc015e4b80d588867f69` |
+| `icon-shop-weapon-rapidMissile.png` | `75635f189837c64915f64e422d3bb083373c4832bc1383898153fb44b2eb0439` |
+| `icon-shop-weapon-upgrade.png`      | `bbb8df92ae714b76ccc4e144b9e67ab752f8d71579ad24fa8f95d7b25d4496aa` |
 
 - `icon-shop-shield`: a heater shield with its left half filled.
 - `icon-shop-shield-recharge`: a solid shield with a lightning bolt knocked out.
 - `icon-shop-engine-tuning`: an engine nozzle over a tapering exhaust plume.
 - `icon-shop-tractor-beam`: an emitter over a widening beam around a caught mote.
 - `icon-shop-ship-paint`: a paint roller.
+- `icon-shop-weapon-rapidMissile`, `icon-shop-weapon-multiLaser` and
+  `icon-shop-weapon-heavyMissile`: the weapon's HUD glyph.
 - `icon-shop-weapon-upgrade`: two stacked chevrons.

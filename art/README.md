@@ -7,11 +7,11 @@ sector one enemy ships and their [destruction](destruction.md), the
 [asteroids and backdrop rocks](asteroids.md), [Stardust](stardust.md),
 [the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
-[quantum jump](quantum-jump.md), character portraits and the
-[storybook](storybook.md) Earth backgrounds. [Galaxies](galaxies.md) retint the
-space field per galaxy. Other space objects use simple runtime shapes with the
-[space palette](space-palette.md): muted surroundings and stronger active
-signals.
+[quantum jump](quantum-jump.md), the [weapon effects](weapons.md), character
+portraits and the [storybook](storybook.md) Earth backgrounds.
+[Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
+use simple runtime shapes with the [space palette](space-palette.md): muted
+surroundings and stronger active signals.
 
 ## Published toolkit
 

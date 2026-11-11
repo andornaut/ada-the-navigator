@@ -145,6 +145,24 @@
       "once": []
     },
     {
+      "key": "icon-shop-weapon-heavyMissile",
+      "png": "sprites/icon-shop-weapon-heavyMissile.png",
+      "json": "sprites/icon-shop-weapon-heavyMissile.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-weapon-multiLaser",
+      "png": "sprites/icon-shop-weapon-multiLaser.png",
+      "json": "sprites/icon-shop-weapon-multiLaser.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-weapon-rapidMissile",
+      "png": "sprites/icon-shop-weapon-rapidMissile.png",
+      "json": "sprites/icon-shop-weapon-rapidMissile.json",
+      "once": []
+    },
+    {
       "key": "icon-shop-weapon-upgrade",
       "png": "sprites/icon-shop-weapon-upgrade.png",
       "json": "sprites/icon-shop-weapon-upgrade.json",
