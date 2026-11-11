@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { chartPoints, chartProjection, MAP_CARD } from "./mapCard.ts";
+import { chartPoints, chartProjection, MAP_CARD, pickedPlace } from "./mapCard.ts";
 
 const { chart, chartInset } = MAP_CARD;
 
@@ -43,6 +43,21 @@ describe("map chart", () => {
     ]);
     expect(Math.hypot(b!.x - a!.x, b!.y - a!.y)).toBeLessThan(2);
     expect(chartPoints([])).toEqual([]);
+  });
+
+  it("picks the marker nearest a press within half the target, so close places stay reachable", () => {
+    const markers = [
+      { x: 100, y: 80 },
+      { x: 110, y: 80 },
+      { x: 200, y: 40 },
+    ];
+    // Overlapping press areas: each face's own centre picks it.
+    expect(pickedPlace(markers, { x: 100, y: 80 })).toBe(0);
+    expect(pickedPlace(markers, { x: 110, y: 80 })).toBe(1);
+    expect(pickedPlace(markers, { x: 104, y: 81 })).toBe(0);
+    expect(pickedPlace(markers, { x: 200, y: 40 + MAP_CARD.marker.target / 2 })).toBe(2);
+    expect(pickedPlace(markers, { x: 200, y: 41 + MAP_CARD.marker.target / 2 })).toBeNull();
+    expect(pickedPlace([], { x: 0, y: 0 })).toBeNull();
   });
 
   it("keeps each place's press area at the minimum target around a smaller face", () => {

@@ -1,7 +1,8 @@
 import type { GalaxyMap, MapPlace } from "../model/map.ts";
 import { font, units } from "./layout/css.ts";
-import { chartPoints, MAP_CARD } from "./layout/mapCard.ts";
+import { type ChartPoint, chartPoints, MAP_CARD, pickedPlace } from "./layout/mapCard.ts";
 import { TYPE } from "./layout/tokens.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 
 // The Map card's chart (MAP_CARD, layout/mapCard.ts): Ada's marker and one button per discovered
@@ -45,8 +46,10 @@ export const MAP_STYLE = `
   pointer-events:none
 }
 
-/* A place's press area is the minimum target; its face is the small disc inside it. */
+/* A place's face is the small disc inside its minimum target. Pointer presses go to the chart,
+   which picks the nearest face (pickedPlace); keyboard focus and activation stay on the button. */
 .ada-controls .ada-card .ada-map-chart .ada-map-place{
+  pointer-events:none;
   width:${units(MAP_CARD.marker.target)};
   height:${units(MAP_CARD.marker.target)};
   padding:0;
@@ -97,6 +100,23 @@ export function createMapChart(onSelect: (place: MapPlace) => void) {
   ada.className = "ada-map-ada";
   ada.setAttribute("aria-hidden", "true");
   let buttons: HTMLButtonElement[] = [];
+  let places: readonly MapPlace[] = [];
+  let markers: ChartPoint[] = [];
+  chart.addEventListener("click", (event) => {
+    // A keyboard press activates its own button; only pointer presses land on the chart.
+    if (event.target !== chart) {
+      return;
+    }
+    const box = chart.getBoundingClientRect();
+    const unit = readViewUnit(chart);
+    const index = pickedPlace(markers, {
+      x: (event.clientX - box.left) / unit,
+      y: (event.clientY - box.top) / unit,
+    });
+    if (index !== null) {
+      onSelect(places[index]!);
+    }
+  });
   return {
     /** The places' buttons, in the map's order. */
     buttons: () => buttons,
@@ -104,6 +124,8 @@ export function createMapChart(onSelect: (place: MapPlace) => void) {
     render(map: GalaxyMap, selected: string | null): void {
       const points = chartPoints([map.player, ...map.places]);
       place(ada, points[0]!);
+      places = map.places;
+      markers = points.slice(1);
       buttons = map.places.map((entry, index) => {
         const button = document.createElement("button");
         button.type = "button";

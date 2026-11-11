@@ -325,6 +325,19 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   ]) {
     call("mapCard.ts", "chartPoints", mapCard.chartPoints, points);
   }
+  const markers = [
+    { x: 100, y: 80 },
+    { x: 110, y: 80 },
+    { x: 200, y: 40 },
+  ];
+  for (const press of [
+    { x: 100, y: 80 },
+    { x: 104, y: 81 },
+    { x: 200, y: 64 },
+    { x: 200, y: 65 },
+  ]) {
+    call("mapCard.ts", "pickedPlace", mapCard.pickedPlace, markers, press);
+  }
 }
 
 /** The dump: each module's constants, and every function case's arguments and result. */

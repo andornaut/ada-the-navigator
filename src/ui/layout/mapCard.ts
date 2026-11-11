@@ -55,3 +55,18 @@ export function chartPoints(points: readonly ChartPoint[]): ChartPoint[] {
     y: chart.height / 2 + (y - centre.y) * scale,
   }));
 }
+
+// The place a press on the chart picks: the one whose marker centre is nearest the press, within
+// half the minimum target, so close places' overlapping press areas never hide one another.
+export function pickedPlace(markers: readonly ChartPoint[], press: ChartPoint): number | null {
+  let best: number | null = null;
+  let bestDistance = MAP_CARD.marker.target / 2;
+  markers.forEach((marker, index) => {
+    const distance = Math.hypot(marker.x - press.x, marker.y - press.y);
+    if (distance <= bestDistance) {
+      best = index;
+      bestDistance = distance;
+    }
+  });
+  return best;
+}
