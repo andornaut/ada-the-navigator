@@ -36,8 +36,9 @@ Fleeing craft do not shoot or resume aggression in this encounter.
 
 `enemyEffects(definition, state)` derives disabled part IDs and defeat. Every required
 part must be disabled to defeat a multipart ship, regardless of hull HP. A disabled
-weapon emits no further shots. Any disabled engine immediately stops all movement;
-other weapons keep firing independently. No primary hull weapon substitutes for a
+weapon emits no further shots. Each engine provides an equal share of thrust: a
+ship's top speed scales with the fraction of its engines still working, and it
+stops when all are disabled. Other weapons keep firing independently. No primary hull weapon substitutes for a
 lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
 
 ## Observation and intents

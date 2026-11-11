@@ -453,7 +453,8 @@ Capital ships are prominent large targets that cover at most a sixth of the
 screen, about 5 Ada widths across, so the whole ship and its hardpoints stay
 readable. A capital has many hardpoints and can travel with escort fighters. All designated
 hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
-firing; a disabled engine stops movement. Large-ship weapons and command areas
+firing. Each engine provides an equal share of thrust, so losing one of two engines
+halves a ship's speed and losing all of them stops it. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.
 
 Missile launchers initially fire straight-flying missiles, visually distinct
