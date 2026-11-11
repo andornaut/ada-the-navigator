@@ -23,8 +23,18 @@ import {
   steelDarkSide,
 } from "./cartwheel-craft.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
+import {
+  bentPlate,
+  bodyRamp,
+  CONTOUR,
+  exportDebris,
+  MARK_DASHES,
+  MARK_WIDTH,
+  TUMBLE_DEG_PER_SECOND,
+  TUMBLE_FRAMES,
+  unit,
+} from "./debris.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
-import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -53,32 +63,7 @@ const cartwheel = (
   }
 ).galaxies.find(({ id }) => id === "cartwheel")!;
 
-// World light, from above and screen-left of the viewer (ship.ts LIGHT).
-const LIGHT = unit([-0.25, 0.45, 1]);
-// Same-colour seam stroke in frame px: hides anti-aliasing cracks between facets.
-const SEAM = 1.2;
-
 type Face = { color: string; points: Point[] };
-
-function unit([x, y, z]: Point): Point {
-  const l = Math.hypot(x, y, z);
-  return [x / l, y / l, z / l];
-}
-
-const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-
-function normal(points: readonly Point[]): Point {
-  let [nx, ny, nz] = [0, 0, 0];
-  for (const [i, a] of points.entries()) {
-    const b = points[(i + 1) % points.length]!;
-    nx += (a[1] - b[1]) * (a[2] + b[2]);
-    ny += (a[2] - b[2]) * (a[0] + b[0]);
-    nz += (a[0] - b[0]) * (a[1] + b[1]);
-  }
-  return [nx, ny, nz];
-}
-
-const r2 = (v: number) => Math.round(v * 100) / 100 + 0;
 
 // The viewBox stays in frame px; the intrinsic size is the display size, so the frame
 // rasterizes at the size it is drawn.
@@ -287,201 +272,13 @@ function exportCraft(spec: CraftSpec) {
 // ------------------------------------------------------------------ debris
 
 const CORAL = palette.colors.obstacle!;
-// Contour outside the silhouette, in display px.
-const CONTOUR = 1.5;
-const TUMBLE_FRAMES = 8;
 const TUMBLE_AXIS = unit([0.4, 1, 0.6]);
 const DEBRIS_SCALE = 1.25;
-
-// Body ramp, lit to shadow: the galaxy's environmentDetail lightness lifted by these steps, at
-// the galaxy tint hue with BODY_CHROMA times its chroma: muted field matter, never the neutral
-// stone of harmless rocks.
-const BODY_LIFT = [0.2, 0.15, 0.1, 0.06, 0.03] as const;
-const BODY_CHROMA = 1.3;
-
-function bodyRamp(environmentDetail: string, chroma: number, hue: number): string[] {
-  const [L] = toOklab(rgb(environmentDetail));
-  const r = (hue * Math.PI) / 180;
-  return BODY_LIFT.map((d) =>
-    hex(
-      fromOklab(L + d, chroma * BODY_CHROMA * Math.cos(r), chroma * BODY_CHROMA * Math.sin(r)),
-    ).toUpperCase(),
-  );
-}
 const BODY = bodyRamp(
   cartwheel.colors.environmentDetail!,
   cartwheel.tint.chroma,
   cartwheel.tint.hue,
 );
-
-type Solid = { faces: Point[][]; accent?: boolean }[];
-
-// A closed prism from a plan polygon (counterclockwise), z0 to z1.
-function prism(plan: readonly (readonly [number, number])[], z0: number, z1: number): Point[][] {
-  const out: Point[][] = [
-    plan.map(([x, y]): Point => [x, y, z1]),
-    plan.map(([x, y]): Point => [x, y, z0]).toReversed(),
-  ];
-  for (const [i, a] of plan.entries()) {
-    const b = plan[(i + 1) % plan.length]!;
-    out.push([
-      [a[0], a[1], z0],
-      [b[0], b[1], z0],
-      [b[0], b[1], z1],
-      [a[0], a[1], z1],
-    ]);
-  }
-  return out;
-}
-
-const ccw = (plan: [number, number][]) => {
-  const a = plan.reduce((s, p, i) => {
-    const q = plan[(i + 1) % plan.length]!;
-    return s + p[0] * q[1] - q[0] * p[1];
-  }, 0);
-  return a > 0 ? plan : plan.toReversed();
-};
-
-// Design A: a bent hull plate, torn on one edge, folded along a rib.
-function bentPlate(): Solid {
-  const left = ccw([
-    [-30, -14],
-    [-4, -16],
-    [-2, 14],
-    [-22, 18],
-    [-27, 9],
-    [-34, 6],
-  ]);
-  const right = ccw([
-    [-2, -16],
-    [22, -12],
-    [30, -2],
-    [24, 4],
-    [28, 12],
-    [0, 14],
-  ]);
-  const fold = (faces: Point[][], a: number): Point[][] =>
-    faces.map((f) =>
-      f.map(([x, y, z]): Point =>
-        x > -2 ? [-2 + (x + 2) * Math.cos(a), y, z + (x + 2) * Math.sin(a)] : [x, y, z],
-      ),
-    );
-  return [
-    { faces: prism(left, -2.5, 2.5) },
-    { faces: fold(prism(right, -2.5, 2.5), 0.55) },
-    {
-      faces: prism(
-        ccw([
-          [-5, -17],
-          [1, -17],
-          [1, 15],
-          [-5, 15],
-        ]),
-        2.5,
-        6.5,
-      ),
-      accent: true,
-    },
-  ];
-}
-
-function turn(axis: Point, angle: number, [x, y, z]: Point): Point {
-  const [u, v, w] = axis;
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-  const d = u * x + v * y + w * z;
-  return [
-    u * d * (1 - c) + x * c + (-w * y + v * z) * s,
-    v * d * (1 - c) + y * c + (w * x - u * z) * s,
-    w * d * (1 - c) + z * c + (-v * x + u * y) * s,
-  ];
-}
-
-// Facets take a body tone by the light; the rib sits one tone deeper.
-function debrisTone(face: readonly Point[], accent: boolean): string {
-  const l = dot(unit(normal(face)), LIGHT);
-  const steps = [0.9, 0.7, 0.45, 0.15];
-  const i = steps.findIndex((s) => l >= s);
-  return BODY[Math.min(BODY.length - 1, (i < 0 ? BODY.length - 1 : i) + (accent ? 1 : 0))]!;
-}
-
-function exportDebris(id: string, title: string, solid: Solid) {
-  const frames = Array.from({ length: TUMBLE_FRAMES }, (_, k) =>
-    solid.flatMap(({ accent, faces }) =>
-      faces.map((f) => ({
-        accent: accent ?? false,
-        face: f.map((p) => {
-          const q = turn(TUMBLE_AXIS, (k * 2 * Math.PI) / TUMBLE_FRAMES, p);
-          return [q[0] * DEBRIS_SCALE, q[1] * DEBRIS_SCALE, q[2] * DEBRIS_SCALE] as Point;
-        }),
-      })),
-    ),
-  );
-  // Contour stroke in frame px: twice the contour, half of it outside the silhouette.
-  const stroke = (2 * CONTOUR) / DISPLAY_SCALE;
-  const all = frames.flat().flatMap(({ face }) => face.map((p) => projectAt(0, 0, p)));
-  const pad = Math.ceil(stroke / 2) + 3;
-  const half = Math.ceil(Math.max(...all.map(([x]) => Math.abs(x)))) + pad;
-  const top = Math.ceil(-Math.min(...all.map(([, y]) => y))) + pad;
-  const w = half * 2;
-  const h = top + Math.ceil(Math.max(...all.map(([, y]) => y))) + pad;
-  const files = frames.map((faces, k) => {
-    const visible = faces
-      .filter(({ face }) => facesViewer(face))
-      .toSorted((a, b) => depth(b.face) - depth(a.face))
-      .map(({ accent, face }) => ({
-        fill: debrisTone(face, accent),
-        pts: face.map((p) => projectAt(half, top, p)),
-      }));
-    // Coral contour: every visible face stroked wide in coral underneath, then the faces.
-    const under = visible.map(
-      ({ pts }) =>
-        `  <polygon fill="${CORAL}" stroke="${CORAL}" stroke-width="${stroke.toFixed(2)}" stroke-linejoin="round" points="${points(pts)}"/>`,
-    );
-    const body = visible.map(
-      ({ fill, pts }) =>
-        `  <polygon fill="${fill}" stroke="${fill}" stroke-width="${SEAM}" stroke-linejoin="round" points="${points(pts)}"/>`,
-    );
-    const file = `${id}-${k}`;
-    writeFileSync(`${dir}${file}.svg`, svg(`${title} ${k}`, w, h, [...under, ...body]));
-    const drawn = visible.flatMap(({ pts }) => pts);
-    const xs = drawn.map(([x]) => x);
-    const ys = drawn.map(([, y]) => y);
-    const outside = stroke / 2;
-    return {
-      file,
-      bounds: [
-        r2(Math.min(...xs) - outside),
-        r2(Math.min(...ys) - outside),
-        r2(Math.max(...xs) + outside),
-        r2(Math.max(...ys) + outside),
-      ],
-      reach: Math.max(...drawn.map(([x, y]) => Math.hypot(x - half, y - top))) + outside,
-    };
-  });
-  const pivot = { x: 0.5, y: Math.round((top / h) * 1e5) / 1e5 };
-  const entries = files.map(({ file }, k) => ({
-    id: file,
-    path: `/art/cartwheel/${file}.svg`,
-    width: w,
-    height: h,
-    displayWidth: w * DISPLAY_SCALE,
-    displayHeight: h * DISPLAY_SCALE,
-    facing: "front",
-    tumbleIndex: k,
-    pivot,
-    debris: id,
-  }));
-  const data = {
-    id,
-    frame: { width: w, height: h },
-    display: { width: w * DISPLAY_SCALE, height: h * DISPLAY_SCALE },
-    pivot: [pivot.x, pivot.y],
-    radius: r2(Math.max(...files.map(({ reach }) => reach))),
-    frames: files.map(({ bounds, file }) => ({ file: `/art/cartwheel/${file}.svg`, bounds })),
-  };
-  return { data, entries };
-}
 
 // ------------------------------------------------------------------ ore nugget
 
@@ -511,7 +308,13 @@ const nuggetFrame = (rows: readonly string[]): Frame =>
 
 // ------------------------------------------------------------------ main
 
-const debris = exportDebris("cartwheel-debris", "Cartwheel debris", bentPlate());
+const debris = exportDebris(dir, "/art/cartwheel/", BODY, CORAL, {
+  id: "cartwheel-debris",
+  title: "Cartwheel debris",
+  solid: bentPlate(),
+  axis: TUMBLE_AXIS,
+  scale: DEBRIS_SCALE,
+});
 const craft = CRAFT.map(exportCraft);
 
 await writeSpriteSheet(
@@ -541,26 +344,13 @@ const nugget = {
   frames: { rest: 0 },
 };
 
-// Direction mark, logical px: three coral dashes trailing a traveling debris piece. Dash i is
-// centred `behind` px past the edge of its frame's drawn bounds along the reverse velocity and
-// `side` px to the left of travel.
-const MARKS = {
-  color: CORAL,
-  width: 2,
-  dashes: [
-    { length: 9, alpha: 0.95, behind: 7.5, side: -3 },
-    { length: 6, alpha: 0.7, behind: 14.5, side: 3 },
-    { length: 4, alpha: 0.45, behind: 21.5, side: 0 },
-  ],
-};
-
 await writeJson(`${dir}debris.json`, {
   version: 1,
   displayScale: DISPLAY_SCALE,
   body: BODY,
   contour: { color: CORAL, width: CONTOUR },
-  tumble: { frames: TUMBLE_FRAMES, degPerSecond: [60, 120] },
-  marks: MARKS,
+  tumble: { frames: TUMBLE_FRAMES, degPerSecond: TUMBLE_DEG_PER_SECOND },
+  marks: { color: CORAL, width: MARK_WIDTH, dashes: MARK_DASHES },
   debris: [debris.data],
 });
 

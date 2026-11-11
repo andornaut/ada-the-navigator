@@ -1,6 +1,6 @@
 // Traveling debris: flat-shaded solids in a galaxy's field hue inside the coral hazard contour,
 // tumbling about a tilted axis through 8 frames, exported as SVG frames with their data and
-// root manifest entries.
+// manifest entries.
 import { writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";

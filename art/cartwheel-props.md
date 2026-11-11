@@ -15,7 +15,8 @@ no damaging hazards.
   are in [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
   are byte-identical.
 - The craft models are in `art/tools/cartwheel-craft.ts`: the miner A hauler,
-  powered or not, and the ore pod.
+  powered or not, and the ore pod. The debris model is shared with Whirlpool's
+  river debris in [art/tools/debris.ts](tools/debris.ts).
 - Every SVG keeps its `viewBox` in frame px and declares its display size
   (frame times 0.4375) as `width` and `height`, so it rasterizes at the size it
   is drawn. Manifest `width` and `height` are frame px; `displayWidth` and
