@@ -52,7 +52,7 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
   two read apart by shape as well as colour.
 - At the smallest view (720 logical, phone insets 43) the header may reach the
   tool column less `SPACING.pageInset`: 570 wide. "Black Eye" and "100% mapped"
-  leave room for 35 pips.
+  leave room for 35 pips; each galaxy has 12 landmarks, 4 of each kind.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
 
@@ -82,7 +82,7 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
 - The column ends at HUD rect top + 216 (224 at a top of 8), at least
   `SPACING.gap` above the tallest panel's top at the 360-high view (233 with
   phone insets).
-- Accessible labels are Gameplay's; none exist yet (see [Open questions](#open-questions)).
+- Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
 ### Place panel
 
@@ -149,17 +149,17 @@ The objective carries the flight's direction indicator.
 | `MAP_SYMBOL.ada.keyline`      | 1.5   | Ink keyline outside the hull (a 3 ink stroke under the fill)         |
 | `MAP_SYMBOL.hit`              | 48    | Press area: `hitAround` of the chip, `HIT_RULE.minTarget`            |
 
-| Symbol        | Place                             | Face      | Glyph                 | Type line (placeholder) |
-| ------------- | --------------------------------- | --------- | --------------------- | ----------------------- |
-| `station`     | A trading station                 | `#C4AFCC` | `map-station.svg`     | Station                 |
-| `growers`     | The growers' outpost              | `#9CCC5A` | `map-growers.svg`     | Outpost                 |
-| `workshop`    | The workshop outpost              | `#F2D15A` | `map-workshop.svg`    | Outpost                 |
-| `salvagers`   | The salvagers' outpost            | `#8F9CF0` | `map-salvagers.svg`   | Outpost                 |
-| `destination` | Any other story destination       | `#65C9BF` | `map-destination.svg` | Destination             |
-| `holodisk`    | The holodisk waypoint, once known | `#E868C8` | `map-holodisk.svg`    | Holodisk                |
-| `nebula`      | A nebula landmark                 | `#EAD4AA` | `map-nebula.svg`      | Landmark                |
-| `wreck`       | A wreck landmark                  | `#EAD4AA` | `map-wreck.svg`       | Landmark                |
-| `beacon`      | A beacon landmark                 | `#EAD4AA` | `map-beacon.svg`      | Landmark                |
+| Symbol        | Place                       | Face      | Glyph                 | Type line   |
+| ------------- | --------------------------- | --------- | --------------------- | ----------- |
+| `station`     | A trading station           | `#C4AFCC` | `map-station.svg`     | Station     |
+| `growers`     | The growers' outpost        | `#9CCC5A` | `map-growers.svg`     | Outpost     |
+| `workshop`    | The workshop outpost        | `#F2D15A` | `map-workshop.svg`    | Outpost     |
+| `salvagers`   | The salvagers' outpost      | `#8F9CF0` | `map-salvagers.svg`   | Outpost     |
+| `destination` | Any other story destination | `#65C9BF` | `map-destination.svg` | Story place |
+| `holodisk`    | Known, unrecovered holodisk | `#E868C8` | `map-holodisk.svg`    | Holodisk    |
+| `nebula`      | A nebula landmark           | `#EAD4AA` | `map-nebula.svg`      | Nebula      |
+| `wreck`       | A wreck landmark            | `#EAD4AA` | `map-wreck.svg`       | Wreck       |
+| `beacon`      | A beacon landmark           | `#EAD4AA` | `map-beacon.svg`      | Beacon      |
 
 - Faces are the in-world key colours: lavender `pointOfInterest` for
   stations, each outpost's own colour, mint `active` for destinations, the
@@ -259,7 +259,7 @@ symbol and the chrome.
 | Token                       | Value | Rule                                                                             |
 | --------------------------- | ----- | -------------------------------------------------------------------------------- |
 | `MAP_SCREEN.fog.reveal`     | 1500  | World units explored around each explored chunk centre, discovered place and Ada |
-| `chunkSize`                 | 512   | The centre of each 512-unit world chunk Ada has visited this flight              |
+| `chunkSize`                 | 512   | The centre of each 512-unit world chunk Ada has visited in this galaxy           |
 | `MAP_SCREEN.fog.feather`    | 0.16  | Gaussian edge, sigma as a share of the reveal's on-screen x radius               |
 | `MAP_SCREEN.fog.minFeather` | 3     | Sigma never below 3 logical px                                                   |
 
@@ -280,7 +280,8 @@ symbol and the chrome.
   over the whole view, masked by the union of those ellipses at every explored
   chunk centre, every discovered place and Ada, the mask blurred by
   `sigma = max(minFeather, feather * rx)`.
-- The explored record covers the current flight; each flight starts in fog.
+- The explored record (explored chunk ids) persists per galaxy across flights
+  and clears on Restart.
 - Marks on fog: on Sunflower the ink edge is 8.62:1 on the fog; on the dark
   fields the faces are 3.81:1 (holodisk on Whirlpool) or more.
 - Fallback: with no explored record, draw the plain field and no fog. Places,
@@ -340,6 +341,7 @@ close places' chips then overlap. Two rules keep each one reachable:
    view (598 at 1280x720). The projection shrinks a world distance by at most
    `sqrt(2)`, so places at least 1020 world units apart are always separable
    at full zoom. At `minScale` the same holds from about 6000 world units.
+   Gameplay keeps every mapped place at least 1020 world units apart.
 
 The selected chip draws above every other chip, so the place the panel names
 is always fully visible. Header, tools and panel sit above the field and take
@@ -399,25 +401,21 @@ is unavailable instead.
 
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
 here; "No destinations mapped yet."; "Unavailable while you are in danger.";
-the galaxy names. Placeholders until Gameplay supplies them, drawn in the
-review sheets only:
+the galaxy names; the tools' accessible labels; and the type line:
 
-- The type line's types: Station, Outpost, Destination, Holodisk, Landmark.
-- The type line's form "{type} · {distance}" and the distance "8,900 km" (the
-  world distance from Ada, rounded to 100, en-US grouping, with a unit).
-- "Unavailable while towing.", pending the towing decision.
-- The tools' accessible labels.
+- Types: Station, Outpost, Story place, Holodisk, Nebula, Wreck, Beacon.
+  Outposts say "Outpost" without their name.
+- Form "{type} · {distance}". The distance is the world distance from Ada
+  divided by 1000, in light-years: one decimal below 10 ("0.4 light-years"),
+  whole numbers from 10 ("12 light-years"), en-US grouping, and "1 light-year"
+  when it rounds to 1.
+
+Placeholder until Gameplay supplies it, drawn in the review sheets only:
+"Unavailable while towing.", pending the towing decision.
 
 ## Open questions
 
-- Gameplay: the type names and the distance's unit, rounding and separator;
-  whether the type line names the outpost ("Growers outpost") or just
-  "Outpost"; the towing reason; the tools' accessible labels.
-- Gameplay: each landmark's kind (nebula, wreck or beacon) and the landmark
-  count per galaxy (the header fits 35 pips); whether the holodisk waypoint
-  shows on the map once known, as the symbol set assumes.
-- Gameplay: that no two map places sit closer than 1020 world units, so every
-  chip separates at full zoom.
+- Gameplay: the towing reason.
 - Tech: a symbol key per `MapPlace` (the table above), and whether stations
   far outside the charting disc exist, which the opening pan and pan limit
   cover.
