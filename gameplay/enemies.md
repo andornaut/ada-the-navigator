@@ -109,7 +109,7 @@ The settled Tech-owned source paths are `src/model/enemy-ai.ts`,
 `SpaceObject` carries optional `enemy`, `velocity` and `routeId` fields. Enemy state
 lives on `SpaceObject.enemy`; ballistic debris uses `SpaceObject.velocity`.
 `FlightState.combat` is optional and carries `initialPackSizes` and `routeEncounters`.
-`Shot.projectile` is optional and distinguishes bolt and missile projectiles.
+`Shot.projectile` is optional and distinguishes bolt, missile and dot projectiles.
 There is no parallel enemy-state collection or save-version migration.
 
 `src/model/save.ts` validates these optional fields when present while accepting

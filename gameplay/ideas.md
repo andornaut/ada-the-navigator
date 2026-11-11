@@ -6,9 +6,8 @@ within that version. See [the prototype contract](prototype.md) for current rule
 
 ## Future candidates
 
-- Permanent ship upgrades and their acquisition.
-- Cosmetics and their acquisition.
-- Other horizontal or vertical progression beyond temporary weapon pickups.
+- Other horizontal or vertical progression beyond the station shop.
 
-Temporary weapon upgrades, ammunition drops, achievements and continued procedural
-play are already part of version one.
+Weapons, ship upgrades and ship paint from station shops, achievements and
+continued procedural play are already part of version one; see
+[Economy](economy.md).

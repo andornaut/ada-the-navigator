@@ -77,11 +77,11 @@ intercepts Ada within 600 and falls back to `hitAndRun` without its capital.
 Chasers press in to close range and bounce off on contact. Finite pursuit, return home and the speed cap still apply.
 When an encounter regenerates, its survivors are restored by role, so a destroyed
 capital never returns as an escort or the reverse. Galaxy one is mildly
-more aggressive than before, and later galaxies ramp difficulty quickly.
+more aggressive than the base catalog, and later galaxies ramp difficulty quickly.
 
 ## Galaxy one roster
 
-Galaxy one is a playtest roster with a few more enemies than before.
+Galaxy one has its own playtest roster.
 
 | Archetype      | Encounter | Group | Weight |  HP | Behaviours                                                                         |
 | -------------- | --------- | ----: | -----: | --: | ---------------------------------------------------------------------------------- |

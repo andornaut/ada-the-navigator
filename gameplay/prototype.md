@@ -136,7 +136,7 @@ why that child is targeted. Ada and other children choose inclusion, visible
 support and refusal to normalize bullying. Do not resolve this by a duel.
 
 The space station is a busy mining collection hub with adequate docking capacity.
-Ada shoots resource-bearing rocks, collects pieces on contact into a limited
+Ada shoots resource-bearing rocks, collects pieces on contact into the
 cargo hold, returns and deposits them. Cumulative deposited resource targets
 advance story milestones; partial loads count. The resource identity and exact
 quantities remain open.
@@ -183,8 +183,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   noticeable momentum and swings wide on sharp turns.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 40 logical pixels with a 2.4 logical pixel
-  deadzone, scaling with the view like every layout value,
-  doubled for finer low-speed control. The drawn knob stays inside the ring, as in
+  deadzone, scaling with the view like every layout value;
+  the long reach gives finer low-speed control. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
   drag. Both joysticks' drawn rings sit 24 logical pixels in from their side edge and 20
@@ -256,7 +256,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - The landing page, as in Archie, shows an "Install" button beside Play while the
   game can be installed. It opens the browser's install prompt, or the same
   browser steps as the Settings Install row in a dialog with a "Close" button.
-- Do not show a top-left information or status panel. Objectives, deposits and
+- Apart from the status pill, do not show a top-left information or status panel. Objectives, deposits and
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
@@ -485,7 +485,7 @@ does not define galaxy four's story or conclusion.
 
 ## Verification priorities
 
-Check independent move/aim controls, shield recharge, both shield-depletion outcomes,
+Check independent move/aim controls, shield recharge, the shield-depletion jump home,
 safe dialogue and arrivals, unlimited mining cargo and deposits, recoverable deliveries,
 fresh-chunk quest encounters, saved story progression, regeneration and exact
 interrupted-flight resume. Verify the three home resolutions unlock galaxies

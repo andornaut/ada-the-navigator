@@ -39,8 +39,7 @@ play against the targets above; rerun it after changing any earning value.
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
 of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
-24 for capital ships: swarm 2, fighter 5, interceptor 6, retaliator 8, frigate 16,
-capital 24, and one per Stardust for asteroids. With the values above, every
+24 for capital ships, and one per Stardust for asteroids. With the values above, every
 drop is below its cap, so each pickup carries 1 Stardust.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
@@ -112,7 +111,7 @@ power-ups.
 When the shield is depleted, Astra quantum jumps the ship home to Earth so it can
 recharge. The flight ends and story progress is saved. The jump
 permanently loses the equipped weapon and its upgrade levels unless it is Basic,
-so a weapon bought or found again starts at level 0. Recharging costs a flat 10
+so a weapon bought or found again starts at level 1. Recharging costs a flat 10
 Stardust, never taking Stardust below zero.
 
 ## Player strings
@@ -120,8 +119,7 @@ Stardust, never taking Stardust below zero.
 The status pill shows the Stardust count as a bare number with en-US grouping
 ("12,500"); its accessible label is `stardustAmount`. Pickup ticks read "+N".
 
-The shield shop row reuses the existing `shield` label. `jumpHome` replaces
-`shieldDepleted`.
+The shield shop row reuses the existing `shield` label.
 
 | Key                 | Text                                                               |
 | ------------------- | ------------------------------------------------------------------ |

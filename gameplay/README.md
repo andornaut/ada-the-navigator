@@ -1,8 +1,11 @@
 # Ada the Navigator gameplay
 
-[Version one design](design.md) records the current premise, story structure,
-space play, controls and unresolved details. [Ships](ships.md) defines ship
-physics and enemy rosters. [Economy](economy.md) defines Stardust, stations and
+[Version one design](design.md) records the premise, characters, story arc and
+unresolved story details. [The prototype contract](prototype.md)
+defines version one's rules and [the player copy](prototype-copy.md) its text.
+[Ships](ships.md) defines ship physics and enemy rosters, and the
+[enemy rule interface](enemies.md) the enemy AI's rules. [Cheats](cheats.md)
+defines the browser-tab cheats. [Economy](economy.md) defines Stardust, stations and
 the shop. [Ideas](ideas.md) contains proposals outside the
 current version. These documents describe design, not implementation.
 
