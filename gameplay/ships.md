@@ -137,7 +137,7 @@ turrets fire while it advances, with no speed to advance.
   column. Shots on the hull outside a turret do no damage, as on other multipart
   ships.
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
-  a two-bolt burst, 0.15 seconds between bolts, every 1.4 seconds while Ada is
+  a two-bolt burst, 0.15 seconds between bolts, every 1.4 seconds before the galaxy's fire multiplier while Ada is
   within 520 world units, using the base enemy bolt. It stops firing beyond 520
   and never pursues.
 - **State:** retained like a frigate, so disabled turrets and a destroyed

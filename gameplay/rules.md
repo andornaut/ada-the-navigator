@@ -200,7 +200,7 @@ them. All values are provisional tuning:
   second (0.35 of Ada's 200 base top speed), falls to zero at its edges and fades
   out over the last 600 world units at each end.
 - Currents and their debris rivers are placed by the galaxy's seed, so they stay
-  in the same places on every flight, like stations. They cover about a fifth of
+  in the same places on every flight, like stations. They cover about a tenth of
   open space, never overlap or close into loops, and keep 800 world units clear
   of stations, story destinations, landmarks and quantum jump arrivals. Asteroids
   are not placed in currents, and chunk generation keeps them clear.
