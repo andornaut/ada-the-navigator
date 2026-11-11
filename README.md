@@ -81,8 +81,9 @@ without aim input, the ship faces its movement direction.
 
 The persistence contract distinguishes an interrupted flight from leaving a galaxy:
 
-- Closing and reopening resumes the exact flight, including its layout seed,
-  position, cargo, shield and equipped weapon.
+- Every launch opens on the start screen. After closing mid-flight, Continue
+  resumes the exact flight, including its layout seed, position, cargo, shield,
+  equipped weapon, tow and danger.
 - Leaving a galaxy ends its flight: re-entering generates a new layout seed and
   starts without carried cargo. Story progress, known destinations, discovered
   stations, deposited resources, activity counters, Stardust, owned weapons, levels,
@@ -110,7 +111,9 @@ The precache version is a hash of that content, so any change installs a new
 worker. Hashed `/assets/` files are served cache-first; the page, art and
 manifest are network-first, so an online load shows the latest deploy and an
 offline load uses the cached copy. A first visit registers the worker once the
-game has drawn. While a new worker waits, the start screen offers it: Update now
+game has drawn. A launch the worker controls checks for a newer version first,
+holding the start screen for at most 4 seconds while it does. While a new worker
+waits, the start screen offers it: Update now
 switches to it and reloads, and Cancel keeps the current version for that visit.
 Otherwise it takes over on a later launch, after every page the old one controls
 has closed. The landing page at `/` is not precached.

@@ -1,5 +1,26 @@
-import type { GameModel } from "./game.ts";
+import type { PrototypeContent } from "../data/types.ts";
+import { GameModel } from "./game.ts";
 import type { StoryPage } from "./storybook.ts";
+
+/**
+ * Test support: a launch from a save, which opens on the start screen, then Continue when the
+ * save was made mid-flight, so the flight resumes as it was saved.
+ */
+export function relaunch(content: PrototypeContent, saved: unknown): GameModel {
+  const model = new GameModel(content, saved);
+  let value = saved;
+  if (typeof saved === "string") {
+    try {
+      value = JSON.parse(saved) as unknown;
+    } catch {
+      value = null;
+    }
+  }
+  if ((value as { mode?: unknown } | null)?.mode === "space") {
+    model.continueGame();
+  }
+  return model;
+}
 
 /**
  * Test support: launching a galaxy now starts its flight at once, since openings play at home.

@@ -20,7 +20,7 @@ import { createFlight, ensureDestination, ensureStation, stepFlight } from "./fl
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening, seedLaunches } from "./test-launch.ts";
+import { playOpening, relaunch, seedLaunches } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const progress: SectorProgress = {
@@ -430,7 +430,7 @@ describe("asteroids in flight", () => {
     for (let step = 0; step < 300; step++) {
       model.step(1 / 60, idle);
     }
-    const resumed = new GameModel(PROTOTYPE, model.save());
+    const resumed = relaunch(PROTOTYPE, model.save());
     const again = resumed.state.flight!;
     expect(again.time).toBe(flight.time);
     again.player.x = orbit.x + 700;

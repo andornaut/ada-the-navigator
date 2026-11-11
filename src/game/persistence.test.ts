@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import { GameModel } from "../model/game.ts";
-import { playOpening } from "../model/test-launch.ts";
+import { playOpening, relaunch } from "../model/test-launch.ts";
 import { readSave, writeSave } from "./persistence.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -26,14 +26,14 @@ describe("browser save boundary", () => {
     model.startSector(1);
     playOpening(model);
     expect(writeSave(model.save())).toBe(false);
-    expect(new GameModel(PROTOTYPE, readSave()).state.mode).toBe("home");
+    expect(relaunch(PROTOTYPE, readSave()).state.mode).toBe("home");
     const before = { ...model.state.flight!.player };
     model.step(0.05, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
     expect(model.state.flight!.player).not.toEqual(before);
     expect(writeSave(model.save())).toBe(false);
     blocked = false;
     expect(writeSave(model.save())).toBe(true);
-    expect(new GameModel(PROTOTYPE, readSave()).state).toEqual(model.state);
+    expect(relaunch(PROTOTYPE, readSave()).state).toEqual(model.state);
   });
 
   it("reports denied access to the storage object without throwing", () => {

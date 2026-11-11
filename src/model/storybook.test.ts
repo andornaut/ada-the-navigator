@@ -15,7 +15,7 @@ import {
   shownChoices,
   storyStart,
 } from "./storybook.ts";
-import { boardAndJump, readStory } from "./test-launch.ts";
+import { boardAndJump, readStory, relaunch } from "./test-launch.ts";
 
 // A choice page whose choices branch one or two pages before rejoining.
 const branching: Scene = {
@@ -323,7 +323,7 @@ describe("story runs", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     reloaded.continueGame();
     expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: true });
     reloaded.storySkip();
@@ -386,7 +386,7 @@ describe("start flow", () => {
     model.start();
     readStory(model);
     model.leaveCockpit();
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     expect(reloaded.state.started).toBe(false);
     reloaded.start();
     // Start replays galaxy one's opening; the prologue is seen, so Ada boards from her room.
@@ -399,14 +399,14 @@ describe("start flow", () => {
       "boarding:1",
     ]);
     reloaded.jump();
-    expect(new GameModel(PROTOTYPE, reloaded.save()).state.started).toBe(true);
+    expect(relaunch(PROTOTYPE, reloaded.save()).state.started).toBe(true);
   });
 
   it("continues in the cockpit with Astra's line, then the farthest unlocked galaxy", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     expect(reloaded.screen).toBe("start");
     reloaded.start();
     expect(reloaded.screen).toBe("start");
@@ -424,7 +424,7 @@ describe("start flow", () => {
     model.state.progress[2].questComplete = false;
     model.state.announceGalaxy = true;
     model.returnHome();
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     reloaded.continueGame();
     expect(readStory(reloaded).map(({ text }) => text)).toEqual([
       "Welcome back, Navigator. A new galaxy is ready.",
@@ -434,9 +434,9 @@ describe("start flow", () => {
 
   it("plays a waiting home scene before galaxy selection", () => {
     const model = questDone(1);
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     reloaded.returnHome();
-    const home = new GameModel(PROTOTYPE, reloaded.save());
+    const home = relaunch(PROTOTYPE, reloaded.save());
     home.continueGame();
     expect(home.storyView?.page.id).toBe("resolution");
     readStory(home);
@@ -451,7 +451,7 @@ describe("start flow", () => {
     // Restart acts only from the start screen.
     model.restart();
     expect(model.state.unlocked).toEqual([1, 2]);
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     const achievements = structuredClone(reloaded.state.achievements);
     reloaded.restart();
     expect(reloaded.screen).toBe("start");

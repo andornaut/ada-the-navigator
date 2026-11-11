@@ -4,7 +4,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -40,7 +40,7 @@ describe("required route approach encounters", () => {
       expect(model.state.progress[sector].introduced).toBe(false);
       expect(model.state.progress[sector].known).not.toContain(target.id);
       expect(flight.shield).toBeGreaterThanOrEqual(shield);
-      const resumed = new GameModel(PROTOTYPE, model.save());
+      const resumed = relaunch(PROTOTYPE, model.save());
       expect(resumed.state).toEqual(model.state);
       const next = resumed.state.flight!;
       const restoredGuard = next.objects.find((object) => object.routeId === target.id)!;

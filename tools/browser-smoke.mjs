@@ -265,7 +265,7 @@ try {
     { GameModel },
     { PROTOTYPE },
     { ensureDestination },
-    { playOpening },
+    { playOpening, relaunch },
     { restoreSave: restoreCalm },
     { ACHIEVEMENTS },
   ] = await Promise.all([
@@ -708,14 +708,24 @@ try {
   );
   await page.locator('[data-action="pause-resume"]').click();
 
+  // Every launch opens on the start screen; Continue resumes a mid-flight save in flight.
+  async function continueFlight() {
+    await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+    await page.locator('.ada-start-actions > [data-action="continue"]').click();
+    await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  }
   // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
   // settings over: a reloaded tab keeps every earlier load's images alive until the context
-  // closes, which the container's memory ceiling cannot hold across the run.
-  async function seedOnce(value, marker) {
+  // closes, which the container's memory ceiling cannot hold across the run. A mid-flight
+  // fixture continues into its flight unless resume is false.
+  async function seedOnce(value, marker, { resume = true } = {}) {
     const fixture = await openFixture(await leaveFixture(), value, marker);
     context = fixture.context;
     page = fixture.page;
     await page.goto(fixture.url);
+    if (resume && JSON.parse(value).mode === "space") {
+      await continueFlight();
+    }
   }
   // The current page's URL, viewport and stored entries, then its context closed.
   async function leaveFixture() {
@@ -772,8 +782,47 @@ try {
   calm.flight.shield = PROTOTYPE.tuning.shieldMax;
   calm.flight.dangerFor = 0;
   assert.ok(restoreCalm(calm), "The calm launched world must remain a canonical save");
-  await seedOnce(JSON.stringify(calm), "ada-browser.calm-launch.v1");
+  // A launch from a mid-flight save opens on the start screen with Continue focused, the flight
+  // held as saved; Continue resumes it where the save left off.
+  await seedOnce(JSON.stringify(calm), "ada-browser.calm-launch.v1", { resume: false });
+  const midFlightContinue = page.locator('.ada-start-actions > [data-action="continue"]');
+  await midFlightContinue.waitFor({ state: "visible" });
+  await page.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+  assert.equal(
+    await page.locator("#game-status").getAttribute("data-mode"),
+    "home",
+    "A mid-flight save launches to the start screen",
+  );
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.dataset.action ?? null),
+    "continue",
+    "Continue is focused on a mid-flight launch",
+  );
+  assert.equal(
+    await page.locator("#game-status").textContent(),
+    "",
+    "The flight's notice waits with the flight, off the start screen",
+  );
+  await page.waitForTimeout(500);
+  assert.deepEqual(
+    (await readSave()).flight.player,
+    calm.flight.player,
+    "The start screen holds the saved flight unchanged",
+  );
+  await page.screenshot({ path: `${output}/launch-mid-flight.png` });
+  await midFlightContinue.click();
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  assert.deepEqual(
+    await page
+      .locator("#game-status")
+      .evaluate((status) => [Number(status.dataset.x), Number(status.dataset.y)]),
+    [calm.flight.player.x, calm.flight.player.y],
+    "Continue resumes the flight at its saved position",
+  );
+  events.checks.push(
+    "A mid-flight save launches to the start screen with Continue focused, and Continue " +
+      "resumes the flight at its saved position",
+  );
 
   await page.waitForFunction((key) => {
     const status = document.querySelector("#game-status");
@@ -786,7 +835,7 @@ try {
   const persisted = await readSave();
   assert.equal(persisted.version, 1);
   await page.reload();
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await continueFlight();
   const resumed = await readSave();
   for (const field of ["seed", "cargo", "shield", "player", "world", "visited"]) {
     assert.deepEqual(
@@ -803,7 +852,7 @@ try {
     page.waitForURL("**/play/"),
     page.locator('a[href="/play/"]').first().click(),
   ]);
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await continueFlight();
   const returned = await readSave();
   for (const field of [
     "seed",
@@ -840,7 +889,7 @@ try {
   assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, safeSerialized).state, safeInput.state);
+  assert.deepEqual(relaunch(PROTOTYPE, safeSerialized).state, safeInput.state);
   save("input-fixture.json", {
     scope:
       "Friendly-destination safe-zone precondition for control checks only; no quest completion proof",
@@ -1032,7 +1081,7 @@ try {
     "One dedicated context control supports pointer and keyboard use, absent in home and dialogue",
   );
 
-  const dangerInput = new GameModel(PROTOTYPE, safeSerialized);
+  const dangerInput = relaunch(PROTOTYPE, safeSerialized);
   dangerInput.state.flight.dangerFor = 5;
   dangerInput.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
   dangerInput.state.flight.objects = [];
@@ -1306,7 +1355,7 @@ try {
   // column, and selecting its target pans the chip clear of the panel's rendered height.
   const { ECONOMY } = await import(new URL("../src/data/economy.ts", import.meta.url));
   const { stationsNear } = await import(new URL("../src/model/stations.ts", import.meta.url));
-  const jobInput = new GameModel(PROTOTYPE, safeSerialized);
+  const jobInput = relaunch(PROTOTYPE, safeSerialized);
   const issuer = stationsNear(ECONOMY, 1, 25000, { x: 0, y: 0 })[0];
   const growersAt = jobInput.state.flight.objects.find(
     (o) => o.kind === "destination" && o.id === "growers",
@@ -1403,7 +1452,7 @@ try {
   // Ada's room page: the Map's Return to Earth lands there, where the Paused card holds only
   // Settings and Back to title, and closes on Escape and its X. With the opening and prologue
   // seen, Return to Earth lands on the room page itself.
-  const roomInput = new GameModel(PROTOTYPE, safeSerialized);
+  const roomInput = relaunch(PROTOTYPE, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
   await seedOnce(roomInput.save(), "ada-browser.room-pause.v1");
@@ -1453,7 +1502,7 @@ try {
   // Towing never refuses the Map's Return to Earth; the held rescue stays held, its craft back
   // where it was stranded.
   const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));
-  const towInput = new GameModel(PROTOTYPE, roomInput.save());
+  const towInput = relaunch(PROTOTYPE, roomInput.save());
   const towFlight = towInput.state.flight;
   // The nearest station whose board offers a rescue.
   let rescue;
@@ -1625,13 +1674,13 @@ try {
   );
   events.checks.push("Native touch release clears movement and firing without resurrection");
 
-  const equipment = new GameModel(PROTOTYPE, safeSerialized);
+  const equipment = relaunch(PROTOTYPE, safeSerialized);
   equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
   // Each with a new weapon's three packs.
   Object.assign(equipment.state.flight.ammo, { multiLaser: 600, rapidMissile: 600 });
   equipment.state.flight.weapon = "basic";
   const equipmentSave = equipment.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, equipmentSave).state, equipment.state);
+  assert.deepEqual(relaunch(PROTOTYPE, equipmentSave).state, equipment.state);
   save("equipment-fixture.json", {
     scope:
       "Canonical owned-upgrade fixture for UI selection and persistence, not pickup progression",
@@ -1706,6 +1755,7 @@ try {
     "The selected weapon must draw the selected state",
   );
   await page.reload();
+  await continueFlight();
   await page.waitForFunction(
     () =>
       document.querySelector('[data-weapon="rapidMissile"]')?.getAttribute("aria-pressed") ===
@@ -1799,7 +1849,7 @@ try {
       "ammunition, reload, modal guards and the status pill's shield meter",
   );
 
-  const damaged = new GameModel(PROTOTYPE, equipmentSave);
+  const damaged = relaunch(PROTOTYPE, equipmentSave);
   assert.ok(damaged.selectWeapon("rapidMissile"));
   // Damage is meaningful only outside the friendly destination's protected region.
   damaged.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 2;
@@ -1835,7 +1885,7 @@ try {
   assert.equal(damaged.state.economy.weapon, "rapidMissile", "The equipped weapon must stay");
   assert.equal(damaged.state.economy.stardust, 30, "The jump home must cost no Stardust");
   const damageSave = damaged.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, damageSave).state, damaged.state);
+  assert.deepEqual(relaunch(PROTOTYPE, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
     scope: "Real-model projectile damage before restore, not a natural browser combat playthrough",
     state: JSON.parse(damageSave),
@@ -2191,7 +2241,7 @@ try {
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
-  const weaponModel = new GameModel(PROTOTYPE, safeSerialized);
+  const weaponModel = relaunch(PROTOTYPE, safeSerialized);
   weaponModel.state.flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
   Object.assign(weaponModel.state.flight.ammo, {
     multiLaser: 600,
@@ -2202,7 +2252,7 @@ try {
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];
   const weaponSave = weaponModel.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, weaponSave).state, weaponModel.state);
+  assert.deepEqual(relaunch(PROTOTYPE, weaponSave).state, weaponModel.state);
   save("weapon-volley-fixture.json", {
     scope:
       "Canonical cleared-flight fixture for actual UI firing, not natural pickup or combat progression",
@@ -2228,7 +2278,7 @@ try {
       );
       const snapshot = await readSave();
       assert.deepEqual(
-        new GameModel(PROTOTYPE, JSON.stringify(snapshot)).state,
+        relaunch(PROTOTYPE, JSON.stringify(snapshot)).state,
         snapshot,
         "Actual fired projectiles and fade metadata must survive canonical save validation",
       );
@@ -2348,7 +2398,7 @@ try {
   cargoModel.teleport("hub");
   cargoModel.state.flight.cargo = 12345;
   const cargoSave = cargoModel.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, cargoSave).state, cargoModel.state);
+  assert.deepEqual(relaunch(PROTOTYPE, cargoSave).state, cargoModel.state);
   save("cargo-fixture.json", {
     scope: "Canonical wide-cargo deposit UI fixture, not natural mining progression",
     state: JSON.parse(cargoSave),
@@ -2369,6 +2419,7 @@ try {
     return state.flight.cargo === 0 && state.progress[2].deposited === 12345;
   }, storageKey);
   await page.reload();
+  await continueFlight();
   await page.waitForFunction(
     (key) => JSON.parse(localStorage.getItem(key)).progress[2].deposited === 12345,
     storageKey,
@@ -2483,7 +2534,7 @@ try {
   // a reload with a larger buffer keeps every request this check reads.
   await page.addInitScript(() => performance.setResourceTimingBufferSize(10000));
   await page.reload();
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await continueFlight();
   await page.waitForFunction(
     () =>
       [
@@ -2591,7 +2642,7 @@ try {
     }
     const serialized = combat.save();
     assert.deepEqual(restoreSave(serialized), combat.state, "Canonical restore accepts combat");
-    assert.deepEqual(new GameModel(PROTOTYPE, serialized).state, combat.state);
+    assert.deepEqual(relaunch(PROTOTYPE, serialized).state, combat.state);
     return serialized;
   }
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -3129,7 +3180,7 @@ try {
     page.locator('a[href="/play/"]').first().click(),
   ]);
   events.checks.push("Mobile website stays upright and its Play link enters the rotated game");
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await continueFlight();
   await page.locator('[data-control="aim-joystick"]').waitFor({ state: "visible" });
   // Wait for the kit/Phaser viewport synchronization after its first painted frame.
   await page.waitForFunction(() => {

@@ -5,7 +5,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {
@@ -32,7 +32,7 @@ describe("save boundary", () => {
       expect(restoreSave({ ...model.state, ...change })).toBeNull();
     }
     expect(restoreSave("{broken")).toBeNull();
-    expect(new GameModel(PROTOTYPE, "{broken").state.mode).toBe("home");
+    expect(relaunch(PROTOTYPE, "{broken").state.mode).toBe("home");
   });
   it("tolerates blocked storage reads and writes", () => {
     const storage = {
@@ -569,7 +569,7 @@ describe("current generation save boundary", () => {
 
   it("serializes only the current schema without decoding discarded ordinary history", () => {
     const snapshot = notableSnapshot();
-    const model = new GameModel(PROTOTYPE, JSON.stringify(snapshot));
+    const model = relaunch(PROTOTYPE, JSON.stringify(snapshot));
     expect(model.state).toEqual(snapshot);
     const parse = vi.spyOn(JSON, "parse");
     try {
@@ -676,8 +676,8 @@ describe("current generation save boundary", () => {
     old.flight.dormant = { packMembers: {}, pages: {}, routes: [], version: 1 };
     old.flight.exploredChunks = ["0,0"];
     expect(restoreSave(old)).toBeNull();
-    expect(new GameModel(PROTOTYPE, old).state.mode).toBe("home");
-    expect(new GameModel(PROTOTYPE, old).state.flight).toBeNull();
+    expect(relaunch(PROTOTYPE, old).state.mode).toBe("home");
+    expect(relaunch(PROTOTYPE, old).state.flight).toBeNull();
     expect(old.flight).not.toHaveProperty("world");
   });
 });

@@ -28,6 +28,7 @@ import {
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import { relaunch } from "./test-launch.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
 
@@ -499,7 +500,7 @@ describe("jobs in play", () => {
     expect(model.state.notice).toBe("Unavailable while towing.");
     expect(distance(flight.player, held.target)).toBeLessThan(200);
     // Closing the game resumes the tow exactly.
-    expect(new GameModel(PROTOTYPE, model.save()).state.flight!.tow).toEqual(flight.tow);
+    expect(relaunch(PROTOTYPE, model.save()).state.flight!.tow).toEqual(flight.tow);
     flight.dangerFor = 0;
     model.returnHome();
     expect(model.state.flight).toBeNull();
@@ -509,6 +510,36 @@ describe("jobs in play", () => {
       craft: { x: held.target.x, y: held.target.y },
       towing: false,
     });
+  });
+
+  it("launch a mid-flight save on the start screen; Continue resumes that flight exactly", () => {
+    const { model, station } = docked();
+    model.state.progress[1].stations.push(station.id);
+    const held = take(model, "rescue");
+    flyTo(model, { x: held.target.x + 100, y: held.target.y }, use);
+    const flight = model.state.flight!;
+    expect(flight.tow).not.toBeNull();
+    flight.dangerFor = 4;
+    expect(model.inDanger).toBe(true);
+    model.state.notice = "Unavailable while towing.";
+    const saved = model.save();
+    const launched = new GameModel(PROTOTYPE, saved);
+    expect(launched.screen).toBe("start");
+    // The flight's notice waits with it.
+    expect(launched.state.notice).toBe("");
+    // Nothing in flight runs behind the start screen, and the save stays as it was.
+    launched.step(1, { ...idle, move: { x: 1, y: 0 } });
+    expect(launched.conversation).toBeNull();
+    expect(launched.save()).toBe(saved);
+    launched.continueGame();
+    expect(launched.screen).toBe("space");
+    expect(launched.state).toEqual(JSON.parse(saved));
+    expect(launched.state.selectedSector).toBe(1);
+    expect(launched.state.flight!.player).toEqual(flight.player);
+    expect(launched.state.flight!.tow).toEqual(flight.tow);
+    expect(launched.towing).toBe(true);
+    expect(launched.inDanger).toBe(true);
+    expect(launched.state.notice).toBe("Unavailable while towing.");
   });
 
   it("complete a rescue once the craft is within 400 of the issuing station", () => {

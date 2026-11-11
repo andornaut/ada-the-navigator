@@ -46,6 +46,7 @@ import {
   coverStartScreen,
   installApp,
   installState,
+  launchReady,
   offersInstall,
   onInstallStateChange,
   setBackArmed,
@@ -293,7 +294,8 @@ function projectId(key: string): string | null {
 }
 
 export class PrototypeScene extends Phaser.Scene {
-  private model = new GameModel(PROTOTYPE, readSave());
+  // Read from the save once the launch's update check lets the first screen show (build).
+  private model!: GameModel;
   private shell!: StoryShell;
   private controls!: ReturnType<typeof createControls>;
   private ink!: Phaser.GameObjects.Graphics;
@@ -513,7 +515,15 @@ export class PrototypeScene extends Phaser.Scene {
     preloadTouchChrome(this);
   }
 
+  // The art loads while a fresh launch checks for a newer version; the save is read and the
+  // first screen, always the start screen, built once that check lets it show (launchReady).
+  // update waits for the controls build makes.
   create(): void {
+    void launchReady().then(() => this.build());
+  }
+
+  private build(): void {
+    this.model = new GameModel(PROTOTYPE, readSave());
     this.basePalette =
       readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
     this.palette = this.basePalette;

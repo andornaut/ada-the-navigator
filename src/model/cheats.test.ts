@@ -5,7 +5,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -50,7 +50,7 @@ describe("grant all weapons", () => {
     const serialized = model.save();
     expect(model.state.economy).toEqual(economy);
     // A resumed flight keeps its granted weapons until the flight ends.
-    expect(new GameModel(PROTOTYPE, serialized).state).toEqual(model.state);
+    expect(relaunch(PROTOTYPE, serialized).state).toEqual(model.state);
     expect(grantAllWeapons(model.state)).toBe(true);
     expect(model.save()).toBe(serialized);
   });

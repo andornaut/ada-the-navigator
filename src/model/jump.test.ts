@@ -7,7 +7,7 @@ import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
 import { grantedAmmo, noAmmo } from "./weapons.ts";
@@ -373,7 +373,7 @@ describe("quantum jump home", () => {
     expect(model.screen).toBe("start");
     expect(model.storyView).toBeNull();
     expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = relaunch(PROTOTYPE, model.save());
     expect(reloaded.screen).toBe("start");
     expect(reloaded.state.economy.stardust).toBe(123);
     expect(reloaded.state.progress[1].known).toEqual(["growers"]);
@@ -477,7 +477,7 @@ describe("economy save", () => {
     flight.weaponSwitchFor = 0.5;
     const site = anyStation();
     model.state.progress[1].stations = [site.id];
-    const restored = new GameModel(PROTOTYPE, model.save());
+    const restored = relaunch(PROTOTYPE, model.save());
     // The restored game also counts the paint set above toward Full Palette.
     expect(restored.state).toEqual({
       ...model.state,
@@ -606,7 +606,7 @@ describe("economy save", () => {
       "rapidMissile",
     );
     // A migrated save restores unchanged after it is saved again.
-    const again = new GameModel(PROTOTYPE, JSON.stringify(restored));
+    const again = relaunch(PROTOTYPE, JSON.stringify(restored));
     expect(again.state.economy).toEqual(restored.economy);
   });
 

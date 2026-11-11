@@ -6,7 +6,7 @@ import { grantAllWeapons } from "./cheats.ts";
 import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState } from "./types.ts";
 import { noAmmo } from "./weapons.ts";
 
@@ -156,14 +156,14 @@ describe("owned upgrade weapons", () => {
     source.state.flight!.weapon = "scattershot";
     source.state.flight!.ammo.scattershot = 42;
     const saved = source.save();
-    const model = new GameModel(PROTOTYPE, saved);
+    const model = relaunch(PROTOTYPE, saved);
     expect(model.save()).toBe(saved);
     expect(model.weapons()).toContainEqual({ ammo: 42, id: "scattershot", selected: true });
     expect(model.save()).toBe(saved);
     expect(model.selectWeapon("basic")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
     // The switch wait is saved, so the resumed flight waits it out before switching back.
-    const resumed = new GameModel(PROTOTYPE, model.save());
+    const resumed = relaunch(PROTOTYPE, model.save());
     expect(resumed.selectWeapon("scattershot")).toBe(false);
     resumed.state.flight!.weaponSwitchFor = 0;
     expect(resumed.selectWeapon("scattershot")).toBe(true);

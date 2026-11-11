@@ -11,6 +11,7 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { relaunch } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -45,6 +46,8 @@ function fixture() {
       const model = new GameModel(content);
       model.state.flight = flight;
       model.state.mode = "space";
+      // A flight has begun, as startSector records.
+      model.state.started = true;
       return { content, model, packId: members[0].enemy.packId };
     }
   }
@@ -103,7 +106,7 @@ describe("casualty-preserving pack retention", () => {
     expect(model.state.progress[1].disabledEnemies).toBe(1);
     model.step(0.001, idle);
     expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
-    const resumed = new GameModel(content, model.save());
+    const resumed = relaunch(content, model.save());
     expect(resumed.state).toEqual(model.state);
     model.step(0.001, idle);
     resumed.step(0.001, idle);
@@ -210,11 +213,12 @@ describe("casualty-preserving pack retention", () => {
     const model = new GameModel(content);
     model.state.flight = flight;
     model.state.mode = "space";
+    model.state.started = true;
     expect(members(model, packId)).toHaveLength(1);
     // A save from the earlier shared roster: four members, one lost, two unloaded.
     flight.combat!.initialPackSizes[packId] = 4;
     flight.combat!.unloadedPackMembers = { [packId]: 2 };
-    const resumed = new GameModel(content, model.save());
+    const resumed = relaunch(content, model.save());
     expect(resumed.state).toEqual(model.state);
 
     regenerate(content, resumed, packId);
@@ -295,7 +299,7 @@ describe("casualty-preserving pack retention", () => {
     expect(restoreSave(model.save())).toEqual(model.state);
     model.step(0.001, idle);
     expect(active.enemy!.fleeing).toBe(false);
-    const resumed = new GameModel(content, model.save());
+    const resumed = relaunch(content, model.save());
     resumed.step(0.001, idle);
     expect(members(resumed, packId)[0]!.enemy!.fleeing).toBe(false);
     expect(resumed.state.flight!.combat!.unloadedPackMembers?.[packId]).toBe(1);

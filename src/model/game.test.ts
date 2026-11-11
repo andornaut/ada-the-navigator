@@ -12,7 +12,7 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { readStory } from "./test-launch.ts";
+import { readStory, relaunch } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -75,7 +75,7 @@ describe("prototype story and persistence", () => {
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
     const saved = model.save();
-    const resumed = new GameModel(PROTOTYPE, saved);
+    const resumed = relaunch(PROTOTYPE, saved);
     expect(resumed.state).toEqual(model.state);
     resumed.step(0.05, idle);
     model.step(0.05, idle);
@@ -116,7 +116,7 @@ describe("prototype story and persistence", () => {
       recoverHolodisk(model);
       finishHome(model, choice);
       expect(model.state.unlocked).toEqual([1, 2]);
-      expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+      expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
     }
   });
   it("counts partial deposits and requires miner, visitors and a joint approach", () => {
@@ -138,7 +138,7 @@ describe("prototype story and persistence", () => {
     recoverHolodisk(model);
     finishHome(model);
     expect(model.state.unlocked).toEqual([1, 2, 3]);
-    expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+    expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
     const model = new GameModel(PROTOTYPE);
@@ -177,7 +177,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   recoverHolodisk(model);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2]);
-  expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   launch(model, 2);
   introduce(model, "hub");
   model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[1];
@@ -196,7 +196,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   recoverHolodisk(model);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2, 3]);
-  expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   launch(model, 3);
   introduce(model, "whale");
   const f = model.state.flight!;
@@ -227,11 +227,11 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   talk(model, "whale");
   expect(model.state.progress[3].questComplete).toBe(true);
   expect(model.state.mode).toBe("space");
-  expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2, 3]);
   expect(model.state.progress[3].resolved).toBe(true);
-  expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
 });
 
 it("plays each Cartwheel story scene first, then its line, at the held story destinations", () => {
@@ -246,7 +246,7 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
   expect(model.state.progress[2].stage).toBe(2);
   expect(model.state.dialogue).toBeNull();
   expect(f.storyScene).toEqual({ at: f.time, id: "blocked", lineDue: true });
-  expect(new GameModel(PROTOTYPE, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
+  expect(relaunch(PROTOTYPE, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
   f.objects = f.objects.filter((o) => o.kind === "destination");
   for (let i = 0; i < 400 && f.storyScene!.lineDue; i++) {
     if (model.state.dialogue) {
@@ -286,7 +286,7 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
   expect(model.state.flight!.storyScene).toMatchObject({ id: "blocked", lineDue: true });
   model.returnHome();
   expect(model.state.progress[2].replayScene).toBe("blocked");
-  const reloaded = new GameModel(PROTOTYPE, model.save());
+  const reloaded = relaunch(PROTOTYPE, model.save());
   expect(reloaded.state.progress[2].replayScene).toBe("blocked");
   launch(reloaded, 2);
   const f = reloaded.state.flight!;
@@ -336,7 +336,7 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   }
   expect(model.state.progress[3].introduced).toBe(false);
   expect(model.state.progress[3].stage).toBe(2);
-  const restored = new GameModel(PROTOTYPE, model.save());
+  const restored = relaunch(PROTOTYPE, model.save());
   expect(restored.state).toEqual(model.state);
   arrive(restored, "whale");
   restored.step(0.01, idle);
@@ -428,7 +428,7 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   const previousGuard = { x: guard.x, y: guard.y };
   flight.objects = [target];
   flight.world.notables[guard.id] = guard;
-  const resumed = new GameModel(content, model.save());
+  const resumed = relaunch(content, model.save());
   expect(resumed.state).toEqual(model.state);
   resumed.step(0.05, { ...idle, move: { x: 1, y: 0 } });
   const next = resumed.state.flight!;
@@ -449,7 +449,7 @@ it("wakes an inactive guard before relocating its pending destination", () => {
   expect(movedGuard.y - previousGuard.y).toBeCloseTo(movedTarget.y - previousTarget.y);
   expect(routeBlocked("growers", next)).toBe(true);
   expect(resumed.state.progress[1].introduced).toBe(false);
-  expect(new GameModel(content, resumed.save()).state).toEqual(resumed.state);
+  expect(relaunch(content, resumed.save()).state).toEqual(resumed.state);
 });
 
 it("marks an interacted destination persistent before ordinary eviction", () => {

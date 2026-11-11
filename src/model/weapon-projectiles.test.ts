@@ -10,7 +10,7 @@ import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./player-projectiles.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -298,7 +298,7 @@ describe("integrated weapon projectiles", () => {
     const { flight, model } = launched("scattershot");
     stepFlight(PROTOTYPE, 0.1, { ...idle, aim: { x: 0, y: -1 }, viewportWidth: 840 }, flight);
     const saved = model.save();
-    const restored = new GameModel(PROTOTYPE, saved);
+    const restored = relaunch(PROTOTYPE, saved);
     expect(restored.state).toEqual(model.state);
     flight.fireCooldown = 100;
     restored.state.flight!.fireCooldown = 100;

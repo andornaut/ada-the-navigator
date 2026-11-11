@@ -6,7 +6,7 @@ import type { SectorId } from "../data/types.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening, readStory } from "./test-launch.ts";
+import { playOpening, readStory, relaunch } from "./test-launch.ts";
 import type { GameState, SectorProgress } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -127,7 +127,7 @@ describe("galaxy one's handover", () => {
     });
     expect(model.state.progress[1].holodisk).toBe(true);
     // A reload during the handover resumes it and continues to the insertion.
-    const resumed = new GameModel(PROTOTYPE, model.save());
+    const resumed = relaunch(PROTOTYPE, model.save());
     resumed.choose("continue");
     expect(resumed.state.dialogue?.text).toBe(inserted[0]);
   });
@@ -153,7 +153,7 @@ describe("new galaxy announcement", () => {
     resolveAtHome(model);
     expect(model.state.unlocked).toEqual([1, 2]);
     expect(model.state.announceGalaxy).toBe(true);
-    const saved = new GameModel(PROTOTYPE, model.save());
+    const saved = relaunch(PROTOTYPE, model.save());
     expect(saved.state.announceGalaxy).toBe(true);
     saved.continueGame();
     expect(saved.storyView?.page.id).toBe("opening");
@@ -291,7 +291,7 @@ describe("galaxy three's holodisk", () => {
     expect(pack.every((o) => o.persistent)).toBe(true);
     expect(f.combat?.initialPackSizes["route:holodisk:pack"]).toBe(HOLODISKS.guard.packSize);
     expect(routeBlocked("holodisk", f)).toBe(true);
-    expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+    expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
     // A guarded holodisk is never a travel destination and cannot be reached early.
     expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
     f.player = { x: disk.x, y: disk.y };

@@ -52,12 +52,14 @@ export {
 const SERVICE_WORKER_URL = "/sw.js";
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "adaBackGuard";
-// A startup check holds the kit's boot signal for at most this long; activation remains manual.
+// A startup check may hold the first screen and saves for this long; activation remains manual.
 const BOOT_WAIT_MS = 4000;
 
 let flow: InstallFlow | undefined;
 let offlinePlay: OfflinePlay | undefined;
 let startScreen: StartScreen | undefined;
+// Resolves once the game may show its first screen and use its save (UpdateFlow.bootable).
+let ready: Promise<void> = Promise.resolve();
 
 // The start screen's update offer: Update now switches to the waiting version and reloads; a
 // defer keeps the current one until the next start-screen visit.
@@ -93,6 +95,7 @@ function setupOfflinePlay(): void {
   );
   offlinePlay = play;
   startScreen = trackStartScreen(play.flow.setOfferVisible);
+  ready = play.bootable;
 }
 
 // Whether back stays on the game. The start screen with nothing open releases it; flight or an
@@ -189,6 +192,13 @@ export function setupPhoneApp(): void {
     pageRunsAsApp(window),
     "storage" in navigator ? navigator.storage : undefined,
   );
+}
+
+// Resolves once the game may show its first screen and read or write its save: at once, or after
+// a fresh load has checked for a newer version, for at most BOOT_WAIT_MS, so a version already
+// waiting is offered on the start screen before play begins.
+export function launchReady(): Promise<void> {
+  return ready;
 }
 
 // The game's first screen has drawn with its art loaded: a first visit registers the service

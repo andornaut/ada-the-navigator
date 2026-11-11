@@ -277,9 +277,14 @@ export class GameModel {
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
-  // The home half's place is not saved: a launch at home shows the start screen, and Continue
-  // rebuilds any waiting scene from story progress.
-  private startShown: boolean;
+  // The home half's place is not saved: every launch shows the start screen, and Continue
+  // rebuilds any waiting scene from story progress or resumes the saved flight.
+  private startShown = true;
+  // A flight saved mid-flight, with its notice, held off the state while the launch's start
+  // screen shows so nothing in flight runs or shows; save() writes it back unchanged and
+  // Continue restores it.
+  private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
+    null;
   private story: StoryPosition | null = null;
   private selection: number | null = null;
   constructor(content: PrototypeContent, saved?: unknown) {
@@ -287,13 +292,18 @@ export class GameModel {
     this.state = restoreSave(saved) ?? newGameState();
     // A save from before achievements unlocks what it already reached, without notices.
     unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
-    this.startShown = this.state.mode === "home";
     this.talk = new ConversationDirector(
       [...CONVERSATIONS, ...PROJECT_THANKS],
       this.state.seenConversations,
     );
-    if (this.state.mode === "space" && this.state.flight) {
-      this.beginConversations();
+    if (this.state.mode === "space") {
+      const { dialogue, docked, flight, mode, notice } = this.state;
+      this.heldFlight = { dialogue, docked, flight, mode, notice };
+      this.state.mode = "home";
+      this.state.flight = null;
+      this.state.dialogue = null;
+      this.state.docked = null;
+      this.state.notice = "";
     }
   }
   /**
@@ -1591,12 +1601,21 @@ export class GameModel {
     this.startShown = false;
     this.beginVisit();
   }
-  /** Continue: any waiting home scene, else the cockpit and Astra's line; then galaxy selection. */
+  /**
+   * Continue: a flight saved mid-flight resumes exactly as saved; otherwise any waiting home
+   * scene, else the cockpit and Astra's line, then galaxy selection.
+   */
   continueGame(): void {
     if (this.screen !== "start" || !this.state.started) {
       return;
     }
     this.startShown = false;
+    if (this.heldFlight) {
+      Object.assign(this.state, this.heldFlight);
+      this.heldFlight = null;
+      this.beginConversations();
+      return;
+    }
     if (this.waitingScene() || !this.state.prologueSeen) {
       this.beginVisit();
     } else {
@@ -1616,6 +1635,7 @@ export class GameModel {
     // the old world, so finds in the new one count again.
     const achievements = { ...this.state.achievements, found: [], sensed: [] };
     this.state = { ...newGameState(), achievements };
+    this.heldFlight = null;
     this.story = null;
     this.selection = null;
     this.startShown = true;
@@ -1827,6 +1847,6 @@ export class GameModel {
   }
   save(): string {
     this.pullLoadout();
-    return JSON.stringify(this.state);
+    return JSON.stringify(this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state);
   }
 }
