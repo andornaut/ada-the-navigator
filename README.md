@@ -85,7 +85,10 @@ name in `/assets/` and points the built pages and manifest there, so a redrawn
 icon reaches an installed app; the source pages and manifest keep plain URLs.
 `src/pwa/index.ts` exposes the install state, its change listener, the install
 prompt and the browser whose own menu installs the game (iOS and Firefox for
-Android). The dev server registers no service worker.
+Android). The dev server registers no service worker. The landing page's
+Install button runs on `src/landing/main.ts`, which loads only the kit's
+install modules: it shows while the browser can install the game, opens the
+browser's prompt or that browser's menu steps, and registers no service worker.
 
 ## Development
 
