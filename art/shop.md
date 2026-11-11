@@ -117,8 +117,9 @@ Escape and Cancel all cancel.
 1. Header: `confirmTitle` ("Buy {name}?").
 2. Item well: the confirm well, with the item well's edge and navy face and
    the glyph at 2x by nearest neighbour or the paint swatch, centred.
-3. Weapons only: the weapon's description (`aboutMissiles`, `aboutTripleLaser`,
-   `aboutScattershot`), body text, centred lines.
+3. Weapons only: the weapon's description (`aboutRapidMissile`,
+   `aboutMultiLaser`, `aboutHeavyMissile`, `aboutScattershot`, `aboutPhaser`),
+   body text, centred lines.
 4. Price: `icon-stardust-20` and the price in cream, centred.
 5. `confirmLeft` ("{amount} left after"), supporting text, centred.
 6. Action group: Cancel (`confirmCancel`, secondary) left, Buy (`confirmBuy`,

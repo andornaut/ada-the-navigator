@@ -9,7 +9,9 @@ import { json } from "./projection.ts";
 
 // Weapon glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per weapon writes
 // both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
-// (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled.
+// (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled. A weapon in
+// HAND_AUTHORED keeps its hand-authored SVG: its grid must match that SVG's rectangles, and only
+// the sheet is written.
 const CREAM = "ead4aa";
 const DISABLED = "9a96ad";
 const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
@@ -108,6 +110,29 @@ const GLYPHS: Readonly<Record<string, readonly string[]>> = {
     E,
     E,
   ],
+  // Seven separate 2 px dots in a wide fan.
+  scattershot: [
+    E,
+    E,
+    "...............##...",
+    "...............##...",
+    E,
+    ".........##.........",
+    ".........##.........",
+    E,
+    E,
+    "...##....##....##...",
+    "...##....##....##...",
+    E,
+    E,
+    ".........##.........",
+    ".........##.........",
+    E,
+    "...............##...",
+    "...............##...",
+    E,
+    E,
+  ],
   // Two slim darts, staggered, each with a thin trail dash.
   rapidMissile: [
     E,
@@ -132,6 +157,8 @@ const GLYPHS: Readonly<Record<string, readonly string[]>> = {
     E,
   ],
 };
+
+const HAND_AUTHORED: ReadonlySet<string> = new Set(["scattershot"]);
 
 interface Sprite {
   readonly key: string;
@@ -160,6 +187,27 @@ function svg(rows: readonly string[]): string {
   ].join("\n");
 }
 
+// The pixel grid of a hand-authored SVG drawn only as "Mx yHx2Vy2Hx" rectangles.
+function rectangles(text: string): string[] {
+  const d = /\sd="([^"]*)"/.exec(text)?.[1] ?? "";
+  const cells = Array.from({ length: 20 }, () => Array.from({ length: 20 }, () => "."));
+  const pattern = /M(\d+) (\d+)H(\d+)V(\d+)H(\d+)Z/g;
+  if (d.replace(pattern, "") !== "") {
+    throw new Error(`unexpected path data: ${d}`);
+  }
+  for (const [, x0, y0, x1, y1, x2] of d.matchAll(pattern)) {
+    if (x2 !== x0) {
+      throw new Error(`open rectangle in path data: ${d}`);
+    }
+    for (let y = Number(y0); y < Number(y1); y += 1) {
+      for (let x = Number(x0); x < Number(x1); x += 1) {
+        cells[y]![x] = "#";
+      }
+    }
+  }
+  return cells.map((row) => row.join(""));
+}
+
 function frame(rows: readonly string[], colour: string): Frame {
   return rows.map((row) => [...row].map((cell) => (cell === "#" ? colour : null)));
 }
@@ -174,7 +222,12 @@ for (const [id, rows] of Object.entries(GLYPHS)) {
   if (rows.length !== 20 || rows.some((row) => row.length !== 20 || /[^#.]/.test(row))) {
     throw new Error(`${id}: the glyph must be 20 rows of 20 "#" or "." cells`);
   }
-  writeFileSync(`${ui}icons/weapon-${id}.svg`, svg(rows));
+  const file = `${ui}icons/weapon-${id}.svg`;
+  if (!HAND_AUTHORED.has(id)) {
+    writeFileSync(file, svg(rows));
+  } else if (rectangles(readFileSync(file, "utf8")).join("\n") !== rows.join("\n")) {
+    throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
+  }
   const key = `icon-shop-weapon-${id}`;
   await writeSpriteSheet(
     { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },

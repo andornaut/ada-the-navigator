@@ -175,6 +175,12 @@
       "once": []
     },
     {
+      "key": "icon-shop-weapon-scattershot",
+      "png": "sprites/icon-shop-weapon-scattershot.png",
+      "json": "sprites/icon-shop-weapon-scattershot.json",
+      "once": []
+    },
+    {
       "key": "icon-shop-weapon-upgrade",
       "png": "sprites/icon-shop-weapon-upgrade.png",
       "json": "sprites/icon-shop-weapon-upgrade.json",

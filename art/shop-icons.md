@@ -10,7 +10,7 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Rapid Missile      | `icon-shop-weapon-rapidMissile`              | 20x20 |
 | Multi-Laser        | `icon-shop-weapon-multiLaser`                | 20x20 |
 | Heavy Missile      | `icon-shop-weapon-heavyMissile`              | 20x20 |
-| Scattershot        | `/art/ui/icons/weapon-scattershot.svg`       | 20x20 |
+| Scattershot        | `icon-shop-weapon-scattershot`               | 20x20 |
 | Phaser             | `icon-shop-weapon-phaser`                    | 20x20 |
 | `{weapon}` upgrade | Upgrade composite of that weapon's glyph     | 24x24 |
 | Generic upgrade    | `icon-shop-weapon-upgrade`                   | 20x20 |
@@ -23,9 +23,8 @@ clear ground, drawn for the navy item well `#262b44` (9.59:1) and the card
 | Owned and In use   | `icon-shop-check`                            | 12x8  |
 | Upgrade badge      | `icon-shop-upgrade-badge`, inside composites | 12x12 |
 
-The Basic, Rapid Missile, Multi-Laser, Heavy Missile and Phaser sheets are the
-same pixel grids as their [weapon icons](weapon-icons.md), written by
-`art/tools/weapon-icons.ts`; Scattershot reuses its SVG. The plain double
+Each weapon sheet is the same pixel grid as its [weapon icon](weapon-icons.md),
+written by `art/tools/weapon-icons.ts`. The plain double
 chevron is the generic upgrade glyph, for any place that names upgrades without
 a weapon.
 
@@ -76,6 +75,7 @@ run Prettier on the written JSON.
 | `icon-shop-weapon-multiLaser.png`   | `b18e753142fa429b19cdda8161bdbe759508ca50f2c2bc015e4b80d588867f69` |
 | `icon-shop-weapon-phaser.png`       | `7b6f8a8023f34e8a5b6a51273aa4a1cb2adcb0bcab4c41fc32b0670e60183d01` |
 | `icon-shop-weapon-rapidMissile.png` | `75635f189837c64915f64e422d3bb083373c4832bc1383898153fb44b2eb0439` |
+| `icon-shop-weapon-scattershot.png`  | `c9a03fc49da03bed20e21eb493694d9eca461e4351f7ebfc64af652a9a6ebf37` |
 | `icon-shop-weapon-upgrade.png`      | `bbb8df92ae714b76ccc4e144b9e67ab752f8d71579ad24fa8f95d7b25d4496aa` |
 
 - `icon-shop-shield`: a heater shield with its left half filled.
@@ -84,6 +84,7 @@ run Prettier on the written JSON.
 - `icon-shop-tractor-beam`: an emitter over a widening beam around a caught mote.
 - `icon-shop-ship-paint`: a paint roller.
 - `icon-shop-weapon-basic`, `icon-shop-weapon-rapidMissile`,
-  `icon-shop-weapon-multiLaser`, `icon-shop-weapon-heavyMissile` and
-  `icon-shop-weapon-phaser`: the weapon's HUD glyph.
+  `icon-shop-weapon-multiLaser`, `icon-shop-weapon-heavyMissile`,
+  `icon-shop-weapon-scattershot` and `icon-shop-weapon-phaser`: the weapon's
+  HUD glyph.
 - `icon-shop-weapon-upgrade`: two stacked chevrons.

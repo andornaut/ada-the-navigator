@@ -271,8 +271,7 @@ Draw the chrome in CSS at logical units so it stays sharp at any scale
 
 Weapon glyphs and the Settings gear are single-colour SVGs
 (`weapon-<id>.svg`, `settings.svg`), so the mask takes each state's colour and
-the refusal cue's red, and stays sharp at fractional scales such as 1.78. The 24px weapon SVGs stay published for existing
-references.
+the refusal cue's red, and stays sharp at fractional scales such as 1.78.
 
 ## Touch sticks
 

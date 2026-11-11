@@ -7,8 +7,9 @@ Laser strokes and scatter dots are 2 px thick.
 
 ## Current roster
 
-IDs match Tech's weapon IDs. Filename case matches the direct DOM URL
-`weapon-${id}.svg`.
+Six weapons, each with a 20 px mask SVG and a [shop sheet](shop-icons.md)
+`icon-shop-weapon-<id>`. IDs match Tech's weapon IDs. Filename case matches the
+direct DOM URL `weapon-${id}.svg`.
 
 | ID             | Path                                          | Icon semantics                                        |
 | -------------- | --------------------------------------------- | ----------------------------------------------------- |
@@ -19,19 +20,13 @@ IDs match Tech's weapon IDs. Filename case matches the direct DOM URL
 | `scattershot`  | `public/art/ui/icons/weapon-scattershot.svg`  | Seven separate solid dots in a wide fan               |
 | `phaser`       | `public/art/ui/icons/weapon-phaser.svg`       | A 2 px beam ending in a five-ray starburst            |
 
-`weapon-multiLaser.svg` replaces `weapon-tripleLaser.svg` for the `multiLaser`
-ID. The `missiles` and `tripleLaser` icons, the legacy spread and pierce icons
-and the 24 px set stay published for existing references; `weapon-basic-24.svg`
-keeps the earlier arrow shape.
-
 ## Pixel grids
 
-The Basic, Rapid Missile, Multi-Laser, Heavy Missile and Phaser glyphs are
-20 × 20 pixel grids in `art/tools/weapon-icons.ts`. Each grid writes both its HUD SVG, one path of
-whole-pixel runs, and its [shop sheet](shop-icons.md)
-`icon-shop-weapon-<id>`, and registers the sheet in the UI manifest. Rebuild
-with `node art/tools/weapon-icons.ts`. The other weapon SVGs, Scattershot's
-included, are hand-authored.
+Every weapon glyph is a 20 × 20 pixel grid in `art/tools/weapon-icons.ts`.
+Each grid writes its shop sheet and registers it in the UI manifest. Five grids
+also write their HUD SVG as one path of whole-pixel runs; Scattershot's SVG is
+hand-authored, and the tool checks that its grid matches that SVG's rectangles.
+Rebuild with `node art/tools/weapon-icons.ts`.
 
 | SVG                       | SHA-256                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -40,21 +35,19 @@ included, are hand-authored.
 | `weapon-multiLaser.svg`   | `1075f62fb2856d21b711c9d78f2c048b1c5a513302b6921e3cabe26dc198e247` |
 | `weapon-phaser.svg`       | `688ed92c17cc1a6414bb4ba515b52420c1d005f70e85bcc57edafee3388f9838` |
 | `weapon-rapidMissile.svg` | `9ec61fa0a35c711877e64fce082ed87f267bc2328e295c585d9d6122fd0dda24` |
+| `weapon-scattershot.svg`  | `e580a47402045f782c4d43b51060d8c096186455f45f5cd8312dea4d694920fd` |
 
 ## HUD glyphs
 
 The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
 [Controls](controls.md#top-right-hud-icon-buttons) defines their states and
 colours. It shows owned weapons only, left to right in the order Basic, Rapid
-Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser. The 24 × 24 px
-versions, `public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`,
-follow the 20 px shapes with 4 px dots and exhaust, 3 px laser strokes and a
-larger bolt head. The same 20 px SVGs draw at 14 px in amber inside
+Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser. The same 20 px SVGs draw at 14 px in amber inside
 [weapon pickups](weapons.md#pickups).
 
 ## Projectiles
 
-[Weapons](weapons.md) specifies every projectile, blast, the Multi-Laser fan
+[Weapons](weapons.md) specifies every projectile, blast, the Multi-Laser fan,
 the Phaser beam and pickups. These icons do not define runtime geometry or timing.
 Gameplay owns weapon labels.
 
