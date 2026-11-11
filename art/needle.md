@@ -293,3 +293,55 @@ and replaces the `loom-portrait` entries in Needle's manifest.
   44). Frames `happy` 0 and `neutral` 1, 1000 ms each, no speaking loop: a line
   Gameplay marks `(happy)` shows `happy`, any other `neutral`. Integer scale,
   nearest neighbour.
+
+## Needle drones
+
+Rebuild with `node art/tools/needle-drones.ts`, which takes the same
+`--offsets <file.json>` as `heavies.ts`. It draws the shared models in process,
+writes `public/art/needle/enemies/` and replaces its `enemy-needle-` entries in
+Needle's manifest, before the story craft.
+
+Needle's drones and heavies are one family: the four drones, the frigate and
+the capital in crimson lacquer. Needle's roster adds no archetype and no
+platform.
+
+- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
+  [coral family](enemies.md); only fills and jet colours change, as for the
+  [claim jumpers](heavies.md#cartwheel-claim-jumpers). Every SVG and shards
+  file goes through the colour swap below and every jets file through the
+  Needle jet colours; the tool stops on any colour outside the family.
+- Hardpoints files are the coral family's, byte-identical: the same `order`,
+  `anchor`, `pivot` and `muzzles` per heading and aim, and the same hit areas
+  from Gameplay's catalog. Jets files keep the coral shape, lengths, layers and
+  mouth data. Destruction uses the shared `destruction.json` timing and flash
+  with the Needle shards.
+- File names are the coral names in `public/art/needle/enemies/`. Ids are the
+  coral ids with `enemy-needle-` in place of `enemy-`, such as
+  `enemy-needle-frigate-3` and `enemy-needle-capital-turret-top-9`, with the
+  coral entry's fields, its own `path` and `family` `needle`. No Needle id
+  matches `enemy-{archetype}-{index}`.
+- Gadget's insignia (the ink claw on an amber disc) stays: these are Gadget's
+  drones.
+
+| Role                   | Coral                           | Needle    | Contrast |
+| ---------------------- | ------------------------------- | --------- | -------: |
+| Hull top               | `#d68b72`                       | `#d65b6c` |   4.19:1 |
+| Hull side              | `#a8654f`                       | `#a14350` |   2.58:1 |
+| Hull rear              | `#7f4b3d`                       | `#75313a` |   1.70:1 |
+| Plates                 | `#e6a890`                       | `#d7cfc9` |  10.26:1 |
+| Turret top             | `#c27a62`                       | `#b44858` |   3.01:1 |
+| Scorch top             | `#5c3a31`                       | `#452a2c` |   1.22:1 |
+| Scorch side            | `#42291f`                       | `#2e1d1e` |   1.02:1 |
+| Burn (deck paint)      | `#6e4436`                       | `#58302f` |   1.41:1 |
+| Guns, lights, disc     | `#f0bd68`                       | unchanged |   9.15:1 |
+| Gun side               | `#b98a40`                       | unchanged |   5.09:1 |
+| Visor, claw ink, ember | `#2a2433`, `#181425`, `#f0a07c` | unchanged |          |
+
+Needle scorch is 3.44:1 on the crimson top and burn 2.97:1, so wrecks read on
+the hull; the wreck ember is 6.19:1 on scorch. The fighter's edge median is
+3.06:1.
+
+| Layer | Gadget                 | Needle                 | Contrast, slow and fast |
+| ----- | ---------------------- | ---------------------- | ----------------------: |
+| Outer | `#b8644c` to `#f0a07c` | `#993847` to `#ed7477` |          2.26:1, 5.53:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#d65b6c` to `#ffe7e9` |         4.19:1, 13.42:1 |
