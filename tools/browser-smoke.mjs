@@ -1504,6 +1504,10 @@ try {
     combatSnapshots[view.archetype] = await readSave();
     const canvas = page.locator("canvas");
     await canvas.waitFor({ state: "visible" });
+    // The pixel regions sample the canvas alone; the conversation box and notices draw over it.
+    const overlays = await page.addStyleTag({
+      content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
+    });
     const combatImage = await canvas.screenshot({
       path: `${output}/combat-canvas-${view.archetype}.png`,
     });
@@ -1620,6 +1624,7 @@ try {
         },
       ),
     );
+    await overlays.evaluate((node) => node.remove());
   }
   await renderCombatView({
     archetype: "capital",
@@ -1768,7 +1773,12 @@ try {
   const asteroidCaptures = {};
   async function captureRocks(sector, name) {
     const tint = asteroidArt.backdropTint(rockArt, sector);
+    // The ramps sample the canvas alone; the conversation box and notices draw over it.
+    const overlays = await page.addStyleTag({
+      content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
+    });
     const image = await page.locator("canvas").screenshot({ path: `${output}/${name}` });
+    await overlays.evaluate((node) => node.remove());
     const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
     const pixels = await stonePixels(image, ramps);
     asteroidCaptures[sector].push({ name, pixels });
