@@ -182,7 +182,7 @@ out of every inset. Other HUD elements anchor to
 | Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 20 above the bottom safe edge (`inset + 20` from the view bottom), so the two sticks mirror each other; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line                                     | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`             |
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (20 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                               |
 | Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                                  |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                    | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                    | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
 | Conversation | In-flight dialogue box below the weapon row: name tab top `CONVERSATION_BOX.tab.clearance` (10) below the HUD button row, box top 10 lower, centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                               | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                       |
 
 Overlap rules:
@@ -211,17 +211,17 @@ Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
 are in [Controls](controls.md#status-pill). Parts, left to right, each centred
 on the pill's row:
 
-| Part          | Geometry                                                                                           |
-| ------------- | -------------------------------------------------------------------------------------------------- |
-| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.70, as the conversation panel    |
-| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour       |
-| Mark gap      | `SPACING.markGap`                                                                                  |
-| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim, 1 ink, then the 92x8 fill area (inset 2)                           |
-| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                    |
-| Stardust icon | `icon-stardust-20`, nearest neighbour                                                              |
-| Mark gap      | `SPACING.markGap`                                                                                  |
-| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                            |
-| Width         | 189 plus the count width: 215.70 at "125", 237.94 at "12,500"; grows rightward, never shrinks text |
+| Part          | Geometry                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel         |
+| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour            |
+| Mark gap      | `SPACING.markGap`                                                                                       |
+| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim around the track (ink at 0.65 over the panel), fill area 92x8 at inset 2 |
+| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                         |
+| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                   |
+| Mark gap      | `SPACING.markGap`                                                                                       |
+| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                                 |
+| Width         | 189 plus the count width: 215.70 at "125", 237.94 at "12,500"; grows rightward, never shrinks text      |
 
 The fill area maps the current capacity (Gameplay: 100 plus 20% per level) to
 92, so a full bar has one length at every level. Fill width is
@@ -347,7 +347,7 @@ values with its own sprites and fonts.
 | Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 68, so 76 without a top inset                                                                            |
 | Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                              |
 | Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                                |
-| Panel          | Ink `#181425` at alpha 0.70, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                                     |
+| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                                     |
 | Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                                     |
 | Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                           |
 | Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                              |
@@ -409,6 +409,7 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Sticks anchor from the safe rect's edges                                                                   | From the centred 720 view                                                           |
 | Every action stack fills the inner width with `SPACING.gap`                                                | Generic stacks 4 apart                                                              |
 | Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                      | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons |
+| Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy           | Panels at 0.70; opaque ink track                                                    |
 | HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                      | The HUD safe rect's corners                                                         |
 | Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area     | 48 squares, 24 glyph, cream ring                                                    |
 | Pause draws `pause.svg` with smooth sampling                                                               | `ui-pause` PNG, nearest neighbour                                                   |

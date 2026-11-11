@@ -140,7 +140,7 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 
 | Token              | Colour    | Use                                          |
 | ------------------ | --------- | -------------------------------------------- |
-| Conversation panel | `#181425` | Ink panel at alpha 0.70                      |
+| Conversation panel | `#181425` | Ink panel at alpha 0.65 in every galaxy      |
 | Portrait edge      | `#181425` | 2 px frame edge, opaque                      |
 | Portrait face      | `#262b44` | Slot face behind the portrait's clear pixels |
 | Tab edge           | `#181425` | 1 px name tab edge, opaque                   |
@@ -155,20 +155,26 @@ translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
 cream. The name tab overhangs the panel's top edge by 10, so its upper half
 sits on open space.
 
-| Text           | Colour    | Ground                                       | Contrast |
-| -------------- | --------- | -------------------------------------------- | -------- |
-| Line           | `#ead4aa` | Panel over `#ffffff`, the brightest backdrop | 4.61:1   |
-| Line           | `#ead4aa` | Panel over the field `#292734`               | 11.78:1  |
-| Ada label      | `#181425` | `#70ace8`                                    | 7.51:1   |
-| Astra label    | `#181425` | `#ffc9a8`                                    | 12.16:1  |
-| Penny label    | `#181425` | `#feae34`                                    | 9.71:1   |
-| Unknown voice  | `#181425` | `#b8b3c9`                                    | 8.86:1   |
-| General Gadget | `#181425` | `#d68b72`                                    | 6.69:1   |
+| Text           | Colour    | Ground                                     | Contrast |
+| -------------- | --------- | ------------------------------------------ | -------- |
+| Line           | `#ead4aa` | Panel over the base field `#292734`        | 11.64:1  |
+| Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 5.20:1   |
+| Line           | `#ead4aa` | Panel over Cartwheel `#39221E`             | 11.71:1  |
+| Line           | `#ead4aa` | Panel over Whirlpool `#132D33`             | 11.66:1  |
+| Line           | `#ead4aa` | Panel over Black Eye `#271423`             | 12.31:1  |
+| Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
+| Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
+| Astra label    | `#181425` | `#ffc9a8`                                  | 12.16:1  |
+| Penny label    | `#181425` | `#feae34`                                  | 9.71:1   |
+| Unknown voice  | `#181425` | `#b8b3c9`                                  | 8.86:1   |
+| General Gadget | `#181425` | `#d68b72`                                  | 6.69:1   |
 
-The panel at 0.70 over pure white composites to `#5d5a66`, the brightest
-possible ground; 0.70 is the lowest alpha, to two decimals, that keeps the line
-at 4.5:1 over white (0.69 gives 4.45:1). Every galaxy field and space object
-composites darker, so the line never drops below 4.61:1.
+The panel composites to `#1e1b2a` over the base field, `#5b534c` over
+Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over
+Black Eye and `#696671` over pure white. Notices use the same panel and line.
+The line meets 4.5:1 over every galaxy field, lowest on Sunflower (5.20:1).
+Over a white object passing under the box it is 3.88:1, below 4.5:1; Ada's
+ship stays 39.2 below the box.
 
 | Tab            | Fill      | On the field `#292734` | On Sunflower `#332712` | On the panel over `#332712` |
 | -------------- | --------- | ---------------------- | ---------------------- | --------------------------- |
@@ -186,50 +192,63 @@ backdrop.
 
 The in-flight status pill holds the shield bar and the Stardust count beside
 the pause button. Geometry, states and timing are `STATUS_PILL` in
-[Layout](layout.md#status-pill). The panel is translucent; every mark and the
-count draw fully opaque over it, and the bar's track is opaque ink, so the
-fill colours keep their contrast over any backdrop.
+[Layout](layout.md#status-pill). The panel and the bar's track are
+translucent ink; every mark and the count draw fully opaque over them.
 
 | Token           | Colour    | Use                                                     |
 | --------------- | --------- | ------------------------------------------------------- |
-| Status panel    | `#181425` | Ink panel at alpha 0.70, as the conversation panel      |
+| Status panel    | `#181425` | Ink panel at alpha 0.65, as the conversation panel      |
 | Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab              |
 | Shield delay    | `#4f7aa6` | Delay part, from a hit until regeneration starts        |
 | Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red       |
 | Shield low peak | `#ff8a80` | Low pulse peak, icon and rim                            |
 | Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge             |
 | Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                       |
-| Shield track    | `#181425` | Opaque ink inside the rim                               |
+| Shield track    | `#181425` | Ink at alpha 0.65 inside the rim, over the panel        |
 | Divider         | `#57536e` | 1x16 rule between the shield and the Stardust count     |
 | Count           | `#ead4aa` | Cream `TYPE.label`                                      |
 | Stardust tick   | `#8ee8a8` | `+N` label, Stardust body mint, with a 1 px ink outline |
 
-The panel at 0.70 composites to `#1d1a2a` over the space field `#292734` and
-`#201a1f` over the Sunflower field `#332712`.
+The panel is ink at 0.65 over the field. The track is ink at 0.65 over the
+panel, 0.8775 combined, so it composites to `#1a1627` over the base field and
+`#2f2a33` over Sunflower.
 
-| Mark or text     | Colour    | Panel over `#292734` | Panel over `#332712` | Panel over `#ffffff` |
-| ---------------- | --------- | -------------------- | -------------------- | -------------------- |
-| Count            | `#ead4aa` | 11.75:1              | 11.80:1              | 4.65:1               |
-| Shield icon      | `#70ace8` | 7.10:1               | 7.12:1               | 2.81:1               |
-| Low icon and rim | `#e4574e` | 4.68:1               | 4.70:1               | 1.85:1               |
-| Low pulse peak   | `#ff8a80` | 7.46:1               | 7.49:1               | 2.95:1               |
-| Rim              | `#9a96ad` | 5.95:1               | 5.97:1               | 2.35:1               |
-| Divider          | `#57536e` | 2.32:1               | 2.33:1               | 1.09:1               |
+| Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
+| ---------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
+| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 |   12.31:1 |    3.88:1 |
+| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |    7.43:1 |    2.34:1 |
+| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |    4.90:1 |    1.54:1 |
+| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |    7.81:1 |    2.46:1 |
+| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |    6.23:1 |    1.96:1 |
+| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |    2.43:1 |    1.30:1 |
+| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |    1.03:1 |    5.62:1 |
 
-| Bar part    | Colour    | On the ink track | Against            |
-| ----------- | --------- | ---------------- | ------------------ |
-| Fill        | `#70ace8` | 7.51:1           | Delay part, 1.88:1 |
-| Delay part  | `#4f7aa6` | 4.00:1           |                    |
-| Low fill    | `#e4574e` | 4.95:1           | Delay part, 1.24:1 |
-| Flash, edge | `#ffffff` | 18.02:1          | Fill, 2.40:1       |
+Marks on the panel, against the field under it.
 
-- The count meets 4.5:1 over every backdrop, including white. Over the galaxy
-  fields every mark meets 3:1; the divider is decorative.
+| Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
+| --------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
+| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |    7.48:1 |    5.28:1 |
+| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |    3.99:1 |    2.81:1 |
+| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.93:1 |    3.48:1 |
+| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 |   17.94:1 |   12.66:1 |
+| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |    6.27:1 |    4.42:1 |
+| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.93:1 |    3.48:1 |
+
+Bar parts on the track, against the field under the pill. The fill is 1.88:1
+against the delay part and the low fill 1.24:1; the flash is 2.40:1 against
+the fill.
+
+- The count meets 4.5:1 over every galaxy field; over a white object under the
+  pill it is 3.88:1.
+- On the dark fields every mark meets 3:1. On Sunflower the low icon and rim
+  (2.07:1) and the normal rim's outer edge (2.63:1) fall below 3:1; the rim's
+  inner edge holds 3:1 against the track. The divider is decorative.
 - The delay part is told from the fill by lightness (1.88:1) and from the low
-  fill by hue; it holds 3:1 against the track.
+  fill by hue; it holds 3:1 against the track over every galaxy field.
 - The `+N` label sits on the field, not the panel: mint is 9.94:1 on
-  `#292734` and 9.90:1 on `#332712`, and its ink outline (12.23:1) keeps it
-  legible over bright objects.
+  `#292734` and 1.12:1 on Sunflower's `#D8C994`, where its ink outline
+  (10.90:1 on the field) carries it; the outline (12.23:1 against mint) keeps
+  it legible over bright objects.
 - The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
   is one 100 ms flash per hit, at most three per second. Nothing flickers.
 
