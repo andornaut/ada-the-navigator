@@ -42,7 +42,16 @@ Boarding, for later chapters: Narration: "Ada holds Penny close and touches the
 rock's glow." Astra: "Welcome back, Navigator."
 
 Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
-Astra: "Memory restored. I've found new coordinates. A new galaxy is ready."
+Astra: "Memory restored. I've found new coordinates."
+
+Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
+"We found this drifting near our outposts. Take it, with our thanks."
+
+Boarding after a new galaxy unlocks, once, instead of "Welcome back, Navigator.":
+Astra: "Welcome back, Navigator. A new galaxy is ready." Not shown when the
+unlocked galaxy's story is still in development.
+
+Hub holodisk purchase confirm: "Buy Holodisk?" with the shared shop strings.
 
 ## Chapter one: the garden
 

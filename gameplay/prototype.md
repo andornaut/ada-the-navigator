@@ -119,7 +119,10 @@ Ada encounters an intelligent space whale trapped by debris. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
 A short departure scene confirms reunion. The whale's family gives Ada a waypoint
-to the galaxy's holodisk, which she must fight her way to. No persistent
+to the galaxy's holodisk, which she must fight her way to. A direction indicator points to
+the waypoint at any range until the holodisk is recovered; the waypoint is not a
+Travel destination. Each galaxy's chapter completes only once its holodisk is
+recovered. No persistent
 companion-following AI or escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
 is expressed through her actions rather than a speech.
 
