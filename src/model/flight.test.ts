@@ -68,7 +68,7 @@ describe("flight boundaries", () => {
   it("keeps movement independent of aim and fires an upgrade only while aiming with unlimited ammo", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
-    stepFlight(PROTOTYPE, 0.1, { ...idle, move: { x: 1, y: 0 } }, flight);
+    stepFlight(PROTOTYPE, 0.3, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
     flight.weapon = "tripleLaser";
@@ -323,9 +323,10 @@ describe("directional handling", () => {
     expect(damped.facing).toEqual(input.aim);
     stepFlight(PROTOTYPE, 0.22, idle, damped);
     stepFlight(vectorOnly, 0.22, idle, reference);
-    expect(damped.facing).toEqual(east);
+    expect(damped.velocity).toEqual(reference.velocity);
     stepFlight(PROTOTYPE, 4, idle, damped);
     stepFlight(vectorOnly, 4, idle, reference);
+    expect(damped.facing).toEqual(east);
     expect(damped.velocity).toEqual({ x: 0, y: 0 });
     expect(damped.player).toEqual(reference.player);
   });
@@ -363,16 +364,31 @@ describe("directional handling", () => {
     expect(damped.shots.at(-1)!.velocity).toEqual(instant.shots.at(-1)!.velocity);
   });
 
-  it("returns to movement-facing and stops firing as soon as aim is released", () => {
+  it("turns back to movement-facing without a snap and stops firing when aim is released", () => {
     const flight = cruising();
     const move = { ...idle, move: east };
-    stepFlight(PROTOTYPE, 0.1, { ...move, aim: { x: 0, y: 1 } }, flight);
+    stepFlight(PROTOTYPE, 0.3, { ...move, aim: { x: -1, y: 0 } }, flight);
+    expect(flight.facing).toEqual({ x: -1, y: 0 });
     const fired = new Set(flight.shots.map((s) => s.id));
     expect(fired.size).toBeGreaterThan(0);
     stepFlight(PROTOTYPE, 1 / 60, move, flight);
+    expect(degrees(flight.facing, east)).toBeCloseTo(180 * Math.exp(-1 / 60 / 0.045), 6);
+    expect(degrees(flight.facing, east)).toBeGreaterThan(100);
+    frames(PROTOTYPE, 14, move, flight);
+    expect(degrees(flight.facing, east)).toBeLessThan(1);
+    frames(PROTOTYPE, 3, move, flight);
     expect(flight.facing).toEqual(east);
     stepFlight(PROTOTYPE, 1, move, flight);
     expect(flight.shots.every((s) => fired.has(s.id))).toBe(true);
+  });
+
+  it("keeps the current facing when aim is released at rest", () => {
+    const flight = empty();
+    stepFlight(PROTOTYPE, 0.3, { ...idle, aim: { x: -1, y: 0 } }, flight);
+    expect(flight.facing).toEqual({ x: -1, y: 0 });
+    stepFlight(PROTOTYPE, 0.5, idle, flight);
+    expect(flight.velocity).toEqual({ x: 0, y: 0 });
+    expect(flight.facing).toEqual({ x: -1, y: 0 });
   });
 
   it("matches one 1/30 s frame with two 1/60 s frames and stays close at 144 Hz", () => {

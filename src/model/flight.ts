@@ -698,7 +698,7 @@ function move(
     distance(start, flight.player) > 0.001 &&
     length(flight.velocity)
   ) {
-    flight.facing = direction(flight.velocity);
+    flight.facing = turnToward(dt, content.tuning.aimTurnSeconds, flight.velocity, flight.facing);
   }
 }
 function enemies(
