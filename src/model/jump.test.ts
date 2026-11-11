@@ -130,6 +130,41 @@ describe("quantum jump home", () => {
     );
   });
 
+  it("lands the emergency jump in Ada's room on its page, then the empty-home line", () => {
+    const model = launched();
+    model.state.flight!.weapon = "basic";
+    model.state.economy.stardust = 30;
+    // Seen, as after a real first launch: the opening never replays.
+    model.state.progress[1].opened = true;
+    model.state.prologueSeen = true;
+    deplete(model);
+    expect(model.storyView?.page).toMatchObject({
+      background: "adaRoom",
+      id: "jumpHome",
+      text:
+        "Astra jumped you home to recharge. Your story progress is saved. " +
+        "Recharging cost 10 Stardust.",
+    });
+    model.storyNext();
+    expect(model.storyView?.page).toMatchObject({
+      action: PROTOTYPE.labels.pickUpRock,
+      background: "adaRoom",
+      text: PROTOTYPE.premise.emptyHome,
+    });
+  });
+
+  it("plays a genuinely waiting home scene after the jump page", () => {
+    const model = launched();
+    model.state.progress[1].opened = true;
+    model.state.prologueSeen = true;
+    model.state.progress[1].questComplete = true;
+    deplete(model);
+    expect(model.storyView?.page.id).toBe("jumpHome");
+    model.storyNext();
+    expect(model.storyView?.page.background).toBe("gardenLot");
+    expect(model.storyView?.page.background).not.toBe("grandmaGarden");
+  });
+
   it("starts a lost weapon at level 1 when it is bought or found again", () => {
     const model = launched();
     const flight = model.state.flight!;

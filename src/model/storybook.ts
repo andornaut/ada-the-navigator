@@ -33,7 +33,8 @@ export type SceneEffect =
   | { readonly kind: "prologue" }
   | { readonly kind: "resolved"; readonly galaxy: SectorId };
 /** What follows a scene: more Earth scenes, the cockpit's boarding, or galaxy selection. */
-export type SceneLead = "home" | "board" | "select";
+/** What follows a scene; `visit` arrives home as any visit does, waiting scenes first. */
+export type SceneLead = "home" | "board" | "select" | "visit";
 export interface Scene {
   readonly id: string;
   /** In reading order; the first page opens the scene. */
@@ -244,6 +245,16 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
     last: pages.at(-1)?.id ?? "prologue:0",
     lead: "select",
     pages,
+  };
+}
+
+/** The emergency jump's page in Ada's room: the jump-home line, then the loss and fee lines. */
+export function jumpHomeScene(text: string): Scene {
+  return {
+    id: "jumpHome",
+    last: "jumpHome",
+    lead: "visit",
+    pages: [{ background: "adaRoom", id: "jumpHome", text }],
   };
 }
 

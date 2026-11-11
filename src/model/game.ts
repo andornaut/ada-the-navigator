@@ -35,6 +35,7 @@ import {
   canGoBack,
   currentPage,
   goBack,
+  jumpHomeScene,
   openingScene,
   prologueScene,
   resolutionScene,
@@ -444,6 +445,8 @@ export class GameModel {
     ]
       .filter(Boolean)
       .join(" ");
+    // The jump lands in Ada's room on its own page; the visit's waiting scenes follow it.
+    this.showScene(jumpHomeScene(this.state.notice));
   }
   private complete(): void {
     this.current.questComplete = true;
@@ -964,6 +967,8 @@ export class GameModel {
     this.applyEffect(ended);
     if (ended.lead === "home") {
       this.showScene(this.waitingScene() ?? this.roomScene(false));
+    } else if (ended.lead === "visit") {
+      this.beginVisit();
     } else if (ended.lead === "board") {
       this.showScene(boardingScene(this.content, this.state.announceGalaxy));
     } else {
