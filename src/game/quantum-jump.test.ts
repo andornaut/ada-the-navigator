@@ -5,6 +5,7 @@ import data from "../../public/art/quantum-jump.json";
 import { type SheetArt, sheetFrame } from "../ui/jump-overlay.ts";
 import {
   canvasFit,
+  cockpitFocus,
   emergencyGlow,
   irisRadius,
   jumpFrameAt,
@@ -88,6 +89,16 @@ describe("quantum jump data", () => {
     const wide = canvasFit({ height: 540, width: 960 }, { height: 600, width: 1280 });
     expect(wide.scale).toBeCloseTo(1280 / 960);
     expect(wide.x).toBeCloseTo(0);
+  });
+
+  it("centres a cockpit jump on the canopy focus, scaled with the cockpit as it grows", () => {
+    // 150 design px down the 390 design px framing, 41.54 logical above centre at scale 1.
+    const phone = cockpitFocus({ height: 360, width: 779 });
+    expect(phone.x).toBeCloseTo(389.5);
+    expect(phone.y).toBeCloseTo(180 - 41.54, 1);
+    const large = cockpitFocus({ height: 1080, width: 1920 });
+    expect(large.x).toBeCloseTo(960);
+    expect(large.y).toBeCloseTo(540 - 2 * 41.54, 1);
   });
 
   it("locates every named frame in Art's sheets", () => {

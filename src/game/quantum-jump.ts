@@ -238,6 +238,16 @@ export function irisRadius(view: { width: number; height: number }, iris: JumpIr
 }
 
 /**
+ * The cockpit's canopy focus in view logical px, where a jump from the cockpit centres: 150 of
+ * the 390 design px down its 779 by 360 logical framing (13 design px per 12 logical px), which
+ * grows with the cockpit's canvas scale.
+ */
+export function cockpitFocus(view: { width: number; height: number }): Vec {
+  const fit = canvasFit({ height: 540, width: 960 }, view);
+  return { x: view.width / 2, y: view.height / 2 + (150 * (12 / 13) - 180) * fit.scale };
+}
+
+/**
  * The storybook background rule shared by the field and the cockpit: a canvas of `canvas`
  * logical px, centred on the view at scale `max(1, viewWidth / w, viewHeight / h)`. Returns its
  * top-left in view logical px and the scale.

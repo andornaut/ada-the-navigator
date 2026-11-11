@@ -64,7 +64,7 @@ import {
 } from "./enemy-art.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
-import { canvasFit, readQuantumJump } from "./quantum-jump.ts";
+import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
@@ -150,6 +150,8 @@ export class PrototypeScene extends Phaser.Scene {
   private jumping = false;
   private holdSource = false;
   private specks: Vec[] = [];
+  // A galaxy jump hides the selector card and its dim, so the jump plays over the cockpit alone.
+  private hideSelector = false;
   // Painted ship frames load only for the scheme in use.
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
@@ -531,7 +533,12 @@ export class PrototypeScene extends Phaser.Scene {
       onJump: () => {
         const selected = this.model.selectedGalaxy;
         if (selected !== null && this.model.isUnlocked(selected)) {
-          jumpThen(() => this.model.jump());
+          this.hideSelector = Boolean(this.quantum) && !this.jumping;
+          jumpThen(() => {
+            this.hideSelector = false;
+            this.model.jump();
+          });
+          this.refresh();
         } else {
           apply(() => this.model.jump());
         }
@@ -724,7 +731,7 @@ export class PrototypeScene extends Phaser.Scene {
       },
       selected === null ? null : SELECTOR_BACKDROP,
     );
-    const galaxy = selected === null ? undefined : GALAXIES[selected - 1];
+    const galaxy = selected === null || this.hideSelector ? undefined : GALAXIES[selected - 1];
     this.galaxies.show(
       galaxy && selected !== null
         ? {
@@ -1180,12 +1187,8 @@ export class PrototypeScene extends Phaser.Scene {
     const view = this.scale.gameSize;
     const center = { x: view.width / 2, y: view.height / 2 };
     const background = this.model.storyView?.page.background;
-    if (this.model.selectedGalaxy !== null || background?.startsWith("cockpit")) {
-      // The cockpit's canopy focus: 150 of the 390 design px down its 779 by 360 framing.
-      const fit = canvasFit({ height: 540, width: 960 }, view);
-      center.y += (150 * (12 / 13) - 180) * fit.scale;
-    }
-    return { center, ship: null, specks: [] };
+    const cockpit = this.model.selectedGalaxy !== null || background?.startsWith("cockpit");
+    return { center: cockpit ? cockpitFocus(view) : center, ship: null, specks: [] };
   }
 
   /** The flight as last drawn: the ship at the play view's centre and the visible specks. */
