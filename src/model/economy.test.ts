@@ -393,13 +393,13 @@ describe("discovery caches", () => {
 describe("tractor beam and pickup reach", () => {
   it("pulls Stardust inside the pull radius toward Ada at the pull speed", () => {
     const value = flight();
-    value.objects.push(stardust("near", 90, 0), stardust("far", 0, 110));
+    value.objects.push(stardust("near", 60, 0), stardust("far", 0, 70));
     stepFlight(PROTOTYPE, 0.1, idle, value);
     const near = value.objects.find((object) => object.id === "near")!;
     const far = value.objects.find((object) => object.id === "far")!;
-    expect(near.x).toBeCloseTo(90 - 150 * 0.1, 6);
+    expect(near.x).toBeCloseTo(60 - 150 * 0.1, 6);
     expect(near.y).toBeCloseTo(0, 9);
-    expect(far).toMatchObject({ x: 0, y: 110 });
+    expect(far).toMatchObject({ x: 0, y: 70 });
   });
 
   it("does not pull weapon pickups", () => {
@@ -435,9 +435,9 @@ describe("tractor beam and pickup reach", () => {
   });
 
   it.each([
-    [1, 100, 150],
-    [2, 150, 220],
-    [3, 200, 300],
+    [1, 65, 150],
+    [2, 100, 220],
+    [3, 135, 300],
   ])("tractor level %i has pull radius %i and speed %i", (level, radius, speed) => {
     const levels = { ...noLevels(), tractor: level };
     expect(shipTuning(ECONOMY, PROTOTYPE, levels)).toMatchObject({
