@@ -72,24 +72,26 @@ try {
         })),
       );
     assert.equal(links.length, 4, "Each entry must declare both PNG favicons, ICO and Apple icon");
-    for (const link of links) {
-      const response = await page.request.get(`http://ada-preview:4173${link.href}`);
-      assert.equal(response.status(), 200, `Icon must be served: ${link.href}`);
-      assert.ok(response.headers()["content-type"].startsWith("image/"));
-      if (link.href.endsWith(".png")) {
-        const dimensions = await page.evaluate(async (href) => {
-          const image = await createImageBitmap(await (await fetch(href)).blob());
-          const size = `${image.width}x${image.height}`;
-          image.close();
-          return size;
-        }, link.href);
-        assert.equal(
-          dimensions,
-          link.sizes,
-          "Decoded favicon/Apple icon dimensions must match HTML metadata",
-        );
-      }
-    }
+    await Promise.all(
+      links.map(async (link) => {
+        const response = await page.request.get(`http://ada-preview:4173${link.href}`);
+        assert.equal(response.status(), 200, `Icon must be served: ${link.href}`);
+        assert.ok(response.headers()["content-type"].startsWith("image/"));
+        if (link.href.endsWith(".png")) {
+          const dimensions = await page.evaluate(async (href) => {
+            const image = await createImageBitmap(await (await fetch(href)).blob());
+            const size = `${image.width}x${image.height}`;
+            image.close();
+            return size;
+          }, link.href);
+          assert.equal(
+            dimensions,
+            link.sizes,
+            "Decoded favicon/Apple icon dimensions must match HTML metadata",
+          );
+        }
+      }),
+    );
     return links;
   }
   const response = await page.goto("http://ada-preview:4173/");
