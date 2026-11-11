@@ -1786,6 +1786,57 @@ try {
     "The browser's jump home lands in Art's night room, plays the overnight sequence and wakes in the morning room",
   );
 
+  // A story run (gameplay/rules.md "Earth scenes"): from Start, Previous on the prologue's first
+  // page returns into the chapter one opening, Skip passes the rest of the run to galaxy selection,
+  // and Home's run is Ada's room page alone, with Skip hidden.
+  await seedOnce(new GameModel(PROTOTYPE).save(), "ada-browser.story-run.v1");
+  await page.locator('[data-action="start"]').click();
+  const storyPanel = page.locator(".ada-story-panel:not([hidden])");
+  const storyButton = (action) => storyPanel.locator(`[data-action="story-${action}"]`);
+  const storyPage = async () => ({
+    background: await page.locator(".ada-story-background").getAttribute("data-background"),
+    previousDisabled: await storyButton("previous").isDisabled(),
+    skipShown: await page.locator('[data-action="story-skip"]').isVisible(),
+    text: ((await storyPanel.locator(".ada-story-paragraph").textContent()) ?? "").trim(),
+  });
+  await storyButton("choice").first().waitFor({ state: "visible" });
+  const opening = await storyPage();
+  await storyButton("choice").first().click();
+  await storyPanel
+    .locator(".ada-story-paragraph", { hasText: PROTOTYPE.chapters[1].openingBranches[0] })
+    .waitFor();
+  await storyButton("next").click();
+  await storyPanel
+    .locator(".ada-story-paragraph", { hasText: PROTOTYPE.premise.prologue[0].text })
+    .waitFor();
+  const prologue = await storyPage();
+  await storyButton("previous").click();
+  await storyPanel
+    .locator(".ada-story-paragraph", { hasText: PROTOTYPE.chapters[1].openingBranches[0] })
+    .waitFor();
+  const back = await storyPage();
+  await page.locator('[data-action="story-skip"]').click();
+  await selector().waitFor({ state: "visible" });
+  await page.locator('[data-action="galaxy-home"]').click();
+  await storyButton("next").waitFor({ state: "visible" });
+  const room = await storyPage();
+  const roomAction = ((await storyButton("next").textContent()) ?? "").trim();
+  await page.screenshot({ path: `${output}/story-run-room.png` });
+  save("story-run-proof.json", { back, opening, prologue, room, roomAction });
+  assert.ok(opening.previousDisabled, "Previous is disabled on the run's first page");
+  assert.ok(opening.skipShown, "Skip shows inside the run");
+  assert.ok(!prologue.previousDisabled, "Previous crosses into the opening from the prologue");
+  assert.equal(back.text, PROTOTYPE.chapters[1].openingBranches[0]);
+  assert.equal(back.background, opening.background, "Previous returns to the opening's last page");
+  assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
+  assert.equal(roomAction, PROTOTYPE.labels.pickUpRock);
+  assert.ok(!room.skipShown, "Skip is hidden on the run's end, Ada's room page");
+  assert.ok(room.previousDisabled, "Ada's room page from galaxy selection starts its run");
+  events.checks.push(
+    "A story run's Previous crosses from the prologue into the opening, Skip passes the run to " +
+      "galaxy selection, and Ada's room page ends a run with Skip hidden",
+  );
+
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
   const weaponModel = new GameModel(PROTOTYPE, safeSerialized);
   weaponModel.state.flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
