@@ -15,6 +15,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
 import {
@@ -979,6 +980,7 @@ export function ensureRouteEncounter(
     return existing;
   }
   if (
+    isHeld(id, flight) ||
     Object.hasOwn(flight.world.notables, `route:${id}`) ||
     combat(flight).routeEncounters.includes(id)
   ) {
@@ -1029,6 +1031,10 @@ export function ensureDestination(
   const existing = flight.objects.find((o) => o.id === id && o.kind === "destination");
   if (existing) {
     return existing;
+  }
+  const held = heldDestination(content, id, flight);
+  if (held) {
+    return held;
   }
   const heading = direction(
     length(flight.velocity)
@@ -1092,6 +1098,46 @@ export function ensureDestination(
   return object;
 }
 
+/**
+ * Cartwheel's miner and visitors destinations stand at their holding points beside the hub
+ * (gameplay/rules.md), placing the hub first; null for any other destination.
+ */
+function heldDestination(
+  content: PrototypeContent,
+  id: string,
+  flight: FlightState,
+): SpaceObject | null {
+  const offset =
+    flight.sector === CARTWHEEL_STORY_SHIPS.sector &&
+    Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
+      ? CARTWHEEL_STORY_SHIPS.destinations[id as keyof typeof CARTWHEEL_STORY_SHIPS.destinations]
+      : undefined;
+  if (!offset) {
+    return null;
+  }
+  const hub = ensureDestination(content, "hub", flight);
+  const target = { x: hub.x + offset.x, y: hub.y + offset.y };
+  generate(content, target, flight);
+  const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
+  flight.objects.push(object);
+  clearLayoutObjects(
+    (o) => o.kind === "destination" || clearOf(content.tuning.safeRadius, object, o),
+    flight,
+  );
+  flight.shots = flight.shots.filter(
+    (s) => !s.enemy || distance(s, object) > content.tuning.safeRadius,
+  );
+  return object;
+}
+
+/** Whether a destination is held beside the hub, so it neither moves ahead nor has a guard. */
+function isHeld(id: string, flight: FlightState): boolean {
+  return (
+    flight.sector === CARTWHEEL_STORY_SHIPS.sector &&
+    Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
+  );
+}
+
 /** Reposition an undiscovered encounter only while its old location is outside the generated near field. */
 export function placeDestinationAhead(
   content: PrototypeContent,
@@ -1099,6 +1145,9 @@ export function placeDestinationAhead(
   flight: FlightState,
 ): SpaceObject {
   const existing = flight.objects.find((o) => o.id === id && o.kind === "destination");
+  if (existing && isHeld(id, flight)) {
+    return existing;
+  }
   if (!existing || distance(existing, flight.player) > content.tuning.chunkSize * 2.5) {
     flight.objects = flight.objects.filter((o) => o !== existing);
     return ensureDestination(content, id, flight);

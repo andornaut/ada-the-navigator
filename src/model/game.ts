@@ -12,6 +12,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
@@ -961,6 +962,17 @@ export class GameModel {
     }
     this.ensureRequiredApproaches();
     this.ensureWhaleDebris();
+    // A story ship scene plays first; its line follows when it ends.
+    const scene = f.storyScene;
+    if (
+      scene?.lineDue &&
+      !this.state.dialogue &&
+      f.time >= scene.at + CARTWHEEL_STORY_SHIPS.scenes[scene.id].duration
+    ) {
+      scene.lineDue = false;
+      this.exchange(CARTWHEEL_STORY_SHIPS.scenes[scene.id].line);
+      return;
+    }
     const intro = first(f.sector);
     if (
       !this.current.introduced &&
@@ -1177,13 +1189,11 @@ export class GameModel {
         const [a, b, c] = this.content.tuning.miningMilestones;
         if (p.stage === 1 && p.deposited >= a) {
           p.stage = 2;
-          f.storyScene = { at: f.time, id: "blocked" };
-          this.exchange("firstDeposit");
+          f.storyScene = { at: f.time, id: "blocked", lineDue: true };
         } else if (p.stage === 4 && p.deposited >= c) {
           p.stage = 5;
-          f.storyScene = { at: f.time, id: "docking" };
+          f.storyScene = { at: f.time, id: "docking", lineDue: true };
           this.complete();
-          this.exchange("approach");
         } else {
           this.exchange("hub");
         }

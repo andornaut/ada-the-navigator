@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import {
@@ -190,6 +191,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   expect(model.state.flight!.storyScene).toEqual({
     at: model.state.flight!.time,
     id: "docking",
+    lineDue: true,
   });
   recoverHolodisk(model);
   finishHome(model);
@@ -230,6 +232,47 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   expect(model.state.unlocked).toEqual([1, 2, 3]);
   expect(model.state.progress[3].resolved).toBe(true);
   expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+});
+
+it("plays each Cartwheel story scene first, then its line, at the held story destinations", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.state.unlocked.push(2);
+  launch(model, 2);
+  introduce(model, "hub");
+  const f = model.state.flight!;
+  f.cargo = PROTOTYPE.tuning.miningMilestones[0];
+  arrive(model, "hub");
+  model.interact();
+  expect(model.state.progress[2].stage).toBe(2);
+  expect(model.state.dialogue).toBeNull();
+  expect(f.storyScene).toEqual({ at: f.time, id: "blocked", lineDue: true });
+  expect(new GameModel(PROTOTYPE, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
+  f.objects = f.objects.filter((o) => o.kind === "destination");
+  for (let i = 0; i < 400 && f.storyScene!.lineDue; i++) {
+    if (model.state.dialogue) {
+      model.choose("continue");
+    } else {
+      model.step(0.05, idle);
+    }
+  }
+  expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
+    CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
+  );
+  expect(model.state.dialogue?.text).toBe(PROTOTYPE.chapters[2].dialogue.firstDeposit?.text);
+  expect(f.storyScene!.lineDue).toBe(false);
+  // The miner and the visitors stand at their holding points beside the hub, unguarded.
+  const hub = f.objects.find((o) => o.id === "hub")!;
+  for (const id of ["miner", "visitors"] as const) {
+    const destination = ensureDestination(PROTOTYPE, id, f);
+    const offset = CARTWHEEL_STORY_SHIPS.destinations[id];
+    expect(destination).toMatchObject({ x: hub.x + offset.x, y: hub.y + offset.y });
+    expect(ensureRouteEncounter(PROTOTYPE, id, f)).toBeNull();
+    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+  }
+  const { miner, visitors } = CARTWHEEL_STORY_SHIPS.destinations;
+  expect(Math.hypot(miner.x - visitors.x, miner.y - visitors.y)).toBeGreaterThanOrEqual(
+    PROTOTYPE.tuning.safeRadius * 2,
+  );
 });
 
 it("places whale debris offscreen and preserves pre-introduction clearing", () => {

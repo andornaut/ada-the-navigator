@@ -13,10 +13,11 @@ export interface StoryShip extends Vec {
   thrust: boolean;
 }
 
-/** The scene playing in a flight: which, and the flight time it started. */
+/** The scene playing in a flight: which, the flight time it started, and whether its line is due. */
 export interface StorySceneState {
   at: number;
   id: StorySceneId;
+  lineDue: boolean;
 }
 
 const STAGE_DOCKED = 5;
@@ -44,6 +45,11 @@ function along(path: StoryPath, t: number): { heading: Vec; point: Vec; thrust: 
     if (t <= to.at) {
       const span = to.at - from.at;
       const f = span > 0 ? (t - from.at) / span : 1;
+      if (from.x === to.x && from.y === to.y) {
+        const next = path.slice(index).find((point) => point.x !== from.x || point.y !== from.y);
+        const ahead = next ? unit({ x: next.x - from.x, y: next.y - from.y }) : { x: 0, y: -1 };
+        return { heading: ahead, point: from, thrust: false };
+      }
       return {
         heading: unit({ x: to.x - from.x, y: to.y - from.y }),
         point: { x: from.x + (to.x - from.x) * f, y: from.y + (to.y - from.y) * f },

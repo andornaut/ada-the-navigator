@@ -221,10 +221,11 @@ export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "na
 /**
  * Each sector's required story route guard fights, mirroring flight.ts's route encounters:
  * one guard per distinct required destination, and galaxy three's holodisk leader and pack.
+ * Cartwheel's miner and visitors wait beside the hub without guards, so only the hub has one.
  */
 const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[])[]>> = {
   1: [["frigate"], ["frigate"], ["frigate"]],
-  2: [["capital"], ["capital"], ["capital"]],
+  2: [["capital"]],
   3: [
     ["capital"],
     ["capital"],

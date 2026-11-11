@@ -535,16 +535,17 @@ describe("asteroid save boundary", () => {
     model.startSector(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
-    saved.flight!.storyScene = { at: 3, id: "blocked" };
+    saved.flight!.storyScene = { at: 3, id: "blocked", lineDue: false };
     saved.progress[2].funded = ["hubRepairs"];
     const restored = restoreSave(JSON.stringify(saved))!;
-    expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked" });
+    expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked", lineDue: false });
     expect(restored.progress[2].funded).toEqual(["hubRepairs"]);
     for (const [scene, funded] of [
-      [{ at: 3, id: "duel" }, ["hubRepairs"]],
-      [{ at: -1, id: "blocked" }, ["hubRepairs"]],
-      [{ at: 3, id: "blocked" }, ["nurseryBeacon"]],
-      [{ at: 3, id: "blocked" }, ["hubRepairs", "hubRepairs"]],
+      [{ at: 3, id: "duel", lineDue: false }, ["hubRepairs"]],
+      [{ at: -1, id: "blocked", lineDue: false }, ["hubRepairs"]],
+      [{ at: 3, id: "blocked" }, ["hubRepairs"]],
+      [{ at: 3, id: "blocked", lineDue: false }, ["nurseryBeacon"]],
+      [{ at: 3, id: "blocked", lineDue: false }, ["hubRepairs", "hubRepairs"]],
     ] as const) {
       const bad = JSON.parse(JSON.stringify(saved)) as {
         flight: { storyScene: unknown };

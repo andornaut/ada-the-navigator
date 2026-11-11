@@ -920,6 +920,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !(
           record(f.storyScene) &&
           nonnegative(f.storyScene.at) &&
+          typeof f.storyScene.lineDue === "boolean" &&
           typeof f.storyScene.id === "string" &&
           Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, f.storyScene.id)
         )

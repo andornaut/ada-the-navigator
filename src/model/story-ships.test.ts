@@ -26,7 +26,7 @@ describe("Cartwheel story ships", () => {
   });
 
   it("plays the blocked scene: the blocker cuts across and the miner turns away", () => {
-    const scene = { at: 10, id: "blocked" as const };
+    const scene = { at: 10, id: "blocked" as const, lineDue: true };
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.blocked;
     const closest = Array.from({ length: 80 }, (_, index) => {
       const ships = storyShips(hub, { stage: 2 }, scene, scene.at + (index / 80) * duration);
@@ -54,7 +54,7 @@ describe("Cartwheel story ships", () => {
   });
 
   it("plays the docking scene: the regulars dock together, the blocker flies off", () => {
-    const scene = { at: 5, id: "docking" as const };
+    const scene = { at: 5, id: "docking" as const, lineDue: true };
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.docking;
     const end = storyShips(hub, { stage: 5 }, scene, scene.at + duration - 0.01);
     for (const id of ["miner", "visitor-1", "visitor-2"]) {

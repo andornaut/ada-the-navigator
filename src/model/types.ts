@@ -106,7 +106,7 @@ export interface FlightState {
   seed: number;
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
-  storyScene?: { at: number; id: StorySceneId };
+  storyScene?: { at: number; id: StorySceneId; lineDue: boolean };
   player: Vec;
   velocity: Vec;
   facing: Vec;
