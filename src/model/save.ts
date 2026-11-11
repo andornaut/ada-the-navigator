@@ -317,10 +317,12 @@ function pastStart(state: GameState): boolean {
     state.mode === "space" ||
     state.flight !== null ||
     state.unlocked.length > 1 ||
-    Object.values(state.progress).some(
-      (p) => p.stage > 0 || p.introduced || p.questComplete || p.resolved || p.known.length > 0,
-    )
+    Object.values(state.progress).some(begun)
   );
+}
+/** Whether a chapter's space story has begun. */
+function begun(p: GameState["progress"][1]): boolean {
+  return p.stage > 0 || p.introduced || p.questComplete || p.resolved || p.known.length > 0;
 }
 /** Saves from before the announcement announce a later galaxy unlocked but not yet begun. */
 function unvisitedUnlock(state: GameState): boolean {
@@ -403,7 +405,8 @@ export function restoreSave(saved: unknown): GameState | null {
     if (
       typeof value.notice !== "string" ||
       (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean") ||
-      (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean")
+      (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean") ||
+      (value.started !== undefined && typeof value.started !== "boolean")
     ) {
       return null;
     }
@@ -425,7 +428,8 @@ export function restoreSave(saved: unknown): GameState | null {
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
         (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
-        (p.holodisk !== undefined && typeof p.holodisk !== "boolean")
+        (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
+        (p.opened !== undefined && typeof p.opened !== "boolean")
       ) {
         return null;
       }
@@ -576,6 +580,17 @@ export function restoreSave(saved: unknown): GameState | null {
       if (typeof p.holodisk !== "boolean") {
         p.holodisk = restored.unlocked.some((unlocked) => unlocked > id);
       }
+      // A chapter begun before storybook scenes has seen its opening.
+      if (typeof p.opened !== "boolean") {
+        p.opened = begun(p as GameState["progress"][1]);
+      }
+    }
+    if (typeof value.started !== "boolean") {
+      restored.started = pastStart(restored);
+    }
+    // Home panels from before storybook scenes are rebuilt from story progress.
+    if (restored.mode === "home") {
+      restored.dialogue = null;
     }
     if (typeof value.prologueSeen !== "boolean") {
       restored.prologueSeen = pastStart(restored);

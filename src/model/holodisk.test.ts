@@ -6,7 +6,7 @@ import type { SectorId } from "../data/types.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, readStory } from "./test-launch.ts";
 import type { GameState, SectorProgress } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -54,11 +54,13 @@ function insertion(model: GameModel): [string, string][] {
   }
   return panels;
 }
+/** Returns home and reads the resolution scene through its closing. */
 function resolveAtHome(model: GameModel) {
   model.returnHome();
-  expect(model.state.dialogue?.context).toBe("resolution");
-  model.choose("0");
-  model.choose("continue");
+  expect(model.storyView?.page.id).toBe("resolution");
+  model.storyChoose(0);
+  expect(model.storyView?.page.id).toBe("closing");
+  model.storyNext();
 }
 
 describe("holodisk objectives", () => {
@@ -130,18 +132,14 @@ describe("galaxy one's handover", () => {
 });
 
 describe("new galaxy announcement", () => {
-  const welcome = (model: GameModel, galaxy: SectorId) => {
-    model.startSector(galaxy);
-    expect(model.state.dialogue?.context).toBe("opening");
-    model.choose("0");
-    const lines: string[] = [];
-    while (model.state.dialogue?.context.startsWith("boarding")) {
-      lines.push(model.state.dialogue.text);
-      model.choose("continue");
-    }
+  // Reads a home visit to galaxy selection, jumps and returns home; gives the last boarding line.
+  const welcome = (model: GameModel) => {
+    const boarding = readStory(model).filter(({ id }) => id.startsWith("boarding"));
+    expect(model.screen).toBe("selector");
+    model.jump();
     expect(model.state.mode).toBe("space");
     model.returnHome();
-    return lines.at(-1);
+    return boarding.at(-1)?.text;
   };
 
   it("replaces the welcome once, at the first boarding after a galaxy unlocks", () => {
@@ -155,9 +153,11 @@ describe("new galaxy announcement", () => {
     expect(model.state.announceGalaxy).toBe(true);
     const saved = new GameModel(PROTOTYPE, model.save());
     expect(saved.state.announceGalaxy).toBe(true);
-    expect(welcome(saved, 2)).toBe("Welcome back, Navigator. A new galaxy is ready.");
+    saved.continueGame();
+    expect(saved.storyView?.page.id).toBe("opening");
+    expect(welcome(saved)).toBe("Welcome back, Navigator. A new galaxy is ready.");
     expect(saved.state.announceGalaxy).toBe(false);
-    expect(welcome(saved, 2)).toBe("Welcome back, Navigator.");
+    expect(welcome(saved)).toBe("Welcome back, Navigator.");
   });
 
   it("is not announced when the holodisk unlocks the galaxy in flight, until boarding", () => {

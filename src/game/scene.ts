@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
+import { GALAXIES } from "../data/storybook.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
@@ -30,8 +31,11 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import { createGalaxySelect } from "../ui/galaxy-select.ts";
+import { createRestartCard } from "../ui/restart-card.ts";
 import { createStardustCounter } from "../ui/stardust-counter.ts";
 import { createStationView } from "../ui/station.ts";
+import { createStorybook } from "../ui/storybook.ts";
 import { asteroidArt, type AsteroidOutline, cellTint, tinted } from "./asteroid-art.ts";
 import {
   type DestructionData,
@@ -145,6 +149,9 @@ export class PrototypeScene extends Phaser.Scene {
   private screenShake = true;
   private palette = FALLBACK_SPACE_PALETTE;
   private station!: ReturnType<typeof createStationView>;
+  private storybook!: ReturnType<typeof createStorybook>;
+  private galaxies!: ReturnType<typeof createGalaxySelect>;
+  private restartCard!: ReturnType<typeof createRestartCard>;
   private stardust!: ReturnType<typeof createStardustCounter>;
 
   constructor() {
@@ -257,8 +264,10 @@ export class PrototypeScene extends Phaser.Scene {
     };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
+      continueGame: () => apply(() => this.model.continueGame()),
       reducedMotion: () => this.controls.reducedMotion(),
-      start: (sector) => apply(() => this.model.startSector(sector)),
+      restart: () => this.restartCard.open(),
+      start: () => apply(() => this.model.start()),
     });
     this.controls = createControls(this, {
       cheats: {
@@ -428,6 +437,48 @@ export class PrototypeScene extends Phaser.Scene {
       }),
     );
     const unregisterStation = () => stationLayers.forEach((unregister) => unregister());
+    // The home half: storybook pages, galaxy selection over the cockpit and Restart's confirm.
+    this.storybook = createStorybook(this.controls.overlay, {
+      labels: { next: label("next"), previous: label("previous"), skip: label("skip") },
+      onChoose: (index) => apply(() => this.model.storyChoose(index)),
+      onNext: () => apply(() => this.model.storyNext()),
+      onPrevious: () => apply(() => this.model.storyPrevious()),
+      onSkip: () => apply(() => this.model.storySkip()),
+    });
+    this.galaxies = createGalaxySelect(this.controls.overlay, {
+      labels: {
+        close: label("close"),
+        home: label("homeButton"),
+        jump: label("jump"),
+        locked: label("galaxyLocked"),
+        next: label("next"),
+        number: label("galaxyNumber"),
+        previous: label("previous"),
+      },
+      onHome: () => apply(() => this.model.leaveCockpit()),
+      onJump: () => apply(() => this.model.jump()),
+      onPage: (delta) => apply(() => this.model.pageGalaxy(delta)),
+      reducedMotion: () => this.controls.reducedMotion(),
+    });
+    this.restartCard = createRestartCard(this.controls.overlay, {
+      labels: {
+        cancel: label("confirmCancel"),
+        close: label("close"),
+        restart: label("restart"),
+        title: label("restartTitle"),
+      },
+      onRestart: () => apply(() => this.model.restart()),
+    });
+    const homeLayers = [
+      this.controls.registerBack({
+        back: () => apply(() => this.model.leaveCockpit()),
+        isOpen: () => this.galaxies.isOpen() && !this.settingsOpen,
+      }),
+      this.controls.registerBack({
+        back: () => this.restartCard.close(),
+        isOpen: () => this.restartCard.isOpen() && !this.settingsOpen,
+      }),
+    ];
     const hide = (): void => {
       this.controls.reset();
       this.flush();
@@ -444,6 +495,10 @@ export class PrototypeScene extends Phaser.Scene {
       window.removeEventListener("keydown", this.feedbackSound.unlock);
       this.feedbackSound.dispose();
       unregisterStation();
+      homeLayers.forEach((unregister) => unregister());
+      this.storybook.dispose();
+      this.galaxies.dispose();
+      this.restartCard.dispose();
       this.station.dispose();
       this.stardust.dispose();
       this.controls.dispose();
@@ -521,8 +576,9 @@ export class PrototypeScene extends Phaser.Scene {
         ? fill(PROTOTYPE.labels.stardustAmount ?? "", { amount: state.economy.stardust })
         : null,
     );
-    // The start screen: the home screen with no dialogue. Each arrival begins an update visit.
-    const start = state.mode === "home" && !state.dialogue;
+    // Each arrival at the start screen begins an update visit.
+    const screen = this.model.screen;
+    const start = screen === "start";
     if (start !== this.startShown) {
       this.startShown = start;
       if (start) {
@@ -536,7 +592,35 @@ export class PrototypeScene extends Phaser.Scene {
       destinations: this.model.destinations(),
       inDanger: this.model.inDanger,
     });
-    this.shell.render(state);
+    this.shell.render(state, screen);
+    const story = this.model.storyView;
+    const selected = this.model.selectedGalaxy;
+    this.storybook.show(
+      story && {
+        background: story.page.background,
+        canGoBack: story.canGoBack,
+        text: story.page.text,
+        ...(story.page.speaker ? { speaker: story.page.speaker } : {}),
+        ...(story.page.choices ? { choices: story.page.choices } : {}),
+        ...(story.page.action ? { action: story.page.action } : {}),
+      },
+      selected === null ? null : "cockpit",
+    );
+    const galaxy = selected === null ? undefined : GALAXIES[selected - 1];
+    this.galaxies.show(
+      galaxy && selected !== null
+        ? {
+            ...galaxy,
+            first: selected === 1,
+            last: selected === GALAXIES.length,
+            number: selected,
+            unlocked: this.model.isUnlocked(selected),
+          }
+        : null,
+    );
+    if (screen !== "start") {
+      this.restartCard.close();
+    }
   }
 
   /**

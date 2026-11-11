@@ -258,36 +258,54 @@ try {
   save("desktop-frame.json", await frameProof());
   events.checks.push("Desktop canvas preserves the 720x360 EXPAND base and pixel-art scaling");
 
-  await page.locator('[data-action="start-sector"][data-sector="1"]').click();
-  // A first launch plays the opening, then the prologue; the last choice always moves on.
-  const launchPanels = [];
-  async function enterFlight(remaining) {
+  // Reads storybook pages (the default choice, else Next or its named action) until galaxy
+  // selection opens or flight begins, and returns each page's background and text.
+  async function readStory(remaining = 30, pages = []) {
     await page.waitForFunction(
       () =>
         document.querySelector("#game-status")?.dataset.mode === "space" ||
-        document.querySelector('[data-action="dialogue-choice"]'),
+        document.querySelector('.ada-story-panel:not([hidden]) [data-action="story-next"]') ||
+        document.querySelector('[data-dialog="galaxies"]')?.closest(".ada-modal:not([hidden])"),
     );
-    if (await page.locator('#game-status[data-mode="space"]').count()) {
-      return;
+    const panel = page.locator(".ada-story-panel:not([hidden])");
+    if (!(await panel.count())) {
+      return pages;
     }
-    assert.ok(remaining > 0, "Galaxy launch must reach space within the opening and prologue");
-    const context = await page.locator(".story-panel").getAttribute("data-context");
-    if (context === "prologue" && !launchPanels.includes(context)) {
-      await page.screenshot({ path: `${output}/prologue.png` });
-    }
-    launchPanels.push(context);
-    await page.locator('[data-action="dialogue-choice"]').last().click();
-    await enterFlight(remaining - 1);
+    assert.ok(remaining > 0, "Storybook pages must reach galaxy selection");
+    pages.push({
+      background: await page.locator(".ada-story-background").getAttribute("data-background"),
+      text: (await panel.locator(".ada-story-paragraph").textContent()) ?? "",
+    });
+    const choice = panel.locator('[data-action="story-choice"]');
+    await (
+      (await choice.count()) ? choice.first() : panel.locator('[data-action="story-next"]')
+    ).click();
+    return readStory(remaining - 1, pages);
   }
-  await enterFlight(12);
+  const selector = page.locator('[data-dialog="galaxies"]');
+  // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
+  // galaxy selection on galaxy one.
+  await page.locator('[data-action="start"]').click();
+  await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
+  await page.screenshot({ path: `${output}/story-opening.png` });
+  const launchPages = await readStory();
+  assert.equal(launchPages[0]?.background, "grandmaGarden", "Start opens galaxy one's opening");
+  assert.equal(launchPages[1]?.background, "adaRoom", "The prologue begins in Ada's room");
+  assert.equal(launchPages[1]?.text, PROTOTYPE.premise.prologue[0].text);
   assert.ok(
-    launchPanels.length > 2 &&
-      launchPanels[0] === "opening" &&
-      launchPanels.slice(1).every((context) => context === "prologue"),
-    "A first launch plays the opening, then the prologue panels",
+    launchPages.slice(2).every(({ background }) => background === "cockpit"),
+    "The rest of the prologue plays in the cockpit",
   );
+  await selector.waitFor({ state: "visible" });
+  assert.equal(
+    (await selector.locator("h2").textContent())?.trim(),
+    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+  );
+  await page.screenshot({ path: `${output}/galaxy-select.png` });
+  await page.locator('[data-action="galaxy-jump"]').click();
   events.checks.push(
-    "A first launch plays the opening, then the prologue, then galaxy one's flight",
+    "Start plays galaxy one's opening and the prologue as storybook pages, then galaxy " +
+      "selection's Jump begins the flight",
   );
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const position = () =>
@@ -1171,33 +1189,46 @@ try {
     holodisk: true,
   });
   fixture.returnHome();
-  assert.equal(fixture.state.dialogue.context, "resolution");
+  assert.equal(fixture.storyView?.page.id, "resolution");
   const serialized = fixture.save();
-  assert.deepEqual(new GameModel(PROTOTYPE, serialized).state, fixture.state);
   save("resolution-fixture.json", {
     scope: "Completed-quest save fixture for home resolution UI boundary only",
     state: JSON.parse(serialized),
   });
   await seedOnce(serialized, "ada-browser.resolution-fixture.v1");
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+  // A launch at home shows the start screen; Continue plays the waiting resolution first.
+  await page.locator('[data-action="continue"]').click();
   await contextControlProof(0, "home resolution");
-  const choices = page.locator('[data-action="dialogue-choice"]');
+  const choices = page.locator('[data-action="story-choice"]');
   await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
   assert.equal(await choices.count(), 2, "home resolution must offer both real choices");
   await page.screenshot({ path: `${output}/resolution.png` });
   await choices.nth(1).click();
   await page.getByText(PROTOTYPE.chapters[1].closing, { exact: true }).waitFor();
-  assert.equal(await choices.count(), 1, "Resolution must lead to the closing continuation");
-  assert.equal((await choices.first().textContent()).trim(), PROTOTYPE.labels.continue);
-  await choices.first().click();
-  const nextSector = page.locator('[data-action="start-sector"][data-sector="2"]');
-  await nextSector.waitFor({ state: "visible" });
-  assert.ok(await nextSector.isEnabled(), "home resolution must unlock sector two");
+  assert.equal(await choices.count(), 0, "The closing is an ordinary page");
+  const homePages = await readStory();
+  assert.equal(homePages[0]?.text, PROTOTYPE.chapters[1].closing);
+  assert.equal(homePages[1]?.text, PROTOTYPE.chapters[2].opening, "Galaxy two's opening follows");
+  await selector.waitFor({ state: "visible" });
+  assert.equal(
+    (await selector.locator("h2").textContent())?.trim(),
+    PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
+    "Galaxy selection opens on the farthest unlocked galaxy",
+  );
+  assert.equal(
+    await page.locator('[data-action="galaxy-jump"]').getAttribute("aria-disabled"),
+    null,
+    "home resolution must unlock galaxy two",
+  );
   await page.waitForFunction((key) => {
     const state = JSON.parse(localStorage.getItem(key));
     return state?.progress[1].resolved && state.unlocked.includes(2);
   }, storageKey);
-  events.checks.push("Fixture-based home resolution and closing unlock the next sector UI");
+  events.checks.push(
+    "Fixture-based home resolution, closing and the next opening lead to galaxy selection on " +
+      "the newly unlocked galaxy",
+  );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
     import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),

@@ -110,9 +110,13 @@ describe("quantum jump home", () => {
     flight.levels.weapons.missiles = 2;
     flight.levels.weapons.tripleLaser = 1;
     model.state.economy.stardust = 30;
+    model.state.progress[1].opened = true;
     deplete(model);
     expect(model.state.mode).toBe("home");
     expect(model.state.flight).toBeNull();
+    // The jump arrives in Ada's room, not galaxy selection.
+    expect(model.screen).toBe("story");
+    expect(model.storyView?.page.background).toBe("adaRoom");
     expect(model.state.economy).toMatchObject({
       ownedWeapons: ["tripleLaser"],
       stardust: 20,

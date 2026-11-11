@@ -29,6 +29,22 @@ import {
   type ShopTab,
   weaponName,
 } from "./shop.ts";
+import {
+  advance,
+  boardingScene,
+  canGoBack,
+  currentPage,
+  goBack,
+  openingScene,
+  prologueScene,
+  resolutionScene,
+  roomScene,
+  type Scene,
+  skip,
+  type StoryPage,
+  type StoryPosition,
+  storyStart,
+} from "./storybook.ts";
 import type { FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
@@ -48,6 +64,7 @@ export function newProgress(): SectorProgress {
     holodisk: false,
     introduced: false,
     known: [],
+    opened: false,
     questComplete: false,
     questItem: null,
     resolved: false,
@@ -56,6 +73,32 @@ export function newProgress(): SectorProgress {
   };
 }
 const progress = newProgress;
+/** A first launch: galaxy one unlocked and nothing begun. */
+export function newGameState(): GameState {
+  return {
+    announceGalaxy: false,
+    dialogue: null,
+    docked: null,
+    economy: newEconomy(ECONOMY),
+    flight: null,
+    mode: "home",
+    notice: "",
+    progress: { 1: progress(), 2: progress(), 3: progress() },
+    prologueSeen: false,
+    selectedSector: 1,
+    started: false,
+    unlocked: [1],
+    version: 1,
+  };
+}
+/** Galaxies one to four in galaxy selection; galaxy four's story is in development. */
+export const GALAXY_COUNT = 4;
+/** What the home half shows: the start screen, a storybook page or galaxy selection. */
+export type Screen = "selector" | "space" | "start" | "story";
+export interface StoryView {
+  readonly page: StoryPage;
+  readonly canGoBack: boolean;
+}
 const first = { 1: "growers", 2: "hub", 3: "whale" } as const;
 const required: Record<SectorId, readonly string[]> = {
   1: ["growers", "workshop", "salvagers", "workshop"],
@@ -65,25 +108,41 @@ const required: Record<SectorId, readonly string[]> = {
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
 export class GameModel {
-  readonly state: GameState;
+  state: GameState;
   private readonly content: PrototypeContent;
   private previousSeed = 0;
+  // The home half's place is not saved: a launch at home shows the start screen, and Continue
+  // rebuilds any waiting scene from story progress.
+  private startShown: boolean;
+  private story: StoryPosition | null = null;
+  private selection: number | null = null;
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
-    this.state = restoreSave(saved) ?? {
-      announceGalaxy: false,
-      dialogue: null,
-      docked: null,
-      economy: newEconomy(ECONOMY),
-      flight: null,
-      mode: "home",
-      notice: "",
-      progress: { 1: progress(), 2: progress(), 3: progress() },
-      prologueSeen: false,
-      selectedSector: 1,
-      unlocked: [1],
-      version: 1,
-    };
+    this.state = restoreSave(saved) ?? newGameState();
+    this.startShown = this.state.mode === "home";
+  }
+  /** Which half and screen shows now. */
+  get screen(): Screen {
+    if (this.state.mode === "space") {
+      return "space";
+    }
+    if (this.startShown) {
+      return "start";
+    }
+    return this.selection === null ? "story" : "selector";
+  }
+  /** The storybook page on show, with whether Previous can act. */
+  get storyView(): StoryView | null {
+    return this.story && this.screen === "story"
+      ? { canGoBack: canGoBack(this.story), page: currentPage(this.story) }
+      : null;
+  }
+  /** The galaxy on show in galaxy selection, 1 to 4. */
+  get selectedGalaxy(): number | null {
+    return this.screen === "selector" ? this.selection : null;
+  }
+  isUnlocked(galaxy: number): boolean {
+    return this.state.unlocked.some((id) => id === galaxy);
   }
   private get current(): SectorProgress {
     return this.state.progress[this.state.selectedSector];
@@ -284,21 +343,17 @@ export class GameModel {
     }
     this.ensureWhaleDebris();
   }
+  /** Jumps to an unlocked galaxy's flight. */
   startSector(id: SectorId): void {
     if (!this.state.unlocked.includes(id) || this.state.mode === "space") {
       return;
     }
     this.state.selectedSector = id;
-    if (this.current.stage > 0 || this.current.introduced || this.current.resolved) {
-      this.launch();
-      return;
-    }
-    this.state.dialogue = {
-      choices: this.chapter.openingChoices.map((label, i) => ({ id: String(i), label })),
-      context: "opening",
-      text: this.chapter.opening,
-      title: this.chapter.name,
-    };
+    this.state.started = true;
+    this.startShown = false;
+    this.story = null;
+    this.selection = null;
+    this.launch();
   }
   private home(forced: boolean): void {
     if (!forced && this.inDanger) {
@@ -312,14 +367,7 @@ export class GameModel {
     this.state.flight = null;
     this.state.dialogue = null;
     this.state.docked = null;
-    if (this.current.questComplete && !this.current.resolved) {
-      this.state.dialogue = {
-        choices: this.chapter.resolutionChoices.map((label, i) => ({ id: String(i), label })),
-        context: "resolution",
-        text: this.chapter.resolution,
-        title: this.chapter.name,
-      };
-    }
+    this.beginVisit();
   }
   returnHome(): void {
     this.home(false);
@@ -382,9 +430,9 @@ export class GameModel {
     }
   }
   /** Unlocks the next galaxy once its holodisk, space quest and home resolution are done. */
-  private unlockNext(): void {
-    const p = this.current;
-    const next = this.state.selectedSector + 1;
+  private unlockNext(galaxy: SectorId = this.state.selectedSector): void {
+    const p = this.state.progress[galaxy];
+    const next = galaxy + 1;
     if (
       p.holodisk &&
       p.questComplete &&
@@ -748,30 +796,6 @@ export class GameModel {
       }
       return;
     }
-    if (dialogue.context === "opening") {
-      if (this.state.prologueSeen) {
-        this.boarding(0);
-      } else {
-        this.prologue(0, 0);
-      }
-      return;
-    }
-    const boarding = /^boarding:(\d+)$/.exec(dialogue.context);
-    if (boarding) {
-      this.boarding(Number(boarding[1]) + 1);
-      return;
-    }
-    const prologue = /^prologue(-answer)?:(\d+):(\d+)$/.exec(dialogue.context);
-    if (prologue) {
-      this.continuePrologue(Boolean(prologue[1]), Number(prologue[2]), Number(prologue[3]), id);
-      return;
-    }
-    if (dialogue.context === "resolution") {
-      this.current.resolved = true;
-      this.unlockNext();
-      this.panel("closing", this.chapter.closing);
-      return;
-    }
     if (dialogue.context === "holodiskOffer" && id === "buy") {
       this.buyHolodisk();
       return;
@@ -787,62 +811,154 @@ export class GameModel {
     }
     this.state.dialogue = null;
   }
-  /**
-   * Shows prologue step `index`. `asked` is a bit mask of the step's optional questions
-   * already answered, which leave its choices.
-   */
-  private prologue(index: number, asked: number): void {
-    const step = this.content.premise.prologue[index];
-    if (!step) {
+  /** Start: galaxy one's home opening, then the prologue, until the first flight begins. */
+  start(): void {
+    if (this.screen !== "start" || this.state.started) {
       return;
     }
-    const questions = (step.questions ?? [])
-      .map(({ question }, i) => ({ id: `ask:${i}`, label: question }))
-      .filter((_, i) => (asked & (1 << i)) === 0);
-    this.state.dialogue = {
-      choices: [...questions, { id: "continue", label: step.choice ?? this.label("continue") }],
-      context: `prologue:${index}:${asked}`,
-      text: step.text,
-      title: step.speaker ?? this.content.premise.title,
-    };
+    this.state.progress[1].opened = false;
+    this.startShown = false;
+    this.beginVisit();
   }
-  /** Shows boarding panel `index`, then jumps after the last. */
-  private boarding(index: number): void {
-    const { boarding, boardingNewGalaxy } = this.content.premise;
-    let line = boarding[index];
-    // The first boarding after a galaxy unlocks announces it once, in place of the last line.
-    if (line && index === boarding.length - 1 && this.state.announceGalaxy) {
-      line = boardingNewGalaxy;
+  /** Continue: any waiting home scene, then galaxy selection in the cockpit. */
+  continueGame(): void {
+    if (this.screen !== "start" || !this.state.started) {
+      return;
+    }
+    this.startShown = false;
+    if (this.waitingScene()) {
+      this.beginVisit();
+    } else {
+      this.openSelection();
+    }
+  }
+  /**
+   * Restart clears story progress, galaxies, holodisks, Stardust and purchases and replays from
+   * Start. Device settings are stored apart from the save.
+   */
+  restart(): void {
+    if (this.screen !== "start") {
+      return;
+    }
+    this.state = newGameState();
+    this.story = null;
+    this.selection = null;
+    this.startShown = true;
+  }
+  /** Next, or the page's named action. */
+  storyNext(): void {
+    if (this.story && this.screen === "story" && !currentPage(this.story).choices) {
+      this.moveStory(advance(this.story));
+    }
+  }
+  /** A choice page's choice, by its index. */
+  storyChoose(index: number): void {
+    const choices = this.story && this.screen === "story" ? currentPage(this.story).choices : null;
+    if (this.story && choices && index >= 0 && index < choices.length) {
+      this.moveStory(advance(this.story, index));
+    }
+  }
+  storyPrevious(): void {
+    if (this.story && this.screen === "story" && canGoBack(this.story)) {
+      this.story = goBack(this.story);
+    }
+  }
+  /** Skip: the scene's end by the default path. */
+  storySkip(): void {
+    if (this.story && this.screen === "story") {
+      this.moveStory(skip(this.story));
+    }
+  }
+  /** Pages galaxy selection by delta, within galaxies one to four. */
+  pageGalaxy(delta: number): void {
+    if (this.selection !== null && this.screen === "selector") {
+      this.selection = Math.min(GALAXY_COUNT, Math.max(1, this.selection + delta));
+    }
+  }
+  /** Jump: the selected galaxy's flight; a locked galaxy refuses. */
+  jump(): boolean {
+    const galaxy = this.selectedGalaxy;
+    if (galaxy === null || !this.isUnlocked(galaxy)) {
+      return false;
+    }
+    this.startSector(galaxy as SectorId);
+    return true;
+  }
+  /** Home, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
+  leaveCockpit(): void {
+    if (this.screen === "selector") {
+      this.selection = null;
+      this.beginVisit();
+    }
+  }
+  /** The first home scene waiting on story progress: a resolution, then an opening. */
+  private waitingScene(): Scene | null {
+    const galaxies = [1, 2, 3] as const;
+    const resolution = galaxies.find(
+      (id) => this.state.progress[id].questComplete && !this.state.progress[id].resolved,
+    );
+    if (resolution !== undefined) {
+      return resolutionScene(this.content, resolution);
+    }
+    const opening = galaxies.find((id) => this.isUnlocked(id) && !this.state.progress[id].opened);
+    return opening === undefined ? null : openingScene(this.content, opening);
+  }
+  /** After Earth scenes: the prologue the first time, else Ada's room with the rock. */
+  private roomScene(empty: boolean): Scene {
+    return this.state.prologueSeen
+      ? roomScene(this.content, { pickUpRock: this.label("pickUpRock") }, empty)
+      : prologueScene(this.content);
+  }
+  /** A home visit: waiting scenes, then Ada's room; an empty visit adds Penny's line. */
+  private beginVisit(): void {
+    this.selection = null;
+    const waiting = this.waitingScene();
+    this.showScene(waiting ?? this.roomScene(true));
+  }
+  private showScene(scene: Scene): void {
+    this.story = storyStart(scene);
+    this.showPage();
+  }
+  private showPage(): void {
+    if (this.story && currentPage(this.story).announces) {
       this.state.announceGalaxy = false;
     }
-    if (line) {
-      this.panel(`boarding:${index}`, line.text, line.speaker ?? this.content.premise.title);
+  }
+  /** Moves to a page, or past a scene's end to what the scene leads to. */
+  private moveStory(next: StoryPosition | null): void {
+    const ended = this.story?.scene;
+    if (next) {
+      this.story = next;
+      this.showPage();
+      return;
+    }
+    if (!ended) {
+      return;
+    }
+    this.applyEffect(ended);
+    if (ended.lead === "home") {
+      this.showScene(this.waitingScene() ?? this.roomScene(false));
+    } else if (ended.lead === "board") {
+      this.showScene(boardingScene(this.content, this.state.announceGalaxy));
     } else {
-      this.launch();
+      this.openSelection();
     }
   }
-  private continuePrologue(answer: boolean, index: number, asked: number, id: string): void {
-    const steps = this.content.premise.prologue;
-    const step = steps[index];
-    const question = /^ask:(\d+)$/.exec(id);
-    const answered = question ? step?.questions?.[Number(question[1])] : undefined;
-    if (!step) {
-      this.state.dialogue = null;
-    } else if (answer) {
-      this.prologue(index, asked);
-    } else if (answered && question) {
-      this.state.dialogue = {
-        choices: [{ id: "continue", label: this.label("continue") }],
-        context: `prologue-answer:${index}:${asked | (1 << Number(question[1]))}`,
-        text: answered.answer,
-        title: step.speaker ?? this.content.premise.title,
-      };
-    } else if (index + 1 < steps.length) {
-      this.prologue(index + 1, 0);
-    } else {
+  private applyEffect(scene: Scene): void {
+    const effect = scene.effect;
+    if (effect?.kind === "opened") {
+      this.state.progress[effect.galaxy].opened = true;
+    } else if (effect?.kind === "resolved") {
+      this.state.progress[effect.galaxy].resolved = true;
+      this.unlockNext(effect.galaxy);
+    } else if (effect?.kind === "prologue") {
       this.state.prologueSeen = true;
-      this.launch();
     }
+  }
+  /** Galaxy selection in the cockpit, open on the farthest unlocked galaxy. */
+  private openSelection(): void {
+    this.story = null;
+    this.selection = Math.max(...this.state.unlocked);
   }
   save(): string {
     this.pullLoadout();

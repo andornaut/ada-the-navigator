@@ -1,13 +1,15 @@
 import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import type { Screen } from "../model/game.ts";
 import type { GameState } from "../model/types.ts";
 import { refuse } from "../ui/refusal.ts";
 import { createStartCard } from "../ui/start-card.ts";
 
 export interface ShellActions {
-  start: (sector: SectorId) => void;
   choose: (id: string) => void;
+  continueGame: () => void;
   reducedMotion: () => boolean;
+  restart: () => void;
+  start: () => void;
 }
 
 function button(label: string, action: () => void): HTMLButtonElement {
@@ -40,18 +42,13 @@ export class StoryShell {
     document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
   }
 
-  render(state: GameState): void {
+  render(state: GameState, screen: Screen): void {
     const { flight } = state;
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
     this.status.dataset.y = String(flight?.player.y ?? 0);
     this.status.textContent = state.notice;
-    const nextSignature = JSON.stringify([
-      state.mode,
-      state.selectedSector,
-      state.unlocked,
-      state.dialogue,
-    ]);
+    const nextSignature = JSON.stringify([screen, state.started, state.dialogue]);
     if (nextSignature === this.signature) {
       return;
     }
@@ -62,10 +59,10 @@ export class StoryShell {
     this.startCard?.dispose();
     this.startCard = undefined;
     this.panel.replaceChildren();
-    this.panel.hidden = state.mode === "space" && !state.dialogue;
-    // Prologue and boarding panels are text-only; the context hook awaits Art's Astra and cockpit.
+    // The panel holds space dialogue and the start screen; storybook pages draw their own.
+    this.panel.hidden = !(screen === "start" || (screen === "space" && state.dialogue));
     this.panel.dataset.context = state.dialogue?.context.split(":")[0] ?? "";
-    if (state.dialogue) {
+    if (screen === "space" && state.dialogue) {
       const heading = document.createElement("h2");
       heading.textContent = state.dialogue.title;
       const text = document.createElement("p");
@@ -89,19 +86,22 @@ export class StoryShell {
         this.panel.append(node);
       }
       this.panel.setAttribute("aria-label", state.dialogue.title);
-    } else if (state.mode === "home") {
-      // The start screen's card: the shared card with the chapters as an action stack.
+    } else if (screen === "start") {
+      // The start screen's card: Start alone until the first flight begins, then Continue and
+      // Restart, as the shared card's action stack.
+      const actions = state.started
+        ? [
+            { action: "continue", label: PROTOTYPE.labels.continue, run: this.actions.continueGame },
+            { action: "restart", label: PROTOTYPE.labels.restart, run: this.actions.restart },
+          ]
+        : [{ action: "start", label: PROTOTYPE.labels.start, run: this.actions.start }];
       this.startCard = createStartCard(this.panel, {
-        chapters: state.unlocked.map((sector) => ({
-          label: PROTOTYPE.chapters[sector].name,
-          start: () => this.actions.start(sector),
-        })),
+        actions: actions.map(({ label, run }) => ({ label: label ?? "", run })),
         note: PROTOTYPE.labels.deferred ?? "",
         title: PROTOTYPE.labels.home ?? "",
       });
       this.startCard.buttons.forEach((node, index) => {
-        node.dataset.action = "start-sector";
-        node.dataset.sector = String(state.unlocked[index]);
+        node.dataset.action = actions[index]?.action ?? "";
       });
     }
     const restore = [...this.panel.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
@@ -111,7 +111,7 @@ export class StoryShell {
     );
     if (restore) {
       restore.focus();
-    } else if (state.dialogue) {
+    } else if (screen === "start" || state.dialogue) {
       this.panel.querySelector<HTMLButtonElement>("button")?.focus();
     }
   }

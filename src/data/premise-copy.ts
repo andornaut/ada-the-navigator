@@ -7,6 +7,7 @@ export const PREMISE: PremiseContent = {
     { speaker: "Astra", text: "Welcome back, Navigator." },
   ],
   boardingNewGalaxy: { speaker: "Astra", text: "Welcome back, Navigator. A new galaxy is ready." },
+  emptyHome: "Penny thumps her tail. Time for another adventure?",
   holodisk: {
     handover: "We found this drifting near our outposts. Take it, with our thanks.",
     inserted: [

@@ -117,6 +117,7 @@ describe("grant all weapons", () => {
     expect(grantAllWeapons(model.state)).toBe(false);
     expect(model.save()).toBe(home);
     model.startSector(1);
+    model.state.dialogue = { choices: [], context: "grower", text: "", title: "" };
     const dialogue = model.save();
     expect(grantAllWeapons(model.state)).toBe(false);
     expect(model.save()).toBe(dialogue);

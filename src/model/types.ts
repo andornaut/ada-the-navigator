@@ -127,6 +127,8 @@ export interface SectorProgress {
   stations: string[];
   /** The galaxy's holodisk is recovered and inserted into Astra's drive. */
   holodisk: boolean;
+  /** The chapter's home opening has played; old scenes never replay. */
+  opened: boolean;
 }
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
@@ -172,6 +174,8 @@ export interface GameState {
   prologueSeen: boolean;
   /** Astra announces a newly unlocked galaxy once, at the next boarding. */
   announceGalaxy: boolean;
+  /** The first flight has begun, so the start screen offers Continue and Restart. */
+  started: boolean;
 }
 export type FlightEvent =
   | { type: "depleted" }

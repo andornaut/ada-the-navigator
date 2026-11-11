@@ -32,6 +32,8 @@ export interface PremiseContent {
   boarding: readonly PremiseLine[];
   /** Replaces the last boarding line once, at the first boarding after a galaxy unlocks. */
   boardingNewGalaxy: Required<PremiseLine>;
+  /** Ada's room on a home visit with no new scene, before "Pick up the rock.". */
+  emptyHome: string;
   holodisk: {
     /** Said by whichever outpost gives Ada galaxy one's holodisk, before the insertion. */
     handover: string;

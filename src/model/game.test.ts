@@ -10,15 +10,12 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { playOpening } from "./test-launch.ts";
+import { readStory } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, sector: SectorId = 1) {
   model.startSector(sector);
-  if (model.state.dialogue?.context === "opening") {
-    playOpening(model);
-  }
 }
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
@@ -36,10 +33,11 @@ function talk(model: GameModel, id: string) {
   model.interact();
   model.choose("continue");
 }
-function finishHome(model: GameModel) {
+/** Returns home and reads the waiting scenes, taking each choice page's `choice`. */
+function finishHome(model: GameModel, choice = 1) {
   model.returnHome();
-  model.choose("1");
-  model.choose("continue");
+  expect(model.storyView?.page.id).toBe("resolution");
+  readStory(model, choice);
 }
 /** Recovers the current galaxy one or two holodisk and continues past its insertion. */
 function recoverHolodisk(model: GameModel) {
@@ -94,10 +92,9 @@ describe("prototype story and persistence", () => {
     expect(resumed.state.progress[1].questItem).toBe("food");
   });
   it("completes the delivery chain at the workshop and converges both responses at home", () => {
-    for (const choice of ["0", "1"]) {
+    for (const choice of [0, 1]) {
       const model = new GameModel(PROTOTYPE);
       model.startSector(1);
-      playOpening(model, choice);
       introduce(model, "growers");
       talk(model, "workshop");
       expect(model.state.progress[1].questItem).toBe("toolkit");
@@ -107,7 +104,7 @@ describe("prototype story and persistence", () => {
       talk(model, "workshop");
       expect(model.state.progress[1].questComplete).toBe(true);
       recoverHolodisk(model);
-      finishHome(model);
+      finishHome(model, choice);
       expect(model.state.unlocked).toEqual([1, 2]);
       expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
     }

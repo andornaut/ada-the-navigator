@@ -28,6 +28,7 @@ const progress: SectorProgress = {
   holodisk: false,
   introduced: false,
   known: [],
+  opened: false,
   questComplete: false,
   questItem: null,
   resolved: false,

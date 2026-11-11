@@ -6,7 +6,7 @@ import { createActions, createButton, createCard } from "./modal.ts";
 
 // The start screen's card: the shared card (ui-settings-card face, the heading role, the card
 // tokens) as a page card centred in the page safe rect, without a dim. Groups: the portraits, the
-// chapter actions as an action stack, then the deferred-galaxy note.
+// start actions as an action stack, then the deferred-galaxy note.
 
 // The portrait sheets, each frame one portrait square; the first frame shows.
 const PORTRAITS = {
@@ -71,7 +71,7 @@ export const START_STYLE = `
 `;
 
 export interface StartCardContent {
-  readonly chapters: readonly { readonly label: string; readonly start: () => void }[];
+  readonly actions: readonly { readonly label: string; readonly run: () => void }[];
   readonly note: string;
   readonly title: string;
 }
@@ -93,17 +93,17 @@ export function createStartCard(
     portrait.dataset.portrait = key;
     portraits.append(portrait);
   }
-  const buttons = content.chapters.map(({ label, start }) => {
+  const buttons = content.actions.map(({ label, run }) => {
     const button = createButton(label);
-    button.addEventListener("click", start);
+    button.addEventListener("click", run);
     return button;
   });
-  const chapters = createActions(buttons.map((button) => ({ button, role: "secondary" as const })));
-  chapters.classList.add("ada-stack");
+  const actions = createActions(buttons.map((button) => ({ button, role: "secondary" as const })));
+  actions.classList.add("ada-stack");
   const note = document.createElement("p");
   note.className = "ada-card-note ada-prose";
   note.textContent = content.note;
-  parts.body.append(portraits, chapters, note);
+  parts.body.append(portraits, actions, note);
   panel.append(parts.frame);
   parts.fit();
   return {
