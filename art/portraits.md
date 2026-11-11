@@ -7,19 +7,18 @@ Copyright (c) 2026 andornaut. Source portraits are licensed under
 The [source licence](portraits-LICENSE.txt) is included unchanged. PNGs are
 unchanged; JSON metadata uses local image filenames and normalized formatting.
 
-Ada is the brown/dark-skinned girl depicted in the source art. The dog portrait retains the source appearance; no breed or character name is assigned here. Penny is the golden dog portrait (`face-dog-penny`).
+Ada is the brown/dark-skinned girl depicted in the source art. Penny is the golden dog portrait (`face-dog-penny`).
 
 The `casey`, `trista` and `mr-b` assets are reusable community portraits from Archie. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
 
 ## Geometry and tags
 
-Every frame is 32 × 32 pixels, untrimmed, with a 1000 ms duration. The Ada, casey, trista and mr-b sheets are 64 × 32 pixels; the dog and Penny sheets are 96 × 32 pixels.
+Every frame is 32 × 32 pixels, untrimmed, with a 1000 ms duration. The Ada, casey, trista and mr-b sheets are 64 × 32 pixels; the Penny sheet is 96 × 32 pixels.
 
 | Portrait | happy   | neutral | upset       |
 | -------- | ------- | ------- | ----------- |
 | Ada      | Frame 0 | Frame 1 | Not present |
 | casey    | Frame 0 | Frame 1 | Not present |
-| Dog      | Frame 0 | Frame 1 | Frame 2     |
 | mr-b     | Frame 0 | Frame 1 | Not present |
 | Penny    | Frame 0 | Frame 1 | Frame 2     |
 | trista   | Frame 0 | Frame 1 | Not present |
@@ -42,14 +41,6 @@ General Gadget sheets are authored for Ada. Both are described in
   - SHA-256: `d6774039c54f424b91d7040ca11cfc9c8b3dc0492dabb63b1ca3b03a482d215a`
   - Destination: `public/art/portraits/ada.json`
   - SHA-256: `92147003c29fea73106df6a8132324e1f2343e893bb3927626775f4d7f55dd0d`
-- Source: `public/art/sprites/face-dog-archie.png`
-  - SHA-256: `20aaa3fa0ef7dacb3ee7902c8536c0f27ff9eb01a40bd646427eabb8a6a60463`
-  - Destination: `public/art/portraits/dog.png`
-  - SHA-256: `20aaa3fa0ef7dacb3ee7902c8536c0f27ff9eb01a40bd646427eabb8a6a60463`
-- Source: `public/art/sprites/face-dog-archie.json`
-  - SHA-256: `a167ac587f398a119a839684e0187b267108c38ac9ad4983781b59d64eb4bd11`
-  - Destination: `public/art/portraits/dog.json`
-  - SHA-256: `e23485d72e1452175d0e19f9aef7d26e069d980661142e4baff01ab779579594`
 - Source: `public/art/sprites/face-dog-penny.png`
   - SHA-256: `2e7c0703c419c1ff88b793a43e8a2d29fb31ba2ed12543a79f3c2eb250d842f1`
   - Destination: `public/art/portraits/penny.png`
@@ -95,4 +86,4 @@ the portrait files above stay unchanged.
 
 ## Verification
 
-All twelve tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources.
+All ten tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources.
