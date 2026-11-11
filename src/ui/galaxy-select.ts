@@ -17,7 +17,8 @@ export interface GalaxySelectLabels {
 
 export interface GalaxyPage {
   readonly flavor: string;
-  readonly hue: string;
+  /** The preview for the page's state: tinted when unlocked, the locked greyscale otherwise. */
+  readonly preview: string;
   readonly name: string;
   readonly number: number;
   readonly unlocked: boolean;
@@ -45,14 +46,14 @@ const STYLE = `
   gap:${units(GALAXY_CARD.rowGap)}
 }
 
-/* PLACEHOLDER (Art): the screenshot is the galaxy's hue until Art's captures land. */
+/* The 180 by 90 preview in its 1 px frame, outside the image (art/galaxies.md "Selector preview"). */
 .ada-controls .ada-galaxy-shot{
+  box-sizing:content-box;
   width:${units(GALAXY_CARD.screenshot.width)};
   height:${units(GALAXY_CARD.screenshot.height)};
+  border:${units(GALAXY_CARD.screenshot.frame)} solid ${GALAXY_CARD.screenshot.frameColor};
+  background:center / 100% 100% no-repeat;
   image-rendering:pixelated
-}
-.ada-controls .ada-galaxy[data-locked] .ada-galaxy-shot{
-  filter:grayscale(1)
 }
 
 .ada-controls .ada-galaxy .ada-galaxy-name{
@@ -183,7 +184,7 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
       } else {
         galaxy.dataset.locked = "true";
       }
-      shot.style.background = page.hue;
+      shot.style.backgroundImage = `url('${page.preview}')`;
       name.textContent = page.unlocked ? page.name : labels.locked;
       const text = page.unlocked ? page.flavor : labels.locked;
       for (const line of lines) {

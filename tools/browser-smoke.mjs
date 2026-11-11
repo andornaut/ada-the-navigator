@@ -405,6 +405,15 @@ try {
       .evaluate((art) => art.style.backgroundImage),
     artUrl("cockpit-seated"),
   );
+  // Galaxy one is unlocked, so its preview is the tinted capture; it must be served.
+  const preview = await selector
+    .locator(".ada-galaxy-shot")
+    .evaluate((shot) => shot.style.backgroundImage);
+  assert.equal(preview, 'url("/previews/galaxy-sunflower.png")');
+  const previewResponse = await page.request.get(
+    "http://ada-preview:4173/previews/galaxy-sunflower.png",
+  );
+  assert.equal(previewResponse.status(), 200, "Galaxy previews must be served");
   assert.equal(
     (await selector.locator("h2").textContent())?.trim(),
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
@@ -1408,9 +1417,14 @@ try {
   const paletteResponse = await page.request.get("http://ada-preview:4173/art/space-palette.json");
   assert.equal(paletteResponse.status(), 200, "Approved space palette must be served");
   const { colors: approvedColors } = await paletteResponse.json();
-  // In flight, space takes the galaxy's hue; the combat fixtures fly in galaxy one.
-  const { GALAXIES } = await import(new URL("../src/data/storybook.ts", import.meta.url));
-  const paletteColors = { ...approvedColors, background: GALAXIES[0].hue };
+  // In flight, space takes the galaxy's field colours; the combat fixtures fly in galaxy one.
+  const galaxiesResponse = await page.request.get("http://ada-preview:4173/art/galaxies.json");
+  assert.equal(galaxiesResponse.status(), 200, "Approved galaxy fields must be served");
+  const { galaxies: galaxyFields } = await galaxiesResponse.json();
+  const paletteColors = {
+    ...approvedColors,
+    ...galaxyFields.find(({ number }) => number === 1).colors,
+  };
   const combatSnapshots = {};
   const pixels = {};
   async function renderCombatView(view) {

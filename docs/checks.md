@@ -14,6 +14,7 @@ load below 20, four CPUs, four test workers and the configured memory ceilings.
 | `npm run build`                        | Vite and retained assets                                                  |
 | `make check`                           | Complete container profile, the default Make target                       |
 | `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                         |
+| `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews` |
 
 Hook verification creates its own scratch Git repository and preserves the
 caller's working files and index. `--output <proof.json>` selects explicit hook

@@ -15,3 +15,13 @@ export function artUrls(files: readonly string[]): string[] {
     .map((file) => `/${ART_DIRECTORY}/${file}`)
     .sort();
 }
+
+// The public directory of Tech's galaxy selector previews (tools/galaxy-previews.mjs), which the
+// selector loads at runtime like the art.
+export const PREVIEW_DIRECTORY = "previews";
+
+// The URLs of the previews the service worker precaches, given each file's path under
+// PREVIEW_DIRECTORY.
+export function previewUrls(files: readonly string[]): string[] {
+  return files.map((file) => `/${PREVIEW_DIRECTORY}/${file}`).sort();
+}

@@ -202,11 +202,11 @@ describe("galaxy selection", () => {
     expect(model.selectedGalaxy).toBe(4);
     model.pageGalaxy(-9);
     expect(model.selectedGalaxy).toBe(1);
-    expect(GALAXIES.map(({ hue, name }) => [name, hue])).toEqual([
-      ["Sunflower", "#332712"],
-      ["Cartwheel", "#39221e"],
-      ["Whirlpool", "#132d33"],
-      ["Black Eye", "#271423"],
+    expect(GALAXIES.map(({ id, name }) => [name, id])).toEqual([
+      ["Sunflower", "sunflower"],
+      ["Cartwheel", "cartwheel"],
+      ["Whirlpool", "whirlpool"],
+      ["Black Eye", "black-eye"],
     ]);
   });
 

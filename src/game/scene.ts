@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { GALAXIES, SELECTOR_BACKDROP } from "../data/storybook.ts";
+import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import { BEAM, weaponAt } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
@@ -77,10 +77,12 @@ import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
 import {
   FALLBACK_SPACE_PALETTE,
-  galaxyBackground,
+  galaxyPalettes,
+  readGalaxyFields,
   readSpacePalette,
   spaceColorCss,
   spaceObjectColor,
+  type SpacePalette,
 } from "./space-palette.ts";
 import {
   readStardustArt,
@@ -165,7 +167,10 @@ export class PrototypeScene extends Phaser.Scene {
   private feedbackSound = new FeedbackSound();
   private screenShake = true;
   private palette = FALLBACK_SPACE_PALETTE;
-  // The space background in use: the flight's galaxy hue, else the palette's.
+  // The palette at home and before a galaxy is set, and each galaxy's retinted field.
+  private basePalette = FALLBACK_SPACE_PALETTE;
+  private galaxyPalettes: ReadonlyMap<number, SpacePalette> = new Map();
+  // The space background in use: the flight's galaxy field, else the base palette's.
   private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
   private storybook!: ReturnType<typeof createStorybook>;
@@ -180,11 +185,15 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as {
         assets: Asset[];
+        galaxies?: string;
         quantumJump?: string;
         spacePalette?: string;
       };
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
+      }
+      if (manifest.galaxies) {
+        this.load.json("galaxies", manifest.galaxies);
       }
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
@@ -224,7 +233,13 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.palette = readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
+    this.basePalette =
+      readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
+    this.palette = this.basePalette;
+    this.galaxyPalettes = galaxyPalettes(
+      this.basePalette,
+      readGalaxyFields(this.cache.json.get("galaxies")),
+    );
     const background = this.palette.background;
     this.game.config.backgroundColor.setTo(
       (background >> 16) & 255,
@@ -709,10 +724,9 @@ export class PrototypeScene extends Phaser.Scene {
       inDanger: this.model.inDanger,
     });
     this.shell.render(state, screen);
-    const background = galaxyBackground(
-      this.palette,
-      state.mode === "space" ? (state.flight?.sector ?? null) : null,
-    );
+    const flightGalaxy = state.mode === "space" ? state.flight?.sector : undefined;
+    this.palette = (flightGalaxy && this.galaxyPalettes.get(flightGalaxy)) || this.basePalette;
+    const background = this.palette.background;
     if (background !== this.spaceBackground) {
       this.spaceBackground = background;
       this.cameras.main.setBackgroundColor(background);
@@ -735,10 +749,12 @@ export class PrototypeScene extends Phaser.Scene {
     this.galaxies.show(
       galaxy && selected !== null
         ? {
-            ...galaxy,
             first: selected === 1,
+            flavor: galaxy.flavor,
             last: selected === GALAXIES.length,
+            name: galaxy.name,
             number: selected,
+            preview: galaxyPreview(galaxy, !this.model.isUnlocked(selected)),
             unlocked: this.model.isUnlocked(selected),
           }
         : null,

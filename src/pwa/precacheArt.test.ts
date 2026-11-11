@@ -5,8 +5,9 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
+import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
-import { ART_DIRECTORY, artUrls } from "./precacheArt.ts";
+import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 
 const publicDir = fileURLToPath(new URL("../../public/", import.meta.url));
 const artDirectory = join(publicDir, ART_DIRECTORY);
@@ -75,5 +76,18 @@ describe("artUrls", () => {
 
   it("leaves out the icon review sheet", () => {
     expect(artUrls(artFiles).filter((url) => url.includes("contact-sheet"))).toEqual([]);
+  });
+});
+
+describe("previewUrls", () => {
+  it("lists every galaxy preview the selector loads, both states", () => {
+    const files = readdirSync(join(publicDir, PREVIEW_DIRECTORY));
+    const urls = previewUrls(files);
+    expect(urls).toEqual(
+      GALAXIES.flatMap((galaxy) =>
+        [false, true].map((locked) => galaxyPreview(galaxy, locked)),
+      ).sort(),
+    );
+    expect(urls.filter((url) => isHashedAssetUrl(CACHE_POLICY, url))).toEqual([]);
   });
 });

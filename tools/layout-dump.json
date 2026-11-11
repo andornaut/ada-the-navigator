@@ -132,6 +132,8 @@
         ],
         "rowGap": 4,
         "screenshot": {
+          "frame": 1,
+          "frameColor": "#181425",
           "height": 90,
           "width": 180
         }

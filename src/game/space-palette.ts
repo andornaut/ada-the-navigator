@@ -1,4 +1,3 @@
-import { GALAXIES } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 
 const ROLES = [
@@ -72,8 +71,46 @@ export function spaceColorCss(color: number): string {
   return `#${color.toString(16).padStart(6, "0")}`;
 }
 
-/** In flight, space takes the galaxy's own hue as its background (Sunflower is gold). */
-export function galaxyBackground(palette: SpacePalette, galaxy: number | null): number {
-  const hue = galaxy === null ? undefined : GALAXIES[galaxy - 1]?.hue;
-  return hue ? Number.parseInt(hue.slice(1), 16) : palette.background;
+// The field roles a galaxy retints (art/galaxies.md "Field hues"); signals never change.
+const FIELD_ROLES = ["background", "environment", "environmentDetail"] as const;
+export type FieldColors = Pick<SpacePalette, (typeof FIELD_ROLES)[number]>;
+
+/** Each galaxy's field colours from Art's galaxies.json, by galaxy number; empty if invalid. */
+export function readGalaxyFields(value: unknown): ReadonlyMap<number, FieldColors> {
+  const galaxies = (value as { galaxies?: unknown } | null)?.galaxies;
+  if ((value as { version?: unknown } | null)?.version !== 1 || !Array.isArray(galaxies)) {
+    return new Map();
+  }
+  const fields = new Map<number, FieldColors>();
+  for (const entry of galaxies as unknown[]) {
+    const { colors, number } = (entry ?? {}) as {
+      colors?: Record<string, unknown>;
+      number?: unknown;
+    };
+    const values = FIELD_ROLES.map((role) => colors?.[role]);
+    if (
+      typeof number !== "number" ||
+      !values.every((color) => typeof color === "string" && /^#[0-9a-f]{6}$/iu.test(color))
+    ) {
+      return new Map();
+    }
+    fields.set(
+      number,
+      Object.fromEntries(
+        FIELD_ROLES.map((role, index) => [
+          role,
+          Number.parseInt((values[index] as string).slice(1), 16),
+        ]),
+      ) as FieldColors,
+    );
+  }
+  return fields;
+}
+
+/** Each galaxy's palette: the base palette with that galaxy's field colours. */
+export function galaxyPalettes(
+  palette: SpacePalette,
+  fields: ReadonlyMap<number, FieldColors>,
+): ReadonlyMap<number, SpacePalette> {
+  return new Map([...fields].map(([galaxy, colors]) => [galaxy, { ...palette, ...colors }]));
 }

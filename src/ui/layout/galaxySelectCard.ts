@@ -13,7 +13,7 @@ export const GALAXY_CARD = {
     { id: "next", role: "secondary" },
   ],
   rowGap: SPACING.rowGap,
-  screenshot: { height: 90, width: 180 },
+  screenshot: { frame: 1, frameColor: "#181425", height: 90, width: 180 },
 } as const;
 
 export type GalaxyAction = (typeof GALAXY_CARD.actions)[number]["id"];

@@ -1,9 +1,12 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
+import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 import {
-  FALLBACK_SPACE_PALETTE,
-  galaxyBackground,
+  galaxyPalettes,
+  readGalaxyFields,
   readSpacePalette,
   spaceColorCss,
   spaceObjectColor,
@@ -73,11 +76,60 @@ describe("space palette boundary", () => {
   });
 });
 
-describe("galaxy background", () => {
-  it("tints space with the flight's galaxy hue and keeps the palette's elsewhere", () => {
+const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
+  galaxies: string;
+};
+const galaxiesData: unknown = JSON.parse(readFileSync(publicFile(manifest.galaxies), "utf8"));
+
+describe("galaxy fields", () => {
+  const fields = readGalaxyFields(galaxiesData);
+  const palettes = galaxyPalettes(palette, fields);
+
+  it("retints the background, environment and detail of each galaxy from Art's galaxies.json", () => {
     expect(
-      [1, 2, 3, 4].map((galaxy) => spaceColorCss(galaxyBackground(FALLBACK_SPACE_PALETTE, galaxy))),
-    ).toEqual(["#332712", "#39221e", "#132d33", "#271423"]);
-    expect(galaxyBackground(FALLBACK_SPACE_PALETTE, null)).toBe(FALLBACK_SPACE_PALETTE.background);
+      [1, 2, 3, 4].map((galaxy) => {
+        const { background, environment, environmentDetail } = palettes.get(galaxy)!;
+        return [background, environment, environmentDetail].map(spaceColorCss);
+      }),
+    ).toEqual([
+      ["#332712", "#3f331e", "#4c3f29"],
+      ["#39221e", "#452e2a", "#523a36"],
+      ["#132d33", "#1f3940", "#2b464c"],
+      ["#271423", "#331f2f", "#3f2b3b"],
+    ]);
+  });
+
+  it("keeps every signal role at the base palette's colour", () => {
+    for (const galaxyPalette of palettes.values()) {
+      for (const role of [
+        "active",
+        "obstacle",
+        "pointOfInterest",
+        "shipHardpoint",
+        "weapon",
+      ] as const) {
+        expect(galaxyPalette[role]).toBe(palette[role]);
+      }
+    }
+  });
+
+  it("reads no galaxy from invalid data, so the base field stays", () => {
+    expect(readGalaxyFields({ galaxies: [], version: 1 }).size).toBe(0);
+    expect(readGalaxyFields({ galaxies: [{ colors: {}, number: 1 }], version: 1 }).size).toBe(0);
+    expect(readGalaxyFields({ version: 2 }).size).toBe(0);
+    expect(readGalaxyFields(null).size).toBe(0);
+  });
+
+  it("names each selector galaxy by its galaxies.json id, with both previews committed", () => {
+    const ids = (galaxiesData as { galaxies: { id: string; number: number }[] }).galaxies;
+    expect(GALAXIES.map(({ id }, index) => ({ id, number: index + 1 }))).toEqual(
+      ids.map(({ id, number }) => ({ id, number })),
+    );
+    for (const galaxy of GALAXIES) {
+      for (const locked of [false, true]) {
+        expect(existsSync(publicFile(galaxyPreview(galaxy, locked))), galaxy.id).toBe(true);
+      }
+    }
   });
 });

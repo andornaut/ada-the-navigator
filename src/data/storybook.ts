@@ -37,27 +37,32 @@ export const ASTRA = "Astra";
 /** One galaxy in galaxy selection, after Chibi's stage cards. */
 export interface GalaxyCard {
   readonly flavor: string;
-  /** The galaxy's main background hue, also the space background tint. */
-  readonly hue: string;
+  /** Art's galaxy id (public/art/galaxies.json), which also names its selector previews. */
+  readonly id: string;
   readonly name: string;
+}
+
+/** A galaxy's selector preview (tools/galaxy-previews.mjs): tinted, or the locked greyscale. */
+export function galaxyPreview(galaxy: Pick<GalaxyCard, "id">, locked: boolean): string {
+  return `/previews/galaxy-${galaxy.id}${locked ? "-locked" : ""}.png`;
 }
 
 /** Galaxies one to four, in order. Galaxy four's story is in development. */
 export const GALAXIES: readonly GalaxyCard[] = [
   {
     flavor: "Scattered outposts grow, build and salvage, each on their own.",
-    hue: "#332712",
+    id: "sunflower",
     name: "Sunflower",
   },
   {
     flavor: "A busy mining hub where every rock is worth something.",
-    hue: "#39221e",
+    id: "cartwheel",
     name: "Cartwheel",
   },
   {
     flavor: "Swirling debris, and a song somewhere in the dark.",
-    hue: "#132d33",
+    id: "whirlpool",
     name: "Whirlpool",
   },
-  { flavor: "A shadowed rim where someone is watching.", hue: "#271423", name: "Black Eye" },
+  { flavor: "A shadowed rim where someone is watching.", id: "black-eye", name: "Black Eye" },
 ];
