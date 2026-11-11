@@ -436,8 +436,10 @@ Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
 Direction indicators are rare. They mark only the current objective's
 destination, a quest item or quest event, the holodisk waypoint and an
-undiscovered station within range. Ordinary enemies and optional discoveries get
-none; Penny senses those instead. This does not add a map.
+undiscovered station within range. Ordinary enemies, optional discovery caches
+and ordinary resource rocks get none; Penny senses those instead. A discovery
+cache lights when Ada comes within 160 world units. The holodisk is collected on
+contact, like other pickups. This does not add a map.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
