@@ -10,6 +10,7 @@ import {
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromAreaBottom, fromHudEdge, hudCentreX, units, viewStyle } from "./layout/css.ts";
+import { hudButtonTarget } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -67,8 +68,22 @@ export interface SettingsOptions {
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
 }
 
-// The start screen's Settings glyph: the 20 gear, drawn at the HUD glyph size.
-const SETTINGS_GLYPH = "icon-settings-nav";
+// The start screen's Settings glyph (art/settings-icon.md): the 20 vector gear, a mask drawn with
+// smooth sampling, as the Achievements trophy is.
+export const SETTINGS_GLYPH = "/art/ui/icons/settings.svg";
+
+// The start screen's Achievements glyph (art/achievements-icon.md): the 20 vector trophy, a mask
+// drawn with smooth sampling.
+export const ACHIEVEMENTS_GLYPH = "/art/ui/icons/achievements.svg";
+
+// Both start-screen discs while a press holds: the pause disc's held face and a white glyph.
+export const NAV_DISC_PRESSED = { face: "#3a4466", glyph: "#ffffff" } as const;
+
+// A start-screen nav disc's right offset from the HUD rect's right: hudButtonTarget(index).
+const navRight = (index: number): string => {
+  const target = hudButtonTarget(index);
+  return fromHudEdge("right", -(target.x + target.width));
+};
 
 const STYLE = `
 @font-face{
@@ -120,15 +135,35 @@ ${viewStyle(WHOLE_PX_EDGES)}
   outline-offset:4px
 }
 
-/* The start screen's Settings: an idle HUD disc button on the HUD rect's top-right corner, its
-   20 gear a mask in the idle glyph colour. */
+/* The start screen's Settings: an idle HUD disc button on the HUD rect's top-right corner
+   (hudButtonTarget(0)), its 20 gear a mask in the idle glyph colour. */
 .ada-controls .ada-settings-open{
   position:absolute;
-  right:${fromHudEdge("right")};
+  right:${navRight(0)};
   top:${fromHudEdge("top")};
-  --glyph:url('/art/ui/sprites/${SETTINGS_GLYPH}.png')
+  --glyph:url('${SETTINGS_GLYPH}')
 }
 ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
+
+/* The start screen's Achievements: the same HUD disc button one pitch left of Settings
+   (hudButtonTarget(1)), its 20 trophy a mask in the idle glyph colour. */
+.ada-controls .ada-achievements-open{
+  position:absolute;
+  right:${navRight(1)};
+  top:${fromHudEdge("top")};
+  --glyph:url('${ACHIEVEMENTS_GLYPH}')
+}
+${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
+
+/* Pressed, on both start-screen discs: the pause disc's held face and a white glyph. */
+.ada-controls .ada-settings-open:active,
+.ada-controls .ada-achievements-open:active{
+  color:${NAV_DISC_PRESSED.glyph}
+}
+.ada-controls .ada-settings-open:active .ada-disc,
+.ada-controls .ada-achievements-open:active .ada-disc{
+  background:${NAV_DISC_PRESSED.face}
+}
 
 /* Each joystick's pointer target, placed over its rest ring (touchControls.ts). */
 .ada-controls [data-control]{

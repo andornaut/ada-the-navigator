@@ -340,6 +340,49 @@ try {
         ),
     };
   }
+  assert.deepEqual(
+    await page
+      .locator(".story-panel button")
+      .evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
+    ["start"],
+    "The start card holds only Start before the first flight",
+  );
+  const [achievementsBox, settingsBox] = await Promise.all(
+    ['[data-action="achievements"]', '[data-action="settings"]'].map((selector) =>
+      page.locator(selector).boundingBox(),
+    ),
+  );
+  // hudButtonTarget(1): one pitch, HUD_BUTTON.target + HUD_BUTTON.gap, left of Settings.
+  const startUnit = await page
+    .locator("#app")
+    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
+  assert.ok(
+    achievementsBox &&
+      settingsBox &&
+      Math.abs(achievementsBox.y - settingsBox.y) < 1 &&
+      Math.abs(achievementsBox.width - settingsBox.width) < 1 &&
+      Math.abs((settingsBox.x - achievementsBox.x) / startUnit - 56) < 0.1,
+    "The start screen's Achievements sits one pitch left of Settings in the same form",
+  );
+  const achievementsButton = page.locator('[data-action="achievements"]');
+  assert.deepEqual(
+    [
+      await achievementsButton.getAttribute("aria-label"),
+      await achievementsButton.locator(".ada-disc").getAttribute("aria-hidden"),
+      await achievementsButton.evaluate((button) =>
+        getComputedStyle(button).getPropertyValue("--glyph").trim(),
+      ),
+    ],
+    [PROTOTYPE.labels.achievements, "true", "url('/art/ui/icons/achievements.svg')"],
+    "Achievements is labelled from Gameplay's string with Art's trophy, the glyph hidden",
+  );
+  assert.equal(
+    await page
+      .locator('[data-action="settings"]')
+      .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
+    "url('/art/ui/icons/settings.svg')",
+    "Settings draws Art's vector gear, the same mask mechanism as Achievements",
+  );
   await page.locator('[data-action="achievements"]').click();
   const firstAchievements = await achievementsPage();
   assert.equal(firstAchievements.count, "1/3", "The 14 achievements page six at a time");
@@ -509,20 +552,23 @@ try {
     await page.keyboard.up("d");
   }
   events.checks.push("Settings pause movement and clear held input on resume");
-  // The first flight after a real prologue: the Paused card's Achievements opens in its place
-  // with New Navigator unlocked, and closing it returns to the Paused card.
-  await openPause();
-  await page.locator('[data-action="pause-achievements"]').click();
-  const pausedAchievements = await achievementsPage();
-  assert.equal(pausedAchievements.count, "1/3");
-  assert.deepEqual(pausedAchievements.entries[0], [ACHIEVEMENTS[0].name, "true"]);
-  assert.ok(
-    pausedAchievements.entries.slice(1).every(([, unlocked]) => unlocked === "false"),
+  // The first flight after a real prologue has New Navigator unlocked, and only it.
+  const prologueSaved = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key)),
+    storageKey,
+  );
+  assert.deepEqual(
+    prologueSaved.achievements.unlocked,
+    [ACHIEVEMENTS[0].id],
     "Only New Navigator is unlocked after the prologue",
   );
-  await page.screenshot({ path: `${output}/achievements-pause.png` });
-  await page.locator('[data-action="close-achievements"]').click();
-  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  // Achievements is on the start screen only: the Paused card has none.
+  await openPause();
+  assert.equal(
+    await page.locator('[data-dialog="pause"] [data-action="pause-achievements"]').count(),
+    0,
+    "The Paused card has no Achievements",
+  );
   await page.locator('[data-action="pause-resume"]').click();
 
   // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
@@ -856,24 +902,27 @@ try {
   dangerInput.state.flight.shots = [];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  const refused = await Promise.all(
-    ["map", "returnHome"].map((action) =>
-      page.locator(`[data-action="pause-${action}"]`).getAttribute("aria-disabled"),
+  // In flight the card stacks Resume, Map, Settings and Back to title, every one available in
+  // danger.
+  const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
+  assert.deepEqual(
+    await pauseActions().evaluateAll((buttons) =>
+      buttons.map((button) => [
+        button.dataset.action,
+        button.textContent,
+        button.getAttribute("aria-disabled"),
+      ]),
     ),
+    [
+      ["pause-resume", PROTOTYPE.labels.resume, null],
+      ["pause-map", PROTOTYPE.labels.map, null],
+      ["pause-settings", PROTOTYPE.labels.settings, null],
+      ["pause-backToTitle", PROTOTYPE.labels.backToTitle, null],
+    ],
+    "The in-flight Paused card stacks Resume, Map, Settings and Back to title, all available " +
+      "in danger",
   );
-  assert.deepEqual(refused, [null, "true"], "In danger Map still opens and Return home refuses");
-  await page
-    .locator('[data-dialog="pause"]')
-    .getByText(PROTOTYPE.labels.travelUnavailable, { exact: true })
-    .waitFor({ state: "visible" });
-  // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
-  await page.locator('[data-action="pause-returnHome"]').click({ force: true });
-  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
-  assert.equal(
-    await page.locator('#game-status[data-mode="space"]').count(),
-    1,
-    "A refused Return home keeps the flight",
-  );
+  await page.screenshot({ path: `${output}/pause-flight-danger.png` });
   // Map opens in danger as a full-screen map in the Paused card's place, with the galaxy's
   // name and how much is mapped in its header; nothing undiscovered appears.
   await page.locator('[data-action="pause-map"]').click();
@@ -922,6 +971,107 @@ try {
     ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => PROTOTYPE.labels[key]),
     "The map's tools carry Gameplay's accessible labels",
   );
+  // Return to Earth on the HUD row: 148.5 wide, its right edge 16 left of the tool column, the
+  // header capped SPACING.gap short of it, 15 pips included. In danger it refuses, and the
+  // reason-only panel shows the danger line with nothing selected.
+  const mapEarth = mapScreen.locator('[data-action="map-returnHome"]');
+  assert.equal(
+    await mapEarth.textContent(),
+    PROTOTYPE.labels.returnHome,
+    "The Map offers Return to Earth",
+  );
+  const hudRow = await mapScreen.evaluate((screen) => {
+    const unit = Number(
+      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+    );
+    const box = (selector) => screen.querySelector(selector).getBoundingClientRect();
+    const header = screen.querySelector(".ada-map-header");
+    const pips = screen.querySelector(".ada-map-pips");
+    while (pips.children.length < 15) {
+      pips.append(pips.firstElementChild.cloneNode(true));
+    }
+    const result = {
+      earth: box('[data-action="map-returnHome"]'),
+      fits: header.scrollWidth <= header.clientWidth,
+      header: box(".ada-map-header"),
+      tools: box(".ada-map-tools"),
+      unit,
+    };
+    while (pips.children.length > 12) {
+      pips.lastElementChild.remove();
+    }
+    return result;
+  });
+  const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
+  assert.ok(
+    logical(hudRow.earth.width) === 148.5 &&
+      logical(hudRow.earth.height) === 48 &&
+      Math.abs(logical(hudRow.tools.left - hudRow.earth.right) - 16) <= 0.1 &&
+      Math.abs(hudRow.earth.top - hudRow.tools.top) <= 0.5,
+    `Return to Earth is 148.5 by 48 on the HUD row, 16 left of the tools: ${JSON.stringify(hudRow)}`,
+  );
+  assert.ok(
+    hudRow.fits && hudRow.header.right <= hudRow.earth.left - 8 * hudRow.unit + 0.5,
+    `The header holds 15 pips within its cap: ${JSON.stringify(hudRow)}`,
+  );
+  assert.equal(await mapEarth.getAttribute("aria-disabled"), "true", "It is disabled in danger");
+  const reasonOnly = await mapScreen.evaluate((screen) => {
+    const panel = screen.querySelector(".ada-map-panel");
+    const unit = Number(
+      getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+    );
+    const box = panel.getBoundingClientRect();
+    return {
+      height: Math.round((box.height / unit) * 10) / 10,
+      hidden: panel.hidden,
+      reason: [...panel.querySelectorAll(".ada-map-reason [data-shown]")].map(
+        (line) => line.textContent,
+      ),
+      row: panel.querySelector(".ada-map-row").hidden,
+      width: Math.round((box.width / unit) * 10) / 10,
+    };
+  });
+  // With nothing mapped the reason follows the empty note: 80 high, else 52.
+  const emptyMap = (await mapScreen.locator(".ada-map-places .ada-map-place").count()) === 0;
+  assert.deepEqual(
+    reasonOnly,
+    {
+      height: emptyMap ? 80 : 52,
+      hidden: false,
+      reason: [PROTOTYPE.labels.travelUnavailable],
+      row: true,
+      width: 360,
+    },
+    "In danger with nothing selected the reason-only panel is 360 by 52, or 80 with the empty note",
+  );
+  await page.screenshot({ path: `${output}/map-earth-danger.png` });
+  // Tab order: the tools, Return to Earth, the places, then Travel here.
+  await mapScreen.locator('[data-tool="close"]').focus();
+  // Each press in turn, then what it focused.
+  const tabThrough = async (presses, seen = []) => {
+    if (presses === 0) {
+      return seen;
+    }
+    await page.keyboard.press("Tab");
+    const at = await page.evaluate(
+      () => document.activeElement?.dataset.tool ?? document.activeElement?.dataset.action ?? "",
+    );
+    return tabThrough(presses - 1, [...seen, at]);
+  };
+  const tabbed = await tabThrough(5);
+  assert.deepEqual(
+    tabbed.slice(0, 4),
+    ["zoomIn", "zoomOut", "recentre", "map-returnHome"],
+    `Tab moves through the tools, then Return to Earth: ${tabbed}`,
+  );
+  await mapScreen.locator('[data-tool="close"]').focus();
+  // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
+  await mapEarth.click({ force: true });
+  assert.ok(
+    (await mapScreen.isVisible()) &&
+      (await page.locator('#game-status[data-mode="space"]').count()) === 1,
+    "A refused Return to Earth keeps the Map and the flight",
+  );
   const known = dangerInput.state.progress[dangerInput.state.flight.sector];
   const chips = mapScreen.locator(".ada-map-places .ada-map-place");
   assert.ok(
@@ -929,8 +1079,17 @@ try {
     "Map shows only discovered places",
   );
   if ((await chips.count()) > 0) {
-    // A selected place's panel names its type and distance from Ada.
+    // A selected place's panel names its type and distance from Ada, and in danger the danger
+    // line, whatever the place offers.
     await chips.first().dispatchEvent("click");
+    assert.deepEqual(
+      await mapScreen
+        .locator(".ada-map-reason [data-shown]")
+        .evaluateAll((lines) => lines.map((line) => line.textContent)),
+      [PROTOTYPE.labels.travelUnavailable],
+      "In danger the danger line shows with a selection",
+    );
+    await page.screenshot({ path: `${output}/map-earth-danger-selected.png` });
     const kinds = Object.entries(PROTOTYPE.labels)
       .filter(([key]) => key.startsWith("mapKind"))
       .map(([, value]) => value);
@@ -949,21 +1108,17 @@ try {
   await page.locator('[data-action="map-close"]').click();
   await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   assert.equal(await mapScreen.isVisible(), false, "The close tool returns to the Paused card");
-  // Achievements stays available in danger and returns to the Paused card.
-  await page.locator('[data-action="pause-achievements"]').click();
-  assert.equal((await achievementsPage()).count, "1/3");
-  await page.locator('[data-action="close-achievements"]').click();
-  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
-    "Danger blocks Return home, the full-screen Map still opens with its galaxy, percent and " +
-      "tools, focus on close, and closes on Escape and its close tool, and " +
+    "Danger refuses the Map's Return to Earth with its reason; the full-screen Map opens " +
+      "with its galaxy, percent and tools, focus on close, and closes on Escape and its close " +
+      "tool, and " +
       "no inapplicable or duplicate contextual control shows",
   );
   events.checks.push(
-    "Achievements open from the start screen and the Paused card in Gameplay's order, paging " +
-      "six at a time, and close back to where they opened",
+    "Achievements open from the start screen's button left of Settings in Gameplay's order, " +
+      "paging six at a time; the start card and the Paused card hold no Achievements",
   );
   // A held job's long Job line wraps inside the place panel, which stays clear of the tool
   // column, and selecting its target pans the chip clear of the panel's rendered height.
@@ -1024,6 +1179,148 @@ try {
     "A held job's long Job line wraps in the place panel, left of the tool column, and the " +
       "selected target pans clear of the panel's rendered height",
   );
+  // Back to title from a flight in danger: the start screen, the flight ended and saved at home
+  // with no sleep scene; Continue resumes in the cockpit.
+  await seedOnce(dangerInput.save(), "ada-browser.danger-title.v1");
+  await openPause();
+  await page.locator('[data-action="pause-backToTitle"]').click();
+  await page.locator('[data-action="continue"]').waitFor({ state: "visible" });
+  await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+  const titled = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
+  assert.ok(
+    titled.mode === "home" &&
+      titled.flight === null &&
+      titled.economy.stardust === dangerInput.state.economy.stardust,
+    "Back to title ends the flight with progress saved",
+  );
+  assert.equal(
+    await page.locator(".ada-story-panel:not([hidden])").count(),
+    0,
+    "Back to title shows the start screen, not the jump-home page or the sleep scene",
+  );
+  // Achievements opens from the title's own button.
+  await page.locator('[data-action="achievements"]').click();
+  assert.equal((await achievementsPage()).count, "1/3", "Achievements opens from the title");
+  await page.screenshot({ path: `${output}/achievements-title.png` });
+  await page.locator('[data-action="close-achievements"]').click();
+  await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  assert.deepEqual(
+    await page
+      .locator(".story-panel button")
+      .evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
+    ["continue", "restart"],
+    "The start card holds only Continue and Restart",
+  );
+  await page.locator('[data-action="continue"]').click();
+  await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator('[data-action="continue"]').isVisible(),
+    false,
+    "Continue resumes from the title",
+  );
+  // Ada's room page: the Map's Return to Earth lands there, where the Paused card holds only
+  // Settings and Back to title, and closes on Escape and its X. With the opening and prologue
+  // seen, Return to Earth lands on the room page itself.
+  const roomInput = new GameModel(PROTOTYPE, safeSerialized);
+  roomInput.state.progress[1].opened = true;
+  roomInput.state.prologueSeen = true;
+  await seedOnce(roomInput.save(), "ada-browser.room-pause.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  await page.screenshot({ path: `${output}/map-earth.png` });
+  await page.locator('[data-dialog="map"] [data-action="map-returnHome"]').click();
+  await page
+    .locator(".ada-story-panel:not([hidden])")
+    .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
+    .waitFor({ state: "visible" });
+  const roomSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
+  assert.ok(
+    roomSaved.mode === "home" && roomSaved.flight === null,
+    "The Map's Return to Earth ends the flight, saved",
+  );
+  const roomPause = page.locator('[data-action="pause"]');
+  if (await roomPause.isVisible()) {
+    const box = await roomPause.boundingBox();
+    const game = await page.locator("canvas").first().boundingBox();
+    assert.ok(
+      box && game && box.x - game.x < game.width / 4 && box.y - game.y < game.height / 4,
+      "Ada's room page shows the pause button at the game area's top left",
+    );
+  }
+  await openPause();
+  assert.deepEqual(
+    await pauseActions().evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
+    ["pause-settings", "pause-backToTitle"],
+    "Ada's room page's Paused card holds Settings and Back to title",
+  );
+  await page.screenshot({ path: `${output}/pause-room.png` });
+  await page.keyboard.press("Escape");
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "hidden" });
+  await openPause();
+  await page.locator('[data-action="close-pause"]').click();
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "hidden" });
+  await openPause();
+  await page.locator('[data-action="pause-backToTitle"]').click();
+  await page.locator('[data-action="continue"]').waitFor({ state: "visible" });
+  events.checks.push(
+    "Back to title ends a flight in danger with progress saved and no sleep scene, and " +
+      "Continue resumes; the Map's Return to Earth lands on Ada's room page, which pauses to " +
+      "Settings and Back to title, closing on Escape and its X",
+  );
+  // Towing never refuses the Map's Return to Earth; the held rescue stays held, its craft back
+  // where it was stranded.
+  const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));
+  const towInput = new GameModel(PROTOTYPE, roomInput.save());
+  const towFlight = towInput.state.flight;
+  // The nearest station whose board offers a rescue.
+  let rescue;
+  for (const site of stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
+    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+  )) {
+    ensureStation(PROTOTYPE, site.id, towFlight);
+    towFlight.player = { x: site.x, y: site.y };
+    towInput.state.docked = site.id;
+    rescue = towInput.jobBoard().find((row) => row.type === "rescue");
+    if (rescue) {
+      break;
+    }
+  }
+  assert.ok(rescue, "A station near the origin offers a rescue");
+  assert.equal(towInput.acceptJob(rescue.id), "accepted", "A rescue is accepted for the tow");
+  towInput.undock();
+  const still = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  const towTarget = towInput.state.tasks[1].target;
+  towFlight.objects = towFlight.objects.filter(({ kind }) => kind !== "enemy");
+  towFlight.player = { x: towTarget.x + 100, y: towTarget.y };
+  towFlight.velocity = { x: 0, y: 0 };
+  towFlight.dangerFor = 0;
+  towInput.state.dialogue = null;
+  towInput.step(0.05, { ...still, use: true });
+  assert.ok(towInput.towing, "The fixture is towing");
+  // Clear of the stranded site's hostiles, the tow line still attached.
+  for (const at of [towFlight.player, towFlight.tow]) {
+    at.x -= 2500;
+  }
+  towFlight.objects = towFlight.objects.filter(({ kind }) => kind !== "enemy");
+  towFlight.dangerFor = 0;
+  await seedOnce(towInput.save(), "ada-browser.tow-earth.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  const towEarth = page.locator('[data-dialog="map"] [data-action="map-returnHome"]');
+  assert.equal(await towEarth.getAttribute("aria-disabled"), null, "Towing keeps it available");
+  await towEarth.click();
+  await page
+    .locator(".ada-story-panel:not([hidden])")
+    .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
+    .waitFor({ state: "visible" });
+  const towed = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
+  assert.ok(
+    towed.flight === null && towed.tasks["1"]?.id === rescue.id,
+    "Return to Earth while towing ends the flight and keeps the rescue held",
+  );
+  events.checks.push("The Map's Return to Earth stays available while towing and ends the flight");
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
@@ -1677,6 +1974,12 @@ try {
     PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
     "Galaxy selection opens on the farthest unlocked galaxy",
   );
+  assert.equal(
+    (await page.locator('[data-action="galaxy-home"]').textContent())?.trim(),
+    PROTOTYPE.labels.homeButton,
+    "Galaxy selection's Earth button reads Earth",
+  );
+  await page.screenshot({ path: `${output}/selector-earth.png` });
   assert.equal(
     await page.locator('[data-action="galaxy-jump"]').getAttribute("aria-disabled"),
     null,

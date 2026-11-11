@@ -38,7 +38,8 @@ A funded project with world art changes its outpost, fading in once the first
 time the outpost is on screen.
 The Paused card's Map shows
 the galaxy's discovered destinations and stations and how much of it is mapped;
-Travel here reaches a chosen one outside danger. Space draws
+Travel here reaches a chosen one outside danger, and Return to Earth ends the
+flight outside danger, towing or not. Space draws
 authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
 discovery caches, the holodisk and its beacon, Stardust, weapon pickups, missiles,
 blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,
@@ -62,12 +63,15 @@ Prototype input mappings:
 | Esc                      | Close the open card; with none open, pause in flight or open Settings at start |
 | Back                     | Close the open card; with none open, pause in flight                           |
 | Weapon buttons           | Equip an owned weapon                                                          |
-| Pause button (touch)     | Pause in flight                                                                |
+| Pause button (touch)     | Pause in flight and on Ada's room page                                         |
 | Left touch joystick      | Move                                                                           |
 | Right touch joystick     | Aim and fire while deflected                                                   |
 | Contextual action button | Talk, deliver or deposit when available                                        |
 
-The Paused card offers Resume, Map, Settings and Return home.
+In flight the Paused card offers Resume, Map, Settings and Back to title; on
+Ada's room page it offers Settings and Back to title. Back to title opens the
+start screen, where Continue resumes. The start screen's Achievements button
+sits left of Settings.
 
 Mobile uses independent twin joysticks. Centering the aim stick stops firing;
 without aim input, the ship faces its movement direction.

@@ -314,7 +314,7 @@ describe("quantum jump home", () => {
     expect(model.storyView?.page.background).toBe("gardenLot");
   });
 
-  it("has no night or sleep after a voluntary Return home", () => {
+  it("has no night or sleep after a voluntary Return to Earth", () => {
     const model = launched();
     seenHome(model);
     model.returnHome();
@@ -323,7 +323,59 @@ describe("quantum jump home", () => {
       background: "adaRoom",
       text: PROTOTYPE.premise.emptyHome,
     });
+    expect(model.roomPage).toBe(true);
     expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
+  });
+
+  it("goes Back to title from flight even in danger, saving progress with no sleep scene", () => {
+    const model = launched();
+    seenHome(model);
+    model.state.economy.stardust = 123;
+    model.state.progress[1].known = ["growers"];
+    model.state.flight!.dangerFor = 5;
+    expect(model.inDanger).toBe(true);
+    model.returnHome();
+    expect(model.state.mode).toBe("space");
+    model.backToTitle();
+    expect(model.state.mode).toBe("home");
+    expect(model.state.flight).toBeNull();
+    expect(model.screen).toBe("start");
+    expect(model.storyView).toBeNull();
+    expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
+    const reloaded = new GameModel(PROTOTYPE, model.save());
+    expect(reloaded.screen).toBe("start");
+    expect(reloaded.state.economy.stardust).toBe(123);
+    expect(reloaded.state.progress[1].known).toEqual(["growers"]);
+  });
+
+  it("resumes on Continue after Back to title: the cockpit, or a waiting home scene first", () => {
+    const model = launched();
+    seenHome(model);
+    model.backToTitle();
+    model.continueGame();
+    expect(model.screen).toBe("story");
+    expect(model.storyView?.page.id).toMatch(/^boarding:/);
+    const waiting = launched();
+    seenHome(waiting);
+    waiting.state.progress[1].questComplete = true;
+    waiting.backToTitle();
+    waiting.continueGame();
+    expect(waiting.storyView?.page.background).toBe("gardenLot");
+  });
+
+  it("goes Back to title from Ada's room page only, never from another storybook page", () => {
+    const model = launched();
+    seenHome(model);
+    model.returnHome();
+    model.backToTitle();
+    expect(model.screen).toBe("start");
+    const resolving = launched();
+    seenHome(resolving);
+    resolving.state.progress[1].questComplete = true;
+    resolving.returnHome();
+    expect(resolving.roomPage).toBe(false);
+    resolving.backToTitle();
+    expect(resolving.screen).toBe("story");
   });
 });
 

@@ -74,7 +74,7 @@ describe("holodisk objectives", () => {
     ] as const) {
       expect(PROTOTYPE.chapters[id].objectives.slice(-2)).toEqual([
         objective,
-        "Return home when ready.",
+        "Return to Earth when ready.",
       ]);
     }
   });
@@ -94,7 +94,7 @@ describe("galaxy one's holodisk", () => {
     ]);
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[1].holodisk).toBe(true);
-    expect(model.objective).toBe("Return home when ready.");
+    expect(model.objective).toBe("Return to Earth when ready.");
     expect(model.state.notice).toBe(PROTOTYPE.labels.chapterComplete);
     // The exchange is still running, so the outposts do not give it again.
     model.interact();
@@ -266,7 +266,7 @@ describe("galaxy two's holodisk", () => {
       ["Astra", memories[2]],
     ]);
     expect(model.state.progress[2].holodisk).toBe(true);
-    expect(model.objective).toBe("Return home when ready.");
+    expect(model.objective).toBe("Return to Earth when ready.");
     model.interact();
     expect(model.state.dialogue?.context).toBe("hub");
     resolveAtHome(model);
@@ -310,7 +310,7 @@ describe("galaxy three's holodisk", () => {
     expect(model.state.progress[3].holodisk).toBe(true);
     expect(model.state.progress[3].known).not.toContain("holodisk");
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
-    expect(model.objective).toBe("Return home when ready.");
+    expect(model.objective).toBe("Return to Earth when ready.");
     model.step(0.01, idle);
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
   });

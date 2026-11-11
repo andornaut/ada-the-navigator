@@ -3,6 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { SCROLL } from "./contentCard.ts";
+import { TEXT_BUTTON } from "./controls.ts";
 import { HUD_BUTTON, hudRect, type Insets, safeRect, type Size } from "./playView.ts";
 import { SPACING } from "./tokens.ts";
 
@@ -16,6 +17,11 @@ export const MAP_SCREEN = {
   chartRadius: CHARTING_RADIUS,
   /** Movement past this pans and never selects (SCROLL.dragThreshold). */
   dragThreshold: SCROLL.dragThreshold,
+  /**
+   * Return to Earth: a secondary TEXT_BUTTON on the HUD row, its "Return to Earth" label (116.5)
+   * plus TEXT_BUTTON.inset each side.
+   */
+  earth: { height: TEXT_BUTTON.height, width: 116.5 + 2 * TEXT_BUTTON.inset },
   /** Chip radius plus SPACING.gap: symbols keep this far inside the fit region. */
   fitMargin: 22,
   fog: {
@@ -209,6 +215,31 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
   const page = safeRect(insets, SPACING.pageInset, view);
   const centre = page.x + page.width / 2;
   return Math.min(page.width, 2 * (toolColumnLeft(insets, view) - SPACING.gap - centre));
+}
+
+/**
+ * Return to Earth on the HUD row (art/map.md "Return to Earth"): its top on the HUD rect's top
+ * and its right edge SPACING.pageInset left of the tool column; it never moves with the header.
+ */
+export function mapEarthRect(insets: Insets, view: Size): Rect {
+  const right = toolColumnLeft(insets, view) - SPACING.pageInset;
+  const { height, width } = MAP_SCREEN.earth;
+  return { height, width, x: right - width, y: hudRect(insets, view).y };
+}
+
+/** The header's cap: the HUD row from its left to SPACING.gap short of Return to Earth. */
+export function mapHeaderCap(insets: Insets, view: Size): number {
+  return mapEarthRect(insets, view).x - SPACING.gap - hudRect(insets, view).x;
+}
+
+/**
+ * The header's width: its padding, the name, the divider and its gaps, the percent, then the
+ * pips one pitch apart.
+ */
+export function mapHeaderWidth(nameWidth: number, percentWidth: number, pips: number): number {
+  const { divider, dividerGap, padding, pip, pipGap, pipPitch } = MAP_SCREEN.header;
+  const pipRow = pips > 0 ? pipGap + pip + (pips - 1) * pipPitch : 0;
+  return 2 * padding + nameWidth + 2 * dividerGap + divider.width + percentWidth + pipRow;
 }
 
 /** The fit region inset by fitMargin on every side. */

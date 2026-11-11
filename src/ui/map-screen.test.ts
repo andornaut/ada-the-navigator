@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
 import {
+  emptyPanelHeight,
   MAP_SCREEN_STYLE,
   mapDistance,
   mapScreenLabels,
@@ -57,6 +58,11 @@ describe("map screen strings", () => {
     // The towing reason is the quests document's towTravel string.
     const row = QUESTS.split("\n").find((line) => line.startsWith("| `towTravel`"));
     expect(row?.split("|")[2]?.trim()).toBe(LABELS.towTravel);
+  });
+
+  it("offer Return to Earth by the player copy's Map line", () => {
+    expect(LABELS.returnHome).toBe("Return to Earth");
+    expect(COPY).toContain(`Map: Map; {percent}% mapped; Travel here; ${LABELS.returnHome};`);
   });
 
   it("give every label a string", () => {
@@ -116,10 +122,25 @@ describe("map place type lines", () => {
 describe("map screen place panel", () => {
   it("offers Travel here only for destinations and stations, refused in danger then towing", () => {
     expect(travelState(false, false, null)).toEqual({ offered: false, reason: null });
-    expect(travelState(true, true, { travel: false })).toEqual({ offered: false, reason: null });
     expect(travelState(false, false, { travel: true })).toEqual({ offered: true, reason: null });
     expect(travelState(true, true, { travel: true })).toEqual({ offered: true, reason: "danger" });
     expect(travelState(false, true, { travel: true })).toEqual({ offered: true, reason: "towing" });
+  });
+
+  it("gives the danger reason for every selection and none, and towing only beside Travel here", () => {
+    expect(travelState(true, false, null)).toEqual({ offered: false, reason: "danger" });
+    expect(travelState(true, true, { travel: false })).toEqual({
+      offered: false,
+      reason: "danger",
+    });
+    expect(travelState(false, true, { travel: false })).toEqual({ offered: false, reason: null });
+    expect(travelState(false, true, null)).toEqual({ offered: false, reason: null });
+  });
+
+  it("holds the reason alone in 52, or after the empty note in 80", () => {
+    expect(panelHeight(true, 0)).toBe(52);
+    expect(emptyPanelHeight(true)).toBe(80);
+    expect(emptyPanelHeight(false)).toBe(52);
   });
 
   it("is 80 high, or 108 with the reason line, and 100 with a third text line", () => {

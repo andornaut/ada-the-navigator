@@ -1,8 +1,13 @@
 // Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
-// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with Resume, Map,
-// Settings, Achievements and Return home stacked full width.
+// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with its actions stacked
+// full width. In flight they are Resume, Map, Settings and Back to title; on Ada's room page,
+// Settings and Back to title (gameplay/rules.md). Return to Earth is on the Map, and
+// Achievements on the start screen.
 
-export type PauseAction = "achievements" | "map" | "resume" | "returnHome" | "settings";
+export type PauseAction = "backToTitle" | "map" | "resume" | "settings";
+
+/** Where the Paused card opens: in flight, or on Ada's room page. */
+export type PausePlace = "flight" | "room";
 
 export interface PauseActionView {
   // Whether the action acts; an unavailable one shows the disabled face and refuses.
@@ -11,15 +16,28 @@ export interface PauseActionView {
   readonly role: "primary" | "secondary";
 }
 
-// The Paused card's actions, top to bottom. In danger, Return home is unavailable; Map still
-// opens, where Travel here is unavailable instead.
-export function pauseActions(inDanger: boolean): readonly PauseActionView[] {
+/**
+ * Return to Earth's rule wherever it is offered: unavailable while Ada is in danger, when it
+ * refuses with the shared cue. Unlike Travel here, towing never refuses it.
+ */
+export function returnToEarthAvailable(inDanger: boolean): boolean {
+  return !inDanger;
+}
+
+// The Paused card's actions for its place, top to bottom. Back to title stays available in
+// danger; Map still opens, where Travel here and Return to Earth are unavailable instead.
+export function pauseActions(place: PausePlace): readonly PauseActionView[] {
+  if (place === "room") {
+    return [
+      { available: true, id: "settings", role: "secondary" },
+      { available: true, id: "backToTitle", role: "secondary" },
+    ];
+  }
   return [
     { available: true, id: "resume", role: "primary" },
     { available: true, id: "map", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
-    { available: true, id: "achievements", role: "secondary" },
-    { available: !inDanger, id: "returnHome", role: "secondary" },
+    { available: true, id: "backToTitle", role: "secondary" },
   ];
 }
 
@@ -28,18 +46,19 @@ export function mapShowsEmpty(places: readonly unknown[]): boolean {
   return places.length === 0;
 }
 
-// The pause button is a touch control shown only in flight; on a fine pointer Escape pauses.
-export function pauseButtonShown(coarse: boolean, inFlight: boolean, cardOpen: boolean): boolean {
-  return coarse && inFlight && !cardOpen;
+// The pause button is a touch control shown only where the card opens (in flight and on Ada's
+// room page); on a fine pointer Escape pauses.
+export function pauseButtonShown(coarse: boolean, pausable: boolean, cardOpen: boolean): boolean {
+  return coarse && pausable && !cardOpen;
 }
 
-// What Escape does once no card is left to close: pause in flight, Settings where its own button
-// shows (the start screen), otherwise nothing.
+// What Escape does once no card is left to close: pause where the card opens, Settings where its
+// own button shows (the start screen), otherwise nothing.
 export function escapeTarget(
-  inFlight: boolean,
+  pausable: boolean,
   settingsButton: boolean,
 ): "none" | "pause" | "settings" {
-  if (inFlight) {
+  if (pausable) {
     return "pause";
   }
   return settingsButton ? "settings" : "none";

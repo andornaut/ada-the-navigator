@@ -240,6 +240,10 @@
       "MAP_SCREEN": {
         "chartRadius": 25000,
         "dragThreshold": 8,
+        "earth": {
+          "height": 48,
+          "width": 148.5
+        },
         "fitMargin": 22,
         "fog": {
           "feather": 0.16,
@@ -8482,6 +8486,141 @@
             },
             "scale": 0.02
           }
+        }
+      ],
+      "mapEarthRect": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 148.5,
+            "x": 499.5,
+            "y": 8
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 148.5,
+            "x": 499.5,
+            "y": 8
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 19,
+              "left": 43,
+              "right": 43,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779
+            }
+          ],
+          "result": {
+            "height": 48,
+            "width": 148.5,
+            "x": 523.5,
+            "y": 8
+          }
+        }
+      ],
+      "mapHeaderCap": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": 483.5
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 483.5
+        },
+        {
+          "args": [
+            {
+              "bottom": 19,
+              "left": 43,
+              "right": 43,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779
+            }
+          ],
+          "result": 472.5
+        }
+      ],
+      "mapHeaderWidth": [
+        {
+          "args": [
+            120,
+            100,
+            0
+          ],
+          "result": 277
+        },
+        {
+          "args": [
+            120,
+            100,
+            12
+          ],
+          "result": 379
+        },
+        {
+          "args": [
+            120,
+            100,
+            15
+          ],
+          "result": 403
         }
       ],
       "mapProjection": [

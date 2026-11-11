@@ -30,7 +30,7 @@ describe("player text", () => {
 
   it("names the ship's mind Astra", () => {
     expect(PROTOTYPE.labels.jumpHome).toBe(
-      "Astra jumped you home to recharge. Your story progress is saved.",
+      "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     );
   });
 });

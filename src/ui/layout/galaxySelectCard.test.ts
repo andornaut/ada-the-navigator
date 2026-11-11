@@ -14,6 +14,6 @@ describe("the galaxy selector card", () => {
   });
 
   it("labels Home with Gameplay's Home string", () => {
-    expect(PROTOTYPE.labels.homeButton).toBe("Home");
+    expect(PROTOTYPE.labels.homeButton).toBe("Earth");
   });
 });

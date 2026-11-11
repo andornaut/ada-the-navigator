@@ -56,6 +56,7 @@ import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
+import { returnToEarthAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
@@ -391,6 +392,9 @@ export class PrototypeScene extends Phaser.Scene {
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
   private settingsOpen = false;
+  // Return to Earth, one command wherever it is offered (the Map): refused in danger, never while
+  // towing (pause.ts returnToEarthAvailable). Set once the quantum jump is ready.
+  private returnToEarth: () => void = () => {};
   private startShown = false;
   private enabled: boolean | undefined;
   private durable = "";
@@ -609,8 +613,12 @@ export class PrototypeScene extends Phaser.Scene {
         source: this.jumpScene(),
       });
     };
+    this.returnToEarth = () => {
+      if (returnToEarthAvailable(this.model.inDanger)) {
+        jumpThen(() => this.model.returnHome());
+      }
+    };
     this.shell = new StoryShell({
-      achievements: () => this.controls.openAchievements(),
       choose: (id) => apply(() => this.model.choose(id)),
       continueGame: () => apply(() => this.model.continueGame()),
       // A tap on a notice dismisses it without touching flight input.
@@ -697,26 +705,26 @@ export class PrototypeScene extends Phaser.Scene {
         }
         return refused;
       },
-      // Navigation lives in the Paused card; both refuse while Ada is in danger.
+      // Navigation lives in the Paused card; Travel here and Return to Earth refuse while Ada is
+      // in danger, and Back to title never does.
       pause: {
         buttonLabel: PROTOTYPE.labels.pause ?? "",
         labels: {
-          achievements: PROTOTYPE.labels.achievements ?? "",
+          backToTitle: PROTOTYPE.labels.backToTitle ?? "",
           close: PROTOTYPE.labels.close ?? "",
-          jobObjective: PROTOTYPE.labels.jobObjective ?? "",
           map: PROTOTYPE.labels.map ?? "",
           mapScreen: mapScreenLabels(PROTOTYPE.labels),
           resume: PROTOTYPE.labels.resume ?? "",
-          returnHome: PROTOTYPE.labels.returnHome ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
           title: PROTOTYPE.labels.pauseTitle ?? "",
-          travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
         },
-        onReturnHome: () => {
-          if (!this.model.inDanger) {
-            jumpThen(() => this.model.returnHome());
+        // The start screen needs no quantum jump; it covers the flight at once.
+        onBackToTitle: () => {
+          if (!this.jumping) {
+            apply(() => this.model.backToTitle());
           }
         },
+        onReturnToEarth: () => this.returnToEarth(),
         onTravel: (id) => {
           if (!this.model.inDanger && !this.model.towing) {
             jumpThen(() => this.model.teleport(id));
@@ -959,10 +967,11 @@ export class PrototypeScene extends Phaser.Scene {
       onRestart: () => apply(() => this.model.restart()),
     });
     const homeLayers = [
-      // Back on a storybook page acts as Previous, and does nothing on a scene's first page.
+      // Back on a storybook page acts as Previous, and does nothing on a scene's first page. On
+      // Ada's room page, back and Escape open the Paused card instead.
       this.controls.registerBack({
         back: () => apply(() => this.model.storyPrevious()),
-        isOpen: () => this.model.screen === "story" && !this.settingsOpen,
+        isOpen: () => this.model.screen === "story" && !this.model.roomPage && !this.settingsOpen,
       }),
       this.controls.registerBack({
         back: () => apply(() => this.model.leaveCockpit()),
@@ -1431,12 +1440,13 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
+    this.controls.setAchievementsButton(start);
     this.controls.setPause({
       field: this.mapField(),
       inDanger: this.model.inDanger,
       job: this.model.jobObjective,
       map: this.model.map,
-      objective: this.model.objective,
+      place: enabled ? "flight" : this.model.roomPage ? "room" : null,
       towing: this.model.towing,
     });
     this.controls.setAchievements(this.model.achievements);

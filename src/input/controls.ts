@@ -60,7 +60,9 @@ export interface ControlsOptions {
   readonly pause: {
     readonly buttonLabel: string;
     readonly labels: PauseLabels;
-    readonly onReturnHome: () => void;
+    readonly onBackToTitle: () => void;
+    /** Return to Earth, which the Map offers. */
+    readonly onReturnToEarth: () => void;
     readonly onTravel: (destination: string) => void;
   };
   // Settings or the cheats card opening or closing over the start screen.
@@ -92,6 +94,8 @@ export interface Controls {
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
+  // Shows the start screen's Achievements button, immediately left of Settings.
+  setAchievementsButton(shown: boolean): void;
   setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
   setStatus(view: StatusView): void;
@@ -125,6 +129,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   canvas.style.touchAction = "none";
   const state = new ControlState();
   let enabled = true;
+  // Whether the Paused card opens here: in flight or on Ada's room page (PauseState.place).
+  let pausable = false;
   let disposed = false;
   let contextLabel: string | undefined;
   let visibility = { aim: true, move: true };
@@ -171,12 +177,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   });
   const pause = createPauseCards(settings.root, {
     labels: options.pause.labels,
-    onAchievements: () => {
-      returnToPause = true;
-      achievements.open();
-    },
+    onBackToTitle: () => options.pause.onBackToTitle(),
     onOpenChange: () => syncModal(),
-    onReturnHome: () => options.pause.onReturnHome(),
+    onReturnToEarth: () => options.pause.onReturnToEarth(),
     onSettings: () => {
       returnToPause = true;
       settings.open();
@@ -184,18 +187,30 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onTravel: (destination) => options.pause.onTravel(destination),
     reducedMotion: () => reducedMotion,
   });
-  // Achievements opened from the Paused card returns to it when it closes.
+  // The start screen's Achievements, a HUD disc button immediately left of Settings.
   const achievements = createAchievementsCard(settings.root, {
     labels: options.achievements,
     onOpenChange: (open) => {
       options.onStartCover?.("achievements", open);
-      if (!open && returnToPause) {
-        returnToPause = false;
-        pause.open();
-      }
+      achievementsButton.setAttribute("aria-expanded", String(open));
       syncModal();
     },
   });
+  const achievementsButton = document.createElement("button");
+  achievementsButton.type = "button";
+  achievementsButton.className = "ada-achievements-open";
+  achievementsButton.dataset.action = "achievements";
+  achievementsButton.setAttribute("aria-label", options.achievements.title);
+  achievementsButton.title = options.achievements.title;
+  achievementsButton.setAttribute("aria-haspopup", "dialog");
+  achievementsButton.setAttribute("aria-expanded", "false");
+  achievementsButton.hidden = true;
+  const achievementsDisc = document.createElement("span");
+  achievementsDisc.className = "ada-disc";
+  achievementsDisc.setAttribute("aria-hidden", "true");
+  achievementsButton.append(achievementsDisc);
+  achievementsButton.addEventListener("click", () => achievements.open());
+  settings.root.append(achievementsButton);
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
   );
@@ -326,9 +341,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   if (update) {
     leaveBack.push(backStack.register({ back: update.defer, isOpen: update.isOpen }));
   }
-  // Back during flight with nothing open opens the Paused card.
+  // Back with nothing open opens the Paused card where it opens.
   const onBack = () => {
-    pressBack(backStack, enabled, () => pause.open());
+    pressBack(backStack, pausable, () => pause.open());
   };
   const reset = () => state.reset();
   const keyDown = (event: KeyboardEvent) => {
@@ -336,7 +351,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       event.preventDefault();
       if (!event.repeat) {
         if (!backStack.back()) {
-          const target = escapeTarget(enabled, settingsButton);
+          const target = escapeTarget(pausable, settingsButton);
           if (target === "pause") {
             pause.open();
           } else if (target === "settings") {
@@ -376,7 +391,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const draw = () => {
     cheats.refresh();
     const touch = touchControlsActive(window, enabled, modalOpen());
-    pauseButton.hidden = !pauseButtonShown(coarsePointer(window), enabled, modalOpen());
+    pauseButton.hidden = !pauseButtonShown(coarsePointer(window), pausable, modalOpen());
     // The pill shows in flight and hides with the pause button under a card; on desktop, where the
     // pause button is hidden, it keeps its place.
     status.setShown(enabled && !modalOpen());
@@ -470,6 +485,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     reset,
     sample: () => state.sample(),
     setAchievements: (entries) => achievements.setEntries(entries),
+    setAchievementsButton(shown) {
+      achievementsButton.hidden = !shown;
+    },
     setContext(label) {
       contextLabel = label;
       state.setUseAvailable(label !== undefined);
@@ -483,7 +501,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
 
       settings.useButton.hidden = !value || contextLabel === undefined;
     },
-    setPause: (view) => pause.setState(view),
+    setPause(view) {
+      pausable = view.place !== null;
+      pause.setState(view);
+    },
     setSettingsButton(shown) {
       settingsButton = shown;
       settings.openButton.hidden = !shown;

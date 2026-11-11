@@ -40,12 +40,13 @@ export function createBackStack(): BackStack {
 
 export type BackOutcome = "closed" | "none" | "paused";
 
-// One back press: the innermost open layer closes, or flight pauses, or nothing happens.
-export function pressBack(stack: BackStack, inFlight: boolean, pause: () => void): BackOutcome {
+// One back press: the innermost open layer closes, or the Paused card opens where it can (in
+// flight and on Ada's room page), or nothing happens.
+export function pressBack(stack: BackStack, pausable: boolean, pause: () => void): BackOutcome {
   if (stack.back()) {
     return "closed";
   }
-  if (inFlight) {
+  if (pausable) {
     pause();
     return "paused";
   }

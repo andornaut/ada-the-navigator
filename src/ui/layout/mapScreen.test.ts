@@ -17,6 +17,9 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapEarthRect,
+  mapHeaderCap,
+  mapHeaderWidth,
   mapProjection,
   openingView,
   panelMaxWidth,
@@ -111,6 +114,23 @@ describe("map projection and fit", () => {
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([640, 325]);
     expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04683);
+  });
+
+  it("puts Return to Earth on the HUD row, 16 left of the tools, and caps the header", () => {
+    // 720 logical with phone insets of 43 at each side.
+    const phone = { bottom: 0, left: 43, right: 43, top: 0 };
+    expect(MAP_SCREEN.earth).toEqual({ height: 48, width: 148.5 });
+    expect(mapEarthRect(NO_INSETS, BASE)).toEqual({ height: 48, width: 148.5, x: 499.5, y: 8 });
+    const earth = mapEarthRect(phone, BASE);
+    expect([earth.x, earth.x + earth.width]).toEqual([464.5, 613]);
+    expect(earth.x + earth.width).toBe(toolColumnLeft(phone, BASE) - SPACING.pageInset);
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(483.5);
+    expect(mapHeaderCap(phone, BASE)).toBe(413.5);
+    // Art's widest header, Sunflower at 100% with 12 pips, is 381.8: 15 pips still fit the cap.
+    const widest = 381.8 - mapHeaderWidth(0, 0, 12);
+    expect(mapHeaderWidth(0, 0, 12) + widest).toBeCloseTo(381.8, 9);
+    expect(mapHeaderWidth(0, 0, 15) + widest).toBeLessThanOrEqual(mapHeaderCap(phone, BASE));
+    expect(mapHeaderWidth(0, 0, 15) - mapHeaderWidth(0, 0, 12)).toBe(24);
   });
 
   it("keeps the centred place panel a gap clear of the tool column: 592 at the 720 base", () => {

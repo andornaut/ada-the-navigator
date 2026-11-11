@@ -93,9 +93,9 @@ function galaxyActionButtons(
 
 /**
  * Galaxy selection over the cockpit, one galaxy per page as in Chibi's stage cards: the header
- * "Galaxy {number}", the screenshot, name and flavor line, then Previous, Home, Jump and Next.
+ * "Galaxy {number}", the screenshot, name and flavor line, then Previous, Earth, Jump and Next.
  * A locked galaxy shows its number, a greyscale screenshot and "..." with Jump unavailable. The
- * close X, an outside tap, back and Escape (through the back stack) go Home.
+ * close X, an outside tap, back and Escape (through the back stack) go to Earth (Ada's room).
  */
 export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptions) {
   const { labels } = options;

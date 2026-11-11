@@ -64,16 +64,13 @@ class FakeElement {
 }
 
 const LABELS: PauseLabels = {
-  achievements: "Achievements",
+  backToTitle: "Back to title",
   close: "Close",
-  jobObjective: "Job: {objective}",
   map: "Map",
   mapScreen: mapScreenLabels(PROTOTYPE.labels),
   resume: "Resume",
-  returnHome: "Return home",
   settings: "Settings",
   title: "Paused",
-  travelUnavailable: "Unavailable",
 };
 
 beforeEach(() => {
@@ -92,6 +89,7 @@ const MAP: GalaxyMap = {
   explored: [],
   facing: { x: 0, y: -1 },
   landmarks: { charted: 0, total: 12 },
+  lines: { job: null, objective: null },
   mapped: 25,
   places: [],
   player: { x: 0, y: 0 },
@@ -101,67 +99,72 @@ const state = (change: Partial<PauseState> = {}): PauseState => ({
   inDanger: false,
   job: null,
   map: MAP,
-  objective: "",
+  place: "flight",
   towing: false,
   ...change,
 });
 
 function cards() {
   const root = new FakeElement();
-  const pause = createPauseCards(root as unknown as HTMLElement, {
+  const options = {
     labels: LABELS,
-    onAchievements: vi.fn(),
+    onBackToTitle: vi.fn(),
     onOpenChange: vi.fn(),
-    onReturnHome: vi.fn(),
+    onReturnToEarth: vi.fn(),
     onSettings: vi.fn(),
     onTravel: vi.fn(),
     reducedMotion: () => true,
-  });
+  };
+  const pause = createPauseCards(root as unknown as HTMLElement, options);
   const body = root.children[0]!.children[0]!.children[0]!.children[1]!;
-  return { body, pause, root };
+  return { body, options, pause, root };
 }
 
-describe("Paused card", () => {
-  it("shows the story objective above the buttons, and the Job line only while a job is held", () => {
-    const { body, pause } = cards();
-    const [objective, job, actions] = body.children as [FakeElement, FakeElement, FakeElement];
-    pause.setState(state({ objective: "Find the growers." }));
-    expect(objective.textContent).toBe("Find the growers.");
-    expect(objective.hidden).toBe(false);
-    expect(job.hidden).toBe(true);
-    expect(actions.className).toContain("ada-actions");
-    pause.setState(state({ job: "Chart the Sleepy Tug", objective: "Find the growers." }));
-    expect(job.textContent).toBe("Job: Chart the Sleepy Tug");
-    expect(job.hidden).toBe(false);
-    pause.setState(state());
-    expect(objective.hidden).toBe(true);
-    expect(job.hidden).toBe(true);
-  });
+const shownActions = (actions: FakeElement) =>
+  actions.children.filter((button) => !button.hidden).map((button) => button.dataset.action);
 
-  it("keeps main's five actions in order: Resume, Map, Settings, Achievements, Return home", () => {
-    const { body } = cards();
-    const actions = body.children[2]!;
-    expect(actions.children.map((button) => button.dataset.action)).toEqual([
+describe("Paused card", () => {
+  it("is the action stack alone: Resume, Map, Settings and Back to title, with no objective", () => {
+    const { body, pause } = cards();
+    pause.setState(state({ job: "Chart the Sleepy Tug" }));
+    expect(body.children).toHaveLength(1);
+    const actions = body.children[0]!;
+    expect(actions.className).toContain("ada-stack");
+    expect(shownActions(actions)).toEqual([
       "pause-resume",
       "pause-map",
       "pause-settings",
-      "pause-achievements",
-      "pause-returnHome",
+      "pause-backToTitle",
+    ]);
+    expect(actions.children.map((button) => button.textContent)).toEqual([
+      "Resume",
+      "Map",
+      "Settings",
+      "Back to title",
     ]);
   });
 
-  it("refuses Return home in danger while Map stays available", () => {
-    const { body, pause } = cards();
+  it("keeps every action, Back to title included, available in danger", () => {
+    const { body, options, pause } = cards();
     pause.setState(state({ inDanger: true }));
-    const actions = body.children[2]!.children;
+    const actions = body.children[0]!.children;
     expect(actions.map((button) => button.getAttribute("aria-disabled"))).toEqual([
       null,
       null,
       null,
       null,
-      "true",
     ]);
-    expect(body.children[3]!.hidden).toBe(false);
+    actions[3]!.click();
+    expect(options.onBackToTitle).toHaveBeenCalledOnce();
+  });
+
+  it("shows only Settings and Back to title on Ada's room page", () => {
+    const { body, options, pause } = cards();
+    const actions = body.children[0]!;
+    pause.setState(state({ place: "room" }));
+    expect(shownActions(actions)).toEqual(["pause-settings", "pause-backToTitle"]);
+    actions.children.find((button) => button.dataset.action === "pause-backToTitle")!.click();
+    expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 
   it("builds the full-screen map hidden beside the Paused card", () => {

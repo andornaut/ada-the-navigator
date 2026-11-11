@@ -7,29 +7,26 @@ import {
   type MapScreenLabels,
 } from "./map-screen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
-import { type PauseAction, pauseActions } from "./pause.ts";
+import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 
 export interface PauseLabels {
-  readonly achievements: string;
+  readonly backToTitle: string;
   readonly close: string;
-  /** "Job: {objective}". */
-  readonly jobObjective: string;
   readonly map: string;
   /** The full-screen map's own labels. */
   readonly mapScreen: MapScreenLabels;
   readonly resume: string;
-  readonly returnHome: string;
   readonly settings: string;
   readonly title: string;
-  readonly travelUnavailable: string;
 }
 
 export interface PauseOptions {
   readonly labels: PauseLabels;
-  readonly onAchievements: () => void;
+  readonly onBackToTitle: () => void;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onReturnHome: () => void;
+  /** Return to Earth, from the Map. */
+  readonly onReturnToEarth: () => void;
   readonly onSettings: () => void;
   readonly onTravel: (destination: string) => void;
   // Whether the player chose Reduced motion, which keeps the refusal cue still.
@@ -40,12 +37,12 @@ export interface PauseState {
   /** The current galaxy's map field: its name, background and fog. */
   readonly field: MapField | null;
   readonly inDanger: boolean;
-  /** The held station job's objective, or null without one. */
+  /** The held station job's objective for the Map, or null without one. */
   readonly job: string | null;
   /** The current galaxy's map, or null outside a flight. */
   readonly map: GalaxyMap | null;
-  /** The current story objective, or empty. */
-  readonly objective: string;
+  /** Where the card opens now: in flight, on Ada's room page, or nowhere. */
+  readonly place: PausePlace | null;
   /** A rescue's tow line is attached: Travel here refuses. */
   readonly towing: boolean;
 }
@@ -54,6 +51,7 @@ const NO_MAP: GalaxyMap = {
   explored: [],
   facing: { x: 0, y: -1 },
   landmarks: { charted: 0, total: 0 },
+  lines: { job: null, objective: null },
   mapped: 0,
   places: [],
   player: { x: 0, y: 0 },
@@ -78,17 +76,10 @@ function setAvailable(button: HTMLButtonElement, available: boolean): void {
   }
 }
 
-// A note line in a card's body.
-function note(text: string): HTMLParagraphElement {
-  const line = document.createElement("p");
-  line.className = "ada-card-note ada-prose";
-  line.textContent = text;
-  return line;
-}
-
-// The Paused card and its full-screen map (art/map.md), as in Chibi: one shows at a time, the
-// card over the dimmed game and the map in the dim's place. The X, an outside tap, back and Escape
-// resume from the Paused card; from the map, its close tool, back and Escape return to the card.
+// The Paused card, its action stack alone (art/layout.md), and its full-screen map (art/map.md),
+// as in Chibi: one shows at a time, the card over the dimmed game and the map in the dim's place.
+// The X, an outside tap, back and Escape resume from the Paused card; from the map, its close
+// tool, back and Escape return to the card.
 export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
   const style = document.createElement("style");
@@ -105,33 +96,28 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const actions = stack();
   const buttons = new Map<PauseAction, HTMLButtonElement>();
   const text: Record<PauseAction, string> = {
-    achievements: labels.achievements,
+    backToTitle: labels.backToTitle,
     map: labels.map,
     resume: labels.resume,
-    returnHome: labels.returnHome,
     settings: labels.settings,
   };
-  for (const { id, role } of pauseActions(false)) {
+  // Every action is built once, in flight's order; each place shows its own.
+  for (const { id, role } of pauseActions("flight")) {
     const button = createButton(text[id], role);
     button.dataset.action = `pause-${id}`;
     buttons.set(id, button);
     actions.append(button);
   }
-  const danger = note(labels.travelUnavailable);
-  danger.hidden = true;
-  // Above the buttons: the story objective, then the held job's.
-  const objective = note("");
-  objective.classList.add("ada-pause-objective");
-  objective.dataset.inkTop = "0";
-  const job = note("");
-  job.classList.add("ada-pause-job");
-  job.dataset.inkTop = "0";
-  paused.body.append(objective, job, actions, danger);
+  paused.body.append(actions);
   modal.append(paused.frame);
   root.append(modal, style);
   const mapScreen = createMapScreen(root, {
     labels: labels.mapScreen,
     onClose: () => closeMap(),
+    onReturnToEarth: () => {
+      setOpen(false);
+      options.onReturnToEarth();
+    },
     onTravel: (id) => {
       setOpen(false);
       options.onTravel(id);
@@ -144,9 +130,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     inDanger: false,
     job: null,
     map: null,
-    objective: "",
+    place: null,
     towing: false,
   };
+  const actionsHere = () => pauseActions(state.place ?? "flight");
   const mapOpen = () => open && mapScreen.isOpen();
   // The map shows in the card's and the dim's place.
   const show = (view: "map" | "paused") => {
@@ -157,7 +144,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     mapScreen.close();
     paused.fit();
-    (actions.querySelector("button") ?? paused.close).focus();
+    (actions.querySelector<HTMLButtonElement>("button:not([hidden])") ?? paused.close).focus();
   };
   const setOpen = (value: boolean) => {
     if (value === open) {
@@ -185,27 +172,23 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       map: state.map ?? NO_MAP,
       towing: state.towing,
     });
-    const signature = JSON.stringify([state.inDanger, state.objective, state.job]);
+    const signature = JSON.stringify([state.place]);
     if (signature === shown) {
       return;
     }
     shown = signature;
-    objective.textContent = state.objective;
-    objective.hidden = state.objective === "";
-    job.textContent =
-      state.job === null ? "" : labels.jobObjective.replace("{objective}", state.job);
-    job.hidden = state.job === null;
-    for (const { available, id } of pauseActions(state.inDanger)) {
-      setAvailable(buttons.get(id)!, available);
+    const here = new Map(actionsHere().map((view) => [view.id, view]));
+    for (const [id, button] of buttons) {
+      button.hidden = !here.has(id);
+      setAvailable(button, here.get(id)?.available ?? true);
     }
-    danger.hidden = !state.inDanger;
     if (open && !mapScreen.isOpen()) {
       paused.fit();
     }
   };
   const act = (id: PauseAction) => {
     const button = buttons.get(id)!;
-    if (!pauseActions(state.inDanger).find((view) => view.id === id)?.available) {
+    if (!actionsHere().find((view) => view.id === id)?.available) {
       refuse(button, options.reducedMotion());
       return;
     }
@@ -217,13 +200,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       // Settings opens in the Paused card's place; closing it returns here (reopen).
       setOpen(false);
       options.onSettings();
-    } else if (id === "achievements") {
-      // Achievements opens in the Paused card's place too, and closing it returns here.
-      setOpen(false);
-      options.onAchievements();
     } else {
       setOpen(false);
-      options.onReturnHome();
+      options.onBackToTitle();
     }
   };
   for (const [id, button] of buttons) {

@@ -121,7 +121,7 @@ describe("storybook text", () => {
       `Storybook pages: Previous, Next, Skip. Boarding from Ada's room: ${labels.pickUpRock}`,
     );
     expect(COPY).toContain(
-      `Home with nothing new: Narration: "${PROTOTYPE.premise.emptyHome}" then ${labels.pickUpRock}`,
+      `Earth with nothing new: Narration: "${PROTOTYPE.premise.emptyHome}" then ${labels.pickUpRock}`,
     );
   });
 });

@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { type GalaxyMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import type { Vec } from "../model/types.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
-import { font, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { hitAround, type PressArea, pressedArea } from "./layout/hitAreas.ts";
 import {
   adaAngle,
@@ -34,11 +34,11 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { SAFE_MARGIN } from "./layout/playView.ts";
-import { TYPE } from "./layout/tokens.ts";
+import { HUD_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
-import { mapShowsEmpty } from "./pause.ts";
+import { mapShowsEmpty, returnToEarthAvailable } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
@@ -60,6 +60,7 @@ export interface MapScreenLabels {
   readonly map: string;
   /** "{percent}% mapped". */
   readonly mapPercent: string;
+  readonly returnHome: string;
   readonly towTravel: string;
   readonly travelEmpty: string;
   readonly travelHere: string;
@@ -83,6 +84,7 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     jobObjective: label("jobObjective"),
     map: label("map"),
     mapPercent: label("mapPercent"),
+    returnHome: label("returnHome"),
     towTravel: label("towTravel"),
     travelEmpty: label("travelEmpty"),
     travelHere: label("travelHere"),
@@ -121,23 +123,24 @@ export interface MapScreenState {
 export interface MapScreenOptions {
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
+  /** Return to Earth: refused in danger, never while towing (pause.ts returnToEarthAvailable). */
+  readonly onReturnToEarth: () => void;
   readonly onTravel: (destination: string) => void;
   readonly reducedMotion: () => boolean;
 }
 
 /**
  * Travel here for a place: offered only by destinations and stations, refused in danger and while
- * towing, with the one reason line that shows.
+ * towing, with the one reason line that shows. The danger reason shows in every state, since
+ * Return to Earth refuses in danger too; the towing reason only beside Travel here.
  */
 export function travelState(
   inDanger: boolean,
   towing: boolean,
   place: Pick<MapPlace, "travel"> | null,
 ): { readonly offered: boolean; readonly reason: "danger" | "towing" | null } {
-  if (!place?.travel) {
-    return { offered: false, reason: null };
-  }
-  return { offered: true, reason: inDanger ? "danger" : towing ? "towing" : null };
+  const offered = Boolean(place?.travel);
+  return { offered, reason: inDanger ? "danger" : offered && towing ? "towing" : null };
 }
 
 /**
@@ -187,14 +190,25 @@ export function placeLines(
   return lines;
 }
 
+/** The panel's height holding the empty note, and the reason below it while one shows: 52 or 80. */
+export function emptyPanelHeight(reason: boolean): number {
+  const { padding, reasonGap } = MAP_PANEL;
+  const line = TYPE.body.lineHeight;
+  return 2 * padding + line + (reason ? reasonGap + line : 0);
+}
+
 /**
  * The panel's height: its row, which grows past 48 for a third text line, and the reason line
- * while Travel here is unavailable. lines counts the name.
+ * while one shows. lines counts the name; 0 is the reason-only panel, with no row (52).
  */
 export function panelHeight(reason: boolean, lines = 2): number {
   const { padding, reasonGap, row, textTop } = MAP_PANEL;
+  const reasonLine = reason ? TYPE.body.lineHeight : 0;
+  if (lines === 0) {
+    return 2 * padding + reasonLine;
+  }
   const text = 2 * textTop + lines * TYPE.body.lineHeight;
-  return 2 * padding + Math.max(row, text) + (reason ? reasonGap + TYPE.body.lineHeight : 0);
+  return 2 * padding + Math.max(row, text) + (reason ? reasonGap + reasonLine : 0);
 }
 
 export const MAP_SCREEN_STYLE = `
@@ -230,7 +244,7 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-ada{
   z-index:1
 }
-.ada-controls .ada-map-header,
+.ada-controls .ada-map-hud-row,
 .ada-controls .ada-map-tools,
 .ada-controls .ada-map-panel{
   z-index:2
@@ -324,12 +338,38 @@ export const MAP_SCREEN_STYLE = `
   overflow:visible
 }
 
-/* The header: one ink panel on the HUD rect's top-left with the galaxy name, a divider, the
-   percent mapped and one pip per landmark. It takes no input. */
-.ada-controls .ada-map-header{
+/* The HUD row, from the HUD rect's left to SPACING.pageInset short of the tool column
+   (layout/mapScreen.ts mapEarthRect): the header on its left and Return to Earth, a secondary
+   text button MAP_SCREEN.earth wide, on its right, SPACING.gap apart at least, which caps the
+   header (mapHeaderCap). */
+.ada-controls .ada-map-hud-row{
   position:absolute;
   left:var(${VIEW_PROPERTIES.hud("left")});
   top:var(${VIEW_PROPERTIES.hud("top")});
+  right:${fromHudEdge("right", HUD_BUTTON.target + SPACING.pageInset)};
+  height:${units(MAP_SCREEN.header.height)};
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:${units(SPACING.gap)};
+  pointer-events:none
+}
+.ada-controls .ada-map-hud-row .ada-button{
+  flex:none;
+  box-sizing:border-box;
+  width:${units(MAP_SCREEN.earth.width)};
+  height:${units(MAP_SCREEN.earth.height)};
+  padding-left:0;
+  padding-right:0;
+  white-space:nowrap;
+  pointer-events:auto
+}
+
+/* The header: one ink panel with the galaxy name, a divider, the percent mapped and one pip per
+   landmark. It takes no input. */
+.ada-controls .ada-map-header{
+  min-width:0;
+  overflow:hidden;
   box-sizing:border-box;
   height:${units(MAP_SCREEN.header.height)};
   padding:0 ${units(MAP_SCREEN.header.padding)};
@@ -423,6 +463,10 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   align-items:center;
   gap:${units(MAP_PANEL.markGap)}
 }
+/* The reason-only and empty panels hold no row. */
+.ada-controls .ada-map-row[hidden]{
+  display:none
+}
 .ada-controls .ada-map-row .ada-map-place{
   position:relative;
   flex:none
@@ -456,6 +500,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   display:none
 }
 .ada-controls .ada-map-empty{
+  margin:0;
   text-align:center
 }
 `;
@@ -621,7 +666,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
   panel.append(row, reason, empty);
-  screen.append(fog, placesLayer, adaLayer, header, tools, panel);
+  // Return to Earth on the HUD row, with no confirm, as for Travel here.
+  const hudRow = document.createElement("div");
+  hudRow.className = "ada-map-hud-row";
+  const returnHome = createButton(labels.returnHome, "secondary");
+  returnHome.dataset.action = "map-returnHome";
+  hudRow.append(header, returnHome);
+  screen.append(fog, placesLayer, adaLayer, hudRow, tools, panel);
   root.append(screen);
 
   let state: MapScreenState | null = null;
@@ -652,6 +703,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     travelState(state?.inDanger ?? false, state?.towing ?? false, selectedPlace());
   const detailLines = (place: MapPlace) =>
     state ? placeLines(labels, state.map.player, state.job, place) : [];
+  // The panel shows for a selected place, with nothing mapped, or for a reason alone.
+  const panelShown = () =>
+    selectedPlace() !== null || mapShowsEmpty(places()) || travelNow().reason !== null;
   // The panel's top, while it shows: the page safe rect's bottom less its height, as rendered
   // once its text is in, so a wrapped name or Job line counts; panelHeight before it lays out.
   const panelTop = (
@@ -659,8 +713,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     insets: { bottom: number },
     unit: number,
   ): number | null => {
-    const shown = selectedPlace() !== null || mapShowsEmpty(places());
-    if (!shown) {
+    if (!panelShown()) {
       return null;
     }
     const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
@@ -669,8 +722,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return bottom - measured;
     }
     const place = selectedPlace();
-    const lines = place ? 1 + detailLines(place).length : 2;
-    return bottom - panelHeight(travelNow().reason !== null, lines);
+    const reason = travelNow().reason !== null;
+    if (!place && mapShowsEmpty(places())) {
+      return bottom - emptyPanelHeight(reason);
+    }
+    return bottom - panelHeight(reason, place ? 1 + detailLines(place).length : 0);
   };
 
   const drawFog = (inner: Rect, unit: number, current: MapView) => {
@@ -796,7 +852,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     panel.style.maxWidth = units(panelMaxWidth(insets, size));
     const place = selectedPlace();
     const travelling = travelNow();
-    panel.hidden = place === null && !mapShowsEmpty(places());
+    panel.hidden = !panelShown();
     row.hidden = place === null;
     empty.hidden = place !== null || !mapShowsEmpty(places());
     if (place) {
@@ -817,6 +873,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
+    const earthAvailable = returnToEarthAvailable(state?.inDanger ?? false);
+    returnHome.classList.toggle("ada-unavailable", !earthAvailable);
+    if (earthAvailable) {
+      returnHome.removeAttribute("aria-disabled");
+    } else {
+      returnHome.setAttribute("aria-disabled", "true");
+    }
   };
 
   // Selecting pans the chip clear of the panel at once; an empty press clears the selection.
@@ -881,6 +944,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     options.onTravel(place.id);
   });
+  returnHome.addEventListener("click", () => {
+    if (!returnToEarthAvailable(state?.inDanger ?? false)) {
+      refuse(returnHome, options.reducedMotion());
+      return;
+    }
+    options.onReturnToEarth();
+  });
 
   // Field presses: a press within dragThreshold selects what pressedArea gives; more pans; two
   // pointers pinch. The header, tools and panel take their own presses first.
@@ -894,7 +964,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   const onChrome = (event: Event) =>
     event.target instanceof Element &&
-    event.target.closest(".ada-map-tools,.ada-map-panel") !== null;
+    event.target.closest(".ada-map-tools,.ada-map-hud-row .ada-button,.ada-map-panel") !== null;
   const pinchOf = (): { distance: number; mid: Point } | null => {
     const [a, b] = [...pointers.values()];
     return a && b
@@ -986,23 +1056,26 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     { passive: false },
   );
-  // Tab stays on the screen: the tools, the places in reading order, then Travel here.
+  // Tab stays on the screen in art/map.md's order: the tools, Return to Earth, the places in
+  // reading order, then Travel here, wrapping at either end.
   screen.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
     }
-    const targets = [...screen.querySelectorAll<HTMLButtonElement>("button")].filter(
-      (button) => !button.closest("[hidden]") && !button.hidden,
-    );
-    const first = targets[0];
-    const last = targets.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
+    const targets = [
+      ...tools.querySelectorAll<HTMLButtonElement>("button"),
+      returnHome,
+      ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
+      travel,
+    ].filter((button) => !button.closest("[hidden]") && !button.hidden);
+    if (targets.length === 0) {
+      return;
     }
+    event.preventDefault();
+    const at = targets.indexOf(document.activeElement as HTMLButtonElement);
+    const step = event.shiftKey ? -1 : 1;
+    const next = at < 0 ? (event.shiftKey ? targets.length - 1 : 0) : at + step;
+    targets[(next + targets.length) % targets.length]!.focus();
   });
   const refit = () => {
     if (!screen.hidden && view) {

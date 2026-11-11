@@ -5,7 +5,6 @@ import { refuse } from "../ui/refusal.ts";
 import { createStartCard } from "../ui/start-card.ts";
 
 export interface ShellActions {
-  achievements: () => void;
   choose: (id: string) => void;
   continueGame: () => void;
   dismissNotice: () => void;
@@ -92,24 +91,17 @@ export class StoryShell {
       this.panel.setAttribute("aria-label", state.dialogue.title);
     } else if (screen === "start") {
       // The start screen's card: Start until the first flight begins, then Continue and
-      // Restart, and Achievements below either, as the shared card's action stack.
-      const actions = [
-        ...(state.started
-          ? [
-              {
-                action: "continue",
-                label: PROTOTYPE.labels.continue,
-                run: this.actions.continueGame,
-              },
-              { action: "restart", label: PROTOTYPE.labels.restart, run: this.actions.restart },
-            ]
-          : [{ action: "start", label: PROTOTYPE.labels.start, run: this.actions.start }]),
-        {
-          action: "achievements",
-          label: PROTOTYPE.labels.achievements,
-          run: this.actions.achievements,
-        },
-      ];
+      // Restart, as the shared card's action stack. Achievements sits left of Settings instead.
+      const actions = state.started
+        ? [
+            {
+              action: "continue",
+              label: PROTOTYPE.labels.continue,
+              run: this.actions.continueGame,
+            },
+            { action: "restart", label: PROTOTYPE.labels.restart, run: this.actions.restart },
+          ]
+        : [{ action: "start", label: PROTOTYPE.labels.start, run: this.actions.start }];
       this.startCard = createStartCard(this.panel, {
         actions: actions.map(({ label, run }) => ({ label: label ?? "", run })),
         note: PROTOTYPE.labels.deferred ?? "",

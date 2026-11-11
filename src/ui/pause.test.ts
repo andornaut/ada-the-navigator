@@ -12,35 +12,46 @@ import {
   pauseButtonShown,
   pauseFrames,
   pausePose,
+  returnToEarthAvailable,
 } from "./pause.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("stacks Resume (primary), Map, Settings, Achievements and Return home", () => {
-    expect(pauseActions(false).map(({ id, role }) => [id, role])).toEqual([
-      ["resume", "primary"],
-      ["map", "secondary"],
-      ["settings", "secondary"],
-      ["achievements", "secondary"],
-      ["returnHome", "secondary"],
+  it("stacks Resume (primary), Map, Settings and Back to title, all available", () => {
+    expect(pauseActions("flight")).toEqual([
+      { available: true, id: "resume", role: "primary" },
+      { available: true, id: "map", role: "secondary" },
+      { available: true, id: "settings", role: "secondary" },
+      { available: true, id: "backToTitle", role: "secondary" },
     ]);
-    expect(pauseActions(false).every(({ available }) => available)).toBe(true);
   });
 
-  it("keeps Return home visible but unavailable in danger, and Map available", () => {
-    const actions = pauseActions(true);
-    expect(actions).toHaveLength(5);
-    expect(actions.filter(({ available }) => !available).map(({ id }) => id)).toEqual([
-      "returnHome",
+  it("has only Settings and Back to title on Ada's room page", () => {
+    expect(pauseActions("room")).toEqual([
+      { available: true, id: "settings", role: "secondary" },
+      { available: true, id: "backToTitle", role: "secondary" },
     ]);
+  });
+
+  it("refuses Return to Earth only in danger, never for towing", () => {
+    expect(returnToEarthAvailable(false)).toBe(true);
+    expect(returnToEarthAvailable(true)).toBe(false);
   });
 
   it("has Gameplay's strings, and no player-visible city name remains", () => {
     expect(PROTOTYPE.labels.pause).toBe("Pause");
     expect(PROTOTYPE.labels.pauseTitle).toBe("Paused");
-    expect(PROTOTYPE.labels.returnHome).toBe("Return home");
+    expect(PROTOTYPE.labels.returnHome).toBe("Return to Earth");
+    expect(PROTOTYPE.labels.backToTitle).toBe("Back to title");
+    expect(PROTOTYPE.labels.homeButton).toBe("Earth");
+    expect(PROTOTYPE.labels.jumpHome).toBe(
+      "Astra jumped you back to Earth to recharge. Your story progress is saved.",
+    );
+    for (const chapter of Object.values(PROTOTYPE.chapters)) {
+      expect(chapter.objectives.at(-1)).toBe("Return to Earth when ready.");
+    }
     expect(PROTOTYPE.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
     expect(PROTOTYPE.labels.toronto).toBeUndefined();
     expect(PROTOTYPE.labels.travelEmpty).toBe("No destinations mapped yet.");
@@ -61,7 +72,7 @@ describe("Map card", () => {
 });
 
 describe("pause button", () => {
-  it("shows only on a touch screen in flight with no card open", () => {
+  it("shows only on a touch screen where the card opens (flight or Ada's room page), no card open", () => {
     expect(pauseButtonShown(true, true, false)).toBe(true);
     expect(pauseButtonShown(false, true, false)).toBe(false);
     expect(pauseButtonShown(true, false, false)).toBe(false);
@@ -92,7 +103,7 @@ describe("pause button", () => {
 });
 
 describe("Escape and back", () => {
-  it("pause in flight, open Settings only where its button shows, and otherwise do nothing", () => {
+  it("pause where the card opens, open Settings only where its button shows, else do nothing", () => {
     expect(escapeTarget(true, false)).toBe("pause");
     expect(escapeTarget(false, true)).toBe("settings");
     expect(escapeTarget(false, false)).toBe("none");

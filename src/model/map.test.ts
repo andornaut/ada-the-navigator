@@ -48,6 +48,7 @@ function context(
   landmarks: LandmarkChart = NO_LANDMARKS,
   objective: string | null = null,
   job: MapContext["job"] = null,
+  lines: MapContext["lines"] = { job: null, objective: "" },
 ): MapContext {
   return {
     catalog: ECONOMY,
@@ -59,6 +60,7 @@ function context(
     job,
     label: (id, kind) => `${kind}:${id}`,
     landmarks,
+    lines,
     objective,
     progress,
   };
@@ -192,6 +194,39 @@ describe("galaxy map", () => {
       y: 0,
     });
     expect(spot.mapped).toBe(onPlace.mapped);
+  });
+
+  it("ties the objective and job lines to their targets' chips once mapped, else to none", () => {
+    const model = flying();
+    const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
+    const job = { id: "growers", label: "Deliver seeds to Grower", x: growers.x, y: growers.y };
+    const lines = { job: "Deliver seeds to Grower", objective: "Find the growers." };
+    const unmapped = galaxyMap(
+      context(model, { known: [], stations: [] }, NO_LANDMARKS, "growers", null, lines),
+    );
+    expect(unmapped.lines).toEqual({
+      job: { target: null, text: "Deliver seeds to Grower" },
+      objective: { target: null, text: "Find the growers." },
+    });
+    const mapped = galaxyMap(
+      context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "growers", job, lines),
+    );
+    expect(mapped.lines).toEqual({
+      job: { target: "growers", text: "Deliver seeds to Grower" },
+      objective: { target: "growers", text: "Find the growers." },
+    });
+    // A job's own spot is its line's target; no job and no objective give no lines.
+    const spot = { id: "job:7", label: "Find a lost toolbox", x: 5000, y: 0 };
+    expect(
+      galaxyMap(
+        context(model, { known: [], stations: [] }, NO_LANDMARKS, null, spot, {
+          job: "Find a lost toolbox",
+          objective: "",
+        }),
+      ).lines,
+    ).toEqual({ job: { target: "job:7", text: "Find a lost toolbox" }, objective: null });
+    expect(model.map?.lines.job).toBeNull();
+    expect(model.map?.lines.objective?.text).toBe(model.objective);
   });
 
   it("gives each place its symbol and keeps Ada's facing, the landmark pips and explored chunks", () => {
@@ -445,6 +480,7 @@ describe("galaxy map", () => {
       job: null,
       label: (id: string) => id,
       landmarks: NO_LANDMARKS,
+      lines: { job: null, objective: "" },
       objective: "miner",
       progress: { known: ["hub", "miner", "visitors"], stations: [] },
     } satisfies MapContext;

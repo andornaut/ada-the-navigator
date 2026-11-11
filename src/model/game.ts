@@ -362,6 +362,10 @@ export class GameModel {
         }
       : null;
   }
+  /** Ada's room page, with "Pick up the rock": the page whose pause card has Back to title. */
+  get roomPage(): boolean {
+    return this.story !== null && this.screen === "story" && currentPage(this.story).id === "room";
+  }
   /** The galaxy on show in galaxy selection, 1 to 4. */
   get selectedGalaxy(): number | null {
     return this.screen === "selector" ? this.selection : null;
@@ -692,6 +696,21 @@ export class GameModel {
   }
   returnHome(): void {
     this.home(false);
+  }
+  /**
+   * Back to title: the start screen, where Continue resumes. From flight it first ends the flight
+   * as Return to Earth does, with story progress saved and no sleep scene, even in danger; it also
+   * leaves Ada's room page.
+   */
+  backToTitle(): void {
+    if (this.state.mode === "space" && this.state.flight) {
+      this.home(true);
+    } else if (!this.roomPage) {
+      return;
+    }
+    this.story = null;
+    this.selection = null;
+    this.startShown = true;
   }
   teleport(id: string): void {
     const f = this.state.flight;
@@ -1059,6 +1078,7 @@ export class GameModel {
           .map(({ id, kind, name, x, y }) => ({ id, kind, label: this.label(name), x, y })),
         total: landmarkSites(f.sector).length,
       },
+      lines: { job: this.jobObjective, objective: this.objective },
       objective: this.objectiveId(f.sector),
       progress: this.current,
     });
@@ -1629,7 +1649,7 @@ export class GameModel {
     this.startSector(galaxy as SectorId);
     return true;
   }
-  /** Home, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
+  /** Earth, the close X, an outside tap, back and Escape: Ada's room, without a jump. */
   leaveCockpit(): void {
     if (this.screen === "selector") {
       this.selection = null;
