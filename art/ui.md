@@ -17,6 +17,13 @@ from its separately pinned source. Its entry uses the same sprite schema.
 The [touch joystick sheets](touch-joystick.md) supply `ui-move-hint` and
 `ui-move-knob` the same way. The [Settings row icons](settings-icons.md) supply
 one `icon-*` sheet per Settings row and the install steps glyphs the same way.
+`ui-pause` is Chibi's pause button sheet from commit
+`9fb52cec066eba6801912e66c9e37b549d864647`, PNG bytes unchanged (SHA-256
+`dffc046021eda682de667121948a69d39c24ae30dd6f41373db35f3d123eb46c`), JSON data
+unchanged with Prettier whitespace (source
+`054c38c2cbfa6662c2fc94aa8b01ca431a206c9dcf6bbb6686fa4687452c2469`, destination
+`78a3dd1952a8466f104ffd0a932f7218bb51c28d4133eb44bfd7fdb9dd96406c`). Its navy,
+cream and ink already match Ada's HUD buttons, so it is not recoloured.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 

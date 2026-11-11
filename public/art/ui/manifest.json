@@ -115,6 +115,12 @@
       "once": []
     },
     {
+      "key": "ui-pause",
+      "png": "sprites/ui-pause.png",
+      "json": "sprites/ui-pause.json",
+      "once": ["press"]
+    },
+    {
       "key": "ui-settings-card",
       "png": "sprites/ui-settings-card.png",
       "json": "sprites/ui-settings-card.json",

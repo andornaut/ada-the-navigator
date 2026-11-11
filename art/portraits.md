@@ -9,7 +9,7 @@ unchanged; JSON metadata uses local image filenames and normalized formatting.
 
 Ada is the brown/dark-skinned girl depicted in the source art. The dog portrait retains the source appearance; no breed or character name is assigned here.
 
-The `casey`, `trista` and `mr-b` assets are reusable Toronto portraits. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
+The `casey`, `trista` and `mr-b` assets are reusable community portraits from Archie. These filenames and preserved source frame keys identify asset provenance only; they assign no Archie identity, story, age or NPC role in Ada. Tech selects the frame for each character. Each portrait includes a neutral expression at frame 1.
 
 ## Geometry and tags
 

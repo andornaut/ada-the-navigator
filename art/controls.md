@@ -67,6 +67,21 @@ groups.
 - Every modal dims the background behind it and receives input exclusively.
   Outside taps never activate controls underneath.
 
+## Pause
+
+- Pause button: `ui-pause`, tags `rest`, `press` (once) and `held`, 35x35 frames.
+  A 33px disc with an ink edge, a 2px cream ring and a navy face holds two 4x13
+  bars 3px apart; press swells it to 35px for the first 60ms frame only. Its edge
+  sits 8px in from the view's top and left, with a 52.5x52.5 press area. It is a
+  touch control, hidden on desktop (Escape pauses) and while dialogue is open.
+- Pause card: title "Paused" (Gameplay owns the strings), then Resume (primary),
+  Settings and the return-home action, stacked in that order. The three faces
+  are 48px high, fill the body width and sit 8px apart, with 16px from each face
+  to the card's left and right edges and from the last face to the bottom.
+  Settings opens over the same dim; one card shows at a time.
+- The space screen shows no navigation or destination panel; navigation lives in
+  the pause card.
+
 ## Switch
 
 `ui-switch` is 32x16 with tags `on` and `off`. On places the knob right with a
