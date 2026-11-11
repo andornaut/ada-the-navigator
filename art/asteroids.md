@@ -17,16 +17,17 @@ scenery: greyscale sprites tinted per galaxy at runtime.
 
 ## Classes
 
-Silhouette widths are display px of frame 0, the width the generator scales each
-rock to (Ada is 42 px wide). Spin and drift rates are ranges; Tech picks one
-value per rock from the level seed.
+Each rock's scale puts its footprint radius inside its class's world range, and
+keeps each class's footprint radius order. Silhouette widths are display px of
+frame 0, the width the generator scales each rock to (Ada is 42 px wide). Spin
+and drift rates are ranges; Tech picks one value per rock from the level seed.
 
-| Size     | Shapes | Silhouette width | Frames | Spin       | Drift         |  HP | Stardust |
-| -------- | -----: | ---------------- | -----: | ---------- | ------------- | --: | -------: |
-| `small`  |      4 | 36 to 50         |     24 | 8 to 18°/s | 14 to 32 px/s |   3 |      0–1 |
-| `medium` |      4 | 84 to 118        |     24 | 4 to 10°/s | 8 to 20 px/s  |   5 |        1 |
-| `large`  |      3 | 170 to 210       |      1 | none       | none          |  10 |        2 |
-| `huge`   |      3 | 260 to 400       |      1 | none       | none          |  16 |        3 |
+| Size     | Shapes | Footprint range | Footprint radii | Silhouette width | Frames | Spin       | Drift         |  HP | Stardust |
+| -------- | -----: | --------------- | --------------- | ---------------- | -----: | ---------- | ------------- | --: | -------: |
+| `small`  |      4 | 12 to 18        | 13 to 17.2      | 26.71 to 50      |     24 | 8 to 18°/s | 14 to 32 px/s |   3 |      0–1 |
+| `medium` |      4 | 24 to 34        | 31.43 to 33.8   | 57.12 to 84      |     24 | 4 to 10°/s | 8 to 20 px/s  |   5 |        1 |
+| `large`  |      3 | 52 to 70        | 58.28 to 61.37  | 135.34 to 167.19 |      1 | none       | none          |  10 |        2 |
+| `huge`   |      3 | 84 to 104       | 97.25 to 102    | 233.29 to 260    |      1 | none       | none          |  16 |        3 |
 
 - Each model is a seeded star-shaped plan with one or two concave bays, built up
   through a tapered base, a full girth, an inset shoulder and a crown of one to
@@ -52,19 +53,19 @@ is about twice its frame 0 silhouette. The footprint radius is in world units
 | Rock          | Frame 0 silhouette | Widest silhouette | Frame width by height | Footprint radius |
 | ------------- | -----------------: | ----------------: | --------------------: | ---------------: |
 | `asteroid-s1` |               40.4 |              43.2 |        48.13 by 29.31 |            13.94 |
-| `asteroid-s2` |               46.5 |              89.9 |         96.25 by 59.5 |            29.62 |
-| `asteroid-s3` |               36.4 |              38.1 |           42 by 27.56 |            11.74 |
+| `asteroid-s2` |               27.1 |              52.4 |        56.88 by 35.44 |             17.2 |
+| `asteroid-s3` |               40.2 |              42.1 |        46.38 by 30.19 |               13 |
 | `asteroid-s4` |               50.4 |              51.4 |        55.13 by 36.31 |            16.43 |
 | `asteroid-m1` |               84.3 |              93.1 |       103.25 by 63.44 |            31.43 |
-| `asteroid-m2` |              100.4 |             136.0 |       138.25 by 86.19 |            41.85 |
-| `asteroid-m3` |              118.2 |             146.1 |        164.5 by 108.5 |            49.22 |
-| `asteroid-m4` |               92.4 |             173.7 |      182.88 by 110.69 |            54.44 |
-| `asteroid-l1` |              170.4 |             170.4 |         193.38 by 140 |            73.21 |
-| `asteroid-l2` |              190.2 |             190.2 |      198.63 by 116.38 |            76.62 |
-| `asteroid-l3` |              210.4 |             210.4 |      224.88 by 140.88 |            77.08 |
+| `asteroid-m2` |               77.3 |             104.8 |       106.75 by 66.94 |             32.2 |
+| `asteroid-m3` |               79.4 |              98.2 |        111.13 by 73.5 |               33 |
+| `asteroid-m4` |               57.5 |             108.0 |       114.63 by 69.56 |             33.8 |
+| `asteroid-l1` |              135.7 |             135.7 |         154 by 111.56 |            58.28 |
+| `asteroid-l2` |              151.5 |             151.5 |       158.38 by 93.19 |            61.01 |
+| `asteroid-l3` |              167.7 |             167.7 |      179.38 by 112.44 |            61.37 |
 | `asteroid-h1` |              260.4 |             260.4 |      296.63 by 165.81 |            97.25 |
-| `asteroid-h2` |              330.4 |             330.4 |       353.5 by 272.56 |           140.75 |
-| `asteroid-h3` |              400.4 |             400.4 |       428.75 by 255.5 |           157.92 |
+| `asteroid-h2` |              233.6 |             233.6 |      250.25 by 193.38 |             99.5 |
+| `asteroid-h3` |              258.8 |             258.8 |      278.25 by 165.81 |              102 |
 
 ## Palette
 
@@ -189,44 +190,56 @@ Sample (one small rock, first frame only):
 {
   "id": "asteroid-s3",
   "size": "small",
-  "frame": { "width": 96, "height": 63 },
-  "display": { "width": 42, "height": 27.56 },
+  "frame": {
+    "width": 106,
+    "height": 69
+  },
+  "display": {
+    "width": 46.38,
+    "height": 30.19
+  },
   "pivot": [0.5, 0.66667],
-  "radius": 47.46,
-  "footprintRadius": 11.74,
-  "drift": { "eligible": true, "speed": [14, 32] },
-  "spin": { "degPerSecond": [8, 18] },
+  "radius": 52.5,
+  "footprintRadius": 13,
+  "drift": {
+    "eligible": true,
+    "speed": [14, 32]
+  },
+  "spin": {
+    "degPerSecond": [8, 18]
+  },
   "frames": [
     {
       "file": "/art/asteroids/asteroid-s3-0.svg",
       "collision": [
         [
-          [51.5, 5.5],
-          [87.5, 24.25],
-          [85, 42.5],
-          [62.25, 58],
-          [46.25, 56.5],
-          [26, 52],
-          [17.5, 45.25],
-          [4.25, 24.75],
-          [36.25, 10.75]
+          [57.25, 5.5],
+          [96.75, 26.5],
+          [94, 46.5],
+          [68.5, 63.75],
+          [49.5, 61.75],
+          [28.75, 57],
+          [19.25, 49.5],
+          [4.75, 27],
+          [5, 25.75],
+          [40, 11.5]
         ],
         [
-          [4.25, 24.75],
-          [16.25, 15],
-          [36.25, 10.75]
+          [5, 25.75],
+          [18.25, 16],
+          [40, 11.5]
         ]
       ],
       "footprint": [
         [
-          [5.45, 6.58],
-          [-0.6, 8.85],
-          [-9.52, 4.03],
-          [-8.77, -3.46],
-          [-5.74, -7.57],
-          [4.18, -9.47],
-          [9.05, -2.29],
-          [9.8, 3.87]
+          [6.03, 7.28],
+          [-0.66, 9.8],
+          [-10.54, 4.46],
+          [-9.71, -3.83],
+          [-6.35, -8.38],
+          [4.62, -10.48],
+          [10.03, -2.54],
+          [10.85, 4.28]
         ]
       ]
     }
@@ -267,10 +280,10 @@ itself:
    stays convex (Hertel-Mehlhorn).
 
 Checked against the rendered SVGs at 4 px per frame px: every part is convex,
-the parts' union matches the drawn alpha with intersection over union 0.983 or
-more (0.993 or more from medium up), and no boundary lies more than 0.75 frame
-px from the drawing in either direction. Parts per frame: 1 to 4 for small, 2 to
-6 for medium, 3 to 8 for large and 5 to 9 for huge.
+the parts' union matches the drawn alpha with intersection over union 0.981 or
+more (0.991 or more from medium up), and no boundary lies more than 1 frame px
+from the drawing in either direction. Parts per frame: 1 to 4 for small, 1 to 6
+for medium, 3 to 8 for large and 4 to 8 for huge.
 
 ## Not yet drawn
 

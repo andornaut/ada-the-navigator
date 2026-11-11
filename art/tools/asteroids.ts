@@ -89,7 +89,9 @@ const CLASSES: Record<SizeClass, ClassSpec> = {
   },
 };
 
-// Target silhouette width in display px; the generator scales each model to hit it.
+// Frame 0 silhouette width in display px; the generator scales each model to hit it. The widths
+// put each footprint radius inside its class's world range (small 12 to 18, medium 24 to 34,
+// large 52 to 70, huge 84 to 104) and keep each class's footprint radius order.
 const SHAPES: readonly {
   id: string;
   size: SizeClass;
@@ -98,19 +100,19 @@ const SHAPES: readonly {
   aspect: number;
 }[] = [
   { id: "asteroid-s1", size: "small", width: 40, seed: 11, aspect: 1.15 },
-  { id: "asteroid-s2", size: "small", width: 46, seed: 23, aspect: 1.45 },
-  { id: "asteroid-s3", size: "small", width: 36, seed: 37, aspect: 1.0 },
+  { id: "asteroid-s2", size: "small", width: 26.71, seed: 23, aspect: 1.45 },
+  { id: "asteroid-s3", size: "small", width: 39.86, seed: 37, aspect: 1.0 },
   { id: "asteroid-s4", size: "small", width: 50, seed: 41, aspect: 1.3 },
   { id: "asteroid-m1", size: "medium", width: 84, seed: 53, aspect: 1.2 },
-  { id: "asteroid-m2", size: "medium", width: 100, seed: 67, aspect: 1.6 },
-  { id: "asteroid-m3", size: "medium", width: 118, seed: 71, aspect: 1.1 },
-  { id: "asteroid-m4", size: "medium", width: 92, seed: 83, aspect: 1.4 },
-  { id: "asteroid-l1", size: "large", width: 170, seed: 97, aspect: 1.35 },
-  { id: "asteroid-l2", size: "large", width: 190, seed: 101, aspect: 1.7 },
-  { id: "asteroid-l3", size: "large", width: 210, seed: 113, aspect: 1.15 },
+  { id: "asteroid-m2", size: "medium", width: 76.94, seed: 67, aspect: 1.6 },
+  { id: "asteroid-m3", size: "medium", width: 79.11, seed: 71, aspect: 1.1 },
+  { id: "asteroid-m4", size: "medium", width: 57.12, seed: 83, aspect: 1.4 },
+  { id: "asteroid-l1", size: "large", width: 135.34, seed: 97, aspect: 1.35 },
+  { id: "asteroid-l2", size: "large", width: 151.27, seed: 101, aspect: 1.7 },
+  { id: "asteroid-l3", size: "large", width: 167.19, seed: 113, aspect: 1.15 },
   { id: "asteroid-h1", size: "huge", width: 260, seed: 127, aspect: 1.5 },
-  { id: "asteroid-h2", size: "huge", width: 330, seed: 131, aspect: 1.25 },
-  { id: "asteroid-h3", size: "huge", width: 400, seed: 139, aspect: 1.8 },
+  { id: "asteroid-h2", size: "huge", width: 233.29, seed: 131, aspect: 1.25 },
+  { id: "asteroid-h3", size: "huge", width: 258.36, seed: 139, aspect: 1.8 },
 ];
 
 // Backdrop rocks reuse the medium model rules at backdrop widths.
