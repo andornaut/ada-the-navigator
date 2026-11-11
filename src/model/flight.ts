@@ -647,6 +647,30 @@ function movementHeading(
   movementHeadings.set(flight, turnToward(dt, response, requested, previous));
   return turnToward(dt / 2, response, requested, previous);
 }
+/**
+ * Fraction of maxSpeed requested by a movement deflection from 0 (just past the dead zone)
+ * to 1 (full reach). No input requests no speed; any input requests at least minSpeedFraction.
+ */
+export function movementSpeedFraction(
+  tuning: Pick<PrototypeContent["tuning"], "minSpeedFraction" | "speedCurveExponent">,
+  deflection: number,
+): number {
+  const m = Math.min(1, Math.max(0, deflection));
+  if (!m) {
+    return 0;
+  }
+  return tuning.minSpeedFraction + (1 - tuning.minSpeedFraction) * m ** tuning.speedCurveExponent;
+}
+/** Current ship speed as a fraction of maxSpeed, clamped to [0, 1], for speed-scaled jets. */
+export function shipSpeedFraction(
+  tuning: Pick<PrototypeContent["tuning"], "maxSpeed">,
+  flight: Pick<FlightState, "velocity">,
+): number {
+  if (!(tuning.maxSpeed > 0)) {
+    return 0;
+  }
+  return Math.min(1, Math.max(0, length(flight.velocity) / tuning.maxSpeed));
+}
 function move(
   content: PrototypeContent,
   dt: number,
@@ -655,12 +679,11 @@ function move(
 ): void {
   const magnitude = Math.min(1, length(input.move));
   const heading = movementHeading(content, dt, input, flight);
+  const speed = movementSpeedFraction(content.tuning, magnitude) * content.tuning.maxSpeed;
   const response = magnitude ? content.tuning.accelerationSeconds : content.tuning.brakingSeconds;
   const blend = 1 - Math.exp(-dt / Math.max(0.001, response));
-  flight.velocity.x +=
-    (heading.x * magnitude * content.tuning.maxSpeed - flight.velocity.x) * blend;
-  flight.velocity.y +=
-    (heading.y * magnitude * content.tuning.maxSpeed - flight.velocity.y) * blend;
+  flight.velocity.x += (heading.x * speed - flight.velocity.x) * blend;
+  flight.velocity.y += (heading.y * speed - flight.velocity.y) * blend;
   // Stop subpixel drift so released controls stop advancing exploration.
   if (!magnitude && length(flight.velocity) < 0.01) {
     flight.velocity = { x: 0, y: 0 };

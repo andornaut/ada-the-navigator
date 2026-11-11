@@ -18,6 +18,10 @@ export interface PrototypeContent {
   tuning: {
     chunkSize: number;
     maxSpeed: number;
+    /** Fraction of maxSpeed requested by the smallest movement input past the dead zone. */
+    minSpeedFraction: number;
+    /** Exponent applied to movement deflection before scaling toward maxSpeed. */
+    speedCurveExponent: number;
     accelerationSeconds: number;
     brakingSeconds: number;
     /** Exponential time constant for turning the requested movement direction. */

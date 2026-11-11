@@ -6,7 +6,9 @@ import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import {
   createFlight,
   ensureDestination,
+  movementSpeedFraction,
   placeDestinationAhead,
+  shipSpeedFraction,
   stepFlight,
   syncFlightRegion,
   teleport,
@@ -455,5 +457,82 @@ describe("directional handling", () => {
     stepFlight(PROTOTYPE, 1.5, input, restored);
     expect(degrees(restored.velocity, flight.velocity)).toBeLessThan(0.5);
     expect(restored.facing).toEqual(flight.facing);
+  });
+});
+
+describe("analog movement speed", () => {
+  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const speed = (flight: FlightState) => Math.hypot(flight.velocity.x, flight.velocity.y);
+  function cruise(move: Vec): FlightState {
+    const flight = empty();
+    flight.player = { x: 256, y: 256 };
+    for (let frame = 0; frame < 90; frame++) {
+      stepFlight(PROTOTYPE, 1 / 60, { ...idle, move }, flight);
+    }
+    return flight;
+  }
+
+  it.each([
+    [1e-9, 8],
+    [0.25, 14],
+    [0.5, 42],
+    [0.75, 102],
+    [1, 200],
+  ])("targets about Gameplay's speed at %s deflection", (deflection, expected) => {
+    const fraction = movementSpeedFraction(PROTOTYPE.tuning, deflection);
+    expect(fraction * maxSpeed).toBeCloseTo(expected, -0.5);
+  });
+
+  it("settles the ship at the curved speed for partial and full stick deflection", () => {
+    for (const deflection of [0.25, 0.5, 1]) {
+      const flight = cruise({ x: 0, y: -deflection });
+      const target = maxSpeed * movementSpeedFraction(PROTOTYPE.tuning, deflection);
+      expect(speed(flight) / target).toBeCloseTo(1, 3);
+    }
+    expect(speed(cruise({ x: 0, y: -0.25 }))).toBeLessThan(0.1 * maxSpeed);
+  });
+
+  it("rises monotonically from the floor to exactly maxSpeed at full deflection", () => {
+    let previous = 0;
+    for (let step = 1; step <= 100; step++) {
+      const fraction = movementSpeedFraction(PROTOTYPE.tuning, step / 100);
+      expect(fraction).toBeGreaterThan(previous);
+      previous = fraction;
+    }
+    expect(movementSpeedFraction(PROTOTYPE.tuning, 1)).toBe(1);
+    expect(movementSpeedFraction(PROTOTYPE.tuning, 2)).toBe(1);
+    expect(movementSpeedFraction(PROTOTYPE.tuning, 1e-9)).toBeCloseTo(
+      PROTOTYPE.tuning.minSpeedFraction,
+      9,
+    );
+  });
+
+  it("requests no speed without input and brakes to a stop", () => {
+    expect(movementSpeedFraction(PROTOTYPE.tuning, 0)).toBe(0);
+    const flight = cruise({ x: 1, y: 0 });
+    for (let frame = 0; frame < 300; frame++) {
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    }
+    expect(flight.velocity).toEqual({ x: 0, y: 0 });
+  });
+
+  it("keeps keyboard movement, including bounded diagonals, at maxSpeed", () => {
+    expect(speed(cruise({ x: 1, y: 0 })) / maxSpeed).toBeCloseTo(1, 3);
+    expect(speed(cruise({ x: Math.SQRT1_2, y: Math.SQRT1_2 })) / maxSpeed).toBeCloseTo(1, 3);
+  });
+});
+
+describe("ship speed fraction", () => {
+  it.each([
+    [{ x: 0, y: 0 }, 0],
+    [{ x: 60, y: 80 }, 0.5],
+    [{ x: -200, y: 0 }, 1],
+    [{ x: 300, y: 400 }, 1],
+  ])("reports %j as %s of maxSpeed", (velocity, expected) => {
+    expect(shipSpeedFraction(PROTOTYPE.tuning, { velocity })).toBeCloseTo(expected, 12);
+  });
+
+  it("is zero for a non-positive maxSpeed", () => {
+    expect(shipSpeedFraction({ maxSpeed: 0 }, { velocity: { x: 1, y: 0 } })).toBe(0);
   });
 });
