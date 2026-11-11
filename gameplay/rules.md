@@ -8,8 +8,8 @@ balance values are provisional and must be tuned through playtesting.
 
 Version one is the game now being built, with four galaxies; anything later
 belongs in [Ideas](ideas.md).
-Version one includes a fourth concluding galaxy, but its story and mechanics are
-explicitly deferred. Do not invent a finale to fill that slot.
+The fourth galaxy, Black Eye, holds the finale; its home chapter is to be
+designed.
 
 Space uses authored sprites for ships, stations, outposts, pickups and asteroids,
 with simple placeholders only where art has not landed yet.
