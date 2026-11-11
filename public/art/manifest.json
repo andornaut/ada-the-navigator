@@ -1528,6 +1528,79 @@
       }
     },
     {
+      "id": "cockpit",
+      "path": "/art/cockpit.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "cockpit-seated",
+      "path": "/art/cockpit-seated.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "cockpit-astra",
+      "path": "/art/cockpit-astra.png",
+      "width": 312,
+      "height": 80,
+      "displayWidth": 39,
+      "displayHeight": 40,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "frameWidth": 78,
+      "frameHeight": 80,
+      "frames": {
+        "speak1": 0,
+        "speak2": 1,
+        "speak3": 2,
+        "speak4": 3
+      },
+      "loop": [
+        {
+          "frame": 0,
+          "name": "speak1",
+          "ms": 120
+        },
+        {
+          "frame": 1,
+          "name": "speak2",
+          "ms": 120
+        },
+        {
+          "frame": 2,
+          "name": "speak3",
+          "ms": 120
+        },
+        {
+          "frame": 3,
+          "name": "speak4",
+          "ms": 120
+        }
+      ],
+      "at": {
+        "x": 530,
+        "y": 169
+      }
+    },
+    {
       "id": "stardust",
       "path": "/art/stardust.png",
       "width": 36,
