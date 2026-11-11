@@ -4,7 +4,7 @@
 unresolved story details. [The version one rules](rules.md)
 defines version one's rules and [the player copy](player-copy.md) its text.
 [Ships](ships.md) defines ship physics and enemy rosters, and the
-[enemy rule interface](enemies.md) the enemy AI's rules. [Quests](quests.md) defines station jobs and the landmarks surveys chart. [Cheats](cheats.md)
+[enemy rule interface](enemies.md) the enemy AI's rules. [Quests](quests.md) defines station jobs, the landmarks surveys chart and achievements. [Cheats](cheats.md)
 defines the browser-tab cheats. [Economy](economy.md) defines Stardust, stations and
 the shop. [Ideas](ideas.md) contains proposals outside the
 current version. These documents describe design, not implementation.

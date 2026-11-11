@@ -1,9 +1,9 @@
 # Quests
 
-Station jobs and the landmarks surveys chart. Every number in this document is
-provisional tuning. [Economy](economy.md) defines Stardust pacing and stations, and
-[the version one rules](rules.md) define direction indicators, Penny's sense,
-carried items and persistence.
+Station jobs, the landmarks surveys chart and achievements. Every number in this
+document is provisional tuning. [Economy](economy.md) defines Stardust pacing and
+stations, and [the version one rules](rules.md) define direction indicators,
+Penny's sense, conversations, carried items and persistence.
 
 ## Station jobs
 
@@ -174,3 +174,53 @@ Chunk generation keeps their space clear.
 - Flying within 300 world units of a landmark charts it at once and plays the
   existing "New place mapped." conversation.
 - Charted landmarks persist across flights and regeneration. Restart clears them.
+
+## Achievements
+
+Achievements cover story, map charting, helping, donations, Penny's finds and
+collections. The start screen and the pause card have an Achievements button
+that opens an Achievements card, as in Chibi. Achievements and their progress
+survive Restart. None needs a missable dialogue choice. Unlocking one shows the
+notice "Achievement: {name}". A Penny find is a point of interest Penny sensed
+that Ada then reaches within 160 world units.
+
+| Name               | Condition                                           |
+| ------------------ | --------------------------------------------------- |
+| New Navigator      | Finish the prologue.                                |
+| The Garden Begins  | Complete the Sunflower chapter.                     |
+| Room for Everyone  | Complete the Cartwheel chapter.                     |
+| Time to Explore    | Complete the Whirlpool chapter.                     |
+| Blockade Breaker   | Break General Gadget's blockade in Black Eye.       |
+| Cartographer       | Chart every landmark in one galaxy.                 |
+| Astra's Atlas      | Chart every landmark in all four galaxies.          |
+| Helping Hand       | Complete a station job.                             |
+| Good Neighbor      | Complete 25 station jobs or repeatable activities.  |
+| Friends Everywhere | Make every optional ally: quest and project allies. |
+| Good Cause         | Fund a community project.                           |
+| Community Builder  | Fund every community project.                       |
+| Good Nose          | Reach 10 things Penny sensed.                       |
+| Full Palette       | Own every ship paint.                               |
+
+The card lists every achievement in table order; none is hidden. A locked entry
+shows its full name and condition in muted grey with a grey badge; an unlocked
+entry has an ink name and a coloured badge, as in Chibi. A locked counted
+achievement also shows its progress as `{have}/{need}`:
+
+| Name               | Counts                                                  |
+| ------------------ | ------------------------------------------------------- |
+| Cartographer       | Landmarks charted in the galaxy with the most charted   |
+| Astra's Atlas      | Landmarks charted across all four galaxies              |
+| Good Neighbor      | Station jobs and repeatable activities completed, of 25 |
+| Friends Everywhere | Optional allies made                                    |
+| Community Builder  | Community projects funded                               |
+| Good Nose          | Penny finds, of 10                                      |
+| Full Palette       | Ship paints owned, Classic included                     |
+
+The other achievements show no count. When the list is longer than the card, it
+pages with Previous, the page count and Next, as in Chibi.
+
+| Key                   | Text                |
+| --------------------- | ------------------- |
+| `achievements`        | Achievements        |
+| `achievement`         | Achievement: {name} |
+| `achievementProgress` | {have}/{need}       |

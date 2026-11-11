@@ -407,8 +407,8 @@ lost carried quest items remain replaceable.
 
 Additional mining deposits provide recorded totals and achievement progress.
 Stardust and station shops are described in [Economy](economy.md). Achievements emphasize story, exploration and galaxy
-activities, with none requiring missable dialogue choices. Exact achievement
-requirements and repeatable-task content remain to be specified.
+activities, with none requiring missable dialogue choices. [Quests](quests.md)
+defines achievements; repeatable-task content remains to be specified.
 
 ## Astra and Penny in flight
 
