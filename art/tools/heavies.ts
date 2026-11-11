@@ -676,8 +676,11 @@ function svg(size: number, pivotZ: number, title: string, list: readonly Face[])
     });
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
+  // The viewBox stays in frame px; the intrinsic size is the display size, so browsers
+  // rasterize the frame at the size it is drawn.
+  const display = size * DISPLAY_SCALE;
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${display}" height="${display}" viewBox="0 0 ${size} ${size}">`,
     `  <title>${title}</title>`,
     ...polygons,
     "</svg>",

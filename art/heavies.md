@@ -74,18 +74,26 @@ Turrets with identical drawings share one top set: the frigate's two guns use
 `gun` and the capital's four turrets, bolt and missile alike, use `turret`.
 
 Sprite frames are square, a multiple of 8 px, and hold every heading and state
-of that hardpoint around a centred pivot:
+of that hardpoint around a centred pivot. Every heavies SVG keeps its `viewBox`
+in frame px and declares its display size (frame times 0.4375) as `width` and
+`height`, so it rasterizes at the size it is drawn. Anchors, pivots, muzzles
+and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 
-| Sprite                     | Base frame | Top frame |
-| -------------------------- | ---------: | --------: |
-| Frigate gun                |         48 |        88 |
-| Frigate engine             |         80 |           |
-| Capital command            |         72 |           |
-| Capital engine (each side) |         88 |           |
-| Capital turret             |         48 |        80 |
+| Sprite                     | Base frame | Base display | Top frame | Top display |
+| -------------------------- | ---------: | -----------: | --------: | ----------: |
+| Frigate hull               |        384 |          168 |           |             |
+| Capital hull               |        480 |          210 |           |             |
+| Frigate gun                |         48 |           21 |        88 |        38.5 |
+| Frigate engine             |         80 |           35 |           |             |
+| Capital command            |         72 |         31.5 |           |             |
+| Capital engine (each side) |         88 |         38.5 |           |             |
+| Capital turret             |         48 |           21 |        80 |          35 |
 
 ## Manifest entries
 
+- `width` and `height` are the frame px of the `viewBox`, the space every
+  frame-px value refers to; `displayWidth` and `displayHeight` are the drawn
+  size, which is also the SVG's declared size.
 - Hull: `enemy-{a}-{k}`, the same fields as every enemy heading frame.
 - Hardpoint base: `enemy-{a}-{h}-{state}-{k}` with `path`, `width`, `height`,
   `displayWidth`, `displayHeight` (frame times 0.4375), `facing` `world-{k}`,
