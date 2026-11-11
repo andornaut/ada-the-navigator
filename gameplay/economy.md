@@ -19,23 +19,29 @@ its Stardust. A multipart ship is defeated when all its required parts are disab
 
 | Source             | Stardust |
 | ------------------ | -------: |
-| Asteroid           |      1–3 |
-| `swarm`            |        2 |
-| `fighter`          |        5 |
-| `interceptor`      |        6 |
-| `retaliator`       |       15 |
-| `frigate`          |       40 |
-| `capital`          |      150 |
-| `oversizedCapital` |      400 |
+| Asteroid           |      0–1 |
+| Discovery cache    |        5 |
+| `swarm`            |        1 |
+| `fighter`          |        2 |
+| `interceptor`      |        1 |
+| `retaliator`       |        4 |
+| `frigate`          |        5 |
+| `capital`          |        9 |
+| `oversizedCapital` |       11 |
+
+An enemy's Stardust is half its hit points, rounded down, and at least 1.
+Discovery caches are rare. These values come from a pacing simulation of typical
+play against the targets above; rerun it after changing any earning value.
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
 of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 24 for capital ships: swarm 2, fighter 5, interceptor 6, retaliator 8, frigate 16,
-capital 24, and one per Stardust for asteroids.
+capital 24, and one per Stardust for asteroids. With the values above, every
+drop is below its cap, so each pickup carries 1 Stardust.
 
-Weapons are sold at stations and are also rare drops: 2% of destroyed small ships,
-10% of frigates and 25% of capitals drop a random upgrade weapon. A dropped weapon
+Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
+ships, 5% of frigates and 10% of capitals drop a random upgrade weapon. A dropped weapon
 Ada already owns becomes 25 Stardust instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
@@ -44,7 +50,9 @@ existing cargo role and do not drop Stardust.
 Stations are rare points of interest, each with a shop. They are placed by the
 galaxy's seed, so a galaxy's stations stay in the same places on every flight, at
 least 8000 world units apart and away from story destinations. A discovered
-station becomes a travel destination like other destinations. A station is a safe
+station becomes a travel destination like other destinations. An undiscovered station
+within 1500 world units of Ada is marked by the direction indicator, so stations
+stay rare but findable. A station is a safe
 area. The dock is the station sprite's visible entrance. Ada docks when her
 hull circle overlaps the mouth circle: half the drawn mouth width in world units,
 scaled by a forgiving `dockForgiveness` of 3.

@@ -393,7 +393,7 @@ once per point of interest. Exact lines are in
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
 Nearby optional discoveries show a direction indicator; this does not add a map.
-Discovery rewards use cargo and Stardust pickups; a discovery cache holds 25
+Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
 
