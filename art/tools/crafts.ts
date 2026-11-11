@@ -332,10 +332,12 @@ export const gadgetJets: JetColors = {
 };
 
 // Family speed jets (version 1): Tech draws outer and core triangles per mouth behind the frame.
+// `extra` fields follow the jets data in the same file.
 export function jetsFile(
   frame: number,
   mouths: (yaw: number) => JetMouth[],
   colors: JetColors = gadgetJets,
+  extra: Readonly<Record<string, unknown>> = {},
 ): string {
   const scale = Math.sqrt(frame / 96);
   return json({
@@ -350,6 +352,7 @@ export function jetsFile(
       index: yaw,
       mouths: mouths(yaw),
     })),
+    ...extra,
   });
 }
 

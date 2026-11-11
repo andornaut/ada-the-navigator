@@ -57,9 +57,10 @@ dock facing screen-down and a free berth on each side.
   `[-0.924, 0.382]` and `(218.626, 175.72)` outward `[0.924, 0.382]`, width
   28.169. A craft docks moving opposite `outward`.
 - A docked craft holds just outside its dock: its pivot sits on the dock or
-  berth point moved along `outward` by the craft's nose distance (pivot to nose
-  tip at its docking heading), so the nose meets the dock face and the pier
-  stays visible. The same rule holds at the second bay's berth.
+  berth point moved along `outward` by the craft's
+  [`nose[k].distance`](#nose) for its docking heading `k`, so the nose meets
+  the dock face and the pier stays visible. The same rule holds at the second
+  bay's berth.
 
 ### Worn and repaired
 
@@ -158,6 +159,31 @@ outer `#c9a978` to `#ffe9b8` and core `#efe4cf` to `#ffffff`.
 | `visitor1` |      2 |           4 | `(-21, ±3.2, 7.8)`         |
 | `visitor2` |      2 |           4 | `(-21, ±3.2, 7.8)`         |
 | `blocker`  |      2 |           6 | `(-26, ±15, 7)`            |
+
+### Nose
+
+`{craft}-jets.json` also carries `nose`: 16 entries, `nose[k]` for heading `k`.
+The nose reaches to the forward-most solid part (hull, wing, pod, ram bar or
+lamp); the 0.6-deep window panes on the walls do not count.
+
+- `distance`: world units from the pivot to the point under the nose on the
+  centre line. The generator projects that point the art's way at display
+  scale (0.4375) and inverts the game's projection `(x - y, (x + y) / 2)`, as
+  for the [asteroid footprints](asteroids.md#footprint). The two projections
+  differ in aspect, so it depends on heading `k` at angle `a = k * 22.5`
+  degrees: `0.4375 * reach * sqrt(7/8 + sin(2a) / 8)`, from 0.866 to 1 times
+  `0.4375 * reach`.
+- `tip`: `[x, y]` in frame px, the drawn tip projected like the frames: the
+  midpoint of the forward-most top edge nearest the centre line. The generator
+  fails unless it lies within 0.5 frame px of an edge of a face the heading's
+  frame draws.
+
+| Craft      | Reach (u) | Forward-most part         | `distance` at 2, 10 | At 0, 4, 8, 12 | At 6, 14 |
+| ---------- | --------: | ------------------------- | ------------------: | -------------: | -------: |
+| `miner`    |      34.5 | Hull front                |              15.094 |         14.119 |   13.072 |
+| `visitor1` |      18.9 | Hull nose                 |               8.269 |          7.735 |    7.161 |
+| `visitor2` |      18.9 | Hull nose                 |               8.269 |          7.735 |    7.161 |
+| `blocker`  |        27 | High beams (tip: v = -13) |              11.813 |          11.05 |    10.23 |
 
 ## Palettes
 
