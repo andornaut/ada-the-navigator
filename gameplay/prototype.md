@@ -220,10 +220,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     device's reduced-motion preference.
   - Install, as in Archie: shown only while installation is available and the game
     is not installed, with the note "Full screen, offline" and an Install button.
-    The button opens the browser's install prompt. Where the browser has none, it
-    shows that browser's steps: on iOS, "Add to Home Screen" with "Tap Share, then
-    Add to Home Screen."; in Firefox for Android, "Add app to Home screen" with "Tap
-    the menu, then More, then Add app to Home screen."
+    The row and the landing page's Install button show in every browser that is
+    not running the installed app. The button opens the browser's install prompt
+    when it holds one; otherwise it shows that browser's steps. Strings are under
+    "Install steps" in [the player copy](prototype-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
 - Updates, as in Archie and Chibi: when a new version is waiting, the start screen

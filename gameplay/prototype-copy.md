@@ -317,6 +317,26 @@ Sunflower:
 Galaxy four has no playable story or invented finale in this prototype. Keep its
 unfinished status explicit in development builds.
 
+## Install steps
+
+Shown when the browser holds no install prompt. Title, then steps:
+
+- iOS: "Add to Home Screen" / "Tap Share, then Add to Home Screen."
+- Firefox for Android: "Add app to Home screen" / "Tap the menu, then More, then
+  Add app to Home screen."
+- Chrome or Edge for Android: "Install app" / "Tap the menu, then Add to Home
+  screen or Install app."
+- Samsung Internet: "Add to Home screen" / "Tap the menu, then Add page to, then
+  Home screen."
+- Chrome or Edge on a computer: "Install app" / "Choose Install in the address
+  bar, or open the browser menu and choose Install. If it offers Open in app, the
+  game is already installed."
+- Safari on a Mac: "Add to Dock" / "Choose File, then Add to Dock."
+- Firefox on a computer: "Not available in Firefox" / "Firefox can't install this
+  game as an app. Open this page in Chrome or Edge to install it."
+- Any other browser: "Install" / "Open this page in your device's browser and use
+  its menu to install it or add it to your home screen."
+
 ## Landing page
 
 - Pitch: Explore space. Bring new ideas home.
