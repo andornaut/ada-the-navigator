@@ -158,7 +158,9 @@ a provisional 300 Stardust.
 Ada loves her dog but resents walking it and overlooks its dependence on her for
 movement and exploration. Her space experience changes her understanding of care.
 
-Ada encounters an intelligent space whale trapped by debris. She shoots the
+Ada encounters an intelligent space whale trapped by debris: 3 rocks of radius
+24 and 3 HP, evenly spaced on a ring 76 world units from the whale's centre, clear
+of its footprint. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
 A short departure scene confirms reunion. The whale's family gives Ada a waypoint
