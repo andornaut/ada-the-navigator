@@ -1075,20 +1075,19 @@ try {
     import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
-  const combat = new GameModel(PROTOTYPE);
-  combat.startSector(1);
-  combat.choose("0");
-  assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
-  const flight = combat.state.flight;
-  combat.state.progress[1].introduced = true;
-  combat.state.dialogue = null;
-  flight.objects = [];
-  flight.shots = [];
-  const origin = { ...flight.player };
-  for (const [archetype, offset] of [
-    ["capital", { x: -140, y: 140 }],
-    ["oversizedCapital", { x: 350, y: -350 }],
-  ]) {
+  // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
+  // save at the offset its sampled screen region expects.
+  function combatFixture(archetype, offset, missile) {
+    const combat = new GameModel(PROTOTYPE);
+    combat.startSector(1);
+    combat.choose("0");
+    assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
+    const flight = combat.state.flight;
+    combat.state.progress[1].introduced = true;
+    combat.state.dialogue = null;
+    flight.objects = [];
+    flight.shots = [];
+    const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
     const at = { x: origin.x + offset.x, y: origin.y + offset.y };
@@ -1110,145 +1109,188 @@ try {
       kind: "enemy",
       radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
     });
+    if (missile) {
+      flight.shots.push({
+        enemy: true,
+        hitIds: [],
+        id: "browser-combat:missile",
+        life: PROTOTYPE.tuning.flight.enemyProjectileLifetime,
+        piercing: false,
+        projectile: "missile",
+        velocity: { x: 12, y: 12 },
+        x: origin.x,
+        y: origin.y - 180,
+      });
+    }
+    const serialized = combat.save();
+    assert.deepEqual(restoreSave(serialized), combat.state, "Canonical restore accepts combat");
+    assert.deepEqual(new GameModel(PROTOTYPE, serialized).state, combat.state);
+    return serialized;
   }
-  flight.shots.push({
-    enemy: true,
-    hitIds: [],
-    id: "browser-combat:missile",
-    life: PROTOTYPE.tuning.flight.enemyProjectileLifetime,
-    piercing: false,
-    projectile: "missile",
-    velocity: { x: 12, y: 12 },
-    x: origin.x,
-    y: origin.y - 180,
-  });
-  const combatSerialized = combat.save();
-  assert.deepEqual(restoreSave(combatSerialized), combat.state, "Canonical restore accepts combat");
-  assert.deepEqual(new GameModel(PROTOTYPE, combatSerialized).state, combat.state);
-  save("combat-fixture.json", {
-    scope:
-      "Real-model save fixture with damaged hardpoints and a seeded missile; " +
-      "render/restore proof only, not natural encounter or combat completion",
-    state: JSON.parse(combatSerialized),
-  });
   await page.setViewportSize({ width: 1280, height: 720 });
-  await seedOnce(combatSerialized, "ada-browser.combat-fixture.v1");
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-  await page.waitForFunction((key) => {
-    const current = JSON.parse(localStorage.getItem(key))?.flight;
-    return (
-      current?.objects.some((object) => object.enemy?.archetype === "oversizedCapital") &&
-      current.objects.some(
-        (object) =>
-          object.enemy?.archetype === "capital" &&
-          object.enemy.hardpoints.some((part) => part.hp === 0) &&
-          object.enemy.hardpoints.some((part) => part.hp > 0),
-      ) &&
-      current.shots.some((shot) => shot.enemy && shot.projectile === "missile")
-    );
-  }, storageKey);
-  const combatSnapshot = await readSave();
-  const canvas = page.locator("canvas");
-  await canvas.waitFor({ state: "visible" });
-  const combatImage = await canvas.screenshot({ path: `${output}/combat-canvas.png` });
-  const intrinsic = await canvas.evaluate((element) => ({
-    width: element.width,
-    height: element.height,
-  }));
   const paletteResponse = await page.request.get("http://ada-preview:4173/art/space-palette.json");
   assert.equal(paletteResponse.status(), 200, "Approved space palette must be served");
   const { colors: paletteColors } = await paletteResponse.json();
-  const pixels = await page.evaluate(
-    async ({ encoded, intrinsic, paletteColors }) => {
-      const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-      const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
-      const sample = document.createElement("canvas");
-      sample.width = bitmap.width;
-      sample.height = bitmap.height;
-      const drawing = sample.getContext("2d");
-      drawing.drawImage(bitmap, 0, 0);
-      bitmap.close();
-      // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
-      const regions = {
-        capital: { x: 0, y: 90, width: 240, height: 195 },
-        missile: { x: 510, y: 65, width: 65, height: 55 },
-        disabled: { x: 615, y: 155, width: 50, height: 50 },
-        background: { x: 280, y: 280, width: 160, height: 60 },
-      };
-      return Object.fromEntries(
-        Object.entries(regions).map(([name, region]) => {
-          const scaleX = sample.width / intrinsic.width;
-          const scaleY = sample.height / intrinsic.height;
-          const bitmapRegion = {
-            x: Math.floor((region.x + Math.max(0, (intrinsic.width - 720) / 2)) * scaleX),
-            y: Math.floor(region.y * scaleY),
-            width: Math.max(1, Math.floor(region.width * scaleX)),
-            height: Math.max(1, Math.floor(region.height * scaleY)),
+  const combatSnapshots = {};
+  const pixels = {};
+  async function renderCombatView(view) {
+    const serialized = combatFixture(view.archetype, view.offset, view.missile);
+    const seeded = view.missile ? " and a seeded missile" : "";
+    save(`combat-fixture-${view.archetype}.json`, {
+      scope: [
+        `Real-model save fixture with damaged hardpoints${seeded}`,
+        "render/restore proof only, not natural encounter or combat completion",
+      ].join("; "),
+      state: JSON.parse(serialized),
+    });
+    await seedOnce(serialized, `ada-browser.combat-fixture-${view.archetype}.v1`);
+    await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    await page.waitForFunction(
+      ({ archetype, key, missile }) => {
+        const current = JSON.parse(localStorage.getItem(key))?.flight;
+        return (
+          current?.objects.some(
+            (object) =>
+              object.enemy?.archetype === archetype &&
+              object.enemy.hardpoints.some((part) => part.hp === 0) &&
+              object.enemy.hardpoints.some((part) => part.hp > 0),
+          ) &&
+          (!missile || current.shots.some((shot) => shot.enemy && shot.projectile === "missile"))
+        );
+      },
+      { archetype: view.archetype, key: storageKey, missile: view.missile },
+    );
+    combatSnapshots[view.archetype] = await readSave();
+    const canvas = page.locator("canvas");
+    await canvas.waitFor({ state: "visible" });
+    const combatImage = await canvas.screenshot({
+      path: `${output}/combat-canvas-${view.archetype}.png`,
+    });
+    const intrinsic = await canvas.evaluate((element) => ({
+      width: element.width,
+      height: element.height,
+    }));
+    Object.assign(
+      pixels,
+      await page.evaluate(
+        async ({ encoded, intrinsic, names, paletteColors }) => {
+          const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+          const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+          const sample = document.createElement("canvas");
+          sample.width = bitmap.width;
+          sample.height = bitmap.height;
+          const drawing = sample.getContext("2d");
+          drawing.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
+          const regions = {
+            capital: { x: 0, y: 90, width: 240, height: 195 },
+            missile: { x: 510, y: 65, width: 65, height: 55 },
+            disabled: { x: 615, y: 155, width: 50, height: 50 },
+            background: { x: 280, y: 280, width: 160, height: 60 },
           };
-          const image = drawing.getImageData(
-            bitmapRegion.x,
-            bitmapRegion.y,
-            bitmapRegion.width,
-            bitmapRegion.height,
-          );
-          const colors = Object.fromEntries(
-            [
-              "obstacle",
-              "shipHardpoint",
-              "weapon",
-              "environment",
-              "environmentDetail",
-              "background",
-            ].map((role) => {
-              const hex = paletteColors[role];
-              if (!/^#[0-9a-f]{6}$/i.test(hex)) {
-                throw new Error(`Missing valid palette role: ${role}`);
-              }
-              return [
-                role,
-                [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16)),
-              ];
-            }),
-          );
-          const counts = Object.fromEntries(Object.keys(colors).map((role) => [role, 0]));
-          const outline = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-          for (let offset = 0; offset < image.data.length; offset += 4) {
-            for (const [role, rgb] of Object.entries(colors)) {
-              // Small channel tolerance permits raster rounding without accepting another palette class.
-              if (
-                rgb.every((channel, index) => Math.abs(image.data[offset + index] - channel) <= 3)
-              ) {
-                counts[role]++;
-                if (role === "obstacle") {
-                  const index = offset / 4;
-                  const x = index % image.width;
-                  const y = Math.floor(index / image.width);
-                  outline.minX = Math.min(outline.minX, x);
-                  outline.maxX = Math.max(outline.maxX, x);
-                  outline.minY = Math.min(outline.minY, y);
-                  outline.maxY = Math.max(outline.maxY, y);
+          return Object.fromEntries(
+            names
+              .map((name) => [name, regions[name]])
+              .map(([name, region]) => {
+                const scaleX = sample.width / intrinsic.width;
+                const scaleY = sample.height / intrinsic.height;
+                const bitmapRegion = {
+                  x: Math.floor((region.x + Math.max(0, (intrinsic.width - 720) / 2)) * scaleX),
+                  y: Math.floor(region.y * scaleY),
+                  width: Math.max(1, Math.floor(region.width * scaleX)),
+                  height: Math.max(1, Math.floor(region.height * scaleY)),
+                };
+                const image = drawing.getImageData(
+                  bitmapRegion.x,
+                  bitmapRegion.y,
+                  bitmapRegion.width,
+                  bitmapRegion.height,
+                );
+                const colors = Object.fromEntries(
+                  [
+                    "obstacle",
+                    "shipHardpoint",
+                    "weapon",
+                    "environment",
+                    "environmentDetail",
+                    "background",
+                  ].map((role) => {
+                    const hex = paletteColors[role];
+                    if (!/^#[0-9a-f]{6}$/i.test(hex)) {
+                      throw new Error(`Missing valid palette role: ${role}`);
+                    }
+                    return [
+                      role,
+                      [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16)),
+                    ];
+                  }),
+                );
+                const counts = Object.fromEntries(Object.keys(colors).map((role) => [role, 0]));
+                const outline = {
+                  minX: Infinity,
+                  maxX: -Infinity,
+                  minY: Infinity,
+                  maxY: -Infinity,
+                };
+                for (let offset = 0; offset < image.data.length; offset += 4) {
+                  for (const [role, rgb] of Object.entries(colors)) {
+                    // Small channel tolerance permits raster rounding without accepting another palette class.
+                    if (
+                      rgb.every(
+                        (channel, index) => Math.abs(image.data[offset + index] - channel) <= 3,
+                      )
+                    ) {
+                      counts[role]++;
+                      if (role === "obstacle") {
+                        const index = offset / 4;
+                        const x = index % image.width;
+                        const y = Math.floor(index / image.width);
+                        outline.minX = Math.min(outline.minX, x);
+                        outline.maxX = Math.max(outline.maxX, x);
+                        outline.minY = Math.min(outline.minY, y);
+                        outline.maxY = Math.max(outline.maxY, y);
+                      }
+                    }
+                  }
                 }
-              }
-            }
-          }
-          return [
-            name,
-            {
-              logical: region,
-              bitmap: bitmapRegion,
-              counts,
-              area: image.width * image.height,
-              outlineSpan: {
-                x: counts.obstacle ? (outline.maxX - outline.minX) / scaleX : 0,
-                y: counts.obstacle ? (outline.maxY - outline.minY) / scaleY : 0,
-              },
-            },
-          ];
-        }),
-      );
-    },
-    { encoded: combatImage.toString("base64"), intrinsic, paletteColors },
-  );
+                return [
+                  name,
+                  {
+                    logical: region,
+                    bitmap: bitmapRegion,
+                    counts,
+                    area: image.width * image.height,
+                    outlineSpan: {
+                      x: counts.obstacle ? (outline.maxX - outline.minX) / scaleX : 0,
+                      y: counts.obstacle ? (outline.maxY - outline.minY) / scaleY : 0,
+                    },
+                  },
+                ];
+              }),
+          );
+        },
+        {
+          encoded: combatImage.toString("base64"),
+          intrinsic,
+          names: view.names,
+          paletteColors,
+        },
+      ),
+    );
+  }
+  await renderCombatView({
+    archetype: "capital",
+    missile: true,
+    names: ["capital", "missile", "background"],
+    offset: { x: -140, y: 140 },
+  });
+  await renderCombatView({
+    archetype: "oversizedCapital",
+    missile: false,
+    names: ["disabled"],
+    offset: { x: 350, y: -350 },
+  });
   assert.ok(
     pixels.capital.counts.obstacle > 20 &&
       pixels.capital.outlineSpan.x > 50 &&
@@ -1280,8 +1322,8 @@ try {
   await page.screenshot({ path: `${output}/combat.png` });
   save("combat-proof.json", {
     scope: "Rendered canonical combat fixture; screenshot review required for visual correctness",
-    state: combatSnapshot,
-    canvas: await canvas.boundingBox(),
+    states: combatSnapshots,
+    canvas: await page.locator("canvas").boundingBox(),
     oversizedSizeRatio: enemyCatalog.oversizedCapital.sizeRatio,
     pixels,
     paletteColors,
