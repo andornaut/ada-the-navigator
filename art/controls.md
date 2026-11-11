@@ -146,11 +146,12 @@ against the card, and 5.91:1 and 4.84:1 against the page background.
 
 ## Top-right HUD icon buttons
 
-Navigation and HUD buttons in the top-right corner are 48x48 faces with a 2px
-ink `#181425` border and corner radius 8, and draw a 24px glyph for
-readability: `weapon-<id>-24.svg` for the weapon selector and
-`icon-settings-nav-24` for the settings button. The weapon buttons sit 8px
-apart, so a selection ring clears its neighbours.
+The weapon selector buttons in the top-right corner are 48x48 faces with a 2px
+ink `#181425` border and corner radius 8, and draw a 24px `weapon-<id>-24.svg`
+glyph for readability. They sit 8px apart, so a selection ring clears its
+neighbours. The space screen has no settings button; Settings opens from the
+pause card. `icon-settings-nav-24` serves screens outside space play, such as
+the start screen.
 
 | Weapon state | Face      | Glyph                    | Ring |
 | ------------ | --------- | ------------------------ | ---- |
@@ -167,7 +168,6 @@ apart, so a selection ring clears its neighbours.
   selected look. The locked look is fully opaque, with no ring.
 - A tap on a locked weapon plays the [refusal cue](#refusal-cue) with the
   glyph as its label.
-- The settings button stays idle navy with a cream gear in every state.
 - Focus-visible is a 3px cream outline at 4px offset, over any state.
 - Contrast: idle glyph 9.59:1, selected glyph 10.45:1, locked glyph 3.66:1 and
   refused glyph 4.42:1 on their faces.
