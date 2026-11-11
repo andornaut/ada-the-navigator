@@ -21,6 +21,8 @@ export const SPACING = {
 // Type roles: size and line box, and weight.
 export const TYPE = {
   body: { lineHeight: 20, size: 16, weight: 400 },
+  // The HUD weapon counts only, the one role below 16 (art/layout.md "Type").
+  count: { lineHeight: 14, size: 12, weight: 700 },
   heading: { lineHeight: 28, size: 24, weight: 700 },
   label: { lineHeight: 20, size: 16, weight: 700 },
 } as const;

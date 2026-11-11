@@ -286,17 +286,15 @@ describe("ammunition", () => {
     incoming(flight);
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
-    // The jump loses the equipped Multi-Laser but not its count.
-    expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
+    expect(model.state.economy.ownedWeapons).toEqual(["multiLaser", "scattershot"]);
     expect(model.state.economy.ammo).toMatchObject({ multiLaser: 123, scattershot: 45 });
     model.startSector(1);
     playOpening(model);
     expect(model.state.flight!.ammo).toMatchObject({ multiLaser: 123, scattershot: 45 });
-    // Finding it again adds its three packs to the count it kept.
+    // Finding it again gives one pack, as for any weapon Ada owns.
     model.state.flight!.objects = [];
-    model.state.flight!.weaponSwitchFor = 0;
     pickup(model, "multiLaser");
-    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 600);
+    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 200);
   });
 
   it("keeps a granted weapon's flight ammunition out of the economy", () => {

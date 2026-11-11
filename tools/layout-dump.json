@@ -213,7 +213,11 @@
     "playView.ts": {
       "CONTROL_EDGE": 8,
       "HUD_AMMO_COUNT": {
-        "top": 38
+        "clearance": 4,
+        "height": 14,
+        "padding": 4,
+        "radius": 4,
+        "top": 40
       },
       "HUD_BUTTON": {
         "annulus": 4,
@@ -404,6 +408,11 @@
           "lineHeight": 20,
           "size": 16,
           "weight": 400
+        },
+        "count": {
+          "lineHeight": 14,
+          "size": 12,
+          "weight": 700
         },
         "heading": {
           "lineHeight": 28,
@@ -7091,6 +7100,16 @@
             }
           ],
           "result": "400 calc(var(--ada-unit) * 16px)/calc(var(--ada-unit) * 20px) AdaUI,'Liberation Sans',sans-serif"
+        },
+        {
+          "args": [
+            {
+              "lineHeight": 14,
+              "size": 12,
+              "weight": 700
+            }
+          ],
+          "result": "700 calc(var(--ada-unit) * 12px)/calc(var(--ada-unit) * 14px) AdaUI,'Liberation Sans',sans-serif"
         },
         {
           "args": [

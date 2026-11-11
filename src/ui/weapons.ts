@@ -54,12 +54,17 @@ export function ammoCount(shots: number): string {
 }
 
 // Each state's disc face, its ink edge (an annulus when selected) and glyph colour
-// (art/controls.md "Top-right HUD icon buttons"). The empty state draws as idle until Art
-// specifies it; its count reads 0.
+// (art/controls.md "Top-right HUD icon buttons"). Empty is an unselected weapon with no
+// ammunition: its glyph is the idle lavender mixed toward the navy face.
 export const HUD_DISC_STATES = {
+  empty: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#75748c" },
   idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
   selected: { edge: HUD_BUTTON.annulus, face: "#bfa06f", glyph: "#181425" },
-} as const satisfies Record<Exclude<WeaponButtonState, "empty">, unknown>;
+} as const satisfies Record<WeaponButtonState, unknown>;
+
+// The count pill's text (art/controls.md "Ammunition count"): cream in every state, the empty
+// state's "0" red; the refusal cue tints only the glyph.
+export const AMMO_COUNT_TEXT = { empty: "#e4574e", normal: "#ead4aa" } as const;
 
 const INK = "#181425";
 
@@ -147,10 +152,21 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
   left:50%;
   top:${units(HUD_AMMO_COUNT.top)};
   transform:translateX(-50%);
-  font:${font(TYPE.label)};
+  box-sizing:border-box;
+  height:${units(HUD_AMMO_COUNT.height)};
+  padding:0 ${units(HUD_AMMO_COUNT.padding)};
+  border-radius:${units(HUD_AMMO_COUNT.radius)};
+  background:${INK};
+  font:${font(TYPE.count)};
   white-space:nowrap;
-  color:${HUD_DISC_STATES.idle.glyph};
+  color:${AMMO_COUNT_TEXT.normal};
   pointer-events:none
+}
+.ada-controls .ada-weapon[data-state=empty]{
+  color:${HUD_DISC_STATES.empty.glyph}
+}
+.ada-controls .ada-weapon[data-state=empty] .ada-ammo{
+  color:${AMMO_COUNT_TEXT.empty}
 }
 .ada-controls .ada-weapon[data-state=selected]{
   color:${HUD_DISC_STATES.selected.glyph};

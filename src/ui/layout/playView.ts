@@ -107,10 +107,11 @@ export const HUD_BUTTON = {
   target: HIT_RULE.minTarget,
 } as const;
 
-// The ammunition count below each non-Basic weapon disc, provisional until Art places it: one
-// TYPE.label line centred on the target, its line box from 38 below the target's top (inside the
-// disc's lower edge) to 58, where the conversation box's name tab may start.
-export const HUD_AMMO_COUNT = { top: 38 } as const;
+// The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
+// non-Basic disc, height high with radius corners and padding at each end around the count in
+// TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
+// lower edge; its bottom stays clearance above the conversation box's name tab.
+export const HUD_AMMO_COUNT = { clearance: 4, height: 14, padding: 4, radius: 4, top: 40 } as const;
 
 // Where a disc and a glyph sit inside their target.
 // Storybook Skip: a compact secondary control apart from page navigation, in the top-right HUD

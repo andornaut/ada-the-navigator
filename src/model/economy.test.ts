@@ -17,6 +17,7 @@ import {
   fill,
   itemAbout,
   itemName,
+  packCount,
   requestPurchase,
   selectPaint,
   shopRow,
@@ -665,9 +666,10 @@ describe("shop purchases", () => {
       price: 250,
     });
     const rows = shopRows(ECONOMY, economy, "weapons");
-    expect(rows[1]).toMatchObject({ owned: true, price: null });
-    expect(rows.at(-2)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
-    expect(rows.at(-1)).toEqual({
+    // The owned weapon's ammunition row leads the tab, before the weapon rows.
+    expect(rows[2]).toMatchObject({ owned: true, price: null });
+    expect(rows.at(-1)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
+    expect(rows[0]).toEqual({
       inUse: false,
       item: { kind: "ammo", weapon: "multiLaser" },
       level: null,
@@ -703,7 +705,8 @@ describe("shop purchases", () => {
       expect(economy.ammo.phaser).toBe(count * 55);
     }
     expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 6 });
-    expect(itemName(ECONOMY, PROTOTYPE.labels, pack)).toBe("Phaser ammo ×55");
+    expect(itemName(ECONOMY, PROTOTYPE.labels, pack)).toBe("Phaser ammo");
+    expect(packCount(ECONOMY, PROTOTYPE.labels, "phaser")).toBe("×55");
   });
 
   it.each([
@@ -839,15 +842,16 @@ describe("shop purchases", () => {
     expect(states("ship")[3]).toBe("owned");
   });
 
-  it("shows a weapon's one-line description in the buy confirm", () => {
+  it("shows a weapon's one-line description or a pack's size in the buy confirm", () => {
     const labels = PROTOTYPE.labels;
-    const about = (weapon: UpgradeWeapon) => itemAbout(labels, { kind: "weapon", weapon });
+    const about = (weapon: UpgradeWeapon) => itemAbout(ECONOMY, labels, { kind: "weapon", weapon });
     expect(about("heavyMissile")).toBe("One slow missile with a big blast.");
     expect(about("rapidMissile")).toBe("Quick missiles with a small blast.");
     expect(about("multiLaser")).toBe("A fan of laser bolts that grows with each level.");
     expect(about("scattershot")).toBe("A shotgun spread, strongest up close.");
     expect(about("phaser")).toBe("An instant beam that strikes the first thing in its path.");
-    expect(itemAbout(labels, { kind: "track", track: "shield" })).toBe("");
+    expect(itemAbout(ECONOMY, labels, { kind: "track", track: "shield" })).toBe("");
+    expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×50");
     expect(labels.aboutMissiles).toBeUndefined();
     expect(labels.aboutTripleLaser).toBeUndefined();
   });

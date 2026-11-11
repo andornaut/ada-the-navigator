@@ -135,21 +135,21 @@ export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
 }
 
 /**
- * A tab's rows. Weapons lists the upgrade weapons, then an upgrade row for Basic and
- * each owned upgrade weapon, then an ammunition row for each owned upgrade weapon. Ship
- * lists the upgrade tracks, then the paint schemes.
+ * A tab's rows. Weapons lists an ammunition row for each owned upgrade weapon, then the
+ * upgrade weapons, then an upgrade row for Basic and each owned upgrade weapon. Ship lists the
+ * upgrade tracks, then the paint schemes.
  */
 export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: ShopTab): ShopRow[] {
   const items: ShopItem[] =
     tab === "weapons"
       ? [
+          ...UPGRADE_WEAPONS.filter((weapon) => weaponOwned(economy, weapon)).map(
+            (weapon): ShopItem => ({ kind: "ammo", weapon }),
+          ),
           ...UPGRADE_WEAPONS.map((weapon): ShopItem => ({ kind: "weapon", weapon })),
           ...(["basic", ...UPGRADE_WEAPONS] as const)
             .filter((weapon) => weaponOwned(economy, weapon))
             .map((weapon): ShopItem => ({ kind: "weaponUpgrade", weapon })),
-          ...UPGRADE_WEAPONS.filter((weapon) => weaponOwned(economy, weapon)).map(
-            (weapon): ShopItem => ({ kind: "ammo", weapon }),
-          ),
         ]
       : [
           ...SHIP_TRACKS.map((track): ShopItem => ({ kind: "track", track })),
@@ -255,9 +255,32 @@ export function weaponName(labels: Readonly<Record<string, string>>, weapon: Wea
   return labels[WEAPON_LABELS[weapon]] ?? "";
 }
 
-/** The buy confirm's one-line weapon description; other items have none. */
-export function itemAbout(labels: Readonly<Record<string, string>>, item: ShopItem): string {
-  return item.kind === "weapon" ? (labels[ABOUT_LABELS[item.weapon]] ?? "") : "";
+/** An ammunition pack's size line, such as "×200". */
+export function packCount(
+  catalog: EconomyCatalog,
+  labels: Readonly<Record<string, string>>,
+  weapon: UpgradeWeapon,
+): string {
+  return fill(labels.ammoPackCount ?? "", { count: catalog.ammo.pack[weapon] });
+}
+
+/**
+ * The buy confirm's one line under the glyph: a weapon's description or an ammunition pack's
+ * size; other items have none.
+ */
+export function itemAbout(
+  catalog: EconomyCatalog,
+  labels: Readonly<Record<string, string>>,
+  item: ShopItem,
+): string {
+  switch (item.kind) {
+    case "weapon":
+      return labels[ABOUT_LABELS[item.weapon]] ?? "";
+    case "ammo":
+      return packCount(catalog, labels, item.weapon);
+    default:
+      return "";
+  }
 }
 
 /** The player-facing name used by rows and the confirm title. */
@@ -272,10 +295,7 @@ export function itemName(
     case "weaponUpgrade":
       return fill(labels.weaponUpgrade ?? "", { weapon: weaponName(labels, item.weapon) });
     case "ammo":
-      return fill(labels.ammoPack ?? "", {
-        count: catalog.ammo.pack[item.weapon],
-        weapon: weaponName(labels, item.weapon),
-      });
+      return fill(labels.ammoPack ?? "", { weapon: weaponName(labels, item.weapon) });
     case "track":
       return labels[TRACK_LABELS[item.track]] ?? "";
     default:

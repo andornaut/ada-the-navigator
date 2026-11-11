@@ -1,5 +1,13 @@
 import type { EconomyCatalog, UpgradeTrack } from "../data/economy.ts";
-import { fill, itemName, type ShopItem, type ShopRow, shopRowState } from "../model/shop.ts";
+import { ammoShopSheet } from "../data/weapon-glyphs.ts";
+import {
+  fill,
+  itemName,
+  packCount,
+  type ShopItem,
+  type ShopRow,
+  shopRowState,
+} from "../model/shop.ts";
 import { type ItemGlyph, type StationRow, weaponItemGlyph } from "../ui/station.ts";
 
 // Maps the model's shop rows to the station view's rows (art/shop.md, art/shop-icons.md).
@@ -22,9 +30,9 @@ export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
       return weaponItemGlyph(item.weapon);
     case "weaponUpgrade":
       return { kind: "upgrade", weapon: item.weapon };
-    // Until Art draws ammunition glyphs, a pack row shows its weapon's glyph.
+    // The ammunition kind's sheet alone, never the weapon's sheet.
     case "ammo":
-      return weaponItemGlyph(item.weapon);
+      return { key: ammoShopSheet(item.weapon), kind: "sprite" };
     case "track":
       return { key: TRACK_ICONS[item.track], kind: "sprite" };
     default:
@@ -40,11 +48,14 @@ export function stationRow(
 ): StationRow {
   return {
     glyph: itemGlyph(catalog, row.item),
-    group: row.item.kind === "paint" ? "paint" : "items",
+    group: row.item.kind === "paint" ? "paint" : row.item.kind === "ammo" ? "ammo" : "items",
     key: JSON.stringify(row.item),
+    // An ammunition row's pack size takes the level line's place.
     level: row.level
       ? fill(labels.level ?? "", { level: row.level.current, max: row.level.max })
-      : "",
+      : row.item.kind === "ammo"
+        ? packCount(catalog, labels, row.item.weapon)
+        : "",
     name: itemName(catalog, labels, row.item),
     price: row.price,
     state: shopRowState(stardust, row),

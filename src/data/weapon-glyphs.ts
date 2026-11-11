@@ -13,6 +13,20 @@ export function weaponShopSheet(weapon: Weapon): string {
   return `icon-shop-weapon-${weapon}`;
 }
 
+/** Each upgrade weapon's ammunition kind (art/weapon-icons.md "Ammunition icons"). */
+export const AMMO_KIND = {
+  heavyMissile: "missile",
+  multiLaser: "energy",
+  phaser: "energy",
+  rapidMissile: "missile",
+  scattershot: "shell",
+} as const satisfies Record<Exclude<Weapon, "basic">, string>;
+
+/** The two-frame shop sheet of a weapon's ammunition kind, drawn alone in an ammunition row. */
+export function ammoShopSheet(weapon: Exclude<Weapon, "basic">): string {
+  return `icon-shop-ammo-${AMMO_KIND[weapon]}`;
+}
+
 /**
  * A weapon pickup's glyph (art/weapons.md "Pickups"): the weapon's 20px HUD glyph drawn at 14px
  * in amber, centred on the pickup, for every weapon that drops as a pickup.

@@ -673,7 +673,7 @@ export class PrototypeScene extends Phaser.Scene {
         return request.kind === "refused"
           ? request
           : {
-              about: itemAbout(labels, item(key)),
+              about: itemAbout(ECONOMY, labels, item(key)),
               action: label("confirmBuy"),
               kind: "confirm",
               left: fill(label("confirmLeft"), { amount: amount(request.left) }),

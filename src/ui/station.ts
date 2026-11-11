@@ -356,8 +356,11 @@ export interface StationRow {
   /** A community project's row, whose owned state reads Funded (art/projects.md). */
   readonly project?: boolean;
   readonly glyph: ItemGlyph;
-  /** The paint group follows the item group on the Ship tab. */
-  readonly group: "items" | "paint";
+  /**
+   * The ammunition group precedes the item group on the Weapons tab; the paint group follows
+   * it on the Ship tab.
+   */
+  readonly group: "ammo" | "items" | "paint";
   readonly key: string;
   readonly level: string;
   readonly name: string;
@@ -635,7 +638,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const tabContent = (id: StationTab): HTMLElement[] => {
     const rows = options.rows(id);
-    const content: HTMLElement[] = [groupElement(rows.filter((row) => row.group === "items"))];
+    const ammo = rows.filter((row) => row.group === "ammo");
+    const content: HTMLElement[] = [
+      ...(ammo.length ? [groupElement(ammo)] : []),
+      groupElement(rows.filter((row) => row.group === "items")),
+    ];
     const paint = rows.filter((row) => row.group === "paint");
     if (paint.length) {
       const block = document.createElement("div");
