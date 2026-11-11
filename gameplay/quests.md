@@ -212,7 +212,7 @@ limit. Black Eye has no repeatable activity yet.
   base top speed. Beyond 700 it waits. It drifts with currents like Ada. One
   hunter pack waits along the way. The calf takes no damage, and drones ignore
   it. Reaching within 400 world units of the family completes the activity.
-  Return home or a shield-depletion jump returns the calf to its start.
+  Return to Earth, Back to title or a shield-depletion jump returns the calf to its start.
 
 Activity lines:
 
