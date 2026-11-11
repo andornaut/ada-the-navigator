@@ -288,6 +288,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     intermittently, 4 times slower than basic fire, and deals 4 times basic damage
     to the enemy it hits; levels grow its range and damage.
 - A missile's blast damages every enemy within its radius, never Ada.
+- Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
+  measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world-speed ratio.
 - Each scattershot dot travels half the current projected viewport width along its
