@@ -152,8 +152,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
   panel.append(text, choices, controls);
   layer.append(background, panel, skip);
-  // First in the controls layer, so the HUD's settings button draws and presses above the page.
-  root.prepend(style, layer);
+  // The page goes first in the controls layer, so the HUD's settings button draws and presses
+  // above it; its style goes last, after the shared card styles it refines.
+  root.prepend(layer);
+  root.append(style);
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
