@@ -81,6 +81,12 @@ after the body.
 
 - Family destination: the calf at world offset `[38, 40]` and the younger calf
   at `[-18, 58]` from the smaller adult (`family` in the data).
+- A guided calf: while the `calf` is away from its family, the family draws
+  without that member, so a calf never shows twice. The guided calf uses the
+  `calf` frames: its heading follows its travel, with the swim loop while it
+  moves and the idle loop while it waits. On return it takes its offset again
+  and settles to its stationary heading. A calf's state needs no extra art;
+  any cue uses the existing UI.
 - The debris trapping the whale is ordinary stone rocks from the
   [asteroid set](asteroids.md), with no separate art.
 - The nursery beacon and the current-map buoys are drawn with the Whirlpool
