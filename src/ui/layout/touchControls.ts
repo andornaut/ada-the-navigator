@@ -13,7 +13,7 @@ import { TYPE } from "./tokens.ts";
 // moves at most knobReach from the ring's centre. Move input reaches full speed moveReach from
 // the stick's origin, past a moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 24,
+  bottom: 20,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,

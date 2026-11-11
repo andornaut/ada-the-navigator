@@ -246,22 +246,22 @@ describe("touch controls", () => {
     right: centre.x + 37,
   });
 
-  it("rest the rings' drawn edges max(24, inset) from the sides and 24 above the safe bottom", () => {
+  it("rest the rings' drawn edges max(24, inset) from the sides and 20 above the safe bottom", () => {
     expect(stickRestCentres(view, NO_INSETS)).toEqual({
-      aim: { x: 659, y: 299 },
-      move: { x: 60, y: 299 },
+      aim: { x: 659, y: 303 },
+      move: { x: 60, y: 303 },
     });
     // A wider, deeper view keeps them on its own edges, not a centred 720 view.
     expect(stickRestCentres({ height: 400, width: 900 }, NO_INSETS)).toEqual({
-      aim: { x: 839, y: 339 },
-      move: { x: 60, y: 339 },
+      aim: { x: 839, y: 343 },
+      move: { x: 60, y: 343 },
     });
     const clear = stickRestCentres(view, { bottom: 30, left: 90, right: 100, top: 0 });
     expect(ringEdges(clear.move).left).toBe(90);
     expect(720 - ringEdges(clear.aim).right).toBe(100);
     expect(360 - 30 - ringEdges(clear.move).bottom).toBe(TOUCH_STICK.bottom);
     expect(TOUCH_STICK).toMatchObject({
-      bottom: 24,
+      bottom: 20,
       frame: 75,
       knobReach: 12,
       moveDeadZone: 2.4,
@@ -273,10 +273,22 @@ describe("touch controls", () => {
   it.each([
     ["no insets", NO_INSETS],
     ["phone insets", phone],
-  ] as const)("clear the shield bar by 21 with %s", (_, insets) => {
+  ] as const)("clear the shield bar by 17 with %s", (_, insets) => {
     const shieldTop = view.height - insets.bottom - SHIELD_BAR.height;
     const { move } = stickRestCentres(view, insets);
-    expect(shieldTop - ringEdges(move).bottom).toBe(21);
+    expect(shieldTop - ringEdges(move).bottom).toBe(17);
+  });
+
+  it.each([
+    ["the 720 view", view, NO_INSETS],
+    ["the 720 view with phone insets", view, phone],
+    ["a wider, deeper view", { height: 400, width: 900 }, NO_INSETS],
+    ["a fractional view with fractional insets", { height: 360, width: 779.2 }, phone],
+  ] as const)("mirror the rings' drawn edges across %s", (_, size, insets) => {
+    const { aim, move } = stickRestCentres(size, insets);
+    const width = Math.floor(size.width);
+    expect(width - ringEdges(aim).right).toBe(ringEdges(move).left);
+    expect(ringEdges(aim).bottom).toBe(ringEdges(move).bottom);
   });
 
   it("keep the Use button's press area clear of both rings at the 720 minimum width", () => {
@@ -318,6 +330,6 @@ describe("touch controls", () => {
   });
 
   it("put each stick's DOM target over its ring's frame", () => {
-    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 23, y: 262 });
+    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 23, y: 266 });
   });
 });
