@@ -108,9 +108,35 @@ describe("modal buttons", () => {
     expect(rule(".ada-controls .ada-actions")).toContain("gap:8px");
     expect(rule(".ada-controls .ada-actions")).toContain("grid-auto-columns:1fr");
   });
+
+  it("centres each action group in the card at one shared width", () => {
+    const actions = rule(".ada-controls .ada-actions");
+    expect(actions).toContain("width:max-content");
+    expect(actions).toContain("margin:8px auto 0");
+  });
+
+  it("draws a row's compact button as a 72x28 face with an 8px inset", () => {
+    const compact = rule(".ada-controls .ada-button.ada-compact");
+    expect(compact).toContain("min-width:72px");
+    expect(compact).toContain("height:28px");
+    // The 2px nine-slice edge plus 6px padding makes the 8px inset.
+    expect(compact).toContain("padding:0 6px");
+    expect(rule(".ada-controls .ada-row")).toContain("align-items:center");
+  });
+
+  it("keeps 16px below the last control when a card scrolls to its end", () => {
+    expect(rule(".ada-controls .ada-card")).toContain("padding:16px 16px 0");
+    expect(rule(".ada-controls .ada-card::after")).toContain("height:16px");
+  });
 });
 
 describe("modal text", () => {
+  it("keeps notes at the 16px body size and lets their rows grow", () => {
+    expect(rule(".ada-controls .ada-setting-note")).toContain("font-size:16px");
+    expect(rule(".ada-controls .ada-row")).toContain("min-height:48px");
+    expect(rule(".ada-controls .ada-row")).not.toMatch(/(^|;)\s*height:/);
+  });
+
   it("uses the contract's text colours", () => {
     expect(TEXT_TOKENS).toEqual({
       buttonLabel: "#181425",

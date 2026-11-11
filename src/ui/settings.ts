@@ -298,6 +298,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   installNote.textContent = options.labels.installNote;
   installText.append(installCaption, installNote);
   const installButton = createButton(options.labels.installButton);
+  installButton.classList.add("ada-compact");
   installButton.dataset.action = "install";
   installButton.setAttribute("aria-label", options.labels.install);
   installRow.append(settingsIcon(SETTING_ICONS.install), installText, installButton);

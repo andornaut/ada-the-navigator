@@ -1,5 +1,5 @@
 import { type CheatAction, createCheatSession } from "./cheat-actions.ts";
-import { createButton, createCard } from "./modal.ts";
+import { createActions, createButton, createCard } from "./modal.ts";
 
 export interface CheatLabels {
   readonly close: string;
@@ -38,7 +38,9 @@ export function createCheats(
   launcher.dataset.action = "cheats";
   launcher.setAttribute("aria-haspopup", "dialog");
   launcher.setAttribute("aria-expanded", "false");
-  launcherParent.append(launcher);
+  // A single action, centred as every action group is.
+  const launcherGroup = createActions([{ button: launcher, role: "secondary" }]);
+  launcherParent.append(launcherGroup);
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -119,6 +121,7 @@ export function createCheats(
     currentRun = nextRun;
     const eligible = session.eligible();
     launcher.hidden = !eligible;
+    launcherGroup.hidden = !eligible;
     if (!eligible) {
       setOpen(false);
     }
@@ -186,7 +189,7 @@ export function createCheats(
       document.removeEventListener("visibilitychange", refresh);
       document.removeEventListener("focusin", retainFocus);
       modal.remove();
-      launcher.remove();
+      launcherGroup.remove();
     },
     isOpen: () => open,
     refresh,

@@ -44,11 +44,13 @@ const FOCUS = `
   box-shadow:0 0 0 1px #181425,0 0 0 4px #181425`;
 
 export const MODAL_STYLE = `
+/* A modal fills the controls layer; its card shrinks to fit and scrolls on a short screen. */
 .ada-controls .ada-modal{
   position:absolute;
   inset:0;
-  display:grid;
-  place-items:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   background:#101926b3;
   pointer-events:auto;
   padding:16px;
@@ -59,7 +61,15 @@ export const MODAL_STYLE = `
   position:relative;
   max-width:100%;
   max-height:100%;
-  display:flex
+  display:flex;
+  flex-direction:column
+}
+
+/* The last control keeps the card's 16px padding below it when the card scrolls to its end. */
+.ada-controls .ada-card::after{
+  content:"";
+  display:block;
+  height:16px
 }
 
 .ada-controls .ada-card{
@@ -68,8 +78,10 @@ export const MODAL_STYLE = `
   min-width:min(50vw,480px);
   max-width:100%;
   max-height:100%;
+  min-height:0;
+  flex:0 1 auto;
   overflow:auto;
-  padding:16px;
+  padding:16px 16px 0;
   color:${TEXT_TOKENS.label};
   background:#3b3850;
   border:2px solid #6b6685;
@@ -186,12 +198,29 @@ export const MODAL_STYLE = `
   border-image-source:var(--ui-button-primary-disabled)
 }
 
+/* Action groups sit centred in the card, one shared width per group. */
 .ada-controls .ada-actions{
-  display:inline-grid;
+  display:grid;
   grid-auto-columns:1fr;
   grid-auto-flow:column;
   gap:8px;
-  margin-top:8px
+  width:max-content;
+  max-width:100%;
+  margin:8px auto 0
+}
+
+/* Chibi's compact exception for a button inside a control row: a 72x28 face with an 8px
+   horizontal inset, centred in the row, full-size label; the whole row stays the target. */
+.ada-controls .ada-button.ada-compact{
+  flex:none;
+  min-width:72px;
+  height:28px;
+  min-height:28px;
+  padding:0 6px
+}
+.ada-controls .ada-button.ada-compact:active:not(:disabled){
+  padding:0 6px;
+  border-image-source:var(--ui-button-pressed)
 }
 
 /* Control rows: 48 high, icon, label and switch; the whole row is the press target. */
@@ -241,9 +270,10 @@ export const MODAL_STYLE = `
   overflow-wrap:anywhere
 }
 
+/* Supporting text keeps the body size, as in Chibi: it wraps and its row grows instead. */
 .ada-controls .ada-setting-note{
-  font-size:13px;
-  line-height:16px;
+  font-size:16px;
+  line-height:20px;
   color:${TEXT_TOKENS.supporting}
 }
 
