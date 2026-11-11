@@ -1,7 +1,8 @@
 // Asteroids: seeded low-poly rocks in the shared solid-model projection, flat fills, no strokes
 // beyond a same-colour seam. Writes one SVG per frame to public/art/asteroids/, asteroids.json
 // (frame, display, pivot, drawn collision parts, world footprints, drift and spin data, backdrop
-// tints) and links the data from the root manifest.
+// tints), resource-rocks.json (the medium and large shapes with an ore crystal cluster) and
+// links both from the root manifest.
 // Usage: node art/tools/asteroids.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -27,6 +28,11 @@ const STONE_HUE = 70;
 const STONE_CHROMA = 0.016;
 const STONE_L = [0.61, 0.545, 0.48, 0.42, 0.365] as const;
 const STONE = STONE_L.map((L) => oklch(L, STONE_CHROMA, STONE_HUE));
+
+// Ore ramp, lit to shadow, around the `active` signal (tone 1): resource rock crystals read as the
+// same ore as cargo pieces and the hub's ore. Lightness steps and chroma scales per tone.
+const ORE_L_STEP = [0.1, 0, -0.085, -0.17, -0.25] as const;
+const ORE_CHROMA_SCALE = [0.75, 1, 0.95, 0.85, 0.72] as const;
 
 // Backdrop rocks: greyscale, white tops and BACKDROP_SIDE sides, multiplied at runtime by the
 // galaxy's backdropLit colour (Phaser setTint), so side = backdropLit * BACKDROP_SIDE exactly.
@@ -125,6 +131,12 @@ const BACKDROP: readonly { id: string; width: number; seed: number; aspect: numb
   { id: "backdrop-3", width: 64, seed: 227, aspect: 1.2 },
   { id: "backdrop-4", width: 90, seed: 229, aspect: 1.5 },
 ];
+
+// Resource rocks: every medium and large shape (same seed, aspect and width, so the same base
+// ring and footprints) with an ore crystal cluster on the crown.
+const RESOURCES = SHAPES.filter(({ size }) => size === "medium" || size === "large").map(
+  (shape) => ({ ...shape, id: shape.id.replace("asteroid-", "resource-"), shape: shape.id }),
+);
 
 // ------------------------------------------------------------------ maths
 
@@ -258,15 +270,110 @@ function yawed(faces: readonly Face[], yaw: number, scale: number): Face[] {
   );
 }
 
+// ------------------------------------------------------------------ resource inset
+
+// A facet with the ramp its tones come from.
+type Painted = { face: Face; ramp: readonly string[] };
+
+const centroid = (f: Face): Point => {
+  const n = f.length;
+  return [
+    f.reduce((s, p) => s + p[0], 0) / n,
+    f.reduce((s, p) => s + p[1], 0) / n,
+    f.reduce((s, p) => s + p[2], 0) / n,
+  ];
+};
+const add = (a: Point, b: Point, k = 1): Point => [
+  a[0] + b[0] * k,
+  a[1] + b[1] * k,
+  a[2] + b[2] * k,
+];
+const cross3 = (a: Point, b: Point): Point => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
+
+// A cluster of hexagonal ore crystals growing from the crown facets nearest the highest one, each
+// tilted out along its facet's normal, so the silhouette changes as well as the colour. Compact
+// seat facets under the cluster take the ore ramp's shadow tones; long slivers stay stone so no
+// stripe runs down the flank. Crystals never lean down-screen past the rock. Model units, before
+// the yaw and scale, so the cluster turns with the rock.
+function crystals(
+  faces: readonly Face[],
+  spec: ClassSpec,
+  seed: number,
+  ore: readonly string[],
+): Painted[] {
+  const rnd = mulberry(seed * 13 + 5);
+  const big = spec.vertices[0] >= 12;
+  const count = big ? 5 : 3;
+  const seat = [ore[2]!, ore[3]!, ore[4]!, ore[4]!, ore[4]!];
+  const out: Painted[] = faces.map((face) => ({ face, ramp: STONE }));
+  const tops = faces
+    .map((face, i) => ({ c: centroid(face), face, i, n: unit(normal(face)) }))
+    .filter(({ c, n }) => n[2] > 0.6 && c[2] > spec.height * 0.8)
+    .sort((a, b) => b.c[2] - a.c[2]);
+  const peak = tops[0]!.c;
+  const reach = (c: Point) => Math.hypot(c[0] - peak[0], c[1] - peak[1]);
+  const chosen = tops.toSorted((a, b) => reach(a.c) - reach(b.c)).slice(0, count);
+  for (const { c, face, i, n } of chosen) {
+    if (Math.min(...face.map((p) => p[2])) > spec.height * 0.62 && n[2] > 0.85 && c[2] > 0) {
+      out[i]!.ramp = seat;
+    }
+  }
+  chosen.forEach(({ c, n }, k) => {
+    let [lx, ly] = [n[0] * 0.9 + (rnd() - 0.5) * 0.6, n[1] * 0.9 + (rnd() - 0.5) * 0.6];
+    const lh = Math.hypot(lx, ly);
+    if (lh > 0.55) [lx, ly] = [(lx * 0.55) / lh, (ly * 0.55) / lh];
+    if (lx + ly > 0.35) [lx, ly] = [lx - (lx + ly - 0.35) / 2, ly - (lx + ly - 0.35) / 2];
+    const lean = unit([lx, ly, 1]);
+    const r = (big ? 0.06 : 0.085) * (0.8 + rnd() * 0.4) * (k === 0 ? 1.2 : 1);
+    const length = (big ? 0.4 : 0.52) * (0.7 + rnd() * 0.45) * (k === 0 ? 1.3 : 1);
+    const ref: Point = Math.abs(lean[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+    const u = unit(cross3(lean, ref));
+    const v = cross3(lean, u);
+    const base = add(c, lean, -0.04);
+    // Each ring vertex draws once from the sequence, unused, so the approved cluster's later
+    // crystals keep their sizes.
+    const ring = (along: number, scale: number) =>
+      Array.from({ length: 6 }, (_, i) => {
+        rnd();
+        const a = (i * Math.PI) / 3;
+        return add(
+          add(add(base, lean, along), u, Math.cos(a) * r * scale),
+          v,
+          Math.sin(a) * r * scale,
+        );
+      });
+    const b0 = ring(0, 1);
+    const t0 = ring(length * 0.68, 0.92);
+    const tip = add(base, lean, length);
+    const axisAt = (p: Point) =>
+      add(base, lean, dot([p[0] - base[0], p[1] - base[1], p[2] - base[2]], lean));
+    const outward = (f: Face): Face => {
+      const fc = centroid(f);
+      const o = axisAt(fc);
+      return dot(normal(f), [fc[0] - o[0], fc[1] - o[1], fc[2] - o[2]]) >= 0 ? f : f.toReversed();
+    };
+    for (let i = 0; i < 6; i++) {
+      const j = (i + 1) % 6;
+      out.push({ face: outward([b0[i]!, b0[j]!, t0[j]!, t0[i]!]), ramp: ore });
+      out.push({ face: outward([t0[i]!, t0[j]!, tip]), ramp: ore });
+    }
+  });
+  return out;
+}
+
 // ------------------------------------------------------------------ silhouette
 
 type V2 = [number, number];
 
-function projected(faces: readonly Face[], pivot: V2): { pts: V2[]; face: Face }[] {
+function projected(faces: readonly Painted[], pivot: V2): (Painted & { pts: V2[] })[] {
   return faces
-    .filter((f) => facesViewer(f))
-    .toSorted((a, b) => depth(b) - depth(a))
-    .map((face) => ({ face, pts: face.map((p) => projectAt(pivot[0], pivot[1], p)) }));
+    .filter(({ face }) => facesViewer(face))
+    .toSorted((a, b) => depth(b.face) - depth(a.face))
+    .map((p) => ({ ...p, pts: p.face.map((q) => projectAt(pivot[0], pivot[1], q)) }));
 }
 
 function extent(faces: readonly Face[]): {
@@ -505,14 +612,26 @@ function tone(face: Face, ramp: readonly string[]): string {
   return ramp[i < 0 ? ramp.length - 1 : i]!;
 }
 
-function svgFrame(title: string, w: number, h: number, polys: { pts: V2[]; fill: string }[]) {
+// The viewBox is always frame px. `declared` is the SVG's intrinsic size: frame px for the plain
+// and backdrop rocks, which Tech loads at `displayScale`, or display px for the resource rocks,
+// which rasterize at the size they are drawn.
+type Declared = "frame" | "display";
+
+function svgFrame(
+  title: string,
+  w: number,
+  h: number,
+  polys: { pts: V2[]; fill: string }[],
+  declared: Declared,
+) {
   const body = polys
     .map(({ fill, pts }) => {
       const points = pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
       return `  <polygon fill="${fill}" stroke="${fill}" stroke-width="${SEAM}" stroke-linejoin="round" points="${points}"/>`;
     })
     .join("\n");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
+  const k = declared === "display" ? DISPLAY : 1;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w * k}" height="${h * k}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
 }
 
 // World units from the pivot for a point on the art's world plane (model units at frame scale):
@@ -552,25 +671,41 @@ interface Built {
   outline: V2[];
 }
 
+// `drawn` defaults to the model's facets in `ramp`; a resource rock passes its stone facets plus
+// the crystal cluster. The scale always comes from the stone model, so a resource rock keeps its
+// plain shape's size, base ring and footprints.
 function build(
   id: string,
   { base, faces: model }: { base: Point[]; faces: Face[] },
   frames: number,
   widthDisplay: number,
   ramp: readonly string[],
+  {
+    drawn = model.map((face) => ({ face, ramp })),
+    declared = "frame",
+  }: { drawn?: readonly Painted[]; declared?: Declared } = {},
 ) {
   // Scale so frame 0's silhouette is the target width.
   const e0 = extent(model);
   const scale = widthDisplay / DISPLAY / (e0.maxX - e0.minX);
   const yaws = Array.from({ length: frames }, (_, k) => (k * 2 * Math.PI) / frames);
-  const posed = yaws.map((y) => yawed(model, y, scale));
+  const posed = yaws.map((y) => {
+    const faces = yawed(
+      drawn.map((p) => p.face),
+      y,
+      scale,
+    );
+    return faces.map((face, i): Painted => ({ face, ramp: drawn[i]!.ramp }));
+  });
   const bases = yaws.map((y) => yawed([base], y, scale)[0]!);
-  const bounds = posed.map(extent).reduce((a, b) => ({
-    maxX: Math.max(a.maxX, b.maxX),
-    maxY: Math.max(a.maxY, b.maxY),
-    minX: Math.min(a.minX, b.minX),
-    minY: Math.min(a.minY, b.minY),
-  }));
+  const bounds = posed
+    .map((p) => extent(p.map(({ face }) => face)))
+    .reduce((a, b) => ({
+      maxX: Math.max(a.maxX, b.maxX),
+      maxY: Math.max(a.maxY, b.maxY),
+      minX: Math.min(a.minX, b.minX),
+      minY: Math.min(a.minY, b.minY),
+    }));
   const margin = 2;
   // Symmetric horizontal margins keep the pivot at the frame's horizontal centre.
   const half = Math.ceil(Math.max(-bounds.minX, bounds.maxX)) + margin;
@@ -581,8 +716,8 @@ function build(
   const built: Built[] = posed.map((faces, k) => {
     const polys = projected(faces, pivot);
     const file = frames > 1 ? `${id}-${k}.svg` : `${id}.svg`;
-    const fills = polys.map(({ face, pts }) => ({ fill: tone(face, ramp), pts }));
-    writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills));
+    const fills = polys.map(({ face, pts, ramp: own }) => ({ fill: tone(face, own), pts }));
+    writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared));
     const outline = silhouette(
       polys.map((p) => p.pts),
       w,
@@ -659,7 +794,20 @@ const tints = Object.fromEntries(
 
 // ------------------------------------------------------------------ main
 
-const asteroids = SHAPES.map((shape) => {
+// Ore ramp from the palette's `active` signal.
+const [activeL, activeA, activeB] = toOklab(rgb(palette.colors.active!));
+const ORE = ORE_L_STEP.map((step, i) =>
+  oklch(
+    activeL + step,
+    Math.hypot(activeA, activeB) * ORE_CHROMA_SCALE[i]!,
+    (Math.atan2(activeB, activeA) * 180) / Math.PI,
+  ),
+);
+
+function rock(
+  shape: { id: string; size: SizeClass; width: number; seed: number; aspect: number },
+  resource: boolean,
+) {
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
   const frames = spec.spin?.frames ?? 1;
@@ -669,6 +817,7 @@ const asteroids = SHAPES.map((shape) => {
     frames,
     shape.width,
     STONE,
+    resource ? { declared: "display", drawn: crystals(model.faces, spec, shape.seed, ORE) } : {},
   );
   return {
     id: shape.id,
@@ -686,6 +835,21 @@ const asteroids = SHAPES.map((shape) => {
       footprint: b.footprint,
     })),
   };
+}
+
+const asteroids = SHAPES.map((shape) => rock(shape, false));
+
+// A resource rock stands on its plain shape's base: the footprints must match exactly.
+const resources = RESOURCES.map((shape) => {
+  const entry = rock(shape, true);
+  const plain = asteroids.find(({ id }) => id === shape.shape)!;
+  const same =
+    entry.footprintRadius === plain.footprintRadius &&
+    entry.frames.every(
+      (frame, k) => JSON.stringify(frame.footprint) === JSON.stringify(plain.frames[k]!.footprint),
+    );
+  if (!same) throw new Error(`${shape.id} footprints differ from ${shape.shape}`);
+  return entry;
 });
 
 const white = "#FFFFFF";
@@ -729,10 +893,23 @@ writeFileSync(
   ),
 );
 
-// The root manifest names the asteroid data next to the other data files.
+// Each `rocks[i]` has the `asteroids[i]` schema; `ore` is the crystals' ramp.
+const resourcePath = `${art}resource-rocks.json`;
+writeFileSync(
+  resourcePath,
+  await format(
+    json({ version: 1, displayScale: DISPLAY, stone: STONE, ore: ORE, rocks: resources }),
+    {
+      ...(await resolveConfig(resourcePath)),
+      filepath: resourcePath,
+    },
+  ),
+);
+
+// The root manifest names the asteroid and resource rock data next to the other data files.
 const manifestPath = `${art}manifest.json`;
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-if (manifest.asteroids !== "/art/asteroids.json") {
-  manifest.asteroids = "/art/asteroids.json";
-  writeFileSync(manifestPath, json(manifest));
+const links = { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" };
+if (Object.entries(links).some(([key, path]) => manifest[key] !== path)) {
+  writeFileSync(manifestPath, json({ ...manifest, ...links }));
 }

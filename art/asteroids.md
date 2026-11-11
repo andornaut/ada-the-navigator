@@ -7,7 +7,9 @@ scenery: greyscale sprites tinted per galaxy at runtime.
 - Rebuild with `node art/tools/asteroids.ts`. It writes one SVG per frame to
   `public/art/asteroids/`, writes [asteroids.json](../public/art/asteroids.json)
   (formatted with the project's Prettier settings) and links it from the root
-  manifest as `asteroids`. Reruns are byte-identical.
+  manifest as `asteroids`. It also writes the [resource rocks](#resource-rocks)
+  and [resource-rocks.json](../public/art/resource-rocks.json), linked as
+  `resourceRocks`. Reruns are byte-identical.
 - The models are seeded, so a shape changes only when its seed, aspect, width or
   class rules change in the generator.
 - The build reads the field colours from
@@ -294,7 +296,59 @@ more (0.991 or more from medium up), and no boundary lies more than 1 frame px
 from the drawing in either direction. Parts per frame: 1 to 4 for small, 1 to 6
 for medium, 3 to 8 for large and 4 to 8 for huge.
 
-## Not yet drawn
+## Resource rocks
 
-Resource rocks (medium and large shapes with a distinct resource inset) need
-their own mock-up before they join this set.
+Cartwheel's resource rocks are every medium and large shape with a cluster of
+teal ore crystals on its crown: three crystals on a medium rock, five on a
+large one. The crystals change the silhouette as well as the colour, so a
+resource rock reads apart from plain stone at 1x without relying on hue.
+
+- Each `resource-{shape}` uses its plain `asteroid-{shape}`'s seed, aspect,
+  width and scale, so its base ring, `footprint` parts and `footprintRadius`
+  are identical frame for frame; the build fails if they differ. Collide on
+  the footprints exactly as for asteroids.
+- Medium rocks spin through the same 24 frames as medium asteroids; large
+  rocks have one still frame. Drift data is the class's, as for asteroids.
+- The cluster grows from the crown facets nearest the highest one, each
+  crystal tilted out along its facet's normal and never leaning down-screen
+  past the rock. Seat facets under the cluster take the ore shadow tones. The
+  cluster turns with the rock, lit by the same world light.
+- Ore ramp (`ore`), lit to shadow: `#9EE5DD`, `#65C9BF`, `#4EADA4`,
+  `#3E9189` and `#347770`, built around the palette's `active` signal (tone 1)
+  at Oklab L steps +0.1, 0, -0.085, -0.17 and -0.25, so the crystals read as
+  the same ore as the [ore nugget](cartwheel-props.md#ore-nugget) and the hub.
+- HP and pieces are Gameplay values (medium 3 HP and 3 pieces, large 5 and 5,
+  two medium for every large), listed here for reference.
+
+Resource rock SVGs keep the `viewBox` in frame px and declare their display
+size (frame times 0.4375) as `width` and `height`, so they rasterize at the
+size they are drawn: load them without the `displayScale` load scale that the
+plain asteroid SVGs, which declare frame size, take.
+
+| Rock          | Plain shape   | Size   | Frames | Frame (display px) | Footprint radius | Footprint parts | Collision parts | Drawn radius (display px) |
+| ------------- | ------------- | ------ | -----: | ------------------ | ---------------: | --------------: | --------------: | ------------------------: |
+| `resource-m1` | `asteroid-m1` | medium |     24 | 103.25 by 79.19    |            31.43 |               2 |         2 to 13 |                      55.2 |
+| `resource-m2` | `asteroid-m2` | medium |     24 | 106.75 by 72.19    |             32.2 |               3 |         4 to 14 |                      53.7 |
+| `resource-m3` | `asteroid-m3` | medium |     24 | 111.13 by 90.56    |               33 |               4 |         4 to 13 |                      65.2 |
+| `resource-m4` | `asteroid-m4` | medium |     24 | 114.63 by 74.38    |             33.8 |               2 |         4 to 11 |                      57.0 |
+| `resource-l1` | `asteroid-l1` | large  |      1 | 154 by 120.31      |            58.28 |               5 |              13 |                      84.7 |
+| `resource-l2` | `asteroid-l2` | large  |      1 | 158.38 by 94.94    |            61.01 |               4 |              11 |                      90.4 |
+| `resource-l3` | `asteroid-l3` | large  |      1 | 179.38 by 112.44   |            61.37 |               3 |               3 |                      96.1 |
+
+Frames are taller than the plain shapes' (the crystals rise above the crown),
+so the pivot fraction differs while the pivot itself stays the base centre.
+
+The drawn silhouettes follow [Collision](#collision). Checked against the
+rendered SVGs at 4 px per frame px, with enclosed background between crossing
+crystals (at most 1.31 frame px²) filled as the traced outline drops it:
+intersection over union 0.991 or more, and no boundary more than 1 frame px
+from the drawing except one 1.35 px pocket between two crystals in
+`resource-m3` frame 14. The drawn silhouette is for drawing bounds only; hits
+use the footprints.
+
+`resource-rocks.json`, version 1: `displayScale`, `stone`, `ore` and `rocks`.
+Each `rocks[i]` has the `asteroids[i]` schema ([Data](#data)), so the asteroid
+reader parses it unchanged. It is its own file because the asteroid catalog is
+bundled into the app at import, and Cartwheel's rocks need not ship with every
+galaxy, and because its SVGs declare display size where the plain asteroid
+SVGs declare frame size.

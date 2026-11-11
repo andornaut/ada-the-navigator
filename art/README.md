@@ -6,7 +6,9 @@ sector one enemy ships and their [destruction](destruction.md), the galaxy one
 [heavies](heavies.md) with destructible hardpoints and aimed turrets, the
 [station](station.md), the [outposts and discovery cache](outposts.md),
 Cartwheel's [hub, mooring buoy and story craft](cartwheel.md),
-[asteroids and backdrop rocks](asteroids.md), [Stardust](stardust.md),
+[asteroids, resource rocks and backdrop rocks](asteroids.md), the
+[Cartwheel props](cartwheel-props.md) (traveling debris, the ore nugget,
+stranded craft and the tow line), [Stardust](stardust.md),
 [the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
@@ -60,10 +62,11 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost, Cartwheel, asteroid and whale SVGs are deterministic
-exports from `art/tools/ship.ts`, `art/tools/enemies.ts`, `art/tools/station.ts`,
-`art/tools/outposts.ts`, `art/tools/cartwheel.ts`, `art/tools/asteroids.ts` and
-`art/tools/whales.ts`, with the heavies' layered
+Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid and whale SVGs are
+deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
+`art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/cartwheel.ts`,
+`art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts` and `art/tools/whales.ts`, with the
+heavies' layered
 sprites from `art/tools/heavies.ts`; edit the generators and
 regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
