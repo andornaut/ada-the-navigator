@@ -103,8 +103,10 @@ saved: a scene interrupted midway restarts from its first page.
 ### Cockpit and galaxy selection
 
 The cockpit is retro-futurist: 1960s ideas of the future with 1980s and 1990s
-technology details, about the size of a closet, under a large glass canopy with a
-view all around. It resembles a convertible's interior: two seats side by side
+technology details, about the size of a closet, under a blue canopy: an opaque dome
+from outside that Ada sees through from within. Pages aboard picture the ship
+from outside, and Astra speaks through a lamp on the hull ridge that glows while
+she talks. It resembles a convertible's interior: two seats side by side
 for Ada and Penny, with a little room to walk around behind them. Ada pilots
 from the port seat, with Penny on the starboard seat. Every quantum jump uses one
 jump effect; Astra's emergency jump when the shield fails tints it red. Jumping

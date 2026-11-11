@@ -10,8 +10,9 @@ completion.
 
 Plays once, on first launch, around chapter one's home opening. Panel title:
 The Glowing Rock.
-In the cockpit, Ada and Penny stand (the empty cockpit) from their arrival through
-the optional questions; from "Ada sits in the pilot's chair and buckles Penny in
+Cockpit pages picture the ship from outside, so the text carries whether Ada and
+Penny stand or sit. They stand from their arrival through the optional questions;
+from "Ada sits in the pilot's chair and buckles Penny in
 beside her." onward they are seated. Boarding in later chapters, Continue and
 galaxy selection always show them seated.
 A replayed chapter one opening uses the boarding panels instead.
@@ -51,7 +52,7 @@ Ada's room, rock glowing:
 The cockpit, standing:
 
 - Narration: "Light swirls around Ada and Penny. When it fades, they are standing
-  in a tiny cockpit under a glass canopy. Outside, colors shimmer like nowhere at
+  in a tiny cockpit under a blue dome. Through it, colors shimmer like nowhere at
   all."
 - Narration: "Penny's tail thumps. She sniffs the two seats as if she has been
   here before."
