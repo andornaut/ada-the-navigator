@@ -57,6 +57,8 @@ export class StoryShell {
     const focusedChoice = active?.dataset.choice;
     this.panel.replaceChildren();
     this.panel.hidden = state.mode === "space" && !state.dialogue;
+    // Prologue and boarding panels are text-only; the context hook awaits Art's Astra and cockpit.
+    this.panel.dataset.context = state.dialogue?.context.split(":")[0] ?? "";
     if (state.dialogue) {
       const heading = document.createElement("h2");
       heading.textContent = state.dialogue.title;

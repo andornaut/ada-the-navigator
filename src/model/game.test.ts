@@ -9,13 +9,14 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { playOpening } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(model: GameModel, sector: SectorId = 1) {
   model.startSector(sector);
   if (model.state.dialogue?.context === "opening") {
-    model.choose("0");
+    playOpening(model);
   }
 }
 function arrive(model: GameModel, id: string) {
@@ -79,7 +80,7 @@ describe("prototype story and persistence", () => {
     for (const choice of ["0", "1"]) {
       const model = new GameModel(PROTOTYPE);
       model.startSector(1);
-      model.choose(choice);
+      playOpening(model, choice);
       introduce(model, "growers");
       talk(model, "workshop");
       expect(model.state.progress[1].questItem).toBe("toolkit");

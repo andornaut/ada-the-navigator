@@ -9,6 +9,7 @@ import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationById, stationInCell, type StationSite, stationsNear } from "./stations.ts";
+import { playOpening } from "./test-launch.ts";
 import type { FlightInput, FlightState, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -41,7 +42,7 @@ function atStation(seed = 5): FlightState {
 function launched(): GameModel {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   const flight = model.state.flight!;
   flight.player = { x: site.x, y: site.y + 200 };
   model.step(1 / 60, idle);

@@ -4,6 +4,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { playOpening } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const first = { 1: "growers", 2: "hub", 3: "whale" } as const;
@@ -12,7 +13,7 @@ function approach(sector: SectorId) {
   const model = new GameModel(PROTOTYPE);
   model.state.unlocked = [1, 2, 3];
   model.startSector(sector);
-  model.choose("0");
+  playOpening(model);
   const flight = model.state.flight!;
   flight.objects = [];
   const target = ensureDestination(PROTOTYPE, first[sector], flight);

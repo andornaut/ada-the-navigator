@@ -5,13 +5,14 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
+import { playOpening } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function launched(): GameModel {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   model.state.flight!.objects = [];
   return model;
 }
@@ -50,7 +51,7 @@ describe("grant all weapons", () => {
     expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "basic" });
     model.returnHome();
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["basic"]);
   });
 

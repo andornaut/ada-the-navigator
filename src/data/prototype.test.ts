@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { CHEAT_COPY } from "./cheat-copy.ts";
 import { PROTOTYPE } from "./prototype.ts";
 
-const playerText = JSON.stringify([PROTOTYPE.chapters, PROTOTYPE.labels, CHEAT_COPY]);
+const playerText = JSON.stringify([
+  PROTOTYPE.chapters,
+  PROTOTYPE.labels,
+  PROTOTYPE.premise,
+  CHEAT_COPY,
+]);
 
 describe("player text", () => {
   it("calls each story area a galaxy, never a sector", () => {
@@ -16,6 +21,11 @@ describe("player text", () => {
 
   it("calls Ada's home home or Earth and never names her city", () => {
     expect(playerText).not.toMatch(/toronto/i);
+  });
+
+  it("names Ada's dog Penny; Archie is only the sibling game", () => {
+    expect(playerText).not.toMatch(/archie/i);
+    expect(PROTOTYPE.premise.prologue[0]?.text).toMatch(/^On a walk with Penny, /);
   });
 
   it("names the ship's mind Astra", () => {

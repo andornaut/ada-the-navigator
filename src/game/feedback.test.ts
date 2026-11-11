@@ -5,12 +5,13 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy } from "../model/enemy-ai.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
+import { playOpening } from "../model/test-launch.ts";
 import { ModelFeedback } from "./feedback.ts";
 
 function launched() {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   const feedback = new ModelFeedback();
   feedback.observe(100, model.state);
   return { feedback, flight: model.state.flight!, state: model.state };

@@ -76,6 +76,7 @@ export class GameModel {
       mode: "home",
       notice: "",
       progress: { 1: progress(), 2: progress(), 3: progress() },
+      prologueSeen: false,
       selectedSector: 1,
       unlocked: [1],
       version: 1,
@@ -635,7 +636,21 @@ export class GameModel {
       return;
     }
     if (dialogue.context === "opening") {
+      if (this.state.prologueSeen) {
+        const { speaker, text } = this.content.premise.boarding;
+        this.panel("boarding", text, speaker);
+      } else {
+        this.prologue(0, 0);
+      }
+      return;
+    }
+    if (dialogue.context === "boarding") {
       this.launch();
+      return;
+    }
+    const prologue = /^prologue(-answer)?:(\d+):(\d+)$/.exec(dialogue.context);
+    if (prologue) {
+      this.continuePrologue(Boolean(prologue[1]), Number(prologue[2]), Number(prologue[3]), id);
       return;
     }
     if (dialogue.context === "resolution") {
@@ -648,6 +663,48 @@ export class GameModel {
       return;
     }
     this.state.dialogue = null;
+  }
+  /**
+   * Shows prologue step `index`. `asked` is a bit mask of the step's optional questions
+   * already answered, which leave its choices.
+   */
+  private prologue(index: number, asked: number): void {
+    const step = this.content.premise.prologue[index];
+    if (!step) {
+      return;
+    }
+    const questions = (step.questions ?? [])
+      .map(({ question }, i) => ({ id: `ask:${i}`, label: question }))
+      .filter((_, i) => (asked & (1 << i)) === 0);
+    this.state.dialogue = {
+      choices: [...questions, { id: "continue", label: step.choice ?? this.label("continue") }],
+      context: `prologue:${index}:${asked}`,
+      text: step.text,
+      title: step.speaker ?? this.label("home"),
+    };
+  }
+  private continuePrologue(answer: boolean, index: number, asked: number, id: string): void {
+    const steps = this.content.premise.prologue;
+    const step = steps[index];
+    const question = /^ask:(\d+)$/.exec(id);
+    const answered = question ? step?.questions?.[Number(question[1])] : undefined;
+    if (!step) {
+      this.state.dialogue = null;
+    } else if (answer) {
+      this.prologue(index, asked);
+    } else if (answered && question) {
+      this.state.dialogue = {
+        choices: [{ id: "continue", label: this.label("continue") }],
+        context: `prologue-answer:${index}:${asked | (1 << Number(question[1]))}`,
+        text: answered.answer,
+        title: step.speaker ?? this.label("home"),
+      };
+    } else if (index + 1 < steps.length) {
+      this.prologue(index + 1, 0);
+    } else {
+      this.state.prologueSeen = true;
+      this.launch();
+    }
   }
   save(): string {
     this.pullLoadout();

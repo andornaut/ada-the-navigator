@@ -1,3 +1,4 @@
+import { PREMISE } from "./premise-copy.ts";
 import { SHIP_PHYSICS } from "./ship-physics.ts";
 import type { PrototypeContent } from "./types.ts";
 export const PROTOTYPE: PrototypeContent = {
@@ -299,6 +300,7 @@ export const PROTOTYPE: PrototypeContent = {
     weaponTripleLaser: "Triple Laser",
     weaponUpgrade: "{weapon} upgrade",
   },
+  premise: PREMISE,
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
     chunkSize: 512,

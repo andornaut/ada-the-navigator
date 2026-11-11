@@ -259,6 +259,8 @@ try {
   events.checks.push("Desktop canvas preserves the 720x360 EXPAND base and pixel-art scaling");
 
   await page.locator('[data-action="start-sector"][data-sector="1"]').click();
+  // A first launch plays the opening, then the prologue; the last choice always moves on.
+  const launchPanels = [];
   async function enterFlight(remaining) {
     await page.waitForFunction(
       () =>
@@ -268,11 +270,25 @@ try {
     if (await page.locator('#game-status[data-mode="space"]').count()) {
       return;
     }
-    assert.ok(remaining > 0, "Sector launch must reach space within the opening dialogue");
-    await page.locator('[data-action="dialogue-choice"]').first().click();
+    assert.ok(remaining > 0, "Galaxy launch must reach space within the opening and prologue");
+    const context = await page.locator(".story-panel").getAttribute("data-context");
+    if (context === "prologue" && !launchPanels.includes(context)) {
+      await page.screenshot({ path: `${output}/prologue.png` });
+    }
+    launchPanels.push(context);
+    await page.locator('[data-action="dialogue-choice"]').last().click();
     await enterFlight(remaining - 1);
   }
-  await enterFlight(4);
+  await enterFlight(12);
+  assert.ok(
+    launchPanels.length > 2 &&
+      launchPanels[0] === "opening" &&
+      launchPanels.slice(1).every((context) => context === "prologue"),
+    "A first launch plays the opening, then the prologue panels",
+  );
+  events.checks.push(
+    "A first launch plays the opening, then the prologue, then galaxy one's flight",
+  );
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   const position = () =>
     page.locator("#game-status").evaluate((element) => ({
@@ -367,10 +383,11 @@ try {
   assert.deepEqual(returned.progress, onLanding.progress);
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
-  const [{ GameModel }, { PROTOTYPE }, { ensureDestination }] = await Promise.all([
+  const [{ GameModel }, { PROTOTYPE }, { ensureDestination }, { playOpening }] = await Promise.all([
     import(new URL("../src/model/game.ts", import.meta.url)),
     import(new URL("../src/data/prototype.ts", import.meta.url)),
     import(new URL("../src/model/flight.ts", import.meta.url)),
+    import(new URL("../src/model/test-launch.ts", import.meta.url)),
   ]);
   async function seedOnce(value, marker) {
     // The old app's pagehide save runs before this one-shot seed on the new document.
@@ -387,7 +404,7 @@ try {
   }
   const safeInput = new GameModel(PROTOTYPE);
   safeInput.startSector(1);
-  safeInput.choose("0");
+  playOpening(safeInput);
   Object.assign(safeInput.state.progress[1], {
     introduced: true,
     stage: 1,
@@ -1042,7 +1059,7 @@ try {
   const cargoModel = new GameModel(PROTOTYPE);
   cargoModel.state.unlocked = [1, 2];
   cargoModel.startSector(2);
-  cargoModel.choose("0");
+  playOpening(cargoModel);
   Object.assign(cargoModel.state.progress[2], { introduced: true, stage: 1, known: ["hub"] });
   ensureDestination(PROTOTYPE, "hub", cargoModel.state.flight);
   cargoModel.teleport("hub");
@@ -1080,7 +1097,7 @@ try {
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
   const fixture = new GameModel(PROTOTYPE);
   fixture.startSector(1);
-  fixture.choose("0");
+  playOpening(fixture);
   assert.ok(fixture.state.flight, "The real model must create a valid flight");
   Object.assign(fixture.state.progress[1], {
     stage: 4,
@@ -1130,7 +1147,7 @@ try {
   function combatFixture(archetype, offset, missile) {
     const combat = new GameModel(PROTOTYPE);
     combat.startSector(1);
-    combat.choose("0");
+    playOpening(combat);
     assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
     const flight = combat.state.flight;
     combat.state.progress[1].introduced = true;

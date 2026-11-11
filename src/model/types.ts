@@ -150,6 +150,8 @@ export interface GameState {
   docked: string | null;
   economy: EconomyState;
   notice: string;
+  /** The prologue plays once; saves already past the start count it as seen. */
+  prologueSeen: boolean;
 }
 export type FlightEvent =
   | { type: "depleted" }

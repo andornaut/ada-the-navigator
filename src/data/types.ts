@@ -14,8 +14,27 @@ export interface ChapterContent {
   dialogue: Readonly<Record<string, { speaker: string; text: string; optional?: string }>>;
 }
 
+/** A dialogue panel; narration has no speaker. */
+export interface PremiseLine {
+  speaker?: string;
+  text: string;
+}
+/** A prologue panel. Its choice replaces Continue; its optional questions never gate progress. */
+export interface PrologueStep extends PremiseLine {
+  choice?: string;
+  questions?: readonly { question: string; answer: string }[];
+}
+/** Ada, Astra and the ship between chapters. */
+export interface PremiseContent {
+  /** The boarding line before each later chapter's jump. */
+  boarding: Required<PremiseLine>;
+  /** Plays once, after galaxy one's home opening and before the first flight. */
+  prologue: readonly PrologueStep[];
+}
+
 export interface PrototypeContent {
   chapters: Readonly<Record<SectorId, ChapterContent>>;
+  premise: PremiseContent;
   labels: Readonly<Record<string, string>>;
   /** Install steps for browsers that install only from their own menu. */
   installSteps: Readonly<Record<"firefoxAndroid" | "ios", { title: string; steps: string }>>;

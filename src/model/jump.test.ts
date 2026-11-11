@@ -6,6 +6,7 @@ import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
+import { playOpening } from "./test-launch.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
 
@@ -16,7 +17,7 @@ const anyStation = () => stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!;
 function launched(): GameModel {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   model.state.flight!.objects = [];
   return model;
 }
@@ -132,7 +133,7 @@ describe("quantum jump home", () => {
     flight.levels.weapons.missiles = 3;
     deplete(model);
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     model.state.flight!.objects = [];
     expect(model.state.flight!.levels.weapons.missiles).toBe(0);
     pickup(model.state.flight!, "missiles");
@@ -195,7 +196,7 @@ describe("shop through the model", () => {
     model.undock();
     model.returnHome();
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["basic", "missiles"]);
     expect(model.state.economy.stardust).toBe(250);
   });

@@ -5,6 +5,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
+import { playOpening } from "./test-launch.ts";
 import type { FlightState, GameState, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {
@@ -12,7 +13,7 @@ describe("save boundary", () => {
     const model = new GameModel(PROTOTYPE);
     expect(restoreSave(model.save())).toEqual(model.state);
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     const restored = restoreSave(model.save());
     expect(restored).toEqual(model.state);
     expect(restored?.flight).not.toBe(model.state.flight);
@@ -20,7 +21,7 @@ describe("save boundary", () => {
   it("rejects truncated, corrupt and unsupported data without throwing", () => {
     const model = new GameModel(PROTOTYPE);
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     for (const change of [
       { version: 2 },
       { flight: {} },
@@ -50,7 +51,7 @@ describe("save boundary", () => {
 function combatSnapshot() {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   if (!model.state.flight) {
     throw new Error("Expected launched flight");
   }

@@ -293,6 +293,17 @@ function migrateEconomy(state: GameState): void {
     flight.dockId ??= null;
   }
 }
+/** Saves from before the prologue skip it once any story or flight has begun. */
+function pastStart(state: GameState): boolean {
+  return (
+    state.mode === "space" ||
+    state.flight !== null ||
+    state.unlocked.length > 1 ||
+    Object.values(state.progress).some(
+      (p) => p.stage > 0 || p.introduced || p.questComplete || p.resolved || p.known.length > 0,
+    )
+  );
+}
 function boundedLevel(value: unknown, max: number): boolean {
   return Number.isInteger(value) && nonnegative(value) && Number(value) <= max;
 }
@@ -341,6 +352,7 @@ function stationIds(sector: SectorId, value: unknown): boolean {
  * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
  * from before the economy gain an empty economy (or their flight's weapons), no
  * discovered stations and no weapon lock; their unused ammunition count is dropped.
+ * Saves from before the prologue count it as seen once play has begun.
  */
 export function restoreSave(saved: unknown): GameState | null {
   try {
@@ -362,7 +374,10 @@ export function restoreSave(saved: unknown): GameState | null {
     ) {
       return null;
     }
-    if (typeof value.notice !== "string") {
+    if (
+      typeof value.notice !== "string" ||
+      (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean")
+    ) {
       return null;
     }
     for (const id of [1, 2, 3]) {
@@ -527,6 +542,9 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     const restored = structuredClone(value) as unknown as GameState;
     migrateEconomy(restored);
+    if (typeof value.prologueSeen !== "boolean") {
+      restored.prologueSeen = pastStart(restored);
+    }
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);
       Object.values(restored.flight.world.notables).forEach(restoreOrientation);

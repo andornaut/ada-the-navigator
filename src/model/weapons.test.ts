@@ -5,13 +5,14 @@ import type { Weapon } from "../data/types.ts";
 import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
+import { playOpening } from "./test-launch.ts";
 import type { FlightState } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(): GameModel {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   model.state.flight!.objects = [];
   return model;
 }
@@ -114,7 +115,7 @@ describe("owned unlimited weapons", () => {
     expect(model.state.flight).toBeNull();
     expect(model.state.progress[1].deposited).toBe(42);
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
       { id: "basic", locked: false, selected: true },

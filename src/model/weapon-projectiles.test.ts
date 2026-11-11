@@ -7,12 +7,13 @@ import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { projectileOpacity } from "./player-projectiles.ts";
 import { restoreSave } from "./save.ts";
+import { playOpening } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(weapon: Weapon) {
   const model = new GameModel(PROTOTYPE);
   model.startSector(1);
-  model.choose("0");
+  playOpening(model);
   const flight = model.state.flight!;
   flight.objects = [];
   flight.shots = [];

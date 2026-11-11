@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import { GameModel } from "../model/game.ts";
+import { playOpening } from "../model/test-launch.ts";
 import { readSave, writeSave } from "./persistence.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -23,7 +24,7 @@ describe("browser save boundary", () => {
     expect(writeSave(model.save())).toBe(true);
     blocked = true;
     model.startSector(1);
-    model.choose("0");
+    playOpening(model);
     expect(writeSave(model.save())).toBe(false);
     expect(new GameModel(PROTOTYPE, readSave()).state.mode).toBe("home");
     const before = { ...model.state.flight!.player };
