@@ -21,8 +21,8 @@ import {
   stardustPillRight,
   viewScale,
 } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
-import { stickRestCentres, stickTargets, TOUCH_STICK } from "./touchControls.ts";
+import { SPACING, TYPE } from "./tokens.ts";
+import { stickRestCentres, stickTargets, TOUCH_STICK, USE_BUTTON } from "./touchControls.ts";
 import { playLayout, uncoveredInsets, viewProperties } from "./viewScale.ts";
 
 describe("view scale", () => {
@@ -194,6 +194,29 @@ describe("HUD anchors", () => {
     expect(719 - (clear.aim.x + 36)).toBe(100);
     expect(359 - (clear.move.y + 36)).toBe(30);
     expect(TOUCH_STICK).toMatchObject({ bottom: 20, frame: 75, knobReach: 12, side: 85 });
+  });
+
+  it("give the Use button an action-high HUD face level with the sticks, in a hitAround area", () => {
+    expect(USE_BUTTON).toMatchObject({
+      border: HUD_BUTTON.border,
+      bottom: TOUCH_STICK.bottom,
+      height: TEXT_BUTTON.height,
+      inset: TEXT_BUTTON.inset,
+      margin: CONTROL_EDGE,
+      radius: HUD_BUTTON.radius,
+      text: TYPE.label,
+    });
+    // Any face at least as wide as it is high grows by the same margin on every side.
+    for (const width of [USE_BUTTON.minWidth, 80, 200]) {
+      const face = { height: USE_BUTTON.height, width, x: 0, y: 0 };
+      expect(hitAround(face)).toEqual({
+        height: face.height + 2 * USE_BUTTON.pressMargin,
+        width: face.width + 2 * USE_BUTTON.pressMargin,
+        x: -USE_BUTTON.pressMargin,
+        y: -USE_BUTTON.pressMargin,
+      });
+    }
+    expect(USE_BUTTON.pressMargin).toBe(12);
   });
 
   it("put each stick's DOM target over its ring's frame", () => {

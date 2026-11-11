@@ -7,11 +7,11 @@ import {
   writeSetting,
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
-import { CONTROL_ROW, NINE_SLICE_EDGES, TEXT_BUTTON } from "./layout/controls.ts";
+import { CONTROL_ROW, NINE_SLICE_EDGES } from "./layout/controls.ts";
 import { font, safeEdge, units, viewStyle } from "./layout/css.ts";
 import { HUD_BUTTON, SAFE_MARGIN, SHIELD_BAR } from "./layout/playView.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { TOUCH_STICK } from "./layout/touchControls.ts";
+import { TYPE } from "./layout/tokens.ts";
+import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import {
   createActions,
@@ -191,15 +191,32 @@ ${viewStyle(NINE_SLICE_EDGES)}
    drawn bottom edge. */
 .ada-controls .ada-use{
   position:absolute;
-  left:50%;
-  bottom:${safeEdge("bottom", TOUCH_STICK.bottom)};
+  left:calc((${safeEdge("left", USE_BUTTON.margin)} + 100% - ${safeEdge(
+    "right",
+    USE_BUTTON.margin,
+  )}) / 2);
+  bottom:${safeEdge("bottom", USE_BUTTON.bottom)};
   transform:translateX(-50%);
-  max-width:calc(100% - 2 * ${units(SPACING.pageInset)});
-  min-width:${units(TEXT_BUTTON.height)};
-  min-height:${units(TEXT_BUTTON.height)};
-  padding:0 ${units(TEXT_BUTTON.inset)};
-  border-width:${units(HUD_BUTTON.border)};
-  border-radius:${units(HUD_BUTTON.radius)}
+  box-sizing:border-box;
+  max-width:calc(100% - ${safeEdge("left", USE_BUTTON.margin)} - ${safeEdge(
+    "right",
+    USE_BUTTON.margin,
+  )});
+  min-width:${units(USE_BUTTON.minWidth)};
+  height:${units(USE_BUTTON.height)};
+  min-height:${units(USE_BUTTON.height)};
+  padding:0 ${units(USE_BUTTON.inset - USE_BUTTON.border)};
+  border-width:${units(USE_BUTTON.border)};
+  border-radius:${units(USE_BUTTON.radius)};
+  font:${font(USE_BUTTON.text)};
+  white-space:nowrap
+}
+
+/* The Use button's press area: hitAround its face. */
+.ada-controls .ada-use::after{
+  content:"";
+  position:absolute;
+  inset:${units(-USE_BUTTON.pressMargin)}
 }
 
 .ada-controls .ada-use:focus-visible{${FOCUS_STYLE}

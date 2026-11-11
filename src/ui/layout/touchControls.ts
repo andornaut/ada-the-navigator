@@ -2,7 +2,10 @@ import type { Point, Rect } from "@andornaut/game-kit/rect";
 
 import type { StickSide } from "../../input/state.ts";
 import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
-import type { Insets, Size } from "./playView.ts";
+import { TEXT_BUTTON } from "./controls.ts";
+import { hitMargin } from "./hitAreas.ts";
+import { CONTROL_EDGE, HUD_BUTTON, type Insets, type Size } from "./playView.ts";
+import { TYPE } from "./tokens.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
 // frames, each ring's drawn edge max(side, inset) in from the view's left (move) or right (aim)
@@ -30,6 +33,24 @@ export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<St
     move: { x: Math.ceil(Math.max(TOUCH_STICK.side, insets.left)) + DRAWN_HALF, y },
   };
 }
+
+// The context Use button (art/layout.md "HUD and overlays", Use), shown only while an interaction
+// is available: an action-high face with the HUD button's border and radius, its label in the
+// label role, as wide as the label plus the action inset each side (at least one face high);
+// centred across the HUD safe rect, its bottom level with the sticks' drawn bottom,
+// max(bottom, inset); its press area hitAround(face) reaches pressMargin past it.
+const USE_FACE: Rect = { height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 };
+export const USE_BUTTON = {
+  border: HUD_BUTTON.border,
+  bottom: TOUCH_STICK.bottom,
+  height: USE_FACE.height,
+  inset: TEXT_BUTTON.inset,
+  margin: CONTROL_EDGE,
+  minWidth: USE_FACE.width,
+  pressMargin: hitMargin(USE_FACE),
+  radius: HUD_BUTTON.radius,
+  text: TYPE.label,
+} as const;
 
 // Each joystick's DOM pointer target: the ring's frame over its rest centre pixel.
 export function stickTargets(view: Size, insets: Insets): Readonly<Record<StickSide, Rect>> {
