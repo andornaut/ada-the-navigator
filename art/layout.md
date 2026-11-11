@@ -202,7 +202,7 @@ moves both sides in alike and the HUD and the sticks mirror exactly.
 | HUD rect   | Sides `mirroredSide(insets, HUD_EDGE, view)` in from each view edge; top `ceil(max(12, inset top))`; bottom `min(348, view bottom - ceil(max(12, inset bottom)))` | The lines the top controls' drawn art meets (its top corners); the sticks and Use anchor to the same game area with their own offsets          | `hudRect(insets, view)`, `HUD_EDGE`, `playView.ts` (Chibi `topShift`)                         |
 | HUD button | Target 48, disc 33, selected annulus 4, glyph 20, gap 8; pitch 56                                                                                                 | Chibi's `SKILL_BUTTON`; the disc equals the pause disc; gap = `CONTROL_EDGE`; pitch = target + gap, between neighbours                         | `HUD_BUTTON` = `{ target, disc, annulus, glyph, gap }`, `playView.ts`                         |
 | HUD row    | Targets reach 7.5 (the disc inset) past the HUD rect's top and right; centre line HUD rect top + 16.5; targets' bottom HUD rect top + 40.5                        | The outermost disc's drawn edge and every disc's drawn top sit on the rect; the pause disc, the discs, the pill and Skip share the centre line | `HUD_ROW` = `{ reach, centre, bottom }`, `playView.ts`                                        |
-| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 4                                                                                            | Opaque ink pill on the disc's lower edge; at least 4 above the conversation name tab (11.5)                                                    | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
+| Count pill | 14 high, radius 4, padding 4, top 40 below the target top, clearance 5                                                                                            | Opaque ink pill on the disc's lower edge; the conversation box top sits the clearance below its bottom                                         | `HUD_AMMO_COUNT` = `{ height, radius, padding, top, clearance }`, `playView.ts`, to implement |
 
 | Screen, CSS px | Insets, logical   | Logical view | Play view x | HUD rect left, right, top |
 | -------------- | ----------------- | ------------ | ----------- | ------------------------- |
@@ -229,7 +229,7 @@ left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
 | Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `HUD_BUTTON`, `playView.ts`                                                         |
 | Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)`, one pitch (56) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`        |
-| Conversation | In-flight dialogue box below the weapon row: name tab top HUD rect top + 58 (`HUD_BUTTON.target` + `CONVERSATION_BOX.tab.clearance`, 70 at a top of 12, 17.5 below the weapon targets' bottom), box top 10 lower (80), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                       | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                              |
+| Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 51.5 (63.5 at a top of 12), name tab top 10 higher (53.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                 | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                              |
 
 Overlap rules:
 
@@ -241,12 +241,13 @@ Overlap rules:
   the pill may reach 358.75 wide, a count up to 169.75 wide ("999,999,999" is
   89), and "1,234,567" leaves 114.57. With the pause button hidden the pill
   starts at 43 and may reach 409.5.
-- The weapon count pills end at HUD rect top + 46.5 (58.5), 11.5 above the
-  name tab top; they stay inside their targets' columns (the widest, "999m",
-  is 38.69 of 48), so they add nothing to the clusters' horizontal clearance.
-- The Stardust `+N` label stays above the conversation box: its 20 line ends
-  at HUD rect top + 54.5 (66.5), the name tab top is HUD rect top + 58 (70)
-  and the box top HUD rect top + 68 (80).
+- The weapon count pills end at HUD rect top + 46.5 (58.5), 5 above the
+  conversation box top; they stay inside their targets' columns (the widest,
+  "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
+  clearance.
+- The Stardust `+N` label's 20 line ends at HUD rect top + 54.5 (66.5), 3
+  below the box top (HUD rect top + 51.5) and 13 below the name tab top (+
+  41.5); see [Tab clearance](#tab-clearance).
 - Press areas may reach past the HUD rect into a side inset (the pause press
   area 9.75, the outermost weapon target 7.5); drawn art never does.
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
@@ -257,8 +258,8 @@ Overlap rules:
   Escape. While a modal card or storybook page shows, the flight pause button
   hides and the HUD takes no input under the dim. The conversation box is not modal: the
   pause button, weapons and sticks stay visible and live beside it.
-- The conversation box's bottom (140) sits at least 24 above the ship's drawn
-  top at the 360-high view (28.17).
+- The conversation box's bottom (123.5) sits at least 24 above the ship's drawn
+  top at the 360-high view (44.67).
 
 ### Status pill
 
@@ -324,10 +325,10 @@ ammunition count string; Basic shows none.
 | Vertical | Spans HUD rect top + 32.5 to + 46.5 (44.5 to 58.5); overlaps the disc's lower edge (+ 33) by 0.5; digit ink from + 35.3 to + 43.8, wholly below the disc            |
 | Layer    | A child of the weapon button, drawn over the disc; it takes no input and moves with the button's shake                                                              |
 
-- Position rule: the pill overlaps the disc's lower edge by 0.5 and keeps at
-  least `HUD_AMMO_COUNT.clearance` (4) above the conversation name tab. Its
-  bottom is HUD rect top + 46.5, 11.5 above the tab top (HUD rect top + 58).
-  Its lower 6 lie below the target, outside the press area.
+- Position rule: the pill overlaps the disc's lower edge by 0.5. Its bottom
+  is HUD rect top + 46.5, and the conversation box top sits
+  `HUD_AMMO_COUNT.clearance` (5) below it. Its lower 6 lie below the target,
+  outside the press area.
 - Count strings fit one line at every value: the widest pill (38.69) leaves
   9.31 inside the 48 target and 17.31 between neighbouring pills.
 
@@ -508,24 +509,26 @@ In-flight dialogue: one line at a time from one speaker, over live flight.
 Constants: `CONVERSATION_BOX`, `conversationBox.ts`, to implement. Colours are in
 [Controls](controls.md#conversation-box); portraits are in
 [Conversation portraits](conversation.md). Chibi's dialogue panel uses the same
-values with its own sprites and fonts.
+values with its own sprites and fonts, and the same vertical rule: the box top
+sits 5 below the lowest drawn art of the top-right HUD row (Ada's count pills)
+and the name tab overhangs it by 10.
 
-| Token          | Value                                                                                          | Rule                                                                                                             |
-| -------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                  |
-| Tab top        | HUD rect top plus `HUD_BUTTON.target` plus `CONVERSATION_BOX.tab.clearance` (10)               | HUD rect top + 48 + 10 = 58, so 70 without a top inset; the same rule in both games, whose top buttons stay live |
-| Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 68, so 80 without a top inset                                                                     |
-| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                       |
-| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                         |
-| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                              |
-| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                              |
-| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                    |
-| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                       |
-| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                                       |
-| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                                         |
-| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                                       |
-| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                           |
-| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end              |
+| Token          | Value                                                                                          | Rule                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)       |
+| Top            | The count pills' bottom plus `HUD_AMMO_COUNT.clearance` (5) (`CONVERSATION_BOX.top`)           | HUD rect top `- 7.5 + 40 + 14 + 5` = + 51.5, so 63.5 without a top inset; the same rule in both games |
+| Tab top        | Box top minus `CONVERSATION_BOX.tab.overhang` (10)                                             | HUD rect top + 41.5, so 53.5 without a top inset                                                      |
+| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                            |
+| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                              |
+| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                   |
+| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                   |
+| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                         |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                            |
+| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                            |
+| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                              |
+| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                            |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                |
+| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end   |
 
 - The tab draws over the panel's top edge. Its 10 inside the panel sit above
   the text block's top line box, so it never covers text.
@@ -546,15 +549,57 @@ values with its own sprites and fonts.
   (Gameplay's rule).
 - Both sides use the same left-aligned text column; the frame and the tab
   change ends with the speaker.
-- The tab top (70) clears the weapon press areas (52.5) by 17.5, the weapon
-  count pills (58.5) by 11.5, the pause press area (54.75) by 15.25 and the
-  Stardust `+N` label (66.5) by 3.5.
-- Clearance at the 360-high view: the box bottom is at 140. The ship's pivot
-  sits at the view centre (180) with a 42 display frame; its highest drawn hull
-  point across the 32 headings is 168.17 (heading 4, the apex), 28.17 below the
-  box. The rule is at least 24.
-- At the 1280x720 view (720x405 logical) the box bottom is still 140 and the
-  hull top 190.67, 50.67 below.
+- Clearance at the 360-high view: the box spans 63.5 to 123.5. The ship's
+  pivot sits at the view centre (180) with a 42 display frame; its highest
+  drawn hull point across the 32 headings is 168.17 (heading 4, the apex),
+  44.67 below the box. The rule is at least 24.
+- At the 1280x720 view (720x405 logical) the box bottom is still 123.5 and the
+  hull top 190.67, 67.17 below.
+
+#### Tab clearance
+
+The tab spans HUD rect top + 41.5 to + 61.5 (53.5 to 73.5). Vertically it
+clears the status pill (bottom + 30.5) by 11, the weapon discs (bottom + 33)
+by 8.5 and the weapon targets (bottom + 40.5) by 1. It shares rows with the
+count pills (+ 32.5 to + 46.5, 5 of overlap), the pause press area (to +
+42.75, 1.25) and the `+N` line (+ 34.5 to + 54.5, 13). Across, with the box
+centred and 480 wide, the tab is `tab.inset` 8 inside its end: Ada's (the
+right end, "Ada" 42.23 wide) and the widest left-end tab ("General Gadget"
+131.15). Count pills are 14.67 to 38.69 wide, centred on their discs at target
+left + 24; Basic is the leftmost button and shows none. The `+N` line centres
+on the count, which starts at the pill's left + 181.
+
+| View                  | Box              | Ada's tab        | Weapon targets 2 and 1 (count pill centres) | Left tab, widest | Pause press right | `+N` at count "0" (touch; desktop) |
+| --------------------- | ---------------- | ---------------- | ------------------------------------------- | ---------------- | ----------------- | ---------------------------------- |
+| 720x360, 1280x720     | 120 to 600       | 549.77 to 592    | 555.5 to 603.5 (579.5); 611.5 (635.5)       | 128 to 259.15    | 54.75             | 238.1 to 258.3; 187.3 to 207.6     |
+| 720x360, phone insets | 120 to 600       | 549.77 to 592    | 524.5 to 572.5 (548.5); 580.5 (604.5)       | 128 to 259.15    | 85.75             | 269.1 to 289.3; 218.3 to 238.6     |
+| 844x390               | 149.54 to 629.54 | 579.31 to 621.54 | 585.58 to 633.58 (609.58); 641.58 (665.58)  | 157.54 to 288.69 | 83.75             | 267.1 to 287.3; 216.3 to 236.6     |
+| 844x390, insets 43    | 149.54 to 629.54 | 579.31 to 621.54 | 583.58 to 631.58 (607.58); 639.58 (663.58)  | 157.54 to 288.69 | 85.75             | 269.1 to 289.3; 218.3 to 238.6     |
+
+- Weapon disc columns and Ada's tab: the tab clears the discs and targets
+  vertically, but crosses weapon target 2's column at every view (at the 720
+  base 549.77 to 592 against 555.5 to 603.5), so with four or more weapons
+  that column's count pill (at least 572.17 to 586.83) overlaps the tab by 5
+  vertically. With phone insets at 720x360 target 1's pill (centre 604.5) also
+  reaches the tab once it is wider than 25 (a three-digit count). Target 3's
+  column clears the tab by 2.27 (720), 1.73 (844x390) and 3.73 (844x390 with
+  insets).
+- Pause press area: at least 42.25 left of every tab (128 against 85.75).
+- `+N` line and left-end tabs: at the 720 base on touch, "General Gadget"
+  (to 259.15) and "Unknown voice" (to 257.35) overlap a `+N` at a short count;
+  on desktop, where the pill starts at the HUD rect's left, every left-end tab
+  but "Astra" and "Miner" overlaps. At 844x390 on touch "Whale family" (to
+  267.34) overlaps too, by 0.26; with phone insets at 720x360 the touch `+N`
+  starts at 269.08 and clears every tab. The `+N` line also overlaps the box
+  panel's top by 3.
+- Open, a placement decision: the smallest fix is to keep the tab and the box
+  out of the pill and `+N` rows across rather than move the box. Ada's tab
+  takes the left end, inset past her portrait frame (`4 + 52 + 8` = 64 from
+  the panel's left: 184 to 226.23 at the 720 base), clear of every weapon
+  column; and the `+N` label moves onto the status pill's row,
+  `SPACING.markGap` right of the pill (line box HUD rect top + 6.5 to + 26.5),
+  which clears every tab and the box, at the cost of 6 plus the label's width
+  from the pill's widest count.
 
 ### Galaxy selector
 
@@ -654,9 +699,10 @@ Tests:
   is hidden; its centre is the HUD row's centre line; with four weapons at
   720x360 and phone insets, the pill at a 169.75-wide count keeps
   `SPACING.pageInset` from the leftmost weapon target.
-- `HUD_AMMO_COUNT`'s bottom keeps at least `HUD_AMMO_COUNT.clearance` above the
-  conversation name tab top at every HUD rect top (11.5); the "999m" pill is
-  narrower than the target and centred on the disc.
+- The conversation box top equals `HUD_AMMO_COUNT`'s bottom plus
+  `HUD_AMMO_COUNT.clearance` (5) at every HUD rect top, and the name tab top
+  is 10 above it; the "999m" pill is narrower than the target and centred on
+  the disc.
 - `hudRect` matches the HUD rect table at 720x360, 844x390 (without insets,
   with both insets and with a left notch), 1280x720 and 1920x1080; the pause
   disc and every weapon disc lie inside `playView` inset by `HUD_EDGE`.
