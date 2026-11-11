@@ -83,12 +83,11 @@ describe("station placement", () => {
   });
 
   it.each([1, 2, 3] as const)(
-    "keeps sector %i stations rare, 8000 apart and off the start",
+    "keeps sector %i stations one per 12000 cell, 8000 apart and off the start",
     (sector) => {
       const found = sites(sector);
-      // About half of the 961 cells, so a station roughly every 12000 units.
-      expect(found.length).toBeGreaterThan(380);
-      expect(found.length).toBeLessThan(580);
+      // Every one of the 961 cells holds a station clear of the start.
+      expect(found).toHaveLength(961);
       for (const [index, first] of found.entries()) {
         expect(Math.hypot(first.x, first.y)).toBeGreaterThanOrEqual(
           ECONOMY.station.originClearance,
@@ -105,10 +104,52 @@ describe("station placement", () => {
     expect(stationsNear(ECONOMY, 1, 10, { x: site.x + 20, y: site.y })).toEqual([]);
   });
 
-  it("keeps stations at least 8000 apart so existing saves keep their stations", () => {
+  it("fills every cell at least 8000 apart on the existing grid", () => {
     const { cellSize, jitter } = ECONOMY.station;
     expect(cellSize - jitter).toBeGreaterThanOrEqual(8000);
-    expect(ECONOMY.station).toMatchObject({ cellSize: 12000, chance: 0.5, jitter: 4000 });
+    expect(ECONOMY.station).toMatchObject({ cellSize: 12000, chance: 1, jitter: 4000 });
+  });
+
+  it("keeps every station from the half-occupied grid in place, so saves keep their stations", () => {
+    const half = { ...ECONOMY, station: { ...ECONOMY.station, chance: 0.5 } };
+    for (const sector of [1, 2, 3] as const) {
+      let kept = 0;
+      let added = 0;
+      for (let x = -15; x <= 15; x++) {
+        for (let y = -15; y <= 15; y++) {
+          const before = stationInCell(half, sector, { x, y });
+          const now = stationInCell(ECONOMY, sector, { x, y });
+          if (before) {
+            expect(now).toEqual(before);
+            expect(stationById(ECONOMY, sector, before.id)).toEqual(before);
+            kept++;
+          } else if (now) {
+            added++;
+          }
+        }
+      }
+      expect(kept).toBeGreaterThan(300);
+      expect(added).toBeGreaterThan(300);
+    }
+  });
+
+  it("places the same stations in flights of every seed", () => {
+    for (const sector of [1, 2, 3] as const) {
+      for (const seed of [1, 7, 99, 4242]) {
+        const flight = createFlight(PROTOTYPE, sector, seed, { known: [] });
+        const expected = stationInCell(ECONOMY, sector, { x: 2, y: 1 })!;
+        flight.player = { x: expected.x + 600, y: expected.y };
+        stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+        const placed = flight.objects.filter((object) => object.kind === "station");
+        expect(placed.map((station) => station.id)).toContain(expected.id);
+        for (const station of placed) {
+          expect(stationById(ECONOMY, sector, station.id)).toMatchObject({
+            x: station.x,
+            y: station.y,
+          });
+        }
+      }
+    }
   });
 
   it("marks the nearest undiscovered station within 1500 for the direction indicator", () => {

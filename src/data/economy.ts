@@ -184,7 +184,8 @@ export const ECONOMY: EconomyCatalog = {
   stardustPickupRadius: 5,
   station: {
     cellSize: 12000,
-    chance: 0.5,
+    // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
+    chance: 1,
     destinationClearance: 1200,
     // Gameplay's forgiving dock: the mouth circle's radius scaled up for docking.
     dockForgiveness: 3,
