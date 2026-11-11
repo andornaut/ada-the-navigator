@@ -25,6 +25,7 @@ const progress: SectorProgress = {
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,
+  donated: {},
   holodisk: false,
   introduced: false,
   known: [],

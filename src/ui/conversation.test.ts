@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { SPEAKERS } from "../data/conversations.ts";
 import {
+  AWAITING_ART,
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
   portraitFrame,
@@ -80,7 +81,12 @@ describe("conversation box style", () => {
       expect(css.get(`.ada-conversation[data-speaker="${speaker}"] .ada-conversation-name`)).toBe(
         `background:${TAB_COLOURS[speaker as keyof typeof TAB_COLOURS]}`,
       );
-      expect(COMPACT_PORTRAITS).toHaveProperty(speaker);
+      // A speaker Art has not drawn yet has no sheet until it lands.
+      if ((AWAITING_ART as readonly string[]).includes(speaker)) {
+        expect(COMPACT_PORTRAITS).not.toHaveProperty(speaker);
+      } else {
+        expect(COMPACT_PORTRAITS).toHaveProperty(speaker);
+      }
     }
     for (const sheet of Object.values(COMPACT_PORTRAITS)) {
       const asset = MANIFEST.assets.find(({ path }) => path === sheet.url);

@@ -2,6 +2,7 @@ import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { PROJECTS } from "../data/projects.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -387,6 +388,7 @@ function migrateEconomy(state: GameState): void {
   state.docked ??= null;
   for (const progress of Object.values(state.progress)) {
     progress.stations ??= [];
+    progress.donated ??= {};
   }
   if (flight) {
     delete flight.ammo;
@@ -556,6 +558,21 @@ function economyState(value: unknown): value is EconomyState {
     value.paints.includes(value.paint)
   );
 }
+/** Each paid amount is a whole number of Stardust toward one of the galaxy's projects, at most its cost. */
+function donations(sector: SectorId, value: unknown): boolean {
+  return (
+    record(value) &&
+    Object.entries(value).every(([id, paid]) => {
+      const project = PROJECTS[sector].find((entry) => entry.id === id);
+      return (
+        project !== undefined &&
+        Number.isInteger(paid) &&
+        nonnegative(paid) &&
+        Number(paid) <= project.cost
+      );
+    })
+  );
+}
 function stationIds(sector: SectorId, value: unknown): boolean {
   return (
     strings(value) &&
@@ -625,6 +642,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
         (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
+        (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean")
       ) {

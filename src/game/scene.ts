@@ -612,12 +612,23 @@ export class PrototypeScene extends Phaser.Scene {
         text: amount(this.model.state.economy.stardust),
       }),
       buy: (key) => apply(() => this.model.buy(item(key))),
+      // A project row's key is its project id after "project:".
+      donate: (key) => {
+        let result: "paid" | "refused" = "refused";
+        apply(() => {
+          result = this.model.donate(key.slice("project:".length)).kind;
+        });
+        return result;
+      },
       labels: {
         close: label("close"),
         confirmBuy: label("confirmBuy"),
         confirmCancel: label("confirmCancel"),
+        donate: label("donate"),
         inUse: label("inUse"),
         owned: label("owned"),
+        projectFunded: label("projectFunded"),
+        projects: label("projects"),
         shipPaint: label("shipPaint"),
         shop: label("shop"),
         shopShip: label("shopShip"),
@@ -626,6 +637,7 @@ export class PrototypeScene extends Phaser.Scene {
         stationWelcome: label("stationWelcome"),
         undock: label("undock"),
       },
+      projectsShown: () => this.model.projects !== null,
       reducedMotion: () => this.controls.reducedMotion(),
       request: (key) => {
         const request = this.model.requestPurchase(item(key));
@@ -640,9 +652,20 @@ export class PrototypeScene extends Phaser.Scene {
             };
       },
       rows: (tab) =>
-        this.model
-          .shopRows(tab)
-          .map((row) => stationRow(ECONOMY, labels, this.model.state.economy.stardust, row)),
+        tab === "projects"
+          ? (this.model.projects ?? []).map((project) => ({
+              donate: true,
+              glyph: { kind: "blank" },
+              group: "items",
+              key: `project:${project.id}`,
+              level: fill(label("projectProgress"), { paid: project.paid, price: project.cost }),
+              name: project.name,
+              price: null,
+              state: project.funded ? "owned" : "forSale",
+            }))
+          : this.model
+              .shopRows(tab)
+              .map((row) => stationRow(ECONOMY, labels, this.model.state.economy.stardust, row)),
       select: (key) => {
         const chosen = item(key);
         if (chosen.kind === "paint") {

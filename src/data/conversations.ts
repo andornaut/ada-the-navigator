@@ -3,7 +3,17 @@ import type { SectorId } from "./types.ts";
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
 // gameplay/player-copy.md "In-flight conversations" and the General's broadcasts).
 
-export type Speaker = "ada" | "astra" | "general" | "penny";
+export type Speaker =
+  | "ada"
+  | "astra"
+  | "general"
+  | "grower"
+  | "miner"
+  | "penny"
+  | "salvager"
+  | "station"
+  | "whaleFamily"
+  | "workshop";
 
 /**
  * Highest first: a warning (the General's broadcasts among them), then a first-flight lesson,
@@ -28,6 +38,7 @@ export type ConversationTrigger =
   | { readonly kind: "drones" }
   | { readonly kind: "general"; readonly sector: SectorId }
   | { readonly kind: "quiet"; readonly sector: SectorId }
+  | { readonly kind: "funded"; readonly project: string }
   | { readonly kind: "penny" };
 
 /** Ada's and Penny's portrait moods; a line that names none shows neutral. */
@@ -61,7 +72,14 @@ export const SPEAKERS: Readonly<
   astra: { name: "Astra", side: "right" },
   // Until the Whirlpool holodisk is inserted; see GENERAL_NAMED.
   general: { name: "Unknown voice", side: "right" },
+  // The community projects' thank-you speakers (gameplay/economy.md "Donations").
+  grower: { name: "Grower", side: "right" },
+  miner: { name: "Miner", side: "right" },
   penny: { name: "Penny", side: "right" },
+  salvager: { name: "Salvager", side: "right" },
+  station: { name: "Station", side: "right" },
+  whaleFamily: { name: "Whale family", side: "right" },
+  workshop: { name: "Workshop", side: "right" },
 };
 
 /** The General's name tab once the Whirlpool holodisk is inserted. */

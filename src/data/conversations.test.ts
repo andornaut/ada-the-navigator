@@ -139,7 +139,13 @@ describe("in-flight conversations", () => {
       ["ada", "left"],
       ["astra", "right"],
       ["general", "right"],
+      ["grower", "right"],
+      ["miner", "right"],
       ["penny", "right"],
+      ["salvager", "right"],
+      ["station", "right"],
+      ["whaleFamily", "right"],
+      ["workshop", "right"],
     ]);
   });
 

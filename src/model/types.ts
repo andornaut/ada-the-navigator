@@ -138,6 +138,8 @@ export interface SectorProgress {
   holodisk: boolean;
   /** The chapter's home opening has played; old scenes never replay. */
   opened: boolean;
+  /** Stardust paid toward each of the galaxy's community projects, by project id. */
+  donated: Record<string, number>;
 }
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;

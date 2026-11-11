@@ -7,6 +7,7 @@ import {
 } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
@@ -34,6 +35,15 @@ import {
   questItemDestination,
 } from "./indicators.ts";
 import { type GalaxyMap, galaxyMap, NO_LANDMARKS } from "./map.ts";
+import {
+  donate,
+  type DonationResult,
+  projectAllies,
+  projectsOffered,
+  type ProjectView,
+  projectViews,
+  worldChanges,
+} from "./projects.ts";
 import { restoreSave } from "./save.ts";
 import {
   buy,
@@ -82,6 +92,7 @@ export function newProgress(): SectorProgress {
     deposited: 0,
     disabledEnemies: 0,
     discoveries: 0,
+    donated: {},
     holodisk: false,
     introduced: false,
     known: [],
@@ -170,7 +181,10 @@ export class GameModel {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
     this.startShown = this.state.mode === "home";
-    this.talk = new ConversationDirector(CONVERSATIONS, this.state.seenConversations);
+    this.talk = new ConversationDirector(
+      [...CONVERSATIONS, ...PROJECT_THANKS],
+      this.state.seenConversations,
+    );
     if (this.state.mode === "space" && this.state.flight) {
       this.beginConversations();
     }
@@ -418,6 +432,45 @@ export class GameModel {
     const result = buy(ECONOMY, item, this.state.economy);
     this.pushLoadout();
     return result;
+  }
+  /**
+   * The docked galaxy's community projects with their progress, or null where none are offered:
+   * outside a station, or before the galaxy's chapter is complete (projects.ts).
+   */
+  get projects(): ProjectView[] | null {
+    const sector = this.state.flight?.sector;
+    if (!this.state.docked || !sector || !projectsOffered(this.state.progress[sector])) {
+      return null;
+    }
+    return projectViews(PROJECTS[sector], this.state.progress[sector]);
+  }
+  /**
+   * One Donate press toward a docked galaxy's project. Funding the last part closes the station
+   * card and queues the speaker's thank-you line in the conversation box.
+   */
+  donate(id: string): DonationResult {
+    const sector = this.state.flight?.sector;
+    if (!this.state.docked || !sector) {
+      return { kind: "refused" };
+    }
+    const economy = this.state.economy;
+    const result = donate(PROJECTS[sector], this.state.progress[sector], economy.stardust, id);
+    if (result.kind === "paid") {
+      economy.stardust -= result.amount;
+      if (result.funded) {
+        this.undock();
+        this.talk.thank(id);
+      }
+    }
+    return result;
+  }
+  /** Each galaxy's allies for the Black Eye finale, one per funded project. */
+  allies(sector: SectorId): ReturnType<typeof projectAllies> {
+    return projectAllies(PROJECTS[sector], this.state.progress[sector]);
+  }
+  /** Each galaxy's world changes at their sites, one per funded project (projects.ts). */
+  worldChanges(sector: SectorId): ReturnType<typeof worldChanges> {
+    return worldChanges(PROJECTS[sector], this.state.progress[sector]);
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);

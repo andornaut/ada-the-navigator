@@ -1,4 +1,4 @@
-import type { Mood } from "../data/conversations.ts";
+import type { Mood, Speaker } from "../data/conversations.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { FOCUS_STYLE } from "./modal.ts";
@@ -18,7 +18,7 @@ export interface ConversationLineView {
   /** Whether the General's tab reads his name. */
   readonly named: boolean;
   readonly side: "left" | "right";
-  readonly speaker: keyof typeof COMPACT_PORTRAITS;
+  readonly speaker: Speaker;
   readonly text: string;
   readonly desktop?: string;
 }
@@ -44,6 +44,19 @@ export const COMPACT_PORTRAITS = {
   },
 } as const;
 
+// The community projects' thank-you speakers, whom Art has not drawn yet.
+// CLEANUP (added 2026-11-11): until Art gives them compact portraits and tab colours, their frame
+// stays empty and their tab takes the unnamed General's neutral fill.
+export const AWAITING_ART = [
+  "grower",
+  "miner",
+  "salvager",
+  "station",
+  "whaleFamily",
+  "workshop",
+] as const;
+const AWAITING_TAB = "#b8b3c9";
+
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
 
@@ -65,6 +78,10 @@ export function portraitFrame(
   if (line.speaker === "ada" || line.speaker === "penny") {
     const moods: Readonly<Partial<Record<Mood, number>>> = COMPACT_PORTRAITS[line.speaker].moods;
     return moods[line.mood] ?? moods.neutral!;
+  }
+  // A speaker Art has not drawn has no sheet; its frame stays empty.
+  if ((AWAITING_ART as readonly string[]).includes(line.speaker)) {
+    return 0;
   }
   if (line.speaker === "astra") {
     return loop(COMPACT_PORTRAITS.astra.speaking);
@@ -91,7 +108,8 @@ export const TAB_COLOURS = {
   general: "#b8b3c9",
   generalNamed: "#d68b72",
   penny: "#feae34",
-} as const;
+  ...Object.fromEntries(AWAITING_ART.map((speaker) => [speaker, AWAITING_TAB])),
+} as Readonly<Record<string, string>>;
 
 const TAB_RULES = Object.entries(TAB_COLOURS)
   .map(([speaker, colour]) =>

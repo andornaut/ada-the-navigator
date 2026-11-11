@@ -325,8 +325,11 @@ export interface StationLabels {
   readonly close: string;
   readonly confirmBuy: string;
   readonly confirmCancel: string;
+  readonly donate: string;
   readonly inUse: string;
   readonly owned: string;
+  readonly projectFunded: string;
+  readonly projects: string;
   readonly shipPaint: string;
   readonly shop: string;
   readonly shopShip: string;
@@ -336,7 +339,7 @@ export interface StationLabels {
   readonly undock: string;
 }
 
-export type StationTab = "weapons" | "ship";
+export type StationTab = "projects" | "ship" | "weapons";
 
 /**
  * How a row answers a tap: forSale opens the confirm, unaffordable refuses, selectable
@@ -346,12 +349,18 @@ export type StationRowState = "forSale" | "unaffordable" | "selectable" | "owned
 
 /** An item's glyph (art/shop-icons.md). */
 export type ItemGlyph =
+  | { readonly kind: "blank" }
   | { readonly kind: "sprite"; readonly key: string }
   | { readonly kind: "upgrade"; readonly weapon: Weapon }
   | { readonly kind: "swatch"; readonly path: string };
 
 /** One shop row as shown; `key` names the item to the caller. */
 export interface StationRow {
+  /**
+   * A community project's row: Donate pays a part at each press with no confirm, and a funded
+   * one (owned) shows Funded.
+   */
+  readonly donate?: boolean;
   readonly glyph: ItemGlyph;
   /** The paint group follows the item group on the Ship tab. */
   readonly group: "items" | "paint";
@@ -376,6 +385,10 @@ export interface StationOptions {
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
+  /** One Donate press toward a project row; a refused press plays the refusal cue. */
+  readonly donate: (key: string) => "paid" | "refused";
+  /** Whether the Projects tab shows: once the galaxy's projects are offered. */
+  readonly projectsShown: () => boolean;
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
   readonly request: (key: string) => StationRequest;
@@ -412,6 +425,13 @@ export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
 }
 
 function glyphElement(glyph: ItemGlyph): HTMLElement {
+  // CLEANUP (added 2026-11-11): a project's well is blank until Art draws project icons.
+  if (glyph.kind === "blank") {
+    const node = document.createElement("span");
+    node.className = "ada-glyph";
+    node.setAttribute("aria-hidden", "true");
+    return node;
+  }
   if (glyph.kind === "swatch") {
     const image = document.createElement("img");
     image.className = "ada-glyph-swatch";
@@ -512,6 +532,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   for (const [id, label] of [
     ["weapons", labels.shopWeapons],
     ["ship", labels.shopShip],
+    ["projects", labels.projects],
   ] as const) {
     const button = createButton(label);
     button.setAttribute("role", "tab");
@@ -551,6 +572,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let open = false;
   let view: "card" | "shop" = "card";
   let tab: StationTab = "weapons";
+  // The tabs the shop shows: Projects joins Weapons and Ship once the galaxy offers projects.
+  const shownTabs = (): StationTab[] =>
+    options.projectsShown() ? ["weapons", "ship", "projects"] : ["weapons", "ship"];
   let confirm: { key: string } | null = null;
 
   const renderBalances = (): void => {
@@ -579,7 +603,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const slot = document.createElement("span");
     slot.className = "ada-shop-slot";
     const trailing = document.createElement("span");
-    if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
+    if (row.donate) {
+      trailing.className = "ada-owned";
+      trailing.textContent = row.state === "owned" ? labels.projectFunded : labels.donate;
+    } else if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
       trailing.className = "ada-owned";
       trailing.textContent = row.state === "inUse" ? labels.inUse : labels.owned;
     } else {
@@ -593,6 +620,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       [row.name, row.level, trailing.textContent].filter(Boolean).join(", "),
     );
     node.addEventListener("click", () => {
+      if (row.donate) {
+        if (row.state === "owned") {
+          return;
+        }
+        if (options.donate(row.key) === "refused") {
+          refuse(node, options.reducedMotion());
+        }
+        render();
+        return;
+      }
       const action = rowAction(row.state);
       if (action === "select") {
         options.select(row.key);
@@ -645,7 +682,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
     const measure = document.createElement("div");
     measure.className = "ada-shop-list ada-shop-measure";
-    const tabsContent = (["weapons", "ship"] as const).map((id) => {
+    const tabsContent = shownTabs().map((id) => {
       const holder = document.createElement("div");
       holder.className = "ada-shop-list";
       holder.append(...tabContent(id));
@@ -678,7 +715,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
 
   const renderShop = (): void => {
+    if (!shownTabs().includes(tab)) {
+      tab = "weapons";
+    }
     for (const [id, button] of tabButtons) {
+      button.hidden = !shownTabs().includes(id);
       button.classList.toggle("ada-primary", id === tab);
       button.setAttribute("aria-selected", String(id === tab));
     }

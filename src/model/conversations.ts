@@ -196,6 +196,11 @@ export class ConversationDirector {
     this.sector = null;
   }
 
+  /** A funded project's thank-you line, which waits its turn in the queue. */
+  thank(project: string): void {
+    this.request((trigger) => trigger.kind === "funded" && trigger.project === project);
+  }
+
   /** A tap on the box: the next line, or after the last, the box closes. */
   advance(): void {
     if (this.active) {
