@@ -68,11 +68,21 @@ a brief boarding line, then chooses a galaxy.
 
 Earth scenes are storybook pages. Each page has a full background of a place,
 colorful but low contrast, with no landmarks or signs naming the city, and its
-text or dialogue in a readable panel at the bottom. Next turns the page and
-Previous returns to the previous page in the scene; Previous is disabled on a
-scene's first page. A page that ends in a named action, such as "Pick up the
-rock.", shows that action in place of Next. Skip is always visible and goes to the
-end of the scene, taking the default path through any choices. Choice buttons are
+text or dialogue in a readable panel at the bottom.
+
+A story run is every Earth and cockpit page shown in a row between two points of
+play: it starts when Ada leaves the start screen, a flight or galaxy selection,
+and ends at galaxy selection or on Ada's room page with its named action. Next
+turns one page. Previous returns to the page shown before, across scene
+boundaries within the run, and is disabled only on the run's first page. A page
+that ends in a named action, such as "Pick up the rock.", shows that action in
+place of Next. Skip passes every remaining page and scene of the run, taking the
+default path through choices and leaving optional questions unasked, and stops
+where play resumes: galaxy selection when the run leads aboard, or Ada's room
+page with its named action. Skip shows on every page except that room page and
+the sleep scene. A scene's effects (a chapter opened or resolved, the prologue
+seen) apply as the scene ends; Previous back into an ended scene does not undo
+them. Choice buttons are
 all secondary, with focus on the first. A choice page offers
 two or three choices; each leads to one or two branch pages and then rejoins the
 main story, so choices never change a chapter's resolution. The first choice is
