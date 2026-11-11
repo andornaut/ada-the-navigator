@@ -990,6 +990,41 @@ function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState):
  * flight: hunters on a seeded side of the destination, or its far side when that side holds
  * the route guard. Members are retained like route guards and chase as one pack.
  */
+/**
+ * A Whirlpool hunting pack of `count` fighters around a centre, kept with the flight. A pack
+ * placed again under its id replaces its members.
+ */
+export function placeHuntingPack(
+  content: PrototypeContent,
+  packId: string,
+  centre: Vec,
+  count: number,
+  flight: FlightState,
+): void {
+  flight.objects = flight.objects.filter(
+    (object) => object.kind !== "enemy" || object.enemy?.packId !== packId,
+  );
+  activateFlightRegion(content, centre, flight);
+  for (let i = 0; i < count; i++) {
+    const phase = (i * Math.PI * 2) / count;
+    const member = spawnEnemy(
+      content,
+      flight.sector,
+      HUNTING_PACKS.archetype,
+      `${packId}:${i}`,
+      {
+        x: centre.x + Math.cos(phase) * HUNTING_PACKS.spread,
+        y: centre.y + Math.sin(phase) * HUNTING_PACKS.spread,
+      },
+      packId,
+      phase,
+    );
+    member.persistent = true;
+    flight.objects.push(member);
+  }
+  combat(flight).initialPackSizes[packId] = count;
+}
+
 export function ensureHuntingPacks(content: PrototypeContent, flight: FlightState): void {
   if (!HUNTING_PACKS.sectors.includes(flight.sector)) {
     return;
@@ -1018,27 +1053,7 @@ export function ensureHuntingPacks(content: PrototypeContent, flight: FlightStat
     if (guard && distance(guard, at(angle)) < HUNTING_PACKS.guardGap) {
       angle += Math.PI;
     }
-    const centre = at(angle);
-    activateFlightRegion(content, centre, flight);
-    const packId = `hunt:${destination.id}`;
-    for (let i = 0; i < count; i++) {
-      const phase = (i * Math.PI * 2) / count;
-      const member = spawnEnemy(
-        content,
-        flight.sector,
-        HUNTING_PACKS.archetype,
-        `${packId}:${i}`,
-        {
-          x: centre.x + Math.cos(phase) * HUNTING_PACKS.spread,
-          y: centre.y + Math.sin(phase) * HUNTING_PACKS.spread,
-        },
-        packId,
-        phase,
-      );
-      member.persistent = true;
-      flight.objects.push(member);
-    }
-    combat(flight).initialPackSizes[packId] = count;
+    placeHuntingPack(content, `hunt:${destination.id}`, at(angle), count, flight);
     placed.push(destination.id);
   }
 }

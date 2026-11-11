@@ -5,6 +5,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { ART_MANIFEST as manifest } from "./test-art-manifest.ts";
 import {
+  familyMembers,
   readWhaleArt,
   type WhaleFrame,
   whaleFrameAsset,
@@ -92,5 +93,15 @@ describe("whale art", () => {
         assets.filter((asset) => asset.id !== "whale-calf-3-5"),
       ),
     ).toBeUndefined();
+  });
+
+  it("omits the family's calf while it is guided, keeping the others, and restores it on return", () => {
+    const kinds = (away: boolean) => familyMembers(away, art.family).map(({ kind }) => kind);
+    expect(art.family.map(({ kind }) => kind)).toContain("calf");
+    expect(kinds(true)).not.toContain("calf");
+    expect(familyMembers(true, art.family)).toEqual(
+      art.family.filter(({ kind }) => kind !== "calf"),
+    );
+    expect(kinds(false)).toEqual(art.family.map(({ kind }) => kind));
   });
 });

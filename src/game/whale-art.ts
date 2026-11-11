@@ -136,6 +136,17 @@ export function readWhaleArt<T extends WhaleFrame>(
   return { family, kinds, reducedFrame: reduced as number };
 }
 
+/**
+ * The family members drawn at the family destination: all of them, or without the `calf` while
+ * it is away being guided, so a calf never shows twice (art/whales.md "Placement").
+ */
+export function familyMembers(
+  calfAway: boolean,
+  family: WhaleArt["family"],
+): WhaleArt["family"][number][] {
+  return family.filter(({ kind }) => !calfAway || kind !== "calf");
+}
+
 /** A stable start phase per whale, so a family never beats in step. */
 export function whalePhase(id: string, loopMs: number): number {
   let n = 2166136261;

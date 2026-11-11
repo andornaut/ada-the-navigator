@@ -96,7 +96,7 @@ function take(model: GameModel, type: HeldJob["type"]): HeldJob {
   expect(offer).toBeDefined();
   expect(model.acceptJob(offer!.id)).toBe("accepted");
   model.undock();
-  return structuredClone(model.state.tasks[1]!);
+  return structuredClone(model.state.tasks[1] as HeldJob);
 }
 /** Places Ada at a point at rest with a full shield, out of danger, and steps once. */
 function flyTo(model: GameModel, point: Vec, input = idle): void {
@@ -582,7 +582,7 @@ describe("jobs in play", () => {
       x: held.target.x + Math.cos(away) * 899,
       y: held.target.y + Math.sin(away) * 899,
     });
-    expect(model.state.tasks[1]?.entered).toBe(true);
+    expect((model.state.tasks[1] as HeldJob | undefined)?.entered).toBe(true);
     expect(model.indicatorTargets.some(({ kind }) => kind === "job")).toBe(false);
     flyTo(model, { x: spot.x + 161, y: spot.y });
     expect(model.jobScenery.glint).toBeNull();
@@ -648,7 +648,7 @@ describe("jobs in play", () => {
     badLandmark.progress[1].charted = ["landmark:1:99"];
     expect(restoreSave(badLandmark)).toBeNull();
     const badJob = structuredClone(saved);
-    badJob.tasks[1]!.station = "station:nowhere";
+    (badJob.tasks[1] as HeldJob).station = "station:nowhere";
     expect(restoreSave(badJob)).toBeNull();
   });
 

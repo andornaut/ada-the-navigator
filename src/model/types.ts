@@ -1,3 +1,4 @@
+import type { ActivityId } from "../data/activities.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { JobType } from "../data/jobs.ts";
@@ -132,6 +133,8 @@ export interface FlightState {
   dockId: string | null;
   /** The towed craft's position while a rescue job's tow line is attached. */
   tow?: Vec;
+  /** Guide a calf's calf in this flight, once placed at its start (model/calf.ts). */
+  calf?: GuidedCalf;
   fireCooldown: number;
   objects: SpaceObject[];
   shots: Shot[];
@@ -169,6 +172,8 @@ export interface SectorProgress {
   explored: string[];
   /** A story ship scene cut short by the end of a flight, replayed at the hub. */
   replayScene?: StorySceneId;
+  /** Guides of the calf accepted so far, which seed the next calf's start; absent before one. */
+  guides?: number;
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {
@@ -199,11 +204,27 @@ export interface HeldJob extends JobOffer {
   /** Ada has entered a hunt's search area. */
   entered?: boolean;
 }
-/**
- * A galaxy's one optional task, by kind: a held station job. Other optional task kinds join the
- * union and share the slot.
- */
-export type OptionalTask = HeldJob;
+/** An accepted repeatable activity (data/activities.ts) and how far it has come. */
+export interface HeldActivity {
+  kind: "activity";
+  id: ActivityId;
+  /** The story place that offered it. */
+  place: string;
+  reward: number;
+  /** A mining contract's resources deposited at the hub since accepting. */
+  deposited?: number;
+  /** A supply run's item is aboard; a lost one is replaced through Talk at the issuer. */
+  carrying?: boolean;
+  /** A guide's calf start, as an offset from the family. */
+  start?: Vec;
+}
+/** The guided calf: where it is, how it moves and whether it follows Ada. */
+export interface GuidedCalf extends Vec {
+  following: boolean;
+  velocity: Vec;
+}
+/** A galaxy's one optional task: a held station job or an accepted repeatable activity. */
+export type OptionalTask = HeldActivity | HeldJob;
 export interface JobsState {
   /** Each station's offers in slot order, by galaxy and station id. */
   boards: Partial<Record<SectorId, Record<string, JobOffer[]>>>;

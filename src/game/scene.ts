@@ -164,6 +164,7 @@ import {
   paintFrames,
   selectPaintedShipAsset,
   type ShipAsset,
+  shipDirection,
   thrustFrames,
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
@@ -182,6 +183,7 @@ import {
   hubBayKey,
   hubBuoyKey,
   hubStoryKey,
+  partKey,
   spriteOwner,
   staleSpriteKeys,
 } from "./sprite-keys.ts";
@@ -227,6 +229,7 @@ import {
   type TaperShape,
 } from "./weapon-effects.ts";
 import {
+  familyMembers,
   readWhaleArt,
   type WhaleArt,
   whaleFrameAsset,
@@ -357,6 +360,8 @@ export class PrototypeScene extends Phaser.Scene {
   private strandedCraft: ReadonlyMap<string, StrandedCraftArt<Asset>> = new Map();
   private towInk!: Phaser.GameObjects.Graphics;
   private towSprite!: Phaser.GameObjects.Image;
+  // The guided calf's heading, kept while it rests.
+  private calfHeading = 0;
   // Cartwheel's claim jumpers; a claim archetype without loaded art draws the coral family's.
   private claimArt = new Map<string, EnemyArt<Asset>>();
   private claimShards = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
@@ -807,6 +812,7 @@ export class PrototypeScene extends Phaser.Scene {
         amount: this.model.state.economy.stardust,
         text: amount(this.model.state.economy.stardust),
       }),
+      busyLine: () => this.model.jobBusyLine,
       buy: (key) =>
         apply(() => {
           if (projectId(key)) {
@@ -822,6 +828,7 @@ export class PrototypeScene extends Phaser.Scene {
           rewardText: fill(label("jobReward"), { amount: job.reward }),
         })),
       labels: {
+        activityDrop: label("activityDrop"),
         close: label("close"),
         confirmBuy: label("confirmBuy"),
         confirmCancel: label("confirmCancel"),
@@ -1727,6 +1734,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.drawObject(object);
     }
     this.drawStoryShips(flight);
+    this.drawGuidedCalf();
     this.drawRockBreaks();
     this.startRockLoads();
     // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
@@ -2844,7 +2852,8 @@ export class PrototypeScene extends Phaser.Scene {
     // The family: the smaller adult at the destination with its calves at their offsets.
     if (
       object.id === "family" &&
-      this.whaleArt?.family.every(({ kind, offset }) =>
+      this.whaleArt &&
+      familyMembers(this.model.calfAway, this.whaleArt.family).every(({ kind, offset }) =>
         this.drawWhale(kind, `${object.id}:${kind}`, {
           x: object.x + offset.x,
           y: object.y + offset.y,
@@ -2859,21 +2868,48 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * A stationary whale at its world position, pivot on the world plane, in its fixed heading and
-   * idle loop from its own phase. Its loop's frames load on first draw; false until frame 0 has.
+   * Guide a calf's calf, owned by the family destination: Art's `calf` frames in the heading of
+   * its travel, swimming while it moves and idling while it waits (art/whales.md "Placement").
    */
-  private drawWhale(kind: WhaleKind, id: string, at: Vec): boolean {
+  private drawGuidedCalf(): void {
+    const calf = this.model.guidedCalf;
+    if (!calf) {
+      return;
+    }
+    const speed = Math.hypot(calf.velocity.x, calf.velocity.y);
+    const kind = this.whaleArt?.kinds.get("calf");
+    // A resting calf keeps the heading it last swam in.
+    if (speed > 1) {
+      this.calfHeading = shipDirection(kind?.frames.length ?? 16, calf.velocity);
+    }
+    this.drawWhale("calf", partKey("family", "guidedCalf"), calf, {
+      heading: this.calfHeading,
+      moving: speed > 1,
+    });
+  }
+
+  /**
+   * A whale at its world position, pivot on the world plane: stationary in its fixed heading and
+   * idle loop from its own phase, or in `motion`'s heading with the swim loop while it moves. Its
+   * loop's frames load on first draw; false until frame 0 has.
+   */
+  private drawWhale(
+    kind: WhaleKind,
+    id: string,
+    at: Vec,
+    motion?: { readonly heading: number; readonly moving: boolean },
+  ): boolean {
     const art = this.whaleArt?.kinds.get(kind);
     if (!art || !this.whaleArt) {
       return false;
     }
-    const frames = art.frames[art.stationaryHeading]!;
+    const frames = art.frames[motion?.heading ?? art.stationaryHeading]!;
     const wanted =
       frames[
         whaleLoopFrame(
           this.whaleArt,
           art,
-          false,
+          motion?.moving ?? false,
           this.reducedMotion,
           whalePhase(id, art.idleMs * frames.length),
           this.time.now,
@@ -2885,7 +2921,7 @@ export class PrototypeScene extends Phaser.Scene {
       return false;
     }
     const point = this.project(at);
-    const key = id.includes(":") ? `${id.split(":")[0]}#${kind}` : id;
+    const key = id.includes("#") || !id.includes(":") ? id : `${id.split(":")[0]}#${kind}`;
     this.objectSprite(key, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)

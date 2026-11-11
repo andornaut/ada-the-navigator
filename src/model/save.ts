@@ -11,6 +11,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { newAchievements } from "./achievements.ts";
+import { validActivity } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
@@ -742,7 +743,7 @@ function jobsState(value: unknown): boolean {
       ),
   );
 }
-/** Saved optional task slots, one per galaxy: each a held job with its progress. */
+/** Saved optional task slots, one per galaxy: each a held job or an activity with its progress. */
 function optionalTasks(value: unknown): boolean {
   return (
     record(value) &&
@@ -750,10 +751,11 @@ function optionalTasks(value: unknown): boolean {
       ([sector, task]) =>
         SECTOR_KEYS.includes(sector) &&
         record(task) &&
-        task.kind === "job" &&
-        jobOffer(Number(sector) as SectorId, task) &&
-        (task.carrying === undefined || typeof task.carrying === "boolean") &&
-        (task.entered === undefined || typeof task.entered === "boolean"),
+        ((task.kind === "job" &&
+          jobOffer(Number(sector) as SectorId, task) &&
+          (task.carrying === undefined || typeof task.carrying === "boolean") &&
+          (task.entered === undefined || typeof task.entered === "boolean")) ||
+          (task.kind === "activity" && validActivity(Number(sector) as SectorId, task))),
     )
   );
 }
@@ -826,6 +828,7 @@ export function restoreSave(saved: unknown): GameState | null {
         (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean") ||
+        (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
         (p.replayScene !== undefined &&
           !(
             typeof p.replayScene === "string" &&
@@ -887,6 +890,13 @@ export function restoreSave(saved: unknown): GameState | null {
         (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
         (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||
         (f.tow !== undefined && !vector(f.tow)) ||
+        (f.calf !== undefined &&
+          !(
+            record(f.calf) &&
+            vector(f.calf) &&
+            vector(f.calf.velocity) &&
+            typeof f.calf.following === "boolean"
+          )) ||
         (f.levels !== undefined && !upgradeLevels(f.levels))
       ) {
         return null;

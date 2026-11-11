@@ -373,6 +373,7 @@ export interface StationLabels {
   readonly jobActive: string;
   readonly jobBoard: string;
   readonly jobBoardIntro: string;
+  readonly activityDrop: string;
   readonly jobBusy: string;
   readonly jobDrop: string;
   readonly jobDropCancel: string;
@@ -402,6 +403,8 @@ export type StationView = "card" | "shop" | "jobs";
 export interface StationJob {
   readonly detail: string;
   readonly id: string;
+  /** A station job, or the galaxy's active activity, whose Drop names it. */
+  readonly kind: "activity" | "job";
   readonly reward: number;
   /** The reward's words for assistive technology, such as "15 Stardust". */
   readonly rewardText: string;
@@ -456,6 +459,8 @@ export type StationRequest =
 export interface StationOptions {
   /** Accept takes an offer at once; false refuses it while Ada holds a job. */
   readonly acceptJob: (id: string) => boolean;
+  /** Why Accept refuses while the galaxy's slot is taken: a job or an activity holds it. */
+  readonly busyLine: () => string;
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
@@ -859,6 +864,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         return;
       }
       if (!options.acceptJob(job.id)) {
+        jobsBusy.textContent = options.busyLine();
         jobsBusy.hidden = false;
         jobsCard.fit();
         refuse(node, options.reducedMotion());
@@ -929,11 +935,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.fit();
     buy.focus();
   };
-  // Drop asks first, naming the held job.
+  // Drop asks first, naming the held job or the active activity.
   const openDrop = (job: StationJob): void => {
     confirm = { drop: true };
-    confirmCard.title.textContent = labels.jobDropTitle;
-    confirmCard.frame.setAttribute("aria-label", labels.jobDropTitle);
+    const title = job.kind === "activity" ? labels.activityDrop : labels.jobDropTitle;
+    confirmCard.title.textContent = title;
+    confirmCard.frame.setAttribute("aria-label", title);
     confirmCard.body.replaceChildren(prose("ada-confirm-about", job.title), dropActions);
     confirmModal.hidden = false;
     confirmCard.fit();

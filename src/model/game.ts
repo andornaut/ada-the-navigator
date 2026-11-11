@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
+import { SUPPLY_RUNS } from "../data/activities.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -8,6 +9,7 @@ import {
   SPEAKERS,
 } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
@@ -25,10 +27,19 @@ import {
   recordSensed,
   unlockAchievements,
 } from "./achievements.ts";
+import {
+  acceptActivity,
+  completeActivity,
+  contractDeposit,
+  dropActivity,
+  heldActivity,
+  placeActivity,
+} from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
-import { carriesStardust } from "./drops.ts";
+import { carriesStardust, dropRandom } from "./drops.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -38,6 +49,7 @@ import {
   ensureRouteEncounter,
   ensureStation,
   placeDestinationAhead,
+  placeHuntingPack,
   routeBlocked,
   settleRouteEncounters,
   stepFlight,
@@ -127,6 +139,8 @@ import type {
   FlightInput,
   FlightState,
   GameState,
+  GuidedCalf,
+  HeldActivity,
   HeldJob,
   JobOffer,
   JobTarget,
@@ -213,7 +227,10 @@ const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "sa
 /** A job board row: the held job (Active, with Drop) or an offer, refused while Ada is busy. */
 export interface JobRow {
   readonly id: string;
-  readonly type: JobType;
+  /** A station job, or the galaxy's active repeatable activity. */
+  readonly kind: "activity" | "job";
+  /** The row's icon: the job's type, or `activity`. */
+  readonly type: JobType | "activity";
   readonly title: string;
   readonly detail: string;
   readonly reward: number;
@@ -638,6 +655,106 @@ export class GameModel {
       title,
     };
   }
+  /**
+   * Talk at a story place once its galaxy's chapter is complete (gameplay/quests.md "Repeatable
+   * activities"): with the slot empty, its activity line with Accept and Not now; while a job or
+   * another place's activity holds the slot, the same line with Accept refused; while its own
+   * activity is active, that activity's objective with Drop, replacing a supply run's lost item.
+   * Else its usual line.
+   */
+  private talkAt(place: string, key: string): void {
+    const f = this.state.flight;
+    const activity = f && placeActivity(f.sector, this.current, place);
+    if (!f || !activity) {
+      this.exchange(key);
+      return;
+    }
+    const speaker = this.chapter.dialogue[key]?.speaker ?? this.chapter.name;
+    const held = heldActivity(f.sector, this.state);
+    if (held?.place === place) {
+      if (held.id === "supplyRun") {
+        held.carrying = true;
+      }
+      this.state.dialogue = {
+        choices: [
+          { id: "drop", label: this.label("jobDrop") },
+          { id: "continue", label: this.label("continue") },
+        ],
+        context: `activityActive:${place}`,
+        text: this.jobObjective ?? "",
+        title: speaker,
+      };
+      return;
+    }
+    // The family offers a guide only while a calf start qualifies for where it is this flight.
+    const start = activity.id === "guideCalf" ? this.calfStartHere(f) : undefined;
+    if (start === null) {
+      this.exchange(key);
+      return;
+    }
+    const busy = this.state.tasks[f.sector];
+    this.state.dialogue = {
+      choices: [
+        { id: "take", label: this.label("activityTake"), ...(busy ? { refused: true } : {}) },
+        { id: "skip", label: this.label("activitySkip") },
+      ],
+      context: `activity:${place}`,
+      text: this.label(activity.places[place]!),
+      title: speaker,
+    };
+  }
+  /** The next guide's calf start from the family where it is this flight, or null. */
+  private calfStartHere(f: FlightState): Vec | null {
+    const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
+    return family ? calfStart(f.sector, family, this.current.guides ?? 0) : null;
+  }
+  /** Accepts the offered activity, or refuses while the galaxy's slot is taken. */
+  private takeActivity(place: string): void {
+    const f = this.state.flight;
+    if (!f) {
+      return;
+    }
+    const busy = this.state.tasks[f.sector];
+    if (busy) {
+      this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+      return;
+    }
+    const activity = placeActivity(f.sector, this.current, place);
+    const start = activity?.id === "guideCalf" ? this.calfStartHere(f) : undefined;
+    if (start === null || !acceptActivity(f.sector, this.current, this.state, place, start)) {
+      return;
+    }
+    if (start) {
+      this.current.guides = (this.current.guides ?? 0) + 1;
+    }
+    this.state.dialogue = null;
+  }
+  /**
+   * Returns the galaxy's held activity to its start: the guided calf goes back to its start spot
+   * and its hunter pack is placed again. Return to Earth, a shield-depletion jump, Drop and Back
+   * to title use it.
+   */
+  resetActivity(sector: SectorId): void {
+    const f = this.state.flight;
+    if (f?.sector === sector && heldActivity(sector, this.state)?.id === "guideCalf") {
+      delete f.calf;
+    }
+  }
+  /** Drops the held activity, losing its progress. */
+  private dropHeldActivity(sector: SectorId): boolean {
+    this.resetActivity(sector);
+    return dropActivity(sector, this.state);
+  }
+  /** Pays the held activity with the job completion notice and frees the galaxy's slot. */
+  private finishActivity(sector: SectorId): void {
+    const reward = completeActivity(sector, this.state);
+    if (!reward) {
+      return;
+    }
+    this.state.economy.stardust += reward;
+    this.notify(fill(this.label("jobComplete"), { amount: reward }));
+    this.recordAchievement({ kind: "activityCompleted" });
+  }
   private exchange(key: string): void {
     const entry = this.chapter.dialogue[key];
     if (!entry) {
@@ -698,6 +815,11 @@ export class GameModel {
     if (held?.type === "delivery") {
       held.carrying = false;
     }
+    const activity = this.activity;
+    if (activity?.id === "supplyRun") {
+      activity.carrying = false;
+    }
+    this.resetActivity(this.state.selectedSector);
     // A story scene still due its line replays at the hub on the next flight.
     const scene = this.state.flight?.storyScene;
     if (scene?.lineDue) {
@@ -754,6 +876,10 @@ export class GameModel {
       ensureStation(this.content, id, f);
     } else {
       ensureDestination(this.content, id, f);
+    }
+    // Travel ends a guide's follow: the calf waits where it is.
+    if (f.calf) {
+      f.calf.following = false;
     }
     teleportFlight(this.content, id, f);
     this.explore(f);
@@ -934,6 +1060,7 @@ export class GameModel {
       this.recordAchievement({ galaxy: f.sector, id, kind: "landmarkCharted" });
     }
     this.stepJob(events, f);
+    this.stepCalf(dt, f);
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
     const near = (range: number) => (object: { x: number; y: number }) =>
@@ -1240,7 +1367,7 @@ export class GameModel {
         this.complete();
         this.exchange("deliveryComplete");
       } else {
-        this.exchange(dialogueKeys[id] ?? id);
+        this.talkAt(id, dialogueKeys[id] ?? id);
       }
     } else if (f.sector === 2) {
       if (id === "hub" && p.questComplete && !p.holodisk) {
@@ -1248,8 +1375,12 @@ export class GameModel {
         f.cargo = 0;
         this.offerHolodisk();
       } else if (id === "hub") {
-        p.deposited += f.cargo;
+        const load = f.cargo;
+        p.deposited += load;
         f.cargo = 0;
+        if (contractDeposit(f.sector, this.state, load)) {
+          this.finishActivity(f.sector);
+        }
         const [a, b, c] = this.content.tuning.miningMilestones;
         if (p.stage === 1 && p.deposited >= a) {
           p.stage = 2;
@@ -1259,7 +1390,7 @@ export class GameModel {
           f.storyScene = { at: f.time, id: "docking", lineDue: true };
           this.complete();
         } else {
-          this.exchange("hub");
+          this.talkAt("hub", "hub");
         }
         if (p.stage === 2 && p.deposited >= b) {
           ensureDestination(this.content, "miner", f);
@@ -1290,7 +1421,7 @@ export class GameModel {
       this.complete();
       this.exchange("reunion");
     } else {
-      this.exchange(id);
+      this.talkAt(id, id);
     }
   }
   /** The current galaxy's held station job. */
@@ -1359,16 +1490,37 @@ export class GameModel {
     const row = (job: JobOffer, state: JobRow["state"]): JobRow => ({
       ...this.jobText(job),
       id: job.id,
+      kind: "job",
       reward: job.reward,
       state,
       type: job.type,
     });
+    // An active activity heads the board, marked Active with Drop, as a held job does.
+    const activity = this.activity;
+    const activityRow: JobRow[] = activity
+      ? [
+          {
+            detail: "",
+            id: activity.id,
+            kind: "activity",
+            reward: activity.reward,
+            state: "held",
+            title: this.jobObjective ?? "",
+            type: "activity",
+          },
+        ]
+      : [];
     return [
+      ...activityRow,
       ...(held ? [row(held, "held")] : []),
       ...board
         .filter((offer) => offer.id !== held?.id)
         .map((offer) => row(offer, busy ? "busy" : "offer")),
     ];
+  }
+  /** Why a board's Accept refuses while the slot is taken: an activity, else a held job. */
+  get jobBusyLine(): string {
+    return this.label(this.activity ? "activityBusy" : "jobBusy");
   }
   /** Accepts an offer on the docked station's board, with no confirm. */
   acceptJob(id: string): "accepted" | "busy" | "missing" {
@@ -1377,8 +1529,14 @@ export class GameModel {
       ? acceptJob(this.state.flight.sector, station, id, this.state)
       : "missing";
   }
-  /** Drops the held job; a towed craft goes back to where it was stranded. */
+  /**
+   * Drops the task in the galaxy's slot: an activity, losing its progress, or the held job, whose
+   * towed craft goes back to where it was stranded.
+   */
   dropJob(): boolean {
+    if (this.dropHeldActivity(this.state.selectedSector)) {
+      return true;
+    }
     const dropped = dropJob(this.state.selectedSector, this.state);
     if (dropped && this.state.flight) {
       delete this.state.flight.tow;
@@ -1388,7 +1546,33 @@ export class GameModel {
   /** The held job's objective, shown beside the story objective and labelled Job. */
   get jobObjective(): string | null {
     const held = this.held;
-    return held ? this.jobText(held).title : null;
+    if (held) {
+      return this.jobText(held).title;
+    }
+    const activity = this.activity;
+    if (activity?.id === "supplyRun") {
+      const run = SUPPLY_RUNS[activity.place]!;
+      return fill(this.label("supplyObjective"), { destination: run.to, item: run.item });
+    }
+    if (activity?.id === "miningContract") {
+      return fill(this.label("contractObjective"), { have: activity.deposited ?? 0 });
+    }
+    if (activity?.id === "guideCalf") {
+      return this.label(this.state.flight?.calf?.following ? "calfGuide" : "calfFind");
+    }
+    return null;
+  }
+  /** The current galaxy's accepted activity. */
+  private get activity(): HeldActivity | undefined {
+    return heldActivity(this.state.selectedSector, this.state);
+  }
+  /** Whether Whirlpool's guided calf is away from its family: while Guide a calf is held. */
+  get calfAway(): boolean {
+    return heldActivity(3, this.state)?.id === "guideCalf";
+  }
+  /** The guided calf in this flight, for the scene. */
+  get guidedCalf(): Readonly<GuidedCalf> | null {
+    return this.state.mode === "space" ? (this.state.flight?.calf ?? null) : null;
   }
   /** Whether a rescue's tow line is attached, which refuses Travel. */
   get towing(): boolean {
@@ -1398,7 +1582,18 @@ export class GameModel {
   private jobUse(): "tow" | "deliver" | null {
     const f = this.state.flight;
     const held = this.held;
-    if (!f || !held || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+    if (!f || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+      return null;
+    }
+    const activity = this.activity;
+    if (
+      activity?.id === "supplyRun" &&
+      activity.carrying &&
+      this.nearest() === SUPPLY_RUNS[activity.place]!.to
+    ) {
+      return "deliver";
+    }
+    if (!held) {
       return null;
     }
     if (
@@ -1419,6 +1614,10 @@ export class GameModel {
     const use = this.jobUse();
     const f = this.state.flight;
     const held = this.held;
+    if (use && f && this.activity) {
+      this.finishActivity(f.sector);
+      return true;
+    }
     if (!use || !f || !held) {
       return false;
     }
@@ -1481,6 +1680,43 @@ export class GameModel {
       }
     }
   }
+  /**
+   * One flight step of Guide a calf: the calf waits at its start with its hunter pack at the
+   * midpoint home, placed again after a reset, then follows Ada and completes at the family.
+   */
+  private stepCalf(dt: number, f: FlightState): void {
+    const activity = heldActivity(f.sector, this.state);
+    const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
+    if (activity?.id !== "guideCalf" || !activity.start || !family) {
+      return;
+    }
+    if (!f.calf) {
+      f.calf = placedCalf(family, activity.start);
+      const next = dropRandom(f.seed, `calf-pack:${this.current.guides ?? 0}`);
+      const [fewest, most] = HUNTING_PACKS.count;
+      placeHuntingPack(
+        this.content,
+        "hunt:calf",
+        calfRouteMidpoint(family, activity.start),
+        fewest + Math.floor(next() * (most - fewest + 1)),
+        f,
+      );
+    }
+    stepCalf(
+      f.sector,
+      {
+        accelerationSeconds: this.content.tuning.physics.accelerationSeconds,
+        maxSpeed: this.content.tuning.maxSpeed,
+      },
+      dt,
+      f.player,
+      f.calf,
+    );
+    if (calfHome(family, f.calf)) {
+      delete f.calf;
+      this.finishActivity(f.sector);
+    }
+  }
   /** A held hunt's lost item within Penny's hunt range, as its point id. */
   private lostItemNear(f: FlightState): string | null {
     const held = this.held;
@@ -1515,7 +1751,7 @@ export class GameModel {
   private jobTarget(f: FlightState): IndicatorTarget | null {
     const held = this.held;
     if (!held) {
-      return null;
+      return this.activityTarget(f);
     }
     const mark = ({ id, x, y }: JobTarget): IndicatorTarget => ({
       id: id || `job:${held.id}`,
@@ -1542,6 +1778,36 @@ export class GameModel {
       return place ? mark(place) : null;
     }
     return mark(held.target);
+  }
+  /**
+   * Where the activity sends Ada now: a supply run's destination, or its issuing outpost to
+   * replace a lost item; the hub for a mining contract; the calf until it follows, then the family.
+   */
+  private activityTarget(f: FlightState): IndicatorTarget | null {
+    const activity = heldActivity(f.sector, this.state);
+    if (!activity) {
+      return null;
+    }
+    const mark = ({ x, y }: Vec, id: string): IndicatorTarget => ({ id, kind: "job", x, y });
+    const place = (id: string) =>
+      f.objects.find((object) => object.kind === "destination" && object.id === id);
+    if (activity.id === "guideCalf") {
+      const calf = f.calf;
+      const family = place("family");
+      return calf && !calf.following
+        ? mark(calf, "activity:calf")
+        : family
+          ? mark(family, "family")
+          : null;
+    }
+    const id =
+      activity.id === "supplyRun"
+        ? activity.carrying
+          ? SUPPLY_RUNS[activity.place]!.to
+          : activity.place
+        : activity.place;
+    const at = place(id);
+    return at ? mark(at, id) : null;
   }
   /** Landmarks and the held job's craft, search area and glint, for the scene. */
   get jobScenery(): JobScenery {
@@ -1575,6 +1841,28 @@ export class GameModel {
       if (entry?.optional) {
         this.panel(dialogue.context, entry.optional, entry.speaker);
       }
+      return;
+    }
+    const offered = /^activity:(.+)$/.exec(dialogue.context);
+    if (offered && id === "take") {
+      this.takeActivity(offered[1]!);
+      return;
+    }
+    if (/^activityActive:/.test(dialogue.context) && id === "drop") {
+      this.state.dialogue = {
+        choices: [
+          { id: "confirmDrop", label: this.label("jobDrop") },
+          { id: "cancel", label: this.label("jobDropCancel") },
+        ],
+        context: "activityDrop",
+        text: this.jobObjective ?? "",
+        title: this.label("activityDrop"),
+      };
+      return;
+    }
+    if (dialogue.context === "activityDrop" && id === "confirmDrop") {
+      this.dropHeldActivity(this.state.selectedSector);
+      this.state.dialogue = null;
       return;
     }
     if (dialogue.context === "holodiskOffer" && id === "buy") {
