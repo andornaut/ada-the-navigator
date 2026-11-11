@@ -14,7 +14,6 @@ import {
   grey,
   over,
   polyline,
-  region,
   resize,
   rgba,
   type RgbaImage,
@@ -37,7 +36,6 @@ const YAW = 24;
 // Design px per model unit, and the design px where the canopy's focus point (0, -3, 5.5) lands.
 const K = 11;
 const FOCUS: Xy = [422, 150];
-const SPEAK_MS = 120;
 
 // The Classic paint of the in-game ship (art/tools/ship.ts).
 const PAINT = {
@@ -315,9 +313,6 @@ function spriteHighlight(): Face[] {
     .map(({ face }) => face);
 }
 
-// Astra's lamp on the ridge just ahead of the canopy's front seam.
-const LAMP: Point = [0, -13.4, roof(0, -13.4) + 0.05];
-
 function convex(points: readonly Xy[]): Xy[] {
   const keyed = new Map<string, Xy>();
   for (const [x, y] of points) {
@@ -357,10 +352,8 @@ const mix = (a: string, b: string, t: number): [number, number, number] => {
   ];
 };
 
-export type Astra = { speaking: false } | { speaking: true; frame: number };
-
 // The untreated model over the in-between field, at the view's resolution.
-export function renderModel(view: View, astra: Astra): RgbaImage {
+export function renderModel(view: View): RgbaImage {
   const S = SS * view.scale;
   const width = view.width * SS;
   const height = view.height * SS;
@@ -451,22 +444,6 @@ export function renderModel(view: View, astra: Astra): RgbaImage {
     ] as const) {
       polyline(lay, [proj(from), proj(to)], [r, g, b, 255], px(1.2));
     }
-  }
-  // Astra's rose-gold lamp on the ridge ahead of the canopy, flattened onto the hull: a dim ember
-  // while idle, a bright core in a warm halo that pulses while she speaks. The dome draws over
-  // the halo's near edge.
-  const lamp = proj(LAMP);
-  const rr = S * 3.6;
-  const flat = 0.75;
-  disc(lay, lamp, rr * 1.35, rgba("d9a08a"), rr * 1.35 * flat);
-  disc(lay, lamp, rr * 0.8, rgba("5a3f4f"), rr * 0.8 * flat);
-  if (astra.speaking) {
-    const f = astra.frame;
-    glow(lamp, rr * [3.2, 3.6, 4, 3.6][f]!, rgba("f5a98a", 225), S * 3);
-    const core = rr * [0.7, 0.8, 0.9, 0.8][f]!;
-    disc(lay, lamp, core, rgba("fff1e0"), core * flat);
-  } else {
-    disc(lay, lamp, rr * 0.5, rgba("b9787c"), rr * 0.5 * flat);
   }
   drawCanopy();
   // The rear points toward the viewer at this heading, so the tail faces draw after the canopy.
@@ -568,49 +545,15 @@ export function treat(view: View, image: RgbaImage): RgbaImage {
   return out;
 }
 
-export const cockpit = (view: View, astra: Astra) => treat(view, renderModel(view, astra));
-
-// Smallest even-aligned rectangle holding every pixel that differs between a and any of others.
-function changed(a: RgbaImage, others: readonly RgbaImage[]) {
-  let [x0, y0, x1, y1] = [a.width, a.height, -1, -1];
-  for (const b of others) {
-    for (let y = 0; y < a.height; y++) {
-      for (let x = 0; x < a.width; x++) {
-        const i = (y * a.width + x) * 4;
-        if (
-          a.data[i] !== b.data[i] ||
-          a.data[i + 1] !== b.data[i + 1] ||
-          a.data[i + 2] !== b.data[i + 2]
-        ) {
-          [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
-        }
-      }
-    }
-  }
-  x0 -= x0 % 2;
-  y0 -= y0 % 2;
-  x1 += 2 - (x1 % 2);
-  y1 += 2 - (y1 % 2);
-  return { height: y1 - y0, width: x1 - x0, x: x0, y: y0 };
-}
+export const cockpit = (view: View) => treat(view, renderModel(view));
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const view = centredView(CANVAS.width, CANVAS.height, CANVAS.density);
   // The opaque canopy hides the seats, so the empty and seated backgrounds are one image.
-  const idle = cockpit(view, { speaking: false });
-  writePng(`${art}cockpit.png`, idle, true);
-  writePng(`${art}cockpit-seated.png`, idle, true);
-  const speaking = [0, 1, 2, 3].map((frame) => cockpit(view, { frame, speaking: true }));
-  // Astra's lamp changes only the pixels round it, so it ships as patches over either
-  // background: the rectangle covers every speaking frame.
-  const patch = changed(idle, speaking);
-  const sheet = filled(rgba(SPACE_BG), patch.width * speaking.length, patch.height);
-  speaking.forEach((frame, i) =>
-    over(sheet, region(frame, patch.x, patch.y, patch.width, patch.height), i * patch.width, 0),
-  );
-  writePng(`${art}cockpit-astra.png`, sheet, true);
+  const image = cockpit(view);
+  writePng(`${art}cockpit.png`, image, true);
+  writePng(`${art}cockpit-seated.png`, image, true);
 
-  const d = CANVAS.density;
   const background = (id: string) => ({
     id,
     path: `/art/${id}.png`,
@@ -621,23 +564,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     facing: "front",
     pivot: { x: 0.5, y: 0.5 },
   });
-  placeEntries("core", "cockpit", [
-    background("cockpit"),
-    background("cockpit-seated"),
-    {
-      id: "cockpit-astra",
-      path: "/art/cockpit-astra.png",
-      width: sheet.width,
-      height: sheet.height,
-      displayWidth: patch.width / d,
-      displayHeight: patch.height / d,
-      facing: "front",
-      pivot: { x: 0, y: 0 },
-      frameWidth: patch.width,
-      frameHeight: patch.height,
-      frames: { speak1: 0, speak2: 1, speak3: 2, speak4: 3 },
-      loop: [0, 1, 2, 3].map((frame) => ({ frame, name: `speak${frame + 1}`, ms: SPEAK_MS })),
-      at: { x: patch.x / d, y: patch.y / d },
-    },
-  ]);
+  placeEntries("core", "cockpit", [background("cockpit"), background("cockpit-seated")]);
 }

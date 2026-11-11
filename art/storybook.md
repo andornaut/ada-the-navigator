@@ -92,10 +92,9 @@ starts on the page where Ada sits and buckles Penny in, and covers every later
 ship-scene page: quantum jump, the galaxy selector, and every later chapter's
 boarding and Continue, where they sit at once. Gameplay owns the page marks.
 
-On a cockpit page whose speaker is Astra, the `cockpit-astra` speaking frames
-play over either cockpit background at `at`, 120 ms each, while the page shows
-(reduced motion holds `speak1`). Other speakers and narration show no patch.
-See [Astra speaking](cockpit.md#astra-speaking).
+On a cockpit page whose speaker is Astra, she speaks with her dialogue
+portrait; the cockpit background stays still. See
+[Astra speaking](cockpit.md#astra-speaking).
 
 ## Pages
 
@@ -182,7 +181,7 @@ figures stay in view (Ada 263, Penny 318).
 `story-ada-room-sleep` is a composite entry: its `path` is the night background
 and `overlays` lists `story-ada-room-sleep-figures`, drawn over it. Overlay
 entries are RGBA PNGs at 2x with `pivot` (0, 0) and `at`, their top-left corner
-on the background canvas in logical px, like `cockpit-astra`.
+on the background canvas in logical px.
 
 | Id                             | Size (px) | `at`       | Contents                                |
 | ------------------------------ | --------- | ---------- | --------------------------------------- |

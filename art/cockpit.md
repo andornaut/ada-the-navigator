@@ -1,8 +1,7 @@
 # Cockpit background
 
 - Rebuild with `node art/tools/cockpit.ts` (about 25 s). It writes
-  `public/art/cockpit.png`, `cockpit-seated.png` and `cockpit-astra.png`, and
-  their root [manifest](../public/art/manifest.json) entries.
+  `public/art/cockpit.png` and `cockpit-seated.png`, and their root [manifest](../public/art/manifest.json) entries.
 - A painted (anti-aliased) background, not pixel art: shapes are drawn at 3x
   and reduced with Lanczos filtering, then muted.
 
@@ -49,10 +48,7 @@ a white-dominant hull. Close-up detail:
   glint at the brighter one and a thin rim of light along the upper left edge,
   all kept inside the outline. A dark blue seam runs along the near arc where
   the canopy meets the hull. No interior shows.
-- Astra's lamp on the ridge just ahead of the canopy's front seam, model point
-  (0, -13.4) on the hull, flattened to 0.75 of its width: a rose-gold bezel
-  round a dark rose glass with a dim ember. The canopy draws after it, so the
-  dome covers the near edge of its halo.
+- The ridge ahead of the canopy is plain hull: no lamp or Astra cue.
 
 | Part        | Colours                                                    |
 | ----------- | ---------------------------------------------------------- |
@@ -61,8 +57,6 @@ a white-dominant hull. Close-up detail:
 | Canopy      | Roof `#2585d0`, highlight `#87bce5`, glint `#ffffff`       |
 | Mouths      | Frame `#0f4e8f`, face `#64caff`; seam `#0f4e8f`            |
 | Nav lights  | Port `#d68b72`, starboard `#65c9bf`, apex `#70ace8`        |
-| Astra lamp  | Bezel `#d9a08a`, glass `#5a3f4f`, ember `#b9787c`          |
-| Astra glow  | Halo `#f5a98a`, core `#fff1e0`                             |
 
 ## Muting
 
@@ -99,15 +93,5 @@ sparkles.
 
 ## Astra speaking
 
-`cockpit-astra` holds four speaking frames as opaque patches over the lamp and
-its halo: 82 by 86 image px (41 by 43 logical px) each, frames `speak1` to
-`speak4`, 120 ms each (480 ms loop, the `loop` list).
-
-- Draw the current frame over either background with the background's
-  transform, its top-left at `at`, (552, 166) logical px on the canvas.
-- Speaking: the lamp's ember becomes a bright core in a warm halo that pulses
-  out and back. The lamp radius is 3.6 design px (bezel 1.35 and glass 0.8 of
-  it); per frame the halo is 3.2, 3.6, 4 and 3.6 lamp radii and the core 0.7,
-  0.8, 0.9 and 0.8.
-- Idle: no patch (the dim ember in the background).
-- Reduced motion: `speak1` held while Astra speaks.
+The background has no Astra patch: Astra speaks with her dialogue portrait,
+like every other speaker, over either cockpit background.

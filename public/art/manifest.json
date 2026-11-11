@@ -3475,53 +3475,6 @@
       }
     },
     {
-      "id": "cockpit-astra",
-      "path": "/art/cockpit-astra.png",
-      "width": 328,
-      "height": 86,
-      "displayWidth": 41,
-      "displayHeight": 43,
-      "facing": "front",
-      "pivot": {
-        "x": 0,
-        "y": 0
-      },
-      "frameWidth": 82,
-      "frameHeight": 86,
-      "frames": {
-        "speak1": 0,
-        "speak2": 1,
-        "speak3": 2,
-        "speak4": 3
-      },
-      "loop": [
-        {
-          "frame": 0,
-          "name": "speak1",
-          "ms": 120
-        },
-        {
-          "frame": 1,
-          "name": "speak2",
-          "ms": 120
-        },
-        {
-          "frame": 2,
-          "name": "speak3",
-          "ms": 120
-        },
-        {
-          "frame": 3,
-          "name": "speak4",
-          "ms": 120
-        }
-      ],
-      "at": {
-        "x": 552,
-        "y": 166
-      }
-    },
-    {
       "id": "holodisk",
       "path": "/art/holodisk.png",
       "width": 44,
