@@ -75,7 +75,7 @@ describe("storybook text", () => {
     const [park, polish, glow] = PROTOTYPE.premise.prologue;
     expect(COPY).toContain(`Park page: "${park?.text}"`);
     expect(COPY).toContain(`Ada's room, rock unpolished: "${polish?.text}"`);
-    expect(COPY).toContain(`Ada's room, rock glowing. Choice: "${glow?.choice}"`);
+    expect(COPY).toContain(`Ada's room, rock glowing: "${glow?.text}" Choice: "${glow?.choice}"`);
     expect([park, polish, glow].map((step) => step?.background)).toEqual([
       "park",
       "adaRoomUnpolished",

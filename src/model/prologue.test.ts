@@ -41,7 +41,7 @@ describe("prologue", () => {
         "At home, she polishes it until a faint pattern begins to glow.",
         "Next",
       ],
-      ["adaRoom", "", "", "Touch the glow."],
+      ["adaRoom", "", "The pattern pulses softly, as if it is waiting for her.", "Touch the glow."],
       [
         "cockpit",
         "",
@@ -97,7 +97,7 @@ describe("prologue", () => {
         "At home, she polishes it until a faint pattern begins to glow.",
         "Next",
       ],
-      ["adaRoom", "", "Touch the glow."],
+      ["adaRoom", "The pattern pulses softly, as if it is waiting for her.", "Touch the glow."],
     ]);
     // Every later Ada's-room page keeps the glowing room.
     model.leaveCockpit();

@@ -27,8 +27,11 @@ export const PREMISE: PremiseContent = {
       background: "adaRoomUnpolished",
       text: "At home, she polishes it until a faint pattern begins to glow.",
     },
-    // Ada's room with the rock glowing: only the choice.
-    { background: "adaRoom", choice: "Touch the glow.", text: "" },
+    {
+      background: "adaRoom",
+      choice: "Touch the glow.",
+      text: "The pattern pulses softly, as if it is waiting for her.",
+    },
     {
       text: [
         "Light swirls around Ada and Penny. They are standing in a tiny cockpit. ",
