@@ -256,12 +256,12 @@ Unexplored space is fog: one flat colour over the field, with a feathered edge
 around what Ada has explored. It draws directly over the field, under every
 symbol and the chrome.
 
-| Token                       | Value | Rule                                                                          |
-| --------------------------- | ----- | ----------------------------------------------------------------------------- |
-| `MAP_SCREEN.fog.reveal`     | 1500  | World units explored around Ada's flown path, each discovered place and Ada   |
-| `MAP_SCREEN.fog.sample`     | 250   | The explored record keeps Ada's position at least every 250 world units flown |
-| `MAP_SCREEN.fog.feather`    | 0.16  | Gaussian edge, sigma as a share of the reveal's on-screen x radius            |
-| `MAP_SCREEN.fog.minFeather` | 3     | Sigma never below 3 logical px                                                |
+| Token                       | Value | Rule                                                                             |
+| --------------------------- | ----- | -------------------------------------------------------------------------------- |
+| `MAP_SCREEN.fog.reveal`     | 1500  | World units explored around each explored chunk centre, discovered place and Ada |
+| `chunkSize`                 | 512   | The centre of each 512-unit world chunk Ada has visited this flight              |
+| `MAP_SCREEN.fog.feather`    | 0.16  | Gaussian edge, sigma as a share of the reveal's on-screen x radius               |
+| `MAP_SCREEN.fog.minFeather` | 3     | Sigma never below 3 logical px                                                   |
 
 - Colour: the sRGB channel mean of the galaxy's `environment` and
   `environmentDetail`, rounded half up. It steps darker than the field on
@@ -277,9 +277,10 @@ symbol and the chrome.
 
 - A world circle of radius `reveal` projects to an axis-aligned ellipse with
   radii `reveal * sqrt(2) * scale` across and half that down. Draw the fog
-  over the whole view, masked by the union of those ellipses at every sample,
-  every discovered place and Ada, the mask blurred by
+  over the whole view, masked by the union of those ellipses at every explored
+  chunk centre, every discovered place and Ada, the mask blurred by
   `sigma = max(minFeather, feather * rx)`.
+- The explored record covers the current flight; each flight starts in fog.
 - Marks on fog: on Sunflower the ink edge is 8.62:1 on the fog; on the dark
   fields the faces are 3.81:1 (holodisk on Whirlpool) or more.
 - Fallback: with no explored record, draw the plain field and no fog. Places,
@@ -417,9 +418,6 @@ review sheets only:
   shows on the map once known, as the symbol set assumes.
 - Gameplay: that no two map places sit closer than 1020 world units, so every
   chip separates at full zoom.
-- Gameplay and Tech: whether the explored record persists across flights,
-  given that a galaxy's layout regenerates on the next flight; if it cannot be
-  kept, the plain field is the fallback.
 - Tech: a symbol key per `MapPlace` (the table above), and whether stations
   far outside the charting disc exist, which the opening pan and pan limit
   cover.
