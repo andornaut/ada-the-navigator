@@ -357,7 +357,9 @@ Sunflower:
 - Travel card: Discovered destinations. With none yet: No destinations mapped yet.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
-  saved. When they apply: Your {weapon} was lost. Recharging cost {amount}
+  saved.
+- After the sleep scene, morning: Narration: "Astra recharges overnight. In the
+  morning, the rock is warm again." When they apply: Your {weapon} was lost. Recharging cost {amount}
   Stardust.
 - Station welcome: Welcome aboard. Trade your Stardust for weapons and ship
   upgrades.
