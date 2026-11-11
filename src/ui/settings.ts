@@ -9,8 +9,8 @@ import {
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, NINE_SLICE_EDGES } from "./layout/controls.ts";
-import { font, fromHudEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
-import { SHIELD_BAR } from "./layout/playView.ts";
+import { font, fromHudEdge, fromSafeEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
+import { SAFE_MARGIN, SHIELD_BAR } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -167,7 +167,7 @@ ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
     "right",
     USE_BUTTON.margin,
   )}) / 2);
-  bottom:${safeEdge("bottom", USE_BUTTON.bottom)};
+  bottom:${fromSafeEdge("bottom", SAFE_MARGIN.edge, USE_BUTTON.bottom)};
   transform:translateX(-50%);
   box-sizing:border-box;
   max-width:calc(100% - ${safeEdge("left", USE_BUTTON.margin)} - ${safeEdge(

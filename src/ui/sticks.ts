@@ -10,7 +10,6 @@ import { stickRestCentres, TOUCH_STICK } from "./layout/touchControls.ts";
 import {
   MOVE_KNOB_REACH,
   type Point,
-  SPEED_LINE_FRAME,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromePose,
@@ -33,9 +32,9 @@ interface StickLayout extends Size {
 export interface StickView {
   readonly knob: Point;
   readonly knobPose: TouchChromePose;
-  // The speed line, from the ring's centre to the knob's, while the knob is off centre: its
-  // frame's top-left and the knob's offset from the ring's centre.
-  readonly line?: { readonly at: Point; readonly offset: Point };
+  // The speed line, from the stick's origin to the thumb's actual position however far it goes,
+  // while the thumb is off the origin.
+  readonly line?: { readonly from: Point; readonly to: Point };
   readonly ring: Point;
   readonly ringPose: TouchChromePose;
 }
@@ -77,10 +76,9 @@ export function stickViews(
     let knob: Point;
     let ringPose: TouchChromePose = "rest";
     if (side === "move") {
-      const scale = state.movementScale;
       const sampled = stickVector(MOVE_STICK_GEOMETRY, {
-        x: stick ? (stick.position.x - stick.origin.x) * scale.x : 0,
-        y: stick ? (stick.position.y - stick.origin.y) * scale.y : 0,
+        x: stick ? stick.position.x - stick.origin.x : 0,
+        y: stick ? stick.position.y - stick.origin.y : 0,
       });
       // The drawn offset is proportional to the sampled deflection and stops inside the markers.
       knob = {
@@ -101,12 +99,13 @@ export function stickViews(
       const divisor = Math.max(1, Math.hypot(dx, dy) / TOUCH_STICK.knobReach);
       knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
-    const offset = { x: knob.x - centre.x, y: knob.y - centre.y };
+    // The line runs from the stick's origin to the thumb, unclamped, while the thumb is off it.
+    const thumb = stick?.position;
     views[side] = {
       knob: centredAt(knob, TOUCH_KNOB_FRAME),
       knobPose: stick ? "held" : "rest",
-      ...(offset.x !== 0 || offset.y !== 0
-        ? { line: { at: centredAt(centre, SPEED_LINE_FRAME), offset } }
+      ...(stick && thumb && (thumb.x !== stick.origin.x || thumb.y !== stick.origin.y)
+        ? { line: { from: stick.origin, to: thumb } }
         : {}),
       ring: centredAt(centre, TOUCH_CHROME_FRAME),
       ringPose,

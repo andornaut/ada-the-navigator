@@ -27,7 +27,7 @@ describe("layout tokens", () => {
     });
     expect(SPACING.panelPadding).toBe(MODAL_CONTENT.padding);
     expect(CONTROL_EDGE).toBe(8);
-    expect(SAFE_MARGIN).toEqual({ hud: 8, page: 16, shield: 0 });
+    expect(SAFE_MARGIN).toEqual({ edge: 0, hud: 8, page: 16 });
   });
 
   it("set the heading, body and label roles", () => {

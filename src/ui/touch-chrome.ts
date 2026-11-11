@@ -117,29 +117,39 @@ export function touchChromeLayers(
   return layers;
 }
 
-// The speed line from a ring's centre to its knob's centre: a cream stroke SPEED_LINE_WIDTH wide
-// with an ink fringe 1 pixel wide on each side. It is drawn in a frame SPEED_LINE_FRAME square
-// whose centre pixel sits on the ring's, long enough for the farthest knob.
+// The speed line from a stick's origin to the thumb: a cream stroke SPEED_LINE_WIDTH wide with an
+// ink fringe 1 pixel wide on each side and round ends. It is drawn from a capsule frame whose ends
+// are SPEED_LINE_CAP round and whose middle stretches to the line's length.
 export const SPEED_LINE_WIDTH = 2;
-export const SPEED_LINE_FRAME = 29;
+export const SPEED_LINE_CAP = SPEED_LINE_WIDTH / 2 + 1;
+export const SPEED_LINE_CAPSULE = {
+  height: 2 * SPEED_LINE_CAP,
+  width: 2 * SPEED_LINE_CAP + SPEED_LINE_WIDTH,
+} as const;
 
-// The line's layers for a knob offset in whole pixels, or none for a knob at rest.
-export function speedLineLayers(
-  colours: TouchChromeColours,
-  offset: Point,
-): readonly TouchChromeLayer[] {
-  if (offset.x === 0 && offset.y === 0) {
-    return [];
-  }
-  const centre = SPEED_LINE_FRAME / 2;
+// The capsule's layers: the stroke along its middle, from one cap's centre to the other's.
+export function speedLineLayers(colours: TouchChromeColours): readonly TouchChromeLayer[] {
   const path = [
-    { x: centre, y: centre },
-    { x: centre + offset.x, y: centre + offset.y },
+    { x: SPEED_LINE_CAP, y: SPEED_LINE_CAP },
+    { x: SPEED_LINE_CAPSULE.width - SPEED_LINE_CAP, y: SPEED_LINE_CAP },
   ];
   return [
     { colour: colours.ink, kind: "stroke", path, width: SPEED_LINE_WIDTH + 2 },
     { colour: colours.cream, kind: "stroke", path, width: SPEED_LINE_WIDTH },
   ];
+}
+
+// Where the capsule draws for a line: its start, its length between cap centres and its angle.
+export function speedLinePlacement(line: { readonly from: Point; readonly to: Point }): {
+  readonly angle: number;
+  readonly from: Point;
+  readonly length: number;
+} {
+  return {
+    angle: Math.atan2(line.to.y - line.from.y, line.to.x - line.from.x),
+    from: line.from,
+    length: Math.hypot(line.to.x - line.from.x, line.to.y - line.from.y),
+  };
 }
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));

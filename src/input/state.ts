@@ -1,5 +1,7 @@
 import { createModalInputGate, type ModalInputScope } from "@andornaut/game-kit/input/modalInput";
 
+import { TOUCH_STICK } from "../ui/layout/touchControls.ts";
+
 export interface Vector {
   readonly x: number;
   readonly y: number;
@@ -24,9 +26,13 @@ export interface StickGeometry {
   readonly reach: number;
 }
 
-// Native 75px ring frame, with a radial dead zone and bounded thumb travel.
+// Native 75px ring frame, with a radial dead zone and bounded thumb travel. Both sticks measure
+// travel in logical px, so their reach scales with the view.
 export const STICK_GEOMETRY: StickGeometry = { deadZone: 6, reach: 37 };
-export const MOVE_STICK_GEOMETRY: StickGeometry = { deadZone: 2.4, reach: 20 };
+export const MOVE_STICK_GEOMETRY: StickGeometry = {
+  deadZone: TOUCH_STICK.moveDeadZone,
+  reach: TOUCH_STICK.moveReach,
+};
 
 function bounded(vector: Vector): Vector {
   const length = Math.hypot(vector.x, vector.y);
@@ -48,7 +54,6 @@ export class ControlState {
   private readonly keys = new Set<string>();
   private readonly sticks = new Map<StickSide, Stick>();
   private readonly geometry: StickGeometry;
-  private moveScale: Vector = { x: 1, y: 1 };
   private modal: ModalInputScope | undefined;
   private enabled = true;
   private useAvailable = false;
@@ -139,17 +144,6 @@ export class ControlState {
     return this.sticks.get(side);
   }
 
-  get movementScale(): Vector {
-    return this.moveScale;
-  }
-
-  setMoveScale(scale: Vector): void {
-    if (![scale.x, scale.y].every((value) => Number.isFinite(value) && value > 0)) {
-      throw new Error("Invalid movement scale");
-    }
-    this.moveScale = { ...scale };
-  }
-
   stickSample(side: StickSide): Vector {
     const stick = this.sticks.get(side);
     if (!stick) {
@@ -159,18 +153,7 @@ export class ControlState {
       x: stick.position.x - stick.origin.x,
       y: stick.position.y - stick.origin.y,
     };
-    if (side === "aim") {
-      return stickVector(this.geometry, offset);
-    }
-    const css = stickVector(MOVE_STICK_GEOMETRY, {
-      x: offset.x * this.moveScale.x,
-      y: offset.y * this.moveScale.y,
-    });
-    const strength = Math.hypot(css.x, css.y);
-    const length = Math.hypot(offset.x, offset.y);
-    return length === 0 || strength === 0
-      ? { x: 0, y: 0 }
-      : { x: (offset.x / length) * strength, y: (offset.y / length) * strength };
+    return stickVector(side === "aim" ? this.geometry : MOVE_STICK_GEOMETRY, offset);
   }
 
   openModal(): void {

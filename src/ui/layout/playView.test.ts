@@ -238,21 +238,59 @@ describe("HUD anchors", () => {
 describe("touch controls", () => {
   const view = { height: 360, width: 720 };
 
-  it("rest the sticks' drawn edges max(85, inset) in and max(20, inset) up", () => {
+  // A ring's drawn edges in the view: its frame is drawn 1 inside the 75 frame.
+  const ringEdges = (centre: { x: number; y: number }) => ({
+    bottom: centre.y + 37,
+    left: centre.x - 36,
+    right: centre.x + 37,
+  });
+
+  it("rest the rings' drawn edges max(24, inset) from the sides and 24 above the safe bottom", () => {
     expect(stickRestCentres(view, NO_INSETS)).toEqual({
-      aim: { x: 598, y: 303 },
-      move: { x: 121, y: 303 },
+      aim: { x: 659, y: 299 },
+      move: { x: 60, y: 299 },
     });
     // A wider, deeper view keeps them on its own edges, not a centred 720 view.
     expect(stickRestCentres({ height: 400, width: 900 }, NO_INSETS)).toEqual({
-      aim: { x: 778, y: 343 },
-      move: { x: 121, y: 343 },
+      aim: { x: 839, y: 339 },
+      move: { x: 60, y: 339 },
     });
     const clear = stickRestCentres(view, { bottom: 30, left: 90, right: 100, top: 0 });
-    expect(clear.move.x - 36).toBe(90);
-    expect(719 - (clear.aim.x + 36)).toBe(100);
-    expect(359 - (clear.move.y + 36)).toBe(30);
-    expect(TOUCH_STICK).toMatchObject({ bottom: 20, frame: 75, knobReach: 12, side: 85 });
+    expect(ringEdges(clear.move).left).toBe(90);
+    expect(720 - ringEdges(clear.aim).right).toBe(100);
+    expect(360 - 30 - ringEdges(clear.move).bottom).toBe(TOUCH_STICK.bottom);
+    expect(TOUCH_STICK).toMatchObject({
+      bottom: 24,
+      frame: 75,
+      knobReach: 12,
+      moveDeadZone: 2.4,
+      moveReach: 40,
+      side: 24,
+    });
+  });
+
+  it.each([
+    ["no insets", NO_INSETS],
+    ["phone insets", phone],
+  ] as const)("clear the shield bar by 21 with %s", (_, insets) => {
+    const shieldTop = view.height - insets.bottom - SHIELD_BAR.height;
+    const { move } = stickRestCentres(view, insets);
+    expect(shieldTop - ringEdges(move).bottom).toBe(21);
+  });
+
+  it("keep the Use button's press area clear of both rings at the 720 minimum width", () => {
+    for (const insets of [NO_INSETS, phone]) {
+      const { aim, move } = stickRestCentres(view, insets);
+      const rect = safeRect(insets, USE_BUTTON.margin, view);
+      const centre = rect.x + rect.width / 2;
+      // The widest Use face whose press area still clears both rings.
+      const widest =
+        2 * Math.min(centre - ringEdges(move).right, ringEdges(aim).left - centre) -
+        2 * USE_BUTTON.pressMargin;
+      expect(widest).toBeGreaterThanOrEqual(400);
+      // Its bottom sits level with the rings' drawn bottom.
+      expect(view.height - insets.bottom - USE_BUTTON.bottom).toBe(ringEdges(move).bottom);
+    }
   });
 
   it("give the Use button an action-high HUD face level with the sticks, in a hitAround area", () => {
@@ -279,6 +317,6 @@ describe("touch controls", () => {
   });
 
   it("put each stick's DOM target over its ring's frame", () => {
-    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 84, y: 266 });
+    expect(stickTargets(view, NO_INSETS).move).toEqual({ height: 75, width: 75, x: 23, y: 262 });
   });
 });

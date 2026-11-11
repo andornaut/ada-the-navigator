@@ -1,5 +1,7 @@
+import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
 import { describe, expect, it } from "vitest";
 
+import { TOUCH_STICK } from "../ui/layout/touchControls.ts";
 import { ControlState, MOVE_STICK_GEOMETRY, stickVector } from "./state.ts";
 
 const zero = { x: 0, y: 0 };
@@ -103,11 +105,52 @@ describe("independent twin stick ownership", () => {
   });
 });
 
+describe("move stick travel in logical px", () => {
+  it("reaches full speed 40 logical px out past a 2.4 dead zone", () => {
+    expect(MOVE_STICK_GEOMETRY).toEqual({ deadZone: 2.4, reach: 40 });
+    expect(MOVE_STICK_GEOMETRY.reach).toBe(TOUCH_STICK.moveReach);
+    expect(MOVE_STICK_GEOMETRY.deadZone).toBe(TOUCH_STICK.moveDeadZone);
+  });
+
+  // A canvas showing the 720x360 view at s CSS px per logical px.
+  it.each([
+    [1, 0],
+    [2, 0],
+    [1.0833, 90],
+    [2.6667, -90],
+  ] as const)("scales its reach with the view at s %s, frame turn %s", (s, turn) => {
+    const size = { height: 360, width: 720 };
+    const box =
+      turn === 0
+        ? { height: 360 * s, width: 720 * s, x: 30, y: 20 }
+        : { height: 720 * s, width: 360 * s, x: 30, y: 20 };
+    const origin = { x: 200, y: 150 };
+    for (const logical of [2, 10, 21.2, 40, 90]) {
+      const controls = new ControlState();
+      controls.down("move", 1, pageToGame(turn, box, size, origin));
+      // The thumb travels logical px, s CSS px each, across the shown frame.
+      const along = turn === 0 ? { x: logical * s, y: 0 } : { x: 0, y: logical * s };
+      controls.move(
+        1,
+        pageToGame(turn, box, size, { x: origin.x + along.x, y: origin.y + along.y }),
+      );
+      const move = controls.sample().move;
+      expect(Math.hypot(move.x, move.y)).toBeCloseTo(
+        Math.min(1, Math.max(0, (logical - 2.4) / (40 - 2.4))),
+        9,
+      );
+    }
+  });
+});
+
 describe("left stick analog throttle", () => {
   it.each([0, 0.1, 0.5, 1, 2])("maps radial travel to bounded strength %s", (strength) => {
     const controls = new ControlState();
     const geometry = MOVE_STICK_GEOMETRY;
-    const travel = strength === 0 ? geometry.deadZone : geometry.deadZone + strength * 17.6;
+    const travel =
+      strength === 0
+        ? geometry.deadZone
+        : geometry.deadZone + strength * (geometry.reach - geometry.deadZone);
     controls.down("move", 1, { x: 100, y: 80 });
     controls.move(1, { x: 100 + travel, y: 80 });
     expect(controls.sample().move.x).toBeCloseTo(Math.min(1, strength), 12);
@@ -121,7 +164,10 @@ describe("left stick analog throttle", () => {
     (angle) => {
       const controls = new ControlState();
       controls.down("move", 1, zero);
-      controls.move(1, { x: Math.cos(angle) * 11.2, y: Math.sin(angle) * 11.2 });
+      const half =
+        MOVE_STICK_GEOMETRY.deadZone +
+        (MOVE_STICK_GEOMETRY.reach - MOVE_STICK_GEOMETRY.deadZone) / 2;
+      controls.move(1, { x: Math.cos(angle) * half, y: Math.sin(angle) * half });
       const move = controls.sample().move;
       expect(Math.hypot(move.x, move.y)).toBeCloseTo(0.5, 12);
       expect(move.x).toBeCloseTo(Math.cos(angle) * 0.5, 12);
@@ -136,7 +182,7 @@ describe("left stick analog throttle", () => {
     controls.move(1, { x: 1.44, y: 1.92 });
     controls.move(2, { x: 505, y: 0 });
     expect(controls.sample()).toEqual({ aim: zero, move: zero, use: false });
-    controls.move(1, { x: 11.2, y: 0 });
+    controls.move(1, { x: 21.2, y: 0 });
     controls.move(2, { x: 521.5, y: 0 });
     const sample = controls.sample();
     expect(sample.aim).toEqual({ x: 0.5, y: 0 });

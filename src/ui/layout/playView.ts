@@ -59,11 +59,12 @@ export function safeRect(insets: Insets, margin: number, view: Size): Rect {
   };
 }
 
-// HUD controls' safe-rect margin, and the canvas-drawn sticks' bottom margin.
+// HUD controls' safe-rect margin.
 export const CONTROL_EDGE = 8;
 
-// Margins of the three safe rects: HUD controls; modals and page content; the shield bar.
-export const SAFE_MARGIN = { hud: CONTROL_EDGE, page: SPACING.pageInset, shield: 0 } as const;
+// Margins of the safe rects: the bare safe edge (the shield bar and the sticks' bottom); HUD
+// controls; modals and page content.
+export const SAFE_MARGIN = { edge: 0, hud: CONTROL_EDGE, page: SPACING.pageInset } as const;
 
 // Chibi's play view: the 720x360 base view centred across the logical view, at its top.
 export function playView(view: Size): Rect {
@@ -139,7 +140,7 @@ export function stardustPillRight(weaponCount: number): number {
 }
 
 // The shield bar: 3 high, across the shield safe rect, its bottom on that rect's bottom.
-export const SHIELD_BAR = { height: 3, margin: SAFE_MARGIN.shield } as const;
+export const SHIELD_BAR = { height: 3, margin: SAFE_MARGIN.edge } as const;
 
 // A notice: a compact strip of body text on an ink panel, compact height (growing per wrapped
 // line), inset like an action, at most the story panel's measure wide; its top on the HUD rect's

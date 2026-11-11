@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ControlState } from "../input/state.ts";
+import { ControlState, MOVE_STICK_GEOMETRY } from "../input/state.ts";
 import { NO_INSETS } from "./layout/playView.ts";
 import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
 import {
@@ -8,8 +8,10 @@ import {
   MARKER_INK_WIDTH,
   MOVE_KNOB_REACH,
   MOVE_MARKERS,
-  SPEED_LINE_FRAME,
+  SPEED_LINE_CAP,
+  SPEED_LINE_CAPSULE,
   speedLineLayers,
+  speedLinePlacement,
   TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
@@ -23,19 +25,23 @@ const layout = {
   visible: true,
   width: 720,
 };
+// Move travel for a deflection: past the dead zone, a share of the remaining reach.
+const travel = (strength: number) =>
+  MOVE_STICK_GEOMETRY.deadZone +
+  strength * (MOVE_STICK_GEOMETRY.reach - MOVE_STICK_GEOMETRY.deadZone);
 const knobCentre = (point: { x: number; y: number }) => ({
   x: point.x + (TOUCH_KNOB_FRAME - 1) / 2,
   y: point.y + (TOUCH_KNOB_FRAME - 1) / 2,
 });
 
 describe("joystick placement", () => {
-  it("rests both same-sized rings where Chibi's move hint rests, mirrored across the view", () => {
+  it("rests both same-sized rings on the safe edges, mirrored across the view", () => {
     const views = stickViews(layout, new ControlState());
-    expect(views.move?.ring).toEqual(centredAt({ x: 121, y: 303 }, TOUCH_CHROME_FRAME));
-    expect(views.aim?.ring).toEqual(centredAt({ x: 598, y: 303 }, TOUCH_CHROME_FRAME));
+    expect(views.move?.ring).toEqual(centredAt({ x: 60, y: 299 }, TOUCH_CHROME_FRAME));
+    expect(views.aim?.ring).toEqual(centredAt({ x: 659, y: 299 }, TOUCH_CHROME_FRAME));
     expect(views.move?.ringPose).toBe("rest");
     expect(views.move?.knobPose).toBe("rest");
-    expect(knobCentre(views.move!.knob)).toEqual({ x: 121, y: 303 });
+    expect(knobCentre(views.move!.knob)).toEqual({ x: 60, y: 299 });
   });
 
   it("omits a side hidden by its setting and both while controls do not show", () => {
@@ -54,9 +60,8 @@ describe("left stick deflection display", () => {
     "draws the sampled %s throttle in proportion inside the markers",
     (strength) => {
       const state = new ControlState();
-      state.setMoveScale({ x: 0.5, y: 0.5 });
       state.down("move", 1, { x: 100, y: 100 });
-      state.move(1, { x: 100 + (2.4 + strength * 17.6) / 0.5, y: 100 });
+      state.move(1, { x: 100 + travel(strength), y: 100 });
       const view = stickViews(layout, state).move!;
       expect(view.ring).toEqual(centredAt({ x: 100, y: 100 }, TOUCH_CHROME_FRAME));
       expect(knobCentre(view.knob)).toEqual({
@@ -159,7 +164,7 @@ describe("move knob travel", () => {
       const state = new ControlState();
       state.down("move", 1, { x: 200, y: 200 });
       const radians = (degrees * Math.PI) / 180;
-      state.move(1, { x: 200 + 40 * Math.cos(radians), y: 200 - 40 * Math.sin(radians) });
+      state.move(1, { x: 200 + 80 * Math.cos(radians), y: 200 - 80 * Math.sin(radians) });
       const view = stickViews(layout, state).move!;
       const knob = knobCentre(view.knob);
       // The knob's centre pixel within the ring's frame, at that pixel's centre.
@@ -176,7 +181,7 @@ describe("move knob travel", () => {
     const at = (strength: number) => {
       const state = new ControlState();
       state.down("move", 1, { x: 100, y: 100 });
-      state.move(1, { x: 100 + 2.4 + strength * 17.6, y: 100 });
+      state.move(1, { x: 100 + travel(strength), y: 100 });
       return knobCentre(stickViews(layout, state).move!.knob).x - 100;
     };
     expect(MOVE_KNOB_REACH).toBe(11);
@@ -186,37 +191,44 @@ describe("move knob travel", () => {
 });
 
 describe("speed line", () => {
-  // Where the line ends, in the view: its frame's centre pixel plus the offset.
-  const lineEnd = (line: { at: { x: number; y: number }; offset: { x: number; y: number } }) => ({
-    x: line.at.x + (SPEED_LINE_FRAME - 1) / 2 + line.offset.x,
-    y: line.at.y + (SPEED_LINE_FRAME - 1) / 2 + line.offset.y,
-  });
-
-  it("is absent at rest and inside the dead zone", () => {
+  it("is absent at rest and present once the thumb leaves the origin", () => {
     const state = new ControlState();
     expect(stickViews(layout, state).move?.line).toBeUndefined();
     expect(stickViews(layout, state).aim?.line).toBeUndefined();
     state.down("move", 1, { x: 100, y: 100 });
-    state.move(1, { x: 101, y: 100 });
     expect(stickViews(layout, state).move?.line).toBeUndefined();
-    expect(speedLineLayers(TOUCH_CHROME_COLOURS, { x: 0, y: 0 })).toEqual([]);
+    state.move(1, { x: 101, y: 100 });
+    expect(stickViews(layout, state).move?.line).toEqual({
+      from: { x: 100, y: 100 },
+      to: { x: 101, y: 100 },
+    });
   });
 
-  it.each([0.25, 0.5, 1])("ends at the move knob's centre at %s deflection", (strength) => {
-    const state = new ControlState();
-    state.down("move", 1, { x: 100, y: 100 });
-    state.move(1, { x: 100 + 2.4 + strength * 17.6, y: 100 });
-    const view = stickViews(layout, state).move!;
-    expect(lineEnd(view.line!)).toEqual(knobCentre(view.knob));
-    expect(view.line!.at).toEqual(centredAt({ x: 100, y: 100 }, SPEED_LINE_FRAME));
-  });
+  it.each([0.5, 1, 3])(
+    "runs from the move origin to the thumb at %s of full reach, unclamped",
+    (share) => {
+      const state = new ControlState();
+      state.down("move", 1, { x: 100, y: 100 });
+      const thumb = { x: 100 + share * MOVE_STICK_GEOMETRY.reach, y: 100 };
+      state.move(1, thumb);
+      const view = stickViews(layout, state).move!;
+      expect(view.line).toEqual({ from: { x: 100, y: 100 }, to: thumb });
+      // The drawn knob stays inside the ring while the line follows the thumb past it.
+      expect(knobCentre(view.knob).x - 100).toBeLessThanOrEqual(MOVE_KNOB_REACH);
+      expect(speedLinePlacement(view.line!).length).toBe(share * MOVE_STICK_GEOMETRY.reach);
+    },
+  );
 
-  it("ends at the aim knob's centre", () => {
+  it("runs from the aim origin to the thumb, past the ring's edge", () => {
     const state = new ControlState();
     state.down("aim", 2, { x: 500, y: 100 });
-    state.move(2, { x: 490, y: 92 });
+    state.move(2, { x: 400, y: 160 });
     const view = stickViews(layout, state).aim!;
-    expect(lineEnd(view.line!)).toEqual(knobCentre(view.knob));
+    expect(view.line).toEqual({ from: { x: 500, y: 100 }, to: { x: 400, y: 160 } });
+    const placement = speedLinePlacement(view.line!);
+    expect(placement.length).toBeGreaterThan(TOUCH_CHROME_FRAME / 2);
+    expect(placement.angle).toBeCloseTo(Math.atan2(60, -100), 12);
+    expect(knobCentre(view.knob)).not.toEqual({ x: 400, y: 160 });
   });
 
   it("lies over the ring and under the knob", () => {
@@ -224,15 +236,16 @@ describe("speed line", () => {
     expect(STICK_DEPTHS.line).toBeLessThan(STICK_DEPTHS.knob);
   });
 
-  it("draws a cream core with an ink fringe on each side, fitting its frame", () => {
-    const centre = SPEED_LINE_FRAME / 2;
-    const layers = speedLineLayers(TOUCH_CHROME_COLOURS, { x: 12, y: 0 });
+  it("draws a cream core with an ink fringe on each side and round caps", () => {
+    const layers = speedLineLayers(TOUCH_CHROME_COLOURS);
     const cream = [234, 212, 170, 255];
     const ink = [24, 20, 37, 255];
-    expect(touchChromePixel(layers, { x: centre + 6, y: centre })).toEqual(cream);
-    expect(touchChromePixel(layers, { x: centre + 6, y: centre + 1.5 })).toEqual(ink);
-    expect(touchChromePixel(layers, { x: centre + 6, y: centre - 1.5 })).toEqual(ink);
-    expect(touchChromePixel(layers, { x: centre + 6, y: centre + 2.5 })[3]).toBe(0);
-    expect(centre + 12 + 2).toBeLessThanOrEqual(SPEED_LINE_FRAME);
+    const mid = { x: SPEED_LINE_CAPSULE.width / 2, y: SPEED_LINE_CAP };
+    expect(touchChromePixel(layers, mid)).toEqual(cream);
+    expect(touchChromePixel(layers, { x: mid.x, y: mid.y + 1.5 })).toEqual(ink);
+    expect(touchChromePixel(layers, { x: mid.x, y: mid.y - 1.5 })).toEqual(ink);
+    // The capsule's corners lie outside the round caps.
+    expect(touchChromePixel(layers, { x: 0.25, y: 0.25 })[3]).toBe(0);
+    expect(SPEED_LINE_CAPSULE).toEqual({ height: 4, width: 6 });
   });
 });

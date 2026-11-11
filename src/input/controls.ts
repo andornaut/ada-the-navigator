@@ -38,7 +38,6 @@ import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
 import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
-import { movementCssScale } from "./geometry.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -239,10 +238,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     });
   };
   const fitControls = (): void => {
-    const bounds = canvas.getBoundingClientRect();
-    if (bounds.width > 0 && bounds.height > 0) {
-      state.setMoveScale(movementCssScale(FRAME_TURN.turn(), scene.scale.gameSize, bounds));
-    }
     camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
     camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
     layout = view.update();

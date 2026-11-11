@@ -9,8 +9,10 @@ import Phaser from "phaser";
 import {
   isTouchChromePose,
   type Point,
-  SPEED_LINE_FRAME,
+  SPEED_LINE_CAP,
+  SPEED_LINE_CAPSULE,
   speedLineLayers,
+  speedLinePlacement,
   TOUCH_CHROME_ALPHA,
   TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
@@ -56,32 +58,33 @@ export function preloadTouchChrome(scene: Phaser.Scene): void {
 function createChromeTexture(
   scene: Phaser.Scene,
   key: string,
-  logical: number,
+  logical: { readonly height: number; readonly width: number },
   frames: ReadonlyMap<string, readonly TouchChromeLayer[]>,
 ): void {
-  const size = logical * TOUCH_CHROME_SCALE;
-  const stride = size + 2;
-  const texture = scene.textures.createCanvas(key, stride * frames.size, stride);
+  const width = logical.width * TOUCH_CHROME_SCALE;
+  const height = logical.height * TOUCH_CHROME_SCALE;
+  const stride = width + 2;
+  const texture = scene.textures.createCanvas(key, stride * frames.size, height + 2);
   if (!texture) {
     throw new Error(`Cannot create ${key}`);
   }
   const context = texture.getContext();
   let column = 0;
   for (const [frame, layers] of frames) {
-    const image = context.createImageData(size, size);
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
+    const image = context.createImageData(width, height);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
         image.data.set(
           touchChromePixel(layers, {
             x: (x + 0.5) / TOUCH_CHROME_SCALE,
             y: (y + 0.5) / TOUCH_CHROME_SCALE,
           }),
-          4 * (y * size + x),
+          4 * (y * width + x),
         );
       }
     }
     context.putImageData(image, column * stride + 1, 1);
-    texture.add(frame, 0, column * stride + 1, 1, size, size);
+    texture.add(frame, 0, column * stride + 1, 1, width, height);
     column++;
   }
   texture.refresh();
@@ -114,7 +117,7 @@ export function createTouchChrome(
     createChromeTexture(
       scene,
       key,
-      logical,
+      { height: logical, width: logical },
       new Map(
         [...poses].map(([frame, pose]) => [
           frame,
@@ -150,42 +153,48 @@ export function showTouchChrome(sprite: Phaser.GameObjects.Sprite, tag: TouchChr
   }
 }
 
-// The speed line's texture for a knob offset in whole pixels, made on first use and kept for the
-// game; there are at most a few hundred offsets.
-function speedLineTexture(scene: Phaser.Scene, offset: Point): string {
-  const key = `touch-chrome-line-${offset.x}_${offset.y}`;
-  if (!scene.textures.exists(key)) {
+const SPEED_LINE_KEY = "touch-chrome-line";
+
+// A joystick's speed line: the capsule frame as a three-slice whose middle stretches to the line's
+// length, hidden until showSpeedLine places it.
+export function createSpeedLine(scene: Phaser.Scene): Phaser.GameObjects.NineSlice {
+  if (!scene.textures.exists(SPEED_LINE_KEY)) {
     createChromeTexture(
       scene,
-      key,
-      SPEED_LINE_FRAME,
-      new Map([["line", speedLineLayers(TOUCH_CHROME_COLOURS, offset)]]),
+      SPEED_LINE_KEY,
+      SPEED_LINE_CAPSULE,
+      new Map([["line", speedLineLayers(TOUCH_CHROME_COLOURS)]]),
     );
   }
-  return key;
-}
-
-// A joystick's speed line, hidden until showSpeedLine places it.
-export function createSpeedLine(scene: Phaser.Scene): Phaser.GameObjects.Sprite {
+  const cap = SPEED_LINE_CAP * TOUCH_CHROME_SCALE;
   return scene.add
-    .sprite(0, 0, speedLineTexture(scene, { x: 1, y: 0 }), "line")
-    .setOrigin(0)
-    .setDisplaySize(SPEED_LINE_FRAME, SPEED_LINE_FRAME)
+    .nineslice(
+      0,
+      0,
+      SPEED_LINE_KEY,
+      "line",
+      SPEED_LINE_CAPSULE.width * TOUCH_CHROME_SCALE,
+      0,
+      cap,
+      cap,
+    )
+    .setScale(1 / TOUCH_CHROME_SCALE)
     .setAlpha(TOUCH_CHROME_ALPHA)
     .setVisible(false);
 }
 
-// Draws the line from the ring's centre to the knob's, or hides it while the knob is centred.
+// Draws the line from the stick's origin to the thumb, however far it reaches, or hides it.
 export function showSpeedLine(
-  sprite: Phaser.GameObjects.Sprite,
-  line: { readonly at: Point; readonly offset: Point } | undefined,
+  slice: Phaser.GameObjects.NineSlice,
+  line: { readonly from: Point; readonly to: Point } | undefined,
 ): void {
-  sprite.setVisible(line !== undefined);
+  slice.setVisible(line !== undefined);
   if (line) {
-    const key = speedLineTexture(sprite.scene, line.offset);
-    if (sprite.texture.key !== key) {
-      sprite.setTexture(key, "line").setDisplaySize(SPEED_LINE_FRAME, SPEED_LINE_FRAME);
-    }
-    sprite.setPosition(line.at.x, line.at.y);
+    const { angle, from, length } = speedLinePlacement(line);
+    const width = (length + 2 * SPEED_LINE_CAP) * TOUCH_CHROME_SCALE;
+    slice.setSize(width, SPEED_LINE_CAPSULE.height * TOUCH_CHROME_SCALE);
+    // The origin sits on the starting cap's centre, so the line pivots on the stick's origin.
+    slice.setOrigin(SPEED_LINE_CAP / (length + 2 * SPEED_LINE_CAP), 0.5);
+    slice.setPosition(from.x, from.y).setRotation(angle);
   }
 }

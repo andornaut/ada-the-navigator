@@ -641,8 +641,13 @@ try {
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });
-  // Compare observable flight response, not the implementation's stick sampling formula.
-  async function analogRun(distance, marker) {
+  // Compare observable flight response, not the implementation's stick sampling formula. Travel is
+  // in logical px, --ada-unit CSS px each.
+  const stickUnit = await page
+    .locator("#app")
+    .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
+  async function analogRun(logical, marker) {
+    const distance = logical * stickUnit;
     await seedOnce(safeSerialized, marker);
     const target = await page.locator('[data-control="move-joystick"]').boundingBox();
     assert.ok(target);
@@ -660,14 +665,14 @@ try {
   }
   const deadTravel = await analogRun(1, "ada-browser.analog-dead.v1");
   const smallTravel = await analogRun(8, "ada-browser.analog-small.v1");
-  const fullTravel = await analogRun(20, "ada-browser.analog-full.v1");
-  assert.equal(deadTravel, 0, "Movement inside the CSS dead zone must remain idle");
+  const fullTravel = await analogRun(40, "ada-browser.analog-full.v1");
+  assert.equal(deadTravel, 0, "Movement inside the logical dead zone must remain idle");
   assert.ok(
     smallTravel > 0 && fullTravel > smallTravel * 1.5,
-    "Full CSS travel must move materially farther than partial travel over the same interval",
+    "Full logical travel must move materially farther than partial travel over the same interval",
   );
   save("analog-proof.json", { deadTravel, smallTravel, fullTravel });
-  events.checks.push("CSS move-stick dead zone and partial/full throttle affect actual flight");
+  events.checks.push("Logical move-stick dead zone and partial/full throttle affect actual flight");
   await seedOnce(safeSerialized, "ada-browser.after-analog.v1");
   const joystick = page.locator('[data-control="move-joystick"]');
   await joystick.waitFor({ state: "visible" });
