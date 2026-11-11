@@ -85,8 +85,10 @@ sparkles.
 - Scale `max(1, viewWidth / 960, viewHeight / 540)`: the canvas shows at 1x
   in every view up to 960 by 540 and grows only past it, so it always covers
   the view without letterboxing. At 779 by 360 it shows the approved framing.
-- `cockpit` is empty, for the galaxy selection card and conversations before
-  Ada sits; `cockpit-seated` shows Ada and Penny in their seats.
+- `cockpit` is empty, for the prologue's arrival pages before Ada sits;
+  `cockpit-seated` shows Ada and Penny in their seats, for every page after
+  and for the galaxy selection card. See
+  [storybook](storybook.md#locations).
 
 ## Astra speaking
 

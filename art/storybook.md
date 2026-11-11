@@ -75,9 +75,11 @@ The game names each page's location by a background key
 | `cockpit`           | `cockpit` ([cockpit](cockpit.md))                |
 | `cockpitSeated`     | `cockpit-seated` ([cockpit](cockpit.md))         |
 
-`cockpit` is the empty cockpit, for pages before Ada and Penny sit and for the
-galaxy selector; `cockpitSeated` is every ship-scene page from the moment they
-sit. Gameplay marks that page in the sequence.
+`cockpit` is the empty cockpit, used only in the prologue: from the arrival
+narration through Astra's lines and the optional questions. `cockpitSeated`
+starts on the page where Ada sits and buckles Penny in, and covers every later
+ship-scene page: quantum jump, the galaxy selector, and every later chapter's
+boarding and Continue, where they sit at once. Gameplay owns the page marks.
 
 On a cockpit page whose speaker is Astra, the `cockpit-astra` speaking frames
 play over either cockpit background at `at`, 120 ms each, while the page shows
