@@ -317,7 +317,7 @@ describe("start flow", () => {
     // Achievements and their counts are all Restart keeps.
     expect(reloaded.state).toEqual({
       ...new GameModel(PROTOTYPE).state,
-      achievements: { ...achievements, sensed: [] },
+      achievements: { ...achievements, found: [], sensed: [] },
     });
     expect(achievements.unlocked).toContain("newNavigator");
     reloaded.start();

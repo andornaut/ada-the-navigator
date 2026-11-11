@@ -19,8 +19,10 @@ export interface AchievementEntry {
 export interface AchievementsLabels {
   readonly close: string;
   readonly next: string;
+  /** `{page}/{pages}`. */
+  readonly page: string;
   readonly previous: string;
-  /** `{have}/{need}`, which also gives the page count. */
+  /** `{have}/{need}`. */
   readonly progress: string;
   readonly title: string;
 }
@@ -43,6 +45,10 @@ export function achievementPage<T>(entries: readonly T[], page: number): T[] {
 
 export function fillCount(template: string, have: number, need: number): string {
   return template.replace("{have}", String(have)).replace("{need}", String(need));
+}
+
+export function fillPage(template: string, page: number, pages: number): string {
+  return template.replace("{page}", String(page)).replace("{pages}", String(pages));
 }
 
 const STYLE = `
@@ -170,7 +176,7 @@ export function createAchievementsCard(
       ...achievementPage(entries, page).map((entry) => entryNode(labels, entry)),
     );
     pager.hidden = pages === 1;
-    pageCount.textContent = fillCount(labels.progress, page + 1, pages);
+    pageCount.textContent = fillPage(labels.page, page + 1, pages);
     // An end of the list shows the disabled face but stays focusable, as other cards' do.
     for (const [button, unavailable] of [
       [previous, page === 0],

@@ -126,18 +126,21 @@ describe("Penny finds", () => {
     expect(state.found).toEqual([]);
     reachSensed(PENNY_FIND_RANGE, 1, points, { x: 1, y: 0 }, state);
     expect(state.found).toEqual(["penny:1:cache"]);
+    expect(state.finds).toBe(1);
     // Another galaxy's point waits for its own flight; a found point is not sensed again.
     expect(state.sensed).toEqual(["penny:2:hub"]);
     recordSensed(state, ["penny:1:cache"]);
     expect(state.sensed).toEqual(["penny:2:hub"]);
+    reachSensed(PENNY_FIND_RANGE, 1, points, { x: 1, y: 0 }, state);
+    expect(state.finds).toBe(1);
   });
 
   it("unlocks Good Nose at the tenth find", () => {
     const state = newAchievements();
-    state.found = Array.from({ length: 9 }, (_, n) => `penny:1:point-${n}`);
+    state.finds = 9;
     const game = newGameState();
     expect(unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, state, game)).toEqual([]);
-    state.found.push("penny:1:point-9");
+    state.finds = 10;
     expect(unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, state, game)).toEqual([
       ACHIEVEMENTS.find(({ name }) => name === "Good Nose"),
     ]);
@@ -261,12 +264,14 @@ describe("notices and persistence", () => {
     expect(nextNotice(model)).toBe("Achievement: Helping Hand");
   });
 
-  it("keeps achievements and their counts on Restart, dropping Penny's sensed points", () => {
+  it("keeps achievements, counts and paints ever owned on Restart, starting a new world's finds", () => {
     const model = new GameModel(PROTOTYPE);
     model.state.started = true;
     model.recordAchievement({ kind: "jobCompleted" });
     model.recordAchievement({ galaxy: 1, id: "nebula", kind: "landmarkCharted" });
-    model.state.achievements.found.push("penny:1:a");
+    const point = [{ id: "a", x: 0, y: 0 }];
+    recordSensed(model.state.achievements, ["penny:1:a"]);
+    reachSensed(PENNY_FIND_RANGE, 1, point, { x: 0, y: 0 }, model.state.achievements);
     model.state.achievements.sensed.push("penny:1:b");
     model.state.economy.paints.push("iris");
     model.recordAchievement({ kind: "activityCompleted" });
@@ -276,13 +281,18 @@ describe("notices and persistence", () => {
     expect(model.state.achievements).toMatchObject({
       activities: 1,
       charted: { 1: ["nebula"] },
-      found: ["penny:1:a"],
+      finds: 1,
+      found: [],
       jobs: 1,
       paints: [ECONOMY.defaultPaint, "iris"],
       sensed: [],
       unlocked: [id("Helping Hand")],
     });
     expect(view(model, "Full Palette").progress?.have).toBe(2);
+    // The same point in the new world is a new find.
+    recordSensed(model.state.achievements, ["penny:1:a"]);
+    reachSensed(PENNY_FIND_RANGE, 1, point, { x: 0, y: 0 }, model.state.achievements);
+    expect(model.state.achievements.finds).toBe(2);
   });
 
   it("saves and restores achievements, rejecting a malformed record", () => {

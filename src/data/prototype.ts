@@ -310,6 +310,7 @@ export const PROTOTYPE: PrototypeContent = {
     achievement: "Achievement: {name}",
     achievementProgress: "{have}/{need}",
     achievements: "Achievements",
+    achievementsPage: "{page}/{pages}",
     aimControls: "Aim controls",
     ammoPack: "{weapon} ammo",
     ammoPackCount: "×{count}",

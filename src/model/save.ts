@@ -71,7 +71,7 @@ function achievementState(value: unknown): boolean {
     ["unlocked", "allies", "projects", "paints", "sensed", "found"].every((key) =>
       strings(value[key]),
     ) &&
-    ["jobs", "activities"].every(
+    ["jobs", "activities", "finds"].every(
       (key) => Number.isInteger(value[key]) && nonnegative(value[key]),
     ) &&
     typeof value.blockade === "boolean" &&

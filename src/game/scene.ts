@@ -496,6 +496,7 @@ export class PrototypeScene extends Phaser.Scene {
       achievements: {
         close: PROTOTYPE.labels.close ?? "",
         next: PROTOTYPE.labels.next ?? "",
+        page: PROTOTYPE.labels.achievementsPage ?? "",
         previous: PROTOTYPE.labels.previous ?? "",
         progress: PROTOTYPE.labels.achievementProgress ?? "",
         title: PROTOTYPE.labels.achievements ?? "",

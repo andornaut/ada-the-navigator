@@ -20,8 +20,10 @@ export interface AchievementState {
   paints: string[];
   /** Points Penny sensed that Ada has not reached yet, as `penny:{sector}:{point}` instances. */
   sensed: string[];
-  /** Penny finds by instance: each sensed point counts once. */
+  /** The points found in this world, each counted once; Restart starts the list anew. */
   found: string[];
+  /** Penny finds counted, which Restart keeps. */
+  finds: number;
 }
 
 /**
@@ -54,6 +56,7 @@ export function newAchievements(): AchievementState {
     allies: [],
     blockade: false,
     charted: {},
+    finds: 0,
     found: [],
     jobs: 0,
     paints: [],
@@ -120,7 +123,10 @@ export function reachSensed(
     if (!point || Math.hypot(point.x - player.x, point.y - player.y) > range) {
       return true;
     }
-    addOnce(achievements.found, instance);
+    if (!achievements.found.includes(instance)) {
+      achievements.found.push(instance);
+      achievements.finds++;
+    }
     return false;
   });
 }
@@ -177,7 +183,7 @@ export function achievementProgress(
         need: totals.projects > 0 ? (goal.need ?? totals.projects) : 0,
       };
     case "pennyFinds":
-      return { have: achievements.found.length, need: goal.need };
+      return { have: achievements.finds, need: goal.need };
     case "paints":
       return { have: achievements.paints.length, need: totals.paints };
     case "blockade":

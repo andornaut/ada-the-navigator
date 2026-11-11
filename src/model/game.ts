@@ -1513,8 +1513,9 @@ export class GameModel {
     if (this.screen !== "start") {
       return;
     }
-    // Achievements and their counts survive Restart; Penny's sensed points belong to the old world.
-    const achievements = { ...this.state.achievements, sensed: [] };
+    // Achievements and their counts survive Restart. Penny's sensed and found points belong to
+    // the old world, so finds in the new one count again.
+    const achievements = { ...this.state.achievements, found: [], sensed: [] };
     this.state = { ...newGameState(), achievements };
     this.story = null;
     this.selection = null;

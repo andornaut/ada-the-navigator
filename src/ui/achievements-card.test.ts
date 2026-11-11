@@ -7,6 +7,7 @@ import {
   achievementPages,
   ACHIEVEMENTS_PER_PAGE,
   fillCount,
+  fillPage,
 } from "./achievements-card.ts";
 
 describe("Achievements card", () => {
@@ -19,9 +20,9 @@ describe("Achievements card", () => {
     expect(achievementPages(0)).toBe(1);
   });
 
-  it("formats a count and the page count with Gameplay's {have}/{need}", () => {
-    const template = PROTOTYPE.labels.achievementProgress ?? "";
-    expect(fillCount(template, 3, 10)).toBe("3/10");
-    expect(fillCount(template, 1, achievementPages(ACHIEVEMENTS.length))).toBe("1/3");
+  it("formats a count with {have}/{need} and the page count with {page}/{pages}", () => {
+    expect(fillCount(PROTOTYPE.labels.achievementProgress ?? "", 3, 10)).toBe("3/10");
+    const pages = achievementPages(ACHIEVEMENTS.length);
+    expect(fillPage(PROTOTYPE.labels.achievementsPage ?? "", 1, pages)).toBe("1/3");
   });
 });
