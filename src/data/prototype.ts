@@ -480,6 +480,7 @@ export const PROTOTYPE: PrototypeContent = {
     undock: "Undock",
     use: "Use",
     weapon: "Weapon",
+    weaponAmmoLabel: "{weapon}, {count} left",
     weaponBasic: "Basic",
     weaponHeavyMissile: "Heavy Missile",
     weaponMultiLaser: "Multi-Laser",

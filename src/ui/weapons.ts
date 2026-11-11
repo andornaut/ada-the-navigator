@@ -14,8 +14,28 @@ export interface WeaponChoice {
 }
 
 export interface WeaponLabels {
+  /** A non-Basic weapon button's accessible label, `weaponAmmoLabel`: "{weapon}, {count} left". */
+  readonly ammo: string;
   readonly group: string;
   readonly names: Readonly<Record<Weapon, string>>;
+}
+
+const SHOTS_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
+/**
+ * A weapon button's accessible label: Basic's name, or the weapon and its exact count, en-US
+ * grouped ("Rapid Missile, 1,200 left"), not the pill's four-character form.
+ */
+export function weaponButtonLabel(labels: WeaponLabels, choice: WeaponChoice): string {
+  const name = labels.names[choice.id];
+  if (choice.ammo === null) {
+    return name;
+  }
+  const values: Readonly<Record<string, string>> = {
+    count: SHOTS_FORMAT.format(choice.ammo),
+    weapon: name,
+  };
+  return labels.ammo.replace(/\{(\w+)\}/gu, (match, key: string) => values[key] ?? match);
 }
 
 interface WeaponSelectorOptions {
@@ -233,7 +253,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       if (count && choice.ammo !== null) {
         count.textContent = ammoCount(choice.ammo);
       }
-      entry.setAttribute("aria-label", name);
+      entry.setAttribute("aria-label", weaponButtonLabel(options.labels, choice));
       entry.setAttribute("aria-pressed", String(choice.selected));
       entry.dataset.state = weaponButtonState(choice);
       entry.title = name;

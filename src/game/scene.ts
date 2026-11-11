@@ -607,6 +607,7 @@ export class PrototypeScene extends Phaser.Scene {
         offer: updateOffer,
       },
       weaponLabels: {
+        ammo: PROTOTYPE.labels.weaponAmmoLabel ?? "",
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
           basic: PROTOTYPE.labels.weaponBasic ?? "",

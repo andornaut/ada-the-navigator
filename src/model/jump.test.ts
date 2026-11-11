@@ -41,7 +41,7 @@ function deplete(model: GameModel): void {
   incoming(flight);
   model.step(0.01, idle);
 }
-function pickup(flight: FlightState, weapon: "rapidMissile" | "multiLaser" | "scattershot") {
+function pickup(flight: FlightState, weapon: UpgradeWeapon) {
   flight.objects.push({
     ...flight.player,
     hp: 1,
@@ -116,6 +116,27 @@ describe("weapon switching", () => {
     pickup(flight, "scattershot");
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.weapon).toBe("scattershot");
+  });
+});
+
+describe("picked-up weapons", () => {
+  it("equip in combat through the game step unless the switch wait runs, then join unequipped", () => {
+    const model = launched();
+    const flight = model.state.flight!;
+    // Incoming fire keeps Ada in danger for the whole check.
+    flight.player = { x: 5000, y: 5000 };
+    incoming(flight);
+    model.step(0.01, idle);
+    expect(flight.dangerFor).toBeGreaterThan(0);
+    pickup(flight, "phaser");
+    model.step(0.01, idle);
+    expect(flight.dangerFor).toBeGreaterThan(0);
+    expect(flight.weapon).toBe("phaser");
+    expect(flight.weaponSwitchFor).toBeGreaterThan(0);
+    pickup(flight, "heavyMissile");
+    model.step(0.01, idle);
+    expect(flight.ownedWeapons).toEqual(["phaser", "heavyMissile"]);
+    expect(flight.weapon).toBe("phaser");
   });
 });
 

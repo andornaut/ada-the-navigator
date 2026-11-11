@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
+import type { Weapon } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { HUD_AMMO_COUNT, HUD_BUTTON } from "./layout/playView.ts";
@@ -11,6 +12,7 @@ import {
   ammoCount,
   HUD_DISC_STATES,
   WEAPON_STYLE,
+  weaponButtonLabel,
   weaponButtonState,
 } from "./weapons.ts";
 
@@ -21,6 +23,30 @@ describe("HUD weapon buttons", () => {
     expect(weaponButtonState({ ammo: 12, id: "rapidMissile", selected: false })).toBe("idle");
     expect(weaponButtonState({ ammo: null, id: "basic", selected: false })).toBe("idle");
     expect(weaponButtonState({ ammo: 0, id: "phaser", selected: false })).toBe("empty");
+  });
+
+  it("labels a weapon button with its exact count, en-US grouped, and Basic with its name", () => {
+    const labels = {
+      ammo: PROTOTYPE.labels.weaponAmmoLabel!,
+      group: "",
+      names: {
+        basic: "Basic",
+        heavyMissile: "Heavy Missile",
+        multiLaser: "Multi-Laser",
+        phaser: "Phaser",
+        rapidMissile: "Rapid Missile",
+        scattershot: "Scattershot",
+      },
+    };
+    expect(PROTOTYPE.labels.weaponAmmoLabel).toBe("{weapon}, {count} left");
+    const label = (id: Weapon, ammo: number | null) =>
+      weaponButtonLabel(labels, { ammo, id, selected: false });
+    expect(label("basic", null)).toBe("Basic");
+    expect(label("rapidMissile", 1200)).toBe("Rapid Missile, 1,200 left");
+    expect(label("phaser", 0)).toBe("Phaser, 0 left");
+    expect(label("multiLaser", 9999)).toBe("Multi-Laser, 9,999 left");
+    // Exact past the pill's four characters ("2m").
+    expect(label("scattershot", 2_500_000)).toBe("Scattershot, 2,500,000 left");
   });
 
   it.each([
