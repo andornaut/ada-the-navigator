@@ -237,6 +237,7 @@ describe("HUD anchors", () => {
 
 describe("touch controls", () => {
   const view = { height: 360, width: 720 };
+  const phone: Insets = { bottom: 19, left: 43, right: 43, top: 0 };
 
   // A ring's drawn edges in the view: its frame is drawn 1 inside the 75 frame.
   const ringEdges = (centre: { x: number; y: number }) => ({
