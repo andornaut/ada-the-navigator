@@ -237,7 +237,7 @@ export const PROTOTYPE: PrototypeContent = {
     confirmLeft: "{amount} left after",
     confirmTitle: "Buy {name}?",
     continue: "Continue",
-    deferred: "Galaxy four: Story in development.",
+    deferred: "Galaxy four: story in development",
     deliver: "Deliver",
     deposit: "Deposit",
     destinations: "Discovered destinations",

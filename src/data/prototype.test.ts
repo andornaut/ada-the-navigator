@@ -11,7 +11,7 @@ describe("player text", () => {
     for (const id of [1, 2, 3] as const) {
       expect(PROTOTYPE.chapters[id].objectives[0]).toBe("Explore the galaxy.");
     }
-    expect(PROTOTYPE.labels.deferred).toBe("Galaxy four: Story in development.");
+    expect(PROTOTYPE.labels.deferred).toBe("Galaxy four: story in development");
   });
 
   it("calls Ada's home home or Earth and never names her city", () => {
