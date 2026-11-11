@@ -118,7 +118,8 @@ describe("space currents", () => {
   });
 
   it("drift Ada with the flow outside her own velocity and speed cap", () => {
-    const current = currents.find((entry) => entry.length > 3500)!;
+    // A current without a river, so no river rock on the centre line meets the ship.
+    const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point, tangent } = middle(current);
     const top = PROTOTYPE.tuning.maxSpeed;
     for (const sense of [0, 1, -1]) {
@@ -135,7 +136,8 @@ describe("space currents", () => {
   });
 
   it("drift small craft and pickups but not frigates, capitals or platforms", () => {
-    const current = currents.find((entry) => entry.length > 3500)!;
+    // A current without a river, so no river rock on the centre line meets the ship.
+    const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point } = middle(current);
     const flight = emptyFlight({ x: point.x + 600, y: point.y + 600 });
     // Each sits on the centre line, far enough apart that no ship blocks another.
