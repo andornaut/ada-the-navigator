@@ -13,7 +13,7 @@ Destroyed enemy ships and asteroids release Stardust as small glinting pickups.
 Ada's ship has a tractor beam, with no visual of its own, that draws Stardust
 within its pull radius toward her at its pull speed; Stardust collects on contact
 within the existing pickup reach. The beam pulls only Stardust. Base pull radius
-is 100 world units and base pull speed is 150 world units per second. Enemy ships are
+is 65 world units and base pull speed is 150 world units per second. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A multipart ship is defeated when all its required parts are disabled.
 
@@ -79,7 +79,7 @@ not yet designed, so the station card shows no quest board until it is.
 | Shield          | Levels 2 and 3: capacity 150, then 225                                       | 150, 300 |
 | Shield recharge | Levels 2 and 3: each about ×1.5 recharge (shorter delay, faster rate)        | 150, 300 |
 | Engine tuning   | Levels 2 and 3: each +5% top speed, −10% acceleration and braking seconds    | 120, 240 |
-| Tractor beam    | Levels 2 and 3: pull radius 150, then 200; pull speed 220, then 300          | 80, 160  |
+| Tractor beam    | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300          | 80, 160  |
 | Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free | 50 each  |
 
 Enemy speed ratios stay relative to Ada's base speed, so engine tuning lets Ada
