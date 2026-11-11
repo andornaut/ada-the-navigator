@@ -13,7 +13,7 @@
 Every storybook background, like the cockpit, is a 960 by 540 logical px canvas
 at 2x: a 1920 by 1080 opaque PNG with `displayWidth` 960 and `displayHeight` 540
 and the pivot at the centre. Draw it at display size under the insets, centred
-across and offset down by the [scene anchor](layout.md#storybook-page), which
+across and offset down by the [run anchor](layout.md#storybook-page), which
 places its [subject band](#subject-bands) in the strip above the story panel;
 a backdrop without a panel stays centred. It covers every view up to 960 by 540
 (a 720 by 540 4:3 view, an 800 by 360 21:9 phone); scale it up to cover only
@@ -138,8 +138,8 @@ their scene's background (Grandma's choice uses `story-grandma-garden`).
 Each background's manifest entry carries `subject: { top, bottom }`, the canvas
 rows (logical px) its key objects span, written by its generator
 (`art/tools/storybook.ts`, `art/tools/cockpit.ts`). The story page offsets the
-background so the band centres in the strip above the scene's tallest panel
-([scene anchor](layout.md#storybook-page)). At a 360-high view the canvas can
+background so the band centres in the strip above the tallest panel in the
+story run ([run anchor](layout.md#storybook-page)). At a 360-high view the canvas can
 rise at most 180 (90 past centred), so a band's bottom shows only while it is
 at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 
@@ -162,48 +162,36 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
 | `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
-Placement per scene and background: canvas top `y`, then the band's view rows
-and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390 with
-the same insets, and 1280x720 (720x405). A star marks a clamped placement.
+Placement per story run and background: canvas top `y`, then the band's view
+rows and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390
+with the same insets, and 1280x720 (720x405). A star marks a clamped
+placement. Runs: the first launch (chapter one's opening, then the prologue),
+a visit (a waiting chapter scene, Ada's room, boarding), the empty visit and
+the jump home (night, morning, then the visit).
 
-| Scene, background                      | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
-| -------------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| opening:1, `story-grandma-garden`      | y -180*: 15..135, top 133       | y -180*: 15..135, top 133       | y -135*: 60..180, top 181       |
-| resolution:1, `story-community-garden` | y -168.5: 11.5..121.5, top 133  | y -168.5: 11.5..121.5, top 133  | y -135*: 45..155, top 181       |
-| opening:2, `story-school-hallway`      | y -146: -1..144, top 143        | y -141: 4..149, top 153         | y -117: 28..173, top 201        |
-| resolution:2, `story-schoolyard`       | y -158.5: 1.5..141.5, top 143   | y -153.5: 6.5..146.5, top 153   | y -129.5: 30.5..170.5, top 201  |
-| opening:3, `story-front-door`          | y -161: -1..134, top 133        | y -161: -1..134, top 133        | y -135*: 25..160, top 181       |
-| resolution:3, `story-park`             | y -180*: 40..105, top 143       | y -168: 52..117, top 169        | y -135*: 85..150, top 217       |
-| prologue, `story-park`                 | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
-| prologue, `story-ada-room-unpolished`  | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
-| prologue, `story-ada-room`             | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
-| prologue, `cockpit`                    | y -175: -10..135, top 125       | y -175: -10..135, top 125       | y -135*: 30..175, top 173       |
-| prologue, `cockpit-seated`             | y -136: 29..174, top 203        | y -136: 29..174, top 203        | y -112: 53..198, top 251        |
-| room, `story-ada-room`                 | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
-| room (empty visit), `story-ada-room`   | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
-| boarding, `story-ada-room`             | y -149: 106..151, top 257       | y -149: 106..151, top 257       | y -125: 130..175, top 305       |
-| boarding, `cockpit-seated`             | y -123: 42..187, top 229        | y -123: 42..187, top 229        | y -99: 66..211, top 277         |
-| jumpHome, `story-ada-room-night`       | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
-| jumpHome, `story-ada-room-morning`     | y -169: 76..181, top 257        | y -169: 76..181, top 257        | y -135*: 110..215, top 305      |
+| Background, runs                                                    | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
+| ------------------------------------------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
+| `story-grandma-garden`, first launch                                | y -180*: 15..110, top 113       | y -180*: 15..110, top 113       | y -135*: 60..155, top 161       |
+| `story-park`, first launch                                          | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
+| `story-ada-room-unpolished`, first launch                           | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
+| `story-ada-room`, every visit, first launch, empty visit, jump home | y -171: 84..129, top 213        | y -171: 84..129, top 213        | y -135*: 120..165, top 261      |
+| `cockpit`, first launch                                             | y -180*: -5..118, top 93        | y -180*: -5..118, top 93        | y -135*: 40..163, top 141       |
+| `cockpit-seated`, first launch                                      | y -135: 40..163, top 203        | y -135: 40..163, top 203        | y -111: 64..187, top 251        |
+| `story-community-garden`, visit, chapter 1 resolution               | y -178.5: 1.5..111.5, top 113   | y -178.5: 1.5..111.5, top 113   | y -135*: 45..155, top 161       |
+| `cockpit-seated`, every visit, empty visit, jump home               | y -122: 53..176, top 229        | y -122: 53..176, top 229        | y -98: 77..200, top 277         |
+| `story-school-hallway`, visit, chapter 2 opening                    | y -170.5: 13.5..119.5, top 133  | y -170.5: 13.5..119.5, top 133  | y -135*: 49..155, top 181       |
+| `story-schoolyard`, visit, chapter 2 resolution                     | y -156.5: 11.5..121.5, top 133  | y -156.5: 11.5..121.5, top 133  | y -132.5: 35.5..145.5, top 181  |
+| `story-front-door`, visit, chapter 3 opening                        | y -171: 4..109, top 113         | y -171: 4..109, top 113         | y -135*: 40..145, top 161       |
+| `story-park`, visit, chapter 3 resolution                           | y -180*: 40..105, top 143       | y -176: 44..109, top 153        | y -135*: 85..150, top 201       |
+| `story-ada-room-night`, jump home                                   | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
+| `story-ada-room-morning`, jump home                                 | y -169: 76..181, top 257        | y -169: 76..181, top 257        | y -135*: 110..215, top 305      |
 
-Apart from the cockpit below, every band clears its panel at these views with
-Gameplay's current pages, within 2 rows (Grandma's beds, the hallway's doors
-and the coats graze the panel or the view top by 1 or 2). Two cases crop a key
-object:
-
-- The prologue's cockpit, under Astra's questions (panel top 125 at 360-high
-  views): the 145-row canopy is taller than the 125 strip, so 10 rows go under
-  the panel and 10 above the view. Recompose: draw the ship at 0.85 about the
-  canopy's centre, so the dome spans 175..298 (123 rows).
-- A 218-character opening, resolution or closing at 720x360 with insets
-  (panel top 117, a 117 strip): Grandma's beds lose 18 rows at their foot
-  (the placement clamps), the schoolyard's 140 rows lose 11.5 at each end, the
-  hallway's 145 rows 14 at each end and the front door's 135 rows 9 at each
-  end. Recompose each subject into at most 110 rows ending by row 290: move
-  Grandma's beds to the house's side of the lot (rows 185..290), set the play
-  structure beside the school's door (180..290), hang the notice board lower
-  beside the near door (180..290), and hang the coats and lead lower by the
-  door (180..290).
+Every band clears its panel at these views except the cockpit's: under
+Astra's three questions (panel top 93 at 360-high views, 141 at 720x405) the
+123-row canopy is taller than the 93 strip, and the clamp holds the canvas
+at its lowest, so 25 rows of the dome's underside go under the panel and 5
+above the view, and 22 under the panel at 720x405. At 0.6 with the canopy
+focus 15 rows higher the dome spans about 175..262 and clears both.
 
 ## Ada's sprites
 
