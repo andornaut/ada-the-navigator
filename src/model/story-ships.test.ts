@@ -34,7 +34,7 @@ const ship = (ships: ReturnType<typeof storyShips>, id: string) =>
 describe("Cartwheel story ships", () => {
   it("wait at their holding points facing the hub between scenes, without the blocker", () => {
     for (const stage of [0, 2, 4]) {
-      const ships = storyShips(hub, { stage }, undefined, 40);
+      const ships = storyShips(hub, { stage }, false, undefined, 40);
       expect(ships.map((entry) => entry.id)).toEqual(["miner", "visitor-1", "visitor-2"]);
       for (const entry of ships) {
         expect(entry.thrust).toBe(false);
@@ -51,22 +51,25 @@ describe("Cartwheel story ships", () => {
     const scene = { at: 10, id: "blocked" as const, lineDue: true };
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.blocked;
     const closest = Array.from({ length: 80 }, (_, index) => {
-      const ships = storyShips(hub, { stage: 2 }, scene, scene.at + (index / 80) * duration);
+      const ships = storyShips(hub, { stage: 2 }, false, scene, scene.at + (index / 80) * duration);
       return gap(ship(ships, "miner")!, ship(ships, "blocker")!);
     });
     expect(Math.min(...closest)).toBeLessThan(80);
-    const middle = storyShips(hub, { stage: 2 }, scene, scene.at + 3);
+    const middle = storyShips(hub, { stage: 2 }, false, scene, scene.at + 3);
     expect(ship(middle, "miner")!.thrust).toBe(true);
     expect(ship(middle, "blocker")!.thrust).toBe(true);
     expect(ship(middle, "visitor-1")!.thrust).toBe(false);
     const nearest = Math.min(
       ...Array.from({ length: 81 }, (_, index) =>
-        gap(ship(storyShips(hub, { stage: 2 }, scene, scene.at + index / 10), "miner")!, hub),
+        gap(
+          ship(storyShips(hub, { stage: 2 }, false, scene, scene.at + index / 10), "miner")!,
+          hub,
+        ),
       ),
     );
     // The miner never reaches the hub, and is back holding once the scene ends.
     expect(nearest).toBeGreaterThan(100);
-    const after = storyShips(hub, { stage: 2 }, scene, scene.at + duration);
+    const after = storyShips(hub, { stage: 2 }, false, scene, scene.at + duration);
     expect(ship(after, "blocker")).toBeUndefined();
     expect(ship(after, "miner")).toMatchObject({
       thrust: false,
@@ -78,13 +81,52 @@ describe("Cartwheel story ships", () => {
   it("plays the docking scene: the regulars dock together, the blocker flies off", () => {
     const scene = { at: 5, id: "docking" as const, lineDue: true };
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.docking;
-    const end = storyShips(hub, { stage: 5 }, scene, scene.at + duration - 0.01);
+    const end = storyShips(hub, { stage: 5 }, false, scene, scene.at + duration - 0.01);
     for (const id of ["miner", "visitor-1", "visitor-2"]) {
       expect(gap(ship(end, id)!, hub)).toBeLessThan(80);
     }
     expect(gap(ship(end, "blocker")!, hub)).toBeGreaterThan(1200);
-    expect(storyShips(hub, { stage: 5 }, scene, scene.at + duration)).toEqual([]);
-    expect(storyShips(hub, { stage: 5 }, undefined, 0)).toEqual([]);
+    // Once the scene ends the regulars stay where it docked them, and the blocker is gone.
+    const docked = storyShips(hub, { stage: 5 }, false, scene, scene.at + duration);
+    expect(docked.map(({ id }) => id)).toEqual(["miner", "visitor-1", "visitor-2"]);
+    for (const id of ["miner", "visitor-1", "visitor-2"] as const) {
+      expect(gap(ship(docked, id)!, ship(end, id)!)).toBeLessThan(1);
+    }
+    expect(storyShips(hub, { stage: 5 }, false, undefined, 0)).toEqual(docked);
+  });
+
+  it("keep the regulars docked after the docking scene, facing into their docks", () => {
+    const { docked } = CARTWHEEL_STORY_SHIPS;
+    const at = (bay: boolean) => storyShips(hub, { stage: 5 }, bay, undefined, 100);
+    for (const [bay, docks] of [
+      [false, docked.hub],
+      [true, docked.bay],
+    ] as const) {
+      const ships = at(bay);
+      expect(ships.map(({ id }) => id)).toEqual(["miner", "visitor-1", "visitor-2"]);
+      for (const entry of ships) {
+        const dock = docks[entry.id as keyof typeof docks];
+        expect(entry).toMatchObject({ heading: dock.heading, thrust: false });
+        expect(entry.x).toBeCloseTo(hub.x + dock.at.x, 9);
+        expect(entry.y).toBeCloseTo(hub.y + dock.at.y, 9);
+        expect(Math.hypot(entry.heading.x, entry.heading.y)).toBeCloseTo(1, 9);
+      }
+    }
+    // The miner at the live dock faces screen-up into it: world (-1, -1) / sqrt 2.
+    expect(docked.hub.miner.heading.x).toBeCloseTo(-Math.SQRT1_2, 9);
+    expect(docked.hub.miner.heading.y).toBeCloseTo(-Math.SQRT1_2, 9);
+    // The bay moves the first visitor to its berth; the miner and the second visitor stay.
+    expect(docked.bay["visitor-1"]).not.toEqual(docked.hub["visitor-1"]);
+    expect(docked.bay.miner).toEqual(docked.hub.miner);
+    expect(docked.bay["visitor-2"]).toEqual(docked.hub["visitor-2"]);
+    // Docked ships match where the docking scene's paths end.
+    for (const [id, path] of Object.entries(CARTWHEEL_STORY_SHIPS.scenes.docking.paths)) {
+      if (id === "blocker") {
+        continue;
+      }
+      const dock = docked.hub[id as keyof typeof docked.hub];
+      expect(gap(path.at(-1)!, dock.at), id).toBeLessThan(1e-9);
+    }
   });
 
   it("moor inside the view centred on the docked hub, clear of the hub and each other", () => {

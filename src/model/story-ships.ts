@@ -70,12 +70,14 @@ function along(path: StoryPath, t: number): { heading: Vec; point: Vec; thrust: 
 /**
  * Cartwheel's story ships around the hub at flight time `time`. They are not flight objects,
  * so shots pass through them and they never fight. The miner and the visitors wait at their
- * holding points until the docking scene, after which they stay docked; the blocking pilot
- * flies only in its scenes.
+ * holding points until the docking scene, after which they stay docked, facing into their
+ * docks; `bay` (hubBay) moves the first visitor to the second docking bay's berth. The
+ * blocking pilot flies only in its scenes.
  */
 export function storyShips(
   hub: Vec,
   progress: Pick<SectorProgress, "stage">,
+  bay: boolean,
   scene: StorySceneState | undefined,
   time: number,
 ): StoryShip[] {
@@ -95,6 +97,9 @@ export function storyShips(
     } else if (id !== "blocker" && progress.stage < STAGE_DOCKED) {
       const hold = data.hold[id];
       place(id, hold, unit({ x: -hold.x, y: -hold.y }), false);
+    } else if (id !== "blocker") {
+      const docked = data.docked[bay ? "bay" : "hub"][id];
+      place(id, docked.at, docked.heading, false);
     }
   }
   return ships;

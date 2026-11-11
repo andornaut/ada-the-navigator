@@ -2177,7 +2177,13 @@ export class PrototypeScene extends Phaser.Scene {
       }
     }
     const progress = this.model.state.progress[flight.sector];
-    for (const ship of storyShips(hub, progress, flight.storyScene, flight.time)) {
+    for (const ship of storyShips(
+      hub,
+      progress,
+      hubBay(progress),
+      flight.storyScene,
+      flight.time,
+    )) {
       const point = this.project(ship);
       const art = this.craftArt.get(STORY_SHIP_CRAFT[ship.id]);
       if (art) {

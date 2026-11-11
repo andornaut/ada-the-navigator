@@ -91,10 +91,32 @@ const VISITOR_2 = moored(BUOYS.visitors, "back", 14);
  * The hub's live dock and its two free berths (art/cartwheel.md "Hub") as world offsets from
  * its pivot: frame px from the 240 px frame's pivot (0.5, 0.5625), at the 0.4375 display scale.
  */
-const HUB_DOCKS = (() => {
-  const at = (x: number, y: number) => screenToWorld((x - 120) * 0.4375, (y - 135) * 0.4375);
-  return { left: at(21.374, 175.72), live: at(120, 216.317), right: at(218.626, 175.72) };
-})();
+const at = (x: number, y: number) => screenToWorld((x - 120) * 0.4375, (y - 135) * 0.4375);
+const HUB_DOCKS = { left: at(21.374, 175.72), live: at(120, 216.317), right: at(218.626, 175.72) };
+
+/** A dock at its frame px, facing into it: opposite its outward screen direction, in world. */
+function dock(x: number, y: number, outward: readonly [number, number]): StoryDock {
+  const out = screenToWorld(outward[0], outward[1]);
+  const size = Math.hypot(out.x, out.y);
+  return { at: at(x, y), heading: { x: -out.x / size, y: -out.y / size } };
+}
+
+/** Where a docked story ship stands and the unit world heading it faces. */
+export interface StoryDock {
+  readonly at: Vec;
+  readonly heading: Vec;
+}
+
+/**
+ * The hub's live dock, its two free berths and the second docking bay's berth
+ * (art/cartwheel.md "Hub" and "World changes"), each with its outward screen direction.
+ */
+const DOCKS = {
+  bay: dock(50.084, 225.391, [-0.612, 0.791]),
+  left: dock(21.374, 175.72, [-0.924, 0.382]),
+  live: dock(120, 216.317, [0, 1]),
+  right: dock(218.626, 175.72, [0.924, 0.382]),
+} as const;
 
 /**
  * Cartwheel's story ships (gameplay/rules.md): the miner, two regular visitors and the
@@ -102,11 +124,16 @@ const HUB_DOCKS = (() => {
  * the docked view, facing the hub; each buoy is its group's story destination, outside the
  * hub's safe area and two safe areas from the other. Each scene moves its ships along scripted
  * paths, then its line plays. Ships that dock stay docked: the miner at the live dock, the
- * visitors at the free berths. Values are provisional tuning in world units and seconds.
+ * visitors at the free berths, and once the second docking bay is funded the first visitor at
+ * its berth. Values are provisional tuning in world units and seconds.
  */
 export const CARTWHEEL_STORY_SHIPS: {
   readonly buoys: Readonly<Record<"miner" | "visitors", Vec>>;
   readonly destinations: Readonly<Record<"miner" | "visitors", Vec>>;
+  /** Where each regular stays docked after the docking scene, without and with the bay. */
+  readonly docked: Readonly<
+    Record<"bay" | "hub", Readonly<Record<Exclude<StoryShipId, "blocker">, StoryDock>>>
+  >;
   readonly hold: Readonly<Record<Exclude<StoryShipId, "blocker">, Vec>>;
   readonly scenes: Readonly<Record<StorySceneId, StoryScene>>;
   readonly sector: SectorId;
@@ -115,6 +142,10 @@ export const CARTWHEEL_STORY_SHIPS: {
 } = {
   buoys: BUOYS,
   destinations: BUOYS,
+  docked: {
+    bay: { miner: DOCKS.live, "visitor-1": DOCKS.bay, "visitor-2": DOCKS.right },
+    hub: { miner: DOCKS.live, "visitor-1": DOCKS.left, "visitor-2": DOCKS.right },
+  },
   hold: { miner: MINER, "visitor-1": VISITOR_1, "visitor-2": VISITOR_2 },
   scenes: {
     // The blocking pilot cuts across the miner's approach and the miner turns away.
