@@ -1,0 +1,41 @@
+{
+  "frames": {
+    "ui-move-hint 0.aseprite": {
+      "frame": { "x": 0, "y": 0, "w": 75, "h": 75 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 75, "h": 75 },
+      "sourceSize": { "w": 75, "h": 75 },
+      "duration": 100
+    },
+    "ui-move-hint 1.aseprite": {
+      "frame": { "x": 75, "y": 0, "w": 75, "h": 75 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 75, "h": 75 },
+      "sourceSize": { "w": 75, "h": 75 },
+      "duration": 100
+    },
+    "ui-move-hint 2.aseprite": {
+      "frame": { "x": 150, "y": 0, "w": 75, "h": 75 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 75, "h": 75 },
+      "sourceSize": { "w": 75, "h": 75 },
+      "duration": 100
+    }
+  },
+  "meta": {
+    "app": "http://www.aseprite.org/",
+    "version": "1.2.30-x64",
+    "image": "ui-move-hint.png",
+    "format": "RGBA8888",
+    "size": { "w": 225, "h": 75 },
+    "scale": "1",
+    "frameTags": [
+      { "name": "rest", "from": 0, "to": 0, "direction": "forward" },
+      { "name": "held-left", "from": 1, "to": 1, "direction": "forward" },
+      { "name": "held-right", "from": 2, "to": 2, "direction": "forward" }
+    ]
+  }
+}
