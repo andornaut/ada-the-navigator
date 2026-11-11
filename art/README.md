@@ -34,7 +34,7 @@ and its public base path. That subset preserves the source `fonts` and `sprites`
 schema, with paths relative to `/art/ui/`; it is separate from the prototype
 `assets` list. [UI provenance](ui.md) records fonts, slices and licences.
 
-Ship textures use eight isometric headings with a centered pivot and a 96 by 96
+Ship textures use sixteen isometric headings with a centered pivot and a 96 by 96
 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
 Choose the projected heading without rotating the image; draw speed jets from
 `ship-jets.json` behind the idle texture. Thrust textures remain a fallback when
