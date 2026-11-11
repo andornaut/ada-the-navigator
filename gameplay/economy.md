@@ -110,18 +110,19 @@ Once a galaxy's chapter is complete (its space story and its home page), every
 station in that galaxy offers its community projects, which Ada funds with
 Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
 counts toward achievements and makes one ally who joins the Black Eye finale.
-Projects give no combat power outside the finale. Prices target about an hour
-of post-story play to fund all of a galaxy's projects without jobs.
+Projects give no combat power outside the finale. Prices target funding all of a galaxy's projects about an hour after its
+story ends, measured in the pacing simulation by Stardust earned without jobs,
+purchases not subtracted.
 
 | Project            | Galaxy    | Price | Speaker      | Thank-you line                                                             | World change                                                 | Ally in the finale                                  |
 | ------------------ | --------- | ----: | ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| Greenhouse ring    | Sunflower |   250 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                        |
-| Workshop crane     | Sunflower |   200 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
-| Salvage beacons    | Sunflower |   150 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
-| Second docking bay | Cartwheel |   300 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
-| Hub repairs        | Cartwheel |   200 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
-| Nursery beacon     | Whirlpool |   250 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
-| Current-map buoys  | Whirlpool |   200 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
+| Greenhouse ring    | Sunflower |   300 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                        |
+| Workshop crane     | Sunflower |   250 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
+| Salvage beacons    | Sunflower |   175 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
+| Second docking bay | Cartwheel |   350 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
+| Hub repairs        | Cartwheel |   250 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
+| Nursery beacon     | Whirlpool |   300 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
+| Current-map buoys  | Whirlpool |   250 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
 
 Projects is the third shop tab, after Weapons and Ship, shown once the galaxy's
 projects are offered. It lists only that galaxy's projects, in table order, so a
