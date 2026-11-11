@@ -9,7 +9,7 @@ load below 20, four CPUs, four test workers and the configured memory ceilings.
 | Command                                | Work                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------- |
 | `npm run check`                        | Scratch hook proof, types, lint, tests, build and both packaging dry runs |
-| `npm run lint`                         | Prettier, ESLint and Markdown lint                                        |
+| `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and Markdown lint                     |
 | `npm test`                             | Vitest, with at most four workers                                         |
 | `npm run build`                        | Vite and retained assets                                                  |
 | `make check`                           | Complete container profile, the default Make target                       |
@@ -47,6 +47,37 @@ execution. Both matrix jobs preserve their logs and receipts as CI artifacts.
 `AI attributions` remains unchanged.
 
 See [container compatibility](container-adoption.md) for runner boundaries.
+
+## Scheduled gate image
+
+The scheduled gate uses the immutable local image ID in `delivery-kit.json`.
+Prepare that image on the delivery host before approving config adoption:
+
+```bash
+mkdir -p .check-results
+tar --create --file .check-results/gate-context.tar \
+  --mode='u+rwX,go+rX' --files-from tests/container/context
+tests/container/admit build-image
+docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
+  --resource memory=4g --ulimit nofile=256:256 \
+  --iidfile .check-results/gate-image.id \
+  --file tests/container/Dockerfile - < .check-results/gate-context.tar
+node --input-type=module -e \
+  'import{readFileSync}from"node:fs";const c=JSON.parse(readFileSync("delivery-kit.json"));if(readFileSync(".check-results/gate-image.id","utf8").trim()!==c.gate.image)throw Error("Prepared image differs from the approved image ID")'
+```
+
+Image IDs are local and content addressed. A rebuild can produce a different ID;
+review and verify that image before changing the pin. Keep the prepared image
+available on the delivery host. Config changes require separate operational
+approval and do not start or restart the runner.
+
+The shared Dockerfile supplies Node 24.22.2, ShellCheck 0.11.0 and the locked
+dependencies. Its empty entrypoint permits delivery-kit 2.1.1 to start
+`sleep infinity`; Make selects `/bin/sh` explicitly and dispatches the same inner
+checks. The kit copies the read-only checkout into `/tmp/work`, installs locked
+dependencies as UID 19001, disconnects networking and runs the three configured
+`tests/container/check` categories directly. Native and scheduled lint both use
+`internal:lint`, including ShellCheck. No runtime download provisions ShellCheck.
 
 ## Detached receipt compatibility
 

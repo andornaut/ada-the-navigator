@@ -11,4 +11,4 @@ RUN npm ci --ignore-scripts --no-audit --no-fund --maxsockets=1
 COPY --chown=19001:19001 tests/container/check /opt/check/run
 COPY --chown=19001:19001 tests/container/check.mjs /opt/check/check.mjs
 WORKDIR /work
-ENTRYPOINT ["/opt/check/run"]
+ENTRYPOINT []

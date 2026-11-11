@@ -10,8 +10,8 @@
     "timezone": "America/Toronto"
   },
   "gate": {
-    "image": "node:24.22.2",
-    "install": "npm ci",
+    "image": "sha256:8e211cfb182cd88e2243c38113016c8f22f35de4873e9da58a6685481173a4df",
+    "install": "npm ci --maxsockets=1",
     "steps": [
       {
         "name": "lint",
