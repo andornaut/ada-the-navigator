@@ -393,7 +393,9 @@ Black Eye:
 - Map place panel: under the place's name, a line naming its kind: Station,
   Outpost, Story place (other story destinations), Holodisk, Nebula, Wreck or
   Beacon, then " · " and the distance from Ada. When the place is the held
-  job's target, the job's "Job: {objective}" line follows.
+  job's target, the job's "Job: {objective}" line follows. The holodisk
+  waypoint's name is Lost holodisk. A job's own spot, such as a search area,
+  shows the job title as its name and no type or "Job:" line.
 - Map distance: world units divided by 1000, in light-years: one decimal below
   10 ("0.4 light-years"), whole numbers from 10 ("12 light-years"), en-US
   grouping, and "1 light-year" when it rounds to 1.

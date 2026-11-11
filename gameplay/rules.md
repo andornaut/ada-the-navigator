@@ -228,7 +228,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   a known holodisk waypoint until its holodisk is recovered, and how much of the
   galaxy is mapped. Undiscovered places never appear. Map places keep at least
   1020 world units apart, so each stays separate at full zoom; placement
-  enforces this for every mapped place, outposts and the waypoint included. The
+  enforces this for every mapped place, outposts and the waypoint included, and
+  a relaunch spaces story destinations at least 1200 apart. Story characters
+  waiting at a station, such as Cartwheel's miner and visitors, are not map
+  places; the station stands for them. Only chunks inside the charting circle
+  enter the explored record. The
   explored area persists per galaxy across flights and clears on Restart. Choosing
   a discovered destination or station offers "Travel here", which teleports there. Return
   home ends the flight and takes Ada home to Earth, with story
