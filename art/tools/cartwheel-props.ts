@@ -1,7 +1,8 @@
 // Cartwheel props: traveling debris (a bent hull plate tumbling through 8 frames), the ore
 // nugget cargo piece, and the two stranded craft a tow job brings home (the ore pod and the stuck
 // hauler) at sixteen headings, with the tow line spec. Writes SVGs, the nugget sheet and
-// debris.json and tow.json to public/art/cartwheel/, and the root manifest entries and links.
+// debris.json and tow.json to public/art/cartwheel/, and their core and Cartwheel manifest
+// entries and links.
 // Usage: node art/tools/cartwheel-props.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -581,12 +582,14 @@ await writeJson(`${dir}tow.json`, {
   craft: craft.map(({ data }) => data),
 });
 
+// The nugget and the tow line serve every galaxy's cargo and rescues, so they are core; the
+// debris and stranded craft are Cartwheel's.
+replaceEntries("core", (id) => id === "ore-nugget", [nugget]);
 const owned =
-  /^cartwheel-debris-\d+$|^craft-stranded-hauler-\d+$|^craft-stranded-ore-pod-\d+-[ab]$|^ore-nugget$/;
-replaceEntries(
-  (id) => owned.test(id),
-  [nugget, ...debris.entries, ...craft.flatMap(({ entries }) => entries)],
-);
-
-// The root manifest names the debris and tow data next to the other data files.
-linkData({ cartwheelDebris: "/art/cartwheel/debris.json", tow: "/art/cartwheel/tow.json" });
+  /^cartwheel-debris-\d+$|^craft-stranded-hauler-\d+$|^craft-stranded-ore-pod-\d+-[ab]$/;
+replaceEntries("cartwheel", (id) => owned.test(id), [
+  ...debris.entries,
+  ...craft.flatMap(({ entries }) => entries),
+]);
+linkData("core", { tow: "/art/cartwheel/tow.json" });
+linkData("cartwheel", { cartwheelDebris: "/art/cartwheel/debris.json" });

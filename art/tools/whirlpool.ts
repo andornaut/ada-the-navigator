@@ -1,7 +1,7 @@
 // Whirlpool's currents and debris rivers (art/whirlpool.md): the current streak spec Tech draws
 // at runtime (currents.json) and the river debris, a bent plate and a broken girder in the
 // Whirlpool field hue inside the coral hazard contour (SVG frames and debris.json), written to
-// public/art/whirlpool/ with their root manifest entries and links.
+// public/art/whirlpool/ with their entries and links in Whirlpool's manifest.
 // Usage: node art/tools/whirlpool.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -22,7 +22,7 @@ import {
   TUMBLE_FRAMES,
   unit,
 } from "./debris.ts";
-import { placeEntries } from "./manifest.ts";
+import { linkData, placeEntries } from "./manifest.ts";
 import { json } from "./projection.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -132,20 +132,16 @@ await writeJson(`${dir}debris.json`, {
 });
 
 placeEntries(
+  "whirlpool",
   "whirlpool-",
   pieces.flatMap(({ entries }) => entries),
 );
 
-// The root manifest names the streak and debris data next to the other data files.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-const links = {
+// Whirlpool's manifest names the streak and debris data after the whale data.
+linkData("whirlpool", {
   whirlpoolCurrents: "/art/whirlpool/currents.json",
   whirlpoolDebris: "/art/whirlpool/debris.json",
-};
-if (Object.entries(links).some(([key, path]) => manifest[key] !== path)) {
-  writeFileSync(manifestPath, json({ ...manifest, ...links }));
-}
+});
 
 const report = {
   streakOnField: ratio(STREAKS.color, BACKGROUND),

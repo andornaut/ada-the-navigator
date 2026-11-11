@@ -176,7 +176,7 @@ const sheetEntry = (
   frames: Object.fromEntries(frames.map(([name], i) => [name, i])),
   loop: frames.map(([name, , ms], frame) => ({ frame, name, ms })),
 });
-placeEntries("holodisk", [
+placeEntries("core", "holodisk", [
   sheetEntry("holodisk", PICKUP, TURN),
   sheetEntry("holodisk-beacon", BEACON, PULSE),
 ]);

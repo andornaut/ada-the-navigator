@@ -39,7 +39,31 @@ Use explicit subpath imports such as `@andornaut/art-kit/build`,
 
 ## Ada contract and validation
 
-The runtime contract is [the manifest](../public/art/manifest.json), version 1.
+The runtime contract is the art manifest set, version 1: the
+[core manifest](../public/art/manifest.json) and one manifest per galaxy. The
+core manifest's `galaxies` maps each SectorId to its galaxy's manifest:
+
+| SectorId | Galaxy    | Manifest                                                                |
+| -------- | --------- | ----------------------------------------------------------------------- |
+| 1        | Sunflower | [`/art/sunflower/manifest.json`](../public/art/sunflower/manifest.json) |
+| 2        | Cartwheel | [`/art/cartwheel/manifest.json`](../public/art/cartwheel/manifest.json) |
+| 3        | Whirlpool | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
+
+Every manifest has `version`, `assets` and data links in the same schema. An
+entry or data link that exactly one galaxy uses is in that galaxy's manifest,
+generic art included; one that several galaxies or none use (boot, HUD, UI,
+Ada, story) is in core. Usage follows the game's content data: Sunflower holds
+its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
+jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
+and `oreField` links; Whirlpool the whales, river debris and the `whales`,
+`whirlpoolCurrents` and `whirlpoolDebris` links. The station, discovery cache,
+coral family, ore nugget and `tow` serve every galaxy and stay in core.
+Tech loads core at boot and a galaxy's manifest with its set.
+
+Generators write through `art/tools/manifest.ts`, naming the target manifest;
+a write fails, leaving the files unchanged, when an id is in two manifests or
+the `galaxies` map lacks a galaxy. Reruns are byte-identical.
+
 Each asset has a stable semantic `id`, public `path`, intrinsic `width` and `height`,
 `facing`, and normalized `pivot`. Portrait sheets also define `frameWidth`,
 `frameHeight`, and zero-based named `frames`. Portrait dimensions describe the

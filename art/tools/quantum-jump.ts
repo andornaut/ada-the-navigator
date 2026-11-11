@@ -5,10 +5,9 @@ import { ellipse, line } from "@andornaut/art-kit/draw";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
 import { format, resolveConfig } from "prettier";
 
-import { placeEntries } from "./manifest.ts";
+import { linkData, placeEntries } from "./manifest.ts";
 import { blend, blur, disc, filled, over, rgba, type RgbaImage, writePng } from "./paint.ts";
 import { IN_BETWEEN, SHIMMER, SPACE_BG } from "./palette.ts";
-import { json } from "./projection.ts";
 import { centredView, LOGICAL_PER_DESIGN, shimmer } from "./shimmer.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -139,7 +138,7 @@ const entry = (
   frameHeight,
   frames: Object.fromEntries(names.map((name, i) => [name, i])),
 });
-placeEntries("quantum-jump", [
+placeEntries("core", "quantum-jump", [
   entry(
     "quantum-jump-field",
     fieldSheet,
@@ -239,10 +238,5 @@ writeFileSync(
   }),
 );
 
-// The root manifest names the effect data next to the space palette.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-if (manifest.quantumJump !== "/art/quantum-jump.json") {
-  manifest.quantumJump = "/art/quantum-jump.json";
-  writeFileSync(manifestPath, json(manifest));
-}
+// The core manifest names the effect data next to the space palette.
+linkData("core", { quantumJump: "/art/quantum-jump.json" });

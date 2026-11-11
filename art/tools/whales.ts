@@ -1,9 +1,10 @@
 // Whirlpool's lantern whale and its family: 16 headings by 8 swim frames per kind as flat-shaded
-// SVGs in public/art/whales/, their root manifest entries and public/art/whales.json (art/whales.md).
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// SVGs in public/art/whales/, their entries in Whirlpool's manifest and public/art/whales.json
+// (art/whales.md).
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { placeEntries } from "./manifest.ts";
+import { linkData, placeEntries } from "./manifest.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -629,13 +630,8 @@ writeFileSync(
     kinds,
   }),
 );
-placeEntries("whale-", entries as { id: string }[]);
+placeEntries("whirlpool", "whale-", entries as { id: string }[]);
 
-// The root manifest names the whale data next to the other data files.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-if (manifest.whales !== "/art/whales.json") {
-  manifest.whales = "/art/whales.json";
-  writeFileSync(manifestPath, json(manifest));
-}
+// Whirlpool's manifest names the whale data.
+linkData("whirlpool", { whales: "/art/whales.json" });
 console.log(`${entries.length} frames, ${(pixels / 1e6).toFixed(3)} megapixels rasterized`);

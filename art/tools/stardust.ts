@@ -5,7 +5,7 @@ import type { Frame } from "@andornaut/art-kit/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
-import { json } from "./projection.ts";
+import { editManifest } from "./manifest.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -145,10 +145,9 @@ const entry = {
   frames: { rest: 0, glint1: 1, glint2: 2 },
   loop: LOOP.map(([name, ms], index) => ({ frame: index, name, ms })),
 };
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-const kept = manifest.assets.filter(({ id }) => id !== "stardust");
-const later = kept.findIndex(({ id }) => id.startsWith("station-") || id.startsWith("enemy-"));
-const insert = later === -1 ? kept.length : later;
-manifest.assets = [...kept.slice(0, insert), entry, ...kept.slice(insert)];
-writeFileSync(manifestPath, json(manifest));
+editManifest("core", (manifest) => {
+  const kept = manifest.assets.filter(({ id }) => id !== "stardust");
+  const later = kept.findIndex(({ id }) => id.startsWith("station-") || id.startsWith("enemy-"));
+  const insert = later === -1 ? kept.length : later;
+  manifest.assets = [...kept.slice(0, insert), entry, ...kept.slice(insert)];
+});

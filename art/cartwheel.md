@@ -1,9 +1,9 @@
 # Cartwheel hub and story craft
 
 - Rebuild with `node art/tools/cartwheel.ts`. It writes `public/art/cartwheel/`
-  and replaces its own manifest entries in place: the hub and the mooring buoy
-  follow the sector one outposts and precede the discovery cache; the story
-  craft follow the enemies.
+  and replaces its own entries in place in
+  [Cartwheel's manifest](../public/art/cartwheel/manifest.json): the hub and
+  the mooring buoy open it; the story craft follow the claim jumpers.
 - `node art/tools/cartwheel.ts --alternates <dir>` also writes the unused
   designs (the pale cream visitor `visitor3` and the plough blocker
   `blocker-plough`) with their entries to `<dir>`, outside `public/art/`.

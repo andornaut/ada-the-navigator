@@ -3,8 +3,8 @@
 - Rebuild with `node art/tools/galaxies.ts`. It writes
   [galaxies.json](../public/art/galaxies.json) from the base field roles in
   [space-palette.json](../public/art/space-palette.json), formatted with the
-  project's Prettier settings, and links it from the root manifest as
-  `galaxies`. The build fails if any space signal falls below
+  project's Prettier settings, and links it from the core manifest as
+  `galaxyFields`. The build fails if any space signal falls below
   5:1 on a dark galaxy's background, or the ink keyline below 5:1 on a light
   galaxy's background.
 - `galaxies` lists galaxy 1 to 4 in selector order with `number`, `id`,

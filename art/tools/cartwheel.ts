@@ -973,14 +973,20 @@ const buoyEntries = (["a", "b"] as const).map((letter) =>
 const crafts = [miner, visitor1, visitor2, blockerRam];
 const craftEntries = crafts.flatMap((craft) => writeCraft(output, craft));
 
-// The hub and the buoy follow the sector one outposts; the story craft go last.
+// Cartwheel's manifest opens with the hub and the buoy; the story craft follow the claim jumpers.
 replaceEntries(
+  "cartwheel",
   (id) => id.startsWith("outpost-hub-") || id.startsWith("mooring-buoy-"),
   [...hubEntries, ...buoyEntries],
-  (id) => id === "discovery-cache" || id.startsWith("enemy-"),
+  () => true,
 );
 const craftIds = new RegExp(`^craft-(${crafts.map(({ name }) => name).join("|")})-\\d+$`);
-replaceEntries((id) => craftIds.test(id), craftEntries);
+replaceEntries(
+  "cartwheel",
+  (id) => craftIds.test(id),
+  craftEntries,
+  (id) => id.startsWith("cartwheel-debris-") || id.startsWith("craft-stranded-"),
+);
 
 const flag = process.argv.indexOf("--alternates");
 if (flag !== -1) {

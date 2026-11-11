@@ -2,9 +2,9 @@
 
 - Rebuild with `node art/tools/whirlpool.ts`. It writes `public/art/whirlpool/`:
   `currents.json` (the streak spec), the river debris frames and `debris.json`,
-  and its own `whirlpool-` entries in the root
-  [manifest](../public/art/manifest.json), which names the data files as
-  `whirlpoolCurrents` and `whirlpoolDebris`.
+  and its own `whirlpool-` entries in
+  [Whirlpool's manifest](../public/art/whirlpool/manifest.json), which names the
+  data files as `whirlpoolCurrents` and `whirlpoolDebris`.
 - The build fails if the whale's lit hull (`hull[0]` in `whales.json`) falls
   below 3:1 over the streak colour.
 - The debris model is shared in [art/tools/debris.ts](tools/debris.ts).

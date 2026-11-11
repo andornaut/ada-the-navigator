@@ -1,9 +1,9 @@
 # Whirlpool whales
 
 - Rebuild with `node art/tools/whales.ts`. It writes `public/art/whales/`,
-  [whales.json](../public/art/whales.json) and its own `whale-` entries in the
-  root [manifest](../public/art/manifest.json), which names the data file as
-  `whales`.
+  [whales.json](../public/art/whales.json) and its own `whale-` entries in
+  [Whirlpool's manifest](../public/art/whirlpool/manifest.json), which names the
+  data file as `whales`.
 - The model shares the rotation, culling, depth and projection of
   [art/tools/projection.ts](tools/projection.ts) with 16 headings
   (`ENEMY_HEADINGS`): heading `k` faces world angle `k * 22.5` degrees, as for

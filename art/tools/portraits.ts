@@ -7,7 +7,7 @@ import type { Tag } from "@andornaut/art-kit/raster";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
-import { json } from "./projection.ts";
+import { editManifest } from "./manifest.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}portraits/`;
@@ -555,9 +555,8 @@ const owned = [
     a.id.localeCompare(b.id),
 );
 const ids = new Set(owned.map(({ id }) => id));
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-const kept = manifest.assets.filter(({ id }) => !ids.has(id));
-const last = kept.findLastIndex(({ id }) => id.endsWith("-portrait"));
-manifest.assets = [...kept.slice(0, last + 1), ...owned, ...kept.slice(last + 1)];
-writeFileSync(manifestPath, json(manifest));
+editManifest("core", (manifest) => {
+  const kept = manifest.assets.filter(({ id }) => !ids.has(id));
+  const last = kept.findLastIndex(({ id }) => id.endsWith("-portrait"));
+  manifest.assets = [...kept.slice(0, last + 1), ...owned, ...kept.slice(last + 1)];
+});

@@ -2,7 +2,7 @@
 // allows, picks the first seed from FIRST_SEED up that draws that count and places the cluster:
 // large rocks first, then medium, each at a uniform point of the field disc whose footprint
 // stays GAP world units clear of every placed footprint and inside the field radius. Writes
-// public/art/cartwheel/ore-field.json and links it from the root manifest as `oreField`.
+// public/art/cartwheel/ore-field.json and links it from Cartwheel's manifest as `oreField`.
 // Usage: node art/tools/ore-field.ts (after node art/tools/asteroids.ts)
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -126,4 +126,4 @@ writeFileSync(
   ),
 );
 
-linkData({ oreField: "/art/cartwheel/ore-field.json" });
+linkData("cartwheel", { oreField: "/art/cartwheel/ore-field.json" });

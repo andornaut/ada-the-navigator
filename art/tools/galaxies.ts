@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { contrast } from "@andornaut/art-kit/colour";
 import { format, resolveConfig } from "prettier";
 
+import { linkData } from "./manifest.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { json } from "./projection.ts";
 
@@ -142,7 +143,4 @@ writeFileSync(
   ),
 );
 
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { galaxies?: string };
-manifest.galaxies = "/art/galaxies.json";
-writeFileSync(manifestPath, json(manifest));
+linkData("core", { galaxyFields: "/art/galaxies.json" });

@@ -403,8 +403,9 @@ async function main() {
         : text,
     );
   }
-  // After the sector one enemies and the heavies, before Cartwheel's story craft.
+  // In Cartwheel's manifest after the hub and buoy, before the story craft.
   replaceEntries(
+    "cartwheel",
     (id) => id.startsWith(PREFIX),
     entries,
     (id) => id.startsWith("craft-"),

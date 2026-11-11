@@ -961,4 +961,4 @@ writeFileSync(
 );
 
 // The root manifest names the asteroid and resource rock data next to the other data files.
-linkData({ asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });
+linkData("core", { asteroids: "/art/asteroids.json", resourceRocks: "/art/resource-rocks.json" });

@@ -52,6 +52,7 @@ function main() {
   const names = crafts.map(({ name }) => name).join("|");
   const hull = new RegExp(`^enemy-(${names})-\\d+$`);
   replaceEntries(
+    "core",
     (id) => hull.test(id),
     crafts.flatMap(({ frame, name }) => hullEntries(name, frame)),
   );

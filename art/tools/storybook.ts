@@ -1,6 +1,6 @@
 // Storybook backgrounds: seven isometric Earth dioramas with treatment d, on the shared
 // 960 by 540 logical canvas at 2x, and Ada's room overnight with its sleep scene overlays.
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
@@ -28,6 +28,7 @@ import {
   TREATMENT,
   treatmentD,
 } from "./diorama.ts";
+import { editManifest, readManifest } from "./manifest.ts";
 import { fromOklab, hex, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
@@ -1141,25 +1142,15 @@ function overnight(at: (id: string) => Overlay["at"]) {
 // Root manifest groups after the ship and portraits, in order; the story group leads.
 const LATER = ["cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
 
-const MANIFEST = `${art}manifest.json`;
-
-interface Manifest {
-  assets: { id: string }[];
-  storyOvernight?: string;
-  storyTransition?: string;
-}
-
-const readManifest = () => JSON.parse(readFileSync(MANIFEST, "utf8")) as Manifest;
-
 export function placeStoryEntries(entries: readonly { id: string }[]) {
-  const manifest = readManifest();
-  const kept = manifest.assets.filter(({ id }) => !id.startsWith("story-"));
-  const next = kept.findIndex(({ id }) => LATER.some((prefix) => id.startsWith(prefix)));
-  const at = next === -1 ? kept.length : next;
-  manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
-  manifest.storyTransition = "/art/story-transition.json";
-  manifest.storyOvernight = "/art/story-overnight.json";
-  writeFileSync(MANIFEST, json(manifest));
+  editManifest("core", (manifest) => {
+    const kept = manifest.assets.filter(({ id }) => !id.startsWith("story-"));
+    const next = kept.findIndex(({ id }) => LATER.some((prefix) => id.startsWith(prefix)));
+    const at = next === -1 ? kept.length : next;
+    manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
+    manifest.storyTransition = "/art/story-transition.json";
+    manifest.storyOvernight = "/art/story-overnight.json";
+  });
 }
 
 const file = (id: string) => `${art}${storyPath(id).slice("/art/".length)}`;
@@ -1178,7 +1169,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     for (const id of OVERLAYS) writePng(file(id), sprites[id].image);
     overlays = OVERLAYS.map((id) => overlayEntry(id, sprites[id]));
   } else {
-    const assets = readManifest().assets as { at: Overlay["at"]; id: string }[];
+    const assets = readManifest("core").assets as { at: Overlay["at"]; id: string }[];
     overlays = OVERLAYS.map((id) => assets.find((asset) => asset.id === id)!);
   }
   placeStoryEntries(

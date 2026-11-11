@@ -8,8 +8,11 @@ no damaging hazards.
 - Rebuild with `node art/tools/cartwheel-props.ts`. It writes the SVGs, the
   nugget sheet, [debris.json](../public/art/cartwheel/debris.json) and
   [tow.json](../public/art/cartwheel/tow.json) to `public/art/cartwheel/`
-  (JSON through the project's Prettier settings), replaces its root manifest
-  entries in place and links the data as `cartwheelDebris` and `tow`. Reruns
+  (JSON through the project's Prettier settings) and replaces its manifest
+  entries in place. The nugget entry and the `tow` link are in the core
+  manifest, since every galaxy's resource rocks drop cargo and any rescue draws
+  the tow line; the debris, the stranded craft and the `cartwheelDebris` link
+  are in [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
   are byte-identical.
 - The craft models are in `art/tools/cartwheel-craft.ts`: the miner A hauler,
   powered or not, and the ore pod.
@@ -134,7 +137,7 @@ rock clusters, and no field speck can read as a nugget or Stardust.
   It reads the footprints from
   [resource-rocks.json](../public/art/resource-rocks.json), writes
   [ore-field.json](../public/art/cartwheel/ore-field.json) and links it from
-  the root manifest as `oreField`. Reruns are byte-identical.
+  Cartwheel's manifest as `oreField`. Reruns are byte-identical.
 - One layout per rock count from 6 to 10, each from the first seed from 23 up
   that draws that count (Python's `random.Random` sequence, `art/tools/random.ts`).
   Seed 23, 8 rocks, is the approved field.

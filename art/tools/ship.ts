@@ -1,6 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { editManifest } from "./manifest.ts";
 import {
   anchor,
   depth,
@@ -646,13 +647,8 @@ const entries = [
     })),
   ),
 ];
-const manifestPath = `${output}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
-  assets: { id: string }[];
-  shipNose?: string;
-};
 const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
-const others = manifest.assets.filter((asset) => !isShip(asset));
-manifest.assets = [...entries, ...others];
-manifest.shipNose = "/art/ship-nose.json";
-writeFileSync(manifestPath, json(manifest));
+editManifest("core", (manifest) => {
+  manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
+  manifest.shipNose = "/art/ship-nose.json";
+});

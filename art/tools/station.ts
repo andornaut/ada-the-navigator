@@ -1,7 +1,8 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { json, projectAt, round } from "./projection.ts";
+import { editManifest } from "./manifest.ts";
+import { projectAt, round } from "./projection.ts";
 import {
   BLINK_MS,
   blue,
@@ -243,14 +244,10 @@ for (const frame of ["a", "b"] as const) {
   writeFileSync(`${art}station-${frame}.svg`, svg(frame));
 }
 
-// Station entries sit before the outposts, the discovery cache and the enemy entries, which
-// enemies.ts keeps last.
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-const kept = manifest.assets.filter(({ id }) => !id.startsWith("station-"));
-const later = kept.findIndex(
-  ({ id }) => id.startsWith("outpost-") || id === "discovery-cache" || id.startsWith("enemy-"),
-);
-const insert = later === -1 ? kept.length : later;
-manifest.assets = [...kept.slice(0, insert), ...entries, ...kept.slice(insert)];
-writeFileSync(manifestPath, json(manifest));
+// Station entries sit before the discovery cache and the enemy entries.
+editManifest("core", (manifest) => {
+  const kept = manifest.assets.filter(({ id }) => !id.startsWith("station-"));
+  const later = kept.findIndex(({ id }) => id === "discovery-cache" || id.startsWith("enemy-"));
+  const insert = later === -1 ? kept.length : later;
+  manifest.assets = [...kept.slice(0, insert), ...entries, ...kept.slice(insert)];
+});

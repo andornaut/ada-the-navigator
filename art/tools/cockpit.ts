@@ -793,7 +793,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     facing: "front",
     pivot: { x: 0.5, y: 0.5 },
   });
-  placeEntries("cockpit", [
+  placeEntries("core", "cockpit", [
     background("cockpit"),
     background("cockpit-seated"),
     {

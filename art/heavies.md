@@ -199,8 +199,9 @@ platform. Sunflower keeps the coral originals.
 
 - Rebuild with `node art/tools/claim-jumpers.ts`, which takes the same
   `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
-  process, writes `public/art/cartwheel/enemies/` and replaces its own manifest
-  entries in place, after the heavies and before Cartwheel's story craft.
+  process, writes `public/art/cartwheel/enemies/` and replaces its own entries
+  in place in [Cartwheel's manifest](../public/art/cartwheel/manifest.json),
+  after the hub and buoy and before the story craft.
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
   coral family; only fills change. Every SVG and shards file goes through the
   colour swap below, every jets file through the claim jet colours, and the

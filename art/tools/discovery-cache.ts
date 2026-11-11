@@ -5,7 +5,7 @@ import type { Frame } from "@andornaut/art-kit/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 import { format, resolveConfig } from "prettier";
 
-import { json } from "./projection.ts";
+import { editManifest } from "./manifest.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const SIZE = 21;
@@ -100,7 +100,7 @@ await writeSpriteSheet(
 );
 await prettify(`${art}discovery-cache.json`);
 
-// The sheet loads as a root manifest sprite sheet after the outposts and before the enemies.
+// The sheet loads as a core manifest sprite sheet after the station and before the enemies.
 const entry = {
   id: "discovery-cache",
   path: "/art/discovery-cache.png",
@@ -118,10 +118,9 @@ const entry = {
     { frame: 2, name: "litB", ms: BLINK_MS },
   ],
 };
-const manifestPath = `${art}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
-const kept = manifest.assets.filter(({ id }) => id !== "discovery-cache");
-const later = kept.findIndex(({ id }) => id.startsWith("enemy-"));
-const insert = later === -1 ? kept.length : later;
-manifest.assets = [...kept.slice(0, insert), entry, ...kept.slice(insert)];
-writeFileSync(manifestPath, json(manifest));
+editManifest("core", (manifest) => {
+  const kept = manifest.assets.filter(({ id }) => id !== "discovery-cache");
+  const later = kept.findIndex(({ id }) => id.startsWith("enemy-"));
+  const insert = later === -1 ? kept.length : later;
+  manifest.assets = [...kept.slice(0, insert), entry, ...kept.slice(insert)];
+});

@@ -927,15 +927,11 @@ const manifestEntries = [
   ...Object.entries(overlays).flatMap(([name, overlay]) => overlayEntries(name, overlay)),
 ];
 
-// This tool owns only its own outpost and project entries; Cartwheel's hub follows them.
+// Sunflower's outposts and their project entries, in Sunflower's manifest.
 const own = new RegExp(
   `^outpost-(${[...Object.keys(outposts), ...Object.keys(overlays)].join("|")})-[ab]$`,
 );
-replaceEntries(
-  (id) => own.test(id),
-  manifestEntries,
-  (id) => id.startsWith("outpost-hub-") || id === "discovery-cache" || id.startsWith("enemy-"),
-);
+replaceEntries("sunflower", (id) => own.test(id), manifestEntries);
 
 // World changes keyed by Gameplay's project id: a replacement frame pair for the outpost, or an
 // overlay at anchors offset from the outpost's pivot in frame px.

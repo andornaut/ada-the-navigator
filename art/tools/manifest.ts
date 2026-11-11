@@ -1,12 +1,81 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { json } from "./projection.ts";
 
-const path = fileURLToPath(new URL("../../public/art/manifest.json", import.meta.url));
+// The game's SectorId to its galaxy. Each galaxy's manifest holds the entries and data links
+// that only that galaxy uses; the core manifest holds the rest and maps each SectorId to its
+// galaxy's manifest under `galaxies`.
+export const GALAXIES = { 1: "sunflower", 2: "cartwheel", 3: "whirlpool" } as const;
 
-// Root manifest groups after the ship and portraits, in order. A generator replaces its own
-// group in place, so each group stays contiguous and independent of the others.
+export type ManifestFile = "core" | (typeof GALAXIES)[keyof typeof GALAXIES];
+
+interface Manifest {
+  assets: { id: string }[];
+  [key: string]: unknown;
+}
+
+const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
+const FILES: readonly ManifestFile[] = ["core", ...Object.values(GALAXIES)];
+
+/** A manifest's public path. */
+export function manifestUrl(file: ManifestFile): string {
+  return file === "core" ? "/art/manifest.json" : `/art/${file}/manifest.json`;
+}
+
+const filePath = (file: ManifestFile) => `${art}${manifestUrl(file).slice("/art/".length)}`;
+
+function read(file: ManifestFile): string {
+  const path = filePath(file);
+  if (!existsSync(path)) {
+    throw new Error(`${manifestUrl(file)} is missing`);
+  }
+  return readFileSync(path, "utf8");
+}
+
+export function readManifest(file: ManifestFile): Manifest {
+  return JSON.parse(read(file)) as Manifest;
+}
+
+// The core map names every galaxy's manifest, and no id is in two manifests.
+function check(manifests: ReadonlyMap<ManifestFile, Manifest>) {
+  const map = (manifests.get("core")!.galaxies ?? {}) as Record<string, unknown>;
+  for (const [sector, galaxy] of Object.entries(GALAXIES)) {
+    if (map[sector] !== manifestUrl(galaxy)) {
+      throw new Error(`core manifest galaxies.${sector} must be ${manifestUrl(galaxy)}`);
+    }
+  }
+  const extra = Object.keys(map).filter((sector) => !Object.hasOwn(GALAXIES, sector));
+  if (extra.length > 0) {
+    throw new Error(`core manifest galaxies has unknown sectors ${extra.join(", ")}`);
+  }
+  const seen = new Map<string, ManifestFile>();
+  for (const [file, { assets }] of manifests) {
+    for (const { id } of assets) {
+      const other = seen.get(id);
+      if (other !== undefined) {
+        throw new Error(`${id} is in both ${manifestUrl(other)} and ${manifestUrl(file)}`);
+      }
+      seen.set(id, file);
+    }
+  }
+}
+
+// Applies `edit` to one manifest, checks the whole set and writes that file only when its text
+// changes, so reruns leave every manifest byte-identical.
+export function editManifest(file: ManifestFile, edit: (manifest: Manifest) => void) {
+  const text = read(file);
+  const manifests = new Map(FILES.map((name) => [name, readManifest(name)]));
+  edit(manifests.get(file)!);
+  check(manifests);
+  const next = json(manifests.get(file));
+  if (next !== text) {
+    writeFileSync(filePath(file), next);
+  }
+}
+
+// Manifest groups after the ship and portraits, in order. A generator replaces its own group
+// in place, so each group stays contiguous and independent of the others.
 const GROUPS = [
   "cockpit",
   "holodisk",
@@ -18,39 +87,40 @@ const GROUPS = [
   "whirlpool-",
 ] as const;
 
-export function placeEntries(group: (typeof GROUPS)[number], entries: readonly { id: string }[]) {
-  const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };
-  const kept = manifest.assets.filter(({ id }) => !id.startsWith(group));
-  const later = GROUPS.slice(GROUPS.indexOf(group) + 1);
-  const next = kept.findIndex(({ id }) => later.some((prefix) => id.startsWith(prefix)));
-  const at = next === -1 ? kept.length : next;
-  manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
-  writeFileSync(path, json(manifest));
+export function placeEntries(
+  file: ManifestFile,
+  group: (typeof GROUPS)[number],
+  entries: readonly { id: string }[],
+) {
+  editManifest(file, (manifest) => {
+    const kept = manifest.assets.filter(({ id }) => !id.startsWith(group));
+    const later = GROUPS.slice(GROUPS.indexOf(group) + 1);
+    const next = kept.findIndex(({ id }) => later.some((prefix) => id.startsWith(prefix)));
+    const at = next === -1 ? kept.length : next;
+    manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
+  });
 }
 
 // Replaces the entries `owns` selects at the position of the first of them. Without any, they
 // go before the first other entry `placeBefore` selects, or last. Generators sharing a group
-// (`enemy-`, `outpost-`) keep their own entries in place.
+// (`enemy-`, `craft-`) keep their own entries in place.
 export function replaceEntries(
+  file: ManifestFile,
   owns: (id: string) => boolean,
   entries: readonly { id: string }[],
   placeBefore: (id: string) => boolean = () => false,
 ) {
-  const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };
-  const first = manifest.assets.findIndex(({ id }) => owns(id));
-  const next = manifest.assets.findIndex(({ id }) => !owns(id) && placeBefore(id));
-  const at = first !== -1 ? first : next !== -1 ? next : manifest.assets.length;
-  const before = manifest.assets.slice(0, at);
-  const after = manifest.assets.slice(at).filter(({ id }) => !owns(id));
-  manifest.assets = [...before, ...entries, ...after];
-  writeFileSync(path, json(manifest));
+  editManifest(file, (manifest) => {
+    const first = manifest.assets.findIndex(({ id }) => owns(id));
+    const next = manifest.assets.findIndex(({ id }) => !owns(id) && placeBefore(id));
+    const at = first !== -1 ? first : next !== -1 ? next : manifest.assets.length;
+    const before = manifest.assets.slice(0, at);
+    const after = manifest.assets.slice(at).filter(({ id }) => !owns(id));
+    manifest.assets = [...before, ...entries, ...after];
+  });
 }
 
-// Links data files from the root manifest by key, after the existing links. Rewrites the
-// manifest only when a link is missing or differs, so reruns leave it byte-identical.
-export function linkData(links: Readonly<Record<string, string>>) {
-  const manifest = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
-  if (Object.entries(links).some(([key, url]) => manifest[key] !== url)) {
-    writeFileSync(path, json({ ...manifest, ...links }));
-  }
+// Links data files from a manifest by key, after its existing links.
+export function linkData(file: ManifestFile, links: Readonly<Record<string, string>>) {
+  editManifest(file, (manifest) => Object.assign(manifest, links));
 }

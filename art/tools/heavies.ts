@@ -869,7 +869,7 @@ async function main() {
     entries.push(...result.entries);
   }
   if (out === undefined) {
-    replaceEntries(owns, entries);
+    replaceEntries("core", owns, entries);
   } else {
     writeFileSync(`${dir}manifest-entries.json`, json(entries));
   }
