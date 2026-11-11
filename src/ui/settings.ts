@@ -160,8 +160,12 @@ ${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 }
 
 /* The touch Use button: an action one row high, centred across, its bottom level with the sticks'
-   drawn bottom edge. */
+   drawn bottom edge, with the HUD's opaque navy face, an ink border and a cream label. */
 .ada-controls .ada-use{
+  background:#262b44;
+  border-color:#181425;
+  border-style:solid;
+  color:#ead4aa;
   position:absolute;
   left:calc((${safeEdge("left", USE_BUTTON.margin)} + 100% - ${safeEdge(
     "right",
