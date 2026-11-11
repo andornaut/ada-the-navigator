@@ -11,6 +11,13 @@ function save(name, value) {
   writeFileSync(`${output}/${name}`, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+// A canvas's size in logical px: its CSS size over the fit of the 720x360 base view. Its backing
+// is in device pixels.
+function logicalSize(canvas) {
+  const fit = Math.min(canvas.offsetWidth / 720, canvas.offsetHeight / 360);
+  return { width: canvas.offsetWidth / fit, height: canvas.offsetHeight / fit };
+}
+
 // The whole run's limit. The canvas renders at its device-pixel backing in software GL.
 const SMOKE_LIMIT_SECONDS = 180;
 const watchdog = setTimeout(() => {
@@ -222,6 +229,8 @@ try {
       );
       return {
         intrinsic: { width: canvas.width, height: canvas.height },
+        layout: { width: canvas.offsetWidth, height: canvas.offsetHeight },
+        renderScale: Math.min(devicePixelRatio, 2),
         bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
         body: { width: document.body.clientWidth, height: document.body.clientHeight },
         rotation: { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d },
@@ -229,10 +238,10 @@ try {
         viewport: { width: innerWidth, height: innerHeight },
       };
     });
-    assert.ok(frame.intrinsic.width >= 720 && frame.intrinsic.height >= 360);
     assert.ok(
-      Math.abs(frame.intrinsic.width - 720) <= 1 || Math.abs(frame.intrinsic.height - 360) <= 1,
-      "EXPAND must preserve one logical base dimension of 720x360",
+      Math.abs(frame.intrinsic.width - Math.round(frame.layout.width * frame.renderScale)) <= 1 &&
+        Math.abs(frame.intrinsic.height - Math.round(frame.layout.height * frame.renderScale)) <= 1,
+      "The canvas backing must be its CSS size times min(devicePixelRatio, 2)",
     );
     const displayRatio = portrait
       ? frame.bounds.height / frame.bounds.width
@@ -264,7 +273,7 @@ try {
     return frame;
   }
   save("desktop-frame.json", await frameProof());
-  events.checks.push("Desktop canvas preserves the 720x360 EXPAND base and pixel-art scaling");
+  events.checks.push("Desktop canvas backs its CSS size at min(devicePixelRatio, 2), pixelated");
 
   const [
     { GameModel },
@@ -2720,10 +2729,7 @@ try {
     const overlays = await page.addStyleTag({
       content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
     });
-    const intrinsic = await canvas.evaluate((element) => ({
-      width: element.width,
-      height: element.height,
-    }));
+    const intrinsic = await canvas.evaluate(logicalSize);
     // A heavy's part frames load once it is in flight, so sample until its turret tops show.
     async function sampleUntilComposed(remaining) {
       const sampled = await sampleCombatView(view, canvas, intrinsic);
@@ -2750,7 +2756,7 @@ try {
         const drawing = sample.getContext("2d");
         drawing.drawImage(bitmap, 0, 0);
         bitmap.close();
-        // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
+        // Projection is anchored to logical SCREEN center (360,180), even when the view is taller.
         const regions = {
           // The 5-width capital centres at (180, 180); its disabled left engine at its anchor.
           capital: { x: 90, y: 130, width: 180, height: 100 },
@@ -3072,10 +3078,7 @@ try {
         id: object.asteroid,
       };
     });
-  const overlayIntrinsic = await overlayCanvas.evaluate((element) => ({
-    height: element.height,
-    width: element.width,
-  }));
+  const overlayIntrinsic = await overlayCanvas.evaluate(logicalSize);
   const overlayPng = await page.evaluate(
     async ({ encoded, intrinsic, outlines }) => {
       const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));

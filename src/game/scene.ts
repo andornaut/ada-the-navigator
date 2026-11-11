@@ -1,3 +1,5 @@
+import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
+import { densityTexels, MAX_RENDER_SCALE, renderScale } from "@andornaut/game-kit/view/renderScale";
 import Phaser from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
@@ -127,9 +129,7 @@ import {
   enemyJetTriangles,
   enemyPartFrame,
   enemyPartsToLoad,
-  enemyRasterSize,
   enemyShardsPath,
-  enemySvg,
   HitFlashes,
   type PartPose,
   selectEnemyFrame,
@@ -146,6 +146,7 @@ import {
   thresholdSilhouette,
 } from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
+import { canvasSize, fitPlayCamera, sceneFit, shakeIntensity, viewShift } from "./play-camera.ts";
 import {
   boundsOnScreen,
   type OutpostPart,
@@ -203,6 +204,7 @@ import {
   stationFrame,
   stationFrameIndex,
 } from "./station-art.ts";
+import { fileFilter, type TextureFilter, vectorRaster } from "./textures.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 import {
   craftFrame,
@@ -442,6 +444,13 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   preload(): void {
+    // Each texture file samples by its kind (textures.ts) once it loads.
+    this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string, type: string) => {
+      const filter = fileFilter(type);
+      if (filter && this.textures.exists(key)) {
+        this.filterTexture(key, filter);
+      }
+    });
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset>;
       if (manifest.spacePalette) {
@@ -485,10 +494,8 @@ export class PrototypeScene extends Phaser.Scene {
         if (loadsOnDemand(asset) || enemyPartFrame(asset)) {
           continue;
         }
-        if (enemySvg(asset)) {
-          this.loadEnemySvg(asset);
-        } else if (asset.path.endsWith(".svg")) {
-          this.load.svg(asset.id, asset.path);
+        if (asset.path.endsWith(".svg")) {
+          this.loadSvg(asset);
         } else if (asset.frameWidth && asset.frameHeight) {
           this.load.spritesheet(asset.id, asset.path, {
             frameHeight: asset.frameHeight,
@@ -502,7 +509,7 @@ export class PrototypeScene extends Phaser.Scene {
       if (!data) {
         return;
       }
-      this.load.svg("destruction-flash", data.flash.path);
+      this.load.svg("destruction-flash", data.flash.path, { scale: this.renderScale() });
       for (const archetype of Object.keys(data.archetypes)) {
         this.load.json(`shards-${archetype}`, `/art/enemies/${archetype}-shards.json`);
       }
@@ -510,12 +517,14 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
-    // Weapon pickups draw their HUD glyphs rasterised at the pickup size, one canvas px each.
+    // Weapon pickups draw their HUD glyphs rasterised at the pickup size.
+    const glyph = { displayHeight: PICKUP_GLYPH.size, displayWidth: PICKUP_GLYPH.size };
     for (const weapon of PICKUP_GLYPH.weapons) {
-      this.load.svg(pickupGlyphKey(weapon), weaponGlyphPath(weapon), {
-        height: PICKUP_GLYPH.size,
-        width: PICKUP_GLYPH.size,
-      });
+      this.load.svg(
+        pickupGlyphKey(weapon),
+        weaponGlyphPath(weapon),
+        vectorRaster(this.renderScale(), glyph),
+      );
     }
     preloadTouchChrome(this);
   }
@@ -545,19 +554,7 @@ export class PrototypeScene extends Phaser.Scene {
     );
     this.cameras.main.setBackgroundColor(background);
     this.spaceBackground = background;
-    const fit = (): void => {
-      this.cameras.main.setViewport(
-        Math.floor((this.scale.gameSize.width - SCREEN.width) / 2),
-        0,
-        SCREEN.width,
-        SCREEN.height,
-      );
-    };
-    fit();
-    this.scale.on(Phaser.Scale.Events.RESIZE, fit);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
-      this.scale.off(Phaser.Scale.Events.RESIZE, fit),
-    );
+    fitPlayCamera(this);
     this.ink = this.add.graphics();
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
@@ -1053,9 +1050,9 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Art's rock frames load after the scene starts, at display size (the canvas draws logical
-   * px): each rock's frame 0 and the backdrop sprites first, then each spin frame the first
-   * time it is drawn, so starting the scene never waits on 202 SVGs.
+   * Art's rock frames load after the scene starts, at display size times r: each rock's frame 0
+   * and the backdrop sprites first, then each spin frame the first time it is drawn, so starting
+   * the scene never waits on 202 SVGs.
    */
   private loadAsteroidArt(): void {
     const catalog = ASTEROID_ART;
@@ -1078,9 +1075,8 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Loads a galaxy's own art the first time one of its flights draws: SVGs at display size
-   * times min(devicePixelRatio, 2), the nugget sheet and the data files, then reads them. Until
-   * then its objects keep their placeholders.
+   * Loads a galaxy's own art the first time one of its flights draws: SVGs (loadSvg), the nugget
+   * sheet and the data files, then reads them. Until then its objects keep their placeholders.
    */
   private loadGalaxyArt(sector: SectorId): void {
     if (this.galaxyLoads.has(sector)) {
@@ -1115,10 +1111,8 @@ export class PrototypeScene extends Phaser.Scene {
     if (!galaxyLoadsAtOnce(asset) || this.textures.exists(asset.id)) {
       return;
     }
-    if (enemySvg(asset)) {
-      this.loadEnemySvg(asset);
-    } else if (asset.path.endsWith(".svg")) {
-      this.load.svg(asset.id, asset.path, { scale: Math.min(window.devicePixelRatio || 1, 2) });
+    if (asset.path.endsWith(".svg")) {
+      this.loadSvg(asset);
     } else if (asset.frameWidth && asset.frameHeight) {
       this.load.spritesheet(asset.id, asset.path, {
         frameHeight: asset.frameHeight,
@@ -1219,9 +1213,6 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.debrisArt = debris;
     this.streakSpec = readStreakSpec(this.cache.json.get("whirlpool-currents"));
-    if (this.textures.exists("ore-nugget")) {
-      this.textures.get("ore-nugget").setFilter(Phaser.Textures.FilterMode.NEAREST);
-    }
     const rocks = readResourceRocks(this.cache.json.get("resource-rocks"));
     this.resourceRocks = new Map((rocks?.rocks ?? []).map((rock) => [rock.id, rock]));
     this.resourceFiles = new Set(
@@ -1240,11 +1231,10 @@ export class PrototypeScene extends Phaser.Scene {
     }
     if (!this.rockRequests.has(file) && this.asteroidArt) {
       this.rockRequests.add(file);
-      this.load.svg(
-        file,
-        file,
-        this.resourceFiles.has(file) ? undefined : { scale: this.asteroidArt.displayScale },
-      );
+      this.load.svg(file, file, {
+        scale:
+          this.renderScale() * (this.resourceFiles.has(file) ? 1 : this.asteroidArt.displayScale),
+      });
       this.rockQueued = true;
     }
     return false;
@@ -1440,7 +1430,8 @@ export class PrototypeScene extends Phaser.Scene {
     const kinds = this.feedback.observe(PROTOTYPE.tuning.maxSpeed * 0.1, this.model.state);
     this.feedbackSound.play(kinds);
     if (this.screenShake && kinds.includes("damage")) {
-      this.cameras.main.shake(100, 0.002);
+      const camera = this.cameras.main;
+      camera.shake(100, shakeIntensity(camera.zoom, 0.002));
     }
   }
 
@@ -1590,11 +1581,7 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     for (const part of parts) {
-      if (enemySvg(part)) {
-        this.loadEnemySvg(part);
-      } else {
-        this.load.svg(part.id, part.path);
-      }
+      this.loadSvg(part);
     }
     this.load.once(Phaser.Loader.Events.COMPLETE, () => {
       this.shipAssets = [
@@ -1620,9 +1607,30 @@ export class PrototypeScene extends Phaser.Scene {
     };
   }
 
-  /** Queues an enemy SVG at its display size times min(devicePixelRatio, 2) (enemy-art.ts). */
-  private loadEnemySvg(asset: Asset & { displayHeight: number; displayWidth: number }): void {
-    this.load.svg(asset.id, asset.path, enemyRasterSize(window.devicePixelRatio, asset));
+  /** The canvas's device pixels per CSS pixel, r: min(devicePixelRatio, 2). */
+  private renderScale(): number {
+    return renderScale(MAX_RENDER_SCALE, window.devicePixelRatio);
+  }
+
+  /** Sets a texture's filter on every source it draws from. */
+  private filterTexture(key: string, filter: TextureFilter): void {
+    setTextureFilters(this.textures, new Map([[key, filter]]));
+  }
+
+  /**
+   * Queues a manifest SVG at its display size times r (vectorRaster), or at its own size times r
+   * when it declares none.
+   */
+  private loadSvg(asset: Asset): void {
+    const r = this.renderScale();
+    const { displayHeight, displayWidth } = asset;
+    this.load.svg(
+      asset.id,
+      asset.path,
+      displayHeight !== undefined && displayWidth !== undefined
+        ? vectorRaster(r, { displayHeight, displayWidth })
+        : { scale: r },
+    );
   }
 
   /**
@@ -1647,7 +1655,7 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     for (const frame of frames) {
-      this.load.svg(frame.id, frame.path);
+      this.loadSvg(frame);
     }
     this.load.once(Phaser.Loader.Events.COMPLETE, () => {
       this.shipAssets = [
@@ -2004,6 +2012,11 @@ export class PrototypeScene extends Phaser.Scene {
     thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels.data);
     context.putImageData(pixels, 0, 0);
     canvas.refresh();
+    // The silhouette samples as its source does.
+    this.filterTexture(
+      key,
+      frame.source.scaleMode === Phaser.ScaleModes.NEAREST ? "nearest" : "linear",
+    );
     return key;
   }
 
@@ -2545,7 +2558,7 @@ export class PrototypeScene extends Phaser.Scene {
     if (this.model.state.mode === "space" && this.model.state.flight) {
       return this.spaceJumpScene();
     }
-    const view = this.scale.gameSize;
+    const view = canvasSize(sceneFit(this));
     const center = { x: view.width / 2, y: view.height / 2 };
     const background = this.model.storyView?.page.background;
     const cockpit = this.model.selectedGalaxy !== null || background?.startsWith("cockpit");
@@ -2554,7 +2567,7 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** The flight as last drawn: the ship at the play view's centre and the visible specks. */
   private spaceJumpScene(): JumpScene {
-    const offset = Math.floor((this.scale.gameSize.width - SCREEN.width) / 2);
+    const offset = viewShift(sceneFit(this)).x;
     const center = { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 };
     const source = this.ship.texture.getSourceImage() as CanvasImageSource;
     return {
@@ -2767,8 +2780,8 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * The after state drawn into one texture, its keyline beneath its sprites, then shown over the
-   * before state at the reveal's alpha, so the group fades as one.
+   * The after state drawn into one texture at r texels per logical px, its keyline beneath its
+   * sprites, then shown over the before state at the reveal's alpha, so the group fades as one.
    */
   private drawRevealGroup(
     id: string,
@@ -2782,10 +2795,13 @@ export class PrototypeScene extends Phaser.Scene {
     const top = Math.floor(point.y + bounds.top - grow - 1);
     const width = Math.ceil(point.x + bounds.right + grow + 1) - left;
     const height = Math.ceil(point.y + bounds.bottom + grow + 1) - top;
+    const r = this.renderScale();
+    const texels = { height: densityTexels(r, height), width: densityTexels(r, width) };
     let group = this.revealGroups.get(id);
-    if (!group || group.width !== width || group.height !== height) {
+    if (!group || group.width !== texels.width || group.height !== texels.height) {
       group?.destroy();
-      group = this.add.renderTexture(0, 0, width, height).setOrigin(0, 0);
+      group = this.add.renderTexture(0, 0, texels.width, texels.height).setOrigin(0, 0);
+      this.filterTexture(group.texture.key, "linear");
       this.revealGroups.set(id, group);
     }
     group.clear();
@@ -2795,8 +2811,8 @@ export class PrototypeScene extends Phaser.Scene {
         config: {
           originX: part.frame.pivot.x,
           originY: part.frame.pivot.y,
-          scaleX: part.frame.displayWidth! / frame.width,
-          scaleY: part.frame.displayHeight! / frame.height,
+          scaleX: (r * part.frame.displayWidth!) / frame.width,
+          scaleY: (r * part.frame.displayHeight!) / frame.height,
         },
         frame,
         x: point.x + part.offset.x - left,
@@ -2807,15 +2823,16 @@ export class PrototypeScene extends Phaser.Scene {
       for (const { config, frame, x, y } of stamps) {
         const silhouette = this.keylineSilhouette({ frame });
         for (const offset of silhouette ? keylineOffsets(grow) : []) {
-          group.stamp(silhouette!, undefined, x + offset.x, y + offset.y, config);
+          group.stamp(silhouette!, undefined, r * (x + offset.x), r * (y + offset.y), config);
         }
       }
     }
     for (const { config, frame, x, y } of stamps) {
-      group.stamp(frame.texture.key, undefined, x, y, config);
+      group.stamp(frame.texture.key, undefined, r * x, r * y, config);
     }
     group.render();
     group
+      .setDisplaySize(width, height)
       .setPosition(left, top)
       .setDepth(2 + parts[parts.length - 1]!.order * 1e-7 + 1e-7)
       .setAlpha(alpha)
@@ -2930,14 +2947,14 @@ export class PrototypeScene extends Phaser.Scene {
     return true;
   }
 
-  /** Whether a whale frame is ready; a missing one is queued, rastered at up to 2x display. */
+  /** Whether a whale frame is ready; a missing one is queued (loadSvg). */
   private whaleTexture(frame: Asset): boolean {
     if (this.textures.exists(frame.id)) {
       return true;
     }
     if (!this.whaleRequests.has(frame.id) && frame.path) {
       this.whaleRequests.add(frame.id);
-      this.load.svg(frame.id, frame.path, { scale: Math.min(window.devicePixelRatio || 1, 2) });
+      this.loadSvg(frame);
       // Whale frames start with the next queued rock load.
       this.rockQueued = true;
     }

@@ -19,7 +19,6 @@ import {
   CLAIM_WIRED,
   composedArchetypes,
   composeEnemy,
-  ENEMY_RASTER_MAX_DPR,
   type EnemyArt,
   enemyArt,
   type EnemyFrame,
@@ -28,8 +27,6 @@ import {
   enemyJetsPath,
   enemyJetTriangles,
   enemyPartFrame,
-  enemyRasterSize,
-  enemySvg,
   HIT_FLASH_MS,
   HitFlashes,
   hullHeading,
@@ -453,39 +450,7 @@ describe("composed heavies", () => {
   });
 });
 
-describe("enemy raster size", () => {
-  const frigate = { displayHeight: 168, displayWidth: 168 };
-
-  it("rasterises at the display size times the device pixel ratio, at most 2", () => {
-    expect(ENEMY_RASTER_MAX_DPR).toBe(2);
-    expect(enemyRasterSize(1, frigate)).toEqual({ height: 168, width: 168 });
-    expect(enemyRasterSize(1.5, frigate)).toEqual({ height: 252, width: 252 });
-    expect(enemyRasterSize(2, frigate)).toEqual({ height: 336, width: 336 });
-    expect(enemyRasterSize(3, frigate)).toEqual({ height: 336, width: 336 });
-    expect(enemyRasterSize(2.625, { displayHeight: 35, displayWidth: 35 })).toEqual({
-      height: 70,
-      width: 70,
-    });
-  });
-
-  it("rounds up to whole pixels and treats an unknown ratio as 1", () => {
-    expect(enemyRasterSize(1.3, { displayHeight: 10.5, displayWidth: 33.6 })).toEqual({
-      height: 14,
-      width: 44,
-    });
-    expect(enemyRasterSize(Number.NaN, frigate)).toEqual({ height: 168, width: 168 });
-    expect(enemyRasterSize(0, frigate)).toEqual({ height: 168, width: 168 });
-  });
-
-  it("covers every enemy SVG in the manifest, and nothing else", () => {
-    const assets = manifest.assets as (EnemyFrame & { path: string })[];
-    // Gadget's coral family and Cartwheel's claim jumpers.
-    const enemies = assets.filter((asset) => /^\/art\/(cartwheel\/)?enemies\//.test(asset.path));
-    expect(enemies.length).toBeGreaterThan(400);
-    expect(enemies.every((asset) => enemySvg(asset))).toBe(true);
-    expect(assets.filter((asset) => enemySvg(asset))).toHaveLength(enemies.length);
-  });
-
+describe("enemy SVGs", () => {
   it("finds every heavy SVG declared at its display size, its viewBox in frame px", () => {
     const heavies = (
       manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]

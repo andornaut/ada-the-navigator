@@ -114,6 +114,8 @@ export function createJumpOverlay(
       return;
     }
     context.globalAlpha = alpha;
+    // Art's sheets are pixel art: nearest at their fractional scale.
+    context.imageSmoothingEnabled = false;
     context.drawImage(
       image,
       source.x,
@@ -230,6 +232,8 @@ export function createJumpOverlay(
       }
       // The glow sits under the ship, so the ship draws again above it.
       if (scene.ship) {
+        // The ship is vector art: smooth.
+        context.imageSmoothingEnabled = true;
         context.drawImage(
           scene.ship.image,
           scene.ship.x,
@@ -251,6 +255,7 @@ export function createJumpOverlay(
         paint.fillStyle = "#ffffff";
         paint.fillRect(0, 0, silhouette.width, silhouette.height);
         context.globalAlpha = frame.white;
+        context.imageSmoothingEnabled = true;
         context.drawImage(silhouette, ship.x, ship.y, ship.width, ship.height);
         context.globalAlpha = 1;
       }

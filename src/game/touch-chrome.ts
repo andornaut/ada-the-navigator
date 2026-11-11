@@ -4,6 +4,7 @@ import {
   sheetTags,
   tagRepeat,
 } from "@andornaut/game-kit/art/aseprite";
+import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import Phaser from "phaser";
 
 import {
@@ -88,7 +89,7 @@ function createChromeTexture(
     column++;
   }
   texture.refresh();
-  texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+  setTextureFilters(scene.textures, new Map([[key, "linear"]]));
 }
 
 // A joystick part drawn from its sheet's frames and tags, or undefined while the UI manifest

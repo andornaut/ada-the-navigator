@@ -37,7 +37,7 @@ describe("view scale", () => {
     [1280, 720, 1.7778, 720, 405, 85.33],
     [1440, 900, 2, 720, 450, 96],
     [1920, 1080, 2.6667, 720, 405, 128],
-    // An EXPAND-wide screen widens the logical view instead.
+    // A screen wider than 2:1 widens the logical view instead.
     [1600, 600, 1.6667, 960, 360, 80],
   ])("at %sx%s is s %s, a %sx%s logical view and a %s CSS px button", (w, h, s, lw, lh, button) => {
     const css = { height: h, width: w };

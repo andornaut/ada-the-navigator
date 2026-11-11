@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 const IMAGE = "mcr.microsoft.com/playwright/mcp:v0.0.83";
 const root = fileURLToPath(new URL("..", import.meta.url));
-// The view at 1 px per logical px: the 720 by 360 base, untouched by EXPAND.
+// The view at 1 px per logical px: the 720 by 360 base at a device pixel ratio of 1.
 const VIEW = { height: 360, width: 720 };
 // A fixed world per galaxy, so a re-run captures the same frame.
 const SEED = 1;

@@ -8,6 +8,7 @@ import {
 import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
+import { canvasSize, fitCanvasCamera, sceneFit } from "../game/play-camera.ts";
 import {
   createSpeedLine,
   createTouchChrome,
@@ -275,7 +276,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   }
   scene.cameras.main.ignore(stickParts);
   const stickSet = new Set<GameObjects.GameObject>(stickParts);
-  const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
+  // The sticks draw over the whole canvas, in logical px.
+  const camera = scene.cameras.add();
+  fitCanvasCamera(scene, camera);
   // The play area's view scale (src/ui/layout/viewScale.ts): the DOM UI's logical px, the safe
   // insets and the nine-slice edges, from the canvas's display size.
   const host = parent.closest<HTMLElement>(`#${VIEW_HOST_ID}`) ?? parent;
@@ -284,13 +287,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // Keep each joystick's pointer target over its drawn rest ring, in logical canvas px.
   let placedTargets = "";
   const placeTargets = (): void => {
-    const { gameSize } = scene.scale;
-    const placement = JSON.stringify([gameSize.width, gameSize.height, layout.insets]);
+    const size = canvasSize(sceneFit(scene));
+    const placement = JSON.stringify([size.width, size.height, layout.insets]);
     if (placement === placedTargets) {
       return;
     }
     placedTargets = placement;
-    const targets = stickTargets(gameSize, layout.insets);
+    const targets = stickTargets(size, layout.insets);
     settings.joystickTargets.forEach((target, index) => {
       const rect = targets[index === 0 ? "move" : "aim"];
       target.style.left = units(rect.x);
@@ -298,7 +301,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     });
   };
   const fitControls = (): void => {
-    camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
     camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
     layout = view.update();
     placeTargets();
@@ -310,7 +312,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     return pageToGame(
       FRAME_TURN.turn(),
       canvas.getBoundingClientRect(),
-      scene.scale.gameSize,
+      canvasSize(sceneFit(scene)),
       clientPoint(event),
     );
   };
@@ -329,7 +331,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cancel: ({ pointerId }) => state.release(pointerId),
       down: ({ pointerId }, event) => {
         const at = point(event);
-        state.down(at.x < scene.scale.width / 2 ? "move" : "aim", pointerId, at);
+        state.down(at.x < canvasSize(sceneFit(scene)).width / 2 ? "move" : "aim", pointerId, at);
       },
       move: ({ pointerId }, event) => state.move(pointerId, point(event)),
       up: ({ pointerId }) => state.release(pointerId),
@@ -413,13 +415,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
+    const size = canvasSize(sceneFit(scene));
     const views = stickViews(
       {
-        height: scene.scale.height,
+        height: size.height,
         insets: layout.insets,
         visibility,
         visible: touch,
-        width: scene.scale.width,
+        width: size.width,
       },
       state,
     );

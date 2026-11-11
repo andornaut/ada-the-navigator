@@ -52,7 +52,8 @@ debris keep simple placeholders. See [economy](gameplay/economy.md).
 The game uses a 720 × 360 base view (2:1 landscape), matching Chibi. The canvas
 expands to available space while the play view stays centered across the top.
 Portrait touch screens turn the page frame to landscape; controls remain mapped
-to the visible frame. Rendering uses nearest-neighbor scaling.
+to the visible frame. The canvas renders in device pixels at up to twice its CSS
+size, with pixel art sampled nearest-neighbor and vector art smoothly.
 
 Prototype input mappings:
 
