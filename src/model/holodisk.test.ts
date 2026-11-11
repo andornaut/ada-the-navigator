@@ -16,11 +16,9 @@ const inserted = [
 ];
 /** Astra's memory line after each galaxy's insertion. */
 const memories = {
-  1: "I remember now. I once had a navigator. And I hid my holodisks on purpose. But why?",
-  2: "General Gadget. I helped him map the universe. I thought he was good.",
-  3:
-    "He wants to rule everything. Together, the holodisks make a highway for his fleet. " +
-    "That's why I scattered them.",
+  1: "I remember a fleet... and someone giving orders.",
+  2: "I carried that fleet from galaxy to galaxy. But whose fleet?",
+  3: "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
 };
 
 /** A flight in `galaxy` whose space quest is complete and holodisk not yet recovered. */

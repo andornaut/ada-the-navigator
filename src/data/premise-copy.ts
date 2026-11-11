@@ -14,12 +14,9 @@ export const PREMISE: PremiseContent = {
       { speaker: "Astra", text: "Memory restored. I've found new coordinates." },
     ],
     memories: {
-      1: "I remember now. I once had a navigator. And I hid my holodisks on purpose. But why?",
-      2: "General Gadget. I helped him map the universe. I thought he was good.",
-      3: [
-        "He wants to rule everything. Together, the holodisks make a highway for his fleet. ",
-        "That's why I scattered them.",
-      ].join(""),
+      1: "I remember a fleet... and someone giving orders.",
+      2: "I carried that fleet from galaxy to galaxy. But whose fleet?",
+      3: "General Gadget. I was his navigator. I scattered my holodisks to keep them from him.",
     },
     name: "Holodisk",
   },
@@ -64,8 +61,8 @@ export const PREMISE: PremiseContent = {
       ],
       speaker: "Astra",
       text: [
-        "I was made to explore and map, but I cannot fly without a navigator. Will you ",
-        "be mine?",
+        "I was made to explore and map, but I can no longer fly without a navigator. ",
+        "Will you be mine?",
       ].join(""),
     },
     { text: "Ada sits in the pilot's chair and buckles Penny in beside her." },

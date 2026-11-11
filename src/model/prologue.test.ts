@@ -54,7 +54,8 @@ describe("prologue", () => {
       ],
       [
         "Astra",
-        "I was made to explore and map, but I cannot fly without a navigator. Will you be mine?",
+        "I was made to explore and map, but I can no longer fly without a navigator. " +
+          "Will you be mine?",
         ["How did you get to Earth?", "Can Penny come?", "How do I get home?", "Continue"],
       ],
       [
