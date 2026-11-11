@@ -319,7 +319,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.
-- Friendly destinations, dialogue locations and teleport arrivals are always safe.
+- Friendly destinations, dialogue locations and teleport arrivals are always safe. No
+  encounter is placed within 2000 world units of a flight's start or any quantum
+  jump arrival, so every launch begins calm.
 
 ## Interactions and navigation
 
