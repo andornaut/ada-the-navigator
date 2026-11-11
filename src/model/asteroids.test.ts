@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   ASTEROID_CATALOG,
@@ -249,11 +249,25 @@ describe("asteroid chunk fields", () => {
 });
 
 describe("asteroids in flight", () => {
+  // Launches draw their world seed from crypto; a fixed seed makes the explored chunks, and so
+  // the huge and drifting asteroids these tests rely on, the same on every run.
+  const LAUNCH_SEED = 173;
   function launched() {
+    const random = vi
+      .spyOn(globalThis.crypto, "getRandomValues")
+      .mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+        (array as unknown as Uint32Array).fill(LAUNCH_SEED);
+        return array;
+      });
     const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
-    playOpening(model);
+    try {
+      model.startSector(1);
+      playOpening(model);
+    } finally {
+      random.mockRestore();
+    }
     const flight = model.state.flight!;
+    expect(flight.seed).toBe(LAUNCH_SEED);
     flight.objects = flight.objects.filter((object) => object.kind !== "rock");
     flight.shots = [];
     return { flight, model };
@@ -346,8 +360,11 @@ describe("asteroids in flight", () => {
   it("resumes a drifting asteroid on its seeded path after paging and a save round-trip", () => {
     const { flight, model } = launched();
     explore(model);
-    const drifter = flight.objects.find((object) => object.orbit)!;
-    expect(drifter).toBeDefined();
+    const drifter = flight.objects.find((object) => object.orbit);
+    expect(drifter, "the fixed launch seed explores into a drifting asteroid").toBeDefined();
+    if (!drifter) {
+      return;
+    }
     const orbit = { ...drifter.orbit! };
     const start = { x: drifter.x, y: drifter.y };
     model.step(1, idle);
