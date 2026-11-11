@@ -117,6 +117,9 @@ function serve(dist) {
   });
 }
 
+// CLEANUP (added 2026-11-11): every capture frames the nearest station on a field without rocks;
+// reframe each on its galaxy's own outposts or landmark, with field mass, once the asteroid
+// renderer lands, and recapture.
 // A save in flight in galaxy `number` with the ship beside its station nearest the start, or, for
 // a galaxy with no flight yet, the base field with no objects at the same framing.
 // CLEANUP (added 2026-11-11): galaxy four has no flight (SectorId is 1 to 3), so it captures the

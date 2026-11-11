@@ -56,7 +56,7 @@ describe("view scale", () => {
     }
   });
 
-  it("gives the DOM s as --ada-unit, the CSS px insets and whole-pixel nine-slice edges", () => {
+  it("gives the DOM s as --ada-unit, the CSS px insets and whole-pixel drawn edges", () => {
     const layout = playLayout(
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
@@ -69,11 +69,15 @@ describe("view scale", () => {
       "--ada-slice-4": "4px",
       "--ada-unit": String(layout.s),
     });
+    expect(layout.slices[1]).toBe(1);
     expect(playLayout({ height: 720, width: 1280 }, NO_INSETS).slices).toEqual({
+      1: 2,
       2: 4,
       4: 7,
       6: 11,
     });
+    // The galaxy preview's 1 px frame at 1.78x and 2.67x: round(1 * s) whole CSS px.
+    expect(playLayout({ height: 1080, width: 1920 }, NO_INSETS).slices[1]).toBe(3);
   });
 
   it("writes logical sizes as calc(var(--ada-unit) * N), never raw px", () => {

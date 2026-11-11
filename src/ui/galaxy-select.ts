@@ -1,4 +1,4 @@
-import { units } from "./layout/css.ts";
+import { slice, units } from "./layout/css.ts";
 import { GALAXY_CARD, type GalaxyAction } from "./layout/galaxySelectCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
@@ -36,7 +36,7 @@ export interface GalaxySelectOptions {
   readonly reducedMotion: () => boolean;
 }
 
-const STYLE = `
+export const GALAXY_SELECT_STYLE = `
 .ada-controls .ada-galaxy{
   align-self:stretch;
   display:flex;
@@ -46,12 +46,13 @@ const STYLE = `
   gap:${units(GALAXY_CARD.rowGap)}
 }
 
-/* The 180 by 90 preview in its 1 px frame, outside the image (art/galaxies.md "Selector preview"). */
+/* The 180 by 90 preview in its 1 px frame, outside the image (art/galaxies.md "Selector preview"),
+   as whole CSS px: round(1 * s). */
 .ada-controls .ada-galaxy-shot{
   box-sizing:content-box;
   width:${units(GALAXY_CARD.screenshot.width)};
   height:${units(GALAXY_CARD.screenshot.height)};
-  border:${units(GALAXY_CARD.screenshot.frame)} solid ${GALAXY_CARD.screenshot.frameColor};
+  border:${slice(GALAXY_CARD.screenshot.frame)} solid ${GALAXY_CARD.screenshot.frameColor};
   background:center / 100% 100% no-repeat;
   image-rendering:pixelated
 }
@@ -99,7 +100,7 @@ function galaxyActionButtons(
 export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptions) {
   const { labels } = options;
   const style = document.createElement("style");
-  style.textContent = STYLE;
+  style.textContent = GALAXY_SELECT_STYLE;
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;

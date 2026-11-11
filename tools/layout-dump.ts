@@ -259,11 +259,11 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   for (const role of Object.values(tokens.TYPE)) {
     call("css.ts", "font", css.font, role);
   }
-  for (const edge of controls.NINE_SLICE_EDGES) {
+  for (const edge of controls.WHOLE_PX_EDGES) {
     call("css.ts", "slice", css.slice, edge);
     call("css.ts", "viewProperty slice", css.VIEW_PROPERTIES.slice, edge);
   }
-  call("css.ts", "viewStyle", css.viewStyle, controls.NINE_SLICE_EDGES);
+  call("css.ts", "viewStyle", css.viewStyle, controls.WHOLE_PX_EDGES);
 }
 
 /** The dump: each module's constants, and every function case's arguments and result. */

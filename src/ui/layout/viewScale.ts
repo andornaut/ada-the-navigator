@@ -1,5 +1,5 @@
 import { SCREEN } from "../../data/screen.ts";
-import { NINE_SLICE_EDGES } from "./controls.ts";
+import { WHOLE_PX_EDGES } from "./controls.ts";
 import { HUD_SIDES, type HudSide, VIEW_PROPERTIES } from "./css.ts";
 import {
   hudRect,
@@ -50,7 +50,7 @@ export function playLayout(cssSize: Size, cssInsets: Insets): PlayLayout {
     insets: safeInsets(cssInsets, s),
     s,
     slices: Object.fromEntries(
-      NINE_SLICE_EDGES.map((edge) => [edge, Math.max(1, Math.round(edge * s))]),
+      WHOLE_PX_EDGES.map((edge) => [edge, Math.max(1, Math.round(edge * s))]),
     ),
     view: logicalView(cssSize),
   };
@@ -70,7 +70,7 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
       (side) => [VIEW_PROPERTIES.hud(side), `${hudEdges[side] * layout.s}px`] as const,
     ),
     ...SIDES.map((side) => [VIEW_PROPERTIES.safe(side), `${layout.cssInsets[side]}px`] as const),
-    ...NINE_SLICE_EDGES.map(
+    ...WHOLE_PX_EDGES.map(
       (edge) => [VIEW_PROPERTIES.slice(edge), `${layout.slices[edge]}px`] as const,
     ),
   ];

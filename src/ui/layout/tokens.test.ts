@@ -6,9 +6,9 @@ import {
   BUTTON_SLICE,
   CONTROL_ROW,
   FOCUS_RING,
-  NINE_SLICE_EDGES,
   PILL,
   TEXT_BUTTON,
+  WHOLE_PX_EDGES,
 } from "./controls.ts";
 import { HIT_RULE, hitAround, hitMargin, pressedArea } from "./hitAreas.ts";
 import { CONTROL_EDGE, SAFE_MARGIN } from "./playView.ts";
@@ -63,7 +63,7 @@ describe("layout tokens", () => {
     expect(FOCUS_RING.outset).toBe(4);
     expect(FOCUS_RING.fringe + FOCUS_RING.band + FOCUS_RING.fringe).toBe(FOCUS_RING.outset);
     expect(PILL).toMatchObject({ height: 28, padding: 8, radius: 4 });
-    expect(NINE_SLICE_EDGES).toEqual([2, 4, 6]);
+    expect(WHOLE_PX_EDGES).toEqual([1, 2, 4, 6]);
     expect(BUTTON_SLICE).toEqual({ bottom: 6, left: 2, right: 2, top: 4 });
   });
 

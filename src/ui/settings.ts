@@ -8,7 +8,7 @@ import {
   writeSetting,
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
-import { CONTROL_ROW, NINE_SLICE_EDGES } from "./layout/controls.ts";
+import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, fromSafeEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -86,7 +86,7 @@ const STYLE = `
   font-display:swap
 }
 
-${viewStyle(NINE_SLICE_EDGES)}
+${viewStyle(WHOLE_PX_EDGES)}
 
 .ada-controls{
   position:absolute;
