@@ -123,8 +123,8 @@ left-aligned at the inner left) shows while Travel here is unavailable.
   width `max(text + 32, minWidth)`.
 - Travel here unavailable: the disabled face, focusable; activation plays the
   refusal cue ([Controls](controls.md#buttons)). The reason is "Unavailable
-  while you are in danger." (Gameplay), or "Unavailable while towing.",
-  pending Gameplay. One reason shows at a time.
+  while you are in danger." or "Unavailable while towing." (Gameplay). One
+  reason shows at a time.
 - The panel's chip and text are decorative to the pointer: a press on the panel
   outside Travel here does nothing and never reaches the field.
 
@@ -385,7 +385,7 @@ presses first; a chip under them takes no press there.
 | Travel place selected | Selection ring on the chip                      | Chip, name, type line, Travel here (primary)                    |
 | Other place selected  | Selection ring on the landmark or holodisk chip | Chip, name, type line; no action                                |
 | In danger             | Unchanged                                       | Travel here unavailable, "Unavailable while you are in danger." |
-| Towing (pending)      | Unchanged                                       | Travel here unavailable, "Unavailable while towing."            |
+| Towing                | Unchanged                                       | Travel here unavailable, "Unavailable while towing."            |
 | Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                       |
 | No explored record    | Plain field, no fog                             | Unchanged                                                       |
 
@@ -401,7 +401,8 @@ is unavailable instead.
 
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
 here; "No destinations mapped yet."; "Unavailable while you are in danger.";
-the galaxy names; the tools' accessible labels; and the type line:
+the galaxy names; "Unavailable while towing."; the tools' accessible labels;
+and the type line:
 
 - Types: Station, Outpost, Story place, Holodisk, Nebula, Wreck, Beacon.
   Outposts say "Outpost" without their name.
@@ -410,12 +411,8 @@ the galaxy names; the tools' accessible labels; and the type line:
   whole numbers from 10 ("12 light-years"), en-US grouping, and "1 light-year"
   when it rounds to 1.
 
-Placeholder until Gameplay supplies it, drawn in the review sheets only:
-"Unavailable while towing.", pending the towing decision.
-
 ## Open questions
 
-- Gameplay: the towing reason.
 - Tech: a symbol key per `MapPlace` (the table above), and whether stations
   far outside the charting disc exist, which the opening pan and pan limit
   cover.
