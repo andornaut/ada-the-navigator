@@ -276,13 +276,13 @@ const STYLE = `
   overflow-wrap:anywhere
 }
 
-.ada-controls label .ada-setting-text{
+.ada-controls .ada-setting-text{
   display:grid;
   gap:2px;
   padding:4px 0
 }
 
-.ada-controls label .ada-setting-note{
+.ada-controls .ada-setting-note{
   font-size:13px;
   line-height:16px;
   opacity:0.75
