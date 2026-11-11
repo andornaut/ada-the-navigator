@@ -1291,7 +1291,10 @@ try {
   await page.setViewportSize({ width: 1280, height: 720 });
   const paletteResponse = await page.request.get("http://ada-preview:4173/art/space-palette.json");
   assert.equal(paletteResponse.status(), 200, "Approved space palette must be served");
-  const { colors: paletteColors } = await paletteResponse.json();
+  const { colors: approvedColors } = await paletteResponse.json();
+  // In flight, space takes the galaxy's hue; the combat fixtures fly in galaxy one.
+  const { GALAXIES } = await import(new URL("../src/data/storybook.ts", import.meta.url));
+  const paletteColors = { ...approvedColors, background: GALAXIES[0].hue };
   const combatSnapshots = {};
   const pixels = {};
   async function renderCombatView(view) {
@@ -1478,7 +1481,7 @@ try {
   );
   assert.ok(
     pixels.background.counts.background > pixels.background.area * 0.9,
-    "Empty space must render the approved background rather than the monochrome fallback",
+    "Empty space must render galaxy one's hue rather than the monochrome fallback",
   );
   await page.screenshot({ path: `${output}/combat.png` });
   save("combat-proof.json", {

@@ -195,9 +195,11 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       button.style.width = "";
     }
     const unit = readViewUnit(panel);
-    const widest = Math.max(
-      ...pageControls.filter((button) => !button.hidden).map((button) => button.offsetWidth),
-    );
+    // offsetWidth rounds to whole CSS px, so the next px up keeps the widest label on one line.
+    const widest =
+      Math.max(
+        ...pageControls.filter((button) => !button.hidden).map((button) => button.offsetWidth),
+      ) + 1;
     for (const button of pageControls) {
       button.style.width = units(widest / unit);
     }
