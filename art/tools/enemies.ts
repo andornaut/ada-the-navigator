@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { type Craft, crafts, drawOrder, faces } from "./crafts.ts";
-import { anchor, HEADINGS, json, project, round, vector } from "./projection.ts";
+import { anchor, ENEMY_HEADINGS, json, project, round, vector } from "./projection.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}enemies/`;
@@ -33,12 +33,12 @@ function jets(craft: Craft): string {
   const centre = craft.frame / 2;
   const scale = Math.sqrt(craft.frame / 96);
   const half = craft.mouthWidth / 2;
-  const headings = Array.from({ length: HEADINGS }, (_, yaw) => ({
+  const headings = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: craft.mouths.map(([x, y]) => ({
-      anchor: anchor(centre, yaw, [x, y, MOUTH_Z]),
-      axis: vector(yaw, [0, 1, 0]),
-      half: vector(yaw, [-half, 0, 0]),
+      anchor: anchor(ENEMY_HEADINGS, centre, yaw, [x, y, MOUTH_Z]),
+      axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
+      half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
     })),
   }));
   return json({
@@ -55,7 +55,7 @@ function jets(craft: Craft): string {
 
 function manifestEntries(craft: Craft) {
   const display = craft.frame * DISPLAY_SCALE;
-  return Array.from({ length: HEADINGS }, (_, yaw) => ({
+  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
     id: `enemy-${craft.name}-${yaw}`,
     path: `/art/enemies/${craft.name}-${yaw}.svg`,
     width: craft.frame,
@@ -72,7 +72,7 @@ function manifestEntries(craft: Craft) {
 mkdirSync(output, { recursive: true });
 for (const craft of crafts) {
   writeFileSync(`${output}${craft.name}-jets.json`, jets(craft));
-  for (let yaw = 0; yaw < HEADINGS; yaw++) {
+  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
     writeFileSync(`${output}${craft.name}-${yaw}.svg`, svg(craft, yaw));
   }
 }

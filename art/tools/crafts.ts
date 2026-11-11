@@ -1,4 +1,4 @@
-import { depth, facesViewer, type Point, rotate } from "./projection.ts";
+import { depth, ENEMY_HEADINGS, facesViewer, type Point, rotate } from "./projection.ts";
 
 // Sector one enemy models, shared by the frame and destruction exports.
 export type Plan = readonly (readonly [number, number])[];
@@ -257,7 +257,7 @@ export const crafts: Craft[] = [
 
 // Visible sides in plan order, then the top. Rear-facing hull edges use the rear shade.
 export function faces(yaw: number, part: Part): Face[] {
-  const top = (plan: Plan) => plan.map(([x, y]) => rotate(yaw, [x, y, part.z1]));
+  const top = (plan: Plan) => plan.map(([x, y]) => rotate(ENEMY_HEADINGS, yaw, [x, y, part.z1]));
   // Orient the plan so its top faces up.
   const plan = facesViewer(top(part.plan)) ? part.plan : part.plan.toReversed();
   const result: Face[] = [];
@@ -271,7 +271,7 @@ export function faces(yaw: number, part: Part): Face[] {
         [a[0], a[1], part.z0],
         [b[0], b[1], part.z0],
       ] as const
-    ).map((point) => rotate(yaw, point));
+    ).map((point) => rotate(ENEMY_HEADINGS, yaw, point));
     if (facesViewer(points)) {
       const rear =
         part.rear !== undefined &&
@@ -291,7 +291,9 @@ export function drawOrder(yaw: number, hullTop: number, parts: readonly Part[]):
   return parts
     .map((part) => ({
       part,
-      depth: depth(part.plan.map(([x, y]) => rotate(yaw, [x, y, (part.z0 + part.z1) / 2]))),
+      depth: depth(
+        part.plan.map(([x, y]) => rotate(ENEMY_HEADINGS, yaw, [x, y, (part.z0 + part.z1) / 2])),
+      ),
       layer: part.decal ? 1 : part.z0 >= hullTop ? 2 : 0,
     }))
     .sort((a, b) => a.layer - b.layer || b.depth - a.depth || a.part.z1 - b.part.z1)

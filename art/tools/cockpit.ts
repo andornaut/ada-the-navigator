@@ -24,7 +24,7 @@ import {
 } from "./paint.ts";
 import { SPACE_BG } from "./palette.ts";
 import { placeEntries } from "./manifest.ts";
-import { depth, facesViewer, type Point, rotate } from "./projection.ts";
+import { depth, facesViewer, type Point, rotate, SHIP_HEADINGS } from "./projection.ts";
 import { roundHalfEven } from "./random.ts";
 import { centredView, DESIGN, shimmer, type View } from "./shimmer.ts";
 
@@ -33,7 +33,8 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // Logical canvas, centred on the view; 2 image px per logical px.
 export const CANVAS = { width: 960, height: 540, density: 2 } as const;
 const SS = 3;
-const YAW = 12;
+// Ship heading 24 of 32 (up-right).
+const YAW = 24;
 // Design px per model unit, and the design px where the canopy's focus point (0, -3, 5.5) lands.
 const K = 11;
 const FOCUS: Xy = [422, 150];
@@ -535,13 +536,13 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
   const width = view.width * SS;
   const height = view.height * SS;
   const lay = blankImage(width, height);
-  const focus = rotate(YAW, [0, -3, 5.5]);
+  const focus = rotate(SHIP_HEADINGS, YAW, [0, -3, 5.5]);
   const pivot: Xy = [
     FOCUS[0] - (K * (focus[0] - focus[1]) * Math.sqrt(3)) / 2,
     FOCUS[1] - K * ((focus[0] + focus[1]) / 2 - focus[2]),
   ];
   const proj = (p: Point): Xy => {
-    const [x, y, z] = rotate(YAW, p);
+    const [x, y, z] = rotate(SHIP_HEADINGS, YAW, p);
     return [
       S * (pivot[0] + (K * (x - y) * Math.sqrt(3)) / 2 - view.x0),
       S * (pivot[1] + K * ((x + y) / 2 - z) - view.y0),
@@ -554,7 +555,7 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
   };
   const drawGroup = (faces: readonly [Material, Face][], outline?: string) => {
     const items = faces
-      .map(([m, f]) => ({ f, m, rotated: f.map((p) => rotate(YAW, p)) }))
+      .map(([m, f]) => ({ f, m, rotated: f.map((p) => rotate(SHIP_HEADINGS, YAW, p)) }))
       .filter(({ rotated }) => facesViewer(rotated))
       .map((item) => ({ ...item, key: -depth(item.rotated) }))
       .sort((a, b) => Number(a.m.endsWith("!")) - Number(b.m.endsWith("!")) || a.key - b.key);
@@ -611,8 +612,8 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
   ];
   const groupDepth = (g: Group) =>
     g.kind === "canopy"
-      ? depth([rotate(YAW, [cx, cy, cz + 1.5])])
-      : depth(g.faces.flatMap(([, f]) => f.map((p) => rotate(YAW, p))));
+      ? depth([rotate(SHIP_HEADINGS, YAW, [cx, cy, cz + 1.5])])
+      : depth(g.faces.flatMap(([, f]) => f.map((p) => rotate(SHIP_HEADINGS, YAW, p))));
   for (const group of rest.sort((a, b) => -groupDepth(a) - -groupDepth(b))) {
     if (group.kind === "canopy") {
       drawCanopy();
@@ -645,7 +646,7 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
     const back: [Face, Point[]][] = [];
     const front: [Face, Point[]][] = [];
     for (const f of dome) {
-      const rotated = f.map((p) => rotate(YAW, p));
+      const rotated = f.map((p) => rotate(SHIP_HEADINGS, YAW, p));
       (facesViewer(rotated) ? front : back).push([f, rotated]);
     }
     const glass = (faces: readonly [Face, Point[]][], alpha: number) => {
@@ -665,7 +666,9 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
     glass(back, 34);
     const inner = interior();
     const key = (g: Group) =>
-      g.kind === "flat" ? -1e9 : -depth(g.faces.flatMap(([, f]) => f.map((p) => rotate(YAW, p))));
+      g.kind === "flat"
+        ? -1e9
+        : -depth(g.faces.flatMap(([, f]) => f.map((p) => rotate(SHIP_HEADINGS, YAW, p))));
     let headsDone = false;
     for (const group of inner.sort((a, b) => key(a) - key(b))) {
       if (group.kind === "flat") {

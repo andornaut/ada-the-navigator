@@ -2,15 +2,40 @@
 
 - Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
-- Exports: `ship-{0..15}.svg`, `ship-thrust-{0..15}.svg`, `ship-jets.json`,
+- Exports: `ship-{0..31}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
   and the [paint schemes](#paint-schemes).
-  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 10 (up).
+  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 20 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
-- Heading index is normalized `round(atan2(world.y, world.x) / (PI / 8))` modulo 16,
-  in 22.5 degree steps. Even indices project down-right (0), down (2),
-  down-left (4), left (6), up-left (8), up (10), up-right (12) and right (14);
-  odd indices fall between them.
+- The ship has 32 headings (`SHIP_HEADINGS`); enemy craft keep 16
+  (`ENEMY_HEADINGS`, [sector one enemies](enemies.md)). Heading index is
+  normalized `round(atan2(world.y, world.x) / (PI / 16))` modulo 32, in 11.25
+  degree world steps. Ship heading `2k` faces the same angle as enemy heading
+  `k`. Multiples of four project down-right (0), down (4), down-left (8), left
+  (12), up-left (16), up (20), up-right (24) and right (28).
+- The isometric projection makes screen steps uneven: 19.0 degrees either side
+  of down and up, 6.6 degrees either side of left and right. Nose screen angles are
+  clockwise from screen right, with screen y down:
+
+| Index |  World | Screen | Index |  World | Screen |
+| ----: | -----: | -----: | ----: | -----: | -----: |
+|     0 |      0 |   30.0 |    16 |    180 |  210.0 |
+|     1 |  11.25 |   40.8 |    17 | 191.25 |  220.8 |
+|     2 |   22.5 |   54.3 |    18 |  202.5 |  234.3 |
+|     3 |  33.75 |   71.0 |    19 | 213.75 |  251.0 |
+|     4 |     45 |   90.0 |    20 |    225 |  270.0 |
+|     5 |  56.25 |  109.0 |    21 | 236.25 |  289.0 |
+|     6 |   67.5 |  125.7 |    22 |  247.5 |  305.7 |
+|     7 |  78.75 |  139.2 |    23 | 258.75 |  319.2 |
+|     8 |     90 |  150.0 |    24 |    270 |  330.0 |
+|     9 | 101.25 |  158.9 |    25 | 281.25 |  338.9 |
+|    10 |  112.5 |  166.6 |    26 |  292.5 |  346.6 |
+|    11 | 123.75 |  173.4 |    27 | 303.75 |  353.4 |
+|    12 |    135 |  180.0 |    28 |    315 |    0.0 |
+|    13 | 146.25 |  186.6 |    29 | 326.25 |    6.6 |
+|    14 |  157.5 |  193.4 |    30 |  337.5 |   13.4 |
+|    15 | 168.75 |  201.1 |    31 | 348.75 |   21.1 |
+
 - Local forward is negative Y. Rotate the solid model into world heading before
   projecting `screenX = (x - y) * sqrt(3) / 2` and
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.
@@ -67,9 +92,9 @@ Classic frame.
 | Graphite |    50 | `#aab2c4` | `#858ea4`   | `#666f86`  | `#59d0ff`   | `#2a92cc`    | `#a4e5ff` |
 | Iris     |    50 | `#d9ccff` | `#b2a0ec`   | `#8f7cd0`  | `#3a2b8c`   | `#271c66`    | `#938ac0` |
 
-- Classic is the free default and is the `ship-{0..15}.svg` set.
+- Classic is the free default and is the `ship-{0..31}.svg` set.
 - Other schemes export idle frames only:
-  `paint/{cobalt,seafoam,graphite,iris}/ship-{0..15}.svg`. Draw speed jets
+  `paint/{cobalt,seafoam,graphite,iris}/ship-{0..31}.svg`. Draw speed jets
   behind them exactly as for Classic. There are no painted thrust frames.
 - `ship-paint.json` (version 1) lists every scheme in shop order with `id`,
   `name`, `price` and the six colours as `top`, `frontSides`, `rearSides`,
@@ -80,8 +105,10 @@ Classic frame.
   scheme id. Classic frames have no `paint` field. Select by `paint` and
   `directionIndex`; a lookup by `ship-` prefix alone must exclude entries with
   `paint`.
-- `art/tools/ship.ts` writes the frames, `ship-paint.json` and the paint
-  manifest entries, replacing any earlier paint entries.
+- `art/tools/ship.ts` writes the frames, `ship-paint.json` and every `ship`
+  and `ship-*` manifest entry at the start of the manifest, in order: `ship`,
+  `ship-thrust`, then `ship-N` and `ship-thrust-N` per heading, then the paint
+  entries. It replaces any earlier ship entries.
 
 ## Speed jets
 
@@ -91,7 +118,8 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 - `f` is current speed as a fraction of max speed. No jet at `f = 0`.
 - Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
   (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
-- Per heading, each of the two `mouths` gives frame-px values in the 96 by 96
+- `headings` holds all 32 ship headings, `headings[k].index` = `k`. Per
+  heading, each of the two `mouths` gives frame-px values in the 96 by 96
   frame: `anchor` (projected mouth midpoint at z = 2), `axis` (projected rear
   direction per ship unit) and `half` (projected half mouth width). Scale them
   with the ship's display size.

@@ -46,8 +46,8 @@ every screen's groups. [Controls](controls.md) is the button, switch, focus
 and refusal contract.
 [Station and shop](shop.md) lays out the station card, shop and buy confirm.
 
-Ship textures use sixteen isometric headings with a centered pivot and a 96 by 96
-transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
+Ship textures use 32 isometric headings (enemy craft use 16) with a centered
+pivot and a 96 by 96 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
 Choose the projected heading without rotating the image; draw speed jets from
 `ship-jets.json` behind the idle texture. Thrust textures remain a fallback when
 the jets file is unavailable. [Ship geometry](ship.md),

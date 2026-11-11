@@ -14,7 +14,7 @@ import {
   type Part,
   type Plan,
 } from "./crafts.ts";
-import { HEADINGS, json, projectAt, rotate, round, vector } from "./projection.ts";
+import { ENEMY_HEADINGS, json, projectAt, rotate, round, vector } from "./projection.ts";
 
 type Kind = "hull" | "part" | "fleck";
 type Group = { kind: Kind; parts: Part[]; from?: number; to?: number };
@@ -176,15 +176,15 @@ function shards(craft: Craft): string {
     const drift = [Math.cos(angle) * length, Math.sin(angle) * length] as const;
     return { centre: [cx, cy, z] as const, drift, lift };
   });
-  const headings = Array.from({ length: HEADINGS }, (_, yaw) => ({
+  const headings = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
     index: yaw,
     shards: all
       .map((group, shard) => {
         const { centre: c, drift, lift } = motion[shard]!;
-        const [x, y] = projectAt(centre, centre, rotate(yaw, c));
-        const [dx, dy] = vector(yaw, [drift[0], drift[1], 0]);
-        const rest = rotate(yaw, [c[0], c[1], 0]);
-        const moved = rotate(yaw, [drift[0], drift[1], 0]);
+        const [x, y] = projectAt(centre, centre, rotate(ENEMY_HEADINGS, yaw, c));
+        const [dx, dy] = vector(ENEMY_HEADINGS, yaw, [drift[0], drift[1], 0]);
+        const rest = rotate(ENEMY_HEADINGS, yaw, [c[0], c[1], 0]);
+        const moved = rotate(ENEMY_HEADINGS, yaw, [drift[0], drift[1], 0]);
         return {
           shard,
           centroid: [px(x), px(y)],

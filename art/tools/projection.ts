@@ -1,11 +1,14 @@
 // Shared solid-model projection for ship and enemy frame exports.
 export type Point = readonly [number, number, number];
 
-// Heading k faces world angle k * 360 / HEADINGS degrees; local forward is negative Y.
-export const HEADINGS = 16;
+// Heading k of n faces world angle k * 360 / n degrees; local forward is negative Y.
+// Ada's ship turns through 32 headings for finer aiming; enemy craft keep 16, so ship
+// heading 2k faces enemy heading k.
+export const SHIP_HEADINGS = 32;
+export const ENEMY_HEADINGS = 16;
 
-export function rotate(yaw: number, [x, y, z]: Point): Point {
-  const angle = (yaw * Math.PI) / (HEADINGS / 2) + Math.PI / 2;
+export function rotate(headings: number, yaw: number, [x, y, z]: Point): Point {
+  const angle = (yaw * Math.PI) / (headings / 2) + Math.PI / 2;
   return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), z];
 }
 
@@ -44,14 +47,19 @@ export function project(centre: number, point: Point): string {
 export const round = (value: number) => Math.round(value * 1000) / 1000 + 0;
 
 // Projected frame px of a local point after rotation, rounded for jet contracts.
-export function anchor(centre: number, yaw: number, point: Point): [number, number] {
-  const [x, y, z] = rotate(yaw, point);
+export function anchor(
+  headings: number,
+  centre: number,
+  yaw: number,
+  point: Point,
+): [number, number] {
+  const [x, y, z] = rotate(headings, yaw, point);
   return [round(centre + ((x - y) * Math.sqrt(3)) / 2), round(centre + (x + y) / 2 - z)];
 }
 
 // Linear part of the frame projection: local units on the z = 0 plane to frame px.
-export function vector(yaw: number, point: Point): [number, number] {
-  const [x, y] = rotate(yaw, point);
+export function vector(headings: number, yaw: number, point: Point): [number, number] {
+  const [x, y] = rotate(headings, yaw, point);
   return [round(((x - y) * Math.sqrt(3)) / 2), round((x + y) / 2)];
 }
 

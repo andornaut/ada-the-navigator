@@ -13,8 +13,8 @@ selection card.
 ## View
 
 - The game's isometric projection and face culling
-  ([projection.ts](tools/projection.ts)) at heading 12, flat-shaded polygons
-  lit from the upper left.
+  ([projection.ts](tools/projection.ts)) at ship heading 24 of 32,
+  flat-shaded polygons lit from the upper left.
 - 11 design px per model unit. The canopy focus, model point (0, -3, 5.5),
   lands 150 design px from the top of the design frame, centred horizontally.
 - Design px: the 844 by 390 design frame is the 779 by 360 logical view of an

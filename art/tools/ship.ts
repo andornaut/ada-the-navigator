@@ -5,7 +5,7 @@ import {
   anchor,
   depth,
   facesViewer,
-  HEADINGS,
+  SHIP_HEADINGS,
   json,
   type Point,
   projectAt,
@@ -108,7 +108,7 @@ const SCHEMES: readonly Scheme[] = [
 const [classic] = SCHEMES;
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // UP projects straight up.
-const UP = 10;
+const UP = 20;
 
 // Swapping plan axes reverses winding; reverse to retain upward-facing tops.
 function plan(z: number, points: readonly (readonly [number, number])[]): Point[] {
@@ -250,7 +250,7 @@ function dome(faces: Face[], yaw: number, paint: Paint): void {
   }
   // The lowest ring takes the side colour and the rest the roof colour; the two
   // facets facing the light most directly take the highlight.
-  const lit = shell.map((points) => dot(unit(rotate(yaw, normal(points))), LIGHT));
+  const lit = shell.map((points) => dot(unit(rotate(SHIP_HEADINGS, yaw, normal(points))), LIGHT));
   const brightest = new Set(
     lit
       .map((value, i) => [value, i] as const)
@@ -301,7 +301,7 @@ function fin(faces: Face[], yaw: number, paint: Paint): void {
   const [left, right] = [outline(-1), outline(1)];
   const centre: Point = [0, 21, 7];
   // The tail draws after the canopy when the rear points toward the viewer.
-  const rear = rotate(yaw, [0, 18.5, 0]);
+  const rear = rotate(SHIP_HEADINGS, yaw, [0, 18.5, 0]);
   const layer = rear[0] + rear[1] > 0 ? 7 : 4;
   for (const sign of [-1, 1]) {
     const band = [
@@ -318,7 +318,9 @@ function fin(faces: Face[], yaw: number, paint: Paint): void {
     ];
     const facing = outward(centre, body);
     const color =
-      dot(unit(rotate(yaw, normal(facing))), LIGHT) > 0 ? paint.frontSides : paint.rearSides;
+      dot(unit(rotate(SHIP_HEADINGS, yaw, normal(facing))), LIGHT) > 0
+        ? paint.frontSides
+        : paint.rearSides;
     faces.push({ color, layer, points: facing });
     faces.push({ color: paint.canopyRoof, layer, points: outward(centre, band) });
   }
@@ -368,7 +370,10 @@ function convexHull(points: readonly (readonly [number, number])[]): [number, nu
 
 function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
   const polygons = model(yaw, thrust, scheme.paint)
-    .map((face) => ({ ...face, points: face.points.map((point) => rotate(yaw, point)) }))
+    .map((face) => ({
+      ...face,
+      points: face.points.map((point) => rotate(SHIP_HEADINGS, yaw, point)),
+    }))
     .filter(visible)
     .sort((a, b) => a.layer - b.layer || depth(b.points) - depth(a.points))
     .map(({ color, points, silhouette }) => {
@@ -388,14 +393,14 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
 
 // Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame.
 function jets(): string {
-  const headings = Array.from({ length: HEADINGS }, (_, yaw) => ({
+  const headings = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: [-1, 1].map((sign) => {
       const [a, b] = mouthEdge(sign);
       return {
-        anchor: anchor(48, yaw, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 2]),
-        axis: vector(yaw, [0, 1, 0]),
-        half: vector(yaw, [(a[0] - b[0]) / 2, (a[1] - b[1]) / 2, 0]),
+        anchor: anchor(SHIP_HEADINGS, 48, yaw, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 2]),
+        axis: vector(SHIP_HEADINGS, yaw, [0, 1, 0]),
+        half: vector(SHIP_HEADINGS, yaw, [(a[0] - b[0]) / 2, (a[1] - b[1]) / 2, 0]),
       };
     }),
   }));
@@ -421,7 +426,7 @@ function jets(): string {
 
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}ship-jets.json`, jets());
-for (let yaw = 0; yaw < HEADINGS; yaw++) {
+for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
   for (const thrust of [false, true]) {
     writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
   }
@@ -433,7 +438,7 @@ writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
 const painted = SCHEMES.filter((scheme) => scheme !== classic);
 for (const scheme of painted) {
   mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
-  for (let yaw = 0; yaw < HEADINGS; yaw++) {
+  for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
     writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
   }
 }
@@ -451,30 +456,37 @@ writeFileSync(
   }),
 );
 
-// Paint frame entries mirror ship-N with a paint id and follow the ship entries in the manifest.
-interface Asset {
-  readonly directionIndex?: number;
-  readonly id: string;
-  readonly paint?: string;
-  readonly path: string;
-}
-const manifestPath = `${output}manifest.json`;
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: Asset[] };
-const kept = manifest.assets.filter((asset) => asset.paint === undefined);
-const entries = painted.flatMap((scheme) =>
-  Array.from({ length: HEADINGS }, (_, yaw) => {
-    const base = kept.find(({ id }) => id === `ship-${yaw}`);
-    if (!base) {
-      throw new Error(`The manifest lacks ship-${yaw}`);
-    }
-    return {
-      ...base,
-      id: `ship-${scheme.id}-${yaw}`,
-      path: `/art/paint/${scheme.id}/ship-${yaw}.svg`,
+// Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
+// the paint frames, which mirror ship-N with their own path and a paint id.
+const entry = (id: string, path: string, yaw: number) => ({
+  id,
+  path,
+  width: 96,
+  height: 96,
+  displayWidth: 42,
+  displayHeight: 42,
+  facing: `world-${yaw}`,
+  directionIndex: yaw,
+  pivot: { x: 0.5, y: 0.5 },
+});
+const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
+const entries = [
+  entry("ship", "/art/ship.svg", UP),
+  entry("ship-thrust", "/art/ship-thrust.svg", UP),
+  ...yaws.flatMap((yaw) => [
+    entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
+    entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
+  ]),
+  ...painted.flatMap((scheme) =>
+    yaws.map((yaw) => ({
+      ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
       paint: scheme.id,
-    };
-  }),
-);
-const after = kept.findLastIndex(({ id }) => id.startsWith("ship-")) + 1;
-manifest.assets = [...kept.slice(0, after), ...entries, ...kept.slice(after)];
+    })),
+  ),
+];
+const manifestPath = `${output}manifest.json`;
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
+const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
+const others = manifest.assets.filter((asset) => !isShip(asset));
+manifest.assets = [...entries, ...others];
 writeFileSync(manifestPath, json(manifest));

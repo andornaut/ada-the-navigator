@@ -374,7 +374,7 @@ values with its own sprites and fonts.
   area (50.75) by 15.25 and the Stardust `+N` label (62.5) by 3.5.
 - Clearance at the 360-high view: the box bottom is at 136. The ship's pivot
   sits at the view centre (180) with a 42 display frame; its highest drawn hull
-  point across the 16 headings is 167.2 (heading 2), 31.2 below the box. The
+  point across the 32 headings is 167.2 (heading 4), 31.2 below the box. The
   rule is at least 24.
 - At the 1280x720 view (720x405 logical) the box bottom is still 136 and the
   hull top 189.7, 53.7 below.

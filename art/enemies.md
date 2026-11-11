@@ -6,6 +6,9 @@
   [destruction effect](destruction.md).
   [art/tools/projection.ts](tools/projection.ts) holds the rotation, culling,
   depth and projection shared with [ship geometry](ship.md).
+- Enemy craft and their destruction shards use 16 headings (`ENEMY_HEADINGS`)
+  in 22.5 degree world steps; enemy heading `k` faces ship heading `2k` of
+  Ada's 32.
 - Exports per archetype: `{archetype}-{0..15}.svg` idle frames and
   `{archetype}-jets.json`. Manifest ids are `enemy-{archetype}-{index}` with
   `archetype`, `directionIndex` and `facing` `world-{index}`.
