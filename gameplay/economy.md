@@ -3,7 +3,9 @@
 Stardust is the game's one currency. It is shimmering dust released by destroyed
 ships and asteroids, and every station trades in it. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
-tuning.
+tuning toward these pacing targets: affording the first weapon (150) takes about
+20 minutes of play, saving 300 for Cartwheel's holodisk takes about 40 minutes,
+and exploring finds a station every few minutes.
 
 ## Earning Stardust
 
@@ -44,7 +46,8 @@ galaxy's seed, so a galaxy's stations stay in the same places on every flight, a
 least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. A station is a safe
 area. The dock is the station sprite's visible entrance. Ada docks when her
-hull circle overlaps the mouth circle, whose radius is half the drawn mouth width.
+hull circle overlaps the mouth circle: half the drawn mouth width in world units,
+scaled by a forgiving `dockForgiveness` of 3.
 Undocking places Ada at rest just outside the dock, so flying back in docks again. Flying into its dock opens the station card, which pauses action like a
 conversation. The card shows the Stardust balance, a welcome line, Undock and Shop.
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all

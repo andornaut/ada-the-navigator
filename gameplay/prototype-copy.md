@@ -44,6 +44,16 @@ rock's glow." Astra: "Welcome back, Navigator."
 Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
 Astra: "Memory restored. I've found new coordinates."
 
+Then Astra's memory line for that galaxy:
+
+- Sunflower: "I remember now. I once had a navigator. And I hid my holodisks on
+  purpose. But why?"
+- Cartwheel: "General Gadget. I helped him map the universe. I thought he was
+  good."
+- Whirlpool: "He wants to rule everything. Together, the holodisks make a highway
+  for his fleet. That's why I scattered them."
+- Black Eye: written with the finale.
+
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
 "We found this drifting near our outposts. Take it, with our thanks."
 

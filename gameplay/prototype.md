@@ -135,9 +135,11 @@ is expressed through her actions rather than a speech.
 ### Galaxy four: deferred conclusion
 
 A concluding home chapter draws on the first three experiences without adding
-another community problem. The recurring hostile faction is confronted in this
-galaxy, and Ada takes its holodisk from them by force. The faction's motives,
-finale, enemies and resolution remain undesigned.
+another community problem. Ada and the allies she made in earlier galaxies
+confront General Gadget's fleet here, take the last holodisk from him by force and
+defeat him; shown that the galaxies are infinite and cannot be controlled, he
+relents. The detailed scenes, enemies and home chapter remain to be designed; see
+[the design](design.md#general-gadget).
 
 ## Flight and combat
 
@@ -238,7 +240,8 @@ finale, enemies and resolution remain undesigned.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Galaxy one's roster is in
   [Ships](ships.md).
-- A recurring hostile alien faction provides continuity across galaxies.
+- General Gadget's uncrewed drone fleet is the recurring hostile faction in every
+  galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.

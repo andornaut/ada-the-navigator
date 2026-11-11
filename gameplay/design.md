@@ -41,11 +41,36 @@ In each galaxy, Ada explores, meets aliens who need help, helps them and learns 
 lesson that she applies at home. She also recovers that galaxy's holodisk, which
 the aliens may give her as a reward, sell for a price, point her toward through a
 fight, or which she must take by force. Inserting it into Astra's disk drive
-restores part of her memory and reveals the next galaxy's coordinates. Holodisks
-gradually reveal how Astra reached Earth; the full answer belongs to the
-undesigned conclusion.
+restores part of her memory and reveals the next galaxy's coordinates.
+
+## General Gadget
+
+General Gadget leads a fleet of uncrewed drones; destroying them hurts no one.
+Astra once believed he was good and helped him, as his navigator ship, to map the
+universe, until she realized he wanted to rule over all of it. She used her
+quantum jump to scatter all but one of her holodisks across different galaxies.
+The jump damaged her memory and her ship and stranded her near Earth, and without
+a navigator she could no longer fly. Gadget's drones search every galaxy for the
+same holodisks: together they would form an intergalactic highway for the troop
+movements and communication he needs to rule the universe. Astra has forgotten
+all of this.
+
+Holodisks restore her story in steps:
+
+1. Sunflower: Astra remembers she once had a navigator, and that she hid her
+   holodisks on purpose.
+2. Cartwheel: she remembers General Gadget and helping him map the universe.
+3. Whirlpool: she remembers why she fled, and that Gadget's fleet is hunting the
+   holodisks to build his highway.
+4. Black Eye: Gadget holds the last holodisk.
+
+Through her adventures Astra learns that she does not need to run or hide the
+holodisks. Ada makes friends and allies across the galaxies, and they help her
+defeat General Gadget in Black Eye. Ada shows him that there are infinitely many
+galaxies, so the universe cannot be controlled, and the General relents.
 
 The interactive story at home and procedural space adventures continue together
 throughout the game. The first three chapters concern a community garden,
-playground bullying and caring for her dog. A fourth concluding chapter is within
-version one but remains undesigned.
+playground bullying and caring for her dog. A fourth concluding chapter, the
+confrontation with General Gadget, is within version one; its home chapter and
+detailed scenes remain to be designed.
