@@ -1425,12 +1425,14 @@ interface Background {
   id: string;
   palette: Palette;
   build: Builder;
-  subject?: Subject;
+  subject: Subject;
   // Pixel sprites drawn over the treated background, by manifest id.
   overlays?: readonly string[];
 }
 
 const band = (top: number, bottom: number): Subject => ({ top, bottom });
+// The rock on Ada's desk, shared by every room background with the desk in view.
+const DESK_ROCK = band(255, 300);
 
 // Ada's pixel sprites (art/tools/ada-sprites.ts), each placed over one background.
 const PLAYING_ID = "story-ada-playing";
@@ -1438,19 +1440,31 @@ const WAKING_ID = "story-ada-waking";
 
 // Scene order follows the story; the overnight recharge follows the chapters' scenes.
 export const BACKGROUNDS: readonly Background[] = [
-  { id: "story-park", palette: PARK, build: park },
-  { id: "story-ada-room-unpolished", palette: ROOM, build: (P) => room(P) },
-  { id: "story-ada-room", palette: ROOM, build: (P) => room(P, { glow: glowAmount(0) }) },
+  // The dig spot and rock, the bench and the pond.
+  { id: "story-park", palette: PARK, build: park, subject: band(220, 285) },
+  { id: "story-ada-room-unpolished", palette: ROOM, build: (P) => room(P), subject: DESK_ROCK },
+  {
+    id: "story-ada-room",
+    palette: ROOM,
+    build: (P) => room(P, { glow: glowAmount(0) }),
+    subject: DESK_ROCK,
+  },
   ...GLOW.map((glow, i) => ({
     id: `story-ada-room-glow-${i + 1}`,
     palette: ROOM,
     build: (P: Palette) => room(P, { glow: glowAmount(glow) }),
+    subject: DESK_ROCK,
   })),
-  { id: "story-grandma-garden", palette: GARDEN, build: garden },
-  { id: "story-community-garden", palette: LOT, build: lot },
-  { id: "story-schoolyard", palette: YARD, build: schoolyard },
-  { id: "story-school-hallway", palette: HALL, build: hallway },
-  { id: "story-front-door", palette: DOOR, build: frontDoor },
+  // The raised beds in bloom beside the house's door.
+  { id: "story-grandma-garden", palette: GARDEN, build: garden, subject: band(195, 315) },
+  // The sprouting bed, the two empty beds and the shed.
+  { id: "story-community-garden", palette: LOT, build: lot, subject: band(180, 290) },
+  // The school's door and the play structure.
+  { id: "story-schoolyard", palette: YARD, build: schoolyard, subject: band(160, 300) },
+  // The notice board and the two doors.
+  { id: "story-school-hallway", palette: HALL, build: hallway, subject: band(145, 290) },
+  // The coats and Penny's lead on their hooks, over the shoe rack.
+  { id: "story-front-door", palette: DOOR, build: frontDoor, subject: band(160, 295) },
   // Needle: the recorder and the rock on Ada's desk.
   {
     id: "story-ada-room-recorder",
@@ -1485,11 +1499,24 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P) => garden(P, "replanted"),
     subject: band(195, 315),
   },
-  { id: "story-ada-room-night", palette: NIGHT, build: (P) => night(P, NIGHT_GLOW) },
-  { id: "story-ada-room-morning", palette: MORNING, build: morning, overlays: [WAKING_ID] },
+  // The rock's glow on the desk.
+  {
+    id: "story-ada-room-night",
+    palette: NIGHT,
+    build: (P) => night(P, NIGHT_GLOW),
+    subject: band(250, 300),
+  },
+  // Ada stretching on the bed and the rock on the desk.
+  {
+    id: "story-ada-room-morning",
+    palette: MORNING,
+    build: morning,
+    subject: band(245, 350),
+    overlays: [WAKING_ID],
+  },
 ];
 
-const subjectOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)?.subject;
+const subjectOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)!.subject;
 const overlaysOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)?.overlays;
 
 export function paint(palette: Palette, scene: Scene) {
@@ -1507,7 +1534,7 @@ export const entry = (id: string, subject = subjectOf(id)) => ({
   displayHeight: CANVAS.height,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
-  ...(subject && { subject }),
+  subject,
   ...(overlaysOf(id) && { overlays: overlaysOf(id) }),
 });
 
@@ -1638,9 +1665,10 @@ const overlayEntry = (id: string, { at, image }: Overlay) => ({
   at,
 });
 
-// The sleep scene's background: the night background under the figures overlay.
+// The sleep scene's background: the night background under the figures overlay, placed as the
+// night page places it, so the overlays fade in without a jump.
 const sleepEntry = () => ({
-  ...entry(SLEEP),
+  ...entry(SLEEP, subjectOf("story-ada-room-night")),
   path: storyPath("story-ada-room-night"),
   overlays: [SLEEP_FIGURES],
 });

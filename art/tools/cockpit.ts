@@ -563,6 +563,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     displayHeight: CANVAS.height,
     facing: "front",
     pivot: { x: 0.5, y: 0.5 },
+    // The canopy dome: the story page's subject band in canvas logical px (art/layout.md).
+    subject: { top: 165, bottom: 310 },
   });
   placeEntries("core", "cockpit", [background("cockpit"), background("cockpit-seated")]);
 }

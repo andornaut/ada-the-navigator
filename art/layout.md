@@ -517,32 +517,37 @@ face. Constants: `SHOP_ROW`, `shopCard.ts`, to implement.
 ### Storybook page
 
 Earth scenes, and space story pages that pause flight. One panel holds a text
-column and a choice column side by side over the scene, with a strip of the
-background above it. Constants: `STORY_PANEL`, `storyPage.ts`; `STORY_BUTTON`,
-`controls.ts`; `STORY_SKIP` and `STORY_PANEL_TOP`, `playView.ts`; all to
-implement at the values below.
+column and a choice column side by side, bottom-anchored over the scene and
+only as tall as its page needs; the scene shows in the strip above it.
+Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
+`STORY_BUTTON`, `controls.ts`; `STORY_SKIP` and `STORY_PANEL_TOP`,
+`playView.ts`; all to implement at the values below.
 
-| Token         | Value                                                                                                                                                                                                                                                                                        | Rule                                                                                                                                            |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Background    | 960x540 logical canvas at 2x ([storybook](storybook.md))                                                                                                                                                                                                                                     | Centred, scale `max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets                                                          |
-| Panel rect    | The available rect's width, at most `STORY_PANEL.maxWidth` 760, centred; bottom on the available rect's bottom                                                                                                                                                                               | `ui-settings-card` face, no dim behind it                                                                                                       |
-| Panel height  | `max(tallest page + 2 * padding, bottom - STORY_PANEL.strip * viewH)`, `strip` 0.3; top never above `STORY_PANEL_TOP`                                                                                                                                                                        | One height per view, measured over every page Gameplay ships, so paging never resizes the panel                                                 |
-| Panel top cap | `STORY_PANEL_TOP`: the HUD row's lowest press area plus `SPACING.gap`: y 60.5 (Skip and Settings end at 52.5), y 62.75 on Ada's room page (the pause press area ends at 54.75)                                                                                                               | The panel never runs under Skip, Settings or the room's pause button                                                                            |
-| Padding       | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                                                                                                                     | Inner width = panel width - 32                                                                                                                  |
-| Columns       | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                                                                                                       | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                   |
-| Choice column | `clamp(220, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                    | The text column takes the rest: 357 to 428, about 44 to 53 characters of `TYPE.story` per line                                                  |
-| Story text    | `TYPE.story` 18 regular on 26, cream `#ead4aa` on the card `#3b3850` (7.76:1), left-aligned, top of the column                                                                                                                                                                               | Liberation Sans averages 8.02 per character at 18; never shrinks                                                                                |
-| Heading       | The chapter's panel title (Gameplay's copy) on opening, resolution and closing pages: `TYPE.heading` 24 bold on 28, white `#ffffff` on the card (11.25:1), left-aligned, the column's first line                                                                                             | `SPACING.gap` above the paragraph, so it adds 36 to the text column; the widest title ("The Glowing Rock.", 216) fits every measure on one line |
-| Name tab      | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                              | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                 |
-| Portrait      | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                              |
-| Portrait gap  | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                            | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                       |
-| Choices       | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces 12 apart (a 48 pitch)                                                                                                                                                                                       | `hitAround` grows a 36 face 9 per side (54); the nearest drawn centre wins the 6 overlap                                                        |
-| Page controls | One row on the choice column's bottom: Previous (secondary) at the left, Next (primary) at the right, each `(choice column - 8) / 2` wide, `SPACING.gap` apart                                                                                                                               | 106 to 127 wide; Next, Continue and Previous fit on one line                                                                                    |
-| Named action  | A page's named action ("Pick up the rock.") in Next's place; when its label + 32 exceeds the half width it fills the choice column on its own row, 12 above the Previous row                                                                                                                 | "Touch the glow.", "Pick up the rock." and "Let's find your holodisk." take the full row                                                        |
-| Scroll        | Only the text column scrolls, when its content is taller than the inner height; it reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                         | Text never shrinks and never paginates; the choices and page controls stay fixed                                                                |
+| Token          | Value                                                                                                                                                                                                                                                                                        | Rule                                                                                                                                                                                                                                                            |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Background     | 960x540 logical canvas at 2x ([storybook](storybook.md)), scale `k = max(1, viewW / 960, viewH / 540)`, nearest neighbour, under the insets, centred across                                                                                                                                  | Offset down by the scene anchor below, so the subject shows in the strip                                                                                                                                                                                        |
+| Scene anchor   | Canvas top `y = clamp(viewH - 540 * k, stripTop / 2 - k * (subject.top + subject.bottom) / 2, 0)`, `stripTop` the panel top of the scene's tallest page on that background                                                                                                                   | The subject band's centre sits at the centre of the strip above that panel; the clamp keeps the canvas covering the view. One placement per scene and background, so the background never moves between its pages; a shorter page shows more of the scene below |
+| Subject band   | `subject: { top, bottom }` in canvas logical px, on each background's manifest entry ([storybook](storybook.md#subject-bands))                                                                                                                                                               | The rows the scene's key objects span                                                                                                                                                                                                                           |
+| Panel rect     | The available rect's width, at most `STORY_PANEL.maxWidth` 760, centred; bottom on the available rect's bottom                                                                                                                                                                               | `ui-settings-card` face, no dim behind it                                                                                                                                                                                                                       |
+| Panel height   | `2 * padding + max(text column content, choice column content)`                                                                                                                                                                                                                              | The width and bottom edge stay fixed; the top moves with each page's content                                                                                                                                                                                    |
+| Panel top cap  | `STORY_PANEL_TOP`: the HUD row's lowest press area plus `SPACING.gap`: y 60.5 (Skip and Settings end at 52.5), y 62.75 on Ada's room page (the pause press area ends at 54.75)                                                                                                               | Past it the panel stops growing and only the text column scrolls                                                                                                                                                                                                |
+| Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                                                                                                                     | Inner width = panel width - 32                                                                                                                                                                                                                                  |
+| Columns        | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                                                                                                       | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                                                                                                                                   |
+| Choice column  | `clamp(220, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                                                                                                                    | The text column takes the rest: 357 to 428, about 44 to 53 characters of `TYPE.story` per line                                                                                                                                                                  |
+| Text content   | The heading if present, the name tab and portrait if present, then the paragraph                                                                                                                                                                                                             | Its height includes the portrait frame where the frame is taller                                                                                                                                                                                                |
+| Choice content | The choices, 16, then the page-control row; a page without choices holds the page-control row alone                                                                                                                                                                                          | A named action on its own row adds 36 + 12                                                                                                                                                                                                                      |
+| Story text     | `TYPE.story` 18 regular on 26, cream `#ead4aa` on the card `#3b3850` (7.76:1), left-aligned, top of the column                                                                                                                                                                               | Liberation Sans averages 8.02 per character at 18; never shrinks                                                                                                                                                                                                |
+| Heading        | The chapter's panel title (Gameplay's copy) on opening, resolution and closing pages: `TYPE.heading` 24 bold on 28, white `#ffffff` on the card (11.25:1), left-aligned, the column's first line                                                                                             | `SPACING.gap` above the paragraph, so it adds 36 to the text column; the widest title ("The Glowing Rock.", 216) fits every measure on one line                                                                                                                 |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`, 1 ink edge, radius 2, `TYPE.label` in ink                                                                                                                                                                              | The speaker's tab colour ([Controls](controls.md#conversation-box)); the column's first line, `SPACING.gap` above the paragraph                                                                                                                                 |
+| Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                                                                                                                | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                                                              |
+| Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                                                                                                            | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                                                                       |
+| Choices        | `STORY_BUTTON` secondary, filling the choice column, stacked from its top, faces 12 apart (a 48 pitch)                                                                                                                                                                                       | `hitAround` grows a 36 face 9 per side (54); the nearest drawn centre wins the 6 overlap                                                                                                                                                                        |
+| Page controls  | One row on the choice column's bottom: Previous (secondary) at the left, Next (primary) at the right, each `(choice column - 8) / 2` wide, `SPACING.gap` apart                                                                                                                               | 106 to 127 wide; Next, Continue and Previous fit on one line                                                                                                                                                                                                    |
+| Named action   | A page's named action ("Pick up the rock.") in Next's place; when its label + 32 exceeds the half width it fills the choice column on its own row, 12 above the Previous row                                                                                                                 | "Touch the glow.", "Pick up the rock." and "Let's find your holodisk." take the full row                                                                                                                                                                        |
+| Scroll         | Only the text column scrolls, when the panel reaches its top cap; it reserves `SCROLL` 14 on its right (6 gap, 8 track, thumb inset 1)                                                                                                                                                       | Text never shrinks and never paginates; the choices and page controls stay fixed                                                                                                                                                                                |
 | Skip          | `STORY_SKIP`, `playView.ts`: a compact secondary button (`TEXT_BUTTON.compactHeight`) in the top-right HUD row, centred on the row's centre line (top HUD rect top + 2.5, so 14.5 to 42.5); its right edge `SMALL_BUTTON_GAP` (24) left of the Settings disc (57 in from the HUD rect's right) when Settings shows, otherwise its drawn right edge on the HUD rect's top-right corner | Always visible on story pages; not one of the page controls                                                                                                                      |
-| Settings      | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                      | The start screen's Settings disc, at the same place on every story page                                                                         |
-| Pause         | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                             | The top-left of the HUD row; Skip and Settings keep the top-right                                                                               |
+| Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                                                                                                      | The start screen's Settings disc, at the same place on every story page                                                                                                                                                                                         |
+| Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Paused card (Settings, Back to title)                                                                             | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                                                               |
 
 The edge rect is `playView(view)` inset by 12, intersected with
 `safeRect(insets, 12, view)`: the top-corner controls' drawn edges sit 12 from
@@ -552,24 +557,32 @@ The 12 edge gap is the HUD symmetry rule, which Tech is implementing in
 `CONTROL_EDGE` 8 until it does.
 
 Rects in logical px, as x range by y range. Phone insets are left and right
-43 and bottom 19 logical; the 844x390 row with insets is an iPhone.
+43 and bottom 19 logical; the 844x390 row with insets is an iPhone. The panel's
+top is its bottom minus its height.
 
-| Screen   | Logical view | Insets     | Panel                              | Text column         | Rule x | Choice column           | Settings disc, target                               | Skip face                   |
-| -------- | ------------ | ---------- | ---------------------------------- | ------------------- | ------ | ----------------------- | --------------------------------------------------- | --------------------------- |
-| 720x360  | 720x360      | 43, 43, 19 | 43..677 x 105..341 (634x236)       | 59..416 (357)       | 428    | 441..661 (220)          | 644..677 x 12..45; 636.5..684.5 x 4.5..52.5         | 556.5..628.5 x 14.5..42.5   |
-| 844x390  | 779.08x360   | 43, 43, 19 | 43..736.08 x 108..341 (693.08x233) | 59..453.37 (394.37) | 465.37 | 478.37..720.08 (241.71) | 703.08..736.08 x 12..45; 695.58..743.58 x 4.5..52.5 | 615.58..687.58 x 14.5..42.5 |
-| 844x390  | 779.08x360   | None       | 16..763.08 x 108..344 (747.08x236) | 32..459.85 (427.85) | 471.85 | 484.85..747.08 (262.23) | 704..737 x 12..45; 696.5..744.5 x 4.5..52.5         | 616.5..688.5 x 14.5..42.5   |
-| 1280x720 | 720x405      | None       | 16..704 x 121.5..389 (688x267.5)   | 32..423.22 (391.22) | 435.22 | 448.22..688 (239.78)    | 675..708 x 12..45; 667.5..715.5 x 4.5..52.5         | 587.5..659.5 x 14.5..42.5   |
+| Screen   | Logical view | Insets     | Panel x, bottom          | Text column         | Rule x | Choice column           | Settings disc, target                               | Skip face                   |
+| -------- | ------------ | ---------- | ------------------------ | ------------------- | ------ | ----------------------- | --------------------------------------------------- | --------------------------- |
+| 720x360  | 720x360      | 43, 43, 19 | 43..677 (634), 341       | 59..416 (357)       | 428    | 441..661 (220)          | 644..677 x 12..45; 636.5..684.5 x 4.5..52.5         | 556.5..628.5 x 14.5..42.5   |
+| 844x390  | 779.08x360   | 43, 43, 19 | 43..736.08 (693.08), 341 | 59..453.37 (394.37) | 465.37 | 478.37..720.08 (241.71) | 703.08..736.08 x 12..45; 695.58..743.58 x 4.5..52.5 | 615.58..687.58 x 14.5..42.5 |
+| 844x390  | 779.08x360   | None       | 16..763.08 (747.08), 344 | 32..459.85 (427.85) | 471.85 | 484.85..747.08 (262.23) | 704..737 x 12..45; 696.5..744.5 x 4.5..52.5         | 616.5..688.5 x 14.5..42.5   |
+| 1280x720 | 720x405      | None       | 16..704 (688), 389       | 32..423.22 (391.22) | 435.22 | 448.22..688 (239.78)    | 675..708 x 12..45; 667.5..715.5 x 4.5..52.5         | 587.5..659.5 x 14.5..42.5   |
 
-Both columns run from the panel top + 16 to its bottom - 16. The tallest page
-sets the 720x360 panel: Astra's three questions with Continue, where "How did
-you get to Earth?" wraps in the 220 column (56 + 36 + 36 + 24 gaps + 16 + 36 =
-204); at the wider views the column holds it on one line (184), and the 30%
-strip sets the height. Gameplay's longest page (218 characters) is six lines
-in the 357 column and five in the wider ones, so a chapter page with its
-heading needs at most 28 + 8 + 6 * 26 = 192 and fits inside every panel
-without raising it. A text column holds at most 7 story lines at 720x360 with
-insets, 6 under a heading or a name tab.
+Panel height and top by page:
+
+| Page                                                   | 720x360, insets | 844x390, insets | 844x390  | 1280x720 |
+| ------------------------------------------------------ | --------------- | --------------- | -------- | -------- |
+| One line, Next only                                    | 68, top 273     | 68, top 273     | 68, 276  | 68, 321  |
+| Three-line narration (78 text over a 36 control row)   | 110, top 231    | 110, top 231    | 110, 234 | 110, 279 |
+| Two choices: the garden opening with its heading (205) | 208, top 133    | 208, top 133    | 198, 146 | 208, 181 |
+| Gameplay's longest page (218) with heading and choices | 224, top 117    | 208, top 133    | 198, 146 | 208, 181 |
+
+The garden opening's choice column is 56 + 12 + 56 + 16 + 36 = 176 (both
+labels wrap) beside a 166 text column (36 heading, five lines); at 844x390
+without insets the first label fits one line (156). The 218-character page is
+six lines in the 357 column (36 + 156 = 192). Astra's three questions with
+Continue need 3 * 36 + 24 + 16 + 36 = 184 (each question fits one line).
+Gameplay's limits (220 characters, three choices of
+at most 36) keep every page under the top cap, so no shipped page scrolls.
 
 Page structure:
 
@@ -577,30 +590,35 @@ Page structure:
    name tab and the portrait (dialogue only), then the paragraph. Narration
    shows no tab and no portrait; the paragraph fills the measure. Other pages
    show no heading.
-2. Choice column: the choices (choice page only, two or three), then free
-   space, then the page controls. A choice page has no Next; Previous keeps
-   its left half. Previous uses the disabled face on a scene's first page. A
-   question page shows its remaining questions as choices with Continue in
-   Next's place. Narration pages leave the choice column empty apart from
-   Previous and Next.
+2. Choice column: the choices (choice page only, two or three), then 16, then
+   the page controls. A choice page has no Next; Previous keeps its left half.
+   Previous uses the disabled face on the story run's first page. A question
+   page shows its remaining questions as choices with Continue in Next's
+   place. Narration pages leave the choice column empty apart from Previous
+   and Next.
 
 Behaviour:
 
+- The background's placement is fixed for a scene and background before its
+  first page shows, from the scene's tallest page on it. A rock glow
+  transition draws its frames at the outgoing page's placement and cuts to the
+  incoming page's; the overnight sleep scene uses the night page's placement,
+  and its cross-fade to the morning draws each image at its own page's
+  placement. A backdrop without a panel (galaxy selection) keeps the centred
+  placement.
 - Speaker portraits follow [Conversation portraits](conversation.md): Astra
   plays her speaking loop while her page shows; Ada and Penny show the mood
-  Gameplay marks. On cockpit pages the panel covers most of Astra's lens
-  ([Astra speaking](cockpit.md#astra-speaking)), so the tab and portrait carry
-  the speaker.
+  Gameplay marks. The tab and portrait carry the speaker.
 - Focus order: the text column (focusable only while it scrolls; arrow keys
   scroll it), the choices top to bottom, a full-row named action, Previous,
   then Next or Continue in the row, then the HUD row (the room's pause button,
   Skip, Settings). Disabled Previous is skipped. Initial focus is the first
-  choice, the default, or else Next or the named action. Keyboard focus
-  scrolls nothing outside the text column; every control is always in view.
-- Reduced motion: the same layout. Page changes are instant in both modes;
-  portraits hold their loop's first frame and the lens holds `speak1`; the
-  rock glow and overnight sequences play their reduced-motion steps with the
-  panel hidden, as in [storybook](storybook.md).
+  choice, the default, or else Next or the named action. Every control is
+  always in view.
+- Reduced motion: the same layout and placements. Page changes are instant in
+  both modes, so the panel's top moves at once; portraits hold their loop's
+  first frame; the rock glow and overnight sequences play their reduced-motion
+  steps with the panel hidden, as in [storybook](storybook.md).
 - A space story page that pauses flight uses the same panel over the paused,
   dimmed space view, without a background. In-flight lines use the
   [conversation box](#conversation-box), which neither pauses nor dims.
@@ -755,7 +773,7 @@ the 20 name, 4 and the flavour's two 20 lines.
 | Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                                                             | A `NOTICE` strip on the HUD rect's top                                                                                        |
 | Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                                                       | 640x64, 48 frame, name tab inside over one line                                                                               |
 | Story pages use `STORY_PANEL`                                                                                                                                                                | `.story-panel` clamp and rem sizes                                                                                            |
-| Story panel: one height per view, a `TYPE.story` text column beside a column of 36 `STORY_BUTTON` choices and page controls | A content-fitted bottom panel up to 640 wide, `TYPE.body` prose, 48 stacked choices |
+| Story panel: content-fitted per page, a `TYPE.story` text column beside a column of 36 `STORY_BUTTON` choices and page controls, over a background anchored by its subject band | A bottom panel up to 640 wide over a centred background, `TYPE.body` prose, 48 stacked choices |
 | Story page HUD row on the 12 edge rect (the HUD symmetry rule) | Skip and Settings on the `CONTROL_EDGE` 8 HUD rect |
 | Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                                                        | 16; a 24 line                                                                                                                 |
 | Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                                                                   | A 288x160 chart in a Map card (`MAP_CARD`)                                                                                    |
@@ -827,8 +845,9 @@ Tests:
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The galaxy card keeps one size across pages. The story panel matches the
-  storybook rect table at each screen, keeps one rect across every page, and
-  fits every Gameplay page without scrolling; a test page longer than the
+  storybook rect and height tables at each screen, keeps its width and bottom
+  edge across pages, and fits every Gameplay page without scrolling; each
+  scene's background placement matches the scene anchor for its tallest page; a test page longer than the
   column scrolls only the text column, with the choices and page controls in
   place.
 - Every story choice and page control is 36 drawn on one line (56 on two) with

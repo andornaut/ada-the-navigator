@@ -12,9 +12,12 @@
 
 Every storybook background, like the cockpit, is a 960 by 540 logical px canvas
 at 2x: a 1920 by 1080 opaque PNG with `displayWidth` 960 and `displayHeight` 540
-and the pivot at the centre. Draw it at display size, centred on the view under
-the insets. It covers every view up to 960 by 540 (a 720 by 540 4:3 view, an
-800 by 360 21:9 phone); scale it up to cover only past that.
+and the pivot at the centre. Draw it at display size under the insets, centred
+across and offset down by the [scene anchor](layout.md#storybook-page), which
+places its [subject band](#subject-bands) in the strip above the story panel;
+a backdrop without a panel stays centred. It covers every view up to 960 by 540
+(a 720 by 540 4:3 view, an 800 by 360 21:9 phone); scale it up to cover only
+past that.
 
 Scenes are composed on the 844 by 390 design frame, the 779 by 360 logical view
 of an 844 by 390 phone, which sits at the canvas centre (logical x 90.5 to
@@ -124,27 +127,82 @@ portrait; the cockpit background stays still. See
 
 Gameplay owns the page sequence and copy. Each page names one background; the
 [storybook page layout](layout.md#storybook-page) places the panel over it:
-bottom-anchored on the available rect, one height per view, no dim. At
-360-high views the panel covers the design frame below y 105 to 108, so the
-strip above it shows the backdrop and the scene's upper part. The
+bottom-anchored on the available rect, only as tall as the page needs, no dim.
+The strip above it shows the scene's subject band. The
 background never moves or scales between pages of a scene. Choice pages reuse
 their scene's background (Grandma's choice uses `story-grandma-garden`).
 
 ## Subject bands
 
-Each new background's manifest entry carries `subject: { top, bottom }`, the
-canvas rows (logical px) its key objects span, for the story page's scene
-anchor, which centres the band in the strip above the story panel:
+Each background's manifest entry carries `subject: { top, bottom }`, the canvas
+rows (logical px) its key objects span, written by its generator
+(`art/tools/storybook.ts`, `art/tools/cockpit.ts`). The story page offsets the
+background so the band centres in the strip above the scene's tallest panel
+([scene anchor](layout.md#storybook-page)). At a 360-high view the canvas can
+rise at most 180 (90 past centred), so a band's bottom shows only while it is
+at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 
-| Id                               | Band     | Key objects                                   |
-| -------------------------------- | -------- | --------------------------------------------- |
-| `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk         |
-| `story-concert-hall`             | 195..300 | The stage, the piano and Ada in the spotlight |
-| `story-grandma-garden-spilled`   | 195..315 | The house's door, the tray and the beds       |
-| `story-grandma-garden-replanted` | 195..315 | The house's door, the tray and the beds       |
+| Id                               | Band     | Key objects                                            |
+| -------------------------------- | -------- | ------------------------------------------------------ |
+| `story-park`                     | 220..285 | The dig spot and rock, the bench and the pond          |
+| `story-ada-room-unpolished`      | 255..300 | The rock on the desk                                   |
+| `story-ada-room`                 | 255..300 | The rock on the desk; the glow frames share it         |
+| `story-grandma-garden`           | 195..315 | The raised beds in bloom beside the door               |
+| `story-community-garden`         | 180..290 | The sprouting bed, the empty beds, the shed            |
+| `story-schoolyard`               | 160..300 | The school's door and the play structure               |
+| `story-school-hallway`           | 145..290 | The notice board and the two doors                     |
+| `story-front-door`               | 160..295 | The coats and Penny's lead over the shoe rack          |
+| `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
+| `story-ada-room-morning`         | 245..350 | Ada stretching on the bed, the rock on the desk        |
+| `cockpit`                        | 165..310 | The canopy dome                                        |
+| `cockpit-seated`                 | 165..310 | The canopy dome                                        |
+| `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk                  |
+| `story-concert-hall`             | 195..300 | The stage, the piano and Ada in the spotlight          |
+| `story-grandma-garden-spilled`   | 195..315 | The house's door, the tray and the beds                |
+| `story-grandma-garden-replanted` | 195..315 | The house's door, the tray and the beds                |
 
-The garden variants keep `story-grandma-garden`'s band and the recorder room
-the desk's, so a scene does not move between its pages.
+Placement per scene and background: canvas top `y`, then the band's view rows
+and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390 with
+the same insets, and 1280x720 (720x405). A star marks a clamped placement.
+
+| Scene, background                      | 720x360, insets                 | 844x390, insets                 | 1280x720                        |
+| -------------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
+| opening:1, `story-grandma-garden`      | y -180*: 15..135, top 133       | y -180*: 15..135, top 133       | y -135*: 60..180, top 181       |
+| resolution:1, `story-community-garden` | y -168.5: 11.5..121.5, top 133  | y -168.5: 11.5..121.5, top 133  | y -135*: 45..155, top 181       |
+| opening:2, `story-school-hallway`      | y -146: -1..144, top 143        | y -141: 4..149, top 153         | y -117: 28..173, top 201        |
+| resolution:2, `story-schoolyard`       | y -158.5: 1.5..141.5, top 143   | y -153.5: 6.5..146.5, top 153   | y -129.5: 30.5..170.5, top 201  |
+| opening:3, `story-front-door`          | y -161: -1..134, top 133        | y -161: -1..134, top 133        | y -135*: 25..160, top 181       |
+| resolution:3, `story-park`             | y -180*: 40..105, top 143       | y -168: 52..117, top 169        | y -135*: 85..150, top 217       |
+| prologue, `story-park`                 | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
+| prologue, `story-ada-room-unpolished`  | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
+| prologue, `story-ada-room`             | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
+| prologue, `cockpit`                    | y -175: -10..135, top 125       | y -175: -10..135, top 125       | y -135*: 30..175, top 173       |
+| prologue, `cockpit-seated`             | y -136: 29..174, top 203        | y -136: 29..174, top 203        | y -112: 53..198, top 251        |
+| room, `story-ada-room`                 | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
+| room (empty visit), `story-ada-room`   | y -165: 90..135, top 225        | y -165: 90..135, top 225        | y -135*: 120..165, top 273      |
+| boarding, `story-ada-room`             | y -149: 106..151, top 257       | y -149: 106..151, top 257       | y -125: 130..175, top 305       |
+| boarding, `cockpit-seated`             | y -123: 42..187, top 229        | y -123: 42..187, top 229        | y -99: 66..211, top 277         |
+| jumpHome, `story-ada-room-night`       | y -146.5: 103.5..153.5, top 257 | y -146.5: 103.5..153.5, top 257 | y -122.5: 127.5..177.5, top 305 |
+| jumpHome, `story-ada-room-morning`     | y -169: 76..181, top 257        | y -169: 76..181, top 257        | y -135*: 110..215, top 305      |
+
+Apart from the cockpit below, every band clears its panel at these views with
+Gameplay's current pages, within 2 rows (Grandma's beds, the hallway's doors
+and the coats graze the panel or the view top by 1 or 2). Two cases crop a key
+object:
+
+- The prologue's cockpit, under Astra's questions (panel top 125 at 360-high
+  views): the 145-row canopy is taller than the 125 strip, so 10 rows go under
+  the panel and 10 above the view. Recompose: draw the ship at 0.85 about the
+  canopy's centre, so the dome spans 175..298 (123 rows).
+- A 218-character opening, resolution or closing at 720x360 with insets
+  (panel top 117, a 117 strip): Grandma's beds lose 18 rows at their foot
+  (the placement clamps), the schoolyard's 140 rows lose 11.5 at each end, the
+  hallway's 145 rows 14 at each end and the front door's 135 rows 9 at each
+  end. Recompose each subject into at most 110 rows ending by row 290: move
+  Grandma's beds to the house's side of the lot (rows 185..290), set the play
+  structure beside the school's door (180..290), hang the notice board lower
+  beside the near door (180..290), and hang the coats and lead lower by the
+  door (180..290).
 
 ## Ada's sprites
 
@@ -269,11 +327,11 @@ night haze (coat `#b57100` before treatment), and morning
 - Waking: Penny sits up awake at the foot of the bed; Ada kneels up in bed
   stretching, the `story-ada-waking` sprite.
 
-On the 844 by 390 phone the morning page's panel top is at logical y 108; the
-rock's top (188), Ada's sprite (top 174, chin 218) and Penny's head (273) sit
-under it. Both figures show during the cross-fade into the morning, before the
-panel appears. The sleep scene shows no panel, so both figures stay in view
-(Ada 263, Penny 318).
+On the 844 by 390 phone with insets the morning page's panel top is at logical
+y 257 and its background at canvas top -169: the rock's top (109), Ada's sprite
+(top 95, chin 139) and Penny's head (194) all clear the panel. The sleep scene
+shows no panel and keeps the night page's placement (-146.5), so both figures
+stay in view (Ada 206.5, Penny 261.5).
 
 ### Sleep scene overlays
 
