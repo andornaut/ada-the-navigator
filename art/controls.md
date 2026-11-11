@@ -65,6 +65,7 @@ disabled. Focus uses the shared ring.
 | Primary rim    | `#d2b886` | Primary top highlight                         |
 | Secondary face | `#9690b4` | Other actions                                 |
 | Secondary lip  | `#5f5980` | Secondary lower lip                           |
+| Secondary rim  | `#aaa4c6` | Secondary top highlight                       |
 | Disabled face  | `#2f2d3d` | Flat unavailable control                      |
 | Focus ring     | `#ead4aa` | Cream band with ink fringes                   |
 | Close X        | `#ead4aa` | Normal close mark; white on `#403d55` pressed |
@@ -72,9 +73,6 @@ disabled. Focus uses the shared ring.
 | Switch off     | `#57536e` | Track, with `#403d55` edge                    |
 | Switch knob    | `#ffffff` | Knob, shaded `#c9c4d8`                        |
 | Card icons     | `#ead4aa` | Settings row and install step icons           |
-
-`ui-button` reuses Chibi's single highlight colour for its disabled face, so the
-secondary top highlight is also `#2f2d3d`.
 
 Runtime text is drawn by the game, never baked into sprites.
 

@@ -6,15 +6,17 @@ import { decodePng } from "@andornaut/art-kit/png";
 import type { Tag } from "@andornaut/art-kit/raster";
 import { type Margins, writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 
+type Colours = Readonly<Record<string, string>>;
+
 // Recolours Chibi's control sheets to Ada's dark lavender palette. Only the listed colours change;
 // every other pixel, alpha, frame, tag and slice is copied from the source sheet.
 // Usage: node art/tools/controls.ts <chibis-way-home checkout>/public/art/sprites
-const RECOLOURS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+const RECOLOURS: Readonly<Record<string, Colours>> = {
   "icon-browser-menu": { "3a4466": "ead4aa" },
   "icon-install": { "3a4466": "ead4aa" },
   "icon-ios-share": { "3a4466": "ead4aa" },
   "icon-move-controls": { "3a4466": "ead4aa" },
-  "ui-button": { "5a6988": "5f5980", "8b9bb4": "9690b4", c0cbdc: "2f2d3d" },
+  "ui-button": { "5a6988": "5f5980", "8b9bb4": "9690b4" },
   "ui-button-primary": {
     "262b44": "8a7148",
     "3a4466": "bfa06f",
@@ -30,6 +32,16 @@ const RECOLOURS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     "3e8948": "2f7d76",
     "5a6988": "57536e",
     c0cbdc: "c9c4d8",
+  },
+};
+
+// Per-tag colours, applied over RECOLOURS. Chibi's secondary button uses one colour for the
+// enabled top highlight and the disabled face.
+const TAG_RECOLOURS: Readonly<Record<string, Readonly<Record<string, Colours>>>> = {
+  "ui-button": {
+    disabled: { c0cbdc: "2f2d3d" },
+    normal: { c0cbdc: "aaa4c6" },
+    pressed: { c0cbdc: "aaa4c6" },
   },
 };
 
@@ -52,13 +64,18 @@ function hex(byte: number): string {
 
 async function recolour(
   source: string,
-  map: Readonly<Record<string, string>>,
+  colours: Colours,
+  byTag: Readonly<Record<string, Colours>>,
   key: string,
 ): Promise<void> {
   const image = decodePng(await readFile(`${source}/${key}.png`));
   const data = JSON.parse(await readFile(`${source}/${key}.json`, "utf8")) as AsepriteData;
-  const unused = new Set(Object.keys(map));
-  const frames: Frame[] = Object.values(data.frames).map(({ frame: { h, w, x, y } }) =>
+  const frameColours = Object.keys(data.frames).map((_, index) => {
+    const tag = data.meta.frameTags.find(({ from, to }) => from <= index && index <= to);
+    return { ...colours, ...(tag ? byTag[tag.name] : {}) };
+  });
+  const unused = new Set([colours, ...Object.values(byTag)].flatMap((map) => Object.keys(map)));
+  const frames: Frame[] = Object.values(data.frames).map(({ frame: { h, w, x, y } }, index) =>
     Array.from({ length: h }, (_, row) =>
       Array.from({ length: w }, (_, column) => {
         const at = ((y + row) * image.width + x + column) * 4;
@@ -71,7 +88,7 @@ async function recolour(
         }
         const colour = hex(r) + hex(g) + hex(b);
         unused.delete(colour);
-        return map[colour] ?? colour;
+        return frameColours[index]?.[colour] ?? colour;
       }),
     ),
   );
@@ -106,6 +123,6 @@ const [source] = process.argv.slice(2);
 if (!source) {
   throw new Error("Usage: node art/tools/controls.ts <chibi>/public/art/sprites");
 }
-for (const [key, map] of Object.entries(RECOLOURS)) {
-  await recolour(source, map, key);
+for (const [key, colours] of Object.entries(RECOLOURS)) {
+  await recolour(source, colours, TAG_RECOLOURS[key] ?? {}, key);
 }

@@ -52,34 +52,43 @@ unchanged. Rebuild with
 `node art/tools/controls.ts <chibis-way-home>/public/art/sprites`, then run
 Prettier on the written JSON.
 
-| Sheet               | Source colour | Ada colour | Role                         |
-| ------------------- | ------------- | ---------- | ---------------------------- |
-| `ui-settings-card`  | `#c0cbdc`     | `#3b3850`  | Face                         |
-| `ui-settings-card`  | `#8b9bb4`     | `#2f2d3d`  | Lower-right shade            |
-| `ui-settings-card`  | `#ffffff`     | `#6b6685`  | Upper-left rim               |
-| `ui-button`         | `#8b9bb4`     | `#9690b4`  | Face                         |
-| `ui-button`         | `#5a6988`     | `#5f5980`  | Lip and edge                 |
-| `ui-button`         | `#c0cbdc`     | `#2f2d3d`  | Disabled face, top highlight |
-| `ui-button-primary` | `#3a4466`     | `#bfa06f`  | Face                         |
-| `ui-button-primary` | `#262b44`     | `#8a7148`  | Lip                          |
-| `ui-button-primary` | `#5a6988`     | `#d2b886`  | Top highlight                |
-| `ui-button-primary` | `#c0cbdc`     | `#2f2d3d`  | Disabled face                |
-| `ui-switch`         | `#3e8948`     | `#2f7d76`  | On track                     |
-| `ui-switch`         | `#265c42`     | `#1f5a55`  | On track edge                |
-| `ui-switch`         | `#5a6988`     | `#57536e`  | Off track                    |
-| `ui-switch`         | `#3a4466`     | `#403d55`  | Off track edge               |
-| `ui-switch`         | `#c0cbdc`     | `#c9c4d8`  | Knob shade                   |
-| `ui-focus`          | `#fee761`     | `#ead4aa`  | Ring band                    |
-| `ui-close`          | `#181425`     | `#ead4aa`  | Normal X                     |
-| `ui-close`          | `#3a4466`     | `#403d55`  | Pressed face                 |
-| Card icons (seven)  | `#3a4466`     | `#ead4aa`  | Icon ink                     |
+| Sheet               | Source colour | Ada colour | Role                    |
+| ------------------- | ------------- | ---------- | ----------------------- |
+| `ui-settings-card`  | `#c0cbdc`     | `#3b3850`  | Face                    |
+| `ui-settings-card`  | `#8b9bb4`     | `#2f2d3d`  | Lower-right shade       |
+| `ui-settings-card`  | `#ffffff`     | `#6b6685`  | Upper-left rim          |
+| `ui-button`         | `#8b9bb4`     | `#9690b4`  | Face                    |
+| `ui-button`         | `#5a6988`     | `#5f5980`  | Lip and edge            |
+| `ui-button`         | `#c0cbdc`     | per frame  | See the per-frame table |
+| `ui-button-primary` | `#3a4466`     | `#bfa06f`  | Face                    |
+| `ui-button-primary` | `#262b44`     | `#8a7148`  | Lip                     |
+| `ui-button-primary` | `#5a6988`     | `#d2b886`  | Top highlight           |
+| `ui-button-primary` | `#c0cbdc`     | `#2f2d3d`  | Disabled face           |
+| `ui-switch`         | `#3e8948`     | `#2f7d76`  | On track                |
+| `ui-switch`         | `#265c42`     | `#1f5a55`  | On track edge           |
+| `ui-switch`         | `#5a6988`     | `#57536e`  | Off track               |
+| `ui-switch`         | `#3a4466`     | `#403d55`  | Off track edge          |
+| `ui-switch`         | `#c0cbdc`     | `#c9c4d8`  | Knob shade              |
+| `ui-focus`          | `#fee761`     | `#ead4aa`  | Ring band               |
+| `ui-close`          | `#181425`     | `#ead4aa`  | Normal X                |
+| `ui-close`          | `#3a4466`     | `#403d55`  | Pressed face            |
+| Card icons (seven)  | `#3a4466`     | `#ead4aa`  | Icon ink                |
 
-Ink `#181425` and white `#ffffff` stay unchanged except where listed. The card
-icons are in [Settings row icons](settings-icons.md).
+Chibi's `ui-button` uses `#c0cbdc` for both the enabled top highlight and the
+disabled face, so that colour maps per frame:
+
+| Sheet       | Frames (tags)         | Source colour | Ada colour | Role          |
+| ----------- | --------------------- | ------------- | ---------- | ------------- |
+| `ui-button` | 0-1 (normal, pressed) | `#c0cbdc`     | `#aaa4c6`  | Top highlight |
+| `ui-button` | 2 (disabled)          | `#c0cbdc`     | `#2f2d3d`  | Disabled face |
+
+`ui-button-primary` has a separate highlight colour; its `#c0cbdc` appears only
+in the disabled frame. Ink `#181425` and white `#ffffff` stay unchanged except
+where listed. The card icons are in [Settings row icons](settings-icons.md).
 
 | PNG                   | Source SHA-256                                                     | Destination SHA-256                                                |
 | --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| ui-button.png         | `4a682b1bbd3031940b8edd1ee5456a89c1caacd673235e5661a48bae861cfa79` | `a81825751e7a9166a16b2c88a4a9e129c19405e929247df243587b3fa5424328` |
+| ui-button.png         | `4a682b1bbd3031940b8edd1ee5456a89c1caacd673235e5661a48bae861cfa79` | `8405b0d32c04951a45f64c483edf8dcceed9e6ddf5ddd1ab77337c0d0c0d402a` |
 | ui-button-primary.png | `6e43d89b48641b1f25d1b0da9d29726d630ba1a741f65dc51945bf4a385837a0` | `1f02dc0fcd4740333fb94eed4e0e62106e88f5f642956691e42f2c1f5656b87b` |
 | ui-settings-card.png  | `ef8c2722fab1aae15b042f8dd564b3831a8c1cc68c1a3882ed5dd4ccb70f040a` | `e913c7a895aa3beaa147af8498e2e036d737de1cfcce982c679c832ac8ffaebc` |
 | ui-close.png          | `a975b987ab52cd43f987e4dffa84c94b2efe8b4406694dac70a935202aafb463` | `a618457379439fea7de000b03af82bf149b4e7ae1c2ef4eb210962ff0ede3ea0` |
