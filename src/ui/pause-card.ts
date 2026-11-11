@@ -118,30 +118,45 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     options.onOpenChange(value);
   };
+  // What the cards last showed: the destination list and danger. Rendering only on a change
+  // keeps each button's node across frames, so a press is never lost to a rebuilt button.
+  let shown: { readonly destinations: string; readonly inDanger: boolean } | undefined;
+  const placeButtons: HTMLButtonElement[] = [];
   const render = () => {
-    const views = pauseActions(state.inDanger);
-    for (const { available, id } of views) {
+    const destinations = JSON.stringify(state.destinations.map(({ id, label }) => [id, label]));
+    if (shown?.destinations === destinations && shown.inDanger === state.inDanger) {
+      return;
+    }
+    if (shown?.destinations !== destinations) {
+      placeButtons.splice(
+        0,
+        placeButtons.length,
+        ...state.destinations.map(({ id, label }) => {
+          const button = createButton(label);
+          button.dataset.destination = id;
+          button.addEventListener("click", () => {
+            if (state.inDanger) {
+              refuse(button, options.reducedMotion());
+              return;
+            }
+            setOpen(false);
+            options.onTravel(id);
+          });
+          return button;
+        }),
+      );
+      places.replaceChildren(...placeButtons);
+    }
+    shown = { destinations, inDanger: state.inDanger };
+    for (const { available, id } of pauseActions(state.inDanger)) {
       setAvailable(buttons.get(id)!, available);
+    }
+    for (const button of placeButtons) {
+      setAvailable(button, !state.inDanger);
     }
     note.hidden = !state.inDanger;
     empty.hidden = !travelShowsEmpty(state.destinations);
     places.hidden = !empty.hidden;
-    places.replaceChildren(
-      ...state.destinations.map(({ id, label }) => {
-        const button = createButton(label);
-        button.dataset.destination = id;
-        setAvailable(button, !state.inDanger);
-        button.addEventListener("click", () => {
-          if (state.inDanger) {
-            refuse(button, options.reducedMotion());
-            return;
-          }
-          setOpen(false);
-          options.onTravel(id);
-        });
-        return button;
-      }),
-    );
     if (open) {
       (travel.frame.hidden ? paused : travel).fit();
     }
