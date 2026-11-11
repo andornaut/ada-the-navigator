@@ -30,8 +30,9 @@ X, an outside tap, back and Escape return to the station card.
 - A board's offers stay until taken. A slot refills with a new job from the pool
   when its job is completed. When every landmark in a galaxy is charted, its
   boards stop offering surveys.
-- The held job's objective shows beside the story objective, labelled Job. Its
-  target uses the direction indicator for quest events.
+- The held job's objective shows on the pause card under the story objective,
+  as "Job: {objective}". Its target uses the direction indicator for quest
+  events and is marked on the Map.
 - A job pays at completion wherever Ada is: a notice shows "Job complete: +{amount}
   Stardust", then Astra says one unseen lore line from the galaxy's job pool.
 
@@ -132,6 +133,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 | `jobs`          | Jobs                                       |
 | `jobBoard`      | Job board                                  |
 | `jobBoardIntro` | People here could use some help.           |
+| `jobObjective`  | Job: {objective}                           |
 | `job`           | Job                                        |
 | `jobAccept`     | Accept                                     |
 | `jobActive`     | Active                                     |
