@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
+import type { PrototypeContent } from "../data/types.ts";
+import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import {
   createFlight,
   ensureDestination,
@@ -9,7 +11,7 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
-import type { FlightInput, FlightState, SectorProgress } from "./types.ts";
+import type { FlightInput, FlightState, SectorProgress, Vec } from "./types.ts";
 
 const progress: SectorProgress = {
   deposited: 0,
@@ -27,6 +29,10 @@ function empty(): FlightState {
   const flight = createFlight(PROTOTYPE, 1, 1234, progress);
   flight.objects = [];
   return flight;
+}
+/** Unsigned angle between two vectors, in degrees. */
+function degrees(a: Vec, b: Vec): number {
+  return (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
 }
 
 describe("flight boundaries", () => {
@@ -71,7 +77,9 @@ describe("flight boundaries", () => {
     expect(flight.shots).toHaveLength(3);
     expect(flight.weapon).toBe("tripleLaser");
     expect(flight.ammo).toBe(1);
-    expect(flight.facing).toEqual({ x: 0, y: -1 });
+    expect(flight.facing.x).toBeGreaterThan(0);
+    expect(flight.facing.y).toBeLessThan(0);
+    expect(degrees(flight.shots[1]!.velocity, flight.facing)).toBeLessThan(1e-9);
   });
 
   it("blocks scenery without shield damage and accepts consecutive hits without invulnerability", () => {
@@ -231,4 +239,205 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
   syncFlightRegion(PROTOTYPE, flight);
   expect(flight.objects).toContain(first);
   expect(flight.objects).toContain(second);
+});
+
+describe("directional handling", () => {
+  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const vectorOnly: PrototypeContent = {
+    ...PROTOTYPE,
+    tuning: { ...PROTOTYPE.tuning, movementTurnSeconds: 0 },
+  };
+  const instantAim: PrototypeContent = {
+    ...PROTOTYPE,
+    tuning: { ...PROTOTYPE.tuning, aimTurnSeconds: 0 },
+  };
+  const east = { x: 1, y: 0 };
+  const speed = (flight: FlightState) => Math.hypot(flight.velocity.x, flight.velocity.y);
+  function cruising(): FlightState {
+    const flight = empty();
+    flight.player = { x: 256, y: 256 };
+    flight.velocity = { x: maxSpeed, y: 0 };
+    flight.facing = { ...east };
+    return flight;
+  }
+  function frames(
+    content: PrototypeContent,
+    count: number,
+    input: FlightInput,
+    flight: FlightState,
+  ): void {
+    for (let i = 0; i < count; i++) {
+      stepFlight(content, 1 / 60, input, flight);
+    }
+  }
+
+  it("turns a full-speed 90 degree request no faster than vector-only handling, then converges", () => {
+    const request = { ...idle, move: { x: 0, y: -1 } };
+    const damped = cruising();
+    const reference = cruising();
+    stepFlight(PROTOTYPE, 0.1, request, damped);
+    stepFlight(vectorOnly, 0.1, request, reference);
+    const turned = degrees(damped.velocity, east);
+    const referenceTurned = degrees(reference.velocity, east);
+    expect(referenceTurned).toBeCloseTo(36.6, 0);
+    expect(turned).toBeLessThanOrEqual(referenceTurned);
+    expect(turned).toBeGreaterThan(12);
+    expect(turned).toBeLessThan(22);
+    stepFlight(PROTOTYPE, 0.1, request, damped);
+    expect(speed(damped)).toBeLessThan(0.9 * maxSpeed);
+    stepFlight(PROTOTYPE, 0.8, request, damped);
+    expect(degrees(damped.velocity, request.move)).toBeLessThan(1);
+    expect(degrees(damped.facing, request.move)).toBeLessThan(1);
+    expect(speed(damped)).toBeGreaterThan(0.95 * maxSpeed);
+  });
+
+  it.each([45, 90, 135, 180])(
+    "never brings velocity closer to a %i degree request than vector-only handling",
+    (angle) => {
+      const radians = (angle * Math.PI) / 180;
+      const input = { ...idle, move: { x: Math.cos(radians), y: -Math.sin(radians) } };
+      const error = (flight: FlightState) =>
+        Math.hypot(
+          flight.velocity.x - input.move.x * maxSpeed,
+          flight.velocity.y - input.move.y * maxSpeed,
+        );
+      const damped = cruising();
+      const reference = cruising();
+      for (let i = 0; i < 60; i++) {
+        stepFlight(PROTOTYPE, 1 / 60, input, damped);
+        stepFlight(vectorOnly, 1 / 60, input, reference);
+        expect(error(damped)).toBeGreaterThanOrEqual(error(reference) - 1e-9);
+        expect(speed(damped)).toBeLessThanOrEqual(maxSpeed + 1e-9);
+      }
+    },
+  );
+
+  it("keeps acceleration from rest, braking and independent aim identical to vector-only handling", () => {
+    const damped = empty();
+    const reference = empty();
+    const input = { ...idle, aim: { x: 0, y: -1 }, move: east };
+    stepFlight(PROTOTYPE, 0.18, input, damped);
+    stepFlight(vectorOnly, 0.18, input, reference);
+    expect(damped.velocity.x).toBeCloseTo(maxSpeed * (1 - Math.exp(-1)), 6);
+    expect(damped.velocity.y).toBe(0);
+    expect(damped.facing).toEqual(input.aim);
+    stepFlight(PROTOTYPE, 0.22, idle, damped);
+    stepFlight(vectorOnly, 0.22, idle, reference);
+    expect(damped.facing).toEqual(east);
+    stepFlight(PROTOTYPE, 4, idle, damped);
+    stepFlight(vectorOnly, 4, idle, reference);
+    expect(damped.velocity).toEqual({ x: 0, y: 0 });
+    expect(damped.player).toEqual(reference.player);
+  });
+
+  it("converges aim with its response and fires immediately along the smoothed facing", () => {
+    const flight = empty();
+    flight.facing = { ...east };
+    const aim = { ...idle, aim: { x: 0, y: -1 } };
+    stepFlight(PROTOTYPE, 1 / 60, aim, flight);
+    expect(flight.shots).toHaveLength(1);
+    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(90 * Math.exp(-1 / 60 / 0.045), 6);
+    expect(degrees(flight.shots[0]!.velocity, flight.facing)).toBeLessThan(1e-9);
+    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic.intervalSeconds, 9);
+    frames(PROTOTYPE, 5, aim, flight);
+    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(90 * Math.exp(-0.1 / 0.045), 6);
+    frames(PROTOTYPE, 8, aim, flight);
+    expect(flight.facing).not.toEqual(aim.aim);
+    frames(PROTOTYPE, 1, aim, flight);
+    expect(flight.facing).toEqual(aim.aim);
+  });
+
+  it("keeps right-stick fire cadence identical to instant aim", () => {
+    const damped = empty();
+    const instant = empty();
+    damped.facing = { ...east };
+    instant.facing = { ...east };
+    const aim = { ...idle, aim: { x: 0, y: -1 } };
+    for (let i = 0; i < 60; i++) {
+      stepFlight(PROTOTYPE, 1 / 60, aim, damped);
+      stepFlight(instantAim, 1 / 60, aim, instant);
+      expect(damped.shots.map((s) => s.id)).toEqual(instant.shots.map((s) => s.id));
+      expect(damped.fireCooldown).toBe(instant.fireCooldown);
+    }
+    expect(damped.shots.length).toBeGreaterThan(1);
+    expect(damped.shots.at(-1)!.velocity).toEqual(instant.shots.at(-1)!.velocity);
+  });
+
+  it("returns to movement-facing and stops firing as soon as aim is released", () => {
+    const flight = cruising();
+    const move = { ...idle, move: east };
+    stepFlight(PROTOTYPE, 0.1, { ...move, aim: { x: 0, y: 1 } }, flight);
+    const fired = new Set(flight.shots.map((s) => s.id));
+    expect(fired.size).toBeGreaterThan(0);
+    stepFlight(PROTOTYPE, 1 / 60, move, flight);
+    expect(flight.facing).toEqual(east);
+    stepFlight(PROTOTYPE, 1, move, flight);
+    expect(flight.shots.every((s) => fired.has(s.id))).toBe(true);
+  });
+
+  it("matches one 1/30 s frame with two 1/60 s frames and stays close at 144 Hz", () => {
+    const input = { ...idle, aim: { x: -1, y: 0 }, move: { x: 0, y: -1 } };
+    const single = cruising();
+    const split = cruising();
+    stepFlight(PROTOTYPE, 1 / 30, input, single);
+    stepFlight(PROTOTYPE, 1 / 60, input, split);
+    stepFlight(PROTOTYPE, 1 / 60, input, split);
+    for (const key of ["velocity", "facing", "player"] as const) {
+      expect(split[key].x).toBeCloseTo(single[key].x, 9);
+      expect(split[key].y).toBeCloseTo(single[key].y, 9);
+    }
+    const reference = cruising();
+    const fast = cruising();
+    stepFlight(PROTOTYPE, 0.25, input, reference);
+    for (let i = 0; i < 36; i++) {
+      stepFlight(PROTOTYPE, 1 / 144, input, fast);
+    }
+    expect(degrees(fast.velocity, reference.velocity)).toBeLessThan(0.1);
+    expect(Math.abs(speed(fast) - speed(reference))).toBeLessThan(0.5);
+    expect(degrees(fast.facing, reference.facing)).toBeLessThan(0.1);
+  });
+
+  it("turns movement and aim along the short arc across the angle boundary", () => {
+    const flight = cruising();
+    const at = (deg: number) => ({
+      x: Math.cos((deg * Math.PI) / 180),
+      y: Math.sin((deg * Math.PI) / 180),
+    });
+    const target = at(-179);
+    flight.facing = at(179);
+    flight.velocity = { x: flight.facing.x * maxSpeed, y: flight.facing.y * maxSpeed };
+    stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: target, move: target }, flight);
+    expect(flight.facing.x).toBeLessThan(-0.99);
+    expect(flight.velocity.x).toBeLessThan(-0.99 * maxSpeed);
+    expect(degrees(flight.facing, target)).toBeLessThan(2);
+    expect(degrees(flight.velocity, target)).toBeLessThan(2);
+  });
+
+  it("keeps collision blocking and the speed limit while turning toward a rock", () => {
+    const flight = empty();
+    flight.player = { x: 100, y: 100 };
+    flight.velocity = { x: 0, y: -maxSpeed };
+    flight.objects.push({ hp: 100, id: "wall", kind: "rock", radius: 30, x: 140, y: 80 });
+    for (let i = 0; i < 12; i++) {
+      stepFlight(PROTOTYPE, 1 / 60, { ...idle, move: east }, flight);
+      expect(speed(flight)).toBeLessThanOrEqual(maxSpeed + 1e-9);
+      expect(Math.hypot(flight.player.x - 140, flight.player.y - 80)).toBeGreaterThanOrEqual(40);
+    }
+    expect(flight.player.y).toBeLessThan(100);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+  });
+
+  it("adds no save fields and settles a restored mid-turn flight on the same course", () => {
+    const flight = cruising();
+    const reference = cruising();
+    const input = { ...idle, aim: { x: -1, y: 0 }, move: { x: 0, y: 1 } };
+    stepFlight(PROTOTYPE, 0.05, input, flight);
+    stepFlight(vectorOnly, 0.05, input, reference);
+    expect(Object.keys(flight).sort()).toEqual(Object.keys(reference).sort());
+    const restored = JSON.parse(JSON.stringify(flight)) as FlightState;
+    stepFlight(PROTOTYPE, 1.5, input, flight);
+    stepFlight(PROTOTYPE, 1.5, input, restored);
+    expect(degrees(restored.velocity, flight.velocity)).toBeLessThan(0.5);
+    expect(restored.facing).toEqual(flight.facing);
+  });
 });

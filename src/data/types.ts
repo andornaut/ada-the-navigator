@@ -20,6 +20,10 @@ export interface PrototypeContent {
     maxSpeed: number;
     accelerationSeconds: number;
     brakingSeconds: number;
+    /** Exponential time constant for turning the requested movement direction. */
+    movementTurnSeconds: number;
+    /** Exponential time constant for turning the aim-facing toward the aim input. */
+    aimTurnSeconds: number;
     shieldMax: number;
     shieldRechargeDelay: number;
     shieldRechargeRate: number;

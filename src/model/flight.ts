@@ -41,6 +41,35 @@ function direction(v: Vec): Vec {
   const size = length(v);
   return size ? { x: v.x / size, y: v.y / size } : { x: 0, y: 0 };
 }
+/**
+ * Rotates the unit `current` toward `target` along the shorter arc, removing the
+ * fraction `1 - exp(-dt / response)` of the angle and snapping within half a degree.
+ */
+function turnToward(dt: number, response: number, target: Vec, current: Vec): Vec {
+  const requested = direction(target);
+  if (!length(current)) {
+    return requested;
+  }
+  let delta = Math.atan2(
+    current.x * requested.y - current.y * requested.x,
+    current.x * requested.x + current.y * requested.y,
+  );
+  // Choose a consistent side for an exact half-turn.
+  if (Math.abs(Math.abs(delta) - Math.PI) < 1e-12) {
+    delta = Math.PI;
+  }
+  const remaining = Math.exp(-dt / Math.max(0.001, response));
+  if (Math.abs(delta) * remaining <= Math.PI / 360) {
+    return requested;
+  }
+  const angle = Math.atan2(current.y, current.x) + delta * (1 - remaining);
+  return { x: Math.cos(angle), y: Math.sin(angle) };
+}
+/**
+ * Smoothed requested movement direction per flight. It is transient so saves gain
+ * no field; a restored or newly pressed stick starts from the velocity heading.
+ */
+const movementHeadings = new WeakMap<FlightState, Vec>();
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
@@ -594,6 +623,30 @@ function damage(content: PrototypeContent, flight: FlightState): void {
   flight.sinceDamage = 0;
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
+/**
+ * Direction fed to the vector acceleration: the request, damped while already moving.
+ * Returns the smoothed heading at the slice midpoint so results barely depend on frame rate.
+ */
+function movementHeading(
+  content: PrototypeContent,
+  dt: number,
+  input: FlightInput,
+  flight: FlightState,
+): Vec {
+  const requested = direction(input.move);
+  if (!length(requested)) {
+    movementHeadings.delete(flight);
+    return requested;
+  }
+  if (length(flight.velocity) < 0.01) {
+    movementHeadings.set(flight, requested);
+    return requested;
+  }
+  const previous = movementHeadings.get(flight) ?? direction(flight.velocity);
+  const response = content.tuning.movementTurnSeconds;
+  movementHeadings.set(flight, turnToward(dt, response, requested, previous));
+  return turnToward(dt / 2, response, requested, previous);
+}
 function move(
   content: PrototypeContent,
   dt: number,
@@ -601,7 +654,7 @@ function move(
   flight: FlightState,
 ): void {
   const magnitude = Math.min(1, length(input.move));
-  const heading = direction(input.move);
+  const heading = movementHeading(content, dt, input, flight);
   const response = magnitude ? content.tuning.accelerationSeconds : content.tuning.brakingSeconds;
   const blend = 1 - Math.exp(-dt / Math.max(0.001, response));
   flight.velocity.x +=
@@ -942,7 +995,7 @@ export function stepFlight(
     syncFlightRegion(content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
-      flight.facing = direction(input.aim);
+      flight.facing = turnToward(slice, content.tuning.aimTurnSeconds, input.aim, flight.facing);
     }
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
     if (aiming && flight.fireCooldown <= 0) {

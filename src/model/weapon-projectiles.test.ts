@@ -28,6 +28,7 @@ describe("integrated weapon projectiles", () => {
       { hp: 10, id: "direct", kind: "rock", radius: 4, x: 30, y: 0 },
       { hp: 10, id: "nearby", kind: "rock", radius: 4, x: 30, y: 15 },
     ];
+    flight.facing = { x: 1, y: 0 };
     stepFlight(PROTOTYPE, 0.1, { ...idle, aim: { x: 1, y: 0 }, viewportWidth: 720 }, flight);
     expect(flight.objects.find((object) => object.id === "direct")?.hp).toBe(6);
     expect(flight.objects.find((object) => object.id === "nearby")?.hp).toBe(10);
@@ -37,6 +38,7 @@ describe("integrated weapon projectiles", () => {
 
   it("passes fractional scatter damage through the canonical collision path", () => {
     const { flight } = launched("scattershot");
+    flight.facing = { x: 1, y: 0 };
     stepFlight(PROTOTYPE, 0.001, { ...idle, aim: { x: 1, y: 0 }, viewportWidth: 720 }, flight);
     const center = flight.shots.find((shot) => Math.abs(shot.velocity.y) < 0.000001)!;
     expect(center.projectile).toBe("dot");

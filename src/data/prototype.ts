@@ -257,6 +257,7 @@ export const PROTOTYPE: PrototypeContent = {
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
     accelerationSeconds: 0.18,
+    aimTurnSeconds: 0.045,
     brakingSeconds: 0.22,
     chunkSize: 512,
     dangerReleaseSeconds: 3,
@@ -287,6 +288,7 @@ export const PROTOTYPE: PrototypeContent = {
     introFreshDistance: 10800,
     maxSpeed: 200,
     miningMilestones: [12, 24, 36],
+    movementTurnSeconds: 0.1,
     safeRadius: 160,
     shieldMax: 100,
     shieldRechargeDelay: 3,
