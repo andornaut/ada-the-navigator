@@ -119,7 +119,9 @@ any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 
 An ore field is a seeded cluster of 6 to 10 resource-bearing rocks about 900
 world units across, placed like stations: at least 3000 world units apart and
-1500 from the hub, stations and quantum jump arrivals. Half of claim-jumper
+1500 from the hub, stations and quantum jump arrivals. A field holds only its
+resource rocks: chunk generation keeps ordinary asteroids out of a 600 world
+unit radius around its centre, its 450 radius plus a 150 margin. Half of claim-jumper
 groups are placed at ore fields. Cartwheel enemies notice Ada from 30% farther
 away and fire 30% more often than the base catalog, and encounters come about
 30% more often.
