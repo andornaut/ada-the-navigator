@@ -1,14 +1,17 @@
 # UI assets
 
 Source: Chibi, repository `andornaut/chibis-way-home`, commit
-`55ecc2eedd3761fc2c7c9a91fd63f56f0202ef03`. Source exports match that commit's tracked bytes.
-Source files remain unchanged.
+`55ecc2eedd3761fc2c7c9a91fd63f56f0202ef03` for fonts and palette, and commit
+`04720cc115c6db655e4b25a9cfa6630e54ce10c7` for the control sheets. Fonts and palette
+match their commit's tracked bytes. Source files remain unchanged.
+[Controls](controls.md) defines how the sheets are used.
 
 ## Consumer contract
 
 Serve these outputs under `/art/ui/`. The nested `manifest.json` retains only
-`font-body`, `font-title`, `ui-settings-card`, `ui-close`, `ui-switch` and
-`ui-focus`, preserving their exact entries, ordering, slices and relative paths.
+`font-body`, `font-title`, `ui-button`, `ui-button-primary`, `ui-settings-card`,
+`ui-close`, `ui-switch` and `ui-focus`, preserving their exact entries, slices and
+relative paths, sorted by key.
 The [settings navigation icon](settings-icon.md) supplies `icon-settings-nav`
 from its separately pinned source. Its entry uses the same sprite schema.
 The [touch joystick sheets](touch-joystick.md) supply `ui-move-hint` and
@@ -17,16 +20,19 @@ one `icon-*` sheet per Settings row and the install steps glyphs the same way.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 
-| Sprite           | Sheet | Frame | Tags (inclusive indices) | Nine-slice margins |
-| ---------------- | ----- | ----- | ------------------------ | ------------------ |
-| ui-settings-card | 16x16 | 16x16 | rest 0                   | 2 on each side     |
-| ui-close         | 48x24 | 24x24 | normal 0, pressed 1      | none               |
-| ui-switch        | 64x16 | 32x16 | on 0, off 1              | none               |
-| ui-focus         | 16x16 | 16x16 | rest 0                   | 4 on each side     |
+| Sprite            | Sheet | Frame | Tags (inclusive indices)        | Nine-slice margins |
+| ----------------- | ----- | ----- | ------------------------------- | ------------------ |
+| ui-button         | 48x28 | 16x28 | normal 0, pressed 1, disabled 2 | 2/4/2/6 (l/t/r/b)  |
+| ui-button-primary | 48x28 | 16x28 | normal 0, pressed 1, disabled 2 | 2/4/2/6 (l/t/r/b)  |
+| ui-settings-card  | 16x16 | 16x16 | rest 0                          | 2 on each side     |
+| ui-close          | 48x24 | 24x24 | normal 0, pressed 1             | none               |
+| ui-switch         | 64x16 | 32x16 | on 0, off 1                     | none               |
+| ui-focus          | 16x16 | 16x16 | rest 0                          | 4 on each side     |
 
 All frames last 100 ms, are unrotated and untrimmed, and retain Aseprite
 json-hash frame names and forward tags. Card slice centre is (2,2,12,12);
-focus slice centre is (4,4,8,8), both within (0,0,16,16) bounds.
+focus slice centre is (4,4,8,8), both within (0,0,16,16) bounds. Button slice
+centre is (2,4,12,18) within (0,0,16,28).
 
 BMFont XML names are Liberation Sans Regular (body) and Liberation Sans Bold
 (title), both size 16, lineHeight 20 and base 15. Their single PNG pages are
@@ -35,6 +41,55 @@ For DOM text, use family Liberation Sans with weight 400 from
 `/art/ui/fonts/liberation/LiberationSans-Regular.ttf` and weight 700 from
 `/art/ui/fonts/liberation/LiberationSans-Bold.ttf`. Ring and knob are procedural
 and require no raster asset.
+
+## Dark lavender recolour
+
+`art/tools/controls.ts` reads Chibi's sheets from a checkout of the control-sheet
+commit and writes Ada's sheets with art-kit's `writeSpriteSheet`, which reproduces
+Chibi's PNG and JSON bytes exactly when no colour changes. Only the colours below
+change; alpha, geometry, frames, tags and slices are identical. JSON data is
+unchanged. Rebuild with
+`node art/tools/controls.ts <chibis-way-home>/public/art/sprites`, then run
+Prettier on the written JSON.
+
+| Sheet               | Source colour | Ada colour | Role                         |
+| ------------------- | ------------- | ---------- | ---------------------------- |
+| `ui-settings-card`  | `#c0cbdc`     | `#3b3850`  | Face                         |
+| `ui-settings-card`  | `#8b9bb4`     | `#2f2d3d`  | Lower-right shade            |
+| `ui-settings-card`  | `#ffffff`     | `#6b6685`  | Upper-left rim               |
+| `ui-button`         | `#8b9bb4`     | `#9690b4`  | Face                         |
+| `ui-button`         | `#5a6988`     | `#5f5980`  | Lip and edge                 |
+| `ui-button`         | `#c0cbdc`     | `#2f2d3d`  | Disabled face, top highlight |
+| `ui-button-primary` | `#3a4466`     | `#bfa06f`  | Face                         |
+| `ui-button-primary` | `#262b44`     | `#8a7148`  | Lip                          |
+| `ui-button-primary` | `#5a6988`     | `#d2b886`  | Top highlight                |
+| `ui-button-primary` | `#c0cbdc`     | `#2f2d3d`  | Disabled face                |
+| `ui-switch`         | `#3e8948`     | `#2f7d76`  | On track                     |
+| `ui-switch`         | `#265c42`     | `#1f5a55`  | On track edge                |
+| `ui-switch`         | `#5a6988`     | `#57536e`  | Off track                    |
+| `ui-switch`         | `#3a4466`     | `#403d55`  | Off track edge               |
+| `ui-switch`         | `#c0cbdc`     | `#c9c4d8`  | Knob shade                   |
+| `ui-focus`          | `#fee761`     | `#ead4aa`  | Ring band                    |
+| `ui-close`          | `#181425`     | `#ead4aa`  | Normal X                     |
+| `ui-close`          | `#3a4466`     | `#403d55`  | Pressed face                 |
+| Card icons (seven)  | `#3a4466`     | `#ead4aa`  | Icon ink                     |
+
+Ink `#181425` and white `#ffffff` stay unchanged except where listed. The card
+icons are in [Settings row icons](settings-icons.md).
+
+| PNG                   | Source SHA-256                                                     | Destination SHA-256                                                |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| ui-button.png         | `4a682b1bbd3031940b8edd1ee5456a89c1caacd673235e5661a48bae861cfa79` | `a81825751e7a9166a16b2c88a4a9e129c19405e929247df243587b3fa5424328` |
+| ui-button-primary.png | `6e43d89b48641b1f25d1b0da9d29726d630ba1a741f65dc51945bf4a385837a0` | `1f02dc0fcd4740333fb94eed4e0e62106e88f5f642956691e42f2c1f5656b87b` |
+| ui-settings-card.png  | `ef8c2722fab1aae15b042f8dd564b3831a8c1cc68c1a3882ed5dd4ccb70f040a` | `e913c7a895aa3beaa147af8498e2e036d737de1cfcce982c679c832ac8ffaebc` |
+| ui-close.png          | `a975b987ab52cd43f987e4dffa84c94b2efe8b4406694dac70a935202aafb463` | `a618457379439fea7de000b03af82bf149b4e7ae1c2ef4eb210962ff0ede3ea0` |
+| ui-switch.png         | `b12161896816f9c7f62d0526bb224a4850253db7cfd6d4bb1e41cf93a69316c7` | `67e8137f4e1774ce8561797bd1e0c798adc4de782657be69435f109f392e40be` |
+| ui-focus.png          | `890594014cd3c7bd2b5b43a726cc0d816ff1614362a3c6cbfa1f97f9bdf95af9` | `34773bdb51ed6918464b2a19d094e6bf364534a2036b03a4f1ce1261b3e12aae` |
+
+| JSON                   | Source SHA-256                                                     | Formatted destination SHA-256                                      |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| ui-button.json         | `9e1f2de00f2d281852399f93e82eabdbf0b4310de6114d71d1d5d7e2120a8edd` | `3d966361993c51f0b86e2250d3c62b6e837e4c04870864977b1920e18efaddfe` |
+| ui-button-primary.json | `88f3e07931a03dae1ba10b434bcd2e19d85e64cfffc29f73c612eae709558cbb` | `0c0a0463c8f68e5793a177d929689ef1beb64f01eb25a2dfc668811b2c0feb5a` |
 
 ## Licensing
 
@@ -47,9 +102,10 @@ reused with the project owner's explicit authorization.
 
 Paths below are relative to source `public/art/` and destination
 `public/art/ui/`. The table records source checksums, except the destination manifest row.
-PNG, FNT, TTF, OFL and palette files are byte-identical; sprite JSON data is unchanged
-with normalized formatting. The source manifest hash
-pins the full input; the destination manifest is the documented subset.
+Font PNG, FNT, TTF, OFL and palette files are byte-identical; sprite PNGs are the
+recolours above and sprite JSON data is unchanged with normalized formatting. The source manifest hash
+pins the full input; the destination manifest is the documented subset. The
+control-sheet commit has the same manifest, sprite PNG and sprite JSON bytes.
 
 | Path                                        | SHA-256                                                            |
 | ------------------------------------------- | ------------------------------------------------------------------ |
@@ -70,7 +126,7 @@ pins the full input; the destination manifest is the documented subset.
 | sprites/ui-focus.json                       | `1ab8a4c81c35ab038530df74ae6be1f696a5dd766f4688f22dc6411ae521390c` |
 | palette.json                                | `083925bef07449205f067a6826adab748fa8e3d33658d111d6259f77292c9928` |
 | manifest.json (source full)                 | `17f5bb498704ebba47b3faf5f7e71cbe343b91a95f4e21ba4f7522a1c2fe2ebd` |
-| manifest.json (destination subset)          | `72dccf453ffc547a81c83dbee9a149aa4b5e4687e93fc6425ae3f9705ee2a836` |
+| manifest.json (destination subset)          | `5fdda5ae8452843f3607c375bcfb29fd9fd285a37d1a19e5829a54e00f7fc5e7` |
 
 ## Formatted destination metadata SHA-256
 

@@ -61,6 +61,30 @@
       "once": []
     },
     {
+      "key": "ui-button",
+      "png": "sprites/ui-button.png",
+      "json": "sprites/ui-button.json",
+      "once": [],
+      "slice": {
+        "left": 2,
+        "top": 4,
+        "right": 2,
+        "bottom": 6
+      }
+    },
+    {
+      "key": "ui-button-primary",
+      "png": "sprites/ui-button-primary.png",
+      "json": "sprites/ui-button-primary.json",
+      "once": [],
+      "slice": {
+        "left": 2,
+        "top": 4,
+        "right": 2,
+        "bottom": 6
+      }
+    },
+    {
       "key": "ui-close",
       "png": "sprites/ui-close.png",
       "json": "sprites/ui-close.json",

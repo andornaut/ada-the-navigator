@@ -12,6 +12,8 @@ changes. Both on-screen sticks use the 75 by 75 ring frame and the 11 by 11 knob
 - The renderer redraws ring and knob pixels from vector layers (ink outline,
   cream at rest, white when lit) at the sheet frame sizes, with the rest pose at
   alpha 0.85. The sheets supply frame names, sizes, tags and timing.
+- Both sticks draw a speed line from ring centre to knob centre, under the knob;
+  see [Controls](controls.md#touch-sticks).
 
 PNG bytes are unchanged. JSON data is unchanged; whitespace follows Ada's formatter.
 Source files remain untouched. Reuse is explicitly authorized by the project owner.

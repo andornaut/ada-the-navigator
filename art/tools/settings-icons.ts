@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 
-// Chibi's settings icon ink, drawn as 2-pixel strokes on a clear 16 by 16 frame.
-const INK = "3a4466";
+// Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear 16 by 16 frame.
+const INK = "ead4aa";
 const output = fileURLToPath(new URL("../../public/art/ui/sprites/", import.meta.url));
 
 // "#" is ink, "." is clear.
