@@ -2,6 +2,7 @@
 // points in the station family's schema. Contract: art/needle.md.
 import { fileURLToPath } from "node:url";
 
+import { fillPolygon, rgba } from "./paint.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import { DISPLAY_SCALE, type Face } from "./solid.ts";
 
@@ -127,15 +128,94 @@ export function dockAt(frame: Layout, angle: number, face: number, width: number
   };
 }
 
+const linear = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+const luminance = ([r, g, b]: readonly number[]) =>
+  0.2126 * linear(r! / 255) + 0.7152 * linear(g! / 255) + 0.0722 * linear(b! / 255);
+const ratio = (la: number, lb: number) => (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+const bytes = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
 // WCAG contrast of two sRGB colours.
-export function contrast(a: string, b: string): number {
-  const lum = (hex: string) => {
-    const [r, g, bl] = [1, 3, 5].map((i) => {
-      const v = parseInt(hex.slice(i, i + 2), 16) / 255;
-      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+export const contrast = (a: string, b: string) => ratio(luminance(bytes(a)), luminance(bytes(b)));
+
+// The colour `alpha` of `top` over `base`, as six hex digits.
+export function over(top: string, alpha: number, base: string): string {
+  const [t, b] = [bytes(top), bytes(base)];
+  return `#${t
+    .map((v, i) =>
+      Math.round(v * alpha + b[i]! * (1 - alpha))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
+const SUPERSAMPLE = 4;
+
+// Median WCAG contrast on `field` of a sprite's outer edge at display size: the polygons (frame
+// px) filled at 4x and box-filtered to display px; edge pixels are those at alpha 0.5 or more
+// with a 4-neighbour below it. Returns the median and the share at 3:1 or more.
+export function edgeContrast(
+  width: number,
+  height: number,
+  polygons: readonly Polygon[],
+  field = FIELD,
+): { median: number; share: number } {
+  const scale = DISPLAY_SCALE * SUPERSAMPLE;
+  const [W, H] = [Math.ceil(width * scale), Math.ceil(height * scale)];
+  const image = { width: W, height: H, data: new Uint8ClampedArray(W * H * 4) };
+  for (const { color, opacity, points } of polygons) {
+    if (opacity !== undefined && opacity < 1) {
+      continue;
+    }
+    fillPolygon(
+      image as Parameters<typeof fillPolygon>[0],
+      points.map(([x, y]) => [x * scale, y * scale] as const),
+      rgba(color),
+    );
+  }
+  const [w, h] = [Math.floor(W / SUPERSAMPLE), Math.floor(H / SUPERSAMPLE)];
+  const n = SUPERSAMPLE * SUPERSAMPLE;
+  const alpha = new Float64Array(w * h);
+  const colour: number[][] = [];
+  const f = bytes(field);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const sum = [0, 0, 0, 0];
+      for (let dy = 0; dy < SUPERSAMPLE; dy++) {
+        for (let dx = 0; dx < SUPERSAMPLE; dx++) {
+          const i = ((y * SUPERSAMPLE + dy) * W + x * SUPERSAMPLE + dx) * 4;
+          const a = image.data[i + 3]! / 255;
+          for (let c = 0; c < 3; c++) sum[c]! += image.data[i + c]! * a;
+          sum[3]! += a;
+        }
+      }
+      const a = sum[3]! / n;
+      alpha[y * w + x] = a;
+      colour[y * w + x] = [0, 1, 2].map((c) => sum[c]! / n + f[c]! * (1 - a));
+    }
+  }
+  const lf = luminance(f);
+  const values: number[] = [];
+  const solid = (x: number, y: number) =>
+    x >= 0 && y >= 0 && x < w && y < h && alpha[y * w + x]! >= 0.5;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!solid(x, y)) continue;
+      if (
+        [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ].some(([dx, dy]) => !solid(x + dx!, y + dy!))
+      ) {
+        values.push(ratio(luminance(colour[y * w + x]!), lf));
+      }
+    }
+  }
+  values.sort((a, b) => a - b);
+  return {
+    median: values[Math.floor(values.length / 2)] ?? 0,
+    share: values.filter((v) => v >= 3).length / Math.max(1, values.length),
   };
-  const [la, lb] = [lum(a), lum(b)];
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }

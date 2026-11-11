@@ -146,6 +146,327 @@
       "destination": "station",
       "variant": "loom-hall",
       "project": "loomHall"
+    },
+    {
+      "id": "needle-gate-dark-0-back",
+      "path": "/art/needle/gate-dark-0-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-0",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 0,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-dark-0-front",
+      "path": "/art/needle/gate-dark-0-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-0",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 0,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-dark-1-back",
+      "path": "/art/needle/gate-dark-1-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-1",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 1,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-dark-1-front",
+      "path": "/art/needle/gate-dark-1-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-1",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 1,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-dark-2-back",
+      "path": "/art/needle/gate-dark-2-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-2",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 2,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-dark-2-front",
+      "path": "/art/needle/gate-dark-2-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-2",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 2,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-dark-3-back",
+      "path": "/art/needle/gate-dark-3-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-3",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 3,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-dark-3-front",
+      "path": "/art/needle/gate-dark-3-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-3",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 3,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-dark-4-back",
+      "path": "/art/needle/gate-dark-4-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-4",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 4,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-dark-4-front",
+      "path": "/art/needle/gate-dark-4-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-4",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "dark",
+      "orientation": 4,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-lit-0-back",
+      "path": "/art/needle/gate-lit-0-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-0",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 0,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-lit-0-front",
+      "path": "/art/needle/gate-lit-0-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-0",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 0,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-lit-1-back",
+      "path": "/art/needle/gate-lit-1-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-1",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 1,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-lit-1-front",
+      "path": "/art/needle/gate-lit-1-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-1",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 1,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-lit-2-back",
+      "path": "/art/needle/gate-lit-2-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-2",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 2,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-lit-2-front",
+      "path": "/art/needle/gate-lit-2-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-2",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 2,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-lit-3-back",
+      "path": "/art/needle/gate-lit-3-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-3",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 3,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-lit-3-front",
+      "path": "/art/needle/gate-lit-3-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-3",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 3,
+      "layer": "front"
+    },
+    {
+      "id": "needle-gate-lit-4-back",
+      "path": "/art/needle/gate-lit-4-back.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-4",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 4,
+      "layer": "back"
+    },
+    {
+      "id": "needle-gate-lit-4-front",
+      "path": "/art/needle/gate-lit-4-front.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "axis-4",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "gate": "lit",
+      "orientation": 4,
+      "layer": "front"
     }
-  ]
+  ],
+  "needleGates": "/art/needle/gates.json"
 }

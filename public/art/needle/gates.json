@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "frame": 112,
+  "displayScale": 0.4375,
+  "opening": 66,
+  "rim": {
+    "inner": 33,
+    "outer": 40,
+    "depth": 7
+  },
+  "minScreenAngle": 30,
+  "layers": ["back", "front"],
+  "light": {
+    "fadeMs": 240,
+    "easing": "cubicOut"
+  },
+  "orientations": [
+    {
+      "index": 0,
+      "axis": [0.866, 0.5],
+      "open": 0.577,
+      "offHorizontal": 30.001,
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-0-back",
+          "front": "needle-gate-dark-0-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-0-back",
+          "front": "needle-gate-lit-0-front"
+        }
+      }
+    },
+    {
+      "index": 1,
+      "axis": [0.583, 0.813],
+      "open": 0.754,
+      "offHorizontal": 54.356,
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-1-back",
+          "front": "needle-gate-dark-1-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-1-back",
+          "front": "needle-gate-lit-1-front"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "axis": [0, 1],
+      "open": 0.816,
+      "offHorizontal": 90,
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-2-back",
+          "front": "needle-gate-dark-2-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-2-back",
+          "front": "needle-gate-lit-2-front"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "axis": [-0.583, 0.813],
+      "open": 0.754,
+      "offHorizontal": 54.356,
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-3-back",
+          "front": "needle-gate-dark-3-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-3-back",
+          "front": "needle-gate-lit-3-front"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "axis": [-0.866, 0.5],
+      "open": 0.577,
+      "offHorizontal": 30.001,
+      "files": {
+        "dark": {
+          "back": "needle-gate-dark-4-back",
+          "front": "needle-gate-dark-4-front"
+        },
+        "lit": {
+          "back": "needle-gate-lit-4-back",
+          "front": "needle-gate-lit-4-front"
+        }
+      }
+    }
+  ],
+  "colors": {
+    "lit": ["#F3EDE6", "#DED5CC", "#C4BAB0", "#A69C93", "#8A8178"],
+    "dark": ["#C3BAB1", "#ADA49C", "#979088", "#827C75", "#716B65"],
+    "lampLit": "#ffe9b8",
+    "lampDark": "#4d4640",
+    "veil": {
+      "color": "#ffe9b8",
+      "alpha": 0.16
+    }
+  }
+}
