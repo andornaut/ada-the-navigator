@@ -7,14 +7,15 @@
   and reduced with Lanczos filtering, then muted.
 
 A close-up of Ada's ship from outside, with the cockpit seen through its clear
-bubble canopy, over the in-between field. It sits behind dialogue and the galaxy
+canopy, over the in-between field. It sits behind dialogue and the galaxy
 selection card.
 
 ## View
 
 - The game's isometric projection and face culling
   ([projection.ts](tools/projection.ts)) at ship heading 24 of 32,
-  flat-shaded polygons lit from the upper left.
+  flat-shaded polygons lit from the upper left. The rear
+  points toward the viewer, so the tail faces draw after the canopy.
 - 11 design px per model unit. The canopy focus, model point (0, -3, 5.5),
   lands 150 design px from the top of the design frame, centred horizontally.
 - Design px: the 844 by 390 design frame is the 779 by 360 logical view of an
@@ -22,41 +23,50 @@ selection card.
 
 ## Model
 
-The silhouette is the in-game hull plan from `art/tools/ship.ts` at 0.32 model
-units per plan unit, copied into the generator so the close-up stays fixed when
-the sprite model changes. Close-up detail:
+The hull is the in-game pyramid from [ship geometry](ship.md): the same plan at
+0.32 model units per plan unit, 1.2-unit skirt, shoulder, apex, 76 degree rear
+lean and planar faces, copied into the generator so the close-up stays fixed
+when the sprite model changes. The faces take the Classic paint by the sprite's
+shading rule at heading 24, so the close-up and the `ship-24` frame share every
+hull colour: blue walls round the mouths, a white tail with blue-grey shade and
+a white-dominant hull. Close-up detail:
 
-- Hull slab, 4 units high, with a chamfered top edge and a white top.
-- Raised fuselage along the centreline that carries the canopy.
-- Dorsal spine from the canopy to the fin.
-- Tall swept tail fin with a blue cap band and a blue leading-edge strip.
-- Octagonal thruster nacelles over the two engine mouths, with tapered fronts,
-  dark intakes, blue exhaust rings and light blue mouths.
-- Two dark vents beside the canopy.
-- Plate seams, one teal pinstripe per side and blue wing-edge trim.
+- Engine mouths where the sprite has them, a dark blue frame round a light blue
+  face inset 0.3 units.
+- Two faint plate seams on each wing face, the face colour mixed 45% toward
+  the rear side colour.
 - Nav lights with soft glows: coral at the port wingtip, teal at the starboard
-  wingtip, blue at the fin tip.
-- Tessellated glass bubble canopy: back and front glass tinted by light, a
-  light silhouette edge, a blue rim band and a soft highlight.
-- Inside the tub: floor, dash, centre console and two teal seats with
-  pedestals, cushions and reclined backrests with cream caps. Ada's seat is
-  port (upper left on screen), Penny's starboard.
-- Astra's rose-gold lens on the dash.
+  wingtip and a smaller blue light at the tail apex.
+- The sprite's canopy made clear: the same 9 by 9 plan centred at local Y -3,
+  rear edge at the shoulder and level crown 2.8 above the ridge, in 48 segments
+  and 12 rings. The glass is the canopy roof colour lifted toward the highlight
+  where the light falls; the rings below 30 degrees are a denser sill in the
+  canopy side colour. Back glass draws before the interior, front glass after
+  it, then a light silhouette edge and a soft highlight on the upper left. A
+  dark blue seam runs where the canopy meets the hull: the far arc behind the
+  tub, the near arc over the glass.
+- Inside, clipped to the canopy outline: a tub sunk into the hull, its floor
+  at z 3.8 and at least 0.4 under the hull surface, with dark inner walls; a
+  dash, centre console and two teal seats with pedestals, cushions and reclined
+  backrests with cream caps. Ada's seat is port (upper left on screen),
+  Penny's starboard.
+- Astra's rose-gold lens on the dash's rear face, model point (0, -9, 5.3).
 - Seated variant: the tops of Ada's head (navy hair, pink bow) and Penny's
   (golden head, orange ears) over the seat backs.
 
-| Part        | Colours                                                       |
-| ----------- | ------------------------------------------------------------- |
-| Hull white  | `#9aabbf`, `#abbfce`, `#c3d1de`, `#d4dfe9`, `#ffffff`         |
-| Blue        | `#0f4e8f`, `#1767b3`, `#2585d0`, `#4f9fe0`                    |
-| Dark        | `#1d2234`, `#262b44`, `#3a4466`, `#5a6988`                    |
-| Seats       | `#2f6a6e`, `#3d8084`, `#4f9ea3`, `#6cb8b9`; outline `#2c5f63` |
-| Seat caps   | `#b8ad9a`, `#d9cbb1`, `#efe4cf`                               |
-| Floor, dash | `#5a6988`, `#6d7b98`, `#8b9bb4`                               |
-| Seams       | `#c9d4e0`; pinstripe `#6fb7b3`; trim `#2585d0`                |
-| Mouths      | `#64caff`                                                     |
-| Astra lens  | Bezel `#d9a08a`, glass `#3b2a3f`, ember `#9a6470`             |
-| Astra glow  | Halo `#ffc9a8`, core `#fff1e0`                                |
+| Part         | Colours                                                       |
+| ------------ | ------------------------------------------------------------- |
+| Hull         | Top `#ffffff`, front sides `#d4dfe9`, rear sides `#abbfce`    |
+| Walls, sill  | `#1767b3`                                                     |
+| Canopy glass | `#2585d0` toward highlight `#87bce5`                          |
+| Mouths       | Frame `#0f4e8f`, face `#64caff`; seam `#0f4e8f`               |
+| Nav lights   | Port `#d68b72`, starboard `#65c9bf`, apex `#70ace8`           |
+| Tub walls    | `#1d2234`, `#262b44`, `#3a4466`, `#5a6988`                    |
+| Seats        | `#2f6a6e`, `#3d8084`, `#4f9ea3`, `#6cb8b9`; outline `#2c5f63` |
+| Seat caps    | `#b8ad9a`, `#d9cbb1`, `#efe4cf`                               |
+| Floor, dash  | `#5a6988`, `#6d7b98`, `#8b9bb4`                               |
+| Astra lens   | Bezel `#d9a08a`, glass `#3b2a3f`, ember `#9a6470`             |
+| Astra glow   | Halo `#ffc9a8`, core `#fff1e0`                                |
 
 ## Muting
 
@@ -93,11 +103,11 @@ sparkles.
 ## Astra speaking
 
 `cockpit-astra` holds four speaking frames as opaque patches over the lens and
-its warm halo: 78 by 80 image px (39 by 40 logical px) each, frames `speak1` to
+its warm halo: 78 by 74 image px (39 by 37 logical px) each, frames `speak1` to
 `speak4`, 120 ms each (480 ms loop, the `loop` list).
 
 - Draw the current frame over either background with the background's
-  transform, its top-left at `at`, (530, 169) logical px on the canvas. The
+  transform, its top-left at `at`, (513, 182) logical px on the canvas. The
   heads never reach the patch, so one set serves both.
 - Idle: no patch (the dim ember in the background).
 - Reduced motion: `speak1` held while Astra speaks.

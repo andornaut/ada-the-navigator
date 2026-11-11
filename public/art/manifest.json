@@ -3473,16 +3473,16 @@
       "id": "cockpit-astra",
       "path": "/art/cockpit-astra.png",
       "width": 312,
-      "height": 80,
+      "height": 74,
       "displayWidth": 39,
-      "displayHeight": 40,
+      "displayHeight": 37,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "frameWidth": 78,
-      "frameHeight": 80,
+      "frameHeight": 74,
       "frames": {
         "speak1": 0,
         "speak2": 1,
@@ -3512,8 +3512,8 @@
         }
       ],
       "at": {
-        "x": 530,
-        "y": 169
+        "x": 513,
+        "y": 182
       }
     },
     {
