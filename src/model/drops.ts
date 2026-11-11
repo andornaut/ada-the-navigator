@@ -37,7 +37,7 @@ export function rollEnemyDrop(
 ): Drop {
   const drop: Drop = { stardust: catalog.enemyStardust[archetype], weapon: null };
   if (next() < catalog.weaponDropChance[archetype]) {
-    const weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "missiles";
+    const weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
     if (owned.includes(weapon)) {
       drop.stardust += catalog.ownedWeaponStardust;
     } else {

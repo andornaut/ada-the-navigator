@@ -4,7 +4,7 @@ import type { Weapon } from "./types.ts";
 export type UpgradeWeapon = Exclude<Weapon, "basic">;
 export type UpgradeTrack = "shield" | "shieldRecharge" | "engine" | "tractor";
 
-/** A tuning value with its base and one value per bought level. */
+/** A tuning value with its level 1 base and one value per bought level from level 2. */
 export interface LeveledValue {
   base: number;
   levels: readonly number[];
@@ -38,19 +38,23 @@ export interface EconomyCatalog {
   /** Stardust given instead of a dropped weapon Ada already owns. */
   ownedWeaponStardust: number;
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
-  /** Prices per level; the level count is each list's length. */
+  /**
+   * Prices of levels 2 and up; level 1 is the base, so the level count is each list's
+   * length plus 1.
+   */
   weaponUpgradePrices: readonly number[];
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
-  /** Per-level effect fractions, applied additively per level. */
-  effects: {
-    weaponDamage: number;
-    weaponInterval: number;
-    shieldCapacity: number;
-    shieldRechargeDelay: number;
-    shieldRechargeRate: number;
-    engineSpeed: number;
-    engineSeconds: number;
-  };
+  /** Multipliers on the base value at levels 1, 2 and 3. */
+  effects: Readonly<
+    Record<
+      | "engineSeconds"
+      | "engineSpeed"
+      | "shieldCapacity"
+      | "shieldRechargeDelay"
+      | "shieldRechargeRate",
+      readonly [number, number, number]
+    >
+  >;
   tractorRadius: LeveledValue;
   tractorSpeed: LeveledValue;
   paints: Readonly<Record<string, PaintScheme>>;
@@ -145,14 +149,14 @@ export const ECONOMY: EconomyCatalog = {
     },
   },
   discoveryStardust: 5,
+  // Engine tuning: +5% top speed and -10% acceleration and braking seconds per level. Shield
+  // capacity 100, 150, 225. Recharge about x1.5 per level: delay /1.2 and rate x1.25 each.
   effects: {
-    engineSeconds: -0.1,
-    engineSpeed: 0.05,
-    shieldCapacity: 0.2,
-    shieldRechargeDelay: -0.15,
-    shieldRechargeRate: 0.2,
-    weaponDamage: 0.1,
-    weaponInterval: -0.1,
+    engineSeconds: [1, 0.9, 0.8],
+    engineSpeed: [1, 1.05, 1.1],
+    shieldCapacity: [1, 1.5, 2.25],
+    shieldRechargeDelay: [1, 1 / 1.2, 1 / 1.44],
+    shieldRechargeRate: [1, 1.25, 1.5625],
   },
   // Half each archetype's hit points (hardpoints for multipart ships), rounded down, at least 1.
   enemyStardust: {
@@ -201,15 +205,21 @@ export const ECONOMY: EconomyCatalog = {
     safeRadius: 320,
   },
   trackPrices: {
-    engine: [120, 240, 480],
-    shield: [100, 200, 400],
-    shieldRecharge: [100, 200, 400],
+    engine: [120, 240],
+    shield: [150, 300],
+    shieldRecharge: [150, 300],
     tractor: [80, 160],
   },
   tractorRadius: { base: 100, levels: [150, 200] },
   tractorSpeed: { base: 150, levels: [220, 300] },
   weaponDropChance: { ...small, capital: 0.1, frigate: 0.05 },
   weaponLockSeconds: 5,
-  weaponPrices: { missiles: 150, scattershot: 350, tripleLaser: 250 },
-  weaponUpgradePrices: [100, 200, 400],
+  weaponPrices: {
+    heavyMissile: 300,
+    multiLaser: 250,
+    phaser: 400,
+    rapidMissile: 150,
+    scattershot: 350,
+  },
+  weaponUpgradePrices: [150, 300],
 };

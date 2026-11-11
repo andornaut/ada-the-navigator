@@ -6,8 +6,10 @@ import {
   onScreen,
   runScenario,
   scenarioEconomy,
+  SCENARIOS,
 } from "../../tools/pacing-sim.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { sectorEncounters } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
@@ -20,7 +22,14 @@ describe("pacing simulation world", () => {
     for (const sector of [1, 2] as const satisfies readonly SectorId[]) {
       for (let seed = 1; seed <= 30; seed++) {
         const flight = createFlight(PROTOTYPE, sector, seed, { known: [] });
-        const world = { catalog: ECONOMY, sector, seed, spawnWeights };
+        const world = {
+          catalog: ECONOMY,
+          encounterRate: 1,
+          encounters: sectorEncounters[sector],
+          sector,
+          seed,
+          spawnWeights,
+        };
         const expected = { caches: [] as string[], packs: [] as string[], rocks: [] as string[] };
         for (let x = -2; x <= 2; x++) {
           for (let y = -2; y <= 2; y++) {
@@ -129,5 +138,20 @@ describe("pacing simulation runs", () => {
       expect(run.destroyed.oversizedCapital).toBe(2);
       expect(run.stardust.guards).toBeGreaterThan(0);
     }
+  });
+
+  it("meets more encounters, frigates and escorted capitals with galaxy one's playtest roster", () => {
+    const met = (name: "current" | "roster") => {
+      const scenario = { ...SCENARIOS[name]!, behaviour: {}, name };
+      const { summary } = runScenario({ ...options, minutes: 60, scenario, seeds: 6 });
+      return summary.metPerMinute;
+    };
+    const total = (record: Partial<Record<string, number>>) =>
+      Object.values(record).reduce<number>((sum, value) => sum + (value ?? 0), 0);
+    const current = met("current");
+    const roster = met("roster");
+    expect(total(roster)).toBeGreaterThan(total(current) * 1.1);
+    expect(current.frigate).toBeUndefined();
+    expect(roster.frigate ?? 0).toBeGreaterThan(0);
   });
 });

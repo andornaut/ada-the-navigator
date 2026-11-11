@@ -21,6 +21,7 @@ import {
   TEXT_TOKENS,
 } from "./modal.ts";
 import { refuse } from "./refusal.ts";
+import { weaponGlyphPath } from "./weapons.ts";
 import { buttonProperty } from "./ui-skin.ts";
 
 // The station card, the shop and the buy confirm (art/shop.md) on the shared card builder; every
@@ -435,7 +436,7 @@ function glyphElement(glyph: ItemGlyph): HTMLElement {
     "--sheet",
     glyph.kind === "sprite"
       ? `url('${SPRITES}${glyph.key}.png')`
-      : `url('/art/ui/icons/weapon-${glyph.weapon}.svg')`,
+      : `url('${weaponGlyphPath(glyph.weapon)}')`,
   );
   return node;
 }

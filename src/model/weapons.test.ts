@@ -47,25 +47,25 @@ describe("owned unlimited weapons", () => {
     const model = launched();
     const flight = model.state.flight!;
     expect(model.weapons()).toEqual([{ id: "basic", locked: false, selected: true }]);
-    pickup(model, "missiles");
-    pickup(model, "tripleLaser");
+    pickup(model, "rapidMissile");
+    pickup(model, "multiLaser");
     flight.fireCooldown = 0.25;
-    expect(model.selectWeapon("missiles")).toBe(true);
+    expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.fireCooldown).toBe(0.25);
     expect(model.selectWeapon("basic")).toBe(true);
-    expect(model.selectWeapon("tripleLaser")).toBe(true);
-    expect(flight.ownedWeapons).toEqual(["missiles", "tripleLaser"]);
+    expect(model.selectWeapon("multiLaser")).toBe(true);
+    expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     expect(model.weapons()).toEqual([
       { id: "basic", locked: false, selected: false },
-      { id: "missiles", locked: false, selected: false },
-      { id: "tripleLaser", locked: false, selected: true },
+      { id: "rapidMissile", locked: false, selected: false },
+      { id: "multiLaser", locked: false, selected: true },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
     expect(model.save()).toBe(before);
   });
 
-  it.each(["missiles", "tripleLaser", "scattershot"] as const)(
+  it.each(["rapidMissile", "multiLaser", "scattershot"] as const)(
     "fires %s continuously without ammunition and preserves ownership",
     (weapon) => {
       const model = launched();
@@ -80,17 +80,17 @@ describe("owned unlimited weapons", () => {
 
   it("does not duplicate ownership when collecting the same upgrade repeatedly", () => {
     const model = launched();
-    pickup(model, "missiles");
+    pickup(model, "rapidMissile");
     expect(model.selectWeapon("basic")).toBe(true);
-    pickup(model, "missiles");
-    pickup(model, "missiles");
-    expect(model.state.flight!.ownedWeapons).toEqual(["missiles"]);
-    expect(model.weapons().filter((choice) => choice.id === "missiles")).toHaveLength(1);
+    pickup(model, "rapidMissile");
+    pickup(model, "rapidMissile");
+    expect(model.state.flight!.ownedWeapons).toEqual(["rapidMissile"]);
+    expect(model.weapons().filter((choice) => choice.id === "rapidMissile")).toHaveLength(1);
   });
 
   it("depletes the shield without restoring it, so an equipped upgrade no longer absorbs depletion", () => {
     const model = launched();
-    pickup(model, "missiles");
+    pickup(model, "rapidMissile");
     const flight = model.state.flight!;
     flight.shield = PROTOTYPE.tuning.enemyDamage;
     incoming(flight);
@@ -101,7 +101,7 @@ describe("owned unlimited weapons", () => {
 
   it("jumps home on basic depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
     const model = launched();
-    pickup(model, "tripleLaser");
+    pickup(model, "multiLaser");
     model.state.flight!.dangerFor = 0;
     model.state.flight!.weaponLockFor = 0;
     expect(model.selectWeapon("basic")).toBe(true);
@@ -119,14 +119,14 @@ describe("owned unlimited weapons", () => {
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
       { id: "basic", locked: false, selected: true },
-      { id: "tripleLaser", locked: false, selected: false },
+      { id: "multiLaser", locked: false, selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
   });
 
   it("keeps friendly arrivals protected without losing an owned upgrade", () => {
     const model = launched();
-    pickup(model, "missiles");
+    pickup(model, "rapidMissile");
     const flight = model.state.flight!;
     flight.objects.push({
       ...flight.player,
@@ -140,8 +140,8 @@ describe("owned unlimited weapons", () => {
     incoming(flight);
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.shield).toBe(PROTOTYPE.tuning.enemyDamage);
-    expect(flight.weapon).toBe("missiles");
-    expect(flight.ownedWeapons).toEqual(["missiles"]);
+    expect(flight.weapon).toBe("rapidMissile");
+    expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
   });
 
   it("restores selected upgrade ownership without using the ammunition counter", () => {
@@ -161,18 +161,18 @@ describe("owned unlimited weapons", () => {
 
   it("rejects malformed ownership metadata without weakening snapshot validation", () => {
     const model = launched();
-    pickup(model, "missiles");
+    pickup(model, "rapidMissile");
     expect(restoreSave(model.save())).not.toBeNull();
     for (const ownedWeapons of [
       null,
       {},
       ["basic"],
       ["unknown"],
-      ["missiles", "missiles"],
-      ["missiles", 1],
+      ["rapidMissile", "rapidMissile"],
+      ["rapidMissile", 1],
       [],
-      ["tripleLaser"],
-      { missiles: true },
+      ["multiLaser"],
+      { rapidMissile: true },
       ["__proto__"],
     ]) {
       const snapshot = JSON.parse(model.save()) as { flight: { ownedWeapons: unknown } };
@@ -186,12 +186,12 @@ describe("owned unlimited weapons", () => {
 
   it("rejects selection outside live flight and during dialogue", () => {
     const model = launched();
-    pickup(model, "tripleLaser");
+    pickup(model, "multiLaser");
     model.state.dialogue = { choices: [], context: "test", text: "", title: "" };
     expect(model.selectWeapon("basic")).toBe(false);
     model.state.dialogue = null;
     model.returnHome();
-    expect(model.selectWeapon("tripleLaser")).toBe(false);
+    expect(model.selectWeapon("multiLaser")).toBe(false);
     expect(model.weapons()).toEqual([]);
   });
 });

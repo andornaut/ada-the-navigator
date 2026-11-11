@@ -13,7 +13,7 @@ import {
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
-import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -65,7 +65,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { noLevels, shipTuning, upgradedWeapon } from "./upgrades.ts";
+import { noLevels, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 import { collectWeapon, ensureOwnedWeapons, ownedForSave } from "./weapons.ts";
 
@@ -970,13 +970,15 @@ function fire(
   viewportWidth: number,
   aim: Vec,
   flight: FlightState,
+  events: FlightEvent[],
 ): void {
   ensureOwnedWeapons(flight);
-  const definition = upgradedWeapon(
-    ECONOMY,
-    flight.levels.weapons[flight.weapon],
-    WEAPON_CATALOG[flight.weapon],
-  );
+  const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
+  if (definition.projectileKind === "beam") {
+    fireBeam(content, definition, aim, flight, events);
+    flight.fireCooldown += definition.intervalSeconds;
+    return;
+  }
   const volley = planPlayerVolley(definition, {
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
@@ -1343,66 +1345,18 @@ function shots(
           continue;
         }
         shot.hitIds.push(object.id);
-        if (object.kind === "enemy" && object.enemy) {
-          const definition = enemyCatalog[object.enemy.archetype];
-          const enemy = object.enemy;
-          const adaWidth = content.tuning.flight.shipRadius * 2;
-          const part = definition.hardpoints.find((part) => {
-            if (!enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0)) {
-              return false;
-            }
-            const offset = hardpointOffset(definition, adaWidth, enemy.facing, part);
-            return (
-              distance(shot, { x: object.x + offset.x, y: object.y + offset.y }) <=
-              content.tuning.flight.shipRadius + 6
-            );
-          });
-          // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
-          if (definition.hardpoints.length && !part) {
-            shot.hitIds.pop();
-            continue;
-          }
-          object.enemy = damageEnemy(
-            definition,
-            { amount: shot.damage, hardpointId: part?.id ?? null },
-            object.enemy,
-          );
-          object.hp = enemyEffects(definition, object.enemy).defeated
-            ? 0
-            : Math.max(1, object.enemy.hp);
-        } else {
-          object.hp -= shot.damage;
+        const part = hitPart(content, partReach(content), shot, object);
+        // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
+        if (part === undefined) {
+          shot.hitIds.pop();
+          continue;
+        }
+        hit(content, shot.damage, part, object, flight, events);
+        if (shot.blast !== undefined) {
+          blast(content, shot.damage, shot.blast, shot, object, flight, events);
         }
         if (!shot.piercing) {
           shot.life = 0;
-        }
-        if (object.hp <= 0) {
-          if (object.kind === "enemy") {
-            destroyEnemy(object, flight);
-            events.push({ type: "enemyDisabled" });
-          }
-          if (object.kind === "rock") {
-            const next = dropRandom(flight.seed, object.id);
-            const amount = rollAsteroidStardust(ECONOMY, next);
-            // An asteroid scatters its Stardust about its own radius.
-            releaseStardust(object, object.radius, next, amount, amount, flight);
-          }
-          if (object.kind === "debris") {
-            events.push({ id: object.id, type: "debrisCleared" });
-          }
-          if (object.kind === "resource") {
-            for (let p = 0; p < content.tuning.flight.piecesPerRock; p++) {
-              flight.objects.push({
-                hp: 1,
-                id: `piece:${flight.nextId++}`,
-                kind: "pickup",
-                radius: content.tuning.flight.pieceRadius,
-                role: "cargo",
-                x: object.x + (p - 1) * 12,
-                y: object.y,
-              });
-            }
-          }
         }
         if (shot.life <= 0) {
           break;
@@ -1418,6 +1372,267 @@ function shots(
     }
   }
   flight.objects = flight.objects.filter((o) => o.hp > 0);
+}
+
+/** How near a point must be to a live hardpoint to strike it. */
+function partReach(content: PrototypeContent): number {
+  return content.tuning.flight.shipRadius + 6;
+}
+
+/** A multipart enemy's live hardpoints, in world coordinates. */
+function liveParts(
+  content: PrototypeContent,
+  object: SpaceObject,
+): { id: string; x: number; y: number }[] {
+  const enemy = object.enemy;
+  if (!enemy) {
+    return [];
+  }
+  const definition = enemyCatalog[enemy.archetype];
+  const adaWidth = content.tuning.flight.shipRadius * 2;
+  return definition.hardpoints
+    .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
+    .map((part) => {
+      const offset = hardpointOffset(definition, adaWidth, enemy.facing, part);
+      return { id: part.id, x: object.x + offset.x, y: object.y + offset.y };
+    });
+}
+
+/**
+ * The hardpoint a strike at `point` lands on: null for the hull of a ship without hardpoints
+ * and for scenery, undefined when a multipart ship has no live hardpoint within `reach`.
+ */
+function hitPart(
+  content: PrototypeContent,
+  reach: number,
+  point: Vec,
+  object: SpaceObject,
+): string | null | undefined {
+  if (object.kind !== "enemy" || !object.enemy) {
+    return null;
+  }
+  if (!enemyCatalog[object.enemy.archetype].hardpoints.length) {
+    return null;
+  }
+  let nearest: { id: string; gap: number } | undefined;
+  for (const part of liveParts(content, object)) {
+    const gap = distance(point, part);
+    if (gap <= reach && (!nearest || gap < nearest.gap)) {
+      nearest = { gap, id: part.id };
+    }
+  }
+  return nearest?.id;
+}
+
+/** Damages an enemy (at a hardpoint, or its hull for null) or scenery, then resolves its loss. */
+function hit(
+  content: PrototypeContent,
+  amount: number,
+  part: string | null,
+  object: SpaceObject,
+  flight: FlightState,
+  events: FlightEvent[],
+): void {
+  if (object.hp <= 0) {
+    return;
+  }
+  if (object.kind === "enemy" && object.enemy) {
+    const definition = enemyCatalog[object.enemy.archetype];
+    object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
+    object.hp = enemyEffects(definition, object.enemy).defeated ? 0 : Math.max(1, object.enemy.hp);
+  } else {
+    object.hp -= amount;
+  }
+  if (object.hp > 0) {
+    return;
+  }
+  if (object.kind === "enemy") {
+    destroyEnemy(object, flight);
+    events.push({ type: "enemyDisabled" });
+  }
+  if (object.kind === "rock") {
+    const next = dropRandom(flight.seed, object.id);
+    const stardust = rollAsteroidStardust(ECONOMY, next);
+    // An asteroid scatters its Stardust about its own radius.
+    releaseStardust(object, object.radius, next, stardust, stardust, flight);
+  }
+  if (object.kind === "debris") {
+    events.push({ id: object.id, type: "debrisCleared" });
+  }
+  if (object.kind === "resource") {
+    for (let p = 0; p < content.tuning.flight.piecesPerRock; p++) {
+      flight.objects.push({
+        hp: 1,
+        id: `piece:${flight.nextId++}`,
+        kind: "pickup",
+        radius: content.tuning.flight.pieceRadius,
+        role: "cargo",
+        x: object.x + (p - 1) * 12,
+        y: object.y,
+      });
+    }
+  }
+}
+
+/**
+ * A missile's blast damages every other live enemy within its radius of the impact, and never
+ * Ada; a multipart ship takes it at its nearest live hardpoint in reach.
+ */
+function blast(
+  content: PrototypeContent,
+  amount: number,
+  radius: number,
+  at: Vec,
+  struck: SpaceObject,
+  flight: FlightState,
+  events: FlightEvent[],
+): void {
+  const blasts = blastFlashes.get(flight) ?? [];
+  blasts.push({ age: 0, radius, x: at.x, y: at.y });
+  blastFlashes.set(flight, blasts);
+  for (const object of [...flight.objects]) {
+    if (object === struck || object.kind !== "enemy" || object.hp <= 0) {
+      continue;
+    }
+    const part = hitPart(content, radius + partReach(content), at, object);
+    if (part === undefined || (part === null && distance(at, object) > radius + object.radius)) {
+      continue;
+    }
+    hit(content, amount, part, object, flight, events);
+  }
+}
+
+/** A hitscan beam's visible flash, view-only and never saved. */
+export interface BeamFlash {
+  from: Vec;
+  to: Vec;
+  age: number;
+}
+const beamFlashes = new WeakMap<FlightState, BeamFlash[]>();
+
+/** A missile blast's visible flash at its impact, view-only and never saved. */
+export interface BlastFlash extends Vec {
+  radius: number;
+  age: number;
+}
+const blastFlashes = new WeakMap<FlightState, BlastFlash[]>();
+/** How long a blast's placeholder flash shows. */
+export const BLAST_FLASH_SECONDS = 0.25;
+
+/** The flight's beam flashes still showing. */
+export function activeBeamFlashes(flight: FlightState): readonly BeamFlash[] {
+  return beamFlashes.get(flight) ?? [];
+}
+
+/** The flight's blast flashes still showing. */
+export function activeBlastFlashes(flight: FlightState): readonly BlastFlash[] {
+  return blastFlashes.get(flight) ?? [];
+}
+
+function ageFlashes(dt: number, flight: FlightState): void {
+  const beams = beamFlashes.get(flight);
+  if (beams) {
+    beams.forEach((flash) => (flash.age += dt));
+    beamFlashes.set(
+      flight,
+      beams.filter((flash) => flash.age < BEAM.flashSeconds),
+    );
+  }
+  const blasts = blastFlashes.get(flight);
+  if (blasts) {
+    blasts.forEach((flash) => (flash.age += dt));
+    blastFlashes.set(
+      flight,
+      blasts.filter((flash) => flash.age < BLAST_FLASH_SECONDS),
+    );
+  }
+}
+
+/**
+ * Where a ray from `origin` along unit `direction` first meets a circle, as a distance along
+ * the ray within `range`, or null. An origin inside the circle meets it at 0.
+ */
+export function rayCircle(
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  center: Vec,
+  radius: number,
+): number | null {
+  const along = (center.x - origin.x) * direction.x + (center.y - origin.y) * direction.y;
+  const square = (center.x - origin.x) ** 2 + (center.y - origin.y) ** 2 - along * along;
+  if (square > radius * radius) {
+    return null;
+  }
+  const half = Math.sqrt(radius * radius - square);
+  if (along + half < 0) {
+    return null;
+  }
+  const entry = Math.max(0, along - half);
+  return entry <= range ? entry : null;
+}
+
+/**
+ * Resolves a hitscan beam at once along the aim: it stops at the first enemy or obstacle
+ * within range and damages only that enemy. Its flash ends at the hit point, or at full range
+ * on a miss. A multipart ship blocks it only at a live hardpoint.
+ */
+function fireBeam(
+  content: PrototypeContent,
+  definition: WeaponDefinition,
+  aim: Vec,
+  flight: FlightState,
+  events: FlightEvent[],
+): void {
+  const range = definition.beamRange ?? 0;
+  const span = length(aim);
+  if (!span || range <= 0) {
+    return;
+  }
+  const direction = { x: aim.x / span, y: aim.y / span };
+  const origin = { ...flight.player };
+  let first: { object: SpaceObject; part: string | null; at: number } | null = null;
+  const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) => {
+    const at = rayCircle(origin, direction, range, center, radius + BEAM.halfWidth);
+    if (at !== null && (!first || at < first.at)) {
+      first = { at, object, part };
+    }
+  };
+  for (const object of flight.objects) {
+    if (object.hp <= 0) {
+      continue;
+    }
+    if (["rock", "resource", "debris"].includes(object.kind)) {
+      consider(object, null, object, object.radius);
+    } else if (object.kind === "enemy" && object.enemy) {
+      if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
+        for (const part of liveParts(content, object)) {
+          consider(object, part.id, part, partReach(content));
+        }
+      } else {
+        consider(object, null, object, object.radius);
+      }
+    }
+  }
+  const struck = first as { object: SpaceObject; part: string | null; at: number } | null;
+  const reach = struck ? struck.at : range;
+  const flashes = beamFlashes.get(flight) ?? [];
+  flashes.push({
+    age: 0,
+    from: origin,
+    to: { x: origin.x + direction.x * reach, y: origin.y + direction.y * reach },
+  });
+  beamFlashes.set(flight, flashes);
+  if (struck) {
+    hit(
+      content,
+      content.tuning.flight.playerShotDamage * definition.damageRatio,
+      struck.part,
+      struck.object,
+      flight,
+      events,
+    );
+  }
 }
 
 /** The id of the wreck that replaces a destroyed enemy. */
@@ -1577,9 +1792,10 @@ export function stepFlight(
         flight.facing,
       );
     }
+    ageFlashes(slice, flight);
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
     if (aiming && flight.fireCooldown <= 0) {
-      fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight);
+      fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight, events);
     }
     const shotDelays = new Map<string, number>();
     const threat = enemies(content, slice, flight, events, shotDelays);

@@ -248,8 +248,8 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     flight.objects.push(enemy("notable", 9000, "capital"), enemy("active", 400));
     syncFlightRegion(PROTOTYPE, flight);
     flight.cargo = 300;
-    flight.ownedWeapons = ["missiles"];
-    flight.weapon = "missiles";
+    flight.ownedWeapons = ["rapidMissile"];
+    flight.weapon = "rapidMissile";
     const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
     const input = { ...idle, aim: { x: 1, y: 0 }, move: { x: 0, y: 1 } };
     expect(stepFlight(PROTOTYPE, 0.2, input, resumed)).toEqual(

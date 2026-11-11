@@ -8,7 +8,14 @@ export interface WeaponChoice {
   /** Changing to this weapon is refused while weapon changes are locked. */
   locked: boolean;
 }
-export const UPGRADE_WEAPONS = ["missiles", "tripleLaser", "scattershot"] as const;
+/** Shop order, cheapest first; the drop pool and the cheat grant use the same list. */
+export const UPGRADE_WEAPONS = [
+  "rapidMissile",
+  "multiLaser",
+  "heavyMissile",
+  "scattershot",
+  "phaser",
+] as const;
 
 /** Weapon changes lock during combat (the danger state) and while the post-combat timer runs. */
 export function weaponsLocked(flight: Pick<FlightState, "dangerFor" | "weaponLockFor">): boolean {
@@ -89,7 +96,7 @@ export function loseEquippedWeapon(flight: FlightState): UpgradeWeapon | null {
     // A run-only granted weapon costs nothing beyond the flight.
     flight.grantedWeapons = flight.grantedWeapons.filter((weapon) => weapon !== lost);
   } else {
-    flight.levels.weapons[lost] = 0;
+    flight.levels.weapons[lost] = 1;
   }
   flight.weapon = "basic";
   return lost;

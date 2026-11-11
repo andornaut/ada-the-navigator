@@ -25,7 +25,7 @@ export interface ShopRow {
   inUse: boolean;
   /** The next purchase's price, or null when not for sale. */
   price: number | null;
-  /** Bought level and level count for leveled items; null otherwise. */
+  /** Current level (from 1) and level count for leveled items; null otherwise. */
   level: { current: number; max: number } | null;
 }
 
@@ -46,6 +46,7 @@ function prices(catalog: EconomyCatalog, item: ShopItem): readonly number[] | nu
   }
 }
 
+/** The current level, from 1 (the base) to the level count. */
 function level(economy: EconomyState, item: ShopItem): number {
   switch (item.kind) {
     case "weaponUpgrade":
@@ -53,7 +54,7 @@ function level(economy: EconomyState, item: ShopItem): number {
     case "track":
       return economy.levels[item.track];
     default:
-      return 0;
+      return 1;
   }
 }
 
@@ -64,15 +65,17 @@ function weaponOwned(economy: EconomyState, weapon: Weapon): boolean {
 export function shopRow(catalog: EconomyCatalog, economy: EconomyState, item: ShopItem): ShopRow {
   const table = prices(catalog, item);
   if (table) {
+    // Level 1 is the base; the table prices levels 2 and up.
     const current = level(economy, item);
-    const maxed = current >= table.length;
+    const max = table.length + 1;
+    const maxed = current >= max;
     const forSale = item.kind !== "weaponUpgrade" || weaponOwned(economy, item.weapon);
     return {
       inUse: false,
       item,
-      level: { current, max: table.length },
+      level: { current, max },
       owned: maxed,
-      price: maxed || !forSale ? null : table[current]!,
+      price: maxed || !forSale ? null : table[current - 1]!,
     };
   }
   if (item.kind === "weapon") {
@@ -205,9 +208,11 @@ export function fill(template: string, values: Readonly<Record<string, string | 
 
 const WEAPON_LABELS: Readonly<Record<Weapon, string>> = {
   basic: "weaponBasic",
-  missiles: "weaponMissiles",
+  heavyMissile: "weaponHeavyMissile",
+  multiLaser: "weaponMultiLaser",
+  phaser: "weaponPhaser",
+  rapidMissile: "weaponRapidMissile",
   scattershot: "weaponScattershot",
-  tripleLaser: "weaponTripleLaser",
 };
 const TRACK_LABELS: Readonly<Record<UpgradeTrack, string>> = {
   engine: "engineTuning",
@@ -217,9 +222,11 @@ const TRACK_LABELS: Readonly<Record<UpgradeTrack, string>> = {
 };
 
 const ABOUT_LABELS: Readonly<Record<UpgradeWeapon, string>> = {
-  missiles: "aboutMissiles",
+  heavyMissile: "aboutHeavyMissile",
+  multiLaser: "aboutMultiLaser",
+  phaser: "aboutPhaser",
+  rapidMissile: "aboutRapidMissile",
   scattershot: "aboutScattershot",
-  tripleLaser: "aboutTripleLaser",
 };
 
 export function weaponName(labels: Readonly<Record<string, string>>, weapon: Weapon): string {

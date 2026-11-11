@@ -17,6 +17,7 @@ import { pathToFileURL } from "node:url";
 import { CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
+  type EncounterEntry,
   type EnemyArchetype,
   enemyCatalog,
   enemyEncounterTuning,
@@ -26,7 +27,7 @@ import { HOLODISKS } from "../src/data/holodisks.ts";
 import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { SectorId, Weapon } from "../src/data/types.ts";
-import { WEAPON_CATALOG } from "../src/data/weapon-catalog.ts";
+import { weaponAt } from "../src/data/weapon-catalog.ts";
 import { planChunk } from "../src/model/chunk-templates.ts";
 import {
   dropRandom,
@@ -110,8 +111,19 @@ export interface Scenario {
   economy: EconomyOverrides;
   /** Chunk spawn weight for discovery caches; the base is PROTOTYPE's. */
   cacheSpawnWeight?: number;
+  /** Replacement encounter tables per sector; the base is the catalog's sectorEncounters. */
+  encounters?: Partial<Record<SectorId, readonly SimEncounterEntry[]>>;
+  /** Encounter cell density multiplier; cell spacing shrinks with its square root. */
+  encounterRate?: Partial<Record<SectorId, number>>;
+  /** Multiplier on every enemy's perception reach. */
+  perceptionScale?: Partial<Record<SectorId, number>>;
   prices: Partial<Prices>;
   behaviour: Partial<Behaviour>;
+}
+
+/** An encounter table entry; a group can bring escorts that fight alongside it. */
+export interface SimEncounterEntry extends EncounterEntry {
+  escorts?: { archetype: EnemyArchetype; count: number };
 }
 
 export const DEFAULT_BEHAVIOUR: Behaviour = {
@@ -139,6 +151,30 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
 /** Named value sets for comparison; `current` changes nothing. */
 export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "name">>> = {
   current: { description: "Current data", economy: {}, prices: {} },
+  // CLEANUP (added 2026-11-11): galaxy one's playtest roster (gameplay/ships.md) before it
+  // reaches the catalog; remove once sectorEncounters and the per-galaxy rates carry it.
+  roster: {
+    description: "Galaxy one's playtest roster: bigger packs, frigates, capital battles",
+    economy: {},
+    encounterRate: { 1: 1.2 },
+    encounters: {
+      1: [
+        { archetype: "swarm", groupSize: [4, 6], weight: 0.35 },
+        { archetype: "fighter", groupSize: [1, 3], weight: 0.3 },
+        { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
+        { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+        { archetype: "frigate", groupSize: [1, 1], weight: 0.07 },
+        {
+          archetype: "capital",
+          escorts: { archetype: "fighter", count: 4 },
+          groupSize: [1, 1],
+          weight: 0.03,
+        },
+      ],
+    },
+    perceptionScale: { 1: 1.2 },
+    prices: {},
+  },
 };
 
 /**
@@ -178,6 +214,7 @@ interface Pack {
   archetype: EnemyArchetype;
   count: number;
   decided: boolean;
+  escorts: SimEncounterEntry["escorts"] | null;
   id: string;
   x: number;
   y: number;
@@ -265,11 +302,17 @@ export interface WorldOptions {
   sector: SectorId;
   seed: number;
   spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
+  encounters: readonly SimEncounterEntry[];
+  encounterRate: number;
 }
 
 const tuning = PROTOTYPE.tuning;
 const size = tuning.chunkSize;
 const span = Math.max(3, Math.ceil(enemyEncounterTuning.quietDistance / size));
+/** Whether a chunk index hosts an encounter cell for a possibly fractional chunk spacing. */
+function hostsCell(spacing: number, index: number): boolean {
+  return Math.ceil(index / spacing) * spacing < index + 1;
+}
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -296,14 +339,17 @@ export function generateChunk(
   const stationSafe = (point: { x: number; y: number }) =>
     stationsNear(catalog, sector, catalog.station.safeRadius, point).length > 0;
   const chunk: Chunk = { caches: [], dust: [], pack: null, rocks: [] };
-  if (x % span === 0 && y % span === 0) {
+  const spacing = span / Math.sqrt(options.encounterRate);
+  if (hostsCell(spacing, x) && hostsCell(spacing, y)) {
     const next = lcg(cellHash(seed ^ 9173, x, y));
     const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
     if (distance(center, player) >= tuning.safeRadius * 2 && !stationSafe(center)) {
       if (Math.floor(next() * 4) !== 3) {
         const countRoll = next();
-        const { archetype, count } = rollEncounter(sectorEncounters[sector], countRoll, next());
-        chunk.pack = { archetype, count, decided: false, id: `pack:${x},${y}`, ...center };
+        const { archetype, count } = rollEncounter(options.encounters, countRoll, next());
+        const escorts =
+          options.encounters.find((entry) => entry.archetype === archetype)?.escorts ?? null;
+        chunk.pack = { archetype, count, decided: false, escorts, id: `pack:${x},${y}`, ...center };
       }
     }
   }
@@ -339,15 +385,20 @@ export function generateChunk(
 }
 
 const DAMAGE = tuning.flight.playerShotDamage;
-/** Projectiles of one volley that reach a single small target when the volley hits. */
+/**
+ * Projectiles of one level 1 volley that reach a single small target when the volley hits;
+ * the player buys nothing, so found weapons stay at level 1.
+ */
 const ON_TARGET: Readonly<Record<Weapon, number>> = {
   basic: 1,
-  missiles: 1,
+  heavyMissile: 1,
+  multiLaser: 1.4,
+  phaser: 1,
+  rapidMissile: 1,
   scattershot: 2.5,
-  tripleLaser: 1.4,
 };
 function volleySeconds(behaviour: Behaviour, weapon: Weapon, hp: number): number {
-  const definition = WEAPON_CATALOG[weapon];
+  const definition = weaponAt(weapon, 1);
   const perVolley = DAMAGE * definition.damageRatio * ON_TARGET[weapon];
   return (Math.ceil(hp / perVolley - 1e-9) * definition.intervalSeconds) / behaviour.hitRate;
 }
@@ -376,6 +427,9 @@ export interface SimulationInput {
   sector: SectorId;
   seed: number;
   spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
+  encounters: readonly SimEncounterEntry[];
+  encounterRate: number;
+  perceptionScale: number;
 }
 
 export function simulate(input: SimulationInput): RunResult {
@@ -436,7 +490,14 @@ export function simulate(input: SimulationInput): RunResult {
   };
   const newFlight = () => {
     flightSeed = cellHash(0x0f17, input.seed, result.jumps + sector * 1000) || 1;
-    world = { catalog, sector, seed: flightSeed, spawnWeights: input.spawnWeights };
+    world = {
+      catalog,
+      encounterRate: input.encounterRate,
+      encounters: input.encounters,
+      sector,
+      seed: flightSeed,
+      spawnWeights: input.spawnWeights,
+    };
     chunks = new Map();
     position = { x: 0, y: 0 };
     target = null;
@@ -488,25 +549,33 @@ export function simulate(input: SimulationInput): RunResult {
     newFlight();
   };
   /** Fights one pack, destroying members as morale allows and advancing time as it goes. */
-  const fight = (pack: Pack) => {
-    const definition = enemyCatalog[pack.archetype];
-    const flee = fleeAfter(pack.archetype);
-    advance(behaviour.engageSeconds);
+  const fightGroup = (archetype: EnemyArchetype, count: number, id: string) => {
+    const definition = enemyCatalog[archetype];
+    // Multipart ships fall to their hardpoints and never flee on hull damage.
+    const flee = definition.hardpoints.length ? null : fleeAfter(archetype);
     let lost = 0;
-    for (let member = 0; member < pack.count; member++) {
-      const packFlees = pack.count > 1 && lost / pack.count >= definition.morale.packLossRatio;
+    for (let member = 0; member < count; member++) {
+      const packFlees = count > 1 && lost / count >= definition.morale.packLossRatio;
       const fleeing = packFlees || flee !== null;
       if (fleeing && rng() >= behaviour.fleeKillChance) {
         advance(packFlees ? 0 : volleySeconds(behaviour, weapon, flee ?? 0));
         continue;
       }
       advance(
-        volleySeconds(behaviour, weapon, definition.hp) +
+        volleySeconds(behaviour, weapon, totalHp(archetype)) +
           (fleeing ? behaviour.fleeChaseSeconds : 0),
       );
       lost++;
-      add(result.destroyed, pack.archetype);
-      loot(pack.archetype, `${pack.id}:${member}`, "enemies");
+      add(result.destroyed, archetype);
+      loot(archetype, `${id}:${member}`, "enemies");
+    }
+  };
+  /** Fights one pack and any escorts, advancing time as it goes. */
+  const fight = (pack: Pack) => {
+    advance(behaviour.engageSeconds);
+    fightGroup(pack.archetype, pack.count, pack.id);
+    if (pack.escorts) {
+      fightGroup(pack.escorts.archetype, pack.escorts.count, `${pack.id}:escorts`);
     }
     advance(behaviour.collectSeconds);
   };
@@ -584,7 +653,7 @@ export function simulate(input: SimulationInput): RunResult {
       const definition = enemyCatalog[pack.archetype];
       const reach =
         definition.aggression === "sight"
-          ? distance(pack, position) <= definition.perception
+          ? distance(pack, position) <= definition.perception * input.perceptionScale
           : onScreen(pack.x - position.x, pack.y - position.y);
       if (!reach) {
         continue;
@@ -875,6 +944,9 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       catalog,
       minutes: options.minutes,
       prices,
+      encounterRate: scenario.encounterRate?.[options.sector] ?? 1,
+      encounters: scenario.encounters?.[options.sector] ?? sectorEncounters[options.sector],
+      perceptionScale: scenario.perceptionScale?.[options.sector] ?? 1,
       sector: options.sector,
       seed: index + 1,
       spawnWeights,
@@ -1168,6 +1240,15 @@ function main(argv: readonly string[]): void {
     ...(scenario.cacheSpawnWeight === undefined
       ? {}
       : { cacheSpawnWeight: scenario.cacheSpawnWeight as number }),
+    ...(scenario.encounters === undefined
+      ? {}
+      : { encounters: scenario.encounters as NonNullable<Scenario["encounters"]> }),
+    ...(scenario.encounterRate === undefined
+      ? {}
+      : { encounterRate: scenario.encounterRate as NonNullable<Scenario["encounterRate"]> }),
+    ...(scenario.perceptionScale === undefined
+      ? {}
+      : { perceptionScale: scenario.perceptionScale as NonNullable<Scenario["perceptionScale"]> }),
   };
   const { runs, summary } = runScenario({
     behaviour: behaviour as unknown as Behaviour,

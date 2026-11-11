@@ -289,7 +289,7 @@ describe("station discovery and docking", () => {
   it("refuses travel and purchases outside a dock", () => {
     const model = launched();
     model.state.economy.stardust = 500;
-    expect(model.buy({ kind: "weapon", weapon: "missiles" })).toEqual({
+    expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "refused",
       reason: "notForSale",
     });

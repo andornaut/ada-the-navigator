@@ -3,7 +3,8 @@ import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState"
 import type { ShipPhysics } from "./ship-physics.ts";
 
 export type SectorId = 1 | 2 | 3;
-export type Weapon = "basic" | "missiles" | "tripleLaser" | "scattershot";
+export type Weapon =
+  "basic" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
 
 export interface ChapterContent {
   name: string;

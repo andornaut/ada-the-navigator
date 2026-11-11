@@ -47,7 +47,7 @@ describe("model feedback", () => {
 
   it("does not report switching back to basic fire as a pickup", () => {
     const { feedback, flight, state } = launched();
-    flight.weapon = "missiles";
+    flight.weapon = "rapidMissile";
     feedback.observe(100, state);
     flight.weapon = "basic";
     expect(feedback.observe(100, state)).not.toContain("pickup");

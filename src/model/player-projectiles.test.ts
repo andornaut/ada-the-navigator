@@ -13,24 +13,56 @@ const context: VolleyContext = {
 };
 
 describe("pure player projectile volleys", () => {
-  it("makes automatic missiles slower and more powerful without adding homing or splash", () => {
-    const basic = planPlayerVolley(WEAPON_CATALOG.basic, context);
-    const missiles = planPlayerVolley(WEAPON_CATALOG.missiles, context);
-    expect(missiles.interval).toBeGreaterThan(basic.interval);
-    expect(missiles.projectiles).toHaveLength(1);
-    const missile = missiles.projectiles[0]!;
-    expect(Math.hypot(missile.velocity.x, missile.velocity.y)).toBeCloseTo(context.baseSpeed * 0.6);
-    expect(missile.damage).toBe(context.baseDamage * 4);
-    expect(missile.projectile).toBe("missile");
-    expect(missile.life).toBe(context.baseLifetime);
-    expect(missile).toMatchObject(context.origin);
-    expect(missile.fade).toBeUndefined();
+  it.each([
+    ["rapidMissile", 0.3, 1.3, 1.5, 25],
+    ["heavyMissile", 1.2, 0.6, 8, 60],
+  ] as const)(
+    "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
+    (weapon, interval, speed, damage, blast) => {
+      const volley = planPlayerVolley(WEAPON_CATALOG[weapon][0], context);
+      expect(volley.interval).toBe(interval);
+      expect(volley.projectiles).toHaveLength(1);
+      const missile = volley.projectiles[0]!;
+      expect(Math.hypot(missile.velocity.x, missile.velocity.y)).toBeCloseTo(
+        context.baseSpeed * speed,
+      );
+      expect(missile.damage).toBe(context.baseDamage * damage);
+      expect(missile.blast).toBe(blast);
+      expect(missile.projectile).toBe("missile");
+      expect(missile.life).toBe(context.baseLifetime);
+      expect(missile).toMatchObject(context.origin);
+      expect(missile.fade).toBeUndefined();
+    },
+  );
+
+  it("gives bolts and dots no blast and refuses the hitscan Phaser", () => {
+    for (const weapon of ["basic", "multiLaser", "scattershot"] as const) {
+      for (const shot of planPlayerVolley(WEAPON_CATALOG[weapon][0], context).projectiles) {
+        expect(shot.blast).toBeUndefined();
+      }
+    }
+    expect(() => planPlayerVolley(WEAPON_CATALOG.phaser[0], context)).toThrow(RangeError);
+  });
+
+  it.each([
+    [1, [-20, 0, 20], [-30, -20, -10, 0, 10, 20, 30]],
+    [2, [-20, -20 / 3, 20 / 3, 20], [-30, -22.5, -15, -7.5, 0, 7.5, 15, 22.5, 30]],
+    [3, [-20, -10, 0, 10, 20], [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30]],
+  ])("fans level %i Multi-Laser bolts and Scattershot dots evenly", (level, bolts, dots) => {
+    const multi = WEAPON_CATALOG.multiLaser[level - 1]!;
+    const scatter = WEAPON_CATALOG.scattershot[level - 1]!;
+    expect(multi.anglesDegrees).toHaveLength(bolts.length);
+    multi.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(bolts[index]!, 9));
+    expect(scatter.anglesDegrees).toHaveLength(dots.length);
+    scatter.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(dots[index]!, 9));
+    // Each level reaches a little farther.
+    expect(scatter.rangeScreenWidths).toBeCloseTo(0.5 + 0.05 * (level - 1), 9);
   });
 
   it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
     const cases = [
-      { definition: WEAPON_CATALOG.tripleLaser, degrees: [-20, 0, 20] },
-      { definition: WEAPON_CATALOG.scattershot, degrees: [-30, -20, -10, 0, 10, 20, 30] },
+      { definition: WEAPON_CATALOG.multiLaser[0], degrees: [-20, 0, 20] },
+      { definition: WEAPON_CATALOG.scattershot[0], degrees: [-30, -20, -10, 0, 10, 20, 30] },
     ];
     for (const { definition, degrees } of cases) {
       for (const aim of [
@@ -70,7 +102,7 @@ describe("pure player projectile volleys", () => {
         { x: 1, y: 1 },
         { x: -1, y: 1 },
       ]) {
-        const volley = planPlayerVolley(WEAPON_CATALOG.scattershot, {
+        const volley = planPlayerVolley(WEAPON_CATALOG.scattershot[0], {
           ...context,
           aim,
           viewportWidth,
@@ -89,7 +121,7 @@ describe("pure player projectile volleys", () => {
   });
 
   it("keeps dots opaque through sixty-five percent of range and fades to zero at expiry", () => {
-    const shot = planPlayerVolley(WEAPON_CATALOG.scattershot, context).projectiles[0]!;
+    const shot = planPlayerVolley(WEAPON_CATALOG.scattershot[0], context).projectiles[0]!;
     const fade = shot.fade!;
     expect(projectileOpacity(fade, shot.life)).toBe(1);
     expect(projectileOpacity(fade, shot.life * 0.35)).toBeCloseTo(1);
@@ -99,14 +131,14 @@ describe("pure player projectile volleys", () => {
   });
 
   it("does not fire on zero aim or mutate the supplied origin, heading or authored definition", () => {
-    const before = JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot });
+    const before = JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot[0] });
     expect(
-      planPlayerVolley(WEAPON_CATALOG.basic, { ...context, aim: { x: 0, y: 0 } }).projectiles,
+      planPlayerVolley(WEAPON_CATALOG.basic[0], { ...context, aim: { x: 0, y: 0 } }).projectiles,
     ).toEqual([]);
-    planPlayerVolley(WEAPON_CATALOG.scattershot, context);
-    expect(JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot })).toBe(before);
+    planPlayerVolley(WEAPON_CATALOG.scattershot[0], context);
+    expect(JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot[0] })).toBe(before);
     expect(() =>
-      planPlayerVolley(WEAPON_CATALOG.scattershot, { ...context, viewportWidth: 0 }),
+      planPlayerVolley(WEAPON_CATALOG.scattershot[0], { ...context, viewportWidth: 0 }),
     ).toThrow(RangeError);
   });
 });

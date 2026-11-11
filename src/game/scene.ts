@@ -6,12 +6,18 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GALAXIES } from "../data/storybook.ts";
-import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { BEAM, weaponAt } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
-import { shipSpeedFraction, stationDock } from "../model/flight.ts";
+import {
+  activeBeamFlashes,
+  activeBlastFlashes,
+  BLAST_FLASH_SECONDS,
+  shipSpeedFraction,
+  stationDock,
+} from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
@@ -376,9 +382,11 @@ export class PrototypeScene extends Phaser.Scene {
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
           basic: PROTOTYPE.labels.weaponBasic ?? "",
-          missiles: PROTOTYPE.labels.weaponMissiles ?? "",
+          heavyMissile: PROTOTYPE.labels.weaponHeavyMissile ?? "",
+          multiLaser: PROTOTYPE.labels.weaponMultiLaser ?? "",
+          phaser: PROTOTYPE.labels.weaponPhaser ?? "",
+          rapidMissile: PROTOTYPE.labels.weaponRapidMissile ?? "",
           scattershot: PROTOTYPE.labels.weaponScattershot ?? "",
-          tripleLaser: PROTOTYPE.labels.weaponTripleLaser ?? "",
         },
       },
     });
@@ -719,6 +727,25 @@ export class PrototypeScene extends Phaser.Scene {
     }
     for (const object of flight.objects) {
       this.drawObject(object);
+    }
+    // Placeholder blast flash until Art supplies one: the blast's ground-plane ellipse, half-width
+    // R x 1.414 and half-height R x 0.707, fading out.
+    for (const flash of activeBlastFlashes(flight)) {
+      const point = this.project(flash);
+      this.overlay.lineStyle(2, this.palette.weapon, 1 - flash.age / BLAST_FLASH_SECONDS);
+      this.overlay.strokeEllipse(
+        point.x,
+        point.y,
+        flash.radius * Math.SQRT2 * 2,
+        flash.radius * Math.SQRT1_2 * 2,
+      );
+    }
+    // Placeholder beam flash until Art supplies one: a line that fades over the flash.
+    for (const flash of activeBeamFlashes(flight)) {
+      const from = this.project(flash.from);
+      const to = this.project(flash.to);
+      this.overlay.lineStyle(2, this.palette.weapon, 1 - flash.age / BEAM.flashSeconds);
+      this.overlay.lineBetween(from.x, from.y, to.x, to.y);
     }
     for (const shot of flight.shots) {
       const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
@@ -1363,7 +1390,7 @@ export class PrototypeScene extends Phaser.Scene {
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
-        } else if (object.weapon === "missiles") {
+        } else if (object.weapon && weaponAt(object.weapon, 1).projectileKind === "missile") {
           this.ink.lineBetween(point.x, point.y - radius * 0.65, point.x, point.y + radius * 0.65);
           this.ink.lineBetween(
             point.x,
@@ -1378,7 +1405,7 @@ export class PrototypeScene extends Phaser.Scene {
             point.y + radius * 0.6,
           );
         } else if (object.weapon) {
-          for (const degrees of WEAPON_CATALOG[object.weapon].anglesDegrees) {
+          for (const degrees of weaponAt(object.weapon, 1).anglesDegrees) {
             const angle = (degrees * Math.PI) / 180;
             const x = point.x + Math.cos(angle) * radius * 0.7;
             const y = point.y + Math.sin(angle) * radius * 0.7;

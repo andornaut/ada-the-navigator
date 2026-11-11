@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
@@ -20,9 +20,11 @@ import {
   selectPaint,
   shopRows,
   shopRowState,
+  weaponName,
 } from "./shop.ts";
 import type { EconomyState, FlightEvent, FlightInput, FlightState, SpaceObject } from "./types.ts";
-import { newEconomy, noLevels, shipTuning, upgradedWeapon } from "./upgrades.ts";
+import { newEconomy, noLevels, shipTuning } from "./upgrades.ts";
+import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const length = (v: { x: number; y: number }) => Math.hypot(v.x, v.y);
@@ -139,14 +141,15 @@ describe("Stardust drops", () => {
     }
     const dropped = [...weapons.values()].reduce((sum, count) => sum + count, 0);
     expect(Math.abs(dropped / draws - chance)).toBeLessThan(chance * 0.15);
-    expect([...weapons.keys()].sort()).toEqual(["missiles", "scattershot", "tripleLaser"]);
+    // The pool is every shop weapon, the Phaser included.
+    expect([...weapons.keys()].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     for (const count of weapons.values()) {
-      expect(Math.abs(count / dropped - 1 / 3)).toBeLessThan(0.08);
+      expect(Math.abs(count / dropped - 1 / 5)).toBeLessThan(0.06);
     }
   });
 
   it("gives 25 Stardust instead of a dropped weapon Ada already owns", () => {
-    const owned = ["missiles", "tripleLaser", "scattershot"] as const;
+    const owned = UPGRADE_WEAPONS;
     let replaced = 0;
     for (let index = 0; index < 8000; index++) {
       const drop = rollEnemyDrop(ECONOMY, owned, "capital", dropRandom(3, `w:${index}`));
@@ -365,7 +368,7 @@ describe("tractor beam and pickup reach", () => {
       id: "weapon",
       kind: "pickup",
       radius: 10,
-      weapon: "missiles",
+      weapon: "rapidMissile",
       x: 50,
       y: 0,
     });
@@ -383,17 +386,17 @@ describe("tractor beam and pickup reach", () => {
     expect(value.objects.map((object) => object.id)).toEqual(["outside"]);
     const weapon = flight();
     weapon.objects.push(
-      { hp: 1, id: "edge", kind: "pickup", radius: 10, weapon: "missiles", x: 23.9, y: 0 },
-      { hp: 1, id: "beyond", kind: "pickup", radius: 10, weapon: "tripleLaser", x: 0, y: 24.1 },
+      { hp: 1, id: "edge", kind: "pickup", radius: 10, weapon: "rapidMissile", x: 23.9, y: 0 },
+      { hp: 1, id: "beyond", kind: "pickup", radius: 10, weapon: "multiLaser", x: 0, y: 24.1 },
     );
     stepFlight(PROTOTYPE, 0.001, idle, weapon);
-    expect(weapon.ownedWeapons).toEqual(["missiles"]);
+    expect(weapon.ownedWeapons).toEqual(["rapidMissile"]);
   });
 
   it.each([
-    [0, 100, 150],
-    [1, 150, 220],
-    [2, 200, 300],
+    [1, 100, 150],
+    [2, 150, 220],
+    [3, 200, 300],
   ])("tractor level %i has pull radius %i and speed %i", (level, radius, speed) => {
     const levels = { ...noLevels(), tractor: level };
     expect(shipTuning(ECONOMY, PROTOTYPE, levels)).toMatchObject({
@@ -413,13 +416,13 @@ describe("tractor beam and pickup reach", () => {
 
   it("does not change pickup reach with tractor levels", () => {
     const value = flight();
-    value.levels.tractor = 2;
+    value.levels.tractor = 3;
     value.objects.push({
       hp: 1,
       id: "weapon",
       kind: "pickup",
       radius: 10,
-      weapon: "missiles",
+      weapon: "rapidMissile",
       x: 25,
       y: 0,
     });
@@ -429,13 +432,13 @@ describe("tractor beam and pickup reach", () => {
 
   it("turns a found weapon Ada already owns into 25 Stardust", () => {
     const value = flight();
-    value.ownedWeapons = ["missiles"];
+    value.ownedWeapons = ["rapidMissile"];
     value.objects.push({
       hp: 1,
       id: "w",
       kind: "pickup",
       radius: 10,
-      weapon: "missiles",
+      weapon: "rapidMissile",
       x: 0,
       y: 0,
     });
@@ -446,54 +449,45 @@ describe("tractor beam and pickup reach", () => {
 });
 
 describe("upgrade effects", () => {
-  it.each([0, 1, 2, 3])("applies shield, recharge and engine level %i", (level) => {
-    const levels = { ...noLevels(), engine: level, shield: level, shieldRecharge: level };
-    const tuning = shipTuning(ECONOMY, PROTOTYPE, levels);
-    const base = PROTOTYPE.tuning;
-    expect(tuning.shieldMax).toBeCloseTo(base.shieldMax * (1 + 0.2 * level), 9);
-    expect(tuning.shieldRechargeDelay).toBeCloseTo(
-      base.shieldRechargeDelay * (1 - 0.15 * level),
-      9,
-    );
-    expect(tuning.shieldRechargeRate).toBeCloseTo(base.shieldRechargeRate * (1 + 0.2 * level), 9);
-    expect(tuning.physics.speedRatio).toBeCloseTo(base.physics.speedRatio * (1 + 0.05 * level), 9);
-    expect(tuning.physics.accelerationSeconds).toBeCloseTo(
-      base.physics.accelerationSeconds * (1 - 0.1 * level),
-      9,
-    );
-    expect(tuning.physics.brakingSeconds).toBeCloseTo(
-      base.physics.brakingSeconds * (1 - 0.1 * level),
-      9,
-    );
-    expect(tuning.physics.turnSeconds).toBe(base.physics.turnSeconds);
-  });
-
-  it.each([0, 1, 2, 3])("applies weapon upgrade level %i to damage and interval", (level) => {
-    for (const definition of Object.values(WEAPON_CATALOG)) {
-      const upgraded = upgradedWeapon(ECONOMY, level, definition);
-      expect(upgraded.damageRatio).toBeCloseTo(definition.damageRatio * (1 + 0.1 * level), 9);
-      expect(upgraded.intervalSeconds).toBeCloseTo(
-        definition.intervalSeconds * (1 - 0.1 * level),
+  it.each([
+    [1, 100, 1, 1, 1, 1],
+    [2, 150, 1 / 1.2, 1.25, 1.05, 0.9],
+    [3, 225, 1 / 1.44, 1.5625, 1.1, 0.8],
+  ])(
+    "applies shield, recharge and engine level %i",
+    (level, shield, delay, rate, speed, seconds) => {
+      const levels = { ...noLevels(), engine: level, shield: level, shieldRecharge: level };
+      const tuning = shipTuning(ECONOMY, PROTOTYPE, levels);
+      const base = PROTOTYPE.tuning;
+      expect(tuning.shieldMax).toBeCloseTo(shield, 9);
+      expect(tuning.shieldRechargeDelay).toBeCloseTo(base.shieldRechargeDelay * delay, 9);
+      expect(tuning.shieldRechargeRate).toBeCloseTo(base.shieldRechargeRate * rate, 9);
+      // Recharge output (rate over delay) grows about 1.5 times per level.
+      expect(rate / delay).toBeCloseTo(1.5 ** (level - 1), 9);
+      expect(tuning.physics.speedRatio).toBeCloseTo(base.physics.speedRatio * speed, 9);
+      expect(tuning.physics.accelerationSeconds).toBeCloseTo(
+        base.physics.accelerationSeconds * seconds,
         9,
       );
-      expect(upgraded.speedRatio).toBe(definition.speedRatio);
-    }
-  });
+      expect(tuning.physics.brakingSeconds).toBeCloseTo(base.physics.brakingSeconds * seconds, 9);
+      expect(tuning.physics.turnSeconds).toBe(base.physics.turnSeconds);
+    },
+  );
 
-  it("fires the equipped weapon with its own upgrade level", () => {
+  it("fires the equipped weapon at its own level", () => {
     const value = flight();
     value.levels.weapons.basic = 3;
     stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
-    expect(value.shots[0]!.damage).toBeCloseTo(PROTOTYPE.tuning.flight.playerShotDamage * 1.3, 9);
-    expect(value.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic.intervalSeconds * 0.7, 9);
+    expect(value.shots[0]!.damage).toBeCloseTo(PROTOTYPE.tuning.flight.playerShotDamage * 1.5, 9);
+    expect(value.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic[2].intervalSeconds, 9);
     const other = flight();
-    other.levels.weapons.missiles = 3;
+    other.levels.weapons.rapidMissile = 3;
     stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, other);
     expect(other.shots[0]!.damage).toBe(PROTOTYPE.tuning.flight.playerShotDamage);
   });
 
   it("starts a flight at the upgraded shield capacity and recharges toward it", () => {
-    const levels = { ...noLevels(), shield: 2, shieldRecharge: 1 };
+    const levels = { ...noLevels(), shield: 2, shieldRecharge: 2 };
     const value = createFlight(
       PROTOTYPE,
       1,
@@ -506,18 +500,18 @@ describe("upgrade effects", () => {
       },
     );
     value.objects = [];
-    expect(value.shield).toBeCloseTo(140, 9);
+    expect(value.shield).toBeCloseTo(150, 9);
     value.shield = 100;
     value.sinceDamage = 0;
-    stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay * 0.85 - 0.05, idle, value);
+    stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay / 1.2 - 0.05, idle, value);
     expect(value.shield).toBe(100);
     stepFlight(PROTOTYPE, 0.1 + 1, idle, value);
-    expect(value.shield).toBeGreaterThan(100 + 18 * 1.2 * 0.9);
+    expect(value.shield).toBeGreaterThan(100 + 18 * 1.25 * 0.9);
   });
 
   it("raises Ada's top speed and acceleration with engine tuning", () => {
     const right = { ...idle, move: { x: 1, y: 0 } };
-    for (const level of [0, 3]) {
+    for (const level of [1, 3]) {
       const value = flight();
       value.levels.engine = level;
       stepFlight(PROTOTYPE, 0.2, right, value);
@@ -531,7 +525,7 @@ describe("upgrade effects", () => {
   });
 
   it("keeps enemy movement tied to Ada's base speed when engines are tuned", () => {
-    const runs = [0, 3].map((level) => {
+    const runs = [1, 3].map((level) => {
       const value = flight(91);
       value.levels.engine = level;
       value.objects.push(enemy("interceptor", "chaser", 260, 0));
@@ -554,17 +548,24 @@ describe("shop purchases", () => {
     expect(shopRows(ECONOMY, economy, "weapons")).toEqual([
       {
         inUse: false,
-        item: { kind: "weapon", weapon: "missiles" },
+        item: { kind: "weapon", weapon: "rapidMissile" },
         level: null,
         owned: false,
         price: 150,
       },
       {
         inUse: false,
-        item: { kind: "weapon", weapon: "tripleLaser" },
+        item: { kind: "weapon", weapon: "multiLaser" },
         level: null,
         owned: false,
         price: 250,
+      },
+      {
+        inUse: false,
+        item: { kind: "weapon", weapon: "heavyMissile" },
+        level: null,
+        owned: false,
+        price: 300,
       },
       {
         inUse: false,
@@ -575,38 +576,57 @@ describe("shop purchases", () => {
       },
       {
         inUse: false,
-        item: { kind: "weaponUpgrade", weapon: "basic" },
-        level: { current: 0, max: 3 },
+        item: { kind: "weapon", weapon: "phaser" },
+        level: null,
         owned: false,
-        price: 100,
+        price: 400,
+      },
+      {
+        inUse: false,
+        item: { kind: "weaponUpgrade", weapon: "basic" },
+        level: { current: 1, max: 3 },
+        owned: false,
+        price: 150,
       },
     ]);
-    expect(buy(ECONOMY, { kind: "weapon", weapon: "tripleLaser" }, economy)).toEqual({
+    expect(buy(ECONOMY, { kind: "weapon", weapon: "multiLaser" }, economy)).toEqual({
       kind: "bought",
       price: 250,
     });
     const rows = shopRows(ECONOMY, economy, "weapons");
     expect(rows[1]).toMatchObject({ owned: true, price: null });
-    expect(rows.at(-1)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "tripleLaser" } });
+    expect(rows.at(-1)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
     expect(economy.stardust).toBe(4750);
-    expect(economy.ownedWeapons).toEqual(["tripleLaser"]);
+    expect(economy.ownedWeapons).toEqual(["multiLaser"]);
   });
 
   it.each([
-    [{ kind: "weaponUpgrade", weapon: "basic" }, [100, 200, 400]],
-    [{ kind: "track", track: "shield" }, [100, 200, 400]],
-    [{ kind: "track", track: "shieldRecharge" }, [100, 200, 400]],
-    [{ kind: "track", track: "engine" }, [120, 240, 480]],
+    [{ kind: "weaponUpgrade", weapon: "basic" }, [150, 300]],
+    [{ kind: "track", track: "shield" }, [150, 300]],
+    [{ kind: "track", track: "shieldRecharge" }, [150, 300]],
+    [{ kind: "track", track: "engine" }, [120, 240]],
     [{ kind: "track", track: "tractor" }, [80, 160]],
-  ] as const)("prices each level of %j and stops at the last", (item, prices) => {
+  ] as const)("prices levels 2 and 3 of %j and stops at level 3", (item, prices) => {
     const economy = rich();
     let spent = 0;
-    prices.forEach((price, level) => {
-      expect(shopRows(ECONOMY, economy, item.kind === "track" ? "ship" : "weapons")).toContainEqual(
-        { inUse: false, item, level: { current: level, max: prices.length }, owned: false, price },
-      );
+    const tab = item.kind === "track" ? "ship" : "weapons";
+    prices.forEach((price, index) => {
+      expect(shopRows(ECONOMY, economy, tab)).toContainEqual({
+        inUse: false,
+        item,
+        level: { current: index + 1, max: 3 },
+        owned: false,
+        price,
+      });
       expect(buy(ECONOMY, item, economy)).toEqual({ kind: "bought", price });
       spent += price;
+    });
+    expect(shopRows(ECONOMY, economy, tab)).toContainEqual({
+      inUse: false,
+      item,
+      level: { current: 3, max: 3 },
+      owned: true,
+      price: null,
     });
     expect(economy.stardust).toBe(5000 - spent);
     expect(requestPurchase(ECONOMY, economy, item)).toEqual({
@@ -618,24 +638,26 @@ describe("shop purchases", () => {
 
   it("confirms with the balance left after, and refuses what Ada cannot afford", () => {
     const economy = rich(200);
-    expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "missiles" })).toEqual({
+    expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "confirm",
       left: 50,
       price: 150,
     });
-    expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "tripleLaser" })).toEqual({
+    expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "refused",
       reason: "cantAfford",
     });
     const exact = rich(150);
-    expect(requestPurchase(ECONOMY, exact, { kind: "weapon", weapon: "missiles" })).toMatchObject({
+    expect(
+      requestPurchase(ECONOMY, exact, { kind: "weapon", weapon: "rapidMissile" }),
+    ).toMatchObject({
       left: 0,
     });
   });
 
   it("refuses a confirmed purchase when the balance changed before Buy", () => {
     const economy = rich(150);
-    const item = { kind: "weapon", weapon: "missiles" } as const;
+    const item = { kind: "weapon", weapon: "rapidMissile" } as const;
     expect(requestPurchase(ECONOMY, economy, item).kind).toBe("confirm");
     economy.stardust = 149;
     expect(buy(ECONOMY, item, economy)).toEqual({ kind: "refused", reason: "cantAfford" });
@@ -675,11 +697,19 @@ describe("shop purchases", () => {
   });
 
   it("sets each row's tap behaviour from ownership, use and the balance", () => {
-    const economy = rich(120);
+    const economy = rich(150);
     economy.paints.push("iris");
     const states = (tab: "weapons" | "ship") =>
       shopRows(ECONOMY, economy, tab).map((row) => shopRowState(economy.stardust, row));
-    expect(states("weapons")).toEqual(["unaffordable", "unaffordable", "unaffordable", "forSale"]);
+    // Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser, then the Basic upgrade.
+    expect(states("weapons")).toEqual([
+      "forSale",
+      "unaffordable",
+      "unaffordable",
+      "unaffordable",
+      "unaffordable",
+      "forSale",
+    ]);
     // Shield, recharge, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris.
     expect(states("ship")).toEqual([
       "forSale",
@@ -699,22 +729,38 @@ describe("shop purchases", () => {
       "unaffordable",
       "selectable",
     ]);
-    economy.levels.tractor = 2;
+    economy.levels.tractor = 3;
     expect(states("ship")[3]).toBe("owned");
   });
 
   it("shows a weapon's one-line description in the buy confirm", () => {
     const labels = PROTOTYPE.labels;
-    expect(itemAbout(labels, { kind: "weapon", weapon: "missiles" })).toBe(
-      "One slow, strong missile.",
-    );
-    expect(itemAbout(labels, { kind: "weapon", weapon: "tripleLaser" })).toBe(
-      "Three bolts in a fan.",
-    );
-    expect(itemAbout(labels, { kind: "weapon", weapon: "scattershot" })).toBe(
-      "Seven short-range shots in a wide spread.",
-    );
+    const about = (weapon: UpgradeWeapon) => itemAbout(labels, { kind: "weapon", weapon });
+    expect(about("heavyMissile")).toBe("One slow missile with a big blast.");
+    expect(about("rapidMissile")).toBe("Quick missiles with a small blast.");
+    expect(about("multiLaser")).toBe("A fan of laser bolts that grows with each level.");
+    expect(about("scattershot")).toBe("A shotgun spread, strongest up close.");
+    expect(about("phaser")).toBe("An instant beam that strikes the first thing in its path.");
     expect(itemAbout(labels, { kind: "track", track: "shield" })).toBe("");
+    expect(labels.aboutMissiles).toBeUndefined();
+    expect(labels.aboutTripleLaser).toBeUndefined();
+  });
+
+  it("names the five shop weapons and their upgrades", () => {
+    const labels = PROTOTYPE.labels;
+    expect(UPGRADE_WEAPONS.map((weapon) => weaponName(labels, weapon))).toEqual([
+      "Rapid Missile",
+      "Multi-Laser",
+      "Heavy Missile",
+      "Scattershot",
+      "Phaser",
+    ]);
+    expect(itemName(ECONOMY, labels, { kind: "weaponUpgrade", weapon: "multiLaser" })).toBe(
+      "Multi-Laser upgrade",
+    );
+    expect(UPGRADE_WEAPONS.map((weapon) => ECONOMY.weaponPrices[weapon])).toEqual([
+      150, 250, 300, 350, 400,
+    ]);
   });
 
   it("names items and fills confirm strings from the player strings", () => {
@@ -736,7 +782,7 @@ describe("shop purchases", () => {
     expect(labels.stationWelcome).toBe(
       "Welcome aboard. Trade your Stardust for weapons and ship upgrades.",
     );
-    expect(fill(labels.confirmTitle!, { name: "Triple Laser" })).toBe("Buy Triple Laser?");
+    expect(fill(labels.confirmTitle!, { name: "Multi-Laser" })).toBe("Buy Multi-Laser?");
     expect(fill(labels.confirmLeft!, { amount: 50 })).toBe("50 left after");
     expect(fill(labels.level!, { level: 1, max: 3 })).toBe("Level 1 of 3");
     expect(fill(labels.stardustAmount!, { amount: 7 })).toBe("7 Stardust");

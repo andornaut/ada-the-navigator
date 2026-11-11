@@ -411,8 +411,9 @@ function unvisitedUnlock(state: GameState): boolean {
   const p = state.progress[latest];
   return latest > 1 && p.stage === 0 && !p.introduced && !p.resolved && p.known.length === 0;
 }
-function boundedLevel(value: unknown, max: number): boolean {
-  return Number.isInteger(value) && nonnegative(value) && Number(value) <= max;
+/** Levels run from 1, the base, to one more than the number of priced levels. */
+function boundedLevel(value: unknown, prices: number): boolean {
+  return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= prices + 1;
 }
 function upgradeLevels(value: unknown): value is UpgradeLevels {
   return (
@@ -429,6 +430,77 @@ function upgradeLevels(value: unknown): value is UpgradeLevels {
       boundedLevel(value[track], ECONOMY.trackPrices[track].length),
     )
   );
+}
+
+/*
+ * CLEANUP (added 2026-11-11): converts saves from before the five-weapon roster. Remove once
+ * every stored save has been loaded and rewritten by a build with this migration.
+ */
+const LEGACY_WEAPONS: Readonly<Record<string, string>> = {
+  missiles: "rapidMissile",
+  tripleLaser: "multiLaser",
+};
+const legacyWeapon = (value: unknown) =>
+  typeof value === "string" ? (LEGACY_WEAPONS[value] ?? value) : value;
+const legacyWeapons = (value: unknown) => (Array.isArray(value) ? value.map(legacyWeapon) : value);
+/** Bought levels 0 to 3 become levels 1 to 3: 0 is 1, 1 and 2 are 2, and 3 is 3. */
+const legacyLevel = (value: unknown) =>
+  typeof value === "number" ? Math.min(3, value === 0 ? 1 : value <= 2 ? 2 : 3) : value;
+
+function migrateLegacyLevels(levels: unknown): void {
+  if (!record(levels) || !record(levels.weapons)) {
+    return;
+  }
+  const weapons = levels.weapons;
+  if (!Object.hasOwn(weapons, "missiles") && !Object.hasOwn(weapons, "tripleLaser")) {
+    return;
+  }
+  levels.weapons = {
+    basic: legacyLevel(weapons.basic),
+    heavyMissile: 1,
+    multiLaser: legacyLevel(weapons.tripleLaser),
+    phaser: 1,
+    rapidMissile: legacyLevel(weapons.missiles),
+    scattershot: legacyLevel(weapons.scattershot),
+  };
+  for (const track of ["engine", "shield", "shieldRecharge"]) {
+    levels[track] = legacyLevel(levels[track]);
+  }
+  // The tractor had two bought levels, which become levels 2 and 3.
+  if (typeof levels.tractor === "number") {
+    levels.tractor = levels.tractor + 1;
+  }
+}
+
+function migrateLegacyObjects(objects: unknown): void {
+  for (const object of Array.isArray(objects)
+    ? objects
+    : Object.values(record(objects) ? objects : {})) {
+    if (record(object) && object.weapon !== undefined) {
+      object.weapon = legacyWeapon(object.weapon);
+    }
+  }
+}
+
+/** Renames Missiles and Triple Laser and maps bought levels onto levels 1 to 3, in place. */
+function migrateLegacyWeapons(value: Record<string, unknown>): void {
+  for (const holder of [value.economy, value.flight]) {
+    if (!record(holder)) {
+      continue;
+    }
+    holder.weapon = legacyWeapon(holder.weapon);
+    holder.ownedWeapons = legacyWeapons(holder.ownedWeapons);
+    if (holder.grantedWeapons !== undefined) {
+      holder.grantedWeapons = legacyWeapons(holder.grantedWeapons);
+    }
+    migrateLegacyLevels(holder.levels);
+  }
+  if (record(value.flight)) {
+    migrateLegacyObjects(value.flight.objects);
+    if (record(value.flight.world)) {
+      migrateLegacyObjects(value.flight.world.notables);
+    }
+  }
 }
 function economyState(value: unknown): value is EconomyState {
   return (
@@ -468,6 +540,9 @@ export function restoreSave(saved: unknown): GameState | null {
     const value: unknown = migrateLegacyEnemies(
       typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved),
     );
+    if (record(value)) {
+      migrateLegacyWeapons(value);
+    }
     if (
       !record(value) ||
       value.version !== 1 ||
@@ -639,6 +714,8 @@ export function restoreSave(saved: unknown): GameState | null {
             (s.projectile === undefined ||
               ["bolt", "missile", "dot"].includes(String(s.projectile))) &&
             (s.enemy || (finite(s.damage) && s.damage > 0)) &&
+            (s.blast === undefined ||
+              (!s.enemy && s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
             (s.fade === undefined ||
               (!s.enemy &&
                 s.projectile === "dot" &&

@@ -528,7 +528,9 @@ try {
     await page.getByRole("button", { name: CHEAT_COPY.grantAllWeapons, exact: true }).click();
     await page.waitForFunction((key) => {
       const owned = JSON.parse(localStorage.getItem(key)).flight.ownedWeapons ?? [];
-      return ["missiles", "tripleLaser", "scattershot"].every((weapon) => owned.includes(weapon));
+      return ["rapidMissile", "multiLaser", "heavyMissile", "scattershot", "phaser"].every(
+        (weapon) => owned.includes(weapon),
+      );
     }, storageKey);
     const granted = await readSave();
     assert.deepEqual(granted.progress, beforeGrant.progress);
@@ -825,7 +827,7 @@ try {
   events.checks.push("Native touch release clears movement and firing without resurrection");
 
   const equipment = new GameModel(PROTOTYPE, safeSerialized);
-  equipment.state.flight.ownedWeapons = ["missiles", "tripleLaser"];
+  equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
   equipment.state.flight.weapon = "basic";
   const equipmentSave = equipment.save();
   assert.deepEqual(new GameModel(PROTOTYPE, equipmentSave).state, equipment.state);
@@ -835,7 +837,7 @@ try {
     state: JSON.parse(equipmentSave),
   });
   await seedOnce(equipmentSave, "ada-browser.equipment.v1");
-  const missileButton = page.locator('button[data-weapon="missiles"]');
+  const missileButton = page.locator('button[data-weapon="rapidMissile"]');
   await missileButton.waitFor({ state: "visible" });
   assert.equal(
     await page.locator('button[data-weapon="scattershot"]').count(),
@@ -844,7 +846,7 @@ try {
   );
   await missileButton.click();
   await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "missiles",
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "rapidMissile",
     storageKey,
   );
   assert.equal(await missileButton.getAttribute("aria-pressed"), "true");
@@ -853,6 +855,8 @@ try {
     0,
     "The removed top-left information HUD must not be recreated",
   );
+  // Placeholder glyphs map new weapons onto existing icons until Art supplies their own.
+  const { weaponGlyphPath } = await import(new URL("../src/ui/weapons.ts", import.meta.url));
   const weaponImages = await page.locator(".ada-weapon-selector .ada-disc").evaluateAll((glyphs) =>
     glyphs.map((glyph) => ({
       decorative: glyph.getAttribute("aria-hidden") === "true",
@@ -867,15 +871,13 @@ try {
   for (const icon of weaponImages) {
     assert.ok(icon.decorative, "Weapon glyphs must not duplicate button names");
     assert.ok(
-      icon.mask.includes(`/art/ui/icons/weapon-${icon.weapon}.svg`),
+      icon.mask.includes(weaponGlyphPath(icon.weapon)),
       `Weapon glyphs must mask Art's 20px icon: ${icon.mask}`,
     );
   }
   const glyphStatuses = await Promise.all(
     weaponImages.map(async (icon) =>
-      (
-        await page.request.get(`http://ada-preview:4173/art/ui/icons/weapon-${icon.weapon}.svg`)
-      ).status(),
+      (await page.request.get(`http://ada-preview:4173${weaponGlyphPath(icon.weapon)}`)).status(),
     ),
   );
   assert.deepEqual(
@@ -884,29 +886,30 @@ try {
     "The 20px weapon glyphs must be served",
   );
   assert.equal(
-    weaponImages.find((icon) => icon.weapon === "missiles")?.state,
+    weaponImages.find((icon) => icon.weapon === "rapidMissile")?.state,
     "selected",
     "The selected weapon must draw the selected state",
   );
   await page.reload();
   await page.waitForFunction(
     () =>
-      document.querySelector('[data-weapon="missiles"]')?.getAttribute("aria-pressed") === "true",
+      document.querySelector('[data-weapon="rapidMissile"]')?.getAttribute("aria-pressed") ===
+      "true",
   );
-  assert.deepEqual((await readSave()).flight.ownedWeapons, ["missiles", "tripleLaser"]);
+  assert.deepEqual((await readSave()).flight.ownedWeapons, ["rapidMissile", "multiLaser"]);
   await openSettings();
   assert.ok(await missileButton.isDisabled(), "Settings must disable weapon selection");
   const pausedWeapon = (await readSave()).flight.weapon;
-  await page.locator('[data-weapon="tripleLaser"]').evaluate((button) => button.click());
+  await page.locator('[data-weapon="multiLaser"]').evaluate((button) => button.click());
   assert.equal(
     (await readSave()).flight.weapon,
     pausedWeapon,
     "A disabled weapon must not change selection behind the modal",
   );
   await closeSettings();
-  await page.locator('[data-weapon="tripleLaser"]').click();
+  await page.locator('[data-weapon="multiLaser"]').click();
   await page.waitForFunction(
-    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "tripleLaser",
+    (key) => JSON.parse(localStorage.getItem(key)).flight.weapon === "multiLaser",
     storageKey,
   );
   await page.keyboard.down("ArrowRight");
@@ -920,7 +923,7 @@ try {
   }
   assert.equal(
     (await readSave()).flight.weapon,
-    "tripleLaser",
+    "multiLaser",
     "Firing must not consume an upgrade",
   );
   const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
@@ -968,7 +971,7 @@ try {
   );
 
   const damaged = new GameModel(PROTOTYPE, equipmentSave);
-  assert.ok(damaged.selectWeapon("missiles"));
+  assert.ok(damaged.selectWeapon("rapidMissile"));
   // Damage is meaningful only outside the friendly destination's protected region.
   damaged.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 2;
   assert.ok(
@@ -996,7 +999,7 @@ try {
   damaged.state.economy.stardust = 30;
   damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
   assert.equal(damaged.state.mode, "home", "Shield depletion must jump Ada home");
-  assert.deepEqual(damaged.state.economy.ownedWeapons, ["tripleLaser"]);
+  assert.deepEqual(damaged.state.economy.ownedWeapons, ["multiLaser"]);
   assert.equal(damaged.state.economy.weapon, "basic", "The equipped upgrade must be lost");
   assert.equal(damaged.state.economy.stardust, 20, "Recharging must cost 10 Stardust");
   const damageSave = damaged.save();
@@ -1014,14 +1017,14 @@ try {
       jumpNotice.includes("Recharging cost 10 Stardust."),
     `The jump home notice must name the loss and the fee: ${jumpNotice}`,
   );
-  assert.equal(await page.locator('[data-weapon="missiles"]').count(), 0);
+  assert.equal(await page.locator('[data-weapon="rapidMissile"]').count(), 0);
   events.checks.push(
     "Canonical shield depletion jumps Ada home, losing the equipped upgrade and charging the recharge fee",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
   const weaponModel = new GameModel(PROTOTYPE, safeSerialized);
-  weaponModel.state.flight.ownedWeapons = ["missiles", "tripleLaser", "scattershot"];
+  weaponModel.state.flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
   weaponModel.state.flight.weapon = "basic";
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];
@@ -1062,7 +1065,7 @@ try {
       await page.keyboard.up("ArrowRight");
     }
   }
-  const missiles = await heldVolley("missiles", "missile", 3);
+  const missiles = await heldVolley("rapidMissile", "missile", 3);
   // Remaining life counts down, so ascending life is firing order (oldest first).
   const missileShots = missiles.flight.shots
     .filter((shot) => !shot.enemy && shot.projectile === "missile")
@@ -1092,7 +1095,7 @@ try {
   for (const shot of missileShots) {
     assert.ok(shot.damage > PROTOTYPE.tuning.flight.playerShotDamage);
   }
-  const triple = await heldVolley("tripleLaser", "bolt", 3);
+  const triple = await heldVolley("multiLaser", "bolt", 3);
   const bolts = triple.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "bolt");
   const newest = Math.max(...bolts.map((shot) => shot.life));
   const angles = bolts

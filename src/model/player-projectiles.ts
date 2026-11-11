@@ -15,10 +15,11 @@ export interface ProjectileFade {
   readonly projectedRange: number;
 }
 export interface PlayerProjectile extends Vec {
+  readonly blast?: number;
   readonly damage: number;
   readonly fade?: ProjectileFade;
   readonly life: number;
-  readonly projectile: WeaponDefinition["projectileKind"];
+  readonly projectile: Exclude<WeaponDefinition["projectileKind"], "beam">;
   readonly velocity: Vec;
 }
 export interface PlayerVolley {
@@ -30,7 +31,10 @@ function positive(value: number): boolean {
   return Number.isFinite(value) && value > 0;
 }
 
-/** Flight owns collision, aging and identity; this helper only describes one automatic volley. */
+/**
+ * Flight owns collision, aging and identity; this helper only describes one automatic volley
+ * of projectiles. A hitscan beam has no projectile and is refused.
+ */
 export function planPlayerVolley(
   definition: WeaponDefinition,
   context: VolleyContext,
@@ -46,6 +50,8 @@ export function planPlayerVolley(
       definition.speedRatio,
     ].every(positive) ||
     ![context.origin.x, context.origin.y].every(Number.isFinite) ||
+    definition.projectileKind === "beam" ||
+    (definition.blastRadius !== null && !positive(definition.blastRadius)) ||
     !definition.anglesDegrees.length ||
     !definition.anglesDegrees.every(Number.isFinite) ||
     (definition.rangeScreenWidths !== null && !positive(definition.rangeScreenWidths)) ||
@@ -82,9 +88,10 @@ export function planPlayerVolley(
         : context.viewportWidth * definition.rangeScreenWidths;
     const life = projectedRange === null ? context.baseLifetime : projectedRange / projectedSpeed;
     const projectile: PlayerProjectile = {
+      ...(definition.blastRadius === null ? {} : { blast: definition.blastRadius }),
       damage,
       life,
-      projectile: definition.projectileKind,
+      projectile: definition.projectileKind as PlayerProjectile["projectile"],
       velocity: { x: heading.x * speed, y: heading.y * speed },
       x: context.origin.x,
       y: context.origin.y,

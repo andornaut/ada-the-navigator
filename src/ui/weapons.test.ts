@@ -12,8 +12,8 @@ describe("HUD weapon buttons", () => {
   });
 
   it("locks every other weapon in combat and through the 5 seconds after", () => {
-    expect(weaponButtonState({ id: "missiles", locked: true, selected: false })).toBe("locked");
-    expect(weaponButtonState({ id: "missiles", locked: false, selected: false })).toBe("idle");
+    expect(weaponButtonState({ id: "rapidMissile", locked: true, selected: false })).toBe("locked");
+    expect(weaponButtonState({ id: "rapidMissile", locked: false, selected: false })).toBe("idle");
   });
 
   it("colours each state as Art's Chibi skill buttons, with no cream ring or amber", () => {
@@ -29,9 +29,19 @@ describe("HUD weapon buttons", () => {
     expect(WEAPON_STYLE.match(/#ead4aa/gu)).toHaveLength(1);
   });
 
-  it("draws Art's single-colour 20px glyphs as masks on the discs", () => {
-    expect(weaponGlyphPath("tripleLaser")).toBe("/art/ui/icons/weapon-tripleLaser.svg");
-    for (const weapon of ["basic", "missiles", "tripleLaser", "scattershot"] as const) {
+  it("draws Art's single-colour 20px glyphs as masks on the discs, with placeholders", () => {
+    expect(weaponGlyphPath("multiLaser")).toBe("/art/ui/icons/weapon-tripleLaser.svg");
+    expect(weaponGlyphPath("rapidMissile")).toBe("/art/ui/icons/weapon-missiles.svg");
+    expect(weaponGlyphPath("heavyMissile")).toBe("/art/ui/icons/weapon-missiles.svg");
+    expect(weaponGlyphPath("phaser")).toBe("/art/ui/icons/weapon-basic.svg");
+    for (const weapon of [
+      "basic",
+      "rapidMissile",
+      "multiLaser",
+      "heavyMissile",
+      "scattershot",
+      "phaser",
+    ] as const) {
       const file = new URL(`../../public${weaponGlyphPath(weapon)}`, import.meta.url);
       expect(existsSync(file)).toBe(true);
     }

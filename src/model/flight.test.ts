@@ -79,10 +79,10 @@ describe("flight boundaries", () => {
     stepFlight(PROTOTYPE, 0.4, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
-    flight.weapon = "tripleLaser";
+    flight.weapon = "multiLaser";
     stepFlight(PROTOTYPE, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(3);
-    expect(flight.weapon).toBe("tripleLaser");
+    expect(flight.weapon).toBe("multiLaser");
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);
     expect(degrees(flight.shots[1]!.velocity, flight.facing)).toBeLessThan(1e-9);
@@ -139,23 +139,23 @@ describe("flight boundaries", () => {
   it("collects cargo without a capacity limit and retains each collected upgrade", () => {
     const flight = empty();
     flight.cargo = 500;
-    flight.weapon = "missiles";
+    flight.weapon = "rapidMissile";
     flight.objects.push(
       { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
       {
         ...flight.player,
         hp: 1,
-        id: "tripleLaser",
+        id: "multiLaser",
         kind: "pickup",
         radius: 10,
-        weapon: "tripleLaser",
+        weapon: "multiLaser",
       },
     );
     stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.cargo).toBe(501);
     expect(flight.objects).toHaveLength(0);
-    expect(flight.weapon).toBe("tripleLaser");
-    expect(flight.ownedWeapons).toEqual(["missiles", "tripleLaser"]);
+    expect(flight.weapon).toBe("multiLaser");
+    expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
   });
 
   it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {
@@ -365,7 +365,7 @@ describe("directional handling", () => {
       6,
     );
     expect(degrees(flight.shots[0]!.velocity, flight.facing)).toBeLessThan(1e-9);
-    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic.intervalSeconds, 9);
+    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic[0].intervalSeconds, 9);
     frames(PROTOTYPE, 5, aim, flight);
     expect(degrees(flight.facing, aim.aim)).toBeCloseTo(
       90 * Math.exp(-0.1 / physics.aimTurnSeconds),
@@ -594,12 +594,12 @@ describe("ship speed fraction", () => {
 
   it("scales jets by Ada's tuned top speed so they do not saturate after engine tuning", () => {
     const levels = { ...noLevels(), engine: 3 };
-    // Engine level 3 raises the top speed from 200 to 230.
+    // Engine level 3 raises the top speed from 200 to 220.
     expect(shipSpeedFraction(PROTOTYPE, { levels, velocity: { x: 200, y: 0 } })).toBeCloseTo(
-      200 / 230,
+      200 / 220,
       12,
     );
-    expect(shipSpeedFraction(PROTOTYPE, { levels, velocity: { x: 230, y: 0 } })).toBeCloseTo(1, 12);
+    expect(shipSpeedFraction(PROTOTYPE, { levels, velocity: { x: 220, y: 0 } })).toBeCloseTo(1, 12);
     expect(shipSpeedFraction(PROTOTYPE, { levels: noLevels(), velocity: { x: 200, y: 0 } })).toBe(
       1,
     );

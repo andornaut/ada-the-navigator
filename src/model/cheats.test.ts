@@ -24,17 +24,29 @@ describe("grant all weapons", () => {
     Object.assign(flight, {
       cargo: 12345,
       fireCooldown: 0.37,
-      ownedWeapons: ["tripleLaser"],
+      ownedWeapons: ["multiLaser"],
       shield: 42,
-      weapon: "tripleLaser",
+      weapon: "multiLaser",
     });
     model.save();
     const economy = structuredClone(model.state.economy);
     expect(grantAllWeapons(model.state)).toBe(true);
-    expect(flight.ownedWeapons).toEqual(["tripleLaser", "missiles", "scattershot"]);
-    expect(flight.grantedWeapons).toEqual(["missiles", "scattershot"]);
+    // The grant adds the four other shop weapons, Heavy Missile and Phaser included.
+    expect(flight.ownedWeapons).toEqual([
+      "multiLaser",
+      "rapidMissile",
+      "heavyMissile",
+      "scattershot",
+      "phaser",
+    ]);
+    expect(flight.grantedWeapons).toEqual([
+      "rapidMissile",
+      "heavyMissile",
+      "scattershot",
+      "phaser",
+    ]);
     expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 42 });
-    expect(flight.weapon).toBe("tripleLaser");
+    expect(flight.weapon).toBe("multiLaser");
     const serialized = model.save();
     expect(model.state.economy).toEqual(economy);
     // A resumed flight keeps its granted weapons until the flight ends.
@@ -46,7 +58,7 @@ describe("grant all weapons", () => {
   it("ends granted weapons with the flight", () => {
     const model = launched();
     grantAllWeapons(model.state);
-    model.state.flight!.weapon = "missiles";
+    model.state.flight!.weapon = "rapidMissile";
     model.save();
     expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "basic" });
     model.returnHome();
@@ -58,10 +70,10 @@ describe("grant all weapons", () => {
   it("costs nothing saved when a granted weapon is lost in a quantum jump", () => {
     const model = launched();
     const flight = model.state.flight!;
-    flight.levels.weapons.tripleLaser = 2;
-    flight.ownedWeapons = ["tripleLaser"];
+    flight.levels.weapons.multiLaser = 2;
+    flight.ownedWeapons = ["multiLaser"];
     grantAllWeapons(model.state);
-    flight.weapon = "missiles";
+    flight.weapon = "rapidMissile";
     model.state.economy.stardust = 30;
     flight.shield = PROTOTYPE.tuning.enemyDamage;
     flight.shots.push({
@@ -75,8 +87,8 @@ describe("grant all weapons", () => {
     });
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
-    expect(model.state.economy).toMatchObject({ ownedWeapons: ["tripleLaser"], stardust: 20 });
-    expect(model.state.economy.levels.weapons.tripleLaser).toBe(2);
+    expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 20 });
+    expect(model.state.economy.levels.weapons.multiLaser).toBe(2);
     expect(model.state.notice).not.toContain("was lost");
   });
 
@@ -97,17 +109,20 @@ describe("grant all weapons", () => {
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!.id;
     model.state.economy.stardust = 150;
-    expect(model.buy({ kind: "weapon", weapon: "missiles" })).toEqual({
+    expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "bought",
       price: 150,
     });
-    expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "missiles"]);
-    expect(flight.grantedWeapons).toEqual(["tripleLaser"]);
+    expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "rapidMissile"]);
+    expect(flight.grantedWeapons).toEqual(["multiLaser", "heavyMissile", "phaser"]);
+    // The HUD discs run Basic, Rapid, Multi-Laser, Heavy, Scattershot, Phaser.
     expect(model.weapons().map((choice) => choice.id)).toEqual([
       "basic",
-      "missiles",
-      "tripleLaser",
+      "rapidMissile",
+      "multiLaser",
+      "heavyMissile",
       "scattershot",
+      "phaser",
     ]);
   });
 

@@ -64,6 +64,8 @@ export interface SpaceObject extends Vec {
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";
   damage?: number;
+  /** World radius of a player missile's blast, which damages every enemy in it. */
+  blast?: number;
   fade?: ProjectileFade;
   id: string;
   velocity: Vec;

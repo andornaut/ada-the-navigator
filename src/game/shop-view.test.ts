@@ -12,9 +12,9 @@ const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.
 
 describe("shop rows on the station view", () => {
   it("maps items to Art's shop glyphs", () => {
-    expect(itemGlyph(ECONOMY, { kind: "weapon", weapon: "missiles" })).toEqual({
+    expect(itemGlyph(ECONOMY, { kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "weapon",
-      weapon: "missiles",
+      weapon: "rapidMissile",
     });
     expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "basic" })).toEqual({
       kind: "upgrade",
