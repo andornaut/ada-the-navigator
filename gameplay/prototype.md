@@ -131,6 +131,15 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
     the menu, then More, then Add app to Home screen."
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
+- Updates, as in Archie and Chibi: when a new version is waiting, the start screen
+  offers it in a compact modal titled "Update available", with secondary "Cancel"
+  on the left, primary "Update now" on the right, the ordinary close X and no body
+  text. Only Update now reloads into the new version. Cancel, the close X, an
+  outside tap, Escape and back defer it for that start-screen visit. Settings and
+  install steps covering the start screen suppress the offer.
+- The landing page, as in Archie, shows an "Install" button beside Play while the
+  game can be installed. It opens the browser's install prompt, or the same
+  browser steps as the Settings Install row in a dialog with a "Close" button.
 - Do not show a top-left information or status panel. Objectives, deposits and
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
