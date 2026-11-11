@@ -41,7 +41,8 @@ No quest board until station quests are designed.
 
 ## Shop
 
-1. Header: `shop`. The close X, back and Escape close the shop.
+1. Header: `shop`. The close X, an outside tap, back and Escape return to the
+   station card; only the station card's exits undock.
 2. Balance: the amount alone, without the word Stardust.
 3. Tabs: one action group, Weapons (`shopWeapons`) left and Ship (`shopShip`)
    right, sharing one width. The selected tab draws `ui-button-primary`, the
