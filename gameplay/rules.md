@@ -217,11 +217,14 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, stacked: "Resume" (primary), "Travel", "Settings" and "Return home".
-  Travel opens the discovered destinations; choosing one teleports there. Return
+  one shape, stacked: "Resume" (primary), "Map", "Settings" and "Return home".
+  Map shows the current galaxy: Ada's position, discovered destinations and
+  stations, charted landmarks, the current objective's destination once mapped,
+  and how much of the galaxy is mapped. Undiscovered places never appear. Choosing
+  a discovered destination or station offers "Travel here", which teleports there. Return
   home ends the flight and takes Ada home to Earth, with story
-  progress saved and no quantum jump cost. While Ada is in danger, Travel and Return home
-  stay visible but disabled, refuse with the shared refusal feedback, and the card
+  progress saved and no quantum jump cost. While Ada is in danger, Travel here and Return
+  home stay visible but disabled, refuse with the shared refusal feedback, and the card
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   On the start screen, Settings opens from its own button, as in Chibi.
@@ -304,8 +307,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Top-right weapon icons select basic fire or an owned weapon, in the order Basic,
   Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser; only owned
   weapons show an icon. Switching preserves
-  ownership of the other upgrades. Weapons cannot be changed during combat or for 5
-  seconds after it.
+  ownership of the other weapons. Ada can switch at any time, including in combat;
+  after a switch the next switch waits 1 second (provisional).
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Galaxy one's roster is in
   [Ships](ships.md).
@@ -442,7 +445,7 @@ destination, a quest item or quest event, the holodisk waypoint and an
 undiscovered station within range. Ordinary enemies, optional discovery caches
 and ordinary resource rocks get none; Penny senses those instead. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
-contact, like other pickups. This does not add a map.
+contact, like other pickups. The pause menu's Map is the only map; there is no minimap.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.

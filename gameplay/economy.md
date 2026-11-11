@@ -97,14 +97,29 @@ Seafoam, Graphite and Iris. Tapping an owned scheme puts it in use at once, with
 no confirm; the scheme in use has the selection ring and shows In use instead of
 Owned.
 
-## Weapons in combat
+## Weapon switching
 
-Weapons cannot be changed during combat or for 5 seconds after it ends; the lock
-and its icon treatment last through those 5 seconds. Combat is
-the existing danger state that also blocks travel. While weapon changes are
-locked, the other weapon icons are visibly disabled and refuse with the shared
-refusal feedback. The selected weapon's icon has a treatment like Chibi's
-power-ups.
+Ada can switch weapons at any time, including in combat. After a switch, the next
+switch waits 1 second (provisional); during that wait the other weapon icons
+refuse with the shared refusal feedback. The selected weapon's icon has a treatment
+like Chibi's power-ups.
+
+## Donations
+
+Once a galaxy's story is complete, its outposts and stations offer community
+projects that Ada can fund with Stardust. A funded project visibly changes the
+galaxy, plays a thank-you line, counts toward achievements and makes an ally who
+joins the Black Eye finale. Projects give no combat power. Each galaxy has two or
+three projects, provisionally 300 to 800 Stardust each:
+
+- Sunflower: a greenhouse ring for the growers (500); a crane for the workshop
+  (400); a salvage beacon network (300).
+- Cartwheel: a second docking bay so no miner waits alone (600); hub repairs (400).
+- Whirlpool: a nursery beacon for whale calves (500); a current-map buoy chain
+  (400).
+
+A project's donation can be paid in parts; progress persists across flights.
+The station card shows a Projects tab beside the shop once projects are offered.
 
 ## Quantum jump home
 
@@ -136,6 +151,9 @@ The shield shop row reuses the existing `shield` label.
 | `confirmLeft`       | {amount} left after                                                |
 | `confirmBuy`        | Buy                                                                |
 | `confirmCancel`     | Cancel                                                             |
+| `projects`          | Projects                                                           |
+| `donate`            | Donate                                                             |
+| `projectFunded`     | Funded                                                             |
 | `undock`            | Undock                                                             |
 | `stationWelcome`    | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
 | `inUse`             | In use                                                             |
@@ -149,7 +167,6 @@ The shield shop row reuses the existing `shield` label.
 | `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                   |
 | `aboutScattershot`  | A shotgun spread, strongest up close.                              |
 | `aboutPhaser`       | An instant beam that strikes the first thing in its path.          |
-| `weaponLocked`      | Weapons can't be changed in combat.                                |
 | `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
 | `shieldRecharge`    | Shield recharge                                                    |
 | `engineTuning`      | Engine tuning                                                      |

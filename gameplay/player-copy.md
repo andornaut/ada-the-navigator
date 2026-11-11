@@ -344,7 +344,7 @@ Sunflower:
   adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
-- Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.
+- Pause: Pause (button label), Paused, Resume, Map, Settings, Return home.
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
   text: ...
@@ -354,7 +354,8 @@ Sunflower:
   - Galaxy 2, Cartwheel: "A busy mining hub where every rock is worth something."
   - Galaxy 3, Whirlpool: "Swirling debris, and a song somewhere in the dark."
   - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
-- Travel card: Discovered destinations. With none yet: No destinations mapped yet.
+- Map: Map; {percent}% mapped; Travel here. With nothing discovered yet: No
+  destinations mapped yet.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
   saved.
