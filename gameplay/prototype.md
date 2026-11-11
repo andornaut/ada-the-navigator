@@ -267,12 +267,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   output (damage times fire rate times how often it hits) by about 1.5, so level 3
   is about 2.25 times level 1. Each weapon grows along its own dimensions:
   - Basic: damage and fire rate.
-  - Heavy Missile: one slow straight missile with a large blast and high damage;
-    levels grow its blast radius and damage.
-  - Rapid Missile: faster straight missiles with a small blast, stronger than basic
-    fire; levels grow its fire rate and damage.
-  - Multi-Laser: a fan of bolts, 3 at level 1 (-20, 0 and 20 degrees), then 4, then
-    5 across the same fan, with a small damage rise to reach the level step.
+  - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
+    basic damage) with a large blast; levels grow its blast radius (60, 72, 85)
+    and damage.
+  - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
+    basic damage) with a small blast (25); levels grow its fire rate and damage.
+  - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
+    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step.
   - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
     then 9, then 11, each level reaching a little farther. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. Dots do not apply
@@ -290,7 +291,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing, piercing or reload is added.
-- Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
+- Top-right weapon icons select basic fire or an owned weapon, in the order Basic,
+  Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser; only owned
+  weapons show an icon. Switching preserves
   ownership of the other upgrades. Weapons cannot be changed during combat or for 5
   seconds after it.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
