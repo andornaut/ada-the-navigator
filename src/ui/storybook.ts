@@ -1,6 +1,6 @@
 import type { Background } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
-import { HUD_BUTTON, STORY_SKIP } from "./layout/playView.ts";
+import { STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -49,8 +49,9 @@ const AVAILABLE_WIDTH = `calc(100% - ${safeEdge("left", SPACING.pageInset)} - ${
   "right",
   SPACING.pageInset,
 )})`;
-// The panel grows up to a gap below the HUD row, so it never covers Skip or the settings button.
-const AVAILABLE_HEIGHT = `calc(100% - ${fromHudEdge("top", HUD_BUTTON.target + SPACING.gap)} - ${safeEdge(
+// The panel grows up to the page safe rect's top. PROVISIONAL (Art): a page taller than the view
+// below the HUD row (a question page on a phone) reaches under Skip's corner.
+const AVAILABLE_HEIGHT = `calc(100% - ${safeEdge("top", SPACING.pageInset)} - ${safeEdge(
   "bottom",
   SPACING.pageInset,
 )})`;
