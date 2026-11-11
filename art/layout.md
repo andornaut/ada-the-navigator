@@ -313,9 +313,10 @@ available. Ada's room page opens the room card from its pause button
 ([Storybook page](#storybook-page)).
 
 Map, from the Paused card, is a full-screen map rather than a card: the
-galaxy's field under the insets, a header panel on the HUD rect's top-left, a
-column of `HUD_BUTTON` tools on its top-right and the place panel on the
-available rect's bottom, with Return to Earth on the HUD row. Its tokens
+galaxy's field under the insets, a header panel on the HUD rect's top-left
+(the name, then the pips over the percent), Quests and Return to Earth on the
+HUD row, a column of `HUD_BUTTON` tools on its top-right and the place panel
+on the available rect's bottom. Quests opens a Quests modal card over it. Its tokens
 (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
 [Map](map.md). Close, back and Escape return
 to Paused.

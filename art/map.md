@@ -17,44 +17,52 @@ The map is a screen, not a card: the field fills the whole logical view, under
 the insets, and the header, the tools and the place panel float on it. Like a
 modal it takes input exclusively; nothing of the flight HUD shows.
 
-| Part   | Anchor                                                                                    |
-| ------ | ----------------------------------------------------------------------------------------- |
-| Field  | The whole logical view, in the galaxy's `background` with the fog over it                 |
-| Header | Top-left corner on the HUD rect's top-left (`hudRect`)                                    |
-| Tools  | One column of `HUD_BUTTON` targets, top on the HUD rect's top-right corner, `pitch` apart |
-| Earth  | Return to Earth on the HUD row, right edge `SPACING.pageInset` left of the tool column    |
-| Panel  | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom      |
-| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                |
+| Part   | Anchor                                                                                     |
+| ------ | ------------------------------------------------------------------------------------------ |
+| Field  | The whole logical view, in the galaxy's `background` with the fog over it                  |
+| Header | Top-left corner on the HUD rect's top-left (`hudRect`)                                     |
+| Tools  | One column of `HUD_BUTTON` targets, top on the HUD rect's top-right corner, `pitch` apart  |
+| Row    | Quests, then Return to Earth, on the HUD row, ending `SPACING.pageInset` left of the tools |
+| Panel  | Centred in `safeRect(insets, SPACING.pageInset, view)`, bottom on that rect's bottom       |
+| Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                 |
+| Quests | A modal card over the map: see [Quests modal](#quests-modal)                               |
 
 ### Header
 
-One ink panel holding, left to right on its 48 row: the galaxy name
-(`TYPE.heading`, white), a divider, "{percent}% mapped" (`TYPE.label`, cream)
-and one pip per landmark in the galaxy. Strings are Gameplay's: the galaxy
+One ink panel on its 48 row holding, left to right: the galaxy name
+(`TYPE.heading`, white), a divider, then a column of one pip per landmark over
+"{percent}% mapped" (`TYPE.label`, cream). Strings are Gameplay's: the galaxy
 names and "{percent}% mapped" (`gameplay/player-copy.md`).
 
-| Token                          | Value | Rule                                                               |
-| ------------------------------ | ----- | ------------------------------------------------------------------ |
-| `MAP_SCREEN.header.height`     | 48    | The HUD row: `HUD_BUTTON.target`                                   |
-| `MAP_SCREEN.header.radius`     | 4     | As `PILL`                                                          |
-| `MAP_SCREEN.header.alpha`      | 0.65  | Ink `#181425` panel, the HUD panel alpha                           |
-| `MAP_SCREEN.header.padding`    | 16    | At each end                                                        |
-| `MAP_SCREEN.header.nameTop`    | 10    | The name's 28 line box top, centring it in the row                 |
-| `MAP_SCREEN.header.labelTop`   | 14    | The percent's 20 line box top                                      |
-| `MAP_SCREEN.header.dividerGap` | 12    | Name, 12, a 1x16 divider `#57536e` centred on the row, 12, percent |
-| `MAP_SCREEN.header.pipGap`     | 8     | Percent to the first pip                                           |
-| `MAP_SCREEN.header.pip`        | 6     | Pip diameter, centred on the row                                   |
-| `MAP_SCREEN.header.pipPitch`   | 8     | Pip centre to centre (2 apart)                                     |
+| Token                          | Value | Rule                                                                                    |
+| ------------------------------ | ----- | --------------------------------------------------------------------------------------- |
+| `MAP_SCREEN.header.height`     | 48    | The HUD row: `HUD_BUTTON.target`                                                        |
+| `MAP_SCREEN.header.radius`     | 4     | As `PILL`                                                                               |
+| `MAP_SCREEN.header.alpha`      | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                |
+| `MAP_SCREEN.header.padding`    | 16    | At each end                                                                             |
+| `MAP_SCREEN.header.nameTop`    | 10    | The name's 28 line box top, centring it in the row                                      |
+| `MAP_SCREEN.header.dividerGap` | 12    | Name, 12, a 1x16 divider `#57536e` centred on the row, 12, the column                   |
+| `MAP_SCREEN.header.stackTop`   | 9     | The column's top: `(48 - 30) / 2` for the 6 pips, the gap and the 20 line; to implement |
+| `MAP_SCREEN.header.stackGap`   | 4     | Pips to the percent's line box (`SPACING.rowGap`), which tops at 19; to implement       |
+| `MAP_SCREEN.header.labelTop`   | 14    | The percent's 20 line box top when the galaxy has no landmarks                          |
+| `MAP_SCREEN.header.pip`        | 6     | Pip diameter                                                                            |
+| `MAP_SCREEN.header.pipPitch`   | 8     | Pip centre to centre (2 apart)                                                          |
 
-- Width: `2 * padding + name + 12 + 1 + 12 + percent`, plus `pipGap + 8 * n - 2`
-  for `n` landmarks. With no landmarks the pips and their gap are absent.
+- The pips and the percent both start at the column's left. With no
+  landmarks the pip row is absent and the percent centres on the row
+  (`labelTop`).
+- Width: `2 * padding + name + 12 + 1 + 12 + column`, where `column` is
+  `max(percent, 8 * n - 2)` for `n` landmarks. The widest is 279.8:
+  "Sunflower" (116.0), "100% mapped" (106.8) and 12 pips (94).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Return to Earth less `SPACING.gap`: 413.5 wide at the
-  smallest view (720 logical, phone insets 43), 483.5 at the 720 base.
-  "Sunflower", the widest name, and "100% mapped" leave room for 15 pips; each
-  galaxy has 12 landmarks, 4 of each kind. The widest header is 381.8.
+- The header may reach Quests less `SPACING.gap`: 319.3 wide at the smallest
+  view (720 logical, phone insets 43), 389.3 at the 720 base. At 319.3 the
+  column may be 146.3 wide, room for 18 pips; each galaxy has 12 landmarks, 4
+  of each kind.
+- The header keeps the 48 row, so the fit region's top, `maxScale` and the
+  1020 separation are unchanged.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
 
@@ -90,24 +98,36 @@ top-right corner: close, zoom in, zoom out, recentre. Target `i` is at
   (`2 * (664 - 8 - 360)`), so it always clears the column.
 - Accessible labels (Gameplay's): Zoom in, Zoom out and Center on Ada.
 
-### Return to Earth
+### Quests and Return to Earth
 
-A secondary `TEXT_BUTTON` labelled "Return to Earth" (Gameplay), on every
-galaxy's Map. Constant: `MAP_SCREEN.earth`, to implement.
+Two secondary `TEXT_BUTTON`s on the HUD row of every galaxy's Map, left to
+right: "Quests", then "Return to Earth" (Gameplay). Constant:
+`MAP_SCREEN.hudRow`, to implement.
 
-- Geometry: 48 high, the label plus `2 * TEXT_BUTTON.inset` wide (116.5 + 32 =
-  148.5), top on the HUD rect's top, right edge at the tool column's left
-  (`toolColumnLeft`) less `SPACING.pageInset`. At the 720 base it spans 499.5
-  to 648; at 720 with phone insets 464.5 to 613. It never moves with the
-  header's width.
-- The button is its press area (48, `HIT_RULE.minTarget`). The fit region,
-  the tool column and the place panel are unchanged by it: it sits in the HUD
-  row above the fit region's top.
-- Action: Gameplay's Return to Earth, with no confirm. It ends the flight and
+- Geometry: 48 high, top on the HUD rect's top. Each is its own label plus
+  `2 * TEXT_BUTTON.inset` wide: Quests 54.3 + 32 = 86.3, Return to Earth
+  116.5 + 32 = 148.5. They are separate controls, not an action row: one
+  shared width (148.5 each) would reach 592.9 of the 570 available with phone
+  insets.
+- Return to Earth's right edge is the tool column's left (`toolColumnLeft`)
+  less `SPACING.pageInset`; Quests ends `SPACING.gap` left of Return to Earth.
+  Neither moves with the header's width.
+
+| View, logical            | Header, up to | Quests         | Return to Earth | Tool column left |
+| ------------------------ | ------------- | -------------- | --------------- | ---------------- |
+| 720x360                  | 8 to 397.3    | 405.3 to 491.5 | 499.5 to 648    | 664              |
+| 720x360, phone insets 43 | 43 to 362.3   | 370.3 to 456.5 | 464.5 to 613    | 629              |
+
+- Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
+  the tool column and the place panel are unchanged: the row sits above the
+  fit region's top.
+- Quests opens the [Quests modal](#quests-modal). It is always available, in
+  danger and while towing too.
+- Return to Earth: Gameplay's action, with no confirm. It ends the flight and
   takes Ada to her room. It stays available while towing; the towed craft
-  returns to where it was stranded.
-- In danger: the unavailable face (disabled face, focusable); activation plays
-  the [refusal cue](controls.md#refusal-cue). The panel shows the danger
+  returns to where it was stranded. In danger it shows the unavailable face
+  (disabled face, focusable), activation plays the
+  [refusal cue](controls.md#refusal-cue), and the panel shows the danger
   reason (below).
 
 ### Place panel
@@ -174,6 +194,72 @@ unavailable.
   towing line shows only while a place offering Travel here is selected.
 - The panel's chip and text are decorative to the pointer: a press on the panel
   outside Travel here does nothing and never reaches the field.
+
+### Quests modal
+
+The galaxy's current quests on a standard content-fitted card
+([Layout](layout.md#modals)) titled "Quests", with the close X, over the map
+under the modal dim. The dim covers the field, the header, the HUD row, the
+tools and the panel. The close X, an outside tap, back and Escape close it,
+leaving the map's view and selection unchanged. Focus starts on the first line
+button, or on the close X without one. Constants: `MAP_SCREEN.quests`, to
+implement.
+
+| Token                          | Value | Rule                                                                   |
+| ------------------------------ | ----- | ---------------------------------------------------------------------- |
+| `MAP_SCREEN.quests.lineGap`    | 8     | Between lines (`SPACING.gap`)                                          |
+| `MAP_SCREEN.quests.chip`       | 28    | A line button's chip (`MAP_SYMBOL.chip`)                               |
+| `MAP_SCREEN.quests.overhang`   | 4     | The chip past the label's 20 line box, above and below, in the 44 face |
+| `MAP_SCREEN.quests.markGap`    | 6     | Chip to label (`SPACING.markGap`)                                      |
+| `MAP_SCREEN.quests.textColumn` | 50    | Text start from the inner edge: `TEXT_BUTTON.inset + chip + markGap`   |
+| `MAP_SCREEN.quests.ring`       | 1     | The unmapped ring's width, `#b8b3c9`                                   |
+
+Lines, in Gameplay's order: the story objective, or "Story complete." once the
+chapter is resolved; the held job or activity as "Job: {objective}"; with no
+job held and a station discovered, "Station job boards have more to do.".
+With no lines, the card holds the empty note "Explore to find something to
+do.".
+
+1. Mapped line, its target a place on the map: a secondary `TEXT_BUTTON`
+   filling the inner width, content left-aligned: the target's chip (as in the
+   place panel, without the ring or indicator), `markGap`, then the line in
+   `TYPE.label` as the button label. The chip overhangs the label's line box by
+   4 above and below, so a one-line button is 48; each wrapped line adds 20.
+   The button counts at its full width and widens the card.
+2. Plain line: `TYPE.body`, supporting `#b8b3c9`, starting on the text column,
+   20 per line, wrapping as prose (it never widens the card). A line whose
+   target is not yet mapped carries a 28 hollow ring in the chip slot, the
+   uncharted pip's look, centred on the text and overhanging it by 4 each way.
+   "Story complete." and the job-board line carry no ring. The ring is
+   decorative: the line reads as its text.
+3. Empty note: one centred `TYPE.body` supporting line.
+
+- Width: `cardWidth` from the widest line button,
+  `16 + 28 + 6 + label + 16`, floor 360, capped at the available width (634
+  with phone insets, 688 at the 720 base); a button wider than the inner width
+  wraps.
+- Height: `58 + lines + gaps + 16`. Every state fits the 325 available.
+
+| State at 720x360, phone insets                    | Lines                              | Card        |
+| ------------------------------------------------- | ---------------------------------- | ----------- |
+| Story target mapped, no job, a station discovered | Button 48, plain 20                | 439.9 x 150 |
+| Story and job targets mapped                      | Two buttons, 48 each               | 439.9 x 178 |
+| Story target unmapped, job target mapped          | Ringed plain wrapped to 40, button | 360 x 170   |
+| A job line wider than the 602 inner width         | Button 48, button wrapped to 68    | 634 x 198   |
+| Story complete, no job, a station discovered      | Two plain lines                    | 360 x 122   |
+| No lines                                          | Empty note                         | 360 x 94    |
+
+The 439.9 width is "Take food from the growers to the workshop." in a button.
+
+- Press: a mapped line closes the modal, pans so its chip sits at the fit
+  region's centre at the current scale (clamped by the pan limit), applies the
+  keep-clear rule, then selects the chip; the place panel shows as for any
+  selection. At 720x360 with phone insets the centre is (332, 202.5) and the
+  ring's bottom 221.5: it clears the 80, 100 and 108 panels (tops 261, 241 and 233) by at least `SPACING.gap`, and keep-clear lifts it 16.5 above the 128
+  panel (top 213).
+- Plain lines and the empty note take no input.
+- In danger the modal is unchanged: Quests and every line button stay
+  available, and a selection is never refused.
 
 ## Symbols
 
@@ -432,12 +518,13 @@ presses first; a chip under them takes no press there.
 - Every zoom clamps to `minScale`..`maxScale`; every pan clamps to the pan
   limit.
 - Keyboard: Tab moves through the tools (close, zoom in, zoom out, recentre),
-  then Return to Earth, then the places in reading order (drawn centre top to
+  then Quests and Return to Earth, then the places in reading order (drawn centre top to
   bottom, then left to right), then Travel here. Enter or Space on a place selects it; focusing a
   place pans it clear by the keep-clear rule. Focus starts on close.
 - Travel here: Gameplay's teleport. While Ada is in danger or towing it is
   unavailable, with the reason line; activation plays the refusal cue.
-- Return to Earth: see [Return to Earth](#return-to-earth).
+- Quests and Return to Earth: see
+  [Quests and Return to Earth](#quests-and-return-to-earth).
 
 ## States
 
@@ -451,6 +538,7 @@ presses first; a chip under them takes no press there.
 | Job spot selected     | Selection ring on the orange diamond            | Diamond and the job's name; no action                                           |
 | In danger             | Return to Earth unavailable                     | Travel here unavailable, "Unavailable while you are in danger."                 |
 | Towing                | Return to Earth available                       | Travel here unavailable, "Unavailable while towing."                            |
+| Quests open           | Under the modal dim                             | Under the modal dim                                                             |
 | Light field           | Ink parts carry every mark (keyline rule)       | Unchanged                                                                       |
 | No explored record    | Plain field, no fog                             | Unchanged                                                                       |
 
@@ -464,11 +552,13 @@ are unavailable on the map.
 ## Strings
 
 Gameplay's, from `gameplay/player-copy.md`: Map; "{percent}% mapped"; Travel
-here; Return to Earth; "No destinations mapped yet."; "Unavailable while you
-are in danger.";
+here; Return to Earth; Quests; "No destinations mapped yet."; "Unavailable
+while you are in danger.";
 the galaxy names; "Unavailable while towing."; the tools' accessible labels;
 "Job: {objective}" (`jobObjective`, also in `gameplay/quests.md`), under the
-type line of the held job's target; and the type line:
+type line of the held job's target and on the Quests modal; the Quests modal's
+"Story complete.", "Station job boards have more to do." and "Explore to find
+something to do."; and the type line:
 
 - Types: Station, Outpost, Story place, Holodisk, Nebula, Wreck, Beacon.
   Outposts say "Outpost" without their name.
