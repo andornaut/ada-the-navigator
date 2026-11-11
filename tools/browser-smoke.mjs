@@ -300,7 +300,6 @@ try {
         .locator(".ada-story-art")
         .first()
         .evaluate((art) => art.style.backgroundImage),
-      astra: await page.locator(".ada-story-astra").evaluate((patch) => !patch.hidden),
       background: await page.locator(".ada-story-background").getAttribute("data-background"),
       speaker: await panel.evaluate(
         (node) => node.querySelector(".ada-story-speaker:not([hidden])")?.textContent ?? "",
@@ -468,20 +467,15 @@ try {
     launchPages.slice(1).map(() => ""),
     "Every other page change cuts",
   );
-  // Astra's lens animates on the cockpit pages she speaks, and on no other.
-  assert.deepEqual(
-    launchPages.map(({ astra }) => astra),
-    launchPages.map(
+  assert.ok(
+    launchPages.some(
       ({ background, speaker }) => speaker === "Astra" && background.startsWith("cockpit"),
     ),
-  );
-  assert.ok(
-    launchPages.some(({ astra }) => astra),
     "Astra speaks in the prologue's cockpit",
   );
   events.checks.push(
-    "Storybook pages show Art's backgrounds, the glowing room plays the rock glow into the " +
-      "cockpit, and Astra's lens animates while she speaks there",
+    "Storybook pages show Art's backgrounds and the glowing room plays the rock glow into the " +
+      "cockpit",
   );
   // Each optional question's answer returns to the list until Continue.
   for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)

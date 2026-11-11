@@ -9,11 +9,7 @@ import { boardingScene, prologueScene } from "../model/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 import {
   type ArtAsset,
-  astraSpeaks,
-  framePosition,
-  readAstraSpeaking,
   readStoryTransitions,
-  speakingFrames,
   storyBackgrounds,
   transitionSteps,
 } from "./story-art.ts";
@@ -160,58 +156,5 @@ describe("storybook art", () => {
       }
     }
     expect(SELECTOR_BACKDROP).toBe("cockpitSeated");
-  });
-
-  describe("Astra speaking", () => {
-    const astra = readAstraSpeaking(manifest.assets)!;
-
-    it("places the patch at its manifest position and display size on the 960 by 540 canvas", () => {
-      const entry = manifest.assets.find(({ id }) => id === "cockpit-astra") as {
-        at: { x: number; y: number };
-        displayHeight: number;
-        displayWidth: number;
-        path: string;
-      };
-      expect(astra.url).toBe(entry.path);
-      expect(astra.box).toEqual({
-        height: (entry.displayHeight / 540) * 100,
-        left: (entry.at.x / 960) * 100,
-        top: (entry.at.y / 540) * 100,
-        width: (entry.displayWidth / 960) * 100,
-      });
-      // The patch lies wholly on the canvas.
-      expect(entry.at.x + entry.displayWidth).toBeLessThanOrEqual(960);
-      expect(entry.at.y + entry.displayHeight).toBeLessThanOrEqual(540);
-      expect(astra.frameCount).toBe(4);
-    });
-
-    it("loops speak1 to speak4 at 120 ms each, and holds speak1 under reduced motion", () => {
-      expect(speakingFrames(astra, false)).toEqual(
-        [0, 1, 2, 3].map((frame) => ({ frame, ms: 120 })),
-      );
-      expect(speakingFrames(astra, true)).toEqual([{ frame: 0, ms: 120 }]);
-      const positions = [0, 1, 2, 3].map((frame) => framePosition(astra, frame));
-      expect(positions.every((position) => position.endsWith("%"))).toBe(true);
-      [0, 100 / 3, 200 / 3, 100].forEach((expected, frame) =>
-        expect(Number.parseFloat(positions[frame]!)).toBeCloseTo(expected, 6),
-      );
-    });
-
-    it("animates on the cockpit pages Astra speaks and on no other page", () => {
-      const pages = [
-        ...prologueScene(PROTOTYPE, LABELS).pages,
-        ...boardingScene(PROTOTYPE, false).pages,
-      ];
-      const speaking = pages.filter(astraSpeaks);
-      expect(speaking.length).toBeGreaterThan(0);
-      for (const page of pages) {
-        expect(astraSpeaks(page), page.id).toBe(
-          page.speaker === "Astra" && page.background.startsWith("cockpit"),
-        );
-      }
-      expect(pages.some((page) => page.speaker === "Ada" && !astraSpeaks(page))).toBe(true);
-      expect(astraSpeaks({ background: "park", speaker: "Astra" })).toBe(false);
-      expect(astraSpeaks({ background: "cockpit" })).toBe(false);
-    });
   });
 });

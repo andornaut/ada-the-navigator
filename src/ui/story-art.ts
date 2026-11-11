@@ -1,28 +1,19 @@
-import { ASTRA, type Background, BACKGROUND_ART } from "../data/storybook.ts";
+import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { STORY_BACKGROUND } from "./layout/storyPage.ts";
 
-// Art's storybook backgrounds, their composite overlays, the rock glow transitions, the overnight
-// sequence and Astra's speaking frames (art/storybook.md, art/cockpit.md), read from the root
-// manifest and the story transition and overnight files it links as storyTransition and
-// storyOvernight.
+// Art's storybook backgrounds, their composite overlays, the rock glow transitions and the
+// overnight sequence (art/storybook.md), read from the root manifest and the story transition and
+// overnight files it links as storyTransition and storyOvernight.
 
 export const ART_MANIFEST_URL = "/art/manifest.json";
-
-/** The sheet of Astra's speaking frames, drawn over either cockpit while she speaks. */
-export const ASTRA_SPEAKING_ID = "cockpit-astra";
-
-/** The backgrounds Astra's lens shows on. */
-export const COCKPIT_BACKGROUNDS: readonly Background[] = ["cockpit", "cockpitSeated"];
 
 export interface ArtAsset {
   readonly displayHeight?: number;
   readonly displayWidth?: number;
   readonly id: string;
   readonly path: string;
-  /** A sheet's frame layout, loop and top-left on the background canvas, in logical px. */
+  /** An overlay's top-left on the background canvas, in logical px. */
   readonly at?: { readonly x: number; readonly y: number };
-  readonly frameWidth?: number;
-  readonly loop?: readonly { readonly frame: number; readonly ms: number }[];
   /** A composite background's overlay entries, drawn over its path in order. */
   readonly overlays?: readonly string[];
   readonly width?: number;
@@ -96,27 +87,7 @@ export interface StoryTransition {
   readonly to: string;
 }
 
-/** One frame of a looping sheet, held for ms. */
-export interface SheetFrame {
-  readonly frame: number;
-  readonly ms: number;
-}
-
-/** Astra's speaking sheet: its frames and its box as percentages of the background canvas. */
-export interface AstraSpeaking {
-  readonly box: {
-    readonly height: number;
-    readonly left: number;
-    readonly top: number;
-    readonly width: number;
-  };
-  readonly frameCount: number;
-  readonly loop: readonly SheetFrame[];
-  readonly url: string;
-}
-
 export interface StoryArt {
-  readonly astra: AstraSpeaking | null;
   readonly backgrounds: Partial<Record<Background, string>>;
   /** Each composite background's overlays, drawn over its image. */
   readonly composites: Partial<Record<Background, readonly StoryOverlay[]>>;
@@ -367,44 +338,6 @@ export function breathKeyframes(samples: number): { offset: number; opacity: num
   }));
 }
 
-/** Astra's speaking sheet from the manifest, placed on the background canvas, or null. */
-export function readAstraSpeaking(assets: readonly ArtAsset[]): AstraSpeaking | null {
-  const entry = assets.find(({ id }) => id === ASTRA_SPEAKING_ID);
-  const box = entry && canvasBox(entry);
-  const { frameWidth, loop, width } = entry ?? {};
-  if (!entry || !box || !frameWidth || !width || !loop?.length) {
-    return null;
-  }
-  const frameCount = Math.round(width / frameWidth);
-  if (loop.some(({ frame, ms }) => frame < 0 || frame >= frameCount || ms <= 0)) {
-    return null;
-  }
-  return {
-    box,
-    frameCount,
-    loop: loop.map(({ frame, ms }) => ({ frame, ms })),
-    url: entry.path,
-  };
-}
-
-/** Whether Astra's lens animates on a page: a cockpit page she speaks. */
-export function astraSpeaks(page: { readonly background: Background; readonly speaker?: string }) {
-  return page.speaker === ASTRA && COCKPIT_BACKGROUNDS.includes(page.background);
-}
-
-/** The frames a speaking page cycles through: the loop, or its first frame held. */
-export function speakingFrames(
-  astra: AstraSpeaking,
-  reducedMotion: boolean,
-): readonly SheetFrame[] {
-  return reducedMotion ? astra.loop.slice(0, 1) : astra.loop;
-}
-
-/** A frame's horizontal background position on a sheet of frameCount frames. */
-export function framePosition(astra: AstraSpeaking, frame: number): string {
-  return astra.frameCount > 1 ? `${(frame / (astra.frameCount - 1)) * 100}%` : "0%";
-}
-
 const fetchJson = async (url: string): Promise<unknown> => {
   const response = await fetch(url);
   if (!response.ok) {
@@ -427,7 +360,6 @@ export async function loadStoryArt(): Promise<StoryArt> {
     linked(manifest.storyOvernight),
   ]);
   return {
-    astra: readAstraSpeaking(assets),
     backgrounds: storyBackgrounds(assets),
     composites: storyComposites(assets),
     overnight: readOvernight(assets, overnight),
