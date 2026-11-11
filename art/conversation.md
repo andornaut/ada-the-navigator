@@ -54,7 +54,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 - General Gadget: faceless. Static (navy `#3a4466` and `#1d2032` noise and a
   rolling scanline) behind an ink-edged coral octagon that holds the drones'
   claw insignia (ink claw closing on an amber disc; see
-  [Sector one enemies](enemies.md)) and a hard amber `#f0bd68` zigzag
+  [Sector one enemies](enemies.md#insignia)) and a hard amber `#f0bd68` zigzag
   voice trace; idle has a flat `#b98a40` line. Unknown: the plate dims to
   `#7f4b3d` with `#5e3a33` shade and the disc to `#b98a40`, two glitch bands
   tear it sideways and specks break it up. Named: coral `#d68b72` with

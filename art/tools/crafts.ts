@@ -3,6 +3,8 @@ import { depth, facesViewer, type Point, rotate } from "./projection.ts";
 // Sector one enemy models, shared by the frame and destruction exports.
 export type Plan = readonly (readonly [number, number])[];
 // `loose` parts break off as their own destruction shard; others ride on the hull wedge they sit in.
+// `decal` parts are flat paint on the hull top: they draw right after the hull and split along
+// the destruction wedge cuts with it.
 export type Part = {
   plan: Plan;
   z0: number;
@@ -11,6 +13,7 @@ export type Part = {
   side: string;
   rear?: string;
   loose?: true;
+  decal?: true;
 };
 export type Craft = {
   name: string;
@@ -44,6 +47,53 @@ export const box = (x0: number, y0: number, x1: number, y1: number): Plan => [
   [x0, y1],
 ];
 
+const ink = "#181425";
+
+// General Gadget's insignia: a horseshoe claw opening forward (negative y), prong tips hooked
+// inward, closing on an amber disc. Unit outline of the right half from the rear centre.
+const CLAW_HALF: Plan = [
+  [0, 1],
+  [0.5, 0.87],
+  [0.87, 0.5],
+  [1, 0],
+  [1, -0.6],
+  [0.78, -1],
+  [0.2, -0.92],
+  [0.36, -0.68],
+  [0.5, -0.45],
+  [0.5, 0],
+  [0.44, 0.25],
+  [0.25, 0.44],
+  [0, 0.5],
+];
+const CLAW_DISC = { y: -0.2, r: 0.26, sides: 12 };
+
+// One closed outline: the outer right edge, the inner edge round the opening, the outer left edge.
+function clawPlan(cx: number, cy: number, r: number): Plan {
+  const half = CLAW_HALF.map(([x, y]) => [cx + x * r, cy + y * r] as const);
+  const flip = ([x, y]: readonly [number, number]) => [2 * cx - x, y] as const;
+  const [outer, inner] = [half.slice(0, 7), half.slice(7)];
+  return [
+    ...outer,
+    ...inner,
+    ...inner.slice(0, -1).toReversed().map(flip),
+    ...outer.slice(1).toReversed().map(flip),
+  ];
+}
+
+// The mark at plan centre (cx, cy) with radius r, flat on the hull top at height z.
+function insignia(cx: number, cy: number, r: number, z: number): Part[] {
+  const disc: Plan = Array.from({ length: CLAW_DISC.sides }, (_, i) => {
+    const a = (i / CLAW_DISC.sides) * 2 * Math.PI;
+    const radius = CLAW_DISC.r * r;
+    return [cx + radius * Math.cos(a), cy + CLAW_DISC.y * r + radius * Math.sin(a)] as const;
+  });
+  return [
+    { plan: clawPlan(cx, cy, r), z0: z, z1: z, top: ink, side: ink, decal: true },
+    { plan: disc, z0: z, z1: z, top: amber, side: amber, decal: true },
+  ];
+}
+
 export const crafts: Craft[] = [
   {
     // Small beetle with forward mandibles.
@@ -67,6 +117,8 @@ export const crafts: Craft[] = [
         rear: coralRear,
       },
       { plan: box(-3.2, -6, 3.2, 0), z0: 3, z1: 4.5, top: amber, side: amberSide, loose: true },
+      // Insignia on bare hull top.
+      ...insignia(0, 6.5, 5.5, 3),
     ],
     mouths: [[0, 16]],
     mouthWidth: 4,
@@ -98,6 +150,8 @@ export const crafts: Craft[] = [
       { plan: box(-3.5, -9, 3.5, -3), z0: 4, z1: 6, top: visor, side: visorSide, loose: true },
       { plan: box(-17.5, -34, -14.5, -24), z0: 2, z1: 5, top: amber, side: amberSide },
       { plan: box(14.5, -34, 17.5, -24), z0: 2, z1: 5, top: amber, side: amberSide },
+      // Insignia on bare hull top.
+      ...insignia(7.5, 3.5, 5.2, 4),
     ],
     mouths: [
       [-8, 18],
@@ -129,6 +183,8 @@ export const crafts: Craft[] = [
       },
       { plan: box(-2.5, -6, 2.5, 4), z0: 3.5, z1: 5.5, top: visor, side: visorSide, loose: true },
       { plan: box(-1, -30, 1, -14), z0: 1.5, z1: 3, top: amber, side: amberSide, loose: true },
+      // Insignia on bare hull top.
+      ...insignia(0, 10, 4.6, 3.5),
     ],
     mouths: [[0, 16]],
     mouthWidth: 6,
@@ -186,6 +242,8 @@ export const crafts: Craft[] = [
           loose: true,
         };
       }),
+      // Insignia on bare hull top.
+      ...insignia(0, 20.5, 7, 7),
     ],
     mouths: [
       [-22, 28],
@@ -226,15 +284,16 @@ export function faces(yaw: number, part: Part): Face[] {
   return result;
 }
 
-// Parts resting on the hull top (the first part) draw after the hull. Otherwise parts draw
-// far to near, and equal depths draw lower tops first.
+// Decals draw after the hull and the parts beside it; parts resting on the hull top (the first
+// part) draw after the decals. Otherwise parts draw far to near, and equal depths draw lower
+// tops first.
 export function drawOrder(yaw: number, hullTop: number, parts: readonly Part[]): Part[] {
   return parts
     .map((part) => ({
       part,
       depth: depth(part.plan.map(([x, y]) => rotate(yaw, [x, y, (part.z0 + part.z1) / 2]))),
-      raised: part.z0 >= hullTop ? 1 : 0,
+      layer: part.decal ? 1 : part.z0 >= hullTop ? 2 : 0,
     }))
-    .sort((a, b) => a.raised - b.raised || b.depth - a.depth || a.part.z1 - b.part.z1)
+    .sort((a, b) => a.layer - b.layer || b.depth - a.depth || a.part.z1 - b.part.z1)
     .map(({ part }) => part);
 }

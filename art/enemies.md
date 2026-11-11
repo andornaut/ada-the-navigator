@@ -19,6 +19,7 @@ One salvage-craft family reads as hostile against Ada's white and blue ship:
 - Amber `#f0bd68` guns with `#b98a40` sides, matching the palette weapon signal.
 - Dark visor `#2a2433` with `#1e1a26` sides.
 - Forward pincers or tines on every hull are the family trait.
+- Every drone carries General Gadget's [insignia](#insignia).
 
 ## Crafts
 
@@ -35,6 +36,28 @@ Ada's 96px frame at 42px. Extents are model units over Ada's 42.88-unit wingspan
 Hit circles use Gameplay's `sizeRatio` in Ada widths: swarm 0.65, fighter 1,
 interceptor 0.75 and retaliator 2. The interceptor's ratio sits near the mean of
 its drawn length and width, so the narrow hull keeps a forgiving hit area.
+
+## Insignia
+
+One mark for the whole fleet: an ink `#181425` horseshoe claw opening toward
+the nose, its prong tips hooked inward, closing on an amber `#f0bd68` disc.
+Ink on the coral hull is 6.69:1. The same mark is General Gadget's voice
+portrait ([Conversation portraits](conversation.md)).
+
+- Two flat `decal` parts per craft in `crafts.ts`: the claw outline (radius
+  `r`) and a 12-sided disc of radius `0.26 r` centred `0.2 r` forward of the
+  claw centre. Both sit at the hull's top height with no thickness, so only
+  their tops draw.
+- Decals draw right after the hull and any part beside it, before the parts
+  resting on the hull top, so plates, visors and turrets occlude them.
+- Placement on bare hull top, in model units (forward is negative Y):
+
+| Archetype     | Centre     | `r` | Display across | Position                                |
+| ------------- | ---------- | --: | -------------: | --------------------------------------- |
+| `swarm`       | (0, 6.5)   | 5.5 |         4.8 px | Behind the amber hatch                  |
+| `fighter`     | (7.5, 3.5) | 5.2 |         4.6 px | Right shoulder, opposite the left plate |
+| `interceptor` | (0, 10)    | 4.6 |         4.0 px | Behind the visor                        |
+| `retaliator`  | (0, 20.5)  |   7 |         6.1 px | Behind the turret                       |
 
 ## Frames
 

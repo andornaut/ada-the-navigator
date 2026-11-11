@@ -115,6 +115,15 @@ function groups(craft: Craft): Group[] {
   }
   const loose: Group[] = [];
   for (const part of rest) {
+    if (part.decal) {
+      for (const group of result) {
+        const plan = wedge(group.from!, group.to!, part.plan);
+        if (plan.length >= 3) {
+          group.parts.push({ ...part, plan });
+        }
+      }
+      continue;
+    }
     if (part.loose) {
       loose.push({ kind: "part", parts: [part] });
       continue;
@@ -158,7 +167,9 @@ function shards(craft: Craft): string {
   }
   const motion = all.map((group, i) => {
     const [jitter, distance, , lift] = SEEDS[i]!;
-    const [cx, cy] = centroid(group.parts.flatMap(({ plan }) => plan));
+    // Decals are paint: they never move a shard's centroid.
+    const solid = group.parts.filter(({ decal }) => !decal);
+    const [cx, cy] = centroid(solid.flatMap(({ plan }) => plan));
     const angle = Math.atan2(cy, cx) + jitter;
     const length = half * distance * (group.kind === "fleck" ? FLECK_DISTANCE : 1);
     const z = (group.parts[0]!.z0 + group.parts[0]!.z1) / 2;

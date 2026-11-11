@@ -18,7 +18,8 @@ idle frame.
 
 - `halfSpan`: the hull's largest `|x|` in model units.
 - `shards[i]`: the fixed per-shard draw table, identical for every heading.
-  `kind` is `hull` (a wedge of the hull with the plates and guns on it), `part`
+  `kind` is `hull` (a wedge of the hull with the plates and guns on it, and
+  its piece of the insignia, which is cut along the same wedge rays), `part`
   (a loose visor, turret or barrel) or `fleck` (small debris). `spin` is the
   signed total spin in radians. `jitter`, `distance` and `lift` are the inputs
   already applied to `drift`: direction jitter (rad), drift in half-spans and
@@ -27,7 +28,8 @@ idle frame.
   rest. `shard` indexes `shards`. `centroid` is the pivot for spin and shrink.
   `drift` is the full displacement. `nearness` and `nearnessDrift` give the draw
   order. `polygons` are the shard's faces as they appear in the idle frame, in
-  draw order: `color` and flat `points` `[x0, y0, x1, y1, ...]`.
+  draw order: `color` and flat `points` `[x0, y0, x1, y1, ...]`. Insignia
+  pieces never move a shard's `centroid` or `drift`.
 
 ## Timeline
 
