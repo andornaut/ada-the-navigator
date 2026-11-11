@@ -12,7 +12,8 @@ Use `@andornaut/art-kit` version `0.22.0` from the verified published
 
 - SHA256: `8d6f7433af167ca70c64513b8e42b67383dd1dc9b1814ea1e2d4f68e496092d3`
 - `SOURCE_COMMIT`: `30ccd1fa13f677d09190a2fd2582c3baf2fa1309`
-- Node.js: `>=24.21.0`
+- Node.js: `^24.22.2 || ^26.12.0` (project `engines`; art-kit itself
+  requires `>=24.21.0`)
 - Image dependencies: `pngjs` `7.0.0`, `@jsquash/webp` `1.5.0`
 - Optional font support: `skia-canvas` `4.0.0`
 
