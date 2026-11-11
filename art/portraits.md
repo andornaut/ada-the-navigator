@@ -83,6 +83,16 @@ General Gadget sheets are authored for Ada. Both are described in
   - Destination: `public/art/portraits/mr-b.json`
   - SHA-256: `ade24dcfa71bf1841f13c5d84b3d66633c62ed3739888d76d4f0fae27ee2e2fe`
 
+## Storybook sprite source
+
+`art/sources/face-walker-ada.png` is a byte-identical copy of the Archie source
+`public/art/sprites/face-walker-ada.png` at the pinned commit above (SHA-256
+`46633962fb8d3d4757954009b614a940d0e918dccb90e350b4b7e60d2f9deaa3`, the same
+bytes as `public/art/portraits/ada.png`), under the same licence.
+`art/tools/ada-sprites.ts` reads its neutral frame for the head of Ada's
+storybook sprites ([storybook](storybook.md#adas-sprites)) and adapts it there;
+the portrait files above stay unchanged.
+
 ## Verification
 
 All twelve tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources.

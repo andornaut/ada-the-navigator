@@ -3375,6 +3375,94 @@
       }
     },
     {
+      "id": "story-ada-room-recorder",
+      "path": "/art/story/ada-room-recorder.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 255,
+        "bottom": 300
+      }
+    },
+    {
+      "id": "story-concert-hall",
+      "path": "/art/story/concert-hall.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 195,
+        "bottom": 300
+      },
+      "overlays": ["story-ada-playing"]
+    },
+    {
+      "id": "story-ada-playing",
+      "path": "/art/story/ada-playing.png",
+      "width": 44,
+      "height": 56,
+      "displayWidth": 44,
+      "displayHeight": 56,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 480,
+        "y": 228
+      },
+      "scale": 1,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-grandma-garden-spilled",
+      "path": "/art/story/grandma-garden-spilled.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 195,
+        "bottom": 315
+      }
+    },
+    {
+      "id": "story-grandma-garden-replanted",
+      "path": "/art/story/grandma-garden-replanted.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "subject": {
+        "top": 195,
+        "bottom": 315
+      }
+    },
+    {
       "id": "story-ada-room-night",
       "path": "/art/story/ada-room-night.png",
       "width": 1920,
@@ -3446,7 +3534,27 @@
       "pivot": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "overlays": ["story-ada-waking"]
+    },
+    {
+      "id": "story-ada-waking",
+      "path": "/art/story/ada-waking.png",
+      "width": 48,
+      "height": 42,
+      "displayWidth": 96,
+      "displayHeight": 84,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 249,
+        "y": 264
+      },
+      "scale": 2,
+      "sampling": "nearest"
     },
     {
       "id": "title-field",

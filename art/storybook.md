@@ -1,10 +1,11 @@
 # Storybook art
 
 - Rebuild with `node art/tools/storybook.ts` (optionally one id). It writes the
-  Earth backgrounds and the overnight overlays to `public/art/story/`, their
-  `story-` root manifest entries, `story-transition.json` and
-  `story-overnight.json`. `art/tools/diorama.ts` holds the solids, painter,
-  lights and treatment.
+  Earth backgrounds, [Ada's sprites](#adas-sprites) and the overnight overlays
+  to `public/art/story/`, their `story-` root manifest entries,
+  `story-transition.json` and `story-overnight.json`. `art/tools/diorama.ts`
+  holds the solids, painter, lights and treatment; `art/tools/ada-sprites.ts`
+  draws the sprites.
 - Output is deterministic: the same source writes byte-identical PNGs.
 
 ## Canvas
@@ -52,39 +53,62 @@ and the scene's subject stays clearest above it.
 
 ## Locations
 
-| Id                          | Scene                                                 | Backdrop              | Key colours                                                         |
-| --------------------------- | ----------------------------------------------------- | --------------------- | ------------------------------------------------------------------- |
-| `story-park`                | Park: pond, bench, three trees, the dig spot and rock | `#cfe4e8` → `#dfeadb` | grass `#8cc777`, path `#e8d3a2`, pond `#8fc8de`, rock `#93877e`     |
-| `story-ada-room-unpolished` | Ada's room, the rock on the desk as dug up            | `#d9d2e6` → `#cfc5de` | wall `#e6d6ea`, floor `#d9b98f`, blanket `#8fb0e2`, rock `#93877e`  |
-| `story-ada-room`            | Ada's room, the polished rock's faint glowing pattern | `#d9d2e6` → `#cfc5de` | as above, glow line `#53d1c2`, glow `#96ecde`                       |
-| `story-grandma-garden`      | Grandma's house, fence, raised beds in bloom, tree    | `#bfe0e8` → `#d9ecd6` | grass `#86c46f`, wall `#f0d7a8`, roof `#d06a55`, blooms `#ef7f8f`   |
-| `story-community-garden`    | Fenced lot: shed, one sprouting and two empty beds    | `#d3dfe6` → `#dfe6dc` | ground `#cfae82`, patches `#a9c98b`, shed `#b49ad6`, bin `#6f9a7a`  |
-| `story-schoolyard`          | School, hopscotch, play structure and slide, tree     | `#cfe0ea` → `#dde6e4` | asphalt `#b6aebf`, brick `#d48f7e`, slide `#f2c95c`, bars `#ea8f84` |
-| `story-school-hallway`      | Lockers, notice board, two doors, bench               | `#c7d3e6` → `#a9b8d2` | wall `#f1e3c6`, lockers `#5fb3a6`, floor `#d8c29c`, bench `#7d8fc0` |
-| `story-front-door`          | Front door, coats and lead, shoe rack, dog's bowl     | `#e6dccd` → `#dcd0c0` | door `#a98bc4`, floor `#d6b48e`, coats `#f0c95e` and `#86ade0`      |
-| `story-ada-room-night`      | Ada's room at night: moon and stars, lamp off         | `#1d2452` → `#2a2f5e` | wall `#445487`, floor `#414c64`, blanket `#1d4484`, glass `#16245e` |
-| `story-ada-room-morning`    | Morning: Ada sits up stretching, Penny awake          | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a` |
+| Id                               | Scene                                                 | Backdrop              | Key colours                                                               |
+| -------------------------------- | ----------------------------------------------------- | --------------------- | ------------------------------------------------------------------------- |
+| `story-park`                     | Park: pond, bench, three trees, the dig spot and rock | `#cfe4e8` → `#dfeadb` | grass `#8cc777`, path `#e8d3a2`, pond `#8fc8de`, rock `#93877e`           |
+| `story-ada-room-unpolished`      | Ada's room, the rock on the desk as dug up            | `#d9d2e6` → `#cfc5de` | wall `#e6d6ea`, floor `#d9b98f`, blanket `#8fb0e2`, rock `#93877e`        |
+| `story-ada-room`                 | Ada's room, the polished rock's faint glowing pattern | `#d9d2e6` → `#cfc5de` | as above, glow line `#53d1c2`, glow `#96ecde`                             |
+| `story-grandma-garden`           | Grandma's house, fence, raised beds in bloom, tree    | `#bfe0e8` → `#d9ecd6` | grass `#86c46f`, wall `#f0d7a8`, roof `#d06a55`, blooms `#ef7f8f`         |
+| `story-community-garden`         | Fenced lot: shed, one sprouting and two empty beds    | `#d3dfe6` → `#dfe6dc` | ground `#cfae82`, patches `#a9c98b`, shed `#b49ad6`, bin `#6f9a7a`        |
+| `story-schoolyard`               | School, hopscotch, play structure and slide, tree     | `#cfe0ea` → `#dde6e4` | asphalt `#b6aebf`, brick `#d48f7e`, slide `#f2c95c`, bars `#ea8f84`       |
+| `story-school-hallway`           | Lockers, notice board, two doors, bench               | `#c7d3e6` → `#a9b8d2` | wall `#f1e3c6`, lockers `#5fb3a6`, floor `#d8c29c`, bench `#7d8fc0`       |
+| `story-front-door`               | Front door, coats and lead, shoe rack, dog's bowl     | `#e6dccd` → `#dcd0c0` | door `#a98bc4`, floor `#d6b48e`, coats `#f0c95e` and `#86ade0`            |
+| `story-ada-room-recorder`        | `story-ada-room` with the recorder on a song sheet    | `#d9d2e6` → `#cfc5de` | as `story-ada-room`, recorder `#7a4a32`, rings `#efe4c8`                  |
+| `story-concert-hall`             | Corner stage, curtains, piano, spotlight, chair rows  | `#d8cde0` → `#cbbfd2` | wall `#efe2cf`, floor `#d7ad7c`, curtain `#c95a66`, chairs `#6f93cf`      |
+| `story-grandma-garden-spilled`   | `story-grandma-garden` with the tray spilled          | `#bfe0e8` → `#d9ecd6` | as `story-grandma-garden`, tray `#4f6a5a`, pots `#d9825b`, soil `#6e4a30` |
+| `story-grandma-garden-replanted` | `story-grandma-garden` with the tray replanted        | `#bfe0e8` → `#d9ecd6` | as above, seedlings `#7cc95a`, trowel `#9aa6b4`, sack `#c9a978`           |
+| `story-ada-room-night`           | Ada's room at night: moon and stars, lamp off         | `#1d2452` → `#2a2f5e` | wall `#445487`, floor `#414c64`, blanket `#1d4484`, glass `#16245e`       |
+| `story-ada-room-morning`         | Morning: the bed, Penny awake; Ada is a sprite        | `#f6d9b4` → `#efcfb4` | wall `#ffd5cb`, floor `#f3b65f`, blanket `#a6b3cb`, glass `#fad98a`       |
 
 Full palettes are in the generator. Colours are before treatment d.
+
+- Needle opens and resolves in `story-ada-room-recorder`: the recorder lies on
+  its song sheet at the desk's free left end, left of the rock, so the rock
+  stays the brightest point. It closes in `story-concert-hall`, the stage seen
+  from the hall, with Ada playing in the spotlight.
+- Andromeda opens, resolves and closes in Grandma's garden with a potting table
+  on the lawn by the house and a green tray of eight terracotta pots on it.
+  `story-grandma-garden-spilled` (the opening, its branch pages and the
+  resolution) has the front-row pots pushed back crooked, three seedlings out
+  (two on the table, one on the grass) and loose soil on the table and the
+  grass; `story-grandma-garden-replanted` (the closing) has every pot upright
+  with its seedling, the soil swept up, a trowel on the table and a potting-soil
+  sack beside it.
+- `story-ada-room` and `story-grandma-garden` are unchanged; the new
+  backgrounds add their props to the same scenes.
 
 The game names each page's location by a background key
 (`Background` in `src/data/storybook.ts`):
 
-| Key                 | Asset id                                         |
-| ------------------- | ------------------------------------------------ |
-| `grandmaGarden`     | `story-grandma-garden`                           |
-| `gardenLot`         | `story-community-garden`                         |
-| `schoolHallway`     | `story-school-hallway`                           |
-| `schoolyard`        | `story-schoolyard`                               |
-| `frontDoor`         | `story-front-door`                               |
-| `park`              | `story-park`                                     |
-| `adaRoom`           | `story-ada-room`                                 |
-| `adaRoomUnpolished` | `story-ada-room-unpolished` (the rock as dug up) |
-| `adaRoomNight`      | `story-ada-room-night`                           |
-| `adaRoomSleep`      | `story-ada-room-sleep` (night plus the figures)  |
-| `adaRoomMorning`    | `story-ada-room-morning`                         |
-| `cockpit`           | `cockpit` ([cockpit](cockpit.md))                |
-| `cockpitSeated`     | `cockpit-seated` ([cockpit](cockpit.md))         |
+| Key                      | Asset id                                         |
+| ------------------------ | ------------------------------------------------ |
+| `grandmaGarden`          | `story-grandma-garden`                           |
+| `gardenLot`              | `story-community-garden`                         |
+| `schoolHallway`          | `story-school-hallway`                           |
+| `schoolyard`             | `story-schoolyard`                               |
+| `frontDoor`              | `story-front-door`                               |
+| `park`                   | `story-park`                                     |
+| `adaRoom`                | `story-ada-room`                                 |
+| `adaRoomUnpolished`      | `story-ada-room-unpolished` (the rock as dug up) |
+| `adaRoomNight`           | `story-ada-room-night`                           |
+| `adaRoomSleep`           | `story-ada-room-sleep` (night plus the figures)  |
+| `adaRoomMorning`         | `story-ada-room-morning`                         |
+| `adaRoomRecorder`        | `story-ada-room-recorder` (key to add)           |
+| `concertHall`            | `story-concert-hall` (key to add)                |
+| `grandmaGardenSpilled`   | `story-grandma-garden-spilled` (key to add)      |
+| `grandmaGardenReplanted` | `story-grandma-garden-replanted` (key to add)    |
+| `cockpit`                | `cockpit` ([cockpit](cockpit.md))                |
+| `cockpitSeated`          | `cockpit-seated` ([cockpit](cockpit.md))         |
 
 `cockpit` is the empty cockpit, used only in the prologue: from the arrival
 narration through Astra's lines and the optional questions. `cockpitSeated`
@@ -103,6 +127,73 @@ Gameplay owns the page sequence and copy. Each page names one background; the
 bottom-anchored on the available rect, sized to its own content, no dim. The
 background never moves or scales between pages of a scene. Choice pages reuse
 their scene's background (Grandma's choice uses `story-grandma-garden`).
+
+## Subject bands
+
+Each new background's manifest entry carries `subject: { top, bottom }`, the
+canvas rows (logical px) its key objects span, for the story page's scene
+anchor, which centres the band in the strip above the story panel:
+
+| Id                               | Band     | Key objects                                   |
+| -------------------------------- | -------- | --------------------------------------------- |
+| `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk         |
+| `story-concert-hall`             | 195..300 | The stage, the piano and Ada in the spotlight |
+| `story-grandma-garden-spilled`   | 195..315 | The house's door, the tray and the beds       |
+| `story-grandma-garden-replanted` | 195..315 | The house's door, the tray and the beds       |
+
+The garden variants keep `story-grandma-garden`'s band and the recorder room
+the desk's, so a scene does not move between its pages.
+
+## Ada's sprites
+
+Ada on the concert stage and waking on the morning page is a crisp pixel
+sprite drawn over the treated background, not painted into it. Each is an
+overlay of its background: the background entry's `overlays` names it, and
+its entry gives the PNG at one sprite px per image px, `scale` (logical px per
+sprite px), `displayWidth` and `displayHeight` (the image times `scale`),
+`pivot` (0, 0), `at` (its top-left corner on the canvas in whole logical px)
+and `sampling: "nearest"`.
+
+| Id                  | Size (px) | `scale` | `at`       | Background               | Pose                                        |
+| ------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
+| `story-ada-playing` | 44 x 56   | 1       | (480, 228) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
+| `story-ada-waking`  | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
+
+- Scale: one sprite px is 1 logical px in the concert hall and 2 in Ada's room,
+  each scene's furniture scale; that is 2 and 4 canvas px at the canvas's 2x.
+  Whole-px `at` puts the sprite's grid on whole canvas px.
+- Drawing: after the background's blur, desaturation and haze, with the
+  background's transform (centred, the scene anchor's offset, scale
+  `max(1, viewW / 960, viewH / 540)`), nearest-neighbour at that scale and at
+  the device ratio, like every pixel sprite ([layout](layout.md)): no linear
+  filter and no sub-pixel offset, so each sprite px stays one solid square.
+  It moves and scales with its background and shows whenever it does,
+  cross-fades included.
+- Head: Ada's portrait's neutral frame, pixel for pixel
+  (`art/sources/face-walker-ada.png`, [provenance](portraits.md#storybook-sprite-source)),
+  with these changes only: the crown rounded into an oval (one more row on
+  top), one 1 px white shine per eye (the lower-right shines go), 2 px of blush
+  `#f6757a` per cheek inside the face outline, a small smile, no chin line (the
+  chin is skin and the neck under it `#9c5a42`), and no hair below the chin;
+  the back hair reaches her shoulders behind the neck.
+- Body: a front view in Archie's walker-ada colours (shirt `#fee761` and
+  `#feae34`, shorts `#0099db` and `#124e89`, skin `#b86f50` and `#c28569`,
+  white shoes with soles `#f6757a`), ink edge `#181425` and flat shading,
+  about 2.5 heads tall with torso and legs about equal (shoulder 25 to hip 40,
+  hip to sole 54). It centres on the head's centre line (x 21.5), with weight
+  on her left leg, a gentle A-line shirt hem, rounded shoes and arms as 3 px
+  strokes with clean 1 px steps and bent elbows.
+- Playing: the recorder (`#7a4a32`, shade `#5a3424`, ring `#efe4c8`) leans down
+  and forward from her lips to the viewer's left; her left hand holds it high
+  and her right hand low, each arm from its own side with the elbow out, the
+  arms apart so the recorder shows between them. A 22 by 3 ink shadow at alpha
+  60 sits under her shoes.
+- Waking: arms in a soft V with bent elbows and loose fists by the top of her
+  head, eyes shut and a small open yawn. The duvet's bunched edge covers her
+  lap, in the morning page's treated blanket colour sampled at canvas px
+  (492, 776), with a fold shade 24 darker and the ink edge.
+- Penny stays painted on the morning page; a crisp Penny sprite on the same
+  rule could follow.
 
 ## Rock glow transition
 
@@ -124,6 +215,11 @@ page's.
   cockpit background. The ship scene's first page panel then appears.
 - `reducedMotion` replaces `steps`: one 400 ms cross-fade from
   `story-ada-room` to the entry's cockpit background, with no glow frames.
+
+Every glow frame is drawn from `story-ada-room`. A boarding page in
+`story-ada-room-recorder` would need recorder versions of the three frames;
+none are drawn while Gameplay's story leaves Needle's boarding background
+unnamed.
 
 The glow frames are `story-ada-room` with the rock's glow grown to a third, two
 thirds and all of the room: 32 nested ellipses (height 0.6 of width) in
@@ -151,11 +247,11 @@ keep their values.
 - Morning: grade `(0.02, 0.99, 1.1, 0.014, 0.05)`, a pale gold window
   `#fad98a`, a sun glow `#ffdf96` (radius 3.0, peak 80), a long soft beam and
   bright floor patches screened in `#ffe2a0` that thin toward the room's front,
-  and the rock's faint glow as in `story-ada-room`. Day haze. The waking
-  figures are drawn into this background: the morning page needs only one
-  image.
+  and the rock's faint glow as in `story-ada-room`. Day haze. Penny and the
+  blanket over Ada's legs are drawn into this background; Ada is the
+  `story-ada-waking` sprite over it ([Ada's sprites](#adas-sprites)).
 
-Ada and Penny are drawn about 1.5 times the room's furniture scale so they read
+The painted figures (Ada asleep, and Penny) are drawn about 1.5 times the room's furniture scale so they read
 on a phone, within the bed's footprint, from the portrait palettes: Ada's hair
 `#262b44`, skin `#b86f50`, shirt `#fee761` and bow `#b55088`; Penny's coat
 `#feae34`, ears and tail `#f77622`, muzzle `#fee761` and collar `#0099db`. They
@@ -167,11 +263,11 @@ night haze (coat `#b57100` before treatment), and morning
 - Asleep: Ada on her back, head on the pillow, the blanket to her chin; Penny
   asleep across the foot of the bed over Ada's feet, head turned to the viewer,
   eyes closed.
-- Waking: Ada sits back against the pillow, arms raised in a stretch; Penny
-  sits up awake at the foot of the bed.
+- Waking: Penny sits up awake at the foot of the bed; Ada kneels up in bed
+  stretching, the `story-ada-waking` sprite.
 
 On the 844 by 390 phone the morning page's panel top is at logical y 236 and the
-rock's top at 188. Ada's head (centre 211) and raised arms clear the panel;
+rock's top at 188. Ada's sprite (top 174, chin 218) clears the panel;
 Penny's head (273) sits under it and shows during the cross-fade into the
 morning, before the panel appears. The sleep scene shows no panel, so both
 figures stay in view (Ada 263, Penny 318).

@@ -1,9 +1,19 @@
-// Storybook backgrounds: seven isometric Earth dioramas with treatment d, on the shared
-// 960 by 540 logical canvas at 2x, and Ada's room overnight with its sleep scene overlays.
-import { writeFileSync } from "node:fs";
+// Storybook backgrounds: isometric Earth dioramas with treatment d, on the shared 960 by 540
+// logical canvas at 2x, Ada's room overnight with its sleep scene overlays, and Ada's pixel
+// sprites (art/tools/ada-sprites.ts) placed over their backgrounds.
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { decodePng } from "@andornaut/art-kit/png";
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
+
+import {
+  playing as playingSprite,
+  PLAYING_FEET,
+  waking as wakingSprite,
+  WAKING_CENTRE,
+  WAKING_HEIGHT,
+} from "./ada-sprites.ts";
 
 import {
   box,
@@ -29,7 +39,7 @@ import {
   treatmentD,
 } from "./diorama.ts";
 import { editManifest, readManifest } from "./manifest.ts";
-import { fromOklab, hex, toOklab } from "./oklab.ts";
+import { fromOklab, hex, type Rgb, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
 
@@ -84,11 +94,166 @@ const GARDEN: Palette = {
   path: "#e2cfa4",
   can: "#7fa7d9",
   chimney: "#b85a48",
+  // Andromeda's potting table, the seedling tray and its pots, the spill and the trowel.
+  bench: "#cfa77a",
+  tray: "#4f6a5a",
+  pot: "#d9825b",
+  potsoil: "#6a4630",
+  spill: "#6e4a30",
+  sprout: "#7cc95a",
+  sackbag: "#c9a978",
+  trowel: "#9aa6b4",
+  handle: "#b8553f",
 };
+
+// Andromeda's seedling tray on the potting table by the house: spilled (the opening and the
+// resolution) or replanted (the closing).
+type TrayState = "spilled" | "replanted";
+
+const POTS_X = [7.6, 8.56, 9.52, 10.48];
+const POTS_Y = [9.15, 10.1];
+const TABLE = { x0: 6.8, x1: 11.05, y0: 8.35, y1: 11.2, z: 2.3 };
+
+// A seedling: a short stem and a two-lobed crown of leaves.
+function seedling(s: Scene, P: Palette, [x, y, z]: Point, key: number, h = 0.5) {
+  s.solid(prism(x, y, 0.06, 5, z, z + h * 0.8), P.sprout!, 2, key);
+  s.solid(
+    lump([x - 0.14, y + 0.14], [0.25, 0.14], z + h * 0.68, z + h, 0.6, -0.78),
+    P.sprout!,
+    2,
+    key + 0.001,
+  );
+  s.solid(
+    lump([x + 0.14, y - 0.14], [0.25, 0.14], z + h * 0.72, z + h * 1.04, 0.6, -0.78),
+    P.sprout!,
+    2,
+    key + 0.002,
+  );
+}
+
+// A seedling knocked flat: stem and leaves lying on a surface at z, pointing along (dx, dy).
+function fallen(
+  s: Scene,
+  P: Palette,
+  [x, y, z]: Point,
+  [dx, dy]: readonly [number, number],
+  key: number,
+) {
+  s.solid(
+    rod([x, y, z + 0.05], [x + dx * 0.4, y + dy * 0.4, z + 0.05], 0.045, 5),
+    P.sprout!,
+    2,
+    key,
+  );
+  s.solid(
+    lump([x + dx * 0.55, y + dy * 0.55], [0.3, 0.18], z, z + 0.14, 0.7, Math.atan2(dy, dx)),
+    P.sprout!,
+    2,
+    key + 0.001,
+  );
+  // A clump of soil still on the roots.
+  s.solid(lump([x, y], [0.2, 0.16], z, z + 0.16, 0.6), P.potsoil!, 2, key + 0.002);
+}
+
+function pottingTable(s: Scene, P: Palette, state: TrayState) {
+  const { x0, x1, y0, y1, z } = TABLE;
+  const base = 19;
+  // Legs, a low shelf, then the top.
+  for (const [lx, ly] of [
+    [x0 + 0.15, y0 + 0.15],
+    [x1 - 0.45, y0 + 0.15],
+    [x0 + 0.15, y1 - 0.45],
+    [x1 - 0.45, y1 - 0.45],
+  ] as const) {
+    s.solid(
+      box(lx, lx + 0.3, ly, ly + 0.3, 0, z - 0.22),
+      P.bench!,
+      2,
+      base + (lx - x0) * 0.01 + (ly - y0) * 0.01,
+    );
+  }
+  s.solid(box(x0 + 0.3, x1 - 0.3, y0 + 0.3, y1 - 0.3, 0.5, 0.68), P.bench!, 2, base + 0.05);
+  const top: Decal[] = [];
+  if (state === "spilled") {
+    // Loose soil across the table top in front of the tray, where the elbow swept it.
+    for (const [cx, cy, r, sy, rot] of [
+      [8.1, 10.95, 0.55, 0.42, 0.1],
+      [9.3, 10.98, 0.42, 0.38, 0.5],
+      [10.5, 10.7, 0.45, 0.6, 0.2],
+      [7.15, 10.7, 0.3, 0.7, 0.9],
+      [10.8, 8.75, 0.28, 0.8, 0.3],
+    ] as const) {
+      top.push([flat(octagon(cx, cy, r, 0, 9, rot, sy), z + 0.001), P.spill!]);
+    }
+  }
+  s.solid(box(x0, x1, y0, y1, z - 0.22, z), P.bench!, 2, base + 0.1, top);
+  // The tray: a shallow green tray with eight terracotta pots.
+  const tz = z + 0.2;
+  s.solid(box(7.05, 11.0 - 0.07, 8.62, 10.62, z, tz), P.tray!, 2, base + 0.2);
+  const jitter: Record<string, readonly [number, number]> =
+    state === "spilled"
+      ? {
+          "0,1": [0.08, 0.06],
+          "1,1": [-0.06, 0.1],
+          "2,0": [0.08, -0.04],
+          "3,1": [0.05, 0.1],
+          "2,1": [-0.05, 0.04],
+        }
+      : {};
+  // After the spill the front row lost soil and three seedlings, which lie on the table and the
+  // grass; the pots are pushed back into the tray a little crooked.
+  const empty = state === "spilled" ? new Set(["1,1", "2,1", "3,1"]) : new Set<string>();
+  const low = state === "spilled" ? new Set(["0,1", "1,1", "2,1", "3,1"]) : new Set<string>();
+  for (const [j, py] of POTS_Y.entries()) {
+    for (const [i, px] of POTS_X.entries()) {
+      const id = `${i},${j}`;
+      const [jx, jy] = jitter[id] ?? [0, 0];
+      const [cx, cy] = [px + jx, py + jy];
+      const key = base + 0.3 + j * 0.1 + i * 0.01;
+      const rim = tz + 0.62;
+      s.solid(frustum(cx, cy, 0.33, 0.43, 8, tz, rim, 0.2), P.pot!, 2, key, [
+        [flat(octagon(cx, cy, 0.36, 0, 8, 0.2), rim + 0.001), low.has(id) ? "#b86a48" : P.potsoil!],
+        ...(low.has(id)
+          ? [[flat(octagon(cx, cy, 0.26, 0, 8, 0.2), rim + 0.002), P.potsoil!] as Decal]
+          : []),
+      ]);
+      if (!empty.has(id)) {
+        const lean = state === "spilled" && j === 1 ? 0.14 : 0;
+        seedling(s, P, [cx + lean, cy + lean, rim], key + 0.005, state === "replanted" ? 0.8 : 0.7);
+      }
+    }
+  }
+  if (state === "spilled") {
+    // Heaps of soil on the table edge, two seedlings knocked onto the table, one onto the grass,
+    // and soil scattered on the grass below.
+    s.solid(lump([8.1, 10.95], [0.38, 0.22], z, z + 0.16, 0.5), P.spill!, 2, base + 0.55);
+    s.solid(lump([10.5, 10.75], [0.3, 0.22], z, z + 0.13, 0.5), P.spill!, 2, base + 0.56);
+    fallen(s, P, [8.9, 10.95, z], [0.85, 0.5], base + 0.6);
+    fallen(s, P, [10.0, 10.9, z], [0.9, -0.4], base + 0.61);
+    for (const [cx, cy, r, sy, rot] of [
+      [9.3, 11.95, 0.95, 0.5, 0.25],
+      [10.7, 11.7, 0.5, 0.6, 0.1],
+      [7.9, 11.75, 0.45, 0.55, 0.5],
+      [8.7, 12.6, 0.22, 0.8, 0.0],
+      [10.1, 12.55, 0.18, 0.8, 0.0],
+    ] as const) {
+      s.solid([flat(octagon(cx, cy, r, 0, 9, rot, sy), 0.002)], P.spill!, 1, 2.1 + cx * 0.001);
+    }
+    fallen(s, P, [9.4, 12.05, 0], [0.7, 0.7], 22.6);
+  } else {
+    // Replanted: the trowel on the table, the potting-soil sack beside it.
+    s.solid(box(9.4, 10.35, 10.82, 11.06, z, z + 0.06), P.trowel!, 2, base + 0.62);
+    s.solid(box(10.35, 10.95, 10.86, 11.02, z, z + 0.11), P.handle!, 2, base + 0.63);
+    s.solid(lump([7.9, 12.05], [0.7, 0.5], 0, 1.35, 0.82, 0.2), P.sackbag!, 2, 22.0);
+    s.solid(lump([7.9, 12.05], [0.58, 0.41], 1.35, 1.6, 0.6, 0.2), P.sackbag!, 2, 22.01, [
+      [flat(octagon(7.9, 12.05, 0.14, 0, 8, 0.3), 1.601), P.potsoil!],
+    ]);
+  }
+}
 
 // The house sits at the left corner and the beds at the right, along one screen-horizontal
 // band, so both stay above the story panel.
-function garden(P: Palette): Scene {
+function garden(P: Palette, tray?: TrayState): Scene {
   const n = 24;
   const s = island();
   s.solid(box(0, n, 0, n, -1.4, 0), P.earth!, 0, 0);
@@ -133,6 +298,7 @@ function garden(P: Palette): Scene {
   s.solid(frustum(5.35, 5.35, 2.2, 2.4, 8, 2.8, 4.6, 0.39), P.crown!, 2, 8.2);
   s.solid(frustum(5.35, 5.35, 2.4, 1.2, 8, 4.6, 6.0, 0.39), P.crown!, 2, 8.3);
   s.solid(box(11.2, 12.0, 6.0, 6.7, 0, 0.8), P.can!, 2, 18);
+  if (tray) pottingTable(s, P, tray);
   return s;
 }
 
@@ -243,6 +409,11 @@ const ROOM: Palette = {
   glowline: "#53d1c2",
   glow: "#96ecde",
   cloth: "#ef9fa8",
+  // Needle's recorder (dark brown, ivory rings) and its song sheet on the desk.
+  recorder: "#7a4a32",
+  joint: "#efe4c8",
+  sheet: "#fbf7ee",
+  staff: "#8c86a0",
 };
 
 // The rock on the desk, in model units.
@@ -267,9 +438,33 @@ interface RoomOptions {
   moon?: boolean;
   // Ada and Penny on the bed.
   figures?: { colours: Colours; pose: Pose };
+  // Needle's recorder on its song sheet at the desk's left end.
+  recorder?: boolean;
 }
 
-function room(P: Palette, { figures, glow, moon }: RoomOptions = {}): Scene {
+// The recorder lying on the desk, mouthpiece to the left, along screen-horizontal (x - y).
+function recorder(
+  s: Scene,
+  P: Palette,
+  z: number,
+  key: number,
+  from: Point,
+  dir: readonly [number, number],
+) {
+  const [ux, uy] = dir;
+  const at = (t: number, dz = 0): Point => [from[0] + ux * t, from[1] + uy * t, z + 0.085 + dz];
+  const r = 0.1;
+  s.solid(rod(at(0), at(0.32), r * 0.95, 8, r * 1.1), P.recorder!, 2, key);
+  s.solid(rod(at(0.32), at(0.4), r * 1.18, 8), P.joint!, 2, key + 0.001);
+  s.solid(rod(at(0.4), at(1.12), r, 8), P.recorder!, 2, key + 0.002);
+  s.solid(rod(at(1.12), at(1.2), r * 1.15, 8), P.joint!, 2, key + 0.003);
+  s.solid(rod(at(1.2), at(1.42), r * 1.05, 8, r * 1.3), P.recorder!, 2, key + 0.004);
+}
+
+function room(
+  P: Palette,
+  { figures, glow, moon, recorder: withRecorder }: RoomOptions = {},
+): Scene {
   const [nx, ny, wall] = [16, 12, 7];
   const s = fitted(nx, ny, wall);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
@@ -322,7 +517,29 @@ function room(P: Palette, { figures, glow, moon }: RoomOptions = {}): Scene {
   s.solid(box(4.6, 6.6, 0.2, 2.6, 0, 2.3), P.drawer!, 2, 5.5, [
     [onY(2.601, 4.9, 6.3, 1.5, 1.6), P.desk!],
   ]);
-  s.solid(box(1.0, 6.8, 0, 2.8, 2.3, 2.6), P.desk!, 2, 6.0);
+  const desk: Decal[] = [];
+  if (withRecorder) {
+    // The song sheet, turned a little on the desk, with two staves.
+    const sheet = (u0: number, u1: number, v0: number, v1: number, z: number): Face => {
+      const [cx, cy, a] = [1.95, 1.55, -0.25];
+      return [
+        [u0, v0],
+        [u1, v0],
+        [u1, v1],
+        [u0, v1],
+      ].map(([u, v]): Point => [
+        cx + u! * Math.cos(a) - v! * Math.sin(a),
+        cy + u! * Math.sin(a) + v! * Math.cos(a),
+        z,
+      ]);
+    };
+    desk.push([sheet(-0.75, 0.75, -0.55, 0.55, 2.601), P.sheet!]);
+    for (const v of [-0.32, -0.22, -0.12, 0.12, 0.22, 0.32]) {
+      desk.push([sheet(-0.62, 0.62, v - 0.018, v + 0.018, 2.602), P.staff!]);
+    }
+  }
+  s.solid(box(1.0, 6.8, 0, 2.8, 2.3, 2.6), P.desk!, 2, 6.0, desk);
+  if (withRecorder) recorder(s, P, 2.6, 6.05, [1.15, 2.2, 0], [Math.SQRT1_2, -Math.SQRT1_2]);
   s.solid(frustum(6.0, 0.9, 0.38, 0.38, 8, 2.6, 2.75), P.lamp!, 2, 6.6);
   s.solid(box(5.95, 6.05, 0.85, 0.95, 2.75, 3.8), P.lamp!, 2, 6.7);
   s.solid(frustum(6.0, 0.9, 0.62, 0.32, 8, 3.6, 4.2), P.shade!, 2, 6.8);
@@ -464,17 +681,31 @@ function lump(
 
 type Xy = readonly [number, number];
 
-// A square beam of half-width w from a to b, its ends level: limbs.
-function beam(a: Point, b: Point, w: number): Face[] {
-  const square = ([x, y, z]: Point): Point[] => [
-    [x - w, y - w, z],
-    [x + w, y - w, z],
-    [x + w, y + w, z],
-    [x - w, y + w, z],
+// A cylinder of n sides and radius r (tapering to r1) from a to b at any angle: stems, the
+// recorder.
+function rod(a: Point, b: Point, r: number, n = 8, r1 = r): Face[] {
+  const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const len = Math.hypot(d[0]!, d[1]!, d[2]!);
+  const u = d.map((v) => v / len);
+  const ref = Math.abs(u[2]!) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  const cross = (p: number[], q: number[]) => [
+    p[1]! * q[2]! - p[2]! * q[1]!,
+    p[2]! * q[0]! - p[0]! * q[2]!,
+    p[0]! * q[1]! - p[1]! * q[0]!,
   ];
-  const lo = square(a);
-  const hi = square(b);
-  return [hi, lo, ...lo.map((p, i) => [p, lo[(i + 1) % 4]!, hi[(i + 1) % 4]!, hi[i]!])];
+  const e1 = cross(u, ref);
+  const l1 = Math.hypot(e1[0]!, e1[1]!, e1[2]!);
+  const v1 = e1.map((v) => v / l1);
+  const v2 = cross(u, v1);
+  const ringAt = (c: Point, rr: number) =>
+    Array.from({ length: n }, (_, i): Point => {
+      const t = 0.2 + (2 * Math.PI * i) / n;
+      const at = (j: number) => c[j]! + rr * (Math.cos(t) * v1[j]! + Math.sin(t) * v2[j]!);
+      return [at(0), at(1), at(2)];
+    });
+  const A = ringAt(a, r);
+  const B = ringAt(b, r1);
+  return [B, A, ...A.map((p, i) => [p, A[(i + 1) % n]!, B[(i + 1) % n]!, B[i]!])];
 }
 
 // Ada asleep on her back, head on the pillow and the blanket to her chin; Penny asleep across
@@ -495,30 +726,10 @@ function asleep(s: Scene, P: Palette, F: Colours) {
   penny(s, F, { at: [1.3, 10.65], awake: false });
 }
 
-// Ada sitting up and stretching, arms up and out; Penny sitting up awake at the foot of the bed.
+// The morning page's bed: Ada's legs under the blanket and Penny sitting up awake at its foot.
+// Ada herself is the story-ada-waking pixel sprite, drawn over the treated background.
 function waking(s: Scene, P: Palette, F: Colours) {
-  // Her legs under the blanket; she sits back against the pillow so her head clears the story
-  // panel on the morning page.
   s.solid(lump([1.8, 9.6], [1.2, 1.45], 1.8, 2.3, 0.86), P.blanket!, 2, 9.9);
-  s.solid(lump([1.8, 7.7], [0.8, 0.58], 2.05, 3.95, 0.84), F.shirt!, 2, 9.91);
-  for (const side of [-1, 1]) {
-    const at = (dx: number, z: number): Point => [1.8 + side * dx, 7.7, z];
-    // The arm nearer the viewer draws over her head.
-    const key = side > 0 ? 9.95 : 9.912;
-    s.solid(beam(at(0.6, 3.55), at(0.78, 4.15), 0.18), F.shirt!, 2, key);
-    s.solid(beam(at(0.78, 4.15), at(1.15, 5.4), 0.13), F.skin!, 2, key + 0.001);
-  }
-  s.solid(lump([1.8, 7.58], [0.72, 0.66], 3.85, 5.05, 0.84), F.hair!, 2, 9.92);
-  s.solid(lump([1.98, 7.9], [0.45, 0.36], 3.91, 4.81, 0.84), F.skin!, 2, 9.93);
-  for (const [x, y] of [
-    [2.37, 7.98],
-    [2.08, 8.21],
-  ] as const) {
-    s.solid(box(x - 0.05, x + 0.05, y - 0.05, y + 0.05, 4.39, 4.51), F.nose!, 2, 9.932);
-  }
-  s.solid(lump([1.71, 7.46], [0.63, 0.57], 5.05, 5.32, 0.7), F.hair!, 2, 9.935);
-  s.solid(lump([2.43, 7.13], [0.27, 0.18], 4.87, 5.38, 0.7), F.bow!, 2, 9.94);
-  s.solid(lump([2.16, 6.98], [0.22, 0.15], 4.9, 5.35, 0.7), F.bowlight!, 2, 9.945);
   penny(s, F, { at: [1.4, 10.7], awake: true });
 }
 
@@ -952,6 +1163,223 @@ function park(P: Palette): Scene {
   return s;
 }
 
+/* School concert hall */
+
+const CONCERT: Palette = {
+  back: ["#d8cde0", "#cbbfd2"],
+  floor: "#d7ad7c",
+  board: "#c99d6c",
+  slab: "#b48c62",
+  wall: "#efe2cf",
+  wains: "#b88a62",
+  stage: "#c7925e",
+  stageboard: "#b98552",
+  skirt: "#7c5a96",
+  curtain: "#c95a66",
+  fold: "#ad4555",
+  valance: "#a63e4f",
+  window: "#a9d2ea",
+  frame: "#f8efe0",
+  door: "#9c7356",
+  chair: "#6f93cf",
+  chairleg: "#4d5f86",
+  stand: "#3d4466",
+  paper: "#fbf6ea",
+  piano: "#34303f",
+  keys: "#f6f2ea",
+  riser: "#9f7a5c",
+  spot: "#fff0c2",
+  lamp: "#f6d98c",
+  banner: "#7fb7a8",
+  note: "#fbf6ea",
+};
+
+// The hall's scale (design px per model unit), and the spotlight's centre on the stage top,
+// where Ada's feet stand.
+const CONCERT_K = 19.5;
+const CONCERT_SPOT: Point = [4.9, 3.3, 1.7];
+
+// Curtain pleats as alternating vertical stripes on a back wall face.
+function pleats(
+  on: "x" | "y",
+  a0: number,
+  a1: number,
+  z0: number,
+  z1: number,
+  P: Palette,
+  eps: number,
+): Decal[] {
+  const out: Decal[] = [];
+  const w = 0.55;
+  for (let a = a0; a + w <= a1 + 1e-6; a += w * 2) {
+    out.push([on === "y" ? onY(eps, a, a + w, z0, z1) : onX(eps, a, a + w, z0, z1), P.fold!]);
+  }
+  return out;
+}
+
+function musicStand(
+  s: Scene,
+  P: Palette,
+  [x, y, z]: Point,
+  key: number,
+  facing: "viewer" | "away" = "viewer",
+) {
+  s.solid(box(x - 0.05, x + 0.05, y - 0.05, y + 0.05, z, z + 2.3), P.stand!, 2, key);
+  s.solid([flat(octagon(x, y, 0.38, 0, 3, 0.5), z + 0.02)], P.stand!, 2, key - 0.01);
+  // The desk tilts back from the player: a thin slab facing the player.
+  const sgn = facing === "viewer" ? -1 : 1;
+  const half = 0.55;
+  const t = 0.35 * sgn;
+  const quad: Point[] = [
+    [x - half * Math.SQRT1_2 + t * 0.5, y + half * Math.SQRT1_2 + t * 0.5, z + 2.0],
+    [x + half * Math.SQRT1_2 + t * 0.5, y - half * Math.SQRT1_2 + t * 0.5, z + 2.0],
+    [x + half * Math.SQRT1_2 - t * 0.2, y - half * Math.SQRT1_2 - t * 0.2, z + 2.85],
+    [x - half * Math.SQRT1_2 - t * 0.2, y + half * Math.SQRT1_2 - t * 0.2, z + 2.85],
+  ];
+  const off = (p: Point, dz: number, dd: number): Point => [p[0] + dd, p[1] + dd, p[2] + dz];
+  const front = quad.map((p) => off(p, 0, 0.04));
+  s.solid(
+    [
+      quad,
+      front.slice().reverse(),
+      ...quad.map((p, i) => [p, quad[(i + 1) % 4]!, front[(i + 1) % 4]!, front[i]!]),
+    ],
+    facing === "viewer" ? P.stand! : P.paper!,
+    2,
+    key + 0.01,
+  );
+}
+
+function chair(s: Scene, P: Palette, x: number, y: number, facing: "-y" | "-x", key: number) {
+  // Seat 0.9 square at 1.0; the back on the side away from the stage.
+  s.solid(box(x, x + 0.9, y, y + 0.9, 0.95, 1.1), P.chair!, 2, key);
+  if (facing === "-y")
+    s.solid(box(x, x + 0.9, y + 0.78, y + 0.9, 1.1, 2.15), P.chair!, 2, key + 0.002);
+  else s.solid(box(x + 0.78, x + 0.9, y, y + 0.9, 1.1, 2.15), P.chair!, 2, key + 0.002);
+  for (const [lx, ly] of [
+    [x + 0.05, y + 0.05],
+    [x + 0.75, y + 0.05],
+    [x + 0.05, y + 0.75],
+    [x + 0.75, y + 0.75],
+  ] as const) {
+    s.solid(box(lx, lx + 0.1, ly, ly + 0.1, 0, 0.95), P.chairleg!, 2, key - 0.001);
+  }
+}
+
+function piano(s: Scene, P: Palette, x0: number, y0: number, z: number, key: number) {
+  // An upright piano against the left wall, keyboard facing +x.
+  s.solid(box(x0, x0 + 1.0, y0, y0 + 2.6, z, z + 2.9), P.piano!, 2, key);
+  s.solid(box(x0 + 1.0, x0 + 1.55, y0, y0 + 2.6, z + 1.55, z + 1.75), P.piano!, 2, key + 0.01, [
+    [onZ(z + 1.751, x0 + 1.02, x0 + 1.5, y0 + 0.1, y0 + 2.5), P.keys!],
+  ]);
+  s.solid(box(x0 + 1.0, x0 + 1.15, y0, y0 + 2.6, z, z + 1.55), P.piano!, 2, key + 0.005);
+}
+
+// The stage seen from the hall: a corner stage with curtains on both back walls, risers, music
+// stands, an upright piano and a spotlight; rows of chairs on the hall floor face it.
+function concertHall(P: Palette): Scene {
+  const [nx, ny, wall] = [22, 18, 8];
+  const k = CONCERT_K;
+  const s = new Scene(k, [W / 2 - ((nx - ny) * R3 * k) / 2 + 30, 6 + wall * k]);
+  s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
+  const boards: Decal[] = [];
+  for (let j = 1; j < ny / 1.5; j++)
+    boards.push([onZ(0.001, 0, nx, j * 1.5, j * 1.5 + 0.07), P.board!]);
+  s.solid([onZ(0, 0, nx, 0, ny)], P.floor!, 0, 1, boards);
+  const [sx, sy, sz] = [11.5, 8.0, 1.7];
+  // Right wall (along x): curtains behind the stage, then tall windows.
+  const right: Decal[] = [
+    [onY(0.001, 0, nx, 0, 1.4), P.wains!],
+    [onY(0.002, 0, sx, sz, wall - 0.9), P.curtain!],
+    ...pleats("y", 0.3, sx - 0.3, sz, wall - 0.9, P, 0.003),
+    [onY(0.004, 0, sx, wall - 1.4, wall - 0.6), P.valance!],
+  ];
+  for (const wx of [13.2, 17.2]) {
+    right.push(
+      [onY(0.002, wx, wx + 2.6, 2.4, 6.8), P.frame!],
+      [onY(0.003, wx + 0.2, wx + 2.4, 2.6, 6.6), P.window!],
+    );
+    right.push([onY(0.004, wx + 1.22, wx + 1.38, 2.6, 6.6), P.frame!]);
+  }
+  s.solid(box(-0.6, nx, -0.6, 0, 0, wall), P.wall!, 1, 0, right);
+  // Left wall (along y): curtains behind the stage, a banner with notes, double doors.
+  const left: Decal[] = [
+    [onX(0.001, 0, ny, 0, 1.4), P.wains!],
+    [onX(0.002, 0, sy, sz, wall - 0.9), P.curtain!],
+    ...pleats("x", 0.3, sy - 0.3, sz, wall - 0.9, P, 0.003),
+    [onX(0.004, 0, sy, wall - 1.4, wall - 0.6), P.valance!],
+    [onX(0.002, 9.4, 13.8, 0, 4.6), P.frame!],
+    [onX(0.003, 9.6, 11.55, 0, 4.4), P.door!],
+    [onX(0.003, 11.65, 13.6, 0, 4.4), P.door!],
+    [onX(0.004, 10.0, 11.1, 2.6, 3.8), P.window!],
+    [onX(0.004, 12.1, 13.2, 2.6, 3.8), P.window!],
+    [onX(0.002, 14.6, 17.4, 4.4, 6.4), P.banner!],
+  ];
+  for (const [ny0, nz0] of [
+    [15.1, 5.0],
+    [16.0, 5.5],
+    [16.8, 4.9],
+  ] as const) {
+    left.push(
+      [onX(0.003, ny0, ny0 + 0.32, nz0, nz0 + 0.28), P.note!],
+      [onX(0.003, ny0 + 0.24, ny0 + 0.32, nz0, nz0 + 0.8), P.note!],
+    );
+  }
+  s.solid(box(-0.6, 0, 0, ny, 0, wall), P.wall!, 1, 0.5, left);
+  // Stage: a raised corner platform, boards on top, a plum skirt.
+  const top: Decal[] = [];
+  for (let j = 1; j < sy / 1.2; j++)
+    top.push([onZ(sz + 0.001, 0, sx, j * 1.2, j * 1.2 + 0.06), P.stageboard!]);
+  s.solid(box(0, sx, 0, sy, 0, sz), P.stage!, 1, 1, [
+    ...top,
+    [onX(sx + 0.001, 0, sy, 0, sz - 0.18), P.skirt!],
+    [onY(sy + 0.001, 0, sx, 0, sz - 0.18), P.skirt!],
+  ]);
+  // Steps at the stage's left front.
+  s.solid(box(1.2, 3.2, sy, sy + 0.7, 0, sz * 0.66), P.stage!, 2, 9.5);
+  s.solid(box(1.2, 3.2, sy + 0.7, sy + 1.4, 0, sz * 0.33), P.stage!, 2, 10.2);
+  // Risers along the back curtains, music stands facing the hall, the piano at the left.
+  s.solid(box(0, sx - 0.5, 0, 1.6, sz, sz + 0.5), P.riser!, 2, 2.5);
+  s.solid(box(0, 1.6, 0, sy - 0.5, sz, sz + 0.5), P.riser!, 2, 2.6);
+  piano(s, P, 1.7, 3.6, sz, 6.0);
+  for (const mx of [6.0, 7.9, 9.8]) musicStand(s, P, [mx, 0.9, sz + 0.5], mx + 0.9);
+  // The spotlight centre stage, where the story-ada-playing sprite stands.
+  const spot = CONCERT_SPOT;
+  s.lights.push({
+    alpha: 0.55,
+    colour: rgb(P.spot!),
+    quads: [flat(octagon(spot[0], spot[1], 1.9, 0, 12, 0, 0.75), sz + 0.01)],
+    soft: 2.5,
+  });
+  s.lights.push({
+    alpha: 0.12,
+    colour: rgb(P.spot!),
+    hull: true,
+    quads: [
+      [
+        ...flat(octagon(spot[0], spot[1], 1.9, 0, 12, 0, 0.75), sz + 0.01),
+        ...flat(octagon(spot[0] - 1.5, spot[1] - 1.5, 0.35, 0, 8), wall + 3),
+      ],
+    ],
+    soft: 4,
+  });
+  // Wall lamps between the windows.
+  for (const lx of [16.4]) {
+    s.solid(box(lx - 0.25, lx + 0.25, 0, 0.3, 4.6, 5.2), P.lamp!, 2, 0.6);
+    s.glows.push({ at: [lx, 0.3, 4.9], colour: rgb(P.lamp!), peak: 90, radius: 1.3 });
+  }
+  // Rows of chairs facing the stage.
+  for (const [r, cy] of [10.0, 12.0, 14.0, 16.0].entries()) {
+    for (let cx = 0.8 + (r % 2) * 0.3; cx + 0.9 < sx - 0.2; cx += 1.4)
+      chair(s, P, cx, cy, "-y", cx + cy + 1);
+  }
+  for (const [r, cx] of [13.6, 15.6, 17.6, 19.6].entries()) {
+    for (let cy = 0.8 + (r % 2) * 0.3; cy + 0.9 < sy - 0.2; cy += 1.4)
+      chair(s, P, cx, cy, "-x", cx + cy + 1);
+  }
+  return s;
+}
+
 /* Rock glow transition: the rock's glow washes Ada's room, then the cockpit */
 
 // Glow amounts of the transition frames; 1 is the approved full wash.
@@ -983,11 +1411,28 @@ export const TRANSITION = {
 
 /* Outputs */
 
+// The scene's subject band in canvas logical px: the rows its key objects span. The story page
+// offsets the background so the band centres in the strip above the story panel
+// (art/layout.md "Storybook page").
+interface Subject {
+  top: number;
+  bottom: number;
+}
+
 interface Background {
   id: string;
   palette: Palette;
   build: Builder;
+  subject?: Subject;
+  // Pixel sprites drawn over the treated background, by manifest id.
+  overlays?: readonly string[];
 }
+
+const band = (top: number, bottom: number): Subject => ({ top, bottom });
+
+// Ada's pixel sprites (art/tools/ada-sprites.ts), each placed over one background.
+const PLAYING_ID = "story-ada-playing";
+const WAKING_ID = "story-ada-waking";
 
 // Scene order follows the story; the overnight recharge follows the chapters' scenes.
 export const BACKGROUNDS: readonly Background[] = [
@@ -1004,9 +1449,40 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: "story-schoolyard", palette: YARD, build: schoolyard },
   { id: "story-school-hallway", palette: HALL, build: hallway },
   { id: "story-front-door", palette: DOOR, build: frontDoor },
+  // Needle: the recorder and the rock on Ada's desk.
+  {
+    id: "story-ada-room-recorder",
+    palette: ROOM,
+    build: (P) => room(P, { glow: glowAmount(0), recorder: true }),
+    subject: band(255, 300),
+  },
+  // Needle's closing: the stage, and Ada playing in the spotlight.
+  {
+    id: "story-concert-hall",
+    palette: CONCERT,
+    build: concertHall,
+    subject: band(195, 300),
+    overlays: [PLAYING_ID],
+  },
+  // Andromeda: the seedling tray on the potting table, spilled, then replanted.
+  {
+    id: "story-grandma-garden-spilled",
+    palette: GARDEN,
+    build: (P) => garden(P, "spilled"),
+    subject: band(195, 315),
+  },
+  {
+    id: "story-grandma-garden-replanted",
+    palette: GARDEN,
+    build: (P) => garden(P, "replanted"),
+    subject: band(195, 315),
+  },
   { id: "story-ada-room-night", palette: NIGHT, build: (P) => night(P, NIGHT_GLOW) },
-  { id: "story-ada-room-morning", palette: MORNING, build: morning },
+  { id: "story-ada-room-morning", palette: MORNING, build: morning, overlays: [WAKING_ID] },
 ];
+
+const subjectOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)?.subject;
+const overlaysOf = (id: string) => BACKGROUNDS.find((background) => background.id === id)?.overlays;
 
 export function paint(palette: Palette, scene: Scene) {
   return treatmentD(CANVAS, palette.haze ?? TREATMENT.haze, render(CANVAS, palette.back, scene));
@@ -1014,7 +1490,7 @@ export function paint(palette: Palette, scene: Scene) {
 
 const storyPath = (id: string) => `/art/story/${id.replace(/^story-/, "")}.png`;
 
-export const entry = (id: string) => ({
+export const entry = (id: string, subject = subjectOf(id)) => ({
   id,
   path: storyPath(id),
   width: CANVAS.width * CANVAS.density,
@@ -1023,6 +1499,65 @@ export const entry = (id: string) => ({
   displayHeight: CANVAS.height,
   facing: "front",
   pivot: { x: 0.5, y: 0.5 },
+  ...(subject && { subject }),
+  ...(overlaysOf(id) && { overlays: overlaysOf(id) }),
+});
+
+/* Ada's pixel sprites over their backgrounds */
+
+// Logical canvas px of a model point in a scene.
+function canvasAt(scene: Scene, point: Point) {
+  const k = 360 / DESIGN.height;
+  const [dx, dy] = scene.project(point);
+  return {
+    x: (dx - (DESIGN.width / 2 - CANVAS.width / 2 / k)) * k,
+    y: (dy - (DESIGN.height / 2 - CANVAS.height / 2 / k)) * k,
+  };
+}
+
+// Each sprite's integer scale (logical px per sprite px) and its top-left corner on the canvas in
+// whole logical px, so its pixel grid lands on whole canvas px.
+function spritePlaces() {
+  // In the concert hall at the hall's furniture scale: her feet on the spotlight's centre.
+  const feet = canvasAt(concertHall(CONCERT), CONCERT_SPOT);
+  // In Ada's room at twice that, the room's furniture scale: centred on her seat against the
+  // pillow, kneeling up so the duvet's lower edge rests on the pillow's back edge (canvas y 348).
+  const seat = canvasAt(room(MORNING), [1.8, 7.5, 2.45]);
+  return {
+    [PLAYING_ID]: {
+      at: { x: Math.round(feet.x - PLAYING_FEET.x), y: Math.round(feet.y) - PLAYING_FEET.y },
+      scale: 1,
+    },
+    [WAKING_ID]: {
+      at: { x: Math.round(seat.x - 2 * WAKING_CENTRE), y: 348 - 2 * WAKING_HEIGHT },
+      scale: 2,
+    },
+  };
+}
+
+// The treated blanket on the morning page, under Ada's legs: the duvet over her lap takes it.
+const BLANKET_PX = { x: 492, y: 776 };
+const blanketOf = (image: RgbaImage): Rgb => {
+  const i = (BLANKET_PX.y * image.width + BLANKET_PX.x) * 4;
+  return [image.data[i]!, image.data[i + 1]!, image.data[i + 2]!];
+};
+
+const spriteEntry = (
+  id: string,
+  image: RgbaImage,
+  { at, scale }: { at: { x: number; y: number }; scale: number },
+) => ({
+  id,
+  path: storyPath(id),
+  width: image.width,
+  height: image.height,
+  displayWidth: image.width * scale,
+  displayHeight: image.height * scale,
+  facing: "front",
+  pivot: { x: 0, y: 0 },
+  at,
+  scale,
+  sampling: "nearest",
 });
 
 /* Overnight overlays: the sleep scene is the night background with Ada and Penny over it, and
@@ -1140,7 +1675,7 @@ function overnight(at: (id: string) => Overlay["at"]) {
 }
 
 // Root manifest groups after the ship and portraits, in order; the story group leads.
-const LATER = ["cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
+const LATER = ["title-", "cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
 
 export function placeStoryEntries(entries: readonly { id: string }[]) {
   editManifest("core", (manifest) => {
@@ -1157,10 +1692,24 @@ const file = (id: string) => `${art}${storyPath(id).slice("/art/".length)}`;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const only = process.argv[2];
+  let morningImage: RgbaImage | undefined;
   for (const { build, id, palette } of BACKGROUNDS) {
     if (only && only !== id) continue;
-    writePng(file(id), paint(palette, build(palette)), true);
+    const image = paint(palette, build(palette));
+    writePng(file(id), image, true);
+    if (id === "story-ada-room-morning") morningImage = image;
   }
+  // Ada's sprites rebuild every run; the waking one samples the morning page's blanket.
+  const places = spritePlaces();
+  const blanket = blanketOf(
+    morningImage ?? decodePng(readFileSync(file("story-ada-room-morning"))),
+  );
+  const sprites = { [PLAYING_ID]: playingSprite(), [WAKING_ID]: wakingSprite(blanket) };
+  for (const [id, image] of Object.entries(sprites)) writePng(file(id), image);
+  const spriteOf = (id: string) =>
+    (overlaysOf(id) ?? []).map((sprite) =>
+      spriteEntry(sprite, sprites[sprite]!, places[sprite as keyof typeof places]),
+    );
   // The overlays rebuild with the night background; other single-id runs keep their entries.
   const rebuild = !only || only === "story-ada-room-night" || OVERLAYS.some((id) => id === only);
   let overlays: { at: Overlay["at"]; id: string }[];
@@ -1174,7 +1723,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   placeStoryEntries(
     BACKGROUNDS.flatMap(({ id }) =>
-      id === "story-ada-room-night" ? [entry(id), sleepEntry(), ...overlays] : [entry(id)],
+      id === "story-ada-room-night"
+        ? [entry(id), sleepEntry(), ...overlays]
+        : [entry(id), ...spriteOf(id)],
     ),
   );
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));
