@@ -2044,6 +2044,57 @@ try {
     import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
+  // A claim platform beside Ada in Cartwheel: its hull is in Cartwheel's manifest and its turret
+  // and port frames load when it first draws, after that manifest has loaded.
+  const claimModel = new GameModel(PROTOTYPE);
+  claimModel.state.unlocked = [1, 2];
+  claimModel.state.prologueSeen = true;
+  claimModel.startSector(2);
+  playOpening(claimModel);
+  if (claimModel.state.mode !== "space") {
+    claimModel.jump();
+  }
+  {
+    const flight = claimModel.state.flight;
+    flight.objects = [];
+    flight.shots = [];
+    const definition = enemyCatalog.platform;
+    const at = { x: flight.player.x - 60, y: flight.player.y + 170 };
+    const enemy = createEnemy(
+      definition,
+      { archetype: "platform", id: "browser-claim:platform", packId: null, phase: 0 },
+      at,
+    );
+    flight.objects.push({
+      ...at,
+      enemy,
+      hp: definition.hp,
+      id: enemy.id,
+      kind: "enemy",
+      radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+    });
+  }
+  await seedOnce(claimModel.save(), "ada-browser.claim-platform.v1");
+  // The resource timing buffer holds 250 entries by default, fewer than a flight's art requests;
+  // a reload with a larger buffer keeps every request this check reads.
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(10000));
+  await page.reload();
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page.waitForFunction(
+    () =>
+      [
+        "/art/cartwheel/enemies/platform.svg",
+        "/art/cartwheel/enemies/platform-port-intact-0.svg",
+      ].every((path) =>
+        performance.getEntriesByType("resource").some(({ name }) => name.endsWith(path)),
+      ),
+    null,
+    { timeout: 30000 },
+  );
+  events.checks.push(
+    "A Cartwheel flight loads the claim platform's hull and, once Cartwheel's manifest has loaded, " +
+      "its part frames",
+  );
   const [
     { ASTEROID_ART, readAsteroidCatalog },
     asteroidArt,

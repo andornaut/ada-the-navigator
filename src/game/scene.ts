@@ -62,6 +62,7 @@ import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
 import {
   type CoreManifest,
+  galaxyLoadsAtOnce,
   type GalaxyManifest,
   galaxyManifestKey,
   galaxyManifestPaths,
@@ -116,6 +117,7 @@ import {
   enemyJetsPath,
   enemyJetTriangles,
   enemyPartFrame,
+  enemyPartsToLoad,
   enemyRasterSize,
   enemyShardsPath,
   enemySvg,
@@ -1073,7 +1075,7 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** Queues one of a galaxy manifest's SVGs or sheets; whale frames and part frames wait. */
   private loadGalaxyAsset(asset: Asset): void {
-    if (whaleFrameAsset(asset) || enemyPartFrame(asset) || this.textures.exists(asset.id)) {
+    if (!galaxyLoadsAtOnce(asset) || this.textures.exists(asset.id)) {
       return;
     }
     if (enemySvg(asset)) {
@@ -1532,10 +1534,19 @@ export class PrototypeScene extends Phaser.Scene {
    */
   private loadEnemyParts(archetype: string): void {
     const claim = this.claimed(archetype);
-    this.partLoads.add(`${claim ? "claim" : "coral"}:${archetype}`);
-    const parts = (claim ? this.claimPartAssets : this.partAssets).filter(
-      (asset) => asset.archetype === archetype && !this.textures.exists(asset.id),
+    const sector = this.model.state.flight?.sector;
+    // Coral parts are in the core manifest; claim parts in their galaxy's, which may not have
+    // loaded when the craft first draws.
+    const parts = enemyPartsToLoad(
+      !claim || (sector !== undefined && this.galaxyManifests.has(sector)),
+      (id) => this.textures.exists(id),
+      claim ? this.claimPartAssets : this.partAssets,
+      archetype,
     );
+    if (parts === null) {
+      return;
+    }
+    this.partLoads.add(`${claim ? "claim" : "coral"}:${archetype}`);
     if (parts.length === 0) {
       return;
     }

@@ -1,4 +1,6 @@
 import type { SectorId } from "../data/types.ts";
+import { type EnemyFrame, enemyPartFrame } from "./enemy-art.ts";
+import { whaleFrameAsset } from "./whale-art.ts";
 
 // Art's split manifest (art/README.md): the core manifest at public/art/manifest.json holds the
 // boot set and shared data links and maps each galaxy to its own manifest, which holds the
@@ -40,6 +42,14 @@ const LINKS: readonly (keyof GalaxyLinks)[] = [
   "whirlpoolCurrents",
   "whirlpoolDebris",
 ];
+
+/**
+ * Whether a galaxy manifest's asset loads with the galaxy's first flight: hull headings, props and
+ * sheets do; hardpoint and turret frames wait for their craft, and whale frames for a whale.
+ */
+export function galaxyLoadsAtOnce(asset: EnemyFrame & { readonly kind?: unknown }): boolean {
+  return !enemyPartFrame(asset) && !whaleFrameAsset(asset);
+}
 
 /** The loader's cache key for a galaxy's manifest. */
 export function galaxyManifestKey(sector: SectorId): string {

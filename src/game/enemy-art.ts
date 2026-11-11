@@ -183,6 +183,20 @@ export function enemyPartFrame(asset: EnemyFrame): boolean {
   return asset.hardpoint !== undefined || asset.top !== undefined;
 }
 
+/**
+ * The part frames still to load for archetype's craft, or null while its family's part list is
+ * not known yet: a galaxy family's parts are in that galaxy's manifest, so until it loads the
+ * craft keeps its placeholder and asks again.
+ */
+export function enemyPartsToLoad<T extends EnemyFrame>(
+  known: boolean,
+  loaded: (id: string) => boolean,
+  parts: readonly T[],
+  archetype: string,
+): readonly T[] | null {
+  return known ? parts.filter((part) => part.archetype === archetype && !loaded(part.id)) : null;
+}
+
 /** Archetypes whose manifest entries include hardpoint bases or turret tops. */
 export function composedArchetypes(assets: readonly EnemyFrame[]): Set<string> {
   return new Set(assets.filter(enemyPartFrame).flatMap((asset) => asset.archetype ?? []));
