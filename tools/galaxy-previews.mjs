@@ -115,8 +115,8 @@ function serve(dist) {
   });
 }
 
-// CLEANUP (added 2026-11-11): recapture Sunflower once its light field lands, and Cartwheel and
-// Whirlpool once the hub and the whale draw as art; they still draw the placeholder ellipse.
+// CLEANUP (added 2026-11-11): recapture Cartwheel and Whirlpool once the hub and the whale draw
+// as art; they still draw the placeholder ellipse.
 // A save in flight in galaxy `number` with the ship beside the first destination of its route, or,
 // for a galaxy with no flight yet, the base field with no objects at the same framing.
 // CLEANUP (added 2026-11-11): galaxy four has no flight (SectorId is 1 to 3), so it captures the
@@ -222,8 +222,9 @@ async function processCapture({ anchor, capture, focus, locked, preview }) {
   return btoa(text);
 }
 
-// The field data one capture draws with: for unlocked, the galaxy's own field colours and backdrop
-// tint on the flight's galaxy (the same files when it flies there); for locked, the base field.
+// The field data one capture draws with: for unlocked, the galaxy's own field colours, backdrop
+// tint and field tint (which carries the light-field rule) on the flight's galaxy (the same files
+// when it flies there); for locked, the base field, which no light-field rule touches.
 function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
   const flown = ids[sector - 1];
   const tints = Object.fromEntries(
@@ -243,7 +244,9 @@ function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
       galaxies: base
         ? []
         : galaxies.galaxies.map((entry) =>
-            entry.number === sector ? { ...entry, colors: galaxy.colors } : entry,
+            entry.number === sector
+              ? { ...entry, colors: galaxy.colors, tint: galaxy.tint }
+              : entry,
           ),
     },
   };

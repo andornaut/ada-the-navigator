@@ -109,7 +109,7 @@
         "noticeInset": 8,
         "padding": 4,
         "panel": {
-          "alpha": 0.7,
+          "alpha": 0.65,
           "ink": "#181425"
         },
         "portrait": {

@@ -1,3 +1,4 @@
+import { LIGHT_FIELD } from "../game/light-field.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { STATUS_PILL } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
@@ -6,7 +7,8 @@ import { readViewUnit } from "./layout/viewScale.ts";
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
 // beside pause holding the shield bar and the Stardust count. The bar draws in CSS at logical
 // units with fractional widths; the shield's states are a pure function of what the model shows
-// each frame, so they are tested without a browser.
+// each frame, so they are tested without a browser. On a light field the shield icon and bar
+// each draw inside an ink outline (art/galaxies.md "Light fields").
 
 export const STATUS_COLOURS = {
   count: "#ead4aa",
@@ -14,12 +16,19 @@ export const STATUS_COLOURS = {
   flash: "#ffffff",
   low: "#e4574e",
   lowPeak: "#ff8a80",
-  panel: "rgb(24 20 37 / 0.7)",
+  panel: "rgb(24 20 37 / 0.65)",
   rim: "#9a96ad",
   shield: "#70ace8",
   shieldDelay: "#4f7aa6",
   tick: "#8ee8a8",
-  track: "#181425",
+  // Its own ink layer at 0.65 over the panel, not a hole in it.
+  track: "rgb(24 20 37 / 0.65)",
+} as const;
+
+// The light-field outline around the shield icon and bar (`lightField.hudOutline`), in ink.
+const LIGHT_OUTLINE = {
+  ink: `#${LIGHT_FIELD.ink.toString(16).padStart(6, "0")}`,
+  width: LIGHT_FIELD.hudOutline,
 } as const;
 
 export const STATUS_TIMING = {
@@ -152,8 +161,18 @@ const OUTLINE_SHADOW = [
   `0 calc(-1 * ${OUTLINE})`,
   `0 ${OUTLINE}`,
 ]
-  .map((offset) => `${offset} 0 ${STATUS_COLOURS.track}`)
+  .map((offset) => `${offset} 0 ${LIGHT_OUTLINE.ink}`)
   .join(",");
+// The icon mask grown by the outline in all eight directions: chained shadows compound into a
+// square kernel.
+const ICON_OUTLINE = [
+  `${units(LIGHT_OUTLINE.width)} 0`,
+  `${units(-LIGHT_OUTLINE.width)} 0`,
+  `0 ${units(LIGHT_OUTLINE.width)}`,
+  `0 ${units(-LIGHT_OUTLINE.width)}`,
+]
+  .map((offset) => `drop-shadow(${offset} 0 ${LIGHT_OUTLINE.ink})`)
+  .join(" ");
 
 export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status{
@@ -174,11 +193,17 @@ export const STATUS_PILL_STYLE = `
   --shield-mark:${STATUS_COLOURS.shield};
   --shield-rim:${STATUS_COLOURS.rim}
 }
-.ada-controls .ada-status-shield{
+.ada-controls .ada-status-mark{
   flex:none;
+  display:flex;
+  margin-right:${units(STATUS_PILL.markGap)}
+}
+.ada-controls .ada-status[data-field=light] .ada-status-mark{
+  filter:${ICON_OUTLINE}
+}
+.ada-controls .ada-status-shield{
   width:${units(STATUS_PILL.icon)};
   height:${units(STATUS_PILL.icon)};
-  margin-right:${units(STATUS_PILL.markGap)};
   background:var(--shield-mark);
   -webkit-mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat;
   mask:url('/art/ui/icons/shield.svg') center / 100% 100% no-repeat
@@ -191,6 +216,9 @@ export const STATUS_PILL_STYLE = `
   height:${units(bar.height)};
   border:${units(bar.rim)} solid var(--shield-rim);
   background:${STATUS_COLOURS.track}
+}
+.ada-controls .ada-status[data-field=light] .ada-status-bar{
+  box-shadow:0 0 0 ${units(LIGHT_OUTLINE.width)} ${LIGHT_OUTLINE.ink}
 }
 .ada-controls .ada-status-bar > span{
   position:absolute;
@@ -245,6 +273,8 @@ export const STATUS_PILL_STYLE = `
 
 export interface StatusView {
   readonly capacity: number;
+  // Whether the field under the HUD is light, which outlines the shield icon and bar.
+  readonly lightField: boolean;
   readonly recharging: boolean;
   readonly shield: number;
   readonly stardust: number;
@@ -259,9 +289,13 @@ export function createStatusPill(
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
+  // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
+  const shieldMark = document.createElement("span");
+  shieldMark.className = "ada-status-mark";
+  shieldMark.setAttribute("aria-hidden", "true");
   const icon = document.createElement("span");
   icon.className = "ada-status-shield";
-  icon.setAttribute("aria-hidden", "true");
+  shieldMark.append(icon);
   const meter = document.createElement("span");
   meter.className = "ada-status-bar";
   meter.setAttribute("role", "meter");
@@ -285,7 +319,7 @@ export function createStatusPill(
   count.setAttribute("role", "status");
   const countText = document.createTextNode("");
   count.append(countText);
-  root.append(icon, meter, divider, sparkle, count);
+  root.append(shieldMark, meter, divider, sparkle, count);
   parent.append(root);
 
   const shieldBar = new ShieldBar();
@@ -355,6 +389,10 @@ export function createStatusPill(
       const bar = shieldBar.update(view, nowMs, options.reducedMotion());
       if (root.dataset.tone !== bar.tone) {
         root.dataset.tone = bar.tone;
+      }
+      const field = view.lightField ? "light" : "dark";
+      if (root.dataset.field !== field) {
+        root.dataset.field = field;
       }
       const mark = shieldMarkColour(bar.tone, bar.pulse);
       root.style.setProperty("--shield-mark", mark);

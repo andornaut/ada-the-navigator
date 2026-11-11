@@ -36,7 +36,7 @@ export const CONVERSATION_BOX = {
   noticeInset: SPACING.gap,
   padding: PADDING,
   // The ink panel, translucent so space shows through; text, tab and portrait stay opaque.
-  panel: { alpha: 0.7, ink: "#181425" },
+  panel: { alpha: 0.65, ink: "#181425" },
   // A 22 compact frame at 2x, centred in the navy slot inside the 2 ink frame edge.
   portrait: { art: 44, edge: FRAME_EDGE, face: "#262b44", frame: FRAME, slot: SLOT },
   // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 32

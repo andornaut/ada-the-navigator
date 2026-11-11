@@ -94,6 +94,22 @@ function readLayer(value: unknown): JetLayer | undefined {
   return result;
 }
 
+/** Art's jet layers in draw order; undefined if the list is empty or any layer is malformed. */
+export function readJetLayers(value: unknown): JetLayer[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) {
+    return undefined;
+  }
+  const layers: JetLayer[] = [];
+  for (const entry of value as unknown[]) {
+    const layer = readLayer(entry);
+    if (!layer) {
+      return undefined;
+    }
+    layers.push(layer);
+  }
+  return layers;
+}
+
 function readMouths(value: unknown): JetMouth[] | undefined {
   if (!Array.isArray(value) || value.length === 0) {
     return undefined;
@@ -134,20 +150,14 @@ export function readShipJets(value: unknown): ShipJets | undefined {
     !finite(length.base) ||
     !finite(length.scale) ||
     !finite(length.exponent) ||
-    !Array.isArray(root.layers) ||
-    root.layers.length === 0 ||
     !Array.isArray(root.headings) ||
     root.headings.length === 0
   ) {
     return undefined;
   }
-  const layers: JetLayer[] = [];
-  for (const entry of root.layers as unknown[]) {
-    const layer = readLayer(entry);
-    if (!layer) {
-      return undefined;
-    }
-    layers.push(layer);
+  const layers = readJetLayers(root.layers);
+  if (!layers) {
+    return undefined;
   }
   const headings: JetMouth[][] = [];
   for (const entry of root.headings as unknown[]) {

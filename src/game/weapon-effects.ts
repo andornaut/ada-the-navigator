@@ -426,10 +426,42 @@ function beamLayer(
 }
 
 /**
+ * The beam's outermost layers, which a light field turns to ink (art/galaxies.md "Light
+ * fields"): the glow taper's start and end widths in `w` and alpha in `a`, the bloom's outer disc
+ * radius in `w` and alpha in `a`, and the reduced-motion edge's alpha in `a`.
+ */
+export interface BeamGlow {
+  readonly bloom: { readonly alpha: number; readonly radius: number };
+  readonly colour: Colour;
+  readonly edgeAlpha: number;
+  readonly glow: { readonly alpha: number; readonly width: readonly [number, number] };
+}
+
+/** The beam's amber glow on a dark field (art/weapons.md "Phaser beam"). */
+export const AMBER_BEAM_GLOW: BeamGlow = {
+  bloom: { alpha: 0.3, radius: 5 },
+  colour: EFFECT_COLOURS.amber,
+  edgeAlpha: 0.35,
+  glow: { alpha: 0.38, width: [8, 5] },
+};
+
+/**
  * The Phaser beam `t` ms after firing, from the screen nose point to the contact (hit) or the
  * level's full range (miss), with its muzzle bloom; under reduced motion a steady line.
  */
 export function beam(
+  from: Vec,
+  to: Vec,
+  hit: boolean,
+  reducedMotion: boolean,
+  t: number,
+): EffectShape[] {
+  return glowingBeam(AMBER_BEAM_GLOW, from, to, hit, reducedMotion, t);
+}
+
+/** The Phaser beam with the given outer glow: amber on a dark field, ink on a light one. */
+export function glowingBeam(
+  glow: BeamGlow,
   from: Vec,
   to: Vec,
   hit: boolean,
@@ -446,7 +478,7 @@ export function beam(
   const at = frame(from, Math.atan2(to.y - from.y, to.x - from.x));
   const along = (u: number) => at(u, 0);
   const fade = hit ? 0 : Math.min(BEAM_MISS_FADE, length);
-  const { amber, cream, white } = EFFECT_COLOURS;
+  const { cream, white } = EFFECT_COLOURS;
   if (reducedMotion) {
     const a = t <= 90 ? 1 : 1 - (t - 90) / (BEAM_MS - 90);
     const steady = (colour: Colour, width: number, alpha: number): EffectShape[] => {
@@ -469,14 +501,21 @@ export function beam(
       }
       return shapes;
     };
-    return [...steady(amber, 4, 0.35 * a), ...steady(cream, 2, a)];
+    return [...steady(glow.colour, 4, glow.edgeAlpha * a), ...steady(cream, 2, a)];
   }
   const { a, w } = beamKeys(t);
+  const [start, end] = glow.glow.width;
   return [
-    ...beamLayer(amber, along, length, [8 * w, 5 * w], 0.38 * a, fade),
+    ...beamLayer(glow.colour, along, length, [start * w, end * w], glow.glow.alpha * a, fade),
     ...beamLayer(cream, along, length, [4 * w, 2.4 * w], 0.95 * a, fade),
     ...beamLayer(white, along, length, [1.8 * w, w], a, fade),
-    { alpha: 0.3 * a, at: from, colour: amber, kind: "disc", radius: 5 * w },
+    {
+      alpha: glow.bloom.alpha * a,
+      at: from,
+      colour: glow.colour,
+      kind: "disc",
+      radius: glow.bloom.radius * w,
+    },
     { alpha: 0.9 * a, at: from, colour: cream, kind: "disc", radius: 2.9 * w },
     { alpha: a, at: from, colour: white, kind: "disc", radius: 1.6 * w },
   ];

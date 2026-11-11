@@ -6,6 +6,7 @@ import {
   shieldMarkColour,
   stardustCount,
   STATUS_COLOURS,
+  STATUS_PILL_STYLE,
   STATUS_TIMING,
 } from "./status-pill.ts";
 
@@ -102,9 +103,27 @@ describe("status pill shield bar", () => {
       shield: "#70ace8",
       shieldDelay: "#4f7aa6",
       tick: "#8ee8a8",
-      track: "#181425",
     });
     expect(blendHex("#000000", "#ffffff", 0.5)).toBe("#808080");
+  });
+
+  it("draws the panel and the shield track as ink at 0.65, the track over the panel", () => {
+    expect(STATUS_COLOURS.panel).toBe("rgb(24 20 37 / 0.65)");
+    expect(STATUS_COLOURS.track).toBe("rgb(24 20 37 / 0.65)");
+  });
+
+  it("outlines the shield icon and bar in ink on a light field only", () => {
+    const light = STATUS_PILL_STYLE.split("}").filter((rule) =>
+      rule.includes("[data-field=light]"),
+    );
+    expect(light).toHaveLength(2);
+    const [icon, bar] = light;
+    expect(icon).toContain(".ada-status-mark{");
+    // Four chained 1 px shadows grow the icon mask by a square kernel.
+    expect(icon!.match(/drop-shadow\(/g)).toHaveLength(4);
+    expect(icon).toContain("#181425");
+    expect(bar).toContain(".ada-status-bar{");
+    expect(bar).toMatch(/box-shadow:0 0 0 .+ #181425/);
   });
 });
 

@@ -93,7 +93,7 @@ describe("galaxy fields", () => {
         return [background, environment, environmentDetail].map(spaceColorCss);
       }),
     ).toEqual([
-      ["#332712", "#3f331e", "#4c3f29"],
+      ["#d8c994", "#c9ba86", "#baab77"],
       ["#39221e", "#452e2a", "#523a36"],
       ["#132d33", "#1f3940", "#2b464c"],
       ["#271423", "#331f2f", "#3f2b3b"],

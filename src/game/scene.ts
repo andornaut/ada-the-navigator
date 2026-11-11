@@ -84,6 +84,13 @@ import {
   selectEnemyFrame,
 } from "./enemy-art.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
+import {
+  inkEdges,
+  keylineOffsets,
+  LIGHT_FIELD,
+  lightGalaxy,
+  readLightGalaxies,
+} from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
 import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
 import { sceneryDetail } from "./scenery.ts";
@@ -123,9 +130,10 @@ import {
 } from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 import {
-  beam as beamEffect,
+  AMBER_BEAM_GLOW,
   blast as blastEffect,
   type EffectShape,
+  glowingBeam,
   heavyMissile,
   missileFrame,
   missileKind,
@@ -205,6 +213,13 @@ export class PrototypeScene extends Phaser.Scene {
   // A heavy's part frames load on demand, once per archetype.
   private partAssets: Asset[] = [];
   private partLoads = new Set<string>();
+  // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
+  // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
+  private light = false;
+  private keyed: { key: string; sprite: Phaser.GameObjects.Image }[] = [];
+  private keylines = new Map<string, Phaser.GameObjects.Image[]>();
+  private jetKeyline!: Phaser.GameObjects.Graphics;
+  private indicatorInk!: Phaser.GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   private stardustArt: StardustArt<Asset> | undefined;
@@ -258,6 +273,8 @@ export class PrototypeScene extends Phaser.Scene {
   // The palette at home and before a galaxy is set, and each galaxy's retinted field.
   private basePalette = FALLBACK_SPACE_PALETTE;
   private galaxyPalettes: ReadonlyMap<number, SpacePalette> = new Map();
+  // The galaxies whose field is light, from the same galaxies.json as their palettes.
+  private lightGalaxies: ReadonlySet<number> = new Set();
   // The space background in use: the flight's galaxy field, else the base palette's.
   private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
@@ -344,6 +361,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.basePalette,
       readGalaxyFields(this.cache.json.get("galaxies")),
     );
+    this.lightGalaxies = readLightGalaxies(this.cache.json.get("galaxies"));
     const background = this.palette.background;
     this.game.config.backgroundColor.setTo(
       (background >> 16) & 255,
@@ -369,6 +387,8 @@ export class PrototypeScene extends Phaser.Scene {
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
     this.overlay = this.add.graphics().setDepth(3);
+    this.indicatorInk = this.add.graphics().setDepth(3 - 1e-6);
+    this.jetKeyline = this.add.graphics();
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
@@ -937,6 +957,10 @@ export class PrototypeScene extends Phaser.Scene {
     this.controls.setWeapons(this.model.weapons());
     this.controls.setStatus({
       capacity: this.model.shieldMax,
+      lightField: lightGalaxy(
+        this.lightGalaxies,
+        state.mode === "space" ? state.flight?.sector : undefined,
+      ),
       recharging: this.model.shieldRecharging,
       shield: state.flight?.shield ?? 0,
       stardust: state.economy.stardust,
@@ -1094,6 +1118,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.jets.clear();
     this.overlay.clear();
     this.enemyJets.clear();
+    this.jetKeyline.clear();
+    this.indicatorInk.clear();
+    this.keyed = [];
     for (const sprite of this.enemySprites.values()) {
       sprite.setVisible(false);
     }
@@ -1105,8 +1132,10 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     if (!flight || this.model.state.mode !== "space") {
+      this.drawKeylines();
       return;
     }
+    this.light = lightGalaxy(this.lightGalaxies, flight.sector);
     this.drawBackdrop(flight);
     // Stationary world markers provide motion cues without a navigation map.
     const cell = 160;
@@ -1136,19 +1165,26 @@ export class PrototypeScene extends Phaser.Scene {
     this.startRockLoads();
     // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
     for (const flash of activeBlastFlashes(flight)) {
-      this.drawEffect(
-        blastEffect(this.project(flash), flash.radius, this.reducedMotion, flash.age * 1000),
+      const shapes = blastEffect(
+        this.project(flash),
+        flash.radius,
+        this.reducedMotion,
+        flash.age * 1000,
       );
+      this.drawEffect(shapes, this.edges(["blastRing", "blastFlash"], shapes));
     }
     // Art's Phaser beam from the nose, and a hit's spark at the contact.
     for (const flash of activeBeamFlashes(flight)) {
       const from = this.project(flash.from);
       const to = this.project(flash.to);
       const ms = flash.age * 1000;
-      this.drawEffect(beamEffect(from, to, flash.hit, this.reducedMotion, ms));
+      // On a light field the beam's outer glow and bloom are ink.
+      const glow = this.light ? LIGHT_FIELD.phaser : AMBER_BEAM_GLOW;
+      this.drawEffect(glowingBeam(glow, from, to, flash.hit, this.reducedMotion, ms));
       if (flash.hit) {
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        this.drawEffect(sparkEffect(to, angle, this.reducedMotion, ms));
+        const spark = sparkEffect(to, angle, this.reducedMotion, ms);
+        this.drawEffect(spark, this.edges(["hitSpark"], spark));
       }
     }
     for (const shot of flight.shots) {
@@ -1159,15 +1195,31 @@ export class PrototypeScene extends Phaser.Scene {
         y: shot.y - shot.velocity.y * 0.035,
       });
       const alpha = shot.fade ? projectileOpacity(shot.fade, shot.life) : 1;
+      // On a light field each bolt and dot draws over an ink edge.
+      const edge = this.light ? LIGHT_FIELD.shotEdge : 0;
       if (shot.projectile === "dot") {
+        if (edge) {
+          this.overlay.fillStyle(LIGHT_FIELD.ink, alpha);
+          this.overlay.fillCircle(point.x, point.y, 1.5 + edge);
+        }
         this.overlay.fillStyle(color, alpha);
         this.overlay.fillCircle(point.x, point.y, 1.5);
       } else if (shot.projectile === "missile" && !shot.enemy && shot.blast !== undefined) {
-        // Art's Rapid or Heavy missile, its exhaust flickering unless motion is reduced.
+        // Art's Rapid or Heavy missile, its exhaust flickering unless motion is reduced. On a
+        // light field the dart and fins take an ink edge and the streak stays as it is.
         const kind = missileKind(shot.blast);
         const frame = missileFrame(kind, this.reducedMotion, this.time.now);
+        const shapes = (kind === "rapid" ? rapidMissile : heavyMissile)(
+          point,
+          shot.velocity,
+          frame,
+        );
         this.drawEffect(
-          (kind === "rapid" ? rapidMissile : heavyMissile)(point, shot.velocity, frame),
+          shapes,
+          this.edges(
+            ["missile"],
+            shapes.filter((shape) => shape.kind !== "taper"),
+          ),
         );
       } else if (shot.projectile === "missile") {
         const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
@@ -1195,6 +1247,10 @@ export class PrototypeScene extends Phaser.Scene {
           point.y,
         );
       } else {
+        if (edge) {
+          this.overlay.lineStyle(1.5 + 2 * edge, LIGHT_FIELD.ink, alpha);
+          this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
+        }
         this.overlay.lineStyle(1.5, color, alpha);
         this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
       }
@@ -1219,19 +1275,44 @@ export class PrototypeScene extends Phaser.Scene {
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
     // Authored direction frames already include perspective and must not rotate in screen space.
     this.ship.setRotation(0);
+    this.keyline("ship", "player-ship", this.ship);
     if (this.shipJets && ship?.directionIndex !== undefined) {
       this.jets.setPosition(this.ship.x, this.ship.y);
+      this.jetKeyline.setPosition(this.ship.x, this.ship.y).setDepth(this.ship.depth - 2e-6);
       const display = {
         displayHeight: ship.displayHeight ?? 42,
         displayWidth: ship.displayWidth ?? 42,
         pivot: ship.pivot,
       };
+      // A light field swaps in Art's dark jet layers, with no halo, keylined with the hull.
+      const jets = this.light ? { ...this.shipJets, layers: LIGHT_FIELD.jets.ship } : this.shipJets;
+      const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
-        this.shipJets,
+        jets,
         display,
         ship.directionIndex,
         speed,
       )) {
+        if (keyline) {
+          this.jetKeyline.fillStyle(LIGHT_FIELD.ink, alpha);
+          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
+          this.jetKeyline.fillTriangle(
+            points[0].x,
+            points[0].y,
+            points[1].x,
+            points[1].y,
+            points[2].x,
+            points[2].y,
+          );
+          this.jetKeyline.strokeTriangle(
+            points[0].x,
+            points[0].y,
+            points[1].x,
+            points[1].y,
+            points[2].x,
+            points[2].y,
+          );
+        }
         this.jets.fillStyle(color, alpha);
         this.jets.fillTriangle(
           points[0].x,
@@ -1251,6 +1332,65 @@ export class PrototypeScene extends Phaser.Scene {
         this.enemySprites.delete(id);
       }
     }
+    this.drawKeylines();
+  }
+
+  /**
+   * On a light field, records a sprite of a keylined kind (`lightField.keylined`) for this
+   * frame's ink keyline.
+   */
+  private keyline(kind: string, key: string, sprite: Phaser.GameObjects.Image): void {
+    if (this.light && LIGHT_FIELD.keylined.includes(kind)) {
+      this.keyed.push({ key, sprite });
+    }
+  }
+
+  /**
+   * Each keylined sprite's ink keyline: eight ink copies of its frame offset by `keyline` px in
+   * every direction (a square kernel), just beneath it in its depth slot, at its alpha. Keylines
+   * not drawn this frame are destroyed.
+   */
+  private drawKeylines(): void {
+    const used = new Set<string>();
+    const offsets = keylineOffsets(LIGHT_FIELD.keyline);
+    for (const { key, sprite } of this.keyed) {
+      if (!sprite.visible) {
+        continue;
+      }
+      used.add(key);
+      let copies = this.keylines.get(key);
+      if (!copies) {
+        copies = offsets.map(() => this.add.image(0, 0, sprite.texture.key));
+        this.keylines.set(key, copies);
+      }
+      copies.forEach((copy, index) => {
+        copy
+          .setTexture(sprite.texture.key, sprite.frame.name)
+          .setOrigin(sprite.originX, sprite.originY)
+          .setDisplaySize(sprite.displayWidth, sprite.displayHeight)
+          .setPosition(sprite.x + offsets[index]!.x, sprite.y + offsets[index]!.y)
+          .setDepth(sprite.depth - 2e-6)
+          .setAlpha(sprite.alpha)
+          .setTint(LIGHT_FIELD.ink)
+          .setTintMode(Phaser.TintModes.FILL)
+          .setVisible(true);
+      });
+    }
+    for (const [key, copies] of this.keylines) {
+      if (!used.has(key)) {
+        for (const copy of copies) {
+          copy.destroy();
+        }
+        this.keylines.delete(key);
+      }
+    }
+  }
+
+  /** On a light field, the ink edges beneath an effect whose kind takes them (`lightField.effects`). */
+  private edges(kinds: readonly string[], shapes: readonly EffectShape[]): EffectShape[] {
+    return this.light && kinds.some((kind) => LIGHT_FIELD.effects.includes(kind))
+      ? inkEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
+      : [];
   }
 
   private drawEnemy(point: Vec, object: SpaceObject): void {
@@ -1418,6 +1558,7 @@ export class PrototypeScene extends Phaser.Scene {
         .setPosition(point.x + part.offset.x, point.y + part.offset.y)
         // Parts keep the heading's layer order within the hull's screen depth.
         .setDepth(playDepth(point.y) + index * 1e-7);
+      this.keyline(enemy.archetype, key, sprite);
       const hp = part.hardpoint === null ? undefined : state(part.hardpoint)?.hp;
       if (
         hp !== undefined &&
@@ -1432,7 +1573,12 @@ export class PrototypeScene extends Phaser.Scene {
       enemyEncounterTuning.speedCapRatio,
       enemy,
     );
-    for (const { alpha, color, points } of enemyJetTriangles(art, frame, speed, pose.intact)) {
+    // A light field swaps in Art's dark enemy jet layers.
+    const jets =
+      this.light && art.jets
+        ? { ...art, jets: { ...art.jets, layers: LIGHT_FIELD.jets.enemy } }
+        : art;
+    for (const { alpha, color, points } of enemyJetTriangles(jets, frame, speed, pose.intact)) {
       this.enemyJets.fillStyle(color, alpha);
       this.enemyJets.fillTriangle(
         point.x + points[0].x,
@@ -1473,16 +1619,41 @@ export class PrototypeScene extends Phaser.Scene {
       const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
       const x = cx + dx * Math.max(0, scale);
       const y = cy + dy * Math.max(0, scale);
+      const arrow = [
+        { x: x + ux * 8, y: y + uy * 8 },
+        { x: x - ux * 5 - uy * 5, y: y - uy * 5 + ux * 5 },
+        { x: x - ux * 5 + uy * 5, y: y - uy * 5 - ux * 5 },
+      ] as const;
+      const ring = { x: x - ux * 13, y: y - uy * 13 };
+      if (this.light) {
+        this.drawIndicatorInk(arrow, ring);
+      }
       this.overlay.lineStyle(2, this.palette.pointOfInterest, 0.8);
       this.overlay.strokeTriangle(
-        x + ux * 8,
-        y + uy * 8,
-        x - ux * 5 - uy * 5,
-        y - uy * 5 + ux * 5,
-        x - ux * 5 + uy * 5,
-        y - uy * 5 - ux * 5,
+        arrow[0].x,
+        arrow[0].y,
+        arrow[1].x,
+        arrow[1].y,
+        arrow[2].x,
+        arrow[2].y,
       );
-      this.overlay.strokeCircle(x - ux * 13, y - uy * 13, 3);
+      this.overlay.strokeCircle(ring.x, ring.y, 3);
+    }
+  }
+
+  /**
+   * A light field's ink stroke under an indicator (`lightField.indicatorStroke`), round joined.
+   * It draws opaque on a layer at alpha 0.8, so the joins do not stack.
+   */
+  private drawIndicatorInk(arrow: readonly [Vec, Vec, Vec], ring: Vec): void {
+    const width = LIGHT_FIELD.indicatorStroke;
+    const ink = this.indicatorInk.setAlpha(0.8);
+    ink.lineStyle(width, LIGHT_FIELD.ink, 1);
+    ink.strokeTriangle(arrow[0].x, arrow[0].y, arrow[1].x, arrow[1].y, arrow[2].x, arrow[2].y);
+    ink.strokeCircle(ring.x, ring.y, 3);
+    ink.fillStyle(LIGHT_FIELD.ink, 1);
+    for (const corner of arrow) {
+      ink.fillCircle(corner.x, corner.y, width / 2);
     }
   }
 
@@ -1607,23 +1778,29 @@ export class PrototypeScene extends Phaser.Scene {
       this.drawStationPlaceholder(object, point, radius);
       return;
     }
-    this.drawBlink(this.stationArt, object, point);
+    this.drawBlink(this.stationArt, "station", object, point);
   }
 
   /** A fixed-facing station or outpost frame at its pivot, blinking A and B. */
-  private drawBlink(art: StationArt<Asset>, object: SpaceObject, point: Vec): void {
+  private drawBlink(
+    art: StationArt<Asset>,
+    kind: "outpost" | "station",
+    object: SpaceObject,
+    point: Vec,
+  ): void {
     const frame = stationFrame(art, this.reducedMotion, this.time.now);
-    this.objectSprite(object.id, frame.id)
+    const sprite = this.objectSprite(object.id, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)
       .setPosition(point.x, point.y);
+    this.keyline(kind, object.id, sprite);
   }
 
   /** A destination: its outpost or holodisk art, else the placeholder rings. */
   private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
     const outpost = this.outpostArt.get(object.id);
     if (outpost) {
-      this.drawBlink(outpost, object, point);
+      this.drawBlink(outpost, "outpost", object, point);
       return;
     }
     if (object.id === "holodisk" && this.holodiskArt) {
@@ -1648,10 +1825,12 @@ export class PrototypeScene extends Phaser.Scene {
       flight &&
       holodiskWaypoint(this.model.state.progress[flight.sector].holodisk, [object])
     ) {
+      // A light field holds the beacon on its base frame, with no pulse.
+      const held = this.light ? beacon.frames[LIGHT_FIELD.holodiskBeacon] : undefined;
       this.objectSprite(
         `${object.id}${BEACON_SUFFIX}`,
         beacon.asset.id,
-        beaconFrame(beacon, this.reducedMotion, this.time.now),
+        held ?? beaconFrame(beacon, this.reducedMotion, this.time.now),
       )
         .setDisplaySize(beacon.asset.displayWidth!, beacon.asset.displayHeight!)
         .setOrigin(beacon.asset.pivot.x, beacon.asset.pivot.y)
@@ -1664,11 +1843,12 @@ export class PrototypeScene extends Phaser.Scene {
       loopPhase(object.id, art.loopMs),
       this.time.now,
     );
-    this.objectSprite(object.id, art.asset.id, frame)
+    const sprite = this.objectSprite(object.id, art.asset.id, frame)
       .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
       .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
       .setPosition(point.x, point.y)
       .setDepth(2);
+    this.keyline("holodisk", object.id, sprite);
   }
 
   /** A discovery cache stays hidden until Ada first approaches it, then loops its lights. */
@@ -1683,10 +1863,11 @@ export class PrototypeScene extends Phaser.Scene {
       this.litCaches.add(object.id);
     }
     const frame = cacheFrame(art, this.litCaches.has(object.id), this.reducedMotion, this.time.now);
-    this.objectSprite(object.id, art.asset.id, frame)
+    const sprite = this.objectSprite(object.id, art.asset.id, frame)
       .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
       .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
       .setPosition(point.x, point.y);
+    this.keyline("discoveryCache", object.id, sprite);
   }
 
   /** Fallback without the station art: a ring hull, its dock and its safe-area outline. */
@@ -1733,10 +1914,11 @@ export class PrototypeScene extends Phaser.Scene {
       stardustPhase(object.id, art.loopMs),
       this.time.now,
     );
-    this.objectSprite(object.id, art.asset.id, frame)
+    const sprite = this.objectSprite(object.id, art.asset.id, frame)
       .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
       .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
       .setPosition(at.x, at.y);
+    this.keyline("stardust", object.id, sprite);
   }
 
   /**
@@ -1764,7 +1946,7 @@ export class PrototypeScene extends Phaser.Scene {
     if (this.reducedMotion) {
       const state = reducedAt(data, timing, time);
       if (state) {
-        this.objectSprite(object.id, frame.id)
+        const sprite = this.objectSprite(object.id, frame.id)
           .setDisplaySize(
             (frame.displayWidth ?? 42) * state.scale,
             (frame.displayHeight ?? 42) * state.scale,
@@ -1773,10 +1955,12 @@ export class PrototypeScene extends Phaser.Scene {
           .setPosition(point.x, point.y)
           .setAlpha(state.alpha)
           .setTint(state.tint);
+        this.keyline(wreck.archetype, object.id, sprite);
       }
       return;
     }
     const pivot = { x: frame.pivot.x * width, y: frame.pivot.y * height };
+    const pieces: EffectShape[] = [];
     for (const polygon of shardPolygons(
       data,
       shards,
@@ -1787,18 +1971,16 @@ export class PrototypeScene extends Phaser.Scene {
       if (polygon.alpha <= 0) {
         continue;
       }
-      const points: Phaser.Math.Vector2[] = [];
+      const points: Vec[] = [];
       for (let index = 0; index + 1 < polygon.points.length; index += 2) {
-        points.push(
-          new Phaser.Math.Vector2(
-            point.x + (polygon.points[index]! - pivot.x) * scale,
-            point.y + (polygon.points[index + 1]! - pivot.y) * scale,
-          ),
-        );
+        points.push({
+          x: point.x + (polygon.points[index]! - pivot.x) * scale,
+          y: point.y + (polygon.points[index + 1]! - pivot.y) * scale,
+        });
       }
-      this.overlay.fillStyle(polygon.color, polygon.alpha);
-      this.overlay.fillPoints(points, true);
+      pieces.push({ alpha: polygon.alpha, colour: polygon.color, kind: "polygon", points });
     }
+    this.drawEffect(pieces, this.edges(["destructionShards"], pieces));
     const flash = wreckFlashAt(data, timing, wreck);
     if (flash && this.textures.exists("destruction-flash")) {
       const flashWidth = flash.width * scale;
@@ -1892,18 +2074,25 @@ export class PrototypeScene extends Phaser.Scene {
           this.drawStardust(object, point, radius);
           break;
         }
+        if (this.light && object.weapon && LIGHT_FIELD.keylined.includes("weaponPickup")) {
+          // The square's ink keyline: a stroke 2 keyline wider on the same path.
+          this.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
+          this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
+          this.ink.lineStyle(1.5, color);
+        }
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
         } else if (object.weapon && this.textures.exists(pickupGlyphKey(object.weapon))) {
           // The weapon's HUD glyph at 14px, filled in the square's amber.
-          this.objectSprite(object.id, pickupGlyphKey(object.weapon))
+          const glyph = this.objectSprite(object.id, pickupGlyphKey(object.weapon))
             .setDisplaySize(PICKUP_GLYPH.size, PICKUP_GLYPH.size)
             .setOrigin(0.5)
             .setPosition(point.x, point.y)
             .setTint(color)
             .setTintMode(Phaser.TintModes.FILL);
+          this.keyline("weaponPickup", object.id, glyph);
         }
         break;
       case "resource":
@@ -1953,11 +2142,12 @@ export class PrototypeScene extends Phaser.Scene {
       this.drawAsteroid(point, footprintOutline(art, frame));
       return;
     }
-    this.objectSprite(object.id, texture)
+    const sprite = this.objectSprite(object.id, texture)
       .setOrigin(art.pivot.x, art.pivot.y)
       .setDisplaySize(art.display.width, art.display.height)
       .setPosition(point.x, point.y)
       .setDepth(playDepth(point.y));
+    this.keyline("asteroid", object.id, sprite);
     const velocity = object.orbit ? object.velocity : undefined;
     if (!velocity) {
       return;
@@ -2031,10 +2221,13 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
-  /** Fills and strokes Art's weapon effect shapes on the overlay, in order. */
-  private drawEffect(shapes: readonly EffectShape[]): void {
+  /**
+   * Fills and strokes Art's weapon effect shapes on the overlay, in order, over their ink
+   * edges, if any.
+   */
+  private drawEffect(shapes: readonly EffectShape[], edges: readonly EffectShape[] = []): void {
     const graphics = this.overlay;
-    for (const shape of shapes) {
+    for (const shape of [...edges, ...shapes]) {
       switch (shape.kind) {
         case "polygon":
           graphics.fillStyle(shape.colour, shape.alpha);
@@ -2102,6 +2295,7 @@ export class PrototypeScene extends Phaser.Scene {
         .setAlpha(state.alpha)
         .setTint(state.tint)
         .setVisible(true);
+      this.keyline("asteroid", `break:${rock.id}`, rock.sprite);
       return true;
     });
   }

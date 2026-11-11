@@ -37,8 +37,8 @@ const VIEWS = [
 ] as const;
 
 describe("conversation box", () => {
-  it("is a 60 high ink panel at 0.70 alpha around a 52 portrait frame with 4 padding", () => {
-    expect(CONVERSATION_BOX.panel).toEqual({ alpha: 0.7, ink: "#181425" });
+  it("is a 60 high ink panel at 0.65 alpha around a 52 portrait frame with 4 padding", () => {
+    expect(CONVERSATION_BOX.panel).toEqual({ alpha: 0.65, ink: "#181425" });
     expect(CONVERSATION_BOX.portrait).toMatchObject({ art: 44, edge: 2, frame: 52, slot: 48 });
     expect(CONVERSATION_BOX.padding).toBe(4);
     expect(CONVERSATION_BOX.height).toBe(60);
