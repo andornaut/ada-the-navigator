@@ -439,7 +439,8 @@ deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Other space objects retain monochrome placeholder graphics.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety; some drift on their own trajectories. Background objects stay muted
+and variety; about a quarter of small and medium asteroids drift in slow closed
+loops around their starting point. Bigger asteroids take more shots. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
 Moving inanimate obstacles have constant velocity and direction. Regions of
 traveling debris create navigation challenges along exploration and quest routes.
