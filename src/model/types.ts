@@ -100,6 +100,8 @@ export interface FlightState {
   combat?: {
     initialPackSizes: Record<string, number>;
     routeEncounters: string[];
+    /** Whale destinations whose hunting pack has been placed this flight. */
+    huntingPacks?: string[];
     unloadedPackMembers?: Record<string, number>;
   };
   sector: SectorId;

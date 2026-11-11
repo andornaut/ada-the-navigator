@@ -29,6 +29,26 @@ export const ORE_FIELDS = {
 } as const;
 
 /**
+ * Whirlpool's hunting packs (gameplay/ships.md "Galaxy three roster"): a pack of hunters waits
+ * near each whale destination, placed once per flight as Ada comes within `placeRange`.
+ * Values are provisional tuning in world units.
+ */
+export const HUNTING_PACKS = {
+  archetype: "fighter",
+  /** Inclusive pack size. */
+  count: [3, 4] as const,
+  destinations: ["whale", "family"] as readonly string[],
+  /** Pack centre from the destination, outside its safe area. */
+  distance: 520,
+  /** A pack this close to the destination's route guard moves to the far side. */
+  guardGap: 400,
+  placeRange: 1536,
+  sectors: [3] as readonly SectorId[],
+  /** Member spacing around the pack centre. */
+  spread: 70,
+} as const;
+
+/**
  * Whirlpool's space currents (gameplay/rules.md): seeded open curved paths whose flow drifts
  * ships and pickups. All values are provisional tuning in world units and seconds.
  */

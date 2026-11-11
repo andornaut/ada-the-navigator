@@ -5,6 +5,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { CARTWHEEL_STORY_SHIPS, DONATION_PROJECTS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
@@ -237,7 +238,10 @@ function combatState(
             nonnegative(count),
         ))) &&
     strings(value.routeEncounters) &&
-    (value.routeEncounters as string[]).every((id) => routes.includes(id))
+    (value.routeEncounters as string[]).every((id) => routes.includes(id)) &&
+    (value.huntingPacks === undefined ||
+      (strings(value.huntingPacks) &&
+        (value.huntingPacks as string[]).every((id) => HUNTING_PACKS.destinations.includes(id))))
   );
 }
 function wreckState(value: unknown): boolean {

@@ -33,6 +33,7 @@ import {
   activateRouteEncounter,
   createFlight,
   ensureDestination,
+  ensureHuntingPacks,
   ensureRouteEncounter,
   ensureStation,
   placeDestinationAhead,
@@ -961,6 +962,7 @@ export class GameModel {
       ensureDestination(this.content, "holodisk", f);
     }
     this.ensureRequiredApproaches();
+    ensureHuntingPacks(this.content, f);
     this.ensureWhaleDebris();
     // A story ship scene plays first; its line follows when it ends.
     const scene = f.storyScene;
@@ -1084,7 +1086,9 @@ export class GameModel {
     const debris = id === "whale" ? f.objects.filter((o) => o.id.startsWith("whale-debris:")) : [];
     const destination = placeDestinationAhead(this.content, id, f);
     if (before) {
-      for (const guard of f.objects.filter((object) => object.routeId === id)) {
+      for (const guard of f.objects.filter(
+        (object) => object.routeId === id || object.id.startsWith(`hunt:${id}:`),
+      )) {
         const dx = destination.x - before.x;
         const dy = destination.y - before.y;
         guard.x += dx;

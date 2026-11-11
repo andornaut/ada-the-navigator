@@ -10,7 +10,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
-import { CURRENTS, ORE_FIELDS } from "../data/galaxy-features.ts";
+import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
@@ -966,6 +966,64 @@ function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState):
     flight.objects.push(member);
   }
   combat(flight).initialPackSizes[packId] = packSize;
+}
+
+/**
+ * Places a hunting pack near each whale destination within `placeRange` of Ada, once per
+ * flight: hunters on a seeded side of the destination, or its far side when that side holds
+ * the route guard. Members are retained like route guards and chase as one pack.
+ */
+export function ensureHuntingPacks(content: PrototypeContent, flight: FlightState): void {
+  if (!HUNTING_PACKS.sectors.includes(flight.sector)) {
+    return;
+  }
+  const placed = (combat(flight).huntingPacks ??= []);
+  for (const destination of flight.objects.filter(
+    (object) =>
+      object.kind === "destination" &&
+      HUNTING_PACKS.destinations.includes(object.id) &&
+      !placed.includes(object.id) &&
+      distance(object, flight.player) <= HUNTING_PACKS.placeRange,
+  )) {
+    const next = random(
+      hash(flight.seed ^ 0x4a7e, destination.id.length, destination.id.charCodeAt(0)),
+    );
+    const [fewest, most] = HUNTING_PACKS.count;
+    const count = fewest + Math.floor(next() * (most - fewest + 1));
+    let angle = next() * Math.PI * 2;
+    const at = (turn: number) => ({
+      x: destination.x + Math.cos(turn) * HUNTING_PACKS.distance,
+      y: destination.y + Math.sin(turn) * HUNTING_PACKS.distance,
+    });
+    const guard = flight.objects.find(
+      (object) => object.kind === "enemy" && object.routeId === destination.id,
+    );
+    if (guard && distance(guard, at(angle)) < HUNTING_PACKS.guardGap) {
+      angle += Math.PI;
+    }
+    const centre = at(angle);
+    activateFlightRegion(content, centre, flight);
+    const packId = `hunt:${destination.id}`;
+    for (let i = 0; i < count; i++) {
+      const phase = (i * Math.PI * 2) / count;
+      const member = spawnEnemy(
+        content,
+        flight.sector,
+        HUNTING_PACKS.archetype,
+        `${packId}:${i}`,
+        {
+          x: centre.x + Math.cos(phase) * HUNTING_PACKS.spread,
+          y: centre.y + Math.sin(phase) * HUNTING_PACKS.spread,
+        },
+        packId,
+        phase,
+      );
+      member.persistent = true;
+      flight.objects.push(member);
+    }
+    combat(flight).initialPackSizes[packId] = count;
+    placed.push(destination.id);
+  }
 }
 
 export function ensureRouteEncounter(
