@@ -391,8 +391,12 @@ Black Eye:
   destinations mapped yet.
 - Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
 - Map place panel: under the place's name, a line naming its kind: Station,
-  Outpost, Story place (other story destinations), Nebula, Wreck or Beacon. When
-  the place is the held job's target, the job's "Job: {objective}" line follows.
+  Outpost, Story place (other story destinations), Holodisk, Nebula, Wreck or
+  Beacon, then " · " and the distance from Ada. When the place is the held
+  job's target, the job's "Job: {objective}" line follows.
+- Map distance: world units divided by 1000, in light-years: one decimal below
+  10 ("0.4 light-years"), whole numbers from 10 ("12 light-years"), en-US
+  grouping, and "1 light-year" when it rounds to 1.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
   saved.

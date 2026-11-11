@@ -225,7 +225,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   station job is held, its "Job:" line. Space shows no objective text.
   Map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
-  and how much of the galaxy is mapped. Undiscovered places never appear. Choosing
+  a known holodisk waypoint until its holodisk is recovered, and how much of the
+  galaxy is mapped. Undiscovered places never appear. Map places keep at least
+  1020 world units apart, so each stays separate at full zoom; placement
+  enforces this for every mapped place, outposts and the waypoint included. The
+  explored area persists per galaxy across flights and clears on Restart. Choosing
   a discovered destination or station offers "Travel here", which teleports there. Return
   home ends the flight and takes Ada home to Earth, with story
   progress saved and no quantum jump cost. While Ada is in danger, Travel here and Return
