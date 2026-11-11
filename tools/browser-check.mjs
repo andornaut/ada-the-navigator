@@ -239,6 +239,7 @@ function serve() {
     ".ttf": "font/ttf",
     ".otf": "font/otf",
     ".ico": "image/x-icon",
+    ".webmanifest": "application/manifest+json",
   };
   const server = createServer((request, response) => {
     try {

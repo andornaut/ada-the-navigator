@@ -57,13 +57,93 @@ try {
     }
     return route.abort("blockedbyclient");
   });
+  async function iconLinks() {
+    assert.equal(
+      await page.locator('link[rel="manifest"]').getAttribute("href"),
+      "/manifest.webmanifest",
+    );
+    const links = await page
+      .locator('link[rel="icon"],link[rel="apple-touch-icon"]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          href: node.getAttribute("href"),
+          rel: node.getAttribute("rel"),
+          sizes: node.getAttribute("sizes"),
+        })),
+      );
+    assert.equal(links.length, 4, "Each entry must declare both PNG favicons, ICO and Apple icon");
+    for (const link of links) {
+      const response = await page.request.get(`http://ada-preview:4173${link.href}`);
+      assert.equal(response.status(), 200, `Icon must be served: ${link.href}`);
+      assert.ok(response.headers()["content-type"].startsWith("image/"));
+      if (link.href.endsWith(".png")) {
+        const dimensions = await page.evaluate(async (href) => {
+          const image = await createImageBitmap(await (await fetch(href)).blob());
+          const size = `${image.width}x${image.height}`;
+          image.close();
+          return size;
+        }, link.href);
+        assert.equal(
+          dimensions,
+          link.sizes,
+          "Decoded favicon/Apple icon dimensions must match HTML metadata",
+        );
+      }
+    }
+    return links;
+  }
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
   assert.equal(await page.locator("#game-canvas").count(), 0, "Landing must not bootstrap Phaser");
+  const landingIcons = await iconLinks();
+  const manifestResponse = await page.request.get("http://ada-preview:4173/manifest.webmanifest");
+  assert.equal(manifestResponse.status(), 200);
+  assert.ok(manifestResponse.headers()["content-type"].startsWith("application/manifest+json"));
+  const manifest = await manifestResponse.json();
+  assert.equal(manifest.id, "/play/");
+  assert.equal(manifest.start_url, "/play/");
+  assert.equal(manifest.scope, "/");
+  const decodedIcons = await page.evaluate(async (icons) => {
+    return Promise.all(
+      icons.map(async (icon) => {
+        const response = await fetch(icon.src);
+        if (!response.ok) {
+          throw new Error(`Missing app icon: ${icon.src}`);
+        }
+        const bitmap = await createImageBitmap(await response.blob());
+        const result = {
+          src: icon.src,
+          sizes: `${bitmap.width}x${bitmap.height}`,
+          purpose: icon.purpose,
+        };
+        bitmap.close();
+        return result;
+      }),
+    );
+  }, manifest.icons);
+  for (const icon of decodedIcons) {
+    assert.equal(icon.sizes, manifest.icons.find((entry) => entry.src === icon.src).sizes);
+  }
   const playLink = page.locator('a[href="/play/"]').first();
   await playLink.waitFor({ state: "visible" });
   await page.screenshot({ path: `${output}/site-desktop.png` });
   await Promise.all([page.waitForURL("**/play/"), playLink.click()]);
+  const playIcons = await iconLinks();
+  assert.deepEqual(
+    playIcons,
+    landingIcons,
+    "Landing and play must share the same app icon identity",
+  );
+  save("app-icon-proof.json", {
+    scope: "Served app metadata and decoded icons only, not installation or offline support",
+    manifest,
+    decodedIcons,
+    landingIcons,
+    playIcons,
+  });
+  events.checks.push(
+    "Landing and play share a play-start manifest and actual decoded app/favicons",
+  );
   events.checks.push(
     "Root website links to the real game at /play/ without starting Phaser on the landing page",
   );
