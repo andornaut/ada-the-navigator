@@ -6,7 +6,14 @@ import type { SectorProgress } from "./types.ts";
 // flights. A funded project plays its thank-you line, changes the world at its site, counts
 // toward achievements and makes one ally for the finale. No project changes combat outside it.
 
-export type ProjectProgress = Pick<SectorProgress, "donated" | "resolved">;
+export type ProjectProgress = Pick<SectorProgress, "donated" | "resolved" | "revealed">;
+
+/** A funded project's world change at its site, and whether its reveal has played. */
+export interface WorldChange {
+  readonly project: string;
+  readonly revealed: boolean;
+  readonly site: string;
+}
 
 /** A project as the station shows it: what is paid, what remains, and whether it is funded. */
 export interface ProjectView {
@@ -115,13 +122,30 @@ export function projectAllies(
 }
 
 /**
- * The galaxy's world changes: each funded project's site, where Art's sprite shows on every later
- * flight. CLEANUP (added 2026-11-11): the scene draws nothing for them until Art's world-change
- * sprites land; draw each at its site then.
+ * The galaxy's world changes: each funded project's site, where Art's change shows on every later
+ * flight once its one reveal has played.
  */
 export function worldChanges(
   projects: readonly CommunityProject[],
   progress: ProjectProgress,
-): { readonly project: string; readonly site: string }[] {
-  return fundedProjects(projects, progress).map(({ id, site }) => ({ project: id, site }));
+): WorldChange[] {
+  return fundedProjects(projects, progress).map(({ id, site }) => ({
+    project: id,
+    revealed: progress.revealed.includes(id),
+    site,
+  }));
+}
+
+/** Records a funded project's reveal as played; false if it is unfunded or already revealed. */
+export function revealWorldChange(
+  projects: readonly CommunityProject[],
+  progress: ProjectProgress,
+  id: string,
+): boolean {
+  const funded = fundedProjects(projects, progress).some((project) => project.id === id);
+  if (!funded || progress.revealed.includes(id)) {
+    return false;
+  }
+  progress.revealed.push(id);
+  return true;
 }

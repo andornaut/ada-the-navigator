@@ -13,6 +13,7 @@ import {
   type ProjectProgress,
   projectsOffered,
   projectViews,
+  revealWorldChange,
   worldChanges,
 } from "./projects.ts";
 import { restoreSave } from "./save.ts";
@@ -26,6 +27,7 @@ const cost = (id: string) => sunflower.find((project) => project.id === id)!.cos
 const progress = (resolved = true, donated: Record<string, number> = {}): ProjectProgress => ({
   donated,
   resolved,
+  revealed: [],
 });
 
 describe("community projects", () => {
@@ -136,8 +138,19 @@ describe("community projects", () => {
       { ally: "chase", project: "workshopCrane" },
     ]);
     expect(worldChanges(sunflower, funded)).toEqual([
-      { project: "greenhouseRing", site: "growers" },
-      { project: "workshopCrane", site: "workshop" },
+      { project: "greenhouseRing", revealed: false, site: "growers" },
+      { project: "workshopCrane", revealed: false, site: "workshop" },
+    ]);
+  });
+
+  it("play each world change's reveal once, and only once funded", () => {
+    const paid = progress(true, { greenhouseRing: cost("greenhouseRing"), salvageBeacons: 1 });
+    expect(revealWorldChange(sunflower, paid, "salvageBeacons")).toBe(false);
+    expect(revealWorldChange(sunflower, paid, "greenhouseRing")).toBe(true);
+    expect(revealWorldChange(sunflower, paid, "greenhouseRing")).toBe(false);
+    expect(paid.revealed).toEqual(["greenhouseRing"]);
+    expect(worldChanges(sunflower, paid)).toEqual([
+      { project: "greenhouseRing", revealed: true, site: "growers" },
     ]);
   });
 
@@ -208,15 +221,33 @@ describe("donating at a station", () => {
     expect(shown).toContain(thanks);
   });
 
-  it("keeps donations across a save, and loads saves from before projects", () => {
+  it("keeps donations and reveals across a save, and loads saves from before them", () => {
     const model = docked(1000);
     model.donate("greenhouseRing");
+    expect(model.revealWorldChange(1, "greenhouseRing")).toBe(true);
     const saved = JSON.parse(model.save()) as { progress: Record<string, Record<string, unknown>> };
-    expect(new GameModel(PROTOTYPE, model.save()).state.progress[1].donated).toEqual({
-      greenhouseRing: cost("greenhouseRing"),
-    });
+    const restored = new GameModel(PROTOTYPE, model.save()).state.progress[1];
+    expect(restored.donated).toEqual({ greenhouseRing: cost("greenhouseRing") });
+    expect(restored.revealed).toEqual(["greenhouseRing"]);
     delete saved.progress["1"]!.donated;
-    expect(restoreSave(saved)?.progress[1].donated).toEqual({});
+    delete saved.progress["1"]!.revealed;
+    expect(restoreSave(saved)?.progress[1]).toMatchObject({ donated: {}, revealed: [] });
+  });
+
+  it("rejects a save revealing a project twice, unfunded or from another galaxy", () => {
+    const model = docked(1000);
+    model.donate("greenhouseRing");
+    for (const revealed of [
+      ["greenhouseRing", "greenhouseRing"],
+      ["workshopCrane"],
+      ["hubRepairs"],
+    ]) {
+      const saved = JSON.parse(model.save()) as {
+        progress: Record<string, Record<string, unknown>>;
+      };
+      saved.progress["1"]!.revealed = revealed;
+      expect(restoreSave(saved), JSON.stringify(revealed)).toBeNull();
+    }
   });
 
   it("rejects a save paying an unknown project or more than its price", () => {

@@ -68,10 +68,16 @@ export function stationFrame<T extends StationFrame>(
   reducedMotion: boolean,
   timeMs: number,
 ): T {
-  if (reducedMotion) {
-    return art.frames[0];
-  }
-  return art.frames[Math.floor(timeMs / art.frameMs) % 2 === 0 ? 0 : 1];
+  return art.frames[stationFrameIndex(art, reducedMotion, timeMs)];
+}
+
+/** The blink's frame index: 0 for A, 1 for B. */
+export function stationFrameIndex(
+  art: Pick<StationArt, "frameMs">,
+  reducedMotion: boolean,
+  timeMs: number,
+): 0 | 1 {
+  return reducedMotion || Math.floor(timeMs / art.frameMs) % 2 === 0 ? 0 : 1;
 }
 
 /** Screen display px to world units under the view's 2:1 projection. */

@@ -415,6 +415,7 @@ function migrateEconomy(state: GameState): void {
     progress.stations ??= [];
     progress.donated ??= {};
     progress.charted ??= [];
+    progress.revealed ??= [];
   }
   state.jobs ??= { boards: {}, made: 0 };
   state.tasks ??= {};
@@ -623,6 +624,19 @@ function donations(sector: SectorId, value: unknown): boolean {
     })
   );
 }
+/** Each revealed project appears once and is one of the galaxy's projects, fully paid. */
+function revealedProjects(sector: SectorId, donated: unknown, value: unknown): boolean {
+  const paid = record(donated) ? donated : {};
+  return (
+    strings(value) &&
+    Array.isArray(value) &&
+    new Set(value).size === value.length &&
+    value.every((id) => {
+      const project = PROJECTS[sector].find((entry) => entry.id === id);
+      return project !== undefined && paid[id] === project.cost;
+    })
+  );
+}
 function stationIds(sector: SectorId, value: unknown): boolean {
   return (
     strings(value) &&
@@ -783,6 +797,7 @@ export function restoreSave(saved: unknown): GameState | null {
         (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
         (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
         (p.charted !== undefined && !chartedIds(id as SectorId, p.charted)) ||
+        (p.revealed !== undefined && !revealedProjects(id as SectorId, p.donated, p.revealed)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean")
       ) {

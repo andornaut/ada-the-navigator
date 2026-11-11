@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -99,6 +100,15 @@ import {
   thresholdSilhouette,
 } from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
+import {
+  boundsOnScreen,
+  type OutpostPart,
+  outpostParts,
+  partsBounds,
+  type ProjectArtSet,
+  readProjectArt,
+  revealAlpha,
+} from "./project-art.ts";
 import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
@@ -134,6 +144,7 @@ import {
   type StationArt,
   type StationFrame,
   stationFrame,
+  stationFrameIndex,
 } from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 import {
@@ -238,12 +249,22 @@ export class PrototypeScene extends Phaser.Scene {
   // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
   // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
   private light = false;
-  private keyed: { key: string; sprite: Phaser.GameObjects.Image }[] = [];
+  private keyed: { depth: number | undefined; key: string; sprite: Phaser.GameObjects.Image }[] =
+    [];
   private keylines = new Map<string, Phaser.GameObjects.Image[]>();
   private jetKeyline!: Phaser.GameObjects.Graphics;
   private indicatorInk!: Phaser.GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
+  // Funded projects' world changes at the outposts (art/projects.md "World changes"): each reveal
+  // in play by project, from its start on the flight clock, and its after state's group texture.
+  // The flight clock runs only while flight does, so the pause card, the full-screen Map, a
+  // station card or a dialogue neither starts a reveal under it nor plays one out.
+  private projectArt: ProjectArtSet<Asset> | undefined;
+  private flightLive = false;
+  private flightClock = 0;
+  private reveals = new Map<string, number>();
+  private revealGroups = new Map<string, Phaser.GameObjects.RenderTexture>();
   private stardustArt: StardustArt<Asset> | undefined;
   private cacheArt: LoopArt<Asset> | undefined;
   private holodiskArt: LoopArt<Asset> | undefined;
@@ -438,6 +459,7 @@ export class PrototypeScene extends Phaser.Scene {
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
     this.outpostArt = readOutpostArt(this.shipAssets);
+    this.projectArt = readProjectArt(this.shipAssets, this.outpostArt, PROJECTS_FILE);
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
@@ -951,14 +973,15 @@ export class PrototypeScene extends Phaser.Scene {
     const state = this.model.state;
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
     const wasInSpace = state.mode === "space";
-    if (
+    this.flightLive =
       !this.jumping &&
       !this.settingsOpen &&
       !document.hidden &&
       state.mode === "space" &&
       !state.dialogue &&
-      !state.docked
-    ) {
+      !state.docked;
+    if (this.flightLive) {
+      this.flightClock += milliseconds;
       const sampled = this.controls.sample();
       const input: FlightInput = {
         aim: screenToWorld(sampled.aim),
@@ -1291,6 +1314,9 @@ export class PrototypeScene extends Phaser.Scene {
     for (const sprite of this.backdropSprites.values()) {
       sprite.setVisible(false);
     }
+    for (const group of this.revealGroups.values()) {
+      group.setVisible(false);
+    }
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
@@ -1511,21 +1537,26 @@ export class PrototypeScene extends Phaser.Scene {
    * On a light field, records a sprite of a keylined kind (`lightField.keylined`) for this
    * frame's ink keyline.
    */
-  private keyline(kind: string, key: string, sprite: Phaser.GameObjects.Image): void {
+  private keyline(
+    kind: string,
+    key: string,
+    sprite: Phaser.GameObjects.Image,
+    depth?: number,
+  ): void {
     if (this.light && LIGHT_FIELD.keylined.includes(kind)) {
-      this.keyed.push({ key, sprite });
+      this.keyed.push({ depth, key, sprite });
     }
   }
 
   /**
    * Each keylined sprite's ink keyline: eight copies of its frame's ink silhouette offset by
-   * `keyline` px in every direction (a square kernel), just beneath it in its depth slot, at its
-   * alpha. Keylines not drawn this frame are destroyed.
+   * `keyline` px in every direction (a square kernel), just beneath it in its depth slot (or at
+   * its group's keyline depth), at its alpha. Keylines not drawn this frame are destroyed.
    */
   private drawKeylines(): void {
     const used = new Set<string>();
     const offsets = keylineOffsets(LIGHT_FIELD.keyline);
-    for (const { key, sprite } of this.keyed) {
+    for (const { depth, key, sprite } of this.keyed) {
       if (!sprite.visible) {
         continue;
       }
@@ -1545,7 +1576,7 @@ export class PrototypeScene extends Phaser.Scene {
           .setOrigin(sprite.originX, sprite.originY)
           .setDisplaySize(sprite.displayWidth, sprite.displayHeight)
           .setPosition(sprite.x + offsets[index]!.x, sprite.y + offsets[index]!.y)
-          .setDepth(sprite.depth - 2e-6)
+          .setDepth(depth ?? sprite.depth - 2e-6)
           .setAlpha(sprite.alpha)
           .setVisible(true);
       });
@@ -1564,9 +1595,9 @@ export class PrototypeScene extends Phaser.Scene {
    * A sprite frame's keyline source, made once per frame: opaque ink where the frame's alpha is
    * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
    */
-  private keylineSilhouette(sprite: Phaser.GameObjects.Image): string | undefined {
+  private keylineSilhouette(sprite: { frame: Phaser.Textures.Frame }): string | undefined {
     const frame = sprite.frame;
-    const key = `keyline:${sprite.texture.key}#${String(frame.name)}`;
+    const key = `keyline:${frame.texture.key}#${String(frame.name)}`;
     if (this.textures.exists(key)) {
       return key;
     }
@@ -2095,11 +2126,139 @@ export class PrototypeScene extends Phaser.Scene {
     this.keyline(kind, object.id, sprite);
   }
 
+  /**
+   * An outpost with its galaxy's funded world changes. A change not yet revealed stays unseen until
+   * the first frame the outpost is on screen in live flight, which records the reveal and fades
+   * the after state in over the before state as one group (reduced motion cuts to it).
+   */
+  private drawOutpost(art: StationArt<Asset>, object: SpaceObject, point: Vec): void {
+    const index = stationFrameIndex(art, this.reducedMotion, this.time.now);
+    const sector = this.model.state.flight?.sector;
+    const projects = this.projectArt?.projects;
+    const changes =
+      sector && projects
+        ? this.model
+            .worldChanges(sector)
+            .filter(({ project, site }) => site === object.id && projects.has(project))
+        : [];
+    const changeArt = (ids: readonly string[]) => ids.map((id) => projects!.get(id)!);
+    const all = changes.map(({ project }) => project);
+    const now = this.flightClock;
+    let unseen = changes.filter(({ revealed }) => !revealed).map(({ project }) => project);
+    if (
+      unseen.length > 0 &&
+      this.flightLive &&
+      boundsOnScreen(SCREEN, point, partsBounds(outpostParts(art, changeArt(all), index)))
+    ) {
+      for (const project of unseen) {
+        this.model.revealWorldChange(sector!, project);
+        if (!this.reducedMotion) {
+          this.reveals.set(project, now);
+        }
+      }
+      unseen = [];
+    }
+    const revealMs = this.projectArt?.revealMs ?? 0;
+    const elapsed = all.flatMap((project) => {
+      const start = this.reveals.get(project);
+      if (start !== undefined && now - start >= revealMs) {
+        this.reveals.delete(project);
+      }
+      return this.reveals.has(project) ? [{ ms: now - start!, project }] : [];
+    });
+    const fading = new Set(elapsed.map(({ project }) => project));
+    const after = all.filter((project) => !unseen.includes(project));
+    const before = after.filter((project) => !fading.has(project));
+    this.drawOutpostParts(object.id, outpostParts(art, changeArt(before), index), point);
+    if (elapsed.length === 0) {
+      this.revealGroups.get(object.id)?.destroy();
+      this.revealGroups.delete(object.id);
+      return;
+    }
+    const alpha = revealAlpha(revealMs, Math.min(...elapsed.map(({ ms }) => ms)));
+    this.drawRevealGroup(object.id, outpostParts(art, changeArt(after), index), point, alpha);
+  }
+
+  /**
+   * An outpost's sprites in its depth slot, behind parts first, keylined on a light field as one
+   * silhouette beneath them all.
+   */
+  private drawOutpostParts(id: string, parts: readonly OutpostPart<Asset>[], point: Vec): void {
+    const depth = 2;
+    const keylineDepth = depth + parts[0]!.order * 1e-7 - 2e-6;
+    for (const part of parts) {
+      // Under the outpost's id (spriteOwner), so each part lives as long as its outpost.
+      const key = part.order === 0 ? id : `${id}#part${part.order}`;
+      const sprite = this.objectSprite(key, part.frame.id)
+        .setDisplaySize(part.frame.displayWidth!, part.frame.displayHeight!)
+        .setOrigin(part.frame.pivot.x, part.frame.pivot.y)
+        .setPosition(point.x + part.offset.x, point.y + part.offset.y)
+        .setDepth(depth + part.order * 1e-7);
+      this.keyline("outpost", key, sprite, keylineDepth);
+    }
+  }
+
+  /**
+   * The after state drawn into one texture, its keyline beneath its sprites, then shown over the
+   * before state at the reveal's alpha, so the group fades as one.
+   */
+  private drawRevealGroup(
+    id: string,
+    parts: readonly OutpostPart<Asset>[],
+    point: Vec,
+    alpha: number,
+  ): void {
+    const grow = this.light && LIGHT_FIELD.keylined.includes("outpost") ? LIGHT_FIELD.keyline : 0;
+    const bounds = partsBounds(parts);
+    const left = Math.floor(point.x + bounds.left - grow - 1);
+    const top = Math.floor(point.y + bounds.top - grow - 1);
+    const width = Math.ceil(point.x + bounds.right + grow + 1) - left;
+    const height = Math.ceil(point.y + bounds.bottom + grow + 1) - top;
+    let group = this.revealGroups.get(id);
+    if (!group || group.width !== width || group.height !== height) {
+      group?.destroy();
+      group = this.add.renderTexture(0, 0, width, height).setOrigin(0, 0);
+      this.revealGroups.set(id, group);
+    }
+    group.clear();
+    const stamps = parts.map((part) => {
+      const frame = this.textures.getFrame(part.frame.id);
+      return {
+        config: {
+          originX: part.frame.pivot.x,
+          originY: part.frame.pivot.y,
+          scaleX: part.frame.displayWidth! / frame.width,
+          scaleY: part.frame.displayHeight! / frame.height,
+        },
+        frame,
+        x: point.x + part.offset.x - left,
+        y: point.y + part.offset.y - top,
+      };
+    });
+    if (grow > 0) {
+      for (const { config, frame, x, y } of stamps) {
+        const silhouette = this.keylineSilhouette({ frame });
+        for (const offset of silhouette ? keylineOffsets(grow) : []) {
+          group.stamp(silhouette!, undefined, x + offset.x, y + offset.y, config);
+        }
+      }
+    }
+    for (const { config, frame, x, y } of stamps) {
+      group.stamp(frame.texture.key, undefined, x, y, config);
+    }
+    group.render();
+    group
+      .setPosition(left, top)
+      .setDepth(2 + parts[parts.length - 1]!.order * 1e-7 + 1e-7)
+      .setAlpha(alpha)
+      .setVisible(true);
+  }
+
   /** A destination: its outpost or holodisk art, else the placeholder rings. */
   private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
     const outpost = this.outpostArt.get(object.id);
     if (outpost) {
-      this.drawBlink(outpost, "outpost", object, point);
+      this.drawOutpost(outpost, object, point);
       return;
     }
     if (object.id === "holodisk" && this.holodiskArt) {

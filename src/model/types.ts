@@ -148,6 +148,8 @@ export interface SectorProgress {
   donated: Record<string, number>;
   /** Charted landmark ids (model/landmarks.ts). */
   charted: string[];
+  /** Funded projects whose world change has played its reveal, in reveal order. */
+  revealed: string[];
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {

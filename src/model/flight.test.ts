@@ -31,6 +31,7 @@ const progress: SectorProgress = {
   questComplete: false,
   questItem: null,
   resolved: false,
+  revealed: [],
   stage: 0,
   stations: [],
 };

@@ -34,6 +34,8 @@ also drop weapons rarely, and a dropped weapon Ada owns gives a pack of its
 ammunition. Once a galaxy's chapter is
 complete, its stations' Projects tab takes donations toward community projects:
 each confirmed donation pays what the balance covers, and part payments persist.
+A funded project with world art changes its outpost, fading in once the first
+time the outpost is on screen.
 The Paused card's Map shows
 the galaxy's discovered destinations and stations and how much of it is mapped;
 Travel here reaches a chosen one outside danger. Space draws

@@ -75,6 +75,8 @@ import {
   projectsOffered,
   type ProjectView,
   projectViews,
+  revealWorldChange,
+  type WorldChange,
   worldChanges,
 } from "./projects.ts";
 import { restoreSave } from "./save.ts";
@@ -145,6 +147,7 @@ export function newProgress(): SectorProgress {
     questComplete: false,
     questItem: null,
     resolved: false,
+    revealed: [],
     stage: 0,
     stations: [],
   };
@@ -583,8 +586,12 @@ export class GameModel {
     return projectAllies(PROJECTS[sector], this.state.progress[sector]);
   }
   /** Each galaxy's world changes at their sites, one per funded project (projects.ts). */
-  worldChanges(sector: SectorId): ReturnType<typeof worldChanges> {
+  worldChanges(sector: SectorId): WorldChange[] {
     return worldChanges(PROJECTS[sector], this.state.progress[sector]);
+  }
+  /** Records that a funded project's world change has played its one reveal (projects.ts). */
+  revealWorldChange(sector: SectorId, id: string): boolean {
+    return revealWorldChange(PROJECTS[sector], this.state.progress[sector], id);
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
