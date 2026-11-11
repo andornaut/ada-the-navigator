@@ -17,6 +17,7 @@ import { stickRestCentres, stickViews } from "../ui/sticks.ts";
 import { TOUCH_CHROME_FRAME } from "../ui/touch-chrome.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
+import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
 import { movementCssScale } from "./geometry.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
@@ -187,6 +188,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const stopPointers = listenPagePresses(
     (event) =>
       state.accepts() &&
+      coarsePointer(window) &&
       (event.pointerType === "touch" || joystickTarget(event.target) !== null) &&
       !onPageControl(event.target) &&
       (event.target === canvas || event.target === parent || joystickTarget(event.target) !== null),
@@ -244,14 +246,15 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   document.addEventListener("visibilitychange", onVisibility);
   const draw = () => {
     cheats.refresh();
+    const touch = touchControlsActive(window, enabled, modalOpen());
     for (const target of settings.joystickTargets) {
-      target.hidden = !enabled || modalOpen();
+      target.hidden = !touch;
     }
     const views = stickViews(
       {
         height: scene.scale.height,
         visibility,
-        visible: enabled && !modalOpen(),
+        visible: touch,
         width: scene.scale.width,
       },
       state,
