@@ -183,7 +183,7 @@ out of every inset. Other HUD elements anchor to
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (20 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                               |
 | Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                                  |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                    | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
-| Conversation | In-flight dialogue box below the weapon row: name tab top `SPACING.gap` below the weapon press areas, box top 10 lower, centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                   | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                       |
+| Conversation | In-flight dialogue box below the weapon row: name tab top `CONVERSATION_BOX.tab.clearance` (10) below the HUD button row, box top 10 lower, centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                               | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                       |
 
 Overlap rules:
 
@@ -194,8 +194,8 @@ Overlap rules:
   may reach 351.25 wide, a count up to 162.25 wide ("999,999,999" is 89), and
   "1,234,567" leaves 107.07.
 - The Stardust `+N` label stays above the conversation box: its 20 line ends
-  at HUD rect top + 54.5 (62.5), the name tab top is HUD rect top + 56 (64)
-  and the box top HUD rect top + 66 (74).
+  at HUD rect top + 54.5 (62.5), the name tab top is HUD rect top + 58 (66)
+  and the box top HUD rect top + 68 (76).
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
 - Press areas inside one cluster may overlap; `pressedArea` gives the press to
   the nearest drawn centre.
@@ -340,22 +340,22 @@ Constants: `CONVERSATION_BOX`, `conversationBox.ts`, to implement. Colours are i
 [Conversation portraits](conversation.md). Chibi's dialogue panel uses the same
 values with its own sprites and fonts.
 
-| Token          | Value                                                                                          | Rule                                                                                                |
-| -------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)     |
-| Tab top        | Weapon press-area bottom plus `SPACING.gap`                                                    | HUD rect top + 48 target + 8 = 56, so 64 without a top inset                                        |
-| Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 66, so 74 without a top inset                                                        |
-| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                          |
-| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                            |
-| Panel          | Ink `#181425` at alpha 0.70, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                 |
-| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                 |
-| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                       |
-| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                          |
-| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                          |
-| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                            |
-| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                          |
-| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line              |
-| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end |
+| Token          | Value                                                                                          | Rule                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                         |
+| Tab top        | HUD button row bottom plus `CONVERSATION_BOX.tab.clearance` (10)                               | HUD rect top + 48 target + 10 = 58, so 66 without a top inset; the same rule in both games, whose top buttons stay live |
+| Top            | Tab top plus `CONVERSATION_BOX.tab.overhang` (10) (`CONVERSATION_BOX.top`)                     | HUD rect top + 68, so 76 without a top inset                                                                            |
+| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                              |
+| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                                |
+| Panel          | Ink `#181425` at alpha 0.70, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                                     |
+| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                                     |
+| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                           |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                              |
+| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480                                                                                                              |
+| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                                                |
+| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                                              |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                                  |
+| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end                     |
 
 - The tab draws over the panel's top edge. Its 10 inside the panel sit above
   the text block's top line box, so it never covers text.
@@ -370,14 +370,14 @@ values with its own sprites and fonts.
   (Gameplay's rule).
 - Both sides use the same left-aligned text column; the frame and the tab
   change ends with the speaker.
-- The tab top (64) clears the weapon press areas (56), the pause press area
-  (50.75) and the Stardust `+N` label (62.5).
-- Clearance at the 360-high view: the box bottom is at 134. The ship's pivot
+- The tab top (66) clears the weapon press areas (56) by 10, the pause press
+  area (50.75) by 15.25 and the Stardust `+N` label (62.5) by 3.5.
+- Clearance at the 360-high view: the box bottom is at 136. The ship's pivot
   sits at the view centre (180) with a 42 display frame; its highest drawn hull
-  point across the 16 headings is 167.2 (heading 2), 33.2 below the box. The
+  point across the 16 headings is 167.2 (heading 2), 31.2 below the box. The
   rule is at least 24.
-- At the 1280x720 view (720x405 logical) the box bottom is still 134 and the
-  hull top 189.7, 55.7 below.
+- At the 1280x720 view (720x405 logical) the box bottom is still 136 and the
+  hull top 189.7, 53.7 below.
 
 ### Galaxy selector
 
