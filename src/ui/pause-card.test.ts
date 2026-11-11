@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { PROTOTYPE } from "../data/prototype.ts";
 import type { GalaxyMap } from "../model/map.ts";
+import { mapScreenLabels } from "./map-screen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pause-card.ts";
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
@@ -66,17 +68,11 @@ const LABELS: PauseLabels = {
   close: "Close",
   jobObjective: "Job: {objective}",
   map: "Map",
-  mapPercent: "{percent}% mapped",
-  mapRecentre: "Recentre",
-  mapZoomIn: "Zoom in",
-  mapZoomOut: "Zoom out",
+  mapScreen: mapScreenLabels(PROTOTYPE.labels),
   resume: "Resume",
   returnHome: "Return home",
   settings: "Settings",
   title: "Paused",
-  towTravel: "Unavailable while towing.",
-  travelEmpty: "None",
-  travelHere: "Travel here",
   travelUnavailable: "Unavailable",
 };
 

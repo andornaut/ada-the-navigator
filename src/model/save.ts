@@ -4,6 +4,7 @@ import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { newAchievements } from "./achievements.ts";
@@ -11,6 +12,7 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
+import { validExplored } from "./map.ts";
 import { fundedProjects } from "./projects.ts";
 import { stationById } from "./stations.ts";
 import type {
@@ -416,6 +418,7 @@ function migrateEconomy(state: GameState): void {
     progress.donated ??= {};
     progress.charted ??= [];
     progress.revealed ??= [];
+    progress.explored ??= [];
   }
   state.jobs ??= { boards: {}, made: 0 };
   state.tasks ??= {};
@@ -798,6 +801,7 @@ export function restoreSave(saved: unknown): GameState | null {
         (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
         (p.charted !== undefined && !chartedIds(id as SectorId, p.charted)) ||
         (p.revealed !== undefined && !revealedProjects(id as SectorId, p.donated, p.revealed)) ||
+        (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean")
       ) {

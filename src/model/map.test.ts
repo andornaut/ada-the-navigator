@@ -3,18 +3,27 @@ import { describe, expect, it } from "vitest";
 import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import type { SectorId } from "../data/types.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import {
+  chartedChunk,
   CHARTING_RADIUS,
+  chartingChunks,
+  chunkId,
   galaxyMap,
   type LandmarkChart,
   type MapContext,
   NO_LANDMARKS,
+  placeType,
+  recordExplored,
+  validExplored,
 } from "./map.ts";
+import { restoreSave } from "./save.ts";
 import { stationInCell, stationsNear } from "./stations.ts";
 import { playOpening } from "./test-launch.ts";
+import type { GameState, SectorProgress } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
 function flying() {
@@ -42,7 +51,9 @@ function context(
     catalog: ECONOMY,
     chunkSize: PROTOTYPE.tuning.chunkSize,
     destinations: galaxyRoute(1),
+    explored: [],
     flight: model.state.flight!,
+    holodisk: null,
     job,
     label: (id, kind) => `${kind}:${id}`,
     landmarks,
@@ -204,9 +215,10 @@ describe("galaxy map", () => {
     ]);
     expect(map.landmarks).toEqual({ charted: 1, total: 12 });
     expect(map.facing).toEqual(flight.facing);
-    // The flight starts in chunk 0,0: its centre is explored.
+    // The flight starts in chunk 0,0, which the galaxy's explored record holds.
     const size = PROTOTYPE.tuning.chunkSize;
-    expect(map.explored).toContainEqual({ x: size / 2, y: size / 2 });
+    expect(model.state.progress[1].explored).toEqual(["0,0"]);
+    expect(model.map?.explored).toEqual([{ x: size / 2, y: size / 2 }]);
   });
 
   it("is the model's Map in flight, labelled as the destinations list, and absent at home", () => {
@@ -262,4 +274,195 @@ describe("galaxy map", () => {
       }
     }
   });
+
+  it("shows the known holodisk waypoint as a Holodisk chip without Travel until it is recovered", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked = [1, 2, 3];
+    model.startSector(3);
+    Object.assign(model.state.progress[3], { introduced: true, questComplete: true, stage: 5 });
+    model.state.dialogue = null;
+    const flight = model.state.flight!;
+    expect(model.map?.places.some(({ kind }) => kind === "holodisk")).toBe(false);
+    model.step(0.01, IDLE);
+    const disk = flight.objects.find((o) => o.kind === "destination" && o.id === "holodisk")!;
+    expect(model.map?.places.find(({ kind }) => kind === "holodisk")).toEqual({
+      id: "holodisk",
+      job: false,
+      kind: "holodisk",
+      label: PROTOTYPE.labels.mapKindHolodisk,
+      objective: false,
+      symbol: "holodisk",
+      travel: false,
+      x: disk.x,
+      y: disk.y,
+    });
+    model.state.progress[3].holodisk = true;
+    expect(model.map?.places.some(({ kind }) => kind === "holodisk")).toBe(false);
+  });
+
+  it("gives every kind of place a symbol and a type line kind, except a job's own spot", () => {
+    const symbols = [
+      "beacon",
+      "destination",
+      "growers",
+      "holodisk",
+      "job",
+      "nebula",
+      "salvagers",
+      "station",
+      "workshop",
+      "wreck",
+    ] as const;
+    expect(symbols.map((symbol) => [symbol, placeType({ symbol })])).toEqual([
+      ["beacon", "beacon"],
+      ["destination", "story"],
+      ["growers", "outpost"],
+      ["holodisk", "holodisk"],
+      ["job", null],
+      ["nebula", "nebula"],
+      ["salvagers", "outpost"],
+      ["station", "station"],
+      ["workshop", "outpost"],
+      ["wreck", "wreck"],
+    ]);
+  });
+
+  it("keeps the explored chunks across flights and clears them on Restart", () => {
+    const size = PROTOTYPE.tuning.chunkSize;
+    const far = { x: 5000, y: 3000 };
+    const centre = { x: 9.5 * size, y: 5.5 * size };
+    const model = flying();
+    const flight = model.state.flight!;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.velocity = { x: 0, y: 0 };
+    flight.player = { ...far };
+    model.step(0.05, IDLE);
+    expect(model.state.progress[1].explored).toContain(chunkId(size, far));
+    model.returnHome();
+    model.startSector(1);
+    playOpening(model);
+    // A new flight starts at the origin, and the record still reveals the far chunk.
+    expect(model.state.flight!.player).toEqual({ x: 0, y: 0 });
+    expect(model.map?.explored).toContainEqual(centre);
+    model.returnHome();
+    const reloaded = new GameModel(PROTOTYPE, model.save());
+    expect(reloaded.state.progress[1].explored).toContain(chunkId(size, far));
+    reloaded.restart();
+    expect(reloaded.screen).toBe("start");
+    expect(reloaded.state.progress[1].explored).toEqual([]);
+    reloaded.startSector(1);
+    playOpening(reloaded);
+    expect(reloaded.map?.explored).not.toContainEqual(centre);
+  });
+
+  it("records only charting-disc chunks, once each, bounded by the disc's 7500 chunks", () => {
+    const size = PROTOTYPE.tuning.chunkSize;
+    expect(chartingChunks(size)).toBe(7500);
+    const explored: string[] = [];
+    recordExplored(size, explored, { x: 10, y: 10 });
+    recordExplored(size, explored, { x: 20, y: 20 });
+    recordExplored(size, explored, { x: CHARTING_RADIUS + size, y: 0 });
+    expect(explored).toEqual(["0,0"]);
+    expect(chartedChunk(size, { x: 48, y: 0 })).toBe(true);
+    expect(chartedChunk(size, { x: 49, y: 0 })).toBe(false);
+    expect(validExplored(size, ["0,0", "-3,7"])).toBe(true);
+    expect(validExplored(size, [])).toBe(true);
+    for (const bad of [["0,0", "0,0"], ["49,0"], ["0, 0"], ["01,0"], [0], "0,0", null]) {
+      expect(validExplored(size, bad), JSON.stringify(bad)).toBe(false);
+    }
+  });
+
+  it("loads a save without an explored record as empty, and refuses an invalid record", () => {
+    const saved = JSON.parse(new GameModel(PROTOTYPE).save()) as GameState;
+    delete (saved.progress[2] as Partial<SectorProgress>).explored;
+    expect(restoreSave(saved)?.progress[2].explored).toEqual([]);
+    saved.progress[2].explored = ["0,0", "1,-1"];
+    expect(restoreSave(saved)?.progress[2].explored).toEqual(["0,0", "1,-1"]);
+    for (const bad of [["0,0", "0,0"], ["200,0"], ["x"], {}]) {
+      saved.progress[2].explored = bad as string[];
+      expect(restoreSave(saved), JSON.stringify(bad)).toBeNull();
+    }
+  });
+
+  it("shows a discovered destination wherever a new flight places it, fog or not", () => {
+    const model = flying();
+    model.state.progress[1].known = ["growers"];
+    model.returnHome();
+    model.startSector(1);
+    playOpening(model);
+    const growers = model.state.flight!.objects.find((o) => o.id === "growers")!;
+    expect(model.map?.places.find(({ id }) => id === "growers")).toMatchObject({
+      x: growers.x,
+      y: growers.y,
+    });
+  });
+
+  it("keeps every seeded station and landmark, and each story place from them, 1020 apart", () => {
+    for (const sector of [1, 2, 3] as const) {
+      const fixed = seeded(sector);
+      expect(fixed.length, `galaxy ${sector}`).toBeGreaterThan(LANDMARK_TUNING.count);
+      expect(tooClose(fixed), `galaxy ${sector}`).toEqual([]);
+      const across = launched(sector).flatMap((place) =>
+        tooClose([place, ...fixed]).filter((pair) => pair.startsWith(`${place.id} `)),
+      );
+      expect(across, `galaxy ${sector}`).toEqual([]);
+    }
+  });
+
+  it("places a launch's story destinations 400 world units apart, inside the 1020 spacing", () => {
+    // The pairs that break the spacing now; their placement fix is Gameplay's.
+    expect(([1, 2, 3] as const).flatMap((sector) => tooClose(launched(sector)))).toEqual([
+      "growers workshop 400",
+      "growers salvagers 400",
+      "workshop salvagers 800",
+      "hub miner 400",
+      "hub visitors 400",
+      "miner visitors 800",
+      "whale family 400",
+      "whale holodisk 400",
+      "family holodisk 800",
+    ]);
+  });
+
+  it("has stations outside the charting disc in every galaxy: the catalog fills every cell", () => {
+    for (const sector of [1, 2, 3] as const) {
+      const far = stationInCell(ECONOMY, sector, {
+        x: Math.ceil(CHARTING_RADIUS / ECONOMY.station.cellSize) + 3,
+        y: 0,
+      });
+      expect(far && Math.hypot(far.x, far.y), `galaxy ${sector}`).toBeGreaterThan(CHARTING_RADIUS);
+    }
+  });
 });
+
+const IDLE = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+
+// Gameplay keeps every mapped place at least 1020 world units apart (art/map.md scale rule).
+const SPACING = 1020;
+function tooClose(places: readonly { id: string; x: number; y: number }[]): string[] {
+  return places.flatMap((a, index) =>
+    places.slice(index + 1).flatMap((b) => {
+      const apart = Math.hypot(a.x - b.x, a.y - b.y);
+      return apart < SPACING ? [`${a.id} ${b.id} ${Math.round(apart)}`] : [];
+    }),
+  );
+}
+// A galaxy's seeded places: its stations in the charting disc and its landmarks.
+function seeded(sector: SectorId) {
+  return [
+    ...stationsNear(ECONOMY, sector, CHARTING_RADIUS, { x: 0, y: 0 }),
+    ...landmarkSites(sector),
+  ];
+}
+// A launch that knows the whole route, and galaxy three's waypoint, places them from the start.
+function launched(sector: SectorId) {
+  const model = new GameModel(PROTOTYPE);
+  model.state.unlocked = [1, 2, 3];
+  model.startSector(sector);
+  const flight = model.state.flight!;
+  return [...galaxyRoute(sector), ...(sector === 3 ? ["holodisk"] : [])].map((id) => {
+    const { x, y } = ensureDestination(PROTOTYPE, id, flight);
+    return { id, x, y };
+  });
+}

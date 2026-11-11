@@ -1,6 +1,11 @@
 import type { GalaxyMap } from "../model/map.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createMapScreen, MAP_SCREEN_STYLE, type MapField } from "./map-screen.ts";
+import {
+  createMapScreen,
+  MAP_SCREEN_STYLE,
+  type MapField,
+  type MapScreenLabels,
+} from "./map-screen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
 import { type PauseAction, pauseActions } from "./pause.ts";
 import { refuse } from "./refusal.ts";
@@ -11,21 +16,13 @@ export interface PauseLabels {
   /** "Job: {objective}". */
   readonly jobObjective: string;
   readonly map: string;
-  /** "{percent}% mapped". */
-  readonly mapPercent: string;
-  /** The map tools' accessible labels. */
-  readonly mapRecentre: string;
-  readonly mapZoomIn: string;
-  readonly mapZoomOut: string;
+  /** The full-screen map's own labels. */
+  readonly mapScreen: MapScreenLabels;
   readonly resume: string;
   readonly returnHome: string;
   readonly settings: string;
   readonly title: string;
-  readonly travelEmpty: string;
-  readonly travelHere: string;
   readonly travelUnavailable: string;
-  /** Travel's note while a tow line is attached. */
-  readonly towTravel: string;
 }
 
 export interface PauseOptions {
@@ -133,18 +130,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.append(paused.frame);
   root.append(modal, style);
   const mapScreen = createMapScreen(root, {
-    labels: {
-      close: labels.close,
-      map: labels.map,
-      mapPercent: labels.mapPercent,
-      recentre: labels.mapRecentre,
-      towTravel: labels.towTravel,
-      travelEmpty: labels.travelEmpty,
-      travelHere: labels.travelHere,
-      travelUnavailable: labels.travelUnavailable,
-      zoomIn: labels.mapZoomIn,
-      zoomOut: labels.mapZoomOut,
-    },
+    labels: labels.mapScreen,
     onClose: () => closeMap(),
     onTravel: (id) => {
       setOpen(false);
@@ -195,6 +181,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapScreen.setState({
       field: state.field,
       inDanger: state.inDanger,
+      job: state.job,
       map: state.map ?? NO_MAP,
       towing: state.towing,
     });

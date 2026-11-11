@@ -3,12 +3,13 @@ import type { LandmarkKind } from "../data/jobs.ts";
 import type { SectorId } from "../data/types.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
-import { visitedChunks } from "./visited.ts";
+import { chunkCoordinates } from "./visited.ts";
 
 // The pause menu's Map (gameplay/rules.md "Pause"): the current galaxy with Ada's position, the
 // discovered destinations and stations, charted landmarks, the current objective's destination
 // once mapped and the held station job's target (gameplay/quests.md), and how much of the galaxy
-// is mapped. Undiscovered places never appear.
+// is mapped, a known holodisk waypoint until its holodisk is recovered. Undiscovered places never
+// appear.
 
 /**
  * The charted area: a circle of this many world units around the galaxy's origin, which holds its
@@ -18,6 +19,82 @@ import { visitedChunks } from "./visited.ts";
 export const CHARTING_RADIUS = 25000;
 
 const ORIGIN: Vec = { x: 0, y: 0 };
+
+/** A chunk's id, "x,y" in chunk coordinates (flight chunks), from a world point in it. */
+export function chunkId(chunkSize: number, point: Vec): string {
+  return `${Math.floor(point.x / chunkSize)},${Math.floor(point.y / chunkSize)}`;
+}
+
+/** Whether a chunk's centre lies in the charting disc: the explored record keeps only these. */
+export function chartedChunk(chunkSize: number, chunk: Vec): boolean {
+  return within({ x: (chunk.x + 0.5) * chunkSize, y: (chunk.y + 0.5) * chunkSize });
+}
+
+const chunkCounts = new Map<number, number>();
+/**
+ * The charting disc's chunk count, the explored record's bound: 7500 ids at the 512 chunk size,
+ * at most 7 characters each, so at most about 75 KB of save per galaxy.
+ */
+export function chartingChunks(chunkSize: number): number {
+  const known = chunkCounts.get(chunkSize);
+  if (known !== undefined) {
+    return known;
+  }
+  const reach = Math.ceil(CHARTING_RADIUS / chunkSize);
+  let count = 0;
+  for (let x = -reach - 1; x <= reach; x++) {
+    for (let y = -reach - 1; y <= reach; y++) {
+      count += chartedChunk(chunkSize, { x, y }) ? 1 : 0;
+    }
+  }
+  chunkCounts.set(chunkSize, count);
+  return count;
+}
+
+/**
+ * Adds the chunk holding point to a galaxy's explored record (SectorProgress.explored) when the
+ * chunk lies in the charting disc and is new to it.
+ */
+export function recordExplored(chunkSize: number, explored: string[], point: Vec): void {
+  const id = chunkId(chunkSize, point);
+  const chunk = chunkCoordinates(id);
+  if (chunk && chartedChunk(chunkSize, chunk) && !explored.includes(id)) {
+    explored.push(id);
+  }
+}
+
+// Each explored record's chunk centres, kept while the record only grows (recordExplored), so
+// the Map, built every frame, decodes each id once.
+const centres = new WeakMap<
+  readonly string[],
+  { chunkSize: number; list: readonly Vec[]; size: number }
+>();
+function exploredCentres(chunkSize: number, explored: readonly string[]): readonly Vec[] {
+  const known = centres.get(explored);
+  if (known && known.size === explored.length && known.chunkSize === chunkSize) {
+    return known.list;
+  }
+  const list = explored.flatMap((id) => {
+    const chunk = chunkCoordinates(id);
+    return chunk ? [{ x: (chunk.x + 0.5) * chunkSize, y: (chunk.y + 0.5) * chunkSize }] : [];
+  });
+  centres.set(explored, { chunkSize, list, size: explored.length });
+  return list;
+}
+
+/** A saved explored record: distinct chunk ids, each in the charting disc, so within its bound. */
+export function validExplored(chunkSize: number, value: unknown): value is string[] {
+  if (!Array.isArray(value) || value.length > chartingChunks(chunkSize)) {
+    return false;
+  }
+  return (
+    new Set(value).size === value.length &&
+    value.every((id) => {
+      const chunk = typeof id === "string" ? chunkCoordinates(id) : null;
+      return chunk !== null && chartedChunk(chunkSize, chunk);
+    })
+  );
+}
 
 /** A charted landmark, as the landmark model reports it. */
 export interface MapLandmark {
@@ -37,7 +114,7 @@ export interface LandmarkChart {
 /** No landmarks yet: the slot the landmark model fills. */
 export const NO_LANDMARKS: LandmarkChart = { charted: [], total: 0 };
 
-export type MapPlaceKind = "destination" | "job" | "landmark" | "station";
+export type MapPlaceKind = "destination" | "holodisk" | "job" | "landmark" | "station";
 
 /**
  * A place's map symbol (art/map.md "Symbols"): a station, galaxy one's three outposts by name,
@@ -62,6 +139,28 @@ function destinationSymbol(id: string): MapSymbol {
   return NAMED_OUTPOSTS.find((symbol) => symbol === id) ?? "destination";
 }
 
+/** The place panel's type line kinds (gameplay/player-copy.md "Map place panel"). */
+export type MapPlaceType =
+  "beacon" | "holodisk" | "nebula" | "outpost" | "station" | "story" | "wreck";
+
+const PLACE_TYPES: Readonly<Record<MapSymbol, MapPlaceType | null>> = {
+  beacon: "beacon",
+  destination: "story",
+  growers: "outpost",
+  holodisk: "holodisk",
+  job: null,
+  nebula: "nebula",
+  salvagers: "outpost",
+  station: "station",
+  workshop: "outpost",
+  wreck: "wreck",
+};
+
+/** A place's type line kind; a held job's own spot has none. */
+export function placeType(place: Pick<MapPlace, "symbol">): MapPlaceType | null {
+  return PLACE_TYPES[place.symbol];
+}
+
 /**
  * A place the map shows. Destinations and stations offer Travel here; landmarks and a job's own
  * spot do not.
@@ -82,8 +181,8 @@ export interface MapPlace {
 
 export interface GalaxyMap {
   /**
-   * Where Ada has explored this flight, for the fog: the centre of each chunk she has visited. An
-   * empty record draws no fog.
+   * Where Ada has explored, for the fog: the centre of each chunk in the galaxy's explored record.
+   * An empty record draws no fog.
    */
   readonly explored: readonly Vec[];
   /** Ada's facing, which her arrow points along. */
@@ -102,14 +201,18 @@ export interface MapContext {
   readonly chunkSize: number;
   /** The galaxy's story destinations, every one of which counts toward the percent. */
   readonly destinations: readonly string[];
-  readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "sector" | "visited">;
+  /** The galaxy's explored record across flights: chunk ids (SectorProgress.explored). */
+  readonly explored: readonly string[];
+  readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "sector">;
+  /** The known holodisk waypoint until its holodisk is recovered, or null. */
+  readonly holodisk: Vec | null;
   /**
    * The held job's target, with the job's title: it marks the place there, or shows as its own
    * spot when no shown place is there. It never counts toward the percent.
    */
   readonly job: (Vec & { readonly id: string; readonly label: string }) | null;
-  /** Each discovered destination's and station's label, by id. */
-  readonly label: (id: string, kind: "destination" | "station") => string;
+  /** Each discovered destination's, station's and the holodisk waypoint's label, by id. */
+  readonly label: (id: string, kind: "destination" | "holodisk" | "station") => string;
   readonly landmarks: LandmarkChart;
   /** The current objective's destination, shown once it is mapped. */
   readonly objective: string | null;
@@ -178,7 +281,22 @@ export function galaxyMap(context: MapContext): GalaxyMap {
     context.destinations.length +
     stationsNear(catalog, sector, CHARTING_RADIUS, ORIGIN).length +
     landmarks.total;
-  const places = [...destinations, ...stations, ...charted];
+  const waypoint: MapPlace[] = context.holodisk
+    ? [
+        {
+          id: "holodisk",
+          job: false,
+          kind: "holodisk",
+          label: context.label("holodisk", "holodisk"),
+          objective: false,
+          symbol: "holodisk",
+          travel: false,
+          x: context.holodisk.x,
+          y: context.holodisk.y,
+        },
+      ]
+    : [];
+  const places = [...destinations, ...stations, ...charted, ...waypoint];
   const { job } = context;
   const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));
   const spot: MapPlace[] =
@@ -199,10 +317,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
       : [];
   const { chunkSize } = context;
   return {
-    explored: visitedChunks(flight.visited).map(({ x, y }) => ({
-      x: (x + 0.5) * chunkSize,
-      y: (y + 0.5) * chunkSize,
-    })),
+    explored: exploredCentres(chunkSize, context.explored),
     facing: { x: flight.facing.x, y: flight.facing.y },
     landmarks: { charted: landmarks.charted.length, total: landmarks.total },
     mapped: total > 0 ? Math.floor((100 * Math.min(found, total)) / total) : 0,

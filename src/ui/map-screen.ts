@@ -1,6 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import type { GalaxyMap, MapPlace } from "../model/map.ts";
+import { type GalaxyMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
+import type { Vec } from "../model/types.ts";
 import { CARD_SLICE, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { hitAround, type PressArea, pressedArea } from "./layout/hitAreas.ts";
@@ -47,17 +48,57 @@ import { hudDiscStyle } from "./weapons.ts";
 const ICONS = "/art/ui/icons/";
 
 export interface MapScreenLabels {
+  /** The recentre tool's accessible label. */
+  readonly centerOnAda: string;
   readonly close: string;
+  /** "{distance} light-years", and the distance that rounds to 1. */
+  readonly distance: string;
+  readonly distanceOne: string;
+  /** "Job: {objective}", under the held job's target's type line. */
+  readonly jobObjective: string;
   readonly map: string;
   /** "{percent}% mapped". */
   readonly mapPercent: string;
-  readonly recentre: string;
   readonly towTravel: string;
   readonly travelEmpty: string;
   readonly travelHere: string;
   readonly travelUnavailable: string;
+  /** "{type} · {distance}". */
+  readonly typeLine: string;
+  /** Each place type's name on the type line. */
+  readonly types: Readonly<Record<MapPlaceType, string>>;
   readonly zoomIn: string;
   readonly zoomOut: string;
+}
+
+/** The map's labels from the player strings (gameplay/player-copy.md "Map"). */
+export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapScreenLabels {
+  const label = (key: string) => strings[key] ?? "";
+  return {
+    centerOnAda: label("mapCenterOnAda"),
+    close: label("close"),
+    distance: label("mapDistance"),
+    distanceOne: label("mapDistanceOne"),
+    jobObjective: label("jobObjective"),
+    map: label("map"),
+    mapPercent: label("mapPercent"),
+    towTravel: label("towTravel"),
+    travelEmpty: label("travelEmpty"),
+    travelHere: label("travelHere"),
+    travelUnavailable: label("travelUnavailable"),
+    typeLine: label("mapTypeLine"),
+    types: {
+      beacon: label("mapKindBeacon"),
+      holodisk: label("mapKindHolodisk"),
+      nebula: label("mapKindNebula"),
+      outpost: label("mapKindOutpost"),
+      station: label("mapKindStation"),
+      story: label("mapKindStory"),
+      wreck: label("mapKindWreck"),
+    },
+    zoomIn: label("mapZoomIn"),
+    zoomOut: label("mapZoomOut"),
+  };
 }
 
 /** The galaxy's field: its name, background and fog colours. */
@@ -70,6 +111,8 @@ export interface MapField {
 export interface MapScreenState {
   readonly field: MapField | null;
   readonly inDanger: boolean;
+  /** The held station job's objective, or null without one. */
+  readonly job: string | null;
   readonly map: GalaxyMap;
   readonly towing: boolean;
 }
@@ -96,10 +139,61 @@ export function travelState(
   return { offered: true, reason: inDanger ? "danger" : towing ? "towing" : null };
 }
 
-/** The panel's height: its row, and the reason line while Travel here is unavailable. */
-export function panelHeight(reason: boolean): number {
-  const { padding, reasonGap, row } = MAP_PANEL;
-  return 2 * padding + row + (reason ? reasonGap + TYPE.body.lineHeight : 0);
+/**
+ * A distance in world units as the type line's light-years of 1000 units: one decimal below 10,
+ * whole numbers from 10, en-US grouping, and the singular when it rounds to 1.
+ */
+export function mapDistance(
+  labels: Pick<MapScreenLabels, "distance" | "distanceOne">,
+  units: number,
+): string {
+  const tenths = Math.round(units / 100);
+  if (tenths === 10) {
+    return labels.distanceOne;
+  }
+  const value =
+    tenths < 100
+      ? (tenths / 10).toLocaleString("en-US", {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1,
+        })
+      : Math.round(units / 1000).toLocaleString("en-US");
+  return labels.distance.replace("{distance}", value);
+}
+
+/**
+ * The panel's text block under a place's name: its type line with the distance from Ada, then the
+ * held job's line when the place is the job's target. A job's own spot is named by the job and
+ * has neither.
+ */
+export function placeLines(
+  labels: Pick<MapScreenLabels, "distance" | "distanceOne" | "jobObjective" | "typeLine" | "types">,
+  from: Vec,
+  job: string | null,
+  place: MapPlace,
+): string[] {
+  const type = placeType(place);
+  if (type === null) {
+    return [];
+  }
+  const distance = mapDistance(labels, Math.hypot(place.x - from.x, place.y - from.y));
+  const lines = [
+    labels.typeLine.replace("{type}", labels.types[type]).replace("{distance}", distance),
+  ];
+  if (place.job && job !== null) {
+    lines.push(labels.jobObjective.replace("{objective}", job));
+  }
+  return lines;
+}
+
+/**
+ * The panel's height: its row, which grows past 48 for a third text line, and the reason line
+ * while Travel here is unavailable. lines counts the name.
+ */
+export function panelHeight(reason: boolean, lines = 2): number {
+  const { padding, reasonGap, row, textTop } = MAP_PANEL;
+  const text = 2 * textTop + lines * TYPE.body.lineHeight;
+  return 2 * padding + Math.max(row, text) + (reason ? reasonGap + TYPE.body.lineHeight : 0);
 }
 
 export const MAP_SCREEN_STYLE = `
@@ -295,6 +389,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
   transform:translateX(-50%);
   box-sizing:border-box;
+  /* Its own text width: shrink-to-fit would stop at the half view right of a centred left. */
+  width:max-content;
   min-width:${units(MAP_PANEL.minWidth)};
   max-width:calc(100% - ${safeEdge("left", SAFE_MARGIN.page)} - ${safeEdge(
     "right",
@@ -317,7 +413,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   display:none
 }
 .ada-controls .ada-map-row{
-  height:${units(MAP_PANEL.row)};
+  min-height:${units(MAP_PANEL.row)};
   display:flex;
   align-items:center;
   gap:${units(MAP_PANEL.markGap)}
@@ -329,6 +425,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-text{
   flex:1;
   display:grid;
+  padding:${units(MAP_PANEL.textTop)} 0;
   margin-right:${units(MAP_PANEL.actionGap - MAP_PANEL.markGap)}
 }
 .ada-controls .ada-map-name{
@@ -466,7 +563,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   tools.className = "ada-map-tools";
   const toolLabels: Record<MapTool, string> = {
     close: labels.close,
-    recentre: labels.recentre,
+    recentre: labels.centerOnAda,
     zoomIn: labels.zoomIn,
     zoomOut: labels.zoomOut,
   };
@@ -497,7 +594,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   text.className = "ada-map-text";
   const name = document.createElement("span");
   name.className = "ada-map-name";
-  text.append(name);
+  const detail = [document.createElement("span"), document.createElement("span")];
+  for (const line of detail) {
+    line.className = "ada-map-detail";
+  }
+  text.append(name, ...detail);
   const travel = createButton(labels.travelHere, "primary");
   travel.dataset.action = "map-travel";
   row.append(panelChip, text, travel);
@@ -543,6 +644,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const selectedPlace = () => places().find(({ id }) => id === selected) ?? null;
   const travelNow = () =>
     travelState(state?.inDanger ?? false, state?.towing ?? false, selectedPlace());
+  const detailLines = (place: MapPlace) =>
+    state ? placeLines(labels, state.map.player, state.job, place) : [];
   // The panel's top, while it shows: the page safe rect's bottom less its height.
   const panelTop = (size: { height: number }, insets: { bottom: number }): number | null => {
     const shown = selectedPlace() !== null || mapShowsEmpty(places());
@@ -550,7 +653,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return null;
     }
     const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
-    return bottom - panelHeight(travelNow().reason !== null);
+    const place = selectedPlace();
+    const lines = place ? 1 + detailLines(place).length : 2;
+    return bottom - panelHeight(travelNow().reason !== null, lines);
   };
 
   const drawFog = (inner: Rect, unit: number, current: MapView) => {
@@ -675,6 +780,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (place) {
       dressChip(panelChip, place);
       name.textContent = place.label;
+      const lines = detailLines(place);
+      detail.forEach((line, index) => {
+        line.textContent = lines[index] ?? "";
+        line.hidden = lines[index] === undefined;
+      });
       travel.hidden = !travelling.offered;
       travel.classList.toggle("ada-unavailable", travelling.reason !== null);
       if (travelling.reason === null) {

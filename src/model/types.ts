@@ -150,6 +150,11 @@ export interface SectorProgress {
   charted: string[];
   /** Funded projects whose world change has played its reveal, in reveal order. */
   revealed: string[];
+  /**
+   * The Map's explored record across flights: the id of each chunk in the charting disc Ada has
+   * visited (model/map.ts recordExplored). Restart clears it.
+   */
+  explored: string[];
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {

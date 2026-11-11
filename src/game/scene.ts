@@ -46,7 +46,7 @@ import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
-import type { MapField } from "../ui/map-screen.ts";
+import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
@@ -603,17 +603,11 @@ export class PrototypeScene extends Phaser.Scene {
           close: PROTOTYPE.labels.close ?? "",
           jobObjective: PROTOTYPE.labels.jobObjective ?? "",
           map: PROTOTYPE.labels.map ?? "",
-          mapPercent: PROTOTYPE.labels.mapPercent ?? "",
-          mapRecentre: PROTOTYPE.labels.mapRecentre ?? "",
-          mapZoomIn: PROTOTYPE.labels.mapZoomIn ?? "",
-          mapZoomOut: PROTOTYPE.labels.mapZoomOut ?? "",
+          mapScreen: mapScreenLabels(PROTOTYPE.labels),
           resume: PROTOTYPE.labels.resume ?? "",
           returnHome: PROTOTYPE.labels.returnHome ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
           title: PROTOTYPE.labels.pauseTitle ?? "",
-          towTravel: PROTOTYPE.labels.towTravel ?? "",
-          travelEmpty: PROTOTYPE.labels.travelEmpty ?? "",
-          travelHere: PROTOTYPE.labels.travelHere ?? "",
           travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
         },
         onReturnHome: () => {

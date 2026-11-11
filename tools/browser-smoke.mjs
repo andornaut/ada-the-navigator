@@ -915,12 +915,32 @@ try {
     ["close", "zoomIn", "zoomOut", "recentre"],
     "The map's tools are close, zoom in, zoom out and recentre",
   );
+  assert.deepEqual(
+    await mapScreen
+      .locator(".ada-map-tool")
+      .evaluateAll((tools) => tools.map((tool) => tool.getAttribute("aria-label"))),
+    ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => PROTOTYPE.labels[key]),
+    "The map's tools carry Gameplay's accessible labels",
+  );
   const known = dangerInput.state.progress[dangerInput.state.flight.sector];
+  const chips = mapScreen.locator(".ada-map-places .ada-map-place");
   assert.ok(
-    (await mapScreen.locator(".ada-map-places .ada-map-place").count()) <=
-      known.known.length + known.stations.length,
+    (await chips.count()) <= known.known.length + known.stations.length,
     "Map shows only discovered places",
   );
+  if ((await chips.count()) > 0) {
+    // A selected place's panel names its type and distance from Ada.
+    await chips.first().dispatchEvent("click");
+    const kinds = Object.entries(PROTOTYPE.labels)
+      .filter(([key]) => key.startsWith("mapKind"))
+      .map(([, value]) => value);
+    const typeLine = (await mapScreen.locator(".ada-map-detail").first().textContent()) ?? "";
+    const [kind, distance] = typeLine.split(" · ");
+    assert.ok(
+      kinds.includes(kind) && /^(?:\d[\d,]*(?:\.\d)? light-years|1 light-year)$/u.test(distance),
+      `The place panel's type line names a kind and a distance: ${typeLine}`,
+    );
+  }
   await page.keyboard.press("Escape");
   await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   assert.equal(await mapScreen.isVisible(), false, "Back and Escape close Map to the Paused card");

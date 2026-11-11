@@ -65,7 +65,7 @@ import {
   landmarkSites,
   unchartedNear,
 } from "./landmarks.ts";
-import { type GalaxyMap, galaxyMap } from "./map.ts";
+import { type GalaxyMap, galaxyMap, recordExplored } from "./map.ts";
 import {
   donate,
   type DonationRequest,
@@ -140,6 +140,7 @@ export function newProgress(): SectorProgress {
     disabledEnemies: 0,
     discoveries: 0,
     donated: {},
+    explored: [],
     holodisk: false,
     introduced: false,
     known: [],
@@ -639,8 +640,13 @@ export class GameModel {
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
+    this.explore(this.state.flight);
     this.ensureWhaleDebris();
     this.beginConversations();
+  }
+  /** Records the chunk Ada is in to the galaxy's explored record, which the Map's fog reveals. */
+  private explore(f: FlightState): void {
+    recordExplored(this.content.tuning.chunkSize, this.current.explored, f.player);
   }
   /** Jumps to an unlocked galaxy's flight. */
   startSector(id: SectorId): void {
@@ -704,6 +710,7 @@ export class GameModel {
       ensureDestination(this.content, id, f);
     }
     teleportFlight(this.content, id, f);
+    this.explore(f);
   }
   /**
    * Shield depletion quantum jumps Ada home and costs only the flight: its layout, open-space
@@ -827,6 +834,7 @@ export class GameModel {
     reachSensed(PENNY_FIND_RANGE, f.sector, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
     const events = stepFlight(this.content, dt, input, f);
+    this.explore(f);
     this.flightEvents = events;
     this.pullLoadout();
     const mapped: string[] = [];
@@ -1003,9 +1011,14 @@ export class GameModel {
       catalog: ECONOMY,
       chunkSize: this.content.tuning.chunkSize,
       destinations: galaxyRoute(f.sector),
+      explored: this.current.explored,
       flight: f,
+      holodisk: this.holodiskWaypoint
+        ? (f.objects.find((o) => o.kind === "destination" && o.id === "holodisk") ?? null)
+        : null,
       job: this.jobMapTarget(f),
-      label: (id) => labels.get(id) ?? id,
+      label: (id, kind) =>
+        kind === "holodisk" ? this.label("mapKindHolodisk") : (labels.get(id) ?? id),
       landmarks: {
         charted: galaxyLandmarks(f.sector, this.current)
           .filter(({ charted }) => charted)
