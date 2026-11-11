@@ -323,7 +323,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - The shield and Stardust share one status pill at the top left, beside the pause
   button: a shield icon and bar, a divider and the Stardust count. The bar is blue,
   turning red when the shield is low (below 25%) or empty, and shows hits, the
-  recharge delay and regeneration.
+  recharge delay and regeneration. Low shield never relies on color alone: the bar
+  also pulses, held steady under reduced motion, and Astra says "Shield low!".
 - Game and save notices, such as the save-failure notice, show briefly in the
   conversation box's slot and style, without a portrait. A notice shows at once,
   ahead of ordinary conversation lines, which resume after it.
