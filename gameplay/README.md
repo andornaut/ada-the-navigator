@@ -1,8 +1,9 @@
 # Ada the Navigator gameplay
 
 [Version one design](design.md) records the current premise, story structure,
-space play, controls and unresolved details. [Ideas](ideas.md) contains proposals
-outside the current version. These documents describe design, not implementation.
+space play, controls and unresolved details. [Ships](ships.md) defines ship
+physics and enemy rosters. [Ideas](ideas.md) contains proposals outside the
+current version. These documents describe design, not implementation.
 
 ## Ownership
 

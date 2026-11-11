@@ -87,9 +87,9 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 ## Flight and combat
 
 - Isometric sprite-based presentation with independently controlled movement and aim.
-- Very gentle acceleration and braking, without strong momentum. Changing direction
-  while moving drifts slightly before settling on the new course; starting from rest
-  and braking stay direct. Provisional movement turn response is 0.10 seconds.
+- Ship physics, including Ada's acceleration, braking, momentum and turn smoothing,
+  are defined per ship type in data; see [Ships](ships.md). Ada's ship has
+  noticeable momentum and swings wide on sharp turns.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 20 CSS pixels with a 2.4 CSS pixel deadzone;
   the visual thumb follows that travel so its position shows the requested speed.
@@ -107,8 +107,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
   not with stick deflection.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
-  the aim with light damping (provisional response 0.045 seconds). Shots follow the
-  ship's current facing and start immediately at the normal cadence.
+  the aim with damping. Shots follow the ship's current facing and start
+  immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
 - Settings use Chibi's gear control. Weapon and settings controls use icons inspired
   by Chibi, with accessible labels.
@@ -166,7 +166,8 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
   ownership of the other upgrades.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
-  solo ships, packs, frigates and capital ships.
+  solo ships, packs, frigates and capital ships. Sector one's roster is in
+  [Ships](ships.md).
 - A recurring hostile alien faction provides continuity across sectors.
 - Disabled enemy ships teleport away. How and why are unknown, as with Ada's tech.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.

@@ -10,10 +10,10 @@ the overall placement contract remains in the prototype document.
 
 ## Data and state
 
-The catalog interface defines typed aggression, speed ratios, perception and engagement
-radii, steering response, orbit and wobble, separation, firing patterns, morale and
-hardpoints and pursuit leashes. Fighter and retaliator are ship-sized solo craft; swarm supports small
-circling erratic packs. Frigates have three independent parts: one engine and two
+The catalog interface defines typed aggression, size, physics ([Ships](ships.md)),
+perception and engagement radii, orbit and wobble, separation, firing patterns,
+morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
+sector one's solo and pack archetypes. Frigates have three independent parts: one engine and two
 weapons. Capital hull widths are 10 and 30 Ada widths. The latter must exceed the
 viewport in Tech's world-to-camera scale; size is not constrained to screen bounds.
 No authored assets or story are introduced. Capital command parts are required but
@@ -57,9 +57,9 @@ The result contains updated state, desired velocity, aim, fire intents and effec
 State position is deliberately unchanged. Steering and velocity response are rules;
 collision resolution and position integration are runtime responsibilities. Commit
 resolved position and velocity back into the next saved state. Separation reads only
-the supplied snapshot, avoiding array-order feedback. Catalog offsets are fixed
-world-axis fractions of hull width, matching the current non-rotating body model.
-If Tech rotates bodies, rotate hardpoint collision and muzzle offsets together.
+the supplied snapshot, avoiding array-order feedback. Catalog offsets are
+fractions of hull width in the hull's local frame. Hulls rotate to face their
+movement, and hardpoint collision and muzzle offsets rotate with them.
 
 Sight aggression latches on visible perception. Retaliators remain idle until hit.
 Engaged craft approach their engagement band, orbit if configured, and separate from
@@ -88,7 +88,7 @@ fixed at creation. A chase ends when elapsed engagement reaches its limit, the e
 reaches its home radius, a visible target leaves that radius, or observation expires.
 Ending a chase latches return-to-home, clears engagement and suppresses new shots.
 Existing projectiles and incoming damage remain active. No grace or invulnerability
-is granted. Normal steering response can retain outward momentum briefly before
+is granted. Ship physics can retain outward momentum briefly before
 turning; the adapter's fixed slice bounds distance overshoot.
 
 Returning craft steer home and stop within five world units. They can rearm sight
