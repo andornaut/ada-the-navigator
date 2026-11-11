@@ -36,8 +36,9 @@ schema, with paths relative to `/art/ui/`; it is separate from the prototype
 
 Ship textures use eight isometric headings with a centered pivot and a 96 by 96
 transparent canvas. The manifest recommends 42 by 42 logical pixels for display.
-Choose the projected heading without rotating the image; swap idle and thrust
-textures without changing geometry. [Ship geometry](ship.md) and
+Choose the projected heading without rotating the image; draw speed jets from
+`ship-jets.json` behind the idle texture. Thrust textures remain a fallback when
+the jets file is unavailable. [Ship geometry](ship.md) and
 [portrait provenance](portraits.md) describe the authored and reused assets.
 
 Ship SVGs are deterministic exports from `art/tools/ship.ts`; edit the generator
