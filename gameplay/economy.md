@@ -125,7 +125,9 @@ its empty state and refuses selection until ammunition is bought.
 
 Each weapon icon shows its remaining count below it in at most four characters:
 the exact number up to 9,999 without a separator, then whole thousands as "10k" to
-"999k", then whole millions as "1m" to "999m". Basic shows no count.
+"999k", then whole millions as "1m" to "999m". Basic shows no count. A weapon
+button's accessible label is `weaponAmmoLabel` with the exact count, en-US
+grouped; Basic's label is its name.
 
 ## Weapon switching
 
@@ -222,6 +224,7 @@ The shield shop row reuses the existing `shield` label.
 | `ammoPack`          | {weapon} ammo                                                    |
 | `ammoPackCount`     | ×{count}                                                         |
 | `outOfAmmo`         | Out of ammo.                                                     |
+| `weaponAmmoLabel`   | {weapon}, {count} left                                           |
 | `projectProgress`   | {paid} of {price}                                                |
 | `donateTitle`       | Donate to {name}?                                                |
 | `donateStillNeeded` | {amount} still needed after                                      |

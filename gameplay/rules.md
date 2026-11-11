@@ -276,7 +276,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Basic is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
   Multi-Laser, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
-  automatically equip their weapon outside combat and retain other owned weapons.
+  equip their weapon at any time unless the switch wait is running, and retain
+  other owned weapons; during the wait the weapon is added without equipping it.
 - Every weapon and the shield have three levels. Each level multiplies effective
   output (damage times fire rate times how often it hits) by about 1.5, so level 3
   is about 2.25 times level 1. Single-target output meets those steps on its own;
