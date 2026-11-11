@@ -20,6 +20,7 @@ provenance are in [UI assets](ui.md).
 | Focus           | Ring 4px outside the face, independent of pressed, selected or checked state |
 | Press target    | At least 48 per axis                                                         |
 | Paired actions  | Secondary on the left, primary on the right                                  |
+| Group placement | Action groups, including a single action, centre horizontally in the card    |
 | Hover           | No hover-only styling; hover never changes size or role colour               |
 | Sheets          | `ui-button` (secondary), `ui-button-primary`; tags normal, pressed, disabled |
 | Nine-slice      | 16x28 frames, margins left/top/right/bottom 2/4/2/6                          |
