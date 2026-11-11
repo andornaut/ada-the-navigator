@@ -706,6 +706,246 @@
         "y": 0.5
       },
       "debris": "needle-debris-girder"
+    },
+    {
+      "id": "craft-glider-0",
+      "path": "/art/needle/glider-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-1",
+      "path": "/art/needle/glider-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-2",
+      "path": "/art/needle/glider-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-3",
+      "path": "/art/needle/glider-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-4",
+      "path": "/art/needle/glider-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-5",
+      "path": "/art/needle/glider-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-6",
+      "path": "/art/needle/glider-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-7",
+      "path": "/art/needle/glider-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-8",
+      "path": "/art/needle/glider-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-9",
+      "path": "/art/needle/glider-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-10",
+      "path": "/art/needle/glider-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-11",
+      "path": "/art/needle/glider-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-12",
+      "path": "/art/needle/glider-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-13",
+      "path": "/art/needle/glider-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-14",
+      "path": "/art/needle/glider-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
+    },
+    {
+      "id": "craft-glider-15",
+      "path": "/art/needle/glider-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "glider"
     }
   ],
   "needleGates": "/art/needle/gates.json",

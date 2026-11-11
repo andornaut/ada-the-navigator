@@ -225,3 +225,52 @@ the galaxy seen edge on.
 - Specks and stars are point stars, not the line: specks run 1.83 to 6.44:1
   and the pearl stars 13.43:1, as small and sparse as the field's dust specks.
 - Reduced motion: the band is static apart from parallax, so it is unchanged.
+
+## Elder Loom's glider
+
+Rebuild with `node art/tools/needle-craft.ts`. It writes `glider-{0..15}.svg`
+and `glider-jets.json` and replaces its `craft-glider-` entries.
+
+A long-winged pearl sailplane: a slender fuselage, straight wings with lavender
+thread bands near the tips and blue wingtip lights, a T-tail, a smoked lavender
+canopy with a warm pane and two small steel motor nacelles under the wing
+roots. Length 48 and span 67 model units (1.12 by 1.56 Ada widths). Not coral,
+amber or Ada's white and blue, and no Gadget insignia.
+
+- A non-hostile story craft in the [Cartwheel story craft](cartwheel.md#story-craft)
+  contract: 16 headings in 22.5 degree steps (heading `k` faces world angle
+  `k * 22.5`, local forward negative Y), no hit circle, no blink. Ids
+  `craft-glider-{k}` with `craft` `glider`, `directionIndex` `k` and `facing`
+  `world-{k}`. Frame 96 (display 42), pivot `(0.5, 0.5)`; render the selected
+  frame with rotation zero.
+- `glider-jets.json` uses the [enemy speed jets](enemies.md#speed-jets) schema
+  (version 1, outer and core layers, no halo, length
+  `(6 + 24 f²) * sqrt(frame / 96)`) in the story craft's civil palette: outer
+  `#c9a978` to `#ffe9b8`, core `#efe4cf` to `#ffffff`. Two mouths 3 wide at
+  the nacelle tails, `(u, v, z)` `(0.5, ±7, 4.8)`, clear of the fuselage at
+  every heading.
+- The same file carries `nose`, 16 entries, as the story craft do. `nose[k]`
+  gives `distance`, the world units from the pivot to the point under the nose
+  on the centre line (the hull's tip, reach 23), and `tip`, the drawn tip in
+  frame px; the build fails unless each tip lies within 0.5 frame px of a drawn
+  edge. A docked or berthed glider holds with its pivot on the berth point
+  moved along `outward` by `nose[k].distance`.
+
+| Headings     | `distance` |
+| ------------ | ---------: |
+| 2, 10        |     10.063 |
+| 1, 3, 9, 11  |      9.877 |
+| 0, 4, 8, 12  |      9.413 |
+| 5, 7, 13, 15 |      8.925 |
+| 6, 14        |      8.714 |
+
+| Role           | Colour    | Contrast |
+| -------------- | --------- | -------: |
+| Pearl hull     | `#e9e3da` |  12.37:1 |
+| Pearl side     | `#b3aba1` |   6.95:1 |
+| Lavender bands | `#c4afcc` |   7.78:1 |
+| Canopy         | `#6f6688` |   2.95:1 |
+| Nacelles       | `#8d8a99` |   4.68:1 |
+| Wingtip lights | `#70ace8` |   6.58:1 |
+
+The silhouette's edge median is 6.07:1.
