@@ -75,6 +75,26 @@
           "phase": 0
         }
       ]
+    },
+    "channelLights": {
+      "galaxy": "needle",
+      "kind": "path",
+      "path": "practice",
+      "frames": ["needle-lamp-a", "needle-lamp-b"],
+      "anchors": {
+        "start": 40,
+        "spacing": 80,
+        "inset": 4,
+        "sides": [-1, 1],
+        "phase": "alternate"
+      }
+    },
+    "loomHall": {
+      "galaxy": "needle",
+      "destination": "station",
+      "kind": "replace",
+      "frames": ["needle-station-hall-a", "needle-station-hall-b"],
+      "replaces": ["needle-station-a", "needle-station-b"]
     }
   }
 }

@@ -8822,6 +8822,36 @@
         "happy": 0,
         "neutral": 1
       }
+    },
+    {
+      "id": "needle-lamp-a",
+      "path": "/art/needle/lamp-a.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "project": "channelLights"
+    },
+    {
+      "id": "needle-lamp-b",
+      "path": "/art/needle/lamp-b.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5625
+      },
+      "frameMs": 700,
+      "project": "channelLights"
     }
   ],
   "needleGates": "/art/needle/gates.json",

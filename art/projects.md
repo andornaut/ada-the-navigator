@@ -6,7 +6,7 @@ donation rule and the strings ([Donations](../gameplay/economy.md)); keys below
 are Gameplay's player string keys, and keys marked placeholder await Gameplay
 strings. Project ids are Gameplay's (`greenhouseRing`, `workshopCrane`,
 `salvageBeacons`, `dockingBay`, `hubRepairs`, `nurseryBeacon`, `currentBuoys`,
-`courierSchool`, `spareBeacon`).
+`courierSchool`, `spareBeacon`, `channelLights`, `loomHall`).
 
 ## Projects tab
 
@@ -44,17 +44,19 @@ Focus and contrast are the item row's ([Shop](shop.md#item-row)).
 
 Effect lines, placeholder strings:
 
-| Project          | Key (placeholder)            | Text (placeholder)      |
-| ---------------- | ---------------------------- | ----------------------- |
-| `greenhouseRing` | `projectEffectGreenhouse`    | Domes for more crops    |
-| `workshopCrane`  | `projectEffectCrane`         | A crane for heavy lifts |
-| `salvageBeacons` | `projectEffectBeacons`       | Lights the scrap lanes  |
-| `dockingBay`     | `projectEffectDockingBay`    | No miner waits alone    |
-| `hubRepairs`     | `projectEffectHubRepairs`    | Fixes the station's hub |
-| `nurseryBeacon`  | `projectEffectNursery`       | Guides whale calves     |
-| `currentBuoys`   | `projectEffectCurrentBuoys`  | Marks the currents      |
-| `courierSchool`  | `projectEffectCourierSchool` | Trains careful couriers |
-| `spareBeacon`    | `projectEffectSpareBeacon`   | A backup guide light    |
+| Project          | Key (placeholder)            | Text (placeholder)          |
+| ---------------- | ---------------------------- | --------------------------- |
+| `greenhouseRing` | `projectEffectGreenhouse`    | Domes for more crops        |
+| `workshopCrane`  | `projectEffectCrane`         | A crane for heavy lifts     |
+| `salvageBeacons` | `projectEffectBeacons`       | Lights the scrap lanes      |
+| `dockingBay`     | `projectEffectDockingBay`    | No miner waits alone        |
+| `hubRepairs`     | `projectEffectHubRepairs`    | Fixes the station's hub     |
+| `nurseryBeacon`  | `projectEffectNursery`       | Guides whale calves         |
+| `currentBuoys`   | `projectEffectCurrentBuoys`  | Marks the currents          |
+| `courierSchool`  | `projectEffectCourierSchool` | Trains careful couriers     |
+| `spareBeacon`    | `projectEffectSpareBeacon`   | A backup guide light        |
+| `channelLights`  | `projectEffectChannelLights` | Lights the practice channel |
+| `loomHall`       | `projectEffectLoomHall`      | A place to teach pilots     |
 
 ## Donation confirm
 
@@ -81,8 +83,9 @@ plays.
 ## World changes
 
 `node art/tools/outposts.ts` writes Sunflower's world changes with the
-[outposts](outposts.md) and `node art/tools/andromeda.ts` writes Andromeda's
-([Andromeda](andromeda.md#world-changes)). `public/art/projects.json` places
+[outposts](outposts.md), `node art/tools/andromeda.ts` writes Andromeda's
+([Andromeda](andromeda.md#world-changes)) and `node art/tools/needle-projects.ts`
+writes Needle's ([Needle](needle.md#world-changes)). `public/art/projects.json` places
 them, keyed by project id; each generator replaces only its own projects
 through `art/tools/projects.ts`, so reruns in any order leave the file
 byte-identical. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
@@ -90,7 +93,7 @@ Whirlpool's are placed by `public/art/whirlpool/projects.json`
 ([Whirlpool](whirlpool.md#project-world-changes)). A project with no world art
 in any of these changes nothing in the world when funded.
 
-A change is one of two kinds:
+A change is one of three kinds:
 
 - **Replacement frames** when the change wraps around the outpost, so its parts
   sort in depth among the outpost's own: the greenhouse ring passes behind and
@@ -100,6 +103,8 @@ A change is one of two kinds:
   drawing it after (or before) the unchanged outpost gives the same pixels as
   one depth sort of both: the workshop crane and the salvage beacons. Overlays
   keep the outpost's frames unchanged and reuse one small sprite.
+- **Path** when the change lines a channel rather than a station: Channel
+  lights. One small sprite at anchors measured along the channel's centre line.
 
 Both kinds use the base asset's schema (for an outpost,
 [Frames and manifest](outposts.md#frames-and-manifest)) with the fields that
@@ -112,8 +117,9 @@ unchanged.
 - `reveal`: `durationMs` 600, `easing` `cubicOut` (see [Reveal](#reveal)).
 - The base a project attaches to, by the base entries' own fields:
   `outpost` (the outpost role and destination id) at Sunflower's outposts,
-  `station` `settlers` at every Andromeda station, and `beacon` `guide` with
-  `state` `relit` at Andromeda's relit dark beacon.
+  `station` `settlers` at every Andromeda station, `beacon` `guide` with
+  `state` `relit` at Andromeda's relit dark beacon, and `galaxy` `needle` with
+  `destination` `station` at the Weavers' station.
 - `kind` `replace`: `frames` (A, B) replace `replaces` (A, B).
 - `kind` `overlay`: `frames` (A, B) and `anchors`. Each anchor places one copy
   of the sprite with its pivot at the base's pivot plus (`x`, `y`) frame px;
@@ -121,6 +127,16 @@ unchanged.
   convert screen to world as for the dock. `layer` `behind` draws before the
   base, `front` after it, all in the base's depth slot. `phase` 0 shows
   frame A while the base shows A; `phase` 1 shows the other frame.
+- `kind` `path`: `galaxy`, `path` (Gameplay's channel id, such as `practice`),
+  `frames` (A, B) and `anchors`: `start`, `spacing` and `inset` in world units
+  and `sides`. Anchor `i` sits at arc length `start + i * spacing` along the
+  channel's centre line, for every `i` with that within the channel, on each
+  side in `sides` (1 left of the centre line's direction, -1 right), `inset`
+  inside that edge, on the world plane. `phase` `alternate`: the anchor at `i`
+  on side -1 shows frame A while `i` is even, the one on side 1 while `i` is
+  odd, so neighbours along and across blink opposite. The sprites sort with
+  the play objects at their pivots, with no collision, and blink on a 700 ms
+  clock (`frameMs`).
 
 ### Greenhouse ring
 
@@ -197,4 +213,6 @@ unchanged.
   fill darken the shared pixels mid-fade.
 - Both states share the outpost's pivot and blink phase, so only the change
   appears. No flash, scale, shake or sound.
+- A path change plays on the first frame any of its anchors is on screen; its
+  sprites fade in as one group over the channel unchanged.
 - Reduced motion cuts to the after state on that first frame.

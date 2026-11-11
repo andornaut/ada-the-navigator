@@ -345,3 +345,38 @@ the hull; the wreck ember is 6.19:1 on scorch. The fighter's edge median is
 | ----- | ---------------------- | ---------------------- | ----------------------: |
 | Outer | `#b8644c` to `#f0a07c` | `#993847` to `#ed7477` |          2.26:1, 5.53:1 |
 | Core  | `#d68b72` to `#ffe2c8` | `#d65b6c` to `#ffe7e9` |         4.19:1, 13.42:1 |
+
+## World changes
+
+Rebuild with `node art/tools/needle-projects.ts`. It writes the Channel lights
+lamp frames and replaces its `needle-lamp-` entries, and writes the
+`channelLights` and `loomHall` entries of
+[projects.json](../public/art/projects.json) through `art/tools/projects.ts`
+([World changes](projects.md#world-changes)). Both reveal with the shared
+600 ms `cubicOut` fade.
+
+### Channel lights
+
+`channelLights`, a `path` change along Gameplay's practice channel (`path`
+`practice`): soft lamps in pairs, one just inside each edge.
+
+- `needle-lamp-a` and `-b`: a small pearl float, a silver mast and a soft warm
+  lamp, `#ffe9b8` lit in A and `#8c7c60` dim in B, over a faint warm pool of
+  light on the world plane (radius 14, alpha 0.14 in A, 0.05 in B). Frame 48 by
+  48 (display 21), pivot `(0.5, 0.5625)`: the float's centre on the world
+  plane. `facing` `fixed`, `frameMs` 700, `project` `channelLights`.
+- `anchors`: the first pair 40 world units along the channel from its start,
+  then every 80, each 4 inside its edge (`start`, `spacing`, `inset`), on both
+  sides (`sides` `[-1, 1]`). `phase` `alternate`: neighbours along and across
+  blink opposite. Reduced motion holds every lamp on A.
+- Data shape for Tech: `{ galaxy, kind: "path", path, frames: [a, b], anchors:
+{ start, spacing, inset, sides, phase } }`, with anchor `i` at arc length
+  `start + i * spacing` on the centre line, offset `side * (width / 2 - inset)`
+  along its left normal (`1` left of the line's direction, `-1` right).
+- Lamp `#ffe9b8` 13.22:1, dim `#8c7c60` 3.88:1, pearl float 12.37:1.
+
+### Loom hall
+
+`loomHall`, a `replace` change at the Weavers' station (`galaxy` `needle`,
+`destination` `station`): `needle-station-hall-a` and `-b` replace
+`needle-station-a` and `-b` ([Loom hall](#loom-hall)).
