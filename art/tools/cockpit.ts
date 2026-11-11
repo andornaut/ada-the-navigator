@@ -1,5 +1,5 @@
 // Close-up of Ada's ship for the cockpit background: the game's isometric projection at
-// heading 24 with the in-game pyramid hull, a clear canopy and the seats inside.
+// heading 24 with the in-game pyramid hull and its opaque canopy enlarged.
 import { fileURLToPath } from "node:url";
 
 import { blankImage } from "@andornaut/art-kit/rgbaImage";
@@ -12,7 +12,6 @@ import {
   fillPolygon,
   filled,
   grey,
-  outlinePolygon,
   over,
   polyline,
   region,
@@ -52,12 +51,6 @@ const PAINT = {
   top: "ffffff",
 } as const;
 
-const RAMPS: Readonly<Record<string, readonly string[]>> = {
-  dark: ["1d2234", "262b44", "3a4466", "5a6988"],
-  teal: ["2f6a6e", "3d8084", "4f9ea3", "6cb8b9"],
-  cream: ["b8ad9a", "d9cbb1", "efe4cf"],
-  floor: ["5a6988", "6d7b98", "8b9bb4"],
-};
 // Light from the upper left, slightly behind the viewer.
 const LIGHT = ((v: Point) =>
   v.map((c) => c / Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])) as unknown as Point)([
@@ -65,11 +58,6 @@ const LIGHT = ((v: Point) =>
 ]);
 
 type Face = Point[];
-type Material = string;
-interface Group {
-  name: string;
-  faces: [Material, Face][];
-}
 
 const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
@@ -90,58 +78,10 @@ function newell(points: readonly Point[]): Point {
 const turned = (points: readonly Point[]) => points.map((p) => rotate(SHIP_HEADINGS, YAW, p));
 const lit = (points: readonly Point[]) => dot(newell(turned(points)), LIGHT);
 
-// Flat shading: the lit fraction picks a step of the material's ramp.
-function shade(material: Material, rotated: readonly Point[]): string {
-  const ramp = RAMPS[material]!;
-  const v = 0.5 + 0.5 * dot(newell(rotated), LIGHT);
-  return ramp[Math.max(0, Math.min(ramp.length - 1, Math.trunc(v * ramp.length)))]!;
-}
-
-// Extrude a closed (u, v) profile: along y with the profile in x-z.
-function prism(profile: readonly Xy[], a0: number, a1: number): Face[] {
-  const f0: Face = profile.map(([u, v]) => [u, a0, v]);
-  const f1: Face = profile.map(([u, v]) => [u, a1, v]);
-  return [
-    f0,
-    [...f1].reverse(),
-    ...profile.map((_, i): Face => {
-      const j = (i + 1) % profile.length;
-      return [f0[i]!, f0[j]!, f1[j]!, f1[i]!];
-    }),
-  ];
-}
-
 const centroid = (points: readonly Point[]): Point =>
   [0, 1, 2].map((i) => points.reduce((s, p) => s + p[i]!, 0) / points.length) as unknown as Point;
 
-// Wind every face of a closed solid outward from its centroid.
-function orient(faces: readonly Face[]): Face[] {
-  const c = centroid(faces.flat());
-  return faces.map((f) => {
-    const fc = centroid(f);
-    const n = newell(f);
-    return dot(n, [fc[0] - c[0], fc[1] - c[1], fc[2] - c[2]]) < 0 ? [...f].reverse() : f;
-  });
-}
-
 const toward = (f: Face, ref: Point): Face => (dot(newell(f), ref) >= 0 ? f : [...f].reverse());
-
-const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number) =>
-  prism(
-    [
-      [x0, z0],
-      [x1, z0],
-      [x1, z1],
-      [x0, z1],
-    ],
-    y0,
-    y1,
-  );
-
-const solid = (name: string, material: Material, faces: readonly Face[]): Group => ({
-  faces: orient(faces).map((f) => [material, f]),
-  name,
-});
 
 // The in-game pyramid hull (art/tools/ship.ts), copied so the close-up does not change when
 // the sprite model does.
@@ -323,7 +263,7 @@ function mouth(sign: number, inset = 0): Face {
 
 // The sprite's chubby canopy, finer: plan semi-axes a and b round local Y centre, the crown
 // level h above the hull at the centre, each ring rising sin(latitude) of the way from the hull
-// surface to the crown. The rings below `band` degrees are the blue sill.
+// surface to the crown. The rings below `band` degrees are the darker lower band.
 const CANOPY = { a: 9, b: 9, centre: -3, h: 2.8, segments: 48, rings: 12, band: 30 };
 const CROWN = roof(0, CANOPY.centre) + CANOPY.h;
 
@@ -335,116 +275,48 @@ function canopyPoint(theta: number, phi: number): Point {
   return [x, y, base + (CROWN - base) * Math.sin(phi)];
 }
 
-function domeFaces(): { band: boolean; face: Face }[] {
-  const { band, rings, segments } = CANOPY;
+// The dome's facets between ring latitudes (degrees) in `segments` steps, wound outward.
+function shell(segments: number, rings: readonly number[]): { band: boolean; face: Face }[] {
   const middle: Point = [0, CANOPY.centre, roof(0, CANOPY.centre) - 2];
   const out: { band: boolean; face: Face }[] = [];
-  for (let ring = 0; ring < rings; ring++) {
-    const [p0, p1] = [ring, ring + 1].map((r) => (r / rings) * (Math.PI / 2)) as [number, number];
+  for (let ring = 0; ring < rings.length - 1; ring++) {
+    const [p0, p1] = [rings[ring]!, rings[ring + 1]!].map((r) => (r * Math.PI) / 180) as [
+      number,
+      number,
+    ];
     for (let u = 0; u < segments; u++) {
       const [t0, t1] = [u, u + 1].map((s) => (s / segments) * 2 * Math.PI) as [number, number];
       const face: Face =
-        ring === rings - 1
+        rings[ring + 1] === 90
           ? [canopyPoint(t0, p0), canopyPoint(t1, p0), canopyPoint(t0, p1)]
           : [canopyPoint(t0, p0), canopyPoint(t1, p0), canopyPoint(t1, p1), canopyPoint(t0, p1)];
-      const mid = centroid(face);
       out.push({
-        band: (p1 * 180) / Math.PI <= band,
-        face: toward(face, minus(mid, middle)),
+        band: rings[ring + 1]! <= CANOPY.band,
+        face: toward(face, minus(centroid(face), middle)),
       });
     }
   }
   return out;
 }
 
-// The cockpit tub under the canopy, sunk into the hull: a floor ring inset from the canopy's
-// base and kept under the hull surface, and the tub's inner walls between them.
-const FLOOR_Z = 3.8;
-
-function tub(): { floor: Face; walls: Face[] } {
-  const { centre, segments } = CANOPY;
-  const base = Array.from({ length: segments }, (_, u) =>
-    canopyPoint((u / segments) * 2 * Math.PI, 0),
+const domeFaces = () =>
+  shell(
+    CANOPY.segments,
+    Array.from({ length: CANOPY.rings + 1 }, (_, r) => (r * 90) / CANOPY.rings),
   );
-  const floor = base.map(([x, y, z]): Point => [
-    x * 0.9,
-    centre + (y - centre) * 0.9,
-    Math.min(FLOOR_Z, z - 0.4),
-  ]);
-  const walls = base.map((a, u): Face => {
-    const j = (u + 1) % segments;
-    const face: Face = [a, base[j]!, floor[j]!, floor[u]!];
-    const mid = centroid(face);
-    return toward(face, [-mid[0], centre - mid[1], 0]);
-  });
-  return { floor, walls };
+
+// The sprite's own 16 by 3 facets; its two facets facing the light most directly carry the
+// highlight, so the close-up's highlight covers the same patch of the dome.
+function spriteHighlight(): Face[] {
+  return shell(16, [0, 30, 60, 90])
+    .map(({ face }) => ({ face, light: lit(face) }))
+    .toSorted((a, b) => b.light - a.light)
+    .slice(0, 2)
+    .map(({ face }) => face);
 }
 
-// Seats sit on the tub floor; Ada's is port (-3), upper left on screen at heading 24, Penny's
-// starboard. Astra's lens sits on the dash's rear face at (0, -9, 5.3).
-const SEATS = [-3, 3] as const;
-const LENS: Point = [0, -9, 5.3];
-
-function interior(): Group[] {
-  const f = FLOOR_Z;
-  const groups: Group[] = [
-    solid("dash", "floor", box(-1.8, 1.8, -9.4, -9, f, 5.6)),
-    solid("console", "floor", box(-0.5, 0.5, -9, -3.5, f, 4.5)),
-  ];
-  for (const sx of SEATS) {
-    groups.push(solid(`ped${sx}`, "teal", box(sx - 0.7, sx + 0.7, -2.4, -1, f, f + 0.5)));
-    const c0 = f + 0.5;
-    const cushion: Xy[] = [
-      [sx - 1.6, c0],
-      [sx + 1.6, c0],
-      [sx + 1.6, c0 + 0.45],
-      [sx + 1.35, c0 + 0.7],
-      [sx - 1.35, c0 + 0.7],
-      [sx - 1.6, c0 + 0.45],
-    ];
-    groups.push(solid(`cush${sx}`, "teal", prism(cushion, -3.5, -0.1)));
-    // A reclined tombstone backrest.
-    const hw = 1.5;
-    const r = 1;
-    const top = c0 + 2.7;
-    const profile: Xy[] = [[sx - hw, c0]];
-    for (let i = 0; i < 9; i++) {
-      const a = Math.PI - (i * Math.PI) / 8;
-      profile.push([
-        sx + (hw - r) * (Math.cos(a) > 0 ? 1 : -1) + r * Math.cos(a),
-        top - r + r * Math.sin(a),
-      ]);
-    }
-    profile.push([sx + hw, c0]);
-    const lean = (y: number, v: number) => y + (0.55 * (v - c0)) / 2.7;
-    const f0: Face = profile.map(([u, v]) => [u, lean(-0.2, v), v]);
-    const f1: Face = profile.map(([u, v]) => [u, lean(0.6, v), v]);
-    const faces: [Material, Face][] = [
-      ["teal", f0],
-      ["teal", [...f1].reverse()],
-    ];
-    for (let i = 0; i < profile.length; i++) {
-      const j = (i + 1) % profile.length;
-      const cap = profile[i]![1] > top - 0.35 && profile[j]![1] > top - 0.35;
-      faces.push([cap ? "cream" : "teal", [f0[i]!, f0[j]!, f1[j]!, f1[i]!]]);
-    }
-    const oriented = orient(faces.map(([, face]) => face));
-    groups.push({ faces: faces.map(([m], i) => [m, oriented[i]!]), name: `back${sx}` });
-  }
-  return groups;
-}
-
-// Seated tops of Ada's and Penny's heads: Ada's navy hair with a pink bow, Penny's golden head
-// and orange ears (Archie's golden dog).
-const HEADS: readonly (readonly [Point, number, string])[] = [
-  [[-3, -1.4, 6.55], 1.3, "262b44"],
-  [[-3.2, -1.7, 6.9], 0.76, "3a4466"],
-  [[-3, -1.1, 7.5], 0.45, "f6757a"],
-  [[1.95, -1.5, 6.45], 0.54, "f77622"],
-  [[4.05, -1.5, 6.45], 0.54, "f77622"],
-  [[3, -1.8, 6.45], 1.08, "feae34"],
-  [[3, -2.1, 7], 0.5, "fee761"],
-];
+// Astra's lamp on the ridge just ahead of the canopy's front seam.
+const LAMP: Point = [0, -13.4, roof(0, -13.4) + 0.05];
 
 function convex(points: readonly Xy[]): Xy[] {
   const keyed = new Map<string, Xy>();
@@ -487,13 +359,8 @@ const mix = (a: string, b: string, t: number): [number, number, number] => {
 
 export type Astra = { speaking: false } | { speaking: true; frame: number };
 
-export interface Scene {
-  seated: boolean;
-  astra: Astra;
-}
-
 // The untreated model over the in-between field, at the view's resolution.
-export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
+export function renderModel(view: View, astra: Astra): RgbaImage {
   const S = SS * view.scale;
   const width = view.width * SS;
   const height = view.height * SS;
@@ -517,22 +384,35 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
       .map((item) => ({ item, rotated: turned(item.points) }))
       .filter(({ rotated }) => facesViewer(rotated))
       .toSorted((a, b) => depth(b.rotated) - depth(a.rotated))
-      .map(({ item, rotated }) => ({ ...item, rotated }));
+      .map(({ item }) => item);
   const paint = (target: RgbaImage, faces: readonly { colour: string; points: Face }[]) => {
     for (const { colour, points } of visible(faces)) {
       fillPolygon(target, points.map(proj), rgba(colour));
     }
   };
-  const drawGroup = (target: RgbaImage, faces: readonly [Material, Face][], outline?: string) => {
-    const items = visible(faces.map(([m, points]) => ({ m, points })));
-    for (const { m, points, rotated } of items) {
-      const fill = rgba(shade(m, rotated));
-      if (outline) {
-        outlinePolygon(target, points.map(proj), fill, rgba(outline), px(1));
-      } else {
-        fillPolygon(target, points.map(proj), fill);
-      }
+  const bounds = (points: readonly Xy[], pad: number): [number, number, number, number] => [
+    Math.min(...points.map(([x]) => x)) - pad,
+    Math.min(...points.map(([, y]) => y)) - pad,
+    Math.max(...points.map(([x]) => x)) + pad,
+    Math.max(...points.map(([, y]) => y)) + pad,
+  ];
+  // A transparent layer in one colour, so blurring it leaves no dark fringe.
+  const clear = ([r, g, b]: ReturnType<typeof rgba>) => filled([r!, g!, b!, 0], width, height);
+  // A soft disc of light, optionally kept inside a mask.
+  const glow = (
+    centre: Xy,
+    r: number,
+    fill: ReturnType<typeof rgba>,
+    sigma: number,
+    mask?: RgbaImage,
+  ) => {
+    const layer = clear(fill);
+    disc(layer, centre, r, fill);
+    blur(layer, sigma, [centre[0] - r, centre[1] - r, centre[0] + r, centre[1] + r]);
+    if (mask) {
+      clip(layer, mask);
     }
+    over(lay, layer);
   };
 
   // Skirt: the right wing's trailing and leading edges front sides, the rest rear sides.
@@ -572,6 +452,22 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
       polyline(lay, [proj(from), proj(to)], [r, g, b, 255], px(1.2));
     }
   }
+  // Astra's rose-gold lamp on the ridge ahead of the canopy, flattened onto the hull: a dim ember
+  // while idle, a bright core in a warm halo that pulses while she speaks. The dome draws over
+  // the halo's near edge.
+  const lamp = proj(LAMP);
+  const rr = S * 3.6;
+  const flat = 0.75;
+  disc(lay, lamp, rr * 1.35, rgba("d9a08a"), rr * 1.35 * flat);
+  disc(lay, lamp, rr * 0.8, rgba("5a3f4f"), rr * 0.8 * flat);
+  if (astra.speaking) {
+    const f = astra.frame;
+    glow(lamp, rr * [3.2, 3.6, 4, 3.6][f]!, rgba("f5a98a", 225), S * 3);
+    const core = rr * [0.7, 0.8, 0.9, 0.8][f]!;
+    disc(lay, lamp, core, rgba("fff1e0"), core * flat);
+  } else {
+    disc(lay, lamp, rr * 0.5, rgba("b9787c"), rr * 0.5 * flat);
+  }
   drawCanopy();
   // The rear points toward the viewer at this heading, so the tail faces draw after the canopy.
   paint(
@@ -596,119 +492,56 @@ export function renderModel(view: View, { astra, seated }: Scene): RgbaImage {
     fillEllipse(lay, [x - r * 0.4, y - r * 0.6, x + r * 0.2, y], rgba("ffffff"));
   }
 
-  function glow(centre: Xy, r: number, fill: ReturnType<typeof rgba>, sigma: number) {
-    const layer = blankImage(width, height);
-    disc(layer, centre, r, fill);
-    blur(layer, sigma, [centre[0] - r, centre[1] - r, centre[0] + r, centre[1] + r]);
-    over(lay, layer);
-  }
-
   function drawCanopy() {
     const dome = domeFaces();
-    const back = dome.filter(({ face }) => !facesViewer(turned(face)));
-    const front = dome.filter(({ face }) => facesViewer(turned(face)));
-    // Blue glass: the sill band denser in the canopy side colour, the rest the roof colour
-    // lifted toward the highlight where the light falls.
-    const glass = (faces: readonly { band: boolean; face: Face }[], alpha: number) => {
-      const layer = blankImage(width, height);
-      for (const { band, face } of faces) {
-        const light = Math.max(0, lit(face));
-        const [r, g, b] = band
-          ? mix(PAINT.canopySides, PAINT.canopyRoof, light * 0.5)
-          : mix(PAINT.canopyRoof, PAINT.canopyHighlight, light ** 2);
-        const a = band ? Math.min(255, alpha * 2.2) : alpha * (0.6 + 0.8 * light ** 2);
-        fillPolygon(layer, face.map(proj), [r, g, b, Math.round(a)]);
-      }
-      over(lay, layer);
-    };
     const silhouette = convex(dome.flatMap(({ face }) => face.map(proj)));
-    // The dark blue seam where the canopy meets the hull: the far arc behind the tub, the near
-    // arc over the glass.
-    const stroke = (run: readonly Xy[]) => {
-      if (run.length > 1) {
-        polyline(lay, run, rgba(PAINT.recess), px(2.5), true);
-      }
-    };
-    const seam = (near: boolean) => {
-      let run: Xy[] = [];
-      for (let u = 0; u <= 96; u++) {
-        const theta = (u / 96) * 2 * Math.PI;
-        const out = rotate(SHIP_HEADINGS, YAW, [Math.cos(theta), Math.sin(theta), 0]);
-        if (out[0] + out[1] > 0 === near) {
-          run.push(proj(canopyPoint(theta, 0)));
-        } else {
-          stroke(run);
-          run = [];
-        }
-      }
-      stroke(run);
-    };
-    glass(back, 40);
-    seam(false);
-    // The tub and seats, clipped to the canopy's outline: the near hull hides the rest.
-    const inside = blankImage(width, height);
-    const { floor, walls } = tub();
-    drawGroup(
-      inside,
-      walls.map((w): [Material, Face] => ["dark", w]),
-    );
-    fillPolygon(inside, floor.map(proj), rgba(RAMPS.floor![1]!));
-    const key = (g: Group) => -depth(g.faces.flatMap(([, f]) => turned(f)));
-    let headsDone = false;
-    for (const group of interior().toSorted((a, b) => key(a) - key(b))) {
-      if (group.name.startsWith("back") && seated && !headsDone) {
-        // The backrests hide all but the tops of the heads.
-        for (const [c, r, hc] of HEADS) {
-          const [x, y] = proj(c);
-          const rr = S * r * 11 * 0.95;
-          fillEllipse(inside, [x - rr, y - rr * 0.9, x + rr, y + rr * 0.9], rgba(hc));
-        }
-        headsDone = true;
-      }
-      const outlined = ["back", "cush", "ped"].some((p) => group.name.startsWith(p));
-      drawGroup(inside, group.faces, outlined ? "2c5f63" : undefined);
-    }
     const mask = blankImage(width, height);
     fillPolygon(mask, silhouette, [255, 255, 255, 255]);
-    clip(inside, mask);
-    over(lay, inside);
-    // Astra: a rose-gold lens on the dash that glows warm while she speaks.
-    const [ax, ay] = proj(LENS);
-    const rr = S * 2.8;
-    disc(lay, [ax, ay], rr * 1.25, rgba("d9a08a"));
-    disc(lay, [ax, ay], rr, rgba("3b2a3f"));
-    if (astra.speaking) {
-      const f = astra.frame;
-      glow([ax, ay], rr * [3.2, 3.6, 4, 3.6][f]!, rgba("ffc9a8", 210), S * 3);
-      disc(lay, [ax, ay], rr * [0.7, 0.8, 0.9, 0.8][f]!, rgba("fff1e0"));
-    } else {
-      disc(lay, [ax, ay], rr * 0.45, rgba("9a6470"));
+    // Opaque like the sprite: a roof-coloured underlay under the outline hides seams between
+    // facets, then the darker lower band in the side colour and the roof colour lifted a little
+    // where the light falls.
+    fillPolygon(lay, silhouette, rgba(PAINT.canopyRoof));
+    for (const { band, points } of visible(
+      dome.map(({ band, face }) => ({ band, points: face })),
+    )) {
+      const light = Math.max(0, lit(points));
+      const [r, g, b] = band
+        ? mix(PAINT.canopySides, PAINT.canopyRoof, 0.25 * light)
+        : mix(PAINT.canopyRoof, PAINT.canopyHighlight, 0.35 * light ** 2);
+      fillPolygon(lay, points.map(proj), [r, g, b, 255]);
     }
-    glass(front, 64);
-    // A light edge around the canopy's outline.
-    const edge = blankImage(width, height);
-    polyline(edge, [...silhouette, silhouette[0]!], [225, 240, 255, 150], px(2), true);
-    over(lay, edge);
-    seam(true);
-    // A soft highlight across the upper left of the canopy.
+    // The sprite's highlight facets softened into a specular patch, with a glint at the
+    // brightest one.
+    const facets = spriteHighlight();
+    const spot = clear(rgba(PAINT.canopyHighlight));
+    for (const face of facets) {
+      fillPolygon(spot, face.map(proj), rgba(PAINT.canopyHighlight));
+    }
+    blur(spot, S * 5, bounds(facets.flat().map(proj), px(16)));
+    clip(spot, mask);
+    over(lay, spot);
+    glow(proj(centroid(facets[0]!)), S * 4, rgba("ffffff", 150), S * 2, mask);
+    // A thin rim of light along the upper left edge.
     const arc = Array.from({ length: 21 }, (_, t) =>
-      proj(canopyPoint(((150 + t * 4.5) * Math.PI) / 180, (55 * Math.PI) / 180)),
+      proj(canopyPoint(((140 + t * 5) * Math.PI) / 180, (35 * Math.PI) / 180)),
     );
-    const bounds = (points: readonly Xy[], pad: number): [number, number, number, number] => [
-      Math.min(...points.map(([x]) => x)) - pad,
-      Math.min(...points.map(([, y]) => y)) - pad,
-      Math.max(...points.map(([x]) => x)) + pad,
-      Math.max(...points.map(([, y]) => y)) + pad,
-    ];
-    for (const [points, w, alpha, sigma] of [
-      [arc, px(7), 150, Math.max(0.5, S * 2.5)],
-      [arc.slice(4, 14), px(2), 170, S * 0.6],
-    ] as const) {
-      const layer = blankImage(width, height);
-      polyline(layer, points, [255, 255, 255, alpha], w, true);
-      blur(layer, sigma, bounds(points, w));
-      over(lay, layer);
-    }
+    const rim = clear(rgba("ffffff"));
+    polyline(rim, arc, [255, 255, 255, 90], px(1.6), true);
+    blur(rim, S * 0.8, bounds(arc, px(2)));
+    clip(rim, mask);
+    over(lay, rim);
+    // The dark blue seam where the canopy meets the hull, on the near arc; the dome hides the
+    // far one.
+    const facing = (theta: number) => {
+      const out = rotate(SHIP_HEADINGS, YAW, [Math.cos(theta), Math.sin(theta), 0]);
+      return out[0] + out[1] > 0;
+    };
+    // Start on the far arc so the near arc is one run.
+    const start = Array.from({ length: 96 }, (_, u) => u).find((u) => !facing((u / 48) * Math.PI))!;
+    const near = Array.from({ length: 97 }, (_, u) => ((start + u) / 48) * Math.PI)
+      .filter(facing)
+      .map((theta) => proj(canopyPoint(theta, 0)));
+    polyline(lay, near, rgba(PAINT.recess), px(2.5), true);
   }
 
   const out = shimmer(view);
@@ -735,7 +568,7 @@ export function treat(view: View, image: RgbaImage): RgbaImage {
   return out;
 }
 
-export const cockpit = (view: View, scene: Scene) => treat(view, renderModel(view, scene));
+export const cockpit = (view: View, astra: Astra) => treat(view, renderModel(view, astra));
 
 // Smallest even-aligned rectangle holding every pixel that differs between a and any of others.
 function changed(a: RgbaImage, others: readonly RgbaImage[]) {
@@ -763,23 +596,18 @@ function changed(a: RgbaImage, others: readonly RgbaImage[]) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const view = centredView(CANVAS.width, CANVAS.height, CANVAS.density);
-  const idle: Astra = { speaking: false };
-  const empty = cockpit(view, { astra: idle, seated: false });
-  const seated = cockpit(view, { astra: idle, seated: true });
-  writePng(`${art}cockpit.png`, empty, true);
-  writePng(`${art}cockpit-seated.png`, seated, true);
-  const speaking = [0, 1, 2, 3].map((frame) =>
-    cockpit(view, { astra: { frame, speaking: true }, seated: true }),
-  );
-  // Astra's glow changes only the pixels round the dash lens, so it ships as patches over
-  // either background: the rectangle covers every speaking frame and must match there.
-  const patch = changed(seated, speaking);
-  const cut = (image: RgbaImage) => region(image, patch.x, patch.y, patch.width, patch.height);
-  if (changed(cut(empty), [cut(seated)]).width > 2) {
-    throw new Error("The seated heads reach Astra's patch");
-  }
+  // The opaque canopy hides the seats, so the empty and seated backgrounds are one image.
+  const idle = cockpit(view, { speaking: false });
+  writePng(`${art}cockpit.png`, idle, true);
+  writePng(`${art}cockpit-seated.png`, idle, true);
+  const speaking = [0, 1, 2, 3].map((frame) => cockpit(view, { frame, speaking: true }));
+  // Astra's lamp changes only the pixels round it, so it ships as patches over either
+  // background: the rectangle covers every speaking frame.
+  const patch = changed(idle, speaking);
   const sheet = filled(rgba(SPACE_BG), patch.width * speaking.length, patch.height);
-  speaking.forEach((frame, i) => over(sheet, cut(frame), i * patch.width, 0));
+  speaking.forEach((frame, i) =>
+    over(sheet, region(frame, patch.x, patch.y, patch.width, patch.height), i * patch.width, 0),
+  );
   writePng(`${art}cockpit-astra.png`, sheet, true);
 
   const d = CANVAS.density;
