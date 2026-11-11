@@ -48,17 +48,27 @@ describe("storybook art", () => {
 
   // Each cockpit Ada's room leads into: the empty one in the prologue, the seated one at boarding.
   const COCKPITS = ["cockpit", "cockpitSeated"] as const;
+  // Each rock glow: Ada's room into either cockpit, and Needle's recorder room into the seated
+  // one at boarding, each through its own room's three glow frames.
+  const GLOWS: readonly { cockpit: ArtBackground; frames: string; room: ArtBackground }[] = [
+    ...COCKPITS.map(
+      (cockpit) => ({ cockpit, frames: "story-ada-room-glow", room: "adaRoom" }) as const,
+    ),
+    { cockpit: "cockpitSeated", frames: "story-ada-room-recorder-glow", room: "adaRoomRecorder" },
+  ] as const;
+  const glows = (from: ArtBackground, to: ArtBackground) =>
+    GLOWS.some(({ cockpit, room }) => room === from && cockpit === to);
 
-  it("joins Ada's room to either cockpit with the rock glow frames", () => {
-    for (const cockpit of COCKPITS) {
-      const steps = transitionSteps(transitions, backgrounds.adaRoom, backgrounds[cockpit], false);
+  it("joins each glowing room to its cockpits with its rock glow frames", () => {
+    for (const { cockpit, frames, room } of GLOWS) {
+      const steps = transitionSteps(transitions, backgrounds[room], backgrounds[cockpit], false);
       expect(
         steps?.map(({ url }) => url),
-        cockpit,
+        `${room} to ${cockpit}`,
       ).toEqual([
-        asset("story-ada-room-glow-1")?.path,
-        asset("story-ada-room-glow-2")?.path,
-        asset("story-ada-room-glow-3")?.path,
+        asset(`${frames}-1`)?.path,
+        asset(`${frames}-2`)?.path,
+        asset(`${frames}-3`)?.path,
         backgrounds[cockpit],
       ]);
       expect(steps?.map(({ fadeMs, holdMs }) => [fadeMs, holdMs])).toEqual([
@@ -71,17 +81,17 @@ describe("storybook art", () => {
   });
 
   it("replaces the glow frames with one cross-fade under reduced motion", () => {
-    for (const cockpit of COCKPITS) {
-      expect(transitionSteps(transitions, backgrounds.adaRoom, backgrounds[cockpit], true)).toEqual(
-        [{ fadeMs: 400, holdMs: 0, url: backgrounds[cockpit] }],
-      );
+    for (const { cockpit, room } of GLOWS) {
+      expect(transitionSteps(transitions, backgrounds[room], backgrounds[cockpit], true)).toEqual([
+        { fadeMs: 400, holdMs: 0, url: backgrounds[cockpit] },
+      ]);
     }
   });
 
   it("cuts between every other pair of pages, and back from the cockpit", () => {
     for (const from of KEYS) {
       for (const to of KEYS) {
-        if (from !== "adaRoom" || !(COCKPITS as readonly ArtBackground[]).includes(to)) {
+        if (!glows(from, to)) {
           expect(
             transitionSteps(transitions, backgrounds[from], backgrounds[to], false),
             `${from} to ${to}`,

@@ -57,6 +57,8 @@ export type OvernightStep =
       readonly fadeMs: number;
       readonly holdMs: number;
       readonly kind: "background";
+      /** The background's composite overlays, which fade in with it. */
+      readonly overlays: readonly StoryOverlay[];
       readonly url: string;
     };
 
@@ -191,19 +193,27 @@ export function readOverlay(assets: readonly ArtAsset[], id: string): StoryOverl
 }
 
 /**
- * Each composite background's overlays: a background entry whose `overlays` lists entries drawn
- * over its path. A composite naming a missing or unplaced overlay draws as its path alone.
+ * The overlays a background entry's `overlays` lists, drawn over its path in order, such as Ada's
+ * sprites; none when it lists none, or when one it lists is missing or unplaced, so the
+ * background draws as its path alone.
  */
+export function backgroundOverlays(
+  assets: readonly ArtAsset[],
+  id: string,
+): readonly StoryOverlay[] {
+  const names = assets.find((asset) => asset.id === id)?.overlays ?? [];
+  const overlays = names.map((name) => readOverlay(assets, name));
+  return overlays.every((overlay) => overlay !== null) ? overlays : [];
+}
+
+/** Each composite background's overlays, for the keys whose entry lists placed overlays. */
 export function storyComposites(
   assets: readonly ArtAsset[],
 ): Partial<Record<Background, readonly StoryOverlay[]>> {
   return Object.fromEntries(
     Object.entries(BACKGROUND_ART).flatMap(([key, id]) => {
-      const names = assets.find((asset) => asset.id === id)?.overlays ?? [];
-      const overlays = names.map((name) => readOverlay(assets, name));
-      return names.length > 0 && overlays.every((overlay) => overlay !== null)
-        ? [[key, overlays]]
-        : [];
+      const overlays = backgroundOverlays(assets, id);
+      return overlays.length > 0 ? [[key, overlays]] : [];
     }),
   ) as Partial<Record<Background, readonly StoryOverlay[]>>;
 }
@@ -212,6 +222,7 @@ const nonnegative = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0;
 
 function readOvernightSteps(
+  assets: readonly ArtAsset[],
   overlays: ReadonlyMap<string, StoryOverlay>,
   byId: ReadonlyMap<string, string>,
   value: unknown,
@@ -236,8 +247,17 @@ function readOvernightSteps(
         ? { fadeMs: step.fadeMs, holdMs: step.holdMs, kind: "overlay", overlay }
         : null;
     }
-    const url = typeof step.background === "string" ? byId.get(step.background) : undefined;
-    return url ? { fadeMs: step.fadeMs, holdMs: step.holdMs, kind: "background", url } : null;
+    const id = typeof step.background === "string" ? step.background : undefined;
+    const url = id === undefined ? undefined : byId.get(id);
+    return id !== undefined && url
+      ? {
+          fadeMs: step.fadeMs,
+          holdMs: step.holdMs,
+          kind: "background",
+          overlays: backgroundOverlays(assets, id),
+          url,
+        }
+      : null;
   });
   return steps.every((step) => step !== null) ? steps : null;
 }
@@ -284,8 +304,8 @@ export function readOvernight(assets: readonly ArtAsset[], data: unknown): Overn
     return null;
   }
   const overlays = new Map(placed.map((overlay) => [overlay.id, overlay]));
-  const steps = readOvernightSteps(overlays, byId, value.steps);
-  const reducedMotion = readOvernightSteps(overlays, byId, value.reducedMotion);
+  const steps = readOvernightSteps(assets, overlays, byId, value.steps);
+  const reducedMotion = readOvernightSteps(assets, overlays, byId, value.reducedMotion);
   const ends = (list: readonly OvernightStep[] | null) => {
     const last = list?.at(-1);
     return last?.kind === "background" && last.url === to;

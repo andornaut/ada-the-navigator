@@ -1927,8 +1927,8 @@ try {
   );
 
   // Art's overnight room (art/storybook.md "Sequence"): the shield breaks in the browser, the jump
-  // lands at night, the sleep page plays the figures, the rock's breath and the cross-fade, and
-  // morning follows.
+  // lands at night, the sleep page plays the figures, the rock's breath and the cross-fade, with
+  // Ada's waking sprite fading in with the morning, and morning follows.
   await seedOnce(breakingSave, "ada-browser.overnight.v1");
   const storyNext = () => page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]');
   const roomShows = (background) =>
@@ -1962,6 +1962,30 @@ try {
     };
   });
   await page.screenshot({ path: `${output}/overnight-sleep.png` });
+  // Midway through the cross-fade to morning: the waking sprite rides in the incoming image, so it
+  // fades with the room instead of appearing after it.
+  const fadeState = await (
+    await page.waitForFunction(
+      () => {
+        const incoming = document.querySelectorAll(".ada-story-art")[1];
+        const opacity = incoming ? Number(getComputedStyle(incoming).opacity) : 0;
+        return (
+          incoming?.style.backgroundImage.includes("ada-room-morning") &&
+          opacity > 0.2 &&
+          opacity < 0.8 && {
+            incoming: incoming.style.backgroundImage,
+            opacity,
+            overlays: [...incoming.querySelectorAll(".ada-story-overlay")].map(
+              (node) => node.dataset.overlay,
+            ),
+          }
+        );
+      },
+      null,
+      { polling: "raf" },
+    )
+  ).jsonValue();
+  await page.screenshot({ path: `${output}/overnight-waking-fade.png` });
   await roomShows("adaRoomMorning");
   const sleptMs = Date.now() - sleepStart;
   await storyNext().waitFor({ state: "visible" });
@@ -1972,9 +1996,19 @@ try {
       .locator(".ada-story-art")
       .first()
       .evaluate((art) => art.style.backgroundImage),
-    overlays: await page.locator(".ada-story-overlay:not([hidden])").count(),
+    overlays: await page
+      .locator(".ada-story-overlay:not([hidden])")
+      .evaluateAll((nodes) => nodes.map((node) => node.dataset.overlay)),
+    // Ada's sprite samples nearest at the device-pixel backing, like the canvas behind it.
+    sampling: await page
+      .locator('.ada-story-overlay[data-overlay="story-ada-waking"]:not([hidden])')
+      .evaluate((node) => ({
+        overlay: getComputedStyle(node).imageRendering,
+        ratio: window.devicePixelRatio,
+      })),
   };
   save("overnight-proof.json", {
+    fadeState,
     morning,
     scope: "The browser's own shield break and jump home, then Art's overnight sequence",
     sleepState,
@@ -1991,9 +2025,30 @@ try {
     morning.art.includes("ada-room-morning"),
     `Morning must draw Art's room: ${morning.art}`,
   );
-  assert.equal(morning.overlays, 0, "The cross-fade to morning ends the overlays");
+  assert.ok(
+    fadeState.incoming.includes("ada-room-morning") &&
+      fadeState.opacity > 0 &&
+      fadeState.opacity < 1,
+    `The capture falls inside the cross-fade to morning: ${JSON.stringify(fadeState)}`,
+  );
+  assert.deepEqual(
+    fadeState.overlays,
+    ["story-ada-waking"],
+    "Ada's waking sprite fades in with the morning",
+  );
+  assert.equal(
+    morning.sampling.overlay,
+    "pixelated",
+    `Ada's waking sprite samples nearest: ${JSON.stringify(morning.sampling)}`,
+  );
+  assert.deepEqual(
+    morning.overlays,
+    ["story-ada-waking"],
+    "The cross-fade to morning ends the night's overlays and leaves Ada waking",
+  );
   events.checks.push(
-    "The browser's jump home lands in Art's night room, plays the overnight sequence and wakes in the morning room",
+    "The browser's jump home lands in Art's night room, plays the overnight sequence and wakes " +
+      "in the morning room, Ada's waking sprite fading in with it",
   );
 
   // A story run (gameplay/rules.md "Earth scenes"): from Start, Previous on the prologue's first

@@ -29,19 +29,24 @@ export interface PremiseLine {
 /** A prologue panel. Its choice replaces Continue; its optional questions never gate progress. */
 /**
  * A storybook location with Art's background: the Earth scenes (Ada's room also before the rock
- * is polished) and the cockpit, empty while Ada and Penny stand and seated once they sit.
+ * is polished and with the recorder, Grandma's garden also with the tray spilled and replanted)
+ * and the cockpit, empty while Ada and Penny stand and seated once they sit.
  */
 export type ArtBackground =
   | "adaRoom"
   | "adaRoomMorning"
   | "adaRoomNight"
+  | "adaRoomRecorder"
   | "adaRoomSleep"
   | "adaRoomUnpolished"
   | "cockpit"
   | "cockpitSeated"
+  | "concertHall"
   | "frontDoor"
   | "gardenLot"
   | "grandmaGarden"
+  | "grandmaGardenReplanted"
+  | "grandmaGardenSpilled"
   | "park"
   | "schoolHallway"
   | "schoolyard";

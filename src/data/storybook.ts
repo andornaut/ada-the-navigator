@@ -17,19 +17,24 @@ export const CHAPTER_BACKGROUNDS: Readonly<
 /**
  * Each location's background in Art's root manifest, by asset id (art/storybook.md). Ada's room
  * through the overnight recharge is night, asleep (a composite: the night with the sleeping
- * figures over it) and morning.
+ * figures over it) and morning (a composite: Ada's waking sprite over it); the concert hall is a
+ * composite with Ada's playing sprite.
  */
 export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   adaRoom: "story-ada-room",
   adaRoomMorning: "story-ada-room-morning",
   adaRoomNight: "story-ada-room-night",
+  adaRoomRecorder: "story-ada-room-recorder",
   adaRoomSleep: "story-ada-room-sleep",
   adaRoomUnpolished: "story-ada-room-unpolished",
   cockpit: "cockpit",
   cockpitSeated: "cockpit-seated",
+  concertHall: "story-concert-hall",
   frontDoor: "story-front-door",
   gardenLot: "story-community-garden",
   grandmaGarden: "story-grandma-garden",
+  grandmaGardenReplanted: "story-grandma-garden-replanted",
+  grandmaGardenSpilled: "story-grandma-garden-spilled",
   park: "story-park",
   schoolHallway: "story-school-hallway",
   schoolyard: "story-schoolyard",

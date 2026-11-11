@@ -386,15 +386,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   };
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
   // One overlay's element, made on first use and placed by its box.
-  const overlayFor = (overlay: StoryOverlay): HTMLDivElement => {
-    let node = overlays.get(overlay.id);
-    if (!node) {
-      node = document.createElement("div");
-      node.className = "ada-story-overlay";
-      node.dataset.overlay = overlay.id;
-      base.append(node);
-      overlays.set(overlay.id, node);
-    }
+  // An overlay element for overlay, placed on the canvas by its box.
+  const placeOverlay = (overlay: StoryOverlay, node = document.createElement("div")) => {
+    node.className = "ada-story-overlay";
+    node.dataset.overlay = overlay.id;
     const { box } = overlay;
     Object.assign(node.style, {
       backgroundImage: image(overlay.url),
@@ -404,6 +399,19 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       width: `${box.width}%`,
     });
     return node;
+  };
+  const overlayFor = (overlay: StoryOverlay): HTMLDivElement => {
+    let node = overlays.get(overlay.id);
+    if (!node) {
+      node = placeOverlay(overlay);
+      base.append(node);
+      overlays.set(overlay.id, node);
+    }
+    return placeOverlay(overlay, node);
+  };
+  // An incoming background's overlays, inside the incoming image so they fade in with it.
+  const showIncomingOverlays = (shown: readonly StoryOverlay[]) => {
+    incoming.replaceChildren(...shown.map((overlay) => placeOverlay(overlay)));
   };
   // Shows these overlays at the given opacity and hides every other.
   const showOverlays = (shown: readonly StoryOverlay[], opacity: number) => {
@@ -429,6 +437,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const stopNight = () => {
     clearTimeout(nightTimer);
     nightTimer = undefined;
+    showIncomingOverlays([]);
     for (const animation of nightAnimations) {
       animation.cancel();
     }
@@ -465,7 +474,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       );
       ms = step.ms;
     } else {
+      // The morning's own overlays (Ada waking) fade in with it, not after the cross-fade.
       incoming.style.backgroundImage = image(step.url);
+      showIncomingOverlays(step.overlays);
       if (step.fadeMs > 0) {
         nightAnimations.push(
           incoming.animate([{ opacity: 0 }, { opacity: 1 }], {
@@ -480,8 +491,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     nightTimer = setTimeout(() => {
       if (step.kind === "background") {
         base.style.backgroundImage = image(step.url);
-        showOverlays([], 1);
+        showOverlays(step.overlays, 1);
         incoming.style.backgroundImage = "";
+        showIncomingOverlays([]);
       }
       for (const animation of nightAnimations.splice(0)) {
         animation.cancel();

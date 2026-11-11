@@ -37,16 +37,24 @@ describe("Art's overnight room", () => {
     expect(overnight).not.toBeNull();
   });
 
-  it("draws night, sleep and morning from Art's backgrounds, the sleep a composite on the night", () => {
+  it("draws night, sleep and morning from Art's backgrounds, sleep and morning composites", () => {
     const backgrounds = storyBackgrounds(manifest.assets);
     expect(backgrounds.adaRoomNight).toBe("/art/story/ada-room-night.png");
     expect(backgrounds.adaRoomMorning).toBe("/art/story/ada-room-morning.png");
     expect(backgrounds.adaRoomSleep).toBe(backgrounds.adaRoomNight);
+    // Every background whose entry lists overlays is a composite: the sleeping figures on the
+    // night, and Ada's sprites waking in the morning and playing in the concert hall.
     const composites = storyComposites(manifest.assets);
-    expect(Object.keys(composites)).toEqual(["adaRoomSleep"]);
+    expect(Object.keys(composites).sort()).toEqual([
+      "adaRoomMorning",
+      "adaRoomSleep",
+      "concertHall",
+    ]);
     expect(composites.adaRoomSleep).toEqual([
       readOverlay(manifest.assets, "story-ada-room-sleep-figures"),
     ]);
+    expect(composites.adaRoomMorning).toEqual([readOverlay(manifest.assets, "story-ada-waking")]);
+    expect(composites.concertHall).toEqual([readOverlay(manifest.assets, "story-ada-playing")]);
     for (const url of [backgrounds.adaRoomNight!, backgrounds.adaRoomMorning!]) {
       expect(existsSync(publicFile(url)), url).toBe(true);
     }
@@ -67,6 +75,19 @@ describe("Art's overnight room", () => {
       (361 / 960) * 100,
       12,
     );
+    // Ada's sprites: 48 by 42 at scale 2 on (249, 264), 44 by 56 at scale 1 on (480, 228).
+    expect(readOverlay(manifest.assets, "story-ada-waking")?.box).toEqual({
+      height: (84 / 540) * 100,
+      left: (249 / 960) * 100,
+      top: (264 / 540) * 100,
+      width: (96 / 960) * 100,
+    });
+    expect(readOverlay(manifest.assets, "story-ada-playing")?.box).toEqual({
+      height: (56 / 540) * 100,
+      left: (480 / 960) * 100,
+      top: (228 / 540) * 100,
+      width: (44 / 960) * 100,
+    });
     expect(readOverlay(manifest.assets, "story-ada-room-night")).toBeNull();
     expect(readOverlay(manifest.assets, "missing")).toBeNull();
     for (const overlay of overnight.overlays) {
@@ -89,6 +110,15 @@ describe("Art's overnight room", () => {
     expect(overnightSeconds(overnight, false)).toBe(2.5);
   });
 
+  it("fades Ada's waking sprite in with the morning, not after the cross-fade", () => {
+    const waking = [readOverlay(manifest.assets, "story-ada-waking")];
+    for (const reduced of [false, true]) {
+      const morning = overnightSteps(overnight, reduced).at(-1)!;
+      expect(morning.kind).toBe("background");
+      expect(morning.kind === "background" && morning.overlays).toEqual(waking);
+    }
+  });
+
   it("under reduced motion shows the figures at once, holds 2 s, then one 400 ms cross-fade", () => {
     const steps = overnightSteps(overnight, true);
     expect(steps).toEqual([
@@ -98,7 +128,13 @@ describe("Art's overnight room", () => {
         kind: "overlay",
         overlay: readOverlay(manifest.assets, "story-ada-room-sleep-figures"),
       },
-      { fadeMs: 400, holdMs: 0, kind: "background", url: path("story-ada-room-morning") },
+      {
+        fadeMs: 400,
+        holdMs: 0,
+        kind: "background",
+        overlays: [readOverlay(manifest.assets, "story-ada-waking")],
+        url: path("story-ada-room-morning"),
+      },
     ]);
     // No breath: the glow holds steady.
     expect(steps.some((step) => step.kind === "breath")).toBe(false);
@@ -170,7 +206,22 @@ describe("Art's overnight room", () => {
     const assets = manifest.assets.map((entry) =>
       entry.id === "story-ada-room-sleep" ? { ...entry, overlays: ["story-missing"] } : entry,
     );
-    expect(storyComposites(assets)).toEqual({});
+    // Only the broken composite drops; the others keep their overlays.
+    const composites = storyComposites(assets);
+    expect(composites).not.toHaveProperty("adaRoomSleep");
+    expect(composites).toEqual({
+      adaRoomMorning: storyComposites(manifest.assets).adaRoomMorning,
+      concertHall: storyComposites(manifest.assets).concertHall,
+    });
     expect(storyBackgrounds(assets).adaRoomSleep).toBe(path("story-ada-room-night"));
+  });
+
+  it("cross-fades to the morning alone when its waking sprite is missing", () => {
+    const assets = manifest.assets.map((entry) =>
+      entry.id === "story-ada-waking" ? { id: entry.id, path: entry.path } : entry,
+    );
+    const morning = readOvernight(assets, data)?.steps.at(-1);
+    expect(morning?.kind === "background" && morning.overlays).toEqual([]);
+    expect(storyComposites(assets)).not.toHaveProperty("adaRoomMorning");
   });
 });
