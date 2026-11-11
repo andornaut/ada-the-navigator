@@ -17,8 +17,8 @@ interface Allowed {
 
 const ALLOWED: readonly Allowed[] = [
   { file: "touch-chrome.ts", reason: "Procedural stick chrome draws in its frames' own px" },
-  // CLEANUP (added 2026-11-11): remove once weapons.ts reads src/ui/layout
-  { file: "weapons.ts", reason: "Weapon buttons and the Stardust pill await Art's HUD spec" },
+  // CLEANUP (added 2026-11-11): remove once the shield pill beside pause holds the Stardust count
+  { file: "stardust-counter.ts", reason: "The placeholder Stardust count awaits Art's shield pin" },
   {
     file: "settings.ts",
     reason: "The base button under the weapon buttons",
@@ -157,6 +157,7 @@ describe("DOM UI sizes", () => {
     expect(rawPixelFindings("station.ts", "`.ada-controls .ada-shop-row{gap:4px}`")).toHaveLength(
       1,
     );
+    expect(rawPixelFindings("weapons.ts", "`.ada-controls .ada-weapon{gap:4px}`")).toHaveLength(1);
     expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
   });
 });

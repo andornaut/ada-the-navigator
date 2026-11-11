@@ -30,8 +30,8 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import { createStardustCounter } from "../ui/stardust-counter.ts";
 import { createStationView } from "../ui/station.ts";
-import { createStardustCounter } from "../ui/weapons.ts";
 import {
   type DestructionData,
   flashAt,

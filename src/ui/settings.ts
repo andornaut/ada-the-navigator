@@ -8,8 +8,8 @@ import {
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, NINE_SLICE_EDGES } from "./layout/controls.ts";
-import { font, safeEdge, units, viewStyle } from "./layout/css.ts";
-import { HUD_BUTTON, SAFE_MARGIN, SHIELD_BAR } from "./layout/playView.ts";
+import { font, fromHudEdge, safeEdge, units, viewStyle } from "./layout/css.ts";
+import { SHIELD_BAR } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -25,10 +25,11 @@ import {
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
+import { STARDUST_COUNTER_STYLE } from "./stardust-counter.ts";
 import { START_STYLE } from "./start-card.ts";
 import { STATION_STYLE } from "./station.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
-import { WEAPON_STYLE } from "./weapons.ts";
+import { hudDiscStyle, WEAPON_STYLE } from "./weapons.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -66,8 +67,8 @@ export interface SettingsOptions {
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
 }
 
-// The start screen's Settings glyph, drawn at the HUD glyph size.
-const SETTINGS_GLYPH = { key: "icon-settings-nav-24", size: HUD_BUTTON.glyph } as const;
+// The start screen's Settings glyph: the 20 gear, drawn at the HUD glyph size.
+const SETTINGS_GLYPH = "icon-settings-nav";
 
 const STYLE = `
 @font-face{
@@ -119,44 +120,15 @@ ${viewStyle(NINE_SLICE_EDGES)}
   outline-offset:4px
 }
 
-/* The start screen's Settings: a HUD button on the HUD safe rect's top-right corner. */
+/* The start screen's Settings: an idle HUD disc button on the HUD rect's top-right corner, its
+   20 gear a mask in the idle glyph colour. */
 .ada-controls .ada-settings-open{
   position:absolute;
-  right:${safeEdge("right", SAFE_MARGIN.hud)};
-  top:${safeEdge("top", SAFE_MARGIN.hud)};
-  width:${units(HUD_BUTTON.size)};
-  height:${units(HUD_BUTTON.size)};
-  min-width:0;
-  min-height:0;
-  padding:0;
-  border-width:${units(HUD_BUTTON.border)};
-  border-radius:${units(HUD_BUTTON.radius)};
-  display:grid;
-  place-items:center
+  right:${fromHudEdge("right")};
+  top:${fromHudEdge("top")};
+  --glyph:url('/art/ui/sprites/${SETTINGS_GLYPH}.png')
 }
-
-.ada-controls .ada-settings-open{
-  background:#262b44;
-  border-color:#181425;
-  color:#ead4aa
-}
-
-.ada-controls .ada-settings-open[aria-expanded=true]{
-  background:#181425
-}
-
-.ada-controls .ada-settings-open::before{
-  content:"";
-  width:${units(SETTINGS_GLYPH.size)};
-  height:${units(SETTINGS_GLYPH.size)};
-  background:url('/art/ui/sprites/${SETTINGS_GLYPH.key}.png') center / ${units(
-    SETTINGS_GLYPH.size,
-  )} ${units(SETTINGS_GLYPH.size)} no-repeat;
-  image-rendering:pixelated
-}
-
-.ada-controls .ada-settings-open:focus-visible{${FOCUS_STYLE}
-}
+${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
 
 /* The shield bar across the shield safe rect, on its bottom edge. */
 .ada-controls .ada-shield-meter{
@@ -231,7 +203,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
-  style.textContent = STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE;
+  style.textContent =
+    STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE + STARDUST_COUNTER_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
@@ -239,6 +212,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   openButton.title = options.labels.settings;
   openButton.setAttribute("aria-haspopup", "dialog");
   openButton.setAttribute("aria-expanded", "false");
+  const openDisc = document.createElement("span");
+  openDisc.className = "ada-disc";
+  openDisc.setAttribute("aria-hidden", "true");
+  openButton.append(openDisc);
   const useButton = document.createElement("button");
   useButton.className = "ada-use";
   useButton.hidden = true;

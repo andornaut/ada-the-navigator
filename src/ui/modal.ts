@@ -12,10 +12,11 @@ import {
   FOCUS_RING,
   TEXT_BUTTON,
 } from "./layout/controls.ts";
-import { font, fromSafeEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
 import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { PAUSE_ART } from "./pause.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
 // the dark lavender palette) and art/layout.md sizes them: Settings, the install steps, the update
@@ -84,9 +85,6 @@ export const FOCUS_STYLE = `
 
 // The close X's press area relative to the card's top-right corner.
 const CLOSE_HIT = CARD_CLOSE.hit;
-
-// The pause sheet's frames sit side by side.
-const PAUSE_SHEET_FRAMES = 4;
 
 // The shared card and control styles apply in the controls overlay and on the start screen.
 export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
@@ -349,12 +347,12 @@ ${UI_SCOPE} .ada-card .ada-card-note{
   text-align:center
 }
 
-/* Chibi's pause button: the 35 frame on the HUD safe rect's top-left corner, in its hitAround
-   press area. */
+/* Chibi's pause button: the 35 frame on the HUD rect's top-left corner, in its hitAround press area.
+   Its vector art draws with smooth sampling at every scale; ui-pause gives only tags and timing. */
 ${UI_SCOPE} .ada-pause{
   position:absolute;
-  left:${fromSafeEdge("left", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.x)};
-  top:${fromSafeEdge("top", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.y)};
+  left:${fromHudEdge("left", PAUSE_BUTTON.hit.x)};
+  top:${fromHudEdge("top", PAUSE_BUTTON.hit.y)};
   width:${units(PAUSE_BUTTON.hit.width)};
   height:${units(PAUSE_BUTTON.hit.height)};
   min-width:0;
@@ -372,11 +370,13 @@ ${UI_SCOPE} .ada-pause::before{
   content:"";
   width:${units(PAUSE_BUTTON.art.width)};
   height:${units(PAUSE_BUTTON.art.height)};
-  background:url('/art/ui/sprites/ui-pause.png') var(--pause-frame,0) 0;
-  background-size:${units(PAUSE_SHEET_FRAMES * PAUSE_BUTTON.art.width)} ${units(
-    PAUSE_BUTTON.art.height,
-  )};
-  image-rendering:pixelated
+  background:url('${PAUSE_ART.rest}') center / 100% 100% no-repeat
+}
+${UI_SCOPE} .ada-pause[data-pose=press]::before{
+  background-image:url('${PAUSE_ART.press}')
+}
+${UI_SCOPE} .ada-pause[data-pose=held]::before{
+  background-image:url('${PAUSE_ART.held}')
 }
 ${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }

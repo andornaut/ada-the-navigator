@@ -1,4 +1,4 @@
-import { font, safeEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { font, fromHudEdge, safeEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { NOTICE, SAFE_MARGIN } from "./layout/playView.ts";
 
 // Notices (art/layout.md "HUD and overlays", Notice): the game's status line (#game-status) and
@@ -9,13 +9,11 @@ import { NOTICE, SAFE_MARGIN } from "./layout/playView.ts";
 // The second strip's top: one strip and a gap below the first.
 const SECOND = NOTICE.height + NOTICE.gap;
 
-// The widest a strip may be: the story panel's measure, or the HUD safe rect less the notice
+// The widest a strip may be: the story panel's measure, or the HUD rect less the notice
 // reserve on each side.
-const MAX_WIDTH = `min(${units(NOTICE.maxWidth)},calc(100% - 2 * (max(var(${VIEW_PROPERTIES.safe(
+const MAX_WIDTH = `min(${units(NOTICE.maxWidth)},calc(100% - 2 * (max(${fromHudEdge(
   "left",
-)}),var(${VIEW_PROPERTIES.safe("right")}),${units(SAFE_MARGIN.hud)}) + var(${
-  VIEW_PROPERTIES.noticeReserve
-}))))`;
+)},${fromHudEdge("right")}) + var(${VIEW_PROPERTIES.noticeReserve}))))`;
 
 export const NOTICE_STYLE = `
 #game-status,

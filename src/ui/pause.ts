@@ -58,10 +58,12 @@ interface PauseSheet {
 
 export interface PauseFrame {
   readonly duration: number;
-  readonly x: number;
+  // The frame's index in the sheet, which picks its pose.
+  readonly index: number;
 }
 
-// ui-pause's frames by tag: rest, the press frames played once, and held.
+// ui-pause's frames by tag: rest, the press frames played once, and held. The sheet gives tags and
+// timing only; the button draws each frame's pose from its vector art.
 export function pauseFrames(
   sheet: PauseSheet,
 ): Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> {
@@ -73,7 +75,26 @@ export function pauseFrames(
     }
     return frames
       .slice(found.from, found.to + 1)
-      .map(({ duration, frame }) => ({ duration, x: frame.x }));
+      .map(({ duration }, offset) => ({ duration, index: found.from + offset }));
   };
   return { held: tag("held"), press: tag("press"), rest: tag("rest") };
+}
+
+// The pause button's vector art per pose (art/controls.md "Pause"): rest, the press swell, and
+// held, which also shows the press's second frame.
+export const PAUSE_ART = {
+  held: "/art/ui/icons/pause-held.svg",
+  press: "/art/ui/icons/pause-press.svg",
+  rest: "/art/ui/icons/pause.svg",
+} as const;
+
+export type PausePose = keyof typeof PAUSE_ART;
+
+// The pose a ui-pause sheet frame shows: frame 0 rest, frame 1 the press swell, frames 2 and 3
+// held.
+export function pausePose(frame: number): PausePose {
+  if (frame <= 0) {
+    return "rest";
+  }
+  return frame === 1 ? "press" : "held";
 }

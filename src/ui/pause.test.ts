@@ -6,9 +6,11 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createBackStack, pressBack } from "./back-stack.ts";
 import {
   escapeTarget,
+  PAUSE_ART,
   pauseActions,
   pauseButtonShown,
   pauseFrames,
+  pausePose,
   travelShowsEmpty,
 } from "./pause.ts";
 
@@ -68,6 +70,19 @@ describe("pause button", () => {
     expect(frames.held).toHaveLength(1);
     const manifest = json("manifest.json") as { sprites: { key: string; once: string[] }[] };
     expect(manifest.sprites.find(({ key }) => key === "ui-pause")?.once).toContain("press");
+  });
+
+  it("draws each sheet frame as its vector pose: 0 rest, 1 press, 2 and 3 held", () => {
+    const frames = pauseFrames(json("sprites/ui-pause.json") as Parameters<typeof pauseFrames>[0]);
+    const poses = [...frames.rest, ...frames.press, ...frames.held].map(({ index }) =>
+      pausePose(index),
+    );
+    expect(poses).toEqual(["rest", "press", "held", "held"]);
+    for (const path of Object.values(PAUSE_ART)) {
+      expect(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8")).toContain(
+        'viewBox="0 0 35 35"',
+      );
+    }
   });
 });
 

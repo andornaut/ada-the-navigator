@@ -1,4 +1,7 @@
 import type { Weapon } from "../data/types.ts";
+import { FOCUS_RING } from "./layout/controls.ts";
+import { fromHudEdge, units } from "./layout/css.ts";
+import { HUD_BUTTON } from "./layout/playView.ts";
 import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
@@ -29,97 +32,109 @@ export function weaponButtonState(choice: WeaponChoice): WeaponButtonState {
   return choice.locked ? "locked" : "idle";
 }
 
-/** The single-colour 24px HUD glyph, drawn as a mask over the button's text colour. */
+/** The single-colour 20px weapon glyph, drawn as a mask over the button's text colour. */
 export function weaponGlyphPath(weapon: Weapon): string {
-  return `/art/ui/icons/weapon-${weapon}-24.svg`;
+  return `/art/ui/icons/weapon-${weapon}.svg`;
 }
 
-// The top-right HUD icon button states (art/controls.md "Top-right HUD icon buttons"). Each
-// glyph is a mask over currentColor, so a state's colour, and the refusal cue's red text
-// colour, tint it.
-export const WEAPON_STYLE = `
-/* PLACEHOLDER (Art): the HUD Stardust count, a plain text plate under the weapon buttons. */
-.ada-controls .ada-stardust{
-  position:absolute;
-  right:max(8px,var(--inset-right));
-  top:calc(max(8px,var(--inset-top)) + 56px);
-  padding:2px 8px;
-  background:#262b44;
-  color:#ead4aa;
-  border:2px solid #181425;
-  font-size:14px;
-  line-height:20px;
-  pointer-events:none
-}
+// Each state's disc face, its ink edge (an annulus when selected) and glyph colour
+// (art/controls.md "Top-right HUD icon buttons").
+export const HUD_DISC_STATES = {
+  idle: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#b8b3c9" },
+  locked: { edge: HUD_BUTTON.edge, face: "#262b44", glyph: "#6f7891" },
+  selected: { edge: HUD_BUTTON.annulus, face: "#bfa06f", glyph: "#181425" },
+} as const satisfies Record<WeaponButtonState, unknown>;
 
-.ada-controls .ada-weapon-selector{
-  position:absolute;
-  right:calc(max(8px,var(--inset-right)) + 56px);
-  top:max(8px,var(--inset-top));
-  display:flex;
-  gap:4px
-}
+const INK = "#181425";
 
-/* Without the settings button (in play) the weapon buttons keep the top-right corner. */
-.ada-controls.ada-no-settings-button .ada-weapon-selector{
-  right:max(8px,var(--inset-right))
-}
+// A disc's ink edge, and with focus the shared focus ring outside it, round with the disc.
+const discShadow = (focused: boolean) =>
+  focused
+    ? `inset 0 0 0 var(--disc-edge) ${INK},0 0 0 ${units(FOCUS_RING.fringe)} ${INK},0 0 0 ${units(
+        FOCUS_RING.outset,
+      )} ${INK}`
+    : `inset 0 0 0 var(--disc-edge) ${INK}`;
 
-.ada-controls .ada-weapon-selector .ada-weapon{
-  position:relative;
+// One HUD disc button's chrome: a target that is its press area, a smooth disc centred in it, and
+// a glyph centred on the disc, drawn in CSS at logical units so it stays sharp at any scale. The
+// start screen's Settings shares it.
+export function hudDiscStyle(button: string, disc: string): string {
+  return `
+${button}{
   box-sizing:border-box;
-  width:48px;
-  height:48px;
-  min-width:48px;
-  min-height:48px;
+  width:${units(HUD_BUTTON.target)};
+  height:${units(HUD_BUTTON.target)};
+  min-width:0;
+  min-height:0;
+  margin:0;
   padding:0;
   display:grid;
   place-items:center;
-  border:2px solid #181425;
-  border-radius:8px;
-  background:#262b44;
-  color:#ead4aa;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:${HUD_DISC_STATES.idle.glyph};
   cursor:pointer;
-  pointer-events:auto
+  pointer-events:auto;
+  touch-action:manipulation;
+  --disc-edge:${units(HUD_DISC_STATES.idle.edge)}
 }
-
-.ada-controls .ada-weapon-selector .ada-weapon[data-state=selected]{
-  background:#f0bd68;
-  color:#181425
-}
-
-/* The selection ring: 2px cream, 2px outside the face, radius 12 at its outer edge. */
-.ada-controls .ada-weapon-selector .ada-weapon[data-state=selected]::after{
-  content:"";
-  position:absolute;
-  inset:-6px;
-  border:2px solid #ead4aa;
-  border-radius:12px;
+${button} ${disc}{
+  box-sizing:border-box;
+  width:${units(HUD_BUTTON.disc)};
+  height:${units(HUD_BUTTON.disc)};
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:${HUD_DISC_STATES.idle.face};
+  box-shadow:${discShadow(false)};
   pointer-events:none
 }
+${button}:focus-visible{
+  outline:none;
+  box-shadow:none
+}
+${button}:focus-visible ${disc}{
+  outline:${units(FOCUS_RING.band)} solid #ead4aa;
+  outline-offset:${units(FOCUS_RING.fringe)};
+  box-shadow:${discShadow(true)}
+}
+${button} ${disc}::before{
+  content:"";
+  width:${units(HUD_BUTTON.glyph)};
+  height:${units(HUD_BUTTON.glyph)};
+  background:currentColor;
+  -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
+  mask:var(--glyph) center / 100% 100% no-repeat
+}
+`;
+}
 
-.ada-controls .ada-weapon-selector .ada-weapon[data-state=locked]{
-  background:#1d2032;
-  color:#6f7891;
+// The top-right weapon buttons (art/controls.md "Top-right HUD icon buttons"), Chibi's skill
+// buttons: HUD_BUTTON targets packed against the HUD rect's top-right corner, a gap apart. Each
+// glyph is a mask over currentColor, so a state's colour, and the refusal cue's red text colour,
+// tint it; selection, lock and refusal never resize the disc or glyph.
+export const WEAPON_STYLE = `
+.ada-controls .ada-weapon-selector{
+  position:absolute;
+  right:${fromHudEdge("right")};
+  top:${fromHudEdge("top")};
+  display:flex;
+  gap:${units(HUD_BUTTON.gap)}
+}
+${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
+.ada-controls .ada-weapon[data-state=selected]{
+  color:${HUD_DISC_STATES.selected.glyph};
+  --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
+}
+.ada-controls .ada-weapon[data-state=selected] .ada-disc{
+  background:${HUD_DISC_STATES.selected.face}
+}
+.ada-controls .ada-weapon[data-state=locked]{
+  color:${HUD_DISC_STATES.locked.glyph};
   cursor:default
 }
-
-.ada-controls .ada-weapon-selector .ada-weapon-glyph{
-  width:24px;
-  height:24px;
-  background:currentColor;
-  -webkit-mask:var(--glyph) center / 24px 24px no-repeat;
-  mask:var(--glyph) center / 24px 24px no-repeat;
-  pointer-events:none
-}
-
-.ada-controls .ada-weapon-selector .ada-weapon:focus-visible{
-  outline:3px solid #ead4aa;
-  outline-offset:4px
-}
-
-.ada-controls .ada-weapon-selector .ada-weapon:disabled{
-  opacity:0.5;
+.ada-controls .ada-weapon:disabled{
   cursor:default
 }
 `;
@@ -151,11 +166,11 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         button.type = "button";
         button.className = "ada-weapon";
         button.dataset.weapon = choice.id;
-        const glyph = document.createElement("span");
-        glyph.className = "ada-weapon-glyph";
-        glyph.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
-        glyph.setAttribute("aria-hidden", "true");
-        button.append(glyph);
+        const disc = document.createElement("span");
+        disc.className = "ada-disc";
+        disc.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
+        disc.setAttribute("aria-hidden", "true");
+        button.append(disc);
         button.addEventListener("click", () => {
           if (enabled && !button.disabled) {
             if (button.dataset.state === "locked") {
@@ -187,24 +202,6 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     setWeapons(value: readonly WeaponChoice[]): void {
       choices = value;
       render();
-    },
-  };
-}
-
-/** PLACEHOLDER (Art): the HUD Stardust count, a plain text plate. */
-export function createStardustCounter(parent: HTMLElement) {
-  const node = document.createElement("div");
-  node.className = "ada-stardust";
-  node.setAttribute("role", "status");
-  node.hidden = true;
-  parent.append(node);
-  return {
-    dispose: () => node.remove(),
-    set(value: string | null): void {
-      node.hidden = value === null;
-      if (value !== null && node.textContent !== value) {
-        node.textContent = value;
-      }
     },
   };
 }

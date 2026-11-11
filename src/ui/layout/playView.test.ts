@@ -2,17 +2,21 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { describe, expect, it } from "vitest";
 
 import { TEXT_BUTTON } from "./controls.ts";
-import { fromSafeEdge, safeEdge, slice, units } from "./css.ts";
-import { hitAround } from "./hitAreas.ts";
+import { fromSafeEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./css.ts";
+import { HIT_RULE, hitAround } from "./hitAreas.ts";
 import {
   CONTROL_EDGE,
   HUD_BUTTON,
-  hudButtonFace,
+  HUD_BUTTON_INSET,
+  hudButtonTarget,
+  hudRect,
+  hudRowWidth,
   type Insets,
   logicalView,
   NO_INSETS,
   noticeReserve,
   PAUSE_BUTTON,
+  playView,
   SAFE_MARGIN,
   safeInsets,
   safeRect,
@@ -127,57 +131,112 @@ describe("safe-margin clamp", () => {
   });
 });
 
+describe("HUD rect", () => {
+  const phoneView = logicalView({ height: 390, width: 844 });
+  const edges = (rect: Rect) => ({ left: rect.x, right: rect.x + rect.width, top: rect.y });
+
+  it("centres Chibi's 720x360 play view across the logical view, at its top", () => {
+    expect(playView(phoneView)).toEqual({ height: 360, width: 720, x: 29, y: 0 });
+    expect(playView({ height: 405, width: 720 })).toEqual({ height: 360, width: 720, x: 0, y: 0 });
+  });
+
+  it.each([
+    [844, 390, NO_INSETS, { left: 37, right: 741, top: 8 }],
+    [844, 390, { bottom: 0, left: 43, right: 43, top: 0 }, { left: 43, right: 736.08, top: 8 }],
+    [1280, 720, NO_INSETS, { left: 8, right: 712, top: 8 }],
+    [1920, 1080, NO_INSETS, { left: 8, right: 712, top: 8 }],
+  ])("at %ix%i with insets %o has the edges %o", (width, height, insets, expected) => {
+    const rect = edges(hudRect(insets, logicalView({ height, width })));
+    expect(rect.left).toBeCloseTo(expected.left, 2);
+    expect(rect.right).toBeCloseTo(expected.right, 2);
+    expect(rect.top).toBe(expected.top);
+  });
+
+  it("gives the bridge the HUD rect's edges in CSS px", () => {
+    const layout = playLayout({ height: 390, width: 844 }, NO_INSETS);
+    const properties = new Map(viewProperties(layout));
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("left"))!)).toBeCloseTo(37 * layout.s, 6);
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("right"))!)).toBeCloseTo(
+      (layout.view.width - 741) * layout.s,
+      6,
+    );
+    expect(parseFloat(properties.get(VIEW_PROPERTIES.hud("top"))!)).toBeCloseTo(8 * layout.s, 6);
+  });
+});
+
 describe("HUD anchors", () => {
-  const view = { height: 360, width: 720 };
+  const view = logicalView({ height: 390, width: 844 });
   const phone: Insets = { bottom: 19, left: 43, right: 43, top: 0 };
-  const hud = safeRect(phone, CONTROL_EDGE, view);
-  // A rect relative to the HUD safe rect's top-left or top-right corner, in the view.
-  const fromLeft = (rect: Rect): Rect => ({ ...rect, x: hud.x + rect.x, y: hud.y + rect.y });
-  const fromRight = (rect: Rect): Rect => ({
-    ...rect,
-    x: hud.x + hud.width + rect.x,
-    y: hud.y + rect.y,
-  });
-  const inside = (rect: Rect, bounds: Rect) =>
-    rect.x >= bounds.x &&
-    rect.y >= bounds.y &&
-    rect.x + rect.width <= bounds.x + bounds.width &&
-    rect.y + rect.height <= bounds.y + bounds.height;
+  // The pause frame and weapon targets lie inside the play view inset by CONTROL_EDGE.
+  for (const [name, insets] of [
+    ["no insets", NO_INSETS],
+    ["phone insets", phone],
+  ] as const) {
+    const hud = hudRect(insets, view);
+    const play = playView(view);
+    const bounds: Rect = {
+      height: play.height - 2 * CONTROL_EDGE,
+      width: play.width - 2 * CONTROL_EDGE,
+      x: play.x + CONTROL_EDGE,
+      y: play.y + CONTROL_EDGE,
+    };
+    const fromLeft = (rect: Rect): Rect => ({ ...rect, x: hud.x + rect.x, y: hud.y + rect.y });
+    const fromRight = (rect: Rect): Rect => ({
+      ...rect,
+      x: hud.x + hud.width + rect.x,
+      y: hud.y + rect.y,
+    });
+    const inside = (rect: Rect, outer: Rect) =>
+      rect.x >= outer.x &&
+      rect.y >= outer.y &&
+      rect.x + rect.width <= outer.x + outer.width &&
+      rect.y + rect.height <= outer.y + outer.height;
 
-  it("put the pause disc's edge on the top-left corner in a 52.5 press area", () => {
-    expect(PAUSE_BUTTON.art).toEqual({ height: 35, width: 35, x: -1, y: -1 });
-    expect(PAUSE_BUTTON.hit).toEqual(hitAround(PAUSE_BUTTON.art));
-    expect(PAUSE_BUTTON.hit.width).toBe(52.5);
-    const disc = { height: 33, width: 33, x: 0, y: 0 };
-    expect(inside(fromLeft(disc), hud)).toBe(true);
+    it(`with ${name}, put the pause disc's edge on the HUD rect's corner in a 52.5 press area`, () => {
+      expect(PAUSE_BUTTON.art).toEqual({ height: 35, width: 35, x: -1, y: -1 });
+      expect(PAUSE_BUTTON.hit.width).toBe(52.5);
+      expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }), bounds)).toBe(true);
+      expect(
+        inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }), safeRect(insets, 8, view)),
+      ).toBe(true);
+    });
+
+    it(`with ${name}, pack four weapon targets 8 apart against the HUD rect's corner`, () => {
+      for (const index of [0, 1, 2, 3]) {
+        const target = fromRight(hudButtonTarget(index));
+        expect(target.x).toBeCloseTo(hud.x + hud.width - 48 - 56 * index, 9);
+        expect(target.y).toBe(hud.y);
+        expect(inside(target, bounds)).toBe(true);
+      }
+      const pause = fromLeft(PAUSE_BUTTON.hit);
+      const leftmost = fromRight(hudButtonTarget(3));
+      expect(leftmost.x - (pause.x + pause.width)).toBeGreaterThanOrEqual(SPACING.pageInset);
+    });
+  }
+
+  it("draw Chibi's skill button: a 48 target, a 33 disc at 7.5, a 4 annulus and a 20 glyph at 14", () => {
+    expect(HUD_BUTTON).toEqual({ annulus: 4, disc: 33, edge: 1, gap: 8, glyph: 20, target: 48 });
+    expect(HUD_BUTTON.target).toBe(HIT_RULE.minTarget);
+    expect(HUD_BUTTON_INSET).toEqual({ disc: 7.5, glyph: 14 });
+    expect(hudRowWidth(3)).toBe(3 * 48 + 2 * 8);
   });
 
-  it("right-align the weapon faces a gap apart, each in a 72 press area", () => {
-    expect(HUD_BUTTON.hit.width).toBe(72);
-    expect(hudButtonFace(0)).toEqual({ height: 48, width: 48, x: -48, y: 0 });
-    expect(hudButtonFace(1).x).toBe(-48 - SPACING.gap - 48);
-    for (const index of [0, 1, 2, 3]) {
-      expect(inside(fromRight(hudButtonFace(index)), hud)).toBe(true);
-    }
-  });
-
-  it("keep the pause and four weapons' press areas a page inset apart at 720 with insets", () => {
-    const pause = fromLeft(PAUSE_BUTTON.hit);
-    const leftmost = fromRight(hitAround(hudButtonFace(3)));
-    expect(leftmost.x - (pause.x + pause.width)).toBeGreaterThanOrEqual(SPACING.pageInset);
-  });
-
-  it("put the Stardust pill a gap left of the weapons, centred on their row", () => {
+  it("put the Stardust pill a gap left of the weapon targets, centred on their row", () => {
     expect(stardustPillRight(3)).toBe(3 * 48 + 2 * 8 + 8);
     expect(stardustPillRight(0)).toBe(0);
-    expect(STARDUST_PILL.top + STARDUST_PILL.pill.height / 2).toBe(HUD_BUTTON.size / 2);
+    expect(STARDUST_PILL.top).toBe(10);
     expect(STARDUST_PILL.pill).toMatchObject({ height: 28, padding: 8, radius: 4 });
   });
 
-  it("keep a notice clear of the pause and weapon press areas by a gap", () => {
+  it("keep a notice clear of the pause press area, the weapon targets and the pill by a gap", () => {
     expect(noticeReserve(0)).toBe(PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap);
-    expect(noticeReserve(4)).toBe(4 * 48 + 3 * 8 + 12 + SPACING.gap);
+    expect(noticeReserve(4)).toBe(4 * 48 + 3 * 8 + SPACING.gap);
+    expect(noticeReserve(2, 60)).toBe(2 * 48 + 8 + 8 + 60 + SPACING.gap);
   });
+});
+
+describe("touch controls", () => {
+  const view = { height: 360, width: 720 };
 
   it("rest the sticks' drawn edges max(85, inset) in and max(20, inset) up", () => {
     expect(stickRestCentres(view, NO_INSETS)).toEqual({
@@ -198,12 +257,12 @@ describe("HUD anchors", () => {
 
   it("give the Use button an action-high HUD face level with the sticks, in a hitAround area", () => {
     expect(USE_BUTTON).toMatchObject({
-      border: HUD_BUTTON.border,
+      border: 2,
       bottom: TOUCH_STICK.bottom,
       height: TEXT_BUTTON.height,
       inset: TEXT_BUTTON.inset,
       margin: CONTROL_EDGE,
-      radius: HUD_BUTTON.radius,
+      radius: 8,
       text: TYPE.label,
     });
     // Any face at least as wide as it is high grows by the same margin on every side.

@@ -1,12 +1,18 @@
-import { noticeReserve, type Side } from "./playView.ts";
+import { CONTROL_EDGE, noticeReserve, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
 // size is a logical value through these helpers, never raw CSS px.
 export const VIEW_HOST_ID = "app";
 
+// The HUD rect's edges the top controls anchor to.
+export type HudSide = "left" | "right" | "top";
+export const HUD_SIDES: readonly HudSide[] = ["top", "right", "left"];
+
 export const VIEW_PROPERTIES = {
-  // How far a centred notice keeps in from the HUD safe rect's sides (playView.ts noticeReserve).
+  // The HUD rect's top, left and right edges in from the view's (playView.ts hudRect).
+  hud: (side: HudSide) => `--ada-hud-${side}`,
+  // How far a centred notice keeps in from the HUD rect's sides (playView.ts noticeReserve).
   noticeReserve: "--ada-notice-reserve",
   safe: (side: Side) => `--ada-safe-${side}`,
   slice: (edge: number) => `--ada-slice-${edge}`,
@@ -33,6 +39,13 @@ export function fromSafeEdge(side: Side, margin: number, offset: number): string
     : `calc(${safeEdge(side, margin)} + ${scaled(offset)})`;
 }
 
+// A logical offset in from the HUD rect's edge on side (playView.ts hudRect); negative reaches
+// past it.
+export function fromHudEdge(side: HudSide, offset = 0): string {
+  const edge = `var(${VIEW_PROPERTIES.hud(side)})`;
+  return offset === 0 ? edge : `calc(${edge} + ${scaled(offset)})`;
+}
+
 // A type role (tokens.ts TYPE) as the CSS font shorthand, in the UI face.
 export function font(role: {
   readonly lineHeight: number;
@@ -54,6 +67,7 @@ export function viewStyle(edges: readonly number[]): string {
 #${VIEW_HOST_ID}{
   ${VIEW_PROPERTIES.unit}:1;
   ${VIEW_PROPERTIES.noticeReserve}:${units(noticeReserve(0))};
+  ${HUD_SIDES.map((side) => `${VIEW_PROPERTIES.hud(side)}:${units(CONTROL_EDGE)};`).join("\n  ")}
   ${(["top", "right", "bottom", "left"] as const).map((side) => `${VIEW_PROPERTIES.safe(side)}:0px;`).join("\n  ")}
   ${edges.map((edge) => `${VIEW_PROPERTIES.slice(edge)}:${edge}px;`).join("\n  ")}
 }

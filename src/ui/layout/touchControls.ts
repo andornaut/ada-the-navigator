@@ -4,7 +4,7 @@ import type { StickSide } from "../../input/state.ts";
 import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
 import { TEXT_BUTTON } from "./controls.ts";
 import { hitMargin } from "./hitAreas.ts";
-import { CONTROL_EDGE, HUD_BUTTON, type Insets, type Size } from "./playView.ts";
+import { CONTROL_EDGE, type Insets, type Size } from "./playView.ts";
 import { TYPE } from "./tokens.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
@@ -35,20 +35,20 @@ export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<St
 }
 
 // The context Use button (art/layout.md "HUD and overlays", Use), shown only while an interaction
-// is available: an action-high face with the HUD button's border and radius, its label in the
+// is available: an action-high face with a 2 ink border and radius 8, its label in the
 // label role, as wide as the label plus the action inset each side (at least one face high);
 // centred across the HUD safe rect, its bottom level with the sticks' drawn bottom,
 // max(bottom, inset); its press area hitAround(face) reaches pressMargin past it.
 const USE_FACE: Rect = { height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 };
 export const USE_BUTTON = {
-  border: HUD_BUTTON.border,
+  border: 2,
   bottom: TOUCH_STICK.bottom,
   height: USE_FACE.height,
   inset: TEXT_BUTTON.inset,
   margin: CONTROL_EDGE,
   minWidth: USE_FACE.width,
   pressMargin: hitMargin(USE_FACE),
-  radius: HUD_BUTTON.radius,
+  radius: 8,
   text: TYPE.label,
 } as const;
 

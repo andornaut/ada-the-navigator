@@ -1,7 +1,8 @@
 import { SCREEN } from "../../data/screen.ts";
 import { NINE_SLICE_EDGES } from "./controls.ts";
-import { VIEW_PROPERTIES } from "./css.ts";
+import { HUD_SIDES, type HudSide, VIEW_PROPERTIES } from "./css.ts";
 import {
+  hudRect,
   type Insets,
   logicalView,
   NO_INSETS,
@@ -57,8 +58,17 @@ export function playLayout(cssSize: Size, cssInsets: Insets): PlayLayout {
 
 // The custom properties that carry layout, by name.
 export function viewProperties(layout: PlayLayout): readonly (readonly [string, string])[] {
+  const hud = hudRect(layout.insets, layout.view);
+  const hudEdges: Readonly<Record<HudSide, number>> = {
+    left: hud.x,
+    right: layout.view.width - hud.x - hud.width,
+    top: hud.y,
+  };
   return [
     [VIEW_PROPERTIES.unit, String(layout.s)],
+    ...HUD_SIDES.map(
+      (side) => [VIEW_PROPERTIES.hud(side), `${hudEdges[side] * layout.s}px`] as const,
+    ),
     ...SIDES.map((side) => [VIEW_PROPERTIES.safe(side), `${layout.cssInsets[side]}px`] as const),
     ...NINE_SLICE_EDGES.map(
       (edge) => [VIEW_PROPERTIES.slice(edge), `${layout.slices[edge]}px`] as const,

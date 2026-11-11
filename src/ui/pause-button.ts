@@ -1,11 +1,10 @@
-import { units } from "./layout/css.ts";
-import { type PauseFrame, pauseFrames } from "./pause.ts";
+import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 
 const UI_ROOT = "/art/ui/";
 
 // Chibi's touch pause button (ui-pause): rest, then its press frames once on a press, then held
-// until release. Activating it pauses. Its frames come from the UI manifest's sheet; until they
-// load it shows the sheet's first frame.
+// until release, each frame drawn as its pose's vector art. Activating it pauses. Its tags and
+// timing come from the UI manifest's sheet; until they load it shows the rest pose.
 export function createPauseButton(
   root: HTMLElement,
   label: string,
@@ -22,7 +21,7 @@ export function createPauseButton(
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const showFrame = (frame: PauseFrame | undefined) => {
-    button.style.setProperty("--pause-frame", units(-(frame?.x ?? 0)));
+    button.dataset.pose = pausePose(frame?.index ?? 0);
   };
   const rest = () => {
     clearTimeout(timer);
