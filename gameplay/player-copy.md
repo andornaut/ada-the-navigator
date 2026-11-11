@@ -367,8 +367,8 @@ Sunflower:
 - Completed story: Chapter complete. You can keep exploring.
 - Galaxy four: story in development
 
-Galaxy four has no playable story or invented finale in this prototype. Keep its
-unfinished status explicit in development builds.
+Galaxy four's home chapter is still being designed; until it is, its label reads
+"Galaxy four: story in development".
 
 ## Install steps
 

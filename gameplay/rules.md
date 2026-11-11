@@ -6,7 +6,8 @@ balance values are provisional and must be tuned through playtesting.
 
 ## Scope and presentation
 
-Build a playable minimalist prototype with the first three story galaxies.
+Version one is the game now being built, with four galaxies; anything later
+belongs in [Ideas](ideas.md).
 Version one includes a fourth concluding galaxy, but its story and mechanics are
 explicitly deferred. Do not invent a finale to fill that slot.
 
@@ -19,8 +20,8 @@ In these documents, Archie and Chibi name the sibling games Archie's Dog Walks
 and Chibi's Way Home. Home characters and
 Ada may reuse Archie's sprites wholesale. Ada is a
 brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
-fonts, joystick and general UI reference. These explicit reuse permissions apply
-to the prototype; do not modify the source games.
+fonts, joystick and general UI reference. These explicit reuse permissions apply to
+the game; do not modify the source games.
 
 ## Start, Home and Space
 
@@ -80,7 +81,7 @@ pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
 until Continue, so Ada can ask every question. Continue lands in the cockpit with
 Astra's boarding line, then galaxy selection. Story position within a scene is not
-saved in the prototype: a scene interrupted midway restarts from its first page.
+saved: a scene interrupted midway restarts from its first page.
 
 ### Cockpit and galaxy selection
 
