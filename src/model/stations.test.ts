@@ -14,7 +14,13 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { stationById, stationInCell, type StationSite, stationsNear } from "./stations.ts";
+import {
+  stationById,
+  stationInCell,
+  stationIndicatorTarget,
+  type StationSite,
+  stationsNear,
+} from "./stations.ts";
 import { playOpening } from "./test-launch.ts";
 import type { FlightInput, FlightState, Vec } from "./types.ts";
 
@@ -97,6 +103,24 @@ describe("station placement", () => {
   it("finds stations near a point by distance", () => {
     expect(stationsNear(ECONOMY, 1, 10, site)).toEqual([site]);
     expect(stationsNear(ECONOMY, 1, 10, { x: site.x + 20, y: site.y })).toEqual([]);
+  });
+
+  it("keeps stations at least 8000 apart so existing saves keep their stations", () => {
+    const { cellSize, jitter } = ECONOMY.station;
+    expect(cellSize - jitter).toBeGreaterThanOrEqual(8000);
+    expect(ECONOMY.station).toMatchObject({ cellSize: 12000, chance: 0.5, jitter: 4000 });
+  });
+
+  it("marks the nearest undiscovered station within 1500 for the direction indicator", () => {
+    const { indicatorRange } = ECONOMY.station;
+    expect(indicatorRange).toBe(1500);
+    const near = { x: site.x + indicatorRange - 1, y: site.y };
+    expect(stationIndicatorTarget(ECONOMY, 1, [], near)).toEqual(site);
+    expect(stationIndicatorTarget(ECONOMY, 1, [], { x: site.x, y: site.y - 600 })).toEqual(site);
+    expect(
+      stationIndicatorTarget(ECONOMY, 1, [], { x: site.x + indicatorRange + 1, y: site.y }),
+    ).toBeNull();
+    expect(stationIndicatorTarget(ECONOMY, 1, [site.id], near)).toBeNull();
   });
 
   it("keeps story destinations away from stations", () => {

@@ -92,3 +92,27 @@ export function stationsNear(
   }
   return sites;
 }
+
+/**
+ * The nearest undiscovered station within the catalog's indicator range of a point, which
+ * the direction indicator marks; null when there is none.
+ */
+export function stationIndicatorTarget(
+  catalog: EconomyCatalog,
+  sector: SectorId,
+  discovered: readonly string[],
+  point: Vec,
+): StationSite | null {
+  let nearest: StationSite | null = null;
+  for (const site of stationsNear(catalog, sector, catalog.station.indicatorRange, point)) {
+    if (
+      !discovered.includes(site.id) &&
+      (!nearest ||
+        Math.hypot(site.x - point.x, site.y - point.y) <
+          Math.hypot(nearest.x - point.x, nearest.y - point.y))
+    ) {
+      nearest = site;
+    }
+  }
+  return nearest;
+}

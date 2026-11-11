@@ -66,7 +66,7 @@ describe("pacing simulation world", () => {
 });
 
 describe("pacing simulation runs", () => {
-  const options = { behaviour: DEFAULT_BEHAVIOUR, minutes: 6, sector: 1 as const, seeds: 3 };
+  const options = { behaviour: DEFAULT_BEHAVIOUR, minutes: 15, sector: 1 as const, seeds: 3 };
 
   it("is deterministic for the same seeds and values", () => {
     const scenario = { behaviour: {}, description: "", economy: {}, name: "current", prices: {} };
@@ -76,28 +76,58 @@ describe("pacing simulation runs", () => {
   });
 
   it("applies value overrides to drops and caches", () => {
-    const catalog = scenarioEconomy({ discoveryStardust: 5, enemyStardust: { swarm: 1 } });
-    expect(catalog.discoveryStardust).toBe(5);
-    expect(catalog.enemyStardust.swarm).toBe(1);
+    const catalog = scenarioEconomy({ discoveryStardust: 3, enemyStardust: { swarm: 7 } });
+    expect(catalog.discoveryStardust).toBe(3);
+    expect(catalog.enemyStardust.swarm).toBe(7);
     expect(catalog.enemyStardust.fighter).toBe(ECONOMY.enemyStardust.fighter);
     const base = runScenario({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "base", prices: {} },
     });
-    const fewer = runScenario({
+    const richer = runScenario({
       ...options,
       scenario: {
         behaviour: {},
         description: "",
-        economy: { discoveryStardust: 5 },
-        name: "fewer",
+        economy: { discoveryStardust: ECONOMY.discoveryStardust * 5 },
+        name: "richer",
         prices: {},
       },
     });
     expect(base.summary.cachesPerMinute).toBeGreaterThan(0);
-    expect(fewer.summary.sourcePerMinute.caches).toBeCloseTo(
-      base.summary.sourcePerMinute.caches / 5,
+    expect(richer.summary.sourcePerMinute.caches).toBeCloseTo(
+      base.summary.sourcePerMinute.caches * 5,
       6,
     );
+  });
+
+  it("finds more stations by following the direction indicator than by sight alone", () => {
+    const stations = (indicatorRange: number) =>
+      runScenario({
+        ...options,
+        minutes: 60,
+        scenario: {
+          behaviour: {},
+          description: "",
+          economy: { station: { indicatorRange } },
+          name: `indicator ${indicatorRange}`,
+          prices: {},
+        },
+        seeds: 4,
+      }).runs.reduce((sum, run) => sum + run.stationSeconds.length, 0);
+    expect(ECONOMY.station.indicatorRange).toBe(1500);
+    expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
+  });
+
+  it("fights galaxy three's oversized capital route guards", () => {
+    const { runs } = runScenario({
+      ...options,
+      scenario: { behaviour: {}, description: "", economy: {}, name: "three", prices: {} },
+      sector: 3,
+    });
+    for (const run of runs) {
+      expect(run.destroyed.oversizedCapital).toBe(2);
+      expect(run.stardust.guards).toBeGreaterThan(0);
+    }
   });
 });

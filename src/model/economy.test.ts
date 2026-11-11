@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { planChunk } from "./chunk-templates.ts";
 import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, stepFlight } from "./flight.ts";
@@ -79,12 +81,12 @@ const total = (objects: SpaceObject[]) =>
 describe("Stardust drops", () => {
   it("releases the documented Stardust per destroyed enemy archetype", () => {
     const expected: Record<EnemyArchetype, number> = {
-      capital: 150,
-      fighter: 5,
-      frigate: 40,
-      interceptor: 6,
-      retaliator: 15,
-      swarm: 2,
+      capital: 12,
+      fighter: 2,
+      frigate: 5,
+      interceptor: 1,
+      retaliator: 4,
+      swarm: 1,
     };
     for (const [archetype, amount] of Object.entries(expected)) {
       // A roll of 0.999 never meets a weapon drop chance.
@@ -95,27 +97,39 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("releases one to three Stardust per asteroid with equal seeded frequency", () => {
+  it("pays each enemy half its hit points, rounded down, and at least 1", () => {
+    for (const [archetype, definition] of Object.entries(enemyCatalog)) {
+      // Multipart ships are defeated through their hardpoints, so those carry their hit points.
+      const hp = definition.hardpoints.length
+        ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
+        : definition.hp;
+      expect(ECONOMY.enemyStardust[archetype as EnemyArchetype]).toBe(
+        Math.max(1, Math.floor(hp / 2)),
+      );
+    }
+  });
+
+  it("releases zero or one Stardust per asteroid with equal seeded frequency", () => {
     const counts = new Map<number, number>();
     for (let index = 0; index < 6000; index++) {
       const value = rollAsteroidStardust(ECONOMY, dropRandom(5, `rock:${index}`));
       counts.set(value, (counts.get(value) ?? 0) + 1);
     }
-    expect([...counts.keys()].sort()).toEqual([1, 2, 3]);
+    expect([...counts.keys()].sort()).toEqual([0, 1]);
     for (const count of counts.values()) {
-      expect(count / 6000).toBeCloseTo(1 / 3, 1);
+      expect(count / 6000).toBeCloseTo(1 / 2, 1);
     }
   });
 
   it.each([
-    ["swarm", 0.02],
-    ["fighter", 0.02],
-    ["interceptor", 0.02],
-    ["retaliator", 0.02],
-    ["frigate", 0.1],
-    ["capital", 0.25],
+    ["swarm", 0.005],
+    ["fighter", 0.005],
+    ["interceptor", 0.005],
+    ["retaliator", 0.005],
+    ["frigate", 0.05],
+    ["capital", 0.1],
   ] as const)("drops a random upgrade weapon from %s at its chance", (archetype, chance) => {
-    const draws = 20000;
+    const draws = chance < 0.01 ? 200000 : 40000;
     const weapons = new Map<string, number>();
     for (let index = 0; index < draws; index++) {
       const drop = rollEnemyDrop(ECONOMY, [], archetype, dropRandom(11, `wreck:${index}`));
@@ -134,42 +148,39 @@ describe("Stardust drops", () => {
   it("gives 25 Stardust instead of a dropped weapon Ada already owns", () => {
     const owned = ["missiles", "tripleLaser", "scattershot"] as const;
     let replaced = 0;
-    for (let index = 0; index < 4000; index++) {
+    for (let index = 0; index < 8000; index++) {
       const drop = rollEnemyDrop(ECONOMY, owned, "capital", dropRandom(3, `w:${index}`));
       expect(drop.weapon).toBeNull();
-      expect([150, 175]).toContain(drop.stardust);
-      replaced += drop.stardust === 175 ? 1 : 0;
+      expect([9, 34]).toContain(drop.stardust);
+      replaced += drop.stardust === 34 ? 1 : 0;
     }
-    expect(Math.abs(replaced / 4000 - 0.25)).toBeLessThan(0.03);
+    expect(Math.abs(replaced / 8000 - 0.1)).toBeLessThan(0.015);
   });
 
-  it.each([
-    ["swarm", [1, 1]],
-    ["fighter", [1, 1, 1, 1, 1]],
-    ["interceptor", [1, 1, 1, 1, 1, 1]],
-    ["retaliator", [2, 2, 2, 2, 2, 2, 2, 1]],
-    ["frigate", [3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2]],
-    ["capital", [7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]],
-  ] as const)(
-    "splits a %s drop into its capped pickup count, larger first",
-    (archetype, pieces) => {
+  it("splits every enemy drop below its cap into pickups of 1 Stardust", () => {
+    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
       const value = ECONOMY.enemyStardust[archetype];
-      const split = splitStardust(ECONOMY.pickupCap[archetype], value);
-      expect(split).toEqual(pieces);
-      expect(split.reduce((sum, piece) => sum + piece, 0)).toBe(value);
-    },
-  );
+      expect(value).toBeLessThanOrEqual(ECONOMY.pickupCap[archetype]);
+      expect(splitStardust(ECONOMY.pickupCap[archetype], value)).toEqual(
+        Array.from({ length: value }, () => 1),
+      );
+    }
+  });
+
+  it("splits a capped drop into its pickup count, larger first", () => {
+    expect(splitStardust(8, 15)).toEqual([2, 2, 2, 2, 2, 2, 2, 1]);
+    expect(splitStardust(16, 40)).toEqual([3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2]);
+  });
 
   it("splits an asteroid into one pickup per Stardust and keeps owned-weapon bonuses whole", () => {
-    for (const amount of [1, 2, 3]) {
-      expect(splitStardust(amount, amount)).toEqual(Array.from({ length: amount }, () => 1));
-    }
-    const bonus = splitStardust(ECONOMY.pickupCap.swarm, 2 + ECONOMY.ownedWeaponStardust);
+    expect(splitStardust(0, 0)).toEqual([]);
+    expect(splitStardust(1, 1)).toEqual([1]);
+    const bonus = splitStardust(ECONOMY.pickupCap.swarm, 1 + ECONOMY.ownedWeaponStardust);
     expect(bonus).toHaveLength(8);
-    expect(bonus.reduce((sum, piece) => sum + piece, 0)).toBe(27);
+    expect(bonus.reduce((sum, piece) => sum + piece, 0)).toBe(26);
   });
 
-  it("releases a destroyed retaliator as eight pickups carrying 15 Stardust", () => {
+  it("releases a destroyed retaliator as four pickups carrying 4 Stardust", () => {
     const value = flight();
     const target = enemy("retaliator", "retaliator", 500, 0);
     target.enemy!.hp = 1;
@@ -184,8 +195,8 @@ describe("Stardust drops", () => {
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),
     );
-    expect(drop.stardust).toBe(15);
-    expect(pickups(value).map((object) => object.amount)).toEqual([2, 2, 2, 2, 2, 2, 2, 1]);
+    expect(drop.stardust).toBe(4);
+    expect(pickups(value).map((object) => object.amount)).toEqual([1, 1, 1, 1]);
   });
 
   it("breaks a destroyed enemy apart before it drops, instead of removing it at once", () => {
@@ -201,7 +212,7 @@ describe("Stardust drops", () => {
     expect(pickups(value)).toEqual([]);
     // Art's fighter timing: drops leave at 150 ms and the wreck is gone at 450 ms.
     stepFlight(PROTOTYPE, 0.15, idle, value);
-    expect(total(pickups(value))).toBe(5);
+    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(true);
     for (const pickup of pickups(value)) {
       expect(pickup.release?.from).toEqual({ x: wreck!.x, y: wreck!.y });
@@ -211,7 +222,7 @@ describe("Stardust drops", () => {
     }
     stepFlight(PROTOTYPE, 0.3, idle, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
-    expect(total(pickups(value))).toBe(5);
+    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
   });
 
   it("times each shard-drawn destruction from Art's destruction data", () => {
@@ -248,7 +259,7 @@ describe("Stardust drops", () => {
     stepFlight(PROTOTYPE, 0.2, reduced, value);
     expect(pickups(value)).toEqual([]);
     stepFlight(PROTOTYPE, 0.05, reduced, value);
-    expect(total(pickups(value))).toBe(5);
+    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
     for (const pickup of pickups(value)) {
       const offset = Math.hypot(pickup.x - wreck.x, pickup.y - wreck.y);
       expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
@@ -267,8 +278,8 @@ describe("Stardust drops", () => {
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
     stepFlight(PROTOTYPE, 0.6, idle, value);
-    // A frigate drop is at least its 40 Stardust; a weapon drop adds a weapon pickup.
-    expect(total(pickups(value))).toBeGreaterThanOrEqual(40);
+    // A frigate drop is at least its Stardust; a weapon drop adds a weapon pickup.
+    expect(total(pickups(value))).toBeGreaterThanOrEqual(ECONOMY.enemyStardust.frigate);
   });
 
   it("releases Stardust from asteroids but none from story mining deposits", () => {
@@ -286,8 +297,7 @@ describe("Stardust drops", () => {
     value.shots.push(killShot(rock), killShot(deposit));
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
     const released = pickups(value);
-    expect(total(released)).toBeGreaterThanOrEqual(1);
-    expect(total(released)).toBeLessThanOrEqual(3);
+    expect(total(released)).toBe(rollAsteroidStardust(ECONOMY, dropRandom(value.seed, "rock")));
     expect(released.every((object) => object.x > 0)).toBe(true);
     expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
       PROTOTYPE.tuning.flight.piecesPerRock,
@@ -296,26 +306,30 @@ describe("Stardust drops", () => {
 });
 
 describe("discovery caches", () => {
-  it("generates Stardust caches worth 25 instead of weapon pickups", () => {
+  it("generates Stardust caches worth 5 instead of weapon pickups", () => {
     const value = createFlight(PROTOTYPE, 1, 4242, { known: [] });
+    const discoveries = new Map<string, SpaceObject>();
     for (let step = 0; step < 40; step++) {
       value.player = { x: step * PROTOTYPE.tuning.chunkSize * 2, y: 0 };
       stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      // Rare caches are gathered along the way, since distant chunks unload.
+      for (const object of value.objects) {
+        if (object.kind === "pickup" && object.role === "discovery") {
+          discoveries.set(object.id, object);
+        }
+      }
     }
-    const discoveries = [...value.objects, ...Object.values(value.world.notables)].filter(
-      (object) => object?.kind === "pickup" && object.role === "discovery",
-    );
-    expect(discoveries.length).toBeGreaterThan(0);
-    for (const cache of discoveries) {
-      expect(cache).toMatchObject({ amount: 25 });
-      expect(cache?.weapon).toBeUndefined();
+    expect(discoveries.size).toBeGreaterThan(0);
+    for (const cache of discoveries.values()) {
+      expect(cache).toMatchObject({ amount: 5 });
+      expect(cache.weapon).toBeUndefined();
     }
   });
 
-  it("collects a cache as 25 Stardust and pulls it with the tractor beam", () => {
+  it("collects a cache as 5 Stardust and pulls it with the tractor beam", () => {
     const value = flight();
     value.objects.push({
-      amount: 25,
+      amount: ECONOMY.discoveryStardust,
       hp: 1,
       id: "cache",
       kind: "pickup",
@@ -326,7 +340,7 @@ describe("discovery caches", () => {
     });
     stepFlight(PROTOTYPE, 0.1, idle, value);
     expect(value.objects[0]!.x).toBeCloseTo(60 - 15, 6);
-    expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(25);
+    expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(5);
     expect(value.weapon).toBe("basic");
     expect(value.ownedWeapons).toEqual([]);
   });
@@ -726,5 +740,41 @@ describe("shop purchases", () => {
     expect(fill(labels.confirmLeft!, { amount: 50 })).toBe("50 left after");
     expect(fill(labels.level!, { level: 1, max: 3 })).toBe("Level 1 of 3");
     expect(fill(labels.stardustAmount!, { amount: 7 })).toBe("7 Stardust");
+  });
+});
+
+describe("discovery cache rarity", () => {
+  const tuning = PROTOTYPE.tuning;
+  const plan = (spawnWeights: typeof tuning.flight.spawnWeights, x: number, y: number) =>
+    planChunk(CHUNK_CATALOG, {
+      clearance: tuning.flight.shipRadius,
+      objectsPerChunk: tuning.flight.objectsPerChunk,
+      rockRadius: tuning.flight.rockRadius,
+      sector: 1,
+      seed: 99,
+      shipRadius: tuning.flight.shipRadius,
+      size: tuning.chunkSize,
+      spawnWeights,
+      x,
+      y,
+    });
+
+  it("leaves rare caches' freed weight empty, so rocks and resources are unchanged", () => {
+    const weights = tuning.flight.spawnWeights;
+    const common = { ...weights, enemy: weights.enemy + weights.pickup - 0.12, pickup: 0.12 };
+    let caches = 0;
+    let chunks = 0;
+    for (let x = -20; x < 20; x++) {
+      for (let y = -20; y < 20; y++) {
+        const now = plan(weights, x, y).placements;
+        const scenery = (placements: typeof now) =>
+          placements.filter((placement) => placement.kind !== "pickup");
+        expect(scenery(now)).toEqual(scenery(plan(common, x, y).placements));
+        caches += now.length - scenery(now).length;
+        chunks++;
+      }
+    }
+    expect(weights.pickup).toBe(0.0136);
+    expect(caches / chunks).toBeCloseTo(weights.pickup * tuning.flight.objectsPerChunk, 1);
   });
 });

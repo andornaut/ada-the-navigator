@@ -83,6 +83,8 @@ export interface EconomyCatalog {
     originClearance: number;
     /** Minimum distance between a station and a story destination. */
     destinationClearance: number;
+    /** World distance within which the direction indicator marks an undiscovered station. */
+    indicatorRange: number;
     radius: number;
     /** World offset of the dock from the station's centre, from the station art's dock point. */
     dockOffset: { x: number; y: number };
@@ -96,11 +98,11 @@ export interface EconomyCatalog {
   };
 }
 
-const small = { fighter: 0.02, interceptor: 0.02, retaliator: 0.02, swarm: 0.02 } as const;
+const small = { fighter: 0.005, interceptor: 0.005, retaliator: 0.005, swarm: 0.005 } as const;
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
-  asteroidStardust: [1, 3],
+  asteroidStardust: [0, 1],
   defaultPaint: "classic",
   // Frigates and capitals have no shard art yet and keep a provisional 0.6 s break-apart,
   // with Art's 40% reduced spread.
@@ -142,7 +144,7 @@ export const ECONOMY: EconomyCatalog = {
       spread: 16.8,
     },
   },
-  discoveryStardust: 25,
+  discoveryStardust: 5,
   effects: {
     engineSeconds: -0.1,
     engineSpeed: 0.05,
@@ -152,13 +154,14 @@ export const ECONOMY: EconomyCatalog = {
     weaponDamage: 0.1,
     weaponInterval: -0.1,
   },
+  // Half each archetype's hit points (hardpoints for multipart ships), rounded down, at least 1.
   enemyStardust: {
-    capital: 150,
-    fighter: 5,
-    frigate: 40,
-    interceptor: 6,
-    retaliator: 15,
-    swarm: 2,
+    capital: 12,
+    fighter: 2,
+    frigate: 5,
+    interceptor: 1,
+    retaliator: 4,
+    swarm: 1,
   },
   jumpFee: 10,
   ownedWeaponStardust: 25,
@@ -190,6 +193,7 @@ export const ECONOMY: EconomyCatalog = {
     // station-a's dock entrance, 27.2 display px below the pivot, in world units.
     dockOffset: { x: 27.223, y: 27.223 },
     dockOutward: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
+    indicatorRange: 1500,
     jitter: 4000,
     originClearance: 3000,
     radius: 40,
@@ -203,7 +207,7 @@ export const ECONOMY: EconomyCatalog = {
   },
   tractorRadius: { base: 100, levels: [150, 200] },
   tractorSpeed: { base: 150, levels: [220, 300] },
-  weaponDropChance: { ...small, capital: 0.25, frigate: 0.1 },
+  weaponDropChance: { ...small, capital: 0.1, frigate: 0.05 },
   weaponLockSeconds: 5,
   weaponPrices: { missiles: 150, scattershot: 350, tripleLaser: 250 },
   weaponUpgradePrices: [100, 200, 400],

@@ -417,7 +417,9 @@ export const PROTOTYPE: PrototypeContent = {
       sceneryRecoil: 24,
       sceneryRestitution: 0.4,
       shipRadius: 10,
-      spawnWeights: { enemy: 0.1, pickup: 0.12, resource: 0.4, rock: 0.38 },
+      // Enemy slots stay empty (encounters come from the director), so rare caches leave gaps
+      // instead of adding rocks or resources.
+      spawnWeights: { enemy: 0.2064, pickup: 0.0136, resource: 0.4, rock: 0.38 },
     },
     introFreshDistance: 10800,
     maxSpeed: 200,

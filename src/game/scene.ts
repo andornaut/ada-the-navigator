@@ -16,6 +16,7 @@ import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
+import { stationIndicatorTarget } from "../model/stations.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -1010,11 +1011,23 @@ export class PrototypeScene extends Phaser.Scene {
         (point) => point.x < 0 || point.y < 0 || point.x > SCREEN.width || point.y > SCREEN.height,
       )
       .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
-    const target = candidates[0];
+    // An undiscovered station within its world indicator range takes precedence.
+    const site = stationIndicatorTarget(
+      ECONOMY,
+      flight.sector,
+      this.model.state.progress[flight.sector].stations,
+      flight.player,
+    );
+    const station = site ? this.project(site) : null;
+    const offscreen =
+      station &&
+      (station.x < 0 || station.y < 0 || station.x > SCREEN.width || station.y > SCREEN.height);
+    const target = offscreen ? station : candidates[0];
     // Provisional nearby range scales with the viewport, without revealing distant targets.
     if (
       !target ||
-      Math.hypot(target.x - cx, target.y - cy) > Math.max(SCREEN.width, SCREEN.height) * 1.5
+      (!offscreen &&
+        Math.hypot(target.x - cx, target.y - cy) > Math.max(SCREEN.width, SCREEN.height) * 1.5)
     ) {
       return;
     }

@@ -47,13 +47,11 @@ export interface Behaviour {
   turnDegrees: number;
   /** Chance the player detours to a discovery cache once it is on screen. */
   cacheChase: number;
-  /** Chance the player detours to an undiscovered station once it is on screen. */
-  stationChase: number;
   /**
-   * Hypothetical station direction indicator range in world units; 0 means stations are
-   * found only once on screen, as now.
+   * Chance the player detours to an undiscovered station once it is on screen or marked by
+   * the direction indicator (within the station data's indicator range).
    */
-  stationIndicatorRange: number;
+  stationChase: number;
   /** Chance the player fights a sight-aggressive pack that engages within its perception. */
   fightChance: number;
   /** Chance the player attacks a retaliator once it is on screen. */
@@ -78,7 +76,10 @@ export interface Behaviour {
   asteroidCollect: number;
   /** Chance a fought encounter ends in a quantum jump home (shield depleted). */
   depletionChance: number;
-  /** Minutes into play at which each story route guard is destroyed; empty disables them. */
+  /**
+   * Minutes into play at which each of the sector's story route guard fights happens, in
+   * ROUTE_GUARDS order; empty disables them.
+   */
   guardMinutes: number[];
   /** Seconds of manoeuvring per route guard fight on top of the time spent shooting. */
   guardSeconds: number;
@@ -87,7 +88,7 @@ export interface Behaviour {
 export interface Prices {
   /** The cheapest shop weapon: the first weapon a player can buy. */
   firstWeapon: number;
-  /** Galaxy two's hub holodisk. */
+  /** Galaxy two's hub holodisk price; every sector reports the time to save it. */
   holodisk: number;
 }
 
@@ -98,7 +99,9 @@ export interface EconomyOverrides {
   ownedWeaponStardust?: number;
   weaponDropChance?: Partial<Record<EnemyArchetype, number>>;
   jumpFee?: number;
-  station?: Partial<Pick<EconomyCatalog["station"], "cellSize" | "chance" | "jitter">>;
+  station?: Partial<
+    Pick<EconomyCatalog["station"], "cellSize" | "chance" | "indicatorRange" | "jitter">
+  >;
 }
 
 export interface Scenario {
@@ -117,7 +120,6 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   turnDegrees: 50,
   cacheChase: 0.6,
   stationChase: 1,
-  stationIndicatorRange: 0,
   fightChance: 0.8,
   retaliatorFightChance: 0.5,
   hitRate: 0.5,
@@ -134,85 +136,26 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   guardSeconds: 8,
 };
 
-/** Rarer small-craft and frigate weapon drops, so the first weapon is usually bought. */
-const rareWeaponDrops = {
-  fighter: 0.005,
-  frigate: 0.05,
-  interceptor: 0.005,
-  retaliator: 0.005,
-  swarm: 0.005,
-};
-/** Stations 4000 apart on a grid with a 1000 band (at least 3000 apart), 90% occupied. */
-const denseStations = { cellSize: 4000, chance: 0.9, jitter: 1000 };
-
 /** Named value sets for comparison; `current` changes nothing. */
 export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "name">>> = {
   current: { description: "Current data", economy: {}, prices: {} },
-  drops: {
-    cacheSpawnWeight: 0.0095,
-    description:
-      "Rewards only: enemy Stardust floor(HP / 2), at least 1; asteroids 1; rarer caches of 5; " +
-      "rarer weapon drops; prices unchanged",
-    economy: {
-      asteroidStardust: [1, 1],
-      discoveryStardust: 5,
-      enemyStardust: {
-        capital: 9,
-        fighter: 2,
-        frigate: 5,
-        interceptor: 1,
-        oversizedCapital: 11,
-        retaliator: 4,
-        swarm: 1,
-      },
-      weaponDropChance: rareWeaponDrops,
-    },
-    prices: {},
-  },
-  "drops-stations": {
-    cacheSpawnWeight: 0.0095,
-    description: "The drops scenario with dense stations",
-    economy: {
-      asteroidStardust: [1, 1],
-      discoveryStardust: 5,
-      enemyStardust: {
-        capital: 9,
-        fighter: 2,
-        frigate: 5,
-        interceptor: 1,
-        oversizedCapital: 11,
-        retaliator: 4,
-        swarm: 1,
-      },
-      station: denseStations,
-      weaponDropChance: rareWeaponDrops,
-    },
-    prices: {},
-  },
-  mixed: {
-    cacheSpawnWeight: 0.0105,
-    description:
-      "Rewards and prices: enemy Stardust equal to HP; asteroids 1-2; rarer caches of 10; " +
-      "rarer weapon drops; every shop price, the holodisk, the jump fee and the duplicate " +
-      "weapon conversion doubled",
-    economy: {
-      asteroidStardust: [1, 2],
-      discoveryStardust: 10,
-      enemyStardust: {
-        capital: 19,
-        fighter: 4,
-        frigate: 10,
-        interceptor: 3,
-        oversizedCapital: 22,
-        retaliator: 8,
-        swarm: 2,
-      },
-      jumpFee: 20,
-      ownedWeaponStardust: 50,
-      weaponDropChance: rareWeaponDrops,
-    },
-    prices: { firstWeapon: 300, holodisk: 600 },
-  },
+};
+
+/**
+ * Each sector's required story route guard fights, mirroring flight.ts's route encounters:
+ * one guard per distinct required destination, and galaxy three's holodisk leader and pack.
+ */
+const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[])[]>> = {
+  1: [["frigate"], ["frigate"], ["frigate"]],
+  2: [["capital"], ["capital"], ["capital"]],
+  3: [
+    ["oversizedCapital"],
+    ["oversizedCapital"],
+    [
+      HOLODISKS.guard.leader,
+      ...Array.from({ length: HOLODISKS.guard.packSize }, () => HOLODISKS.guard.pack),
+    ],
+  ],
 };
 
 type Source = "enemies" | "asteroids" | "caches" | "duplicates" | "guards";
@@ -590,18 +533,23 @@ export function simulate(input: SimulationInput): RunResult {
   const running = () => time < end;
   while (running()) {
     const near = region();
+    const guards = ROUTE_GUARDS[sector][guard];
     if (
+      guards &&
       guard < behaviour.guardMinutes.length &&
       time >= (behaviour.guardMinutes[guard] ?? Infinity) * 60
     ) {
-      const archetype: EnemyArchetype = sector === 1 ? "frigate" : "capital";
-      advance(behaviour.guardSeconds + volleySeconds(behaviour, weapon, totalHp(archetype)));
-      add(result.destroyed, archetype);
-      loot(archetype, `route:guard-${guard}`, "guards");
+      advance(behaviour.guardSeconds);
+      guards.forEach((archetype, index) => {
+        advance(volleySeconds(behaviour, weapon, totalHp(archetype)));
+        add(result.destroyed, archetype);
+        loot(archetype, `route:guard-${guard}:${index}`, "guards");
+      });
       guard++;
       continue;
     }
-    const stationReach = Math.max(4 * size, behaviour.stationIndicatorRange);
+    const indicatorRange = catalog.station.indicatorRange;
+    const stationReach = Math.max(4 * size, indicatorRange);
     for (const site of stationsNear(catalog, sector, stationReach, position)) {
       if (stations.has(site.id)) {
         continue;
@@ -616,7 +564,7 @@ export function simulate(input: SimulationInput): RunResult {
       } else if (
         target?.kind !== "station" &&
         !declined.has(site.id) &&
-        (gap <= behaviour.stationIndicatorRange ||
+        (gap <= indicatorRange ||
           onScreen(site.x - position.x, site.y - position.y, catalog.station.radius))
       ) {
         if (rng() < behaviour.stationChase) {
@@ -1120,7 +1068,7 @@ export function formatSummary(summary: Summary): string {
   return lines.join("\n");
 }
 function formatRecord(record: Partial<Record<EnemyArchetype, number>>, digits: number): string {
-  const keys = [...SMALL, "frigate", "capital"].filter(
+  const keys = [...SMALL, "frigate", "capital", "oversizedCapital"].filter(
     (key) => record[key as EnemyArchetype] !== undefined,
   );
   return (
