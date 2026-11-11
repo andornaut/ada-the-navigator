@@ -796,10 +796,11 @@ export function stationDock(station: Vec): Vec {
 }
 /**
  * How near the dock Ada's centre must be to dock: her hull circle overlaps the dock's mouth
- * circle (gameplay/economy.md).
+ * circle scaled by the dock forgiveness (gameplay/economy.md).
  */
 export function stationDockRadius(content: PrototypeContent): number {
-  return ECONOMY.station.dockMouthRadius + content.tuning.flight.shipRadius;
+  const { dockForgiveness, dockMouthRadius } = ECONOMY.station;
+  return dockMouthRadius * dockForgiveness + content.tuning.flight.shipRadius;
 }
 /** The point `distance` from a station's dock along its outward direction. */
 function outsideDock(distance: number, station: Vec): Vec {

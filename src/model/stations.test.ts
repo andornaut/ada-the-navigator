@@ -204,8 +204,11 @@ describe("station discovery and docking", () => {
     expect(model.state.docked).toBe(site.id);
   });
 
-  it("docks when Ada's hull circle overlaps the dock's mouth circle", () => {
-    expect(dockRadius).toBe(ECONOMY.station.dockMouthRadius + PROTOTYPE.tuning.flight.shipRadius);
+  it("docks when Ada's hull circle overlaps the forgiving mouth circle", () => {
+    const { dockForgiveness, dockMouthRadius } = ECONOMY.station;
+    expect(dockRadius).toBe(dockMouthRadius * dockForgiveness + PROTOTYPE.tuning.flight.shipRadius);
+    // Three times the 5.87 mouth radius plus Ada's 10.
+    expect(dockRadius).toBeCloseTo(27.62, 2);
     const at = (reach: number) => {
       const model = launched();
       const flight = model.state.flight!;
