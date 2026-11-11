@@ -651,9 +651,9 @@ describe("shop purchases", () => {
     expect(paints().map((row) => [row.item, row.owned, row.inUse, row.price])).toEqual([
       [{ kind: "paint", scheme: "classic" }, true, true, null],
       [{ kind: "paint", scheme: "cobalt" }, false, false, 50],
+      [{ kind: "paint", scheme: "seafoam" }, false, false, 50],
       [{ kind: "paint", scheme: "graphite" }, false, false, 50],
       [{ kind: "paint", scheme: "iris" }, false, false, 50],
-      [{ kind: "paint", scheme: "seafoam" }, false, false, 50],
     ]);
     expect(selectPaint(ECONOMY, "cobalt", economy)).toBe(false);
     expect(buy(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy)).toEqual({
@@ -674,7 +674,7 @@ describe("shop purchases", () => {
     const states = (tab: "weapons" | "ship") =>
       shopRows(ECONOMY, economy, tab).map((row) => shopRowState(economy.stardust, row));
     expect(states("weapons")).toEqual(["unaffordable", "unaffordable", "unaffordable", "forSale"]);
-    // Shield, recharge, engine, tractor; then Classic, Cobalt, Graphite, Iris, Seafoam.
+    // Shield, recharge, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris.
     expect(states("ship")).toEqual([
       "forSale",
       "forSale",
@@ -683,15 +683,15 @@ describe("shop purchases", () => {
       "inUse",
       "forSale",
       "forSale",
-      "selectable",
       "forSale",
+      "selectable",
     ]);
     economy.stardust = 40;
     expect(states("ship").slice(5)).toEqual([
       "unaffordable",
       "unaffordable",
-      "selectable",
       "unaffordable",
+      "selectable",
     ]);
     economy.levels.tractor = 2;
     expect(states("ship")[3]).toBe("owned");

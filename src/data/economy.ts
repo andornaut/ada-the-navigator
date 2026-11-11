@@ -54,6 +54,8 @@ export interface EconomyCatalog {
   tractorRadius: LeveledValue;
   tractorSpeed: LeveledValue;
   paints: Readonly<Record<string, PaintScheme>>;
+  /** Paint schemes in shop order, as Art's ship-paint.json lists them. */
+  paintOrder: readonly string[];
   /** The free starting scheme, always owned. */
   defaultPaint: string;
   /** Stardust in a discovery cache. */
@@ -167,6 +169,7 @@ export const ECONOMY: EconomyCatalog = {
   },
   jumpFee: 10,
   ownedWeaponStardust: 25,
+  paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
     classic: { label: "paintClassic", price: 0 },
     cobalt: { label: "paintCobalt", price: 50 },

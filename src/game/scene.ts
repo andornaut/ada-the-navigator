@@ -14,7 +14,7 @@ import { shipSpeedFraction, stationDock } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
-import { fill, itemAbout, itemName, type ShopItem, shopRowState } from "../model/shop.ts";
+import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -30,7 +30,8 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
-import { createStardustCounter, createStationView, type StationRow } from "../ui/station.ts";
+import { createStationView } from "../ui/station.ts";
+import { createStardustCounter } from "../ui/weapons.ts";
 import {
   type DestructionData,
   flashAt,
@@ -60,6 +61,7 @@ import {
   shipDirectionCount,
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
+import { stationRow } from "./shop-view.ts";
 import {
   FALLBACK_SPACE_PALETTE,
   readSpacePalette,
@@ -371,12 +373,18 @@ export class PrototypeScene extends Phaser.Scene {
     const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
     this.stardust = createStardustCounter(this.controls.overlay);
     this.station = createStationView(this.controls.overlay, {
-      balance: () => amount(this.model.state.economy.stardust),
+      balance: () => ({
+        amount: this.model.state.economy.stardust,
+        text: amount(this.model.state.economy.stardust),
+      }),
       buy: (key) => apply(() => this.model.buy(item(key))),
       labels: {
         close: label("close"),
         confirmBuy: label("confirmBuy"),
         confirmCancel: label("confirmCancel"),
+        inUse: label("inUse"),
+        owned: label("owned"),
+        shipPaint: label("shipPaint"),
         shop: label("shop"),
         shopShip: label("shopShip"),
         shopWeapons: label("shopWeapons"),
@@ -393,29 +401,14 @@ export class PrototypeScene extends Phaser.Scene {
               about: itemAbout(labels, item(key)),
               kind: "confirm",
               left: fill(label("confirmLeft"), { amount: amount(request.left) }),
+              price: request.price,
               title: fill(label("confirmTitle"), { name: itemName(ECONOMY, labels, item(key)) }),
             };
       },
       rows: (tab) =>
-        this.model.shopRows(tab).map((row): StationRow => {
-          const state = shopRowState(this.model.state.economy.stardust, row);
-          return {
-            detail: row.level
-              ? fill(label("level"), { level: row.level.current, max: row.level.max })
-              : "",
-            key: JSON.stringify(row.item),
-            name: itemName(ECONOMY, labels, row.item),
-            state,
-            status:
-              state === "inUse"
-                ? label("inUse")
-                : row.owned
-                  ? label("owned")
-                  : row.price === null
-                    ? ""
-                    : amount(row.price),
-          };
-        }),
+        this.model
+          .shopRows(tab)
+          .map((row) => stationRow(ECONOMY, labels, this.model.state.economy.stardust, row)),
       select: (key) => {
         const chosen = item(key);
         if (chosen.kind === "paint") {

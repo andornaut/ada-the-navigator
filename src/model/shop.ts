@@ -133,7 +133,7 @@ export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: Sh
         ]
       : [
           ...SHIP_TRACKS.map((track): ShopItem => ({ kind: "track", track })),
-          ...Object.keys(catalog.paints).map((scheme): ShopItem => ({ kind: "paint", scheme })),
+          ...catalog.paintOrder.map((scheme): ShopItem => ({ kind: "paint", scheme })),
         ];
   return items.map((item) => shopRow(catalog, economy, item));
 }

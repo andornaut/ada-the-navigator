@@ -4,7 +4,7 @@ import type { ButtonTag } from "./modal.ts";
 // takes one image, so each tag's frame is cut out once into its own image and given to the modal
 // styles as a custom property (--ui-button-normal, --ui-button-primary-pressed and so on).
 
-export const BUTTON_SHEETS = ["ui-button", "ui-button-primary"] as const;
+export const BUTTON_SHEETS = ["ui-button", "ui-button-primary", "ui-button-tile"] as const;
 const BUTTON_TAGS: readonly ButtonTag[] = ["normal", "pressed", "disabled"];
 const UI_ROOT = "/art/ui/";
 

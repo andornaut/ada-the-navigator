@@ -17,12 +17,11 @@ interface Allowed {
 
 const ALLOWED: readonly Allowed[] = [
   { file: "touch-chrome.ts", reason: "Procedural stick chrome draws in its frames' own px" },
-  // CLEANUP (added 2026-11-11): remove once station.ts and weapons.ts read src/ui/layout
-  { file: "station.ts", reason: "Station card, shop and Stardust pill are the economy worker's" },
-  { file: "weapons.ts", reason: "Weapon buttons are the economy worker's" },
+  // CLEANUP (added 2026-11-11): remove once weapons.ts reads src/ui/layout
+  { file: "weapons.ts", reason: "Weapon buttons and the Stardust pill await Art's HUD spec" },
   {
     file: "settings.ts",
-    reason: "The base button under the weapon buttons and the station rows",
+    reason: "The base button under the weapon buttons",
     selectors: /^\.ada-controls button(:focus-visible)?$/u,
   },
 ];
@@ -155,6 +154,9 @@ describe("DOM UI sizes", () => {
   it("allow only the listed files and rules", () => {
     expect(rawPixelFindings("settings.ts", "`.ada-controls button{gap:4px}`")).toEqual([]);
     expect(rawPixelFindings("settings.ts", "`.ada-controls .ada-use{gap:4px}`")).toHaveLength(1);
+    expect(rawPixelFindings("station.ts", "`.ada-controls .ada-shop-row{gap:4px}`")).toHaveLength(
+      1,
+    );
     expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
   });
 });
