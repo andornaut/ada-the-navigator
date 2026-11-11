@@ -272,24 +272,21 @@ the idle state with the vector gear `settings.svg`.
 | ------------ | -------------------- | ----------------------------- | ------------------------ | -------------- |
 | Idle         | Navy `#262b44`       | 1 ink `#181425`               | `#b8b3c9`                | 6.83:1         |
 | Selected     | `#bfa06f`, 25 across | 4 ink annulus inside the disc | Ink `#181425`            | 7.27:1         |
-| Locked       | Navy `#262b44`       | 1 ink `#181425`               | `#6f7891`                | 3.16:1         |
 | Refused      | Navy `#262b44`       | 1 ink `#181425`               | `#e4574e` during the cue | 3.82:1         |
 
 - Selection is Chibi's dark annulus inside the fixed disc, with no light outer
-  ring. Selection, lock and refusal never resize the disc or glyph.
+  ring. Selection and refusal never resize the disc or glyph.
 - Brightness: the selected face is the primary button's muted gold, 5.91:1
   against the space background `#292734` (the amber face was 8.50:1, its cream
   ring 10.11:1). The idle glyph is the supporting-text lavender, softer than
-  cream (9.59:1) and above 4.5:1. The locked glyph is dimmer still and holds
-  3:1.
-- The ink edge on idle and locked discs is the pause disc's edge: navy is
+  cream (9.59:1) and above 4.5:1.
+- The ink edge on idle and refused discs is the pause disc's edge: navy is
   1.05:1 on the space background and ink 1.23:1, so the edge outlines the
   disc; the glyph carries the essential contrast.
-- Locked applies to every unselected weapon in combat and through the 5 seconds
-  after it ends, until weapon changes unlock; the selected weapon keeps its
-  selected look. The locked look is fully opaque, with no ring.
-- A tap on a locked weapon plays the [refusal cue](#refusal-cue) with the
-  glyph as its label.
+- Weapons switch at any time, with a 1 s wait between switches (Gameplay).
+  During the wait a tap on another weapon disc plays the
+  [refusal cue](#refusal-cue) with the glyph as its label (the Refused state);
+  the selected weapon keeps its selected look throughout.
 - Focus-visible is the shared focus ring, `FOCUS_RING.outset` outside the disc
   and round with it, over any state.
 
