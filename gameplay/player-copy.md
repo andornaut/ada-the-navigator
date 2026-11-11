@@ -8,42 +8,89 @@ completion.
 
 ## Prologue
 
-Plays once, after chapter one's home opening. Panel title: The Glowing Rock.
+Plays once, on first launch, around chapter one's home opening. Panel title:
+The Glowing Rock.
 In the cockpit, Ada and Penny stand (the empty cockpit) from their arrival through
 the optional questions; from "Ada sits in the pilot's chair and buckles Penny in
 beside her." onward they are seated. Boarding in later chapters, Continue and
 galaxy selection always show them seated.
 A replayed chapter one opening uses the boarding panels instead.
 
-Park page: "On a walk with Penny, Ada digs up an unusual rock."
+First launch only, before chapter one's opening, in Grandma's garden:
 
-Ada's room, rock unpolished: "At home, she polishes it until a faint pattern begins
-to glow."
+- Narration: "Ada is twelve. She loves maps, old atlases and finding the way to
+  places nobody else bothers to go."
+- Narration: "Every Saturday, she and her dog Penny walk to Grandma's house,
+  where the garden grows a little wilder each year."
+- Grandma: "There's my navigator. Did you two take the long way again?"
+- Ada: "Penny found a shortcut. It was mostly mud."
 
-Ada's room, rock glowing: "The pattern pulses softly, as if it is waiting for
-her." Choice: "Touch the glow."
+Chapter one's opening and its choice follow. After its branch page, still in the
+garden:
 
-Narration: "Light swirls around Ada and Penny. They are standing in a tiny
-cockpit. Outside, colors shimmer like nowhere at all."
+- Grandma: "Think about it on your walk home. Good ideas like fresh air."
 
-Astra: "Navigator detected. Hello. I am Astra, this ship's mind."
-Ada: "Where are we?"
-Astra: "Between dimensions. While you are aboard, Earth's time waits for you."
-Astra: "My memory is damaged. I know only one galaxy. A holodisk holding part of
-my memory is somewhere there."
-Astra: "I was made to explore and map, but I can no longer fly without a navigator. Will
-you be mine?"
+In the park:
 
-Optional questions:
+- Narration: "On the way home, Penny tugs Ada off the path and sniffs hard at the
+  roots of an old tree."
+- Narration: "Penny digs. Something round glints in the dirt: a rock, smoother
+  than any Ada has ever seen."
+- Ada: "Good nose, Penny. Let's take it home."
 
-- "How did you get to Earth?" Astra: "I don't remember. The holodisk may help."
+Ada's room, rock unpolished:
+
+- Narration: "That evening, Ada polishes the rock at her desk. Under the dirt,
+  thin lines appear, like a map of somewhere far away."
+
+Ada's room, rock glowing:
+
+- Narration: "The lines begin to glow. The pattern pulses softly, as if it is
+  waiting for her." Action: "Touch the glow."
+
+The cockpit, standing:
+
+- Narration: "Light swirls around Ada and Penny. When it fades, they are standing
+  in a tiny cockpit under a glass canopy. Outside, colors shimmer like nowhere at
+  all."
+- Narration: "Penny's tail thumps. She sniffs the two seats as if she has been
+  here before."
+- Astra: "Hello. Please don't be afraid. I'm Astra."
+- Ada: "Who said that? Where are you?"
+- Astra: "All around you. I'm an AI, the mind of this ship. You're standing
+  inside me, in a way."
+- Astra: "What is your name, explorer?"
+- Ada: "Ada. And this is Penny."
+- Astra: "Hello, Ada. Hello, Penny. The rock you found is my beacon. It waits for
+  someone who loves to find the way."
+- Ada: "Where are we?"
+- Astra: "Between dimensions. While you are aboard, no time passes on Earth.
+  Your family won't even know you left."
+- Astra: "I was made to explore and map new places. But my memory is damaged.
+  Pieces of it are stored on holodisks, and they were scattered across the
+  galaxies."
+- Astra: "I can still jump, but I can't find my way alone. I need a navigator.
+  Will you be mine?"
+- Ada: "A real navigator? In space?"
+- Astra: "In space. I'll fly where you steer. You choose where we go, and tell me
+  what you see."
+
+Optional questions, each returning to the list until Continue:
+
+- "What's a holodisk?" Astra: "A disc that holds part of my memory. Each one you
+  find helps me remember, and shows me new places to jump."
+- "How did you get to Earth?" Astra: "I don't remember. The holodisks may help."
 - "Can Penny come?" Astra: "There are two seats. Please strap Penny in."
 - "How do I get home?" Astra: "Ask me any time you're safe. I'll jump you back to
   the moment you left."
 
-Narration: "Ada sits in the pilot's chair and buckles Penny in beside her."
-Astra: "Quantum jump ready."
-Choice: "Let's find your holodisk."
+The cockpit, seated:
+
+- Narration: "Ada sits in the pilot's chair and buckles Penny in beside her."
+- Astra: "You steer, and you aim. My shield will protect us. If it ever fails,
+  I'll jump us straight back to Earth."
+- Astra: "I remember one galaxy: Sunflower. Its holodisk is somewhere there.
+  Quantum jump ready." Action: "Let's find your holodisk."
 
 Boarding, for later chapters: Narration: "Ada holds Penny close and touches the
 rock's glow." Astra: "Welcome back, Navigator."
