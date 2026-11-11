@@ -227,8 +227,8 @@ Objectives, in order:
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.
-- Storybook pages: Next, Back, Skip. Boarding from Ada's room: Pick up the rock.
-- Galaxy selection: Galaxy {number}, Jump, Next, Back. A locked galaxy's name and
+- Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
+- Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
   text: ...
 - Galaxy names and flavor text:
   - Galaxy 1, Sunflower: "Scattered outposts grow, build and salvage, each on

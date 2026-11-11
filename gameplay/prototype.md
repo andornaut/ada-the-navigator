@@ -41,9 +41,12 @@ a brief boarding line, then chooses a galaxy.
 
 Earth scenes are storybook pages. Each page has a full background of a place,
 colorful but low contrast, with no landmarks or signs naming the city, and its
-text or dialogue in a readable panel on top. Next turns the page and Back returns
-to the previous page in the scene. Skip is always available and goes to the end
-of the scene, taking the default path through any choices. A choice page offers
+text or dialogue in a readable panel at the bottom. Next turns the page and
+Previous returns to the previous page in the scene; Previous is disabled on a
+scene's first page. A page that ends in a named action, such as "Pick up the
+rock.", shows that action in place of Next. Skip is always visible and goes to the
+end of the scene, taking the default path through any choices. Choice buttons are
+all secondary, with focus on the first. A choice page offers
 two or three choices; each leads to one or two branch pages and then rejoins the
 main story, so choices never change a chapter's resolution. The first choice is
 the default. Locations include Grandma's house and garden, the community garden
@@ -60,12 +63,14 @@ for Ada and Penny, with a little room to walk around behind them. The holodisk
 drive looks like a CD or cassette player.
 
 Boarding shows the cockpit with galaxy selection on top. Galaxies are paged one
-per page, in order, with Next and Back, like Chibi's stage cards. An unlocked
+per page, in order, with Previous and Next, like Chibi's stage cards. An unlocked
 galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
 background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
 number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. Galaxies are named after real galaxies' nicknames:
+galaxy one is unlocked. Closing galaxy selection (its close X, an outside tap,
+back or Escape) leaves the cockpit and returns Ada to her room, without a jump.
+Galaxies are named after real galaxies' nicknames:
 Sunflower (one), Cartwheel (two), Whirlpool (three) and Black Eye (four). Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate
 exit from space.
@@ -240,7 +245,11 @@ finale, enemies and resolution remain undesigned.
   selection to recharge. The equipped weapon is lost unless it is Basic, and
   recharging costs a flat Stardust fee. Story progress persists; the next flight
   generates a new layout.
-- The shield bar spans the full bottom width and is approximately three pixels high.
+- The shield bar spans the full width at the bottom safe edge, above any
+  home-indicator inset, and is approximately three pixels high.
+- Game and save notices, such as the save-failure notice, show briefly as a
+  compact strip at the top center below the safe inset, clear of the pause button
+  and weapon icons.
 - One forgiving difficulty; no overall exploration timer.
 - Ordinary scenery blocks or slides the ship without damage. Attacks and marked
   hazards damage the shield.
