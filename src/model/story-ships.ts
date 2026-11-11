@@ -67,17 +67,50 @@ function along(path: StoryPath, t: number): { heading: Vec; point: Vec; thrust: 
   };
 }
 
+/** Each story ship's nose distance in world units by drawn heading `k` (art/cartwheel.md "Nose"). */
+export type StoryNoses = Readonly<Partial<Record<StoryShipId, readonly number[]>>>;
+
+/** Where the docked story ships stand: the bay (hubBay) and each craft's nose by heading. */
+export interface StoryDocking {
+  readonly bay: boolean;
+  readonly noses: StoryNoses;
+}
+
+/**
+ * A regular's hub-relative docked spot (art/cartwheel.md "Hub"): its dock or berth point moved
+ * outward, opposite its docking heading, by its craft's nose distance at that drawn heading,
+ * so the nose meets the dock face. Without the nose data the pivot stays on the point.
+ */
+export function dockedSpot(
+  docking: StoryDocking,
+  id: Exclude<StoryShipId, "blocker">,
+): { at: Vec; heading: Vec } {
+  const dock = CARTWHEEL_STORY_SHIPS.docked[docking.bay ? "bay" : "hub"][id];
+  const noses = docking.noses[id];
+  const distance = noses?.[headingIndex(noses.length, dock.heading)] ?? 0;
+  return {
+    at: { x: dock.at.x - dock.heading.x * distance, y: dock.at.y - dock.heading.y * distance },
+    heading: dock.heading,
+  };
+}
+
+/** The drawn heading index `k` of `count` for a heading: world angle `k * 360 / count`. */
+function headingIndex(count: number, heading: Vec): number {
+  const index = Math.round(Math.atan2(heading.y, heading.x) / ((2 * Math.PI) / count));
+  return ((index % count) + count) % count;
+}
+
 /**
  * Cartwheel's story ships around the hub at flight time `time`. They are not flight objects,
  * so shots pass through them and they never fight. The miner and the visitors wait at their
- * holding points until the docking scene, after which they stay docked, facing into their
- * docks; `bay` (hubBay) moves the first visitor to the second docking bay's berth. The
- * blocking pilot flies only in its scenes.
+ * holding points until the docking scene, after which they stay docked at their docked spots
+ * (dockedSpot), facing into their docks; the docking scene's paths end at those spots, so
+ * nothing jumps when it ends. The blocking pilot flies only in its scenes.
  */
 export function storyShips(
   hub: Vec,
   progress: Pick<SectorProgress, "stage">,
-  bay: boolean,
+  docking: StoryDocking,
   scene: StorySceneState | undefined,
   time: number,
 ): StoryShip[] {
@@ -90,7 +123,12 @@ export function storyShips(
   const place = (id: StoryShipId, local: Vec, heading: Vec, thrust: boolean) =>
     ships.push({ heading, id, thrust, x: hub.x + local.x, y: hub.y + local.y });
   for (const id of ["miner", "visitor-1", "visitor-2", "blocker"] as const) {
-    const path = playing?.paths[id];
+    const scripted = playing?.paths[id];
+    // A regular's docking path ends at its docked spot, not on the dock point itself.
+    const path =
+      scripted && scene!.id === "docking" && id !== "blocker"
+        ? [...scripted.slice(0, -1), { at: scripted.at(-1)!.at, ...dockedSpot(docking, id).at }]
+        : scripted;
     if (path) {
       const { heading, point, thrust } = along(path, time - scene!.at);
       place(id, point, heading, thrust);
@@ -98,7 +136,7 @@ export function storyShips(
       const hold = data.hold[id];
       place(id, hold, unit({ x: -hold.x, y: -hold.y }), false);
     } else if (id !== "blocker") {
-      const docked = data.docked[bay ? "bay" : "hub"][id];
+      const docked = dockedSpot(docking, id);
       place(id, docked.at, docked.heading, false);
     }
   }

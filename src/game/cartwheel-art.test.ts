@@ -15,7 +15,9 @@ import {
   HUB_PROJECT_ART,
   hubLayers,
   readBuoyArt,
+  readCraftNose,
   readHubArt,
+  storyNoses,
 } from "./cartwheel-art.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS } from "./test-art-manifest.ts";
 
@@ -146,5 +148,30 @@ describe("Cartwheel art", () => {
         expect(at.y).toBeCloseTo(theirs[i]!.y, 6);
       });
     }
+  });
+
+  it("read each story craft's nose by heading, its distance following Art's projection rule", () => {
+    for (const craft of new Set(Object.values(STORY_SHIP_CRAFT))) {
+      const nose = readCraftNose(json(`/art/cartwheel/${craft}-jets.json`))!;
+      expect(nose, craft).toHaveLength(16);
+      // distance = 0.4375 * reach * sqrt(7/8 + sin(2a) / 8) at a = k * 22.5 degrees, so each
+      // heading's distance over heading 0's is that root over sqrt(7/8).
+      const aspect = (k: number) => Math.sqrt(7 / 8 + Math.sin(2 * k * (Math.PI / 8)) / 8);
+      nose.forEach(({ distance, tip }, k) => {
+        expect(distance / nose[0]!.distance, `${craft} ${k}`).toBeCloseTo(aspect(k) / aspect(0), 3);
+        expect(Number.isFinite(tip.x) && Number.isFinite(tip.y)).toBe(true);
+      });
+    }
+    const noses = storyNoses((craft) => json(`/art/cartwheel/${craft}-jets.json`));
+    expect(noses["visitor-1"]).toEqual(noses["visitor-2"]);
+    expect(noses.miner![10]).toBeGreaterThan(noses["visitor-1"]![10]!);
+    // A file without a full, well-formed nose array reads as none.
+    const jets = json("/art/cartwheel/miner-jets.json") as { nose: unknown[] };
+    expect(readCraftNose({ ...jets, nose: jets.nose.slice(1) })).toBeUndefined();
+    expect(
+      readCraftNose({ ...jets, nose: [{ distance: -1, tip: [0, 0] }, ...jets.nose.slice(1)] }),
+    ).toBeUndefined();
+    expect(readCraftNose({})).toBeUndefined();
+    expect(storyNoses(() => undefined)).toEqual({});
   });
 });

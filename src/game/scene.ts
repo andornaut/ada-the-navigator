@@ -33,7 +33,13 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
-import { drawnHeading, hubBay, hubWorn, storyShips } from "../model/story-ships.ts";
+import {
+  drawnHeading,
+  hubBay,
+  hubWorn,
+  type StoryNoses,
+  storyShips,
+} from "../model/story-ships.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -86,6 +92,7 @@ import {
   hubLayers,
   readBuoyArt,
   readHubArt,
+  storyNoses,
 } from "./cartwheel-art.ts";
 import { readStreakSpec, streakMarks, type StreakSpec } from "./current-streaks.ts";
 import {
@@ -337,6 +344,8 @@ export class PrototypeScene extends Phaser.Scene {
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
+  /** Each story craft's nose distance by heading, for its docked spot (art/cartwheel.md). */
+  private storyNoses: StoryNoses = {};
   // Every galaxy's tow line, and Cartwheel's stranded craft; a rescue keeps its placeholder
   // craft or line until its art loads.
   private towLine: TowLine | undefined;
@@ -1166,6 +1175,7 @@ export class PrototypeScene extends Phaser.Scene {
       (craft) => this.cache.json.get(`craft-jets-${craft}`),
       craftFrameSets(loaded),
     );
+    this.storyNoses = storyNoses((craft) => this.cache.json.get(`craft-jets-${craft}`));
     const debris = new Map<SectorId, DebrisArt>();
     for (const [sector, key] of [
       [2, "cartwheel-debris"],
@@ -2202,7 +2212,7 @@ export class PrototypeScene extends Phaser.Scene {
     for (const ship of storyShips(
       hub,
       progress,
-      hubBay(progress),
+      { bay: hubBay(progress), noses: this.storyNoses },
       flight.storyScene,
       flight.time,
     )) {

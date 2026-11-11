@@ -1,4 +1,7 @@
+import { STORY_SHIP_CRAFT, type StoryShipId } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
+import type { StoryNoses } from "../model/story-ships.ts";
+import type { Vec } from "../model/types.ts";
 import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame } from "./enemy-art.ts";
 import { readShipJets } from "./ship-jets.ts";
 import type { StationArt, StationFrame } from "./station-art.ts";
@@ -126,6 +129,55 @@ export function craftFrameSets<T extends CartwheelAsset>(assets: readonly T[]): 
     }
   }
   return sets;
+}
+
+/** A story craft's nose at one heading (art/cartwheel.md "Nose"). */
+export interface CraftNose {
+  /** World units from the pivot to the point under the nose on the centre line. */
+  readonly distance: number;
+  /** The drawn tip in frame px. */
+  readonly tip: Vec;
+}
+
+/**
+ * The `nose` array of a craft's jets file: 16 entries, heading `k` at index `k`, each with a
+ * non-negative world `distance` and a frame px `tip`; undefined when any entry is malformed.
+ */
+export function readCraftNose(jets: unknown): CraftNose[] | undefined {
+  const nose =
+    jets && typeof jets === "object" ? (jets as { readonly nose?: unknown }).nose : undefined;
+  if (!Array.isArray(nose) || nose.length !== ENEMY_HEADINGS) {
+    return undefined;
+  }
+  const entries: CraftNose[] = [];
+  for (const entry of nose as unknown[]) {
+    const { distance, tip } = (entry ?? {}) as { distance?: unknown; tip?: unknown };
+    const finite = (value: unknown): value is number =>
+      typeof value === "number" && Number.isFinite(value);
+    if (!finite(distance) || distance < 0 || !Array.isArray(tip) || tip.length !== 2) {
+      return undefined;
+    }
+    if (!finite(tip[0]) || !finite(tip[1])) {
+      return undefined;
+    }
+    entries.push({ distance, tip: { x: tip[0], y: tip[1] } });
+  }
+  return entries;
+}
+
+/**
+ * Each story ship's nose distance by heading, from its craft's jets file (STORY_SHIP_CRAFT);
+ * a ship whose file has no readable `nose` is left out.
+ */
+export function storyNoses(jets: (craft: string) => unknown): StoryNoses {
+  const noses: Partial<Record<StoryShipId, readonly number[]>> = {};
+  for (const [id, craft] of Object.entries(STORY_SHIP_CRAFT) as [StoryShipId, string][]) {
+    const nose = readCraftNose(jets(craft));
+    if (nose) {
+      noses[id] = nose.map(({ distance }) => distance);
+    }
+  }
+  return noses;
 }
 
 /** A craft's frames and speed jets, in the enemy heading convention and jets schema. */

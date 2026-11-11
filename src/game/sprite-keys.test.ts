@@ -23,8 +23,14 @@ describe("object sprite keys", () => {
     const hub = ensureDestination(PROTOTYPE, "hub", flight);
     // Every craft the scenes draw: the waiting pair, and the blocking scene's cast.
     const ships = [
-      ...storyShips(hub, { stage: 2 }, false, undefined, 0),
-      ...storyShips(hub, { stage: 2 }, false, { at: 0, id: "blocked", lineDue: false }, 1),
+      ...storyShips(hub, { stage: 2 }, { bay: false, noses: {} }, undefined, 0),
+      ...storyShips(
+        hub,
+        { stage: 2 },
+        { bay: false, noses: {} },
+        { at: 0, id: "blocked", lineDue: false },
+        1,
+      ),
     ];
     expect(ships.length).toBeGreaterThan(0);
     const keys = [
