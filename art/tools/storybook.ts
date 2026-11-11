@@ -23,8 +23,8 @@ import {
   Scene,
   slab,
   treatmentD,
-  writePng,
 } from "./diorama.ts";
+import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
@@ -689,7 +689,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const only = process.argv[2];
   for (const { build, id, palette } of BACKGROUNDS) {
     if (only && only !== id) continue;
-    writePng(`${art}${entry(id).path.slice("/art/".length)}`, paint(palette, build(palette)));
+    writePng(`${art}${entry(id).path.slice("/art/".length)}`, paint(palette, build(palette)), true);
   }
   placeStoryEntries(BACKGROUNDS.map(({ id }) => entry(id)));
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));

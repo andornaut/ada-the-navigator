@@ -4,10 +4,7 @@
 //
 // Positions are design px: the 844 by 390 design frame is 779 by 360 logical px, the view of an
 // 844 by 390 phone. A canvas maps its output pixels onto that frame and extends past it.
-import { writeFileSync } from "node:fs";
-
 import { polygon } from "@andornaut/art-kit/draw";
-import { encodeRgbPng } from "@andornaut/art-kit/png";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
 import { fromOklab, type Rgb, rgb, toOklab } from "./oklab.ts";
@@ -434,10 +431,4 @@ export function treatmentD(canvas: Canvas, image: RgbaImage): RgbaImage {
     }
   }
   return out;
-}
-
-const PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: -1 };
-
-export function writePng(path: string, image: RgbaImage): void {
-  writeFileSync(path, encodeRgbPng(PNG, image));
 }
