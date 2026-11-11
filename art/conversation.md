@@ -39,8 +39,9 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   line shows; when the line ends the portrait shows its idle frame. Reduced
   motion holds the loop's first frame (`speaking-1`, `unknown-speaking-1` or
   `named-speaking-1`).
-- Idle frames (1000 ms) are for a speaker on screen but silent, such as the
-  storybook panel. The conversation box shows only the current speaker.
+- Idle frames (1000 ms) are for a speaker on screen but silent. The
+  conversation box and the storybook panel show only the current speaker,
+  whose loop plays while the line or page shows.
 - Ada and Penny have no speaking loop. Each line takes the mood Gameplay marks
   after it in [player-copy.md](../gameplay/player-copy.md): a line
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`

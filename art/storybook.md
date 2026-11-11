@@ -124,7 +124,9 @@ portrait; the cockpit background stays still. See
 
 Gameplay owns the page sequence and copy. Each page names one background; the
 [storybook page layout](layout.md#storybook-page) places the panel over it:
-bottom-anchored on the available rect, sized to its own content, no dim. The
+bottom-anchored on the available rect, one height per view, no dim. At
+360-high views the panel covers the design frame below y 105 to 108, so the
+strip above it shows the backdrop and the scene's upper part. The
 background never moves or scales between pages of a scene. Choice pages reuse
 their scene's background (Grandma's choice uses `story-grandma-garden`).
 
@@ -267,11 +269,11 @@ night haze (coat `#b57100` before treatment), and morning
 - Waking: Penny sits up awake at the foot of the bed; Ada kneels up in bed
   stretching, the `story-ada-waking` sprite.
 
-On the 844 by 390 phone the morning page's panel top is at logical y 236 and the
-rock's top at 188. Ada's sprite (top 174, chin 218) clears the panel;
-Penny's head (273) sits under it and shows during the cross-fade into the
-morning, before the panel appears. The sleep scene shows no panel, so both
-figures stay in view (Ada 263, Penny 318).
+On the 844 by 390 phone the morning page's panel top is at logical y 108; the
+rock's top (188), Ada's sprite (top 174, chin 218) and Penny's head (273) sit
+under it. Both figures show during the cross-fade into the morning, before the
+panel appears. The sleep scene shows no panel, so both figures stay in view
+(Ada 263, Penny 318).
 
 ### Sleep scene overlays
 
