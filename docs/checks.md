@@ -81,9 +81,9 @@ dependencies as UID 19001, disconnects networking and runs the three configured
 
 ## Detached receipt compatibility
 
-Use Node.js 24.22.2 (or supported Node.js 26.12.0+) and Docker. Fetch `node:24.22.2` before
-starting checks. The orchestrator runs on the host; dependency installation,
-hook verification, lint, type checks, tests and builds run inside Docker.
+Use Node.js 24.22.2 (or supported Node.js 26.12.0+) and Docker. The orchestrator
+runs on the host; hook verification, lint, type checks, tests and builds run
+inside Docker.
 
 ```bash
 node tools/checks.mjs start all
@@ -106,8 +106,12 @@ in `.check-results/<name>/startup.json`. Only an owned container confirmed never
 started is removed automatically. Running or uncertain containers are retained;
 follow the recorded collection instructions before retrying.
 
-The adapter retains its `node:24.22.2` image, locked `npm ci` installation and
-writable `/tmp/work` container scratch. Its `lint` mode dispatches inner `lint`;
+`start` first builds the Make profile's check image from `tests/container/context`
+and `tests/container/Dockerfile`, after `tests/container/admit build-image`, with
+the same build limits and per-checkout `local-check` tag as the launcher, so Docker
+reuses Make's layers. The image supplies ShellCheck and the locked dependencies;
+the container runs without a network and copies source into writable `/tmp/work`
+scratch. `startup.json` records the image ID. The `lint` mode dispatches inner `lint`;
 `test` and `all` dispatch inner `lint`, `test` and `build`. This includes hook
 acceptance/rejection, types, the full tests, build and both packaging dry runs.
 All categories invoke `tests/container/check` directly, without Make or Docker

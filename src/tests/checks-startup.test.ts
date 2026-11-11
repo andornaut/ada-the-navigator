@@ -8,14 +8,20 @@ import { describe, expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const containerId = "c".repeat(64);
+const imageId = "d".repeat(64);
 const fakeDocker = `#!${process.execPath}
-const { appendFileSync } = require('node:fs');
+const { appendFileSync, readFileSync, writeFileSync } = require('node:fs');
 const args = process.argv.slice(2);
 const command = args[0];
 const scenario = process.env.CHECK_STARTUP_CASE;
 const entry = {command, target: command === 'create' ? null : args.at(-1)};
+if (command === 'create') { entry.image = args.at(-5); entry.network = args[args.indexOf('--network') + 1]; }
 appendFileSync(process.env.PROOF_COMMANDS, JSON.stringify(entry) + '\\n');
-if (command === 'create') {
+if (command === 'build') {
+  readFileSync(0);
+  if (scenario === 'build-fails') { console.error('fixture build failure'); process.exit(31); }
+  writeFileSync(args[args.indexOf('--iidfile') + 1], 'sha256:${imageId}\\n');
+} else if (command === 'create') {
   if (scenario === 'create-fails') { console.error('fixture create failure'); process.exit(17); }
   console.log('${containerId}');
 } else if (command === 'start') {
@@ -40,6 +46,14 @@ function attempt(scenario: string) {
   const project = join(scratch, "project");
   mkdirSync(join(project, "tools"), { recursive: true });
   cpSync(join(root, "tools/checks.mjs"), join(project, "tools/checks.mjs"));
+  mkdirSync(join(project, "tests/container"), { recursive: true });
+  writeFileSync(join(project, "tests/container/context"), "tests/container/Dockerfile\n");
+  writeFileSync(join(project, "tests/container/Dockerfile"), "FROM scratch\n");
+  writeFileSync(
+    join(project, "tests/container/admit"),
+    '#!/bin/sh\n[ "$CHECK_STARTUP_CASE" != admission-rejects ]\n',
+    { mode: 0o755 },
+  );
   writeFileSync(join(project, "package.json"), '{"private":true,"type":"module"}\n');
   writeFileSync(join(project, ".gitignore"), ".check-results/\n");
   execFileSync("git", ["init", "--quiet", "--initial-branch", "main"], { cwd: project });
@@ -63,6 +77,7 @@ function attempt(scenario: string) {
     { cwd: project },
   );
   const commandsPath = join(scratch, "commands.jsonl");
+  writeFileSync(commandsPath, "");
   writeFileSync(join(scratch, "docker"), fakeDocker, { mode: 0o755 });
   const preload = `import os from 'node:os'; import {syncBuiltinESMExports} from 'node:module';
 let calls = 0;
@@ -98,10 +113,14 @@ syncBuiltinESMExports();`;
     readFileSync(resolve(project, ".check-results", name!, "startup.json"), "utf8"),
   );
   const commands = readFileSync(commandsPath, "utf8")
-    .trim()
     .split("\n")
+    .filter(Boolean)
     .map((line) => JSON.parse(line) as { command: string; target: string | null });
   return { commands, receipt, result };
+}
+
+function containerCommands(commands: { command: string; target: string | null }[]) {
+  return commands.filter(({ command }) => command !== "build");
 }
 
 describe("isolated check startup ownership", () => {
@@ -111,10 +130,28 @@ describe("isolated check startup ownership", () => {
     expect(result.stdout.trim()).toBe(receipt.name);
     expect(receipt.containerId).toBe(containerId);
     expect(receipt.stage).toBe("started");
+    expect(receipt.image).toBe(`sha256:${imageId}`);
     expect(commands).toEqual([
-      { command: "create", target: null },
+      { command: "build", target: "-" },
+      { command: "create", image: `sha256:${imageId}`, network: "none", target: null },
       { command: "start", target: containerId },
     ]);
+  });
+
+  it("creates nothing when the check image cannot be built", () => {
+    const { commands, receipt, result } = attempt("build-fails");
+    expect(result.status).toBe(31);
+    expect(result.stderr).toContain("fixture build failure");
+    expect(receipt.stage).toBe("image");
+    expect(receipt.cleanup).toBe("not-created");
+    expect(commands.map(({ command }) => command)).toEqual(["build"]);
+  });
+
+  it("builds nothing when resource admission rejects the image phase", () => {
+    const { commands, receipt, result } = attempt("admission-rejects");
+    expect(result.status).toBe(1);
+    expect(receipt.containerId).toBeNull();
+    expect(commands).toEqual([]);
   });
 
   it("removes only its owned unstarted container when load rises after creation", () => {
@@ -123,7 +160,11 @@ describe("isolated check startup ownership", () => {
     expect(result.stderr).toContain("load >=20");
     expect(result.stderr).toContain("startup.json");
     expect(receipt.cleanup).toBe("removed-unstarted");
-    expect(commands.map(({ command }) => command)).toEqual(["create", "inspect", "rm"]);
+    expect(containerCommands(commands).map(({ command }) => command)).toEqual([
+      "create",
+      "inspect",
+      "rm",
+    ]);
     expect(commands.at(-1)?.target).toBe(containerId);
   });
 
@@ -133,7 +174,7 @@ describe("isolated check startup ownership", () => {
     expect(result.stderr).toContain("fixture create failure");
     expect(receipt.containerId).toBeNull();
     expect(receipt.recovery).toContain("Creation is unconfirmed");
-    expect(commands).toEqual([{ command: "create", target: null }]);
+    expect(containerCommands(commands).map(({ command }) => command)).toEqual(["create"]);
   });
 
   it("cleans up an unstarted container after Docker rejects start", () => {

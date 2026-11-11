@@ -1,8 +1,18 @@
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { closeSync, lstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
-import { loadavg } from "node:os";
-import { resolve } from "node:path";
+import {
+  closeSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { loadavg, tmpdir } from "node:os";
+import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -141,6 +151,87 @@ export function guard(ci) {
   }
 }
 
+/**
+ * Build the Make profile's check image from the inputs `tests/container/run` uses: the
+ * `tests/container/context` manifest, `tests/container/Dockerfile`, the `build-image` admission
+ * phase, the capped build resources and the per-checkout `local-check` tag, so Docker reuses the
+ * layers Make builds. The canonical launcher has no build-only action, so this mirrors its build.
+ */
+function prepareImage() {
+  const checkout = realpathSync(root);
+  const inputs = readFileSync(resolve(checkout, "tests/container/context"), "utf8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  for (const input of inputs) {
+    const path = resolve(checkout, input);
+    if (!path.startsWith(`${checkout}${sep}`) || !lstatSync(path).isFile()) {
+      throw new Error(`Invalid container context input: ${input}`);
+    }
+  }
+  run(resolve(checkout, "tests/container/admit"), ["build-image"]);
+  const scratch = mkdtempSync(join(tmpdir(), "ada-check-image-"));
+  try {
+    const context = join(scratch, "context.tar");
+    run("tar", [
+      "--create",
+      "--file",
+      context,
+      "--directory",
+      checkout,
+      "--mode=u+rwX,go+rX",
+      "--no-recursion",
+      "--",
+      ...inputs,
+    ]);
+    const tag = `local-check:${createHash("sha256").update(checkout).digest("hex").slice(0, 16)}`;
+    const iidfile = join(scratch, "image.id");
+    const build = spawnSync(
+      "docker",
+      [
+        "build",
+        "--resource",
+        "cpu-period=100000",
+        "--resource",
+        "cpu-quota=400000",
+        "--resource",
+        "memory=4g",
+        "--ulimit",
+        "nofile=256:256",
+        "--tag",
+        tag,
+        "--iidfile",
+        iidfile,
+        "--file",
+        "tests/container/Dockerfile",
+        "-",
+      ],
+      {
+        cwd: checkout,
+        encoding: "utf8",
+        input: readFileSync(context),
+        maxBuffer: 64 * 1024 * 1024,
+        timeout: 900000,
+      },
+    );
+    if (build.error) {
+      throw build.error;
+    }
+    if (build.status !== 0) {
+      const error = new Error(`docker build: ${build.stderr || `exited with ${build.status}`}`);
+      error.exitCode = build.status || 1;
+      throw error;
+    }
+    const image = readFileSync(iidfile, "utf8").trim();
+    if (!/^sha256:[a-f0-9]{64}$/.test(image)) {
+      throw new Error("docker build did not record an image ID");
+    }
+    return { image, tag };
+  } finally {
+    rmSync(scratch, { force: true, recursive: true });
+  }
+}
+
 const program = `
 const {cpSync,mkdirSync,writeFileSync,openSync,existsSync} = await import('node:fs');
 const {dirname} = await import('node:path');
@@ -181,17 +272,25 @@ function start(mode, ci) {
   mkdirSync(resolve(results, name), { recursive: true });
   writeFileSync(resolve(results, name, "source.json"), `${JSON.stringify(source, null, 2)}\n`);
   const categories = mode === "lint" ? ["lint"] : ["lint", "test", "build"];
-  const steps = [
-    ["git", "init", "--quiet", "--initial-branch", "main"],
-    ["npm", "ci"],
-    ...categories.map((category) => ["tests/container/check", category]),
-  ];
+  const steps = categories.map((category) => ["tests/container/check", category]);
   const directory = resolve(results, name);
   const receiptPath = resolve(directory, "startup.json");
-  const receipt = { name, containerId: null, stage: "create", cleanup: "unconfirmed" };
+  const receipt = {
+    name,
+    containerId: null,
+    image: null,
+    stage: "image",
+    cleanup: "unconfirmed",
+  };
   const saveReceipt = () => writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   saveReceipt();
   try {
+    // The image carries ShellCheck and the locked dependencies, so the gate runs offline.
+    const { image, tag } = prepareImage();
+    receipt.image = image;
+    receipt.imageTag = tag;
+    receipt.stage = "create";
+    saveReceipt();
     guard(ci);
     const containerId = run("docker", [
       "create",
@@ -211,6 +310,10 @@ function start(mode, ci) {
       "ALL",
       "--security-opt",
       "no-new-privileges",
+      "--network",
+      "none",
+      "--ulimit",
+      "nofile=256:256",
       "--mount",
       `type=bind,source=${root},target=/checkout,readonly`,
       "--env",
@@ -221,7 +324,7 @@ function start(mode, ci) {
       `SOURCE_FILES=${Buffer.from(JSON.stringify(source.files)).toString("base64")}`,
       "--env",
       `CHECK_STEPS=${JSON.stringify(steps)}`,
-      "node:24.22.2",
+      image,
       "node",
       "--input-type=module",
       "-e",
@@ -240,7 +343,13 @@ function start(mode, ci) {
     saveReceipt();
   } catch (error) {
     receipt.error = error.message;
-    let recovery = `Creation is unconfirmed; inspect container name ${name} before retrying.`;
+    if (receipt.stage === "image") {
+      receipt.cleanup = "not-created";
+    }
+    let recovery =
+      receipt.stage === "image"
+        ? "No container was created; retry start after the image builds."
+        : `Creation is unconfirmed; inspect container name ${name} before retrying.`;
     if (receipt.containerId) {
       recovery = `Container retained; collect with: node tools/checks.mjs collect ${name}`;
       try {
