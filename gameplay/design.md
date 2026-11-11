@@ -18,7 +18,9 @@ pilot's chair, with Penny strapped in beside her. Touching the rock's glow alway
 brings her aboard, and jumping home returns her, holding the rock, to the moment
 she left.
 
-The ship's AI is Astra, who presents as female. She is very intelligent but is
+The ship's AI is Astra, who presents as female. She is warm and curious, a
+little formal, delighted by new places, and learns human expressions from Ada.
+She is very intelligent but is
 made to work with a navigator and does not act on her own; without one, the ship
 stays still. Her mission is to explore and map the universe. Her memory is
 corrupted: she does not know how she came to Earth and knows only one galaxy. Her

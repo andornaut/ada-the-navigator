@@ -231,6 +231,24 @@ Objectives, in order:
 6. Fight your way to the holodisk.
 7. Return home when ready.
 
+## Astra in flight
+
+First flight, once each, skipped if already done:
+
+- "Use the left stick to fly." (desktop: "Use WASD to fly.")
+- "Use the right stick to aim and fire." (desktop: "Use the arrow keys to aim and
+  fire.")
+- "That's Stardust. Fly close and I'll pull it in."
+- "A station! Fly into the dock to trade."
+
+Reactions:
+
+- New destination discovered: "New place mapped."
+- Shield low, once per fight: "Shield low!"
+- Gadget's drones arrive: "Drones ahead."
+
+Penny, when drones first spot Ada: "Woof!"
+
 ## Shared interface text
 
 - Start screen: Ada the Navigator, Begin.

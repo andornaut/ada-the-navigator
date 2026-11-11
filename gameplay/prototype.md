@@ -328,6 +328,20 @@ Stardust and station shops are described in [Economy](economy.md). Achievements 
 activities, with none requiring missable dialogue choices. Exact achievement
 requirements and repeatable-task content remain to be specified.
 
+## Astra and Penny in flight
+
+Astra speaks in flight through short one-liners: a small strip with her portrait
+and one line that never pauses play, one at a time, with a cooldown between
+ordinary lines. Hints are always on. The first flight teaches through her lines,
+each shown once and skipped when the player has already done the action. Later
+lines react to play: a newly discovered destination, a low shield (once per
+fight) and Gadget's drones arriving. Exact lines are in
+[the player copy](prototype-copy.md#astra-in-flight).
+
+Penny rides in the second seat. When Gadget's drones first spot Ada in an
+encounter, Penny barks once, with a sound and a short "Woof!", as an early
+warning.
+
 ## Space encounters and feedback
 
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
