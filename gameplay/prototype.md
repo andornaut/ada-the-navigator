@@ -109,11 +109,17 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - Maximum movement speed is provisionally 200 world units per second.
 - Settings use Chibi's gear control. Weapon and settings controls use icons inspired
   by Chibi, with accessible labels.
-- Like Chibi, the control rows in Settings only show or hide the on-screen controls:
-  Move controls (left joystick) and Aim controls (right joystick). Each is shown
-  unless the player hides it, and the choice persists on that device. Hiding a
-  control hides only its drawing; its input still works, and keyboard input is
-  unchanged. Settings shows no keyboard binding text.
+- Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
+  - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
+    joystick (left and right). Each is shown unless the player hides it. Hiding a
+    control hides only its drawing; its input still works.
+  - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
+    sound effects".
+  - Reduced motion, as in Archie: a switch, on when motion is reduced, with the
+    note "Skips screen shakes". A player's first setting on a device follows the
+    device's reduced-motion preference.
+- Every setting persists on that device. Settings shows no keyboard binding text,
+  and keyboard input is unchanged.
 - Do not show a top-left information or status panel. Objectives, deposits and
   progression remain part of the game.
 - With no aim input, the ship turns toward its movement direction with the same aim
@@ -228,7 +234,7 @@ Nearby optional discoveries show a direction indicator; this does not add a map.
 Discovery rewards use existing cargo and weapon pickups.
 
 Visual effects distinguish hits, shield damage, disabled ships, pickups and
-deposits. Sound effects remain restrained. Screen shake can be disabled.
+deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Other space objects retain monochrome placeholder graphics.
 
 Moving inanimate obstacles have constant velocity and direction. Regions of
