@@ -70,6 +70,10 @@ export interface Controls {
   registerBack(layer: BackLayer): () => void;
   dispose(): void;
   openSettings(): void;
+  /** The DOM layer that holds the controls and modal cards. */
+  readonly overlay: HTMLElement;
+  // Whether Reduced motion is on, for the refusal cue.
+  reducedMotion(): boolean;
   reset(): void;
   sample(): ControlSample;
   setContext(label: string | undefined): void;
@@ -433,6 +437,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cheats.close();
       settings.open();
     },
+    overlay: settings.root,
+    reducedMotion: () => reducedMotion,
     registerBack: (layer) => backStack.register(layer),
     reset,
     sample: () => state.sample(),

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -12,6 +13,7 @@ import { shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
+import { fill, itemAbout, itemName, type ShopItem, shopRowState } from "../model/shop.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -27,6 +29,7 @@ import {
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import { createStardustCounter, createStationView, type StationRow } from "../ui/station.ts";
 import {
   type EnemyArt,
   enemyArt,
@@ -93,6 +96,8 @@ export class PrototypeScene extends Phaser.Scene {
   private feedbackSound = new FeedbackSound();
   private screenShake = true;
   private palette = FALLBACK_SPACE_PALETTE;
+  private station!: ReturnType<typeof createStationView>;
+  private stardust!: ReturnType<typeof createStardustCounter>;
 
   constructor() {
     super("prototype");
@@ -237,7 +242,8 @@ export class PrototypeScene extends Phaser.Scene {
       },
       onStartCover: coverStartScreen,
       onWeaponSelect: (weapon) => {
-        if (!this.settingsOpen && this.model.state.mode === "space" && !this.model.state.dialogue) {
+        const state = this.model.state;
+        if (!this.settingsOpen && state.mode === "space" && !state.dialogue && !state.docked) {
           apply(() => this.model.selectWeapon(weapon));
         }
       },
@@ -286,6 +292,71 @@ export class PrototypeScene extends Phaser.Scene {
         },
       },
     });
+    const labels = PROTOTYPE.labels;
+    const label = (key: string): string => labels[key] ?? "";
+    const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
+    const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
+    this.stardust = createStardustCounter(this.controls.overlay);
+    this.station = createStationView(this.controls.overlay, {
+      balance: () => amount(this.model.state.economy.stardust),
+      buy: (key) => apply(() => this.model.buy(item(key))),
+      labels: {
+        close: label("close"),
+        confirmBuy: label("confirmBuy"),
+        confirmCancel: label("confirmCancel"),
+        shop: label("shop"),
+        shopShip: label("shopShip"),
+        shopWeapons: label("shopWeapons"),
+        station: label("station"),
+        stationWelcome: label("stationWelcome"),
+        undock: label("undock"),
+      },
+      reducedMotion: () => this.controls.reducedMotion(),
+      request: (key) => {
+        const request = this.model.requestPurchase(item(key));
+        return request.kind === "refused"
+          ? request
+          : {
+              about: itemAbout(labels, item(key)),
+              kind: "confirm",
+              left: fill(label("confirmLeft"), { amount: amount(request.left) }),
+              title: fill(label("confirmTitle"), { name: itemName(ECONOMY, labels, item(key)) }),
+            };
+      },
+      rows: (tab) =>
+        this.model.shopRows(tab).map((row): StationRow => {
+          const state = shopRowState(this.model.state.economy.stardust, row);
+          return {
+            detail: row.level
+              ? fill(label("level"), { level: row.level.current, max: row.level.max })
+              : "",
+            key: JSON.stringify(row.item),
+            name: itemName(ECONOMY, labels, row.item),
+            state,
+            status:
+              state === "inUse"
+                ? label("inUse")
+                : row.owned
+                  ? label("owned")
+                  : row.price === null
+                    ? ""
+                    : amount(row.price),
+          };
+        }),
+      select: (key) => {
+        const chosen = item(key);
+        if (chosen.kind === "paint") {
+          apply(() => this.model.selectPaint(chosen.scheme));
+        }
+      },
+      undock: () => apply(() => this.model.undock()),
+    });
+    // Back and Escape step back through the station card and shop; Settings opened over the
+    // card closes first, as the innermost card.
+    const unregisterStation = this.controls.registerBack({
+      back: () => this.station.back(),
+      isOpen: () => this.station.isOpen() && !this.settingsOpen,
+    });
     const hide = (): void => {
       this.controls.reset();
       this.flush();
@@ -301,6 +372,9 @@ export class PrototypeScene extends Phaser.Scene {
       window.removeEventListener("pointerdown", this.feedbackSound.unlock);
       window.removeEventListener("keydown", this.feedbackSound.unlock);
       this.feedbackSound.dispose();
+      unregisterStation();
+      this.station.dispose();
+      this.stardust.dispose();
       this.controls.dispose();
       this.shell.dispose();
       this.labels.clear();
@@ -315,7 +389,13 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const state = this.model.state;
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
-    if (!this.settingsOpen && !document.hidden && state.mode === "space" && !state.dialogue) {
+    if (
+      !this.settingsOpen &&
+      !document.hidden &&
+      state.mode === "space" &&
+      !state.dialogue &&
+      !state.docked
+    ) {
       const sampled = this.controls.sample();
       const input: FlightInput = {
         aim: screenToWorld(sampled.aim),
@@ -334,6 +414,8 @@ export class PrototypeScene extends Phaser.Scene {
       state.progress,
       state.unlocked,
       state.dialogue,
+      state.docked,
+      state.economy,
     ]);
     if (durable !== this.durable || time - this.savedAt >= 1000) {
       this.flush();
@@ -352,7 +434,7 @@ export class PrototypeScene extends Phaser.Scene {
 
   private refresh(): void {
     const state = this.model.state;
-    const enabled = state.mode === "space" && !state.dialogue;
+    const enabled = state.mode === "space" && !state.dialogue && !state.docked;
     if (enabled !== this.enabled) {
       this.enabled = enabled;
       this.controls.setEnabled(enabled);
@@ -360,7 +442,13 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.controls.setContext(enabled ? this.model.contextLabel : undefined);
     this.controls.setWeapons(this.model.weapons());
-    this.controls.setShield(PROTOTYPE.tuning.shieldMax, state.flight?.shield ?? 0);
+    this.controls.setShield(this.model.shieldMax, state.flight?.shield ?? 0);
+    this.station.setOpen(state.mode === "space" && Boolean(state.docked));
+    this.stardust.set(
+      state.mode === "space"
+        ? fill(PROTOTYPE.labels.stardustAmount ?? "", { amount: state.economy.stardust })
+        : null,
+    );
     // The start screen: the home screen with no dialogue. Each arrival begins an update visit.
     const start = state.mode === "home" && !state.dialogue;
     if (start !== this.startShown) {
@@ -807,6 +895,66 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  private drawDestinationLabel(object: SpaceObject, point: Vec, radius: number): void {
+    const destination = this.model.destinations().find((entry) => entry.id === object.id);
+    if (!destination) {
+      return;
+    }
+    let label = this.labels.get(object.id);
+    if (!label) {
+      label = this.add
+        .text(0, 0, destination.label, {
+          backgroundColor: spaceColorCss(this.palette.background),
+          color: spaceColorCss(this.palette.pointOfInterest),
+          fontFamily: '"Liberation Sans", sans-serif',
+          fontSize: "14px",
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(5);
+      this.labels.set(object.id, label);
+    }
+    label.setPosition(point.x, point.y + radius + 8).setVisible(true);
+  }
+
+  /** PLACEHOLDER (Art): a station as a ring hull, its dock and its safe-area outline. */
+  private drawStation(object: SpaceObject, point: Vec, radius: number): void {
+    const safe = ECONOMY.station.safeRadius;
+    const dock = ECONOMY.station.dockRadius;
+    this.ink.lineStyle(1, this.palette.pointOfInterest, 0.35);
+    this.ink.strokeEllipse(point.x, point.y, safe * 2, safe);
+    this.ink.fillStyle(this.palette.environment);
+    this.ink.lineStyle(2, this.palette.pointOfInterest);
+    this.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
+    this.ink.strokeEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
+    this.ink.strokeEllipse(point.x, point.y, radius * 1.2, radius * 0.6);
+    this.ink.lineStyle(1.5, this.palette.active, 0.8);
+    this.ink.strokeEllipse(point.x, point.y, dock * 2, dock);
+    this.drawDestinationLabel(object, point, radius);
+  }
+
+  /** PLACEHOLDER (Art): a destroyed ship's break-apart, hull fragments flying outward. */
+  private drawWreck(object: SpaceObject, point: Vec): void {
+    const wreck = object.wreck;
+    if (!wreck) {
+      return;
+    }
+    const progress = Math.min(1, wreck.age / ECONOMY.breakApartSeconds);
+    const size = Math.max(6, enemyCatalog[wreck.archetype].sizeRatio * 10);
+    this.ink.lineStyle(1.5, this.palette.obstacle, 1 - progress);
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3 + Math.atan2(wreck.facing.y, wreck.facing.x);
+      const reach = size * (0.3 + progress * 1.4);
+      const x = point.x + Math.cos(angle) * reach;
+      const y = point.y + Math.sin(angle) * reach * 0.5;
+      this.ink.lineBetween(
+        x - Math.cos(angle + 1) * size * 0.3,
+        y - Math.sin(angle + 1) * size * 0.15,
+        x + Math.cos(angle + 1) * size * 0.3,
+        y + Math.sin(angle + 1) * size * 0.15,
+      );
+    }
+  }
+
   private drawObject(object: SpaceObject): void {
     const point = this.project(object);
     const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
@@ -829,25 +977,15 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
         this.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
         this.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
-        const destination = this.model.destinations().find((entry) => entry.id === object.id);
-        if (destination) {
-          let label = this.labels.get(object.id);
-          if (!label) {
-            label = this.add
-              .text(0, 0, destination.label, {
-                backgroundColor: spaceColorCss(this.palette.background),
-                color: spaceColorCss(this.palette.pointOfInterest),
-                fontFamily: '"Liberation Sans", sans-serif',
-                fontSize: "14px",
-              })
-              .setOrigin(0.5, 0)
-              .setDepth(5);
-            this.labels.set(object.id, label);
-          }
-          label.setPosition(point.x, point.y + radius + 8).setVisible(true);
-        }
+        this.drawDestinationLabel(object, point, radius);
         break;
       }
+      case "station":
+        this.drawStation(object, point, radius);
+        break;
+      case "wreck":
+        this.drawWreck(object, point);
+        break;
       case "hazard":
         this.ink.strokeCircle(point.x, point.y, radius);
         this.ink.lineBetween(
@@ -867,6 +1005,44 @@ export class PrototypeScene extends Phaser.Scene {
         this.drawEnemy(point, object);
         break;
       case "pickup":
+        if (object.role === "stardust") {
+          // PLACEHOLDER (Art): a glinting Stardust pickup drawn as a small four-point star.
+          const glint = 0.6 + 0.4 * Math.sin(this.time.now / 140 + point.x);
+          this.ink.fillStyle(this.palette.active, glint);
+          this.ink.fillTriangle(
+            point.x,
+            point.y - radius,
+            point.x - 2,
+            point.y,
+            point.x + 2,
+            point.y,
+          );
+          this.ink.fillTriangle(
+            point.x,
+            point.y + radius,
+            point.x - 2,
+            point.y,
+            point.x + 2,
+            point.y,
+          );
+          this.ink.fillTriangle(
+            point.x - radius,
+            point.y,
+            point.x,
+            point.y - 2,
+            point.x,
+            point.y + 2,
+          );
+          this.ink.fillTriangle(
+            point.x + radius,
+            point.y,
+            point.x,
+            point.y - 2,
+            point.x,
+            point.y + 2,
+          );
+          break;
+        }
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         if (object.role === "cargo") {
           this.ink.fillStyle(color);

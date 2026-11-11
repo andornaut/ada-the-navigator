@@ -9,6 +9,7 @@ import {
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { createActions, createButton, createCard, createSwitchRow, MODAL_STYLE } from "./modal.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
+import { STATION_STYLE } from "./station.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
@@ -162,6 +163,7 @@ const STYLE = `
   outline-offset:4px
 }
 
+.ada-controls .ada-weapon-selector button[aria-disabled=true],
 .ada-controls .ada-weapon-selector button:disabled{
   opacity:0.5;
   cursor:default
@@ -217,7 +219,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
-  style.textContent = STYLE;
+  style.textContent = STYLE + STATION_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
