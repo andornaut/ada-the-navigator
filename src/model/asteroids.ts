@@ -4,6 +4,7 @@ import {
   type AsteroidArtCatalog,
   type AsteroidSize,
 } from "../data/asteroid-catalog.ts";
+import type { ResourceClass } from "../data/resource-rocks.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 /**
@@ -146,6 +147,14 @@ function partContact(part: readonly Vec[], center: Vec, radius: number): Contact
 }
 
 /** Collision shape of a scenery object: its asteroid polygon, or its circle when it has none. */
+/** The plain shapes of a resource class's size, the footprints its rocks collide on. */
+export function resourceShapes(
+  shapes: readonly AsteroidShape[],
+  resource: ResourceClass,
+): AsteroidShape[] {
+  return shapes.filter((shape) => shape.size === resource);
+}
+
 export function sceneryShape(object: SpaceObject): AsteroidShape | null {
   return object.asteroid ? (ASTEROID_SHAPES.get(object.asteroid) ?? null) : null;
 }

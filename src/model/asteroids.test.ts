@@ -324,7 +324,7 @@ describe("asteroids in flight", () => {
       flight.player.x += 900;
       model.step(1 / 60, idle);
       for (const object of flight.objects) {
-        if (object.asteroid) {
+        if (object.asteroid && object.kind === "rock") {
           seen.set(object.id, object);
         }
       }

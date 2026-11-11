@@ -1,6 +1,7 @@
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
 import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
+import { ASTEROID_SHAPES, resourceShapes } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 
 /** One seeded ore field: its centre, rock positions and whether a platform guards it. */
@@ -8,8 +9,11 @@ export interface OreField extends Vec {
   /** The guard's position and fixed hull facing, or null for an unguarded field. */
   guard: (Vec & { facing: Vec }) | null;
   id: string;
-  rocks: readonly (Vec & { resource: ResourceClass })[];
+  /** Each rock's class and the plain asteroid shape it collides on. */
+  rocks: readonly (Vec & { asteroid: string; resource: ResourceClass })[];
 }
+
+const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 
 /** Fixed per-sector seeds, so ore fields are the same on every flight. */
 const SECTOR_SEEDS: Readonly<Record<SectorId, number>> = {
@@ -58,8 +62,11 @@ export function oreFieldInCell(sector: SectorId, cell: Vec): OreField | null {
   for (let index = 0; index < total; index++) {
     const radius = (diameter / 2) * Math.sqrt((index + 0.5) / total);
     const angle = start + index * turn;
+    const resource = resourceClass(pattern + index);
+    const variants = resourceShapes(ASTEROID_SHAPE_LIST, resource);
     rocks.push({
-      resource: resourceClass(pattern + index),
+      asteroid: variants[Math.floor(roll(0x5a11 + index) * variants.length)]!.id,
+      resource,
       x: x + Math.cos(angle) * radius,
       y: y + Math.sin(angle) * radius,
     });

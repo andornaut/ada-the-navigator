@@ -1,15 +1,17 @@
 import Phaser from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
-import { ASTEROID_ART, type AsteroidArt } from "../data/asteroid-catalog.ts";
+import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { resourceArtId } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
+import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { GALAXIES, galaxyPreview, OVERNIGHT_SLEEP, SELECTOR_BACKDROP } from "../data/storybook.ts";
+import type { SectorId } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
@@ -29,7 +31,7 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
-import { drawnHeading, storyShips } from "../model/story-ships.ts";
+import { drawnHeading, hubBay, hubWorn, storyShips } from "../model/story-ships.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -66,6 +68,19 @@ import {
   playDepth,
   rockArt,
 } from "./asteroid-art.ts";
+import {
+  craftArt,
+  craftFrameSets,
+  type DebrisArt,
+  debrisFrame,
+  debrisMarks,
+  galaxyAsset,
+  type HubArt,
+  hubLayers,
+  readBuoyArt,
+  readDebrisArt,
+  readHubArt,
+} from "./cartwheel-art.ts";
 import {
   type DestructionData,
   readDestruction,
@@ -188,9 +203,8 @@ import {
 
 // CLEANUP (added 2026-11-11): the placeholder current streak colour, until Art's streak art.
 const CURRENT_STREAK = 0x5fd4c8;
-// CLEANUP (added 2026-11-11): placeholder story ship hull and jet colours, until Art's
-// art-cartwheel miner, visitors and blocking pilot land.
-const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6, jet: 0xffa24a } as const;
+// Story craft darts while their frames load.
+const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
 const FLASH_SUFFIX = "#flash";
@@ -219,6 +233,12 @@ interface Asset extends ShipAsset, EnemyFrame {
   outpost?: string;
   kind?: string;
   loopFrame?: number;
+  craft?: string;
+  debris?: string;
+  destination?: string;
+  overlay?: boolean;
+  project?: string;
+  variant?: string;
 }
 
 /** World axes project diagonally; controls continue to follow screen directions. */
@@ -274,6 +294,21 @@ export class PrototypeScene extends Phaser.Scene {
   private flightClock = 0;
   private reveals = new Map<string, number>();
   private revealGroups = new Map<string, Phaser.GameObjects.RenderTexture>();
+  private manifest: {
+    assets: readonly Asset[];
+    cartwheelDebris?: string;
+    resourceRocks?: string;
+    whales?: string;
+  } = { assets: [] };
+  // Galaxy art loads on that galaxy's first flight (cartwheel-art.ts galaxyAsset).
+  private galaxyLoads = new Set<SectorId>();
+  private hubArt: HubArt<Asset> | undefined;
+  private buoyArt: StationArt<Asset> | undefined;
+  private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
+  private debrisArt: DebrisArt | undefined;
+  private resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
+  // Resource rock SVGs declare their display size, so they load without the displayScale.
+  private resourceFiles = new Set<string>();
   private stardustArt: StardustArt<Asset> | undefined;
   private cacheArt: LoopArt<Asset> | undefined;
   private holodiskArt: LoopArt<Asset> | undefined;
@@ -359,9 +394,6 @@ export class PrototypeScene extends Phaser.Scene {
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
       }
-      if (manifest.whales) {
-        this.load.json("whales", manifest.whales);
-      }
       const composed = composedArchetypes(manifest.assets);
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -374,8 +406,9 @@ export class PrototypeScene extends Phaser.Scene {
       }
       for (const asset of manifest.assets) {
         // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
-        // a heavy's part frames when that craft first appears and a whale's when it is drawn.
-        if (loadsOnDemand(asset) || enemyPartFrame(asset) || whaleFrameAsset(asset)) {
+        // a heavy's part frames when that craft first appears and a galaxy's own art on its
+        // first flight.
+        if (loadsOnDemand(asset) || enemyPartFrame(asset) || galaxyAsset(asset) !== null) {
           continue;
         }
         if (enemySvg(asset)) {
@@ -451,7 +484,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.jetKeyline = this.add.graphics();
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
-    const manifest = this.cache.json.get("art-manifest") as { assets: Asset[] } | undefined;
+    const manifest = this.cache.json.get("art-manifest") as
+      | { assets: Asset[]; cartwheelDebris?: string; resourceRocks?: string; whales?: string }
+      | undefined;
     this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
     // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
     // the authored thrust frames, which load only then; until they do, the idle frames draw.
@@ -472,10 +507,12 @@ export class PrototypeScene extends Phaser.Scene {
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
-    this.whaleArt = readWhaleArt(
-      this.cache.json.get("whales"),
-      (manifest?.assets ?? []).filter(whaleFrameAsset),
-    );
+    this.manifest = {
+      assets: manifest?.assets ?? [],
+      ...(manifest?.cartwheelDebris ? { cartwheelDebris: manifest.cartwheelDebris } : {}),
+      ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
+      ...(manifest?.whales ? { whales: manifest.whales } : {}),
+    };
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
     for (const archetype of Object.keys(this.destruction?.archetypes ?? {})) {
@@ -936,6 +973,77 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.once(Phaser.Loader.Events.COMPLETE, ready);
   }
 
+  /**
+   * Loads a galaxy's own art the first time one of its flights draws: SVGs at display size
+   * times min(devicePixelRatio, 2), the nugget sheet and the data files, then reads them. Until
+   * then its objects keep their placeholders.
+   */
+  private loadGalaxyArt(sector: SectorId): void {
+    if (this.galaxyLoads.has(sector)) {
+      return;
+    }
+    this.galaxyLoads.add(sector);
+    const assets = this.manifest.assets.filter(
+      (asset) => galaxyAsset(asset) === sector && !whaleFrameAsset(asset),
+    );
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    for (const asset of assets) {
+      if (asset.path.endsWith(".svg")) {
+        this.load.svg(asset.id, asset.path, { scale });
+      } else if (asset.frameWidth && asset.frameHeight) {
+        this.load.spritesheet(asset.id, asset.path, {
+          frameHeight: asset.frameHeight,
+          frameWidth: asset.frameWidth,
+        });
+      }
+    }
+    for (const [craft, frames] of craftFrameSets(assets)) {
+      this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+    }
+    const data = {
+      2: [
+        ["resource-rocks", this.manifest.resourceRocks],
+        ["cartwheel-debris", this.manifest.cartwheelDebris],
+      ],
+      3: [["whales", this.manifest.whales]],
+    }[sector as 2 | 3];
+    for (const [key, path] of data ?? []) {
+      if (path) {
+        this.load.json(key!, path);
+      }
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => this.readGalaxyArt());
+    this.load.start();
+  }
+
+  /** Reads the galaxy art whose textures and data have loaded. */
+  private readGalaxyArt(): void {
+    const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
+    this.hubArt = readHubArt(loaded);
+    this.buoyArt = readBuoyArt(loaded);
+    this.craftArt = craftArt(
+      (craft) => this.cache.json.get(`craft-jets-${craft}`),
+      craftFrameSets(loaded),
+    );
+    const debris = readDebrisArt(this.cache.json.get("cartwheel-debris"));
+    this.debrisArt =
+      debris && debris.frames.every((_, k) => this.textures.exists(`cartwheel-debris-${k}`))
+        ? debris
+        : undefined;
+    if (this.textures.exists("ore-nugget")) {
+      this.textures.get("ore-nugget").setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+    const rocks = readResourceRocks(this.cache.json.get("resource-rocks"));
+    this.resourceRocks = new Map((rocks?.rocks ?? []).map((rock) => [rock.id, rock]));
+    this.resourceFiles = new Set(
+      (rocks?.rocks ?? []).flatMap((rock) => rock.frames.map((frame) => frame.file)),
+    );
+    this.whaleArt = readWhaleArt(
+      this.cache.json.get("whales"),
+      this.manifest.assets.filter(whaleFrameAsset),
+    );
+  }
+
   /** Whether a rock or backdrop SVG is ready; a missing one is queued for the next load. */
   private rockTexture(file: string): boolean {
     if (this.textures.exists(file)) {
@@ -943,7 +1051,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
     if (!this.rockRequests.has(file) && this.asteroidArt) {
       this.rockRequests.add(file);
-      this.load.svg(file, file, { scale: this.asteroidArt.displayScale });
+      this.load.svg(
+        file,
+        file,
+        this.resourceFiles.has(file) ? undefined : { scale: this.asteroidArt.displayScale },
+      );
       this.rockQueued = true;
     }
     return false;
@@ -1046,6 +1158,39 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Cartwheel's traveling debris: Art's tumbling bent plate over its trailing coral dashes
+   * (art/cartwheel-props.md). False when it does not apply, so the placeholder draws.
+   */
+  private drawTravelingDebris(object: SpaceObject, point: Vec): boolean {
+    const flight = this.model.state.flight!;
+    const art = this.debrisArt;
+    if (!art || flight.sector !== 2 || !object.velocity || object.river || object.orbit) {
+      return false;
+    }
+    const frame = debrisFrame(art, object.id, this.reducedMotion, flight.time);
+    const velocity = {
+      x: object.velocity.x - object.velocity.y,
+      y: (object.velocity.x + object.velocity.y) / 2,
+    };
+    const mark = hexNumber(art.marks.color);
+    for (const dash of debrisMarks(art, frame, velocity)) {
+      this.ink.lineStyle(art.marks.width, mark, dash.alpha);
+      this.ink.lineBetween(
+        point.x + dash.from.x,
+        point.y + dash.from.y,
+        point.x + dash.to.x,
+        point.y + dash.to.y,
+      );
+    }
+    this.objectSprite(object.id, `cartwheel-debris-${frame}`)
+      .setDisplaySize(art.display.width, art.display.height)
+      .setOrigin(art.pivot.x, art.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(playDepth(point.y));
+    return true;
+  }
+
   /** Each rock destroyed this step breaks where it stood, in the frame it last showed. */
   private startRockBreaks(nowMs: number): void {
     const flight = this.model.state.flight;
@@ -1054,7 +1199,11 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     for (const event of this.model.flightEvents) {
-      const art = event.type === "asteroidDestroyed" && rockArt(event.asteroid);
+      const art =
+        event.type === "asteroidDestroyed" &&
+        (event.resource
+          ? this.resourceRocks.get(resourceArtId(event.asteroid))
+          : rockArt(event.asteroid));
       if (art && event.type === "asteroidDestroyed") {
         this.rockBreaks.push({
           art,
@@ -1351,6 +1500,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
+    this.loadGalaxyArt(flight.sector);
     this.drawCurrents(flight);
     this.drawJobs();
     for (const object of flight.objects) {
@@ -1845,18 +1995,9 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * An arrow at the view's edge toward each marked place off screen, at any distance
-   * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
-   */
-  /**
-   * CLEANUP (added 2026-11-11): placeholder teal streaks for Whirlpool's currents until Art's
-   * streak art lands. Dashes run along three lanes of each current and move with its flow, so
-   * its direction reads at a glance.
-   */
-  /**
-   * Cartwheel's story ships around the hub, each in the nearest of its 16 drawn headings with
-   * its jet while it moves. CLEANUP (added 2026-11-11): vector darts stand in until Art's
-   * art-cartwheel ships land; then each draws its heading frames by manifest id.
+   * Cartwheel's buoys and story ships around the hub. Each craft draws Art's frame for the
+   * nearest of its 16 headings, with its speed jets while it moves; a craft whose frames are not
+   * loaded yet draws as a vector dart.
    */
   private drawStoryShips(flight: FlightState): void {
     const hub =
@@ -1866,8 +2007,42 @@ export class PrototypeScene extends Phaser.Scene {
     if (!hub) {
       return;
     }
+    if (this.buoyArt) {
+      for (const [group, offset] of Object.entries(CARTWHEEL_STORY_SHIPS.buoys)) {
+        const at = { x: hub.x + offset.x, y: hub.y + offset.y };
+        const point = this.project(at);
+        const frame = stationFrame(this.buoyArt, this.reducedMotion, this.time.now);
+        this.objectSprite(`buoy:${group}`, frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setDepth(playDepth(point.y));
+      }
+    }
     const progress = this.model.state.progress[flight.sector];
     for (const ship of storyShips(hub, progress, flight.storyScene, flight.time)) {
+      const point = this.project(ship);
+      const art = this.craftArt.get(STORY_SHIP_CRAFT[ship.id]);
+      if (art) {
+        const frame = selectEnemyFrame(art, ship.heading);
+        this.objectSprite(`story:${ship.id}`, frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setDepth(playDepth(point.y));
+        for (const { alpha, color, points } of enemyJetTriangles(art, frame, ship.thrust ? 1 : 0)) {
+          this.enemyJets.fillStyle(color, alpha);
+          this.enemyJets.fillTriangle(
+            point.x + points[0].x,
+            point.y + points[0].y,
+            point.x + points[1].x,
+            point.y + points[1].y,
+            point.x + points[2].x,
+            point.y + points[2].y,
+          );
+        }
+        continue;
+      }
       const heading = drawnHeading(ship.heading);
       const at = (along: number, across: number) =>
         this.project({
@@ -1877,15 +2052,6 @@ export class PrototypeScene extends Phaser.Scene {
       const nose = at(10, 0);
       const left = at(-8, 7);
       const right = at(-8, -7);
-      if (Math.max(nose.x, left.x) < -40 || Math.min(nose.x, left.x) > SCREEN.width + 40) {
-        continue;
-      }
-      if (ship.thrust) {
-        const from = at(-8, 0);
-        const to = at(-18, 0);
-        this.ink.lineStyle(3, STORY_SHIP.jet, 0.9);
-        this.ink.lineBetween(from.x, from.y, to.x, to.y);
-      }
       this.ink.fillStyle(ship.id === "blocker" ? STORY_SHIP.blocker : STORY_SHIP.hull);
       this.ink.fillTriangle(nose.x, nose.y, left.x, left.y, right.x, right.y);
       this.ink.lineStyle(1, this.palette.environmentDetail);
@@ -1893,6 +2059,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * CLEANUP (added 2026-11-11): placeholder teal streaks for Whirlpool's currents until Art's
+   * streak art lands. Dashes run along three lanes of each current and move with its flow, so
+   * its direction reads at a glance.
+   */
   private drawCurrents(flight: FlightState): void {
     const reach = Math.max(SCREEN.width, SCREEN.height) * 1.5;
     const dash = 46;
@@ -1934,6 +2105,10 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * An arrow at the view's edge toward each marked place off screen, at any distance
+   * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
+   */
   private drawIndicators(): void {
     const cx = SCREEN.width / 2;
     const cy = SCREEN.height / 2;
@@ -2216,13 +2391,14 @@ export class PrototypeScene extends Phaser.Scene {
     kind: "outpost" | "station",
     object: SpaceObject,
     point: Vec,
+    key = object.id,
   ): void {
     const frame = stationFrame(art, this.reducedMotion, this.time.now);
-    const sprite = this.objectSprite(object.id, frame.id)
+    const sprite = this.objectSprite(key, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)
       .setPosition(point.x, point.y);
-    this.keyline(kind, object.id, sprite);
+    this.keyline(kind, key, sprite);
   }
 
   /**
@@ -2355,6 +2531,13 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** A destination: its outpost or holodisk art, else the placeholder rings. */
   private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
+    if (object.id === "hub" && this.hubArt) {
+      const progress = this.model.state.progress[this.model.state.flight!.sector];
+      hubLayers(this.hubArt, hubWorn(progress), hubBay(progress)).forEach((layer, index) => {
+        this.drawBlink(layer, "outpost", object, point, index ? `${object.id}:bay` : object.id);
+      });
+      return;
+    }
     const outpost = this.outpostArt.get(object.id);
     if (outpost) {
       this.drawOutpost(outpost, object, point);
@@ -2702,6 +2885,15 @@ export class PrototypeScene extends Phaser.Scene {
           this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
           this.ink.lineStyle(1.5, color);
         }
+        if (object.role === "cargo" && this.textures.exists("ore-nugget")) {
+          // Art's 11 px ore nugget, nearest-neighbour filtered.
+          this.objectSprite(object.id, "ore-nugget", 0)
+            .setDisplaySize(11, 11)
+            .setOrigin(0.5)
+            .setPosition(point.x, point.y)
+            .setDepth(playDepth(point.y));
+          break;
+        }
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
@@ -2717,12 +2909,21 @@ export class PrototypeScene extends Phaser.Scene {
           this.keyline("weaponPickup", object.id, glyph);
         }
         break;
-      case "resource":
+      case "resource": {
+        const art = object.asteroid && this.resourceRocks.get(resourceArtId(object.asteroid));
+        if (art) {
+          this.drawAsteroidSprite(object, point, art);
+          break;
+        }
         this.ink.fillStyle(color);
         this.ink.fillCircle(point.x, point.y, radius);
         break;
+      }
       case "rock":
       case "debris": {
+        if (object.kind === "debris" && this.drawTravelingDebris(object, point)) {
+          break;
+        }
         if (rock) {
           this.drawAsteroidSprite(object, point, rock);
           break;

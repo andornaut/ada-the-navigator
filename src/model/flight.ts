@@ -432,10 +432,10 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
           hp:
             placement.kind === "pickup"
               ? 1
-              : shape
-                ? field.hp[shape.size]
-                : placement.resource
-                  ? RESOURCE_ROCKS.classes[placement.resource].hp
+              : placement.resource
+                ? RESOURCE_ROCKS.classes[placement.resource].hp
+                : shape
+                  ? field.hp[shape.size]
                   : tuning.rockHp,
           id: placement.id,
           kind: placement.kind,
@@ -515,7 +515,7 @@ function placeOreFields(
         hp: RESOURCE_ROCKS.classes[rock.resource].hp,
         id: `${field.id}:${index}`,
         kind: "resource",
-        radius: RESOURCE_ROCKS.classes[rock.resource].radius,
+        radius: ASTEROID_SHAPES.get(rock.asteroid)!.radius,
         role: "discovery",
       };
       if (
@@ -1870,6 +1870,7 @@ function hit(
     events.push({
       asteroid: object.asteroid,
       id: object.id,
+      ...(object.kind === "resource" ? { resource: true as const } : {}),
       type: "asteroidDestroyed",
       x: object.x,
       y: object.y,

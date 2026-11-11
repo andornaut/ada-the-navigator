@@ -107,5 +107,10 @@ export function drawnHeading(heading: Vec): Vec {
 
 /** The hub looks worn until its Hub repairs project is funded. */
 export function hubWorn(progress: Pick<SectorProgress, "funded">): boolean {
-  return !(progress.funded ?? []).includes("hubRepairs");
+  return !(progress.funded ?? []).includes("hub-repairs");
+}
+
+/** The second docking bay overlays the hub once its project is funded. */
+export function hubBay(progress: Pick<SectorProgress, "funded">): boolean {
+  return (progress.funded ?? []).includes("second-docking-bay");
 }

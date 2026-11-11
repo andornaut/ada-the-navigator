@@ -277,6 +277,35 @@ export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefi
   };
 }
 
+/** Art's resource rocks (`resource-rocks.json`, art/asteroids.md "Resource rocks"). */
+export interface ResourceRockCatalog {
+  readonly displayScale: number;
+  readonly rocks: readonly AsteroidArt[];
+}
+
+/** The resource rocks in the asteroid schema, or undefined to keep their placeholders. */
+export function readResourceRocks(value: unknown): ResourceRockCatalog | undefined {
+  const root = fields(value);
+  if (
+    !root ||
+    root.version !== 1 ||
+    !positive(root.displayScale) ||
+    !Array.isArray(root.rocks) ||
+    !root.rocks.length
+  ) {
+    return undefined;
+  }
+  const rocks: AsteroidArt[] = [];
+  for (const value of root.rocks as unknown[]) {
+    const entry = readAsteroid(value);
+    if (!entry || rocks.some((rock) => rock.id === entry.id)) {
+      return undefined;
+    }
+    rocks.push(entry);
+  }
+  return { displayScale: root.displayScale, rocks };
+}
+
 function required(catalog: AsteroidArtCatalog | undefined): AsteroidArtCatalog {
   if (!catalog) {
     throw new Error("public/art/asteroids.json does not read as Art's version 1 catalog");

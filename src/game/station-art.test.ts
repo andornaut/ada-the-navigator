@@ -13,7 +13,7 @@ import {
 
 const manifest = JSON.parse(
   readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
-) as { assets: (StationFrame & { outpost?: string })[] };
+) as { assets: (StationFrame & { destination?: string; outpost?: string })[] };
 const art = readStationArt(manifest.assets)!;
 const outposts = readOutpostArt(manifest.assets);
 
@@ -54,7 +54,15 @@ describe("station art", () => {
 
 describe("outpost art", () => {
   it("reads both blink frames for each sector one outpost, keyed by its destination id", () => {
+    // Only entries with an outpost field are outposts; the hub's carry destination "hub".
+    const roles = manifest.assets.flatMap((asset) => (asset.outpost ? [asset.outpost] : []));
+    expect([...new Set(roles)].sort()).toEqual(["growers", "salvagers", "workshop"]);
     expect([...outposts.keys()].sort()).toEqual(["growers", "salvagers", "workshop"]);
+    expect(
+      manifest.assets
+        .filter((asset) => asset.id.startsWith("outpost-hub-"))
+        .every((asset) => asset.outpost === undefined && asset.destination === "hub"),
+    ).toBe(true);
     for (const [role, blink] of outposts) {
       expect(blink.frames.map((frame) => frame.id)).toEqual([
         `outpost-${role}-a`,

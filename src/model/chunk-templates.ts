@@ -2,7 +2,7 @@ import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { AsteroidField, ChunkCatalog, ChunkTemplateId } from "../data/chunk-catalog.ts";
 import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
-import type { AsteroidShape } from "./asteroids.ts";
+import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 
 /** Asteroid variants and the sector's field weights; without them rocks use `rockRadius`. */
@@ -256,9 +256,9 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
         ? asteroid(asteroids, asteroids.field.slotSizes, seed, 2000 + slot * 16)
         : undefined;
     const resource = kind === "resource" ? resourceClass(resources) : undefined;
-    const radius =
-      chosen?.shape.radius ??
-      (resource ? RESOURCE_ROCKS.classes[resource].radius : options.rockRadius);
+    const variants = resource && asteroids ? resourceShapes(asteroids.shapes, resource) : [];
+    const ore = variants.length ? variants[mix(seed, 3100 + slot) % variants.length] : undefined;
+    const radius = chosen?.shape.radius ?? ore?.radius ?? options.rockRadius;
     const boundary = radius + halfWidth;
     if (
       x < boundary ||
@@ -293,7 +293,7 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
       resources++;
     }
     placements.push({
-      ...(chosen ? { asteroid: chosen.shape.id } : {}),
+      ...(chosen ? { asteroid: chosen.shape.id } : ore ? { asteroid: ore.id } : {}),
       id: `chunk:${options.x},${options.y}:${slot}`,
       kind,
       radius,

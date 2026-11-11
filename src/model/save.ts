@@ -293,7 +293,7 @@ function spaceObject(
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
     (value.asteroid === undefined ||
-      ((value.kind === "rock" || value.kind === "debris") &&
+      ((value.kind === "rock" || value.kind === "debris" || value.kind === "resource") &&
         typeof value.asteroid === "string" &&
         ASTEROID_SHAPES.has(value.asteroid))) &&
     (value.orbit === undefined ||

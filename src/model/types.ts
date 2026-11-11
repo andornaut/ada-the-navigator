@@ -278,5 +278,13 @@ export type FlightEvent =
   | { type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
-  | { type: "asteroidDestroyed"; asteroid: string; id: string; x: number; y: number }
+  | {
+      type: "asteroidDestroyed";
+      asteroid: string;
+      id: string;
+      /** A resource rock, drawn as Art's `resource-{shape}`. */
+      resource?: true;
+      x: number;
+      y: number;
+    }
   | { type: "discovered"; id: string };

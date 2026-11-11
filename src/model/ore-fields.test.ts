@@ -5,6 +5,7 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemy-ai.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { type OreField, oreFieldInCell, oreFieldsNear } from "./ore-fields.ts";
@@ -89,9 +90,15 @@ describe("ore fields", () => {
     expect(rocks.length).toBeGreaterThan(0);
     expect(rocks.every((rock) => rock.kind === "resource")).toBe(true);
     for (const rock of rocks) {
-      const resource = field.rocks[Number(rock.id.split(":").at(-1))]!.resource;
-      const { hp, radius } = RESOURCE_ROCKS.classes[resource];
-      expect(rock).toMatchObject({ hp, radius, resource });
+      const { asteroid, resource } = field.rocks[Number(rock.id.split(":").at(-1))]!;
+      const shape = ASTEROID_SHAPES.get(asteroid)!;
+      expect(shape.size).toBe(resource);
+      expect(rock).toMatchObject({
+        asteroid,
+        hp: RESOURCE_ROCKS.classes[resource].hp,
+        radius: shape.radius,
+        resource,
+      });
     }
     const platform = flight.objects.find((object) => object.id === `platform:${field.id}`)!;
     expect(platform.enemy?.archetype).toBe("platform");

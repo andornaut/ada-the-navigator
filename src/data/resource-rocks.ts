@@ -4,24 +4,21 @@ export type ResourceClass = "medium" | "large";
 export interface ResourceRockClass {
   readonly hp: number;
   readonly pieces: number;
-  /** Collision radius in world units. */
-  readonly radius: number;
 }
 
 /**
  * Resource rock classes: a medium rock has 3 HP and releases 3 cargo pieces, a large rock 5
- * and 5. Every third rock in a chunk or ore field is large, from a seeded start.
+ * and 5. Every third rock in a chunk or ore field is large, from a seeded start. Each rock is
+ * one of the plain asteroid shapes of its class's size, whose footprints Art's resource rocks
+ * share (art/asteroids.md "Resource rocks"), and is drawn as `resource-{shape}`.
  */
 export const RESOURCE_ROCKS: {
   readonly classes: Readonly<Record<ResourceClass, ResourceRockClass>>;
   readonly largeEvery: number;
 } = {
   classes: {
-    // CLEANUP (added 2026-11-11): placeholder circles inside the asteroid medium and large
-    // radius ranges. Remove once Art's crystal resource rocks land; each class then collides
-    // on its manifest rocks' footprints.
-    large: { hp: 5, pieces: 5, radius: 54 },
-    medium: { hp: 3, pieces: 3, radius: 28 },
+    large: { hp: 5, pieces: 5 },
+    medium: { hp: 3, pieces: 3 },
   },
   largeEvery: 3,
 };
@@ -34,4 +31,9 @@ export function resourceClass(ordinal: number): ResourceClass {
 /** A resource rock's class, medium for a rock saved without one. */
 export function resourceRock(object: { resource?: ResourceClass }): ResourceRockClass {
   return RESOURCE_ROCKS.classes[object.resource ?? "medium"];
+}
+
+/** Art's resource rock for a plain asteroid shape id: `asteroid-m1` draws as `resource-m1`. */
+export function resourceArtId(shape: string): string {
+  return shape.replace(/^asteroid-/, "resource-");
 }

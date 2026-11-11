@@ -1,11 +1,33 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { CARTWHEEL_STORY_SHIPS, STORY_VIEW } from "../data/story-ships.ts";
+import {
+  CARTWHEEL_STORY_SHIPS,
+  MOORING_BUOY,
+  STORY_SHIP_CRAFT,
+  STORY_VIEW,
+} from "../data/story-ships.ts";
 import { drawnHeading, hubWorn, storyShips } from "./story-ships.ts";
 import type { Vec } from "./types.ts";
 
+const manifest = JSON.parse(
+  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+) as {
+  assets: {
+    craft?: string;
+    displayHeight?: number;
+    displayWidth?: number;
+    height: number;
+    id: string;
+    moorings?: unknown;
+    pivot: Vec;
+    width: number;
+  }[];
+};
+const STORY_CRAFT = /^craft-([a-z][a-z0-9]*)-(\d+)$/;
 const hub = { x: 1000, y: -500 };
 const gap = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 const ship = (ships: ReturnType<typeof storyShips>, id: string) =>
@@ -67,21 +89,53 @@ describe("Cartwheel story ships", () => {
     expect(storyShips(hub, { stage: 5 }, undefined, 0)).toEqual([]);
   });
 
-  it("hold inside the view centred on the docked hub, clear of the hub and each other", () => {
-    const { destinations, hold } = CARTWHEEL_STORY_SHIPS;
-    const reach = STORY_VIEW.shipReach;
-    for (const point of [...Object.values(hold), ...Object.values(destinations)]) {
+  it("moor inside the view centred on the docked hub, clear of the hub and each other", () => {
+    const { buoys, destinations, hold } = CARTWHEEL_STORY_SHIPS;
+    const assets = new Map(manifest.assets.map((asset) => [asset.id, asset]));
+    const drawn = (point: Vec, width: number, height: number) => {
       // A hub-relative world offset draws at (x - y, (x + y) / 2) from the view's centre.
-      const across = Math.abs(point.x - point.y) + reach * Math.SQRT2;
-      const down = Math.abs(point.x + point.y) / 2 + reach * Math.SQRT1_2;
-      expect(across).toBeLessThanOrEqual(SCREEN.width / 2 - STORY_VIEW.margin);
-      expect(down).toBeLessThanOrEqual(SCREEN.height / 2 - STORY_VIEW.margin);
+      expect(Math.abs(point.x - point.y) + width / 2).toBeLessThanOrEqual(
+        SCREEN.width / 2 - STORY_VIEW.margin,
+      );
+      expect(Math.abs(point.x + point.y) / 2 + height / 2).toBeLessThanOrEqual(
+        SCREEN.height / 2 - STORY_VIEW.margin,
+      );
       expect(Math.hypot(point.x, point.y)).toBeGreaterThan(PROTOTYPE.tuning.safeRadius);
+    };
+    for (const [id, point] of Object.entries(hold)) {
+      const frame = assets.get(`craft-${STORY_SHIP_CRAFT[id as keyof typeof hold]}-0`)!;
+      drawn(point, frame.displayWidth!, frame.displayHeight!);
     }
+    const buoy = assets.get("mooring-buoy-a")!;
+    for (const point of Object.values(buoys)) {
+      drawn(point, buoy.displayWidth!, buoy.displayHeight!);
+    }
+    expect(destinations).toEqual(buoys);
     expect(gap(destinations.miner, destinations.visitors)).toBeGreaterThanOrEqual(
       PROTOTYPE.tuning.safeRadius * 2,
     );
-    expect(gap(hold["visitor-1"], hold["visitor-2"])).toBeGreaterThan(reach * 2);
+    // The visitors' frames do not overlap on screen.
+    const [a, b] = [hold["visitor-1"], hold["visitor-2"]];
+    expect(Math.hypot(a.x - a.y - (b.x - b.y), (a.x + a.y - b.x - b.y) / 2)).toBeGreaterThan(
+      assets.get("craft-visitor1-0")!.displayWidth!,
+    );
+  });
+
+  it("use Art's craft sizes, buoy moorings and 16 headings per story craft", () => {
+    const craft = manifest.assets.filter((asset) => asset.craft && STORY_CRAFT.test(asset.id));
+    expect(Math.max(...craft.map((asset) => asset.displayWidth! / 2))).toBe(STORY_VIEW.drawnHalf);
+    for (const name of Object.values(STORY_SHIP_CRAFT)) {
+      expect(craft.filter((asset) => asset.craft === name)).toHaveLength(16);
+    }
+    const buoy = manifest.assets.find((asset) => asset.id === "mooring-buoy-a")!;
+    expect({ height: buoy.height, width: buoy.width }).toEqual(MOORING_BUOY.frame);
+    expect(buoy.pivot).toEqual(MOORING_BUOY.pivot);
+    expect(buoy.displayWidth! / buoy.width).toBe(MOORING_BUOY.displayScale);
+    expect(buoy.moorings).toEqual(
+      ["left", "right", "back"].map(
+        (tip) => MOORING_BUOY.moorings[tip as keyof typeof MOORING_BUOY.moorings],
+      ),
+    );
   });
 
   it("snaps headings to 16 drawn directions", () => {
@@ -92,7 +146,7 @@ describe("Cartwheel story ships", () => {
 
   it("keeps the hub worn until Hub repairs is funded", () => {
     expect(hubWorn({})).toBe(true);
-    expect(hubWorn({ funded: ["dockingBay"] })).toBe(true);
-    expect(hubWorn({ funded: ["hubRepairs"] })).toBe(false);
+    expect(hubWorn({ funded: ["second-docking-bay"] })).toBe(true);
+    expect(hubWorn({ funded: ["hub-repairs"] })).toBe(false);
   });
 });

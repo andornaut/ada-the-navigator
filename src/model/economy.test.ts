@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -382,11 +382,13 @@ describe("Stardust drops", () => {
     for (const resource of ["medium", "large"] as const) {
       const value = flight();
       const { hp, pieces } = RESOURCE_ROCKS.classes[resource];
+      const shape = ASTEROID_SHAPES.get(resource === "medium" ? "asteroid-m2" : "asteroid-l1")!;
       const deposit: SpaceObject = {
+        asteroid: shape.id,
         hp,
         id: "deposit",
         kind: "resource",
-        radius: RESOURCE_ROCKS.classes[resource].radius,
+        radius: shape.radius,
         resource,
         x: -400,
         y: 0,
@@ -407,11 +409,13 @@ describe("Stardust drops", () => {
     ]);
   });
 
-  it("makes two of every three chunk resource rocks medium", () => {
+  it("makes two of every three chunk resource rocks medium, each on a shape of its size", () => {
     const counts = { large: 0, medium: 0 };
+    const shapes = [...ASTEROID_SHAPES.values()];
     for (let x = -20; x < 20; x++) {
       for (let y = -20; y < 20; y++) {
         const plan = planChunk(CHUNK_CATALOG, {
+          asteroids: { field: ASTEROID_FIELDS[2], shapes },
           clearance: PROTOTYPE.tuning.flight.shipRadius,
           objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
           rockRadius: PROTOTYPE.tuning.flight.rockRadius,
@@ -425,14 +429,18 @@ describe("Stardust drops", () => {
         });
         for (const placement of plan.placements.filter((entry) => entry.kind === "resource")) {
           counts[placement.resource!]++;
-          expect(placement.radius).toBe(RESOURCE_ROCKS.classes[placement.resource!].radius);
+          const shape = ASTEROID_SHAPES.get(placement.asteroid!)!;
+          expect(shape.size).toBe(placement.resource);
+          expect(placement.radius).toBe(shape.radius);
         }
       }
     }
     const share = counts.medium / (counts.medium + counts.large);
+    // A large rock that does not fit its slot's clearance is left out, so large rocks run a
+    // little under a third.
     expect(counts.large).toBeGreaterThan(50);
     expect(share).toBeGreaterThan(0.6);
-    expect(share).toBeLessThan(0.75);
+    expect(share).toBeLessThan(0.85);
   });
 });
 
