@@ -74,7 +74,6 @@ or scroll. Colours per role are in [Controls](controls.md#colour-tokens).
 - Modals and page content (story panel) fit in
   `safeRect(insets, SPACING.pageInset, view)`, the available rect.
 - Backgrounds and the modal dim cover the whole logical view, under the insets.
-- The shield bar is the one element on `safeRect(insets, 0, view)`.
 
 ## Groups
 
@@ -114,7 +113,7 @@ space nor a gap.
 | Press-area growth    | `clamp(6, 16, 0.25 * shorter side)` per side, then grown to 48 per axis | Pause, Use and the close X; nearest drawn centre wins an overlap      | `hitAround`, `pressedArea`, `HIT_RULE`, `hitAreas.ts`, to implement   |
 | Focus ring outset    | 4                                                                       | `ui-focus` outside the drawn face, every state                        | `FOCUS_RING.outset`, `controls.ts`, to implement                      |
 | Selection ring       | 2 band, 2 outside the face                                              | Shares the focus outset; focus may overlap it                         | `FOCUS_RING`, `controls.ts`, to implement                             |
-| Pill                 | 28 high, radius 4, 8 side padding                                       | Price pills and the HUD Stardust pill                                 | `PILL`, `controls.ts`, to implement                                   |
+| Pill                 | 28 high, radius 4, 8 side padding                                       | Price pills and the HUD status pill                                   | `PILL`, `controls.ts`, to implement                                   |
 
 Faces, content insets, nine-slice margins and press areas are separate
 measurements; place neighbours against the full press area. Centre labels by
@@ -153,7 +152,7 @@ the face of each state, never the press area.
 
 ## HUD and overlays
 
-The HUD's top controls (pause, weapons, Stardust pill and the start screen's
+The HUD's top controls (pause, the status pill, weapons and the start screen's
 Settings) anchor to the HUD rect, as Chibi anchors its pause button
 and skill row (`chibis-way-home` `src/ui/layout/playView.ts` `playView`,
 `topShift` and `CONTROL_EDGE`; `src/ui/layout/skillHud.ts`). The rect moves
@@ -175,23 +174,27 @@ out of every inset. Other HUD elements anchor to
 | 1280x720       | None              | 720x405      | 0           | 8, 712, 8                 |
 | 1920x1080      | None              | 720x405      | 0           | 8, 712, 8                 |
 
-| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                        | Constant                                                             |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                              | `PAUSE_BUTTON`, `playView.ts`                                        |
-| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                                                                                     | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                |
-| Stardust     | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon target (the HUD rect's right without weapons), centred on the row (`top + 10`); grows leftward                                                                                                                                                             | `STARDUST_PILL`, `playView.ts`                                       |
-| Shield bar   | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                                                                                                                                                                                              | `SHIELD_BAR`, `playView.ts`, to implement                            |
-| Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 24 above the bottom safe edge (`inset + 24` from the view bottom), clearing the shield bar by 21; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`     |
-| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (24 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                    | `USE_BUTTON`, `touchControls.ts`, to implement                       |
-| Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `icon-settings-nav` (20) as its glyph, on the HUD rect's top-right corner                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `playView.ts`                                          |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one `TYPE.body` cream line centred in the box, no portrait or name tab; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                 | `NOTICE` (shares `CONVERSATION`), `conversationBox.ts`, to implement |
-| Conversation | In-flight dialogue box below the weapon row: top `SPACING.gap` below the weapon press areas, centred, `min(availableWidth, 640)` wide, 64 high, one portrait and one line; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                         | `CONVERSATION`, `conversationBox.ts`, to implement                   |
+| Element      | Geometry                                                                                                                                                                                                                                                                                                                                                                                                                                  | Constant                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Pause        | 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it; Chibi's 7,7 in the 720 view); vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5                                                                                                                                                                                                                                        | `PAUSE_BUTTON`, `playView.ts`                                        |
+| Weapons      | One row of `HUD_BUTTON` targets packed against the HUD rect's top-right corner, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right - 48 - 56 * i`, `y = top`; disc and glyph centred in it (disc at 7.5, glyph at 14); the target is the press area (48, `HIT_RULE.minTarget`)                                                                                                                                               | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                |
+| Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75), centred on the pause disc (`PAUSE_BUTTON.art` centre = HUD rect top + 16.5, so the pill top is HUD rect top + 2.5); grows rightward with the count; keeps its place while the pause button is hidden. Parts and states in [Status pill](#status-pill) | `STATUS_PILL`, `playView.ts`, to implement                           |
+| Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 24 above the bottom safe edge (`inset + 24` from the view bottom); drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line                                                                          | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`     |
+| Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (24 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                       |
+| Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                          |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one `TYPE.body` cream line centred in the box, no portrait or name tab; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                           | `NOTICE` (shares `CONVERSATION`), `conversationBox.ts`, to implement |
+| Conversation | In-flight dialogue box below the weapon row: top `SPACING.gap` below the weapon press areas, centred, `min(availableWidth, 640)` wide, 64 high, one portrait and one line; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                   | `CONVERSATION`, `conversationBox.ts`, to implement                   |
 
 Overlap rules:
 
-- The top-left cluster (pause) and the top-right cluster (weapons, Stardust)
-  keep at least `SPACING.pageInset` between their press areas at the smallest
-  view (720 logical, with phone insets).
+- The top-left cluster is the pause button and the status pill; the top-right
+  cluster is the weapons only. The pill's drawn rect and the pause press area
+  keep at least `SPACING.pageInset` from the weapon press areas at the smallest
+  view (720 logical, with phone insets 43/43/19): with four weapons the pill
+  may reach 351.25 wide, a count up to 162.25 wide ("999,999,999" is 89), and
+  "1,234,567" leaves 107.07.
+- The Stardust `+N` label stays above the conversation box: its 20 line ends
+  at HUD rect top + 54.5 (62.5), the box top is HUD rect top + 56 (64).
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
 - Press areas inside one cluster may overlap; `pressedArea` gives the press to
   the nearest drawn centre.
@@ -200,6 +203,51 @@ Overlap rules:
   pause button, weapons and sticks stay visible and live.
 - The conversation box's bottom sits at least 24 above the ship's drawn top at
   the 360-high view.
+
+### Status pill
+
+Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
+are in [Controls](controls.md#status-pill). Parts, left to right, each centred
+on the pill's row:
+
+| Part          | Geometry                                                                                           |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.70, as the conversation panel    |
+| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour       |
+| Mark gap      | `SPACING.markGap`                                                                                  |
+| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim, 1 ink, then the 92x8 fill area (inset 2)                           |
+| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                    |
+| Stardust icon | `icon-stardust-20`, nearest neighbour                                                              |
+| Mark gap      | `SPACING.markGap`                                                                                  |
+| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                            |
+| Width         | 189 plus the count width: 215.70 at "125", 237.94 at "12,500"; grows rightward, never shrinks text |
+
+The fill area maps the current capacity (Gameplay: 100 plus 20% per level) to
+92, so a full bar has one length at every level. Fill width is
+`92 * shield / capacity`. Two marks extend it to the right: the delay part,
+from the fill end to the delay mark (the shield value just before the first
+hit since the delay part was last clear), and the flash, over one hit's lost
+part. The bar draws in CSS at logical units, like the HUD buttons,
+with fractional widths.
+
+| State  | Trigger                                   | Draw                                                                                                                        | Timing                                                                                                                                                                                                                                     | Reduced motion                                                |
+| ------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Normal | 25% of capacity or more, not regenerating | Fill, rim and icon in their normal colours                                                                                  | Static                                                                                                                                                                                                                                     | Same                                                          |
+| Hit    | The shield drops                          | The lost part (new value to old) in the flash colour                                                                        | One flash, 100 ms, then the part joins the delay part. A flash starts at most once per 334 ms; a hit inside that window does not flash                                                                                                     | No flash; the part joins at once                              |
+| Delay  | From a hit until regeneration starts      | The delay part in the delay colour                                                                                          | Gameplay's recharge delay, 3 s after the last hit                                                                                                                                                                                          | Same                                                          |
+| Regen  | The delay ends, until the shield is full  | The delay part clears at once; the fill grows (Gameplay: 18 per s) with a 2 px leading edge inside the fill's right end     | The edge shows while regenerating and is removed at capacity                                                                                                                                                                               | Same                                                          |
+| Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                             | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                                                                                                                      | Icon and rim hold the low colour                              |
+| Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                       | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge                                                                                                      | Same                                                          |
+| Pickup | The Stardust count increases              | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline shows under the count | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms. A pickup while it shows adds to N and restarts the hold | No bump or rise; the label holds 450 ms and fades over 150 ms |
+
+- The `+N` label centres on the count; its line box top is `SPACING.rowGap`
+  below the pill (HUD rect top + 34.5). The bump is a transform: it never
+  reflows the pill.
+- The pill shows during flight. It hides with the pause button while a modal
+  card or storybook page shows; on desktop, where the pause button is hidden,
+  it keeps its place, so the HUD never shifts with the input mode.
+- The pill takes no input. The shield bar is a meter (Gameplay's shield label,
+  value and capacity) and the count a status; both icons are decorative.
 
 ## Screens
 
@@ -334,22 +382,22 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 
 ## Changes from current values
 
-| Change                                                                                                     | Was                                     |
-| ---------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080 | CSS px at 1x, independent of the canvas |
-| Safe insets clamp HUD controls, cards and page content                                                     | Insets not read                         |
-| Sticks anchor from the safe rect's edges                                                                   | From the centred 720 view               |
-| Every action stack fills the inner width with `SPACING.gap`                                                | Generic stacks 4 apart                  |
-| Stardust pill: 28 high, radius 4, padding 8, mark gap 6, count 16 bold, 8 from the weapons                 | 26, 6, 7, 4, 15, 6                      |
-| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                      | The HUD safe rect's corners             |
-| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area     | 48 squares, 24 glyph, cream ring        |
-| Pause draws `pause.svg` with smooth sampling                                                               | `ui-pause` PNG, nearest neighbour       |
-| Cards scroll one scroll group with the header and close fixed                                              | The whole card scrolls                  |
-| Prose never widens a card; cheats headings and notes use group and row gaps                                | 36em prose cap; 16 and 4 margins        |
-| Shield bar sits on the bottom safe edge                                                                    | Bottom view edge                        |
-| Notices use `TYPE.body` and `NOTICE` placement                                                             | 14 px text at fixed offsets             |
-| Story pages use `STORY_PANEL`                                                                              | `.story-panel` clamp and rem sizes      |
-| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                      | 16; a 24 line                           |
+| Change                                                                                                     | Was                                                                                 |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080 | CSS px at 1x, independent of the canvas                                             |
+| Safe insets clamp HUD controls, cards and page content                                                     | Insets not read                                                                     |
+| Sticks anchor from the safe rect's edges                                                                   | From the centred 720 view                                                           |
+| Every action stack fills the inner width with `SPACING.gap`                                                | Generic stacks 4 apart                                                              |
+| Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                      | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons |
+| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                      | The HUD safe rect's corners                                                         |
+| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area     | 48 squares, 24 glyph, cream ring                                                    |
+| Pause draws `pause.svg` with smooth sampling                                                               | `ui-pause` PNG, nearest neighbour                                                   |
+| Settings draws `settings.svg` as a mask with smooth sampling                                               | `icon-settings-nav` PNG mask                                                        |
+| Cards scroll one scroll group with the header and close fixed                                              | The whole card scrolls                                                              |
+| Prose never widens a card; cheats headings and notes use group and row gaps                                | 36em prose cap; 16 and 4 margins                                                    |
+| Notices use `TYPE.body` and `NOTICE` placement                                                             | 14 px text at fixed offsets                                                         |
+| Story pages use `STORY_PANEL`                                                                              | `.story-panel` clamp and rem sizes                                                  |
+| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                      | 16; a 24 line                                                                       |
 
 ## Exceptions
 
@@ -388,6 +436,11 @@ Tests:
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
   `SPACING.pageInset` apart.
+- `STATUS_PILL`'s left edge equals the pause press area's right plus
+  `SPACING.gap` and its centre the pause disc's centre, with and without the
+  pause button shown; with four weapons at 720x360 and phone insets, the pill
+  at a 162.25-wide count keeps `SPACING.pageInset` from the leftmost weapon
+  target.
 - `hudRect` matches the HUD rect table at 844x390 (with and without insets),
   1280x720 and 1920x1080; the pause frame and every weapon target lie inside
   `playView` inset by `CONTROL_EDGE`.

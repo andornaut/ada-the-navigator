@@ -18,11 +18,21 @@ Source files remain untouched. Reuse is explicitly authorized by the project own
 | Source JSON                | `fa0c821cabebca75550cf3a894ea29d4de31219f64cfd18ad7e25f6c1ac2e496` |
 | Formatted destination JSON | `ae49b543054fed9032d1845e4d7f5cb2ade0d5084176619dcce70f9b5ade51a4` |
 
+## Vector gear
+
+`public/art/ui/icons/settings.svg` is the start screen's Settings glyph: a
+20x20 single-colour vector of the same gear (eight teeth, four orthogonal
+teeth 4 wide to the frame edges and four 3x3 diagonal teeth, around a body of
+radius 7.5 with a centre hole of radius 4), cream `#ead4aa`, drawn as a CSS
+mask in the HUD button's glyph colour with smooth sampling, so it stays sharp
+at fractional scales. At 20 px it differs from `icon-settings-nav` only in edge
+pixels. The PNG stays published for existing references.
+
 ## 24px gear
 
 `icon-settings-nav-24` is a 24 by 24 redraw of the same gear, published for
-existing references (the start screen's Settings button draws the 20px
-`icon-settings-nav`): a ring around an 8-pixel centre
+existing references (the start screen's Settings button draws the
+[vector gear](#vector-gear)): a ring around an 8-pixel centre
 hole, with four 4-pixel-wide orthogonal teeth reaching the frame edges and four
 diagonal teeth, in cream `#ead4aa`. This sheet is authored for Ada and is not
 pinned to Chibi. One untrimmed, unrotated frame, `rest` index 0, duration

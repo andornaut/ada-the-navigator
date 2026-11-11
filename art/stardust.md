@@ -44,10 +44,10 @@ Reduced motion draws no streak.
 
 ## HUD icon
 
-| Key                | Size     | Use                                       |
-| ------------------ | -------- | ----------------------------------------- |
-| `icon-stardust`    | 16 by 16 | Price pills                               |
-| `icon-stardust-20` | 20 by 20 | HUD count, balances and the confirm price |
+| Key                | Size     | Use                                             |
+| ------------------ | -------- | ----------------------------------------------- |
+| `icon-stardust`    | 16 by 16 | Price pills                                     |
+| `icon-stardust-20` | 20 by 20 | HUD status pill, balances and the confirm price |
 
 One large sparkle with a small sparkle and a dust mote, in the four Stardust
 colours on a clear background. Both are UI subset sprites with a single `rest`
@@ -55,6 +55,8 @@ frame.
 
 ## HUD count
 
-An ink `#181425` pill with `icon-stardust-20` and the count in bold cream
-`#ead4aa`, left of the top-right weapon buttons. Its geometry and anchor are
-`STARDUST_PILL` in [Layout](layout.md#hud-and-overlays).
+The count shares the HUD status pill with the shield bar, beside the pause
+button: `icon-stardust-20` and the count in bold cream `#ead4aa`, with a mint
+`+N` tick on pickup. Geometry and timing are `STATUS_PILL` in
+[Layout](layout.md#status-pill); colours are in
+[Controls](controls.md#status-pill).

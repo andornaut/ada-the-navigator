@@ -168,6 +168,63 @@ possible ground; 0.70 is the lowest alpha, to two decimals, that keeps the line
 at 4.5:1 over white (0.69 gives 4.45:1). Every galaxy field and space object
 composites darker, so the line never drops below 4.61:1.
 
+## Status pill
+
+The in-flight status pill holds the shield bar and the Stardust count beside
+the pause button. Geometry, states and timing are `STATUS_PILL` in
+[Layout](layout.md#status-pill). The panel is translucent; every mark and the
+count draw fully opaque over it, and the bar's track is opaque ink, so the
+fill colours keep their contrast over any backdrop.
+
+| Token           | Colour    | Use                                                     |
+| --------------- | --------- | ------------------------------------------------------- |
+| Status panel    | `#181425` | Ink panel at alpha 0.70, as the conversation panel      |
+| Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab              |
+| Shield delay    | `#4f7aa6` | Delay part, from a hit until regeneration starts        |
+| Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red       |
+| Shield low peak | `#ff8a80` | Low pulse peak, icon and rim                            |
+| Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge             |
+| Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                       |
+| Shield track    | `#181425` | Opaque ink inside the rim                               |
+| Divider         | `#57536e` | 1x16 rule between the shield and the Stardust count     |
+| Count           | `#ead4aa` | Cream `TYPE.label`                                      |
+| Stardust tick   | `#8ee8a8` | `+N` label, Stardust body mint, with a 1 px ink outline |
+
+The panel at 0.70 composites to `#1d1a2a` over the space field `#292734` and
+`#201a1f` over the Sunflower field `#332712`.
+
+| Mark or text     | Colour    | Panel over `#292734` | Panel over `#332712` | Panel over `#ffffff` |
+| ---------------- | --------- | -------------------- | -------------------- | -------------------- |
+| Count            | `#ead4aa` | 11.75:1              | 11.80:1              | 4.65:1               |
+| Shield icon      | `#70ace8` | 7.10:1               | 7.12:1               | 2.81:1               |
+| Low icon and rim | `#e4574e` | 4.68:1               | 4.70:1               | 1.85:1               |
+| Low pulse peak   | `#ff8a80` | 7.46:1               | 7.49:1               | 2.95:1               |
+| Rim              | `#9a96ad` | 5.95:1               | 5.97:1               | 2.35:1               |
+| Divider          | `#57536e` | 2.32:1               | 2.33:1               | 1.09:1               |
+
+| Bar part    | Colour    | On the ink track | Against            |
+| ----------- | --------- | ---------------- | ------------------ |
+| Fill        | `#70ace8` | 7.51:1           | Delay part, 1.88:1 |
+| Delay part  | `#4f7aa6` | 4.00:1           |                    |
+| Low fill    | `#e4574e` | 4.95:1           | Delay part, 1.24:1 |
+| Flash, edge | `#ffffff` | 18.02:1          | Fill, 2.40:1       |
+
+- The count meets 4.5:1 over every backdrop, including white. Over the galaxy
+  fields every mark meets 3:1; the divider is decorative.
+- The delay part is told from the fill by lightness (1.88:1) and from the low
+  fill by hue; it holds 3:1 against the track.
+- The `+N` label sits on the field, not the panel: mint is 9.94:1 on
+  `#292734` and 9.90:1 on `#332712`, and its ink outline (12.23:1) keeps it
+  legible over bright objects.
+- The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
+  is one 100 ms flash per hit, at most three per second. Nothing flickers.
+
+`public/art/ui/icons/shield.svg` is the HUD shield glyph: a 20x20 single-colour
+vector of the `icon-shop-shield` silhouette (a heater shield with its left
+half filled), cream `#ead4aa` like the [weapon icons](weapon-icons.md), drawn
+as a CSS mask with smooth sampling. `icon-shop-shield` stays the shop's pixel
+glyph; at 20 px the two differ only in edge pixels.
+
 ## Top-right HUD icon buttons
 
 The weapon selector buttons follow Chibi's skill buttons (`chibis-way-home`
@@ -176,7 +233,7 @@ a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
 glyph centred on it. Sizes and placement are `HUD_BUTTON` in
 [Layout](layout.md#hud-and-overlays). The space screen has no settings button;
 Settings opens from the pause card. The start screen's Settings button uses
-the idle state with `icon-settings-nav`.
+the idle state with the vector gear `settings.svg`.
 
 | Weapon state | Face                 | Edge                          | Glyph                    | Glyph contrast |
 | ------------ | -------------------- | ----------------------------- | ------------------------ | -------------- |
@@ -210,10 +267,11 @@ Draw the chrome in CSS at logical units so it stays sharp at any scale
 | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Disc          | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, `background` the face, `box-shadow: inset 0 0 0 calc(u * 1)` ink |
 | Selected disc | `box-shadow: inset 0 0 0 calc(u * 4)` ink                                                                                   |
-| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(weapon-<id>.svg) center / 100% 100% no-repeat`             |
+| Glyph         | `calc(u * 20)` square, `background` the glyph colour, `mask: url(<glyph>.svg) center / 100% 100% no-repeat`                 |
 
-Weapon glyphs are single-colour SVGs, so the mask takes each state's colour and
-the refusal cue's red. The 24px weapon SVGs stay published for existing
+Weapon glyphs and the Settings gear are single-colour SVGs
+(`weapon-<id>.svg`, `settings.svg`), so the mask takes each state's colour and
+the refusal cue's red, and stays sharp at fractional scales such as 1.78. The 24px weapon SVGs stay published for existing
 references.
 
 ## Touch sticks
