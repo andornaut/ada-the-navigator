@@ -1,4 +1,5 @@
 import type { Vec } from "../model/types.ts";
+import { loopFrame, loopPhase } from "./world-art.ts";
 
 // Art's Stardust pickup (art/stardust.md): a 9x9 gem whose glint loops from a per-pickup phase.
 
@@ -31,13 +32,7 @@ export function readStardustArt<T extends StardustAsset>(
 }
 
 /** A stable start phase per pickup, so a cluster twinkles out of step. */
-export function stardustPhase(id: string, loopMs: number): number {
-  let n = 2166136261;
-  for (let index = 0; index < id.length; index++) {
-    n = Math.imul(n ^ id.charCodeAt(index), 16777619);
-  }
-  return (n >>> 0) % Math.max(1, Math.round(loopMs));
-}
+export const stardustPhase = loopPhase;
 
 /** The sheet frame at timeMs: the glint loop from the pickup's phase; rest only when reduced. */
 export function stardustFrame(
@@ -46,17 +41,7 @@ export function stardustFrame(
   phaseMs: number,
   timeMs: number,
 ): number {
-  if (reducedMotion) {
-    return art.rest;
-  }
-  let at = (((timeMs + phaseMs) % art.loopMs) + art.loopMs) % art.loopMs;
-  for (const step of art.loop) {
-    if (at < step.ms) {
-      return step.frame;
-    }
-    at -= step.ms;
-  }
-  return art.rest;
+  return reducedMotion ? art.rest : loopFrame(art, phaseMs, timeMs);
 }
 
 /** A released pickup's share of the way from its wreck, settling over 110 ms. */

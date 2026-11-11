@@ -110,6 +110,7 @@ import {
 } from "./stardust-art.ts";
 import {
   nameLabelled,
+  readOutpostArt,
   readStationArt,
   type StationArt,
   type StationFrame,
@@ -127,10 +128,32 @@ import {
   spark as sparkEffect,
   type TaperShape,
 } from "./weapon-effects.ts";
+import {
+  BEACON_FRAMES,
+  beaconFrame,
+  CACHE_FRAMES,
+  cacheApproached,
+  cacheFrame,
+  HOLODISK_FRAMES,
+  holodiskFrame,
+  holodiskWaypoint,
+  isDiscoveryCache,
+  type LoopArt,
+  loopPhase,
+  readLoopArt,
+} from "./world-art.ts";
 
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
 const FLASH_SUFFIX = ":flash";
+// The holodisk's beacon sprite shares its id plus this suffix.
+const BEACON_SUFFIX = ":beacon";
+
+/** The object an extra sprite belongs to: a flash or a beacon keeps its owner's id. */
+function spriteOwner(id: string): string {
+  const suffix = [FLASH_SUFFIX, BEACON_SUFFIX].find((end) => id.endsWith(end));
+  return suffix ? id.slice(0, -suffix.length) : id;
+}
 
 interface Asset extends ShipAsset, EnemyFrame {
   path: string;
@@ -142,6 +165,7 @@ interface Asset extends ShipAsset, EnemyFrame {
   frameMs?: number;
   frames?: Readonly<Record<string, number>>;
   loop?: readonly { readonly frame: number; readonly ms: number }[];
+  outpost?: string;
 }
 
 /** World axes project diagonally; controls continue to follow screen directions. */
@@ -170,7 +194,14 @@ export class PrototypeScene extends Phaser.Scene {
   private enemyArt = new Map<string, EnemyArt<Asset>>();
   private enemySprites = new Map<string, Phaser.GameObjects.Image>();
   private stationArt: StationArt<Asset> | undefined;
+  private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   private stardustArt: StardustArt<Asset> | undefined;
+  private cacheArt: LoopArt<Asset> | undefined;
+  private holodiskArt: LoopArt<Asset> | undefined;
+  private beaconArt: LoopArt<Asset> | undefined;
+  // Discovery caches Ada has approached in this flight; a lit cache stays lit.
+  private litCaches = new Set<string>();
+  private litFlight: number | undefined;
   private destruction: DestructionData | undefined;
   private shards = new Map<string, ShardData>();
   // Art's rocks and backdrop, once its catalog and every frame have loaded.
@@ -335,7 +366,11 @@ export class PrototypeScene extends Phaser.Scene {
     );
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
+    this.outpostArt = readOutpostArt(this.shipAssets);
     this.stardustArt = readStardustArt(this.shipAssets);
+    this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
+    this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
+    this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
     for (const archetype of Object.keys(this.destruction?.archetypes ?? {})) {
       const shards = readShards(this.cache.json.get(`shards-${archetype}`));
@@ -1110,7 +1145,7 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const activeIds = new Set(flight.objects.map((object) => object.id));
     for (const [id, sprite] of this.enemySprites) {
-      if (!activeIds.has(id.endsWith(FLASH_SUFFIX) ? id.slice(0, -FLASH_SUFFIX.length) : id)) {
+      if (!activeIds.has(spriteOwner(id))) {
         sprite.destroy();
         this.enemySprites.delete(id);
       }
@@ -1498,15 +1533,90 @@ export class PrototypeScene extends Phaser.Scene {
 
   /** Art's station blinks between frames A and B; reduced motion holds A. Stations draw no name label. */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
-    const art = this.stationArt;
-    if (!art) {
+    if (!this.stationArt) {
       this.drawStationPlaceholder(object, point, radius);
       return;
     }
+    this.drawBlink(this.stationArt, object, point);
+  }
+
+  /** A fixed-facing station or outpost frame at its pivot, blinking A and B. */
+  private drawBlink(art: StationArt<Asset>, object: SpaceObject, point: Vec): void {
     const frame = stationFrame(art, this.reducedMotion, this.time.now);
     this.objectSprite(object.id, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y);
+  }
+
+  /** A destination: its outpost or holodisk art, else the placeholder rings and name label. */
+  private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
+    const outpost = this.outpostArt.get(object.id);
+    if (outpost) {
+      this.drawBlink(outpost, object, point);
+      return;
+    }
+    if (object.id === "holodisk" && this.holodiskArt) {
+      this.drawHolodisk(object, point);
+      return;
+    }
+    this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
+    this.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
+    this.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
+    this.drawDestinationLabel(object, point, radius);
+  }
+
+  /**
+   * The holodisk turns from its own phase over the beacon, which pulses on its waypoint while
+   * the holodisk's location is known and it is not yet recovered.
+   */
+  private drawHolodisk(object: SpaceObject, point: Vec): void {
+    const flight = this.model.state.flight;
+    const art = this.holodiskArt!;
+    const beacon = this.beaconArt;
+    if (
+      beacon &&
+      flight &&
+      holodiskWaypoint(this.model.state.progress[flight.sector].holodisk, [object])
+    ) {
+      this.objectSprite(
+        `${object.id}${BEACON_SUFFIX}`,
+        beacon.asset.id,
+        beaconFrame(beacon, this.reducedMotion, this.time.now),
+      )
+        .setDisplaySize(beacon.asset.displayWidth!, beacon.asset.displayHeight!)
+        .setOrigin(beacon.asset.pivot.x, beacon.asset.pivot.y)
+        .setPosition(point.x, point.y)
+        .setDepth(1.5);
+    }
+    const frame = holodiskFrame(
+      art,
+      this.reducedMotion,
+      loopPhase(object.id, art.loopMs),
+      this.time.now,
+    );
+    this.objectSprite(object.id, art.asset.id, frame)
+      .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
+      .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(2);
+  }
+
+  /** A discovery cache stays hidden until Ada first approaches it, then loops its lights. */
+  private drawCache(object: SpaceObject, point: Vec): void {
+    const flight = this.model.state.flight!;
+    const art = this.cacheArt!;
+    if (this.litFlight !== flight.seed) {
+      this.litFlight = flight.seed;
+      this.litCaches.clear();
+    }
+    if (cacheApproached(PROTOTYPE.tuning.safeRadius, flight.player, object)) {
+      this.litCaches.add(object.id);
+    }
+    const frame = cacheFrame(art, this.litCaches.has(object.id), this.reducedMotion, this.time.now);
+    this.objectSprite(object.id, art.asset.id, frame)
+      .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
+      .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
       .setPosition(point.x, point.y);
   }
 
@@ -1672,13 +1782,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.lineStyle(1.5, color);
     this.ink.fillStyle(this.palette.environment);
     switch (object.kind) {
-      case "destination": {
-        this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
-        this.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
-        this.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
-        this.drawDestinationLabel(object, point, radius);
+      case "destination":
+        this.drawDestination(object, point, radius);
         break;
-      }
       case "station":
         this.drawStation(object, point, radius);
         break;
@@ -1704,6 +1810,10 @@ export class PrototypeScene extends Phaser.Scene {
         this.drawEnemy(point, object);
         break;
       case "pickup":
+        if (this.cacheArt && isDiscoveryCache(object)) {
+          this.drawCache(object, point);
+          break;
+        }
         if (carriesStardust(object)) {
           this.drawStardust(object, point, radius);
           break;
