@@ -7,6 +7,7 @@ import {
 } from "../input/state.ts";
 import type { ControlVisibility } from "./device-settings.ts";
 import {
+  MOVE_KNOB_REACH,
   type Point,
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
@@ -75,7 +76,8 @@ const rounded = (point: Point): Point => ({ x: Math.round(point.x), y: Math.roun
 
 // The joysticks as drawn: a side is absent while hidden by its setting or while controls do not
 // show. A held stick's ring centres on where its drag began; at rest it sits at its rest centre.
-// The move knob follows the CSS travel the move input samples; the aim knob moves at most
+// The move knob moves in proportion to the sampled deflection, at most MOVE_KNOB_REACH pixels,
+// so it stays inside the markers; the aim knob moves at most
 // AIM_KNOB_REACH pixels.
 export function stickViews(
   layout: StickLayout,
@@ -96,14 +98,14 @@ export function stickViews(
     let ringPose: TouchChromePose = "rest";
     if (side === "move") {
       const scale = state.movementScale;
-      const reach = MOVE_STICK_GEOMETRY.reach;
       const sampled = stickVector(MOVE_STICK_GEOMETRY, {
         x: stick ? (stick.position.x - stick.origin.x) * scale.x : 0,
         y: stick ? (stick.position.y - stick.origin.y) * scale.y : 0,
       });
+      // The drawn offset is proportional to the sampled deflection and stops inside the markers.
       knob = {
-        x: centre.x + Math.round((sampled.x * reach) / scale.x),
-        y: centre.y + Math.round((sampled.y * reach) / scale.y),
+        x: centre.x + Math.round(sampled.x * MOVE_KNOB_REACH),
+        y: centre.y + Math.round(sampled.y * MOVE_KNOB_REACH),
       };
       const strength = Math.hypot(sampled.x, sampled.y);
       const across = strength ? sampled.x / strength : 0;

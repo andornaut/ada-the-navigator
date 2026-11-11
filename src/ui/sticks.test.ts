@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { ControlState } from "../input/state.ts";
 import { centredAt, MARKER_THRESHOLD, stickRestCentres, stickViews } from "./sticks.ts";
-import { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "./touch-chrome.ts";
+import {
+  KNOB_OUTER_RADIUS,
+  MARKER_INK_WIDTH,
+  MOVE_KNOB_REACH,
+  MOVE_MARKERS,
+  TOUCH_CHROME_FRAME,
+  TOUCH_KNOB_FRAME,
+} from "./touch-chrome.ts";
 
 const layout = {
   height: 360,
@@ -44,22 +51,28 @@ describe("joystick placement", () => {
   });
 });
 
-describe("left stick CSS travel display", () => {
-  it.each([0.1, 0.5, 1])("draws the sampled %s throttle with the same CSS geometry", (strength) => {
-    const state = new ControlState();
-    state.setMoveScale({ x: 0.5, y: 0.5 });
-    state.down("move", 1, { x: 100, y: 100 });
-    state.move(1, { x: 100 + (2.4 + strength * 17.6) / 0.5, y: 100 });
-    const view = stickViews(layout, state).move!;
-    expect(view.ring).toEqual(centredAt({ x: 100, y: 100 }, TOUCH_CHROME_FRAME));
-    expect(knobCentre(view.knob)).toEqual({ x: 100 + Math.round(strength * 40), y: 100 });
-    expect(view.ringPose).toBe("held-right");
-    expect(view.knobPose).toBe("held");
-    expect(Math.hypot(state.sample().move.x, state.sample().move.y)).toBeCloseTo(strength, 12);
-    state.release(1);
-    expect(stickViews(layout, state).move?.knobPose).toBe("rest");
-    expect(state.sample().move).toEqual({ x: 0, y: 0 });
-  });
+describe("left stick deflection display", () => {
+  it.each([0.1, 0.5, 1])(
+    "draws the sampled %s throttle in proportion inside the markers",
+    (strength) => {
+      const state = new ControlState();
+      state.setMoveScale({ x: 0.5, y: 0.5 });
+      state.down("move", 1, { x: 100, y: 100 });
+      state.move(1, { x: 100 + (2.4 + strength * 17.6) / 0.5, y: 100 });
+      const view = stickViews(layout, state).move!;
+      expect(view.ring).toEqual(centredAt({ x: 100, y: 100 }, TOUCH_CHROME_FRAME));
+      expect(knobCentre(view.knob)).toEqual({
+        x: 100 + Math.round(strength * MOVE_KNOB_REACH),
+        y: 100,
+      });
+      expect(view.ringPose).toBe("held-right");
+      expect(view.knobPose).toBe("held");
+      expect(Math.hypot(state.sample().move.x, state.sample().move.y)).toBeCloseTo(strength, 12);
+      state.release(1);
+      expect(stickViews(layout, state).move?.knobPose).toBe("rest");
+      expect(state.sample().move).toEqual({ x: 0, y: 0 });
+    },
+  );
 
   it("lights the left chevron while the stick pushes left and neither inside the dead zone", () => {
     const state = new ControlState();
@@ -125,5 +138,51 @@ describe("move ring markers", () => {
 
   it("puts the boundary at sin(22.5 degrees) of the unit direction", () => {
     expect(MARKER_THRESHOLD).toBeCloseTo(0.3827, 4);
+  });
+});
+
+describe("move knob travel", () => {
+  // Distance from a point to a polyline, in frame pixels.
+  const toPath = (point: { x: number; y: number }, path: readonly { x: number; y: number }[]) =>
+    Math.min(
+      ...path.slice(1).map((to, index) => {
+        const from = path[index]!;
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const along = ((point.x - from.x) * dx + (point.y - from.y) * dy) / (dx * dx + dy * dy);
+        const t = Math.min(1, Math.max(0, along));
+        return Math.hypot(point.x - from.x - t * dx, point.y - from.y - t * dy);
+      }),
+    );
+
+  it.each([0, 15, 30, 45, 90, 135, 150, 165, 180, 225, 270, 315])(
+    "keeps the knob's outer edge inside the markers at full deflection toward %s degrees",
+    (degrees) => {
+      const state = new ControlState();
+      state.down("move", 1, { x: 200, y: 200 });
+      const radians = (degrees * Math.PI) / 180;
+      state.move(1, { x: 200 + 40 * Math.cos(radians), y: 200 - 40 * Math.sin(radians) });
+      const view = stickViews(layout, state).move!;
+      const knob = knobCentre(view.knob);
+      // The knob's centre pixel within the ring's frame, at that pixel's centre.
+      const inFrame = { x: knob.x - view.ring.x + 0.5, y: knob.y - view.ring.y + 0.5 };
+      for (const marker of MOVE_MARKERS) {
+        expect(toPath(inFrame, marker) - MARKER_INK_WIDTH / 2).toBeGreaterThanOrEqual(
+          KNOB_OUTER_RADIUS,
+        );
+      }
+    },
+  );
+
+  it("draws partial deflection in proportion and full deflection at the derived reach", () => {
+    const at = (strength: number) => {
+      const state = new ControlState();
+      state.down("move", 1, { x: 100, y: 100 });
+      state.move(1, { x: 100 + 2.4 + strength * 17.6, y: 100 });
+      return knobCentre(stickViews(layout, state).move!.knob).x - 100;
+    };
+    expect(MOVE_KNOB_REACH).toBe(11);
+    expect(at(1)).toBe(MOVE_KNOB_REACH);
+    expect(at(0.5)).toBe(Math.round(MOVE_KNOB_REACH / 2));
   });
 });

@@ -68,13 +68,24 @@ export type TouchChromeLayer =
       readonly width: number;
     };
 
-const CENTRE = { x: 37.5, y: 37.5 };
+export const TOUCH_CHROME_CENTRE = { x: 37.5, y: 37.5 };
+const CENTRE = TOUCH_CHROME_CENTRE;
+// The knob's drawn radius, its ink disc, and the move markers' ink stroke width.
+export const KNOB_OUTER_RADIUS = 5.5;
+export const MARKER_INK_WIDTH = 6;
 const LEFT = [
   { x: 18, y: 34 },
   { x: 13, y: 37.5 },
   { x: 18, y: 41 },
 ] as const;
 const RIGHT = LEFT.map(({ x, y }) => ({ x: TOUCH_CHROME_FRAME - x, y }));
+export const MOVE_MARKERS: readonly (readonly Point[])[] = [LEFT, RIGHT];
+
+// How far the move knob's centre may be drawn from the ring's centre: its outer edge then stays
+// inside the markers' inner edge, the marker ink nearest the centre.
+export const MOVE_KNOB_REACH = Math.floor(
+  CENTRE.x - (Math.max(...LEFT.map(({ x }) => x)) + MARKER_INK_WIDTH / 2) - KNOB_OUTER_RADIUS,
+);
 
 // The layers of one frame, painted in order. The move ring carries Chibi's left and right
 // chevrons, each lit while the stick pushes that way; the aim ring is the plain ring. The knob
@@ -87,8 +98,9 @@ export function touchChromeLayers(
   const layers: TouchChromeLayer[] = [];
   const core = pose === "held" ? colours.white : colours.cream;
   if (kind === "knob") {
-    layers.push({ centre: { x: 5.5, y: 5.5 }, colour: colours.ink, kind: "disc", radius: 5.5 });
-    layers.push({ centre: { x: 5.5, y: 5.5 }, colour: core, kind: "disc", radius: 4.5 });
+    const centre = { x: 5.5, y: 5.5 };
+    layers.push({ centre, colour: colours.ink, kind: "disc", radius: KNOB_OUTER_RADIUS });
+    layers.push({ centre, colour: core, kind: "disc", radius: KNOB_OUTER_RADIUS - 1 });
     return layers;
   }
   const outer = 36.5;
@@ -96,8 +108,8 @@ export function touchChromeLayers(
   layers.push({ centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 });
   if (kind === "move") {
     const stroke = (path: readonly Point[], colour: number) => {
-      layers.push({ colour: colours.ink, kind: "stroke", path, width: 6 });
-      layers.push({ colour, kind: "stroke", path, width: 4 });
+      layers.push({ colour: colours.ink, kind: "stroke", path, width: MARKER_INK_WIDTH });
+      layers.push({ colour, kind: "stroke", path, width: MARKER_INK_WIDTH - 2 });
     };
     stroke(LEFT, pose === "held-left" ? colours.white : colours.cream);
     stroke(RIGHT, pose === "held-right" ? colours.white : colours.cream);
