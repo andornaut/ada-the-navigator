@@ -39,6 +39,7 @@ import {
 import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
+import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
@@ -63,6 +64,7 @@ import {
 } from "./enemy-art.ts";
 import { FeedbackSound, ModelFeedback } from "./feedback.ts";
 import { readSave, writeSave } from "./persistence.ts";
+import { canvasFit, readQuantumJump } from "./quantum-jump.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
@@ -142,6 +144,12 @@ export class PrototypeScene extends Phaser.Scene {
   private destruction: DestructionData | undefined;
   private shards = new Map<string, ShardData>();
   private reducedMotion = false;
+  // Art's quantum jump: the overlay, whether a jump is playing (flight pauses), whether the
+  // presentation holds the source scene, and the last drawn space scene's specks.
+  private quantum: ReturnType<typeof createJumpOverlay> | null = null;
+  private jumping = false;
+  private holdSource = false;
+  private specks: Vec[] = [];
   // Painted ship frames load only for the scheme in use.
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
@@ -170,10 +178,14 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as {
         assets: Asset[];
+        quantumJump?: string;
         spacePalette?: string;
       };
       if (manifest.spacePalette) {
         this.load.json("space-palette", manifest.spacePalette);
+      }
+      if (manifest.quantumJump) {
+        this.load.json("quantum-jump", manifest.quantumJump);
       }
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -271,6 +283,27 @@ export class PrototypeScene extends Phaser.Scene {
       this.flush();
       this.refresh();
     };
+    // Every quantum jump plays Art's effect; the game switches once the source is covered.
+    const jumpThen = (action: () => void): void => {
+      if (this.jumping) {
+        return;
+      }
+      if (!this.quantum) {
+        apply(action);
+        return;
+      }
+      this.jumping = true;
+      this.quantum.play({
+        destination: () => this.jumpScene(),
+        emergency: false,
+        onDone: () => {
+          this.jumping = false;
+        },
+        onSwitch: () => apply(action),
+        reducedMotion: this.reducedMotion,
+        source: this.jumpScene(),
+      });
+    };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
       continueGame: () => apply(() => this.model.continueGame()),
@@ -357,12 +390,12 @@ export class PrototypeScene extends Phaser.Scene {
         },
         onReturnHome: () => {
           if (!this.model.inDanger) {
-            apply(() => this.model.returnHome());
+            jumpThen(() => this.model.returnHome());
           }
         },
         onTravel: (id) => {
           if (!this.model.inDanger) {
-            apply(() => this.model.teleport(id));
+            jumpThen(() => this.model.teleport(id));
           }
         },
       },
@@ -447,6 +480,33 @@ export class PrototypeScene extends Phaser.Scene {
       }),
     );
     const unregisterStation = () => stationLayers.forEach((unregister) => unregister());
+    // Art's quantum jump, played over every layer.
+    const artManifest = this.cache.json.get("art-manifest") as
+      { assets?: (Asset & { frames?: Record<string, number> })[] } | undefined;
+    const artAssets = artManifest?.assets ?? [];
+    const sheet = (id: string): SheetArt | undefined => {
+      const asset = artAssets.find((entry) => entry.id === id);
+      return asset?.frameWidth && asset.frameHeight && asset.frames
+        ? {
+            frameHeight: asset.frameHeight,
+            frameWidth: asset.frameWidth,
+            frames: asset.frames,
+            height: asset.height,
+            url: asset.path,
+            width: asset.width,
+          }
+        : undefined;
+    };
+    const jumpData = readQuantumJump(this.cache.json.get("quantum-jump"));
+    const [field, glow, star] = [
+      sheet("quantum-jump-field"),
+      sheet("quantum-jump-glow"),
+      sheet("quantum-jump-star"),
+    ];
+    this.quantum =
+      jumpData && field && glow && star
+        ? createJumpOverlay(this.controls.overlay, { field, glow, jump: jumpData, star })
+        : null;
     // The home half: storybook pages, galaxy selection over the cockpit and Restart's confirm.
     this.storybook = createStorybook(this.controls.overlay, {
       labels: { next: label("next"), previous: label("previous"), skip: label("skip") },
@@ -468,7 +528,14 @@ export class PrototypeScene extends Phaser.Scene {
         previous: label("previous"),
       },
       onHome: () => apply(() => this.model.leaveCockpit()),
-      onJump: () => apply(() => this.model.jump()),
+      onJump: () => {
+        const selected = this.model.selectedGalaxy;
+        if (selected !== null && this.model.isUnlocked(selected)) {
+          jumpThen(() => this.model.jump());
+        } else {
+          apply(() => this.model.jump());
+        }
+      },
       onPage: (delta) => apply(() => this.model.pageGalaxy(delta)),
       reducedMotion: () => this.controls.reducedMotion(),
     });
@@ -514,6 +581,7 @@ export class PrototypeScene extends Phaser.Scene {
       unregisterStation();
       homeLayers.forEach((unregister) => unregister());
       this.storybook.dispose();
+      this.quantum?.dispose();
       this.galaxies.dispose();
       this.restartCard.dispose();
       this.station.dispose();
@@ -531,7 +599,9 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const state = this.model.state;
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
+    const wasInSpace = state.mode === "space";
     if (
+      !this.jumping &&
       !this.settingsOpen &&
       !document.hidden &&
       state.mode === "space" &&
@@ -549,8 +619,28 @@ export class PrototypeScene extends Phaser.Scene {
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);
       this.observeFeedback();
     }
-    this.refresh();
-    this.draw();
+    // A failed shield already sent Ada home; hold the last drawn flight as the source scene
+    // until Astra's emergency jump covers it.
+    if (wasInSpace && this.model.state.mode !== "space" && !this.jumping && this.quantum) {
+      this.jumping = true;
+      this.holdSource = true;
+      this.quantum.play({
+        destination: () => this.jumpScene(),
+        emergency: true,
+        onDone: () => {
+          this.jumping = false;
+        },
+        onSwitch: () => {
+          this.holdSource = false;
+        },
+        reducedMotion: this.reducedMotion,
+        source: this.spaceJumpScene(),
+      });
+    }
+    if (!this.holdSource) {
+      this.refresh();
+      this.draw();
+    }
     const durable = JSON.stringify([
       state.mode,
       state.selectedSector,
@@ -714,12 +804,16 @@ export class PrototypeScene extends Phaser.Scene {
     const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
+    this.specks = [];
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.project({
           x: x * cell + ((y * 37) % 83),
           y: y * cell + ((x * 53) % 79),
         });
+        if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
+          this.specks.push(point);
+        }
         // Background markers stay muted but carry a light per-cell tint.
         this.ink.fillStyle(tinted(0.3, cellTint(x, y), this.palette.environmentDetail), 0.6);
         this.ink.fillCircle(point.x, point.y, 1);
@@ -1078,8 +1172,48 @@ export class PrototypeScene extends Phaser.Scene {
     this.overlay.strokeCircle(x - ux * 13, y - uy * 13, 3);
   }
 
+  /** The scene the quantum jump plays over now: the flight, the cockpit or the home page. */
+  private jumpScene(): JumpScene {
+    if (this.model.state.mode === "space" && this.model.state.flight) {
+      return this.spaceJumpScene();
+    }
+    const view = this.scale.gameSize;
+    const center = { x: view.width / 2, y: view.height / 2 };
+    const background = this.model.storyView?.page.background;
+    if (this.model.selectedGalaxy !== null || background?.startsWith("cockpit")) {
+      // The cockpit's canopy focus: 150 of the 390 design px down its 779 by 360 framing.
+      const fit = canvasFit({ height: 540, width: 960 }, view);
+      center.y += (150 * (12 / 13) - 180) * fit.scale;
+    }
+    return { center, ship: null, specks: [] };
+  }
+
+  /** The flight as last drawn: the ship at the play view's centre and the visible specks. */
+  private spaceJumpScene(): JumpScene {
+    const offset = Math.floor((this.scale.gameSize.width - SCREEN.width) / 2);
+    const center = { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 };
+    const source = this.ship.texture.getSourceImage() as CanvasImageSource;
+    return {
+      center,
+      ship: this.ship.visible
+        ? {
+            height: this.ship.displayHeight,
+            image: source,
+            width: this.ship.displayWidth,
+            x: center.x - this.ship.displayWidth * this.ship.originX,
+            y: center.y - this.ship.displayHeight * this.ship.originY,
+          }
+        : null,
+      specks: this.specks.map((speck) => ({ x: speck.x + offset, y: speck.y })),
+    };
+  }
+
   private drawFeedback(): void {
     for (const pulse of this.feedback.pulses) {
+      // Travel plays the quantum jump; the old teleport ring is retired with it.
+      if (pulse.kind === "teleport" && this.quantum) {
+        continue;
+      }
       const at = this.project(pulse);
       const radius = 12 + pulse.age * (pulse.kind === "teleport" ? 140 : 55);
       this.overlay.lineStyle(
