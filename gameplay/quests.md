@@ -257,14 +257,16 @@ Activity lines:
 | `activitySkip`      | Not now                                     |
 | `activityBusy`      | Finish your activity first.                 |
 | `activityDrop`      | Drop this activity?                         |
-| `supplyObjective`   | Carry {item} to the {destination}.          |
+| `supplyObjective`   | Carry {item} to {destination}.              |
 | `contractObjective` | Deposit resources at the hub: {have} of 30. |
 | `calfFind`          | Find the whale calf.                        |
 | `calfGuide`         | Guide the calf home.                        |
 
-In sentences, a station destination reads in lower case: "Carry fresh food to
-the station." The same holds for delivery job titles. Other destinations keep
-their Map names.
+Templates carry no article; every destination has a sentence name with its
+article, used in objectives and job titles: a station is "the station", an
+outpost "the growers' outpost", "the workshop" or "the salvagers' yard", and
+other places "the mining hub", "the whale family" or "the settlement". So:
+"Deliver seeds to the station" and "Carry fresh food to the station."
 
 ## Achievements
 
