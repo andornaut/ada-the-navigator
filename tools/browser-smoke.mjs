@@ -11,11 +11,16 @@ function save(name, value) {
   writeFileSync(`${output}/${name}`, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+// The whole run's limit. The canvas renders at its device-pixel backing in software GL.
+const SMOKE_LIMIT_SECONDS = 180;
 const watchdog = setTimeout(() => {
   save("events.json", events);
-  save("result.json", { passed: false, error: "Browser smoke exceeded 120 seconds" });
+  save("result.json", {
+    passed: false,
+    error: `Browser smoke exceeded ${SMOKE_LIMIT_SECONDS} seconds`,
+  });
   process.exit(124);
-}, 120000);
+}, SMOKE_LIMIT_SECONDS * 1000);
 
 let browser;
 let page;
