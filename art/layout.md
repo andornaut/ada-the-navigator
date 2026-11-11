@@ -154,15 +154,15 @@ the face of each state, never the press area.
 HUD elements anchor to `safeRect(insets, CONTROL_EDGE, view)` corners, except
 where stated.
 
-| Element    | Geometry                                                                                                                                                                                                             | Constant                                                         |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Pause      | 35x35 frame, 33 disc, drawn edge on the top-left corner (frame 1 outside it); press `hitAround(frame)` = 52.5                                                                                                        | `PAUSE_BUTTON`, `playView.ts`; now `PAUSE_BUTTON`, `pause.ts`    |
-| Weapons    | 48x48 faces, radius 8, 2 ink border, 24 glyph, `SPACING.gap` apart, right-aligned on the top-right corner; press `hitAround(face)` = 72, nearest centre wins                                                         | `HUD_BUTTON`, `playView.ts`, to implement                        |
-| Stardust   | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon, centred on the weapon row; grows leftward                                      | `STARDUST_PILL`, `playView.ts`, to implement                     |
-| Shield bar | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                   | `SHIELD_BAR`, `playView.ts`, to implement                        |
-| Sticks     | 75 frames; ring drawn edge `max(85, inset)` from the left (move) or right (aim) and `max(20, inset)` above the bottom; knob reach 12                                                                                 | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts` |
-| Settings   | Start screen only: a `HUD_BUTTON` with `icon-settings-nav-24` on the top-right corner                                                                                                                                | `HUD_BUTTON`, `playView.ts`, to implement                        |
-| Notice     | `TYPE.body` on an ink panel, content insets `TEXT_BUTTON.inset` by `TEXT_BUTTON.verticalInset`, width at most `STORY_PANEL.maxWidth`; top-centre, `SPACING.gap` below the HUD row; notices stack `SPACING.gap` apart | `NOTICE`, `playView.ts`, to implement                            |
+| Element    | Geometry                                                                                                                                                                                                                                                                                                              | Constant                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pause      | 35x35 frame, 33 disc, drawn edge on the top-left corner (frame 1 outside it); press `hitAround(frame)` = 52.5                                                                                                                                                                                                         | `PAUSE_BUTTON`, `playView.ts`; now `PAUSE_BUTTON`, `pause.ts`    |
+| Weapons    | 48x48 faces, radius 8, 2 ink border, 24 glyph, `SPACING.gap` apart, right-aligned on the top-right corner; press `hitAround(face)` = 72, nearest centre wins                                                                                                                                                          | `HUD_BUTTON`, `playView.ts`, to implement                        |
+| Stardust   | A `PILL` with `icon-stardust-20`, `SPACING.markGap`, the count in `TYPE.label`; right edge `SPACING.gap` left of the leftmost weapon, centred on the weapon row; grows leftward                                                                                                                                       | `STARDUST_PILL`, `playView.ts`, to implement                     |
+| Shield bar | 3 high, the full view width, bottom on `safeRect(insets, 0, view)`                                                                                                                                                                                                                                                    | `SHIELD_BAR`, `playView.ts`, to implement                        |
+| Sticks     | 75 frames; ring drawn edge `max(85, inset)` from the left (move) or right (aim) and `max(20, inset)` above the bottom; knob reach 12                                                                                                                                                                                  | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts` |
+| Settings   | Start screen only: a `HUD_BUTTON` with `icon-settings-nav-24` on the top-right corner                                                                                                                                                                                                                                 | `HUD_BUTTON`, `playView.ts`, to implement                        |
+| Notice     | A compact strip: `TYPE.body` on an ink panel, `TEXT_BUTTON.compactHeight` high (grows per wrapped line), content inset `TEXT_BUTTON.inset`; top edge on `safeRect(insets, CONTROL_EDGE, view)`, centred, clear of the pause and weapon press areas by `SPACING.gap`; shown briefly; notices stack `SPACING.gap` apart | `NOTICE`, `playView.ts`, to implement                            |
 
 Overlap rules:
 
@@ -238,11 +238,11 @@ Panel groups, `SPACING.gap` apart:
 2. Choices (choice page only): an action stack of two or three secondary
    buttons; labels wrap and grow the face. Focus starts on the first, the
    default.
-3. Page controls: Skip (secondary) at the inner left edge; Back (secondary)
-   and Next (primary) right-aligned, `SPACING.gap` apart. All three share one
-   width. A choice page has no Next. Back uses the disabled face on a scene's
-   first page. A page whose primary action is named (Pick up the rock) uses
-   that label in Next's slot.
+3. Page controls: Skip (secondary, always visible) at the inner left edge;
+   Previous (secondary) and Next (primary) right-aligned, `SPACING.gap` apart.
+   All three share one width. A choice page has no Next. Previous uses the
+   disabled face on a scene's first page. A page whose primary action is named
+   ("Pick up the rock.") uses that label in Next's slot.
 
 The panel is paged: it measures every page of the scene and keeps the largest
 size, up to the available height; beyond that the text column scrolls and the
@@ -259,8 +259,11 @@ Constants: `GALAXY_CARD`, `galaxySelectCard.ts`, to implement.
 2. Galaxy group, rows `SPACING.rowGap` apart: the 180x90 screenshot (a quarter
    of a 720x360 capture, nearest neighbour), the name (`TYPE.label`), the
    flavour line (`TYPE.body` prose).
-3. Action row: Back (secondary), Jump (primary), Next (secondary), one shared
-   width. Back uses the disabled face on the first page, Next on the last.
+3. Action row: Previous (secondary), Jump (primary), Next (secondary), one
+   shared width. Previous uses the disabled face on the first page, Next on the
+   last.
+4. Exits: the close X, an outside tap, back and Escape leave the cockpit and
+   return Ada to her room without a jump.
 
 Locked: the number shows, the screenshot is greyscale, the name and flavour
 are "..." in disabled text, and Jump is unavailable (disabled face, refusal
