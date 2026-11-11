@@ -230,9 +230,9 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
   count of guides, saved relative to the family, 5000 to 8000 world units away
   with the straight line to the family crossing a current. If no spot
   qualifies, the family makes no offer that flight. A waiting calf starts following when Ada is
-  within 400 world units, moving like `chase` without firing, stopping 120
+  within 160 world units, so it is on screen, moving like `chase` without firing, stopping 120
   short, at most 0.8 of Ada's base top speed with no upgrades; a following calf
-  keeps following out to 700, then waits. Travel here ends the follow, and the
+  keeps following out to 340, about the view's edge, then waits. Travel here ends the follow, and the
   calf waits where it is. It drifts with currents like Ada. One
   hunter pack of 3 to 4 fighters waits at the midpoint of the straight line,
   placed again whenever the calf resets. The calf takes no damage, and drones ignore
@@ -261,6 +261,10 @@ Activity lines:
 | `contractObjective` | Deposit resources at the hub: {have} of 30. |
 | `calfFind`          | Find the whale calf.                        |
 | `calfGuide`         | Guide the calf home.                        |
+
+In sentences, a station destination reads in lower case: "Carry fresh food to
+the station." The same holds for delivery job titles. Other destinations keep
+their Map names.
 
 ## Achievements
 
