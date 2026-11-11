@@ -38,29 +38,39 @@ describe("joystick chrome", () => {
 
   it("draws a hollow ring with an ink edge and a cream band", () => {
     const layers = touchChromeLayers(TOUCH_CHROME_COLOURS, "aim", "rest");
-    expect(touchChromePixel(layers, { x: 37.5, y: 37.5 })).toEqual([0, 0, 0, 0]);
-    expect(touchChromePixel(layers, { x: 37.5, y: 37.5 - 34 })).toEqual([234, 212, 170, 255]);
-    expect(touchChromePixel(layers, { x: 37.5, y: 37.5 - 36 })).toEqual([24, 20, 37, 255]);
-    expect(touchChromePixel(layers, { x: 37.5, y: 0.2 })[3]).toBe(0);
+    expect(touchChromePixel(4, layers, { x: 37.5, y: 37.5 })).toEqual([0, 0, 0, 0]);
+    expect(touchChromePixel(4, layers, { x: 37.5, y: 37.5 - 34 })).toEqual([234, 212, 170, 255]);
+    expect(touchChromePixel(4, layers, { x: 37.5, y: 37.5 - 36 })).toEqual([24, 20, 37, 255]);
+    expect(touchChromePixel(4, layers, { x: 37.5, y: 0.2 })[3]).toBe(0);
   });
 
   it("lights only the move ring's chevron for the way it is pushed", () => {
     const left = { x: 13.5, y: 37.5 };
     const right = { x: 75 - 13.5, y: 37.5 };
     const pushed = touchChromeLayers(TOUCH_CHROME_COLOURS, "move", "held-left");
-    expect(touchChromePixel(pushed, left)).toEqual([255, 255, 255, 255]);
-    expect(touchChromePixel(pushed, right)).toEqual([234, 212, 170, 255]);
+    expect(touchChromePixel(4, pushed, left)).toEqual([255, 255, 255, 255]);
+    expect(touchChromePixel(4, pushed, right)).toEqual([234, 212, 170, 255]);
     const aim = touchChromeLayers(TOUCH_CHROME_COLOURS, "aim", "rest");
-    expect(touchChromePixel(aim, left)).toEqual([0, 0, 0, 0]);
+    expect(touchChromePixel(4, aim, left)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("antialiases each edge over one texel at the raster scale it paints at", () => {
+    const knob = touchChromeLayers(TOUCH_CHROME_COLOURS, "knob", "rest");
+    // The knob's outer ink disc has radius 5.5 about its centre: 0.25 px beyond it is half a
+    // texel's coverage band at 1 texel per px, and past the band at 2 or more.
+    const beyond = { x: 5.5, y: 5.5 - 5.75 };
+    expect(touchChromePixel(1, knob, beyond)[3]).toBeCloseTo(255 * 0.25, 0);
+    expect(touchChromePixel(2, knob, beyond)[3]).toBe(0);
+    expect(touchChromePixel(2.1667, knob, beyond)[3]).toBe(0);
   });
 
   it("lights the knob while held", () => {
     const centre = { x: 5.5, y: 5.5 };
     expect(
-      touchChromePixel(touchChromeLayers(TOUCH_CHROME_COLOURS, "knob", "rest"), centre),
+      touchChromePixel(4, touchChromeLayers(TOUCH_CHROME_COLOURS, "knob", "rest"), centre),
     ).toEqual([234, 212, 170, 255]);
     expect(
-      touchChromePixel(touchChromeLayers(TOUCH_CHROME_COLOURS, "knob", "held"), centre),
+      touchChromePixel(4, touchChromeLayers(TOUCH_CHROME_COLOURS, "knob", "held"), centre),
     ).toEqual([255, 255, 255, 255]);
   });
 });

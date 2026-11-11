@@ -9,9 +9,11 @@ import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/play-camera.ts";
+import { RASTER_SCALE_EVENT } from "../game/svg-rasters.ts";
 import {
   createSpeedLine,
   createTouchChrome,
+  rasterTouchChrome,
   showSpeedLine,
   showTouchChrome,
 } from "../game/touch-chrome.ts";
@@ -66,6 +68,9 @@ export interface ControlsOptions {
     readonly onReturnToEarth: () => void;
     readonly onTravel: (destination: string) => void;
   };
+  // The scene's SVG raster scale when the controls are made; the scene emits
+  // RASTER_SCALE_EVENT with each new one, and the touch chrome paints again at it.
+  readonly rasterScale: number;
   // Settings or the cheats card opening or closing over the start screen.
   readonly onStartCover?: (what: StartCover, covering: boolean) => void;
   readonly update?: {
@@ -263,9 +268,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       )
     : undefined;
   const stick = (kind: "aim" | "move") => ({
-    knob: createTouchChrome(scene, "knob")?.setDepth(STICK_DEPTHS.knob),
-    line: createSpeedLine(scene).setDepth(STICK_DEPTHS.line),
-    ring: createTouchChrome(scene, kind)?.setDepth(STICK_DEPTHS.ring),
+    knob: createTouchChrome(scene, options.rasterScale, "knob")?.setDepth(STICK_DEPTHS.knob),
+    line: createSpeedLine(scene, options.rasterScale).setDepth(STICK_DEPTHS.line),
+    ring: createTouchChrome(scene, options.rasterScale, kind)?.setDepth(STICK_DEPTHS.ring),
   });
   const sticks = { aim: stick("aim"), move: stick("move") };
   const stickParts = [sticks.move, sticks.aim]
@@ -307,6 +312,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   scene.events.on("prerender", fitControls);
   fitControls();
+  const raster = (scale: number): void => rasterTouchChrome(scene, scale);
+  scene.events.on(RASTER_SCALE_EVENT, raster);
   const point = (event: PagePointerEvent) => {
     fitControls();
     return pageToGame(
@@ -469,6 +476,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pause.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
+      scene.events.off(RASTER_SCALE_EVENT, raster);
       view.dispose();
       scene.cameras.remove(camera);
       for (const part of stickParts) {

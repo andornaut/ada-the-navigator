@@ -1,5 +1,10 @@
 import type { Point, Rect } from "@andornaut/game-kit/rect";
-import { type RenderFit, renderFit } from "@andornaut/game-kit/view/renderScale";
+import {
+  MAX_RENDER_SCALE,
+  type RenderFit,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/view/renderScale";
 import type Phaser from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
@@ -18,6 +23,18 @@ export function sceneFit(scene: Pick<Phaser.Scene, "scale">): RenderFit {
   return renderFit(SCREEN, 1 / zoom, {
     height: gameSize.height * zoom,
     width: gameSize.width * zoom,
+  });
+}
+
+// The fit a canvas filling parent gets at devicePixelRatio once followFrameTurn sizes it, from
+// the parent's layout size, as followFrameTurn measures it.
+export function parentFit(
+  devicePixelRatio: number,
+  parent: Pick<HTMLElement, "offsetHeight" | "offsetWidth">,
+): RenderFit {
+  return renderFit(SCREEN, renderScale(MAX_RENDER_SCALE, devicePixelRatio), {
+    height: parent.offsetHeight,
+    width: parent.offsetWidth,
   });
 }
 

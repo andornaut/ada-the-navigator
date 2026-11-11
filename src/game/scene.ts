@@ -1,5 +1,5 @@
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
-import { densityTexels, MAX_RENDER_SCALE, renderScale } from "@andornaut/game-kit/view/renderScale";
+import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import Phaser from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
@@ -146,7 +146,14 @@ import {
   thresholdSilhouette,
 } from "./light-field.ts";
 import { readSave, writeSave } from "./persistence.ts";
-import { canvasSize, fitPlayCamera, sceneFit, shakeIntensity, viewShift } from "./play-camera.ts";
+import {
+  canvasSize,
+  fitPlayCamera,
+  parentFit,
+  sceneFit,
+  shakeIntensity,
+  viewShift,
+} from "./play-camera.ts";
 import {
   boundsOnScreen,
   type OutpostPart,
@@ -170,6 +177,7 @@ import {
 } from "./ship-art.ts";
 import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
+import { Silhouettes } from "./silhouettes.ts";
 import {
   FALLBACK_SPACE_PALETTE,
   galaxyPalettes,
@@ -204,6 +212,7 @@ import {
   stationFrame,
   stationFrameIndex,
 } from "./station-art.ts";
+import { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg-rasters.ts";
 import { fileFilter, type TextureFilter, vectorRaster } from "./textures.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
 import {
@@ -323,6 +332,9 @@ export class PrototypeScene extends Phaser.Scene {
   private keyed: { depth: number | undefined; key: string; sprite: Phaser.GameObjects.Image }[] =
     [];
   private keylines = new Map<string, Phaser.GameObjects.Image[]>();
+  private silhouettes = new Silhouettes();
+  // Every SVG's raster scale (svg-rasters.ts), from the canvas's fit when preload starts.
+  private rasters!: SvgRasters;
   private jetKeyline!: Phaser.GameObjects.Graphics;
   private indicatorInk!: Phaser.GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
@@ -444,11 +456,20 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Each texture file samples by its kind (textures.ts) once it loads.
+    // Preload runs before followFrameTurn sizes the canvas, so the raster scale starts from the
+    // fit the canvas's parent will give.
+    const parent = this.game.canvas.parentElement;
+    this.rasters = new SvgRasters(parent ? parentFit(window.devicePixelRatio, parent).zoom : 1);
+    // Each texture file samples by its kind (textures.ts) once it loads; an SVG asked for at a
+    // raster scale since replaced rasterises again.
     this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string, type: string) => {
       const filter = fileFilter(type);
       if (filter && this.textures.exists(key)) {
         this.filterTexture(key, filter);
+      }
+      const stale = type === "svg" ? this.rasters.loaded(key) : undefined;
+      if (stale) {
+        this.rasterAgain([stale]);
       }
     });
     this.load.once("filecomplete-json-art-manifest", () => {
@@ -509,7 +530,11 @@ export class PrototypeScene extends Phaser.Scene {
       if (!data) {
         return;
       }
-      this.load.svg("destruction-flash", data.flash.path, { scale: this.renderScale() });
+      this.queueSvg({
+        key: "destruction-flash",
+        path: data.flash.path,
+        size: (scale) => ({ scale }),
+      });
       for (const archetype of Object.keys(data.archetypes)) {
         this.load.json(`shards-${archetype}`, `/art/enemies/${archetype}-shards.json`);
       }
@@ -520,11 +545,11 @@ export class PrototypeScene extends Phaser.Scene {
     // Weapon pickups draw their HUD glyphs rasterised at the pickup size.
     const glyph = { displayHeight: PICKUP_GLYPH.size, displayWidth: PICKUP_GLYPH.size };
     for (const weapon of PICKUP_GLYPH.weapons) {
-      this.load.svg(
-        pickupGlyphKey(weapon),
-        weaponGlyphPath(weapon),
-        vectorRaster(this.renderScale(), glyph),
-      );
+      this.queueSvg({
+        key: pickupGlyphKey(weapon),
+        path: weaponGlyphPath(weapon),
+        size: (scale) => vectorRaster(scale, glyph),
+      });
     }
     preloadTouchChrome(this);
   }
@@ -555,6 +580,20 @@ export class PrototypeScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(background);
     this.spaceBackground = background;
     fitPlayCamera(this);
+    // SVGs, and the touch chrome on RASTER_SCALE_EVENT, rasterise again once a resize moves the
+    // camera's zoom far enough (svg-rasters.ts).
+    const followZoom = (): void => {
+      const before = this.rasters.scale;
+      this.rasterAgain(this.rasters.resize(sceneFit(this).zoom));
+      if (this.rasters.scale !== before) {
+        this.events.emit(RASTER_SCALE_EVENT, this.rasters.scale);
+      }
+    };
+    followZoom();
+    this.scale.on(Phaser.Scale.Events.RESIZE, followZoom);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.scale.off(Phaser.Scale.Events.RESIZE, followZoom),
+    );
     this.ink = this.add.graphics();
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
@@ -764,6 +803,7 @@ export class PrototypeScene extends Phaser.Scene {
           }
         },
       },
+      rasterScale: this.rasters.scale,
       shieldLabel: PROTOTYPE.labels.shield ?? "",
       update: {
         labels: {
@@ -1231,10 +1271,9 @@ export class PrototypeScene extends Phaser.Scene {
     }
     if (!this.rockRequests.has(file) && this.asteroidArt) {
       this.rockRequests.add(file);
-      this.load.svg(file, file, {
-        scale:
-          this.renderScale() * (this.resourceFiles.has(file) ? 1 : this.asteroidArt.displayScale),
-      });
+      // Resource rocks are drawn at their own size; backdrop rocks at the art's display scale.
+      const factor = this.resourceFiles.has(file) ? 1 : this.asteroidArt.displayScale;
+      this.queueSvg({ key: file, path: file, size: (scale) => ({ scale: scale * factor }) });
       this.rockQueued = true;
     }
     return false;
@@ -1607,9 +1646,55 @@ export class PrototypeScene extends Phaser.Scene {
     };
   }
 
-  /** The canvas's device pixels per CSS pixel, r: min(devicePixelRatio, 2). */
-  private renderScale(): number {
-    return renderScale(MAX_RENDER_SCALE, window.devicePixelRatio);
+  /** Queues an SVG at the current raster scale (svg-rasters.ts). */
+  private queueSvg(request: SvgRequest): void {
+    this.load.svg(request.key, request.path, this.rasters.request(request));
+  }
+
+  /**
+   * Rasterises loaded SVGs again at the current raster scale: each loads under a scale-suffixed
+   * key, then replaces its texture's image in place, and every image drawing it keeps its display
+   * size and origin. A raster for a scale replaced meanwhile is dropped.
+   */
+  private rasterAgain(requests: readonly SvgRequest[]): void {
+    if (requests.length === 0) {
+      return;
+    }
+    const scale = this.rasters.scale;
+    for (const request of requests) {
+      const raster = `${request.key}@${scale}`;
+      if (this.textures.exists(raster)) {
+        continue;
+      }
+      this.load.once(`filecomplete-svg-${raster}`, () => {
+        if (scale === this.rasters.scale && this.textures.exists(request.key)) {
+          this.replaceImage(request.key, raster);
+        }
+        this.textures.remove(raster);
+      });
+      this.load.svg(raster, request.path, request.size(scale));
+    }
+    this.load.start();
+  }
+
+  /** Puts the image of texture from into texture key, keeping every user's display size. */
+  private replaceImage(key: string, from: string): void {
+    const texture = this.textures.get(key);
+    const users = this.children.list.filter(
+      (child): child is Phaser.GameObjects.Image =>
+        child instanceof Phaser.GameObjects.Image && child.texture === texture,
+    );
+    const sizes = users.map((user) => [user.displayWidth, user.displayHeight] as const);
+    const source = texture.source[0]!;
+    source.updateSource(this.textures.get(from).getSourceImage() as HTMLImageElement);
+    texture.get("__BASE").setSize(source.width, source.height);
+    users.forEach((user, index) => {
+      const [width, height] = sizes[index]!;
+      user
+        .setFrame(user.frame.name)
+        .setOrigin(user.originX, user.originY)
+        .setDisplaySize(width, height);
+    });
   }
 
   /** Sets a texture's filter on every source it draws from. */
@@ -1618,19 +1703,19 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Queues a manifest SVG at its display size times r (vectorRaster), or at its own size times r
-   * when it declares none.
+   * Queues a manifest SVG at its display size times the raster scale (vectorRaster), or at its
+   * own size times it when it declares none.
    */
   private loadSvg(asset: Asset): void {
-    const r = this.renderScale();
     const { displayHeight, displayWidth } = asset;
-    this.load.svg(
-      asset.id,
-      asset.path,
-      displayHeight !== undefined && displayWidth !== undefined
-        ? vectorRaster(r, { displayHeight, displayWidth })
-        : { scale: r },
-    );
+    this.queueSvg({
+      key: asset.id,
+      path: asset.path,
+      size: (scale) =>
+        displayHeight !== undefined && displayWidth !== undefined
+          ? vectorRaster(scale, { displayHeight, displayWidth })
+          : { scale },
+    });
   }
 
   /**
@@ -1978,6 +2063,14 @@ export class PrototypeScene extends Phaser.Scene {
         this.keylines.delete(key);
       }
     }
+    // Every copy now draws its frame's current silhouette; replaced ones nothing draws go.
+    this.silhouettes.sweep(
+      (key) =>
+        this.children.list.some(
+          (child) => child instanceof Phaser.GameObjects.Image && child.texture.key === key,
+        ),
+      (key) => this.textures.remove(key),
+    );
   }
 
   /**
@@ -1986,7 +2079,11 @@ export class PrototypeScene extends Phaser.Scene {
    */
   private keylineSilhouette(sprite: { frame: Phaser.Textures.Frame }): string | undefined {
     const frame = sprite.frame;
-    const key = `keyline:${frame.texture.key}#${String(frame.name)}`;
+    // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette and
+    // the old one is swept once nothing draws it (silhouettes.ts).
+    const traced = `${frame.texture.key}#${String(frame.name)}`;
+    const key = `keyline:${traced}@${frame.cutWidth}`;
+    this.silhouettes.use(traced, key);
     if (this.textures.exists(key)) {
       return key;
     }
@@ -2780,7 +2877,7 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * The after state drawn into one texture at r texels per logical px, its keyline beneath its
+   * The after state drawn into one texture at the raster scale, its keyline beneath its
    * sprites, then shown over the before state at the reveal's alpha, so the group fades as one.
    */
   private drawRevealGroup(
@@ -2795,7 +2892,7 @@ export class PrototypeScene extends Phaser.Scene {
     const top = Math.floor(point.y + bounds.top - grow - 1);
     const width = Math.ceil(point.x + bounds.right + grow + 1) - left;
     const height = Math.ceil(point.y + bounds.bottom + grow + 1) - top;
-    const r = this.renderScale();
+    const r = this.rasters.scale;
     const texels = { height: densityTexels(r, height), width: densityTexels(r, width) };
     let group = this.revealGroups.get(id);
     if (!group || group.width !== texels.width || group.height !== texels.height) {

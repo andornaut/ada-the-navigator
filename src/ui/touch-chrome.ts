@@ -1,7 +1,7 @@
 // The on-screen joysticks' drawing, after Chibi's touch chrome: a hollow ring in a 75 pixel frame
 // (an ink ring 5 wide round a cream ring 3 wide) and an 11 pixel knob (a cream disc on an ink
-// disc 1 wider). Lit parts turn white. Frames are rendered TOUCH_CHROME_SCALE times larger with
-// antialiased edges and shown TOUCH_CHROME_ALPHA opaque.
+// disc 1 wider). Lit parts turn white. Frames are vector art, painted at the scene's SVG raster
+// scale (texels per logical px) with antialiased edges and shown TOUCH_CHROME_ALPHA opaque.
 
 export interface Point {
   readonly x: number;
@@ -30,7 +30,6 @@ export const TOUCH_CHROME_COLOURS: TouchChromeColours = {
   white: 0xffffff,
 };
 
-export const TOUCH_CHROME_SCALE = 4;
 export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
 export const TOUCH_CHROME_ALPHA = 0.85;
@@ -161,13 +160,14 @@ function segmentDistance(point: Point, from: Point, to: Point): number {
   return Math.hypot(point.x - from.x - t * dx, point.y - from.y - t * dy);
 }
 
-// Coverage changes only within one high-resolution texel of each geometric boundary.
-function coverage(distance: number): number {
-  return clamp01(0.5 - distance * TOUCH_CHROME_SCALE);
+// Coverage changes only within one texel of each geometric boundary, at texels per frame pixel.
+function coverage(texels: number, distance: number): number {
+  return clamp01(0.5 - distance * texels);
 }
 
-// The straight RGBA of the layers at a point in frame pixels.
+// The straight RGBA of the layers at a point in frame pixels, painted at texels per frame pixel.
 export function touchChromePixel(
+  texels: number,
   layers: readonly TouchChromeLayer[],
   point: Point,
 ): readonly [number, number, number, number] {
@@ -185,13 +185,13 @@ export function touchChromePixel(
           segmentDistance(point, layer.path[index - 1]!, layer.path[index]!),
         );
       }
-      amount = coverage(distance - layer.width / 2);
+      amount = coverage(texels, distance - layer.width / 2);
     } else {
       const distance = Math.hypot(point.x - layer.centre.x, point.y - layer.centre.y);
       amount =
         layer.kind === "disc"
-          ? coverage(distance - layer.radius)
-          : coverage(distance - layer.outer) - coverage(distance - layer.inner);
+          ? coverage(texels, distance - layer.radius)
+          : coverage(texels, distance - layer.outer) - coverage(texels, distance - layer.inner);
     }
     const remaining = 1 - amount;
     red = ((layer.colour >> 16) & 255) * amount + red * remaining;

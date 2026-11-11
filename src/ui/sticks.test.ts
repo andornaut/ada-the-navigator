@@ -260,11 +260,11 @@ describe("speed line", () => {
     const cream = [234, 212, 170, 255];
     const ink = [24, 20, 37, 255];
     const mid = { x: SPEED_LINE_CAPSULE.width / 2, y: SPEED_LINE_CAP };
-    expect(touchChromePixel(layers, mid)).toEqual(cream);
-    expect(touchChromePixel(layers, { x: mid.x, y: mid.y + 1.5 })).toEqual(ink);
-    expect(touchChromePixel(layers, { x: mid.x, y: mid.y - 1.5 })).toEqual(ink);
+    expect(touchChromePixel(4, layers, mid)).toEqual(cream);
+    expect(touchChromePixel(4, layers, { x: mid.x, y: mid.y + 1.5 })).toEqual(ink);
+    expect(touchChromePixel(4, layers, { x: mid.x, y: mid.y - 1.5 })).toEqual(ink);
     // The capsule's corners lie outside the round caps.
-    expect(touchChromePixel(layers, { x: 0.25, y: 0.25 })[3]).toBe(0);
+    expect(touchChromePixel(4, layers, { x: 0.25, y: 0.25 })[3]).toBe(0);
     expect(SPEED_LINE_CAPSULE).toEqual({ height: 4, width: 6 });
   });
 });
