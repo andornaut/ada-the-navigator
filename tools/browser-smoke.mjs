@@ -901,20 +901,34 @@ try {
       await page.keyboard.up("ArrowRight");
     }
   }
-  const missiles = await heldVolley("missiles", "missile", 2);
-  const missileShots = missiles.flight.shots.filter(
-    (shot) => !shot.enemy && shot.projectile === "missile",
-  );
+  const missiles = await heldVolley("missiles", "missile", 3);
+  // Remaining life counts down, so ascending life is firing order (oldest first).
+  const missileShots = missiles.flight.shots
+    .filter((shot) => !shot.enemy && shot.projectile === "missile")
+    .sort((a, b) => a.life - b.life);
   assert.ok(
-    new Set(missileShots.map((shot) => shot.id)).size >= 2,
+    new Set(missileShots.map((shot) => shot.id)).size >= 3,
     "One held aim input must emit multiple automatic missiles",
   );
-  const heading = Math.atan2(missileShots[0].velocity.y, missileShots[0].velocity.x);
-  for (const shot of missileShots) {
+  // Shots follow the damped aim facing: the immediate first shot may leave mid-turn, and once
+  // the facing settles on the held screen-right aim (world angle -45 degrees) every later
+  // missile shares that straight heading.
+  const headingOf = (shot) => Math.atan2(shot.velocity.y, shot.velocity.x);
+  const settledAim = -Math.PI / 4;
+  const firstSettled = missileShots.findIndex(
+    (shot) => Math.abs(headingOf(shot) - settledAim) < 0.000001,
+  );
+  assert.ok(
+    firstSettled >= 0 && missileShots.length - firstSettled >= 2,
+    "Held-direction missiles must share the settled aim heading",
+  );
+  for (const shot of missileShots.slice(firstSettled)) {
     assert.ok(
-      Math.abs(Math.atan2(shot.velocity.y, shot.velocity.x) - heading) < 0.000001,
-      "Held-direction missiles must retain a straight shared heading",
+      Math.abs(headingOf(shot) - settledAim) < 0.000001,
+      "Held-direction missiles must retain a straight shared heading once aim settles",
     );
+  }
+  for (const shot of missileShots) {
     assert.ok(shot.damage > PROTOTYPE.tuning.flight.playerShotDamage);
   }
   const triple = await heldVolley("tripleLaser", "bolt", 3);
