@@ -16,6 +16,7 @@ import {
   teleport,
 } from "./flight.ts";
 import type { FlightInput, FlightState, SectorProgress, Vec } from "./types.ts";
+import { noLevels } from "./upgrades.ts";
 
 const progress: SectorProgress = {
   deposited: 0,
@@ -577,15 +578,28 @@ describe("ship speed fraction", () => {
     [{ x: -200, y: 0 }, 1],
     [{ x: 300, y: 400 }, 1],
   ])("reports %j as %s of maxSpeed", (velocity, expected) => {
-    expect(shipSpeedFraction(PROTOTYPE.tuning, { velocity })).toBeCloseTo(expected, 12);
+    expect(shipSpeedFraction(PROTOTYPE, { velocity })).toBeCloseTo(expected, 12);
   });
 
   it("is zero for a non-positive maxSpeed", () => {
     expect(
       shipSpeedFraction(
-        { maxSpeed: 0, physics: PROTOTYPE.tuning.physics },
+        { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, maxSpeed: 0 } },
         { velocity: { x: 1, y: 0 } },
       ),
     ).toBe(0);
+  });
+
+  it("scales jets by Ada's tuned top speed so they do not saturate after engine tuning", () => {
+    const levels = { ...noLevels(), engine: 3 };
+    // Engine level 3 raises the top speed from 200 to 230.
+    expect(shipSpeedFraction(PROTOTYPE, { levels, velocity: { x: 200, y: 0 } })).toBeCloseTo(
+      200 / 230,
+      12,
+    );
+    expect(shipSpeedFraction(PROTOTYPE, { levels, velocity: { x: 230, y: 0 } })).toBeCloseTo(1, 12);
+    expect(shipSpeedFraction(PROTOTYPE, { levels: noLevels(), velocity: { x: 200, y: 0 } })).toBe(
+      1,
+    );
   });
 });

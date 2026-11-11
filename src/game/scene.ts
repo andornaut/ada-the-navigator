@@ -9,7 +9,7 @@ import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
-import { shipSpeedFraction } from "../model/flight.ts";
+import { shipSpeedFraction, stationDock } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
@@ -567,7 +567,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
-    const speed = thrusting ? shipSpeedFraction(PROTOTYPE.tuning, flight) : 0;
+    const speed = thrusting ? shipSpeedFraction(PROTOTYPE, flight) : 0;
     const ship = selectShipAsset(this.shipAssets, !this.shipJets && speed > 0, flight.facing);
     this.ship.setTexture(ship?.id ?? "ship");
     this.ship.setDisplaySize(ship?.displayWidth ?? 42, ship?.displayHeight ?? 42);
@@ -931,9 +931,35 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
     this.ink.strokeEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
     this.ink.strokeEllipse(point.x, point.y, radius * 1.2, radius * 0.6);
+    const dockAt = this.project(stationDock(object));
     this.ink.lineStyle(1.5, this.palette.active, 0.8);
-    this.ink.strokeEllipse(point.x, point.y, dock * 2, dock);
+    this.ink.strokeEllipse(dockAt.x, dockAt.y, dock * 2, dock);
     this.drawDestinationLabel(object, point, radius);
+  }
+
+  /**
+   * PLACEHOLDER (Art): a glinting Stardust pickup drawn as a small four-point star. Each
+   * pickup's glint starts at a phase taken from its id, as the sprite's loop will.
+   */
+  private drawStardust(object: SpaceObject, point: Vec, radius: number): void {
+    const phase = sceneryDetail(object.id).outline[0]?.x ?? 0;
+    const glint = 0.6 + 0.4 * Math.sin(this.time.now / 140 + phase * Math.PI * 2);
+    this.ink.fillStyle(this.palette.active, glint);
+    for (const [dx, dy] of [
+      [0, -1],
+      [0, 1],
+      [-1, 0],
+      [1, 0],
+    ] as const) {
+      this.ink.fillTriangle(
+        point.x + dx * radius,
+        point.y + dy * radius,
+        point.x - 2 * Math.abs(dy),
+        point.y - 2 * Math.abs(dx),
+        point.x + 2 * Math.abs(dy),
+        point.y + 2 * Math.abs(dx),
+      );
+    }
   }
 
   /** PLACEHOLDER (Art): a destroyed ship's break-apart, hull fragments flying outward. */
@@ -1010,41 +1036,7 @@ export class PrototypeScene extends Phaser.Scene {
         break;
       case "pickup":
         if (object.role === "stardust") {
-          // PLACEHOLDER (Art): a glinting Stardust pickup drawn as a small four-point star.
-          const glint = 0.6 + 0.4 * Math.sin(this.time.now / 140 + point.x);
-          this.ink.fillStyle(this.palette.active, glint);
-          this.ink.fillTriangle(
-            point.x,
-            point.y - radius,
-            point.x - 2,
-            point.y,
-            point.x + 2,
-            point.y,
-          );
-          this.ink.fillTriangle(
-            point.x,
-            point.y + radius,
-            point.x - 2,
-            point.y,
-            point.x + 2,
-            point.y,
-          );
-          this.ink.fillTriangle(
-            point.x - radius,
-            point.y,
-            point.x,
-            point.y - 2,
-            point.x,
-            point.y + 2,
-          );
-          this.ink.fillTriangle(
-            point.x + radius,
-            point.y,
-            point.x,
-            point.y - 2,
-            point.x,
-            point.y + 2,
-          );
+          this.drawStardust(object, point, radius);
           break;
         }
         this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);

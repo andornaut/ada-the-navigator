@@ -66,6 +66,8 @@ export interface EconomyCatalog {
     /** Minimum distance between a station and a story destination. */
     destinationClearance: number;
     radius: number;
+    /** World offset of the dock from the station's centre, from the station art's dock point. */
+    dockOffset: { x: number; y: number };
     dockRadius: number;
     safeRadius: number;
   };
@@ -118,6 +120,7 @@ export const ECONOMY: EconomyCatalog = {
     cellSize: 12000,
     chance: 0.5,
     destinationClearance: 1200,
+    dockOffset: { x: 0, y: 0 },
     dockRadius: 48,
     jitter: 4000,
     originClearance: 3000,

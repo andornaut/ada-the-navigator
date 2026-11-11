@@ -664,7 +664,10 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
   flight.player =
     object.kind === "station"
-      ? { x: object.x, y: object.y + ECONOMY.station.dockRadius + 40 }
+      ? (() => {
+          const dock = stationDock(object);
+          return { x: dock.x, y: dock.y + ECONOMY.station.dockRadius + 40 };
+        })()
       : { x: object.x, y: object.y };
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
@@ -735,12 +738,26 @@ export function movementSpeedFraction(
 function adaMaxSpeed(tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">): number {
   return tuning.maxSpeed * tuning.physics.speedRatio;
 }
-/** Current ship speed as a fraction of Ada's maximum speed, clamped to [0, 1], for jets. */
+/**
+ * Current ship speed as a fraction of Ada's tuned maximum speed (base times her engine
+ * tuning), clamped to [0, 1], for jets. Flights without levels use the base speed.
+ */
 export function shipSpeedFraction(
-  tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">,
-  flight: Pick<FlightState, "velocity">,
+  content: PrototypeContent,
+  flight: Pick<FlightState, "velocity"> & Partial<Pick<FlightState, "levels">>,
 ): number {
-  return speedFraction(adaMaxSpeed(tuning), flight.velocity);
+  const physics = shipTuning(ECONOMY, content, flight.levels ?? noLevels()).physics;
+  return speedFraction(
+    adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics }),
+    flight.velocity,
+  );
+}
+/** The point of a station's dock, where flying in docks. */
+export function stationDock(station: Vec): Vec {
+  return {
+    x: station.x + ECONOMY.station.dockOffset.x,
+    y: station.y + ECONOMY.station.dockOffset.y,
+  };
 }
 function move(
   content: PrototypeContent,
@@ -1293,7 +1310,8 @@ export function stepFlight(
   // Flying into a dock docks once; Ada must leave the dock before it docks her again.
   const dock = flight.objects.find(
     (object) =>
-      object.kind === "station" && distance(object, flight.player) <= ECONOMY.station.dockRadius,
+      object.kind === "station" &&
+      distance(stationDock(object), flight.player) <= ECONOMY.station.dockRadius,
   );
   if (!dock) {
     flight.dockId = null;
