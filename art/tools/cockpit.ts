@@ -33,8 +33,11 @@ export const CANVAS = { width: 960, height: 540, density: 2 } as const;
 const SS = 3;
 // Ship heading 24 of 32 (up-right).
 const YAW = 24;
+// The ship's size in the close-up, about the canopy's focus point: the dome spans canvas rows 175
+// to 298, so it fits the strip above the story panel (art/layout.md "Storybook page").
+const SHIP_SCALE = 0.85;
 // Design px per model unit, and the design px where the canopy's focus point (0, -3, 5.5) lands.
-const K = 11;
+const K = 11 * SHIP_SCALE;
 const FOCUS: Xy = [422, 150];
 
 // The Classic paint of the in-game ship (art/tools/ship.ts).
@@ -355,6 +358,8 @@ const mix = (a: string, b: string, t: number): [number, number, number] => {
 // The untreated model over the in-between field, at the view's resolution.
 export function renderModel(view: View): RgbaImage {
   const S = SS * view.scale;
+  // Image px per design px of the ship's lights, glows, lines and blurs, scaled with the ship.
+  const M = S * SHIP_SCALE;
   const width = view.width * SS;
   const height = view.height * SS;
   const lay = blankImage(width, height);
@@ -370,7 +375,7 @@ export function renderModel(view: View): RgbaImage {
       S * (pivot[1] + K * ((x + y) / 2 - z) - view.y0),
     ];
   };
-  const px = (design: number) => Math.max(1, roundHalfEven(S * design));
+  const px = (design: number) => Math.max(1, roundHalfEven(M * design));
   // Visible faces, far to near.
   const visible = <T extends { points: Face }>(faces: readonly T[]) =>
     faces
@@ -463,8 +468,8 @@ export function renderModel(view: View): RgbaImage {
   ];
   for (const [p, c, size] of lights) {
     const [x, y] = proj(p);
-    const r = S * size;
-    glow([x, y], r * 2.4, rgba(c, 70), Math.max(0.5, S * 2));
+    const r = M * size;
+    glow([x, y], r * 2.4, rgba(c, 70), Math.max(0.5, M * 2));
     disc(lay, [x, y], r, rgba(c));
     fillEllipse(lay, [x - r * 0.4, y - r * 0.6, x + r * 0.2, y], rgba("ffffff"));
   }
@@ -494,17 +499,17 @@ export function renderModel(view: View): RgbaImage {
     for (const face of facets) {
       fillPolygon(spot, face.map(proj), rgba(PAINT.canopyHighlight));
     }
-    blur(spot, S * 5, bounds(facets.flat().map(proj), px(16)));
+    blur(spot, M * 5, bounds(facets.flat().map(proj), px(16)));
     clip(spot, mask);
     over(lay, spot);
-    glow(proj(centroid(facets[0]!)), S * 4, rgba("ffffff", 150), S * 2, mask);
+    glow(proj(centroid(facets[0]!)), M * 4, rgba("ffffff", 150), M * 2, mask);
     // A thin rim of light along the upper left edge.
     const arc = Array.from({ length: 21 }, (_, t) =>
       proj(canopyPoint(((140 + t * 5) * Math.PI) / 180, (35 * Math.PI) / 180)),
     );
     const rim = clear(rgba("ffffff"));
     polyline(rim, arc, [255, 255, 255, 90], px(1.6), true);
-    blur(rim, S * 0.8, bounds(arc, px(2)));
+    blur(rim, M * 0.8, bounds(arc, px(2)));
     clip(rim, mask);
     over(lay, rim);
     // The dark blue seam where the canopy meets the hull, on the near arc; the dome hides the
@@ -564,7 +569,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     facing: "front",
     pivot: { x: 0.5, y: 0.5 },
     // The canopy dome: the story page's subject band in canvas logical px (art/layout.md).
-    subject: { top: 165, bottom: 310 },
+    subject: { top: 175, bottom: 298 },
   });
   placeEntries("core", "cockpit", [background("cockpit"), background("cockpit-seated")]);
 }

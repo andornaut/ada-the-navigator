@@ -87,8 +87,9 @@ Full palettes are in the generator. Colours are before treatment d.
   grass; `story-grandma-garden-replanted` (the closing) has every pot upright
   with its seedling, the soil swept up, a trowel on the table and a potting-soil
   sack beside it.
-- `story-ada-room` and `story-grandma-garden` are unchanged; the new
-  backgrounds add their props to the same scenes.
+- The new backgrounds add their props to the scenes of `story-ada-room` and
+  `story-grandma-garden`, which draw without them; the garden's table stands
+  clear of its beds.
 
 The game names each page's location by a background key
 (`Background` in `src/data/storybook.ts`):
@@ -147,19 +148,19 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-park`                     | 220..285 | The dig spot and rock, the bench and the pond          |
 | `story-ada-room-unpolished`      | 255..300 | The rock on the desk                                   |
 | `story-ada-room`                 | 255..300 | The rock on the desk; the glow frames share it         |
-| `story-grandma-garden`           | 195..315 | The raised beds in bloom beside the door               |
+| `story-grandma-garden`           | 199..285 | The raised beds in bloom beside the house              |
 | `story-community-garden`         | 180..290 | The sprouting bed, the empty beds, the shed            |
-| `story-schoolyard`               | 160..300 | The school's door and the play structure               |
-| `story-school-hallway`           | 145..290 | The notice board and the two doors                     |
-| `story-front-door`               | 160..295 | The coats and Penny's lead over the shoe rack          |
+| `story-schoolyard`               | 168..278 | The play structure beside the school's door            |
+| `story-school-hallway`           | 184..290 | The notice board beside the near door                  |
+| `story-front-door`               | 175..280 | The coats and Penny's lead on their hooks by the door  |
 | `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
 | `story-ada-room-morning`         | 245..350 | Ada stretching on the bed, the rock on the desk        |
-| `cockpit`                        | 165..310 | The canopy dome                                        |
-| `cockpit-seated`                 | 165..310 | The canopy dome                                        |
+| `cockpit`                        | 175..298 | The canopy dome                                        |
+| `cockpit-seated`                 | 175..298 | The canopy dome                                        |
 | `story-ada-room-recorder`        | 255..300 | The rock and the recorder on the desk                  |
 | `story-concert-hall`             | 195..300 | The stage, the piano and Ada in the spotlight          |
-| `story-grandma-garden-spilled`   | 195..315 | The house's door, the tray and the beds                |
-| `story-grandma-garden-replanted` | 195..315 | The house's door, the tray and the beds                |
+| `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
+| `story-grandma-garden-replanted` | 176..285 | The seedling tray on the potting table and the beds    |
 
 Placement per scene and background: canvas top `y`, then the band's view rows
 and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390 with

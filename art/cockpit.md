@@ -15,8 +15,11 @@ selection card.
   ([projection.ts](tools/projection.ts)) at ship heading 24 of 32,
   flat-shaded polygons lit from the upper left. The rear
   points toward the viewer, so the tail faces draw after the canopy.
-- 11 design px per model unit. The canopy focus, model point (0, -3, 5.5),
-  lands 150 design px from the top of the design frame, centred horizontally.
+- 9.35 design px per model unit: the ship at 0.85 of the close-up's 11, about
+  the canopy focus, so the dome spans canvas rows 175 to 298 and fits the strip
+  above the story panel. The lights, lines, glows and blurs scale with it. The
+  canopy focus, model point (0, -3, 5.5), lands 150 design px from the top of
+  the design frame, centred horizontally.
 - Design px: the 844 by 390 design frame is the 779 by 360 logical view of an
   844 by 390 phone (13 design px per 12 logical px).
 

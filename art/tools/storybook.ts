@@ -251,8 +251,8 @@ function pottingTable(s: Scene, P: Palette, state: TrayState) {
   }
 }
 
-// The house sits at the left corner and the beds at the right, along one screen-horizontal
-// band, so both stay above the story panel.
+// The house sits at the left corner and the beds beside it toward the right, so the beds' rows
+// (the scene's subject) fit the strip above the story panel.
 function garden(P: Palette, tray?: TrayState): Scene {
   const n = 24;
   const s = island();
@@ -283,12 +283,12 @@ function garden(P: Palette, tray?: TrayState): Scene {
   }
   s.solid(box(0.25, 0.42, 6, 12.6, 0.7, 0.95), P.fence!, 2, 6.2);
   s.solid(box(0.25, 0.42, 6, 12.6, 1.45, 1.7), P.fence!, 2, 6.3);
-  for (const y0 of [2.4, 5.8]) {
-    s.solid(box(12.5, 21.5, y0, y0 + 2.2, 0, 0.8), P.bed!, 2, 12.5 + y0, [
-      [onZ(0.801, 12.75, 21.25, y0 + 0.25, y0 + 1.95), P.soil!],
+  for (const y0 of [3.6, 6.6]) {
+    s.solid(box(11.3, 16.1, y0, y0 + 2.2, 0, 0.8), P.bed!, 2, 11.3 + y0, [
+      [onZ(0.801, 11.55, 15.85, y0 + 0.25, y0 + 1.95), P.soil!],
     ]);
-    for (let i = 0; i < 6; i++) {
-      const x = 13.4 + i * 1.6;
+    for (let i = 0; i < 4; i++) {
+      const x = 12.2 + i * 1.2;
       const key = x + y0 + 1.5;
       s.solid(frustum(x, y0 + 1.1, 0.55, 0.35, 6, 0.8, 1.9), P.plant!, 2, key);
       s.solid(prism(x, y0 + 1.1, 0.28, 6, 1.9, 2.15), P[`bloom${(i % 3) + 1}`]!, 2, key + 0.1);
@@ -297,7 +297,7 @@ function garden(P: Palette, tray?: TrayState): Scene {
   s.solid(box(5.0, 5.7, 5.0, 5.7, 0, 3.2), P.trunk!, 2, 8);
   s.solid(frustum(5.35, 5.35, 2.2, 2.4, 8, 2.8, 4.6, 0.39), P.crown!, 2, 8.2);
   s.solid(frustum(5.35, 5.35, 2.4, 1.2, 8, 4.6, 6.0, 0.39), P.crown!, 2, 8.3);
-  s.solid(box(11.2, 12.0, 6.0, 6.7, 0, 0.8), P.can!, 2, 18);
+  s.solid(box(10.3, 11.1, 6.0, 6.7, 0, 0.8), P.can!, 2, 17);
   if (tray) pottingTable(s, P, tray);
   return s;
 }
@@ -920,16 +920,17 @@ function hallway(P: Palette): Scene {
   ]);
   const left: Decal[] = [
     [onX(0.001, 0, ny, 0, 1.6), P.wains!],
-    [onX(0.002, 1.2, 6.6, 2.4, 5.8), P.board!],
-    [onX(0.003, 1.4, 6.4, 2.6, 5.6), P.cork!],
+    // The notice board beside the near door, its rows 184..290 above the story panel.
+    [onX(0.002, 4.4, 8.0, 3.2, 5.8), P.board!],
+    [onX(0.003, 4.6, 7.8, 3.4, 5.6), P.cork!],
   ];
   for (const [y0, z0, c] of [
-    [1.8, 4.0, "paper1"],
-    [2.9, 3.0, "paper3"],
-    [4.0, 4.2, "paper2"],
-    [5.1, 3.2, "paper4"],
+    [4.8, 4.4, "paper1"],
+    [5.55, 3.7, "paper3"],
+    [6.3, 4.5, "paper2"],
+    [7.05, 3.8, "paper4"],
   ] as const) {
-    left.push([onX(0.004, y0, y0 + 0.9, z0, z0 + 1.2), P[c]!]);
+    left.push([onX(0.004, y0, y0 + 0.6, z0, z0 + 1.0), P[c]!]);
   }
   left.push(
     [onX(0.002, 8.4, 11.6, 0, 5.4), P.frame!],
@@ -998,27 +999,32 @@ function schoolyard(P: Palette): Scene {
   for (let z = 1; z < 5; z++) deco.push([onY(23.001, 0.5, 6.5, z - 0.04, z), P.mortar!]);
   s.solid(box(0.5, 6.5, 6.0, 23.0, 0, 4.8), P.brick!, 2, 12, deco);
   s.solid(box(0.3, 6.7, 5.8, 23.2, 4.8, 5.2), P.roof!, 2, 12.1);
-  // Play structure: posts, deck, roof, slide and climbing bars.
+  // Play structure beside the school's door: posts, deck, roof, climbing bars, and the slide
+  // toward the back of the lot, so the whole structure fits rows 170..276.
+  const [px0, py0] = [8.5, 9.0];
   for (const [cx, cy] of [
-    [13, 5],
-    [15.8, 5],
-    [13, 7.8],
-    [15.8, 7.8],
+    [px0, py0],
+    [px0 + 2.8, py0],
+    [px0, py0 + 2.8],
+    [px0 + 2.8, py0 + 2.8],
   ] as const) {
-    s.solid(box(cx, cx + 0.25, cy, cy + 0.25, 0, 4.8), P.post!, 2, cx + cy);
+    s.solid(box(cx, cx + 0.25, cy, cy + 0.25, 0, 4.4), P.post!, 2, cx + cy);
   }
-  s.solid(box(12.9, 16.2, 4.9, 8.2, 2.6, 2.95), P.deck!, 2, 21.0);
-  s.solid(gable(12.7, 16.4, 4.7, 8.4, 4.8, 6.0), P.bars!, 2, 21.5);
+  s.solid(box(px0 - 0.1, px0 + 3.2, py0 - 0.1, py0 + 3.2, 2.6, 2.95), P.deck!, 2, px0 + py0 + 3);
+  s.solid(gable(px0 - 0.3, px0 + 3.4, py0 - 0.3, py0 + 3.4, 4.4, 5.6), P.bars!, 2, px0 + py0 + 3.5);
   const ramp: Face = [
-    [16.2, 5.8, 2.95],
-    [20.2, 5.8, 0.2],
-    [20.2, 7.2, 0.2],
-    [16.2, 7.2, 2.95],
+    [px0 + 0.8, py0 - 0.1, 2.95],
+    [px0 + 0.8, py0 - 4.1, 0.2],
+    [px0 + 2.2, py0 - 4.1, 0.2],
+    [px0 + 2.2, py0 - 0.1, 2.95],
   ];
-  s.solid(slab(ramp, 0.25), P.slide!, 2, 24);
-  for (const z of [0.8, 1.6, 2.4])
-    s.solid(box(13.0, 16.0, 8.2, 8.35, z, z + 0.14), P.bars!, 2, 21.2);
-  for (const cx of [13.0, 16.0]) s.solid(box(cx, cx + 0.14, 8.2, 8.35, 0, 2.6), P.bars!, 2, 21.3);
+  s.solid(slab(ramp, 0.25), P.slide!, 2, px0 + py0 - 3);
+  for (const z of [0.8, 1.6, 2.4]) {
+    s.solid(box(px0, px0 + 3.0, py0 + 3.2, py0 + 3.35, z, z + 0.14), P.bars!, 2, px0 + py0 + 3.2);
+  }
+  for (const cx of [px0, px0 + 3.0]) {
+    s.solid(box(cx, cx + 0.14, py0 + 3.2, py0 + 3.35, 0, 2.6), P.bars!, 2, px0 + py0 + 3.3);
+  }
   for (let x = 8; x < n; x += 2) s.solid(box(x, x + 0.22, 0.2, 0.42, 0, 2.2), P.fence!, 2, x + 0.5);
   s.solid(box(8, n, 0.27, 0.35, 2.05, 2.2), P.fence!, 2, 8.6);
   tree(s, P, 21.0, 2.6);
@@ -1066,7 +1072,7 @@ function frontDoor(P: Palette): Scene {
   s.solid([onZ(0, 0, nx, 0, ny)], P.floor!, 0, 1, deco);
   s.solid(box(-0.6, nx, -0.6, 0, 0, wall), P.wall!, 1, 0, [
     [onY(0.001, 0, nx, 0, 2.0), P.wains!],
-    [onY(0.002, 0.8, 6.4, 4.7, 4.95), P.rail!],
+    [onY(0.002, 0.6, 5.2, 4.7, 4.95), P.rail!],
     [onY(0.002, 8.0, 11.4, 3.6, 5.8), P.trim!],
     [onY(0.003, 8.2, 11.2, 3.8, 5.6), P.pic!],
     [onY(0.004, 8.2, 11.2, 3.8, 4.6), P.hill!],
@@ -1080,11 +1086,11 @@ function frontDoor(P: Palette): Scene {
     [onX(0.004, 5.4, 8.0, 2.2, 3.6), P.panel!],
     [onX(0.005, 8.0, 8.25, 2.6, 2.85), P.knob!],
   ]);
-  // Coats and the lead on the hooks.
-  s.solid(box(1.2, 2.6, 0, 0.5, 2.2, 4.8), P.coat1!, 2, 1.5);
-  s.solid(box(3.0, 4.3, 0, 0.5, 2.6, 4.8), P.coat2!, 2, 3.0);
-  s.solid(box(5.2, 5.35, 0, 0.15, 3.1, 4.8), P.leash!, 2, 5.0);
-  s.solid(box(4.95, 5.6, 0, 0.15, 2.6, 3.1), P.leash!, 2, 5.1);
+  // Coats and the lead on the hooks, near the corner by the door, inside rows 175..280.
+  s.solid(box(1.0, 2.2, 0, 0.5, 2.8, 4.8), P.coat1!, 2, 1.5);
+  s.solid(box(2.6, 3.8, 0, 0.5, 3.0, 4.8), P.coat2!, 2, 3.0);
+  s.solid(box(4.4, 4.55, 0, 0.15, 3.4, 4.8), P.leash!, 2, 5.0);
+  s.solid(box(4.15, 4.8, 0, 0.15, 3.0, 3.4), P.leash!, 2, 5.1);
   // Shoe rack, plant and the dog's bowl.
   s.solid(box(1.0, 5.0, 0, 1.4, 0, 1.0), P.rack!, 2, 1.0);
   ["shoe1", "shoe2", "shoe1"].forEach((c, i) => {
@@ -1455,16 +1461,16 @@ export const BACKGROUNDS: readonly Background[] = [
     build: (P: Palette) => room(P, { glow: glowAmount(glow) }),
     subject: DESK_ROCK,
   })),
-  // The raised beds in bloom beside the house's door.
-  { id: "story-grandma-garden", palette: GARDEN, build: garden, subject: band(195, 315) },
+  // The raised beds in bloom beside the house.
+  { id: "story-grandma-garden", palette: GARDEN, build: garden, subject: band(199, 285) },
   // The sprouting bed, the two empty beds and the shed.
   { id: "story-community-garden", palette: LOT, build: lot, subject: band(180, 290) },
-  // The school's door and the play structure.
-  { id: "story-schoolyard", palette: YARD, build: schoolyard, subject: band(160, 300) },
-  // The notice board and the two doors.
-  { id: "story-school-hallway", palette: HALL, build: hallway, subject: band(145, 290) },
-  // The coats and Penny's lead on their hooks, over the shoe rack.
-  { id: "story-front-door", palette: DOOR, build: frontDoor, subject: band(160, 295) },
+  // The play structure beside the school's door.
+  { id: "story-schoolyard", palette: YARD, build: schoolyard, subject: band(168, 278) },
+  // The notice board beside the near door.
+  { id: "story-school-hallway", palette: HALL, build: hallway, subject: band(184, 290) },
+  // The coats and Penny's lead on their hooks by the door.
+  { id: "story-front-door", palette: DOOR, build: frontDoor, subject: band(175, 280) },
   // Needle: the recorder and the rock on Ada's desk.
   {
     id: "story-ada-room-recorder",
@@ -1491,13 +1497,13 @@ export const BACKGROUNDS: readonly Background[] = [
     id: "story-grandma-garden-spilled",
     palette: GARDEN,
     build: (P) => garden(P, "spilled"),
-    subject: band(195, 315),
+    subject: band(176, 285),
   },
   {
     id: "story-grandma-garden-replanted",
     palette: GARDEN,
     build: (P) => garden(P, "replanted"),
-    subject: band(195, 315),
+    subject: band(176, 285),
   },
   // The rock's glow on the desk.
   {
