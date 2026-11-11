@@ -14,8 +14,8 @@ The catalog interface defines typed aggression, size, physics ([Ships](ships.md)
 perception and engagement radii, orbit and wobble, separation, firing patterns,
 morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
 galaxy one's solo and pack archetypes. Frigates have three independent parts: one engine and two
-weapons. Capital hull widths are 10 and 30 Ada widths. The latter must exceed the
-viewport in Tech's world-to-camera scale; size is not constrained to screen bounds.
+weapons. A capital hull is about 5 Ada widths across and covers at most a sixth of
+the screen.
 No authored assets or story are introduced. Capital command parts are required but
 never fire. Each weapon carries its own typed fire profile, interval, spread and
 projectile speed. Missile profiles travel straight; there is no homing rule.

@@ -17,17 +17,16 @@ is 100 world units and base pull speed is 150 world units per second. Enemy ship
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A multipart ship is defeated when all its required parts are disabled.
 
-| Source             | Stardust |
-| ------------------ | -------: |
-| Asteroid           |      0–1 |
-| Discovery cache    |        5 |
-| `swarm`            |        1 |
-| `fighter`          |        2 |
-| `interceptor`      |        1 |
-| `retaliator`       |        4 |
-| `frigate`          |        5 |
-| `capital`          |        9 |
-| `oversizedCapital` |       11 |
+| Source          | Stardust |
+| --------------- | -------: |
+| Asteroid        |      0–1 |
+| Discovery cache |        5 |
+| `swarm`         |        1 |
+| `fighter`       |        2 |
+| `interceptor`   |        1 |
+| `retaliator`    |        4 |
+| `frigate`       |        5 |
+| `capital`       |        9 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1.
 Discovery caches are rare. These values come from a pacing simulation of typical
@@ -64,17 +63,18 @@ not yet designed, so the station card shows no quest board until it is.
 
 ## Shop
 
-| Item            | Effect                                                                       | Prices        |
-| --------------- | ---------------------------------------------------------------------------- | ------------- |
-| Missiles        | Owned upgrade weapon                                                         | 150           |
-| Triple Laser    | Owned upgrade weapon                                                         | 250           |
-| Scattershot     | Owned upgrade weapon                                                         | 350           |
-| Weapon upgrade  | Per weapon, Basic included, three levels: each +10% damage, −10% interval    | 100, 200, 400 |
-| Shield          | Three levels: each +20% shield capacity                                      | 100, 200, 400 |
-| Shield recharge | Three levels: each −15% recharge delay, +20% recharge rate                   | 100, 200, 400 |
-| Engine tuning   | Three levels: each +5% top speed, −10% acceleration and braking seconds      | 120, 240, 480 |
-| Tractor beam    | Two levels: pull radius 150, then 200; pull speed 220, then 300              | 80, 160       |
-| Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free | 50 each       |
+| Item            | Effect                                                                       | Prices   |
+| --------------- | ---------------------------------------------------------------------------- | -------- |
+| Rapid Missile   | Owned weapon                                                                 | 150      |
+| Multi-Laser     | Owned weapon                                                                 | 250      |
+| Heavy Missile   | Owned weapon                                                                 | 300      |
+| Scattershot     | Owned weapon                                                                 | 350      |
+| Weapon upgrade  | Per weapon, Basic included: levels 2 and 3, each about ×1.5 effective output | 150, 300 |
+| Shield          | Levels 2 and 3: capacity 150, then 225                                       | 150, 300 |
+| Shield recharge | Levels 2 and 3: each about ×1.5 recharge (shorter delay, faster rate)        | 150, 300 |
+| Engine tuning   | Levels 2 and 3: each +5% top speed, −10% acceleration and braking seconds    | 120, 240 |
+| Tractor beam    | Levels 2 and 3: pull radius 150, then 200; pull speed 220, then 300          | 80, 160  |
+| Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free | 50 each  |
 
 Enemy speed ratios stay relative to Ada's base speed, so engine tuning lets Ada
 outrun the fastest enemies. The shop follows Archie's Pet shop pattern: tabs, owned
@@ -83,7 +83,7 @@ outside tap, back and Escape return to the station card. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
 and refuses with Archie's shared
 refusal feedback; reduced motion shows the red tint without shaking. A levelled
-row shows Ada's current level ("Level 0 of 3" before the first purchase) and the
+row shows Ada's current level ("Level 1 of 3" before the first upgrade) and the
 price of the next level; a maxed row shows Owned. The buy confirm shows a weapon's
 one-line description.
 
@@ -114,37 +114,38 @@ Stardust, never taking Stardust below zero.
 The shield shop row reuses the existing `shield` label. `jumpHome` replaces
 `shieldDepleted`.
 
-| Key                | Text                                                               |
-| ------------------ | ------------------------------------------------------------------ |
-| `stardust`         | Stardust                                                           |
-| `stardustAmount`   | {amount} Stardust                                                  |
-| `station`          | Station                                                            |
-| `shop`             | Shop                                                               |
-| `shopWeapons`      | Weapons                                                            |
-| `shopShip`         | Ship                                                               |
-| `owned`            | Owned                                                              |
-| `level`            | Level {level} of {max}                                             |
-| `confirmTitle`     | Buy {name}?                                                        |
-| `confirmLeft`      | {amount} left after                                                |
-| `confirmBuy`       | Buy                                                                |
-| `confirmCancel`    | Cancel                                                             |
-| `undock`           | Undock                                                             |
-| `stationWelcome`   | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
-| `inUse`            | In use                                                             |
-| `paintClassic`     | Classic                                                            |
-| `paintCobalt`      | Cobalt                                                             |
-| `paintSeafoam`     | Seafoam                                                            |
-| `paintGraphite`    | Graphite                                                           |
-| `paintIris`        | Iris                                                               |
-| `aboutMissiles`    | One slow, strong missile.                                          |
-| `aboutTripleLaser` | Three bolts in a fan.                                              |
-| `aboutScattershot` | Seven short-range shots in a wide spread.                          |
-| `weaponLocked`     | Weapons can't be changed in combat.                                |
-| `jumpHome`         | Astra jumped you home to recharge. Your story progress is saved.   |
-| `jumpWeaponLost`   | Your {weapon} was lost.                                            |
-| `jumpRecharge`     | Recharging cost {amount} Stardust.                                 |
-| `shieldRecharge`   | Shield recharge                                                    |
-| `engineTuning`     | Engine tuning                                                      |
-| `tractorBeam`      | Tractor beam                                                       |
-| `weaponUpgrade`    | {weapon} upgrade                                                   |
-| `shipPaint`        | Ship paint                                                         |
+| Key                 | Text                                                               |
+| ------------------- | ------------------------------------------------------------------ |
+| `stardust`          | Stardust                                                           |
+| `stardustAmount`    | {amount} Stardust                                                  |
+| `station`           | Station                                                            |
+| `shop`              | Shop                                                               |
+| `shopWeapons`       | Weapons                                                            |
+| `shopShip`          | Ship                                                               |
+| `owned`             | Owned                                                              |
+| `level`             | Level {level} of {max}                                             |
+| `confirmTitle`      | Buy {name}?                                                        |
+| `confirmLeft`       | {amount} left after                                                |
+| `confirmBuy`        | Buy                                                                |
+| `confirmCancel`     | Cancel                                                             |
+| `undock`            | Undock                                                             |
+| `stationWelcome`    | Welcome aboard. Trade your Stardust for weapons and ship upgrades. |
+| `inUse`             | In use                                                             |
+| `paintClassic`      | Classic                                                            |
+| `paintCobalt`       | Cobalt                                                             |
+| `paintSeafoam`      | Seafoam                                                            |
+| `paintGraphite`     | Graphite                                                           |
+| `paintIris`         | Iris                                                               |
+| `aboutHeavyMissile` | One slow missile with a big blast.                                 |
+| `aboutRapidMissile` | Quick missiles with a small blast.                                 |
+| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                   |
+| `aboutScattershot`  | A shotgun spread, strongest up close.                              |
+| `weaponLocked`      | Weapons can't be changed in combat.                                |
+| `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
+| `jumpWeaponLost`    | Your {weapon} was lost.                                            |
+| `jumpRecharge`      | Recharging cost {amount} Stardust.                                 |
+| `shieldRecharge`    | Shield recharge                                                    |
+| `engineTuning`      | Engine tuning                                                      |
+| `tractorBeam`       | Tractor beam                                                       |
+| `weaponUpgrade`     | {weapon} upgrade                                                   |
+| `shipPaint`         | Ship paint                                                         |

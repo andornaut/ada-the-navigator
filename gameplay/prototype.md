@@ -203,7 +203,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
 - The space screen shows only essentials: the joysticks, weapon icons, shield bar,
-  Stardust count and a pause button. There is no travel or destinations panel and
+  status pill (shield and Stardust) and a pause button. There is no travel or destinations panel and
   no settings gear in space.
 - Space shows no in-world name labels. Each named destination has a distinct
   look by role, the current objective's destination is marked by the direction
@@ -259,20 +259,32 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
-- Basic is the starter weapon. Upgrades are Missiles, Triple Laser and Scattershot,
-  bought at station shops or found as rare drops; see [Economy](economy.md). Icon
-  pickups, presented like Chibi's power-ups, automatically equip their upgrade
-  outside combat and retain other owned upgrades.
-- Missiles fire one slower, stronger straight projectile. Triple Laser fires three
-  bolts at -20, 0 and 20 degrees. Scattershot fires seven visual dots at -30, -20,
-  -10, 0, 10, 20 and 30 degrees; the dots do not apply damage over time.
+- Basic is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
+  Multi-Laser and Scattershot, bought at station shops or found as rare drops; see
+  [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
+  automatically equip their weapon outside combat and retain other owned weapons.
+- Every weapon and the shield have three levels. Each level multiplies effective
+  output (damage times fire rate times how often it hits) by about 1.5, so level 3
+  is about 2.25 times level 1. Each weapon grows along its own dimensions:
+  - Basic: damage and fire rate.
+  - Heavy Missile: one slow straight missile with a large blast and high damage;
+    levels grow its blast radius and damage.
+  - Rapid Missile: faster straight missiles with a small blast, stronger than basic
+    fire; levels grow its fire rate and damage.
+  - Multi-Laser: a fan of bolts, 3 at level 1 (-20, 0 and 20 degrees), then 4, then
+    5 across the same fan, with a small damage rise to reach the level step.
+  - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
+    then 9, then 11, each level reaching a little farther. Up close every dot hits;
+    at range the spread covers more area but fewer dots hit. Dots do not apply
+    damage over time.
+- A missile's blast damages every enemy within its radius, never Ada.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world-speed ratio.
 - Each scattershot dot travels half the current projected viewport width along its
   own rotated heading, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
-  ratios multiply base shot damage. No homing, splash, piercing or reload is added.
+  ratios multiply base shot damage. No homing, piercing or reload is added.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
   ownership of the other upgrades. Weapons cannot be changed during combat or for 5
   seconds after it.
@@ -288,11 +300,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   selection to recharge. The equipped weapon is lost unless it is Basic, and
   recharging costs a flat Stardust fee. Story progress persists; the next flight
   generates a new layout.
-- The shield bar spans the full width at the bottom safe edge, above any
-  home-indicator inset, and is approximately three pixels high.
-- Game and save notices, such as the save-failure notice, show briefly as a
-  compact strip at the top center below the safe inset, clear of the pause button
-  and weapon icons.
+- The shield and Stardust share one status pill at the top left, beside the pause
+  button: a shield icon and bar, a divider and the Stardust count. The bar is blue,
+  turning red when the shield is low (below 25%) or empty, and shows hits, the
+  recharge delay and regeneration.
+- Game and save notices, such as the save-failure notice, show briefly in the
+  conversation box's slot and style, without a portrait. A notice shows at once,
+  ahead of ordinary conversation lines, which resume after it.
 - One forgiving difficulty; no overall exploration timer.
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
@@ -430,8 +444,9 @@ after losing members. Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
 Frigates have two or three designated hardpoints, such as an engine and weapons.
-Capital ships are prominent large targets, including ships around ten times
-Ada's size and larger ships that extend beyond the viewport. All designated
+Capital ships are prominent large targets that cover at most a sixth of the
+screen, about 5 Ada widths across, so the whole ship and its hardpoints stay
+readable. A capital has many hardpoints and can travel with escort fighters. All designated
 hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
 firing; a disabled engine stops movement. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.

@@ -37,16 +37,15 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 
 ## Values
 
-| Ship               | Size (Ada widths) | `speedRatio` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
-| ------------------ | ----------------: | -----------: | --------------------: | ---------------: | ------------: | ---------------: |
-| Ada                |                 1 |            1 |                  0.30 |             0.45 |          0.18 |             0.07 |
-| `swarm`            |              0.65 |          0.9 |                  0.20 |             0.25 |          0.12 |             0.10 |
-| `fighter`          |                 1 |          0.8 |                  0.40 |             0.50 |          0.30 |             0.15 |
-| `interceptor`      |              0.75 |          1.1 |                  0.90 |             1.20 |          0.60 |             0.12 |
-| `retaliator`       |                 2 |         0.45 |                  1.20 |             1.50 |          0.90 |             0.35 |
-| `frigate`          |                 3 |          0.4 |                   1.5 |              2.0 |           1.2 |             0.40 |
-| `capital`          |                10 |          0.2 |                   2.5 |              3.0 |           2.0 |             0.50 |
-| `oversizedCapital` |                30 |         0.12 |                   3.5 |              4.0 |           3.0 |             0.60 |
+| Ship          | Size (Ada widths) | `speedRatio` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
+| ------------- | ----------------: | -----------: | --------------------: | ---------------: | ------------: | ---------------: |
+| Ada           |                 1 |            1 |                  0.30 |             0.45 |          0.18 |             0.07 |
+| `swarm`       |              0.65 |          0.9 |                  0.20 |             0.25 |          0.12 |             0.10 |
+| `fighter`     |                 1 |          0.8 |                  0.40 |             0.50 |          0.30 |             0.15 |
+| `interceptor` |              0.75 |          1.1 |                  0.90 |             1.20 |          0.60 |             0.12 |
+| `retaliator`  |                 2 |         0.45 |                  1.20 |             1.50 |          0.90 |             0.35 |
+| `frigate`     |                 4 |          0.4 |                   1.5 |              2.0 |           1.2 |             0.40 |
+| `capital`     |                 5 |          0.2 |                   2.5 |              3.0 |           2.0 |             0.50 |
 
 Ada's ship has noticeable momentum: it takes about a second to reach full speed,
 coasts for over a second when the stick is released, and swings wide on sharp
@@ -78,14 +77,14 @@ more aggressive than before, and later galaxies ramp difficulty quickly.
 
 Galaxy one is a playtest roster with a few more enemies than before.
 
-| Archetype      | Encounter | Group | Weight |  HP | Behaviours                                             |
-| -------------- | --------- | ----: | -----: | --: | ------------------------------------------------------ |
-| `swarm`        | Pack      |   4–6 |   0.35 |   2 | `swarm`; packs `flee` after losses                     |
-| `fighter`      | Solo/pair |   1–3 |   0.30 |   4 | `hitAndRun`; a pair shares pack morale                 |
-| `interceptor`  | Solo      |     1 |   0.15 |   3 | `strafe`                                               |
-| `retaliator`   | Solo      |     1 |   0.10 |   8 | `retaliate`, then `chase`; three-bolt spread           |
-| `frigate`      | Solo      |     1 |   0.07 |  10 | `siege`; size 4 Ada widths                             |
-| Capital battle | Group     |     1 |   0.03 |   – | A capital with many hardpoints and 4 `escort` fighters |
+| Archetype      | Encounter | Group | Weight |  HP | Behaviours                                                                         |
+| -------------- | --------- | ----: | -----: | --: | ---------------------------------------------------------------------------------- |
+| `swarm`        | Pack      |   4–6 |   0.35 |   2 | `swarm`; packs `flee` after losses                                                 |
+| `fighter`      | Solo/pair |   1–3 |   0.30 |   4 | `hitAndRun`; a pair shares pack morale                                             |
+| `interceptor`  | Solo      |     1 |   0.15 |   3 | `strafe`                                                                           |
+| `retaliator`   | Solo      |     1 |   0.10 |   8 | `retaliate`, then `chase`; three-bolt spread                                       |
+| `frigate`      | Solo      |     1 |   0.07 |  10 | `siege`; size 4 Ada widths                                                         |
+| Capital battle | Group     |     1 |   0.03 |   – | A `capital` (5 Ada widths: command, 2 engines, 4 turrets) with 4 `escort` fighters |
 
 Weights choose each galaxy-one encounter; the group size range replaces the
 shared range for that archetype. Galaxy one enemies notice Ada from 20% farther
