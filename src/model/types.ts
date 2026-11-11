@@ -1,5 +1,6 @@
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import type { JobType } from "../data/jobs.ts";
 import type { SectorId, Weapon } from "../data/types.ts";
 import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
@@ -116,6 +117,8 @@ export interface FlightState {
   weaponSwitchFor: number;
   /** The station whose dock Ada is inside; docking again needs her to leave it first. */
   dockId: string | null;
+  /** The towed craft's position while a rescue job's tow line is attached. */
+  tow?: Vec;
   fireCooldown: number;
   objects: SpaceObject[];
   shots: Shot[];
@@ -142,6 +145,48 @@ export interface SectorProgress {
   opened: boolean;
   /** Stardust paid toward each of the galaxy's community projects, by project id. */
   donated: Record<string, number>;
+  /** Charted landmark ids (model/landmarks.ts). */
+  charted: string[];
+}
+/** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
+export interface JobTarget extends Vec {
+  id: string;
+}
+/** A station job on offer (gameplay/quests.md "Station jobs"); its targets are fixed when made. */
+export interface JobOffer {
+  id: string;
+  type: JobType;
+  /** The issuing station. */
+  station: string;
+  reward: number;
+  /** The pool item it names: a delivery's cargo, a stranded craft or a lost item. */
+  item: string;
+  /**
+   * A survey's landmark, a delivery's destination, a rescue's stranded craft or a hunt's search
+   * area centre.
+   */
+  target: JobTarget;
+  /** A lost item's spot inside its search area. */
+  spot?: Vec;
+}
+/** The held job and how far it has come. */
+export interface HeldJob extends JobOffer {
+  kind: "job";
+  /** A delivery's item is aboard; a lost one is replaced at the issuing station. */
+  carrying?: boolean;
+  /** Ada has entered a hunt's search area. */
+  entered?: boolean;
+}
+/**
+ * A galaxy's one optional task, by kind: a held station job. Other optional task kinds join the
+ * union and share the slot.
+ */
+export type OptionalTask = HeldJob;
+export interface JobsState {
+  /** Each station's offers in slot order, by galaxy and station id. */
+  boards: Partial<Record<SectorId, Record<string, JobOffer[]>>>;
+  /** Jobs made so far, which seeds the next. */
+  made: number;
 }
 /** Shots left for each upgrade weapon; Basic is unlimited. No cap. */
 export type AmmoCounts = Record<UpgradeWeapon, number>;
@@ -194,6 +239,10 @@ export interface GameState {
   started: boolean;
   /** In-flight conversations already shown, which do not repeat (data/conversations.ts). */
   seenConversations: string[];
+  /** Station job boards; Restart clears them. */
+  jobs: JobsState;
+  /** Each galaxy's one optional task, such as a held station job; Restart clears them. */
+  tasks: Partial<Record<SectorId, OptionalTask>>;
 }
 export type FlightEvent =
   | { type: "depleted" }

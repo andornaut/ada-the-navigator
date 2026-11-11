@@ -1,7 +1,9 @@
+import { JOB_LORE } from "./jobs.ts";
 import type { SectorId } from "./types.ts";
 
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
-// gameplay/player-copy.md "In-flight conversations" and the General's broadcasts).
+// gameplay/player-copy.md "In-flight conversations" and the General's broadcasts, and job lines
+// from gameplay/quests.md).
 
 export type Speaker =
   | "ada"
@@ -39,7 +41,14 @@ export type ConversationTrigger =
   | { readonly kind: "general"; readonly sector: SectorId }
   | { readonly kind: "quiet"; readonly sector: SectorId }
   | { readonly kind: "funded"; readonly project: string }
-  | { readonly kind: "penny" };
+  | { readonly kind: "penny" }
+  /** A held job's moment: the tow line attaching or Ada entering a search area. */
+  | { readonly kind: "job"; readonly moment: JobMoment }
+  /** Astra's lore line after a job completes, one unseen line per job. */
+  | { readonly kind: "jobLore"; readonly sector: SectorId };
+
+/** Held-job moments with their own lines. */
+export type JobMoment = "searchEntered" | "towAttached";
 
 /** Ada's and Penny's portrait moods; a line that names none shows neutral. */
 export type Mood = "happy" | "neutral" | "upset";
@@ -329,4 +338,30 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { kind: "general", sector: 3 },
   },
+  {
+    id: "job:towAttached",
+    lines: [
+      line("astra", "Tow line attached. We'll be slow and heavy."),
+      line("ada", "Hold on, we've got you!"),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "job", moment: "towAttached" },
+  },
+  {
+    id: "job:searchEntered",
+    lines: [line("ada", "It's around here somewhere. Penny, can you help?")],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "job", moment: "searchEntered" },
+  },
+  ...([1, 2, 3] as const).flatMap((sector) =>
+    JOB_LORE[sector].map((text, index): Conversation => ({
+      id: `jobLore:${sector}:${index}`,
+      lines: [line("astra", text)],
+      priority: "lore",
+      repeat: "never",
+      trigger: { kind: "jobLore", sector },
+    })),
+  ),
 ];

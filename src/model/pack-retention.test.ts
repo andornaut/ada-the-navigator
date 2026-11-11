@@ -15,6 +15,7 @@ import type { SectorProgress, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: SectorProgress = {
+  charted: [],
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,

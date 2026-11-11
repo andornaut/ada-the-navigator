@@ -5,12 +5,13 @@ import type { FlightState, SectorProgress } from "./types.ts";
 
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
-// waypoint and an undiscovered station within range, at any distance while off screen. Ordinary
+// waypoint, the held station job's target (gameplay/quests.md) and an undiscovered station within
+// range, at any distance while off screen. Ordinary
 // enemies and optional discoveries get none; Penny senses those instead. Each kind is one source
 // below, so a kind gains its rule without touching the others.
 
 /** Earlier kinds win when two mark the same place. */
-export const INDICATOR_KINDS = ["holodisk", "objective", "questItem", "station"] as const;
+export const INDICATOR_KINDS = ["holodisk", "objective", "questItem", "job", "station"] as const;
 export type IndicatorKind = (typeof INDICATOR_KINDS)[number];
 
 export interface IndicatorTarget {
@@ -24,6 +25,8 @@ export interface IndicatorContext {
   readonly flight: Pick<FlightState, "objects" | "player">;
   /** The galaxy's holodisk waypoint shows until the holodisk is recovered. */
   readonly holodiskWaypoint: boolean;
+  /** Where the held station job sends Ada now, if anywhere. */
+  readonly job: IndicatorTarget | null;
   /** The current objective's destination, if it has one. */
   readonly objective: string | null;
   readonly progress: Pick<SectorProgress, "known" | "stations">;
@@ -53,6 +56,7 @@ export const INDICATOR_SOURCES: Readonly<Record<IndicatorKind, IndicatorSource>>
     flight.objects
       .filter((object) => holodiskWaypoint && object.id === "holodisk")
       .map(({ id, x, y }) => ({ id, kind: "holodisk", x, y })),
+  job: ({ job }) => (job ? [job] : []),
   objective: (context) => mappedDestination(context, context.objective, "objective"),
   questItem: (context) => mappedDestination(context, context.questItem, "questItem"),
   // The nearest undiscovered station within the economy's indicator range (stations.ts).

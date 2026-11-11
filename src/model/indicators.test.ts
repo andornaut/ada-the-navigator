@@ -48,6 +48,7 @@ function context(overrides: Partial<IndicatorContext> = {}): IndicatorContext {
       player: ORIGIN,
     },
     holodiskWaypoint: false,
+    job: null,
     objective: "workshop",
     progress: { known: ["growers", "workshop"], stations: NEAR_STATIONS },
     questItem: null,

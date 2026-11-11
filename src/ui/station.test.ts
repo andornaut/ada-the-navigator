@@ -1,16 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
+import { jobAction, rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
 import { buttonProperty } from "./ui-skin.ts";
 
 describe("station card back steps", () => {
-  it("returns from the shop to the station card and undocks only from the card", () => {
+  it("returns from the shop and the job board to the station card and undocks only from it", () => {
     expect(stationBack("shop", false)).toBe("card");
+    expect(stationBack("jobs", false)).toBe("card");
     expect(stationBack("card", false)).toBe("undock");
   });
 
-  it("cancels an open confirm back to the shop", () => {
+  it("cancels an open confirm back to the card under it", () => {
     expect(stationBack("shop", true)).toBe("shop");
+    expect(stationBack("jobs", true)).toBe("jobs");
+  });
+});
+
+describe("job row taps", () => {
+  it("accept offers, keep refused offers tappable so they refuse, and drop the held job", () => {
+    expect(jobAction("offer")).toBe("accept");
+    expect(jobAction("busy")).toBe("accept");
+    expect(jobAction("held")).toBe("drop");
   });
 });
 

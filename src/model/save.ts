@@ -2,12 +2,14 @@ import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
+import { isLandmark } from "./landmarks.ts";
 import { stationById } from "./stations.ts";
 import type {
   AmmoCounts,
@@ -394,7 +396,10 @@ function migrateEconomy(state: GameState): void {
   for (const progress of Object.values(state.progress)) {
     progress.stations ??= [];
     progress.donated ??= {};
+    progress.charted ??= [];
   }
+  state.jobs ??= { boards: {}, made: 0 };
+  state.tasks ??= {};
   if (flight) {
     if (typeof flight.ammo !== "object") {
       // Granted weapons get the same packs for the flight; they stay out of the economy.
@@ -609,6 +614,93 @@ function stationIds(sector: SectorId, value: unknown): boolean {
   );
 }
 
+/** Charted landmark ids: distinct landmarks of the galaxy. */
+function chartedIds(sector: SectorId, value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    strings(value) &&
+    new Set(value).size === value.length &&
+    value.every((id) => isLandmark(sector, String(id)))
+  );
+}
+/**
+ * A saved job offer: a station of the galaxy issues it, and its target is a landmark for a
+ * survey, a station or outpost for a delivery, or a spot for a rescue or hunt.
+ */
+function jobOffer(sector: SectorId, value: unknown): boolean {
+  if (
+    !record(value) ||
+    typeof value.id !== "string" ||
+    !JOB_TYPES.includes(value.type as (typeof JOB_TYPES)[number]) ||
+    typeof value.station !== "string" ||
+    stationById(ECONOMY, sector, value.station) === null ||
+    !nonnegative(value.reward) ||
+    typeof value.item !== "string" ||
+    !record(value.target) ||
+    !vector(value.target) ||
+    typeof value.target.id !== "string" ||
+    (value.spot !== undefined && !vector(value.spot))
+  ) {
+    return false;
+  }
+  const target = value.target.id;
+  if (value.type === "survey") {
+    return isLandmark(sector, target);
+  }
+  if (value.type === "delivery") {
+    return (
+      target !== value.station &&
+      (stationById(ECONOMY, sector, target) !== null ||
+        (target !== "holodisk" && (destinationIds[sector] ?? []).includes(target)))
+    );
+  }
+  return target === "" && (value.type === "rescue" || vector(value.spot));
+}
+const SECTOR_KEYS = ["1", "2", "3"];
+/** Saved job boards. */
+function jobsState(value: unknown): boolean {
+  if (
+    !record(value) ||
+    !record(value.boards) ||
+    !Number.isSafeInteger(value.made) ||
+    !nonnegative(value.made)
+  ) {
+    return false;
+  }
+  const sectors = SECTOR_KEYS;
+  return Object.entries(value.boards).every(
+    ([sector, stations]) =>
+      sectors.includes(sector) &&
+      record(stations) &&
+      Object.entries(stations).every(
+        ([station, offers]) =>
+          stationById(ECONOMY, Number(sector) as SectorId, station) !== null &&
+          Array.isArray(offers) &&
+          offers.every(
+            (offer) =>
+              jobOffer(Number(sector) as SectorId, offer) &&
+              record(offer) &&
+              offer.station === station,
+          ),
+      ),
+  );
+}
+/** Saved optional task slots, one per galaxy: each a held job with its progress. */
+function optionalTasks(value: unknown): boolean {
+  return (
+    record(value) &&
+    Object.entries(value).every(
+      ([sector, task]) =>
+        SECTOR_KEYS.includes(sector) &&
+        record(task) &&
+        task.kind === "job" &&
+        jobOffer(Number(sector) as SectorId, task) &&
+        (task.carrying === undefined || typeof task.carrying === "boolean") &&
+        (task.entered === undefined || typeof task.entered === "boolean"),
+    )
+  );
+}
+
 /**
  * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
  * from before the economy gain an empty economy (or their flight's weapons), no
@@ -671,6 +763,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
         (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
         (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
+        (p.charted !== undefined && !chartedIds(id as SectorId, p.charted)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean")
       ) {
@@ -678,6 +771,12 @@ export function restoreSave(saved: unknown): GameState | null {
       }
     }
     if (value.economy !== undefined && !economyState(value.economy)) {
+      return null;
+    }
+    if (
+      (value.jobs !== undefined && !jobsState(value.jobs)) ||
+      (value.tasks !== undefined && !optionalTasks(value.tasks))
+    ) {
       return null;
     }
     if (
@@ -722,6 +821,7 @@ export function restoreSave(saved: unknown): GameState | null {
         (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
         (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
         (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||
+        (f.tow !== undefined && !vector(f.tow)) ||
         (f.levels !== undefined && !upgradeLevels(f.levels))
       ) {
         return null;

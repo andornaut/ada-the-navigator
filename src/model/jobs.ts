@@ -1,0 +1,323 @@
+import { ECONOMY } from "../data/economy.ts";
+import {
+  JOB_POOL,
+  JOB_REWARDS,
+  JOB_TUNING,
+  JOB_TYPES,
+  type JobRewardKind,
+  type JobType,
+} from "../data/jobs.ts";
+import type { SectorId } from "../data/types.ts";
+import { dropRandom } from "./drops.ts";
+import { landmarkSites } from "./landmarks.ts";
+import { type StationSite, stationsNear } from "./stations.ts";
+import type {
+  FlightState,
+  GameState,
+  HeldJob,
+  JobOffer,
+  JobTarget,
+  SectorProgress,
+  Vec,
+} from "./types.ts";
+
+// Station job boards (gameplay/quests.md "Station jobs"): each station's three offers, the held
+// job and how it comes along. A held job fills the galaxy's one optional task slot, which other
+// optional task kinds share: while the slot is taken, boards refuse offers. Offers are made from the
+// station's site and a running job count, so a board never changes until a job on it is taken and
+// completed.
+
+/** The boards and the optional task slots they fill. */
+export type JobBook = Pick<GameState, "jobs" | "tasks">;
+
+/** What a board draws on when it makes offers. */
+export interface BoardContext {
+  readonly sector: SectorId;
+  readonly progress: Pick<SectorProgress, "charted">;
+  /** Known outposts in the flight: delivery destinations and tow safe places. */
+  readonly outposts: readonly JobTarget[];
+  /** Live frigates and capitals, which job targets keep clear of. */
+  readonly hostiles: readonly Vec[];
+}
+
+const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/** The held job in a galaxy's optional task slot, if the slot holds a job. */
+export function heldJob(sector: SectorId, book: Pick<GameState, "tasks">): HeldJob | undefined {
+  const task = book.tasks[sector];
+  return task?.kind === "job" ? task : undefined;
+}
+
+/** Live frigates and capitals in a flight. */
+export function jobHostiles(flight: Pick<FlightState, "objects">): Vec[] {
+  return flight.objects.filter(
+    (object) =>
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      (object.enemy?.archetype === "frigate" || object.enemy?.archetype === "capital"),
+  );
+}
+
+/** A delivery's reward row: long from JOB_TUNING.delivery.longFrom. */
+function rewardKind(type: JobType, length: number): JobRewardKind {
+  if (type !== "delivery") {
+    return type;
+  }
+  return length >= JOB_TUNING.delivery.longFrom ? "deliveryLong" : "deliveryShort";
+}
+
+const without = <T>(items: readonly T[], index: number): T[] =>
+  items.filter((_, at) => at !== index);
+const pick = <T>(next: () => number, items: readonly T[]): T | undefined =>
+  items[Math.floor(next() * items.length)];
+
+/** Survey landmarks already named by a board offer or the held job in the galaxy. */
+function surveyed(sector: SectorId, book: JobBook): Set<string> {
+  const offers = Object.values(book.jobs.boards[sector] ?? {}).flat();
+  const held = heldJob(sector, book);
+  return new Set(
+    [...offers, ...(held ? [held] : [])]
+      .filter((offer) => offer.type === "survey")
+      .map((offer) => offer.target.id),
+  );
+}
+
+/** A spot reach-away from the station, clear of hostiles, or null after a few tries. */
+function spotNear(
+  context: BoardContext,
+  next: () => number,
+  reach: { readonly max: number; readonly min: number },
+  station: Vec,
+): Vec | null {
+  for (let attempt = 0; attempt < 24; attempt++) {
+    const length = reach.min + next() * (reach.max - reach.min);
+    const angle = next() * Math.PI * 2;
+    const spot = {
+      x: station.x + Math.cos(angle) * length,
+      y: station.y + Math.sin(angle) * length,
+    };
+    if (
+      context.hostiles.every((hostile) => distance(hostile, spot) >= JOB_TUNING.hostileClearance)
+    ) {
+      return spot;
+    }
+  }
+  return null;
+}
+
+/** The job type's target and pool item, or null when the galaxy has none to give. */
+function jobTarget(
+  context: BoardContext,
+  book: JobBook,
+  next: () => number,
+  station: StationSite,
+  type: JobType,
+): Pick<JobOffer, "item" | "spot" | "target"> | null {
+  const pool = JOB_POOL[context.sector];
+  if (type === "survey") {
+    const taken = surveyed(context.sector, book);
+    // One of the three nearest uncharted landmarks no other survey names.
+    const open = landmarkSites(context.sector)
+      .filter((site) => !context.progress.charted.includes(site.id) && !taken.has(site.id))
+      .sort((a, b) => distance(a, station) - distance(b, station))
+      .slice(0, 3);
+    const site = pick(next, open);
+    return site ? { item: site.kind, target: { id: site.id, x: site.x, y: site.y } } : null;
+  }
+  if (type === "delivery") {
+    const { max, min } = JOB_TUNING.delivery;
+    const places = [
+      ...stationsNear(ECONOMY, context.sector, max, station).filter(
+        (site) => site.id !== station.id,
+      ),
+      ...context.outposts,
+    ].filter((place) => {
+      const length = distance(place, station);
+      return length >= min && length <= max;
+    });
+    const place = pick(next, places);
+    const item = pick(next, pool.delivery);
+    return place && item ? { item, target: { id: place.id, x: place.x, y: place.y } } : null;
+  }
+  if (type === "rescue") {
+    const spot = spotNear(context, next, JOB_TUNING.rescue, station);
+    const item = pick(next, pool.craft);
+    return spot && item ? { item, target: { id: "", ...spot } } : null;
+  }
+  const { hunt } = JOB_TUNING;
+  const centre = spotNear(context, next, hunt, station);
+  const item = pick(next, pool.lost);
+  if (!centre || !item) {
+    return null;
+  }
+  // The item lies well inside the search area, so the glint is never at its rim.
+  const reach = Math.sqrt(next()) * hunt.radius * 0.8;
+  const angle = next() * Math.PI * 2;
+  return {
+    item,
+    spot: { x: centre.x + Math.cos(angle) * reach, y: centre.y + Math.sin(angle) * reach },
+    target: { id: "", ...centre },
+  };
+}
+
+/**
+ * A new offer for a station's slot: types not on the board first, in a seeded order, then any
+ * type the galaxy can still give. Null when it can give none.
+ */
+function makeOffer(
+  context: BoardContext,
+  book: JobBook,
+  board: readonly JobOffer[],
+  station: StationSite,
+): JobOffer | null {
+  const made = book.jobs.made;
+  const next = dropRandom(made, `job:${context.sector}:${station.id}`);
+  // A seeded Fisher-Yates shuffle of the types.
+  const order = [...JOB_TYPES];
+  for (let index = order.length - 1; index > 0; index--) {
+    const swap = Math.floor(next() * (index + 1));
+    [order[index], order[swap]] = [order[swap]!, order[index]!];
+  }
+  const fresh = order.filter((type) => !board.some((offer) => offer.type === type));
+  for (const type of [...fresh, ...order.filter((type) => !fresh.includes(type))]) {
+    const target = jobTarget(context, book, next, station, type);
+    if (target) {
+      book.jobs.made = made + 1;
+      return {
+        ...target,
+        id: `job:${made}`,
+        reward: JOB_REWARDS[context.sector][rewardKind(type, distance(target.target, station))],
+        station: station.id,
+        type,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * A station's board in slot order, made or topped up as needed. A survey offer whose landmark
+ * was charted since is replaced; the held job keeps its slot until it completes.
+ */
+export function stationBoard(
+  context: BoardContext,
+  book: JobBook,
+  station: StationSite,
+): readonly JobOffer[] {
+  const boards = (book.jobs.boards[context.sector] ??= {});
+  const board = (boards[station.id] ??= []);
+  const held = heldJob(context.sector, book);
+  for (let slot = 0; slot < board.length; slot++) {
+    const offer = board[slot]!;
+    if (
+      offer.type === "survey" &&
+      offer.id !== held?.id &&
+      context.progress.charted.includes(offer.target.id)
+    ) {
+      const replacement = makeOffer(context, book, without(board, slot), station);
+      if (replacement) {
+        board[slot] = replacement;
+      } else {
+        board.splice(slot--, 1);
+      }
+    }
+  }
+  while (board.length < JOB_TUNING.boardSize) {
+    const offer = makeOffer(context, book, board, station);
+    if (!offer) {
+      break;
+    }
+    board.push(offer);
+  }
+  return board;
+}
+
+/** Takes an offer from a station's board into the galaxy's empty optional task slot. */
+export function acceptJob(
+  sector: SectorId,
+  station: string,
+  id: string,
+  book: JobBook,
+): "accepted" | "busy" | "missing" {
+  const offer = book.jobs.boards[sector]?.[station]?.find((entry) => entry.id === id);
+  if (!offer) {
+    return "missing";
+  }
+  if (book.tasks[sector]) {
+    return "busy";
+  }
+  // A delivery's item loads at once into the job's own carried-item slot.
+  book.tasks[sector] = {
+    ...structuredClone(offer),
+    kind: "job",
+    ...(offer.type === "delivery" ? { carrying: true } : {}),
+  };
+  return "accepted";
+}
+
+/** Drops the held job: its progress is lost and its offer shows on its board again. */
+export function dropJob(sector: SectorId, book: JobBook): boolean {
+  if (!heldJob(sector, book)) {
+    return false;
+  }
+  delete book.tasks[sector];
+  return true;
+}
+
+/**
+ * Completes the held job: its slot refills from the pool when the galaxy can give a job.
+ * Returns the reward.
+ */
+export function completeJob(
+  context: BoardContext,
+  station: StationSite | null,
+  book: JobBook,
+): number {
+  const held = heldJob(context.sector, book);
+  if (!held) {
+    return 0;
+  }
+  delete book.tasks[context.sector];
+  const board = book.jobs.boards[context.sector]?.[held.station];
+  const slot = board?.findIndex((offer) => offer.id === held.id) ?? -1;
+  if (board && slot >= 0) {
+    const replacement = station && makeOffer(context, book, without(board, slot), station);
+    if (replacement) {
+      board[slot] = replacement;
+    } else {
+      board.splice(slot, 1);
+    }
+  }
+  return held.reward;
+}
+
+/**
+ * The tow line pulls the craft along only while taut: it trails at the line's length behind Ada
+ * and rests where it is when she backs up.
+ */
+export function pullTow(player: Vec, tow: Vec): void {
+  const length = distance(player, tow);
+  const line = JOB_TUNING.tow.line;
+  if (length > line) {
+    tow.x = player.x + ((tow.x - player.x) / length) * line;
+    tow.y = player.y + ((tow.y - player.y) / length) * line;
+  }
+}
+
+/** The nearest of a rescue's safe places to a point: its issuing station or a known outpost. */
+export function nearestSafePlace(
+  outposts: readonly JobTarget[],
+  station: StationSite | null,
+  point: Vec,
+): JobTarget | null {
+  const places = [...(station ? [station] : []), ...outposts];
+  return (
+    places
+      .sort((a, b) => distance(a, point) - distance(b, point))
+      .map(({ id, x, y }) => ({
+        id,
+        x,
+        y,
+      }))[0] ?? null
+  );
+}

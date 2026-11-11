@@ -19,6 +19,7 @@ import type { FlightInput, FlightState, SectorProgress, Vec } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
 
 const progress: SectorProgress = {
+  charted: [],
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,

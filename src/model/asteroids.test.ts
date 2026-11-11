@@ -24,6 +24,7 @@ import { playOpening } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const progress: SectorProgress = {
+  charted: [],
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,

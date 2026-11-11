@@ -6,6 +6,7 @@ import type { SectorProgress } from "./types.ts";
 import { markVisited, validVisitedPages, visitedChunk } from "./visited.ts";
 
 const progress: SectorProgress = {
+  charted: [],
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,

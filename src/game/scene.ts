@@ -569,6 +569,7 @@ export class PrototypeScene extends Phaser.Scene {
           returnHome: PROTOTYPE.labels.returnHome ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
           title: PROTOTYPE.labels.pauseTitle ?? "",
+          towTravel: PROTOTYPE.labels.towTravel ?? "",
           travelEmpty: PROTOTYPE.labels.travelEmpty ?? "",
           travelHere: PROTOTYPE.labels.travelHere ?? "",
           travelUnavailable: PROTOTYPE.labels.travelUnavailable ?? "",
@@ -579,7 +580,7 @@ export class PrototypeScene extends Phaser.Scene {
           }
         },
         onTravel: (id) => {
-          if (!this.model.inDanger) {
+          if (!this.model.inDanger && !this.model.towing) {
             jumpThen(() => this.model.teleport(id));
           }
         },
@@ -616,6 +617,13 @@ export class PrototypeScene extends Phaser.Scene {
       this.renderConversation();
     });
     this.station = createStationView(this.controls.overlay, {
+      acceptJob: (id) => {
+        let accepted = false;
+        apply(() => {
+          accepted = this.model.acceptJob(id) !== "busy";
+        });
+        return accepted;
+      },
       balance: () => ({
         amount: this.model.state.economy.stardust,
         text: amount(this.model.state.economy.stardust),
@@ -628,11 +636,26 @@ export class PrototypeScene extends Phaser.Scene {
             this.model.buy(item(key));
           }
         }),
+      dropJob: () => apply(() => this.model.dropJob()),
+      jobs: () =>
+        this.model.jobBoard().map((job) => ({
+          ...job,
+          rewardText: fill(label("jobReward"), { amount: job.reward }),
+        })),
       labels: {
         close: label("close"),
         confirmBuy: label("confirmBuy"),
         confirmCancel: label("confirmCancel"),
         inUse: label("inUse"),
+        jobAccept: label("jobAccept"),
+        jobActive: label("jobActive"),
+        jobBoard: label("jobBoard"),
+        jobBoardIntro: label("jobBoardIntro"),
+        jobBusy: label("jobBusy"),
+        jobDrop: label("jobDrop"),
+        jobDropCancel: label("jobDropCancel"),
+        jobDropTitle: label("jobDropTitle"),
+        jobs: label("jobs"),
         owned: label("owned"),
         projectFunded: label("projectFunded"),
         projects: label("projects"),
@@ -715,8 +738,8 @@ export class PrototypeScene extends Phaser.Scene {
     });
     // Back and Escape leave the shop for the station card, and the card undocks. Settings
     // opened over either closes first, as the innermost card.
-    const { card, shop } = this.station.layers;
-    const stationLayers = [card, shop].map((layer) =>
+    const { card, inner } = this.station.layers;
+    const stationLayers = [card, inner].map((layer) =>
       this.controls.registerBack({
         back: layer.back,
         isOpen: () => layer.isOpen() && !this.settingsOpen,
@@ -1066,7 +1089,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
-    this.controls.setPause({ inDanger: this.model.inDanger, map: this.model.map });
+    this.controls.setPause({
+      inDanger: this.model.inDanger,
+      map: this.model.map,
+      towing: this.model.towing,
+    });
     this.shell.render(state, screen);
     const flightGalaxy = state.mode === "space" ? state.flight?.sector : undefined;
     this.palette = (flightGalaxy && this.galaxyPalettes.get(flightGalaxy)) || this.basePalette;
@@ -1243,6 +1270,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
+    this.drawJobs();
     for (const object of flight.objects) {
       this.drawObject(object);
     }
@@ -1783,6 +1811,82 @@ export class PrototypeScene extends Phaser.Scene {
     ink.fillStyle(LIGHT_FIELD.ink, 1);
     for (const corner of arrow) {
       ink.fillCircle(corner.x, corner.y, width / 2);
+    }
+  }
+
+  /**
+   * Landmarks, a rescue's craft on its tow line, a hunt's search area and its lost item's glint
+   * (gameplay/quests.md), in the galaxy's palette. Placeholders until Art's landmark, craft and
+   * lost-item art.
+   */
+  private drawJobs(): void {
+    const scenery = this.model.jobScenery;
+    const margin = 160;
+    const near = (point: Vec) =>
+      point.x >= -margin &&
+      point.y >= -margin &&
+      point.x <= SCREEN.width + margin &&
+      point.y <= SCREEN.height + margin;
+    const pulse = this.reducedMotion ? 0.5 : (this.time.now / 1200) % 1;
+    for (const landmark of scenery.landmarks) {
+      const point = this.project(landmark);
+      if (!near(point)) {
+        continue;
+      }
+      if (landmark.kind === "nebula") {
+        this.ink.fillStyle(this.palette.environmentDetail, 0.22);
+        this.ink.fillEllipse(point.x, point.y, 220, 110);
+        this.ink.fillEllipse(point.x + 46, point.y - 16, 130, 64);
+        this.ink.fillEllipse(point.x - 52, point.y + 12, 110, 52);
+      } else if (landmark.kind === "wreck") {
+        this.ink.lineStyle(2, this.palette.environmentDetail, 0.9);
+        const hull = [
+          [-34, 4],
+          [-10, -12],
+          [18, -8],
+          [4, 2],
+          [30, 12],
+          [-6, 16],
+        ].map(([x, y]) => new Phaser.Math.Vector2(point.x + x!, point.y + y!));
+        this.ink.strokePoints(hull, true);
+      } else {
+        this.ink.fillStyle(this.palette.pointOfInterest, 0.9);
+        this.ink.fillCircle(point.x, point.y, 4);
+        this.ink.lineStyle(1, this.palette.pointOfInterest, 0.7 - pulse * 0.5);
+        this.ink.strokeCircle(point.x, point.y, 10 + pulse * 18);
+      }
+    }
+    if (scenery.area) {
+      const { radius, x, y } = scenery.area;
+      const points = Array.from({ length: 48 }, (_, index) => {
+        const angle = (index / 48) * Math.PI * 2;
+        const at = this.project({
+          x: x + Math.cos(angle) * radius,
+          y: y + Math.sin(angle) * radius,
+        });
+        return new Phaser.Math.Vector2(at.x, at.y);
+      });
+      this.ink.lineStyle(1, this.palette.pointOfInterest, 0.45);
+      this.ink.strokePoints(points, true);
+    }
+    if (scenery.craft) {
+      const craft = this.project(scenery.craft);
+      if (scenery.towing) {
+        const ship = this.project(this.model.state.flight!.player);
+        this.ink.lineStyle(1, this.palette.pointOfInterest, 0.8);
+        this.ink.lineBetween(ship.x, ship.y, craft.x, craft.y);
+      }
+      this.ink.fillStyle(this.palette.environmentDetail, 1);
+      this.ink.fillEllipse(craft.x, craft.y, 22, 12);
+      this.ink.lineStyle(1, this.palette.active, 0.9);
+      this.ink.strokeEllipse(craft.x, craft.y, 22, 12);
+    }
+    if (scenery.glint) {
+      const glint = this.project(scenery.glint);
+      const size = 4 + pulse * 4;
+      this.overlay.lineStyle(2, this.palette.active, 1 - pulse * 0.5);
+      this.overlay.lineBetween(glint.x - size, glint.y, glint.x + size, glint.y);
+      this.overlay.lineBetween(glint.x, glint.y - size, glint.x, glint.y + size);
     }
   }
 

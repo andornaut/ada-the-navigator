@@ -11,6 +11,7 @@ import {
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
@@ -56,6 +57,7 @@ import {
   rollEnemyDrop,
   splitStardust,
 } from "./drops.ts";
+import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
@@ -142,6 +144,13 @@ function clearOfSafeAreas(content: PrototypeContent, object: SpaceObject, flight
       return radius === null || clearOf(radius, o, object);
     }) && arrivalPoints(flight).every((point) => clearOf(content.tuning.safeRadius, point, object))
   );
+}
+/**
+ * Whether an object's footprint keeps clear of every landmark's charting range, so chunk
+ * generation leaves the space around landmarks open (gameplay/quests.md "Landmarks").
+ */
+function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
+  return landmarkSites(flight.sector).every((site) => clearOf(LANDMARK_TUNING.chart, site, object));
 }
 const SCENERY = ["rock", "resource", "debris"];
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
@@ -374,7 +383,8 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
           !existing.has(object.id) &&
           !Object.hasOwn(flight.world.notables, object.id) &&
           clearOf(content.tuning.safeRadius, flight.player, object) &&
-          clearOfSafeAreas(content, object, flight)
+          clearOfSafeAreas(content, object, flight) &&
+          clearOfLandmarks(object, flight)
         ) {
           flight.objects.push(object);
           existing.add(object.id);
@@ -867,12 +877,16 @@ export function ensureDestination(
     x: flight.player.x + heading.x * span - heading.y * offset,
     y: flight.player.y + heading.y * span + heading.x * offset,
   };
-  // Story destinations keep clear of each other and of the sector's fixed stations.
+  // Story destinations keep clear of each other and of the sector's fixed stations and
+  // landmarks.
   while (
     flight.objects.some(
       (o) => o.kind === "destination" && distance(o, target) < content.tuning.safeRadius * 2,
     ) ||
-    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, target).length > 0
+    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, target).length > 0 ||
+    landmarkSites(flight.sector).some(
+      (site) => distance(site, target) < LANDMARK_TUNING.placeClearance,
+    )
   ) {
     target.x -= heading.y * content.tuning.safeRadius * 2.5;
     target.y += heading.x * content.tuning.safeRadius * 2.5;
@@ -1117,6 +1131,30 @@ export function undockFlight(content: PrototypeContent, id: string, flight: Flig
   movementHeadings.delete(flight);
   return true;
 }
+/**
+ * While a tow line is attached, Ada's current handling scaled by the tow multipliers
+ * (gameplay/quests.md "Tow handling"): a lower top speed, slower speed changes, wider turns.
+ */
+export function towing<
+  T extends {
+    accelerationSeconds: number;
+    brakingSeconds: number;
+    speedRatio: number;
+    turnSeconds: number;
+  },
+>(flight: Pick<FlightState, "tow">, physics: T): T {
+  if (!flight.tow) {
+    return physics;
+  }
+  const { responseScale, topSpeedScale, turnScale } = JOB_TUNING.tow;
+  return {
+    ...physics,
+    accelerationSeconds: physics.accelerationSeconds * responseScale,
+    brakingSeconds: physics.brakingSeconds * responseScale,
+    speedRatio: physics.speedRatio * topSpeedScale,
+    turnSeconds: physics.turnSeconds * turnScale,
+  };
+}
 function move(
   content: PrototypeContent,
   dt: number,
@@ -1125,7 +1163,7 @@ function move(
 ): void {
   const magnitude = Math.min(1, length(input.move));
   // Engine tuning changes only Ada's physics; enemies keep reading the base maxSpeed.
-  const physics = shipTuning(ECONOMY, content, flight.levels).physics;
+  const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
   const top = adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics });
   const motion = stepShipMotion(
     physics,

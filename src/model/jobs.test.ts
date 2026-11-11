@@ -1,0 +1,456 @@
+import { describe, expect, it } from "vitest";
+
+import { CONVERSATIONS } from "../data/conversations.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { JOB_REWARDS, JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import type { SectorId } from "../data/types.ts";
+import { ensureStation, stationDock, stepFlight, towing } from "./flight.ts";
+import { GameModel, newGameState } from "./game.ts";
+import {
+  acceptJob,
+  type BoardContext,
+  completeJob,
+  dropJob,
+  type JobBook,
+  pullTow,
+  stationBoard,
+} from "./jobs.ts";
+import { chartLandmarks, landmarkSites } from "./landmarks.ts";
+import { restoreSave } from "./save.ts";
+import { stationsNear } from "./stations.ts";
+import type { FlightState, HeldJob, Vec } from "./types.ts";
+import { shipTuning } from "./upgrades.ts";
+
+const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+const use = { ...idle, use: true };
+const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
+const emptyBook = (made = 0): JobBook => ({ jobs: { boards: {}, made }, tasks: {} });
+const context = (sector: SectorId = 1, charted: string[] = []): BoardContext => ({
+  hostiles: [],
+  outposts: [],
+  progress: { charted },
+  sector,
+});
+/** Galaxy one's station nearest the world origin. */
+function firstStation(sector: SectorId = 1) {
+  const [site] = stationsNear(ECONOMY, sector, 20_000, { x: 0, y: 0 }).sort(
+    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+  );
+  return site!;
+}
+/** A galaxy-one flight docked at its first station. */
+function docked(): {
+  model: GameModel;
+  flight: FlightState;
+  station: ReturnType<typeof firstStation>;
+} {
+  const model = new GameModel(PROTOTYPE);
+  // Every lesson and lore line but the jobs' is already heard, so only job lines and Penny talk.
+  model.state.seenConversations.push(
+    ...CONVERSATIONS.filter(
+      ({ trigger }) => trigger.kind !== "job" && trigger.kind !== "jobLore",
+    ).map(({ id }) => id),
+  );
+  model.startSector(1);
+  const flight = model.state.flight!;
+  const station = firstStation();
+  ensureStation(PROTOTYPE, station.id, flight);
+  flight.player = { x: station.x, y: station.y };
+  model.state.docked = station.id;
+  return { flight, model, station };
+}
+/** Takes the docked board's offer of a type and undocks. */
+function take(model: GameModel, type: HeldJob["type"]): HeldJob {
+  const offer = model.jobBoard().find((row) => row.type === type);
+  expect(offer).toBeDefined();
+  expect(model.acceptJob(offer!.id)).toBe("accepted");
+  model.undock();
+  return structuredClone(model.state.tasks[1]!);
+}
+/** Places Ada at a point at rest with a full shield, out of danger, and steps once. */
+function flyTo(model: GameModel, point: Vec, input = idle): void {
+  const flight = model.state.flight!;
+  flight.player = { ...point };
+  flight.velocity = { x: 0, y: 0 };
+  flight.dangerFor = 0;
+  flight.shield = model.shieldMax;
+  model.state.dialogue = null;
+  model.step(0.05, input);
+}
+/** Holds Ada at a point for seconds, tapping through each line; returns the instances heard. */
+function listen(model: GameModel, point: Vec, seconds: number): string[] {
+  const heard: string[] = [];
+  for (let step = 0; step < seconds / 0.05; step++) {
+    flyTo(model, point);
+    const line = model.conversation;
+    if (line) {
+      const instance = line.key.slice(0, line.key.lastIndexOf(":"));
+      if (!heard.includes(instance)) {
+        heard.push(instance);
+      }
+      model.advanceConversation();
+    }
+  }
+  return heard;
+}
+
+describe("landmarks", () => {
+  it("place twelve per galaxy within 25000 of the origin, 3000 apart and 1500 from stations", () => {
+    for (const sector of [1, 2, 3] as const) {
+      const sites = landmarkSites(sector);
+      expect(sites).toHaveLength(LANDMARK_TUNING.count);
+      expect(new Set(sites.map(({ kind }) => kind))).toEqual(
+        new Set(["nebula", "wreck", "beacon"]),
+      );
+      for (const site of sites) {
+        expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(25_000);
+        expect(stationsNear(ECONOMY, sector, 1500, site)).toEqual([]);
+        for (const other of sites.filter((entry) => entry !== site)) {
+          expect(distance(site, other)).toBeGreaterThanOrEqual(3000);
+        }
+      }
+    }
+  });
+
+  it("chart within 300 of Ada at once and only once", () => {
+    const [site] = landmarkSites(1);
+    const progress = { charted: [] as string[] };
+    expect(chartLandmarks(1, progress, { x: site!.x + 301, y: site!.y })).toEqual([]);
+    expect(chartLandmarks(1, progress, { x: site!.x + 299, y: site!.y })).toEqual([site!.id]);
+    expect(chartLandmarks(1, progress, site!)).toEqual([]);
+    expect(progress.charted).toEqual([site!.id]);
+  });
+});
+
+describe("job boards", () => {
+  it("offer three jobs of distinct types with targets in their ranges and table rewards", () => {
+    const station = firstStation();
+    const book = emptyBook();
+    const outpost = { id: "growers", x: station.x + 4000, y: station.y };
+    const board = stationBoard({ ...context(), outposts: [outpost] }, book, station);
+    expect(board).toHaveLength(3);
+    expect(new Set(board.map(({ type }) => type)).size).toBe(3);
+    for (const offer of board) {
+      expect(offer.station).toBe(station.id);
+      const reach = distance(offer.target, station);
+      if (offer.type === "delivery") {
+        expect(reach).toBeGreaterThanOrEqual(3000);
+        expect(reach).toBeLessThanOrEqual(9000);
+        expect(offer.reward).toBe(JOB_REWARDS[1][reach >= 6000 ? "deliveryLong" : "deliveryShort"]);
+      } else if (offer.type === "survey") {
+        expect(landmarkSites(1).some(({ id }) => id === offer.target.id)).toBe(true);
+        expect(offer.reward).toBe(JOB_REWARDS[1].survey);
+      } else {
+        expect(reach).toBeGreaterThanOrEqual(3000);
+        expect(reach).toBeLessThanOrEqual(7000);
+        expect(offer.reward).toBe(JOB_REWARDS[1][offer.type]);
+      }
+      if (offer.type === "hunt") {
+        expect(distance(offer.spot!, offer.target)).toBeLessThan(JOB_TUNING.hunt.radius);
+      }
+    }
+    // Offers stay until taken.
+    expect(stationBoard(context(), book, station)).toEqual(board);
+  });
+
+  it("keep rescue and hunt targets 1000 from frigates and capitals", () => {
+    const station = firstStation();
+    const hostiles = Array.from({ length: 36 }, (_, index) => ({
+      x: station.x + Math.cos(index / 6) * 5000,
+      y: station.y + Math.sin(index / 6) * 5000,
+    }));
+    for (let made = 0; made < 20; made++) {
+      const book = emptyBook(made);
+      for (const offer of stationBoard({ ...context(), hostiles }, book, station)) {
+        if (offer.type === "rescue" || offer.type === "hunt") {
+          for (const hostile of hostiles) {
+            expect(distance(hostile, offer.target)).toBeGreaterThanOrEqual(1000);
+          }
+        }
+      }
+    }
+  });
+
+  it("stop offering surveys once every landmark is charted, replacing a stale survey", () => {
+    const station = firstStation();
+    const book = emptyBook();
+    const board = stationBoard(context(), book, station);
+    const survey = board.find(({ type }) => type === "survey")!;
+    const slot = board.indexOf(survey);
+    const charted = landmarkSites(1).map(({ id }) => id);
+    const after = stationBoard(context(1, charted), book, station);
+    expect(after.some(({ type }) => type === "survey")).toBe(false);
+    expect(after[slot]?.id).not.toBe(survey.id);
+  });
+
+  it("hold one job per galaxy, refuse others while held and return a dropped job", () => {
+    const station = firstStation();
+    const book = emptyBook();
+    const [first, second] = stationBoard(context(), book, station);
+    expect(acceptJob(1, station.id, first!.id, book)).toBe("accepted");
+    expect(acceptJob(1, station.id, second!.id, book)).toBe("busy");
+    expect(dropJob(1, book)).toBe(true);
+    expect(stationBoard(context(), book, station)[0]).toEqual(first);
+    expect(acceptJob(1, station.id, second!.id, book)).toBe("accepted");
+  });
+
+  it("refill a completed job's slot from the pool and pay its reward", () => {
+    const station = firstStation();
+    const book = emptyBook();
+    const board = stationBoard(context(), book, station);
+    const taken = board[1]!;
+    acceptJob(1, station.id, taken.id, book);
+    expect(completeJob(context(), station, book)).toBe(taken.reward);
+    expect(book.tasks[1]).toBeUndefined();
+    const after = stationBoard(context(), book, station);
+    expect(after).toHaveLength(3);
+    expect(after[1]!.id).not.toBe(taken.id);
+    expect(after[0]).toEqual(board[0]);
+  });
+});
+
+describe("tow handling", () => {
+  it("pulls the craft only while the 80 unit line is taut", () => {
+    const tow = { x: 50, y: 0 };
+    pullTow({ x: 0, y: 0 }, tow);
+    expect(tow).toEqual({ x: 50, y: 0 });
+    pullTow({ x: -100, y: 0 }, tow);
+    expect(tow.x).toBeCloseTo(-20);
+    expect(tow.y).toBeCloseTo(0);
+  });
+
+  it("scales Ada's current handling: top speed 0.65, speed changes 2, turns 1.5", () => {
+    const physics = shipTuning(ECONOMY, PROTOTYPE, newGameState().economy.levels).physics;
+    expect(towing({}, physics)).toBe(physics);
+    expect(towing({ tow: { x: 0, y: 0 } }, physics)).toEqual({
+      ...physics,
+      accelerationSeconds: physics.accelerationSeconds * 2,
+      brakingSeconds: physics.brakingSeconds * 2,
+      speedRatio: physics.speedRatio * 0.65,
+      turnSeconds: physics.turnSeconds * 1.5,
+    });
+  });
+
+  it("slows a flight with a craft in tow", () => {
+    const run = (tow: boolean) => {
+      const { flight, model } = docked();
+      model.state.docked = null;
+      flight.player = { x: 0, y: 0 };
+      if (tow) {
+        flight.tow = { x: 0, y: 0 };
+      }
+      for (let step = 0; step < 120; step++) {
+        stepFlight(PROTOTYPE, 1 / 60, { ...idle, move: { x: 1, y: 0 } }, flight);
+        flight.dangerFor = 0;
+      }
+      return Math.hypot(flight.velocity.x, flight.velocity.y);
+    };
+    expect(run(true)).toBeLessThan(run(false) * 0.66);
+  });
+});
+
+describe("jobs in play", () => {
+  it("show the held job at the top of every board in its galaxy, marked Active", () => {
+    const { model } = docked();
+    const held = take(model, "survey");
+    const other = stationsNear(ECONOMY, 1, 30_000, { x: 0, y: 0 }).find(
+      ({ id }) => id !== held.station,
+    )!;
+    ensureStation(PROTOTYPE, other.id, model.state.flight!);
+    model.state.docked = other.id;
+    const rows = model.jobBoard();
+    expect(rows[0]).toMatchObject({ id: held.id, state: "held" });
+    expect(rows.slice(1).every(({ state }) => state === "busy")).toBe(true);
+    expect(model.acceptJob(rows[1]!.id)).toBe("busy");
+    expect(model.jobObjective).toBe(model.jobText(held).title);
+    // Dropping returns it to the board that offered it.
+    expect(model.dropJob()).toBe(true);
+    model.state.docked = held.station;
+    expect(model.jobBoard().some(({ id, state }) => id === held.id && state === "offer")).toBe(
+      true,
+    );
+  });
+
+  it("complete a survey on charting its landmark: notice, reward, refill and a lore line", () => {
+    const { model } = docked();
+    const held = take(model, "survey");
+    const stardust = model.state.economy.stardust;
+    expect(model.indicatorTargets).toContainEqual({
+      id: held.target.id,
+      kind: "job",
+      x: held.target.x,
+      y: held.target.y,
+    });
+    flyTo(model, held.target);
+    expect(model.state.progress[1].charted).toContain(held.target.id);
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(stardust + held.reward);
+    expect(model.state.notice).toBe(`Job complete: +${held.reward} Stardust`);
+    const board = model.state.jobs.boards[1]![held.station]!;
+    expect(board).toHaveLength(3);
+    expect(board.some(({ id }) => id === held.id)).toBe(false);
+    // The lore line waits under the notice, then shows.
+    model.dismissNotice();
+    expect(listen(model, held.target, 60)).toContain("jobLore:1:0");
+  });
+
+  it("tow a rescue: Tow within 120, Travel refused, the tow saved and returned on Return home", () => {
+    const { model, station } = docked();
+    model.state.progress[1].stations.push(station.id);
+    const held = take(model, "rescue");
+    const flight = model.state.flight!;
+    flyTo(model, { x: held.target.x + 121, y: held.target.y });
+    expect(model.contextLabel).not.toBe("Tow");
+    flyTo(model, { x: held.target.x + 100, y: held.target.y });
+    expect(model.contextLabel).toBe("Tow");
+    flyTo(model, { x: held.target.x + 100, y: held.target.y }, use);
+    expect(flight.tow).toEqual({ x: held.target.x, y: held.target.y });
+    expect(model.towing).toBe(true);
+    expect(model.jobScenery).toMatchObject({ craft: flight.tow, towing: true });
+    model.teleport(station.id);
+    expect(model.state.notice).toBe("Unavailable while towing.");
+    expect(distance(flight.player, held.target)).toBeLessThan(200);
+    // Closing the game resumes the tow exactly.
+    expect(new GameModel(PROTOTYPE, model.save()).state.flight!.tow).toEqual(flight.tow);
+    flight.dangerFor = 0;
+    model.returnHome();
+    expect(model.state.flight).toBeNull();
+    expect(model.state.tasks[1]).toEqual(held);
+    model.startSector(1);
+    expect(model.jobScenery).toMatchObject({
+      craft: { x: held.target.x, y: held.target.y },
+      towing: false,
+    });
+  });
+
+  it("complete a rescue once the craft is within 400 of the issuing station", () => {
+    const { model, station } = docked();
+    const held = take(model, "rescue");
+    const flight = model.state.flight!;
+    flyTo(model, held.target, use);
+    expect(flight.tow).toBeDefined();
+    const stardust = model.state.economy.stardust;
+    flight.tow = { x: station.x + 410, y: station.y };
+    flyTo(model, { x: station.x + 480, y: station.y });
+    expect(model.state.tasks[1]).toBeDefined();
+    flight.tow = { x: station.x + 390, y: station.y };
+    flyTo(model, { x: station.x + 460, y: station.y });
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(flight.tow).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(stardust + held.reward);
+  });
+
+  it("find a lost item: the area's indicator shows outside it and contact collects the item", () => {
+    const { model } = docked();
+    const held = take(model, "hunt");
+    const spot = held.spot!;
+    expect(model.indicatorTargets.some(({ kind }) => kind === "job")).toBe(true);
+    expect(model.jobScenery.area).toEqual({ radius: 900, x: held.target.x, y: held.target.y });
+    // The far side of the area from the item, so nothing is collected on entry.
+    const away = Math.atan2(held.target.y - spot.y, held.target.x - spot.x);
+    flyTo(model, {
+      x: held.target.x + Math.cos(away) * 899,
+      y: held.target.y + Math.sin(away) * 899,
+    });
+    expect(model.state.tasks[1]?.entered).toBe(true);
+    expect(model.indicatorTargets.some(({ kind }) => kind === "job")).toBe(false);
+    flyTo(model, { x: spot.x + 161, y: spot.y });
+    expect(model.jobScenery.glint).toBeNull();
+    flyTo(model, { x: spot.x + 150, y: spot.y });
+    expect(model.jobScenery.glint).toEqual(spot);
+    const stardust = model.state.economy.stardust;
+    flyTo(model, spot);
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(stardust + held.reward);
+  });
+
+  it("deliver to a station by docking there, replacing a lost item at the issuing station", () => {
+    const { model, station } = docked();
+    const target = stationsNear(ECONOMY, 1, 20_000, station).find(({ id }) => id !== station.id)!;
+    model.state.tasks[1] = {
+      carrying: true,
+      id: "job:test",
+      item: "seeds",
+      kind: "job",
+      reward: 15,
+      station: station.id,
+      target: { id: target.id, x: target.x, y: target.y },
+      type: "delivery",
+    };
+    model.undock();
+    expect(model.jobObjective).toBe("Deliver seeds to Station");
+    model.state.flight!.dangerFor = 0;
+    model.returnHome();
+    expect(model.state.tasks[1]?.carrying).toBe(false);
+    model.startSector(1);
+    expect(model.indicatorTargets).toContainEqual({
+      id: station.id,
+      kind: "job",
+      x: station.x,
+      y: station.y,
+    });
+    const dockAt = (site: Vec & { id: string }) => {
+      ensureStation(PROTOTYPE, site.id, model.state.flight!);
+      flyTo(model, stationDock(site));
+      expect(model.state.docked).toBe(site.id);
+    };
+    dockAt(station);
+    expect(model.state.tasks[1]?.carrying).toBe(true);
+    model.undock();
+    const stardust = model.state.economy.stardust;
+    dockAt(target);
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(stardust + 15);
+  });
+
+  it("restore saved jobs, charted landmarks and the tow, and reject invalid ones", () => {
+    const { model } = docked();
+    take(model, "rescue");
+    model.state.progress[1].charted.push(landmarkSites(1)[0]!.id);
+    model.state.flight!.tow = { x: 1, y: 2 };
+    const saved = JSON.parse(model.save()) as ReturnType<typeof newGameState>;
+    expect(restoreSave(saved)).toEqual(model.state);
+    const legacy = structuredClone(saved) as Partial<typeof saved>;
+    delete legacy.jobs;
+    delete legacy.tasks;
+    expect(restoreSave(legacy)).toMatchObject(emptyBook());
+    const badLandmark = structuredClone(saved);
+    badLandmark.progress[1].charted = ["landmark:1:99"];
+    expect(restoreSave(badLandmark)).toBeNull();
+    const badJob = structuredClone(saved);
+    badJob.tasks[1]!.station = "station:nowhere";
+    expect(restoreSave(badJob)).toBeNull();
+  });
+
+  it("let Penny sense a lost item within 350 during her usual rest", () => {
+    const { model } = docked();
+    const held = take(model, "hunt");
+    const spot = held.spot!;
+    // An uncharted landmark 600 away is an ordinary Penny point, which starts her 60 s rest.
+    const landmark = landmarkSites(1).find(
+      (site) => distance(site, spot) > 5000 && distance(site, held.target) > 5000,
+    )!;
+    expect(listen(model, { x: landmark.x + 600, y: landmark.y }, 2)).toContain(
+      `penny:1:${landmark.id}`,
+    );
+    expect(listen(model, { x: spot.x + 340, y: spot.y }, 30)).toContain(`penny:1:job:${held.id}`);
+  });
+});
+
+describe("job conversations", () => {
+  it("include the tow, search and every galaxy's lore lines", () => {
+    expect(CONVERSATIONS.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([
+        "job:towAttached",
+        "job:searchEntered",
+        "jobLore:1:0",
+        "jobLore:1:1",
+        "jobLore:2:0",
+        "jobLore:2:1",
+        "jobLore:3:0",
+        "jobLore:3:1",
+      ]),
+    );
+  });
+});

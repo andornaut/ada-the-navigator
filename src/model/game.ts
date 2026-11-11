@@ -2,11 +2,13 @@ import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
   GENERAL_NAMED,
+  type JobMoment,
   type Mood,
   SPEAKERS,
 } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -34,6 +36,18 @@ import {
   objectiveDestination,
   questItemDestination,
 } from "./indicators.ts";
+import {
+  acceptJob,
+  type BoardContext,
+  completeJob,
+  dropJob,
+  heldJob,
+  jobHostiles,
+  nearestSafePlace,
+  pullTow,
+  stationBoard,
+} from "./jobs.ts";
+import { chartLandmarks, galaxyLandmarks, landmarkById, unchartedNear } from "./landmarks.ts";
 import { type GalaxyMap, galaxyMap, NO_LANDMARKS } from "./map.ts";
 import {
   donate,
@@ -59,6 +73,7 @@ import {
   shopRows,
   type ShopTab,
 } from "./shop.ts";
+import { stationById, type StationSite } from "./stations.ts";
 import {
   advance,
   boardingScene,
@@ -79,7 +94,17 @@ import {
   type StoryPosition,
   storyStart,
 } from "./storybook.ts";
-import type { FlightEvent, FlightInput, GameState, SectorProgress } from "./types.ts";
+import type {
+  FlightEvent,
+  FlightInput,
+  FlightState,
+  GameState,
+  HeldJob,
+  JobOffer,
+  JobTarget,
+  SectorProgress,
+  Vec,
+} from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
   ownedForSave,
@@ -91,6 +116,7 @@ import {
 
 export function newProgress(): SectorProgress {
   return {
+    charted: [],
     deposited: 0,
     disabledEnemies: 0,
     discoveries: 0,
@@ -115,6 +141,7 @@ export function newGameState(): GameState {
     docked: null,
     economy: newEconomy(ECONOMY),
     flight: null,
+    jobs: { boards: {}, made: 0 },
     mode: "home",
     notice: "",
     progress: { 1: progress(), 2: progress(), 3: progress() },
@@ -122,6 +149,7 @@ export function newGameState(): GameState {
     seenConversations: [],
     selectedSector: 1,
     started: false,
+    tasks: {},
     unlocked: [1],
     version: 1,
   };
@@ -149,6 +177,34 @@ export function galaxyRoute(sector: SectorId): readonly string[] {
 const first = (sector: SectorId): string => galaxyRoute(sector)[0]!;
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
+/** A job board row: the held job (Active, with Drop) or an offer, refused while Ada is busy. */
+export interface JobRow {
+  readonly id: string;
+  readonly type: JobType;
+  readonly title: string;
+  readonly detail: string;
+  readonly reward: number;
+  readonly state: "held" | "offer" | "busy";
+}
+
+/** What the scene draws for jobs: landmarks, a rescue's craft and a hunt's area and glint. */
+export interface JobScenery {
+  readonly landmarks: readonly (Vec & {
+    readonly charted: boolean;
+    readonly id: string;
+    readonly kind: string;
+  })[];
+  /** A rescue's stranded or towed craft. */
+  readonly craft: Vec | null;
+  readonly towing: boolean;
+  /** A hunt's search area. */
+  readonly area: (Vec & { readonly radius: number }) | null;
+  /** A hunt's lost item while it glints, within glint range of Ada. */
+  readonly glint: Vec | null;
+}
+
+const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
+
 /** The conversation line the box shows, with its speaker's name tab and portrait side. */
 export interface ConversationView {
   /** Seconds the line has shown, which times a speaking loop. */
@@ -173,6 +229,8 @@ export class GameModel {
   private readonly content: PrototypeContent;
   private readonly talk: ConversationDirector;
   private noticeShownFor = 0;
+  /** Held-job moments since the last flight step, for the conversation director. */
+  private jobMoments: (JobMoment | "jobComplete")[] = [];
   private previousSeed = 0;
   // The home half's place is not saved: a launch at home shows the start screen, and Continue
   // rebuilds any waiting scene from story progress.
@@ -317,6 +375,10 @@ export class GameModel {
       )[0]?.id;
   }
   get contextLabel(): string | undefined {
+    const job = this.jobUse();
+    if (job) {
+      return this.label(job);
+    }
     const id = this.nearest();
     if (!id) {
       return undefined;
@@ -557,6 +619,12 @@ export class GameModel {
       return;
     }
     this.current.questItem = null;
+    // A delivery's item is lost like a story item, and a towed craft returns to where it was
+    // stranded with the flight.
+    const held = heldJob(this.state.selectedSector, this.state);
+    if (held?.type === "delivery") {
+      held.carrying = false;
+    }
     this.pullLoadout();
     this.previousSeed = this.state.flight?.seed ?? this.previousSeed;
     this.talk.endFlight();
@@ -583,6 +651,10 @@ export class GameModel {
     }
     if (this.inDanger) {
       this.notify(this.label("travelUnavailable"));
+      return;
+    }
+    if (f.tow) {
+      this.notify(this.label("towTravel"));
       return;
     }
     if (station) {
@@ -759,6 +831,11 @@ export class GameModel {
         this.current.stage = 2;
       }
     }
+    const charted = chartLandmarks(f.sector, this.current, f.player);
+    mapped.push(...charted);
+    this.stepJob(events, f);
+    const jobMoments = this.jobMoments;
+    this.jobMoments = [];
     const near = (range: number) => (object: { x: number; y: number }) =>
       Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
     const held = this.noticeShowing;
@@ -775,10 +852,17 @@ export class GameModel {
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: events.some((event) => event.type === "docked"),
       inDanger: this.inDanger,
+      jobMoments,
+      lostItemNear: this.lostItemNear(f),
       moved: Math.hypot(input.move.x, input.move.y) > 0,
       newStation,
       newlyMapped: mapped,
-      pennyPoints: pennyPoints(this.current, this.holodiskWaypoint, f),
+      pennyPoints: pennyPoints(
+        this.current,
+        this.holodiskWaypoint,
+        unchartedNear(f.sector, this.current, CONVERSATION_TUNING.pennyRange, f.player),
+        f,
+      ),
       shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
       stardustInSight: f.objects.some(
         (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
@@ -845,6 +929,7 @@ export class GameModel {
     return indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
       holodiskWaypoint: this.holodiskWaypoint,
+      job: this.jobIndicator(f),
       objective: this.objectiveId(f.sector),
       progress: p,
       questItem: questItemDestination(p),
@@ -959,6 +1044,9 @@ export class GameModel {
     }
   }
   interact(): void {
+    if (this.useJob()) {
+      return;
+    }
     const id = this.nearest();
     const f = this.state.flight;
     if (!id || !f) {
@@ -1050,6 +1138,252 @@ export class GameModel {
     } else {
       this.exchange(id);
     }
+  }
+  /** The current galaxy's held station job. */
+  private get held(): HeldJob | undefined {
+    return heldJob(this.state.selectedSector, this.state);
+  }
+  /** Known outposts in the flight: delivery destinations and tow safe places. */
+  private outposts(flight: FlightState): JobTarget[] {
+    return flight.objects
+      .filter(
+        (object) =>
+          object.kind === "destination" &&
+          object.id !== "holodisk" &&
+          this.current.known.includes(object.id),
+      )
+      .map(({ id, x, y }) => ({ id, x, y }));
+  }
+  private jobContext(flight: FlightState): BoardContext {
+    return {
+      hostiles: jobHostiles(flight),
+      outposts: this.outposts(flight),
+      progress: this.current,
+      sector: flight.sector,
+    };
+  }
+  private jobStation(job: HeldJob): StationSite | null {
+    return stationById(ECONOMY, this.state.selectedSector, job.station);
+  }
+  /** A place's name in job titles: its travel list label. */
+  private placeLabel(id: string): string {
+    return id.startsWith("station:")
+      ? this.label("station")
+      : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name);
+  }
+  /** A job's title and one line of detail (gameplay/quests.md "Player strings"). */
+  jobText(job: JobOffer): { readonly detail: string; readonly title: string } {
+    const titles: Record<JobType, string> = {
+      delivery: fill(this.label("deliveryTitle"), {
+        item: job.item,
+        place: this.placeLabel(job.target.id),
+      }),
+      hunt: fill(this.label("huntTitle"), { item: job.item }),
+      rescue: fill(this.label("rescueTitle"), { craft: job.item }),
+      survey: fill(this.label("surveyTitle"), { landmark: job.item }),
+    };
+    return { detail: this.label(`${job.type}About`), title: titles[job.type] };
+  }
+  /**
+   * The docked station's job board: the held job first, marked Active, then the station's
+   * offers, which refuse while the galaxy's optional task slot is taken.
+   */
+  jobBoard(): JobRow[] {
+    const f = this.state.flight;
+    const site = f && this.state.docked && stationById(ECONOMY, f.sector, this.state.docked);
+    if (!f || !site) {
+      return [];
+    }
+    const board = stationBoard(this.jobContext(f), this.state, site);
+    const held = this.held;
+    const busy = Boolean(this.state.tasks[f.sector]);
+    const row = (job: JobOffer, state: JobRow["state"]): JobRow => ({
+      ...this.jobText(job),
+      id: job.id,
+      reward: job.reward,
+      state,
+      type: job.type,
+    });
+    return [
+      ...(held ? [row(held, "held")] : []),
+      ...board
+        .filter((offer) => offer.id !== held?.id)
+        .map((offer) => row(offer, busy ? "busy" : "offer")),
+    ];
+  }
+  /** Accepts an offer on the docked station's board, with no confirm. */
+  acceptJob(id: string): "accepted" | "busy" | "missing" {
+    const station = this.state.docked;
+    return station && this.state.flight
+      ? acceptJob(this.state.flight.sector, station, id, this.state)
+      : "missing";
+  }
+  /** Drops the held job; a towed craft goes back to where it was stranded. */
+  dropJob(): boolean {
+    const dropped = dropJob(this.state.selectedSector, this.state);
+    if (dropped && this.state.flight) {
+      delete this.state.flight.tow;
+    }
+    return dropped;
+  }
+  /** The held job's objective, shown beside the story objective and labelled Job. */
+  get jobObjective(): string | null {
+    const held = this.held;
+    return held ? this.jobText(held).title : null;
+  }
+  /** Whether a rescue's tow line is attached, which refuses Travel. */
+  get towing(): boolean {
+    return this.state.mode === "space" && Boolean(this.state.flight?.tow);
+  }
+  /** What the Use button does for the held job here, if anything: Tow or Deliver. */
+  private jobUse(): "tow" | "deliver" | null {
+    const f = this.state.flight;
+    const held = this.held;
+    if (!f || !held || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+      return null;
+    }
+    if (
+      held.type === "rescue" &&
+      !f.tow &&
+      distance(held.target, f.player) <= JOB_TUNING.tow.attach
+    ) {
+      return "tow";
+    }
+    // A station destination takes its delivery on docking; an outpost on Use.
+    if (held.type === "delivery" && held.carrying && this.nearest() === held.target.id) {
+      return "deliver";
+    }
+    return null;
+  }
+  /** Use for the held job: attaches the tow line or delivers to an outpost. */
+  private useJob(): boolean {
+    const use = this.jobUse();
+    const f = this.state.flight;
+    const held = this.held;
+    if (!use || !f || !held) {
+      return false;
+    }
+    if (use === "tow") {
+      f.tow = { x: held.target.x, y: held.target.y };
+      this.jobMoments.push("towAttached");
+    } else {
+      this.finishJob(f);
+    }
+    return true;
+  }
+  /** Pays the held job wherever Ada is, refills its board slot and asks for a lore line. */
+  private finishJob(flight: FlightState): void {
+    const held = this.held;
+    if (!held) {
+      return;
+    }
+    const reward = completeJob(this.jobContext(flight), this.jobStation(held), this.state);
+    delete flight.tow;
+    this.state.economy.stardust += reward;
+    this.notify(fill(this.label("jobComplete"), { amount: reward }));
+    this.jobMoments.push("jobComplete");
+  }
+  /** One flight step of the held job: surveys, delivery docking, the tow line and the hunt. */
+  private stepJob(events: readonly FlightEvent[], f: FlightState): void {
+    const held = this.held;
+    if (!held) {
+      return;
+    }
+    if (held.type === "survey" && this.current.charted.includes(held.target.id)) {
+      this.finishJob(f);
+    } else if (held.type === "delivery") {
+      for (const event of events) {
+        if (event.type !== "docked") {
+          continue;
+        }
+        // A lost item is replaced at the issuing station.
+        if (event.id === held.station) {
+          held.carrying = true;
+        } else if (event.id === held.target.id && held.carrying) {
+          this.finishJob(f);
+          return;
+        }
+      }
+    } else if (held.type === "rescue" && f.tow) {
+      pullTow(f.player, f.tow);
+      const place = nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow);
+      if (place && distance(place, f.tow) <= JOB_TUNING.tow.complete) {
+        this.finishJob(f);
+      }
+    } else if (held.type === "hunt") {
+      if (!held.entered && distance(held.target, f.player) <= JOB_TUNING.hunt.radius) {
+        held.entered = true;
+        this.jobMoments.push("searchEntered");
+      }
+      const { pickupRadius, pickupReach } = this.content.tuning.flight;
+      if (held.spot && distance(held.spot, f.player) <= pickupRadius + pickupReach) {
+        this.finishJob(f);
+      }
+    }
+  }
+  /** A held hunt's lost item within Penny's hunt range, as its point id. */
+  private lostItemNear(f: FlightState): string | null {
+    const held = this.held;
+    return held?.type === "hunt" &&
+      held.spot &&
+      distance(held.spot, f.player) <= JOB_TUNING.hunt.penny
+      ? `job:${held.id}`
+      : null;
+  }
+  /**
+   * Where the held job sends Ada now: a survey's landmark; a delivery's destination, or the
+   * issuing station to replace a lost item; a stranded craft, then the nearest safe place while
+   * towing; a hunt's area centre while Ada is outside it.
+   */
+  private jobIndicator(f: FlightState): IndicatorTarget | null {
+    const held = this.held;
+    if (!held) {
+      return null;
+    }
+    const mark = ({ id, x, y }: JobTarget): IndicatorTarget => ({
+      id: id || `job:${held.id}`,
+      kind: "job",
+      x,
+      y,
+    });
+    if (held.type === "survey") {
+      const site = landmarkById(f.sector, held.target.id);
+      return site ? mark(site) : null;
+    }
+    if (held.type === "delivery") {
+      const station = held.carrying ? held.target.id : held.station;
+      const place =
+        stationById(ECONOMY, f.sector, station) ??
+        f.objects.find((object) => object.kind === "destination" && object.id === station) ??
+        held.target;
+      return mark({ id: station, x: place.x, y: place.y });
+    }
+    if (held.type === "rescue") {
+      const place = f.tow
+        ? nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow)
+        : held.target;
+      return place ? mark(place) : null;
+    }
+    return distance(held.target, f.player) > JOB_TUNING.hunt.radius ? mark(held.target) : null;
+  }
+  /** Landmarks and the held job's craft, search area and glint, for the scene. */
+  get jobScenery(): JobScenery {
+    const f = this.state.flight;
+    const held = this.held;
+    if (!f || this.state.mode !== "space") {
+      return { area: null, craft: null, glint: null, landmarks: [], towing: false };
+    }
+    const hunt = held?.type === "hunt" ? held : undefined;
+    return {
+      area: hunt ? { radius: JOB_TUNING.hunt.radius, x: hunt.target.x, y: hunt.target.y } : null,
+      craft: held?.type === "rescue" ? { ...(f.tow ?? held.target) } : null,
+      glint:
+        hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
+          ? { ...hunt.spot }
+          : null,
+      landmarks: galaxyLandmarks(f.sector, this.current),
+      towing: Boolean(f.tow),
+    };
   }
   choose(id: string): void {
     const dialogue = this.state.dialogue;

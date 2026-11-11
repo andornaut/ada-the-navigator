@@ -889,9 +889,7 @@ describe("shop purchases", () => {
       "Seafoam",
     ]);
     expect(labels.inUse).toBe("In use");
-    expect(labels.stationWelcome).toBe(
-      "Welcome aboard. Trade your Stardust for weapons and ship upgrades.",
-    );
+    expect(labels.stationWelcome).toBe("Welcome aboard. Trade your Stardust, or take a job.");
     expect(fill(labels.confirmTitle!, { name: "Multi-Laser" })).toBe("Buy Multi-Laser?");
     expect(fill(labels.confirmLeft!, { amount: 50 })).toBe("50 left after");
     expect(fill(labels.level!, { level: 1, max: 3 })).toBe("Level 1 of 3");

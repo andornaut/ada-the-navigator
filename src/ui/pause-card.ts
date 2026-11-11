@@ -17,6 +17,8 @@ export interface PauseLabels {
   readonly travelEmpty: string;
   readonly travelHere: string;
   readonly travelUnavailable: string;
+  /** Travel's note while a tow line is attached. */
+  readonly towTravel: string;
 }
 
 export interface PauseOptions {
@@ -33,6 +35,8 @@ export interface PauseState {
   readonly inDanger: boolean;
   /** The current galaxy's map, or null outside a flight. */
   readonly map: GalaxyMap | null;
+  /** A rescue's tow line is attached: Travel here refuses. */
+  readonly towing: boolean;
 }
 
 const NO_MAP: GalaxyMap = { mapped: 0, places: [], player: { x: 0, y: 0 } };
@@ -121,11 +125,14 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const travelGroup = stack();
   travelGroup.append(travel);
   const mapDanger = note(labels.travelUnavailable);
-  mapCard.body.append(percent, chart.element, empty, name, travelGroup, mapDanger);
+  const towNote = note(labels.towTravel);
+  mapCard.body.append(percent, chart.element, empty, name, travelGroup, mapDanger, towNote);
   modal.append(paused.frame, mapCard.frame);
   root.append(modal, style);
   let open = false;
-  let state: PauseState = { inDanger: false, map: null };
+  let state: PauseState = { inDanger: false, map: null, towing: false };
+  // Travel here refuses in danger and while towing.
+  const travelRefused = () => state.inDanger || state.towing;
   const mapOpen = () => open && !mapCard.frame.hidden;
   const show = (card: "map" | "paused") => {
     paused.frame.hidden = card !== "paused";
@@ -157,7 +164,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     const map = state.map ?? NO_MAP;
     const place = selected && map.places.find(({ id }) => id === selected!.id);
     selected = place ?? null;
-    const signature = JSON.stringify([map, selected?.id ?? null, state.inDanger]);
+    const signature = JSON.stringify([map, selected?.id ?? null, state.inDanger, state.towing]);
     if (signature === shown) {
       return;
     }
@@ -180,8 +187,9 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     name.hidden = selected === null;
     name.textContent = selected?.label ?? "";
     travelGroup.hidden = !selected?.travel;
-    setAvailable(travel, !state.inDanger);
+    setAvailable(travel, !travelRefused());
     mapDanger.hidden = !state.inDanger || travelGroup.hidden;
+    towNote.hidden = !state.towing || state.inDanger || travelGroup.hidden;
     if (open) {
       (mapCard.frame.hidden ? paused : mapCard).fit();
     }
@@ -212,7 +220,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     if (!selected?.travel) {
       return;
     }
-    if (state.inDanger) {
+    if (travelRefused()) {
       refuse(travel, options.reducedMotion());
       return;
     }

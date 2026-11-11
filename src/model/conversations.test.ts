@@ -28,6 +28,8 @@ const calm: ConversationFacts = {
   collectedStardust: false,
   docked: false,
   inDanger: false,
+  jobMoments: [],
+  lostItemNear: null,
   moved: false,
   newStation: false,
   newlyMapped: [],
@@ -399,19 +401,30 @@ describe("Penny's points of interest", () => {
   };
 
   it("are the undiscovered ones within 900 units, even off screen, nearest first", () => {
-    expect(pennyPoints({ known: ["growers"], stations: [] }, false, flight)).toEqual([
+    expect(pennyPoints({ known: ["growers"], stations: [] }, false, [], flight)).toEqual([
       "station:1:0",
       "cache",
       "workshop",
     ]);
   });
 
-  it("include the guarded holodisk only while its waypoint shows", () => {
-    expect(pennyPoints({ known: ["growers"], stations: ["station:1:0"] }, true, flight)).toEqual([
+  it("include the uncharted landmarks given within range, by distance", () => {
+    const landmarks = [
+      { id: "landmark:1:0", x: 250, y: 0 },
+      { id: "landmark:1:1", x: 950, y: 0 },
+    ];
+    expect(pennyPoints({ known: ["growers"], stations: [] }, false, landmarks, flight)).toEqual([
+      "station:1:0",
+      "landmark:1:0",
       "cache",
-      "holodisk",
       "workshop",
     ]);
+  });
+
+  it("include the guarded holodisk only while its waypoint shows", () => {
+    expect(
+      pennyPoints({ known: ["growers"], stations: ["station:1:0"] }, true, [], flight),
+    ).toEqual(["cache", "holodisk", "workshop"]);
   });
 });
 

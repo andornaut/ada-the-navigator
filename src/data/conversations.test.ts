@@ -12,10 +12,14 @@ import {
   SPEAKERS,
 } from "./conversations.ts";
 
-// The player copy, with its line wrapping undone.
-const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8")
-  .replace(/\s+/gu, " ")
-  .trim();
+// Gameplay's documents, with their line wrapping undone.
+const read = (name: string) =>
+  readFileSync(new URL(`../../gameplay/${name}`, import.meta.url), "utf8")
+    .replace(/\s+/gu, " ")
+    .trim();
+// The player copy, and the job lines in the quests document.
+const COPY = read("player-copy.md");
+const QUESTS = read("quests.md");
 
 // A copy passage from its heading or lead-in up to until, by default the next heading.
 function passage(start: string, until = " ## "): string {
@@ -50,9 +54,16 @@ const DATA_LINES = CONVERSATIONS.flatMap(({ lines }) =>
 
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
-    for (const { lines } of CONVERSATIONS) {
+    for (const { lines, trigger } of CONVERSATIONS) {
       for (const { desktop, speaker, text } of lines) {
-        expect(COPY).toContain(`${SPEAKERS[speaker].name}: "${text}"`);
+        if (trigger.kind === "jobLore") {
+          // The quests document lists Astra's job lore lines by galaxy.
+          expect(speaker).toBe("astra");
+          expect(QUESTS).toContain(`"${text}"`);
+          continue;
+        }
+        const source = trigger.kind === "job" ? QUESTS : COPY;
+        expect(source).toContain(`${SPEAKERS[speaker].name}: "${text}"`);
         if (desktop !== undefined) {
           expect(COPY).toContain(`${text}" (desktop: "${desktop}")`);
         }

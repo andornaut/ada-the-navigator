@@ -4,12 +4,13 @@ import {
   CONVERSATION_TUNING,
   type ConversationLine,
   GENERAL_NAMED,
+  type JobMoment,
   type Lesson,
   type Speaker,
   SPEAKERS,
 } from "../data/conversations.ts";
 import type { SectorId } from "../data/types.ts";
-import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
+import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
@@ -25,6 +26,13 @@ export interface ConversationFacts {
   readonly collectedStardust: boolean;
   readonly docked: boolean;
   readonly inDanger: boolean;
+  /** Held-job moments this step; jobComplete asks Astra for a lore line. */
+  readonly jobMoments: readonly (JobMoment | "jobComplete")[];
+  /**
+   * A held hunt's lost item within Penny's hunt range, as its point id: Penny senses it once,
+   * whatever her rest.
+   */
+  readonly lostItemNear: string | null;
   readonly moved: boolean;
   /** Destinations and stations mapped this step, destinations by id. */
   readonly newlyMapped: readonly string[];
@@ -116,30 +124,31 @@ export function capitalInSight(
 
 /**
  * Undiscovered points of interest within Penny's range of Ada, even off screen, nearest first:
- * unmapped destinations, the guarded holodisk while its waypoint shows, undiscovered stations and
- * discovery caches.
+ * unmapped destinations, the guarded holodisk while its waypoint shows, undiscovered stations,
+ * discovery caches and the uncharted landmarks given.
  */
 export function pennyPoints(
   progress: Pick<SectorProgress, "known" | "stations">,
   holodiskWaypoint: boolean,
+  landmarks: readonly (Vec & { readonly id: string })[],
   flight: Pick<FlightState, "objects" | "player">,
 ): string[] {
-  const distance = (object: SpaceObject) =>
-    Math.hypot(object.x - flight.player.x, object.y - flight.player.y);
-  return flight.objects
-    .filter(
-      (object) =>
-        distance(object) <= CONVERSATION_TUNING.pennyRange &&
-        (object.kind === "destination"
-          ? object.id === "holodisk"
-            ? holodiskWaypoint
-            : !progress.known.includes(object.id)
-          : object.kind === "station"
-            ? !progress.stations.includes(object.id)
-            : object.role === "discovery" && object.kind === "pickup" && object.hp > 0),
-    )
+  const distance = (point: Vec) => Math.hypot(point.x - flight.player.x, point.y - flight.player.y);
+  return [
+    ...flight.objects.filter((object) =>
+      object.kind === "destination"
+        ? object.id === "holodisk"
+          ? holodiskWaypoint
+          : !progress.known.includes(object.id)
+        : object.kind === "station"
+          ? !progress.stations.includes(object.id)
+          : object.role === "discovery" && object.kind === "pickup" && object.hp > 0,
+    ),
+    ...landmarks,
+  ]
+    .filter((point) => distance(point) <= CONVERSATION_TUNING.pennyRange)
     .sort((a, b) => distance(a) - distance(b))
-    .map((object) => object.id);
+    .map((point) => point.id);
 }
 
 export class ConversationDirector {
@@ -306,6 +315,7 @@ export class ConversationDirector {
       this.shieldWarned = true;
       this.request((trigger) => trigger.kind === "shieldLow");
     }
+    this.observeJob(sector, facts);
     const unsensed = facts.pennyPoints.filter(
       (id) => !this.seen.includes(pennyInstance(sector, id)),
     );
@@ -320,6 +330,32 @@ export class ConversationDirector {
     const penny = this.conversations.find((conversation) => conversation.trigger.kind === "penny");
     if (point !== undefined && penny && !this.queue.some((entry) => entry.point !== undefined)) {
       this.enqueue({ conversation: penny, instance: pennyInstance(sector, point), point });
+    }
+  }
+
+  /** A held job's lines, a completed job's lore line and Penny's lost-item sense. */
+  private observeJob(sector: SectorId, facts: ConversationFacts): void {
+    for (const moment of facts.jobMoments) {
+      if (moment !== "jobComplete") {
+        this.request((trigger) => trigger.kind === "job" && trigger.moment === moment);
+        continue;
+      }
+      // The first lore line neither seen nor waiting, so two quick jobs earn two lines.
+      const lore = this.conversations.find(
+        ({ id, trigger }) =>
+          trigger.kind === "jobLore" &&
+          trigger.sector === sector &&
+          !this.seen.includes(id) &&
+          this.active?.instance !== id &&
+          !this.queue.some((entry) => entry.instance === id),
+      );
+      if (lore) {
+        this.enqueue({ conversation: lore, instance: lore.id });
+      }
+    }
+    const penny = this.conversations.find((conversation) => conversation.trigger.kind === "penny");
+    if (facts.lostItemNear !== null && penny) {
+      this.enqueue({ conversation: penny, instance: pennyInstance(sector, facts.lostItemNear) });
     }
   }
 

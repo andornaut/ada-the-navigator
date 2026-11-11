@@ -22,6 +22,7 @@ import {
 import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 
 const progress: SectorProgress = {
+  charted: [],
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,

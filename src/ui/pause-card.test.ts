@@ -69,6 +69,7 @@ const LABELS: PauseLabels = {
   returnHome: "Return home",
   settings: "Settings",
   title: "Paused",
+  towTravel: "Unavailable while towing.",
   travelEmpty: "None",
   travelHere: "Travel here",
   travelUnavailable: "Unavailable",
@@ -83,11 +84,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// The Map card's body groups: percent, chart, empty note, name, Travel here, danger note.
+// The Map card's body groups: percent, chart, empty note, name, Travel here, danger and towing
+// notes.
 function mapBody(root: FakeElement) {
   const modal = root.children[0]!;
   const body = modal.children[1]!.children[0]!.children[1]!;
-  const [percent, chart, empty, name, travelGroup, danger] = body.children as [
+  const [percent, chart, empty, name, travelGroup, danger, towNote] = body.children as [
+    FakeElement,
     FakeElement,
     FakeElement,
     FakeElement,
@@ -101,6 +104,7 @@ function mapBody(root: FakeElement) {
     markers: () => chart.children.slice(1),
     name,
     percent,
+    towNote,
     travel: travelGroup.children[0]!,
     travelGroup,
   };
@@ -147,7 +151,7 @@ function cards(onTravel = vi.fn()) {
 describe("Map card", () => {
   it("shows the percent mapped and one marker per discovered place, Ada's first", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: MAP });
+    pause.setState({ inDanger: false, map: MAP, towing: false });
     expect(body.percent.textContent).toBe("25% mapped");
     expect(body.markers().map((marker) => marker.dataset.place)).toEqual([
       "workshop",
@@ -160,7 +164,7 @@ describe("Map card", () => {
 
   it("says nothing is mapped yet with no places, and offers no Travel here", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: { ...MAP, mapped: 0, places: [] } });
+    pause.setState({ inDanger: false, map: { ...MAP, mapped: 0, places: [] }, towing: false });
     expect(body.markers()).toEqual([]);
     expect(body.empty.hidden).toBe(false);
     expect(body.travelGroup.hidden).toBe(true);
@@ -168,10 +172,10 @@ describe("Map card", () => {
 
   it("keeps marker nodes across repeated identical states", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: MAP });
+    pause.setState({ inDanger: false, map: MAP, towing: false });
     const first = body.markers();
     for (let frame = 0; frame < 5; frame++) {
-      pause.setState({ inDanger: false, map: structuredClone(MAP) });
+      pause.setState({ inDanger: false, map: structuredClone(MAP), towing: false });
     }
     expect(body.markers().every((marker, index) => marker === first[index])).toBe(true);
   });
@@ -179,7 +183,7 @@ describe("Map card", () => {
   it("offers Travel here for a chosen place, and travels there", () => {
     const onTravel = vi.fn();
     const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: false, map: MAP });
+    pause.setState({ inDanger: false, map: MAP, towing: false });
     expect(body.travelGroup.hidden).toBe(true);
     body.markers()[1]!.click();
     expect(body.name.textContent).toBe("Station");
@@ -192,13 +196,29 @@ describe("Map card", () => {
   it("keeps Travel here visible but refused in danger, with the danger note", () => {
     const onTravel = vi.fn();
     const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: true, map: MAP });
+    pause.setState({ inDanger: true, map: MAP, towing: false });
     body.markers()[0]!.click();
     expect(body.travelGroup.hidden).toBe(false);
     expect(body.travel.getAttribute("aria-disabled")).toBe("true");
     expect(body.danger.hidden).toBe(false);
     body.travel.click();
     expect(onTravel).not.toHaveBeenCalled();
+  });
+
+  it("keeps Travel here visible but refused while towing, with the towing note", () => {
+    const onTravel = vi.fn();
+    const { body, pause } = cards(onTravel);
+    pause.setState({ inDanger: false, map: MAP, towing: true });
+    body.markers()[1]!.click();
+    expect(body.travel.getAttribute("aria-disabled")).toBe("true");
+    expect(body.towNote.textContent).toBe(LABELS.towTravel);
+    expect(body.towNote.hidden).toBe(false);
+    expect(body.danger.hidden).toBe(true);
+    body.travel.click();
+    expect(onTravel).not.toHaveBeenCalled();
+    pause.setState({ inDanger: false, map: MAP, towing: false });
+    expect(body.travel.getAttribute("aria-disabled")).toBeNull();
+    expect(body.towNote.hidden).toBe(true);
   });
 
   it("never offers Travel here for a charted landmark", () => {
@@ -212,7 +232,7 @@ describe("Map card", () => {
       x: 9000,
       y: 9000,
     };
-    pause.setState({ inDanger: false, map: { ...MAP, places: [landmark] } });
+    pause.setState({ inDanger: false, map: { ...MAP, places: [landmark] }, towing: false });
     body.markers()[0]!.click();
     expect(body.name.textContent).toBe("Comet");
     expect(body.travelGroup.hidden).toBe(true);

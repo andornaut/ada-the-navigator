@@ -24,8 +24,9 @@ import {
 import { refuse } from "./refusal.ts";
 import { buttonProperty } from "./ui-skin.ts";
 
-// The station card, the shop and the buy confirm (art/shop.md) on the shared card builder; every
-// size comes from src/ui/layout (layout.md "Shop item row").
+// The station card, the shop, the job board and their confirms (art/shop.md,
+// gameplay/quests.md "Job board") on the shared card builder; every size comes from src/ui/layout
+// (layout.md "Shop item row").
 
 const SPRITES = "/art/ui/sprites/";
 const { bottom, left, right, top } = BUTTON_SLICE;
@@ -304,6 +305,49 @@ export const STATION_STYLE = `
   background:url('${SPRITES}icon-shop-check.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
+
+/* The job board's list: one column of rows at the widest row's width. */
+.ada-controls .ada-job-list{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:max-content;
+  justify-content:center;
+  align-content:start;
+  row-gap:${units(SHOP_ROW.rowGap)};
+  padding:${units(FOCUS_RING.outset)};
+  scrollbar-gutter:stable;
+  overflow-x:hidden;
+  touch-action:pan-y
+}
+.ada-controls .ada-job-row{
+  width:auto;
+  justify-self:stretch
+}
+.ada-controls .ada-job-row .ada-shop-slot{
+  gap:${units(SHOP_ROW.markGap)};
+  align-items:center
+}
+.ada-controls .ada-job-action{
+  font:${font(TYPE.label)};
+  color:${TEXT_TOKENS.title};
+  white-space:nowrap
+}
+.ada-controls [data-state=unaffordable] .ada-job-action{
+  color:inherit
+}
+/* Placeholder until Art's icon-job-* sheets: a flat mark per job type. */
+.ada-controls .ada-job-glyph{
+  width:${units(SHOP_ROW.glyph.icon)};
+  height:${units(SHOP_ROW.glyph.icon)};
+  border-radius:50%;
+  background:#5a6988
+}
+.ada-controls .ada-job-glyph[data-type=survey]{background:#3e8948}
+.ada-controls .ada-job-glyph[data-type=delivery]{background:#be4a2f}
+.ada-controls .ada-job-glyph[data-type=rescue]{background:#0099db}
+.ada-controls .ada-job-glyph[data-type=hunt]{background:#feae34}
+.ada-controls [data-state=unaffordable] .ada-job-glyph{background:#5a6988}
+
 /* Measuring: rows at their natural widths, off screen. */
 .ada-controls .ada-shop-measure{
   position:absolute;
@@ -325,6 +369,15 @@ export interface StationLabels {
   readonly confirmBuy: string;
   readonly confirmCancel: string;
   readonly inUse: string;
+  readonly jobAccept: string;
+  readonly jobActive: string;
+  readonly jobBoard: string;
+  readonly jobBoardIntro: string;
+  readonly jobBusy: string;
+  readonly jobDrop: string;
+  readonly jobDropCancel: string;
+  readonly jobDropTitle: string;
+  readonly jobs: string;
   readonly owned: string;
   readonly projectFunded: string;
   readonly projects: string;
@@ -338,6 +391,24 @@ export interface StationLabels {
 }
 
 export type StationTab = "projects" | "ship" | "weapons";
+
+/** The station's cards: the station card, the shop and the job board. */
+export type StationView = "card" | "shop" | "jobs";
+
+/**
+ * One job board row as shown: the held job (Active, with Drop) or an offer, which refuses while
+ * Ada holds a job.
+ */
+export interface StationJob {
+  readonly detail: string;
+  readonly id: string;
+  readonly reward: number;
+  /** The reward's words for assistive technology, such as "15 Stardust". */
+  readonly rewardText: string;
+  readonly state: "held" | "offer" | "busy";
+  readonly title: string;
+  readonly type: string;
+}
 
 /**
  * How a row answers a tap: forSale opens the confirm, unaffordable refuses, selectable
@@ -383,11 +454,15 @@ export type StationRequest =
   | { readonly kind: "refused" };
 
 export interface StationOptions {
+  /** Accept takes an offer at once; false refuses it while Ada holds a job. */
+  readonly acceptJob: (id: string) => boolean;
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
   /** Whether the Projects tab shows: once the galaxy's projects are offered. */
   readonly projectsShown: () => boolean;
+  readonly dropJob: () => void;
+  readonly jobs: () => readonly StationJob[];
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
   readonly request: (key: string) => StationRequest;
@@ -397,17 +472,19 @@ export interface StationOptions {
 }
 
 /**
- * One step back: the confirm returns to the shop, the shop returns to the station card,
- * and only the station card's exits undock.
+ * One step back: a confirm returns to the card under it, the shop and the job board return to
+ * the station card, and only the station card's exits undock.
  */
-export function stationBack(
-  view: "card" | "shop",
-  confirming: boolean,
-): "card" | "shop" | "undock" {
+export function stationBack(view: StationView, confirming: boolean): StationView | "undock" {
   if (confirming) {
-    return "shop";
+    return view;
   }
-  return view === "shop" ? "card" : "undock";
+  return view === "card" ? "undock" : "card";
+}
+
+/** What a job row tap does: an offer accepts, a refused offer refuses, the held job asks to drop. */
+export function jobAction(state: StationJob["state"]): "accept" | "drop" {
+  return state === "held" ? "drop" : "accept";
 }
 
 /** What a row tap does; an unaffordable row is tappable and refuses. */
@@ -501,11 +578,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   undock.dataset.action = "undock";
   const openShop = createButton(labels.shop, "primary");
   openShop.dataset.action = "open-shop";
+  const openJobs = createButton(labels.jobs);
+  openJobs.dataset.action = "open-jobs";
   stationCard.body.append(
     stationBalance,
     prose("ada-station-welcome", labels.stationWelcome),
     createActions([
       { button: undock, role: "secondary" },
+      { button: openJobs, role: "secondary" },
       { button: openShop, role: "primary" },
     ]),
   );
@@ -557,22 +637,50 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     { button: buy, role: "primary" },
   ]);
 
-  modal.append(stationCard.frame, shopCard.frame);
+  const jobsCard = createCard({
+    closeAction: "jobs-back",
+    closeLabel: labels.close,
+    title: labels.jobBoard,
+  });
+  jobsCard.card.dataset.dialog = "jobs";
+  jobsCard.frame.hidden = true;
+  const jobsBalance = document.createElement("div");
+  jobsBalance.className = "ada-balance";
+  jobsBalance.dataset.inkTop = "0";
+  const jobsIntro = prose("ada-jobs-intro", labels.jobBoardIntro);
+  const jobsBusy = prose("ada-jobs-busy", labels.jobBusy);
+  jobsBusy.hidden = true;
+  const jobList = document.createElement("div");
+  jobList.className = "ada-job-list";
+  jobsCard.body.append(jobsBalance, jobsIntro, jobsBusy, jobList);
+  setScrollGroup(jobsCard, jobList);
+
+  const dropCancel = createButton(labels.jobDropCancel);
+  dropCancel.dataset.action = "drop-cancel";
+  const drop = createButton(labels.jobDrop, "primary");
+  drop.dataset.action = "drop-job";
+  const dropActions = createActions([
+    { button: dropCancel, role: "secondary" },
+    { button: drop, role: "primary" },
+  ]);
+
+  modal.append(stationCard.frame, shopCard.frame, jobsCard.frame);
   confirmModal.append(confirmCard.frame);
   parent.append(modal, confirmModal);
 
   let open = false;
-  let view: "card" | "shop" = "card";
+  let view: StationView = "card";
   let tab: StationTab = "weapons";
   // The tabs the shop shows: Projects joins Weapons and Ship once the galaxy offers projects.
   const shownTabs = (): StationTab[] =>
     options.projectsShown() ? ["weapons", "ship", "projects"] : ["weapons", "ship"];
-  let confirm: { key: string } | null = null;
+  let confirm: { readonly key: string } | { readonly drop: true } | null = null;
 
   const renderBalances = (): void => {
     const balance = options.balance();
     stationBalance.textContent = balance.text;
     shopBalance.textContent = String(balance.amount);
+    jobsBalance.textContent = String(balance.amount);
   };
 
   const rowElement = (row: StationRow): HTMLButtonElement => {
@@ -698,6 +806,75 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     list.style.height = units(height);
   };
 
+  const jobElement = (job: StationJob): HTMLButtonElement => {
+    const node = document.createElement("button");
+    node.type = "button";
+    node.className = "ada-shop-row ada-job-row";
+    node.dataset.job = job.id;
+    // The held job wears the selection ring; a refused offer the disabled face.
+    node.dataset.state = { busy: "unaffordable", held: "inUse", offer: "forSale" }[job.state];
+    const glyph = document.createElement("span");
+    glyph.className = "ada-job-glyph";
+    glyph.dataset.type = job.type;
+    glyph.setAttribute("aria-hidden", "true");
+    const jobWell = document.createElement("span");
+    jobWell.className = "ada-well";
+    jobWell.append(glyph);
+    const name = document.createElement("span");
+    name.className = "ada-shop-name";
+    const title = document.createElement("span");
+    title.textContent = job.title;
+    const detail = document.createElement("span");
+    detail.className = "ada-shop-level";
+    detail.textContent = job.detail;
+    name.append(title, detail);
+    const slot = document.createElement("span");
+    slot.className = "ada-shop-slot";
+    const action = document.createElement("span");
+    action.className = "ada-job-action";
+    const mark = document.createElement("span");
+    if (job.state === "held") {
+      mark.className = "ada-owned";
+      mark.textContent = labels.jobActive;
+      action.textContent = labels.jobDrop;
+    } else {
+      mark.className = "ada-price";
+      mark.textContent = String(job.reward);
+      action.textContent = labels.jobAccept;
+    }
+    slot.append(mark, action);
+    node.append(jobWell, name, slot);
+    node.setAttribute(
+      "aria-label",
+      [
+        job.title,
+        job.detail,
+        job.state === "held" ? labels.jobActive : job.rewardText,
+        action.textContent,
+      ].join(", "),
+    );
+    node.addEventListener("click", () => {
+      if (jobAction(job.state) === "drop") {
+        openDrop(job);
+        return;
+      }
+      if (!options.acceptJob(job.id)) {
+        jobsBusy.hidden = false;
+        jobsCard.fit();
+        refuse(node, options.reducedMotion());
+        return;
+      }
+      jobsBusy.hidden = true;
+      render();
+      jobList.querySelector<HTMLElement>("[data-state=inUse]")?.focus();
+    });
+    return node;
+  };
+
+  const renderJobs = (): void => {
+    jobList.replaceChildren(...options.jobs().map(jobElement));
+  };
+
   const renderShop = (): void => {
     if (!shownTabs().includes(tab)) {
       tab = "weapons";
@@ -714,10 +891,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     renderBalances();
     stationCard.frame.hidden = view !== "card";
     shopCard.frame.hidden = view !== "shop";
+    jobsCard.frame.hidden = view !== "jobs";
     if (view === "shop") {
       renderShop();
       fitList();
       shopCard.fit();
+    } else if (view === "jobs") {
+      renderJobs();
+      jobsCard.fit();
     } else {
       stationCard.fit();
     }
@@ -748,6 +929,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.fit();
     buy.focus();
   };
+  // Drop asks first, naming the held job.
+  const openDrop = (job: StationJob): void => {
+    confirm = { drop: true };
+    confirmCard.title.textContent = labels.jobDropTitle;
+    confirmCard.frame.setAttribute("aria-label", labels.jobDropTitle);
+    confirmCard.body.replaceChildren(prose("ada-confirm-about", job.title), dropActions);
+    confirmModal.hidden = false;
+    confirmCard.fit();
+    dropCancel.focus();
+  };
   const closeConfirm = (): void => {
     confirm = null;
     confirmModal.hidden = true;
@@ -763,9 +954,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       closeConfirm();
       return;
     }
+    const left = view;
     view = step;
+    jobsBusy.hidden = true;
     render();
-    (view === "card" ? openShop : tabButtons.get(tab))?.focus();
+    (view === "card" ? (left === "jobs" ? openJobs : openShop) : tabButtons.get(tab))?.focus();
   };
 
   // The row width and columns follow the view; the card builder refits the card itself.
@@ -777,6 +970,21 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   };
   window.addEventListener("resize", refit);
   window.addEventListener(VIEW_SCALE_EVENT, refit);
+
+  openJobs.addEventListener("click", () => {
+    view = "jobs";
+    jobsBusy.hidden = true;
+    render();
+    (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close).focus();
+  });
+  jobsCard.close.addEventListener("click", back);
+  dropCancel.addEventListener("click", back);
+  drop.addEventListener("click", () => {
+    closeConfirm();
+    options.dropJob();
+    render();
+    (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close).focus();
+  });
 
   undock.addEventListener("click", options.undock);
   openShop.addEventListener("click", () => {
@@ -798,7 +1006,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   buy.addEventListener("click", () => {
     const pending = confirm;
     closeConfirm();
-    if (pending) {
+    if (pending && "key" in pending) {
       options.buy(pending.key);
     }
     render();
@@ -863,18 +1071,19 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       window.removeEventListener(VIEW_SCALE_EVENT, refit);
       stationCard.dispose();
       shopCard.dispose();
+      jobsCard.dispose();
       confirmCard.dispose();
       modal.remove();
       confirmModal.remove();
     },
     isOpen: () => open,
     /**
-     * Back-stack layers: the confirm and the shop step back toward the station card, and
-     * the card undocks. Register the card first so the shop is innermost.
+     * Back-stack layers: a confirm, the shop and the job board step back toward the station
+     * card, and the card undocks. Register the card first so the inner cards are innermost.
      */
     layers: {
       card: { back, isOpen: () => open && view === "card" && confirm === null },
-      shop: { back, isOpen: () => open && (view === "shop" || confirm !== null) },
+      inner: { back, isOpen: () => open && (view !== "card" || confirm !== null) },
     },
     /** Opens on the station card when docking and closes on undocking. */
     setOpen(value: boolean): void {
@@ -884,6 +1093,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       open = value;
       modal.hidden = !open;
       view = "card";
+      jobsBusy.hidden = true;
       closeConfirm();
       if (open) {
         render();
