@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "fieldPaint": {
+    "lightness": 0.45,
+    "chroma": 0.06
+  },
+  "preview": {
+    "crop": {
+      "width": 360,
+      "height": 180
+    },
+    "width": 180,
+    "height": 90,
+    "locked": {
+      "offset": 30,
+      "scale": 0.6
+    }
+  },
+  "galaxies": [
+    {
+      "number": 1,
+      "id": "sunflower",
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.038,
+        "hue": 80
+      },
+      "colors": {
+        "background": "#332712",
+        "environment": "#3F331E",
+        "environmentDetail": "#4C3F29"
+      }
+    },
+    {
+      "number": 2,
+      "id": "cartwheel",
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.036,
+        "hue": 30
+      },
+      "colors": {
+        "background": "#39221E",
+        "environment": "#452E2A",
+        "environmentDetail": "#523A36"
+      }
+    },
+    {
+      "number": 3,
+      "id": "whirlpool",
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.034,
+        "hue": 215
+      },
+      "colors": {
+        "background": "#132D33",
+        "environment": "#1F3940",
+        "environmentDetail": "#2B464C"
+      }
+    },
+    {
+      "number": 4,
+      "id": "black-eye",
+      "tint": {
+        "lightness": -0.055,
+        "chroma": 0.04,
+        "hue": 335
+      },
+      "colors": {
+        "background": "#271423",
+        "environment": "#331F2F",
+        "environmentDetail": "#3F2B3B"
+      }
+    }
+  ]
+}

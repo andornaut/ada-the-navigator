@@ -318,8 +318,8 @@ A modal card over the cockpit, one galaxy per page, after Chibi's stage cards.
 Constants: `GALAXY_CARD`, `galaxySelectCard.ts`, to implement.
 
 1. Header: `Galaxy {number}`.
-2. Galaxy group, rows `SPACING.rowGap` apart: the 180x90 screenshot (a quarter
-   of a 720x360 capture, nearest neighbour), the name (`TYPE.label`), the
+2. Galaxy group, rows `SPACING.rowGap` apart: the 180x90 screenshot (a half-scale
+   360x180 crop, [selector preview](galaxies.md#selector-preview)), the name (`TYPE.label`), the
    flavour line (`TYPE.body` prose).
 3. Action row: Previous (secondary), Jump (primary), Next (secondary), one
    shared width. Previous uses the disabled face on the first page, Next on the

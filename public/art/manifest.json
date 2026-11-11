@@ -3216,5 +3216,6 @@
   ],
   "spacePalette": "/art/space-palette.json",
   "quantumJump": "/art/quantum-jump.json",
-  "storyTransition": "/art/story-transition.json"
+  "storyTransition": "/art/story-transition.json",
+  "galaxies": "/art/galaxies.json"
 }

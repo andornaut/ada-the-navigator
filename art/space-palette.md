@@ -17,6 +17,12 @@ and contrast for points of interest, obstacles and active elements.
 | `weapon`            | `#F0BD68` | Bright warm amber for existing weapon signals.                                |
 | `shipHardpoint`     | `#70ACE8` | Bright cool blue accents for existing ship hardpoints.                        |
 
+In a galaxy, `background`, `environment` and `environmentDetail` come from that
+galaxy's [field hues](galaxies.md); the values above are the tint origin and the
+fallback until a galaxy is set. Galaxy 1, Sunflower, makes the play field
+`#332712`. Signal roles are the same in every galaxy and stay at 5:1 or better
+on each galaxy's background.
+
 Keep environmental detail sparse so its combined coverage does not compete with
 signals. Warm coral and amber balance cool lavender, mint and blue. Use signal
 colors in compact accents with existing shapes and labels; color supplements
