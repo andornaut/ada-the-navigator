@@ -1,7 +1,7 @@
 // Asteroids: seeded low-poly rocks in the shared solid-model projection, flat fills, no strokes
 // beyond a same-colour seam. Writes one SVG per frame to public/art/asteroids/, asteroids.json
-// (frame, display, pivot, collision parts, drift and spin data, backdrop tints) and links the
-// data from the root manifest.
+// (frame, display, pivot, drawn collision parts, world footprints, drift and spin data, backdrop
+// tints) and links the data from the root manifest.
 // Usage: node art/tools/asteroids.ts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -75,7 +75,7 @@ const CLASSES: Record<SizeClass, ClassSpec> = {
     notches: [1, 2],
     notchDepth: 0.62,
     peaks: 2,
-    drift: { eligible: true, speed: [4, 10] },
+    drift: { eligible: false, speed: [0, 0] },
     spin: null,
   },
   huge: {
@@ -164,8 +164,13 @@ function mulberry(seed: number): () => number {
 type Face = Point[];
 
 // A star-shaped plan, extruded through a tapered base, a full girth, an inset shoulder and a
-// faceted crown: every face is a triangle, so each facet takes one flat tone.
-function rockModel(spec: ClassSpec, seed: number, aspect: number): Face[] {
+// faceted crown: every face is a triangle, so each facet takes one flat tone. `base` is the ring
+// on the world plane (z = 0) that the rock stands on.
+function rockModel(
+  spec: ClassSpec,
+  seed: number,
+  aspect: number,
+): { base: Point[]; faces: Face[] } {
   const rnd = mulberry(seed);
   const range = ([a, b]: [number, number]) => a + Math.floor(rnd() * (b - a + 1));
   const n = range(spec.vertices);
@@ -237,7 +242,7 @@ function rockModel(spec: ClassSpec, seed: number, aspect: number): Face[] {
   }
   // The plan runs counterclockwise and every face is listed lower-ring-first in plan order, so
   // each one is already wound outward; concave bays need no per-face test.
-  return faces;
+  return { base: rings[0]!, faces };
 }
 
 function yawed(faces: readonly Face[], yaw: number, scale: number): Face[] {
@@ -505,15 +510,46 @@ function svgFrame(title: string, w: number, h: number, polys: { pts: V2[]; fill:
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">\n  <title>${title}</title>\n${body}\n</svg>\n`;
 }
 
+// World units from the pivot for a point on the art's world plane (model units at frame scale):
+// the art projects it to display px as DISPLAY * ((x - y) sqrt(3) / 2, (x + y) / 2), and the
+// game projects world (X, Y) to display px as (X - Y, (X + Y) / 2), so X and Y invert the latter.
+function world([x, y]: Point): V2 {
+  const sx = (DISPLAY * (x - y) * Math.sqrt(3)) / 2;
+  const sy = (DISPLAY * (x + y)) / 2;
+  return [sx / 2 + sy, sy - sx / 2];
+}
+
+// Strictly convex with one turn sign, as the game's reader requires after rounding.
+function strictlyConvex(part: readonly V2[]): boolean {
+  let sign = 0;
+  for (let i = 0; i < part.length; i++) {
+    const c = cross(part[i]!, part[(i + 1) % part.length]!, part[(i + 2) % part.length]!);
+    if (Math.abs(c) < 1e-9) continue;
+    if (sign && Math.sign(c) !== sign) return false;
+    sign = Math.sign(c);
+  }
+  return part.length >= 3 && sign !== 0;
+}
+
+// The base ring as convex parts in world units from the pivot, from the same posed model.
+function footprint(id: string, base: readonly Point[]): V2[][] {
+  const parts = convexParts(base.map(world)).map((part) =>
+    part.map(([x, y]) => [r2(x), r2(y)] as V2),
+  );
+  if (!parts.every(strictlyConvex)) throw new Error(`${id} footprint part is not convex`);
+  return parts;
+}
+
 interface Built {
   file: string;
   collision: V2[][];
+  footprint: V2[][];
   outline: V2[];
 }
 
 function build(
   id: string,
-  model: Face[],
+  { base, faces: model }: { base: Point[]; faces: Face[] },
   frames: number,
   widthDisplay: number,
   ramp: readonly string[],
@@ -523,6 +559,7 @@ function build(
   const scale = widthDisplay / DISPLAY / (e0.maxX - e0.minX);
   const yaws = Array.from({ length: frames }, (_, k) => (k * 2 * Math.PI) / frames);
   const posed = yaws.map((y) => yawed(model, y, scale));
+  const bases = yaws.map((y) => yawed([base], y, scale)[0]!);
   const bounds = posed.map(extent).reduce((a, b) => ({
     maxX: Math.max(a.maxX, b.maxX),
     maxY: Math.max(a.maxY, b.maxY),
@@ -549,10 +586,13 @@ function build(
     const collision = convexParts(outline).map((part) =>
       part.map(([x, y]) => [r2(x), r2(y)] as V2),
     );
-    return { collision, file, outline };
+    return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!), outline };
   });
   const radius = Math.max(...built.flatMap((b) => b.outline.map((p) => dist(p, pivot))));
-  return { built, h, pivot, radius, w };
+  const footprintRadius = Math.max(
+    ...bases.flatMap((ring) => ring.map((p) => Math.hypot(...world(p)))),
+  );
+  return { built, footprintRadius, h, pivot, radius, w };
 }
 
 // ------------------------------------------------------------------ tint
@@ -610,7 +650,13 @@ const asteroids = SHAPES.map((shape) => {
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
   const frames = spec.spin?.frames ?? 1;
-  const { built, h, pivot, radius, w } = build(shape.id, model, frames, shape.width, STONE);
+  const { built, footprintRadius, h, pivot, radius, w } = build(
+    shape.id,
+    model,
+    frames,
+    shape.width,
+    STONE,
+  );
   return {
     id: shape.id,
     size: shape.size,
@@ -618,9 +664,14 @@ const asteroids = SHAPES.map((shape) => {
     display: { width: r2(w * DISPLAY), height: r2(h * DISPLAY) },
     pivot: [r5(pivot[0] / w), r5(pivot[1] / h)],
     radius: r2(radius),
+    footprintRadius: r2(footprintRadius),
     drift: spec.drift,
     spin: spec.spin ? { degPerSecond: spec.spin.degPerSecond } : false,
-    frames: built.map((b) => ({ file: `/art/asteroids/${b.file}`, collision: b.collision })),
+    frames: built.map((b) => ({
+      file: `/art/asteroids/${b.file}`,
+      collision: b.collision,
+      footprint: b.footprint,
+    })),
   };
 });
 
