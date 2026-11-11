@@ -106,8 +106,12 @@ export interface Prices {
   firstWeapon: number;
   /** Galaxy two's hub holodisk price; every sector reports the time to save it. */
   holodisk: number;
-  /** The sector's community projects in total: the time to save enough to fund them all. */
-  projects: number;
+  /**
+   * The sector's community projects funded in table order, as the Stardust saved by each: a
+   * donation pays what the balance covers and part payments persist, so the nth project is funded
+   * once the earnings since the chapter ended reach the first n costs.
+   */
+  projects: number[];
 }
 
 export interface EconomyOverrides {
@@ -226,7 +230,8 @@ export interface RunResult {
   /** Seconds at which the balance first reached each price, or null. */
   firstWeaponSeconds: number | null;
   holodiskSeconds: number | null;
-  projectsSeconds: number | null;
+  /** Seconds at which each cumulative project total was first reached, or null. */
+  projectsSeconds: (number | null)[];
   stardust: Record<Source, number>;
   enemyStardust: Partial<Record<EnemyArchetype, number>>;
   /** Encounters within reach, those fought, and enemies destroyed, by archetype. */
@@ -529,7 +534,7 @@ export function simulate(input: SimulationInput): RunResult {
     jumps: 0,
     met: {},
     minutes: input.minutes,
-    projectsSeconds: null,
+    projectsSeconds: prices.projects.map(() => null),
     sector,
     seed: input.seed,
     stardust: { asteroids: 0, caches: 0, duplicates: 0, enemies: 0, guards: 0 },
@@ -569,9 +574,11 @@ export function simulate(input: SimulationInput): RunResult {
     if (result.holodiskSeconds === null && balance >= prices.holodisk) {
       result.holodiskSeconds = time;
     }
-    if (result.projectsSeconds === null && balance >= prices.projects) {
-      result.projectsSeconds = time;
-    }
+    prices.projects.forEach((total, index) => {
+      if (result.projectsSeconds[index] === null && balance >= total) {
+        result.projectsSeconds[index] = time;
+      }
+    });
   };
   const newFlight = () => {
     flightSeed = cellHash(0x0f17, input.seed, result.jumps + sector * 1000) || 1;
@@ -902,8 +909,9 @@ export interface Summary {
   firstWeaponUnreached: number;
   holodiskMinutes: Distribution;
   holodiskUnreached: number;
-  projectsMinutes: Distribution;
-  projectsUnreached: number;
+  /** Minutes until each project in table order is funded; unreached runs count as the run length. */
+  projectsMinutes: Distribution[];
+  projectsUnreached: number[];
   /** Stardust per minute excluding the one-off story guards. */
   stardustPerMinute: Distribution;
   stardustPerMinuteFirst20: Distribution;
@@ -993,8 +1001,12 @@ export function summarise(scenario: string, prices: Prices, runs: readonly RunRe
     metPerMinute: byArchetype((run) => run.met),
     minutes,
     prices,
-    projectsMinutes: distribution(times((run) => run.projectsSeconds)),
-    projectsUnreached: runs.filter((run) => run.projectsSeconds === null).length,
+    projectsMinutes: prices.projects.map((_, index) =>
+      distribution(times((run) => run.projectsSeconds[index] ?? null)),
+    ),
+    projectsUnreached: prices.projects.map(
+      (_, index) => runs.filter((run) => run.projectsSeconds[index] === null).length,
+    ),
     runs: runs.length,
     runsWithWeaponFound: runs.filter((run) => run.weaponsFound.length > 0).length,
     weaponFoundBy: {
@@ -1035,7 +1047,9 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
   const prices: Prices = {
     firstWeapon: Math.min(...Object.values(ECONOMY.weaponPrices)),
     holodisk: HOLODISKS.hubPrice,
-    projects: PROJECTS[options.sector].reduce((sum, { cost }) => sum + cost, 0),
+    projects: PROJECTS[options.sector].map((_, index, projects) =>
+      projects.slice(0, index + 1).reduce((sum, { cost }) => sum + cost, 0),
+    ),
     ...scenario.prices,
   };
   const spawnWeights = {
@@ -1229,13 +1243,16 @@ export function formatSummary(summary: Summary): string {
   const lines = [
     `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
     `Prices: first weapon ${summary.prices.firstWeapon}, holodisk ${summary.prices.holodisk}, ` +
-      `projects ${summary.prices.projects}`,
+      `projects ${summary.prices.projects.join(", ")} (cumulative)`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}`,
     `Minutes to holodisk: ${formatDistribution(summary.holodiskMinutes)}; ` +
       `unreached ${summary.holodiskUnreached}`,
-    `Minutes to save for every project: ${formatDistribution(summary.projectsMinutes)}; ` +
-      `unreached ${summary.projectsUnreached}`,
+    ...summary.projectsMinutes.map(
+      (minutes, index) =>
+        `Minutes to fund project ${index + 1} (${summary.prices.projects[index]} saved): ` +
+        `${formatDistribution(minutes)}; unreached ${summary.projectsUnreached[index]}`,
+    ),
     `Stardust/min without guards: ${formatDistribution(summary.stardustPerMinute)}`,
     `Balance/min over first 20 min (with guards): ${formatDistribution(summary.stardustPerMinuteFirst20)}`,
     `Per minute by source: ${SOURCES.map((s) => `${s} ${round(summary.sourcePerMinute[s], 2)}`).join(", ")}`,
