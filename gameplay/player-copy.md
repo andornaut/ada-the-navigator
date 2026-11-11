@@ -389,6 +389,10 @@ Black Eye:
   - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
 - Map: Map; {percent}% mapped; Travel here. With nothing discovered yet: No
   destinations mapped yet.
+- Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
+- Map place panel: under the place's name, a line naming its kind: Station,
+  Outpost, Story place (other story destinations), Nebula, Wreck or Beacon. When
+  the place is the held job's target, the job's "Job: {objective}" line follows.
 - Unavailable in danger: Unavailable while you are in danger.
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
   saved.
