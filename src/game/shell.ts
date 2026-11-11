@@ -139,6 +139,11 @@ export class StoryShell {
         ? node.dataset.choice === focusedChoice
         : Boolean(focusedAction) && node.dataset.action === focusedAction,
     );
+    // An open modal, such as the update offer shown as the launch's start screen first draws,
+    // keeps focus, so a key press never acts on the screen behind it.
+    if (active?.closest(".ada-modal:not([hidden])")) {
+      return;
+    }
     if (restore) {
       restore.focus();
     } else if (screen === "start" || state.dialogue) {
