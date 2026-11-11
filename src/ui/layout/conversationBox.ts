@@ -1,40 +1,55 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { SCREEN } from "../../data/screen.ts";
-import { HUD_BUTTON, hudRect, type Insets, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
-import { STORY_PANEL } from "./storyPage.ts";
+import {
+  HUD_BUTTON,
+  hudRect,
+  type Insets,
+  playView,
+  SAFE_MARGIN,
+  safeRect,
+  type Size,
+} from "./playView.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
-// The in-flight conversation box (gameplay/prototype.md "Astra and Penny in flight"), in logical
-// px. One compact line: a 48 portrait a gap inside the panel's side, and beside it a text column
-// holding the speaker's name tab over the line, a row gap apart. Ada's portrait is on the left;
-// Astra's, Penny's and the General's on the right, with the text column on the other side. Only
-// the portrait changes side: for every speaker the name tab sits on the text column's left edge
-// and the line starts there, left-aligned. The box is centred below the HUD row, at most the story
-// panel's measure wide within the page safe rect, and keeps clear of Ada's ship.
+// The in-flight conversation box (art/layout.md "Conversation box"), shared with Chibi, in logical
+// px: a fixed 60 high panel, centred, at most 480 wide within the page safe rect. A 48 portrait
+// slot in a 52 frame sits padding inside the panel, Ada's on the left and every other speaker's on
+// the right. Beside it a text column, a gap from the frame and from the far edge, holds up to two
+// left-aligned body lines centred on the panel. The 20 high name tab overhangs the panel's top by
+// half its height at the end opposite the portrait. The tab top sits a clearance below the HUD
+// button row, so every top button stays live.
 
-const PORTRAIT = 48;
+const SLOT = 48;
+const FRAME_EDGE = 2;
+const FRAME = SLOT + 2 * FRAME_EDGE;
+const PADDING = 4;
+const TAB = { clearance: 10, edge: 1, height: 20, inset: SPACING.gap, overhang: 10, radius: 2 };
 
 export const CONVERSATION_BOX = {
-  // The box's height: the portrait and a gap above and below it.
-  height: PORTRAIT + 2 * SPACING.gap,
-  // Inside the panel, between the panel, the portrait and the text column.
-  inset: SPACING.gap,
-  maxWidth: STORY_PANEL.maxWidth,
+  height: FRAME + 2 * PADDING,
+  // At most this many wrapped lines; the text never shrinks.
+  lines: 2,
+  maxWidth: 480,
+  // The name tab's label, a mark gap inside each side of the tab.
   name: TYPE.label,
+  // Notices: no portrait or tab, their lines centred a gap inside each side.
+  noticeInset: SPACING.gap,
+  padding: PADDING,
   // The ink panel, translucent so space shows through; text, tab and portrait stay opaque.
   panel: { alpha: 0.7, ink: "#181425" },
-  portrait: PORTRAIT,
-  rowGap: SPACING.rowGap,
-  // Ada's ship at its display size (public/art/manifest.json), centred in the play view.
-  ship: { centreY: SCREEN.height / 2, display: 42 },
+  // A 22 compact frame at 2x, centred in the navy slot inside the 2 ink frame edge.
+  portrait: { art: 44, edge: FRAME_EDGE, face: "#262b44", frame: FRAME, slot: SLOT },
+  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 16
+  // headings is this far above the pivot.
+  ship: { hullRise: 12.8 },
   // Space kept clear between the box's bottom and the top of Ada's ship.
   shipClearance: 24,
-  // The name tab's inset beside its label.
-  tabInset: SPACING.markGap,
+  tab: { ...TAB, labelInset: SPACING.markGap },
   text: TYPE.body,
-  // Below the HUD row: a HUD button's target and a gap under the HUD rect's top.
-  top: HUD_BUTTON.target + SPACING.gap,
+  // The text column's gap from the portrait frame and from the panel's far edge.
+  textGap: SPACING.gap,
+  // From the HUD rect's top: the HUD button row, the tab clearance, then the tab's overhang.
+  top: HUD_BUTTON.target + TAB.clearance + TAB.overhang,
 } as const;
 
 /** The box in the logical view: centred, below the HUD rect's row, at most maxWidth within the page rect. */
@@ -50,44 +65,62 @@ export function conversationBoxRect(insets: Insets, view: Size): Rect {
   };
 }
 
+/** The name tab's top in the logical view: the HUD button row's bottom plus the tab clearance. */
+export function conversationTabTop(insets: Insets, view: Size): number {
+  return conversationBoxRect(insets, view).y - CONVERSATION_BOX.tab.overhang;
+}
+
+/** The top of Ada's ship in the logical view: her pivot on the play view's centre, less the hull's rise. */
+export function shipHullTop(view: Size): number {
+  const play = playView(view);
+  return play.y + play.height / 2 - CONVERSATION_BOX.ship.hullRise;
+}
+
 /** The space between the box's bottom and the top of Ada's ship. */
 export function conversationShipClearance(insets: Insets, view: Size): number {
   const box = conversationBoxRect(insets, view);
-  const { centreY, display } = CONVERSATION_BOX.ship;
-  return centreY - display / 2 - (box.y + box.height);
+  return shipHullTop(view) - (box.y + box.height);
+}
+
+/** The text block's top inside the box for lineCount lines: the lines centred on the panel. */
+export function conversationTextTop(lineCount: number): number {
+  const lines = Math.min(Math.max(lineCount, 1), CONVERSATION_BOX.lines);
+  return (CONVERSATION_BOX.height - lines * CONVERSATION_BOX.text.lineHeight) / 2;
 }
 
 /**
- * The portrait and the text column inside a box width wide, for the speaker's side, with the name
- * tab's and the line's left-aligned origins in the text column.
+ * The portrait frame, its slot, the text column and the name tab's anchor inside a box width
+ * wide, for the speaker's side. The tab anchors to the panel end opposite the portrait, inset
+ * from it, and overhangs the panel's top; its width follows its label.
  */
 export function conversationSpeakerLayout(
   side: "left" | "right",
   width: number,
 ): {
-  readonly line: { readonly align: "left"; readonly x: number; readonly y: number };
-  readonly nameTab: { readonly x: number; readonly y: number };
-  readonly portrait: Rect;
-  readonly text: Rect;
+  readonly frame: Rect;
+  readonly nameTab: { readonly end: "left" | "right"; readonly inset: number; readonly y: number };
+  readonly slot: Rect;
+  readonly text: Rect & { readonly align: "left" };
 } {
-  const { height, inset, name, portrait, rowGap } = CONVERSATION_BOX;
-  const textWidth = width - portrait - 3 * inset;
+  const { height, padding, portrait, tab, textGap } = CONVERSATION_BOX;
   const left = side === "left";
-  const textX = left ? 2 * inset + portrait : inset;
+  const frameX = left ? padding : width - padding - portrait.frame;
+  const textWidth = width - padding - portrait.frame - 2 * textGap;
   return {
-    line: { align: "left", x: textX, y: inset + name.lineHeight + rowGap },
-    nameTab: { x: textX, y: inset },
-    portrait: {
-      height: portrait,
-      width: portrait,
-      x: left ? inset : width - inset - portrait,
-      y: inset,
+    frame: { height: portrait.frame, width: portrait.frame, x: frameX, y: padding },
+    nameTab: { end: left ? "right" : "left", inset: tab.inset, y: -tab.overhang },
+    slot: {
+      height: portrait.slot,
+      width: portrait.slot,
+      x: frameX + portrait.edge,
+      y: padding + portrait.edge,
     },
     text: {
-      height: height - 2 * inset,
+      align: "left",
+      height: height - 2 * padding,
       width: textWidth,
-      x: textX,
-      y: inset,
+      x: left ? padding + portrait.frame + textGap : textGap,
+      y: padding,
     },
   };
 }

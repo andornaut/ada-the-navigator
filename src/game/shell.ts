@@ -7,6 +7,7 @@ import { createStartCard } from "../ui/start-card.ts";
 export interface ShellActions {
   choose: (id: string) => void;
   continueGame: () => void;
+  dismissNotice: () => void;
   reducedMotion: () => boolean;
   restart: () => void;
   start: () => void;
@@ -38,6 +39,8 @@ export class StoryShell {
     this.status.id = "game-status";
     this.status.setAttribute("role", "status");
     this.status.setAttribute("aria-live", "polite");
+    // The notice's box is its press area: a tap dismisses it, otherwise it clears on its own.
+    this.status.addEventListener("click", () => this.actions.dismissNotice());
     this.panel.className = "story-panel";
     document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
   }

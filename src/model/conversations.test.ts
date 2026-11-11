@@ -536,6 +536,21 @@ describe("conversations in the game", () => {
     expect(model.conversation?.key).toBe(key);
   });
 
+  it("dismiss a tapped notice at once, and resume the line under it", () => {
+    const model = flying();
+    model.step(0.05, idle);
+    const key = model.conversation?.key;
+    model.state.flight!.dangerFor = 3;
+    model.returnHome();
+    model.state.flight!.dangerFor = 0;
+    model.step(0.05, idle);
+    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.conversation).toBeNull();
+    model.dismissNotice();
+    expect(model.state.notice).toBe("");
+    expect(model.conversation?.key).toBe(key);
+  });
+
   it("show a warning over a notice, which waits with its time and resumes after", () => {
     const model = flying();
     model.step(0.05, idle);

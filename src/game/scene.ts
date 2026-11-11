@@ -414,6 +414,11 @@ export class PrototypeScene extends Phaser.Scene {
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
       continueGame: () => apply(() => this.model.continueGame()),
+      // A tap on a notice dismisses it without touching flight input.
+      dismissNotice: () => {
+        this.model.dismissNotice();
+        this.refresh();
+      },
       reducedMotion: () => this.controls.reducedMotion(),
       restart: () => this.restartCard.open(),
       start: () => apply(() => this.model.start()),

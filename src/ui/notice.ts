@@ -1,18 +1,20 @@
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
+import { SPACING } from "./layout/tokens.ts";
 
 // Notices: the game's status line (#game-status) and the save status (#save-status). Each shows in
-// the conversation box's slot and style (layout/conversationBox.ts) without a portrait, its text
-// centred, while it has text; lower lines wait under a notice. With both shown, the save status
-// sits a gap below the game notice.
+// the conversation box's slot and style (layout/conversationBox.ts) without a portrait or tab, up
+// to two lines centred a gap inside each side, while it has text; lower lines wait under a notice.
+// The game notice's box is its press area: a tap dismisses it. The save status persists and takes
+// no input. With both shown, the save status sits a gap below the game notice.
 
 /** The play area attribute set while a warning line shows over the notices. */
 export const NOTICE_UNDER_WARNING = "data-warning-showing";
 
-const { inset, panel } = CONVERSATION_BOX;
+const { noticeInset, panel } = CONVERSATION_BOX;
 const TOP = fromHudEdge("top", CONVERSATION_BOX.top);
-const SECOND = CONVERSATION_BOX.height + CONVERSATION_BOX.inset;
+const SECOND = CONVERSATION_BOX.height + SPACING.gap;
 
 // The page rect's width, which a notice keeps within, as the box does.
 const PAGE_WIDTH = `calc(100% - 2 * max(var(${VIEW_PROPERTIES.safe("left")}),var(${VIEW_PROPERTIES.safe(
@@ -32,7 +34,7 @@ export const CONVERSATION_SLOT = `
   top:${TOP};
   box-sizing:border-box;
   width:min(${units(CONVERSATION_BOX.maxWidth)},${PAGE_WIDTH});
-  padding:${units(inset)};
+  height:${units(CONVERSATION_BOX.height)};
   display:flex;
   align-items:center;
   font:${font(CONVERSATION_BOX.text)};
@@ -42,14 +44,18 @@ export const CONVERSATION_SLOT = `
 export const NOTICE_STYLE = `
 #game-status,
 #save-status{${CONVERSATION_SLOT};
-  min-height:${units(CONVERSATION_BOX.height)};
+  padding:0 ${units(noticeInset)};
   justify-content:center;
   text-align:center;
+  overflow:hidden;
   pointer-events:none
 }
 
 #game-status{
-  z-index:6
+  z-index:6;
+  cursor:pointer;
+  pointer-events:auto;
+  touch-action:manipulation
 }
 
 #save-status{

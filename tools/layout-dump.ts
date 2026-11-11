@@ -147,6 +147,14 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
         logical,
         view,
       );
+      call(
+        "conversationBox.ts",
+        "conversationTabTop",
+        conversationBox.conversationTabTop,
+        logical,
+        view,
+      );
+      call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
       call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
       call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
       // Cards and the shop fit the page safe rect's width.
@@ -199,6 +207,9 @@ function stateCases(call: ReturnType<typeof recorder>): void {
     { x: 200, y: 200 },
   ]) {
     call("hitAreas.ts", "pressedArea", hitAreas.pressedArea, areas, point);
+  }
+  for (const lines of [0, 1, 2, 3]) {
+    call("conversationBox.ts", "conversationTextTop", conversationBox.conversationTextTop, lines);
   }
   for (const side of ["left", "right"] as const) {
     for (const width of [320, 480, 640]) {

@@ -168,6 +168,10 @@ export class GameModel {
     this.state.notice = text;
     this.noticeShownFor = 0;
   }
+  /** A tap on a game notice dismisses it at once; lines waiting under it resume. */
+  dismissNotice(): void {
+    this.state.notice = "";
+  }
   /** The save status, which the scene reports, ranks as a notice while it shows. */
   setSaveNotice(text: string): void {
     this.saveNotice = text;
