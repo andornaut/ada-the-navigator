@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "color": "#CFC5BD",
+  "angle": -6,
+  "parallax": 0.2,
+  "profile": [
+    {
+      "name": "haze",
+      "alpha": 0.06,
+      "sigma": 30
+    },
+    {
+      "name": "glow",
+      "alpha": 0.1,
+      "sigma": 7
+    },
+    {
+      "name": "core",
+      "alpha": 0.08,
+      "sigma": 1.2
+    }
+  ],
+  "specks": {
+    "spacing": 2.2,
+    "sigma": 12,
+    "alpha": [0.25, 0.8],
+    "size": 1
+  },
+  "stars": {
+    "color": "#F1ECE6",
+    "spacing": 240,
+    "sigma": 7.2,
+    "size": 2
+  }
+}

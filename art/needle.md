@@ -200,3 +200,28 @@ the Eye's entry; Gameplay places it in the galaxy.
 - `debris`: three rows outside each edge, pieces about 34 apart along it, the
   first row 12 past the edge and each next 26 farther, drifting along the
   channel at 6 to 12 world units per second.
+
+## Space look
+
+Needle's field is in [galaxies.json](../public/art/galaxies.json) (`needle`)
+and its backdrop rock tints in `asteroids.json` (`#48423D` lit, `#3A3531`
+side). Rebuild the band with `node art/tools/needle-sky.ts`; it writes
+[band.json](../public/art/needle/band.json), linked as `needleBand`.
+
+Tech draws the edge-on band at runtime: one thin line across the whole sky,
+the galaxy seen edge on.
+
+| Part    | Rule                                                                                                                                                       |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line    | A straight line at `angle` -6 degrees on screen, scrolling at `parallax` 0.2 of the camera                                                                 |
+| Profile | Across the line, `color` `#CFC5BD` at alpha `sum(alpha * exp(-(d / sigma)^2))`, `d` in logical px: haze 0.06 at sigma 30, glow 0.10 at 7, core 0.08 at 1.2 |
+| Specks  | 1 px stars on the line, one per 2.2 px of its length on average, offset across it by a normal of sigma 12, `color` at alpha 0.25 to 0.8                    |
+| Stars   | 2 px `#F1ECE6` stars, one per 240 px on average, sigma 7.2 across                                                                                          |
+| Depth   | The sky: on the background, under the field's dust specks, backdrop rocks and every other layer                                                            |
+| Seed    | Speck and star positions come from the galaxy seed, so the band looks the same on every flight                                                             |
+
+- The line stays within the backdrop rocks' 1.8:1 cap: its peak (alpha 0.24)
+  is `#4F4945`, 1.78:1, and 7 px out 1.24:1. The build fails over 1.8:1.
+- Specks and stars are point stars, not the line: specks run 1.83 to 6.44:1
+  and the pearl stars 13.43:1, as small and sparse as the field's dust specks.
+- Reduced motion: the band is static apart from parallax, so it is unchanged.
