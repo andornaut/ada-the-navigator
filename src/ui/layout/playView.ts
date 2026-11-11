@@ -107,6 +107,14 @@ export const HUD_BUTTON = {
 } as const;
 
 // Where a disc and a glyph sit inside their target.
+// PROVISIONAL (Art): Skip's spot awaits Art's confirmation. A compact secondary control apart
+// from page navigation, at the top right: in the HUD row, a gap left of the settings button so
+// the two never overlap, centred on the row's 48 targets.
+export const STORY_SKIP = {
+  right: HUD_BUTTON.target + HUD_BUTTON.gap,
+  top: (HUD_BUTTON.target - TEXT_BUTTON.compactHeight) / 2,
+} as const;
+
 export const HUD_BUTTON_INSET = {
   disc: (HUD_BUTTON.target - HUD_BUTTON.disc) / 2,
   glyph: (HUD_BUTTON.target - HUD_BUTTON.glyph) / 2,

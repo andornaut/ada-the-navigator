@@ -1,5 +1,6 @@
 import type { Background } from "../data/storybook.ts";
-import { font, safeEdge, units } from "./layout/css.ts";
+import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
+import { STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
@@ -53,7 +54,7 @@ const AVAILABLE_HEIGHT = `calc(100% - ${safeEdge("top", SPACING.pageInset)} - ${
   SPACING.pageInset,
 )})`;
 
-const STYLE = `
+export const STORYBOOK_STYLE = `
 .ada-controls .ada-story-background{
   position:absolute;
   inset:0;
@@ -91,8 +92,8 @@ const STYLE = `
   color:${TEXT_TOKENS.label}
 }
 
-/* Skip at the inner left; Previous and Next right-aligned a gap apart. The three share one width,
-   set from the widest label as each page renders. */
+/* Previous at the inner left, Next or the named action at the inner right; the two share one
+   width, set from the wider label as each page renders. */
 .ada-controls .ada-story-controls{
   flex:none;
   display:flex;
@@ -100,22 +101,26 @@ const STYLE = `
   gap:${units(STORY_PANEL.gap)}
 }
 
-.ada-controls .ada-story-controls .ada-story-pages{
-  display:flex;
-  gap:${units(STORY_PANEL.gap)}
+/* PROVISIONAL (Art): Skip, apart from page navigation, at the top right left of the settings
+   button (STORY_SKIP). */
+.ada-controls .ada-story-skip{
+  position:absolute;
+  top:${fromHudEdge("top", STORY_SKIP.top)};
+  right:${fromHudEdge("right", STORY_SKIP.right)}
 }
 `;
 
 /**
  * A storybook page: the full location background with its bottom panel of text, choices and
- * page controls. Skip is always shown; Previous uses the disabled face on a scene's first page;
- * a choice page has no Next; a named action takes Next's slot. A question page shows its
+ * page controls, with Skip apart at the top right on every page. Previous (left) uses the
+ * disabled face on a scene's first page; Next (right) is absent on a choice page and shows a
+ * page's named action in its slot. A question page shows its
  * remaining questions with Continue in Next's slot.
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const { labels } = options;
   const style = document.createElement("style");
-  style.textContent = STYLE;
+  style.textContent = STORYBOOK_STYLE;
   const layer = document.createElement("div");
   layer.className = "ada-story";
   layer.hidden = true;
@@ -136,17 +141,16 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const controls = document.createElement("div");
   controls.className = "ada-story-controls";
   const skip = createButton(labels.skip);
+  skip.classList.add("ada-compact", "ada-story-skip");
   skip.dataset.action = "story-skip";
-  const pages = document.createElement("div");
-  pages.className = "ada-story-pages";
   const previous = createButton(labels.previous);
   previous.dataset.action = "story-previous";
   const next = createButton(labels.next, "primary");
   next.dataset.action = "story-next";
-  pages.append(previous, next);
-  controls.append(skip, pages);
+  const pageButtons = { next, previous };
+  controls.append(...STORY_PANEL.pageControls.map((id) => pageButtons[id]));
   panel.append(text, choices, controls);
-  layer.append(background, panel);
+  layer.append(background, panel, skip);
   root.append(style, layer);
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
@@ -167,6 +171,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     shown = signature;
     layer.hidden = page === null && backdrop === null;
     panel.hidden = page === null;
+    skip.hidden = page === null;
     if (!page) {
       if (backdrop) {
         setBackground(backdrop);
@@ -192,8 +197,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.disabled = !page.canGoBack;
     next.hidden = !page.next;
     next.textContent = page.action ?? labels.next;
-    // Skip, Previous and Next share the widest one's width, in logical px.
-    const pageControls = [skip, previous, next];
+    // Previous and Next share the wider one's width, in logical px.
+    const pageControls = [previous, next];
     for (const button of pageControls) {
       button.style.width = "";
     }
