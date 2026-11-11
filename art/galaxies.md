@@ -119,6 +119,7 @@ and where each asset sits:
 | Discovery cache                                                                                        | Shared, keylined on Sunflower                                   |
 | Coral frigate and capital                                                                              | Shared, keylined on Sunflower                                   |
 | Sunflower's outposts (growers, workshop, salvagers)                                                    | Sunflower, keylined                                             |
+| [Andromeda's settlements](andromeda.md#settlements) (hamlet, lamp house)                               | Andromeda                                                       |
 | Coral drone family (swarm, fighter, interceptor, retaliator)                                           | Shared, keylined on Sunflower                                   |
 | [Claim-jumper family and turret platform](heavies.md)                                                  | Cartwheel                                                       |
 | Play asteroids                                                                                         | Shared                                                          |

@@ -128,3 +128,25 @@ replaceEntries(
   stationEntries,
   () => true,
 );
+
+// ---------------------------------------------------------------- settlements
+
+// Andromeda's outposts, in the outpost schema: role `settlement`, one entry pair per design. Docks
+// are decorative, as on Sunflower's outposts.
+const settlements = [
+  { variant: "hamlet", title: "Hamlet", build: m.hamlet, dock: m.HAMLET_DOCK },
+  { variant: "lamphouse", title: "Lamp house", build: m.lampHouse, dock: m.LAMPHOUSE_DOCK },
+] as const;
+const settlementEntries = settlements.flatMap(({ build, dock, title, variant }) => {
+  const items = pair(`outpost-${variant}`, variant, `Settlement, ${title.toLowerCase()}`, build);
+  const frame = layout(allFaces(items));
+  for (const item of items) writeFixed(frame, item);
+  const at = dockAt(frame, dock.face, dock.mouth);
+  return items.map((item) => fixedEntry(frame, item, { dock: at, outpost: "settlement", variant }));
+});
+replaceEntries(
+  "andromeda",
+  (id) => /^outpost-(hamlet|lamphouse)-[ab]$/.test(id),
+  settlementEntries,
+  (id) => !id.startsWith("station-settlers-"),
+);

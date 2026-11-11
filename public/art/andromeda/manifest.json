@@ -42,6 +42,94 @@
         "width": 36.742
       },
       "station": "settlers"
+    },
+    {
+      "id": "outpost-hamlet-a",
+      "path": "/art/andromeda/hamlet-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 59.042,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "hamlet"
+    },
+    {
+      "id": "outpost-hamlet-b",
+      "path": "/art/andromeda/hamlet-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 59.042,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "hamlet"
+    },
+    {
+      "id": "outpost-lamphouse-a",
+      "path": "/art/andromeda/lamphouse-a.svg",
+      "width": 64,
+      "height": 80,
+      "displayWidth": 28,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.6
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 32,
+        "y": 69.213,
+        "outward": [0, 1],
+        "width": 19.596
+      },
+      "outpost": "settlement",
+      "variant": "lamphouse"
+    },
+    {
+      "id": "outpost-lamphouse-b",
+      "path": "/art/andromeda/lamphouse-b.svg",
+      "width": 64,
+      "height": 80,
+      "displayWidth": 28,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.6
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 32,
+        "y": 69.213,
+        "outward": [0, 1],
+        "width": 19.596
+      },
+      "outpost": "settlement",
+      "variant": "lamphouse"
     }
   ]
 }

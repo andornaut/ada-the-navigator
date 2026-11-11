@@ -22,9 +22,11 @@ fraction; each SVG's intrinsic `width` and `height` are its display size
 and `height` are the frame, so pivots and docks are frame px; `displayWidth`
 and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset             | Ids                                        | Frame px | Display  | Pivot        |
-| ----------------- | ------------------------------------------ | -------- | -------- | ------------ |
-| Settlers' station | `station-settlers-a`, `station-settlers-b` | 144, 176 | 63 by 77 | `(0.5, 0.5)` |
+| Asset             | Ids                                          | Frame px | Display  | Pivot           |
+| ----------------- | -------------------------------------------- | -------- | -------- | --------------- |
+| Settlers' station | `station-settlers-a`, `station-settlers-b`   | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
+| Hamlet            | `outpost-hamlet-a`, `outpost-hamlet-b`       | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
+| Lamp house        | `outpost-lamphouse-a`, `outpost-lamphouse-b` | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
 
 ## Settlers' station
 
@@ -67,6 +69,31 @@ A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
   the lantern shows `#b8c1ff` with its white core; frame B lights the
   approach-light pairs, dims the lantern to `#8f9cf0` and the rim lamps to
   `#a08f78`. Unlit blue lights use `#3f5878`. Reduced motion shows frame A.
+
+## Settlements
+
+The settlements are Andromeda's outposts, used like Sunflower's: Ada uses one
+without docking, so their docks are decorative. Entries use the
+[outpost schema](outposts.md#frames-and-manifest) with `outpost`
+`settlement` and `variant` naming the design, `hamlet` or `lamphouse`; Tech
+assigns a design to each settlement. Fixed orientation, the station blink
+(`frameMs` 700) and reduced motion as on the station.
+
+- Hamlet: a round pearl float 52 units across with three cottages, a slate
+  lamp post with a marker lamp and a small dock collar.
+- Lamp house: a pearl float 44 units across with a tall cream house under a
+  rooftop marker lantern, a shed, a slate mailbox post with a periwinkle box
+  and a small dock collar.
+- Frame A lights the dock corner lights and the marker lamps; frame B the
+  approach lights, with the lamps at `#4a5080`.
+
+| Variant     | Dock `(x, y)`  | Dock width | Below the pivot |
+| ----------- | -------------- | ---------: | --------------: |
+| `hamlet`    | `(40, 59.042)` |     22.045 |          24.042 |
+| `lamphouse` | `(32, 69.213)` |     19.596 |          21.213 |
+
+Dock values are frame px with `outward` `[0, 1]`, in the station's dock
+schema.
 
 ## Palette
 
