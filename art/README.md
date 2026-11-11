@@ -8,8 +8,9 @@ sector one enemy ships and their [destruction](destruction.md), the galaxy one
 [asteroids and backdrop rocks](asteroids.md), [Stardust](stardust.md),
 [the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
-[quantum jump](quantum-jump.md), the [weapon effects](weapons.md), character
-portraits and the [storybook](storybook.md) Earth backgrounds.
+[quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
+[Whirlpool whales](whales.md), character portraits and the
+[storybook](storybook.md) Earth backgrounds.
 [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted
 surroundings and stronger active signals.
@@ -55,9 +56,10 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost and asteroid SVGs are deterministic exports from
-`art/tools/ship.ts`, `art/tools/enemies.ts`, `art/tools/station.ts`,
-`art/tools/outposts.ts` and `art/tools/asteroids.ts`, with the heavies' layered
+Ship, enemy, station, outpost, asteroid and whale SVGs are deterministic
+exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
+`art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/asteroids.ts` and
+`art/tools/whales.ts`, with the heavies' layered
 sprites from `art/tools/heavies.ts`; edit the generators and
 regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
