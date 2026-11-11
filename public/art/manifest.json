@@ -5,9 +5,9 @@
     "basePath": "/art/ui/"
   },
   "galaxies": {
-    "1": "/art/sunflower/manifest.json",
-    "2": "/art/cartwheel/manifest.json",
-    "3": "/art/whirlpool/manifest.json"
+    "sunflower": "/art/sunflower/manifest.json",
+    "cartwheel": "/art/cartwheel/manifest.json",
+    "whirlpool": "/art/whirlpool/manifest.json"
   },
   "assets": [
     {

@@ -42,13 +42,14 @@ Use explicit subpath imports such as `@andornaut/art-kit/build`,
 
 The runtime contract is the art manifest set, version 1: the
 [core manifest](../public/art/manifest.json) and one manifest per galaxy. The
-core manifest's `galaxies` maps each SectorId to its galaxy's manifest:
+core manifest's `galaxies` maps each stable galaxy id to its galaxy's manifest; the
+route order is the game's and needs no manifest change:
 
-| SectorId | Galaxy    | Manifest                                                                |
-| -------- | --------- | ----------------------------------------------------------------------- |
-| 1        | Sunflower | [`/art/sunflower/manifest.json`](../public/art/sunflower/manifest.json) |
-| 2        | Cartwheel | [`/art/cartwheel/manifest.json`](../public/art/cartwheel/manifest.json) |
-| 3        | Whirlpool | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
+| Galaxy id   | Manifest                                                                |
+| ----------- | ----------------------------------------------------------------------- |
+| `sunflower` | [`/art/sunflower/manifest.json`](../public/art/sunflower/manifest.json) |
+| `cartwheel` | [`/art/cartwheel/manifest.json`](../public/art/cartwheel/manifest.json) |
+| `whirlpool` | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
 
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,

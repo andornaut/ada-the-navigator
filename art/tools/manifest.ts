@@ -3,12 +3,12 @@ import { fileURLToPath } from "node:url";
 
 import { json } from "./projection.ts";
 
-// The game's SectorId to its galaxy. Each galaxy's manifest holds the entries and data links
-// that only that galaxy uses; the core manifest holds the rest and maps each SectorId to its
-// galaxy's manifest under `galaxies`.
-export const GALAXIES = { 1: "sunflower", 2: "cartwheel", 3: "whirlpool" } as const;
+// The galaxies with art, by their stable galaxy id. Each galaxy's manifest holds the entries and
+// data links that only that galaxy uses; the core manifest holds the rest and maps each galaxy id
+// to its galaxy's manifest under `galaxies`. Route order is the game's, not the manifest's.
+export const GALAXIES = ["sunflower", "cartwheel", "whirlpool"] as const;
 
-export type ManifestFile = "core" | (typeof GALAXIES)[keyof typeof GALAXIES];
+export type ManifestFile = "core" | (typeof GALAXIES)[number];
 
 interface Manifest {
   assets: { id: string }[];
@@ -16,7 +16,7 @@ interface Manifest {
 }
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-const FILES: readonly ManifestFile[] = ["core", ...Object.values(GALAXIES)];
+const FILES: readonly ManifestFile[] = ["core", ...GALAXIES];
 
 /** A manifest's public path. */
 export function manifestUrl(file: ManifestFile): string {
@@ -40,14 +40,15 @@ export function readManifest(file: ManifestFile): Manifest {
 // The core map names every galaxy's manifest, and no id is in two manifests.
 function check(manifests: ReadonlyMap<ManifestFile, Manifest>) {
   const map = (manifests.get("core")!.galaxies ?? {}) as Record<string, unknown>;
-  for (const [sector, galaxy] of Object.entries(GALAXIES)) {
-    if (map[sector] !== manifestUrl(galaxy)) {
-      throw new Error(`core manifest galaxies.${sector} must be ${manifestUrl(galaxy)}`);
+  for (const galaxy of GALAXIES) {
+    if (map[galaxy] !== manifestUrl(galaxy)) {
+      throw new Error(`core manifest galaxies.${galaxy} must be ${manifestUrl(galaxy)}`);
     }
   }
-  const extra = Object.keys(map).filter((sector) => !Object.hasOwn(GALAXIES, sector));
+  const known: readonly string[] = GALAXIES;
+  const extra = Object.keys(map).filter((galaxy) => !known.includes(galaxy));
   if (extra.length > 0) {
-    throw new Error(`core manifest galaxies has unknown sectors ${extra.join(", ")}`);
+    throw new Error(`core manifest galaxies has unknown galaxies ${extra.join(", ")}`);
   }
   const seen = new Map<string, ManifestFile>();
   for (const [file, { assets }] of manifests) {
