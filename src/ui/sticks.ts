@@ -32,8 +32,8 @@ interface StickLayout extends Size {
 export interface StickView {
   readonly knob: Point;
   readonly knobPose: TouchChromePose;
-  // The speed line, from the stick's origin to the thumb's actual position however far it goes,
-  // while the thumb is off the origin.
+  // The move stick's speed line, from its origin to the thumb's actual position however far it
+  // goes, while the thumb is off the origin. The aim stick has none.
   readonly line?: { readonly from: Point; readonly to: Point };
   readonly ring: Point;
   readonly ringPose: TouchChromePose;
@@ -99,8 +99,9 @@ export function stickViews(
       const divisor = Math.max(1, Math.hypot(dx, dy) / TOUCH_STICK.knobReach);
       knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
-    // The line runs from the stick's origin to the thumb, unclamped, while the thumb is off it.
-    const thumb = stick?.position;
+    // The move stick's line runs from its origin to the thumb, unclamped, while the thumb is off
+    // it; the aim stick draws no line.
+    const thumb = side === "move" ? stick?.position : undefined;
     views[side] = {
       knob: centredAt(knob, TOUCH_KNOB_FRAME),
       knobPose: stick ? "held" : "rest",

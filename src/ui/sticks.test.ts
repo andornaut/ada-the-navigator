@@ -241,16 +241,13 @@ describe("speed line", () => {
     },
   );
 
-  it("runs from the aim origin to the thumb, past the ring's edge", () => {
+  it.each([5, 12, 37, 100])("draws no aim line at %s px of deflection", (distance) => {
     const state = new ControlState();
     state.down("aim", 2, { x: 500, y: 100 });
-    state.move(2, { x: 400, y: 160 });
+    state.move(2, { x: 500 - distance * 0.8, y: 100 - distance * 0.6 });
     const view = stickViews(layout, state).aim!;
-    expect(view.line).toEqual({ from: { x: 500, y: 100 }, to: { x: 400, y: 160 } });
-    const placement = speedLinePlacement(view.line!);
-    expect(placement.length).toBeGreaterThan(TOUCH_CHROME_FRAME / 2);
-    expect(placement.angle).toBeCloseTo(Math.atan2(60, -100), 12);
-    expect(knobCentre(view.knob)).not.toEqual({ x: 400, y: 160 });
+    expect(view.line).toBeUndefined();
+    expect(view.knobPose).toBe("held");
   });
 
   it("lies over the ring and under the knob", () => {
