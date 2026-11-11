@@ -17,7 +17,7 @@ import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
-import { currentsNear, pointOnCurrent } from "../model/currents.ts";
+import { currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
@@ -71,16 +71,20 @@ import {
 import {
   craftArt,
   craftFrameSets,
-  type DebrisArt,
-  debrisFrame,
-  debrisMarks,
   galaxyAsset,
   type HubArt,
   hubLayers,
   readBuoyArt,
-  readDebrisArt,
   readHubArt,
 } from "./cartwheel-art.ts";
+import { readStreakSpec, streakMarks, type StreakSpec } from "./current-streaks.ts";
+import {
+  type DebrisArt,
+  debrisFrame,
+  debrisMarks,
+  debrisPiece,
+  readDebrisArt,
+} from "./debris-art.ts";
 import {
   type DestructionData,
   readDestruction,
@@ -201,8 +205,6 @@ import {
   readLoopArt,
 } from "./world-art.ts";
 
-// CLEANUP (added 2026-11-11): the placeholder current streak colour, until Art's streak art.
-const CURRENT_STREAK = 0x5fd4c8;
 // Story craft darts while their frames load.
 const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
@@ -299,13 +301,16 @@ export class PrototypeScene extends Phaser.Scene {
     cartwheelDebris?: string;
     resourceRocks?: string;
     whales?: string;
+    whirlpoolCurrents?: string;
+    whirlpoolDebris?: string;
   } = { assets: [] };
   // Galaxy art loads on that galaxy's first flight (cartwheel-art.ts galaxyAsset).
   private galaxyLoads = new Set<SectorId>();
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
-  private debrisArt: DebrisArt | undefined;
+  private debrisArt: ReadonlyMap<SectorId, DebrisArt> = new Map();
+  private streakSpec: StreakSpec | undefined;
   private resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
   // Resource rock SVGs declare their display size, so they load without the displayScale.
   private resourceFiles = new Set<string>();
@@ -485,7 +490,14 @@ export class PrototypeScene extends Phaser.Scene {
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
     const manifest = this.cache.json.get("art-manifest") as
-      | { assets: Asset[]; cartwheelDebris?: string; resourceRocks?: string; whales?: string }
+      | {
+          assets: Asset[];
+          cartwheelDebris?: string;
+          resourceRocks?: string;
+          whales?: string;
+          whirlpoolCurrents?: string;
+          whirlpoolDebris?: string;
+        }
       | undefined;
     this.shipAssets = (manifest?.assets ?? []).filter((asset) => this.textures.exists(asset.id));
     // Jets render behind the ship sprite. Missing, invalid or heading-mismatched metadata keeps
@@ -512,6 +524,8 @@ export class PrototypeScene extends Phaser.Scene {
       ...(manifest?.cartwheelDebris ? { cartwheelDebris: manifest.cartwheelDebris } : {}),
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
       ...(manifest?.whales ? { whales: manifest.whales } : {}),
+      ...(manifest?.whirlpoolCurrents ? { whirlpoolCurrents: manifest.whirlpoolCurrents } : {}),
+      ...(manifest?.whirlpoolDebris ? { whirlpoolDebris: manifest.whirlpoolDebris } : {}),
     };
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
@@ -1005,7 +1019,11 @@ export class PrototypeScene extends Phaser.Scene {
         ["resource-rocks", this.manifest.resourceRocks],
         ["cartwheel-debris", this.manifest.cartwheelDebris],
       ],
-      3: [["whales", this.manifest.whales]],
+      3: [
+        ["whales", this.manifest.whales],
+        ["whirlpool-currents", this.manifest.whirlpoolCurrents],
+        ["whirlpool-debris", this.manifest.whirlpoolDebris],
+      ],
     }[sector as 2 | 3];
     for (const [key, path] of data ?? []) {
       if (path) {
@@ -1025,11 +1043,21 @@ export class PrototypeScene extends Phaser.Scene {
       (craft) => this.cache.json.get(`craft-jets-${craft}`),
       craftFrameSets(loaded),
     );
-    const debris = readDebrisArt(this.cache.json.get("cartwheel-debris"));
-    this.debrisArt =
-      debris && debris.frames.every((_, k) => this.textures.exists(`cartwheel-debris-${k}`))
-        ? debris
-        : undefined;
+    const debris = new Map<SectorId, DebrisArt>();
+    for (const [sector, key] of [
+      [2, "cartwheel-debris"],
+      [3, "whirlpool-debris"],
+    ] as const) {
+      const art = readDebrisArt(this.cache.json.get(key));
+      const ready = art?.pieces.every((piece) =>
+        piece.frames.every((_, k) => this.textures.exists(`${piece.id}-${k}`)),
+      );
+      if (art && ready) {
+        debris.set(sector, art);
+      }
+    }
+    this.debrisArt = debris;
+    this.streakSpec = readStreakSpec(this.cache.json.get("whirlpool-currents"));
     if (this.textures.exists("ore-nugget")) {
       this.textures.get("ore-nugget").setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
@@ -1159,22 +1187,24 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * Cartwheel's traveling debris: Art's tumbling bent plate over its trailing coral dashes
-   * (art/cartwheel-props.md). False when it does not apply, so the placeholder draws.
+   * Traveling debris, ballistic or in a river, in a galaxy with Art's debris: its tumbling piece
+   * over the trailing coral dashes (art/cartwheel-props.md, art/whirlpool.md). False without
+   * that art, so the placeholder draws.
    */
   private drawTravelingDebris(object: SpaceObject, point: Vec): boolean {
     const flight = this.model.state.flight!;
-    const art = this.debrisArt;
-    if (!art || flight.sector !== 2 || !object.velocity || object.river || object.orbit) {
+    const art = this.debrisArt.get(flight.sector);
+    if (!art || !object.velocity || object.orbit) {
       return false;
     }
-    const frame = debrisFrame(art, object.id, this.reducedMotion, flight.time);
+    const piece = debrisPiece(art, object.id);
+    const frame = debrisFrame(art, piece, object.id, this.reducedMotion, flight.time);
     const velocity = {
       x: object.velocity.x - object.velocity.y,
       y: (object.velocity.x + object.velocity.y) / 2,
     };
     const mark = hexNumber(art.marks.color);
-    for (const dash of debrisMarks(art, frame, velocity)) {
+    for (const dash of debrisMarks(art, piece, frame, velocity)) {
       this.ink.lineStyle(art.marks.width, mark, dash.alpha);
       this.ink.lineBetween(
         point.x + dash.from.x,
@@ -1183,9 +1213,9 @@ export class PrototypeScene extends Phaser.Scene {
         point.y + dash.to.y,
       );
     }
-    this.objectSprite(object.id, `cartwheel-debris-${frame}`)
-      .setDisplaySize(art.display.width, art.display.height)
-      .setOrigin(art.pivot.x, art.pivot.y)
+    this.objectSprite(object.id, `${piece.id}-${frame}`)
+      .setDisplaySize(piece.display.width, piece.display.height)
+      .setOrigin(piece.pivot.x, piece.pivot.y)
       .setPosition(point.x, point.y)
       .setDepth(playDepth(point.y));
     return true;
@@ -2060,47 +2090,47 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /**
-   * CLEANUP (added 2026-11-11): placeholder teal streaks for Whirlpool's currents until Art's
-   * streak art lands. Dashes run along three lanes of each current and move with its flow, so
-   * its direction reads at a glance.
+   * Whirlpool's current streaks from Art's spec (current-streaks.ts): chevrons on the world
+   * plane in each lane, moving with the lane's flow and fading with it, on the field above the
+   * specks and backdrop rocks and below every play object.
    */
   private drawCurrents(flight: FlightState): void {
+    const spec = this.streakSpec;
+    if (!spec) {
+      return;
+    }
     const reach = Math.max(SCREEN.width, SCREEN.height) * 1.5;
-    const dash = 46;
-    const period = 140;
-    const offset = this.reducedMotion ? 0 : ((this.time.now / 1000) * CURRENTS.peakFlow) % period;
+    const color = hexNumber(spec.color);
+    const margin = 24;
+    const near = (point: Vec) => {
+      const at = this.project(point);
+      return (
+        at.x > -margin &&
+        at.y > -margin &&
+        at.x < SCREEN.width + margin &&
+        at.y < SCREEN.height + margin
+      );
+    };
     for (const current of currentsNear(flight.sector, reach, flight.player)) {
-      for (const [lane, alpha] of [
-        [0, 0.45],
-        [-0.25, 0.25],
-        [0.25, 0.25],
-      ] as const) {
-        this.ink.lineStyle(2, CURRENT_STREAK, alpha);
-        for (let arc = offset + lane * period; arc < current.length; arc += period) {
-          if (arc < 0) {
-            continue;
-          }
-          const from = pointOnCurrent(current, arc);
-          const to = pointOnCurrent(current, Math.min(current.length, arc + dash));
-          const across = lane * current.width;
-          const a = this.project({
-            x: from.point.x - from.tangent.y * across,
-            y: from.point.y + from.tangent.x * across,
-          });
-          const b = this.project({
-            x: to.point.x - to.tangent.y * across,
-            y: to.point.y + to.tangent.x * across,
-          });
-          if (
-            Math.max(a.x, b.x) < 0 ||
-            Math.min(a.x, b.x) > SCREEN.width ||
-            Math.max(a.y, b.y) < 0 ||
-            Math.min(a.y, b.y) > SCREEN.height
-          ) {
-            continue;
-          }
-          this.ink.lineBetween(a.x, a.y, b.x, b.y);
-        }
+      const marks = streakMarks(
+        spec,
+        current,
+        CURRENTS.peakFlow,
+        (arc, offset) => flowFraction(current, arc, offset),
+        flight.time,
+        this.reducedMotion,
+        near,
+      );
+      for (const mark of marks) {
+        this.ink.lineStyle(mark.width, color, mark.alpha);
+        this.ink.strokePoints(
+          mark.points.map((point) => {
+            const at = this.project(point);
+            return new Phaser.Math.Vector2(at.x, at.y);
+          }),
+          false,
+          false,
+        );
       }
     }
   }

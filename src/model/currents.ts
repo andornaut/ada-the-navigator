@@ -201,14 +201,25 @@ export function flowAt(sector: SectorId, point: Vec): Vec {
     return { x: 0, y: 0 };
   }
   const { arc, distance, tangent } = nearestOnCurrent(current, point);
-  const half = current.width / 2;
-  if (distance >= half) {
-    return { x: 0, y: 0 };
-  }
-  const across = 1 - (distance / half) ** 2;
-  const ends = Math.min(1, arc / CURRENTS.fade, (current.length - arc) / CURRENTS.fade);
-  const strength = CURRENTS.peakFlow * across * Math.max(0, ends);
+  const strength = CURRENTS.peakFlow * flowFraction(current, arc, distance);
   return { x: tangent.x * strength, y: tangent.y * strength };
+}
+
+/**
+ * The flow over the peak at arc `arc` and offset `offset` across a current: 1 - (2d / w)^2
+ * across, fading over `fade` at each end, zero at and beyond the edges.
+ */
+export function flowFraction(
+  current: Pick<Current, "length" | "width">,
+  arc: number,
+  offset: number,
+): number {
+  const half = current.width / 2;
+  if (Math.abs(offset) >= half) {
+    return 0;
+  }
+  const ends = Math.min(1, arc / CURRENTS.fade, (current.length - arc) / CURRENTS.fade);
+  return (1 - (offset / half) ** 2) * Math.max(0, ends);
 }
 
 /** Whether a disc of `radius` at a point touches any current's band. */

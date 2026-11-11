@@ -10,12 +10,9 @@ import {
   type CartwheelAsset,
   craftArt,
   craftFrameSets,
-  debrisFrame,
-  debrisMarks,
   galaxyAsset,
   hubLayers,
   readBuoyArt,
-  readDebrisArt,
   readHubArt,
 } from "./cartwheel-art.ts";
 
@@ -23,7 +20,6 @@ const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
 const manifest = json("/art/manifest.json") as {
   assets: CartwheelAsset[];
-  cartwheelDebris: string;
   resourceRocks: string;
 };
 const assets = manifest.assets;
@@ -50,7 +46,8 @@ describe("Cartwheel art", () => {
     );
     expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 1 + 8);
     expect(sets.get("unused")!.every((id) => id.startsWith("craft-stranded-"))).toBe(true);
-    expect(sets.get(3)!.every((id) => id.startsWith("whale-"))).toBe(true);
+    expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id))).toBe(true);
+    expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     const boot = sets.get(null)!;
     expect(boot).toEqual(expect.arrayContaining(["ship", "station-a", "outpost-growers-a"]));
     expect(
@@ -98,25 +95,6 @@ describe("Cartwheel art", () => {
     expect(
       craftFrameSets(assets.filter((asset) => asset.id !== "craft-miner-7")).has("miner"),
     ).toBe(false);
-  });
-
-  it("tumbles the traveling debris and trails its coral dashes behind it", () => {
-    const art = readDebrisArt(json(manifest.cartwheelDebris))!;
-    expect(art.frames).toHaveLength(8);
-    expect(art.tumble.degPerSecond).toEqual([60, 120]);
-    expect(debrisFrame(art, "ballistic:1,2:0", true, 30)).toBe(0);
-    const frames = new Set(
-      Array.from({ length: 40 }, (_, i) => debrisFrame(art, "ballistic:1,2:0", false, i / 4)),
-    );
-    expect(frames.size).toBeGreaterThan(4);
-    const marks = debrisMarks(art, 0, { x: 10, y: 0 });
-    expect(marks.map((mark) => mark.alpha)).toEqual([0.95, 0.7, 0.45]);
-    // Moving right, every dash sits to the left of the piece and the farthest fades most.
-    expect(marks.every((mark) => Math.max(mark.from.x, mark.to.x) < 0)).toBe(true);
-    expect(Math.min(marks[2]!.from.x, marks[2]!.to.x)).toBeLessThan(
-      Math.min(marks[0]!.from.x, marks[0]!.to.x),
-    );
-    expect(debrisMarks(art, 0, { x: 0, y: 0 })).toEqual([]);
   });
 
   it("draws each resource rock on its plain shape's exact footprints", () => {
