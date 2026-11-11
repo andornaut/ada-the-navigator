@@ -1,0 +1,91 @@
+{
+  "archetypes": {
+    "frigate": {
+      "hardpoints": [
+        {
+          "id": "engine",
+          "offset": [0, 0.3],
+          "order": 0,
+          "required": true,
+          "role": "engine"
+        },
+        {
+          "fire": "bolt",
+          "id": "port",
+          "offset": [-0.3, 0],
+          "order": 1,
+          "required": true,
+          "role": "turret"
+        },
+        {
+          "fire": "bolt",
+          "id": "starboard",
+          "offset": [0.3, 0],
+          "order": 2,
+          "required": true,
+          "role": "turret"
+        }
+      ],
+      "sizeRatio": 4
+    },
+    "capital": {
+      "hardpoints": [
+        {
+          "id": "command",
+          "offset": [0, 0],
+          "order": 0,
+          "required": true,
+          "role": "command"
+        },
+        {
+          "id": "engine-left",
+          "offset": [-0.25, 0.4],
+          "order": 1,
+          "required": true,
+          "role": "engine"
+        },
+        {
+          "id": "engine-right",
+          "offset": [0.25, 0.4],
+          "order": 2,
+          "required": true,
+          "role": "engine"
+        },
+        {
+          "fire": "bolt",
+          "id": "weapon-left",
+          "offset": [-0.35, -0.3],
+          "order": 3,
+          "required": true,
+          "role": "turret"
+        },
+        {
+          "fire": "bolt",
+          "id": "weapon-right",
+          "offset": [0.35, -0.3],
+          "order": 4,
+          "required": true,
+          "role": "turret"
+        },
+        {
+          "fire": "missile",
+          "id": "weapon-rear-left",
+          "offset": [-0.42, 0.08],
+          "order": 5,
+          "required": true,
+          "role": "turret"
+        },
+        {
+          "fire": "missile",
+          "id": "weapon-rear-right",
+          "offset": [0.42, 0.08],
+          "order": 6,
+          "required": true,
+          "role": "turret"
+        }
+      ],
+      "sizeRatio": 5
+    }
+  },
+  "version": 1
+}
