@@ -204,7 +204,7 @@ Objectives, in order:
 - Travel: Travel, Toronto, Discovered destinations.
 - Travel unavailable: Travel is unavailable while you are in danger.
 - Cargo: Cargo full. Deposit at the station when ready.
-- Shield depletion: Your ship brought you home. Your story progress is saved.
+- Shield depletion: Your ship warped you home to recharge. Your story progress is saved.
 - Sector four: Story in development.
 - Completed story: Chapter complete. You can keep exploring.
 

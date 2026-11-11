@@ -150,9 +150,10 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
-- Basic is the starter weapon. Upgrades are Missiles, Triple Laser and Scattershot.
-  Icon pickups, presented like Chibi's power-ups, automatically equip their upgrade
-  and retain other owned upgrades.
+- Basic is the starter weapon. Upgrades are Missiles, Triple Laser and Scattershot,
+  bought at station shops or found as rare drops; see [Economy](economy.md). Icon
+  pickups, presented like Chibi's power-ups, automatically equip their upgrade
+  outside combat and retain other owned upgrades.
 - Missiles fire one slower, stronger straight projectile. Triple Laser fires three
   bolts at -20, 0 and 20 degrees. Scattershot fires seven visual dots at -30, -20,
   -10, 0, 10, 20 and 30 degrees; the dots do not apply damage over time.
@@ -164,19 +165,19 @@ sector, but its motives, finale, enemies and resolution remain undesigned.
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing, splash, piercing or reload is added.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
-  ownership of the other upgrades.
+  ownership of the other upgrades. Weapons cannot be changed during combat or for 5
+  seconds after it.
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
   solo ships, packs, frigates and capital ships. Sector one's roster is in
   [Ships](ships.md).
 - A recurring hostile alien faction provides continuity across sectors.
-- Disabled enemy ships teleport away. How and why are unknown, as with Ada's tech.
+- Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield; avoiding damage briefly restores it. No hull resource.
 - No post-hit invulnerability or protection window.
-- Shield depletion while an upgrade is selected removes that upgrade, fully restores
-  the shield and always equips basic fire. Other owned upgrades remain available
-  for manual selection.
-- Shield depletion while basic fire is selected returns Ada to Toronto and sector
-  selection. Story progress persists; the next flight generates a new layout.
+- Shield depletion makes Ada's ship quantum warp her home to Toronto and sector
+  selection to recharge. The equipped weapon is lost unless it is Basic, and
+  recharging costs a flat Stardust fee. Story progress persists; the next flight
+  generates a new layout.
 - The shield bar spans the full bottom width and is approximately three pixels high.
 - One forgiving difficulty; no overall exploration timer.
 - Ordinary scenery blocks or slides the ship without damage. Attacks and marked
@@ -247,8 +248,8 @@ optional repeatable sector activities. One optional task per sector can remain
 active while Ada visits other sectors. Preserve its objective across regeneration;
 lost carried quest items remain replaceable.
 
-Additional mining deposits provide recorded totals and achievement progress,
-without currency or a shop. Achievements emphasize story, exploration and sector
+Additional mining deposits provide recorded totals and achievement progress.
+Stardust and station shops are described in [Economy](economy.md). Achievements emphasize story, exploration and sector
 activities, with none requiring missable dialogue choices. Exact achievement
 requirements and repeatable-task content remain to be specified.
 
@@ -257,9 +258,10 @@ requirements and repeatable-task content remain to be specified.
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
 Nearby optional discoveries show a direction indicator; this does not add a map.
-Discovery rewards use existing cargo and weapon pickups.
+Discovery rewards use existing cargo, weapon and Stardust pickups. Stations are rare
+points of interest with shops.
 
-Visual effects distinguish hits, shield damage, disabled ships, pickups and
+Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Other space objects retain monochrome placeholder graphics.
 
