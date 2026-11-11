@@ -222,8 +222,8 @@ export const ECONOMY: EconomyCatalog = {
       retaliator: 0.0025,
       swarm: 0.0025,
     },
-    2: { ...small, capital: 0.1, frigate: 0.05 },
-    3: { ...small, capital: 0.1, frigate: 0.05 },
+    2: { ...small, capital: 0.05, frigate: 0.05 },
+    3: { ...small, capital: 0.05, frigate: 0.05 },
   },
   weaponLockSeconds: 5,
   weaponPrices: {

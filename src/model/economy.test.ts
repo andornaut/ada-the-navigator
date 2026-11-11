@@ -132,9 +132,9 @@ describe("Stardust drops", () => {
     [1, "capital", 0.05],
     [2, "swarm", 0.005],
     [2, "frigate", 0.05],
-    [2, "capital", 0.1],
+    [2, "capital", 0.05],
     [3, "frigate", 0.05],
-    [3, "capital", 0.1],
+    [3, "capital", 0.05],
   ] as const)(
     "in galaxy %i drops a random upgrade weapon from %s at %f",
     (sector, archetype, chance) => {
@@ -166,7 +166,7 @@ describe("Stardust drops", () => {
       expect([12, 37]).toContain(drop.stardust);
       replaced += drop.stardust === 37 ? 1 : 0;
     }
-    expect(Math.abs(replaced / 8000 - 0.1)).toBeLessThan(0.015);
+    expect(Math.abs(replaced / 8000 - 0.05)).toBeLessThan(0.01);
   });
 
   it("splits every enemy drop below its cap into pickups of 1 Stardust", () => {
