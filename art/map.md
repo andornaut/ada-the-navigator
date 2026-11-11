@@ -388,10 +388,11 @@ presses first; a chip under them takes no press there.
 
 ## Pause card
 
-The Paused card's action stack is Resume (primary), Map, Settings, Return home
-([Layout screens](layout.md#cards)). Map always opens. While Ada is in danger,
-Return home is unavailable and the card shows "Unavailable while you are in
-danger." below the stack; on the map, Travel here is unavailable instead.
+The Paused card's action stack is Resume (primary), Map, Settings,
+Achievements, Return home ([Layout screens](layout.md#cards)). Map always
+opens. While Ada is in danger, Return home is unavailable and the card shows
+"Unavailable while you are in danger." below the stack; on the map, Travel here
+is unavailable instead.
 
 ## Strings
 

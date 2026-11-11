@@ -66,12 +66,12 @@ underneath.
   frames 2 and 3 `pause-held.svg`. The sheet's PNG is no longer drawn.
 - Contrast: cream bars and ring 9.59:1 on the navy face and 10.11:1 on the
   space background `#292734`; pressed white bars 9.55:1 on `#3a4466`.
-- Pause card: Resume (primary), Map, Settings, Return home; its groups are in
-  [Layout screens](layout.md#cards). While Ada is in danger, Return home is
-  unavailable and the note "Unavailable while you are in danger." shows below
-  the stack in supporting text. Map always opens the [map](map.md), where
-  Travel here is unavailable in danger instead. Settings opens over the same
-  dim; one card or the map shows at a time.
+- Pause card: Resume (primary), Map, Settings, Achievements, Return home; its
+  groups are in [Layout screens](layout.md#cards). While Ada is in danger,
+  Return home is unavailable and the note "Unavailable while you are in danger."
+  shows below the stack in supporting text. Map always opens the
+  [map](map.md), where Travel here is unavailable in danger instead. Settings
+  opens over the same dim; one card or the map shows at a time.
 - The space screen shows no navigation or destination panel; navigation lives in
   the pause card.
 
