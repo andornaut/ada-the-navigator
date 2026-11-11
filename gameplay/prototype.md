@@ -334,17 +334,30 @@ requirements and repeatable-task content remain to be specified.
 
 ## Astra and Penny in flight
 
-Astra speaks in flight through short one-liners: a small strip with her portrait
-and one line that never pauses play, one at a time, with a cooldown between
-ordinary lines. Hints are always on. The first flight teaches through her lines,
-each shown once and skipped when the player has already done the action. Later
-lines react to play: a newly discovered destination, a low shield (once per
-fight) and Gadget's drones arriving. Exact lines are in
-[the player copy](prototype-copy.md#astra-in-flight).
+In flight, Ada, Astra and Penny talk in short conversations, as Chibi's bosses
+do. A conversation shows in a fixed box along the top with the speaker's name tab
+and portrait: Ada's on the left, Astra's and Penny's on the right. Each line is one
+line long. The box never pauses play and has a translucent background, more
+transparent than Chibi's (provisionally 0.45 alpha); text and portraits stay
+opaque. Each line shows for 5 seconds or until tapped; a tap moves to the next
+line, and the last tap closes the conversation. A conversation has one to three
+lines, and only one shows at a time, with a cooldown between ordinary
+conversations. Hints are always on.
 
-Penny rides in the second seat. When Gadget's drones first spot Ada in an
-encounter, Penny barks once, with a sound and a short "Woof!", as an early
-warning.
+Conversations come from data, each with a trigger and a priority: warnings, then
+Penny, then first-flight lessons, then lore. Triggers include the first flight's
+lessons (each shown once, skipped when the player has already done the action),
+a first arrival in a galaxy, meeting each alien group, a newly mapped destination
+or station, a capital ship sighting, a low shield (once per fight), drones
+arriving, and quiet stretches without combat, which draw unseen lore from the
+galaxy's pool. Astra shares lore and flavor about places and alien species; Ada
+asks questions and reacts. Seen conversations are saved so they do not repeat.
+
+Penny rides in the second seat and never barks aloud. When an undiscovered point
+of interest comes within a provisional 900 world units of Ada, even off screen,
+one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
+once per point of interest. Exact lines are in
+[the player copy](prototype-copy.md#in-flight-conversations).
 
 ## Space encounters and feedback
 

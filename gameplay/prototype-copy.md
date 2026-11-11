@@ -231,23 +231,48 @@ Objectives, in order:
 6. Fight your way to the holodisk.
 7. Return home when ready.
 
-## Astra in flight
+## In-flight conversations
 
-First flight, once each, skipped if already done:
+One line per speaker line. First flight lessons, once each, skipped if already
+done:
 
-- "Use the left stick to fly." (desktop: "Use WASD to fly.")
-- "Use the right stick to aim and fire." (desktop: "Use the arrow keys to aim and
-  fire.")
-- "That's Stardust. Fly close and I'll pull it in."
-- "A station! Fly into the dock to trade."
+- Astra: "Use the left stick to fly." (desktop: "Use WASD to fly.")
+- Astra: "Use the right stick to aim and fire." (desktop: "Use the arrow keys to
+  aim and fire.")
+- Astra: "That's Stardust. Fly close and I'll pull it in." Ada: "Like a magnet!"
+- Astra: "A station! Fly into the dock to trade." Ada: "Shopping in space!"
+
+Warnings:
+
+- Shield low, once per fight: Astra: "Shield low!"
+- Drones arrive: Astra: "Drones ahead." Ada: "I see them."
+
+Penny senses a point of interest: Penny: "Woof! Woof!" Ada: "Penny, did you sense
+something, girl?"
 
 Reactions:
 
-- New destination discovered: "New place mapped."
-- Shield low, once per fight: "Shield low!"
-- Gadget's drones arrive: "Drones ahead."
+- New destination or station mapped: Astra: "New place mapped." Ada: "Our map is
+  growing!"
+- Capital ship sighted: Ada: "That ship is huge!" Astra: "No crew aboard. Aim for
+  the glowing parts."
 
-Penny, when drones first spot Ada: "Woof!"
+Sunflower:
+
+- First arrival: Astra: "Sunflower. It's the only place I remember." Ada: "Then
+  let's make new memories."
+- Meeting the growers: Ada: "Who grows food out here?" Astra: "The growers farm
+  starlight on their outpost."
+- Meeting the workshop: Astra: "The workshop can fix almost anything." Ada:
+  "Except their friendships, maybe."
+- Meeting the salvagers: Ada: "What do salvagers do?" Astra: "They find lost
+  things and use them again."
+- Quiet stretch: Ada: "Astra, do you ever get lonely?" Astra: "Not with a
+  navigator aboard."
+- Quiet stretch: Astra: "Penny's tail is wagging at my console lights." Ada: "She
+  thinks you're fun."
+- Quiet stretch: Ada: "Why is it called Sunflower?" Astra: "Its arms spiral like
+  the seeds of a sunflower."
 
 ## Shared interface text
 
