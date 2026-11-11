@@ -1858,6 +1858,45 @@
       }
     },
     {
+      "id": "story-ada-room-glow-1",
+      "path": "/art/story/ada-room-glow-1.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-ada-room-glow-2",
+      "path": "/art/story/ada-room-glow-2.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-ada-room-glow-3",
+      "path": "/art/story/ada-room-glow-3.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "id": "story-grandma-garden",
       "path": "/art/story/grandma-garden.png",
       "width": 1920,
@@ -3176,5 +3215,6 @@
     }
   ],
   "spacePalette": "/art/space-palette.json",
-  "quantumJump": "/art/quantum-jump.json"
+  "quantumJump": "/art/quantum-jump.json",
+  "storyTransition": "/art/story-transition.json"
 }

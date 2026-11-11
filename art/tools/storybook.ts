@@ -602,6 +602,32 @@ function park(P: Palette): Scene {
   return s;
 }
 
+/* "Pick up the rock." transition: the rock's glow washes Ada's room, then the cockpit */
+
+// Glow amounts of the transition frames; 1 is the approved full wash.
+const GLOW = [1 / 3, 2 / 3, 1] as const;
+
+// Each step cross-fades from the previous image to its background over fadeMs, then holds;
+// fadeMs 0 is a cut. The cockpit background is art-premise's `cockpit`.
+const step = (background: string, fadeMs: number, holdMs: number) => ({
+  background,
+  fadeMs,
+  holdMs,
+});
+export const TRANSITION = {
+  version: 1,
+  rockGlow: {
+    from: "story-ada-room",
+    steps: [
+      step("story-ada-room-glow-1", 160, 0),
+      step("story-ada-room-glow-2", 160, 0),
+      step("story-ada-room-glow-3", 200, 240),
+      step("cockpit", 0, 0),
+    ],
+    reducedMotion: [step("cockpit", 400, 0)],
+  },
+};
+
 /* Outputs */
 
 interface Background {
@@ -615,14 +641,17 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: "story-park", palette: PARK, build: park },
   { id: "story-ada-room-unpolished", palette: ROOM, build: (P) => room(P) },
   { id: "story-ada-room", palette: ROOM, build: (P) => room(P, 0) },
+  ...GLOW.map((glow, i) => ({
+    id: `story-ada-room-glow-${i + 1}`,
+    palette: ROOM,
+    build: (P: Palette) => room(P, glow),
+  })),
   { id: "story-grandma-garden", palette: GARDEN, build: garden },
   { id: "story-community-garden", palette: LOT, build: lot },
   { id: "story-schoolyard", palette: YARD, build: schoolyard },
   { id: "story-school-hallway", palette: HALL, build: hallway },
   { id: "story-front-door", palette: DOOR, build: frontDoor },
 ];
-
-export const roomGlow = (glow: number) => room(ROOM, glow);
 
 export function paint(palette: Palette, scene: Scene) {
   return treatmentD(CANVAS, render(CANVAS, palette.back, scene));
@@ -644,11 +673,15 @@ const LATER = ["cockpit", "stardust", "holodisk", "quantum-jump", "station-", "e
 
 export function placeStoryEntries(entries: readonly { id: string }[]) {
   const path = `${art}manifest.json`;
-  const manifest = JSON.parse(readFileSync(path, "utf8")) as { assets: { id: string }[] };
+  const manifest = JSON.parse(readFileSync(path, "utf8")) as {
+    assets: { id: string }[];
+    storyTransition?: string;
+  };
   const kept = manifest.assets.filter(({ id }) => !id.startsWith("story-"));
   const next = kept.findIndex(({ id }) => LATER.some((prefix) => id.startsWith(prefix)));
   const at = next === -1 ? kept.length : next;
   manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
+  manifest.storyTransition = "/art/story-transition.json";
   writeFileSync(path, json(manifest));
 }
 
@@ -659,4 +692,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     writePng(`${art}${entry(id).path.slice("/art/".length)}`, paint(palette, build(palette)));
   }
   placeStoryEntries(BACKGROUNDS.map(({ id }) => entry(id)));
+  writeFileSync(`${art}story-transition.json`, json(TRANSITION));
 }

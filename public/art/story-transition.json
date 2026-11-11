@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "rockGlow": {
+    "from": "story-ada-room",
+    "steps": [
+      {
+        "background": "story-ada-room-glow-1",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-glow-2",
+        "fadeMs": 160,
+        "holdMs": 0
+      },
+      {
+        "background": "story-ada-room-glow-3",
+        "fadeMs": 200,
+        "holdMs": 240
+      },
+      {
+        "background": "cockpit",
+        "fadeMs": 0,
+        "holdMs": 0
+      }
+    ],
+    "reducedMotion": [
+      {
+        "background": "cockpit",
+        "fadeMs": 400,
+        "holdMs": 0
+      }
+    ]
+  }
+}
