@@ -28,12 +28,14 @@ the root manifest. Reused sources and checksums are in [Portraits](portraits.md)
 Manifest `frames` names every frame. `loops` lists each speaking loop as
 `{ frame, name, ms }`. The sheet JSON carries the same tags and durations.
 
-| Manifest id                                  | Frames                                                                                                   |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `ada-portrait`, `ada-portrait-compact`       | `happy` 0, `neutral` 1                                                                                   |
-| `astra-portrait`, `astra-portrait-compact`   | `idle` 0, `speaking-1` to `speaking-4` 1 to 4                                                            |
-| `gadget-portrait`, `gadget-portrait-compact` | `unknown-idle` 0, `unknown-speaking-1` to `-4` 1 to 4, `named-idle` 5, `named-speaking-1` to `-4` 6 to 9 |
-| `penny-portrait`, `penny-portrait-compact`   | `happy` 0, `neutral` 1, `upset` 2                                                                        |
+| Manifest id                                    | Frames                                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ada-portrait`, `ada-portrait-compact`         | `happy` 0, `neutral` 1                                                                                   |
+| `astra-portrait`, `astra-portrait-compact`     | `idle` 0, `speaking-1` to `speaking-4` 1 to 4                                                            |
+| `gadget-portrait`, `gadget-portrait-compact`   | `unknown-idle` 0, `unknown-speaking-1` to `-4` 1 to 4, `named-idle` 5, `named-speaking-1` to `-4` 6 to 9 |
+| `penny-portrait`, `penny-portrait-compact`     | `happy` 0, `neutral` 1, `upset` 2                                                                        |
+| `pip-portrait`, `pip-portrait-compact`         | `happy` 0, `neutral` 1, `worried` 2                                                                      |
+| `settler-portrait`, `settler-portrait-compact` | `happy` 0, `neutral` 1, `worried` 2                                                                      |
 
 - Speaking loops run 120 ms per frame (480 ms per loop) while that speaker's
   line shows; when the line ends the portrait shows its idle frame. Reduced
@@ -42,6 +44,11 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 - Idle frames (1000 ms) are for a speaker on screen but silent. The
   conversation box and the storybook panel show only the current speaker,
   whose loop plays while the line or page shows.
+- Pip's and the settler's sheets are in Andromeda's manifest, drawn by
+  `node art/tools/andromeda-portraits.ts` ([Andromeda](andromeda.md#portraits)).
+  Like Ada and Penny they have no speaking loop and show the line's mood;
+  `worried` suits the frightened settlers and Pip's confession, and Gameplay
+  marks which lines use it.
 - Ada and Penny have no speaking loop. Each line takes the mood Gameplay marks
   after it in [player-copy.md](../gameplay/player-copy.md): a line
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`

@@ -63,7 +63,7 @@ and `oreField` links; Whirlpool the whales, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers'
 station, the settlements, the guide beacons, Pip's mail scooter, their
-project frames and the garnet drones. The station, discovery cache,
+project frames, the garnet drones and Pip's and the settler's portraits. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
@@ -115,7 +115,8 @@ the pickups ([Stardust](stardust.md#pickup), the
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
-`art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
+`art/tools/andromeda-portraits.ts` adapts Pip's and the settler's portraits from
+Archie sources in `art/sources/`. `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
 compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
 from another game's build pipeline are required.
 

@@ -96,6 +96,36 @@ for the heads of Mom's and Dad's storybook sprites
 ([storybook](storybook.md#story-figures)); their outfit colours follow the
 Archie walker sprites `walker-trista` and `walker-mr-b`.
 
+## Andromeda adaptations
+
+Pip's and the settler's portraits adapt two more Archie portrait sheets under
+the same licence, from the Archie repository at exact commit
+`79bf84671e51f5ce4e0ffa038d82cc3e1c57435b`. The source PNGs are byte-for-byte
+copies in `art/sources/`; their Aseprite data supplies the kept frames, which
+`art/tools/andromeda-portraits.ts` lists by index: `happy` 0, `neutral` 1 and
+`worried` 4 of five, each 1000 ms. The tool recolours them and crops the 22 px
+compact sheets. The source filenames
+identify provenance only; they assign no Archie identity or story in Ada.
+
+| Portrait | Source                                     | Source SHA-256                                                     | Changes                                                                                                      |
+| -------- | ------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Pip      | `public/art/sprites/face-owner-buddy.png`  | `4b968c94ac25ad02b1ccb73968bd46da23ecd86c2dfe79443aceeef5f8815468` | Cap and jacket recoloured periwinkle, cap badge white, a tan satchel strap with an amber buckle; crop (4, 5) |
+|          | `public/art/sprites/face-owner-buddy.json` | `fd1c64f86cb367c0b8e03d1f3180c0ad0f13ff1d9be03674be03e8c8e6ab197c` | Tags and durations of the kept frames                                                                        |
+| Settler  | `public/art/sprites/face-owner-penny.png`  | `b2002580b8911dd580dc8ba1f1da8a9dced50e3a5c0d9d07d1269a7ef1304687` | Tie recoloured periwinkle; crop (5, 4)                                                                       |
+|          | `public/art/sprites/face-owner-penny.json` | `53cf9301493ab9cb71098a09428319c10c64c93f6af1384d6c900f98e4111c6e` | Tags and durations of the kept frames                                                                        |
+
+Outputs in `public/art/andromeda/portraits/`:
+
+| Output                | SHA-256                                                            |
+| --------------------- | ------------------------------------------------------------------ |
+| `pip.png`             | `38330f48ee9936967606da968a7f3fc3e41f177b741bde26383d77c6ba2b18d7` |
+| `pip-compact.png`     | `1c3239001ed08aa0a636ec4f15a928c16550f9be15de311ae9052ff2d965c42b` |
+| `settler.png`         | `7191e967b312f7ae4dee60334eb2d26eb8299f9147a8d4572ac452e1314dde0e` |
+| `settler-compact.png` | `8584d3e8ffff675fcf6888012a2d77330a9c15c2afd20329fcee99129b099a5f` |
+
+The four source files match their committed blobs at the pinned commit by Git
+object hash, and the copied PNGs match the sources byte for byte.
+
 ## Verification
 
 All ten tracked source files match their committed blobs at the pinned source commit by Git object hash and byte comparison. Destination PNG bytes match the sources.

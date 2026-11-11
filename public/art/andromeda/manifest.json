@@ -8373,6 +8373,82 @@
         "y": 0.5
       },
       "craft": "pip"
+    },
+    {
+      "id": "pip-portrait",
+      "path": "/art/andromeda/portraits/pip.png",
+      "width": 96,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "worried": 2
+      }
+    },
+    {
+      "id": "settler-portrait",
+      "path": "/art/andromeda/portraits/settler.png",
+      "width": 96,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "worried": 2
+      }
+    },
+    {
+      "id": "pip-portrait-compact",
+      "path": "/art/andromeda/portraits/pip-compact.png",
+      "width": 66,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "worried": 2
+      }
+    },
+    {
+      "id": "settler-portrait-compact",
+      "path": "/art/andromeda/portraits/settler-compact.png",
+      "width": 66,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "happy": 0,
+        "neutral": 1,
+        "worried": 2
+      }
     }
   ]
 }

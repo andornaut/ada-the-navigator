@@ -1,7 +1,8 @@
 # Andromeda
 
 Andromeda's art: the settlers' station, the settlements, the guide beacons,
-Pip's mail scooter, the two project world changes and the garnet drones.
+Pip's mail scooter, the two project world changes, the garnet drones and the
+portraits of Pip and the settlers.
 
 - Rebuild with `node art/tools/andromeda.ts`. It writes
   `public/art/andromeda/` and replaces its own entries in place in
@@ -262,6 +263,30 @@ Speed jets ramp slow to fast, in place of Gadget's jet colours:
 | ----- | ---------------------- | ---------------------- | ----------------------: |
 | Outer | `#b8644c` to `#f0a07c` | `#c1445c` to `#fb8898` |          2.98:1, 6.37:1 |
 | Core  | `#d68b72` to `#ffe2c8` | `#e47485` to `#ffe0e0` |         5.01:1, 11.92:1 |
+
+## Portraits
+
+Pip's and the settler's conversation and storybook portraits, adapted from
+Archie portrait sheets ([provenance](portraits.md#andromeda-adaptations)). Rebuild
+with `node art/tools/andromeda-portraits.ts`; it writes
+`public/art/andromeda/portraits/` and replaces its own entries at the end of
+Andromeda's manifest. Sizes, frames, the frame and face colours and the
+integer nearest-neighbour scale follow
+[Conversation portraits](conversation.md).
+
+| Manifest id                | Sheet                   | Frames                              |
+| -------------------------- | ----------------------- | ----------------------------------- |
+| `pip-portrait`             | `pip.png`, 96 by 32     | `happy` 0, `neutral` 1, `worried` 2 |
+| `pip-portrait-compact`     | `pip-compact.png`       | The same, 22 px, displayed at 44    |
+| `settler-portrait`         | `settler.png`, 96 by 32 | `happy` 0, `neutral` 1, `worried` 2 |
+| `settler-portrait-compact` | `settler-compact.png`   | The same, 22 px, displayed at 44    |
+
+- Pip: a young courier under a periwinkle cap `#8f9cf0` (brim and shade
+  `#5b6093`) with a white badge, a periwinkle jacket and a tan satchel strap
+  `#e4a672` with an amber buckle.
+- The settler: a brimmed hat and coat with a periwinkle tie `#5b6093`.
+- Compact frames are exact 22 by 22 crops from the hat or cap to the chin: Pip
+  at (4, 5), the settler at (5, 4).
 
 ## Palette
 
