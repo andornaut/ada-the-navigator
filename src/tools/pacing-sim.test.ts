@@ -6,7 +6,6 @@ import {
   onScreen,
   runScenario,
   scenarioEconomy,
-  SCENARIOS,
 } from "../../tools/pacing-sim.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { sectorEncounters } from "../data/enemy-catalog.ts";
@@ -24,7 +23,6 @@ describe("pacing simulation world", () => {
         const flight = createFlight(PROTOTYPE, sector, seed, { known: [] });
         const world = {
           catalog: ECONOMY,
-          encounterRate: 1,
           encounters: sectorEncounters[sector],
           sector,
           seed,
@@ -128,30 +126,28 @@ describe("pacing simulation runs", () => {
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
-  it("fights galaxy three's oversized capital route guards", () => {
+  it("fights galaxy three's capital route guards", () => {
     const { runs } = runScenario({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "three", prices: {} },
       sector: 3,
     });
     for (const run of runs) {
-      expect(run.destroyed.oversizedCapital).toBe(2);
+      expect(run.destroyed.capital).toBe(2);
       expect(run.stardust.guards).toBeGreaterThan(0);
     }
   });
 
-  it("meets more encounters, frigates and escorted capitals with galaxy one's playtest roster", () => {
-    const met = (name: "current" | "roster") => {
-      const scenario = { ...SCENARIOS[name]!, behaviour: {}, name };
-      const { summary } = runScenario({ ...options, minutes: 60, scenario, seeds: 6 });
-      return summary.metPerMinute;
-    };
-    const total = (record: Partial<Record<string, number>>) =>
-      Object.values(record).reduce<number>((sum, value) => sum + (value ?? 0), 0);
-    const current = met("current");
-    const roster = met("roster");
-    expect(total(roster)).toBeGreaterThan(total(current) * 1.1);
-    expect(current.frigate).toBeUndefined();
-    expect(roster.frigate ?? 0).toBeGreaterThan(0);
+  it("meets galaxy one's frigates and escorted capital battles from the catalog", () => {
+    const { summary } = runScenario({
+      ...options,
+      minutes: 60,
+      scenario: { behaviour: {}, description: "", economy: {}, name: "one", prices: {} },
+      seeds: 6,
+    });
+    expect(summary.metPerMinute.frigate ?? 0).toBeGreaterThan(0);
+    expect(summary.metPerMinute.capital ?? 0).toBeGreaterThan(0);
+    // Each capital battle brings four escort fighters.
+    expect(summary.destroyedPerMinute.fighter ?? 0).toBeGreaterThan(0);
   });
 });

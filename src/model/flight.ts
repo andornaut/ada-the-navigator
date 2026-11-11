@@ -440,7 +440,7 @@ function arrivalPoints(flight: FlightState): Vec[] {
 const FLIGHT_START: Vec = { x: 0, y: 0 };
 
 /** Farthest an encounter's ships are placed from its cell centre, hulls included. */
-function encounterReach(
+export function encounterReach(
   content: PrototypeContent,
   archetype: EnemyArchetype,
   count: number,

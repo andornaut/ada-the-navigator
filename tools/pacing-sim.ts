@@ -21,7 +21,7 @@ import {
   type EncounterEntry,
   type EnemyArchetype,
   enemyCatalog,
-  enemyEncounterTuning,
+  enemyDefinition,
   sectorEncounters,
 } from "../src/data/enemy-catalog.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
@@ -37,7 +37,15 @@ import {
   rollEnemyDrop,
   splitStardust,
 } from "../src/model/drops.ts";
-import { createFlight, rollEncounter, stepFlight, wreckId } from "../src/model/flight.ts";
+import {
+  createFlight,
+  encounterReach,
+  encounterSpacing,
+  hostsEncounterCell,
+  rollEncounter,
+  stepFlight,
+  wreckId,
+} from "../src/model/flight.ts";
 import { stationsNear } from "../src/model/stations.ts";
 import type { FlightState } from "../src/model/types.ts";
 
@@ -114,20 +122,11 @@ export interface Scenario {
   /** Chunk spawn weight for discovery caches; the base is PROTOTYPE's. */
   cacheSpawnWeight?: number;
   /** Replacement encounter tables per sector; the base is the catalog's sectorEncounters. */
-  encounters?: Partial<Record<SectorId, readonly SimEncounterEntry[]>>;
-  /** Encounter cell density multiplier; cell spacing shrinks with its square root. */
-  encounterRate?: Partial<Record<SectorId, number>>;
-  /** Multiplier on every enemy's perception reach. */
-  perceptionScale?: Partial<Record<SectorId, number>>;
+  encounters?: Partial<Record<SectorId, readonly EncounterEntry[]>>;
   /** Weapons owned at the start, as carried over from earlier galaxies. */
   startWeapons?: UpgradeWeapon[];
   prices: Partial<Prices>;
   behaviour: Partial<Behaviour>;
-}
-
-/** An encounter table entry; a group can bring escorts that fight alongside it. */
-export interface SimEncounterEntry extends EncounterEntry {
-  escorts?: { archetype: EnemyArchetype; count: number };
 }
 
 export const DEFAULT_BEHAVIOUR: Behaviour = {
@@ -155,30 +154,6 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
 /** Named value sets for comparison; `current` changes nothing. */
 export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "name">>> = {
   current: { description: "Current data", economy: {}, prices: {} },
-  // CLEANUP (added 2026-11-11): galaxy one's playtest roster (gameplay/ships.md) before it
-  // reaches the catalog; remove once sectorEncounters and the per-galaxy rates carry it.
-  roster: {
-    description: "Galaxy one's playtest roster: bigger packs, frigates, capital battles",
-    economy: {},
-    encounterRate: { 1: 1.2 },
-    encounters: {
-      1: [
-        { archetype: "swarm", groupSize: [4, 6], weight: 0.35 },
-        { archetype: "fighter", groupSize: [1, 3], weight: 0.3 },
-        { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
-        { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
-        { archetype: "frigate", groupSize: [1, 1], weight: 0.07 },
-        {
-          archetype: "capital",
-          escorts: { archetype: "fighter", count: 4 },
-          groupSize: [1, 1],
-          weight: 0.03,
-        },
-      ],
-    },
-    perceptionScale: { 1: 1.2 },
-    prices: {},
-  },
 };
 
 /**
@@ -189,8 +164,8 @@ const ROUTE_GUARDS: Readonly<Record<SectorId, readonly (readonly EnemyArchetype[
   1: [["frigate"], ["frigate"], ["frigate"]],
   2: [["capital"], ["capital"], ["capital"]],
   3: [
-    ["oversizedCapital"],
-    ["oversizedCapital"],
+    ["capital"],
+    ["capital"],
     [
       HOLODISKS.guard.leader,
       ...Array.from({ length: HOLODISKS.guard.packSize }, () => HOLODISKS.guard.pack),
@@ -218,7 +193,7 @@ interface Pack {
   archetype: EnemyArchetype;
   count: number;
   decided: boolean;
-  escorts: SimEncounterEntry["escorts"] | null;
+  escorts: EncounterEntry["escorts"] | null;
   id: string;
   x: number;
   y: number;
@@ -310,17 +285,11 @@ export interface WorldOptions {
   sector: SectorId;
   seed: number;
   spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
-  encounters: readonly SimEncounterEntry[];
-  encounterRate: number;
+  encounters: readonly EncounterEntry[];
 }
 
 const tuning = PROTOTYPE.tuning;
 const size = tuning.chunkSize;
-const span = Math.max(3, Math.ceil(enemyEncounterTuning.quietDistance / size));
-/** Whether a chunk index hosts an encounter cell for a possibly fractional chunk spacing. */
-function hostsCell(spacing: number, index: number): boolean {
-  return Math.ceil(index / spacing) * spacing < index + 1;
-}
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -347,17 +316,28 @@ export function generateChunk(
   const stationSafe = (point: { x: number; y: number }) =>
     stationsNear(catalog, sector, catalog.station.safeRadius, point).length > 0;
   const chunk: Chunk = { caches: [], dust: [], pack: null, rocks: [] };
-  const spacing = span / Math.sqrt(options.encounterRate);
-  if (hostsCell(spacing, x) && hostsCell(spacing, y)) {
+  const spacing = encounterSpacing(PROTOTYPE, sector);
+  if (hostsEncounterCell(spacing, x) && hostsEncounterCell(spacing, y)) {
     const next = lcg(cellHash(seed ^ 9173, x, y));
     const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
     if (distance(center, player) >= tuning.safeRadius * 2 && !stationSafe(center)) {
       if (Math.floor(next() * 4) !== 3) {
         const countRoll = next();
-        const { archetype, count } = rollEncounter(options.encounters, countRoll, next());
-        const escorts =
-          options.encounters.find((entry) => entry.archetype === archetype)?.escorts ?? null;
-        chunk.pack = { archetype, count, decided: false, escorts, id: `pack:${x},${y}`, ...center };
+        const roll = rollEncounter(options.encounters, countRoll, next());
+        const { archetype, count } = roll;
+        const escorts = roll.escorts ?? null;
+        // A flight's start begins calm: the whole encounter stays clear of it.
+        const reach = encounterReach(PROTOTYPE, archetype, count, roll.escorts);
+        if (distance(center, { x: 0, y: 0 }) >= tuning.flight.arrivalCalm + reach) {
+          chunk.pack = {
+            archetype,
+            count,
+            decided: false,
+            escorts,
+            id: `pack:${x},${y}`,
+            ...center,
+          };
+        }
       }
     }
   }
@@ -440,7 +420,7 @@ export interface WeaponStanding {
 
 /** Every weapon at every level against one target: the check that no level 3 dominates. */
 export function weaponStandings(behaviour: Behaviour): WeaponStanding[] {
-  const archetypes = [...SMALL, "frigate", "capital", "oversizedCapital"] as const;
+  const archetypes = [...SMALL, "frigate", "capital"] as const;
   return (Object.keys(ON_TARGET) as Weapon[]).flatMap((weapon) =>
     [1, 2, 3].map((level) => {
       const definition = weaponAt(weapon, level);
@@ -496,9 +476,7 @@ export interface SimulationInput {
   sector: SectorId;
   seed: number;
   spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
-  encounters: readonly SimEncounterEntry[];
-  encounterRate: number;
-  perceptionScale: number;
+  encounters: readonly EncounterEntry[];
   /** Weapons owned at the start, from earlier galaxies. */
   startWeapons: readonly UpgradeWeapon[];
 }
@@ -564,7 +542,6 @@ export function simulate(input: SimulationInput): RunResult {
     flightSeed = cellHash(0x0f17, input.seed, result.jumps + sector * 1000) || 1;
     world = {
       catalog,
-      encounterRate: input.encounterRate,
       encounters: input.encounters,
       sector,
       seed: flightSeed,
@@ -724,7 +701,7 @@ export function simulate(input: SimulationInput): RunResult {
       const definition = enemyCatalog[pack.archetype];
       const reach =
         definition.aggression === "sight"
-          ? distance(pack, position) <= definition.perception * input.perceptionScale
+          ? distance(pack, position) <= enemyDefinition(sector, pack.archetype).perception
           : onScreen(pack.x - position.x, pack.y - position.y);
       if (!reach) {
         continue;
@@ -1015,9 +992,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       catalog,
       minutes: options.minutes,
       prices,
-      encounterRate: scenario.encounterRate?.[options.sector] ?? 1,
       encounters: scenario.encounters?.[options.sector] ?? sectorEncounters[options.sector],
-      perceptionScale: scenario.perceptionScale?.[options.sector] ?? 1,
       startWeapons: scenario.startWeapons ?? [],
       sector: options.sector,
       seed: index + 1,
@@ -1212,7 +1187,7 @@ export function formatSummary(summary: Summary): string {
   return lines.join("\n");
 }
 function formatRecord(record: Partial<Record<EnemyArchetype, number>>, digits: number): string {
-  const keys = [...SMALL, "frigate", "capital", "oversizedCapital"].filter(
+  const keys = [...SMALL, "frigate", "capital"].filter(
     (key) => record[key as EnemyArchetype] !== undefined,
   );
   return (
@@ -1322,15 +1297,9 @@ function main(argv: readonly string[]): void {
     ...(scenario.encounters === undefined
       ? {}
       : { encounters: scenario.encounters as NonNullable<Scenario["encounters"]> }),
-    ...(scenario.encounterRate === undefined
-      ? {}
-      : { encounterRate: scenario.encounterRate as NonNullable<Scenario["encounterRate"]> }),
     ...(scenario.startWeapons === undefined
       ? {}
       : { startWeapons: scenario.startWeapons as UpgradeWeapon[] }),
-    ...(scenario.perceptionScale === undefined
-      ? {}
-      : { perceptionScale: scenario.perceptionScale as NonNullable<Scenario["perceptionScale"]> }),
   };
   const { runs, summary } = runScenario({
     behaviour: behaviour as unknown as Behaviour,

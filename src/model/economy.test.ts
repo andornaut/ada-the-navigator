@@ -163,8 +163,8 @@ describe("Stardust drops", () => {
     for (let index = 0; index < 8000; index++) {
       const drop = rollEnemyDrop(ECONOMY, 2, owned, "capital", dropRandom(3, `w:${index}`));
       expect(drop.weapon).toBeNull();
-      expect([9, 34]).toContain(drop.stardust);
-      replaced += drop.stardust === 34 ? 1 : 0;
+      expect([12, 37]).toContain(drop.stardust);
+      replaced += drop.stardust === 37 ? 1 : 0;
     }
     expect(Math.abs(replaced / 8000 - 0.1)).toBeLessThan(0.015);
   });
