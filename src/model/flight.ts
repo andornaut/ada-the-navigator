@@ -118,6 +118,73 @@ const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
  * Push a circle out of overlapping scenery along each contact normal and report every contact
  * once, with the obstacle's own velocity, so movers bounce and never stay embedded.
  */
+/** Scenery reflects Ada's velocity and smoothed heading together, so recoil carries momentum. */
+function adaSceneryContact(
+  content: PrototypeContent,
+  flight: FlightState,
+): (normal: Vec, surface: Vec) => void {
+  const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
+  return (normal, surface) => {
+    flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
+    const heading = movementHeadings.get(flight);
+    if (heading) {
+      movementHeadings.set(flight, reflectDirection(normal, heading));
+    }
+  };
+}
+
+/**
+ * An enemy hull touching Ada bounces both ships by the scenery rule, without damage. Each
+ * reflects against the other's velocity; Ada takes the share m_enemy / (m_ada + m_enemy) of
+ * her reflected change and of the push-out, with mass as size ratio squared, and the enemy
+ * the rest. Their relative motion then matches a scenery bounce, so they always separate.
+ */
+export function bounceShips(
+  content: PrototypeContent,
+  flight: FlightState,
+  object: SpaceObject,
+): void {
+  const enemy = object.enemy;
+  const { sceneryRecoil, sceneryRestitution, shipRadius } = content.tuning.flight;
+  const offset = { x: flight.player.x - object.x, y: flight.player.y - object.y };
+  const gap = length(offset);
+  const reach = object.radius + shipRadius;
+  if (!enemy || gap >= reach) {
+    return;
+  }
+  // Coincident centres separate along the enemy's facing.
+  const normal = gap > 0 ? { x: offset.x / gap, y: offset.y / gap } : direction(enemy.facing);
+  const inward = { x: -normal.x, y: -normal.y };
+  const mass = enemyCatalog[enemy.archetype].sizeRatio ** 2;
+  const adaShare = mass / (1 + mass);
+  const enemyShare = 1 - adaShare;
+  const ada = bounce(sceneryRestitution, sceneryRecoil, normal, enemy.velocity, flight.velocity);
+  const hull = bounce(sceneryRestitution, sceneryRecoil, inward, flight.velocity, enemy.velocity);
+  flight.velocity = {
+    x: flight.velocity.x + (ada.x - flight.velocity.x) * adaShare,
+    y: flight.velocity.y + (ada.y - flight.velocity.y) * adaShare,
+  };
+  enemy.velocity = {
+    x: enemy.velocity.x + (hull.x - enemy.velocity.x) * enemyShare,
+    y: enemy.velocity.y + (hull.y - enemy.velocity.y) * enemyShare,
+  };
+  const depth = reach - gap + 0.01;
+  flight.player.x += normal.x * depth * adaShare;
+  flight.player.y += normal.y * depth * adaShare;
+  object.x += inward.x * depth * enemyShare;
+  object.y += inward.y * depth * enemyShare;
+  enemy.position = { x: object.x, y: object.y };
+  const heading = movementHeadings.get(flight);
+  if (heading) {
+    movementHeadings.set(flight, reflectDirection(normal, heading));
+  }
+  if (enemy.heading) {
+    enemy.heading = reflectDirection(inward, enemy.heading);
+  }
+  // Ada's push-out may meet scenery, which bounces her by its own rule.
+  resolveScenery(flight, shipRadius, adaSceneryContact(content, flight), flight.player);
+}
+
 function resolveScenery(
   flight: FlightState,
   radius: number,
@@ -983,15 +1050,8 @@ function move(
   }
   flight.velocity = motion.velocity;
   const start = { ...flight.player };
-  const { sceneryRecoil, sceneryRestitution, shipRadius } = content.tuning.flight;
-  // Scenery reflects velocity and the smoothed heading together, so recoil carries momentum.
-  const onContact = (normal: Vec, surface: Vec): void => {
-    flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
-    const heading = movementHeadings.get(flight);
-    if (heading) {
-      movementHeadings.set(flight, reflectDirection(normal, heading));
-    }
-  };
+  const { shipRadius } = content.tuning.flight;
+  const onContact = adaSceneryContact(content, flight);
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
   resolveScenery(flight, shipRadius, onContact, flight.player);
   const steps = Math.max(1, Math.ceil((length(flight.velocity) * dt) / 4));
@@ -1107,6 +1167,7 @@ function enemies(
       object.y = point.y;
     }
     object.enemy.position = { x: object.x, y: object.y };
+    bounceShips(content, flight, object);
     threatening ||=
       targetable &&
       intent.state.engaged &&
@@ -1126,15 +1187,6 @@ function enemies(
         projectile: fire.projectile,
         velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
       });
-    }
-    object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
-    if (
-      targetable &&
-      distance(object, flight.player) < object.radius + content.tuning.flight.shipRadius &&
-      !object.cooldown
-    ) {
-      damage(content, flight);
-      object.cooldown = content.tuning.flight.damageInterval;
     }
   }
   return threatening;
