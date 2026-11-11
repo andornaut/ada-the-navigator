@@ -359,8 +359,7 @@ Sunflower:
 - Shield depletion: Astra jumped you home to recharge. Your story progress is
   saved.
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
-  morning, the rock is warm again." When they apply: Your {weapon} was lost. Recharging cost {amount}
-  Stardust.
+  morning, the rock is warm again."
 - Station welcome: Welcome aboard. Trade your Stardust for weapons and ship
   upgrades.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
