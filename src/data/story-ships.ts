@@ -2,16 +2,6 @@ import type { Vec } from "../model/types.ts";
 import { SCREEN } from "./screen.ts";
 import type { SectorId } from "./types.ts";
 
-/**
- * Each galaxy's community projects (gameplay/economy.md "Donations"), by id. A funded id in a
- * galaxy's progress changes that galaxy's world.
- */
-export const DONATION_PROJECTS: Readonly<Record<SectorId, readonly string[]>> = {
-  1: ["greenhouseRing", "workshopCrane", "salvageBeacons"],
-  2: ["dockingBay", "hubRepairs"],
-  3: ["nurseryBeacon", "currentBuoys"],
-};
-
 export type StoryShipId = "miner" | "visitor-1" | "visitor-2" | "blocker";
 export type StorySceneId = "blocked" | "docking";
 
@@ -120,6 +110,8 @@ export const CARTWHEEL_STORY_SHIPS: {
   readonly hold: Readonly<Record<Exclude<StoryShipId, "blocker">, Vec>>;
   readonly scenes: Readonly<Record<StorySceneId, StoryScene>>;
   readonly sector: SectorId;
+  /** The story destination the waiting ships hold beside, which stands for them on the Map. */
+  readonly station: string;
 } = {
   buoys: BUOYS,
   destinations: BUOYS,
@@ -173,4 +165,5 @@ export const CARTWHEEL_STORY_SHIPS: {
     },
   },
   sector: 2,
+  station: "hub",
 };

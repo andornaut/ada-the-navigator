@@ -6,6 +6,7 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
+import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -108,8 +109,8 @@ import {
   enemyJetTriangles,
   enemyPartFrame,
   enemyRasterSize,
-  enemySvg,
   enemyShardsPath,
+  enemySvg,
   HitFlashes,
   type PartPose,
   selectEnemyFrame,
@@ -157,6 +158,15 @@ import {
   type SpacePalette,
 } from "./space-palette.ts";
 import {
+  BEACON_SUFFIX,
+  FLASH_SUFFIX,
+  hubBayKey,
+  hubBuoyKey,
+  hubStoryKey,
+  spriteOwner,
+  staleSpriteKeys,
+} from "./sprite-keys.ts";
+import {
   readStardustArt,
   type StardustArt,
   stardustDrawn,
@@ -173,6 +183,18 @@ import {
   stationFrameIndex,
 } from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
+import {
+  craftFrame,
+  craftHeading,
+  readStrandedCraft,
+  readTowLine,
+  STRANDED_CRAFT,
+  type StrandedCraftArt,
+  towBeads,
+  towCurve,
+  type TowLine,
+  towOffset,
+} from "./tow-art.ts";
 import {
   AMBER_BEAM_GLOW,
   blast as blastEffect,
@@ -212,18 +234,6 @@ import {
 const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
-const FLASH_SUFFIX = "#flash";
-// The holodisk's beacon sprite shares its id plus this suffix.
-const BEACON_SUFFIX = "#beacon";
-
-/**
- * The object an extra sprite belongs to. A flash, a beacon or a composed craft's part sprite
- * keeps its owner's id before a `#`, which object ids never contain.
- */
-function spriteOwner(id: string): string {
-  const mark = id.indexOf("#");
-  return mark < 0 ? id : id.slice(0, mark);
-}
 
 interface Asset extends ShipAsset, EnemyFrame {
   path: string;
@@ -303,6 +313,7 @@ export class PrototypeScene extends Phaser.Scene {
     assets: readonly Asset[];
     cartwheelDebris?: string;
     resourceRocks?: string;
+    tow?: string;
     whales?: string;
     whirlpoolCurrents?: string;
     whirlpoolDebris?: string;
@@ -312,6 +323,12 @@ export class PrototypeScene extends Phaser.Scene {
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
+  // Every galaxy's tow line, and Cartwheel's stranded craft; a rescue keeps its placeholder
+  // craft or line until its art loads.
+  private towLine: TowLine | undefined;
+  private strandedCraft: ReadonlyMap<string, StrandedCraftArt<Asset>> = new Map();
+  private towInk!: Phaser.GameObjects.Graphics;
+  private towSprite!: Phaser.GameObjects.Image;
   // Cartwheel's claim jumpers; a claim archetype without loaded art draws the coral family's.
   private claimArt = new Map<string, EnemyArt<Asset>>();
   private claimShards = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
@@ -496,11 +513,14 @@ export class PrototypeScene extends Phaser.Scene {
     this.jetKeyline = this.add.graphics();
     this.jets = this.add.graphics().setDepth(9);
     this.ship = this.add.image(0, 0, "ship").setDepth(10);
+    this.towInk = this.add.graphics();
+    this.towSprite = this.add.image(0, 0, "ship").setVisible(false);
     const manifest = this.cache.json.get("art-manifest") as
       | {
           assets: Asset[];
           cartwheelDebris?: string;
           resourceRocks?: string;
+          tow?: string;
           whales?: string;
           whirlpoolCurrents?: string;
           whirlpoolDebris?: string;
@@ -535,6 +555,7 @@ export class PrototypeScene extends Phaser.Scene {
       assets: manifest?.assets ?? [],
       ...(manifest?.cartwheelDebris ? { cartwheelDebris: manifest.cartwheelDebris } : {}),
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
+      ...(manifest?.tow ? { tow: manifest.tow } : {}),
       ...(manifest?.whales ? { whales: manifest.whales } : {}),
       ...(manifest?.whirlpoolCurrents ? { whirlpoolCurrents: manifest.whirlpoolCurrents } : {}),
       ...(manifest?.whirlpoolDebris ? { whirlpoolDebris: manifest.whirlpoolDebris } : {}),
@@ -1014,7 +1035,9 @@ export class PrototypeScene extends Phaser.Scene {
     );
     const scale = Math.min(window.devicePixelRatio || 1, 2);
     for (const asset of assets) {
-      if (asset.path.endsWith(".svg")) {
+      if (enemySvg(asset)) {
+        this.loadEnemySvg(asset);
+      } else if (asset.path.endsWith(".svg")) {
         this.load.svg(asset.id, asset.path, { scale });
       } else if (asset.frameWidth && asset.frameHeight) {
         this.load.spritesheet(asset.id, asset.path, {
@@ -1032,16 +1055,21 @@ export class PrototypeScene extends Phaser.Scene {
       }
       if (frames.length > 1) {
         this.load.json(`claim-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+      }
+      // Shards, as in coral, for the archetypes Art's destruction data covers.
+      if (this.destruction && Object.hasOwn(this.destruction.archetypes, archetype)) {
         this.load.json(`claim-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
       }
       if (composedArchetypes(this.claimPartAssets).has(archetype)) {
         this.load.json(`claim-hardpoints-${archetype}`, enemyHardpointsPath(archetype, frames[0]!));
       }
     }
-    // Resource rocks are in every galaxy's chunks; their catalog loads with the first flight.
-    const shared = this.cache.json.exists("resource-rocks")
-      ? []
-      : [["resource-rocks", this.manifest.resourceRocks]];
+    // Resource rocks are in every galaxy's chunks, and any galaxy's rescue draws the tow line:
+    // both load with the first flight.
+    const shared = [
+      ["resource-rocks", this.manifest.resourceRocks],
+      ["tow", this.manifest.tow],
+    ].filter(([key]) => !this.cache.json.exists(key!));
     const data = {
       2: [["cartwheel-debris", this.manifest.cartwheelDebris]],
       3: [
@@ -1069,6 +1097,8 @@ export class PrototypeScene extends Phaser.Scene {
       }
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
+    this.towLine = readTowLine(this.cache.json.get("tow"));
+    this.strandedCraft = readStrandedCraft(this.cache.json.get("tow"), loaded);
     this.hubArt = readHubArt(loaded);
     this.buoyArt = readBuoyArt(loaded);
     this.craftArt = craftArt(
@@ -1544,6 +1574,8 @@ export class PrototypeScene extends Phaser.Scene {
     this.enemyJets.clear();
     this.jetKeyline.clear();
     this.indicatorInk.clear();
+    this.towInk.clear();
+    this.towSprite.setVisible(false);
     this.keyed = [];
     for (const sprite of this.enemySprites.values()) {
       sprite.setVisible(false);
@@ -1764,11 +1796,9 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const activeIds = new Set(flight.objects.map((object) => object.id));
     this.hitFlashes.retain(activeIds, spriteOwner);
-    for (const [id, sprite] of this.enemySprites) {
-      if (!activeIds.has(spriteOwner(id))) {
-        sprite.destroy();
-        this.enemySprites.delete(id);
-      }
+    for (const id of staleSpriteKeys(activeIds, this.enemySprites.keys())) {
+      this.enemySprites.get(id)!.destroy();
+      this.enemySprites.delete(id);
     }
     this.drawKeylines();
   }
@@ -2089,7 +2119,7 @@ export class PrototypeScene extends Phaser.Scene {
         const at = { x: hub.x + offset.x, y: hub.y + offset.y };
         const point = this.project(at);
         const frame = stationFrame(this.buoyArt, this.reducedMotion, this.time.now);
-        this.objectSprite(`buoy:${group}`, frame.id)
+        this.objectSprite(hubBuoyKey(hub.id, group), frame.id)
           .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
           .setOrigin(frame.pivot.x, frame.pivot.y)
           .setPosition(point.x, point.y)
@@ -2102,7 +2132,7 @@ export class PrototypeScene extends Phaser.Scene {
       const art = this.craftArt.get(STORY_SHIP_CRAFT[ship.id]);
       if (art) {
         const frame = selectEnemyFrame(art, ship.heading);
-        this.objectSprite(`story:${ship.id}`, frame.id)
+        this.objectSprite(hubStoryKey(hub.id, ship.id), frame.id)
           .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
           .setOrigin(frame.pivot.x, frame.pivot.y)
           .setPosition(point.x, point.y)
@@ -2304,16 +2334,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.ink.strokePoints(points, true);
     }
     if (scenery.craft) {
-      const craft = this.project(scenery.craft);
-      if (scenery.towing) {
-        const ship = this.project(this.model.state.flight!.player);
-        this.ink.lineStyle(1, this.palette.pointOfInterest, 0.8);
-        this.ink.lineBetween(ship.x, ship.y, craft.x, craft.y);
-      }
-      this.ink.fillStyle(this.palette.environmentDetail, 1);
-      this.ink.fillEllipse(craft.x, craft.y, 22, 12);
-      this.ink.lineStyle(1, this.palette.active, 0.9);
-      this.ink.strokeEllipse(craft.x, craft.y, 22, 12);
+      this.drawTow(scenery.craft, scenery.towing);
     }
     if (scenery.glint) {
       const glint = this.project(scenery.glint);
@@ -2321,6 +2342,84 @@ export class PrototypeScene extends Phaser.Scene {
       this.overlay.lineStyle(2, this.palette.active, 1 - pulse * 0.5);
       this.overlay.lineBetween(glint.x - size, glint.y, glint.x + size, glint.y);
       this.overlay.lineBetween(glint.x, glint.y - size, glint.x, glint.y + size);
+    }
+  }
+
+  /**
+   * A rescue's craft facing Ada, and its tow line while attached: Art's stranded craft and
+   * cable, else the placeholder ellipse and line.
+   */
+  private drawTow(craft: Vec & { readonly item: string }, towing: boolean): void {
+    const flight = this.model.state.flight!;
+    const point = this.project(craft);
+    const id = STRANDED_CRAFT[craft.item];
+    const art = id === undefined ? undefined : this.strandedCraft.get(id);
+    const heading = craftHeading(craft, flight.player);
+    const frame = art && craftFrame(art, heading, this.reducedMotion, this.time.now);
+    const offset = art && frame ? towOffset(art, frame, heading) : { x: 0, y: 0 };
+    if (towing) {
+      const ship = this.project(flight.player);
+      if (this.towLine) {
+        this.drawTowLine(this.towLine, flight, craft, offset);
+        this.towInk.setDepth(Math.min(playDepth(ship.y), playDepth(point.y)) - 1e-6);
+      } else {
+        this.ink.lineStyle(1, this.palette.pointOfInterest, 0.8);
+        this.ink.lineBetween(ship.x, ship.y, point.x, point.y);
+      }
+    }
+    if (frame) {
+      this.towSprite
+        .setTexture(frame.id)
+        .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+        .setOrigin(frame.pivot.x, frame.pivot.y)
+        .setPosition(point.x, point.y)
+        .setDepth(playDepth(point.y))
+        .setVisible(true);
+      return;
+    }
+    this.ink.fillStyle(this.palette.environmentDetail, 1);
+    this.ink.fillEllipse(point.x, point.y, 22, 12);
+    this.ink.lineStyle(1, this.palette.active, 0.9);
+    this.ink.strokeEllipse(point.x, point.y, 22, 12);
+  }
+
+  /**
+   * The cable from Ada's pivot to the craft's tow point, `offset` display px from its pivot:
+   * Art's layered stroke with round joins and caps, its beads and the tow point's cap.
+   */
+  private drawTowLine(
+    line: TowLine,
+    flight: NonNullable<typeof this.model.state.flight>,
+    craft: Vec,
+    offset: Vec,
+  ): void {
+    const curve = towCurve(JOB_TUNING.tow.line, flight.velocity, flight.player, craft);
+    // The craft end moves onto the tow point, the offset easing in along the line.
+    const points = curve.map((world, index) => {
+      const at = this.project(world);
+      const t = index / (curve.length - 1);
+      return { x: at.x + offset.x * t, y: at.y + offset.y * t };
+    });
+    for (const layer of line.layers) {
+      const color = hexNumber(layer.color);
+      this.towInk.lineStyle(layer.width, color, 1);
+      this.towInk.strokePoints(
+        points.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
+        false,
+      );
+      this.towInk.fillStyle(color, 1);
+      for (const point of points) {
+        this.towInk.fillCircle(point.x, point.y, layer.width / 2);
+      }
+    }
+    this.towInk.fillStyle(hexNumber(line.beads.color), 1);
+    for (const bead of towBeads(line.beads, points)) {
+      this.towInk.fillCircle(bead.x, bead.y, line.beads.radius);
+    }
+    const end = points[points.length - 1]!;
+    for (const disc of line.cap) {
+      this.towInk.fillStyle(hexNumber(disc.color), 1);
+      this.towInk.fillCircle(end.x, end.y, disc.radius);
     }
   }
 
@@ -2611,7 +2710,7 @@ export class PrototypeScene extends Phaser.Scene {
     if (object.id === "hub" && this.hubArt) {
       const progress = this.model.state.progress[this.model.state.flight!.sector];
       hubLayers(this.hubArt, hubWorn(progress), hubBay(progress)).forEach((layer, index) => {
-        this.drawBlink(layer, "outpost", object, point, index ? `${object.id}:bay` : object.id);
+        this.drawBlink(layer, "outpost", object, point, index ? hubBayKey(object.id) : object.id);
       });
       return;
     }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -289,7 +290,7 @@ describe("galaxy map", () => {
       id: "holodisk",
       job: false,
       kind: "holodisk",
-      label: PROTOTYPE.labels.mapKindHolodisk,
+      label: "Lost holodisk",
       objective: false,
       symbol: "holodisk",
       travel: false,
@@ -339,6 +340,9 @@ describe("galaxy map", () => {
     flight.player = { ...far };
     model.step(0.05, IDLE);
     expect(model.state.progress[1].explored).toContain(chunkId(size, far));
+    // An encounter the far chunk rolls would keep Ada in danger and refuse the trip home.
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    flight.dangerFor = 0;
     model.returnHome();
     model.startSector(1);
     playOpening(model);
@@ -403,26 +407,53 @@ describe("galaxy map", () => {
       const fixed = seeded(sector);
       expect(fixed.length, `galaxy ${sector}`).toBeGreaterThan(LANDMARK_TUNING.count);
       expect(tooClose(fixed), `galaxy ${sector}`).toEqual([]);
-      const across = launched(sector).flatMap((place) =>
+      const placed = launched(sector).filter(({ id }) => !waiting(sector, id));
+      const across = placed.flatMap((place) =>
         tooClose([place, ...fixed]).filter((pair) => pair.startsWith(`${place.id} `)),
       );
       expect(across, `galaxy ${sector}`).toEqual([]);
     }
   });
 
-  it("places a launch's story destinations 400 world units apart, inside the 1020 spacing", () => {
-    // The pairs that break the spacing now; their placement fix is Gameplay's.
-    expect(([1, 2, 3] as const).flatMap((sector) => tooClose(launched(sector)))).toEqual([
-      "growers workshop 400",
-      "growers salvagers 400",
-      "workshop salvagers 800",
-      "hub miner 400",
-      "hub visitors 400",
-      "miner visitors 800",
-      "whale family 400",
-      "whale holodisk 400",
-      "family holodisk 800",
-    ]);
+  it("spaces a launch's mapped places 1020 apart and its story destinations 1200 apart", () => {
+    for (const sector of [1, 2, 3] as const) {
+      const story = launched(sector).filter(({ id }) => !waiting(sector, id));
+      // Sunflower's three outposts, Cartwheel's hub, and the whale, family and waypoint.
+      expect(story.length, `galaxy ${sector}`).toBe(sector === 2 ? 1 : 3);
+      expect(tooClose([...story, ...seeded(sector)]), `galaxy ${sector}`).toEqual([]);
+      expect(tooClose(story, PROTOTYPE.tuning.storySpacing), `galaxy ${sector}`).toEqual([]);
+    }
+  });
+
+  it("leaves Cartwheel's waiting miner and visitors off the Map, with the hub standing for them", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked = [1, 2];
+    model.startSector(2);
+    model.state.dialogue = null;
+    const flight = model.state.flight!;
+    for (const id of ["miner", "visitors"]) {
+      ensureDestination(PROTOTYPE, id, flight);
+    }
+    const context = {
+      catalog: ECONOMY,
+      chunkSize: PROTOTYPE.tuning.chunkSize,
+      destinations: galaxyRoute(2),
+      explored: [],
+      flight,
+      holodisk: null,
+      job: null,
+      label: (id: string) => id,
+      landmarks: NO_LANDMARKS,
+      objective: "miner",
+      progress: { known: ["hub", "miner", "visitors"], stations: [] },
+    } satisfies MapContext;
+    const map = galaxyMap(context);
+    expect(map.places.map(({ id, objective }) => [id, objective])).toEqual([["hub", true]]);
+    // The percent counts the hub alone of the three.
+    const none = galaxyMap({ ...context, progress: { known: [], stations: [] } });
+    const hub = galaxyMap({ ...context, progress: { known: ["hub"], stations: [] } });
+    expect(map.mapped).toBe(hub.mapped);
+    expect(hub.mapped).toBeGreaterThanOrEqual(none.mapped);
   });
 
   it("has stations outside the charting disc in every galaxy: the catalog fills every cell", () => {
@@ -440,14 +471,20 @@ const IDLE = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 // Gameplay keeps every mapped place at least 1020 world units apart (art/map.md scale rule).
 const SPACING = 1020;
-function tooClose(places: readonly { id: string; x: number; y: number }[]): string[] {
+function tooClose(
+  places: readonly { id: string; x: number; y: number }[],
+  spacing = SPACING,
+): string[] {
   return places.flatMap((a, index) =>
     places.slice(index + 1).flatMap((b) => {
       const apart = Math.hypot(a.x - b.x, a.y - b.y);
-      return apart < SPACING ? [`${a.id} ${b.id} ${Math.round(apart)}`] : [];
+      return apart < spacing ? [`${a.id} ${b.id} ${Math.round(apart)}`] : [];
     }),
   );
 }
+// Cartwheel's miner and visitors wait beside the hub and are not map places.
+const waiting = (sector: SectorId, id: string) =>
+  sector === CARTWHEEL_STORY_SHIPS.sector && Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id);
 // A galaxy's seeded places: its stations in the charting disc and its landmarks.
 function seeded(sector: SectorId) {
   return [

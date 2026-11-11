@@ -410,6 +410,7 @@ export const PROTOTYPE: PrototypeContent = {
     mapCenterOnAda: "Center on Ada",
     mapDistance: "{distance} light-years",
     mapDistanceOne: "1 light-year",
+    mapHolodiskWaypoint: "Lost holodisk",
     mapKindBeacon: "Beacon",
     mapKindHolodisk: "Holodisk",
     mapKindNebula: "Nebula",
@@ -545,6 +546,8 @@ export const PROTOTYPE: PrototypeContent = {
     shieldRechargeDelay: 3,
     shieldRechargeRate: 18,
     speedCurveExponent: 2.5,
+    // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
+    storySpacing: 1200,
     // Medium stone rocks from the asteroid set; a ring 86 from the whale's centre clears
     // Art's 48 footprint plus the largest of their footprints (33).
     whaleDebris: {

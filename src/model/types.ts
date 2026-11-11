@@ -167,8 +167,6 @@ export interface SectorProgress {
    * visited (model/map.ts recordExplored). Restart clears it.
    */
   explored: string[];
-  /** Funded community project ids (`DONATION_PROJECTS`); absent before any is funded. */
-  funded?: string[];
   /** A story ship scene cut short by the end of a flight, replayed at the hub. */
   replayScene?: StorySceneId;
 }

@@ -149,6 +149,17 @@ export function streakMarks(
     const { point, tangent } = pointOnCurrent(current as Current, arc);
     return { x: point.x - tangent.y * offset, y: point.y + tangent.x * offset };
   };
+  // A chevron keeps one frame: its centre's tangent, so a bend never bends its arms.
+  const chevron = (arc: number, offset: number, reach: number): [Vec, Vec, Vec] => {
+    const { tangent } = pointOnCurrent(current as Current, arc);
+    const centre = place(arc, offset);
+    const local = (along: number, across: number): Vec => ({
+      x: centre.x + tangent.x * along - tangent.y * across,
+      y: centre.y + tangent.y * along + tangent.x * across,
+    });
+    const back = -spec.chevron.back * reach;
+    return [local(back, -reach), local(spec.chevron.tip * reach, 0), local(back, reach)];
+  };
   const marks: StreakMark[] = [];
   for (let lane = 0; lane < laneCount(spec, current.width); lane++) {
     const offset = laneOffset(spec, current.width, lane);
@@ -165,11 +176,7 @@ export function streakMarks(
       const { alpha, reach, width } = chevronStyle(spec, f);
       marks.push({
         alpha,
-        points: [
-          place(arc - spec.chevron.back * reach, offset - reach),
-          place(arc + spec.chevron.tip * reach, offset),
-          place(arc - spec.chevron.back * reach, offset + reach),
-        ],
+        points: chevron(arc, offset, reach),
         width,
       });
     }

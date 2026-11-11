@@ -93,12 +93,11 @@ export const ENEMY_HEADINGS = 16;
 export const CORAL = "enemy-";
 export const CLAIM = "enemy-claim-";
 
-/**
- * The claim archetypes Cartwheel draws in the claim family. Its frigate and capital join when
- * they compose from the heavies' raster reader; until then they draw in coral.
- */
+/** The claim archetypes Cartwheel draws in the claim family: all seven. */
 export const CLAIM_WIRED: ReadonlySet<string> = new Set([
+  "capital",
   "fighter",
+  "frigate",
   "interceptor",
   "platform",
   "retaliator",

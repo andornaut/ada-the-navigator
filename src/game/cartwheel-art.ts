@@ -26,14 +26,12 @@ export const STORY_CRAFT_FRAME = /^craft-([a-z][a-z0-9]*)-(\d+)$/;
 /**
  * The galaxy whose flights load an asset, or null for the boot set: Cartwheel's hub, buoy,
  * story craft, ore nugget, traveling debris and claim jumper hulls, and Whirlpool's whale
- * frames and river debris. Claim part frames load when their craft first appears. The stranded
- * craft load with the tow jobs that draw them, so neither set holds them yet.
+ * frames and river debris. Claim part frames load when their craft first appears. Cartwheel's
+ * stranded craft load with it, for its rescue jobs.
  */
-export function galaxyAsset(asset: CartwheelAsset): SectorId | "unused" | null {
-  if (asset.id.startsWith("craft-stranded-")) {
-    return "unused";
-  }
+export function galaxyAsset(asset: CartwheelAsset): SectorId | null {
   if (
+    asset.id.startsWith("craft-stranded-") ||
     asset.destination === "hub" ||
     asset.id.startsWith("mooring-buoy-") ||
     STORY_CRAFT_FRAME.test(asset.id) ||

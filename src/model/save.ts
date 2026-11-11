@@ -2,12 +2,12 @@ import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
-import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
-import { CARTWHEEL_STORY_SHIPS, DONATION_PROJECTS } from "../data/story-ships.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { newAchievements } from "./achievements.ts";
@@ -830,14 +830,6 @@ export function restoreSave(saved: unknown): GameState | null {
           !(
             typeof p.replayScene === "string" &&
             Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, p.replayScene)
-          )) ||
-        (p.funded !== undefined &&
-          !(
-            strings(p.funded) &&
-            (p.funded as string[]).every((project) =>
-              DONATION_PROJECTS[id as SectorId].includes(project),
-            ) &&
-            new Set(p.funded as string[]).size === (p.funded as string[]).length
           ))
       ) {
         return null;

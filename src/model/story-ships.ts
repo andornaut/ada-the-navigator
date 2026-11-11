@@ -1,9 +1,11 @@
+import { PROJECTS } from "../data/projects.ts";
 import {
   CARTWHEEL_STORY_SHIPS,
   type StoryPath,
   type StorySceneId,
   type StoryShipId,
 } from "../data/story-ships.ts";
+import { fundedProjects, type ProjectProgress } from "./projects.ts";
 import type { SectorProgress, Vec } from "./types.ts";
 
 /** A story ship's world position, unit heading and whether its thrust jets fire. */
@@ -105,12 +107,17 @@ export function drawnHeading(heading: Vec): Vec {
   return { x: Math.cos(angle), y: Math.sin(angle) };
 }
 
+/** Whether Cartwheel's project with this id is funded. */
+function cartwheelFunded(progress: ProjectProgress, id: string): boolean {
+  return fundedProjects(PROJECTS[2], progress).some((project) => project.id === id);
+}
+
 /** The hub looks worn until its Hub repairs project is funded. */
-export function hubWorn(progress: Pick<SectorProgress, "funded">): boolean {
-  return !(progress.funded ?? []).includes("hubRepairs");
+export function hubWorn(progress: ProjectProgress): boolean {
+  return !cartwheelFunded(progress, "hubRepairs");
 }
 
 /** The second docking bay overlays the hub once its project is funded. */
-export function hubBay(progress: Pick<SectorProgress, "funded">): boolean {
-  return (progress.funded ?? []).includes("dockingBay");
+export function hubBay(progress: ProjectProgress): boolean {
+  return cartwheelFunded(progress, "dockingBay");
 }

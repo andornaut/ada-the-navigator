@@ -1116,24 +1116,23 @@ export function ensureDestination(
   );
   const span = content.tuning.chunkSize * 2;
   const index = flight.objects.filter((o) => o.kind === "destination").length;
-  const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * content.tuning.safeRadius * 2.5;
+  const spacing = content.tuning.storySpacing;
+  const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * spacing;
   const target = {
     x: flight.player.x + heading.x * span - heading.y * offset,
     y: flight.player.y + heading.y * span + heading.x * offset,
   };
-  // Story destinations keep clear of each other and of the sector's fixed stations and
-  // landmarks.
+  // Story destinations keep storySpacing from each other and clear of the sector's fixed
+  // stations and landmarks.
   const crowded = (point: Vec) =>
-    flight.objects.some(
-      (o) => o.kind === "destination" && distance(o, point) < content.tuning.safeRadius * 2,
-    ) ||
+    flight.objects.some((o) => o.kind === "destination" && distance(o, point) < spacing) ||
     stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, point).length > 0 ||
     landmarkSites(flight.sector).some(
       (site) => distance(site, point) < LANDMARK_TUNING.placeClearance,
     );
   while (crowded(target)) {
-    target.x -= heading.y * content.tuning.safeRadius * 2.5;
-    target.y += heading.x * content.tuning.safeRadius * 2.5;
+    target.x -= heading.y * spacing;
+    target.y += heading.x * spacing;
   }
   // They also keep a current's clearance: the nearest clear point within a short reach, so
   // the destination stays near where it would have been and its chunks stay in one region.
@@ -1186,7 +1185,7 @@ function heldDestination(
   if (!offset) {
     return null;
   }
-  const hub = ensureDestination(content, "hub", flight);
+  const hub = ensureDestination(content, CARTWHEEL_STORY_SHIPS.station, flight);
   const target = { x: hub.x + offset.x, y: hub.y + offset.y };
   generate(content, target, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };

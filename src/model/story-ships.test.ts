@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import {
@@ -10,7 +11,7 @@ import {
   STORY_SHIP_CRAFT,
   STORY_VIEW,
 } from "../data/story-ships.ts";
-import { drawnHeading, hubWorn, storyShips } from "./story-ships.ts";
+import { drawnHeading, hubBay, hubWorn, storyShips } from "./story-ships.ts";
 import type { Vec } from "./types.ts";
 
 const manifest = JSON.parse(
@@ -144,9 +145,18 @@ describe("Cartwheel story ships", () => {
     expect(drawnHeading({ x: 0, y: -1 })).toMatchObject({ y: -1 });
   });
 
-  it("keeps the hub worn until Hub repairs is funded", () => {
-    expect(hubWorn({})).toBe(true);
-    expect(hubWorn({ funded: ["dockingBay"] })).toBe(true);
-    expect(hubWorn({ funded: ["hubRepairs"] })).toBe(false);
+  it("keeps the hub worn until Hub repairs is funded, and adds the bay once it is funded", () => {
+    const cost = (id: string) => PROJECTS[2].find((project) => project.id === id)!.cost;
+    const progress = (donated: Record<string, number>) => ({
+      donated,
+      resolved: true,
+      revealed: [],
+    });
+    expect(hubWorn(progress({}))).toBe(true);
+    expect(hubWorn(progress({ dockingBay: cost("dockingBay") }))).toBe(true);
+    expect(hubWorn(progress({ hubRepairs: cost("hubRepairs") - 1 }))).toBe(true);
+    expect(hubWorn(progress({ hubRepairs: cost("hubRepairs") }))).toBe(false);
+    expect(hubBay(progress({ dockingBay: cost("dockingBay") - 1 }))).toBe(false);
+    expect(hubBay(progress({ dockingBay: cost("dockingBay") }))).toBe(true);
   });
 });

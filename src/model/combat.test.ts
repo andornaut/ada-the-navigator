@@ -670,12 +670,11 @@ describe("combat admission and subframe firing", () => {
       const original = { x: firstGuard.x, y: firstGuard.y };
       let second: SpaceObject;
       if (clearance === "destination") {
-        // Compensate for the second destination's lateral offset to place it on the guard.
-        flight.player = {
-          x: original.x - PROTOTYPE.tuning.safeRadius * 2.5,
-          y: original.y + PROTOTYPE.tuning.chunkSize * 2,
-        };
-        second = ensureDestination(PROTOTYPE, "second", flight);
+        // Story spacing keeps a destination off another's guard; without it, the second
+        // destination lands on the first's guard, which its clearance must keep.
+        flight.player = { x: original.x, y: original.y + PROTOTYPE.tuning.chunkSize * 2 };
+        const unspaced = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, storySpacing: 0 } };
+        second = ensureDestination(unspaced, "second", flight);
         // A current's clearance can shift both destinations, leaving rounding differences.
         expect(second.x).toBeCloseTo(original.x, 9);
         expect(second.y).toBeCloseTo(original.y, 9);
@@ -741,7 +740,7 @@ it("settles a translated route guard after destination relocation without resett
     id: "friendly",
     kind: "destination",
     radius: 30,
-    x: 400 + guard.x - old.x,
+    x: PROTOTYPE.tuning.storySpacing + guard.x - old.x,
     y: -1024 + guard.y - old.y,
   };
   flight.objects.push(friendly);

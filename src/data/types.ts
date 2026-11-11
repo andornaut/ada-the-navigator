@@ -105,6 +105,8 @@ export interface PrototypeContent {
     introFreshDistance: number;
     encounterFreshDistance: number;
     safeRadius: number;
+    /** The least distance between a flight's story destinations (gameplay/rules.md). */
+    storySpacing: number;
     dangerReleaseSeconds: number;
     whaleDebris: { asteroids: string[]; count: number; hp: number; spacing: number };
     flight: {

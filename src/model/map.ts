@@ -1,5 +1,6 @@
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { LandmarkKind } from "../data/jobs.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
@@ -219,6 +220,17 @@ export interface MapContext {
   readonly progress: { readonly known: readonly string[]; readonly stations: readonly string[] };
 }
 
+/**
+ * Story characters waiting at a station, such as Cartwheel's miner and visitors, are not map
+ * places: the station stands for them, including as the objective's place.
+ */
+function waitingAt(sector: SectorId, id: string): string | null {
+  return sector === CARTWHEEL_STORY_SHIPS.sector &&
+    Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
+    ? CARTWHEEL_STORY_SHIPS.station
+    : null;
+}
+
 const within = (point: Vec) =>
   Math.hypot(point.x - ORIGIN.x, point.y - ORIGIN.y) <= CHARTING_RADIUS;
 
@@ -226,7 +238,9 @@ const within = (point: Vec) =>
 export function galaxyMap(context: MapContext): GalaxyMap {
   const { catalog, flight, landmarks, objective, progress } = context;
   const sector = flight.sector as SectorId;
-  const destinations = progress.known.flatMap((id): MapPlace[] => {
+  const mapped = (id: string) => waitingAt(sector, id) === null;
+  const objectivePlace = objective === null ? null : (waitingAt(sector, objective) ?? objective);
+  const destinations = progress.known.filter(mapped).flatMap((id): MapPlace[] => {
     const object = flight.objects.find((entry) => entry.kind === "destination" && entry.id === id);
     return object
       ? [
@@ -235,7 +249,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
             job: false,
             kind: "destination",
             label: context.label(id, "destination"),
-            objective: id === objective,
+            objective: id === objectivePlace,
             symbol: destinationSymbol(id),
             travel: true,
             x: object.x,
@@ -274,11 +288,11 @@ export function galaxyMap(context: MapContext): GalaxyMap {
     y,
   }));
   const found =
-    context.destinations.filter((id) => progress.known.includes(id)).length +
+    context.destinations.filter((id) => mapped(id) && progress.known.includes(id)).length +
     stations.filter(within).length +
     charted.filter(within).length;
   const total =
-    context.destinations.length +
+    context.destinations.filter(mapped).length +
     stationsNear(catalog, sector, CHARTING_RADIUS, ORIGIN).length +
     landmarks.total;
   const waypoint: MapPlace[] = context.holodisk

@@ -530,34 +530,26 @@ describe("asteroid save boundary", () => {
     }
   });
 
-  it("keeps a story scene and funded projects, rejecting unknown ones", () => {
+  it("keeps a story scene and a replay scene, rejecting unknown ones", () => {
     const model = new GameModel(PROTOTYPE);
     model.startSector(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
     saved.flight!.storyScene = { at: 3, id: "blocked", lineDue: false };
-    saved.progress[2].funded = ["hubRepairs"];
     saved.progress[2].replayScene = "docking";
     const restored = restoreSave(JSON.stringify(saved))!;
     expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked", lineDue: false });
-    expect(restored.progress[2].funded).toEqual(["hubRepairs"]);
     expect(restored.progress[2].replayScene).toBe("docking");
     const replay = JSON.parse(JSON.stringify(saved)) as { progress: Record<number, unknown> };
     Object.assign(replay.progress[2]!, { replayScene: "duel" });
     expect(restoreSave(JSON.stringify(replay))).toBeNull();
-    for (const [scene, funded] of [
-      [{ at: 3, id: "duel", lineDue: false }, ["hubRepairs"]],
-      [{ at: -1, id: "blocked", lineDue: false }, ["hubRepairs"]],
-      [{ at: 3, id: "blocked" }, ["hubRepairs"]],
-      [{ at: 3, id: "blocked", lineDue: false }, ["nurseryBeacon"]],
-      [{ at: 3, id: "blocked", lineDue: false }, ["hubRepairs", "hubRepairs"]],
-    ] as const) {
-      const bad = JSON.parse(JSON.stringify(saved)) as {
-        flight: { storyScene: unknown };
-        progress: Record<number, { funded: unknown }>;
-      };
+    for (const scene of [
+      { at: 3, id: "duel", lineDue: false },
+      { at: -1, id: "blocked", lineDue: false },
+      { at: 3, id: "blocked" },
+    ]) {
+      const bad = JSON.parse(JSON.stringify(saved)) as { flight: { storyScene: unknown } };
       bad.flight.storyScene = scene;
-      bad.progress[2]!.funded = funded;
       expect(restoreSave(JSON.stringify(bad))).toBeNull();
     }
   });

@@ -3,8 +3,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, readResourceRocks } from "../data/asteroid-catalog.ts";
+import { PROJECTS } from "../data/projects.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
-import { DONATION_PROJECTS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
+import { STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import {
   type CartwheelAsset,
@@ -45,9 +46,11 @@ describe("Cartwheel art", () => {
         "cartwheel-debris-7",
       ]),
     );
-    // Hub, buoy, four story craft, the nugget, debris and the claim family's 97 hull frames.
-    expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 1 + 8 + 6 * 16 + 1);
-    expect(sets.get("unused")!.every((id) => id.startsWith("craft-stranded-"))).toBe(true);
+    // Hub, buoy, four story craft, the nugget, debris, the claim family's 97 hull frames and
+    // the stranded ore pod's blink pairs and hauler's frames.
+    expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 1 + 8 + 6 * 16 + 1 + 16 * 2 + 16);
+    expect(cartwheel.filter((id) => id.startsWith("craft-stranded-"))).toHaveLength(48);
+    expect([...sets.keys()].sort()).toEqual([2, 3, null].sort());
     expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id))).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     const boot = sets.get(null)!;
@@ -79,8 +82,9 @@ describe("Cartwheel art", () => {
     const keys = new Set(
       assets.flatMap((asset) => (asset.destination === "hub" && asset.project) || []),
     );
-    expect(Object.keys(HUB_PROJECT_ART).sort()).toEqual([...DONATION_PROJECTS[2]].sort());
-    for (const id of DONATION_PROJECTS[2]) {
+    const ids = PROJECTS[2].map(({ id }) => id);
+    expect(Object.keys(HUB_PROJECT_ART).sort()).toEqual(ids.sort());
+    for (const id of ids) {
       expect(keys.has(HUB_PROJECT_ART[id as keyof typeof HUB_PROJECT_ART])).toBe(true);
     }
   });

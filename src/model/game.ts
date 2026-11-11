@@ -220,8 +220,8 @@ export interface JobScenery {
     readonly id: string;
     readonly kind: string;
   })[];
-  /** A rescue's stranded or towed craft. */
-  readonly craft: Vec | null;
+  /** A rescue's stranded or towed craft, with the pool item it is. */
+  readonly craft: (Vec & { readonly item: string }) | null;
   readonly towing: boolean;
   /** A hunt's search area. */
   readonly area: (Vec & { readonly radius: number }) | null;
@@ -1052,7 +1052,7 @@ export class GameModel {
         : null,
       job: this.jobMapTarget(f),
       label: (id, kind) =>
-        kind === "holodisk" ? this.label("mapKindHolodisk") : (labels.get(id) ?? id),
+        kind === "holodisk" ? this.label("mapHolodiskWaypoint") : (labels.get(id) ?? id),
       landmarks: {
         charted: galaxyLandmarks(f.sector, this.current)
           .filter(({ charted }) => charted)
@@ -1510,7 +1510,10 @@ export class GameModel {
     const hunt = held?.type === "hunt" ? held : undefined;
     return {
       area: hunt ? { radius: JOB_TUNING.hunt.radius, x: hunt.target.x, y: hunt.target.y } : null,
-      craft: held?.type === "rescue" ? { ...(f.tow ?? held.target) } : null,
+      craft:
+        held?.type === "rescue"
+          ? { item: held.item, x: (f.tow ?? held.target).x, y: (f.tow ?? held.target).y }
+          : null,
       glint:
         hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
           ? { ...hunt.spot }

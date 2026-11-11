@@ -17,6 +17,7 @@ import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
   aimIndex,
   CLAIM,
+  CLAIM_WIRED,
   composedArchetypes,
   composeEnemy,
   ENEMY_RASTER_MAX_DPR,
@@ -478,7 +479,8 @@ describe("enemy raster size", () => {
 
   it("covers every enemy SVG in the manifest, and nothing else", () => {
     const assets = manifest.assets as (EnemyFrame & { path: string })[];
-    const enemies = assets.filter((asset) => asset.path.startsWith("/art/enemies/"));
+    // Gadget's coral family and Cartwheel's claim jumpers.
+    const enemies = assets.filter((asset) => /^\/art\/(cartwheel\/)?enemies\//.test(asset.path));
     expect(enemies.length).toBeGreaterThan(400);
     expect(enemies.every((asset) => enemySvg(asset))).toBe(true);
     expect(assets.filter((asset) => enemySvg(asset))).toHaveLength(enemies.length);
@@ -487,8 +489,9 @@ describe("enemy raster size", () => {
   it("finds every heavy SVG declared at its display size, its viewBox in frame px", () => {
     const heavies = (
       manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
-    ).filter(({ archetype }) => archetype === "frigate" || archetype === "capital");
-    expect(heavies).toHaveLength(384);
+    ).filter(({ archetype }) => ["capital", "frigate", "platform"].includes(archetype ?? ""));
+    // The coral and claim frigates and capitals, 384 frames each, and the claim platform's 81.
+    expect(heavies).toHaveLength(384 * 2 + 81);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
@@ -558,5 +561,22 @@ describe("claim jumper art", () => {
       .filter((sprite) => sprite.layer === "top")
       .map((sprite) => sprite.frame.id);
     expect(new Set(tops).size).toBe(2);
+  });
+
+  it("composes the claim frigate and capital, drawing a destroyed hardpoint's destroyed base", () => {
+    expect([...CLAIM_WIRED].sort()).toEqual([...sets.keys()].sort());
+    for (const name of ["frigate", "capital"]) {
+      const art = claim.get(name)!;
+      expect(art.frames).toHaveLength(16);
+      expect(art.parts).toBeDefined();
+      const hull = art.frames[3]!;
+      const intact = composeEnemy(art, { aim: () => ({ x: 1, y: 0 }), intact: () => true }, hull);
+      const wrecked = composeEnemy(art, { aim: () => ({ x: 1, y: 0 }), intact: () => false }, hull);
+      const ids = (sprites: typeof intact) => sprites.map((sprite) => sprite.frame.id);
+      expect(ids(intact).every((id) => id.startsWith(`enemy-claim-${name}`))).toBe(true);
+      expect(ids(intact).some((id) => id.includes("-intact-"))).toBe(true);
+      expect(ids(wrecked).some((id) => id.includes("-destroyed-"))).toBe(true);
+      expect(ids(wrecked).some((id) => id.includes("-intact-"))).toBe(false);
+    }
   });
 });
