@@ -11,6 +11,7 @@ import { createActions, createButton, createCard, createSwitchRow, MODAL_STYLE }
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
 import { STATION_STYLE } from "./station.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
+import { WEAPON_STYLE } from "./weapons.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -109,15 +110,13 @@ const STYLE = `
   place-items:center
 }
 
-.ada-controls .ada-settings-open,
-.ada-controls .ada-weapon-selector button{
+.ada-controls .ada-settings-open{
   background:#262b44;
   border-color:#181425;
   color:#ead4aa
 }
 
-.ada-controls .ada-settings-open[aria-expanded=true],
-.ada-controls .ada-weapon-selector button[aria-pressed=true]{
+.ada-controls .ada-settings-open[aria-expanded=true]{
   background:#181425
 }
 
@@ -129,50 +128,9 @@ const STYLE = `
   image-rendering:pixelated
 }
 
-.ada-controls .ada-weapon-selector{
-  position:absolute;
-  right:calc(max(8px,var(--inset-right)) + 56px);
-  top:max(8px,var(--inset-top));
-  display:flex;
-  gap:4px
-}
-
-/* Without the settings button (in play) the weapon buttons keep the top-right corner. */
-.ada-controls.ada-no-settings-button .ada-weapon-selector{
-  right:max(8px,var(--inset-right))
-}
-
-.ada-controls .ada-weapon-selector button{
-  width:48px;
-  height:48px;
-  padding:2px;
-  display:grid;
-  justify-items:center;
-  align-content:center
-}
-
-.ada-controls .ada-weapon-selector button[aria-pressed=true]{
-  outline:2px solid #ead4aa;
-  outline-offset:1px;
-  box-shadow:inset 0 0 0 2px #ead4aa
-}
-
-.ada-controls .ada-settings-open:focus-visible,
-.ada-controls .ada-weapon-selector button:focus-visible{
+.ada-controls .ada-settings-open:focus-visible{
   outline:3px solid #ead4aa;
   outline-offset:4px
-}
-
-.ada-controls .ada-weapon-selector button[aria-disabled=true],
-.ada-controls .ada-weapon-selector button:disabled{
-  opacity:0.5;
-  cursor:default
-}
-
-.ada-controls .ada-weapon-selector img{
-  width:20px;
-  height:20px;
-  pointer-events:none
 }
 
 .ada-controls .ada-shield-meter{
@@ -219,7 +177,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
-  style.textContent = STYLE + STATION_STYLE;
+  style.textContent = STYLE + STATION_STYLE + WEAPON_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";

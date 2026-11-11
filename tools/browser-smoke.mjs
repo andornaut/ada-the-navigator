@@ -784,22 +784,41 @@ try {
     0,
     "The removed top-left information HUD must not be recreated",
   );
-  const weaponImages = await page.locator(".ada-weapon-selector button img").evaluateAll((images) =>
-    images.map((image) => ({
-      loaded: image.complete && image.naturalWidth > 0,
-      source: image.getAttribute("src"),
-      decorative: image.getAttribute("aria-hidden") === "true" && image.getAttribute("alt") === "",
-      weapon: image.parentElement.dataset.weapon,
-    })),
-  );
-  assert.equal(weaponImages.length, 3, "Basic and both owned upgrades require real icon images");
-  for (const icon of weaponImages) {
-    assert.ok(
-      icon.loaded && icon.decorative,
-      "Weapon icons must load without duplicating button names",
+  const weaponImages = await page
+    .locator(".ada-weapon-selector .ada-weapon-glyph")
+    .evaluateAll((glyphs) =>
+      glyphs.map((glyph) => ({
+        decorative: glyph.getAttribute("aria-hidden") === "true",
+        mask: getComputedStyle(glyph).maskImage || getComputedStyle(glyph).webkitMaskImage,
+        state: glyph.parentElement.dataset.state,
+        weapon: glyph.parentElement.dataset.weapon,
+      })),
     );
-    assert.equal(icon.source, `/art/ui/icons/weapon-${icon.weapon}.svg`);
+  assert.equal(weaponImages.length, 3, "Basic and both owned upgrades require weapon glyphs");
+  for (const icon of weaponImages) {
+    assert.ok(icon.decorative, "Weapon glyphs must not duplicate button names");
+    assert.ok(
+      icon.mask.includes(`/art/ui/icons/weapon-${icon.weapon}-24.svg`),
+      `Weapon glyphs must mask Art's 24px icon: ${icon.mask}`,
+    );
   }
+  const glyphStatuses = await Promise.all(
+    weaponImages.map(async (icon) =>
+      (
+        await page.request.get(`http://ada-preview:4173/art/ui/icons/weapon-${icon.weapon}-24.svg`)
+      ).status(),
+    ),
+  );
+  assert.deepEqual(
+    glyphStatuses,
+    weaponImages.map(() => 200),
+    "The 24px weapon glyphs must be served",
+  );
+  assert.equal(
+    weaponImages.find((icon) => icon.weapon === "missiles")?.state,
+    "selected",
+    "The selected weapon must draw the selected state",
+  );
   await page.reload();
   await page.waitForFunction(
     () =>
