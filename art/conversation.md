@@ -42,7 +42,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 - Idle frames (1000 ms) are for a speaker on screen but silent, such as the
   storybook panel. The conversation box shows only the current speaker.
 - Ada and Penny have no speaking loop. Each line takes the mood Gameplay marks
-  after it in [prototype-copy.md](../gameplay/prototype-copy.md): a line
+  after it in [player-copy.md](../gameplay/player-copy.md): a line
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`
   frame is unused for now.
 - General Gadget uses the `unknown-*` frames while his tab reads "Unknown

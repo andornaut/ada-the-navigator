@@ -82,8 +82,10 @@ approved visual variants without changing those rules.
 `src/model/flight.ts:514` resolves scenery collision using circular radii.
 `src/model/flight.ts:687` applies ballistic-debris damage; line 863 applies marked
 hazard damage. Preserve these distinctions and safe destination clearance at
-line 350. The scenery and safe-arrival contract is in
-`gameplay/prototype.md:106`; existing spatial variety is described at line 165.
+line 350. The scenery and safe-arrival contract is in Gameplay's
+[Flight and combat](../gameplay/rules.md#flight-and-combat); existing spatial
+variety is described under
+[Persistence and regeneration](../gameplay/rules.md#persistence-and-regeneration).
 
 At logical display size, check that muted contours remain visible against the
 field, especially inside the compressed isometric projection

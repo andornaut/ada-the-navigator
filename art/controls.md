@@ -173,8 +173,9 @@ The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over
 Black Eye and `#696671` over pure white. Notices use the same panel and line.
 The line meets 4.5:1 over every galaxy field, lowest on Sunflower (5.20:1).
-Over a white object passing under the box it is 3.88:1, below 4.5:1; Ada's
-ship stays 39.2 below the box.
+Over a white object passing under the box it is 3.88:1, accepted: white
+objects pass under the box rarely and briefly, and Ada's ship stays 39.2 below
+it.
 
 | Tab            | Fill      | On the field `#292734` | On Sunflower `#332712` | On the panel over `#332712` |
 | -------------- | --------- | ---------------------- | ---------------------- | --------------------------- |
@@ -209,8 +210,9 @@ translucent ink; every mark and the count draw fully opaque over them.
 | Count           | `#ead4aa` | Cream `TYPE.label`                                      |
 | Stardust tick   | `#8ee8a8` | `+N` label, Stardust body mint, with a 1 px ink outline |
 
-The panel is ink at 0.65 over the field. The track is ink at 0.65 over the
-panel, 0.8775 combined, so it composites to `#1a1627` over the base field and
+The panel is ink at 0.65 over the field. The track is its own ink layer at
+0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
+field, so it composites to `#1a1627` over the base field and
 `#2f2a33` over Sunflower.
 
 | Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
@@ -239,10 +241,18 @@ against the delay part and the low fill 1.24:1; the flash is 2.40:1 against
 the fill.
 
 - The count meets 4.5:1 over every galaxy field; over a white object under the
-  pill it is 3.88:1.
-- On the dark fields every mark meets 3:1. On Sunflower the low icon and rim
-  (2.07:1) and the normal rim's outer edge (2.63:1) fall below 3:1; the rim's
-  inner edge holds 3:1 against the track. The divider is decorative.
+  pill it is 3.88:1, accepted as for the conversation line.
+- On the dark fields every mark meets 3:1 against the panel. The divider is
+  decorative.
+- On a light field (Sunflower) the shield icon and the shield bar each draw
+  inside a 1 px ink outline (`lightField.hudOutline`), as on the `+N` tick: the
+  icon's mask grown by 1 px in ink behind it, and a 1 px ink line outside the
+  bar's rim. Against that ink the low icon and rim are 4.95:1, the normal rim
+  6.30:1, the shield icon 7.51:1 and the low pulse peak 7.89:1, where the
+  panel alone gives 2.07:1, 2.63:1, 3.14:1 and 3.30:1. The rim's inner edge
+  holds 3:1 against the track (4.89:1).
+- Over a white object under the pill the delay part is 2.81:1 against the
+  track; it stays told from the fill by lightness.
 - The delay part is told from the fill by lightness (1.88:1) and from the low
   fill by hue; it holds 3:1 against the track over every galaxy field.
 - The `+N` label sits on the field, not the panel: mint is 9.94:1 on

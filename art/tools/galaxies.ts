@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { contrast } from "@andornaut/art-kit/colour";
+import { format, resolveConfig } from "prettier";
 
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { json } from "./projection.ts";
@@ -49,6 +50,26 @@ const PREVIEW = {
 const LIGHT_FIELD = {
   ink: INK,
   keyline: 1,
+  // Drawn over the keyline: play objects and pickups, then the amber and coral effects.
+  keylined: [
+    "ship",
+    "swarm",
+    "fighter",
+    "interceptor",
+    "retaliator",
+    "frigate",
+    "capital",
+    "asteroid",
+    "stardust",
+    "discoveryCache",
+    "outpost",
+    "station",
+    "holodisk",
+    "weaponPickup",
+  ],
+  effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+  // The status pill's 1 px ink outlines, as on the +N tick.
+  hudOutline: { width: 1, parts: ["shieldIcon", "shieldBar"] },
   shotEdge: 1,
   phaser: { glow: { width: [6.5, 4], alpha: 0.9 }, bloom: { radius: 5, alpha: 0.6 } },
   indicatorStroke: 4,
@@ -105,16 +126,20 @@ const galaxies = GALAXIES.map(({ id, tint: t }, i) => ({
   colors: field(id, t),
 }));
 const bank = BANK.map(({ id, tint: t }) => ({ id, tint: t, colors: field(id, t) }));
+const dataPath = `${art}galaxies.json`;
 writeFileSync(
-  `${art}galaxies.json`,
-  json({
-    version: 1,
-    fieldPaint: FIELD_PAINT,
-    preview: PREVIEW,
-    lightField: LIGHT_FIELD,
-    galaxies,
-    bank,
-  }),
+  dataPath,
+  await format(
+    json({
+      version: 1,
+      fieldPaint: FIELD_PAINT,
+      preview: PREVIEW,
+      lightField: LIGHT_FIELD,
+      galaxies,
+      bank,
+    }),
+    { ...(await resolveConfig(dataPath)), filepath: dataPath },
+  ),
 );
 
 const manifestPath = `${art}manifest.json`;

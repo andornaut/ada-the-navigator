@@ -19,6 +19,27 @@
   "lightField": {
     "ink": "#181425",
     "keyline": 1,
+    "keylined": [
+      "ship",
+      "swarm",
+      "fighter",
+      "interceptor",
+      "retaliator",
+      "frigate",
+      "capital",
+      "asteroid",
+      "stardust",
+      "discoveryCache",
+      "outpost",
+      "station",
+      "holodisk",
+      "weaponPickup"
+    ],
+    "effects": ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
+    "hudOutline": {
+      "width": 1,
+      "parts": ["shieldIcon", "shieldBar"]
+    },
     "shotEdge": 1,
     "phaser": {
       "glow": {

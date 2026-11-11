@@ -2,8 +2,9 @@
 
 - Rebuild with `node art/tools/galaxies.ts`. It writes
   [galaxies.json](../public/art/galaxies.json) from the base field roles in
-  [space-palette.json](../public/art/space-palette.json) and links it from the
-  root manifest as `galaxies`. The build fails if any space signal falls below
+  [space-palette.json](../public/art/space-palette.json), formatted with the
+  project's Prettier settings, and links it from the root manifest as
+  `galaxies`. The build fails if any space signal falls below
   5:1 on a dark galaxy's background, or the ink keyline below 5:1 on a light
   galaxy's background.
 - `galaxies` lists galaxy 1 to 4 in selector order with `number`, `id`,
@@ -62,16 +63,18 @@ from `lightField`, in addition to the usual art; a dark galaxy draws none of
 it. Widths are logical px, scaled by `s` like every other space stroke; ink is
 `#181425` (`lightField.ink`).
 
-| Part                 | Rule                                                                                                                                                                                                                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Keyline              | Every play object and pickup draws over an opaque ink keyline (`keyline` 1): its drawn silhouette (alpha 0.375 or more) grown by 1 px in all eight directions (a square kernel), directly beneath it in its depth slot, at its position, frame and alpha                                               |
-| Keylined objects     | Ada's ship (hull and jets as one silhouette), the drones (swarm, fighter, interceptor, retaliator), the frigate and capital (hull, hardpoints and turret tops as one silhouette), play asteroids, Stardust, the discovery cache, outposts, the station, the holodisk pickup                            |
-| Shots                | Each bolt, amber or coral, draws over an ink line on the same endpoints and caps, `shotEdge` 1 wider each side (1.5 to 3.5). The Scattershot dot draws over an ink disc 1 larger in radius. The missile dart and fins draw over their 1 px ink keyline; the streak stays as it is                      |
-| Phaser beam          | The glow layer is ink, width 6.5 to 4 times `w`, alpha `0.9 a` (`phaser.glow`), in place of amber 8 to 5 at `0.38 a`; the bloom's outer disc is ink, radius `5 w`, alpha `0.6 a` (`phaser.bloom`). Body, core and the inner discs are unchanged. Reduced motion: the 4 px amber edge is ink at `0.9 a` |
-| Direction indicators | The arrow and circle's 2 px stroke at alpha 0.8 draws over a 4 px ink stroke (`indicatorStroke`) at alpha 0.8 on the same path, round joins                                                                                                                                                            |
-| Jets                 | `jets.ship` replaces the layers in `ship-jets.json` (no halo); `jets.enemy` replaces every enemy's jet layers. Mouths, widths and the length rule are unchanged                                                                                                                                        |
-| Holodisk beacon      | Holds its `base` frame `#a83a96` (`holodiskBeacon`), with no pulse                                                                                                                                                                                                                                     |
-| Backdrop rocks       | The [light backdrop rule](asteroids.md#backdrop)                                                                                                                                                                                                                                                       |
+| Part                 | Rule                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keyline              | Every play object and pickup draws over an opaque ink keyline (`keyline` 1): its drawn silhouette (alpha 0.375 or more) grown by 1 px in all eight directions (a square kernel), directly beneath it in its depth slot, at its position, frame and alpha                                                                                                      |
+| Keylined objects     | Ada's ship (hull and jets as one silhouette), the drones (swarm, fighter, interceptor, retaliator), the frigate and capital (hull, hardpoints and turret tops as one silhouette), play asteroids, Stardust, the discovery cache, outposts, the station, the holodisk pickup, the weapon pickup (its amber square and its glyph) (`keylined`)                  |
+| Shots                | Each bolt, amber or coral, draws over an ink line on the same endpoints and caps, `shotEdge` 1 wider each side (1.5 to 3.5). The Scattershot dot draws over an ink disc 1 larger in radius. The missile streak stays as it is                                                                                                                                 |
+| Phaser beam          | The glow layer is ink, width 6.5 to 4 times `w`, alpha `0.9 a` (`phaser.glow`), in place of amber 8 to 5 at `0.38 a`; the bloom's outer disc is ink, radius `5 w`, alpha `0.6 a` (`phaser.bloom`). Body, core and the inner discs are unchanged. Reduced motion: the 4 px amber edge is ink at `0.9 a`                                                        |
+| Direction indicators | The arrow and circle's 2 px stroke at alpha 0.8 draws over a 4 px ink stroke (`indicatorStroke`) at alpha 0.8 on the same path, round joins                                                                                                                                                                                                                   |
+| Jets                 | `jets.ship` replaces the layers in `ship-jets.json`, dropping the halo; `jets.enemy` replaces every enemy's jet layers. Each set is a flat dark outer layer and a core gradient. Mouths, widths and the length rule are unchanged                                                                                                                             |
+| Holodisk beacon      | Holds its `base` frame `#a83a96` (`holodiskBeacon`), with no pulse                                                                                                                                                                                                                                                                                            |
+| Effects              | The amber and coral effects draw over a 1 px ink edge with the same square kernel (`effects`): the missile dart and fins, blast rings and flashes, hit sparks (rays, core and flecks) and destruction shards. A stroke draws over an ink stroke 2 wider on the same path; a filled shape over its silhouette grown by 1 px. The edge takes the effect's alpha |
+| Status pill          | A 1 px ink outline around the shield icon and around the shield bar's rim (`hudOutline`), as on the `+N` tick; see [Controls](controls.md#status-pill)                                                                                                                                                                                                        |
+| Backdrop rocks       | The [light backdrop rule](asteroids.md#backdrop)                                                                                                                                                                                                                                                                                                              |
 
 Contrast on Sunflower's `#D8C994` (WCAG):
 
@@ -81,13 +84,16 @@ Contrast on Sunflower's `#D8C994` (WCAG):
 | Ship jet outer                   | `#8ac0e6` 1.18:1 | `#1767b3` 3.50:1     |
 | Enemy jet outer                  | `#d4826a` 1.76:1 | `#7f4b3d` 4.27:1     |
 | Bolts and dot                    | 1.04 to 1.63:1   | Ink edge, 10.90:1    |
+| Weapon pickup, blasts, sparks    | Amber 1.04:1     | Ink edge, 10.90:1    |
+| Destruction shards               | Coral 1.63:1     | Ink edge, 10.90:1    |
 | Phaser glow                      | 1.02:1           | Ink at 0.9, 8.93:1   |
 | Direction indicators             | 1.18 to 1.61:1   | Ink at 0.8, 6.93:1   |
 | Holodisk beacon                  | Bright 1.75:1    | Base held, 3.42:1    |
 | Lit play stone (`#8A8279`)       | 2.29:1           | Ink keyline, 10.90:1 |
 | `+N` tick, mint with ink outline | Outline 10.90:1  | Unchanged            |
 
-The HUD is the same on every field; its panel numbers are in
+The HUD panels are the same on every field, and only the status pill gains
+its ink outlines on a light field; panel numbers are in
 [Controls](controls.md#status-pill).
 
 ## Asset bank
