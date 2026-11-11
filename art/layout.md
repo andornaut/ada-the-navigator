@@ -31,9 +31,14 @@ the value currently lives, in CSS px.
 - Sampling follows the asset kind:
   - SVG and vector textures rasterize at display size times
     `min(devicePixelRatio, 2)` and draw with linear filtering.
-  - Authored pixel sprites (Ada, the room, characters, portraits and glyph
-    PNGs) keep nearest-neighbour filtering per texture, at integer scale steps
-    where the layout allows.
+  - Authored pixel sprites keep nearest-neighbour filtering per texture.
+    Small static UI pixel art (portraits, the Stardust icon, PNG HUD, weapon
+    and shop glyphs, the `ui-pause` fallback) draws at the largest whole
+    device scale that fits its slot, at least 1, centred in the slot. World
+    sprites under the camera zoom and full-screen rooms and backgrounds keep
+    their fractional scale.
+  - The camera zoom is `min(devicePixelRatio, 2)` times the fit scale and may
+    be fractional; there is no integer world zoom or letterbox.
   - Text renders at device resolution.
   - Line widths, keylines and outlines stay in logical px at every ratio.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
