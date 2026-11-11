@@ -59,7 +59,10 @@ with the rock.
 The cockpit is retro-futurist: 1960s ideas of the future with 1980s and 1990s
 technology details, about the size of a closet, under a large glass canopy with a
 view all around. It resembles a convertible's interior: two seats side by side
-for Ada and Penny, with a little room to walk around behind them. The holodisk
+for Ada and Penny, with a little room to walk around behind them. Ada pilots
+from the port seat, with Penny on the starboard seat. Every quantum jump uses one
+jump effect; Astra's emergency jump when the shield fails tints it red. Jumping
+home arrives in Ada's room. The holodisk
 drive looks like a CD or cassette player.
 
 Every launch, including a replay of a resolved galaxy, boards and shows the
@@ -125,8 +128,9 @@ Ada encounters an intelligent space whale trapped by debris. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
 A short departure scene confirms reunion. The whale's family gives Ada a waypoint
-to the galaxy's holodisk, which she must fight her way to. A direction indicator points to
-the waypoint at any range until the holodisk is recovered; the waypoint is not a
+to the galaxy's holodisk, which she must fight her way to. A direction indicator and a holodisk
+beacon mark the waypoint at any range until the holodisk is recovered; a holodisk
+whose location is not yet known shows no beacon; the waypoint is not a
 Travel destination. Each galaxy's chapter completes only once its holodisk is
 recovered. No persistent
 companion-following AI or escort is required. Back home, Ada chooses to meet her dog's needs; the lesson
