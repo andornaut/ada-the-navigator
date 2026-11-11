@@ -311,6 +311,80 @@ function notableSnapshot(): GameState & { flight: FlightState } {
   };
 }
 
+describe("retired capital layouts", () => {
+  const legacy = (archetype: string, hardpoints: [string, number, number][]) => {
+    const snapshot = combatSnapshot();
+    Object.assign(snapshot.flight.objects[0]!.enemy!, {
+      archetype,
+      hardpoints: hardpoints.map(([id, hp, cooldown]) => ({ aim: null, cooldown, hp, id })),
+    });
+    return snapshot;
+  };
+  const parts = (snapshot: unknown) =>
+    restoreSave(JSON.stringify(snapshot))!.flight!.objects[0]!.enemy!.hardpoints.map(
+      ({ cooldown, hp, id }) => [id, hp, cooldown],
+    );
+
+  it("moves an earlier capital onto the current layout, keeping its damage", () => {
+    const snapshot = legacy("capital", [
+      ["command", 5, 0],
+      ["engine-left", 0, 0],
+      ["engine-right", 4, 0],
+      ["weapon-left", 2, 0.3],
+      ["weapon-right", 3, 1.7],
+    ]);
+    expect(parts(snapshot)).toEqual([
+      ["command", 5, 0],
+      ["engine-left", 0, 0],
+      ["engine-right", 4, 0],
+      ["weapon-left", 2, 0.3],
+      ["weapon-right", 3, 1.7],
+      ["weapon-rear-left", 3, 0],
+      ["weapon-rear-right", 3, 0],
+    ]);
+  });
+
+  it("turns a retired oversized capital into a capital", () => {
+    const snapshot = legacy("oversizedCapital", [
+      ["command", 4, 0],
+      ["engine-left", 4, 0],
+      ["engine-right", 0, 0],
+      ["port", 1, 0.5],
+      ["center", 0, 0],
+      ["starboard", 3, 0],
+    ]);
+    const restored = restoreSave(JSON.stringify(snapshot))!;
+    expect(restored.flight!.objects[0]!.enemy!.archetype).toBe("capital");
+    expect(parts(snapshot)).toEqual([
+      ["command", 4, 0],
+      ["engine-left", 4, 0],
+      ["engine-right", 0, 0],
+      ["weapon-left", 1, 0.5],
+      ["weapon-right", 3, 0],
+      ["weapon-rear-left", 3, 0],
+      ["weapon-rear-right", 3, 0],
+    ]);
+  });
+
+  it("still rejects an unknown capital layout", () => {
+    const snapshot = legacy("capital", [
+      ["command", 5, 0],
+      ["engine-left", 4, 0],
+      ["mystery", 3, 0],
+    ]);
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+
+  it.each([{ tactic: { integrity: 1, phase: "orbit", seconds: 0, volleys: 0 } }, { escortOf: 5 }])(
+    "rejects malformed behaviour state %j",
+    (change) => {
+      const snapshot = combatSnapshot();
+      Object.assign(snapshot.flight.objects[0]!.enemy!, change);
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
+});
+
 describe("enemy orientation save boundary", () => {
   function oriented() {
     const snapshot = combatSnapshot();

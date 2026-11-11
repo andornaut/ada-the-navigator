@@ -1,9 +1,11 @@
-import type {
-  EnemyArchetype,
-  EnemyDefinition,
-  FireProfile,
-  HardpointDefinition,
-  Point,
+import {
+  type EnemyArchetype,
+  enemyCatalog,
+  type EnemyDefinition,
+  escortTuning,
+  type FireProfile,
+  type HardpointDefinition,
+  type Point,
 } from "../data/enemy-catalog.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import {
@@ -21,12 +23,25 @@ export interface HardpointState {
   hp: number;
   id: string;
 }
+/** Behaviour phase memory for hit-and-run retreats and strafing passes. */
+export interface TacticState {
+  /** Hull plus hardpoint hp at the previous step, so a drop shows a hit. */
+  integrity: number;
+  /** `attack` presses in; `retreat` pulls away (hitAndRun); `pass` flies through (strafe). */
+  phase: "attack" | "retreat" | "pass";
+  /** Seconds in the current phase. */
+  seconds: number;
+  /** Volleys fired in the current attack. */
+  volleys: number;
+}
 export interface EnemyState {
   age: number;
   /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
   aim: Point | null;
   archetype: EnemyArchetype;
   engaged: boolean;
+  /** The capital this ship escorts, or null. */
+  escortOf: string | null;
   /** Unit hull facing; hardpoint offsets rotate with it. */
   facing: Point;
   fleeing: boolean;
@@ -44,6 +59,7 @@ export interface EnemyState {
   primaryCooldown: number;
   pursuitSeconds: number;
   returning: boolean;
+  tactic: TacticState;
   velocity: Point;
 }
 export interface EnemyContext {
@@ -70,7 +86,10 @@ export interface FireIntent {
 export interface EnemyEffects {
   defeated: boolean;
   disabledHardpoints: string[];
+  /** True when every engine is disabled. */
   movementStopped: boolean;
+  /** Fraction of engines still working: each gives an equal share of top speed. */
+  thrust: number;
 }
 export interface EnemyIntent {
   aim: Point;
@@ -114,13 +133,30 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
-/** Saved enemy state, which older saves record without orientation or aim. */
-export type SavedEnemyState = Omit<EnemyState, "aim" | "facing" | "hardpoints" | "heading"> & {
+/** Saved enemy state; older saves lack orientation, aim, escort and behaviour state. */
+export type SavedEnemyState = Omit<
+  EnemyState,
+  "aim" | "escortOf" | "facing" | "hardpoints" | "heading" | "tactic"
+> & {
   aim?: Point | null;
+  escortOf?: string | null;
   facing?: Point;
   hardpoints: (Omit<HardpointState, "aim"> & { aim?: Point | null })[];
   heading?: Point | null;
+  tactic?: TacticState;
 };
+
+/** Hull plus hardpoint hp; a drop between steps means the ship was hit. */
+export function enemyIntegrity(state: Pick<EnemyState, "hardpoints" | "hp">): number {
+  return state.hardpoints.reduce((sum, part) => sum + part.hp, state.hp);
+}
+
+const freshTactic = (integrity: number): TacticState => ({
+  integrity,
+  phase: "attack",
+  seconds: 0,
+  volleys: 0,
+});
 
 /** Keeps a saved unit vector bit-for-bit so restored simulation stays deterministic. */
 const savedDirection = (value: Point | null | undefined): Point | null => {
@@ -131,16 +167,22 @@ const savedDirection = (value: Point | null | undefined): Point | null => {
 };
 
 /**
- * Completes orientation state from a save: a missing facing starts from the velocity
- * direction, or up when stopped; a missing heading or aim starts unset.
+ * Completes state from a save: a missing facing starts from the velocity direction, or up
+ * when stopped; a missing heading or aim starts unset; a missing escort is none; a missing
+ * behaviour state starts a fresh attack at the saved hp.
  */
-export function restoreEnemyOrientation(saved: SavedEnemyState): EnemyState {
+export function restoreEnemyState(saved: SavedEnemyState): EnemyState {
+  const hardpoints = saved.hardpoints.map((part) => ({ ...part, aim: savedDirection(part.aim) }));
   return {
     ...saved,
     aim: savedDirection(saved.aim),
+    escortOf: saved.escortOf ?? null,
     facing: savedDirection(saved.facing) ?? savedDirection(saved.velocity) ?? { ...UP },
-    hardpoints: saved.hardpoints.map((part) => ({ ...part, aim: savedDirection(part.aim) })),
+    hardpoints,
     heading: savedDirection(saved.heading),
+    tactic: saved.tactic
+      ? { ...saved.tactic }
+      : freshTactic(enemyIntegrity({ hardpoints, hp: saved.hp })),
   };
 }
 
@@ -149,20 +191,27 @@ export function enemyEffects(definition: EnemyDefinition, state: EnemyState): En
     .filter((part) => !state.hardpoints.some((value) => value.id === part.id && value.hp > 0))
     .map((part) => part.id);
   const required = definition.hardpoints.filter((part) => part.required);
+  const engines = definition.hardpoints.filter((part) => part.kind === "engine");
+  const working = engines.filter((part) => !disabledHardpoints.includes(part.id)).length;
   return {
     defeated: required.length
       ? required.every((part) => disabledHardpoints.includes(part.id))
       : state.hp <= 0,
     disabledHardpoints,
-    movementStopped: definition.hardpoints.some(
-      (part) => part.kind === "engine" && disabledHardpoints.includes(part.id),
-    ),
+    movementStopped: engines.length > 0 && working === 0,
+    thrust: engines.length ? working / engines.length : 1,
   };
 }
 
 export function createEnemy(
   definition: EnemyDefinition,
-  identity: { archetype: EnemyArchetype; id: string; packId: string | null; phase: number },
+  identity: {
+    archetype: EnemyArchetype;
+    escortOf?: string | null;
+    id: string;
+    packId: string | null;
+    phase: number;
+  },
   position: Point,
 ): EnemyState {
   return {
@@ -170,6 +219,7 @@ export function createEnemy(
     aim: null,
     ...identity,
     engaged: false,
+    escortOf: identity.escortOf ?? null,
     facing: { ...UP },
     fleeing: false,
     hardpoints: definition.hardpoints.map((part) => ({
@@ -187,6 +237,7 @@ export function createEnemy(
     primaryCooldown: 0,
     pursuitSeconds: 0,
     returning: false,
+    tactic: freshTactic(definition.hardpoints.reduce((sum, part) => sum + part.hp, definition.hp)),
     velocity: { x: 0, y: 0 },
   };
 }
@@ -218,6 +269,100 @@ export function damageEnemy(
   };
 }
 
+/** Push away from nearby live peers, strongest when closest. */
+function separation(definition: EnemyDefinition, context: EnemyContext, state: EnemyState): Point {
+  const push = { x: 0, y: 0 };
+  for (const peer of context.peers) {
+    if (peer.id === state.id || peer.hp <= 0) {
+      continue;
+    }
+    const delta = { x: state.position.x - peer.position.x, y: state.position.y - peer.position.y };
+    const length = magnitude(delta);
+    if (length > 0 && length < definition.steering.separation) {
+      const weight = 1 - length / definition.steering.separation;
+      push.x += (delta.x / length) * weight;
+      push.y += (delta.y / length) * weight;
+    }
+  }
+  return push;
+}
+
+/** Steer to a point, slowing on approach so momentum cannot carry the ship around it. */
+function arrive(
+  definition: EnemyDefinition,
+  maxSpeed: number,
+  goal: Point,
+  state: EnemyState,
+): Point {
+  const offset = { x: goal.x - state.position.x, y: goal.y - state.position.y };
+  const distance = magnitude(offset);
+  if (distance <= 5) {
+    return { x: 0, y: 0 };
+  }
+  const arrival = Math.min(
+    1,
+    distance / Math.max(0.001, maxSpeed * definition.physics.brakingSeconds),
+  );
+  return { x: (offset.x / distance) * arrival, y: (offset.y / distance) * arrival };
+}
+
+/** The live capital an escort guards, if it is loaded. */
+function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
+  return state.escortOf === null
+    ? undefined
+    : context.peers.find(
+        (peer) =>
+          peer.id === state.escortOf &&
+          (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
+      );
+}
+
+/**
+ * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns
+ * after its retreat; strafe flies straight through within its pass distance and loops back
+ * beyond its loop distance. Leaving the engagement resets to a fresh attack.
+ */
+function nextTactic(
+  definition: EnemyDefinition,
+  next: EnemyState,
+  distance: number,
+  state: EnemyState,
+): TacticState {
+  const integrity = enemyIntegrity(next);
+  const hit = integrity < state.tactic.integrity;
+  const tactic: TacticState = {
+    ...state.tactic,
+    integrity,
+    seconds: state.tactic.seconds + (next.age - state.age),
+  };
+  const enter = (phase: TacticState["phase"]): TacticState => ({
+    ...tactic,
+    phase,
+    seconds: 0,
+    volleys: 0,
+  });
+  if (!next.engaged || next.returning || next.fleeing) {
+    return tactic.phase === "attack" && tactic.volleys === 0 ? tactic : enter("attack");
+  }
+  const behaviour = definition.behaviour;
+  if (behaviour.kind === "hitAndRun") {
+    if (tactic.phase === "attack" && (hit || tactic.volleys >= behaviour.burstVolleys)) {
+      return enter("retreat");
+    }
+    if (tactic.phase === "retreat" && tactic.seconds >= behaviour.retreatSeconds) {
+      return enter("attack");
+    }
+  } else if (behaviour.kind === "strafe") {
+    if (tactic.phase === "attack" && distance <= behaviour.passDistance) {
+      return enter("pass");
+    }
+    if (tactic.phase === "pass" && distance >= behaviour.loopDistance) {
+      return enter("attack");
+    }
+  }
+  return tactic;
+}
+
 /** Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. */
 function steering(
   definition: EnemyDefinition,
@@ -227,17 +372,7 @@ function steering(
   state: EnemyState,
 ): Point {
   if (state.returning) {
-    const home = { x: state.home.x - state.position.x, y: state.home.y - state.position.y };
-    const distance = magnitude(home);
-    if (distance <= 5) {
-      return { x: 0, y: 0 };
-    }
-    // Slow on approach so momentum cannot carry the ship around home.
-    const arrival = Math.min(
-      1,
-      distance / Math.max(0.001, maxSpeed * definition.physics.brakingSeconds),
-    );
-    return { x: (home.x / distance) * arrival, y: (home.y / distance) * arrival };
+    return arrive(definition, maxSpeed, state.home, state);
   }
   if (state.fleeing) {
     return { x: -aim.x, y: -aim.y };
@@ -245,30 +380,52 @@ function steering(
   if (!state.engaged || !context.targetable || context.visibility !== "visible") {
     return { x: 0, y: 0 };
   }
-  const distance = Math.hypot(
-    context.player.x - state.position.x,
-    context.player.y - state.position.y,
-  );
-  const radial = Math.max(-1, Math.min(1, (distance - definition.engagement * 0.7) / 100));
-  const orbit = definition.steering.orbit;
-  const wobble = Math.sin(state.age * 3 + state.phase) * definition.steering.wobble;
-  const desired = {
-    x: aim.x * radial - aim.y * (orbit + wobble),
-    y: aim.y * radial + aim.x * (orbit + wobble),
-  };
-  for (const peer of context.peers) {
-    if (peer.id === state.id || peer.hp <= 0) {
-      continue;
+  const push = separation(definition, context, state);
+  const toward = (scale: number): Point =>
+    unit({ x: aim.x * scale + push.x, y: aim.y * scale + push.y });
+  const capital = escorted(context, state);
+  if (capital) {
+    // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
+    const hull = (enemyCatalog[capital.archetype].sizeRatio * context.adaWidth) / 2;
+    const reach = Math.hypot(
+      context.player.x - capital.position.x,
+      context.player.y - capital.position.y,
+    );
+    if (reach <= escortTuning.interceptRadius + hull) {
+      return toward(1);
     }
-    const delta = { x: state.position.x - peer.position.x, y: state.position.y - peer.position.y };
-    const length = magnitude(delta);
-    if (length > 0 && length < definition.steering.separation) {
-      const weight = 1 - length / definition.steering.separation;
-      desired.x += (delta.x / length) * weight;
-      desired.y += (delta.y / length) * weight;
-    }
+    const gap = hull + escortTuning.stationGap;
+    const station = {
+      x: capital.position.x + Math.cos(state.phase) * gap,
+      y: capital.position.y + Math.sin(state.phase) * gap,
+    };
+    return arrive(definition, maxSpeed, station, state);
   }
-  return unit(desired);
+  const behaviour = definition.behaviour;
+  switch (behaviour.kind) {
+    case "chase":
+      return toward(1);
+    case "swarm": {
+      // Sinusoidal phase makes the chase erratic without query-dependent RNG.
+      const wobble = Math.sin(state.age * 3 + state.phase) * definition.steering.wobble;
+      return unit({
+        x: aim.x - aim.y * wobble + push.x,
+        y: aim.y + aim.x * wobble + push.y,
+      });
+    }
+    case "hitAndRun":
+      return state.tactic.phase === "retreat" ? toward(-1) : toward(1);
+    case "strafe": {
+      // A pass keeps its course, so momentum carries the ship past Ada before it loops back.
+      const course = unit(state.velocity);
+      return state.tactic.phase === "pass" && magnitude(course) ? course : toward(1);
+    }
+    case "siege":
+      break;
+  }
+  // Siege advances slowly while the turrets fire.
+  const advance = toward(1);
+  return { x: advance.x * behaviour.speedFraction, y: advance.y * behaviour.speedFraction };
 }
 
 /** Pure rules: positions are supplied by the runtime after collision resolution. */
@@ -347,7 +504,11 @@ export function stepEnemy(
       next.pursuitSeconds = 0;
     }
   }
-  const speed = enemyMaxSpeed(definition, context.adaSpeed, context.speedCapRatio);
+  next.tactic = nextTactic(definition, next, magnitude(delta), state);
+  // Each working engine gives an equal share of top speed; losing one slows the ship through
+  // its own physics, while the shared cap still bounds saved momentum.
+  const fullSpeed = enemyMaxSpeed(definition, context.adaSpeed, context.speedCapRatio);
+  const speed = fullSpeed * effects.thrust;
   const request = steering(definition, context, speed, aim, next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
@@ -357,7 +518,7 @@ export function stepEnemy(
     const motion = stepShipMotion(
       physics,
       context.dt,
-      { maxSpeed: speed, restHeading: state.facing },
+      { maxSpeed: fullSpeed, restHeading: state.facing },
       { direction: request, speed: speed * Math.min(1, magnitude(request)) },
       { heading: state.heading, velocity: state.velocity },
     );
@@ -376,10 +537,10 @@ export function stepEnemy(
     }
   }
   const velocitySize = magnitude(next.velocity);
-  if (velocitySize > speed && velocitySize > 0) {
+  if (velocitySize > fullSpeed && velocitySize > 0) {
     next.velocity = {
-      x: (next.velocity.x * speed) / velocitySize,
-      y: (next.velocity.y * speed) / velocitySize,
+      x: (next.velocity.x * fullSpeed) / velocitySize,
+      y: (next.velocity.y * fullSpeed) / velocitySize,
     };
   }
   const fire: FireIntent[] = [];
@@ -399,6 +560,7 @@ export function stepEnemy(
     }
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
+  let volleys = 0;
   const cycle = (
     profile: FireProfile,
     origin: Point,
@@ -412,6 +574,7 @@ export function stepEnemy(
     }
     let delay = Math.max(0, cooldown);
     while (delay < context.dt) {
+      volleys++;
       for (const angle of profile.angles) {
         fire.push({
           aim: {
@@ -450,6 +613,9 @@ export function stepEnemy(
         value.cooldown,
       );
     }
+  }
+  if (next.tactic.phase === "attack") {
+    next.tactic = { ...next.tactic, volleys: next.tactic.volleys + volleys };
   }
   return { aim: hullAim, effects, fire, state: next, velocity: next.velocity };
 }

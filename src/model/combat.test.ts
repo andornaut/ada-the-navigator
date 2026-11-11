@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype, enemyCatalog, sectorEncounters } from "../data/enemy-catalog.ts";
+import {
+  encounterQuiet,
+  type EnemyArchetype,
+  enemyCatalog,
+  escortTuning,
+  sectorEncounters,
+} from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { createEnemy, hardpointOffset } from "./enemy-ai.ts";
@@ -77,7 +83,12 @@ describe("integrated combat", () => {
     const target = ship("capital", { x: 400, y: 0 });
     flight.objects.push(target);
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual(["bolt", "missile"]);
+    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual([
+      "bolt",
+      "bolt",
+      "missile",
+      "missile",
+    ]);
     const missile = flight.shots.find((shot) => shot.projectile === "missile")!;
     const velocity = { ...missile.velocity };
     const position = { x: missile.x, y: missile.y };
@@ -107,13 +118,21 @@ describe("integrated combat", () => {
       part.cooldown = 0;
     }
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect({ x: target.x, y: target.y }).toEqual(before);
-    expect(flight.shots.map((shot) => shot.projectile)).toEqual(["missile"]);
-    for (const id of ["engine-right", "weapon-right"]) {
+    // One working engine of two still drives the hull at half its top speed.
+    expect({ x: target.x, y: target.y }).not.toEqual(before);
+    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual([
+      "bolt",
+      "missile",
+      "missile",
+    ]);
+    for (const id of ["engine-right", "weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
       hit(flight, partPosition(target, id), 5);
     }
     expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({ type: "enemyDisabled" });
     expect(flight.objects).toContain(target);
+    const stopped = { x: target.x, y: target.y };
+    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    expect({ x: target.x, y: target.y }).toEqual(stopped);
     hit(flight, partPosition(target, "command"), 5);
     expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({ type: "enemyDisabled" });
     expect(flight.objects).not.toContain(target);
@@ -132,9 +151,10 @@ describe("integrated combat", () => {
       id: "travel",
       life: 5,
       piercing: false,
-      velocity: { x: 300, y: 0 },
-      x: 250,
-      y: 0,
+      // Down the hull's centreline, clear of the turrets and engines either side.
+      velocity: { x: 0, y: 300 },
+      x: 400,
+      y: -150,
     });
     stepFlight(PROTOTYPE, 0.7, idle, flight);
     expect(target.enemy!.hardpoints.find((part) => part.id === "command")?.hp).toBe(4);
@@ -200,7 +220,7 @@ describe("integrated combat", () => {
       expect(routeBlocked("quest", flight)).toBe(false);
       const destination = ensureDestination(PROTOTYPE, "quest", flight);
       const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
-      const archetype = sector === 1 ? "frigate" : sector === 2 ? "capital" : "oversizedCapital";
+      const archetype = sector === 1 ? "frigate" : "capital";
       expect(guard.enemy?.archetype).toBe(archetype);
       expect(
         Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
@@ -250,7 +270,7 @@ describe("integrated combat", () => {
     }
     const packs = flight.combat?.initialPackSizes ?? {};
     expect(Object.keys(packs).length).toBeGreaterThan(2);
-    expect(Object.values(packs).every((size) => size >= 1 && size <= 5)).toBe(true);
+    expect(Object.values(packs).every((size) => size >= 1 && size <= 6)).toBe(true);
     expect(
       flight.objects.some(
         (object) => object.id.startsWith("chunk:") && ["rock", "resource"].includes(object.kind),
@@ -260,14 +280,16 @@ describe("integrated combat", () => {
       flight.objects.some((object) => object.id.startsWith("ballistic:") && object.velocity),
     ).toBe(true);
     expect(flight.objects.some((object) => object.role === "discovery")).toBe(true);
-    const origins = Object.keys(packs).map((id) => id.slice(5).split(",").map(Number));
+    // A capital battle's escorts share their capital's encounter cell.
+    const cells = new Set(Object.keys(packs).map((id) => id.split(":")[1]!));
+    const origins = [...cells].map((cell) => cell.split(",").map(Number));
     for (let i = 0; i < origins.length; i++) {
       for (let j = i + 1; j < origins.length; j++) {
         const first = origins[i]!;
         const second = origins[j]!;
         expect(
           Math.hypot(first[0]! - second[0]!, first[1]! - second[1]!) * PROTOTYPE.tuning.chunkSize,
-        ).toBeGreaterThanOrEqual(1800);
+        ).toBeGreaterThanOrEqual(encounterQuiet(1).distance);
       }
     }
     const replay = empty();
@@ -288,15 +310,70 @@ describe("rotating hulls", () => {
     flight.objects.push(target);
     const width = enemyCatalog.capital.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     const hp = (id: string) => target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
-    // weapon-left's unrotated world-axis spot is empty hull once the capital faces east.
-    hit(flight, { x: target.x - 0.4 * width, y: target.y - 0.2 * width });
+    // weapon-rear-right's unrotated world-axis spot is empty hull once the capital faces east.
+    hit(flight, { x: target.x + 0.42 * width, y: target.y + 0.08 * width });
     stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual([5, 4, 4, 3, 3]);
-    // Facing east, its forward-port offset lies ahead (+x) and to port (-y).
-    hit(flight, { x: target.x + 0.2 * width, y: target.y - 0.4 * width });
+    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual([5, 4, 4, 3, 3, 3, 3]);
+    // Facing east, its aft-starboard offset lies behind (-x) and to starboard (+y).
+    hit(flight, { x: target.x - 0.08 * width, y: target.y + 0.42 * width });
     stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(hp("weapon-left")).toBe(2);
-    expect(partPosition(target, "weapon-left").x).toBeCloseTo(target.x + 0.2 * width, 0);
+    expect(hp("weapon-rear-right")).toBe(2);
+    expect(partPosition(target, "weapon-rear-right").y).toBeCloseTo(target.y + 0.42 * width, 0);
+  });
+});
+
+describe("galaxy one encounters", () => {
+  it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
+    const flight = empty();
+    let leader: SpaceObject | undefined;
+    for (let index = 1; index <= 400 && !leader; index++) {
+      flight.player = { x: index * 4096, y: (index % 7) * 4096 };
+      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      leader = flight.objects.find(
+        (object) =>
+          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
+      );
+    }
+    expect(leader).toBeDefined();
+    const packId = leader!.enemy!.packId!;
+    expect(leader!.id).toBe(`${packId}:0`);
+    expect(leader!.radius).toBe(50);
+    const escorts = flight.objects.filter((object) => object.enemy?.packId === `${packId}:escorts`);
+    expect(escorts).toHaveLength(4);
+    expect(flight.combat!.initialPackSizes).toMatchObject({
+      [packId]: 1,
+      [`${packId}:escorts`]: 4,
+    });
+    for (const escort of escorts) {
+      expect(escort.enemy).toMatchObject({ archetype: "fighter", escortOf: leader!.id });
+      expect(Math.hypot(escort.x - leader!.x, escort.y - leader!.y)).toBeCloseTo(
+        leader!.radius + escortTuning.stationGap,
+        0,
+      );
+    }
+  });
+
+  it.each([
+    [1, true],
+    [2, false],
+  ] as const)("in galaxy %i, notices Ada 700 units away: %s", (sector, engaged) => {
+    const flight = empty();
+    flight.sector = sector;
+    const fighter = ship("fighter", { x: flight.player.x + 700, y: flight.player.y });
+    flight.objects.push(fighter);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(fighter.enemy!.engaged).toBe(engaged);
+  });
+
+  it("sizes saved hit circles from the catalog", () => {
+    const flight = empty();
+    const capital = ship("capital", { x: flight.player.x + 900, y: flight.player.y });
+    capital.radius = 100;
+    flight.objects.push(capital);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(capital.radius).toBe(
+      enemyCatalog.capital.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+    );
   });
 });
 
@@ -309,35 +386,56 @@ describe("sector encounter tables", () => {
     };
   }
 
-  it("weights sector one archetypes and draws each group from its own range", () => {
-    const next = rolls(20261110);
-    const total = 20000;
+  it("weights galaxy one's roster and draws each group from its own range", () => {
+    const next = rolls(20261111);
+    const total = 40000;
     const seen = new Map<EnemyArchetype, number[]>();
+    const escorts = new Set<string>();
     for (let i = 0; i < total; i++) {
       const count = next();
-      const { archetype, count: size } = rollEncounter(sectorEncounters[1], count, next());
-      seen.set(archetype, [...(seen.get(archetype) ?? []), size]);
+      const roll = rollEncounter(sectorEncounters[1], count, next());
+      seen.set(roll.archetype, [...(seen.get(roll.archetype) ?? []), roll.count]);
+      if (roll.escorts) {
+        escorts.add(`${roll.archetype}:${roll.escorts.archetype}:${roll.escorts.count}`);
+      }
     }
-    expect([...seen.keys()].sort()).toEqual(["fighter", "interceptor", "retaliator", "swarm"]);
+    expect([...seen.keys()].sort()).toEqual([
+      "capital",
+      "fighter",
+      "frigate",
+      "interceptor",
+      "retaliator",
+      "swarm",
+    ]);
     const share = (archetype: EnemyArchetype) => (seen.get(archetype)?.length ?? 0) / total;
-    expect(Math.abs(share("swarm") - 0.35)).toBeLessThan(0.015);
-    expect(Math.abs(share("fighter") - 0.35)).toBeLessThan(0.015);
-    expect(Math.abs(share("interceptor") - 0.15)).toBeLessThan(0.015);
-    expect(Math.abs(share("retaliator") - 0.15)).toBeLessThan(0.015);
+    for (const [archetype, weight] of [
+      ["swarm", 0.35],
+      ["fighter", 0.3],
+      ["interceptor", 0.15],
+      ["retaliator", 0.1],
+      ["frigate", 0.07],
+      ["capital", 0.03],
+    ] as const) {
+      expect(Math.abs(share(archetype) - weight)).toBeLessThan(0.01);
+    }
     const sizes = (archetype: EnemyArchetype) => seen.get(archetype) ?? [];
     const fraction = (archetype: EnemyArchetype, size: number) =>
       sizes(archetype).filter((value) => value === size).length / sizes(archetype).length;
-    // Swarms are packs of three to five.
-    expect(new Set(sizes("swarm"))).toEqual(new Set([3, 4, 5]));
-    for (const size of [3, 4, 5]) {
+    // Swarms are packs of four to six.
+    expect(new Set(sizes("swarm"))).toEqual(new Set([4, 5, 6]));
+    for (const size of [4, 5, 6]) {
       expect(Math.abs(fraction("swarm", size) - 1 / 3)).toBeLessThan(0.03);
     }
-    // Fighters fly solo or as a pair.
-    expect(new Set(sizes("fighter"))).toEqual(new Set([1, 2]));
-    expect(Math.abs(fraction("fighter", 2) - 0.5)).toBeLessThan(0.03);
-    // Interceptors and retaliators are always solo.
-    expect(new Set(sizes("interceptor"))).toEqual(new Set([1]));
-    expect(new Set(sizes("retaliator"))).toEqual(new Set([1]));
+    // Fighters fly solo, as a pair or as a three.
+    expect(new Set(sizes("fighter"))).toEqual(new Set([1, 2, 3]));
+    for (const size of [1, 2, 3]) {
+      expect(Math.abs(fraction("fighter", size) - 1 / 3)).toBeLessThan(0.03);
+    }
+    // Interceptors, retaliators and frigates are solo; a capital brings four escort fighters.
+    for (const archetype of ["interceptor", "retaliator", "frigate", "capital"] as const) {
+      expect(new Set(sizes(archetype))).toEqual(new Set([1]));
+    }
+    expect([...escorts]).toEqual(["capital:fighter:4"]);
   });
 
   it.each([2, 3] as const)("keeps sector %i's shared table and seeded results", (sector) => {
@@ -374,11 +472,12 @@ describe("sector encounter tables", () => {
     expect(packs.size).toBeGreaterThan(3);
     for (const [id, archetypes] of packs) {
       expect(archetypes.size).toBe(1);
-      const range = ranges.get([...archetypes][0]!)!;
+      // A capital battle's escorts form their own pack of up to four fighters.
+      const range = id.endsWith(":escorts") ? [1, 4] : ranges.get([...archetypes][0]!)!;
       expect(range).toBeDefined();
       const size = flight.combat!.initialPackSizes[id]!;
       expect(size).toBeGreaterThanOrEqual(1);
-      expect(size).toBeLessThanOrEqual(range[1]);
+      expect(size).toBeLessThanOrEqual(range[1]!);
     }
   });
 });
@@ -635,11 +734,7 @@ it("settles a translated route guard after destination relocation without resett
 
 const viewportSpan = SCREEN.width / 2 + SCREEN.height;
 const capitalHullGap = Math.hypot(viewportSpan, viewportSpan);
-const capitalPairs = [
-  ["capital", "capital"],
-  ["capital", "oversizedCapital"],
-  ["oversizedCapital", "oversizedCapital"],
-] as const;
+const capitalPairs = [["capital", "capital"]] as const;
 
 function silence(object: SpaceObject): void {
   object.cooldown = 999;
@@ -689,12 +784,9 @@ describe("capital local-area separation", () => {
       );
       expect(routeBlocked(firstDestination.id, flight)).toBe(true);
       expect(routeBlocked(secondDestination.id, flight)).toBe(true);
-      expect(
-        flight.objects.filter(
-          (object) =>
-            object.enemy?.archetype === "capital" || object.enemy?.archetype === "oversizedCapital",
-        ),
-      ).toHaveLength(2);
+      expect(flight.objects.filter((object) => object.enemy?.archetype === "capital")).toHaveLength(
+        2,
+      );
       const repeated = structuredClone(flight);
       settleRouteEncounters(PROTOTYPE, repeated);
       expect(repeated).toEqual(flight);
@@ -737,7 +829,7 @@ describe("capital local-area separation", () => {
   it("repairs close capitals in a resumed flight deterministically while retaining damage and route markers", () => {
     const flight = empty();
     const first = ship("capital", { x: 300, y: 0 });
-    const second = ship("oversizedCapital", { x: 500, y: 0 });
+    const second = ship("capital", { x: 500, y: 0 });
     first.id = first.enemy!.id = "resume-first";
     second.id = second.enemy!.id = "resume-second";
     first.routeId = "required-first";
@@ -780,7 +872,7 @@ describe("capital local-area separation", () => {
   it("settles a translated capital away from another capital without changing the existing valid guard", () => {
     const flight = empty();
     const first = ship("capital", { x: -2000, y: 0 });
-    const second = ship("oversizedCapital", { x: 2000, y: 0 });
+    const second = ship("capital", { x: 2000, y: 0 });
     first.id = first.enemy!.id = "anchored";
     second.id = second.enemy!.id = "translated";
     first.routeId = "first";

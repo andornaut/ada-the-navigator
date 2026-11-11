@@ -4,8 +4,11 @@ import {
   type EncounterEntry,
   type EnemyArchetype,
   enemyCatalog,
+  enemyDefinition,
   enemyEncounterTuning,
+  escortTuning,
   sectorEncounters,
+  sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -299,11 +302,12 @@ function spawnEnemy(
   point: Vec,
   packId: string | null = null,
   phase = 0,
+  escortOf: string | null = null,
 ): SpaceObject {
   const definition = enemyCatalog[archetype];
   return {
     ...point,
-    enemy: createEnemy(definition, { archetype, id, packId, phase }, point),
+    enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase }, point),
     hp: definition.hp,
     id,
     kind: "enemy",
@@ -320,7 +324,7 @@ export function rollEncounter(
   table: readonly EncounterEntry[],
   countRoll: number,
   archetypeRoll: number,
-): { archetype: EnemyArchetype; count: number } {
+): { archetype: EnemyArchetype; count: number; escorts?: EncounterEntry["escorts"] } {
   const total = table.reduce((sum, entry) => sum + Math.max(0, entry.weight), 0);
   let threshold = archetypeRoll * total;
   let chosen = table.at(-1);
@@ -333,10 +337,31 @@ export function rollEncounter(
     threshold -= weight;
   }
   const [low, high] = chosen?.groupSize ?? [1, 1];
-  return {
+  const result = {
     archetype: chosen?.archetype ?? "fighter",
     count: low + Math.floor(countRoll * (high - low + 1)),
   };
+  return chosen?.escorts ? { ...result, escorts: chosen.escorts } : result;
+}
+
+/**
+ * Whether chunk index `index` hosts an encounter cell for a possibly fractional chunk
+ * spacing: it contains a multiple of the spacing. Integer spacings host every multiple.
+ */
+export function hostsEncounterCell(spacing: number, index: number): boolean {
+  return Math.ceil(index / spacing) * spacing < index + 1;
+}
+
+/**
+ * Chunk spacing of encounter cells. Areal density follows the galaxy's encounter rate, so
+ * the spacing shrinks with its square root; adjacent cells stay a quiet distance apart.
+ */
+export function encounterSpacing(content: PrototypeContent, sector: SectorId): number {
+  const base = Math.max(
+    3,
+    Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
+  );
+  return base / Math.sqrt(sectorEnemyTuning[sector].encounterRate);
 }
 
 function generateRegion(
@@ -347,8 +372,8 @@ function generateRegion(
 ): void {
   const size = content.tuning.chunkSize;
   // One encounter cell per quiet-distance grid; adjacent chunk traversal cannot duplicate it.
-  const span = Math.max(3, Math.ceil(enemyEncounterTuning.quietDistance / size));
-  if (x % span !== 0 || y % span !== 0) {
+  const spacing = encounterSpacing(content, flight.sector);
+  if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
     return;
   }
   const next = random(hash(flight.seed ^ 9173, x, y));
@@ -388,10 +413,44 @@ function generateRegion(
   }
   const packId = `pack:${x},${y}`;
   const countRoll = next();
-  const { archetype, count } = rollEncounter(sectorEncounters[flight.sector], countRoll, next());
+  const { archetype, count, escorts } = rollEncounter(
+    sectorEncounters[flight.sector],
+    countRoll,
+    next(),
+  );
+  admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) => ({
+    x: center.x + index * 85,
+    y: center.y,
+  }));
+  if (escorts) {
+    // Escorts form their own pack, so regeneration restores each group's survivors by count.
+    const gap =
+      enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius +
+      escortTuning.stationGap;
+    admitGroup(
+      content,
+      flight,
+      next,
+      { ...escorts, escortOf: `${packId}:0`, packId: `${packId}:escorts` },
+      (_, phase) => ({ x: center.x + Math.cos(phase) * gap, y: center.y + Math.sin(phase) * gap }),
+    );
+  }
+}
+
+/**
+ * Admits a seeded group as one pack. A pack seen before admits only its unloaded survivor
+ * budget, preserving its casualty count; escorts start on their stations.
+ */
+function admitGroup(
+  content: PrototypeContent,
+  flight: FlightState,
+  next: () => number,
+  group: { archetype: EnemyArchetype; count: number; escortOf: string | null; packId: string },
+  place: (index: number, phase: number) => Vec,
+): void {
+  const { archetype, count, escortOf, packId } = group;
   const state = combat(flight);
   const initialized = Object.hasOwn(state.initialPackSizes, packId);
-  // Preserve the casualty count and admit only the represented pack's unloaded survivor budget.
   let budget = initialized ? (state.unloadedPackMembers?.[packId] ?? 0) : count;
   let admitted = 0;
   const existing = flight.objects.filter(
@@ -400,17 +459,19 @@ function generateRegion(
   // A pack recorded under an earlier roster can exceed this cell's roll; keep its slots.
   const slots = initialized ? Math.max(count, state.initialPackSizes[packId] ?? 0) : count;
   for (let i = 0; i < slots && budget > 0; i++) {
+    const phase = next() * Math.PI * 2;
     const object = spawnEnemy(
       content,
       archetype,
       `${packId}:${i}`,
-      {
-        x: center.x + i * 85,
-        y: center.y,
-      },
+      place(i, phase),
       packId,
-      next() * Math.PI * 2,
+      phase,
+      escortOf,
     );
+    if (persistentObject(object)) {
+      object.persistent = false;
+    }
     if (
       !safe(content, object, flight) &&
       !flight.objects.some((other) => other.id === object.id) &&
@@ -451,7 +512,7 @@ function capital(object: SpaceObject): boolean {
   return (
     object.kind === "enemy" &&
     object.hp > 0 &&
-    (object.enemy?.archetype === "capital" || object.enemy?.archetype === "oversizedCapital") &&
+    object.enemy?.archetype === "capital" &&
     !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
   );
 }
@@ -626,9 +687,7 @@ export function ensureRouteEncounter(
     ? HOLODISKS.guard.leader
     : flight.sector === 1
       ? "frigate"
-      : flight.sector === 2
-        ? "capital"
-        : "oversizedCapital";
+      : "capital";
   activateFlightRegion(content, destination, flight);
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
   const heading = direction({
@@ -977,11 +1036,14 @@ function enemies(
       );
       object.enemy.hp = object.hp;
     }
+    // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
+    object.radius =
+      content.tuning.flight.shipRadius * enemyCatalog[object.enemy.archetype].sizeRatio;
   }
   const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   for (const object of objects) {
     const state = object.enemy!;
-    const definition = enemyCatalog[state.archetype];
+    const definition = enemyDefinition(flight.sector, state.archetype);
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = !flight.objects.some(
       (obstacle) =>

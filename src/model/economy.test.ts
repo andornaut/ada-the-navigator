@@ -83,7 +83,6 @@ describe("Stardust drops", () => {
       fighter: 5,
       frigate: 40,
       interceptor: 6,
-      oversizedCapital: 400,
       retaliator: 15,
       swarm: 2,
     };
@@ -151,13 +150,6 @@ describe("Stardust drops", () => {
     ["retaliator", [2, 2, 2, 2, 2, 2, 2, 1]],
     ["frigate", [3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2]],
     ["capital", [7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]],
-    [
-      "oversizedCapital",
-      [
-        17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 16, 16, 16, 16, 16, 16, 16,
-        16,
-      ],
-    ],
   ] as const)(
     "splits a %s drop into its capped pickup count, larger first",
     (archetype, pieces) => {

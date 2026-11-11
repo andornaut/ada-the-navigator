@@ -50,9 +50,11 @@ export function persistentObject(object: SpaceObject): boolean {
     object.kind === "station" ||
     object.id.startsWith("whale-debris:") ||
     object.routeId !== undefined ||
-    (object.kind === "enemy" &&
+    // Open-space encounters opt out so they regenerate by pack instead of accumulating.
+    (object.persistent !== false &&
+      object.kind === "enemy" &&
       object.enemy !== undefined &&
-      ["frigate", "capital", "oversizedCapital"].includes(object.enemy.archetype))
+      ["frigate", "capital"].includes(object.enemy.archetype))
   );
 }
 function account(

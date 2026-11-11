@@ -47,7 +47,7 @@ describe("enemy frame sets", () => {
   });
 
   it("leaves vector-only archetypes and non-enemy assets out", () => {
-    for (const name of ["frigate", "capital", "oversizedCapital"]) {
+    for (const name of ["frigate", "capital"]) {
       expect(art.has(name)).toBe(false);
     }
     expect(Object.keys(enemyCatalog).filter((name) => art.has(name))).toHaveLength(4);

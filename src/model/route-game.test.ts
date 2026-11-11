@@ -29,7 +29,7 @@ describe("required route approach encounters", () => {
       const { flight, model, target } = approach(sector);
       const guard = flight.objects.find((object) => object.routeId === target.id)!;
       expect(guard.enemy?.archetype).toBe(
-        ({ 1: "frigate", 2: "capital", 3: "oversizedCapital" } as const)[sector],
+        ({ 1: "frigate", 2: "capital", 3: "capital" } as const)[sector],
       );
       expect(Math.hypot(guard.x - target.x, guard.y - target.y)).toBeGreaterThan(
         PROTOTYPE.tuning.safeRadius + guard.radius,

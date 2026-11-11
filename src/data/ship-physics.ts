@@ -47,7 +47,6 @@ export const SHIP_PHYSICS = {
   fighter: physics(0.8, 0.4, 0.5, 0.3, 0.15),
   frigate: physics(0.4, 1.5, 2, 1.2, 0.4),
   interceptor: physics(1.1, 0.9, 1.2, 0.6, 0.12),
-  oversizedCapital: physics(0.12, 3.5, 4, 3, 0.6),
   retaliator: physics(0.45, 1.2, 1.5, 0.9, 0.35),
   swarm: physics(0.9, 0.2, 0.25, 0.12, 0.1),
 } satisfies Record<string, ShipPhysics>;

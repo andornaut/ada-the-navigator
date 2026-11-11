@@ -841,7 +841,7 @@ export class PrototypeScene extends Phaser.Scene {
       const offset = hullOffset(enemy.facing, { x: x * width, y: y * width });
       return this.project({ x: object.x + offset.x, y: object.y + offset.y });
     };
-    const large = enemy.archetype === "capital" || enemy.archetype === "oversizedCapital";
+    const large = enemy.archetype === "capital";
     const frigate = enemy.archetype === "frigate";
     const pack = enemy.packId !== null;
     const hull: [number, number][] = large

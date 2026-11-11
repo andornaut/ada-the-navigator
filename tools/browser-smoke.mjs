@@ -1365,9 +1365,10 @@ try {
           bitmap.close();
           // Projection is anchored to logical SCREEN center (360,180), even when EXPAND adds height.
           const regions = {
-            capital: { x: 0, y: 90, width: 240, height: 195 },
+            // The 5-width capital centres at (180, 180); its disabled left engine at (115, 188).
+            capital: { x: 90, y: 130, width: 180, height: 100 },
             missile: { x: 510, y: 65, width: 65, height: 55 },
-            disabled: { x: 615, y: 155, width: 50, height: 50 },
+            disabled: { x: 100, y: 172, width: 30, height: 32 },
             background: { x: 280, y: 280, width: 160, height: 60 },
           };
           return Object.fromEntries(
@@ -1463,14 +1464,8 @@ try {
   await renderCombatView({
     archetype: "capital",
     missile: true,
-    names: ["capital", "missile", "background"],
-    offset: { x: -140, y: 140 },
-  });
-  await renderCombatView({
-    archetype: "oversizedCapital",
-    missile: false,
-    names: ["disabled"],
-    offset: { x: 350, y: -350 },
+    names: ["capital", "missile", "background", "disabled"],
+    offset: { x: -90, y: 90 },
   });
   assert.ok(
     pixels.capital.counts.obstacle > 20 &&
@@ -1490,7 +1485,7 @@ try {
     pixels.disabled.counts.environmentDetail > 20 &&
       pixels.disabled.counts.background > 20 &&
       pixels.disabled.counts.environment > 20,
-    "Disabled oversized hardpoint must have a dark cutout and detail cross within the hull",
+    "Disabled capital hardpoint must have a dark cutout and detail cross within the hull",
   );
   assert.ok(
     pixels.missile.counts.obstacle > 2 && pixels.missile.outlineSpan.y > 2,
@@ -1505,12 +1500,12 @@ try {
     scope: "Rendered canonical combat fixture; screenshot review required for visual correctness",
     states: combatSnapshots,
     canvas: await page.locator("canvas").boundingBox(),
-    oversizedSizeRatio: enemyCatalog.oversizedCapital.sizeRatio,
+    capitalSizeRatio: enemyCatalog.capital.sizeRatio,
     pixels,
     paletteColors,
   });
   events.checks.push(
-    "Canonical combat save restores large and oversized enemies, partial hardpoint damage " +
+    "Canonical combat save restores a capital, partial hardpoint damage " +
       "and missile with renderer screenshots",
   );
 

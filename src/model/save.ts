@@ -3,7 +3,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { enemyEffects, restoreEnemyOrientation, type SavedEnemyState } from "./enemy-ai.ts";
+import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
 import { stationById } from "./stations.ts";
 import type {
@@ -77,6 +77,12 @@ function enemyState(value: unknown): boolean {
     !(value.facing === undefined || vector(value.facing)) ||
     !optionalDirection(value.heading) ||
     !optionalDirection(value.aim) ||
+    !(
+      value.escortOf === undefined ||
+      value.escortOf === null ||
+      typeof value.escortOf === "string"
+    ) ||
+    !(value.tactic === undefined || tacticState(value.tactic)) ||
     !Array.isArray(value.hardpoints)
   ) {
     return false;
@@ -97,14 +103,84 @@ function enemyState(value: unknown): boolean {
     )
   );
 }
+/** Retired oversized capitals' side weapons become the capital's forward turrets. */
+const LEGACY_CAPITAL_PARTS: Readonly<Record<string, string>> = {
+  port: "weapon-left",
+  starboard: "weapon-right",
+};
+/** Sorted hardpoint ids of the earlier capital and the retired oversized capital. */
+const LEGACY_CAPITAL_LAYOUTS: readonly (readonly string[])[] = [
+  ["command", "engine-left", "engine-right", "weapon-left", "weapon-right"],
+  ["center", "command", "engine-left", "engine-right", "port", "starboard"],
+];
+/**
+ * Retired `oversizedCapital` enemies become capitals, and capitals saved with an earlier
+ * hardpoint layout adopt the current one: matching parts keep their damage, cooldown and
+ * aim, and new parts start whole.
+ */
+function migrateLegacyEnemy(value: unknown): void {
+  if (!record(value) || !Array.isArray(value.hardpoints)) {
+    return;
+  }
+  if (value.archetype === "oversizedCapital") {
+    value.archetype = "capital";
+  }
+  if (value.archetype !== "capital") {
+    return;
+  }
+  const parts = enemyCatalog.capital.hardpoints;
+  const saved = (value.hardpoints as unknown[]).filter(record);
+  const ids = saved.map((entry) => String(entry.id)).sort();
+  // Only an exact earlier layout migrates; anything else is left for validation to reject.
+  if (
+    saved.length !== value.hardpoints.length ||
+    !LEGACY_CAPITAL_LAYOUTS.some(
+      (layout) => layout.length === ids.length && layout.every((id, index) => id === ids[index]),
+    )
+  ) {
+    return;
+  }
+  value.hardpoints = parts.map((part) => {
+    const match = saved.find(
+      (entry) => entry.id === part.id || LEGACY_CAPITAL_PARTS[String(entry.id)] === part.id,
+    );
+    return match ? { ...match, id: part.id } : { aim: null, cooldown: 0, hp: part.hp, id: part.id };
+  });
+}
+function migrateLegacyEnemies(value: unknown): unknown {
+  if (record(value) && record(value.flight)) {
+    const { objects, world } = value.flight;
+    for (const object of Array.isArray(objects) ? (objects as unknown[]) : []) {
+      if (record(object)) {
+        migrateLegacyEnemy(object.enemy);
+      }
+    }
+    if (record(world) && record(world.notables)) {
+      for (const object of Object.values(world.notables)) {
+        if (record(object)) {
+          migrateLegacyEnemy(object.enemy);
+        }
+      }
+    }
+  }
+  return value;
+}
+/** Behaviour state is absent from older saves. */
+function tacticState(value: unknown): boolean {
+  return (
+    record(value) &&
+    ["attack", "retreat", "pass"].includes(String(value.phase)) &&
+    ["integrity", "seconds", "volleys"].every((key) => nonnegative(value[key]))
+  );
+}
 /** Orientation fields are absent from older saves and null when unset. */
 function optionalDirection(value: unknown): boolean {
   return value === undefined || value === null || vector(value);
 }
-/** Completes enemy orientation for older saves; validation has already run. */
+/** Completes enemy orientation and behaviour state for older saves; validation has run. */
 function restoreOrientation(object: SpaceObject | null): void {
   if (object?.enemy) {
-    object.enemy = restoreEnemyOrientation(object.enemy as SavedEnemyState);
+    object.enemy = restoreEnemyState(object.enemy as SavedEnemyState);
   }
 }
 function combatState(
@@ -384,7 +460,9 @@ function stationIds(sector: SectorId, value: unknown): boolean {
  */
 export function restoreSave(saved: unknown): GameState | null {
   try {
-    const value: unknown = typeof saved === "string" ? JSON.parse(saved) : saved;
+    const value: unknown = migrateLegacyEnemies(
+      typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved),
+    );
     if (
       !record(value) ||
       value.version !== 1 ||

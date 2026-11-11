@@ -21,8 +21,30 @@ interface HardpointBase {
 }
 export type HardpointDefinition = HardpointBase &
   ({ kind: "engine" | "command" } | { fire: FireProfile; kind: "weapon" });
+/**
+ * Movement behaviours an engaged enemy uses. None holds a standoff distance: each one
+ * chases, escapes or alternates between the two. `retaliate` is the `aggression` trigger and
+ * `flee` is the `morale` rule; capital battles assign `escort` to their fighters.
+ */
+export type Behaviour =
+  /** Pursues Ada directly and keeps pressing in. */
+  | { kind: "chase" }
+  /** Chases with erratic wobble and peer separation. */
+  | { kind: "swarm" }
+  /** Rushes in; pulls away for `retreatSeconds` when hit or after `burstVolleys` volleys. */
+  | { burstVolleys: number; kind: "hitAndRun"; retreatSeconds: number }
+  /** Flies straight through once within `passDistance`, loops back beyond `loopDistance`. */
+  | { kind: "strafe"; loopDistance: number; passDistance: number }
+  /** Advances on Ada at `speedFraction` of maximum speed while its turrets fire. */
+  | { kind: "siege"; speedFraction: number };
+/** Escort stations sit `stationGap` beyond the capital's hull; escorts intercept within reach. */
+export interface EscortTuning {
+  interceptRadius: number;
+  stationGap: number;
+}
 export interface EnemyDefinition {
   aggression: "sight" | "retaliate";
+  behaviour: Behaviour;
   engagement: number;
   fire: FireProfile;
   hardpoints: HardpointDefinition[];
@@ -32,7 +54,7 @@ export interface EnemyDefinition {
   physics: ShipPhysics;
   pursuit: { homeRadius: number; maxSeconds: number; unseenSeconds: number };
   sizeRatio: number;
-  steering: { orbit: number; separation: number; wobble: number };
+  steering: { separation: number; wobble: number };
 }
 
 const engine = (id: string, x: number, y: number): HardpointDefinition => ({
@@ -74,6 +96,7 @@ const weapon = (fire: FireProfile, id: string, x: number, y: number): HardpointD
 /** Shared ship-sized defaults; each archetype states its own physics. */
 const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
+  behaviour: { kind: "chase" },
   engagement: 360,
   fire: bolt,
   hardpoints: [],
@@ -82,34 +105,40 @@ const base: Omit<EnemyDefinition, "physics"> = {
   perception: 650,
   pursuit: { homeRadius: 1400, maxSeconds: 18, unseenSeconds: 3 },
   sizeRatio: 1,
-  steering: { orbit: 0, separation: 70, wobble: 0 },
+  steering: { separation: 70, wobble: 0 },
 };
+const siege: Behaviour = { kind: "siege", speedFraction: 0.5 };
 
 /** Provisional tuning in world units and seconds, not user-selected values. */
 export const enemyCatalog = {
   capital: {
     ...base,
+    behaviour: siege,
     engagement: 750,
+    // Five Ada widths across: hit areas stay apart and the whole hull reads on screen.
     hardpoints: [
       command,
-      engine("engine-left", -0.3, 0.35),
-      engine("engine-right", 0.3, 0.35),
-      weapon(bolt, "weapon-left", -0.4, -0.2),
-      weapon(missile, "weapon-right", 0.4, -0.2),
+      engine("engine-left", -0.25, 0.4),
+      engine("engine-right", 0.25, 0.4),
+      weapon(bolt, "weapon-left", -0.35, -0.3),
+      weapon(bolt, "weapon-right", 0.35, -0.3),
+      weapon(missile, "weapon-rear-left", -0.42, 0.08),
+      weapon(missile, "weapon-rear-right", 0.42, 0.08),
     ],
     hp: 18,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     perception: 1100,
     physics: SHIP_PHYSICS.capital,
-    sizeRatio: 10,
+    sizeRatio: 5,
   },
   fighter: {
     ...base,
+    behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 },
     physics: SHIP_PHYSICS.fighter,
-    steering: { ...base.steering, orbit: 0.4 },
   },
   frigate: {
     ...base,
+    behaviour: siege,
     engagement: 500,
     hardpoints: [
       engine("engine", 0, 0.3),
@@ -118,31 +147,15 @@ export const enemyCatalog = {
     ],
     hp: 10,
     physics: SHIP_PHYSICS.frigate,
-    sizeRatio: 3,
+    sizeRatio: 4,
   },
   interceptor: {
     ...base,
+    behaviour: { kind: "strafe", loopDistance: 420, passDistance: 90 },
     engagement: 260,
     hp: 3,
     physics: SHIP_PHYSICS.interceptor,
     sizeRatio: 0.75,
-  },
-  oversizedCapital: {
-    ...base,
-    engagement: 1000,
-    hardpoints: [
-      command,
-      engine("engine-left", -0.35, 0.35),
-      engine("engine-right", 0.35, 0.35),
-      weapon(bolt, "port", -0.4, -0.25),
-      weapon(missile, "center", 0, -0.4),
-      weapon(bolt, "starboard", 0.4, -0.25),
-    ],
-    hp: 24,
-    morale: { individualHpRatio: 0, packLossRatio: 1 },
-    perception: 1500,
-    physics: SHIP_PHYSICS.oversizedCapital,
-    sizeRatio: 30,
   },
   retaliator: {
     ...base,
@@ -151,24 +164,28 @@ export const enemyCatalog = {
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
     sizeRatio: 2,
-    steering: { ...base.steering, orbit: 0.2 },
   },
   swarm: {
     ...base,
+    behaviour: { kind: "swarm" },
     fire: { ...bolt, id: "swarm-bolt", interval: 1.8, projectileSpeedRatio: 1.5 },
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,
     sizeRatio: 0.65,
-    steering: { orbit: 0.9, separation: 85, wobble: 0.65 },
+    steering: { separation: 85, wobble: 0.65 },
   },
 } satisfies Record<string, EnemyDefinition>;
 
 export type EnemyArchetype = keyof typeof enemyCatalog;
 
-/** One weighted encounter choice; groupSize is an inclusive member range. */
+/**
+ * One weighted encounter choice; groupSize is an inclusive member range. A battle adds
+ * `escorts` that guard its first member.
+ */
 export interface EncounterEntry {
   archetype: EnemyArchetype;
+  escorts?: { archetype: EnemyArchetype; count: number };
   groupSize: readonly [number, number];
   weight: number;
 }
@@ -178,17 +195,27 @@ const sharedEncounters: readonly EncounterEntry[] = (
   ["fighter", "swarm", "interceptor", "retaliator"] as const
 ).map((archetype) => ({ archetype, groupSize: [1, 4], weight: 0.25 }));
 
-/** Open-space encounter tables per sector; frigates and capitals keep their route roles. */
+/** Open-space encounter tables per sector; frigates and capitals also keep their route roles. */
 export const sectorEncounters: Readonly<Record<SectorId, readonly EncounterEntry[]>> = {
   1: [
-    { archetype: "swarm", groupSize: [3, 5], weight: 0.35 },
-    { archetype: "fighter", groupSize: [1, 2], weight: 0.35 },
+    { archetype: "swarm", groupSize: [4, 6], weight: 0.35 },
+    { archetype: "fighter", groupSize: [1, 3], weight: 0.3 },
     { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
-    { archetype: "retaliator", groupSize: [1, 1], weight: 0.15 },
+    { archetype: "retaliator", groupSize: [1, 1], weight: 0.1 },
+    { archetype: "frigate", groupSize: [1, 1], weight: 0.07 },
+    {
+      archetype: "capital",
+      escorts: { archetype: "fighter", count: 4 },
+      groupSize: [1, 1],
+      weight: 0.03,
+    },
   ],
   2: sharedEncounters,
   3: sharedEncounters,
 };
+
+/** Capital battle escorts, in world units. */
+export const escortTuning: EscortTuning = { interceptRadius: 600, stationGap: 60 };
 
 /** Small encounters separated by quiet travel; the adapter owns seeded placement. */
 export const enemyEncounterTuning = {
@@ -197,3 +224,49 @@ export const enemyEncounterTuning = {
   quietSeconds: 12,
   speedCapRatio: 1.1,
 } as const;
+
+/** Per-galaxy difficulty: perception reach, fire rate and encounter frequency multipliers. */
+export interface SectorEnemyTuning {
+  encounterRate: number;
+  fireRate: number;
+  perception: number;
+}
+export const sectorEnemyTuning: Readonly<Record<SectorId, SectorEnemyTuning>> = {
+  1: { encounterRate: 1.2, fireRate: 1.15, perception: 1.2 },
+  2: { encounterRate: 1, fireRate: 1, perception: 1 },
+  3: { encounterRate: 1, fireRate: 1, perception: 1 },
+};
+
+/** Quiet travel and time between encounters shorten with the galaxy's encounter rate. */
+export function encounterQuiet(sector: SectorId): { distance: number; seconds: number } {
+  const rate = sectorEnemyTuning[sector].encounterRate;
+  return {
+    distance: enemyEncounterTuning.quietDistance / rate,
+    seconds: enemyEncounterTuning.quietSeconds / rate,
+  };
+}
+
+const scaled = new Map<string, EnemyDefinition>();
+/** The catalog definition with the galaxy's perception and fire-rate multipliers applied. */
+export function enemyDefinition(sector: SectorId, archetype: EnemyArchetype): EnemyDefinition {
+  const key = `${sector}:${archetype}`;
+  let definition = scaled.get(key);
+  if (!definition) {
+    const { fireRate, perception } = sectorEnemyTuning[sector];
+    const catalog: EnemyDefinition = enemyCatalog[archetype];
+    const faster = (fire: FireProfile): FireProfile => ({
+      ...fire,
+      interval: fire.interval / fireRate,
+    });
+    definition = {
+      ...catalog,
+      fire: faster(catalog.fire),
+      hardpoints: catalog.hardpoints.map((part) =>
+        part.kind === "weapon" ? { ...part, fire: faster(part.fire) } : part,
+      ),
+      perception: catalog.perception * perception,
+    };
+    scaled.set(key, definition);
+  }
+  return definition;
+}

@@ -178,14 +178,16 @@ describe("enemy rules", () => {
     const first = stepEnemy(definition, observation(state), state);
     expect(first.fire.map((shot) => [shot.hardpointId, shot.profileId, shot.projectile])).toEqual([
       ["weapon-left", "turret-bolt", "bolt"],
-      ["weapon-right", "straight-missile", "missile"],
+      ["weapon-right", "turret-bolt", "bolt"],
+      ["weapon-rear-left", "straight-missile", "missile"],
+      ["weapon-rear-right", "straight-missile", "missile"],
     ]);
     expect(first.state.hardpoints.find((part) => part.id === "weapon-left")?.cooldown).toBeCloseTo(
       1.4 - 1 / 60,
     );
-    expect(first.state.hardpoints.find((part) => part.id === "weapon-right")?.cooldown).toBeCloseTo(
-      3 - 1 / 60,
-    );
+    expect(
+      first.state.hardpoints.find((part) => part.id === "weapon-rear-left")?.cooldown,
+    ).toBeCloseTo(3 - 1 / 60);
     const ready = {
       ...first.state,
       hardpoints: first.state.hardpoints.map((part) => ({
@@ -195,10 +197,10 @@ describe("enemy rules", () => {
     };
     const second = stepEnemy(definition, observation(ready), ready);
     expect(second.fire.map((shot) => shot.hardpointId)).toEqual(["weapon-left"]);
-    expect(first.fire[0]?.speed).not.toBe(first.fire[1]?.speed);
+    expect(first.fire[0]?.speed).not.toBe(first.fire[2]?.speed);
   });
 
-  it.each(["capital", "oversizedCapital"] as const)(
+  it.each(["capital"] as const)(
     "aims every %s bolt and missile from its own muzzle before applying spread",
     (archetype) => {
       const state = { ...spawn(archetype), position: { x: 110, y: -75 } };
@@ -268,7 +270,7 @@ describe("enemy rules", () => {
   it("requires the command part after hull, engines and weapons are disabled", () => {
     const definition = enemyCatalog.capital;
     let state = damageEnemy(definition, { amount: 999, hardpointId: null }, spawn("capital"));
-    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(2);
+    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(4);
     for (const part of definition.hardpoints.filter((part) => part.kind !== "command")) {
       state = damageEnemy(definition, { amount: 999, hardpointId: part.id }, state);
     }
@@ -332,26 +334,63 @@ describe("enemy ship physics and hull rotation", () => {
   const degreesBetween = (a: { x: number; y: number }, b: { x: number; y: number }) =>
     (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
 
-  it("states the sector one catalog values and keeps the others", () => {
+  it("states the galaxy one catalog values and behaviours", () => {
     const pick = (archetype: EnemyArchetype) => {
       const definition = enemyCatalog[archetype];
       return {
+        behaviour: definition.behaviour.kind,
         engagement: definition.engagement,
         hp: definition.hp,
-        orbit: definition.steering.orbit,
         sizeRatio: definition.sizeRatio,
       };
     };
-    expect(pick("swarm")).toEqual({ engagement: 360, hp: 2, orbit: 0.9, sizeRatio: 0.65 });
-    expect(pick("fighter")).toEqual({ engagement: 360, hp: 4, orbit: 0.4, sizeRatio: 1 });
-    expect(pick("interceptor")).toEqual({ engagement: 260, hp: 3, orbit: 0, sizeRatio: 0.75 });
-    expect(pick("retaliator")).toEqual({ engagement: 360, hp: 8, orbit: 0.2, sizeRatio: 2 });
+    expect(pick("swarm")).toEqual({ behaviour: "swarm", engagement: 360, hp: 2, sizeRatio: 0.65 });
+    expect(pick("fighter")).toEqual({
+      behaviour: "hitAndRun",
+      engagement: 360,
+      hp: 4,
+      sizeRatio: 1,
+    });
+    expect(pick("interceptor")).toEqual({
+      behaviour: "strafe",
+      engagement: 260,
+      hp: 3,
+      sizeRatio: 0.75,
+    });
+    expect(pick("retaliator")).toEqual({
+      behaviour: "chase",
+      engagement: 360,
+      hp: 8,
+      sizeRatio: 2,
+    });
+    expect(pick("frigate")).toEqual({ behaviour: "siege", engagement: 500, hp: 10, sizeRatio: 4 });
+    expect(pick("capital")).toEqual({ behaviour: "siege", engagement: 750, hp: 18, sizeRatio: 5 });
     expect(enemyCatalog.retaliator.fire).toMatchObject({ angles: [-0.2, 0, 0.2], interval: 2.2 });
     expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
-    for (const archetype of ["frigate", "capital", "oversizedCapital"] as const) {
-      expect(enemyCatalog[archetype].steering).toEqual({ orbit: 0, separation: 70, wobble: 0 });
+    expect(enemyCatalog.swarm.steering).toEqual({ separation: 85, wobble: 0.65 });
+    expect(Object.keys(enemyCatalog)).not.toContain("oversizedCapital");
+  });
+
+  it("gives the capital a command part, two engines and four turrets", () => {
+    const parts = enemyCatalog.capital.hardpoints;
+    expect(parts.map((part) => part.kind)).toEqual([
+      "command",
+      "engine",
+      "engine",
+      "weapon",
+      "weapon",
+      "weapon",
+      "weapon",
+    ]);
+    // Hit areas of radius shipRadius + 6 (16 units) stay apart on the 100-unit hull.
+    const width = enemyCatalog.capital.sizeRatio * 20;
+    for (const [index, part] of parts.entries()) {
+      expect(Math.max(Math.abs(part.offset.x), Math.abs(part.offset.y))).toBeLessThanOrEqual(0.5);
+      for (const other of parts.slice(index + 1)) {
+        const gap = Math.hypot(part.offset.x - other.offset.x, part.offset.y - other.offset.y);
+        expect(gap * width).toBeGreaterThanOrEqual(32);
+      }
     }
-    expect(pick("frigate")).toEqual({ engagement: 500, hp: 10, orbit: 0, sizeRatio: 3 });
   });
 
   it.each(archetypes)("moves %s with the shared ship movement model", (archetype) => {
@@ -504,16 +543,16 @@ describe("enemy ship physics and hull rotation", () => {
     const context = { ...observation(state), player: { x: 700, y: 50 } };
     const result = stepEnemy(definition, context, state);
     const origin = (id: string) => result.fire.find((shot) => shot.hardpointId === id)!.origin;
-    // Hull width is 200. Facing east, forward is +x and port is -y.
-    expect(origin("weapon-left").x).toBeCloseTo(100 + 0.2 * 200, 9);
-    expect(origin("weapon-left").y).toBeCloseTo(50 - 0.4 * 200, 9);
-    expect(origin("weapon-right").x).toBeCloseTo(100 + 0.2 * 200, 9);
-    expect(origin("weapon-right").y).toBeCloseTo(50 + 0.4 * 200, 9);
+    // Hull width is 100. Facing east, forward is +x and port is -y.
+    expect(origin("weapon-left").x).toBeCloseTo(100 + 0.3 * 100, 9);
+    expect(origin("weapon-left").y).toBeCloseTo(50 - 0.35 * 100, 9);
+    expect(origin("weapon-right").x).toBeCloseTo(100 + 0.3 * 100, 9);
+    expect(origin("weapon-right").y).toBeCloseTo(50 + 0.35 * 100, 9);
     const engine = hardpointOffset(definition, context.adaWidth, state.facing, {
       offset: { x: 0.3, y: 0.35 },
     });
-    expect(engine.x).toBeCloseTo(-70, 9);
-    expect(engine.y).toBeCloseTo(60, 9);
+    expect(engine.x).toBeCloseTo(-35, 9);
+    expect(engine.y).toBeCloseTo(30, 9);
   });
 
   it("aims weapons independently of the hull with aimTurnSeconds", () => {
@@ -532,15 +571,15 @@ describe("enemy ship physics and hull rotation", () => {
     const part = (state: EnemyState, id: string) =>
       state.hardpoints.find((value) => value.id === id)!.aim!;
     const turned = stepEnemy(definition, context, aimed).state;
-    // Facing up, starboard sits at (18, 0) and port at (-18, 0).
-    const wanted = { x: -18, y: 3000 };
+    // Facing up, starboard sits at (24, 0) and port at (-24, 0).
+    const wanted = { x: -24, y: 3000 };
     expect(degreesBetween(part(turned, "starboard"), wanted)).toBeCloseTo(
       degreesBetween({ x: 1, y: 0 }, wanted) * Math.exp(-context.dt / response),
       6,
     );
     // A weapon with no previous aim acquires its target directly.
-    expect(degreesBetween(part(turned, "port"), { x: 18, y: 3000 })).toBeLessThan(1e-9);
-    // Facing east moves the starboard muzzle to (0, 18); its aim still turns from east.
+    expect(degreesBetween(part(turned, "port"), { x: 24, y: 3000 })).toBeLessThan(1e-9);
+    // Facing east moves the starboard muzzle to (0, 24); its aim still turns from east.
     const rotated = stepEnemy(definition, context, { ...aimed, facing: { x: 1, y: 0 } }).state;
     expect(degreesBetween(part(rotated, "starboard"), { x: 0, y: 1 })).toBeCloseTo(
       90 * Math.exp(-context.dt / response),
