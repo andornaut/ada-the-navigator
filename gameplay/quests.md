@@ -30,8 +30,8 @@ X, an outside tap, back and Escape return to the station card.
 - A board's offers stay until taken. A slot refills with a new job from the pool
   when its job is completed. When every landmark in a galaxy is charted, its
   boards stop offering surveys.
-- The held job's objective shows on the Map under the story objective, as
-  "Job: {objective}". Its target uses the direction indicator for quest
+- The held job's objective shows in the Map's Quests modal under the story
+  objective, as "Job: {objective}". Its target uses the direction indicator for quest
   events and is marked on the Map.
 - A job pays at completion wherever Ada is: a notice shows "Job complete: +{amount}
   Stardust", then Astra says one unseen lore line from the galaxy's job pool.
@@ -204,7 +204,7 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
   loses its progress.
 - While a job holds the slot, Talk plays the activity line, and Accept refuses
   with "Finish or drop your current job first."
-- The pause card shows an active activity as its "Job:" line.
+- The Map's Quests modal shows an active activity as its "Job:" line.
 - On a board, the Active activity row's detail line is its goal: "Carry
   supplies to a station.", "Guide a whale calf home." or "Deposit 30 resources
   at the hub."
