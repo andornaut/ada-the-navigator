@@ -1187,6 +1187,7 @@ try {
     known: ["growers", "workshop", "salvagers"],
     discoveries: 3,
     holodisk: true,
+    opened: true,
   });
   fixture.returnHome();
   assert.equal(fixture.storyView?.page.id, "resolution");
