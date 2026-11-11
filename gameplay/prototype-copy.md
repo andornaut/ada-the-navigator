@@ -292,7 +292,7 @@ Objectives, in order:
 
 ## In-flight conversations
 
-One line per speaker line. First flight lessons, once each, skipped if already
+Each speaker line wraps to at most two lines. First flight lessons, once each, skipped if already
 done:
 
 - Astra: "Use the left stick to fly." (desktop: "Use WASD to fly.")

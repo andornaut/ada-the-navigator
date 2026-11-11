@@ -402,17 +402,17 @@ requirements and repeatable-task content remain to be specified.
 ## Astra and Penny in flight
 
 In flight, Ada, Astra and Penny talk in short conversations, as Chibi's bosses
-do. A conversation shows in a fixed box along the top with the speaker's name tab
-and portrait, one portrait per line for its speaker: Ada's on the left, Astra's,
-Penny's and the General's on the right. It sits below the HUD row and leaves at
-least 24 logical pixels clear above Ada's ship. The pause button and weapon icons
-stay live while it shows. Each line is one
-line long. The box never pauses play and has a translucent background, more
-an ink #181425 panel at 0.70 alpha so it stays readable over the brightest space
-signals; text, tab and portrait stay opaque. Each line shows for 5 seconds or until tapped; a tap moves to the next
-line, and the last tap closes the conversation. A conversation has one to three
-lines, and only one shows at a time, with a cooldown between ordinary
-conversations. Hints are always on.
+do. A conversation shows in a compact box shared with Chibi, below the HUD row,
+leaving at least 24 logical pixels clear above Ada's ship. The speaker's name sits
+in a tab above the box, with one portrait per line for its speaker: Ada's on the
+left, Astra's, Penny's and the General's on the right. Each line wraps to at most
+two lines. The box never pauses play, and the pause button and weapon icons stay
+live while it shows. Its background is an ink #181425 panel at 0.70 alpha, so it
+stays readable over the brightest space signals; text, tab and portrait stay
+opaque. Each line shows for 5 seconds or until the box (tab included) is tapped; a
+tap moves to the next line, and the last tap closes the conversation. Tapping a
+notice dismisses it. A conversation has one to three lines, and only one shows at
+a time, with a cooldown between ordinary conversations. Hints are always on.
 
 Conversations come from data, each with a trigger and a priority: warnings
 (including the General's broadcasts), then notices, then first-flight lessons, then
