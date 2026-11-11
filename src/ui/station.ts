@@ -123,6 +123,28 @@ export interface StationOptions {
   readonly undock: () => void;
 }
 
+/**
+ * One step back: the confirm returns to the shop, the shop returns to the station card,
+ * and only the station card's exits undock.
+ */
+export function stationBack(
+  view: "card" | "shop",
+  confirming: boolean,
+): "card" | "shop" | "undock" {
+  if (confirming) {
+    return "shop";
+  }
+  return view === "shop" ? "card" : "undock";
+}
+
+/** What a row tap does; an unaffordable row is tappable and refuses. */
+export function rowAction(state: StationRowState): "request" | "select" | "none" {
+  if (state === "selectable") {
+    return "select";
+  }
+  return state === "owned" || state === "inUse" ? "none" : "request";
+}
+
 function button(label: string, action: () => void): HTMLButtonElement {
   const node = document.createElement("button");
   node.type = "button";
@@ -160,14 +182,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   let confirm: { about: string; key: string; left: string; title: string } | null = null;
 
   const back = (): void => {
-    if (confirm) {
-      confirm = null;
-    } else if (view === "shop") {
-      view = "card";
-    } else {
+    const step = stationBack(view, confirm !== null);
+    if (step === "undock") {
       options.undock();
       return;
     }
+    confirm = null;
+    view = step;
     render();
   };
   const heading = (title: string): HTMLElement => {
@@ -262,13 +283,15 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       const status = document.createElement("span");
       status.textContent = row.status;
       node.append(name, status);
+      // Unaffordable rows look disabled but stay focusable and tappable, so a tap refuses.
       node.addEventListener("click", () => {
-        if (row.state === "selectable") {
+        const action = rowAction(row.state);
+        if (action === "select") {
           options.select(row.key);
           render();
           return;
         }
-        if (row.state === "owned" || row.state === "inUse") {
+        if (action === "none") {
           return;
         }
         const request = options.request(row.key);
@@ -301,10 +324,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
 
   return {
-    /** Escape's step back; the caller routes the key here while the card is open. */
-    back,
     dispose: () => modal.remove(),
     isOpen: () => open,
+    /**
+     * Back-stack layers: the shop (with its confirm) steps back toward the station card,
+     * and the card undocks. Register the card first so the shop is innermost.
+     */
+    layers: {
+      card: { back, isOpen: () => open && view === "card" && confirm === null },
+      shop: { back, isOpen: () => open && (view === "shop" || confirm !== null) },
+    },
     /** Opens on the station card when docking and closes on undocking. */
     setOpen(value: boolean): void {
       if (value === open) {

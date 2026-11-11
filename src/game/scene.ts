@@ -351,12 +351,16 @@ export class PrototypeScene extends Phaser.Scene {
       },
       undock: () => apply(() => this.model.undock()),
     });
-    // Back and Escape step back through the station card and shop; Settings opened over the
-    // card closes first, as the innermost card.
-    const unregisterStation = this.controls.registerBack({
-      back: () => this.station.back(),
-      isOpen: () => this.station.isOpen() && !this.settingsOpen,
-    });
+    // Back and Escape leave the shop for the station card, and the card undocks. Settings
+    // opened over either closes first, as the innermost card.
+    const { card, shop } = this.station.layers;
+    const stationLayers = [card, shop].map((layer) =>
+      this.controls.registerBack({
+        back: layer.back,
+        isOpen: () => layer.isOpen() && !this.settingsOpen,
+      }),
+    );
+    const unregisterStation = () => stationLayers.forEach((unregister) => unregister());
     const hide = (): void => {
       this.controls.reset();
       this.flush();
