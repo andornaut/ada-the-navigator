@@ -80,7 +80,7 @@ Enemies ignore the towed craft, and it takes no damage. Ada fights normally.
 The Map's Travel here is unavailable while towing and refuses with the shared
 refusal feedback.
 Bringing the craft within 400 world units of the safe place completes the rescue,
-and the craft parks there. Return home or a shield-depletion jump returns the
+and the craft parks there. Return to Earth, Back to title or a shield-depletion jump returns the
 craft to where it was stranded, still marked. Closing the game resumes the tow
 exactly.
 
@@ -273,7 +273,8 @@ achievement also shows its progress as `{have}/{need}`:
 
 The other achievements show no count. When the list is longer than the card, it
 pages with Previous, the page count and Next, as in Chibi. The pause card's
-buttons are Resume, Map, Settings, Achievements and Return home.
+buttons are Resume, Map, Settings, Achievements, Back to title and Return to
+Earth.
 
 | Key                   | Text                |
 | --------------------- | ------------------- |

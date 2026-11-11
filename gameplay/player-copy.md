@@ -145,7 +145,7 @@ Objectives, in order:
 3. Take the workshop's tool kit to the salvagers.
 4. Bring spare parts from the salvagers to the workshop.
 5. Collect the holodisk from the outposts.
-6. Return home when ready.
+6. Return to Earth when ready.
 
 ## Chapter two: the mining hub
 
@@ -218,7 +218,7 @@ Objectives, in order:
 4. Speak with regular visitors about approaching together.
 5. Join the miner's approach at the hub.
 6. Buy the holodisk at the hub.
-7. Return home when ready.
+7. Return to Earth when ready.
 
 ## Chapter three: the whale
 
@@ -288,7 +288,7 @@ Objectives, in order:
 4. Explore to find the whale's family.
 5. Return to the whale and share the coordinates.
 6. Fight your way to the holodisk.
-7. Return home when ready.
+7. Return to Earth when ready.
 
 ## In-flight conversations
 
@@ -374,13 +374,14 @@ Black Eye:
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
-- Galaxy selection Home button: Home.
-- Home with nothing new: Narration: "Penny thumps her tail. Time for another
+- Galaxy selection Earth button: Earth.
+- Earth with nothing new: Narration: "Penny thumps her tail. Time for another
   adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Map, Settings, Achievements,
-  Return home.
+  Back to title, Return to Earth. On Ada's room page: Settings, Achievements,
+  Back to title.
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
   text: ...
@@ -404,7 +405,7 @@ Black Eye:
   10 ("0.4 light-years"), whole numbers from 10 ("12 light-years"), en-US
   grouping, and "1 light-year" when it rounds to 1.
 - Unavailable in danger: Unavailable while you are in danger.
-- Shield depletion: Astra jumped you home to recharge. Your story progress is
+- Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again."

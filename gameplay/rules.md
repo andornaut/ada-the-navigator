@@ -36,6 +36,13 @@ chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
 
+Player-visible labels use "Earth" for travel to Ada's room and "title" for the
+start screen; story dialogue may still call Ada's house home. Every arrival on
+Earth lands in Ada's room. Ada's room page has the pause button at the top left,
+opening the Paused card with Settings, Achievements and Back to title; its close
+X, an outside tap, back and Escape close it. Back to title opens the start
+screen, where Continue resumes as above.
+
 Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
 cancel. Confirming clears all story progress, galaxies, holodisks, Stardust,
 purchases and seen conversations, keeps device settings and achievements, and
@@ -95,7 +102,7 @@ home, the emergency jump included, arrives in Ada's room. An emergency jump
 lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
 asleep with Penny curled up, the rock glowing softly) that a tap skips after a
 moment, then morning, when any waiting home scene plays as on any arrival home. A
-voluntary Return home has no sleep scene. The holodisk
+voluntary Return to Earth has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every launch, including a replay of a resolved galaxy, boards and shows the
@@ -105,12 +112,12 @@ galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
 background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
 number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. A Home button, between Previous and Jump, and closing galaxy selection
+galaxy one is unlocked. An Earth button, between Previous and Jump, and closing galaxy selection
 (its close X, an outside tap, back or Escape), leave the cockpit and return Ada to
 her room without a jump.
 Galaxies are named after real galaxies' nicknames:
 Sunflower (one), Cartwheel (two), Whirlpool (three) and Black Eye (four). Unlocked galaxies remain
-replayable. Completing a quest invites a return home without forcing immediate
+replayable. Completing a quest invites a return to Earth without forcing immediate
 exit from space.
 
 Space conversations pause action and use brief essential exchanges with optional
@@ -274,8 +281,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, stacked: "Resume" (primary), "Map", "Settings", "Achievements" and
-  "Return home".
+  one shape, stacked: "Resume" (primary), "Map", "Settings", "Achievements",
+  "Back to title" and "Return to Earth".
   Above the buttons, the card shows the current story objective and, when a
   station job is held, its "Job:" line. Space shows no objective text.
   Map shows the current galaxy: Ada's position, discovered destinations and
@@ -290,9 +297,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   enter the explored record. The
   explored area persists per galaxy across flights and clears on Restart. Choosing
   a discovered destination or station offers "Travel here", which teleports there. Return
-  home ends the flight and takes Ada home to Earth, with story
-  progress saved and no quantum jump cost. While Ada is in danger, Travel here and Return
-  home stay visible but disabled, refuse with the shared refusal feedback, and the card
+  to Earth ends the flight and takes Ada to her room, with story progress saved
+  and no quantum jump cost. Back to title ends the flight the same way and opens
+  the start screen; it stays available in danger. While Ada is in danger, Travel
+  here and Return to Earth stay visible but disabled, refuse with the shared refusal feedback, and the card
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   On the start screen, Settings opens from its own button, as in Chibi.
@@ -419,7 +427,7 @@ still, teleporting and revisiting chunks do not advance fresh-exploration pacing
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
-available only outside immediate danger. Ada can return home voluntarily from the pause card.
+available only outside immediate danger. Ada can return to Earth voluntarily from the pause card.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
 

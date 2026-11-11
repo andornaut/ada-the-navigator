@@ -204,46 +204,46 @@ The status pill shows the Stardust count as a bare number with en-US grouping
 
 The shield shop row reuses the existing `shield` label.
 
-| Key                 | Text                                                             |
-| ------------------- | ---------------------------------------------------------------- |
-| `stardust`          | Stardust                                                         |
-| `stardustAmount`    | {amount} Stardust                                                |
-| `station`           | Station                                                          |
-| `shop`              | Shop                                                             |
-| `shopWeapons`       | Weapons                                                          |
-| `shopShip`          | Ship                                                             |
-| `owned`             | Owned                                                            |
-| `level`             | Level {level} of {max}                                           |
-| `confirmTitle`      | Buy {name}?                                                      |
-| `confirmLeft`       | {amount} left after                                              |
-| `confirmBuy`        | Buy                                                              |
-| `confirmCancel`     | Cancel                                                           |
-| `projects`          | Projects                                                         |
-| `donate`            | Donate                                                           |
-| `projectFunded`     | Funded                                                           |
-| `ammoPack`          | {weapon} ammo                                                    |
-| `ammoPackCount`     | ×{count}                                                         |
-| `outOfAmmo`         | Out of ammo.                                                     |
-| `weaponAmmoLabel`   | {weapon}, {count} left                                           |
-| `projectProgress`   | {paid} of {price}                                                |
-| `donateTitle`       | Donate to {name}?                                                |
-| `donateStillNeeded` | {amount} still needed after                                      |
-| `undock`            | Undock                                                           |
-| `stationWelcome`    | Welcome aboard. Trade your Stardust, or take a job.              |
-| `inUse`             | In use                                                           |
-| `paintClassic`      | Classic                                                          |
-| `paintCobalt`       | Cobalt                                                           |
-| `paintSeafoam`      | Seafoam                                                          |
-| `paintGraphite`     | Graphite                                                         |
-| `paintIris`         | Iris                                                             |
-| `aboutHeavyMissile` | One slow missile with a big blast.                               |
-| `aboutRapidMissile` | Quick missiles with a small blast.                               |
-| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                 |
-| `aboutScattershot`  | A shotgun spread, strongest up close.                            |
-| `aboutPhaser`       | An instant beam that strikes the first thing in its path.        |
-| `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved. |
-| `shieldRecharge`    | Shield recharge                                                  |
-| `engineTuning`      | Engine tuning                                                    |
-| `tractorBeam`       | Tractor beam                                                     |
-| `weaponUpgrade`     | {weapon} upgrade                                                 |
-| `shipPaint`         | Ship paint                                                       |
+| Key                 | Text                                                                      |
+| ------------------- | ------------------------------------------------------------------------- |
+| `stardust`          | Stardust                                                                  |
+| `stardustAmount`    | {amount} Stardust                                                         |
+| `station`           | Station                                                                   |
+| `shop`              | Shop                                                                      |
+| `shopWeapons`       | Weapons                                                                   |
+| `shopShip`          | Ship                                                                      |
+| `owned`             | Owned                                                                     |
+| `level`             | Level {level} of {max}                                                    |
+| `confirmTitle`      | Buy {name}?                                                               |
+| `confirmLeft`       | {amount} left after                                                       |
+| `confirmBuy`        | Buy                                                                       |
+| `confirmCancel`     | Cancel                                                                    |
+| `projects`          | Projects                                                                  |
+| `donate`            | Donate                                                                    |
+| `projectFunded`     | Funded                                                                    |
+| `ammoPack`          | {weapon} ammo                                                             |
+| `ammoPackCount`     | ×{count}                                                                  |
+| `outOfAmmo`         | Out of ammo.                                                              |
+| `weaponAmmoLabel`   | {weapon}, {count} left                                                    |
+| `projectProgress`   | {paid} of {price}                                                         |
+| `donateTitle`       | Donate to {name}?                                                         |
+| `donateStillNeeded` | {amount} still needed after                                               |
+| `undock`            | Undock                                                                    |
+| `stationWelcome`    | Welcome aboard. Trade your Stardust, or take a job.                       |
+| `inUse`             | In use                                                                    |
+| `paintClassic`      | Classic                                                                   |
+| `paintCobalt`       | Cobalt                                                                    |
+| `paintSeafoam`      | Seafoam                                                                   |
+| `paintGraphite`     | Graphite                                                                  |
+| `paintIris`         | Iris                                                                      |
+| `aboutHeavyMissile` | One slow missile with a big blast.                                        |
+| `aboutRapidMissile` | Quick missiles with a small blast.                                        |
+| `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                          |
+| `aboutScattershot`  | A shotgun spread, strongest up close.                                     |
+| `aboutPhaser`       | An instant beam that strikes the first thing in its path.                 |
+| `jumpHome`          | Astra jumped you back to Earth to recharge. Your story progress is saved. |
+| `shieldRecharge`    | Shield recharge                                                           |
+| `engineTuning`      | Engine tuning                                                             |
+| `tractorBeam`       | Tractor beam                                                              |
+| `weaponUpgrade`     | {weapon} upgrade                                                          |
+| `shipPaint`         | Ship paint                                                                |
