@@ -199,9 +199,14 @@ ${UI_SCOPE} .ada-card-body > *{
   max-width:100%
 }
 
-/* A card with a named scroll group scrolls only that group; its other groups stay in view. */
+/* A card with a named scroll group scrolls only that group; its other groups stay in view. The
+   group clips the end pad above the frame's inner edge, so its last control scrolls into view
+   above that padding. */
 ${UI_SCOPE} .ada-card-body.ada-has-scroll{
   overflow-y:hidden
+}
+${UI_SCOPE} .ada-card-body.ada-has-scroll::after{
+  height:${units(SCROLL.endPad - CARD_CONTENT.gap)}
 }
 ${UI_SCOPE} .ada-card-body > .ada-scroll{
   flex:0 1 auto;
