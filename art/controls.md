@@ -286,13 +286,13 @@ the idle state with the vector gear `settings.svg`.
 | Empty        | Navy `#262b44`       | 1 ink `#181425`               | `#75748c`                | 3.07:1         |
 
 - Selection is Chibi's dark annulus inside the fixed disc, with no light outer
-  ring. Selection and refusal never resize the disc or glyph.
+  ring. Selection, refusal and the empty state never resize the disc or glyph.
 - Brightness: the selected face is the primary button's muted gold, 5.91:1
   against the space background `#292734` (the amber face was 8.50:1, its cream
   ring 10.11:1). The idle glyph is the supporting-text lavender, softer than
   cream (9.59:1) and above 4.5:1.
-- The ink edge on idle and refused discs is the pause disc's edge: navy is
-  1.05:1 on the space background and ink 1.23:1, so the edge outlines the
+- The ink edge on idle, refused and empty discs is the pause disc's edge: navy
+  is 1.05:1 on the space background and ink 1.23:1, so the edge outlines the
   disc; the glyph carries the essential contrast.
 - Weapons switch at any time, with a 1 s wait between switches (Gameplay).
   During the wait a tap on another weapon disc plays the
