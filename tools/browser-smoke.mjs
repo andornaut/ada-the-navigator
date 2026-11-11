@@ -1714,7 +1714,7 @@ try {
   const toScreen = (world) => ({ x: 360 + world.x - world.y, y: 180 + (world.x + world.y) / 2 });
   // The first flight seed whose backdrop field shows a rock in the asteroid fixture's open
   // top-centre area, clear of its play rocks (shown), or none in view at all.
-  function backdropSeed(shown, player) {
+  function backdropSeed(shown, sector, player) {
     const { cell } = asteroidArt.BACKDROP_FIELD;
     const cx = Math.floor(player.x / cell);
     const cy = Math.floor(player.y / cell);
@@ -1723,7 +1723,7 @@ try {
       let visible = false;
       for (let x = cx - 4; x <= cx + 4; x++) {
         for (let y = cy - 4; y <= cy + 4; y++) {
-          const rock = asteroidArt.backdropRock(rockArt, seed, x, y);
+          const rock = asteroidArt.backdropRock(rockArt, sector, seed, x, y);
           if (rock) {
             const at = toScreen({ x: rock.x - player.x, y: rock.y - player.y });
             near ||= at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140;
@@ -1750,7 +1750,7 @@ try {
     flight.objects = [];
     flight.shots = [];
     // No backdrop rock in view, so the sampled regions see only the combat and empty space.
-    flight.seed = backdropSeed(false, flight.player);
+    flight.seed = backdropSeed(false, flight.sector, flight.player);
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
@@ -2047,7 +2047,7 @@ try {
     model.state.dialogue = null;
     flight.objects = [];
     flight.shots = [];
-    flight.seed = backdropSeed(true, flight.player);
+    flight.seed = backdropSeed(true, flight.sector, flight.player);
     const origin = { ...flight.player };
     for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
       const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);
