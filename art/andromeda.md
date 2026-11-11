@@ -22,12 +22,13 @@ fraction; each SVG's intrinsic `width` and `height` are its display size
 and `height` are the frame, so pivots and docks are frame px; `displayWidth`
 and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset             | Ids                                                                         | Frame px | Display  | Pivot           |
-| ----------------- | --------------------------------------------------------------------------- | -------- | -------- | --------------- |
-| Settlers' station | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
-| Hamlet            | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
-| Lamp house        | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
-| Guide beacon      | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 21 by 28 | `(0.5, 0.75)`   |
+| Asset              | Ids                                                                         | Frame px | Display  | Pivot           |
+| ------------------ | --------------------------------------------------------------------------- | -------- | -------- | --------------- |
+| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
+| Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
+| Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
+| Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 21 by 28 | `(0.5, 0.75)`   |
+| Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35       | `(0.5, 0.5)`    |
 
 ## Settlers' station
 
@@ -122,6 +123,55 @@ swaps the sprite in place.
   straight again with a cream patch plate over the crease, blinking as `lit`.
 - Reduced motion shows frame A of a blinking beacon.
 
+## Pip's mail scooter
+
+Pip's courier ship: a non-hostile story craft in the
+[Cartwheel story craft](cartwheel.md#story-craft) contract. Shots pass through
+it, drones ignore it and it has no hit circle.
+
+- 16 headings in 22.5 degree world steps, as the [enemies](enemies.md):
+  heading `k` faces world angle `k * 22.5` degrees and local forward is
+  negative Y. Square transparent frames with the pivot at the centre; render
+  the selected frame with rotation zero. No blink and no thrust frames.
+- Entries carry `craft` `pip`, `directionIndex` and `facing` `world-{k}`; ids
+  are `craft-pip-{k}`.
+- A short cream capsule (`#efe4cf`, sides `#bfae94`, rear `#a08f78`) with a
+  warm-lit cab, two periwinkle mail panniers `#8f9cf0` (sides `#6f78b8`, rear
+  `#4a5080`) with cream flaps, a tail fin carrying the marker courier lamp
+  `#b8c1ff`, twin small graphite engines `#6e7482` and two warm headlights.
+  35 by 23 model units: 0.82 by 0.54 Ada wingspans, about the size of
+  Cartwheel's visitors, and nothing like Ada's white triangle.
+- Groups draw far to near; a group resting on the hull top (10) or the cab top
+  (14) draws after every group below that level.
+
+### Speed jets and nose
+
+`pip-jets.json` uses the [enemy speed jets](enemies.md#speed-jets) schema
+(version 1, outer and core layers, no halo, length
+`(6 + 24 f²) * sqrt(frame / 96)`) in the civil story-craft palette shared
+with Cartwheel's story craft: outer `#c9a978` to `#ffe9b8` and core `#efe4cf`
+to `#ffffff`. Two mouths 3 units wide at `(u, v, z)` `(-19, ±4, 6.5)`, u
+forward.
+
+The file also carries `nose`: 16 entries, `nose[k]` for heading `k`. The nose
+reaches to the forward-most solid part; the 0.6-deep window panes do not count.
+
+- `distance`: world units from the pivot to the point under the nose on the
+  centre line. The generator projects that point the art's way at display
+  scale (0.4375) and inverts the game's projection `(x - y, (x + y) / 2)`, so
+  it depends on heading `k` at angle `a = k * 22.5` degrees:
+  `0.4375 * reach * sqrt(7/8 + sin(2a) / 8)`.
+- `tip`: `[x, y]` in frame px, the drawn tip projected like the frames: the
+  midpoint of the forward-most top edge nearest the centre line. The generator
+  fails unless it lies within 0.5 frame px of an edge of a face the heading's
+  frame draws.
+
+The scooter's reach is 16 units, to the hull nose: `distance` is 7 at headings
+2 and 10, 6.548 at 0, 4, 8 and 12, and 6.062 at 6 and 14. A docked scooter
+holds with its pivot on the dock or berth point moved along `outward` by
+`nose[k].distance` for its docking heading `k`, so the nose meets the dock
+face.
+
 ## Palette
 
 Contrast is WCAG against Andromeda's field background `#232641`; the table
@@ -143,6 +193,11 @@ against its pearl tower and cream gallery, not the field.
 | Beacons | Dark glass          | `#2a2d48` |   1.10:1 |
 | Beacons | Dent crease         | `#7d7a9c` |   3.60:1 |
 | Beacons | Scrape              | `#cfcde0` |   9.45:1 |
+| Pip     | Cream hull          | `#efe4cf` |  11.70:1 |
+| Pip     | Periwinkle panniers | `#8f9cf0` |   5.74:1 |
+| Pip     | Courier lamp        | `#b8c1ff` |   8.50:1 |
+| Pip     | Engines             | `#6e7482` |   3.15:1 |
+| Pip     | Jet outer, fast     | `#ffe9b8` |  12.35:1 |
 | All     | Warm windows        | `#ffe9b8` |  12.35:1 |
 | All     | Blue lights         | `#70ace8` |   6.14:1 |
 

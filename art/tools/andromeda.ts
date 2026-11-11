@@ -6,9 +6,27 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import * as m from "./andromeda-models.ts";
+import { jetsFile } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
-import { type Point, projectAt, round } from "./projection.ts";
-import { along, BLINK_MS, DISPLAY_SCALE, DOCK, type Face, type Part, polygons } from "./solid.ts";
+import {
+  anchor,
+  ENEMY_HEADINGS,
+  type Point,
+  projectAt,
+  rotate,
+  round,
+  vector,
+} from "./projection.ts";
+import {
+  along,
+  BLINK_MS,
+  DISPLAY_SCALE,
+  DOCK,
+  type Face,
+  facing,
+  type Part,
+  polygons,
+} from "./solid.ts";
 
 const output = fileURLToPath(new URL("../../public/art/andromeda/", import.meta.url));
 const PATH = "/art/andromeda/";
@@ -180,4 +198,134 @@ replaceEntries(
   (id) => /^beacon-guide-((lit|relit)-[ab]|dented)$/.test(id),
   beaconEntries,
   (id) => /^(enemy-|craft-|andromeda-haze)|portrait/.test(id),
+);
+
+// ---------------------------------------------------------------- Pip's mail scooter
+
+// Sixteen headings in the enemy convention: heading k faces world angle k * 22.5 degrees.
+const craftView = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, point);
+const visibleAt = (yaw: number) => (nx: number, ny: number) => {
+  const [x, y] = rotate(ENEMY_HEADINGS, yaw, [nx, ny, 0]);
+  return facing(x, y);
+};
+const headingFaces = (craft: m.StoryCraft, yaw: number) =>
+  polygons(craft.build(visibleAt(yaw)), craftView(yaw), craft.levels);
+
+// Smallest square frame, a multiple of 16 px, holding every heading with padding.
+function craftFrame(craft: m.StoryCraft): number {
+  let extent = 0;
+  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
+    for (const { points } of headingFaces(craft, yaw)) {
+      for (const point of points) {
+        const [x, y] = projectAt(0, 0, point);
+        extent = Math.max(extent, Math.abs(x), Math.abs(y));
+      }
+    }
+  }
+  return Math.ceil((2 * (extent + PAD)) / STEP) * STEP;
+}
+
+// The nose tip: the midpoint of the forward-most top edge of the craft's solid parts, nearest the
+// centre line (ties to negative v). Window panes are left out: they stand 0.6 proud of their walls
+// only so they render.
+function noseTip(craft: m.StoryCraft): { reach: number; tip: Point } {
+  const parts = craft.build(() => false).flat();
+  const reach = Math.max(...parts.flatMap(({ plan }) => plan.map(([, y]) => -y)));
+  const edges = parts.flatMap(({ plan, z1 }) => {
+    const front = plan.filter(([, y]) => Math.abs(y + reach) < 1e-9).map(([x]) => x);
+    return front.length === 0 ? [] : [{ v: (Math.min(...front) + Math.max(...front)) / 2, z: z1 }];
+  });
+  const { v, z } = edges.sort(
+    (p, q) => Math.abs(p.v) - Math.abs(q.v) || p.v - q.v || q.z - p.z,
+  )[0]!;
+  return { reach, tip: [...m.uv(reach, v), z] };
+}
+
+// World units from the pivot to the point under the nose tip on the centre line at heading `yaw`:
+// the art's projection at display scale through the inverse of the game's (x - y, (x + y) / 2).
+function noseDistance(reach: number, yaw: number): number {
+  const [x, y] = projectAt(0, 0, rotate(ENEMY_HEADINGS, yaw, [...m.uv(reach, 0), 0]));
+  const [sx, sy] = [x * DISPLAY_SCALE, y * DISPLAY_SCALE];
+  return round(Math.hypot(sy + sx / 2, sy - sx / 2));
+}
+
+type Point2 = readonly [number, number];
+const segmentDistance = ([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2) => {
+  const [ex, ey] = [bx - ax, by - ay];
+  const t = Math.max(0, Math.min(1, ((px - ax) * ex + (py - ay) * ey) / (ex * ex + ey * ey)));
+  return Math.hypot(px - ax - t * ex, py - ay - t * ey);
+};
+
+// Per heading, the drawn tip in frame px and the nose distance in world units. Fails unless each
+// tip lies within 0.5 frame px of an edge of a face the heading's frame draws.
+function noses(craft: m.StoryCraft, frame: number) {
+  const centre = frame / 2;
+  const { reach, tip } = noseTip(craft);
+  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
+    const point = anchor(ENEMY_HEADINGS, centre, yaw, tip);
+    const gap = Math.min(
+      ...headingFaces(craft, yaw).flatMap(({ points }) => {
+        const drawn = points.map((p) => projectAt(centre, centre, p));
+        return drawn.map((p, i) => segmentDistance(point, p, drawn[(i + 1) % drawn.length]!));
+      }),
+    );
+    if (gap > 0.5) {
+      throw new Error(`${craft.name}-${yaw} nose is ${gap.toFixed(2)} frame px off the hull`);
+    }
+    return { distance: noseDistance(reach, yaw), tip: point };
+  });
+}
+
+// The civil story-craft jets, shared with Cartwheel's story craft.
+const civilJets = {
+  outer: ["#c9a978", "#ffe9b8"] as [string, string],
+  core: ["#efe4cf", "#ffffff"] as [string, string],
+};
+
+function writeCraft(craft: m.StoryCraft) {
+  const frame = craftFrame(craft);
+  const centre = frame / 2;
+  const square: Layout = { halfWidth: centre, above: centre, width: frame, height: frame };
+  for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
+    writeFileSync(
+      `${output}${craft.name}-${yaw}.svg`,
+      svgFile(`${craft.title} ${yaw}`, square, headingFaces(craft, yaw)),
+    );
+  }
+  const half = craft.mouthWidth / 2;
+  writeFileSync(
+    `${output}${craft.name}-jets.json`,
+    jetsFile(
+      frame,
+      (yaw) =>
+        craft.mouths.map(([u, v, z]) => ({
+          anchor: anchor(ENEMY_HEADINGS, centre, yaw, [...m.uv(u, v), z]),
+          axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
+          half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
+        })),
+      civilJets,
+      { nose: noses(craft, frame) },
+    ),
+  );
+  const display = round(frame * DISPLAY_SCALE);
+  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+    id: `craft-${craft.name}-${yaw}`,
+    path: `${PATH}${craft.name}-${yaw}.svg`,
+    width: frame,
+    height: frame,
+    displayWidth: display,
+    displayHeight: display,
+    facing: `world-${yaw}`,
+    directionIndex: yaw,
+    pivot: { x: 0.5, y: 0.5 },
+    craft: craft.name,
+  }));
+}
+
+// Story craft follow the drones, before the portraits.
+replaceEntries(
+  "andromeda",
+  (id) => /^craft-pip-\d+$/.test(id),
+  writeCraft(m.pip),
+  (id) => id.includes("portrait"),
 );

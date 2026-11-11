@@ -209,6 +209,246 @@
       },
       "beacon": "guide",
       "state": "dented"
+    },
+    {
+      "id": "craft-pip-0",
+      "path": "/art/andromeda/pip-0.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-1",
+      "path": "/art/andromeda/pip-1.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-2",
+      "path": "/art/andromeda/pip-2.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-3",
+      "path": "/art/andromeda/pip-3.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-4",
+      "path": "/art/andromeda/pip-4.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-5",
+      "path": "/art/andromeda/pip-5.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-6",
+      "path": "/art/andromeda/pip-6.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-7",
+      "path": "/art/andromeda/pip-7.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-8",
+      "path": "/art/andromeda/pip-8.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-9",
+      "path": "/art/andromeda/pip-9.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-10",
+      "path": "/art/andromeda/pip-10.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-11",
+      "path": "/art/andromeda/pip-11.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-12",
+      "path": "/art/andromeda/pip-12.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-13",
+      "path": "/art/andromeda/pip-13.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-14",
+      "path": "/art/andromeda/pip-14.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
+    },
+    {
+      "id": "craft-pip-15",
+      "path": "/art/andromeda/pip-15.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "pip"
     }
   ]
 }
