@@ -14,6 +14,14 @@ function plan(z: number, points: readonly (readonly [number, number])[]): Point[
   return points.map(([x, y]): Point => [y * 0.32, x * 0.32, z]).toReversed();
 }
 
+// Short mouths follow the outer rear edges immediately inside each wing tip.
+function mouthEdge(sign: number): [Point, Point] {
+  return [
+    [sign * 64 * 0.32, 63.1 * 0.32 + 0.03, 0.8],
+    [sign * 54.5 * 0.32, 60.25 * 0.32 + 0.03, 0.8],
+  ];
+}
+
 function model(yaw: number, thrust: boolean): Face[] {
   const faces: Face[] = [];
   const hull = plan(4, [
@@ -36,9 +44,7 @@ function model(yaw: number, thrust: boolean): Face[] {
     });
   }
   for (const sign of [-1, 1]) {
-    // Short mouths follow the outer rear edges immediately inside each wing tip.
-    const a: Point = [sign * 64 * 0.32, 63.1 * 0.32 + 0.03, 0.8];
-    const b: Point = [sign * 54.5 * 0.32, 60.25 * 0.32 + 0.03, 0.8];
+    const [a, b] = mouthEdge(sign);
     const mouth: Point[] = [a, b, [b[0], b[1], 3.2], [a[0], a[1], 3.2]];
     faces.push({
       color: "#64caff",
@@ -151,7 +157,55 @@ function svg(yaw: number, thrust: boolean): string {
   ].join("\n");
 }
 
+const round = (value: number) => Math.round(value * 1000) / 1000 + 0;
+
+// Linear part of the frame projection: ship units on the z = 0 plane to frame px.
+function vector(yaw: number, point: Point): [number, number] {
+  const [x, y] = rotate(yaw, point);
+  return [round(((x - y) * Math.sqrt(3)) / 2), round((x + y) / 2)];
+}
+
+// Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame.
+function jets(): string {
+  const headings = Array.from({ length: 8 }, (_, yaw) => ({
+    index: yaw,
+    mouths: [-1, 1].map((sign) => {
+      const [a, b] = mouthEdge(sign);
+      const [x, y] = rotate(yaw, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 2]);
+      return {
+        anchor: [round(48 + ((x - y) * Math.sqrt(3)) / 2), round(48 + (x + y) / 2 - 2)],
+        axis: vector(yaw, [0, 1, 0]),
+        half: vector(yaw, [(a[0] - b[0]) / 2, (a[1] - b[1]) / 2, 0]),
+      };
+    }),
+  }));
+  const contract = {
+    version: 1,
+    frame: 96,
+    length: { base: 6, scale: 24, exponent: 2 },
+    layers: [
+      {
+        name: "halo",
+        color: "#70ace8",
+        width: 2.4,
+        length: 1.1,
+        alpha: { from: 0.6, to: 1, max: 0.5 },
+      },
+      { name: "outer", colors: ["#5b93cc", "#b9ecff"], width: 1.6, length: 1 },
+      { name: "core", colors: ["#8cc4f0", "#ffffff"], width: 0.8, length: 0.55 },
+    ],
+    headings,
+  };
+  // Prettier keeps arrays of scalars on one line.
+  const text = JSON.stringify(contract, null, 2).replace(
+    /\[\s+([^[\]{}]*?)\s+\]/g,
+    (_, items: string) => `[${items.split(/,\s+/).join(", ")}]`,
+  );
+  return `${text}\n`;
+}
+
 mkdirSync(output, { recursive: true });
+writeFileSync(`${output}ship-jets.json`, jets());
 for (let yaw = 0; yaw < 8; yaw++) {
   for (const thrust of [false, true]) {
     writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));

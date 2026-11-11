@@ -2,7 +2,7 @@
 
 - Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
-- Exports: `ship-{0..7}.svg` and `ship-thrust-{0..7}.svg`.
+- Exports: `ship-{0..7}.svg`, `ship-thrust-{0..7}.svg` and `ship-jets.json`.
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 5 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
@@ -27,3 +27,21 @@
   according to heading. All faces use one projection and outward-normal culling;
   depth orders faces within each component layer.
 - No raster assets, filters, strokes, external dependencies or screen rotation.
+
+## Speed jets
+
+`ship-jets.json` (version 1) drives jets that scale continuously with speed. The
+renderer draws them behind the idle `ship-{index}` frame; there are no jet frames.
+
+- `f` is current speed as a fraction of max speed. No jet at `f = 0`.
+- Jet length in ship units: `length.base + length.scale * f ^ length.exponent`
+  (6 + 24 f²): about 2-3px at f = 0.25 and 13px at max on the 42px display.
+- Per heading, each of the two `mouths` gives frame-px values in the 96 by 96
+  frame: `anchor` (projected mouth midpoint at z = 2), `axis` (projected rear
+  direction per ship unit) and `half` (projected half mouth width). Scale them
+  with the ship's display size.
+- Per mouth, draw one filled triangle per `layers` entry in order (halo, outer,
+  core): base `anchor ± half * width`, tip `anchor + axis * jetLength * length`.
+- Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
+  alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
+  are opaque.
