@@ -102,6 +102,19 @@ describe("conversation box", () => {
     expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 12.8, 9);
   });
 
+  it("rises to the highest drawn hull point of Art's 32 idle headings, at heading 4", () => {
+    // Frames are 96 px with the pivot at (48, 48), drawn 42 px across.
+    const rises = Array.from({ length: 32 }, (_, heading) => {
+      const svg = readFileSync(new URL(`../../../public/art/ship-${heading}.svg`, import.meta.url));
+      const ys = [...String(svg).matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
+      return ((48 - Math.min(...ys)) * 42) / 96;
+    });
+    const highest = Math.max(...rises);
+    expect(rises.indexOf(highest)).toBe(4);
+    expect(highest).toBeLessThanOrEqual(CONVERSATION_BOX.ship.hullRise);
+    expect(highest).toBeCloseTo(CONVERSATION_BOX.ship.hullRise, 1);
+  });
+
   it("keeps 31.2 clear above Ada's ship at the 360 high view and 53.7 at 405", () => {
     expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(31.2, 9);
     // At 405 high the pivot sits at 202.5 and the hull top at 189.7.

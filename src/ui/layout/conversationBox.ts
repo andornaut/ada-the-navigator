@@ -39,8 +39,8 @@ export const CONVERSATION_BOX = {
   panel: { alpha: 0.7, ink: "#181425" },
   // A 22 compact frame at 2x, centred in the navy slot inside the 2 ink frame edge.
   portrait: { art: 44, edge: FRAME_EDGE, face: "#262b44", frame: FRAME, slot: SLOT },
-  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 16
-  // headings is this far above the pivot.
+  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 32
+  // headings (heading 4) is this far above the pivot.
   ship: { hullRise: 12.8 },
   // Space kept clear between the box's bottom and the top of Ada's ship.
   shipClearance: 24,
