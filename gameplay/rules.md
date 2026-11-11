@@ -527,11 +527,14 @@ a time, with a cooldown between ordinary conversations. Hints are always on.
 Conversations come from data, each with a trigger and a priority: warnings
 (including the General's broadcasts), then notices, then first-flight lessons, then
 Penny, then lore. A higher priority interrupts a lower one, which resumes after it
-if still relevant. Triggers include the first flight's
+if still relevant. A queued conversation re-checks its trigger when its turn
+comes and is dropped if the trigger no longer holds, such as Penny's lost-item
+line once Ada has left the item's range. Triggers include the first flight's
 lessons (each shown once, skipped when the player has already done the action),
 a first arrival in a galaxy, meeting each alien group, a newly mapped destination
 or station, a capital ship sighting, a low shield (once per fight), drones
-arriving, and quiet stretches without combat, which draw unseen lore from the
+arriving (only when drones are near; damage from debris or hazards alone never
+plays the drone warning), and quiet stretches without combat, which draw unseen lore from the
 galaxy's pool. Astra shares lore and flavor about places and alien species; Ada
 asks questions and reacts. Seen conversations are saved so they do not repeat.
 
