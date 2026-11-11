@@ -40,8 +40,10 @@ its drawn length and width, so the narrow hull keeps a forgiving hit area.
   frame with rotation zero.
 - Heading index, projection and local forward (negative Y) follow
   [ship geometry](ship.md): index `k` faces world angle `k * 22.5` degrees.
-- Each part is an extruded plan. Parts draw far to near by mean depth; within a
-  part, visible sides precede the top. Outward-normal culling removes hidden faces.
+- Each part is an extruded plan. Parts resting on the hull top (base at or above
+  the hull's top) draw after the hull; otherwise parts draw far to near by mean
+  depth. Within a part, visible sides precede the top. Outward-normal culling
+  toward the `(1, 1, 1)` view direction removes hidden faces.
 - No jets, raster assets, filters, strokes or screen rotation in the frames.
 
 ## Speed jets

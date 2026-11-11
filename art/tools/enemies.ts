@@ -228,15 +228,18 @@ function faces(yaw: number, part: Part): Face[] {
   return result;
 }
 
-// Parts draw far to near; equal depths draw lower tops first.
+// Parts resting on the hull top draw after the hull. Otherwise parts draw far to near,
+// and equal depths draw lower tops first.
 function svg(craft: Craft, yaw: number): string {
   const centre = craft.frame / 2;
+  const hullTop = craft.parts[0]!.z1;
   const polygons = craft.parts
     .map((part) => ({
       part,
       depth: depth(part.plan.map(([x, y]) => rotate(yaw, [x, y, (part.z0 + part.z1) / 2]))),
+      raised: part.z0 >= hullTop ? 1 : 0,
     }))
-    .sort((a, b) => b.depth - a.depth || a.part.z1 - b.part.z1)
+    .sort((a, b) => a.raised - b.raised || b.depth - a.depth || a.part.z1 - b.part.z1)
     .flatMap(({ part }) => faces(yaw, part))
     .map(({ color, points }) => {
       const projected = points.map((point) => project(centre, point));

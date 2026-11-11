@@ -24,9 +24,12 @@
 - Twin subtle blue mouths follow the rear wing edges near their outer corners.
   Thrust adds pale blue flames 16 units long with 9-unit white cores, readable at
   42px display. Hull sides precede the continuous hull top;
-  canopy sides precede its roof. The tail draws before or after the canopy
-  according to heading. All faces use one projection and outward-normal culling;
-  depth orders faces within each component layer.
+  canopy sides precede its roof. The tail draws after the canopy when the rear
+  points toward the viewer (rotated `x + y > 0`), otherwise before it.
+- All faces use one projection. The viewer looks along `-(1, 1, 1)` from
+  `+(1, 1, 1)`: outward-normal culling keeps faces whose normal has
+  `nx + ny + nz > 0`, and depth `-(x + y + z)` orders faces far to near within
+  each component layer.
 - No raster assets, filters, strokes, external dependencies or screen rotation.
 
 ## Speed jets

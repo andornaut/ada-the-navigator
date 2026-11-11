@@ -9,6 +9,8 @@ export function rotate(yaw: number, [x, y, z]: Point): Point {
   return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), z];
 }
 
+// The view direction is (1, 1, 1): the projection collapses it to one screen point and
+// raises +z. A face is visible when its outward normal points toward that viewer.
 // A full polygon normal also handles concave outlines.
 export function facesViewer(points: readonly Point[]): boolean {
   let nx = 0;
@@ -20,12 +22,12 @@ export function facesViewer(points: readonly Point[]): boolean {
     ny += (a[2] - b[2]) * (a[0] + b[0]);
     nz += (a[0] - b[0]) * (a[1] + b[1]);
   }
-  return -nx - ny + Math.sqrt(3) * nz > 0.00001;
+  return nx + ny + nz > 0.00001;
 }
 
-// Larger values are farther from the viewer.
+// Larger values are farther from the viewer at +(1, 1, 1).
 export function depth(points: readonly Point[]): number {
-  return points.reduce((sum, [x, y, z]) => sum + x + y - Math.sqrt(3) * z, 0) / points.length;
+  return points.reduce((sum, [x, y, z]) => sum - (x + y + z), 0) / points.length;
 }
 
 // Frame px for a rotated point, with the pivot at (centre, centre).

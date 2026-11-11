@@ -112,7 +112,7 @@ function model(yaw: number, thrust: boolean): Face[] {
   const tail = rotate(yaw, [0, 18.5, 0]);
   faces.push({
     color: white,
-    layer: tail[0] + tail[1] > 0 ? 4 : 7,
+    layer: tail[0] + tail[1] > 0 ? 7 : 4,
     points: [
       [0, 12.16, 4],
       [0, 24, 4],
