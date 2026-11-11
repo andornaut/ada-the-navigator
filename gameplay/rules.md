@@ -281,9 +281,14 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape: "Resume" (primary), "Map", "Settings" and "Back to title".
-  Above the buttons, the card shows the current story objective and, when a
-  station job is held, its "Job:" line. Space shows no objective text.
+  one shape, in a full-width stack: "Resume" (primary), "Map", "Settings" and
+  "Back to title". The card shows no objective text, and neither does space;
+  in flight the direction indicator is the objective cue.
+  The Map shows the current story objective as a line and, when an optional
+  task is held, its "Job: {objective}" line. Each line is tied to its target's
+  chip once that target is mapped: the chip carries the objective indicator,
+  and selecting it shows the line in the place panel. Art designs the
+  arrangement.
   Map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
@@ -296,7 +301,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   enter the explored record. The
   explored area persists per galaxy across flights and clears on Restart. Choosing
   a discovered destination or station offers "Travel here", which teleports there. The Map
-  also has "Return to Earth" on every galaxy's Map, with no confirm, as for
+  also has "Return to Earth", a labelled secondary button on its top row beside
+  the header, on every galaxy's Map, with no confirm, as for
   Travel here. Unlike Travel here it stays available while towing; the towed craft
   returns to where it was stranded. Return to Earth ends the flight and takes Ada to her room, with story progress saved
   and no quantum jump cost. Back to title ends the flight the same way and opens
