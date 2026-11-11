@@ -1,20 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  ASTEROID_FOOTPRINTS,
-  ASTEROID_SIZES,
-  footprintAsteroids,
-} from "../data/asteroid-catalog.ts";
+import { ASTEROID_ART, ASTEROID_SIZES } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import {
   ASTEROID_SHAPES,
-  asteroidShape,
   bounce,
   orbitMotion,
   reflectDirection,
+  rockFrame,
   sceneryBlocksSegment,
   sceneryContact,
 } from "./asteroids.ts";
@@ -69,49 +65,79 @@ const rock = (id: string, extra: Partial<SpaceObject> = {}): SpaceObject => ({
 const huge = shapes.find((shape) => shape.size === "huge")!;
 
 describe("asteroid footprints", () => {
-  it("are the model's seeded collision bases, one variant per Art rock of each size", () => {
-    expect(footprintAsteroids(0x5eed)).toEqual(ASTEROID_FOOTPRINTS);
+  // Gameplay's size classes (art/asteroids.md "Classes"): footprint radius ranges in world units.
+  const RANGES = { huge: [84, 104], large: [52, 70], medium: [24, 34], small: [12, 18] } as const;
+
+  it("collide with Art's own footprint per frame, its radius inside the class range", () => {
     const counts = Object.fromEntries(
-      ASTEROID_SIZES.map((size) => [
-        size,
-        ASTEROID_FOOTPRINTS.asteroids.filter((entry) => entry.size === size).length,
-      ]),
+      ASTEROID_SIZES.map((size) => [size, shapes.filter((shape) => shape.size === size).length]),
     );
     expect(counts).toEqual({ huge: 3, large: 3, medium: 4, small: 4 });
+    for (const art of ASTEROID_ART.asteroids) {
+      const shape = ASTEROID_SHAPES.get(art.id)!;
+      expect(shape.radius).toBe(art.footprintRadius);
+      expect(shape.frames).toEqual(art.frames.map((frame) => frame.footprint));
+      const [low, high] = RANGES[art.size];
+      expect(shape.radius, art.id).toBeGreaterThanOrEqual(low);
+      expect(shape.radius, art.id).toBeLessThanOrEqual(high);
+      // The broad-phase radius reaches every frame's footprint, to Art's two-decimal rounding of
+      // both the points and the radius.
+      const reach = Math.max(...shape.frames.flat(2).map((at) => Math.hypot(at.x, at.y)));
+      expect(Math.abs(reach - shape.radius), art.id).toBeLessThanOrEqual(0.02);
+    }
   });
 
-  it("varies sizes from small to much larger, lobed irregular shapes", () => {
-    const bySize = Object.fromEntries(
-      ASTEROID_SIZES.map((size) => [size, shapes.filter((shape) => shape.size === size)]),
-    );
-    for (const size of ASTEROID_SIZES) {
-      expect(bySize[size]!.length).toBeGreaterThanOrEqual(3);
-    }
-    const largestSmall = Math.max(...bySize.small!.map((shape) => shape.radius));
-    expect(Math.min(...bySize.huge!.map((shape) => shape.radius))).toBeGreaterThan(
-      4 * largestSmall,
-    );
-    expect([...bySize.large!, ...bySize.huge!].every((shape) => shape.parts.length >= 2)).toBe(
-      true,
-    );
-    // Irregular: vertex distances from the center differ within each outline.
+  it("drift only small and medium rocks", () => {
     for (const shape of shapes) {
-      const reach = shape.parts.flat().map((at) => Math.hypot(at.x, at.y));
-      expect(Math.max(...reach) / Math.min(...reach)).toBeGreaterThan(1.15);
+      expect(shape.drift.eligible, shape.id).toBe(
+        shape.size === "small" || shape.size === "medium",
+      );
     }
   });
 
-  it("converts frame pixels back to world units through the inverse projection", () => {
-    const entry = ASTEROID_FOOTPRINTS.asteroids[0]!;
-    const shape = asteroidShape(entry);
-    const origin = { x: entry.pivot.x * entry.frame.width, y: entry.pivot.y * entry.frame.height };
-    shape.parts.forEach((part, index) =>
-      part.forEach((at, corner) => {
-        const screen = entry.collision[index]![corner]!;
-        expect(at.x - at.y).toBeCloseTo(screen.x - origin.x);
-        expect((at.x + at.y) / 2).toBeCloseTo(screen.y - origin.y);
-      }),
-    );
+  it("turn spinning rocks through every frame at a seeded rate, in either direction", () => {
+    const small = shapes.find((shape) => shape.size === "small")!;
+    const still = shapes.find((shape) => shape.size === "huge")!;
+    const [, fast] = (small.spin as { degPerSecond: readonly [number, number] }).degPerSecond;
+    const frames = (id: string, seconds: number[]) =>
+      seconds.map((at) => rockFrame(small, 7, false, id, at));
+    expect(
+      new Set(
+        frames(
+          "rock-a",
+          Array.from({ length: 400 }, (_, i) => i * 0.25),
+        ),
+      ).size,
+    ).toBe(24);
+    const steps = new Set<number>();
+    for (const id of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+      const [now, next] = frames(id, [0, 15 / fast]);
+      steps.add((next! - now! + 24) % 24);
+    }
+    // Each rock moves at most one frame per 15 / fast seconds; both directions occur.
+    expect([...steps].every((step) => [0, 1, 23].includes(step))).toBe(true);
+    expect(steps.has(1) && steps.has(23)).toBe(true);
+    expect(rockFrame(small, 7, true, "rock-a", 3)).toBe(0);
+    expect(rockFrame(still, 7, false, "rock-a", 3)).toBe(0);
+  });
+
+  it("hit a spinning rock's current frame, not frame 0", () => {
+    // A medium rock whose frames differ: a probe inside one frame's base and outside another's.
+    const medium = shapes.find((shape) => shape.id === "asteroid-m4")!;
+    const object = rock("spinner", { asteroid: medium.id, radius: medium.radius });
+    let probe: { frame: number; at: Vec } | undefined;
+    for (let frame = 1; frame < medium.frames.length && !probe; frame++) {
+      for (let angle = 0; angle < Math.PI * 2 && !probe; angle += Math.PI / 32) {
+        for (const reach of [0.6, 0.75, 0.9].map((share) => share * medium.radius)) {
+          const at = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
+          if (sceneryContact(object, at, 1, frame) && !sceneryContact(object, at, 1, 0)) {
+            probe = { at, frame };
+            break;
+          }
+        }
+      }
+    }
+    expect(probe, "frames differ in footprint").toBeDefined();
   });
 });
 

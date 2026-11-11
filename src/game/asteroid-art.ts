@@ -1,8 +1,7 @@
 import {
-  ASTEROID_FOOTPRINTS,
+  ASTEROID_ART,
   type AsteroidArt,
   type AsteroidArtCatalog,
-  type AsteroidFootprint,
   type BackdropSprite,
   type BackdropTint,
 } from "../data/asteroid-catalog.ts";
@@ -10,43 +9,14 @@ import { GALAXIES } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 
-/** Display-pixel outline of a footprint relative to its pivot: the drawing fallback without Art. */
+/**
+ * A footprint's outline in display px relative to the pivot: the drawing while a rock's frames
+ * load, and the overlay that compares the footprint with the sprite.
+ */
 export interface AsteroidOutline {
   readonly parts: readonly (readonly Vec[])[];
   /** Boundary edges of the part union; edges inside another part are dropped. */
   readonly edges: readonly (readonly [Vec, Vec])[];
-}
-
-// Provisional hues until Art supplies the tint rule; each is mixed lightly into a muted role.
-export const SPACE_TINTS: Readonly<Record<string, number>> = {
-  lilac: 0xb39ac9,
-  moss: 0x8fae86,
-  rust: 0xc08a6a,
-  slate: 0x7f93b8,
-};
-const TINT_KEYS = Object.keys(SPACE_TINTS);
-
-/** Linear sRGB mix of `tint` into `base` by `amount` in [0, 1]. */
-export function mixColor(amount: number, tint: number, base: number): number {
-  let color = 0;
-  for (const shift of [16, 8, 0]) {
-    const a = (base >> shift) & 255;
-    const b = (tint >> shift) & 255;
-    color |= Math.round(a + (b - a) * amount) << shift;
-  }
-  return color;
-}
-
-/** A muted role carrying a light tint; unknown keys keep the base color. */
-export function tinted(amount: number, key: string, base: number): number {
-  const tint = SPACE_TINTS[key];
-  return tint === undefined ? base : mixColor(amount, tint, base);
-}
-
-/** A stable tint key for a background cell, so markers vary without flickering. */
-export function cellTint(x: number, y: number): string {
-  const index = Math.abs(Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) % TINT_KEYS.length;
-  return TINT_KEYS[index]!;
 }
 
 function strictlyInside(part: readonly Vec[], point: Vec): boolean {
@@ -63,20 +33,35 @@ function strictlyInside(part: readonly Vec[], point: Vec): boolean {
   return true;
 }
 
-export function asteroidOutline(entry: AsteroidFootprint): AsteroidOutline {
-  const scale = {
-    x: entry.display.width / entry.frame.width,
-    y: entry.display.height / entry.frame.height,
-  };
-  const origin = { x: entry.pivot.x * entry.frame.width, y: entry.pivot.y * entry.frame.height };
-  const parts = entry.collision.map((part) =>
-    part.map((at) => ({ x: (at.x - origin.x) * scale.x, y: (at.y - origin.y) * scale.y })),
-  );
+function onEdge(part: readonly Vec[], point: Vec): boolean {
+  return part.some((a, index) => {
+    const b = part[(index + 1) % part.length]!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const square = dx * dx + dy * dy;
+    const t = square ? ((point.x - a.x) * dx + (point.y - a.y) * dy) / square : 0;
+    if (t < 0 || t > 1) {
+      return false;
+    }
+    return Math.hypot(a.x + dx * t - point.x, a.y + dy * t - point.y) < 1e-6;
+  });
+}
+
+/** The view's projection of a world offset to display px: `(x - y, (x + y) / 2)`. */
+const project = (at: Vec): Vec => ({ x: at.x - at.y, y: (at.x + at.y) / 2 });
+
+/** The outline of world-unit footprint parts, projected to display px. */
+export function asteroidOutline(footprint: readonly (readonly Vec[])[]): AsteroidOutline {
+  const parts = footprint.map((part) => part.map(project));
   const edges: [Vec, Vec][] = [];
   const PIECES = 12;
   parts.forEach((part, index) => {
+    // A piece inside another part, or on an edge another part shares, is not on the union's
+    // boundary.
     const covered = (point: Vec) =>
-      parts.some((other, at) => at !== index && strictlyInside(other, point));
+      parts.some(
+        (other, at) => at !== index && (strictlyInside(other, point) || onEdge(other, point)),
+      );
     for (let corner = 0; corner < part.length; corner++) {
       const a = part[corner]!;
       const b = part[(corner + 1) % part.length]!;
@@ -97,17 +82,23 @@ export function asteroidOutline(entry: AsteroidFootprint): AsteroidOutline {
   return { edges, parts };
 }
 
-const OUTLINES = new Map(
-  ASTEROID_FOOTPRINTS.asteroids.map((entry) => [
-    entry.id,
-    { entry, outline: asteroidOutline(entry) },
-  ]),
-);
+const ROCKS = new Map(ASTEROID_ART.asteroids.map((rock) => [rock.id, rock]));
 
-export function footprintOutline(
-  id: string,
-): { entry: AsteroidFootprint; outline: AsteroidOutline } | undefined {
-  return OUTLINES.get(id);
+/** Art's rock for an object's asteroid id. */
+export function rockArt(id: string): AsteroidArt | undefined {
+  return ROCKS.get(id);
+}
+
+const OUTLINES = new Map<string, AsteroidOutline>();
+/** The outline of a rock frame's footprint, built once per frame. */
+export function footprintOutline(art: AsteroidArt, frame: number): AsteroidOutline {
+  const key = `${art.id}:${frame}`;
+  let outline = OUTLINES.get(key);
+  if (!outline) {
+    outline = asteroidOutline((art.frames[frame] ?? art.frames[0]!).footprint);
+    OUTLINES.set(key, outline);
+  }
+  return outline;
 }
 
 function hash(seed: number, text: string): number {
@@ -122,63 +113,6 @@ function hash(seed: number, text: string): number {
 /** A stable value in [0, 1) for a seed, an id and a salt. */
 function unit(seed: number, id: string, salt: string): number {
   return hash(seed, `${id}:${salt}`) / 0x100000000;
-}
-
-/**
- * The Art rock drawn over a model footprint: the same size class, matched by rank of radius,
- * so the largest footprint of a size wears that size's largest rock.
- */
-export function artVariant(
-  catalog: AsteroidArtCatalog,
-  footprint: string,
-): AsteroidArt | undefined {
-  let variants = VARIANTS.get(catalog);
-  if (!variants) {
-    variants = new Map();
-    VARIANTS.set(catalog, variants);
-  }
-  if (!variants.has(footprint)) {
-    variants.set(footprint, matchVariant(catalog, footprint));
-  }
-  return variants.get(footprint);
-}
-const VARIANTS = new WeakMap<AsteroidArtCatalog, Map<string, AsteroidArt | undefined>>();
-function matchVariant(catalog: AsteroidArtCatalog, footprint: string): AsteroidArt | undefined {
-  const entry = footprintOutline(footprint)?.entry;
-  if (!entry) {
-    return undefined;
-  }
-  const byRadius = <T extends { readonly id: string; readonly radius: number }>(
-    list: readonly T[],
-  ) => [...list].sort((a, b) => a.radius - b.radius || a.id.localeCompare(b.id));
-  const footprints = byRadius(ASTEROID_FOOTPRINTS.asteroids.filter((at) => at.size === entry.size));
-  const rocks = byRadius(catalog.asteroids.filter((at) => at.size === entry.size));
-  const rank = footprints.indexOf(entry);
-  return rocks[Math.floor((rank * rocks.length) / footprints.length)];
-}
-
-/**
- * The spin frame a rock shows at `seconds` of flight (art/asteroids.md "Classes"): one rate per
- * rock within its range and one direction, both from the level seed, so frame
- * floor(angle / step) mod count plays ascending or descending. Still rocks and reduced motion
- * show frame 0.
- */
-export function spinFrame(
-  art: AsteroidArt,
-  seed: number,
-  reducedMotion: boolean,
-  id: string,
-  seconds: number,
-): number {
-  if (!art.spin || reducedMotion || art.frames.length < 2) {
-    return 0;
-  }
-  const [slow, fast] = art.spin.degPerSecond;
-  const rate = slow + unit(seed, id, "spin-rate") * (fast - slow);
-  const direction = unit(seed, id, "spin-direction") < 0.5 ? -1 : 1;
-  const angle = unit(seed, id, "spin-phase") * 360 + direction * rate * seconds;
-  const turned = ((angle % 360) + 360) % 360;
-  return Math.floor(turned / (360 / art.frames.length)) % art.frames.length;
 }
 
 /** A frame's silhouette parts in display px relative to the pivot. */

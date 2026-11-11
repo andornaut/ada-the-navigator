@@ -1,3 +1,4 @@
+import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
@@ -508,6 +509,13 @@ function migrateLegacyObjects(objects: unknown): void {
     : Object.values(record(objects) ? objects : {})) {
     if (record(object) && object.weapon !== undefined) {
       object.weapon = legacyWeapon(object.weapon);
+    }
+    // A placeholder rock becomes the Art rock it was drawn as, at that rock's footprint radius.
+    const rock = record(object) && typeof object.asteroid === "string" ? object : undefined;
+    const art = rock ? LEGACY_ASTEROIDS[rock.asteroid as string] : undefined;
+    if (rock && art) {
+      rock.asteroid = art;
+      rock.radius = ASTEROID_SHAPES.get(art)!.radius;
     }
   }
 }

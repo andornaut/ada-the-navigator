@@ -446,6 +446,31 @@ describe("enemy orientation save boundary", () => {
   });
 });
 
+describe("asteroid save boundary", () => {
+  it("restores a placeholder rock as the Art rock it was drawn as, at that rock's radius", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.startSector(1);
+    playOpening(model);
+    const saved = JSON.parse(model.save()) as GameState;
+    const legacy: SpaceObject = {
+      asteroid: "placeholder-huge-1",
+      hp: 16,
+      id: "chunk:9,9:feature",
+      kind: "rock",
+      radius: 92.5,
+      x: 4800,
+      y: 4800,
+    };
+    saved.flight!.objects = [...saved.flight!.objects, legacy];
+    const restored = restoreSave(JSON.stringify(saved));
+    const rock = restored?.flight?.objects.find((object) => object.id === legacy.id);
+    expect(rock).toEqual({ ...legacy, asteroid: "asteroid-h2", radius: 99.5 });
+    // An id that is neither current nor legacy still rejects the save.
+    saved.flight!.objects = [...saved.flight!.objects.slice(0, -1), { ...legacy, asteroid: "x" }];
+    expect(restoreSave(JSON.stringify(saved))).toBeNull();
+  });
+});
+
 describe("current generation save boundary", () => {
   it("roundtrips inactive notable parts, AI and active projectiles exactly", () => {
     const snapshot = notableSnapshot();

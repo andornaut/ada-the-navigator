@@ -1,117 +1,61 @@
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
 
-import {
-  ASTEROID_FOOTPRINTS,
-  ASTEROID_SIZES,
-  readAsteroidCatalog,
-} from "../data/asteroid-catalog.ts";
+import { ASTEROID_ART } from "../data/asteroid-catalog.ts";
 import type { Vec } from "../model/types.ts";
 import {
-  artVariant,
   asteroidFiles,
   asteroidOutline,
   BACKDROP_FIELD,
   backdropRock,
   backdropTint,
-  cellTint,
   driftChips,
   footprintOutline,
   frameSilhouette,
-  mixColor,
   playDepth,
-  SPACE_TINTS,
-  spinFrame,
-  tinted,
+  rockArt,
 } from "./asteroid-art.ts";
 
-const ART = readAsteroidCatalog(
-  JSON.parse(readFileSync(new URL("../../public/art/asteroids.json", import.meta.url), "utf8")),
-)!;
+const ART = ASTEROID_ART;
 
-describe("asteroid placeholder art", () => {
-  it("outlines only the union boundary of lobed asteroids", () => {
-    const lobed = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.collision.length > 1)!;
-    const outline = asteroidOutline(lobed);
+describe("footprint outlines", () => {
+  it("outlines only the union boundary of a footprint with several parts", () => {
+    const rock = ART.asteroids.find((entry) => entry.frames[0]!.footprint.length > 1)!;
+    const footprint = rock.frames[0]!.footprint;
+    const outline = asteroidOutline(footprint);
     const span = ([a, b]: readonly [Vec, Vec]) => Math.hypot(b.x - a.x, b.y - a.y);
     const perimeter = outline.parts
       .flatMap((part) => part.map((at, index) => [at, part[(index + 1) % part.length]!] as const))
       .reduce((sum, edge) => sum + span(edge), 0);
     const drawn = outline.edges.reduce((sum, edge) => sum + span(edge), 0);
-    expect(outline.parts).toHaveLength(lobed.collision.length);
+    expect(outline.parts).toHaveLength(footprint.length);
     expect(drawn).toBeLessThan(perimeter);
     expect(drawn).toBeGreaterThan(perimeter / 3);
-    const single = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.collision.length === 1)!;
-    expect(asteroidOutline(single).edges).toHaveLength(single.collision[0]!.length);
-    expect(footprintOutline(single.id)?.entry).toBe(single);
+    expect(footprintOutline(rock, 0)).toBe(footprintOutline(rock, 0));
   });
 
-  it("places the pivot at the origin of display pixels", () => {
-    const entry = ASTEROID_FOOTPRINTS.asteroids[0]!;
-    const xs = asteroidOutline(entry)
-      .parts.flat()
-      .map((at) => at.x);
-    expect(Math.min(...xs)).toBeLessThan(0);
-    expect(Math.max(...xs)).toBeGreaterThan(0);
-  });
-
-  it("keeps tints light: a small share of the hue mixed into the muted role", () => {
-    const base = 0x403f4d;
-    expect(mixColor(0, 0xffffff, base)).toBe(base);
-    expect(mixColor(1, 0xffffff, base)).toBe(0xffffff);
-    expect(tinted(0.3, "unknown", base)).toBe(base);
-    const lilac = tinted(0.3, "lilac", base);
-    expect(lilac).not.toBe(base);
-    expect(lilac).toBe(mixColor(0.3, SPACE_TINTS.lilac!, base));
-    expect(cellTint(3, -7)).toBe(cellTint(3, -7));
-    expect(new Set([0, 1, 2, 3, 4, 5, 6, 7].map((x) => cellTint(x, 2 * x))).size).toBeGreaterThan(
-      1,
-    );
+  it("projects the world footprint to display px about the pivot, inside the drawn rock", () => {
+    for (const rock of ART.asteroids) {
+      const points = footprintOutline(rock, 0).parts.flat();
+      const drawn = frameSilhouette(rock, 0).flat();
+      const [first] = rock.frames[0]!.footprint[0]!;
+      expect(points[0]!.x).toBeCloseTo(first!.x - first!.y);
+      expect(points[0]!.y).toBeCloseTo((first!.x + first!.y) / 2);
+      // The base sits within the silhouette's horizontal extent.
+      const xs = drawn.map((at) => at.x);
+      for (const at of points) {
+        expect(at.x, rock.id).toBeGreaterThanOrEqual(Math.min(...xs) - 1);
+        expect(at.x, rock.id).toBeLessThanOrEqual(Math.max(...xs) + 1);
+      }
+    }
   });
 });
 
 describe("Art's asteroid sprites", () => {
-  it("dresses every footprint in a rock of its size, larger footprints in larger rocks", () => {
-    for (const size of ASTEROID_SIZES) {
-      const footprints = ASTEROID_FOOTPRINTS.asteroids
-        .filter((entry) => entry.size === size)
-        .sort((a, b) => a.radius - b.radius);
-      const rocks = footprints.map((entry) => artVariant(ART, entry.id)!);
-      expect(rocks.every((rock) => rock.size === size)).toBe(true);
-      // Equal counts per size: each rock dresses exactly one footprint, in radius order.
-      expect(new Set(rocks).size).toBe(rocks.length);
-      expect(rocks.map((rock) => rock.radius)).toEqual(
-        [...rocks].map((rock) => rock.radius).sort((a, b) => a - b),
-      );
+  it("finds each rock by its own id", () => {
+    for (const rock of ART.asteroids) {
+      expect(rockArt(rock.id)).toBe(rock);
     }
-    expect(artVariant(ART, "unknown")).toBeUndefined();
-  });
-
-  it("turns spinning rocks through every frame at their seeded rate, in either direction", () => {
-    const small = ART.asteroids.find((rock) => rock.size === "small")!;
-    const huge = ART.asteroids.find((rock) => rock.size === "huge")!;
-    const [slow, fast] = (small.spin as { degPerSecond: [number, number] }).degPerSecond;
-    const frames = (id: string, seconds: number[]) =>
-      seconds.map((at) => spinFrame(small, 7, false, id, at));
-    // One frame is 15 degrees: at the slowest rate a frame lasts 15 / slow seconds at most.
-    const sampled = frames(
-      "rock-a",
-      Array.from({ length: 400 }, (_, index) => index * 0.25),
-    );
-    expect(new Set(sampled).size).toBe(24);
-    const steps = new Set<number>();
-    for (const id of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
-      const [now, next] = frames(id, [0, 15 / fast]);
-      steps.add((next! - now! + 24) % 24);
-    }
-    // Each rock moves at most one frame per 15 / fast seconds; both directions occur.
-    expect([...steps].every((step) => [0, 1, 23].includes(step))).toBe(true);
-    expect(steps.has(1) && steps.has(23)).toBe(true);
-    expect(spinFrame(small, 7, false, "rock-a", 3)).toBe(spinFrame(small, 7, false, "rock-a", 3));
-    expect(slow).toBeLessThan(fast);
-    expect(spinFrame(small, 7, true, "rock-a", 3)).toBe(0);
-    expect(spinFrame(huge, 7, false, "rock-a", 3)).toBe(0);
+    expect(rockArt("placeholder-small-0")).toBeUndefined();
   });
 
   it("scales a frame's silhouette to display px about the pivot", () => {

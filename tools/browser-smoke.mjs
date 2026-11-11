@@ -1402,12 +1402,17 @@ try {
     import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
-  const [{ ASTEROID_FOOTPRINTS, readAsteroidCatalog }, asteroidArt, { orbitMotion }] =
-    await Promise.all([
-      import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
-      import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
-      import(new URL("../src/model/asteroids.ts", import.meta.url)),
-    ]);
+  const [
+    { ASTEROID_ART, readAsteroidCatalog },
+    asteroidArt,
+    { orbitMotion },
+    { DEVICE_STORAGE_KEYS },
+  ] = await Promise.all([
+    import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
+    import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
+    import(new URL("../src/model/asteroids.ts", import.meta.url)),
+    import(new URL("../src/ui/device-settings.ts", import.meta.url)),
+  ]);
   const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
   assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
   const rockArt = readAsteroidCatalog(await asteroidResponse.json());
@@ -1716,7 +1721,7 @@ try {
     huge: { x: 235, y: 150 },
   };
   const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
-  function asteroidFixture(sector) {
+  function asteroidFixture(sector, drifting = true) {
     const model = new GameModel(PROTOTYPE);
     model.state.unlocked = [1, 2, 3];
     model.startSector(sector);
@@ -1730,19 +1735,19 @@ try {
     flight.seed = backdropSeed(true, flight.player);
     const origin = { ...flight.player };
     for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
-      const footprint = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.size === size);
+      const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);
       const offset = toWorld(screen);
       flight.objects.push({
-        asteroid: footprint.id,
+        asteroid: art.id,
         hp: 99,
         id: `browser-rock:${size}`,
         kind: "rock",
-        radius: footprint.radius,
+        radius: art.footprintRadius,
         x: origin.x + offset.x,
         y: origin.y + offset.y,
       });
     }
-    const small = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.size === "small");
+    const small = ASTEROID_ART.asteroids.find((entry) => entry.size === "small");
     const centre = toWorld({ x: -200, y: -130 });
     // Adding 0 turns -0 into 0, which a save's JSON round-trip would otherwise change.
     const orbit = {
@@ -1753,17 +1758,19 @@ try {
       y: origin.y + centre.y,
     };
     const motion = orbitMotion(flight.time, orbit);
-    flight.objects.push({
-      asteroid: small.id,
-      hp: 99,
-      id: "browser-rock:drifting",
-      kind: "rock",
-      orbit,
-      radius: small.radius,
-      velocity: { x: motion.velocity.x + 0, y: motion.velocity.y + 0 },
-      x: motion.position.x + 0,
-      y: motion.position.y + 0,
-    });
+    if (drifting) {
+      flight.objects.push({
+        asteroid: small.id,
+        hp: 99,
+        id: "browser-rock:drifting",
+        kind: "rock",
+        orbit,
+        radius: small.footprintRadius,
+        velocity: { x: motion.velocity.x + 0, y: motion.velocity.y + 0 },
+        x: motion.position.x + 0,
+        y: motion.position.y + 0,
+      });
+    }
     const serialized = model.save();
     assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts rocks");
     return serialized;
@@ -1849,9 +1856,81 @@ try {
   await captureRocks(1, "asteroids-spin-2.png");
   await captureGalaxy(2);
   await captureGalaxy(3);
+  // Art's footprint overlay: still rocks under reduced motion, so each draws and collides with
+  // frame 0; each rock's footprint is outlined over the sprite, with its pivot marked.
+  const reducedKey = DEVICE_STORAGE_KEYS.reducedMotion;
+  await page.evaluate((key) => localStorage.setItem(key, "on"), reducedKey);
+  const overlayFixture = asteroidFixture(1, false);
+  await seedOnce(overlayFixture, "ada-browser.asteroid-overlay.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await page
+    .locator('#game-status[data-asteroids="art"]')
+    .waitFor({ state: "attached", timeout: 30000 });
+  const overlayCanvas = page.locator("canvas");
+  await overlayCanvas.waitFor({ state: "visible" });
+  const overlayImage = await overlayCanvas.screenshot();
+  const overlayState = await readSave();
+  const outlines = overlayState.flight.objects
+    .filter((object) => object.id.startsWith("browser-rock:"))
+    .map((object) => {
+      const at = toScreen({
+        x: object.x - overlayState.flight.player.x,
+        y: object.y - overlayState.flight.player.y,
+      });
+      const outline = asteroidArt.footprintOutline(asteroidArt.rockArt(object.asteroid), 0);
+      return {
+        at,
+        edges: outline.edges.map(([start, end]) => [
+          { x: at.x + start.x, y: at.y + start.y },
+          { x: at.x + end.x, y: at.y + end.y },
+        ]),
+        id: object.asteroid,
+      };
+    });
+  const overlayIntrinsic = await overlayCanvas.evaluate((element) => ({
+    height: element.height,
+    width: element.width,
+  }));
+  const overlayPng = await page.evaluate(
+    async ({ encoded, intrinsic, outlines }) => {
+      const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+      const sample = document.createElement("canvas");
+      sample.width = bitmap.width;
+      sample.height = bitmap.height;
+      const drawing = sample.getContext("2d");
+      drawing.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      const scale = sample.width / intrinsic.width;
+      const left = Math.max(0, (intrinsic.width - 720) / 2);
+      const map = (point) => [(point.x + left) * scale, point.y * scale];
+      drawing.lineWidth = 2;
+      drawing.strokeStyle = "#ff00ff";
+      drawing.fillStyle = "#ff00ff";
+      for (const outline of outlines) {
+        drawing.beginPath();
+        for (const [start, end] of outline.edges) {
+          drawing.moveTo(...map(start));
+          drawing.lineTo(...map(end));
+        }
+        drawing.stroke();
+        const [x, y] = map(outline.at);
+        drawing.fillRect(x - 3, y - 3, 6, 6);
+      }
+      return sample.toDataURL("image/png").split(",")[1];
+    },
+    { encoded: overlayImage.toString("base64"), intrinsic: overlayIntrinsic, outlines },
+  );
+  writeFileSync(`${output}/asteroids-footprints.png`, Buffer.from(overlayPng, "base64"));
+  await page.evaluate((key) => localStorage.removeItem(key), reducedKey);
   save("asteroid-art-proof.json", {
     scope: "Rendered canonical rock fixtures; screenshot review by Art required",
     captures: asteroidCaptures,
+    footprints: {
+      image: "asteroids-footprints.png",
+      rocks: outlines.map(({ at, id }) => ({ id, pivot: at })),
+      scope: "Frame 0 footprints in magenta over the sprites, under reduced motion",
+    },
   });
   events.checks.push(
     "Art's rocks draw in neutral stone in every galaxy over a tinted backdrop field, with spin " +

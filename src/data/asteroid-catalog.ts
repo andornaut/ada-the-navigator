@@ -1,3 +1,4 @@
+import ART_FILE from "../../public/art/asteroids.json" with { type: "json" };
 import type { Vec } from "../model/types.ts";
 
 export const ASTEROID_SIZES = ["small", "medium", "large", "huge"] as const;
@@ -8,10 +9,15 @@ interface Size2 {
   readonly height: number;
 }
 
-/** One drawn frame of an Art asteroid: its SVG and its silhouette as convex parts in frame px. */
+/**
+ * One frame of an Art asteroid: its SVG, its drawn silhouette as convex parts in frame px (for
+ * drawing bounds and the drift cue), and its footprint, the rock's base on the world plane, as
+ * convex parts in world units from the pivot (for hits and placement).
+ */
 export interface AsteroidArtFrame {
   readonly file: string;
   readonly collision: readonly (readonly Vec[])[];
+  readonly footprint: readonly (readonly Vec[])[];
 }
 /**
  * One asteroid in Art's `asteroids.json` version 1 (art/asteroids.md "Data"). Frame values are
@@ -25,8 +31,10 @@ export interface AsteroidArt {
   readonly display: Size2;
   /** Fraction of the frame at the rock's base centre: its world position and sort point. */
   readonly pivot: Vec;
-  /** Frame px from the pivot to the farthest outline point over all frames. */
+  /** Frame px from the pivot to the farthest drawn outline point over all frames. */
   readonly radius: number;
+  /** World units from the pivot to the farthest footprint point over all frames. */
+  readonly footprintRadius: number;
   /** Drift speed range in logical px per second for eligible rocks. */
   readonly drift: { readonly eligible: boolean; readonly speed: readonly [number, number] };
   /** Spin range in degrees per second, or false for one still frame. */
@@ -127,8 +135,9 @@ function readParts(value: unknown): Vec[][] | undefined {
 function readFrame(value: unknown): AsteroidArtFrame | undefined {
   const entry = fields(value);
   const collision = readParts(entry?.collision);
-  return entry && text(entry.file) && entry.file.startsWith("/") && collision
-    ? { collision, file: entry.file }
+  const footprint = readParts(entry?.footprint);
+  return entry && text(entry.file) && entry.file.startsWith("/") && collision && footprint
+    ? { collision, file: entry.file, footprint }
     : undefined;
 }
 
@@ -148,6 +157,7 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
     !display ||
     !pivot ||
     !positive(entry.radius) ||
+    !positive(entry.footprintRadius) ||
     !drift ||
     typeof drift.eligible !== "boolean" ||
     !pair(drift.speed) ||
@@ -163,6 +173,7 @@ function readAsteroid(value: unknown): AsteroidArt | undefined {
   return {
     display,
     drift: { eligible: drift.eligible, speed: [drift.speed[0], drift.speed[1]] },
+    footprintRadius: entry.footprintRadius,
     frame,
     frames: frames as AsteroidArtFrame[],
     id: entry.id,
@@ -266,140 +277,34 @@ export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefi
   };
 }
 
+function required(catalog: AsteroidArtCatalog | undefined): AsteroidArtCatalog {
+  if (!catalog) {
+    throw new Error("public/art/asteroids.json does not read as Art's version 1 catalog");
+  }
+  return catalog;
+}
+
+/** Art's rocks and backdrop: collision, placement and drawing all read it. */
+export const ASTEROID_ART: AsteroidArtCatalog = required(readAsteroidCatalog(ART_FILE));
+
 /**
- * The model's collision footprint of one asteroid variant, in a projected frame like Art's:
- * convex parts whose union is the rock's base on the world plane. Collision and placement read
- * these, so gameplay keeps its sizes while the view draws Art's taller rocks over them.
+ * CLEANUP (added 2026-11-11): saves from before Art's footprints name the former seeded
+ * placeholder variants; each maps to the Art rock it was drawn as. Remove once every saved
+ * flight has been reopened on this version.
  */
-export interface AsteroidFootprint {
-  readonly id: string;
-  readonly size: AsteroidSize;
-  readonly frame: Size2;
-  readonly display: Size2;
-  /** Fraction of the frame at the object's world position. */
-  readonly pivot: Vec;
-  readonly collision: readonly (readonly Vec[])[];
-  /** Bounding radius in frame pixels. */
-  readonly radius: number;
-  /** Drift speed range in world units per second for eligible variants. */
-  readonly drift: { readonly eligible: boolean; readonly speed: readonly [number, number] };
-  /** Outline tint for the drawing fallback when Art's sprites are unavailable. */
-  readonly tint: string;
-}
-export interface AsteroidFootprints {
-  readonly asteroids: readonly AsteroidFootprint[];
-}
-
-// The model's footprints: seeded irregular bases. World bounding radii per size, variant counts,
-// drift eligibility and speeds are provisional playtest values.
-const PLACEHOLDER_SIZES: Readonly<
-  Record<
-    AsteroidSize,
-    { radius: [number, number]; variants: number; lobes: number; drift: [number, number] | null }
-  >
-> = {
-  huge: { drift: null, lobes: 2, radius: [84, 104], variants: 3 },
-  large: { drift: null, lobes: 1, radius: [52, 70], variants: 3 },
-  medium: { drift: [6, 14], lobes: 0, radius: [24, 34], variants: 4 },
-  small: { drift: [10, 24], lobes: 0, radius: [12, 18], variants: 4 },
+export const LEGACY_ASTEROIDS: Readonly<Record<string, string>> = {
+  "placeholder-huge-0": "asteroid-h1",
+  "placeholder-huge-1": "asteroid-h2",
+  "placeholder-huge-2": "asteroid-h3",
+  "placeholder-large-0": "asteroid-l3",
+  "placeholder-large-1": "asteroid-l2",
+  "placeholder-large-2": "asteroid-l1",
+  "placeholder-medium-0": "asteroid-m1",
+  "placeholder-medium-1": "asteroid-m2",
+  "placeholder-medium-2": "asteroid-m3",
+  "placeholder-medium-3": "asteroid-m4",
+  "placeholder-small-0": "asteroid-s2",
+  "placeholder-small-1": "asteroid-s4",
+  "placeholder-small-2": "asteroid-s1",
+  "placeholder-small-3": "asteroid-s3",
 };
-const PLACEHOLDER_TINTS = ["slate", "rust", "moss", "lilac"] as const;
-
-function placeholderRandom(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (Math.imul(state ^ (state >>> 15), 0x2c1b3c6d) + 0x9e3779b9) >>> 0;
-    state ^= state >>> 12;
-    return (state >>> 0) / 0x100000000;
-  };
-}
-
-/** Convex hull, counterclockwise, of an irregular ring of points. */
-function hull(points: Vec[]): Vec[] {
-  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
-  const cross = (o: Vec, a: Vec, b: Vec) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-  const lower: Vec[] = [];
-  for (const at of sorted) {
-    while (lower.length >= 2 && cross(lower.at(-2)!, lower.at(-1)!, at) <= 0) {
-      lower.pop();
-    }
-    lower.push(at);
-  }
-  const upper: Vec[] = [];
-  for (const at of sorted.reverse()) {
-    while (upper.length >= 2 && cross(upper.at(-2)!, upper.at(-1)!, at) <= 0) {
-      upper.pop();
-    }
-    upper.push(at);
-  }
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
-}
-
-function blob(next: () => number, center: Vec, radius: number): Vec[] {
-  const count = 7 + Math.floor(next() * 5);
-  const start = next() * Math.PI * 2;
-  const points: Vec[] = [];
-  for (let index = 0; index < count; index++) {
-    const angle = start + ((index + (next() - 0.5) * 0.6) / count) * Math.PI * 2;
-    const reach = radius * (0.62 + next() * 0.38);
-    points.push({ x: center.x + Math.cos(angle) * reach, y: center.y + Math.sin(angle) * reach });
-  }
-  return hull(points);
-}
-
-const project = (at: Vec): Vec => ({ x: at.x - at.y, y: (at.x + at.y) / 2 });
-
-/** Seeded irregular footprints in a projected frame: convex parts, lobed for large sizes. */
-export function footprintAsteroids(seed: number): AsteroidFootprints {
-  const next = placeholderRandom(seed);
-  const asteroids: AsteroidFootprint[] = [];
-  for (const size of ASTEROID_SIZES) {
-    const plan = PLACEHOLDER_SIZES[size];
-    for (let variant = 0; variant < plan.variants; variant++) {
-      const target = plan.radius[0] + next() * (plan.radius[1] - plan.radius[0]);
-      // Lobes overlap the core so the union stays one irregular, concave mass.
-      const parts = [blob(next, { x: 0, y: 0 }, 0.72)];
-      for (let lobe = 0; lobe < plan.lobes; lobe++) {
-        const angle = next() * Math.PI * 2;
-        const offset = 0.42 + next() * 0.12;
-        parts.push(
-          blob(
-            next,
-            { x: Math.cos(angle) * offset, y: Math.sin(angle) * offset },
-            0.38 + next() * 0.12,
-          ),
-        );
-      }
-      const reach = Math.max(...parts.flat().map((at) => Math.hypot(at.x, at.y)));
-      const world = parts.map((part) =>
-        part.map((at) => ({ x: (at.x / reach) * target, y: (at.y / reach) * target })),
-      );
-      // Projection preserves convexity; frame pixels are the projected sprite at scale one.
-      const screen = world.map((part) => part.map(project));
-      const xs = screen.flat().map((at) => at.x);
-      const ys = screen.flat().map((at) => at.y);
-      const margin = 2;
-      const left = Math.min(...xs) - margin;
-      const top = Math.min(...ys) - margin;
-      const width = Math.ceil(Math.max(...xs) - left + margin);
-      const height = Math.ceil(Math.max(...ys) - top + margin);
-      asteroids.push({
-        collision: screen.map((part) => part.map((at) => ({ x: at.x - left, y: at.y - top }))),
-        display: { height, width },
-        drift: plan.drift
-          ? { eligible: true, speed: plan.drift }
-          : { eligible: false, speed: [0, 0] },
-        frame: { height, width },
-        id: `placeholder-${size}-${variant}`,
-        pivot: { x: -left / width, y: -top / height },
-        radius: Math.max(...screen.flat().map((at) => Math.hypot(at.x, at.y))),
-        size,
-        tint: PLACEHOLDER_TINTS[(asteroids.length + variant) % PLACEHOLDER_TINTS.length]!,
-      });
-    }
-  }
-  return { asteroids };
-}
-
-/** The model's footprints, one per Art variant of each size. */
-export const ASTEROID_FOOTPRINTS: AsteroidFootprints = footprintAsteroids(0x5eed);

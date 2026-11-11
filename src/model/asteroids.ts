@@ -1,19 +1,23 @@
 import {
-  ASTEROID_FOOTPRINTS,
-  type AsteroidFootprint,
-  type AsteroidFootprints,
+  ASTEROID_ART,
+  type AsteroidArt,
+  type AsteroidArtCatalog,
   type AsteroidSize,
 } from "../data/asteroid-catalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
-/** An asteroid variant in world units: convex parts as offsets from the object position. */
+/**
+ * An asteroid in world units (art/asteroids.md "Footprint"): one footprint per drawn frame,
+ * convex parts as offsets from the object position, with the widest frame's radius for the
+ * broad phase and placement.
+ */
 export interface AsteroidShape {
   readonly id: string;
   readonly size: AsteroidSize;
   readonly radius: number;
-  readonly parts: readonly (readonly Vec[])[];
-  readonly drift: AsteroidFootprint["drift"];
-  readonly tint: string;
+  readonly frames: readonly (readonly (readonly Vec[])[])[];
+  readonly drift: AsteroidArt["drift"];
+  readonly spin: AsteroidArt["spin"];
 }
 export interface Contact {
   /** Unit vector from the obstacle surface toward the circle center. */
@@ -22,33 +26,60 @@ export interface Contact {
   readonly depth: number;
 }
 
-/** Inverse of the isometric projection `screen = (x - y, (x + y) / 2)`. */
-const unproject = (at: Vec): Vec => ({ x: at.x / 2 + at.y, y: at.y - at.x / 2 });
-
-export function asteroidShape(entry: AsteroidFootprint): AsteroidShape {
-  const scale = {
-    x: entry.display.width / entry.frame.width,
-    y: entry.display.height / entry.frame.height,
-  };
-  const origin = { x: entry.pivot.x * entry.frame.width, y: entry.pivot.y * entry.frame.height };
-  const parts = entry.collision.map((part) =>
-    part.map((at) => unproject({ x: (at.x - origin.x) * scale.x, y: (at.y - origin.y) * scale.y })),
-  );
+export function asteroidShape(art: AsteroidArt): AsteroidShape {
   return {
-    drift: entry.drift,
-    id: entry.id,
-    parts,
-    radius: Math.max(...parts.flat().map((at) => Math.hypot(at.x, at.y))),
-    size: entry.size,
-    tint: entry.tint,
+    drift: art.drift,
+    frames: art.frames.map((frame) => frame.footprint),
+    id: art.id,
+    radius: art.footprintRadius,
+    size: art.size,
+    spin: art.spin,
   };
 }
 
-export function asteroidShapes(catalog: AsteroidFootprints): ReadonlyMap<string, AsteroidShape> {
-  return new Map(catalog.asteroids.map((entry) => [entry.id, asteroidShape(entry)]));
+export function asteroidShapes(catalog: AsteroidArtCatalog): ReadonlyMap<string, AsteroidShape> {
+  return new Map(catalog.asteroids.map((art) => [art.id, asteroidShape(art)]));
 }
 
-export const ASTEROID_SHAPES = asteroidShapes(ASTEROID_FOOTPRINTS);
+export const ASTEROID_SHAPES = asteroidShapes(ASTEROID_ART);
+
+function hash(seed: number, text: string): number {
+  let value = seed >>> 0 || 0x811c9dc5;
+  for (const character of text) {
+    value = Math.imul(value ^ character.charCodeAt(0), 0x01000193) >>> 0;
+  }
+  value ^= value >>> 15;
+  value = Math.imul(value, 0x2c1b3c6d) >>> 0;
+  return (value ^ (value >>> 12)) >>> 0;
+}
+/** A stable value in [0, 1) for a seed, an id and a salt. */
+function unit(seed: number, id: string, salt: string): number {
+  return hash(seed, `${id}:${salt}`) / 0x100000000;
+}
+
+/**
+ * The frame a rock shows and collides with at `seconds` of flight (art/asteroids.md
+ * "Classes"): one rate per rock within its spin range and one direction, both from the level
+ * seed, so frame floor(angle / step) mod count plays ascending or descending. Still rocks and
+ * reduced motion show frame 0.
+ */
+export function rockFrame(
+  shape: { readonly frames: readonly unknown[]; readonly spin: AsteroidShape["spin"] },
+  seed: number,
+  reducedMotion: boolean,
+  id: string,
+  seconds: number,
+): number {
+  if (!shape.spin || reducedMotion || shape.frames.length < 2) {
+    return 0;
+  }
+  const [slow, fast] = shape.spin.degPerSecond;
+  const rate = slow + unit(seed, id, "spin-rate") * (fast - slow);
+  const direction = unit(seed, id, "spin-direction") < 0.5 ? -1 : 1;
+  const angle = unit(seed, id, "spin-phase") * 360 + direction * rate * seconds;
+  const turned = ((angle % 360) + 360) % 360;
+  return Math.floor(turned / (360 / shape.frames.length)) % shape.frames.length;
+}
 
 function closestOnSegment(point: Vec, a: Vec, b: Vec): Vec {
   const dx = b.x - a.x;
@@ -125,7 +156,12 @@ export function asteroidSize(object: SpaceObject): AsteroidSize {
 }
 
 /** Deepest overlap of a circle with a scenery object, or null when they do not touch. */
-export function sceneryContact(object: SpaceObject, center: Vec, radius: number): Contact | null {
+export function sceneryContact(
+  object: SpaceObject,
+  center: Vec,
+  radius: number,
+  frame = 0,
+): Contact | null {
   const dx = center.x - object.x;
   const dy = center.y - object.y;
   const gap = Math.hypot(dx, dy);
@@ -142,7 +178,7 @@ export function sceneryContact(object: SpaceObject, center: Vec, radius: number)
     return null;
   }
   let deepest: Contact | null = null;
-  for (const part of shape.parts) {
+  for (const part of shape.frames[frame] ?? shape.frames[0]!) {
     const contact = partContact(part, { x: dx, y: dy }, radius);
     if (contact && (!deepest || contact.depth > deepest.depth)) {
       deepest = contact;
@@ -157,6 +193,7 @@ export function sceneryBlocksSegment(
   start: Vec,
   end: Vec,
   inflate: number,
+  frame = 0,
 ): boolean {
   const shape = sceneryShape(object);
   const nearest = closestOnSegment(object, start, end);
@@ -175,7 +212,7 @@ export function sceneryBlocksSegment(
   for (let step = 0; step <= steps; step++) {
     const t = step / steps;
     const at = { x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t };
-    if (sceneryContact(object, at, Math.max(inflate, 1e-6))) {
+    if (sceneryContact(object, at, Math.max(inflate, 1e-6), frame)) {
       return true;
     }
   }

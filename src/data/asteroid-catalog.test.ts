@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { readAsteroidCatalog } from "./asteroid-catalog.ts";
+import { ASTEROID_ART, LEGACY_ASTEROIDS, readAsteroidCatalog } from "./asteroid-catalog.ts";
 import { GALAXIES } from "./storybook.ts";
 
 const PUBLIC = new URL("../../public", import.meta.url).pathname;
@@ -22,6 +22,18 @@ describe("Art's asteroid catalog, version 1", () => {
     expect(catalog).toBeDefined();
     expect(catalog.displayScale).toBe(0.4375);
     expect(catalog.stone).toHaveLength(5);
+    // The model's catalog is this file, read at import.
+    expect(ASTEROID_ART).toEqual(catalog);
+  });
+
+  it("names a legacy placeholder's rock of the same size class for every old id", () => {
+    const sizes = new Map(catalog.asteroids.map((rock) => [rock.id, rock.size]));
+    const ids = Object.keys(LEGACY_ASTEROIDS);
+    expect(ids).toHaveLength(14);
+    for (const [legacy, id] of Object.entries(LEGACY_ASTEROIDS)) {
+      expect(sizes.get(id), legacy).toBe(legacy.split("-")[1]);
+    }
+    expect(new Set(Object.values(LEGACY_ASTEROIDS)).size).toBe(14);
   });
 
   it("gives small and medium rocks 24 spin frames and large and huge one still frame", () => {
@@ -60,6 +72,25 @@ describe("Art's asteroid catalog, version 1", () => {
       { ...FILE, asteroids: [{ ...first, collision: [[[0, 0]]], frames: undefined }] },
     ],
     ["a spin range pair", { ...FILE, asteroids: [{ ...first, spin: [8, 18] }] }],
+    [
+      "a rock without its footprint radius",
+      { ...FILE, asteroids: [{ ...first, footprintRadius: 0 }] },
+    ],
+    [
+      "a frame without its footprint",
+      {
+        ...FILE,
+        asteroids: [
+          {
+            ...first,
+            frames: (first.frames as Record<string, unknown>[]).map((frame) => ({
+              ...frame,
+              footprint: undefined,
+            })),
+          },
+        ],
+      },
+    ],
     ["a still rock with several frames", { ...FILE, asteroids: [{ ...first, spin: false }] }],
     [
       "a concave collision part",

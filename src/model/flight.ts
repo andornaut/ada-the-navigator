@@ -20,6 +20,7 @@ import {
   bounce,
   orbitMotion,
   reflectDirection,
+  rockFrame,
   sceneryBlocksSegment,
   sceneryContact,
   sceneryShape,
@@ -80,6 +81,15 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
  * no field; a restored or newly pressed stick starts from the velocity heading.
  */
 const movementHeadings = new WeakMap<FlightState, Vec>();
+// Whether the current step runs under reduced motion, which holds every rock on frame 0.
+const reducedMotions = new WeakMap<FlightState, boolean>();
+/** The frame a rock shows and collides with now: its spin frame, or 0 when it is still. */
+function frameOf(flight: FlightState, object: SpaceObject): number {
+  const shape = sceneryShape(object);
+  return shape
+    ? rockFrame(shape, flight.seed, reducedMotions.get(flight) ?? false, object.id, flight.time)
+    : 0;
+}
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
@@ -218,7 +228,7 @@ function resolveScenery(
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
         continue;
       }
-      const contact = sceneryContact(object, position, radius);
+      const contact = sceneryContact(object, position, radius, frameOf(flight, object));
       if (contact && (!deepest || contact.depth > deepest.contact.depth)) {
         deepest = { contact, object };
       }
@@ -1182,7 +1192,7 @@ function enemies(
       (obstacle) =>
         SCENERY.includes(obstacle.kind) &&
         obstacle.hp > 0 &&
-        sceneryBlocksSegment(obstacle, object, flight.player, 0),
+        sceneryBlocksSegment(obstacle, object, flight.player, 0, frameOf(flight, obstacle)),
     );
     const intent = stepEnemy(
       definition,
@@ -1342,7 +1352,9 @@ function shots(
         if (
           flight.objects.some(
             (object) =>
-              SCENERY.includes(object.kind) && object.hp > 0 && sceneryContact(object, shot, 3),
+              SCENERY.includes(object.kind) &&
+              object.hp > 0 &&
+              sceneryContact(object, shot, 3, frameOf(flight, object)),
           )
         ) {
           shot.life = 0;
@@ -1386,7 +1398,7 @@ function strike(
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
         ? distance(shot, object) > object.radius + 3
-        : !sceneryContact(object, shot, 3))
+        : !sceneryContact(object, shot, 3, frameOf(flight, object)))
     ) {
       continue;
     }
@@ -1646,6 +1658,7 @@ function sceneryEntry(
   origin: Vec,
   direction: Vec,
   range: number,
+  frame: number,
   object: SpaceObject,
 ): number | null {
   const shape = sceneryShape(object);
@@ -1657,7 +1670,7 @@ function sceneryEntry(
   const exit = Math.min(range, entry + 2 * bound);
   for (let at = entry; at <= exit; at += 2) {
     const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-    if (sceneryContact(object, point, BEAM.halfWidth)) {
+    if (sceneryContact(object, point, BEAM.halfWidth, frame)) {
       return at;
     }
   }
@@ -1691,7 +1704,7 @@ function fireBeam(
       continue;
     }
     if (SCENERY.includes(object.kind)) {
-      nearer(object, null, sceneryEntry(origin, direction, range, object));
+      nearer(object, null, sceneryEntry(origin, direction, range, frameOf(flight, object), object));
     } else if (object.kind === "enemy" && object.enemy) {
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
         for (const part of liveParts(content, object)) {
@@ -1860,6 +1873,7 @@ export function stepFlight(
   flight: FlightState,
 ): FlightEvent[] {
   beginFlightStep(flight);
+  reducedMotions.set(flight, input.reducedMotion ?? false);
   const events: FlightEvent[] = [];
   if (!Number.isFinite(dt) || dt <= 0 || flight.shield <= 0) {
     return events;

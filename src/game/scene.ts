@@ -1,10 +1,6 @@
 import Phaser from "phaser";
 
-import {
-  type AsteroidArt,
-  type AsteroidArtCatalog,
-  readAsteroidCatalog,
-} from "../data/asteroid-catalog.ts";
+import { ASTEROID_ART, type AsteroidArt } from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
@@ -14,6 +10,7 @@ import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
+import { rockFrame } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
@@ -52,18 +49,15 @@ import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
 import {
-  artVariant,
   type AsteroidOutline,
   BACKDROP_FIELD,
   backdropRock,
   backdropTint,
-  cellTint,
   driftChips,
   footprintOutline,
   hexNumber,
   playDepth,
-  spinFrame,
-  tinted,
+  rockArt,
 } from "./asteroid-art.ts";
 import {
   type DestructionData,
@@ -208,8 +202,8 @@ export class PrototypeScene extends Phaser.Scene {
   private litFlight: number | undefined;
   private destruction: DestructionData | undefined;
   private shards = new Map<string, ShardData>();
-  // Art's rocks and backdrop, once its catalog and every frame have loaded.
-  private asteroidArt: AsteroidArtCatalog | undefined;
+  // Art's rocks and backdrop; their frames load on demand.
+  private readonly asteroidArt = ASTEROID_ART;
   private backdropSprites = new Map<string, Phaser.GameObjects.Image>();
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
@@ -263,7 +257,6 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as {
         assets: Asset[];
-        asteroids?: string;
         galaxies?: string;
         quantumJump?: string;
         spacePalette?: string;
@@ -276,9 +269,6 @@ export class PrototypeScene extends Phaser.Scene {
       }
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
-      }
-      if (manifest.asteroids) {
-        this.load.json("asteroids", manifest.asteroids);
       }
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -730,12 +720,8 @@ export class PrototypeScene extends Phaser.Scene {
    * time it is drawn, so starting the scene never waits on 202 SVGs.
    */
   private loadAsteroidArt(): void {
-    const catalog = readAsteroidCatalog(this.cache.json.get("asteroids"));
-    this.asteroidArt = catalog;
+    const catalog = ASTEROID_ART;
     this.shell.setAsteroidArt(false);
-    if (!catalog) {
-      return;
-    }
     const first = [
       ...catalog.asteroids.map((rock) => rock.frames[0]!.file),
       ...catalog.backdrop.sprites.map((sprite) => sprite.file),
@@ -866,12 +852,12 @@ export class PrototypeScene extends Phaser.Scene {
       return;
     }
     for (const event of this.model.flightEvents) {
-      const art = event.type === "asteroidDestroyed" && artVariant(catalog, event.asteroid);
+      const art = event.type === "asteroidDestroyed" && rockArt(event.asteroid);
       if (art && event.type === "asteroidDestroyed") {
         this.rockBreaks.push({
           art,
           at: { x: event.x, y: event.y },
-          frame: spinFrame(art, flight.seed, this.reducedMotion, event.id, flight.time),
+          frame: rockFrame(art, flight.seed, this.reducedMotion, event.id, flight.time),
           id: event.id,
           startedMs: nowMs,
         });
@@ -1052,10 +1038,8 @@ export class PrototypeScene extends Phaser.Scene {
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
     this.specks = [];
-    // Dust specks take the galaxy's backdropSide; without Art they keep a light per-cell tint.
-    const speckColor = this.asteroidArt
-      ? hexNumber(backdropTint(this.asteroidArt, flight.sector).backdropSide)
-      : undefined;
+    // Dust specks take the galaxy's backdropSide.
+    const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.sector).backdropSide);
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.project({
@@ -1065,10 +1049,7 @@ export class PrototypeScene extends Phaser.Scene {
         if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
           this.specks.push(point);
         }
-        this.ink.fillStyle(
-          speckColor ?? tinted(0.3, cellTint(x, y), this.palette.environmentDetail),
-          0.6,
-        );
+        this.ink.fillStyle(speckColor, 0.6);
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
@@ -1761,12 +1742,9 @@ export class PrototypeScene extends Phaser.Scene {
     const radius = definition
       ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2)
       : object.radius;
-    const rock =
-      object.asteroid && this.asteroidArt
-        ? artVariant(this.asteroidArt, object.asteroid)
-        : undefined;
+    const rock = object.asteroid ? rockArt(object.asteroid) : undefined;
     // Art's rocks reach past their footprint; cull by the drawn reach.
-    const reach = rock ? Math.max(radius, rock.radius * this.asteroidArt!.displayScale) : radius;
+    const reach = rock ? Math.max(radius, rock.radius * this.asteroidArt.displayScale) : radius;
     if (
       point.x < -reach - 60 ||
       point.y < -reach - 60 ||
@@ -1839,11 +1817,6 @@ export class PrototypeScene extends Phaser.Scene {
           this.drawAsteroidSprite(object, point, rock);
           break;
         }
-        const art = object.asteroid ? footprintOutline(object.asteroid) : undefined;
-        if (art) {
-          this.drawAsteroid(point, art.entry.tint, art.outline);
-          break;
-        }
         this.ink.fillEllipse(point.x, point.y, radius * 2, radius * 1.4);
         this.ink.strokeEllipse(point.x, point.y, radius * 2, radius * 1.4);
         if (object.kind === "rock") {
@@ -1875,13 +1848,10 @@ export class PrototypeScene extends Phaser.Scene {
    */
   private drawAsteroidSprite(object: SpaceObject, point: Vec, art: AsteroidArt): void {
     const flight = this.model.state.flight!;
-    const frame = spinFrame(art, flight.seed, this.reducedMotion, object.id, flight.time);
+    const frame = rockFrame(art, flight.seed, this.reducedMotion, object.id, flight.time);
     const texture = this.rockFrameTexture(art, frame);
     if (!texture) {
-      const placeholder = object.asteroid ? footprintOutline(object.asteroid) : undefined;
-      if (placeholder) {
-        this.drawAsteroid(point, placeholder.entry.tint, placeholder.outline);
-      }
+      this.drawAsteroid(point, footprintOutline(art, frame));
       return;
     }
     this.objectSprite(object.id, texture)
@@ -2072,16 +2042,17 @@ export class PrototypeScene extends Phaser.Scene {
     graphics.fillStyle(colour, 1);
   }
 
-  /** Placeholder asteroid: its collision parts filled as one mass, outlined on the union. */
-  private drawAsteroid(point: Vec, tint: string, outline: AsteroidOutline): void {
-    this.ink.fillStyle(tinted(0.14, tint, this.palette.environment));
+  /** A rock whose frame has not loaded: its footprint in shadow stone, outlined on the union. */
+  private drawAsteroid(point: Vec, outline: AsteroidOutline): void {
+    const stone = this.asteroidArt.stone;
+    this.ink.fillStyle(hexNumber(stone.at(-1)!));
     for (const part of outline.parts) {
       this.ink.fillPoints(
         part.map((at) => new Phaser.Math.Vector2(point.x + at.x, point.y + at.y)),
         true,
       );
     }
-    this.ink.lineStyle(1.5, tinted(0.3, tint, this.palette.environmentDetail));
+    this.ink.lineStyle(1.5, hexNumber(stone[1]!));
     for (const [start, end] of outline.edges) {
       this.ink.lineBetween(point.x + start.x, point.y + start.y, point.x + end.x, point.y + end.y);
     }
