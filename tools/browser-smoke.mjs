@@ -1015,7 +1015,7 @@ try {
   const jumpNotice = await page.locator("#game-status").textContent();
   assert.ok(
     jumpNotice.includes(PROTOTYPE.labels.jumpHome) &&
-      jumpNotice.includes("Your Missiles was lost.") &&
+      jumpNotice.includes("Your Rapid Missile was lost.") &&
       jumpNotice.includes("Recharging cost 10 Stardust."),
     `The jump home notice must name the loss and the fee: ${jumpNotice}`,
   );
@@ -1109,11 +1109,15 @@ try {
         Math.PI,
     )
     .sort((a, b) => a - b);
-  assert.equal(angles.length, 3, "A real triple-laser volley must emit three simultaneous bolts");
+  assert.equal(
+    angles.length,
+    3,
+    "A real level 1 Multi-Laser volley must emit three simultaneous bolts",
+  );
   for (const [index, offset] of [-20, 0, 20].entries()) {
     assert.ok(
       Math.abs(angles[index] - angles[1] - offset) < 0.000001,
-      "The visible projected triple-laser volley must retain its approved ±20 degree spread",
+      "The visible projected level 1 Multi-Laser volley must retain its approved ±20 degree spread",
     );
   }
   const scatter = await heldVolley("scattershot", "dot", 7, true);
