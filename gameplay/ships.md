@@ -101,7 +101,11 @@ provisional playtest tuning.
 
 ## Presentation
 
-Each galaxy themes its enemy ships as one visual family. Shapes stay simple and
+All art is one shared asset bank. Each galaxy's data references shared asset ids
+rather than owning its art, so an asset can move between galaxies where it suits
+that galaxy's field; story-bound content such as Sunflower's three outposts stays
+with its galaxy. Each galaxy still gives its enemy ships one coherent visual
+family. Shapes stay simple and
 readable at display size, with distinct silhouettes by role: a small darting
 swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
