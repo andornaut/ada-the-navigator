@@ -130,6 +130,11 @@ export interface Behaviour {
   jobs: boolean;
   /** Seconds docked to read a board and take a job, or to hand over a delivery. */
   dockSeconds: number;
+  /**
+   * Chance the player takes a job when docked without one. Declining sends the player back to
+   * exploring until the next station is discovered.
+   */
+  jobTake: number;
   /** Chance a delivery to a discovered station or known outpost uses Travel instead of flying. */
   jobTravel: number;
   /** Seconds a Travel jump takes, with its effect. */
@@ -197,6 +202,7 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   restockPacks: 3,
   jobs: false,
   dockSeconds: 10,
+  jobTake: 1,
   jobTravel: 0.5,
   travelSeconds: 4,
 };
@@ -677,6 +683,8 @@ export function simulate(input: SimulationInput): RunResult {
   let tow: { x: number; y: number } | null = null;
   let search: { x: number; y: number } | null = null;
   let travelDecided = false;
+  // Whether the player heads for a station to take the next job.
+  let seeking = true;
   const earn = (source: Source, amount: number) => {
     result.stardust[source] += amount;
     balance += amount;
@@ -839,6 +847,10 @@ export function simulate(input: SimulationInput): RunResult {
       return;
     }
     advance(behaviour.dockSeconds);
+    seeking = rng() < behaviour.jobTake;
+    if (!seeking) {
+      return;
+    }
     const board = stationBoard(boardContext(), book, site);
     const offer = board[Math.floor(rng() * board.length)];
     if (!offer) {
@@ -856,7 +868,7 @@ export function simulate(input: SimulationInput): RunResult {
     ({ x: number; y: number } & { reach: number; station?: StationSite }) | null => {
     const held = heldJob(sector, book);
     if (!held) {
-      if (!behaviour.jobs) {
+      if (!behaviour.jobs || !seeking) {
         return null;
       }
       const sites = [...known.values()].filter((site) => !emptyBoards.has(site.id));
