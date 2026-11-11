@@ -6,3 +6,4 @@ package-lock.json
 AGENTS.md
 .check-results/
 .cloudflare/
+tools/layout-dump.json
