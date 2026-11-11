@@ -125,7 +125,7 @@ export const enemyCatalog = {
     engagement: 260,
     hp: 3,
     physics: SHIP_PHYSICS.interceptor,
-    sizeRatio: 0.9,
+    sizeRatio: 0.75,
   },
   oversizedCapital: {
     ...base,
@@ -159,7 +159,7 @@ export const enemyCatalog = {
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,
-    sizeRatio: 0.6,
+    sizeRatio: 0.65,
     steering: { orbit: 0.9, separation: 85, wobble: 0.65 },
   },
 } satisfies Record<string, EnemyDefinition>;

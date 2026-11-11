@@ -342,9 +342,9 @@ describe("enemy ship physics and hull rotation", () => {
         sizeRatio: definition.sizeRatio,
       };
     };
-    expect(pick("swarm")).toEqual({ engagement: 360, hp: 2, orbit: 0.9, sizeRatio: 0.6 });
+    expect(pick("swarm")).toEqual({ engagement: 360, hp: 2, orbit: 0.9, sizeRatio: 0.65 });
     expect(pick("fighter")).toEqual({ engagement: 360, hp: 4, orbit: 0.4, sizeRatio: 1 });
-    expect(pick("interceptor")).toEqual({ engagement: 260, hp: 3, orbit: 0, sizeRatio: 0.9 });
+    expect(pick("interceptor")).toEqual({ engagement: 260, hp: 3, orbit: 0, sizeRatio: 0.75 });
     expect(pick("retaliator")).toEqual({ engagement: 360, hp: 8, orbit: 0.2, sizeRatio: 2 });
     expect(enemyCatalog.retaliator.fire).toMatchObject({ angles: [-0.2, 0, 0.2], interval: 2.2 });
     expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
