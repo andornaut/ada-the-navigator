@@ -363,7 +363,8 @@ Penny's and the General's on the right. It sits below the HUD row and leaves at
 least 24 logical pixels clear above Ada's ship. The pause button and weapon icons
 stay live while it shows. Each line is one
 line long. The box never pauses play and has a translucent background, more
-readable over the brightest space signals; text and portraits stay opaque. Each line shows for 5 seconds or until tapped; a tap moves to the next
+an ink #181425 panel at 0.70 alpha so it stays readable over the brightest space
+signals; text, tab and portrait stay opaque. Each line shows for 5 seconds or until tapped; a tap moves to the next
 line, and the last tap closes the conversation. A conversation has one to three
 lines, and only one shows at a time, with a cooldown between ordinary
 conversations. Hints are always on.
