@@ -30,6 +30,10 @@ Ada's 96px frame at 42px. Extents are model units over Ada's 42.88-unit wingspan
 | `interceptor` |    88 |    38.5 |              0.47 |                1.07 |      1 | Long needle, twin tines, centre gun     |
 | `retaliator`  |   192 |      84 |              2.01 |                1.59 |      3 | Broad slab, plates, three-barrel turret |
 
+Hit circles use Gameplay's `sizeRatio` in Ada widths: swarm 0.65, fighter 1,
+interceptor 0.75 and retaliator 2. The interceptor's ratio sits near the mean of
+its drawn length and width, so the narrow hull keeps a forgiving hit area.
+
 ## Frames
 
 - Transparent square viewport with the pivot at its centre; render the selected
