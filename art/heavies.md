@@ -279,6 +279,5 @@ twin-barrel steel turrets ride the rail.
 - Intact: a steel pad 1 unit high on the deck, a rust collar to 2.5 and the
   aimed top, its head to 6 with the barrels just above. Destroyed: a scorched
   pad, a soot stump with a breach and one ember, and burn paint on the deck.
-- `tools/enemy-hardpoints.json` has no `platform` entry yet, so the tool uses
-  its proposed entry (the offsets above). A catalog `platform` entry takes
-  precedence.
+- The hardpoints and offsets come from the catalog's `platform` entry in
+  `tools/enemy-hardpoints.json`, like every other craft's.
