@@ -21,7 +21,7 @@ the root manifest. Reused sources and checksums are in [Portraits](portraits.md)
 - Ada and Penny compact frames are exact 22x22 crops of their 32 frames, from
   the hair or crown to the chin: Ada at (5, 5), Penny at (5, 3). Astra and
   General Gadget are drawn natively at both sizes with the same parts and
-  palette, so the porthole, roundel and voice line stay whole at 22.
+  palette, so the face, roundel and voice lines stay whole at 22.
 
 ## Sheets and frames
 
@@ -50,11 +50,24 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 
 ## Art
 
-- Astra: the rose-gold porthole, bezel `#d9a08a` shaded `#b07a6a`, plum glass
-  `#3b2a3f` inside an ink ring. Speaking frames pulse a warm core (`#ffc9a8`,
-  centre `#fff1e0`, rose rim `#e8968c`), turn six rose dots by 30 degrees each
-  frame, and step five voice bars below. Idle shows a dim `#9a6470` ember and a
-  flat voice line.
+- Astra: a geometric line-art face in teal, anchored on the in-between shimmer
+  `#8fe0f2`. Concentric pointy-top hexagons: an ink edge, a ring lit `#47b2cc`
+  on the upper left and shaded `#2a7b96` on the lower right, a `#1f1a38` face
+  (the in-between's darkest value) and a 1 px `#1d4a63` inner hexagon line. Two
+  2x2 eye lights with plus-shaped halos sit above a 1 px voice-line mouth.
+- Astra speaking: white eyes with `#47b2cc` halos, a white mouth with
+  `#8fe0f2` ends stepping through widths 4, 8, 2 and 6 (2, 6, 4 and 6 at 22),
+  a `#d6f7fc` catch-light on the ring's upper-left edge and a dithered glow on
+  the clear pixels round the ink edge. The glow steps 1, 2, 3, 2 over the loop:
+  a checker of `#1d4a63`, then `#2a7b96`, then both, with a sparser second
+  ring of `#1d4a63` on the 32 sheet only.
+- Astra idle: `#8fe0f2` eyes with `#2a7b96` halos, a flat `#2a7b96` mouth
+  (4 wide, 2 at 22), the ring one step darker (`#2a7b96` and `#1d4a63`), no
+  catch-light and no glow.
+- Every Astra pixel sits on the navy slot face: white is 13.89:1 against it,
+  `#8fe0f2` 9.34:1 and the ring 5.63:1; the glow (1.46:1 and 2.89:1) stays
+  soft. Galaxy fields never touch the portrait, so it reads the same on the
+  dark galaxies and on Sunflower.
 - General Gadget: faceless. Static (navy `#3a4466` and `#1d2032` noise and a
   rolling scanline) behind an ink-edged coral octagon that holds the drones'
   claw insignia (ink claw closing on an amber disc; see

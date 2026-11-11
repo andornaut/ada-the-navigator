@@ -63,7 +63,12 @@ band, pearl hub and a dark spindle hole.
 The cockpit background is too far out to show a slot, so inserting a holodisk
 plays as a close-up inset over it. The drive is a slot-loading car-stereo unit
 in the centre stack: a chrome face, a dark slot, a four-digit amber LED counter,
-three chunky keys and a magenta status LED.
+three chunky keys and a magenta status LED. Astra's face sits on the dash above
+it, drawn as her [conversation portrait](conversation.md#art): an ink-edged
+teal hexagon ring with a dark face, an inner hexagon line, two eye lights and a
+voice-line mouth. Dormant in frames 0 and 1 (dim eyes and mouth, the ring one
+step darker); lit in frames 2 and 3 (white eyes and mouth, a catch-light on the
+ring and a soft `#8fe0f2` halo).
 
 UI subset sprite `holodisk-insert`: a 1056 by 132 sheet of four 264 by 132
 opaque frames, shown at 264 by 132 logical px. Its `insert` tag plays once:
@@ -73,7 +78,7 @@ opaque frames, shown at 264 by 132 logical px. Its `insert` tag plays once:
 | 0     | Hold: Ada offers the disk to the slot                   | 400 ms   |
 | 1     | Push: half in, the far half hidden                      | 250 ms   |
 | 2     | Read: LEDs amber, a magenta link up to Astra, Astra lit | 400 ms   |
-| 3     | Restored: a ring of magenta dots round Astra's porthole | 600 ms   |
+| 3     | Restored: a ring of magenta dots round Astra's face     | 600 ms   |
 
 1650 ms in all, then Astra's line.
 

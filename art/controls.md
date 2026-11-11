@@ -147,7 +147,7 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Portrait face      | `#262b44` | Slot face behind the portrait's clear pixels |
 | Tab edge           | `#181425` | 1 px name tab edge, opaque                   |
 | Ada tab            | `#70ace8` | Her ship's blue accent                       |
-| Astra tab          | `#ffc9a8` | Her warm core                                |
+| Astra tab          | `#8fe0f2` | Her teal light                               |
 | Penny tab          | `#feae34` | Her golden coat                              |
 | Unknown voice tab  | `#b8b3c9` | General Gadget before he is named            |
 | General Gadget tab | `#d68b72` | The drones' coral hull                       |
@@ -166,7 +166,7 @@ sits on open space.
 | Line           | `#ead4aa` | Panel over Black Eye `#271423`             | 12.31:1  |
 | Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
 | Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
-| Astra label    | `#181425` | `#ffc9a8`                                  | 12.16:1  |
+| Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
 | Penny label    | `#181425` | `#feae34`                                  | 9.71:1   |
 | Unknown voice  | `#181425` | `#b8b3c9`                                  | 8.86:1   |
 | General Gadget | `#181425` | `#d68b72`                                  | 6.69:1   |
@@ -182,12 +182,12 @@ it.
 | Tab            | Fill      | On the field `#292734` | On Sunflower `#332712` | On the panel over `#332712` |
 | -------------- | --------- | ---------------------- | ---------------------- | --------------------------- |
 | Ada            | `#70ace8` | 6.11:1                 | 6.08:1                 | 7.12:1                      |
-| Astra          | `#ffc9a8` | 9.88:1                 | 9.84:1                 | 11.53:1                     |
+| Astra          | `#8fe0f2` | 9.84:1                 | 9.80:1                 | 11.48:1                     |
 | Penny          | `#feae34` | 7.89:1                 | 7.86:1                 | 9.21:1                      |
 | Unknown voice  | `#b8b3c9` | 7.20:1                 | 7.17:1                 | 8.41:1                      |
 | General Gadget | `#d68b72` | 5.44:1                 | 5.41:1                 | 6.34:1                      |
 
-Over white the fills alone fall to 1.48:1 (Astra) to 2.69:1 (General Gadget);
+Over white the fills alone fall to 1.49:1 (Astra) to 2.69:1 (General Gadget);
 the 1 ink edge holds 18.02:1 there, so the tab's outline reads over every
 backdrop.
 

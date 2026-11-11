@@ -31,13 +31,14 @@ const CORAL_SIDE = "a8654f";
 const CORAL_REAR = "7f4b3d";
 const CORAL_DEEP = "5e3a33";
 
-const A_BEZEL = "d9a08a";
-const A_BEZEL_SHADE = "b07a6a";
-const A_PLUM = "3b2a3f";
-const A_CORE = "fff1e0";
-const A_WARM = "ffc9a8";
-const A_ROSE = "e8968c";
-const A_DIM = "9a6470";
+// Astra's teal, anchored on the in-between shimmer `#8fe0f2`, and the in-between's darkest value.
+const A_GLOW = "1d4a63";
+const A_SHADE = "2a7b96";
+const A_RING = "47b2cc";
+const A_LIGHT = "8fe0f2";
+const A_GLINT = "d6f7fc";
+const A_WHITE = "ffffff";
+const A_FACE = "1f1a38";
 
 type Point = readonly [number, number];
 
@@ -48,16 +49,6 @@ function set(frame: Frame, x: number, y: number, colour: Colour): void {
   const row = frame[y];
   if (row && x >= 0 && x < row.length) {
     row[x] = colour;
-  }
-}
-
-function disc(frame: Frame, cx: number, cy: number, r: number, colour: string): void {
-  for (const [y, row] of frame.entries()) {
-    for (const x of row.keys()) {
-      if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r + 0.3) {
-        row[x] = colour;
-      }
-    }
   }
 }
 
@@ -161,102 +152,187 @@ function random(seed: number): () => number {
   };
 }
 
+function hexagon(cx: number, cy: number, r: number): Point[] {
+  return Array.from({ length: 6 }, (_, k): Point => {
+    const a = -Math.PI / 2 + (k * Math.PI) / 3;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  });
+}
+
+function fill(frame: Frame, polygon: readonly Point[], colour: (x: number, y: number) => Colour) {
+  for (const [y, row] of frame.entries()) {
+    for (const x of row.keys()) {
+      if (covered((px, py) => inside(polygon, px, py), x, y)) {
+        row[x] = colour(x, y);
+      }
+    }
+  }
+}
+
+// Dithered glow on the clear pixels round the ink edge, stepping up with `level` (1 to 3): ring one
+// is the 4-neighbour border, ring two the next border out (full sheet only).
+function glow(frame: Frame, level: number, rings: number): void {
+  const size = frame.length;
+  const key = (x: number, y: number) => y * size + x;
+  const body = new Set<number>();
+  for (const [y, row] of frame.entries()) {
+    for (const [x, c] of row.entries()) {
+      if (c !== null) {
+        body.add(key(x, y));
+      }
+    }
+  }
+  const border = (cells: ReadonlySet<number>): Set<number> => {
+    const out = new Set<number>();
+    for (const cell of cells) {
+      const [x, y] = [cell % size, Math.floor(cell / size)];
+      for (const [nx, ny] of [
+        [x + 1, y],
+        [x - 1, y],
+        [x, y + 1],
+        [x, y - 1],
+      ] as const) {
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size && !cells.has(key(nx, ny))) {
+          out.add(key(nx, ny));
+        }
+      }
+    }
+    return out;
+  };
+  const one = border(body);
+  for (const cell of one) {
+    const [x, y] = [cell % size, Math.floor(cell / size)];
+    const on = (x + y) % 2 === 0;
+    const colour = level === 3 ? (on ? A_SHADE : A_GLOW) : on ? [A_GLOW, A_SHADE][level - 1] : null;
+    if (colour) {
+      set(frame, x, y, colour);
+    }
+  }
+  if (rings < 2) {
+    return;
+  }
+  for (const cell of border(new Set([...body, ...one]))) {
+    const [x, y] = [cell % size, Math.floor(cell / size)];
+    if ((level === 2 && x % 2 === 0 && y % 2 === 0) || (level === 3 && (x + y) % 2 === 0)) {
+      set(frame, x, y, A_GLOW);
+    }
+  }
+}
+
 type Astra = {
   size: number;
   centre: Point;
-  ink: number;
-  shade: number;
-  bezel: number;
-  lift: number;
-  plum: number;
-  dots: number;
-  core: readonly number[];
+  edge: number;
   ring: number;
-  ember: number;
-  bars: readonly number[];
-  barRow: number;
+  face: number;
+  inner: number;
+  line: number;
+  eyeX: number;
+  eyeRow: number;
+  mouthRow: number;
+  mouths: readonly number[];
+  idleMouth: number;
+  rings: number;
+  glint: number;
 };
 
+// Pixel k spans [k, k + 1], so a frame's centre is size / 2.
 const ASTRA: Readonly<Record<"full" | "compact", Astra>> = {
   full: {
     size: FULL,
-    centre: [15.5, 13.5],
-    ink: 12.6,
-    shade: 11.6,
-    bezel: 11,
-    lift: 0.6,
-    plum: 9,
-    dots: 6.6,
-    core: [3.4, 3.9, 4.4, 3.9],
-    ring: 1,
-    ember: 2.6,
-    bars: [9, 12, 16, 19, 22],
-    barRow: 28,
+    centre: [16, 15.5],
+    edge: 13.6,
+    ring: 12.4,
+    face: 10.4,
+    inner: 7.6,
+    line: 1.15,
+    eyeX: 4,
+    eyeRow: 13,
+    mouthRow: 19,
+    mouths: [4, 8, 2, 6],
+    idleMouth: 4,
+    rings: 2,
+    glint: 9,
   },
   compact: {
     size: COMPACT,
-    centre: [10.5, 8],
-    ink: 8.5,
-    shade: 7.7,
-    bezel: 7.2,
-    lift: 0.5,
-    plum: 5.6,
-    dots: 4.4,
-    core: [2, 2.3, 2.7, 2.3],
-    ring: 0.8,
-    ember: 1.8,
-    bars: [4, 7, 10, 13, 16],
-    barRow: 19,
+    centre: [11, 11],
+    edge: 10.2,
+    ring: 9.2,
+    face: 7.6,
+    inner: 5.6,
+    line: 1.1,
+    eyeX: 3,
+    eyeRow: 9,
+    mouthRow: 13,
+    mouths: [2, 6, 4, 6],
+    idleMouth: 2,
+    rings: 1,
+    glint: 7,
   },
 };
-// Voice bar half-heights plus one, per speaking frame.
-const BARS = [
-  [1, 2, 3, 2, 1],
-  [2, 3, 1, 3, 2],
-  [1, 3, 2, 3, 1],
-  [2, 1, 3, 1, 2],
+// Glow level per speaking frame.
+const GLOW = [1, 2, 3, 2];
+const EYE_HALO: readonly Point[] = [
+  [-1, 0],
+  [-1, 1],
+  [2, 0],
+  [2, 1],
+  [0, -1],
+  [1, -1],
+  [0, 2],
+  [1, 2],
 ];
 
-// Astra's rose-gold porthole. Speaking: a pulsing warm core, six turning rose dots and voice
-// bars. Idle: a dim ember and a flat voice line.
+// Astra's line-art face: concentric hexagons (a ring lit from the upper left, a dark face, an
+// inner line), two eye lights and a voice-line mouth. Speaking: white eyes, the mouth stepping
+// through its widths, a catch-light on the ring and a pulsing dithered glow. Idle: dim eyes, a flat
+// mouth, the ring one step darker and no glow.
 function astra(g: Astra, speaking: number | null): Frame {
   const frame = blank(g.size);
   const [cx, cy] = g.centre;
-  disc(frame, cx, cy, g.ink, INK);
-  disc(frame, cx, cy, g.shade, A_BEZEL_SHADE);
-  disc(frame, cx, cy - g.lift, g.bezel, A_BEZEL);
-  disc(frame, cx, cy, g.plum, A_PLUM);
-  let heights = [1, 1, 1, 1, 1];
-  let bar = A_DIM;
-  if (speaking === null) {
-    disc(frame, cx, cy, g.ember, A_DIM);
-    set(frame, Math.floor(cx), Math.floor(cy), A_ROSE);
-    set(frame, Math.ceil(cx), Math.floor(cy), A_ROSE);
-  } else {
-    const turn = (Math.PI / 6) * (speaking % 2);
-    for (let k = 0; k < 6; k++) {
-      const a = turn + (k * Math.PI) / 3;
-      set(
-        frame,
-        Math.round(cx + g.dots * Math.cos(a)),
-        Math.round(cy + g.dots * Math.sin(a)),
-        A_ROSE,
-      );
+  const lit = speaking !== null;
+  fill(frame, hexagon(cx, cy, g.edge), () => INK);
+  const shade = (x: number, y: number) => x + 0.5 - cx + (y + 0.5 - cy) > 2;
+  fill(frame, hexagon(cx, cy, g.ring), (x, y) => {
+    const ring = shade(x, y) ? A_SHADE : A_RING;
+    return lit ? ring : ring === A_RING ? A_SHADE : A_GLOW;
+  });
+  fill(frame, hexagon(cx, cy, g.face), () => A_FACE);
+  fill(frame, hexagon(cx, cy, g.inner), () => A_GLOW);
+  fill(frame, hexagon(cx, cy, g.inner - g.line), () => A_FACE);
+  for (const side of [-1, 1]) {
+    const ex = Math.trunc(cx + side * g.eyeX - 1);
+    for (const [dx, dy] of EYE_HALO) {
+      set(frame, ex + dx, g.eyeRow + dy, lit ? A_RING : A_SHADE);
     }
-    const r = g.core[speaking]!;
-    disc(frame, cx, cy, r + g.ring, A_ROSE);
-    disc(frame, cx, cy, r, A_WARM);
-    disc(frame, cx, cy, r * 0.45, A_CORE);
-    heights = BARS[speaking]!;
-    bar = A_WARM;
-  }
-  for (const [i, x] of g.bars.entries()) {
-    const reach = heights[i]! - 1;
-    for (let y = g.barRow - reach; y <= g.barRow + reach; y++) {
-      set(frame, x, y, bar);
-      set(frame, x + 1, y, bar);
+    for (const [dx, dy] of [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ] as const) {
+      set(frame, ex + dx, g.eyeRow + dy, lit ? A_WHITE : A_LIGHT);
     }
   }
+  const width = lit ? g.mouths[speaking]! : g.idleMouth;
+  const x0 = Math.trunc(cx - width / 2);
+  for (let x = x0; x < x0 + width; x++) {
+    const end = (x === x0 || x === x0 + width - 1) && width > 2;
+    set(frame, x, g.mouthRow, lit ? (end ? A_LIGHT : A_WHITE) : A_SHADE);
+  }
+  if (!lit) {
+    return frame;
+  }
+  for (const [y, row] of frame.entries()) {
+    for (const [x, c] of row.entries()) {
+      const angle = (Math.atan2(y + 0.5 - cy, x + 0.5 - cx) * 180) / Math.PI;
+      if (c === A_RING && Math.abs(angle + 120) <= g.glint) {
+        row[x] = A_GLINT;
+      }
+    }
+  }
+  glow(frame, GLOW[speaking]!, g.rings);
   return frame;
 }
 

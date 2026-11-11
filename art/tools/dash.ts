@@ -1,5 +1,5 @@
 // Storybook cockpit interior seen from behind the seats: a retro-futurist convertible under a
-// glass canopy, with Astra's porthole on the dash and the holodisk drive in the centre stack.
+// glass canopy, with Astra's face on the dash and the holodisk drive in the centre stack.
 // Drawn at 3x and reduced with Lanczos filtering in the 844 by 390 design frame; Archie's pixel
 // sprites of Ada and Penny sit in the seats at 3x by nearest neighbour.
 import { readFileSync } from "node:fs";
@@ -55,12 +55,15 @@ const PLAYER_SH = "9f9bb3";
 const LED_AMBER = "f0bd68";
 const SLOT_DARK = "24202e";
 const LED_DARK = "2a1f2a";
-const ASTRA_BEZEL = "d9a08a";
-const ASTRA_BEZEL_SH = "b07a6a";
-const ASTRA_CORE = "fff1e0";
-const ASTRA_WARM = "ffc9a8";
-const ASTRA_ROSE = "e8968c";
-const ASTRA_DIM = "9a6470";
+// Astra's teal (see the conversation portraits).
+const ASTRA_INK = "181425";
+const ASTRA_GLOW = "1d4a63";
+const ASTRA_SHADE = "2a7b96";
+const ASTRA_RING = "47b2cc";
+const ASTRA_LIGHT = "8fe0f2";
+const ASTRA_GLINT = "d6f7fc";
+const ASTRA_WHITE = "ffffff";
+const ASTRA_FACE = "1f1a38";
 // Holodisk pearl and magenta.
 export const PEARL = ["ffffff", "d9dff0", "a3aacb"] as const;
 export const HOLO = ["ffb3ec", "e868c8", "a83a96"] as const;
@@ -113,52 +116,73 @@ export interface DashScene {
   hand?: Hand;
 }
 
+// A point on a pointy-top hexagon of vertex radius r at `angle` (radians, 0 pointing right).
+function hexPoint([cx, cy]: Xy, r: number, angle: number): Xy {
+  const sector = Math.floor((angle + Math.PI / 2) / (Math.PI / 3));
+  const normal = -Math.PI / 2 + Math.PI / 6 + sector * (Math.PI / 3);
+  const reach = (r * Math.cos(Math.PI / 6)) / Math.cos(angle - normal);
+  return [cx + reach * Math.cos(angle), cy + reach * Math.sin(angle)];
+}
+
+const hexagon = (c: Xy, r: number): Xy[] =>
+  Array.from({ length: 6 }, (_, k) => hexPoint(c, r, -Math.PI / 2 + (k * Math.PI) / 3));
+
+const deg = (d: number) => (d * Math.PI) / 180;
+
+// Astra's face on the dash, as her portrait: an ink-edged hexagon ring lit from the upper left, a
+// dark face with an inner hexagon line, two eye lights and a voice-line mouth. Lit (`astra` set):
+// white eyes and mouth, a catch-light on the ring and a soft teal halo. Dormant: dim eyes and mouth
+// and the ring one step darker.
 function astraLayer(astra: DashScene["astra"]): RgbaImage {
   const lay = layer();
   const [cx, cy] = ASTRA_C;
+  const poly = (points: readonly Xy[], fill: string, alpha = 255) =>
+    fillPolygon(lay, P(points), rgba(fill, alpha));
   if (astra) {
     const r = [44, 48, 52, 48][astra.frame]!;
     const halo = layer();
-    fillEllipse(halo, [S(cx - r), S(cy - r), S(cx + r), S(cy + r)], rgba(ASTRA_WARM, 90));
+    fillEllipse(halo, [S(cx - r), S(cy - r), S(cx + r), S(cy + r)], rgba(ASTRA_LIGHT, 90));
     blur(halo, S(10), [S(cx - r), S(cy - r), S(cx + r), S(cy + r)]);
     over(lay, halo);
   }
-  ell(lay, ASTRA_C, 27, ASTRA_BEZEL_SH);
-  ell(lay, [cx, cy - 1], 26, ASTRA_BEZEL);
-  ell(lay, ASTRA_C, 20, PLUM);
+  poly(hexagon(ASTRA_C, 29), ASTRA_INK);
+  poly(hexagon(ASTRA_C, 27), astra ? ASTRA_RING : ASTRA_SHADE);
+  // The lower-right half of the ring, from -45 to 135 degrees, in shade.
+  poly(
+    [-45, -30, 30, 90, 135].map((d) => hexPoint(ASTRA_C, 27, deg(d))),
+    astra ? ASTRA_SHADE : ASTRA_GLOW,
+  );
   if (astra) {
-    const rr = [12, 13, 14, 13][astra.frame]!;
-    const core = layer();
-    fillEllipse(
-      core,
-      [S(cx - rr - 4), S(cy - rr - 4), S(cx + rr + 4), S(cy + rr + 4)],
-      rgba(ASTRA_ROSE, 200),
+    poly(
+      [
+        hexPoint(ASTRA_C, 26.5, deg(-132)),
+        hexPoint(ASTRA_C, 26.5, deg(-108)),
+        hexPoint(ASTRA_C, 22, deg(-108)),
+        hexPoint(ASTRA_C, 22, deg(-132)),
+      ],
+      ASTRA_GLINT,
     );
-    fillEllipse(core, [S(cx - rr), S(cy - rr), S(cx + rr), S(cy + rr)], rgba(ASTRA_WARM));
-    fillEllipse(
-      core,
-      [S(cx - rr * 0.5), S(cy - rr * 0.5), S(cx + rr * 0.5), S(cy + rr * 0.5)],
-      rgba(ASTRA_CORE),
-    );
-    blur(core, S(1.6), [S(cx - rr - 4), S(cy - rr - 4), S(cx + rr + 4), S(cy + rr + 4)]);
-    over(lay, core);
-  } else {
-    ell(lay, ASTRA_C, 8, ASTRA_DIM);
-    ell(lay, ASTRA_C, 4, ASTRA_ROSE);
   }
-  // Five-bar voice line under the porthole.
-  const heights = astra
-    ? [
-        [0, 0, 0, 0, 0],
-        [2, 4, 6, 4, 2],
-        [4, 7, 3, 6, 3],
-        [3, 5, 7, 5, 3],
-      ][astra.frame]!
-    : [0, 0, 0, 0, 0];
-  heights.forEach((h, i) => {
-    const x = cx - 16 + i * 8;
-    rrect(lay, [x - 2, cy + 33 - h, x + 2, cy + 37], 2, astra ? ASTRA_WARM : ASTRA_DIM);
-  });
+  poly(hexagon(ASTRA_C, 22), ASTRA_FACE);
+  poly(hexagon(ASTRA_C, 15.5), ASTRA_GLOW);
+  poly(hexagon(ASTRA_C, 13.5), ASTRA_FACE);
+  for (const side of [-1, 1]) {
+    const x = cx + side * 8;
+    if (astra) {
+      const glow = layer();
+      fillEllipse(glow, [S(x - 6), S(cy - 9), S(x + 6), S(cy + 3)], rgba(ASTRA_LIGHT, 160));
+      blur(glow, S(2.4), [S(x - 8), S(cy - 11), S(x + 8), S(cy + 5)]);
+      over(lay, glow);
+    }
+    rrect(lay, [x - 3, cy - 6, x + 3, cy], 1, astra ? ASTRA_WHITE : ASTRA_SHADE);
+  }
+  const mouth = astra ? [14, 20, 22, 20][astra.frame]! : 10;
+  rrect(
+    lay,
+    [cx - mouth / 2, cy + 6, cx + mouth / 2, cy + 9],
+    1,
+    astra ? ASTRA_WHITE : ASTRA_SHADE,
+  );
   return lay;
 }
 

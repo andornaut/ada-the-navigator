@@ -120,7 +120,7 @@ await writeSpriteSheet(
 );
 await prettify(`${art}holodisk-beacon.json`);
 
-// Insert inset: a close-up of the storybook dash cropped round the drive and Astra's porthole.
+// Insert inset: a close-up of the storybook dash cropped round the drive and Astra's face.
 const CROP = { height: 150, width: 300, x: 300, y: 168 } as const;
 const INSET = { height: 132, width: 264 } as const;
 const INSERT: readonly (readonly [string, DashScene, number])[] = [
