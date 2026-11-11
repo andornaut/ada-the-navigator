@@ -1227,6 +1227,8 @@ try {
     velocity: { x: 0, y: 0 },
   });
   damaged.state.economy.stardust = 30;
+  // The flight a step before the shield breaks, for the browser's own jump home below.
+  const breakingSave = damaged.save();
   damaged.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
   assert.equal(damaged.state.mode, "home", "Shield depletion must jump Ada home");
   assert.equal(damaged.state.flight, null, "The jump home must lose only the flight");
@@ -1250,6 +1252,76 @@ try {
   );
   events.checks.push(
     "Canonical shield depletion jumps Ada home, costing only the flight and keeping weapons and Stardust",
+  );
+
+  // Art's overnight room (art/storybook.md "Sequence"): the shield breaks in the browser, the jump
+  // lands at night, the sleep page plays the figures, the rock's breath and the cross-fade, and
+  // morning follows.
+  await seedOnce(breakingSave, "ada-browser.overnight.v1");
+  const storyNext = () => page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]');
+  const roomShows = (background) =>
+    page
+      .locator(`.ada-story-background[data-background="${background}"]`)
+      .waitFor({ state: "attached", timeout: 30000 });
+  await roomShows("adaRoomNight");
+  await storyNext().waitFor({ state: "visible", timeout: 30000 });
+  // The emergency jump's overlay ends before the night room is captured.
+  await page.waitForFunction(() => !document.querySelector(".ada-jump"), null, { timeout: 30000 });
+  await page.waitForFunction(() =>
+    document.querySelector(".ada-story-art")?.style.backgroundImage.includes("ada-room-night"),
+  );
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${output}/overnight-night.png` });
+  await storyNext().click();
+  const sleepStart = Date.now();
+  await roomShows("adaRoomSleep");
+  await page
+    .locator('.ada-story-overlay[data-overlay="story-ada-room-sleep-figures"]')
+    .waitFor({ state: "visible" });
+  // Midway through the breath: the figures in and the glow near its peak (400 + 750 ms).
+  await page.waitForTimeout(Math.max(0, 1150 - (Date.now() - sleepStart)));
+  const sleepState = await page.evaluate(() => {
+    const opacity = (id) =>
+      Number(getComputedStyle(document.querySelector(`[data-overlay="${id}"]`)).opacity);
+    return {
+      figures: opacity("story-ada-room-sleep-figures"),
+      glow: opacity("story-ada-room-sleep-glow"),
+      panelHidden: document.querySelector(".ada-story-panel").hidden,
+    };
+  });
+  await page.screenshot({ path: `${output}/overnight-sleep.png` });
+  await roomShows("adaRoomMorning");
+  const sleptMs = Date.now() - sleepStart;
+  await storyNext().waitFor({ state: "visible" });
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: `${output}/overnight-morning.png` });
+  const morning = {
+    art: await page
+      .locator(".ada-story-art")
+      .first()
+      .evaluate((art) => art.style.backgroundImage),
+    overlays: await page.locator(".ada-story-overlay:not([hidden])").count(),
+  };
+  save("overnight-proof.json", {
+    morning,
+    scope: "The browser's own shield break and jump home, then Art's overnight sequence",
+    sleepState,
+    sleptMs,
+  });
+  assert.equal(sleepState.figures, 1, "The sleeping figures must be in by the breath");
+  assert.ok(sleepState.glow > 0.5, `The rock's breath must near its peak: ${sleepState.glow}`);
+  assert.ok(sleepState.panelHidden, "The sleep page shows no panel");
+  assert.ok(
+    sleptMs >= 2300 && sleptMs < 4500,
+    `The sleep page must last Art's 2.5 s sequence: ${sleptMs} ms`,
+  );
+  assert.ok(
+    morning.art.includes("ada-room-morning"),
+    `Morning must draw Art's room: ${morning.art}`,
+  );
+  assert.equal(morning.overlays, 0, "The cross-fade to morning ends the overlays");
+  events.checks.push(
+    "The browser's jump home lands in Art's night room, plays the overnight sequence and wakes in the morning room",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));

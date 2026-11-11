@@ -33,6 +33,9 @@ export interface PremiseLine {
  */
 export type ArtBackground =
   | "adaRoom"
+  | "adaRoomMorning"
+  | "adaRoomNight"
+  | "adaRoomSleep"
   | "adaRoomUnpolished"
   | "cockpit"
   | "cockpitSeated"
@@ -42,10 +45,8 @@ export type ArtBackground =
   | "park"
   | "schoolHallway"
   | "schoolyard";
-/** Ada's room through the overnight recharge, drawn as flat placeholders until Art's land. */
-export type PlaceholderBackground = "adaRoomMorning" | "adaRoomNight" | "adaRoomSleep";
 /** A storybook page's location. */
-export type Background = ArtBackground | PlaceholderBackground;
+export type Background = ArtBackground;
 
 export interface PrologueStep extends PremiseLine {
   /** Where the page is; the cockpit unless given. */

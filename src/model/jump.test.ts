@@ -242,9 +242,9 @@ describe("quantum jump home", () => {
       id: "sleep",
       sleep: true,
     });
-    model.storyTick(OVERNIGHT_SLEEP.seconds - 0.1);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds - 0.1);
     expect(model.storyView?.page.id).toBe("sleep");
-    model.storyTick(0.1);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, 0.1);
     expect(model.storyView?.page).toMatchObject({
       background: "adaRoomMorning",
       id: "morning",
@@ -258,6 +258,17 @@ describe("quantum jump home", () => {
     });
   });
 
+  it("moves to morning after the sleep length it is given, as Art's reduced-motion 2.4 s", () => {
+    const model = launched();
+    seenHome(model);
+    deplete(model);
+    model.storyNext();
+    model.storyTick(2.4, 2.35);
+    expect(model.storyView?.page.id).toBe("sleep");
+    model.storyTick(2.4, 0.1);
+    expect(model.storyView?.page.id).toBe("morning");
+  });
+
   it("lets a tap skip the sleep only after its moment, and shows no Skip there", () => {
     const model = launched();
     seenHome(model);
@@ -268,14 +279,14 @@ describe("quantum jump home", () => {
     model.storyNext();
     model.storySkip();
     expect(model.storyView?.page.id).toBe("sleep");
-    model.storyTick(OVERNIGHT_SLEEP.skipAfterSeconds - 0.05);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.skipAfterSeconds - 0.05);
     model.storyNext();
     expect(model.storyView?.page.id).toBe("sleep");
-    model.storyTick(0.05);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, 0.05);
     model.storyNext();
     expect(model.storyView?.page.id).toBe("morning");
     // Time only plays the sleep scene on; it never moves other pages.
-    model.storyTick(10);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, 10);
     expect(model.storyView?.page.id).toBe("morning");
   });
 
@@ -284,7 +295,7 @@ describe("quantum jump home", () => {
     seenHome(model);
     deplete(model);
     model.storyNext();
-    model.storyTick(OVERNIGHT_SLEEP.skipAfterSeconds);
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.skipAfterSeconds);
     model.storyPrevious();
     expect(model.storyView?.page.id).toBe("jumpHome");
     model.storyNext();

@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { BACKGROUND_ART, PLACEHOLDER_BACKGROUNDS } from "../data/storybook.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
 import { fromHudEdge, safeEdge } from "./layout/css.ts";
 import { HUD_BUTTON, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING } from "./layout/tokens.ts";
-import { SLEEP_GLOW, sleepGlowKeyframes, STORYBOOK_STYLE } from "./storybook.ts";
+import { STORYBOOK_STYLE } from "./storybook.ts";
 
 // One CSS rule's body from the storybook style.
 function rule(selector: string): string {
@@ -70,22 +69,12 @@ describe("storybook page", () => {
   });
 });
 
-describe("the overnight recharge's rooms", () => {
-  it("draws night, sleep and morning as flat placeholder colours until Art's backgrounds land", () => {
-    expect(Object.keys(PLACEHOLDER_BACKGROUNDS).sort()).toEqual([
-      "adaRoomMorning",
-      "adaRoomNight",
-      "adaRoomSleep",
-    ]);
-    for (const [key, colour] of Object.entries(PLACEHOLDER_BACKGROUNDS)) {
-      expect(colour).toMatch(/^#[0-9a-f]{6}$/u);
-      expect(BACKGROUND_ART).not.toHaveProperty(key);
-    }
-  });
-
-  it("pulses the sleep scene's rock glow, held steady under reduced motion", () => {
-    expect(sleepGlowKeyframes(false)).toEqual(SLEEP_GLOW.keyframes);
-    expect(sleepGlowKeyframes(true)).toBeNull();
-    expect(rule(".ada-controls .ada-story-glow")).toContain("pointer-events:none");
+describe("the overnight recharge's overlays", () => {
+  it("draws each overlay over the canvas at its box, nearest neighbour, taking no presses", () => {
+    const overlay = rule(".ada-controls .ada-story-overlay");
+    expect(overlay).toContain("position:absolute");
+    expect(overlay).toContain("background:0 0 / 100% 100% no-repeat");
+    expect(overlay).toContain("image-rendering:pixelated");
+    expect(overlay).toContain("pointer-events:none");
   });
 });

@@ -6,7 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts";
+import { GALAXIES, galaxyPreview, OVERNIGHT_SLEEP, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
@@ -964,7 +964,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
     // The overnight sleep scene plays on while the page shows, as flight does.
     if (!this.jumping && !this.settingsOpen && !document.hidden) {
-      this.model.storyTick(Math.min(milliseconds / 1000, 0.05));
+      // It lasts as long as Art's overnight sequence, or OVERNIGHT_SLEEP until that loads.
+      this.model.storyTick(
+        this.storybook.sleepSeconds() ?? OVERNIGHT_SLEEP.seconds,
+        Math.min(milliseconds / 1000, 0.05),
+      );
     }
     // A failed shield already sent Ada home; hold the last drawn flight as the source scene
     // until Astra's emergency jump covers it.

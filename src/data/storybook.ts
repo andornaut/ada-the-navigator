@@ -1,6 +1,6 @@
-import type { ArtBackground, Background, PlaceholderBackground, SectorId } from "./types.ts";
+import type { ArtBackground, Background, SectorId } from "./types.ts";
 
-export type { ArtBackground, Background, PlaceholderBackground } from "./types.ts";
+export type { ArtBackground, Background } from "./types.ts";
 
 /** Each chapter's Earth scenes and their locations. */
 export const CHAPTER_BACKGROUNDS: Readonly<
@@ -14,9 +14,16 @@ export const CHAPTER_BACKGROUNDS: Readonly<
   3: { closing: "park", opening: "frontDoor", resolution: "park" },
 };
 
-/** Each location's background in Art's root manifest, by asset id (art/storybook.md). */
+/**
+ * Each location's background in Art's root manifest, by asset id (art/storybook.md). Ada's room
+ * through the overnight recharge is night, asleep (a composite: the night with the sleeping
+ * figures over it) and morning.
+ */
 export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
   adaRoom: "story-ada-room",
+  adaRoomMorning: "story-ada-room-morning",
+  adaRoomNight: "story-ada-room-night",
+  adaRoomSleep: "story-ada-room-sleep",
   adaRoomUnpolished: "story-ada-room-unpolished",
   cockpit: "cockpit",
   cockpitSeated: "cockpit-seated",
@@ -29,19 +36,9 @@ export const BACKGROUND_ART: Readonly<Record<ArtBackground, string>> = {
 };
 
 /**
- * Ada's room through the overnight recharge, as flat colours: night on landing, asleep, morning.
- * CLEANUP (added 2026-11-11): remove once Art supplies these backgrounds and BACKGROUND_ART maps
- * adaRoomNight, adaRoomSleep and adaRoomMorning to their asset ids.
- */
-export const PLACEHOLDER_BACKGROUNDS: Readonly<Record<PlaceholderBackground, string>> = {
-  adaRoomMorning: "#e8c98f",
-  adaRoomNight: "#1d2140",
-  adaRoomSleep: "#141733",
-};
-
-/**
  * The overnight recharge's sleep scene (gameplay/rules.md): 2 to 3 seconds that a tap skips
- * after a moment. Provisional values within Gameplay's range.
+ * after a moment. It lasts as long as Art's overnight sequence (story-overnight.json), or its
+ * reduced-motion one; `seconds` holds while that art is missing.
  */
 export const OVERNIGHT_SLEEP = { seconds: 2.5, skipAfterSeconds: 0.5 } as const;
 

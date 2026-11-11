@@ -1,4 +1,4 @@
-import { type Background, PLACEHOLDER_BACKGROUNDS } from "../data/storybook.ts";
+import type { Background } from "../data/storybook.ts";
 import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_BACKGROUND, STORY_PANEL } from "./layout/storyPage.ts";
@@ -7,10 +7,15 @@ import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
 import {
   astraSpeaks,
+  breathKeyframes,
   framePosition,
   loadStoryArt,
+  overnightSeconds,
+  type OvernightStep,
+  overnightSteps,
   speakingFrames,
   type StoryArt,
+  type StoryOverlay,
   type TransitionStep,
   transitionSteps,
 } from "./story-art.ts";
@@ -30,23 +35,15 @@ export interface StoryPageView {
   readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
-  /** The overnight sleep scene: no panel or Skip, and a tap anywhere moves on. */
+  /**
+   * The overnight sleep scene: no panel or Skip, and a tap anywhere moves on. Art's overnight
+   * sequence plays over it, or its reduced-motion steps when motion is reduced.
+   */
   readonly sleep?: boolean;
 }
 
-/**
- * The sleep scene's placeholder rock glow: a slow pulse, held steady under reduced motion.
- * CLEANUP (added 2026-11-11): remove with PLACEHOLDER_BACKGROUNDS once Art's sleep scene lands.
- */
-export const SLEEP_GLOW = {
-  keyframes: [{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }],
-  periodMs: 1600,
-} as const;
-
-/** The glow's looping keyframes, or none to hold it at full under reduced motion. */
-export function sleepGlowKeyframes(reducedMotion: boolean): readonly Keyframe[] | null {
-  return reducedMotion ? null : SLEEP_GLOW.keyframes;
-}
+// The breath's alpha curve as linear keyframes, fine enough to follow the cosine.
+const BREATH_SAMPLES = 24;
 
 export interface StoryOptions {
   readonly labels: StoryLabels;
@@ -98,16 +95,12 @@ export const STORYBOOK_STYLE = `
   image-rendering:pixelated
 }
 
-/* The sleep scene's placeholder rock glow on the night room (CLEANUP with its colours). */
-.ada-controls .ada-story-glow{
+/* A composite background's overlay, and the overnight sequence's, placed on the canvas by the
+   manifest's at, nearest neighbour. */
+.ada-controls .ada-story-overlay{
   position:absolute;
-  left:46%;
-  top:62%;
-  width:9%;
-  aspect-ratio:1;
-  transform:translate(-50%, -50%);
-  border-radius:50%;
-  background:radial-gradient(circle, #f0bd68 0, rgb(240 189 104 / 0) 70%);
+  background:0 0 / 100% 100% no-repeat;
+  image-rendering:pixelated;
   pointer-events:none
 }
 
@@ -213,10 +206,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   astra.className = "ada-story-astra";
   astra.hidden = true;
   base.append(astra);
-  const glow = document.createElement("div");
-  glow.className = "ada-story-glow";
-  glow.hidden = true;
-  base.append(glow);
+  // Overlays draw over the base image, by id: a composite's at full, the overnight's as it plays.
+  const overlays = new Map<string, HTMLDivElement>();
   const panel = document.createElement("section");
   panel.className = "ada-card ada-story-panel";
   panel.setAttribute("role", "region");
@@ -258,7 +249,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       options.onNext();
     }
   });
-  let art: StoryArt = { astra: null, backgrounds: {}, transitions: [] };
+  let art: StoryArt = {
+    astra: null,
+    backgrounds: {},
+    composites: {},
+    overnight: null,
+    transitions: [],
+  };
   // What the layer last showed; re-rendering only on a change keeps each button across frames.
   let shown = "";
   let shownKey: Background | null = null;
@@ -268,27 +265,120 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   let speaking: ReturnType<typeof setTimeout> | undefined;
   let rendered: StoryPageView | null = null;
   const image = (url: string | undefined) => (url ? `url('${url}')` : "");
+  // One overlay's element, made on first use and placed by its box.
+  const overlayFor = (overlay: StoryOverlay): HTMLDivElement => {
+    let node = overlays.get(overlay.id);
+    if (!node) {
+      node = document.createElement("div");
+      node.className = "ada-story-overlay";
+      node.dataset.overlay = overlay.id;
+      base.append(node);
+      overlays.set(overlay.id, node);
+    }
+    const { box } = overlay;
+    Object.assign(node.style, {
+      backgroundImage: image(overlay.url),
+      height: `${box.height}%`,
+      left: `${box.left}%`,
+      top: `${box.top}%`,
+      width: `${box.width}%`,
+    });
+    return node;
+  };
+  // Shows these overlays at the given opacity and hides every other.
+  const showOverlays = (shown: readonly StoryOverlay[], opacity: number) => {
+    const ids = new Set(shown.map(({ id }) => id));
+    for (const [id, node] of overlays) {
+      node.hidden = !ids.has(id);
+    }
+    for (const overlay of shown) {
+      const node = overlayFor(overlay);
+      node.hidden = false;
+      node.style.opacity = String(opacity);
+    }
+  };
   const setBackground = (key: Background) => {
     shownKey = key;
     background.dataset.background = key;
     base.style.backgroundImage = image(art.backgrounds[key]);
-    base.style.backgroundColor =
-      key in PLACEHOLDER_BACKGROUNDS
-        ? PLACEHOLDER_BACKGROUNDS[key as keyof typeof PLACEHOLDER_BACKGROUNDS]
-        : "";
+    showOverlays(art.composites[key] ?? [], 1);
   };
-  let glowing: Animation | undefined;
-  const showGlow = (on: boolean) => {
-    glowing?.cancel();
-    glowing = undefined;
-    glow.hidden = !on;
-    const keyframes = on ? sleepGlowKeyframes(options.reducedMotion()) : null;
-    if (keyframes) {
-      glowing = glow.animate([...keyframes], {
-        duration: SLEEP_GLOW.periodMs,
-        iterations: Infinity,
-      });
+  // The overnight sequence's running animations and step timer.
+  let nightTimer: ReturnType<typeof setTimeout> | undefined;
+  let nightAnimations: Animation[] = [];
+  const stopNight = () => {
+    clearTimeout(nightTimer);
+    nightTimer = undefined;
+    for (const animation of nightAnimations) {
+      animation.cancel();
     }
+    nightAnimations = [];
+  };
+  // Each step in turn (art/storybook.md "Sequence"): an overlay fades in linearly and holds, a
+  // breath runs the overlay's alpha through one cosine, and a background cross-fades the whole
+  // picture and ends the overlays.
+  const playNight = (steps: readonly OvernightStep[], index = 0): void => {
+    const step = steps[index];
+    if (!step) {
+      return;
+    }
+    let ms: number;
+    if (step.kind === "overlay") {
+      const node = overlayFor(step.overlay);
+      node.hidden = false;
+      node.style.opacity = "1";
+      if (step.fadeMs > 0) {
+        nightAnimations.push(
+          node.animate([{ opacity: 0 }, { opacity: 1 }], {
+            duration: step.fadeMs,
+            easing: "linear",
+          }),
+        );
+      }
+      ms = step.fadeMs + step.holdMs;
+    } else if (step.kind === "breath") {
+      const node = overlayFor(step.overlay);
+      node.hidden = false;
+      node.style.opacity = "0";
+      nightAnimations.push(
+        node.animate(breathKeyframes(BREATH_SAMPLES), { duration: step.ms, easing: "linear" }),
+      );
+      ms = step.ms;
+    } else {
+      incoming.style.backgroundImage = image(step.url);
+      if (step.fadeMs > 0) {
+        nightAnimations.push(
+          incoming.animate([{ opacity: 0 }, { opacity: 1 }], {
+            duration: step.fadeMs,
+            easing: "linear",
+            fill: "forwards",
+          }),
+        );
+      }
+      ms = step.fadeMs + step.holdMs;
+    }
+    nightTimer = setTimeout(() => {
+      if (step.kind === "background") {
+        base.style.backgroundImage = image(step.url);
+        showOverlays([], 1);
+        incoming.style.backgroundImage = "";
+      }
+      for (const animation of nightAnimations.splice(0)) {
+        animation.cancel();
+      }
+      playNight(steps, index + 1);
+    }, ms);
+  };
+  // The sleep page plays Art's overnight sequence from the night: its overlays start clear.
+  const startNight = (page: StoryPageView | null) => {
+    stopNight();
+    const overnight = art.overnight;
+    if (!page?.sleep || !overnight) {
+      return;
+    }
+    base.style.backgroundImage = image(overnight.from);
+    showOverlays(overnight.overlays, 0);
+    playNight(overnightSteps(overnight, options.reducedMotion()));
   };
   const stopSpeaking = () => {
     clearTimeout(speaking);
@@ -355,7 +445,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const render = (page: StoryPageView | null, backdrop: Background | null, focusFirst: boolean) => {
     rendered = page;
     speak(page);
-    showGlow(page?.sleep === true);
     layer.hidden = page === null && backdrop === null;
     panel.hidden = page === null || page.sleep === true;
     skip.hidden = page === null || page.sleep === true;
@@ -366,6 +455,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       return;
     }
     setBackground(page.background);
+    startNight(page);
     speaker.hidden = !page.speaker;
     speaker.textContent = page.speaker ?? "";
     paragraph.hidden = page.text === "";
@@ -413,6 +503,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     const focusFirst = shown !== "" && page !== null;
     shown = signature;
     stop();
+    stopNight();
     stopSpeaking();
     const from = lastPage;
     lastPage = page;
@@ -438,11 +529,13 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     // Preloads every image, so a page or transition frame draws without a blank.
     for (const url of new Set([
       ...Object.values(art.backgrounds),
+      ...Object.values(art.composites).flatMap((shown) => shown.map((overlay) => overlay.url)),
+      ...(art.overnight?.overlays.map((overlay) => overlay.url) ?? []),
       ...art.transitions.flatMap(({ steps }) => steps.map((step) => step.url)),
     ])) {
       new Image().src = url;
     }
-    if (shownKey) {
+    if (shownKey && nightTimer === undefined) {
       setBackground(shownKey);
     }
     if (timer === undefined) {
@@ -452,10 +545,15 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   return {
     dispose(): void {
       stop();
+      stopNight();
       stopSpeaking();
       style.remove();
       layer.remove();
     },
     show,
+    /** How long the sleep page lasts, from Art's overnight sequence, or null until it loads. */
+    sleepSeconds(): number | null {
+      return art.overnight ? overnightSeconds(art.overnight, options.reducedMotion()) : null;
+    },
   };
 }

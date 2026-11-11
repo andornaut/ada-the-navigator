@@ -1616,13 +1616,13 @@ export class GameModel {
   private get sleeping(): boolean {
     return Boolean(this.story && this.screen === "story" && currentPage(this.story).sleep);
   }
-  /** Plays the sleep scene on, moving to morning once its seconds are up. */
-  storyTick(seconds: number): void {
+  /** Plays the sleep scene on, moving to morning once its `sleepSeconds` are up. */
+  storyTick(sleepSeconds: number, seconds: number): void {
     if (!this.sleeping || !Number.isFinite(seconds) || seconds <= 0) {
       return;
     }
     this.slept += seconds;
-    if (this.slept >= OVERNIGHT_SLEEP.seconds) {
+    if (this.slept >= sleepSeconds) {
       this.moveStory(advance(this.story!));
     }
   }
