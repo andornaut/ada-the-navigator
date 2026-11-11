@@ -30,6 +30,19 @@ it("uses one play-route app identity", () => {
   ).toBe(true);
 });
 
+it("gives both pages the manifest's theme colour, so the installed app's colour never changes", () => {
+  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
+  expect(manifest.background_color).toBe(manifest.theme_color);
+  for (const page of ["pages/index.html", "pages/play/index.html"]) {
+    const html = readFileSync(resolve(root, page), "utf8");
+    const colours = [...html.matchAll(/<meta\s+name="theme-color"\s+content="([^"]+)"/gu)];
+    expect(
+      colours.map((match) => match[1]),
+      page,
+    ).toEqual([manifest.theme_color]);
+  }
+});
+
 it("names the installed app in full and describes it as the landing page does", () => {
   const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
   const landing = readFileSync(resolve(root, "pages/index.html"), "utf8");
