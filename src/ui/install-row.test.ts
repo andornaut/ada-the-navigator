@@ -1,12 +1,16 @@
+import { offersInstall } from "@andornaut/game-kit/web/pwa/installState";
 import { describe, expect, it, vi } from "vitest";
 
-import type { InstallOutcome, InstallState, MenuInstallBrowser } from "../pwa/index.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import type { InstallOutcome, InstallState, InstallStepsKind } from "../pwa/index.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
+
+const KINDS = Object.keys(PROTOTYPE.installSteps) as InstallStepsKind[];
 
 function port(
   state: InstallState,
   outcome: InstallOutcome = "accepted",
-  browser?: MenuInstallBrowser,
+  kind: InstallStepsKind = "other",
 ) {
   let listener: ((state: InstallState) => void) | undefined;
   const unsubscribe = vi.fn(() => {
@@ -14,13 +18,13 @@ function port(
   });
   const fake: InstallPort = {
     install: vi.fn(() => Promise.resolve(outcome)),
-    menuBrowser: () => browser,
-    offers: (current) => current === "prompt" || current === "menuSteps",
+    offers: offersInstall,
     onChange: (next) => {
       listener = next;
       return unsubscribe;
     },
     state: () => state,
+    stepsKind: () => kind,
   };
   return { change: (next: InstallState) => listener?.(next), fake, unsubscribe };
 }
@@ -28,9 +32,8 @@ function port(
 describe("Settings Install row", () => {
   it.each([
     ["prompt", true],
-    ["menuSteps", true],
+    ["steps", true],
     ["installed", false],
-    ["unsupported", false],
   ] as const)("shows for install state %s: %s", (state, shown) => {
     const show = vi.fn();
     watchInstallRow(port(state).fake, show);
@@ -55,20 +58,41 @@ describe("Settings Install row", () => {
     expect(fake.install).toHaveBeenCalledTimes(1);
   });
 
-  it.each(["ios", "firefoxAndroid"] as const)(
-    "opens %s menu steps on a menuSteps outcome",
-    async (browser) => {
-      const openSteps = vi.fn();
-      await startInstall(port("menuSteps", "menuSteps", browser).fake, openSteps, () => true);
-      expect(openSteps).toHaveBeenCalledWith(browser);
-    },
-  );
+  it.each(KINDS)("opens %s's steps on a steps outcome", async (kind) => {
+    const openSteps = vi.fn();
+    await startInstall(port("steps", "steps", kind).fake, openSteps, () => true);
+    expect(openSteps).toHaveBeenCalledWith(kind);
+  });
 
-  it("opens no steps after a prompt, without a menu browser or once Settings closed", async () => {
+  it("opens no steps after a prompt or once Settings closed", async () => {
     const openSteps = vi.fn();
     await startInstall(port("prompt", "accepted", "ios").fake, openSteps, () => true);
-    await startInstall(port("menuSteps", "menuSteps").fake, openSteps, () => true);
-    await startInstall(port("menuSteps", "menuSteps", "ios").fake, openSteps, () => false);
+    await startInstall(port("prompt", "dismissed", "ios").fake, openSteps, () => true);
+    await startInstall(port("steps", "steps", "ios").fake, openSteps, () => false);
     expect(openSteps).not.toHaveBeenCalled();
+  });
+});
+
+describe("install steps words", () => {
+  it("cover every browser kind with Gameplay's title and steps", () => {
+    expect(KINDS.sort()).toEqual([
+      "chromiumAndroid",
+      "chromiumDesktop",
+      "firefoxAndroid",
+      "firefoxDesktop",
+      "ios",
+      "other",
+      "safariMac",
+      "samsungInternet",
+    ]);
+    expect(PROTOTYPE.installSteps.ios).toEqual({
+      steps: "Tap Share, then Add to Home Screen.",
+      title: "Add to Home Screen",
+    });
+    expect(PROTOTYPE.installSteps.safariMac).toEqual({
+      steps: "Choose File, then Add to Dock.",
+      title: "Add to Dock",
+    });
+    expect(PROTOTYPE.installSteps.firefoxDesktop.title).toBe("Not available in Firefox");
   });
 });

@@ -29,7 +29,7 @@ import {
   type OfflinePlay,
   startOfflinePlay,
 } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
-import type { InstallState, MenuInstallBrowser } from "@andornaut/game-kit/web/pwa/installState";
+import type { InstallState, InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
@@ -45,7 +45,7 @@ export { PHONE_EVENTS } from "./events.ts";
 export type { InstallOutcome } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 export {
   type InstallState,
-  type MenuInstallBrowser,
+  type InstallStepsKind,
   offersInstall,
 } from "@andornaut/game-kit/web/pwa/installState";
 
@@ -197,8 +197,8 @@ export function gameShown(): void {
   offlinePlay?.registrationReady();
 }
 
-// "prompt" or "menuSteps" while the game can be installed (offersInstall), "installed" while it
-// runs as an installed app, otherwise "unsupported".
+// "installed" while it runs as an installed app, otherwise "prompt" while the browser holds its
+// install prompt or "steps" for the browser's own install steps; offersInstall is true for both.
 export function installState(): InstallState {
   return installFlow().state();
 }
@@ -208,15 +208,15 @@ export function onInstallStateChange(listener: (state: InstallState) => void): (
   return installFlow().onChange(listener);
 }
 
-// Shows the browser's install prompt, or tells the caller to show menuBrowser's steps. Call it
-// from the player's tap: the browser shows its prompt only during a gesture.
+// Shows the browser's install prompt, or tells the caller ("steps") to show stepsKind's steps.
+// Call it from the player's tap: the browser shows its prompt only during a gesture.
 export function installApp(): Promise<InstallOutcome> {
   return installFlow().install();
 }
 
-// The browser that installs only from its own menu, whose steps installApp's "menuSteps" calls for.
-export function menuBrowser(): MenuInstallBrowser | undefined {
-  return installFlow().menuBrowser;
+// The browser's kind, whose install steps installApp's "steps" calls for.
+export function stepsKind(): InstallStepsKind {
+  return installFlow().stepsKind;
 }
 
 // A new start-screen visit, as the start screen appears: a deferred offer may show again.

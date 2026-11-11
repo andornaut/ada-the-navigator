@@ -1,3 +1,4 @@
+import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   type ControlVisibility,
   type DeviceSetting,
@@ -55,7 +56,7 @@ export interface FeedbackSettings {
 }
 
 export type InstallSteps = Readonly<
-  Record<"firefoxAndroid" | "ios", { readonly steps: string; readonly title: string }>
+  Record<InstallStepsKind, { readonly steps: string; readonly title: string }>
 >;
 
 export interface SettingsOptions {
@@ -343,14 +344,14 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       installButton.focus();
     }
   };
-  const openSteps = (browser: keyof InstallSteps) => {
-    const words = options.install?.steps[browser];
+  const openSteps = (kind: InstallStepsKind) => {
+    const words = options.install?.steps[kind];
     if (!words) {
       return;
     }
     stepsTitle.textContent = words.title;
     stepsText.textContent = words.steps;
-    showIcon(stepsGlyph, STEPS_GLYPHS[browser]);
+    showIcon(stepsGlyph, STEPS_GLYPHS[kind]);
     stepsFrame.setAttribute("aria-label", words.title);
     cardFrame.hidden = true;
     stepsFrame.hidden = false;

@@ -21,11 +21,11 @@ import {
   coverStartScreen,
   installApp,
   installState,
-  menuBrowser,
   offersInstall,
   onInstallStateChange,
   setBackArmed,
   startScreenShown,
+  stepsKind,
   updateOffer,
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/back-stack.ts";
@@ -283,10 +283,10 @@ export class PrototypeScene extends Phaser.Scene {
       install: {
         port: {
           install: installApp,
-          menuBrowser,
           offers: offersInstall,
           onChange: onInstallStateChange,
           state: installState,
+          stepsKind,
         },
         steps: PROTOTYPE.installSteps,
       },

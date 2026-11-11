@@ -8,6 +8,21 @@ import { SETTING_ICONS, STEPS_GLYPHS } from "./settings-icons.ts";
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
+describe("install steps glyphs", () => {
+  it("start from Share on Apple devices and the browser's menu elsewhere", () => {
+    expect(STEPS_GLYPHS).toEqual({
+      chromiumAndroid: "icon-browser-menu",
+      chromiumDesktop: "icon-browser-menu",
+      firefoxAndroid: "icon-browser-menu",
+      firefoxDesktop: "icon-browser-menu",
+      ios: "icon-ios-share",
+      other: "icon-browser-menu",
+      safariMac: "icon-ios-share",
+      samsungInternet: "icon-browser-menu",
+    });
+  });
+});
+
 describe("Settings icons", () => {
   it.each([...Object.values(SETTING_ICONS), ...Object.values(STEPS_GLYPHS)])(
     "draws %s from a single rest frame the UI manifest lists",

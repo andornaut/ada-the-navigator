@@ -1,3 +1,5 @@
+import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
+
 import type { ShipPhysics } from "./ship-physics.ts";
 
 export type SectorId = 1 | 2 | 3;
@@ -50,8 +52,8 @@ export interface PrototypeContent {
   chapters: Readonly<Record<SectorId, ChapterContent>>;
   premise: PremiseContent;
   labels: Readonly<Record<string, string>>;
-  /** Install steps for browsers that install only from their own menu. */
-  installSteps: Readonly<Record<"firefoxAndroid" | "ios", { title: string; steps: string }>>;
+  /** Each browser kind's own install steps, shown where the browser holds no install prompt. */
+  installSteps: Readonly<Record<InstallStepsKind, { title: string; steps: string }>>;
   /** The start screen's update offer. */
   update: { accept: string; cancel: string; title: string };
   tuning: {

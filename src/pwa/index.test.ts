@@ -33,6 +33,15 @@ interface Device {
 const CHROME = "Mozilla/5.0 (X11; Linux x86_64) Chrome/142.0 Safari/537.36";
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1";
 const FIREFOX_ANDROID = "Mozilla/5.0 (Android 15; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0";
+const FIREFOX_DESKTOP = "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0";
+const SAFARI_MAC =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
+const CHROME_ANDROID =
+  "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Mobile Safari/537.36";
+const SAMSUNG =
+  "Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) " +
+  "SamsungBrowser/28.0 Chrome/130.0 Mobile Safari/537.36";
+const OPERA = "Mozilla/5.0 (X11; Linux x86_64) Chrome/142.0 Safari/537.36 OPR/120.0";
 
 // The browser's window as the kit's install flow and back guard read it.
 function stubDevice({ app = false, maxTouchPoints = 0, userAgent = CHROME }: Device): EventTarget {
@@ -233,8 +242,8 @@ describe("install offer", () => {
     pwa.setupPhoneApp();
     const states: string[] = [];
     pwa.onInstallStateChange((state) => states.push(state));
-    expect(pwa.installState()).toBe("unsupported");
-    expect(pwa.offersInstall(pwa.installState())).toBe(false);
+    expect(pwa.installState()).toBe("steps");
+    expect(pwa.offersInstall(pwa.installState())).toBe(true);
 
     const prompt = installPrompt("accepted");
     page.dispatchEvent(prompt);
@@ -248,14 +257,16 @@ describe("install offer", () => {
     expect(states).toEqual(["prompt", "installed"]);
   });
 
-  it("hides the offer after a dismissed prompt until the browser offers another", async () => {
+  it("falls back to the browser's steps after a dismissed prompt", async () => {
     const page = stubDevice({});
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     page.dispatchEvent(installPrompt("dismissed"));
     await expect(pwa.installApp()).resolves.toBe("dismissed");
-    expect(pwa.installState()).toBe("unsupported");
-    await expect(pwa.installApp()).resolves.toBe("unavailable");
+    expect(pwa.installState()).toBe("steps");
+    expect(pwa.offersInstall(pwa.installState())).toBe(true);
+    await expect(pwa.installApp()).resolves.toBe("steps");
+    expect(pwa.stepsKind()).toBe("chromiumDesktop");
   });
 
   it("stops calling a listener once it unsubscribes", async () => {
@@ -268,20 +279,23 @@ describe("install offer", () => {
   });
 
   it.each([
-    { browser: "ios", device: { maxTouchPoints: 5, userAgent: IPHONE } },
-    { browser: "firefoxAndroid", device: { maxTouchPoints: 5, userAgent: FIREFOX_ANDROID } },
-  ] as const)(
-    "asks for $browser's menu steps where no prompt exists",
-    async ({ browser, device }) => {
-      stubDevice(device);
-      const pwa = await import("./index.ts");
-      pwa.setupPhoneApp();
-      expect(pwa.installState()).toBe("menuSteps");
-      expect(pwa.offersInstall(pwa.installState())).toBe(true);
-      expect(pwa.menuBrowser()).toBe(browser);
-      await expect(pwa.installApp()).resolves.toBe("menuSteps");
-    },
-  );
+    { device: { userAgent: CHROME }, kind: "chromiumDesktop" },
+    { device: { maxTouchPoints: 5, userAgent: CHROME_ANDROID }, kind: "chromiumAndroid" },
+    { device: { userAgent: FIREFOX_DESKTOP }, kind: "firefoxDesktop" },
+    { device: { maxTouchPoints: 5, userAgent: FIREFOX_ANDROID }, kind: "firefoxAndroid" },
+    { device: { maxTouchPoints: 5, userAgent: IPHONE }, kind: "ios" },
+    { device: { userAgent: SAFARI_MAC }, kind: "safariMac" },
+    { device: { maxTouchPoints: 5, userAgent: SAMSUNG }, kind: "samsungInternet" },
+    { device: { userAgent: OPERA }, kind: "other" },
+  ] as const)("asks for $kind's steps where no prompt exists", async ({ device, kind }) => {
+    stubDevice(device);
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    expect(pwa.installState()).toBe("steps");
+    expect(pwa.offersInstall(pwa.installState())).toBe(true);
+    expect(pwa.stepsKind()).toBe(kind);
+    await expect(pwa.installApp()).resolves.toBe("steps");
+  });
 
   it("offers nothing while running as the installed app", async () => {
     stubDevice({ app: true, maxTouchPoints: 5, userAgent: IPHONE });

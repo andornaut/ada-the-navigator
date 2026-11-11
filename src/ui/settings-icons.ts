@@ -1,3 +1,4 @@
+import type { InstallStepsKind } from "../pwa/index.ts";
 import type { DeviceSetting } from "./device-settings.ts";
 
 // Art's Settings icons (art/settings-icons.md): 16 by 16 single-frame sheets in the UI manifest,
@@ -11,11 +12,17 @@ export const SETTING_ICONS: Readonly<Record<DeviceSetting | "install", string>> 
   sound: "icon-sound",
 };
 
-// The glyph of the button each browser's install steps start from, as in Chibi; the second step
-// shows SETTING_ICONS.install.
-export const STEPS_GLYPHS: Readonly<Record<"firefoxAndroid" | "ios", string>> = {
+// The glyph of the button each browser's install steps start from, as in Chibi: Share on Apple
+// devices, the browser's menu elsewhere. The second step shows SETTING_ICONS.install.
+export const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string>> = {
+  chromiumAndroid: "icon-browser-menu",
+  chromiumDesktop: "icon-browser-menu",
   firefoxAndroid: "icon-browser-menu",
+  firefoxDesktop: "icon-browser-menu",
   ios: "icon-ios-share",
+  other: "icon-browser-menu",
+  safariMac: "icon-ios-share",
+  samsungInternet: "icon-browser-menu",
 };
 
 // Shows the sheet's rest frame, its first and only frame, in an icon element.
