@@ -6,6 +6,7 @@ import { mapShowsEmpty, type PauseAction, pauseActions } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 
 export interface PauseLabels {
+  readonly achievements: string;
   readonly close: string;
   /** "Job: {objective}". */
   readonly jobObjective: string;
@@ -25,6 +26,7 @@ export interface PauseLabels {
 
 export interface PauseOptions {
   readonly labels: PauseLabels;
+  readonly onAchievements: () => void;
   readonly onOpenChange: (open: boolean) => void;
   readonly onReturnHome: () => void;
   readonly onSettings: () => void;
@@ -92,6 +94,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const actions = stack();
   const buttons = new Map<PauseAction, HTMLButtonElement>();
   const text: Record<PauseAction, string> = {
+    achievements: labels.achievements,
     map: labels.map,
     resume: labels.resume,
     returnHome: labels.returnHome,
@@ -233,6 +236,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       // Settings opens in the Paused card's place; closing it returns here (reopen).
       setOpen(false);
       options.onSettings();
+    } else if (id === "achievements") {
+      // Achievements opens in the Paused card's place too, and closing it returns here.
+      setOpen(false);
+      options.onAchievements();
     } else {
       setOpen(false);
       options.onReturnHome();

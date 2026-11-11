@@ -161,6 +161,8 @@ export class ConversationDirector {
   /** Seconds until Penny can sense another point. */
   private pennyWait = 0;
   private playedThisFlight = new Set<string>();
+  /** Penny's sensed points since the last takeSensed, as their instances; rested-past ones never. */
+  private sensedPoints: string[] = [];
   private queue: Request[] = [];
   private quietFor = 0;
   private sector: SectorId | null = null;
@@ -435,10 +437,18 @@ export class ConversationDirector {
       this.markSeen(request);
       if (request.conversation.trigger.kind === "penny") {
         this.pennyWait = CONVERSATION_TUNING.pennyIntervalSeconds;
+        this.sensedPoints.push(request.instance);
       }
     }
     const { resume, ...shown } = request;
     this.active = { ...shown, elapsed: resume?.elapsed ?? 0, line: resume?.line ?? 0 };
+  }
+
+  /** The points Penny sensed since the last call, as `penny:{sector}:{point}` instances. */
+  takeSensed(): string[] {
+    const sensed = this.sensedPoints;
+    this.sensedPoints = [];
+    return sensed;
   }
 
   /** Whether a warning shows, which a notice waits under. */

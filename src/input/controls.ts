@@ -16,6 +16,11 @@ import {
 } from "../game/touch-chrome.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
+import {
+  type AchievementEntry,
+  type AchievementsLabels,
+  createAchievementsCard,
+} from "../ui/achievements-card.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
@@ -40,6 +45,7 @@ import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly achievements: AchievementsLabels;
   readonly cheats: {
     readonly actions: readonly CheatAction[];
     readonly canExecute: () => boolean;
@@ -68,6 +74,8 @@ export interface ControlsOptions {
 
 export interface Controls {
   closeSettings(): void;
+  // Opens the Achievements card, as the start screen's Achievements does.
+  openAchievements(): void;
   // Adds a card that back and Escape close while it is open, innermost so far.
   registerBack(layer: BackLayer): () => void;
   dispose(): void;
@@ -78,6 +86,8 @@ export interface Controls {
   reducedMotion(): boolean;
   reset(): void;
   sample(): ControlSample;
+  // The Achievements card's entries.
+  setAchievements(entries: readonly AchievementEntry[]): void;
   setContext(label: string | undefined): void;
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
@@ -161,6 +171,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   });
   const pause = createPauseCards(settings.root, {
     labels: options.pause.labels,
+    onAchievements: () => {
+      returnToPause = true;
+      achievements.open();
+    },
     onOpenChange: () => syncModal(),
     onReturnHome: () => options.pause.onReturnHome(),
     onSettings: () => {
@@ -170,12 +184,28 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     onTravel: (destination) => options.pause.onTravel(destination),
     reducedMotion: () => reducedMotion,
   });
+  // Achievements opened from the Paused card returns to it when it closes.
+  const achievements = createAchievementsCard(settings.root, {
+    labels: options.achievements,
+    onOpenChange: (open) => {
+      options.onStartCover?.("achievements", open);
+      if (!open && returnToPause) {
+        returnToPause = false;
+        pause.open();
+      }
+      syncModal();
+    },
+  });
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
   );
   let settingsButton = true;
   const modalOpen = (): boolean =>
-    settings.isOpen() || cheats.isOpen() || pause.isOpen() || (update?.isOpen() ?? false);
+    settings.isOpen() ||
+    cheats.isOpen() ||
+    pause.isOpen() ||
+    achievements.isOpen() ||
+    (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
     settings.root.classList.toggle("ada-modal-open", open);
@@ -286,6 +316,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }),
     backStack.register({ back: () => pause.closeMap(), isOpen: () => pause.mapOpen() }),
     backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
+    backStack.register({ back: () => achievements.close(), isOpen: () => achievements.isOpen() }),
     backStack.register({
       back: () => settings.close(),
       isOpen: () => settings.isOpen() && !settings.stepsOpen(),
@@ -401,6 +432,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
+      achievements.dispose();
       pause.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
@@ -427,6 +459,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         parent.style.position = previousPosition;
       }
     },
+    openAchievements: () => achievements.open(),
     openSettings: () => {
       cheats.close();
       settings.open();
@@ -436,6 +469,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     registerBack: (layer) => backStack.register(layer),
     reset,
     sample: () => state.sample(),
+    setAchievements: (entries) => achievements.setEntries(entries),
     setContext(label) {
       contextLabel = label;
       state.setUseAvailable(label !== undefined);

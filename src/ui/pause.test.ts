@@ -18,11 +18,12 @@ const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));
 
 describe("Paused card", () => {
-  it("stacks Resume (primary), Map, Settings and Return home", () => {
+  it("stacks Resume (primary), Map, Settings, Achievements and Return home", () => {
     expect(pauseActions(false).map(({ id, role }) => [id, role])).toEqual([
       ["resume", "primary"],
       ["map", "secondary"],
       ["settings", "secondary"],
+      ["achievements", "secondary"],
       ["returnHome", "secondary"],
     ]);
     expect(pauseActions(false).every(({ available }) => available)).toBe(true);
@@ -30,7 +31,7 @@ describe("Paused card", () => {
 
   it("keeps Return home visible but unavailable in danger, and Map available", () => {
     const actions = pauseActions(true);
-    expect(actions).toHaveLength(4);
+    expect(actions).toHaveLength(5);
     expect(actions.filter(({ available }) => !available).map(({ id }) => id)).toEqual([
       "returnHome",
     ]);

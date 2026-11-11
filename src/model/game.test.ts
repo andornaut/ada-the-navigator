@@ -77,11 +77,14 @@ describe("prototype story and persistence", () => {
     expect(resumed.state).toEqual(model.state);
     resumed.step(0.05, idle);
     model.step(0.05, idle);
-    // A conversation showing at the save does not resume, so the next one heard can differ.
-    expect({ ...resumed.state, seenConversations: [] }).toEqual({
-      ...model.state,
+    // A conversation showing at the save does not resume, so the next one heard, and so what
+    // Penny senses, can differ.
+    const heard = (state: typeof model.state) => ({
+      ...state,
+      achievements: { ...state.achievements, sensed: [] },
       seenConversations: [],
     });
+    expect(heard(resumed.state)).toEqual(heard(model.state));
     const seed = resumed.state.flight!.seed;
     resumed.returnHome();
     launch(resumed);

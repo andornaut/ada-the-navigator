@@ -374,6 +374,9 @@ describe("conversation triggers", () => {
     run(talk, 0.05, { pennyPoints: ["d"] });
     expect(showing(talk)).toBe("penny:1:d:0");
     expect(heard).toEqual(expect.arrayContaining(["penny:1:c", "penny:1:d"]));
+    // Only the points she sensed count toward her finds, not the ones passed while she rested.
+    expect(talk.takeSensed()).toEqual(["penny:1:a", "penny:1:d"]);
+    expect(talk.takeSensed()).toEqual([]);
   });
 });
 
@@ -543,7 +546,9 @@ describe("conversations in the game", () => {
   // A first flight, with the heard conversations already heard.
   function flying(heard: readonly string[] = []): GameModel {
     const model = new GameModel(PROTOTYPE);
+    // As after a real first launch: the prologue and its achievement are behind Ada.
     model.state.prologueSeen = true;
+    model.state.achievements.unlocked.push("newNavigator");
     model.state.seenConversations.push(...heard);
     model.startSector(1);
     playOpening(model);

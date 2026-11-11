@@ -265,12 +265,14 @@ try {
     { ensureDestination },
     { playOpening },
     { restoreSave: restoreCalm },
+    { ACHIEVEMENTS },
   ] = await Promise.all([
     import(new URL("../src/model/game.ts", import.meta.url)),
     import(new URL("../src/data/prototype.ts", import.meta.url)),
     import(new URL("../src/model/flight.ts", import.meta.url)),
     import(new URL("../src/model/test-launch.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
+    import(new URL("../src/data/achievements.ts", import.meta.url)),
   ]);
   // Reads storybook pages (the default choice, else Next or its named action) until galaxy
   // selection opens or flight begins, and returns each page's background, its image and text,
@@ -319,6 +321,41 @@ try {
   }
   // Resolved on the current page, which each fixture replaces.
   const selector = () => page.locator('[data-dialog="galaxies"]');
+  // The start screen's Achievements opens the card on page one, every entry locked in a new game,
+  // and closing it returns to the start screen.
+  async function achievementsPage() {
+    const card = page.locator('[data-dialog="achievements"]');
+    await card.waitFor({ state: "visible" });
+    return {
+      count: (await card.locator(".ada-achievement-pager > p").textContent())?.trim(),
+      entries: await card
+        .locator(".ada-achievement")
+        .evaluateAll((nodes) =>
+          nodes.map((node) => [
+            node.querySelector(".ada-achievement-name")?.textContent,
+            node.getAttribute("data-unlocked"),
+          ]),
+        ),
+    };
+  }
+  await page.locator('[data-action="achievements"]').click();
+  const firstAchievements = await achievementsPage();
+  assert.equal(firstAchievements.count, "1/3", "The 14 achievements page six at a time");
+  assert.deepEqual(
+    firstAchievements.entries.map(([name]) => name),
+    ACHIEVEMENTS.slice(0, 6).map(({ name }) => name),
+    "Achievements list in Gameplay's order",
+  );
+  assert.ok(
+    firstAchievements.entries.every(([, unlocked]) => unlocked === "false"),
+    "A new game has no achievement unlocked",
+  );
+  await page.screenshot({ path: `${output}/achievements-start.png` });
+  await page.locator('[data-action="achievements-next"]').click();
+  assert.equal((await achievementsPage()).count, "2/3");
+  await page.locator('[data-action="close-achievements"]').click();
+  await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
   // galaxy selection on galaxy one.
   await page.locator('[data-action="start"]').click();
@@ -470,6 +507,21 @@ try {
     await page.keyboard.up("d");
   }
   events.checks.push("Settings pause movement and clear held input on resume");
+  // The first flight after a real prologue: the Paused card's Achievements opens in its place
+  // with New Navigator unlocked, and closing it returns to the Paused card.
+  await openPause();
+  await page.locator('[data-action="pause-achievements"]').click();
+  const pausedAchievements = await achievementsPage();
+  assert.equal(pausedAchievements.count, "1/3");
+  assert.deepEqual(pausedAchievements.entries[0], [ACHIEVEMENTS[0].name, "true"]);
+  assert.ok(
+    pausedAchievements.entries.slice(1).every(([, unlocked]) => unlocked === "false"),
+    "Only New Navigator is unlocked after the prologue",
+  );
+  await page.screenshot({ path: `${output}/achievements-pause.png` });
+  await page.locator('[data-action="close-achievements"]').click();
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  await page.locator('[data-action="pause-resume"]').click();
 
   // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
   // settings over: a reloaded tab keeps every earlier load's images alive until the context
@@ -837,11 +889,20 @@ try {
   await page.keyboard.press("Escape");
   await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   assert.equal(await mapCard.isVisible(), false, "Back and Escape close Map to the Paused card");
+  // Achievements stays available in danger and returns to the Paused card.
+  await page.locator('[data-action="pause-achievements"]').click();
+  assert.equal((await achievementsPage()).count, "1/3");
+  await page.locator('[data-action="close-achievements"]').click();
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
     "Danger blocks Return home, Map still opens with its percent and closes on Escape, and " +
       "no inapplicable or duplicate contextual control shows",
+  );
+  events.checks.push(
+    "Achievements open from the start screen and the Paused card in Gameplay's order, paging " +
+      "six at a time, and close back to where they opened",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });

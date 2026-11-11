@@ -363,7 +363,11 @@ describe("economy save", () => {
     const site = anyStation();
     model.state.progress[1].stations = [site.id];
     const restored = new GameModel(PROTOTYPE, model.save());
-    expect(restored.state).toEqual(model.state);
+    // The restored game also counts the paint set above toward Full Palette.
+    expect(restored.state).toEqual({
+      ...model.state,
+      achievements: { ...model.state.achievements, paints: [ECONOMY.defaultPaint, "cobalt"] },
+    });
     expect(restored.state.economy).toMatchObject({
       ownedWeapons: ["scattershot"],
       paint: "cobalt",

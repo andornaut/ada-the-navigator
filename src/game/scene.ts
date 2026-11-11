@@ -480,6 +480,7 @@ export class PrototypeScene extends Phaser.Scene {
       });
     };
     this.shell = new StoryShell({
+      achievements: () => this.controls.openAchievements(),
       choose: (id) => apply(() => this.model.choose(id)),
       continueGame: () => apply(() => this.model.continueGame()),
       // A tap on a notice dismisses it without touching flight input.
@@ -492,6 +493,13 @@ export class PrototypeScene extends Phaser.Scene {
       start: () => apply(() => this.model.start()),
     });
     this.controls = createControls(this, {
+      achievements: {
+        close: PROTOTYPE.labels.close ?? "",
+        next: PROTOTYPE.labels.next ?? "",
+        previous: PROTOTYPE.labels.previous ?? "",
+        progress: PROTOTYPE.labels.achievementProgress ?? "",
+        title: PROTOTYPE.labels.achievements ?? "",
+      },
       cheats: {
         actions: [
           {
@@ -562,6 +570,7 @@ export class PrototypeScene extends Phaser.Scene {
       pause: {
         buttonLabel: PROTOTYPE.labels.pause ?? "",
         labels: {
+          achievements: PROTOTYPE.labels.achievements ?? "",
           close: PROTOTYPE.labels.close ?? "",
           jobObjective: PROTOTYPE.labels.jobObjective ?? "",
           map: PROTOTYPE.labels.map ?? "",
@@ -1097,6 +1106,7 @@ export class PrototypeScene extends Phaser.Scene {
       objective: this.model.objective,
       towing: this.model.towing,
     });
+    this.controls.setAchievements(this.model.achievements);
     this.shell.render(state, screen);
     const flightGalaxy = state.mode === "space" ? state.flight?.sector : undefined;
     this.palette = (flightGalaxy && this.galaxyPalettes.get(flightGalaxy)) || this.basePalette;

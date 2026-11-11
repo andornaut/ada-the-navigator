@@ -42,9 +42,9 @@ export function createUpdateOffer(accept: () => void, dismiss: () => void): Upda
   };
 }
 
-// What can cover the start screen: Settings, with its install steps in its place, or the cheats
-// card that replaces it.
-export type StartCover = "cheats" | "settings";
+// What can cover the start screen: Settings, with its install steps in its place, the cheats
+// card that replaces it, or the Achievements card.
+export type StartCover = "achievements" | "cheats" | "settings";
 
 export interface StartScreen {
   cover(what: StartCover, covering: boolean): void;

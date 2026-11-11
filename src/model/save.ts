@@ -6,6 +6,7 @@ import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { newAchievements } from "./achievements.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
@@ -63,6 +64,22 @@ const destinationIds: Record<number, readonly string[]> = {
   2: ["hub", "miner", "visitors"],
   3: ["whale", "family", "holodisk"],
 };
+/** Saved achievements: id and count lists, non-negative counts and a blockade flag. */
+function achievementState(value: unknown): boolean {
+  return (
+    record(value) &&
+    ["unlocked", "allies", "projects", "paints", "sensed", "found"].every((key) =>
+      strings(value[key]),
+    ) &&
+    ["jobs", "activities"].every(
+      (key) => Number.isInteger(value[key]) && nonnegative(value[key]),
+    ) &&
+    typeof value.blockade === "boolean" &&
+    record(value.charted) &&
+    Object.values(value.charted).every(strings)
+  );
+}
+
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
 }
@@ -740,7 +757,8 @@ export function restoreSave(saved: unknown): GameState | null {
       (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean") ||
       (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean") ||
       (value.started !== undefined && typeof value.started !== "boolean") ||
-      (value.seenConversations !== undefined && !strings(value.seenConversations))
+      (value.seenConversations !== undefined && !strings(value.seenConversations)) ||
+      (value.achievements !== undefined && !achievementState(value.achievements))
     ) {
       return null;
     }
@@ -954,6 +972,10 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (!Array.isArray(value.seenConversations)) {
       restored.seenConversations = playedConversations(restored);
+    }
+    // Saves from before achievements start with none; the model unlocks what they reached.
+    if (value.achievements === undefined) {
+      restored.achievements = newAchievements();
     }
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);

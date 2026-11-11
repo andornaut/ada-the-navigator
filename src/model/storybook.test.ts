@@ -311,9 +311,15 @@ describe("start flow", () => {
     model.restart();
     expect(model.state.unlocked).toEqual([1, 2]);
     const reloaded = new GameModel(PROTOTYPE, model.save());
+    const achievements = structuredClone(reloaded.state.achievements);
     reloaded.restart();
     expect(reloaded.screen).toBe("start");
-    expect(reloaded.state).toEqual(new GameModel(PROTOTYPE).state);
+    // Achievements and their counts are all Restart keeps.
+    expect(reloaded.state).toEqual({
+      ...new GameModel(PROTOTYPE).state,
+      achievements: { ...achievements, sensed: [] },
+    });
+    expect(achievements.unlocked).toContain("newNavigator");
     reloaded.start();
     expect(reloaded.storyView?.page.id).toBe("opening");
     expect(readStory(reloaded).some(({ id }) => id === "prologue:0")).toBe(true);

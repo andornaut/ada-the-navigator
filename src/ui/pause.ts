@@ -1,8 +1,8 @@
 // Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
 // corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with Resume, Map,
-// Settings and Return home stacked full width.
+// Settings, Achievements and Return home stacked full width.
 
-export type PauseAction = "map" | "resume" | "returnHome" | "settings";
+export type PauseAction = "achievements" | "map" | "resume" | "returnHome" | "settings";
 
 export interface PauseActionView {
   // Whether the action acts; an unavailable one shows the disabled face and refuses.
@@ -18,6 +18,7 @@ export function pauseActions(inDanger: boolean): readonly PauseActionView[] {
     { available: true, id: "resume", role: "primary" },
     { available: true, id: "map", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
+    { available: true, id: "achievements", role: "secondary" },
     { available: !inDanger, id: "returnHome", role: "secondary" },
   ];
 }

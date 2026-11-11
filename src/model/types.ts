@@ -2,6 +2,7 @@ import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { SectorId, Weapon } from "../data/types.ts";
+import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
 
@@ -243,6 +244,8 @@ export interface GameState {
   jobs: JobsState;
   /** Each galaxy's one optional task, such as a held station job; Restart clears them. */
   tasks: Partial<Record<SectorId, OptionalTask>>;
+  /** Unlocked achievements and their counts, which Restart keeps. */
+  achievements: AchievementState;
 }
 export type FlightEvent =
   | { type: "depleted" }

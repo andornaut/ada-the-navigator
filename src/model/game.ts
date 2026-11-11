@@ -1,3 +1,4 @@
+import { ACHIEVEMENT_TOTALS, ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -13,6 +14,15 @@ import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
+import {
+  type AchievementEvent,
+  achievementProgress,
+  newAchievements,
+  reachSensed,
+  recordAchievement,
+  recordSensed,
+  unlockAchievements,
+} from "./achievements.ts";
 import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
 import { carriesStardust } from "./drops.ts";
 import {
@@ -142,6 +152,7 @@ const progress = newProgress;
 /** A first launch: galaxy one unlocked and nothing begun. */
 export function newGameState(): GameState {
   return {
+    achievements: newAchievements(),
     announceGalaxy: false,
     dialogue: null,
     docked: null,
@@ -228,6 +239,16 @@ export interface ConversationView {
   readonly desktop?: string;
 }
 
+/** One entry on the Achievements card, in Gameplay's table order. */
+export interface AchievementView {
+  readonly condition: string;
+  readonly id: string;
+  readonly name: string;
+  /** A locked counted achievement's count; absent once unlocked or while its system is unbuilt. */
+  readonly progress?: { readonly have: number; readonly need: number };
+  readonly unlocked: boolean;
+}
+
 export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
@@ -237,6 +258,8 @@ export class GameModel {
   private noticeShownFor = 0;
   /** Held-job moments since the last flight step, for the conversation director. */
   private jobMoments: (JobMoment | "jobComplete")[] = [];
+  /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
+  private achievementNotices: string[] = [];
   private previousSeed = 0;
   // The home half's place is not saved: a launch at home shows the start screen, and Continue
   // rebuilds any waiting scene from story progress.
@@ -246,6 +269,8 @@ export class GameModel {
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
+    // A save from before achievements unlocks what it already reached, without notices.
+    unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
     this.startShown = this.state.mode === "home";
     this.talk = new ConversationDirector(
       [...CONVERSATIONS, ...PROJECT_THANKS],
@@ -504,6 +529,7 @@ export class GameModel {
     this.pullLoadout();
     const result = buy(ECONOMY, item, this.state.economy);
     this.pushLoadout();
+    this.syncAchievements();
     return result;
   }
   /**
@@ -788,6 +814,8 @@ export class GameModel {
       return;
     }
     this.ensureRequiredApproaches();
+    // Before the step, so a sensed cache collected this step still counts as reached.
+    reachSensed(PENNY_FIND_RANGE, f.sector, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
     const events = stepFlight(this.content, dt, input, f);
     this.flightEvents = events;
@@ -874,6 +902,13 @@ export class GameModel {
         (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
       ),
     });
+    recordSensed(this.state.achievements, this.talk.takeSensed());
+    this.syncAchievements();
+    // One achievement notice at a time, each once the notice slot is free.
+    const unlocked = this.state.notice ? undefined : this.achievementNotices.shift();
+    if (unlocked !== undefined) {
+      this.notify(fill(this.label("achievement"), { name: unlocked }));
+    }
     if (!this.current.introduced && f.freshDistance >= this.content.tuning.introFreshDistance) {
       ensureDestination(this.content, first(f.sector), f);
       if (
@@ -1478,7 +1513,9 @@ export class GameModel {
     if (this.screen !== "start") {
       return;
     }
-    this.state = newGameState();
+    // Achievements and their counts survive Restart; Penny's sensed points belong to the old world.
+    const achievements = { ...this.state.achievements, sensed: [] };
+    this.state = { ...newGameState(), achievements };
     this.story = null;
     this.selection = null;
     this.startShown = true;
@@ -1616,6 +1653,37 @@ export class GameModel {
     } else if (effect?.kind === "prologue") {
       this.state.prologueSeen = true;
     }
+    this.syncAchievements();
+  }
+  /** Unlocks every achievement now reached, queueing its notice for the next flight step. */
+  private syncAchievements(): void {
+    const unlocked = unlockAchievements(
+      ACHIEVEMENTS,
+      ACHIEVEMENT_TOTALS,
+      this.state.achievements,
+      this.state,
+    );
+    this.achievementNotices.push(...unlocked.map(({ name }) => name));
+  }
+  /** Records an achievement event from a system that counts toward one (data/achievements.ts). */
+  recordAchievement(event: AchievementEvent): void {
+    recordAchievement(this.state.achievements, event);
+    this.syncAchievements();
+  }
+  /** The Achievements card's entries, in Gameplay's table order. */
+  get achievements(): readonly AchievementView[] {
+    const state = this.state.achievements;
+    return ACHIEVEMENTS.map(({ condition, counted, goal, id, name }) => {
+      const unlocked = state.unlocked.includes(id);
+      const progress = achievementProgress(ACHIEVEMENT_TOTALS, goal, state);
+      return {
+        condition,
+        id,
+        name,
+        ...(counted && !unlocked && progress.need > 0 && { progress }),
+        unlocked,
+      };
+    });
   }
   /** Galaxy selection in the cockpit, open on the farthest unlocked galaxy. */
   private openSelection(): void {
