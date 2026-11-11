@@ -670,6 +670,7 @@ function move(
   const motion = stepShipMotion(
     content.tuning.physics,
     dt,
+    { maxSpeed: adaMaxSpeed(content.tuning) },
     {
       direction: input.move,
       speed: movementSpeedFraction(content.tuning, magnitude) * adaMaxSpeed(content.tuning),

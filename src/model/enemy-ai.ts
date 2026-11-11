@@ -356,14 +356,16 @@ export function stepEnemy(
     const motion = stepShipMotion(
       physics,
       context.dt,
+      { maxSpeed: speed, restHeading: state.facing },
       { direction: request, speed: speed * Math.min(1, magnitude(request)) },
       { heading: state.heading, velocity: state.velocity },
     );
     next.velocity = motion.velocity;
     next.heading = motion.heading;
-    // The hull turns smoothly even when movement starts directly from rest.
-    if (magnitude(request)) {
-      next.facing = turnToward(context.dt, physics.turnSeconds, request, state.facing);
+    // The hull faces its movement and keeps its facing at rest; the heading starts from
+    // the hull, so velocity turns with turnSeconds into the direction the hull points.
+    if (magnitude(motion.velocity)) {
+      next.facing = direction(motion.velocity);
     }
   }
   const velocitySize = magnitude(next.velocity);

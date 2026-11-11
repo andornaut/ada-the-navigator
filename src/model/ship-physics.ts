@@ -1,4 +1,4 @@
-import type { ShipPhysics } from "../data/ship-physics.ts";
+import { REST_SPEED_FRACTION, type ShipPhysics } from "../data/ship-physics.ts";
 
 export interface Vector {
   x: number;
@@ -48,15 +48,27 @@ export function turnToward(dt: number, response: number, target: Vector, current
 }
 
 /**
+ * Per-ship context for a movement step. `maxSpeed` sets the rest threshold. With a
+ * `restHeading`, a heading starting from rest turns from it instead of starting on the
+ * request; enemies pass their hull facing so they turn into motion.
+ */
+export interface ShipLimits {
+  maxSpeed: number;
+  restHeading?: Vector;
+}
+
+/**
  * The movement model shared by every ship. While moving, the heading turns toward the
- * requested direction with `turnSeconds`; from rest it starts on the request directly.
- * Velocity approaches `heading * speed` with `accelerationSeconds`, or zero with
- * `brakingSeconds` when nothing is requested. The midpoint heading drives velocity so
- * results barely depend on frame rate.
+ * requested direction with `turnSeconds`; from rest it starts on the request, or turns
+ * from `restHeading` when given. Velocity approaches `heading * speed` with
+ * `accelerationSeconds`, or zero with `brakingSeconds` when nothing is requested, and
+ * comes to rest below `REST_SPEED_FRACTION` of the maximum speed. The midpoint heading
+ * drives velocity so results barely depend on frame rate.
  */
 export function stepShipMotion(
   physics: ShipPhysics,
   dt: number,
+  ship: ShipLimits,
   request: MotionRequest,
   motion: ShipMotion,
 ): ShipMotion {
@@ -64,10 +76,11 @@ export function stepShipMotion(
   const moving = length(requested) > 0;
   let heading: Vector | null = null;
   let applied = requested;
-  if (moving && length(motion.velocity) < 0.01) {
-    heading = requested;
-  } else if (moving) {
-    const previous = motion.heading ?? direction(motion.velocity);
+  if (moving) {
+    const resting = length(motion.velocity) < 0.01;
+    const previous = resting
+      ? (ship.restHeading ?? requested)
+      : (motion.heading ?? direction(motion.velocity));
     heading = turnToward(dt, physics.turnSeconds, requested, previous);
     applied = turnToward(dt / 2, physics.turnSeconds, requested, previous);
   }
@@ -78,8 +91,7 @@ export function stepShipMotion(
     x: motion.velocity.x + (applied.x * speed - motion.velocity.x) * blend,
     y: motion.velocity.y + (applied.y * speed - motion.velocity.y) * blend,
   };
-  // Stop subpixel drift so a released ship comes to rest.
-  if (!moving && length(velocity) < 0.01) {
+  if (!moving && length(velocity) < REST_SPEED_FRACTION * ship.maxSpeed) {
     return { heading, velocity: { x: 0, y: 0 } };
   }
   return { heading, velocity };

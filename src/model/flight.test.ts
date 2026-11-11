@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { PrototypeContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { createEnemy } from "./enemy-ai.ts";
 import {
   createFlight,
   ensureDestination,
@@ -160,7 +162,24 @@ describe("flight boundaries", () => {
     flight.player = { x: 100, y: 100 };
     flight.objects = [
       { hp: 1, id: "debris", kind: "debris", radius: 10, x: 130, y: 100 },
-      { behavior: "guard", hp: 1, id: "enemy", kind: "enemy", radius: 10, x: 160, y: 100 },
+      {
+        // Facing along the firing line, it starts moving along it rather than off it.
+        enemy: {
+          ...createEnemy(
+            enemyCatalog.fighter,
+            { archetype: "fighter", id: "enemy", packId: null, phase: 0 },
+            { x: 160, y: 100 },
+          ),
+          facing: { x: 1, y: 0 },
+          hp: 1,
+        },
+        hp: 1,
+        id: "enemy",
+        kind: "enemy",
+        radius: 10,
+        x: 160,
+        y: 100,
+      },
       { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
     ];
     flight.weapon = "basic";
@@ -201,7 +220,7 @@ it("stops movement and fresh exploration after released controls finish braking"
   const flight = empty();
   flight.player = { x: 100, y: 100 };
   stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
-  stepFlight(PROTOTYPE, 6, idle, flight);
+  stepFlight(PROTOTYPE, 2, idle, flight);
   const position = { ...flight.player };
   const explored = flight.freshDistance;
   stepFlight(PROTOTYPE, 1, idle, flight);
@@ -215,7 +234,7 @@ it("retains nonzero movement-facing through released coasting and rest before pl
   stepFlight(PROTOTYPE, 0.1, idle, flight);
   expect(flight.velocity.x).toBeGreaterThan(0);
   expect(flight.facing).toEqual({ x: 1, y: 0 });
-  stepFlight(PROTOTYPE, 6, idle, flight);
+  stepFlight(PROTOTYPE, 2, idle, flight);
   expect(flight.velocity).toEqual({ x: 0, y: 0 });
   expect(flight.facing).toEqual({ x: 1, y: 0 });
   const before = { ...flight.player };
@@ -521,10 +540,30 @@ describe("analog movement speed", () => {
   it("requests no speed without input and brakes to a stop", () => {
     expect(movementSpeedFraction(PROTOTYPE.tuning, 0)).toBe(0);
     const flight = cruise({ x: 1, y: 0 });
-    for (let frame = 0; frame < 300; frame++) {
+    for (let frame = 0; frame < 130; frame++) {
       stepFlight(PROTOTYPE, 1 / 60, idle, flight);
     }
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
+  });
+
+  it("comes to rest about 2.1 s after release from full speed, below 1% of maximum speed", () => {
+    const flight = cruise({ x: 1, y: 0 });
+    const brakingSeconds = PROTOTYPE.tuning.physics.brakingSeconds;
+    let elapsed = 0;
+    let slowest = Infinity;
+    while (speed(flight) > 0 && elapsed < 5) {
+      slowest = Math.min(slowest, speed(flight));
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      elapsed += 1 / 60;
+    }
+    expect(elapsed).toBeCloseTo(brakingSeconds * Math.log(100), 1);
+    expect(elapsed).toBeGreaterThan(2);
+    expect(elapsed).toBeLessThan(2.15);
+    // The last moving frame is at Ada's 2 u/s rest threshold, not a sub-pixel crawl.
+    expect(slowest).toBeGreaterThanOrEqual(0.01 * maxSpeed);
+    const position = { ...flight.player };
+    stepFlight(PROTOTYPE, 1, idle, flight);
+    expect(flight.player).toEqual(position);
   });
 
   it("keeps keyboard movement, including bounded diagonals, at maxSpeed", () => {

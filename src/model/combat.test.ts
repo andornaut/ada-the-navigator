@@ -93,6 +93,8 @@ describe("integrated combat", () => {
     const target = ship("capital", { x: 400, y: 0 });
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
+    // A moving hull faces its velocity.
+    target.enemy!.facing = { x: 20 / Math.hypot(20, 10), y: 10 / Math.hypot(20, 10) };
     hit(flight, partPosition(target, "engine-left"), 4);
     hit(flight, partPosition(target, "weapon-left"), 3);
     stepFlight(PROTOTYPE, 0.001, idle, flight);

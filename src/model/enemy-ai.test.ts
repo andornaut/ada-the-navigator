@@ -367,6 +367,7 @@ describe("enemy ship physics and hull rotation", () => {
     const expected = stepShipMotion(
       definition.physics,
       context.dt,
+      { maxSpeed: speed, restHeading: state.facing },
       { direction: { x: -1, y: 0 }, speed },
       { heading: state.heading, velocity: state.velocity },
     );
@@ -387,28 +388,69 @@ describe("enemy ship physics and hull rotation", () => {
     expect(result.state.heading).toBeNull();
   });
 
-  it("turns the hull toward its movement with turnSeconds and holds it when stopped", () => {
+  it("turns from rest into motion along its hull with turnSeconds and holds it when stopped", () => {
     const definition = enemyCatalog.frigate;
+    const turn = definition.physics.turnSeconds;
     let state: EnemyState = { ...spawn("frigate"), home: { x: 5000, y: 0 }, returning: true };
     const context = { ...observation(state), visibility: "unknown" as const };
     expect(state.facing).toEqual({ x: 0, y: -1 });
     const first = stepEnemy(definition, context, state);
-    expect(first.state.heading).toEqual({ x: 1, y: 0 });
-    expect(degreesBetween(first.state.facing, { x: 1, y: 0 })).toBeCloseTo(
-      90 * Math.exp(-context.dt / definition.physics.turnSeconds),
+    // The heading starts from the hull facing up rather than on the request east.
+    expect(degreesBetween(first.state.heading!, { x: 1, y: 0 })).toBeCloseTo(
+      90 * Math.exp(-context.dt / turn),
       9,
     );
+    expect(degreesBetween(first.velocity, { x: 0, y: -1 })).toBeLessThan(1);
     state = first.state;
+    let slip = 0;
     for (let i = 0; i < 600; i++) {
       state = stepEnemy(definition, context, state).state;
+      slip = Math.max(slip, degreesBetween(state.velocity, state.facing));
     }
-    expect(state.facing).toEqual({ x: 1, y: 0 });
+    expect(slip).toBeLessThan(10);
+    expect(degreesBetween(state.facing, { x: 1, y: 0 })).toBeLessThan(0.5);
+    const settled = { ...state.facing };
     // Arriving home stops movement; the hull keeps its last facing.
     const stopped = stepEnemy(definition, context, { ...state, position: { ...state.home } });
     expect(stopped.velocity).toEqual({ x: 0, y: 0 });
-    expect(stopped.state.facing).toEqual({ x: 1, y: 0 });
+    expect(stopped.state.facing).toEqual(settled);
     const idle = { ...stopped.state, returning: false };
-    expect(stepEnemy(definition, context, idle).state.facing).toEqual({ x: 1, y: 0 });
+    expect(stepEnemy(definition, context, idle).state.facing).toEqual(settled);
+  });
+
+  it("keeps a moving hull pointed along its velocity through a sharp turn", () => {
+    const definition = enemyCatalog.frigate;
+    const speed = 100 * definition.physics.speedRatio;
+    let state: EnemyState = {
+      ...spawn("frigate"),
+      facing: { x: 0, y: -1 },
+      heading: { x: 0, y: -1 },
+      home: { x: 5000, y: 0 },
+      returning: true,
+      velocity: { x: 0, y: -speed },
+    };
+    const context = { ...observation(state), visibility: "unknown" as const };
+    for (let i = 0; i < 600; i++) {
+      state = stepEnemy(definition, context, state).state;
+      expect(degreesBetween(state.velocity, state.facing)).toBeLessThan(1e-9);
+    }
+    expect(degreesBetween(state.facing, { x: 1, y: 0 })).toBeLessThan(0.5);
+  });
+
+  it("brings a heavy archetype to rest below 1% of its maximum speed without creeping", () => {
+    const definition = enemyCatalog.capital;
+    const maxSpeed = 100 * definition.physics.speedRatio;
+    let state: EnemyState = { ...spawn("capital"), velocity: { x: maxSpeed, y: 0 } };
+    const context = { ...observation(state), visibility: "unknown" as const };
+    let elapsed = 0;
+    while (state.velocity.x > 0 && elapsed < 30) {
+      state = stepEnemy(definition, context, state).state;
+      elapsed += context.dt;
+    }
+    // exp(-t / brakingSeconds) reaches 1% at brakingSeconds * ln(100), about 13.8 s.
+    expect(elapsed).toBeCloseTo(definition.physics.brakingSeconds * Math.log(100), 1);
+    expect(state.velocity).toEqual({ x: 0, y: 0 });
+    expect(state.facing).toEqual({ x: 1, y: 0 });
   });
 
   it("keeps the hull still when a disabled engine stops movement", () => {

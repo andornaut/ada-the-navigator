@@ -53,10 +53,13 @@ describe("shared movement model", () => {
   const east = { x: 1, y: 0 };
   const north = { x: 0, y: -1 };
 
+  const limits = { maxSpeed: 160 };
+
   it("starts directly on the request from rest and accelerates with accelerationSeconds", () => {
     const next = stepShipMotion(
       physics,
       0.1,
+      limits,
       { direction: north, speed: 160 },
       { heading: null, velocity: { x: 0, y: 0 } },
     );
@@ -65,32 +68,51 @@ describe("shared movement model", () => {
     expect(next.velocity.y).toBeCloseTo(-160 * (1 - Math.exp(-0.1 / physics.accelerationSeconds)));
   });
 
+  it("turns a heading starting from rest from the rest heading with turnSeconds", () => {
+    const next = stepShipMotion(
+      physics,
+      0.1,
+      { ...limits, restHeading: north },
+      { direction: east, speed: 160 },
+      { heading: null, velocity: { x: 0, y: 0 } },
+    );
+    expect(angle(next.heading!)).toBeCloseTo(-90 * Math.exp(-0.1 / physics.turnSeconds), 9);
+    // Velocity follows the slice-midpoint heading, still close to the rest heading.
+    expect(angle(next.velocity)).toBeCloseTo(-90 * Math.exp(-0.05 / physics.turnSeconds), 9);
+  });
+
   it("turns a moving heading with turnSeconds along the shorter arc", () => {
     const next = stepShipMotion(
       physics,
       0.1,
+      { ...limits, restHeading: { x: 0, y: 1 } },
       { direction: north, speed: 160 },
       { heading: east, velocity: { x: 160, y: 0 } },
     );
     expect(-angle(next.heading!)).toBeCloseTo(90 * (1 - Math.exp(-0.1 / physics.turnSeconds)), 9);
   });
 
-  it("brakes with brakingSeconds, clears the heading and settles at rest", () => {
-    const next = stepShipMotion(
-      physics,
-      0.2,
-      { direction: { x: 0, y: 0 }, speed: 160 },
-      { heading: east, velocity: { x: 100, y: 0 } },
-    );
+  it("brakes with brakingSeconds, clears the heading and rests below 1% of maximum speed", () => {
+    const stop = { direction: { x: 0, y: 0 }, speed: 160 };
+    const next = stepShipMotion(physics, 0.2, limits, stop, {
+      heading: east,
+      velocity: { x: 100, y: 0 },
+    });
     expect(next.heading).toBeNull();
     expect(next.velocity.x).toBeCloseTo(100 * Math.exp(-0.2 / physics.brakingSeconds), 9);
-    const stopped = stepShipMotion(
+    const coasting = { heading: null, velocity: { x: 1.62, y: 0 } };
+    expect(stepShipMotion(physics, 0, limits, stop, coasting).velocity).toEqual({ x: 1.62, y: 0 });
+    const slow = { heading: null, velocity: { x: 1.59, y: 0 } };
+    expect(stepShipMotion(physics, 0, limits, stop, slow).velocity).toEqual({ x: 0, y: 0 });
+    // A moving request never snaps to rest.
+    const creeping = stepShipMotion(
       physics,
-      0.2,
-      { direction: { x: 0, y: 0 }, speed: 160 },
-      { heading: null, velocity: { x: 0.005, y: 0 } },
+      1 / 60,
+      limits,
+      { direction: east, speed: 1 },
+      { heading: east, velocity: { x: 1, y: 0 } },
     );
-    expect(stopped.velocity).toEqual({ x: 0, y: 0 });
+    expect(creeping.velocity.x).toBeCloseTo(1, 12);
   });
 
   it("never stores negative zero, which JSON saves cannot represent", () => {
