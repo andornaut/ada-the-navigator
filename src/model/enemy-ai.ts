@@ -7,7 +7,9 @@ import {
   type HardpointDefinition,
   type Point,
 } from "../data/enemy-catalog.ts";
+import { MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
+import { muzzleOffset } from "./muzzles.ts";
 import {
   direction,
   hullOffset,
@@ -561,6 +563,15 @@ export function stepEnemy(
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
   let volleys = 0;
+  // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
+  // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
+  // the continuous aim. Other weapons fire from the model origin.
+  const layout = MUZZLE_LAYOUTS[state.archetype];
+  const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
+    const offset =
+      turret === null ? undefined : muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
+    return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
+  };
   const cycle = (
     profile: FireProfile,
     origin: Point,
@@ -575,6 +586,8 @@ export function stepEnemy(
     let delay = Math.max(0, cooldown);
     while (delay < context.dt) {
       volleys++;
+      const volley = Math.floor((state.age + delay) / interval);
+      const from = spawn(origin, hardpointId, muzzleAim, volley);
       for (const angle of profile.angles) {
         fire.push({
           aim: {
@@ -583,7 +596,7 @@ export function stepEnemy(
           },
           delay,
           hardpointId,
-          origin: { ...origin },
+          origin: { ...from },
           profileId: profile.id,
           projectile: profile.projectile,
           speed: context.adaSpeed * profile.projectileSpeedRatio,

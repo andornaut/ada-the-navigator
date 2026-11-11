@@ -221,13 +221,15 @@ describe("enemy rules", () => {
       for (const part of weapons) {
         const shots = result.fire.filter((shot) => shot.hardpointId === part.id);
         expect(shots).toHaveLength(angles.length);
+        // The turret aims from its hardpoint; every shot of a volley leaves one drawn muzzle.
+        const mount = {
+          x: state.position.x + part.offset.x * definition.sizeRatio * context.adaWidth,
+          y: state.position.y + part.offset.y * definition.sizeRatio * context.adaWidth,
+        };
         for (const [index, shot] of shots.entries()) {
-          expect(shot.origin).toEqual({
-            x: state.position.x + part.offset.x * definition.sizeRatio * context.adaWidth,
-            y: state.position.y + part.offset.y * definition.sizeRatio * context.adaWidth,
-          });
-          const dx = context.player.x - shot.origin.x;
-          const dy = context.player.y - shot.origin.y;
+          expect(shot.origin).toEqual(shots[0]!.origin);
+          const dx = context.player.x - mount.x;
+          const dy = context.player.y - mount.y;
           const cross = dx * shot.aim.y - dy * shot.aim.x;
           const dot = dx * shot.aim.x + dy * shot.aim.y;
           expect(Math.hypot(shot.aim.x, shot.aim.y)).toBeCloseTo(1, 12);
@@ -537,18 +539,22 @@ describe("enemy ship physics and hull rotation", () => {
     expect(result.state.facing).toEqual({ x: 1, y: 0 });
   });
 
-  it("rotates hardpoint muzzle origins with the hull at exactly 90 degrees", () => {
+  it("rotates hardpoint offsets with the hull at exactly 90 degrees", () => {
     const definition = enemyCatalog.capital;
-    const state = { ...spawn("capital"), facing: { x: 1, y: 0 }, position: { x: 100, y: 50 } };
-    const context = { ...observation(state), player: { x: 700, y: 50 } };
-    const result = stepEnemy(definition, context, state);
-    const origin = (id: string) => result.fire.find((shot) => shot.hardpointId === id)!.origin;
+    const facing = { x: 1, y: 0 };
+    const offset = (id: string) =>
+      hardpointOffset(
+        definition,
+        20,
+        facing,
+        definition.hardpoints.find((part) => part.id === id)!,
+      );
     // Hull width is 100. Facing east, forward is +x and port is -y.
-    expect(origin("weapon-left").x).toBeCloseTo(100 + 0.3 * 100, 9);
-    expect(origin("weapon-left").y).toBeCloseTo(50 - 0.35 * 100, 9);
-    expect(origin("weapon-right").x).toBeCloseTo(100 + 0.3 * 100, 9);
-    expect(origin("weapon-right").y).toBeCloseTo(50 + 0.35 * 100, 9);
-    const engine = hardpointOffset(definition, context.adaWidth, state.facing, {
+    expect(offset("weapon-left").x).toBeCloseTo(0.3 * 100, 9);
+    expect(offset("weapon-left").y).toBeCloseTo(-0.35 * 100, 9);
+    expect(offset("weapon-right").x).toBeCloseTo(0.3 * 100, 9);
+    expect(offset("weapon-right").y).toBeCloseTo(0.35 * 100, 9);
+    const engine = hardpointOffset(definition, 20, facing, {
       offset: { x: 0.3, y: 0.35 },
     });
     expect(engine.x).toBeCloseTo(-35, 9);
