@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "durationMs": 1000,
+  "frames": [
+    { "name": "space", "startMs": 0, "ms": 100 },
+    { "name": "charge", "startMs": 100, "ms": 150, "glow": "full", "streak": 1 },
+    {
+      "name": "close",
+      "startMs": 250,
+      "ms": 150,
+      "iris": { "reach": 0.645 },
+      "field": "close",
+      "glow": "full",
+      "white": 0.3,
+      "streak": 1.4
+    },
+    {
+      "name": "tight",
+      "startMs": 400,
+      "ms": 120,
+      "iris": { "radius": 66 },
+      "field": "tight",
+      "glow": "full",
+      "white": 0.7
+    },
+    { "name": "jump", "startMs": 520, "ms": 80, "field": "jump", "star": true, "bright": true },
+    {
+      "name": "open",
+      "startMs": 600,
+      "ms": 300,
+      "destination": true,
+      "iris": { "radius": 120 },
+      "field": "open",
+      "glow": "mid",
+      "white": 0.6
+    },
+    {
+      "name": "clear",
+      "startMs": 900,
+      "ms": 100,
+      "destination": true,
+      "iris": { "reach": 0.925 },
+      "field": "clear",
+      "glow": "low"
+    }
+  ],
+  "iris": {
+    "rim": { "colour": "#dcc3f2", "from": 0, "to": 3 },
+    "line": { "colour": "#8fe0f2", "at": 5, "width": 1 }
+  },
+  "streak": { "colour": "#4a4858", "length": 7, "width": 1 },
+  "emergency": {
+    "charge": { "glow": "emergency", "wash": { "colour": "#e43b44", "alpha": 0.15 } },
+    "still": "still-emergency"
+  },
+  "reducedMotion": {
+    "durationMs": 900,
+    "still": "still",
+    "steps": [
+      { "fromMs": 0, "toMs": 100, "show": "source" },
+      { "fromMs": 100, "toMs": 400, "crossFade": ["source", "still"] },
+      { "fromMs": 400, "toMs": 550, "show": "still" },
+      { "fromMs": 550, "toMs": 750, "crossFade": ["still", "destination"] },
+      { "fromMs": 750, "toMs": 900, "show": "destination" }
+    ]
+  }
+}

@@ -1675,6 +1675,69 @@
       ]
     },
     {
+      "id": "quantum-jump-field",
+      "path": "/art/quantum-jump-field.png",
+      "width": 960,
+      "height": 3780,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 960,
+      "frameHeight": 540,
+      "frames": {
+        "close": 0,
+        "tight": 1,
+        "jump": 2,
+        "open": 3,
+        "clear": 4,
+        "still": 5,
+        "still-emergency": 6
+      }
+    },
+    {
+      "id": "quantum-jump-glow",
+      "path": "/art/quantum-jump-glow.png",
+      "width": 448,
+      "height": 112,
+      "displayWidth": 112,
+      "displayHeight": 112,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 112,
+      "frameHeight": 112,
+      "frames": {
+        "full": 0,
+        "mid": 1,
+        "low": 2,
+        "emergency": 3
+      }
+    },
+    {
+      "id": "quantum-jump-star",
+      "path": "/art/quantum-jump-star.png",
+      "width": 37,
+      "height": 37,
+      "displayWidth": 37,
+      "displayHeight": 37,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 37,
+      "frameHeight": 37,
+      "frames": {
+        "jump": 0
+      }
+    },
+    {
       "id": "stardust",
       "path": "/art/stardust.png",
       "width": 36,
@@ -2717,5 +2780,6 @@
       "archetype": "retaliator"
     }
   ],
-  "spacePalette": "/art/space-palette.json"
+  "spacePalette": "/art/space-palette.json",
+  "quantumJump": "/art/quantum-jump.json"
 }
