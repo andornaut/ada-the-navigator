@@ -26,6 +26,12 @@ its Stardust. A multipart ship is defeated when all its required parts are disab
 | `capital`          |      150 |
 | `oversizedCapital` |      400 |
 
+A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
+the larger pieces first, so one pickup can carry more than 1 Stardust. The number
+of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
+24 for capital ships: swarm 2, fighter 5, interceptor 6, retaliator 8, frigate 16,
+capital 24, and one per Stardust for asteroids.
+
 Weapons are sold at stations and are also rare drops: 2% of destroyed small ships,
 10% of frigates and 25% of capitals drop a random upgrade weapon. A dropped weapon
 Ada already owns becomes 25 Stardust instead. Story mining deposits keep their
