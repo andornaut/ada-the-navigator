@@ -205,18 +205,24 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
 - While a job holds the slot, Talk plays the activity line, and Accept refuses
   with "Finish or drop your current job first."
 - The pause card shows an active activity as its "Job:" line.
+- On a board, the Active activity row's detail line is its goal: "Carry
+  supplies to a station.", "Guide a whale calf home." or "Deposit 30 resources
+  at the hub."
+- Holding one outpost's supply run, Talk at another outpost refuses Accept with
+  "Finish your activity first."
 
-| Galaxy    | Activity        | Offered by          | Goal                                                     | Reward |
-| --------- | --------------- | ------------------- | -------------------------------------------------------- | -----: |
-| Sunflower | Supply run      | Any of the outposts | Carry supplies to one of the other two outposts.         |     15 |
-| Cartwheel | Mining contract | The hub             | Deposit 30 resources at the hub; partial loads count.    |     35 |
-| Whirlpool | Guide a calf    | The whale family    | Lead a whale calf 5000 to 8000 world units home to them. |     50 |
+| Galaxy    | Activity        | Offered by          | Goal                                                     |   Reward |
+| --------- | --------------- | ------------------- | -------------------------------------------------------- | -------: |
+| Sunflower | Supply run      | Any of the outposts | Carry supplies to a station 3000 or more away.           | 15 or 25 |
+| Cartwheel | Mining contract | The hub             | Deposit 30 resources at the hub; partial loads count.    |       35 |
+| Whirlpool | Guide a calf    | The whale family    | Lead a whale calf 5000 to 8000 world units home to them. |       50 |
 
-- **Supply run**: uses the job carried-item slot and the delivery rules, except
-  the 3000 minimum: each outpost names its destination (growers to salvagers,
-  workshop to growers, salvagers to workshop). The items are fresh food,
-  repaired tools and spare parts; a lost item is replaced through Talk at the
-  issuing outpost.
+- **Supply run**: follows the delivery job rules in full, 3000 minimum
+  included: the outpost's item goes to a known station at least 3000 world
+  units away, preferring the nearest, and pays the delivery rewards (15 short,
+  25 long). With no such station known, the outpost makes no offer. The items
+  are fresh food, repaired tools and spare parts; a lost item is replaced
+  through Talk at the issuing outpost.
 - **Mining contract**: counts only deposits made after accepting, from 0; the
   hub's story deposit total keeps counting alongside. At most half of
   ore fields have a platform guarding them, so unguarded ore is always available.
@@ -238,9 +244,9 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
 
 Activity lines:
 
-- Grower: "Fresh food for the salvagers. Would you carry it?"
-- Workshop: "These repaired tools belong to the growers. Could you take them?"
-- Salvager: "We found parts the workshop needs. Will you bring them?"
+- Grower: "Fresh food for the station traders. Would you carry it?"
+- Workshop: "A station ordered these repaired tools. Could you take them?"
+- Salvager: "A station shop needs these spare parts. Will you bring them?"
 - Station: "Contract open: deposit 30 resources here. Partial loads count."
 - Whale family: "One of our young ones swam off to play. Could you guide them
   home? Stay close. They follow friends."
