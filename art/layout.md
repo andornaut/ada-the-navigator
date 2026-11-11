@@ -22,9 +22,11 @@ the value currently lives, in CSS px.
 | Safe rect      | Edge moved in by `max(m, inset)` | The shared safe-margin clamp: margin `m` from the view edge, never inside an inset | `safeRect(insets, m, view)`, `playView.ts`, to implement |
 
 - Measure all UI in logical px. The Phaser canvas draws the logical view
-  (`Scale.EXPAND`) at the backing resolution below. The DOM overlay root
-  carries the same factor `s` as the CSS variable `--ada-unit` (one logical px
-  in CSS px), updated on resize and orientation change; every size is
+  through game-kit's `followFrameTurn` with `Scale.NONE` and a device-pixel
+  backing (`deviceResolution`); every camera zooms the 720x360 base to fit, so
+  world and scroll coordinates are logical px. The DOM overlay root carries
+  the same factor `s` as the CSS variable `--ada-unit` (one logical px in CSS
+  px), updated on resize and orientation change; every size is
   `calc(var(--ada-unit) * N)` through the layout helpers. The root is not
   transform-scaled, so text stays crisp and hit testing stays native. Layout
   code reads and writes logical px only.
