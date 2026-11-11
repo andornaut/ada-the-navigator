@@ -83,14 +83,14 @@ more aggressive than the base catalog, and later galaxies ramp difficulty quickl
 
 Galaxy one has its own playtest roster.
 
-| Archetype      | Encounter | Group | Weight |  HP | Behaviours                                                                         |
-| -------------- | --------- | ----: | -----: | --: | ---------------------------------------------------------------------------------- |
-| `swarm`        | Pack      |   4–6 |   0.35 |   2 | `swarm`; packs `flee` after losses                                                 |
-| `fighter`      | Solo/pair |   1–3 |   0.30 |   4 | `hitAndRun`; a pair shares pack morale                                             |
-| `interceptor`  | Solo      |     1 |   0.15 |   3 | `strafe`                                                                           |
-| `retaliator`   | Solo      |     1 |   0.10 |   8 | `retaliate`, then `chase`; three-bolt spread                                       |
-| `frigate`      | Solo      |     1 |   0.07 |  10 | `siege`; size 4 Ada widths                                                         |
-| Capital battle | Group     |     1 |   0.03 |   – | A `capital` (5 Ada widths: command, 2 engines, 4 turrets) with 4 `escort` fighters |
+| Archetype      | Encounter   | Group | Weight |  HP | Behaviours                                                                         |
+| -------------- | ----------- | ----: | -----: | --: | ---------------------------------------------------------------------------------- |
+| `swarm`        | Pack        |   4–6 |   0.35 |   2 | `swarm`; packs `flee` after losses                                                 |
+| `fighter`      | Small group |   1–3 |   0.30 |   4 | `hitAndRun`; a group shares pack morale                                            |
+| `interceptor`  | Solo        |     1 |   0.15 |   3 | `strafe`                                                                           |
+| `retaliator`   | Solo        |     1 |   0.10 |   8 | `retaliate`, then `chase`; three-bolt spread                                       |
+| `frigate`      | Solo        |     1 |   0.07 |  10 | `siege`; size 4 Ada widths                                                         |
+| Capital battle | Group       |     1 |   0.03 |   – | A `capital` (5 Ada widths: command, 2 engines, 4 turrets) with 4 `escort` fighters |
 
 Weights choose each galaxy-one encounter; the group size range replaces the
 shared range for that archetype. Galaxy one enemies notice Ada from 20% farther

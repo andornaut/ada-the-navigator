@@ -10,7 +10,8 @@ Build a playable minimalist prototype with the first three story galaxies.
 Version one includes a fourth concluding galaxy, but its story and mechanics are
 explicitly deferred. Do not invent a finale to fill that slot.
 
-Space uses monochrome shapes and basic placeholders except Ada's small ship.
+Space uses authored sprites for ships, stations, outposts, pickups and asteroids,
+with simple placeholders only where art has not landed yet.
 Its sprite is white and blue, an elongated triangle with one front point, two
 rear points, twin thrusters at those rear points, a small tail and a compact
 canopy with room for Ada and her dog. Keep the ship small relative to the viewport.
@@ -446,8 +447,6 @@ points of interest with shops.
 
 Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
-Other space objects retain monochrome placeholder graphics.
-
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
 loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
