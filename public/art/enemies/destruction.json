@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "shards": {
+    "ease": 2.4,
+    "shrink": 0.65,
+    "cool": {
+      "color": "#7f4b3d",
+      "amount": 0.55
+    },
+    "fade": {
+      "from": 0.3,
+      "exponent": 1.3
+    },
+    "fleckFadeEnd": 0.6
+  },
+  "flash": {
+    "path": "/art/enemies/destruction-flash.svg",
+    "width": 80,
+    "height": 64,
+    "phases": [
+      {
+        "fromMs": 0,
+        "toMs": 20,
+        "scale": 1,
+        "alpha": 0.922
+      },
+      {
+        "fromMs": 20,
+        "toMs": 80,
+        "scale": 0.55,
+        "alpha": 0.588
+      }
+    ]
+  },
+  "pickups": {
+    "settleMs": 110,
+    "radius": [0.6, 1],
+    "angleJitter": 0.3,
+    "squash": 0.8
+  },
+  "reduced": {
+    "shrink": 0.8,
+    "cool": 0.6,
+    "tint": "#c1b9b8"
+  },
+  "archetypes": {
+    "swarm": {
+      "durationMs": 430,
+      "releaseMs": 140,
+      "flashWidth": 27.72,
+      "spread": 16.8,
+      "reduced": {
+        "durationMs": 350,
+        "releaseMs": 230,
+        "spread": 6.72
+      }
+    },
+    "fighter": {
+      "durationMs": 450,
+      "releaseMs": 150,
+      "flashWidth": 41.58,
+      "spread": 19.2,
+      "reduced": {
+        "durationMs": 360,
+        "releaseMs": 240,
+        "spread": 7.68
+      }
+    },
+    "interceptor": {
+      "durationMs": 440,
+      "releaseMs": 150,
+      "flashWidth": 19.8,
+      "spread": 18,
+      "reduced": {
+        "durationMs": 350,
+        "releaseMs": 230,
+        "spread": 7.2
+      }
+    },
+    "retaliator": {
+      "durationMs": 600,
+      "releaseMs": 190,
+      "flashWidth": 85.14,
+      "spread": 33.6,
+      "reduced": {
+        "durationMs": 450,
+        "releaseMs": 300,
+        "spread": 13.44
+      }
+    }
+  }
+}

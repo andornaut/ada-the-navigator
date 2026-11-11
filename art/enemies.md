@@ -2,6 +2,8 @@
 
 - Rebuild with `node art/tools/enemies.ts`. It writes `public/art/enemies/` and
   replaces the `enemy-*` entries at the end of the root manifest.
+  [art/tools/crafts.ts](tools/crafts.ts) holds the craft models, shared with the
+  [destruction effect](destruction.md).
   [art/tools/projection.ts](tools/projection.ts) holds the rotation, culling,
   depth and projection shared with [ship geometry](ship.md).
 - Exports per archetype: `{archetype}-{0..15}.svg` idle frames and
