@@ -129,8 +129,8 @@ holds its position, and every existing archetype moves. It reuses `siege`, whose
 turrets fire while it advances, with no speed to advance.
 
 - **Placement:** one platform stands at the edge of at most half of the ore
-  fields, chosen by the seed, so unguarded ore is always available. Its hull
-  keeps a seeded fixed facing.
+  fields, chosen by the seed, so unguarded ore is always available. Its hull is one drawn frame
+  that never rotates and has no thrust jets.
 - **Parts:** two turrets, 6 HP each, both required; the hull has no HP of its
   own. Hit areas, turret mounts and muzzles come from Art's drawn hardpoints,
   as for the frigate and capital, and the hull's hit circle follows the size
