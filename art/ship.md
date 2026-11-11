@@ -2,13 +2,14 @@
 
 - Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
-- Exports: `ship-{0..7}.svg`, `ship-thrust-{0..7}.svg` and `ship-jets.json`.
-  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 5 (up).
+- Exports: `ship-{0..15}.svg`, `ship-thrust-{0..15}.svg` and `ship-jets.json`.
+  `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 10 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
-- Heading index is normalized `round(atan2(world.y, world.x) / (PI / 4))` modulo 8.
-  Index 0 projects down-right, 1 down, 2 down-left, 3 left, 4 up-left,
-  5 up, 6 up-right and 7 right.
+- Heading index is normalized `round(atan2(world.y, world.x) / (PI / 8))` modulo 16,
+  in 22.5 degree steps. Even indices project down-right (0), down (2),
+  down-left (4), left (6), up-left (8), up (10), up-right (12) and right (14);
+  odd indices fall between them.
 - Local forward is negative Y. Rotate the solid model into world heading before
   projecting `screenX = (x - y) * sqrt(3) / 2` and
   `screenY = (x + y) / 2 - z`, then add the viewport pivot.

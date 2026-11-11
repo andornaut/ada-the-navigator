@@ -8,6 +8,9 @@ const white = "#ffffff";
 const side = "#d4dfe9";
 const rear = "#abbfce";
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
+// Heading k faces world angle k * 360 / HEADINGS degrees; UP projects straight up.
+const HEADINGS = 16;
+const UP = 10;
 
 // Swapping plan axes reverses winding; reverse to retain upward-facing tops.
 function plan(z: number, points: readonly (readonly [number, number])[]): Point[] {
@@ -111,7 +114,7 @@ function model(yaw: number, thrust: boolean): Face[] {
 }
 
 function rotate(yaw: number, [x, y, z]: Point): Point {
-  const angle = (yaw * Math.PI) / 4 + Math.PI / 2;
+  const angle = (yaw * Math.PI) / (HEADINGS / 2) + Math.PI / 2;
   return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), z];
 }
 
@@ -167,7 +170,7 @@ function vector(yaw: number, point: Point): [number, number] {
 
 // Speed jets: Tech draws halo, outer and core triangles per mouth behind the idle frame.
 function jets(): string {
-  const headings = Array.from({ length: 8 }, (_, yaw) => ({
+  const headings = Array.from({ length: HEADINGS }, (_, yaw) => ({
     index: yaw,
     mouths: [-1, 1].map((sign) => {
       const [a, b] = mouthEdge(sign);
@@ -206,10 +209,10 @@ function jets(): string {
 
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}ship-jets.json`, jets());
-for (let yaw = 0; yaw < 8; yaw++) {
+for (let yaw = 0; yaw < HEADINGS; yaw++) {
   for (const thrust of [false, true]) {
     writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
   }
 }
-writeFileSync(`${output}ship.svg`, svg(5, false));
-writeFileSync(`${output}ship-thrust.svg`, svg(5, true));
+writeFileSync(`${output}ship.svg`, svg(UP, false));
+writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
