@@ -14,7 +14,8 @@ it("serves landing and play independently and builds both public URLs with worki
   writeFileSync(join(root, "pages/index.html"), '<title>Site</title><a href="/play/">Play</a>');
   writeFileSync(
     join(root, "pages/play/index.html"),
-    '<title>Game</title><script type="module" src="/src/main.ts"></script><script type="module" src="./entry.ts"></script>',
+    '<title>Game</title><script type="module" src="/src/main.ts"></script>' +
+      '<script type="module" src="./entry.ts"></script>',
   );
   writeFileSync(join(root, "src/main.ts"), 'document.body.dataset.booted = "game";');
   writeFileSync(
@@ -53,7 +54,7 @@ it("serves landing and play independently and builds both public URLs with worki
   const play = readFileSync(join(root, "dist/play/index.html"), "utf8");
   expect(landing).toContain('href="/play/"');
   expect(landing).not.toContain('type="module"');
-  const gameModule = play.match(/src="(\/assets\/[^\"]+\.js)"/);
+  const gameModule = play.match(/src="(\/assets\/[^"]+\.js)"/);
   expect(gameModule).not.toBeNull();
   const gameCode = readFileSync(join(root, "dist", gameModule![1]!), "utf8");
   expect(gameCode).toContain("booted");
