@@ -216,8 +216,10 @@ describe("story runs", () => {
     expect(model.storyView).toMatchObject({
       canGoBack: false,
       canSkip: true,
-      page: { id: "opening" },
+      page: { background: "grandmaGarden", id: "opening:arrival:0" },
     });
+    readTo(model, "opening");
+    expect(model.storyView?.canGoBack).toBe(true);
     readTo(model, "prologue:0");
     expect(model.storyView?.canGoBack).toBe(true);
   });
@@ -226,11 +228,20 @@ describe("story runs", () => {
     const model = started();
     readTo(model, "prologue:0");
     expect(model.state.progress[1].opened).toBe(true);
+    // Back into Grandma's garden, the opening's last page, then its branch and the opening.
     model.storyPrevious();
-    expect(model.storyView).toMatchObject({ canGoBack: true, page: { id: "opening:branch:0" } });
+    expect(model.storyView).toMatchObject({
+      canGoBack: true,
+      page: { background: "grandmaGarden", id: "opening:farewell" },
+    });
     expect(model.state.progress[1].opened).toBe(true);
     model.storyPrevious();
-    expect(model.storyView).toMatchObject({ canGoBack: false, page: { id: "opening" } });
+    model.storyPrevious();
+    expect(model.storyView?.page.id).toBe("opening");
+    while (model.storyView?.canGoBack) {
+      model.storyPrevious();
+    }
+    expect(model.storyView?.page.id).toBe("opening:arrival:0");
     // Reading on ends the opening again and returns to the prologue, the effect still set.
     readTo(model, "prologue:0");
     expect(model.state.progress[1].opened).toBe(true);
@@ -451,7 +462,8 @@ describe("start flow", () => {
     });
     expect(achievements.unlocked).toContain("newNavigator");
     reloaded.start();
-    expect(reloaded.storyView?.page.id).toBe("opening");
+    // A restart is a first launch again: Grandma's garden, then the opening and the prologue.
+    expect(reloaded.storyView?.page.id).toBe("opening:arrival:0");
     expect(readStory(reloaded).some(({ id }) => id === "prologue:0")).toBe(true);
   });
 });

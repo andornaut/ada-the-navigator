@@ -25,7 +25,7 @@ describe("player text", () => {
 
   it("names Ada's dog Penny; Archie is only the sibling game", () => {
     expect(playerText).not.toMatch(/archie/i);
-    expect(PROTOTYPE.premise.prologue[0]?.text).toMatch(/^On a walk with Penny, /);
+    expect(PROTOTYPE.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
 
   it("names the ship's mind Astra", () => {

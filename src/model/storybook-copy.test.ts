@@ -30,6 +30,8 @@ const scenes: readonly Scene[] = [
     openingScene(PROTOTYPE, galaxy),
     resolutionScene(PROTOTYPE, galaxy),
   ]),
+  // The first launch frames chapter one's opening with Grandma's garden.
+  openingScene(PROTOTYPE, 1, true),
   prologueScene(PROTOTYPE, labels),
   roomScene(PROTOTYPE, labels, false),
   roomScene(PROTOTYPE, labels, true),
@@ -71,16 +73,43 @@ describe("storybook text", () => {
     );
   });
 
-  it("splits the prologue's opening as the copy's page breaks", () => {
-    const [park, polish, glow] = PROTOTYPE.premise.prologue;
-    expect(COPY).toContain(`Park page: "${park?.text}"`);
-    expect(COPY).toContain(`Ada's room, rock unpolished: "${polish?.text}"`);
-    expect(COPY).toContain(`Ada's room, rock glowing: "${glow?.text}" Choice: "${glow?.choice}"`);
-    expect([park, polish, glow].map((step) => step?.background)).toEqual([
+  it("pages the opening as the copy's sections, each at its location", () => {
+    const { gardenArrival, gardenFarewell, prologue } = PROTOTYPE.premise;
+    // Each section of the copy, as its heading and its lines in order, with the pages that show it.
+    const line = ({ speaker, text }: { speaker?: string; text: string }) =>
+      `- ${speaker ?? "Narration"}: "${text}"`;
+    const section = (heading: string, steps: readonly { speaker?: string; text: string }[]) =>
+      `${heading} ${steps.map(line).join(" ")}`;
+    const park = prologue.slice(0, 3);
+    const polish = prologue[3]!;
+    const glow = prologue[4]!;
+    const standing = prologue.filter((step) => !step.background);
+    const seated = prologue.filter((step) => step.background === "cockpitSeated");
+    expect(COPY).toContain(
+      section(
+        "First launch only, before chapter one's opening, in Grandma's garden:",
+        gardenArrival,
+      ),
+    );
+    expect(COPY).toContain(`garden: ${line(gardenFarewell)}`);
+    expect(COPY).toContain(section("In the park:", park));
+    expect(COPY).toContain(section("Ada's room, rock unpolished:", [polish]));
+    expect(COPY).toContain(`Ada's room, rock glowing: ${line(glow)} Action: "${glow.choice}"`);
+    expect(COPY).toContain(section("The cockpit, standing:", standing));
+    expect(COPY).toContain(section("The cockpit, seated:", seated.slice(0, 2)));
+    expect(COPY).toContain(`${line(seated[2]!)} Action: "${seated[2]!.choice}"`);
+    expect([...gardenArrival, gardenFarewell].map((step) => step.background)).toEqual(
+      Array<string>(5).fill("grandmaGarden"),
+    );
+    expect([...park, polish, glow].map((step) => step.background)).toEqual([
+      "park",
+      "park",
       "park",
       "adaRoomUnpolished",
       "adaRoom",
     ]);
+    expect(standing).toHaveLength(14);
+    expect(seated).toHaveLength(3);
   });
 
   it("follows each chapter choice with its own branch page", () => {
@@ -108,7 +137,7 @@ describe("storybook text", () => {
           expect(COPY).toContain(`"${label}"`);
         }
         if (action && action !== labels.continue && action !== labels.pickUpRock) {
-          expect(COPY).toContain(`Choice: "${action}"`);
+          expect(COPY).toContain(`Action: "${action}"`);
         }
       }
     }

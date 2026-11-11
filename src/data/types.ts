@@ -62,6 +62,10 @@ export interface PremiseContent {
   boardingNewGalaxy: Required<PremiseLine>;
   /** Ada's room on a home visit with no new scene, before "Pick up the rock.". */
   emptyHome: string;
+  /** First launch only: Grandma's garden before chapter one's opening. */
+  gardenArrival: readonly PrologueStep[];
+  /** First launch only: Grandma's line after chapter one's opening branch, still in the garden. */
+  gardenFarewell: PrologueStep;
   holodisk: {
     /** Said by whichever outpost gives Ada galaxy one's holodisk, before the insertion. */
     handover: string;
@@ -72,7 +76,10 @@ export interface PremiseContent {
     /** The holodisk's name in the hub's purchase confirm. */
     name: string;
   };
-  /** Plays once, after galaxy one's home opening and before the first flight. */
+  /**
+   * Plays once, after galaxy one's home opening and before the first flight: the park, Ada's
+   * room, the cockpit standing with Astra's optional questions, then seated.
+   */
   prologue: readonly PrologueStep[];
   /** Ada's room before a named action that takes her aboard. */
   roomRock: string;

@@ -1,5 +1,5 @@
 import { type Background, CHAPTER_BACKGROUNDS } from "../data/storybook.ts";
-import type { PrototypeContent, SectorId } from "../data/types.ts";
+import type { PrologueStep, PrototypeContent, SectorId } from "../data/types.ts";
 
 /** A choice and the page it leads to; without one, the choice ends the scene. */
 export interface StoryChoice {
@@ -175,18 +175,54 @@ export function sceneEnd(position: StoryPosition): StoryPosition {
   return here;
 }
 
-/** A chapter's home opening: its narration and choices, each with a branch page before the story
- * rejoins as the scene ends. */
-export function openingScene(content: PrototypeContent, galaxy: SectorId): Scene {
+/** A premise line as a page, at its own background or the scene's. */
+function linePage(
+  background: Background,
+  id: string,
+  next: string | undefined,
+  step: PrologueStep,
+): StoryPage {
+  return {
+    background: step.background ?? background,
+    id,
+    ...(next ? { next } : {}),
+    ...(step.speaker ? { speaker: step.speaker } : {}),
+    text: step.text,
+  };
+}
+
+/**
+ * A chapter's home opening: its narration and choices, each with a branch page before the story
+ * rejoins as the scene ends. On the first launch, chapter one's opening is framed by Grandma's
+ * garden: the arrival pages before it and her farewell after the branch.
+ */
+export function openingScene(
+  content: PrototypeContent,
+  galaxy: SectorId,
+  firstLaunch = false,
+): Scene {
   const chapter = content.chapters[galaxy];
+  const background = CHAPTER_BACKGROUNDS[galaxy].opening;
+  const framed = firstLaunch && galaxy === 1;
+  const arrival = framed ? content.premise.gardenArrival : [];
+  const arrivalPages = arrival.map((step, index) =>
+    linePage(
+      background,
+      `opening:arrival:${index}`,
+      index + 1 < arrival.length ? `opening:arrival:${index + 1}` : "opening",
+      step,
+    ),
+  );
+  const farewell = framed ? "opening:farewell" : undefined;
   return {
     effect: { galaxy, kind: "opened" },
     id: `opening:${galaxy}`,
-    last: "opening:branch:0",
+    last: farewell ?? "opening:branch:0",
     lead: "home",
     pages: [
+      ...arrivalPages,
       {
-        background: CHAPTER_BACKGROUNDS[galaxy].opening,
+        background,
         choices: chapter.openingChoices.map((label, index) => ({
           label,
           next: `opening:branch:${index}`,
@@ -195,10 +231,14 @@ export function openingScene(content: PrototypeContent, galaxy: SectorId): Scene
         text: chapter.opening,
       },
       ...chapter.openingBranches.map((text, index): StoryPage => ({
-        background: CHAPTER_BACKGROUNDS[galaxy].opening,
+        background,
         id: `opening:branch:${index}`,
+        ...(farewell ? { next: farewell } : {}),
         text,
       })),
+      ...(farewell
+        ? [linePage(background, farewell, undefined, content.premise.gardenFarewell)]
+        : []),
     ],
   };
 }

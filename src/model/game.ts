@@ -1699,7 +1699,10 @@ export class GameModel {
       return resolutionScene(this.content, resolution);
     }
     const opening = galaxies.find((id) => this.isUnlocked(id) && !this.state.progress[id].opened);
-    return opening === undefined ? null : openingScene(this.content, opening);
+    // Before the prologue is seen, chapter one's opening is the first launch's.
+    return opening === undefined
+      ? null
+      : openingScene(this.content, opening, !this.state.prologueSeen);
   }
   /** After Earth scenes: the prologue the first time, else Ada's room with the rock. */
   private roomScene(empty: boolean): Scene {
