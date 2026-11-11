@@ -2,8 +2,9 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { HUD_BUTTON } from "./layout/playView.ts";
-import { HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState, weaponGlyphPath } from "./weapons.ts";
+import { HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState } from "./weapons.ts";
 
 describe("HUD weapon buttons", () => {
   it("shows the selected weapon as selected even while weapon changes are locked", () => {

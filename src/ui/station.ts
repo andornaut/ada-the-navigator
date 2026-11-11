@@ -1,4 +1,5 @@
 import type { Weapon } from "../data/types.ts";
+import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -22,7 +23,6 @@ import {
 } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 import { buttonProperty } from "./ui-skin.ts";
-import { weaponGlyphPath } from "./weapons.ts";
 
 // The station card, the shop and the buy confirm (art/shop.md) on the shared card builder; every
 // size comes from src/ui/layout (layout.md "Shop item row").

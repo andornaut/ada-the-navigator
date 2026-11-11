@@ -856,7 +856,9 @@ try {
     "The removed top-left information HUD must not be recreated",
   );
   // Placeholder glyphs map new weapons onto existing icons until Art supplies their own.
-  const { weaponGlyphPath } = await import(new URL("../src/ui/weapons.ts", import.meta.url));
+  const { weaponGlyphPath } = await import(
+    new URL("../src/data/weapon-glyphs.ts", import.meta.url)
+  );
   const weaponImages = await page.locator(".ada-weapon-selector .ada-disc").evaluateAll((glyphs) =>
     glyphs.map((glyph) => ({
       decorative: glyph.getAttribute("aria-hidden") === "true",
