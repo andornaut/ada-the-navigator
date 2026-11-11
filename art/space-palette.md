@@ -20,8 +20,10 @@ and contrast for points of interest, obstacles and active elements.
 In a galaxy, `background`, `environment` and `environmentDetail` come from that
 galaxy's [field hues](galaxies.md); the values above are the tint origin and the
 fallback until a galaxy is set. Galaxy 1, Sunflower, makes the play field
-`#332712`. Signal roles are the same in every galaxy and stay at 5:1 or better
-on each galaxy's background.
+Chibi's farm yellow `#D8C994`, a light field. Signal roles are the same in every
+galaxy and stay at 5:1 or better on each dark galaxy's background; on a light
+field every play object and pickup draws over an ink keyline
+([Light fields](galaxies.md#light-fields)).
 
 Keep environmental detail sparse so its combined coverage does not compete with
 signals. Warm coral and amber balance cool lavender, mint and blue. Use signal

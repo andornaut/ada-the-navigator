@@ -9655,7 +9655,8 @@
     "sideScale": 0.8,
     "rule": {
       "lift": 0.035,
-      "chromaScale": 1.5
+      "chromaScale": 1.5,
+      "lightDrop": 0.045
     },
     "sprites": [
       {
@@ -9722,8 +9723,8 @@
       "backdropSide": "#3A394A"
     },
     "sunflower": {
-      "backdropLit": "#5B4724",
-      "backdropSide": "#49391D"
+      "backdropLit": "#C9BB86",
+      "backdropSide": "#A1966B"
     },
     "cartwheel": {
       "backdropLit": "#643F39",

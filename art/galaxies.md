@@ -4,10 +4,13 @@
   [galaxies.json](../public/art/galaxies.json) from the base field roles in
   [space-palette.json](../public/art/space-palette.json) and links it from the
   root manifest as `galaxies`. The build fails if any space signal falls below
-  5:1 on a galaxy's background.
+  5:1 on a dark galaxy's background, or the ink keyline below 5:1 on a light
+  galaxy's background.
 - `galaxies` lists galaxy 1 to 4 in selector order with `number`, `id`,
   `tint` and `colors`. Ids are not display strings; Gameplay owns names and
   flavour lines.
+- `lightField` holds the [light-field rule](#light-fields); `bank` holds field
+  tints that no galaxy uses yet, with `id`, `tint` and `colors`.
 
 ## Field hues
 
@@ -17,48 +20,117 @@ results under the space palette's role names; they replace `background`,
 (`pointOfInterest`, `obstacle`, `active`, `weapon`, `shipHardpoint`), the ship
 and the in-between colours never change.
 
-| Number | Id          | `background` | `environment` | `environmentDetail` | Lowest signal contrast |
-| ------ | ----------- | ------------ | ------------- | ------------------- | ---------------------- |
-| 1      | `sunflower` | `#332712`    | `#3F331E`     | `#4C3F29`           | `obstacle` 5.41:1      |
-| 2      | `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1      |
-| 3      | `whirlpool` | `#132D33`    | `#1F3940`     | `#2B464C`           | `obstacle` 5.37:1      |
-| 4      | `black-eye` | `#271423`    | `#331F2F`     | `#3F2B3B`           | `obstacle` 6.44:1      |
+| Number | Id          | `background` | `environment` | `environmentDetail` | Lowest edge contrast       |
+| ------ | ----------- | ------------ | ------------- | ------------------- | -------------------------- |
+| 1      | `sunflower` | `#D8C994`    | `#C9BA86`     | `#BAAB77`           | Ink keyline 10.90:1, light |
+| 2      | `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1          |
+| 3      | `whirlpool` | `#132D33`    | `#1F3940`     | `#2B464C`           | `obstacle` 5.37:1          |
+| 4      | `black-eye` | `#271423`    | `#331F2F`     | `#3F2B3B`           | `obstacle` 6.44:1          |
 
-Every other signal is above 6:1 on every background.
+On the dark galaxies every other signal is above 6:1. Sunflower is Chibi's farm
+yellow: its environment (1.17:1) and detail (1.38:1) step darker than the
+background, as Chibi's farm layers do. Bare signals there are 1.04:1
+(`weapon`) to 1.63:1 (`obstacle`), so on a light field every play object and
+pickup reads by its ink keyline.
 
 ## Tint rule
 
-`tint` is `lightness` (Oklab L offset), `chroma` and `hue` (degrees). A field
-colour keeps its own Oklab L plus `lightness` and takes `chroma` at `hue`:
-`(L + lightness, chroma cos hue, chroma sin hue)`, converted back to sRGB and
-clamped. The four base roles keep their lightness steps, so the field reads the
-same in every galaxy, only in another hue; Black Eye is also 0.055 darker.
+`tint` is `lightness` (Oklab L offset), `chroma`, `hue` (degrees) and, on a
+light galaxy, `light: true`. A field colour keeps its own Oklab L plus
+`lightness` and takes `chroma` at `hue`: `(L + lightness, chroma cos hue,
+chroma sin hue)`, converted back to sRGB and clamped. The four base roles keep
+their lightness steps, so the field reads the same in every galaxy, only in
+another hue; Black Eye is also 0.055 darker.
 
-The same rule retints raster space art and captures: a pixel is field paint
-when its Oklab L is below `fieldPaint.lightness` (0.45) and its chroma below
-`fieldPaint.chroma` (0.06). Other pixels are signals and stay as they are.
+With `light: true` each role's step from the base background mirrors below it:
+`L' = 2 L_background - L + lightness`, with `L_background` the base
+background's Oklab L. The background is unchanged by the mirror and the
+environment and detail land darker by their usual steps. Sunflower's tint is
+`lightness` +0.5549, `chroma` 0.0714, `hue` 94.2, which gives `#D8C994`
+exactly.
+
+The same rule retints raster space art and captures on a dark galaxy: a pixel
+is field paint when its Oklab L is below `fieldPaint.lightness` (0.45) and its
+chroma below `fieldPaint.chroma` (0.06). Other pixels are signals and stay as
+they are. A light galaxy retints no raster art: the rule would lift ink and
+dark outlines with the field.
+
+## Light fields
+
+A galaxy with `tint.light` has a light field. There Tech draws the following
+from `lightField`, in addition to the usual art; a dark galaxy draws none of
+it. Widths are logical px, scaled by `s` like every other space stroke; ink is
+`#181425` (`lightField.ink`).
+
+| Part                 | Rule                                                                                                                                                                                                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Keyline              | Every play object and pickup draws over an opaque ink keyline (`keyline` 1): its drawn silhouette (alpha 0.375 or more) grown by 1 px with a round kernel, directly beneath it in its depth slot, at its position, frame and alpha                                                                     |
+| Keylined objects     | Ada's ship (hull and jets as one silhouette), the drones (swarm, fighter, interceptor, retaliator), the frigate and capital (hull, hardpoints and turret tops as one silhouette), play asteroids, Stardust, the discovery cache, outposts, the station, the holodisk pickup                            |
+| Shots                | Each bolt, amber or coral, draws over an ink line on the same endpoints and caps, `shotEdge` 1 wider each side (1.5 to 3.5). The Scattershot dot draws over an ink disc 1 larger in radius. The missile dart and fins draw over their 1 px ink keyline; the streak stays as it is                      |
+| Phaser beam          | The glow layer is ink, width 6.5 to 4 times `w`, alpha `0.9 a` (`phaser.glow`), in place of amber 8 to 5 at `0.38 a`; the bloom's outer disc is ink, radius `5 w`, alpha `0.6 a` (`phaser.bloom`). Body, core and the inner discs are unchanged. Reduced motion: the 4 px amber edge is ink at `0.9 a` |
+| Direction indicators | The arrow and circle's 2 px stroke at alpha 0.8 draws over a 4 px ink stroke (`indicatorStroke`) at alpha 0.8 on the same path, round joins                                                                                                                                                            |
+| Jets                 | `jets.ship` replaces the layers in `ship-jets.json` (no halo); `jets.enemy` replaces every enemy's jet layers. Mouths, widths and the length rule are unchanged                                                                                                                                        |
+| Holodisk beacon      | Holds its `base` frame `#a83a96` (`holodiskBeacon`), with no pulse                                                                                                                                                                                                                                     |
+| Backdrop rocks       | The [light backdrop rule](asteroids.md#backdrop)                                                                                                                                                                                                                                                       |
+
+Contrast on Sunflower's `#D8C994` (WCAG):
+
+| Item                             | Bare             | With the rule        |
+| -------------------------------- | ---------------- | -------------------- |
+| Silhouette edge, median          | 1.22 to 1.85:1   | Ink keyline, 10.90:1 |
+| Ship jet outer                   | `#8ac0e6` 1.18:1 | `#1767b3` 3.50:1     |
+| Enemy jet outer                  | `#d4826a` 1.76:1 | `#7f4b3d` 4.27:1     |
+| Bolts and dot                    | 1.04 to 1.63:1   | Ink edge, 10.90:1    |
+| Phaser glow                      | 1.02:1           | Ink at 0.9, 8.93:1   |
+| Direction indicators             | 1.18 to 1.61:1   | Ink at 0.8, 6.93:1   |
+| Holodisk beacon                  | Bright 1.75:1    | Base held, 3.42:1    |
+| Lit play stone (`#8A8279`)       | 2.29:1           | Ink keyline, 10.90:1 |
+| `+N` tick, mint with ink outline | Outline 10.90:1  | Unchanged            |
+
+The HUD is the same on every field; its panel numbers are in
+[Controls](controls.md#status-pill).
+
+## Asset bank
+
+All art is one shared bank; Gameplay places content per galaxy
+([Presentation](../gameplay/ships.md#presentation)). Art's record of the bank
+and where each asset sits:
+
+| Asset                                                         | Placement                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------- |
+| Trading station                                               | Cartwheel                                               |
+| Discovery cache                                               | Cartwheel                                               |
+| Frigate and capital                                           | Cartwheel                                               |
+| Sunflower's outposts (growers, workshop, salvagers)           | Sunflower, keylined                                     |
+| Coral drone family (swarm, fighter, interceptor, retaliator)  | Sunflower, keylined                                     |
+| Play asteroids                                                | Shared                                                  |
+| Stardust                                                      | Shared                                                  |
+| Backdrop rocks                                                | Shared, tinted per galaxy (`tints` in `asteroids.json`) |
+| Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`) | `bank`, no galaxy: a field for a later dark galaxy      |
 
 ## Selector preview
 
 The [galaxy selector](layout.md#galaxy-selector) card shows one preview per
 galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
 
-- Capture the galaxy's space view with the base field from
-  `space-palette.json`, with no HUD, touch controls, notices, panels or cards,
-  at 1 px per logical px.
-- Crop a 360 by 180 logical px window (`preview.crop`) framed on a point of
-  interest: the galaxy's station or landmark near the centre, with some field
-  mass and environment detail in frame. Ada's ship may appear off centre.
+- Capture the galaxy's space view with no HUD, touch controls, notices, panels
+  or cards, at 1 px per logical px.
+- Unlocked: capture in the galaxy's own field (its `colors`, backdrop tints
+  and, on a light galaxy, the light-field rule). Do not tint-map a base-field
+  capture: the tint rule lifts ink on a light field.
+- Crop a 360 by 180 logical px window (`preview.crop`) framed off centre: the
+  galaxy's first destination sits a third in from the crop's left edge (x 120,
+  y 90), and the rest of the crop shows field and backdrop rocks on the cleared
+  side. Ada's ship may appear.
 - Halve it to 180 by 90 (`preview.width`, `preview.height`) by nearest
   neighbour and draw it at that size in a 1 px `#181425` frame.
-- Unlocked: the galaxy's [tint rule](#tint-rule) applied to that preview.
-- Locked: the untinted preview in greyscale, each pixel `30 + 0.6 Y`
+- Locked: unchanged. A base-field capture in greyscale, each pixel `30 + 0.6 Y`
   (`preview.locked`), with `Y` the ITU-R 601 luma, truncated. Every locked
   galaxy shares one grey range, so a locked preview gives away no hue.
 
 ## Space palette
 
 `space-palette.json` keeps the base field (`#292734`, `#34333F`, `#403F4D`):
-the tint origin, and the fallback until a galaxy is set. In play the
-field comes from the current galaxy, so Sunflower, galaxy 1, replaces the
-current `#292734` background with `#332712`.
+the tint origin, and the fallback until a galaxy is set. In play the field
+comes from the current galaxy, so Sunflower, galaxy 1, replaces the base
+`#292734` background with `#D8C994`.

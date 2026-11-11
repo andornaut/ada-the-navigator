@@ -16,19 +16,67 @@
       "scale": 0.6
     }
   },
+  "lightField": {
+    "ink": "#181425",
+    "keyline": 1,
+    "shotEdge": 1,
+    "phaser": {
+      "glow": {
+        "width": [6.5, 4],
+        "alpha": 0.9
+      },
+      "bloom": {
+        "radius": 5,
+        "alpha": 0.6
+      }
+    },
+    "indicatorStroke": 4,
+    "jets": {
+      "ship": [
+        {
+          "name": "outer",
+          "colors": ["#1767b3", "#1767b3"],
+          "width": 1.6,
+          "length": 1
+        },
+        {
+          "name": "core",
+          "colors": ["#2585d0", "#64caff"],
+          "width": 0.8,
+          "length": 0.55
+        }
+      ],
+      "enemy": [
+        {
+          "name": "outer",
+          "colors": ["#7f4b3d", "#7f4b3d"],
+          "width": 1.6,
+          "length": 1
+        },
+        {
+          "name": "core",
+          "colors": ["#a8654f", "#d68b72"],
+          "width": 0.8,
+          "length": 0.55
+        }
+      ]
+    },
+    "holodiskBeacon": "base"
+  },
   "galaxies": [
     {
       "number": 1,
       "id": "sunflower",
       "tint": {
-        "lightness": 0,
-        "chroma": 0.038,
-        "hue": 80
+        "lightness": 0.5549,
+        "chroma": 0.0714,
+        "hue": 94.2,
+        "light": true
       },
       "colors": {
-        "background": "#332712",
-        "environment": "#3F331E",
-        "environmentDetail": "#4C3F29"
+        "background": "#D8C994",
+        "environment": "#C9BA86",
+        "environmentDetail": "#BAAB77"
       }
     },
     {
@@ -71,6 +119,21 @@
         "background": "#271423",
         "environment": "#331F2F",
         "environmentDetail": "#3F2B3B"
+      }
+    }
+  ],
+  "bank": [
+    {
+      "id": "dark-gold",
+      "tint": {
+        "lightness": 0,
+        "chroma": 0.038,
+        "hue": 80
+      },
+      "colors": {
+        "background": "#332712",
+        "environment": "#3F331E",
+        "environmentDetail": "#4C3F29"
       }
     }
   ]

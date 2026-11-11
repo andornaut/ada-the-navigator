@@ -32,9 +32,12 @@ const STONE = STONE_L.map((L) => oklch(L, STONE_CHROMA, STONE_HUE));
 // galaxy's backdropLit colour (Phaser setTint), so side = backdropLit * BACKDROP_SIDE exactly.
 const BACKDROP_SIDE = 0.8;
 // Backdrop tint rule: the galaxy's environmentDetail lightness plus BACKDROP_LIFT, at the galaxy
-// hue with BACKDROP_CHROMA times the galaxy tint chroma. The base field keeps its own hue.
+// hue with BACKDROP_CHROMA times the galaxy tint chroma. The base field keeps its own hue. A light
+// galaxy's rocks sit below its background instead: its lightness minus BACKDROP_LIGHT_DROP, at
+// the tint chroma and hue, so the darker sides read as the rock's shade.
 const BACKDROP_LIFT = 0.035;
 const BACKDROP_CHROMA = 1.5;
+const BACKDROP_LIGHT_DROP = 0.045;
 // Backdrop rocks stay field: backdropLit on the galaxy background stays below this contrast.
 const BACKDROP_MAX_CONTRAST = 1.8;
 
@@ -605,12 +608,19 @@ const palette = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as 
 const galaxies = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
   galaxies: {
     id: string;
-    tint: { lightness: number; chroma: number; hue: number };
+    tint: { lightness: number; chroma: number; hue: number; light?: boolean };
     colors: Record<string, string>;
   }[];
 };
 
-function backdropLit(field: Record<string, string>, chroma: number, hue: number): string {
+function backdropLit(
+  field: Record<string, string>,
+  { chroma, hue, light }: { chroma: number; hue: number; light?: boolean },
+): string {
+  if (light) {
+    const [L] = toOklab(rgb(field.background!));
+    return oklch(L - BACKDROP_LIGHT_DROP, chroma, hue);
+  }
   const [L] = toOklab(rgb(field.environmentDetail!));
   return oklch(L + BACKDROP_LIFT, chroma * BACKDROP_CHROMA, hue);
 }
@@ -621,29 +631,30 @@ function multiply(colour: string, k: number): string {
 }
 
 const [, ba, bb] = toOklab(rgb(palette.colors.environmentDetail!));
-const baseHue = (Math.atan2(bb, ba) * 180) / Math.PI;
-const baseChroma = Math.hypot(ba, bb);
+const baseTint = { chroma: Math.hypot(ba, bb), hue: (Math.atan2(bb, ba) * 180) / Math.PI };
 const fields = [
-  { id: "base", colors: palette.colors, lit: backdropLit(palette.colors, baseChroma, baseHue) },
-  ...galaxies.galaxies.map((g) => ({
-    id: g.id,
-    colors: g.colors,
-    lit: backdropLit(g.colors, g.tint.chroma, g.tint.hue),
-  })),
-];
-for (const { colors, id, lit } of fields) {
-  const ratio = contrast(colors.background!.slice(1), lit.slice(1));
-  if (ratio >= BACKDROP_MAX_CONTRAST) {
-    throw new Error(
-      `backdropLit on ${id} is ${ratio.toFixed(2)}:1, not below ${BACKDROP_MAX_CONTRAST}:1`,
-    );
+  { id: "base", colors: palette.colors, tint: baseTint },
+  ...galaxies.galaxies.map((g) => ({ id: g.id, colors: g.colors, tint: g.tint })),
+].map(({ colors, id, tint }) => {
+  const lit = backdropLit(colors, tint);
+  return { colors, id, lit, side: multiply(lit, BACKDROP_SIDE) };
+});
+// Both tones stay field: on a light field the side is the darker, higher-contrast tone.
+for (const { colors, id, lit, side } of fields) {
+  for (const [name, colour] of [
+    ["backdropLit", lit],
+    ["backdropSide", side],
+  ] as const) {
+    const ratio = contrast(colors.background!.slice(1), colour.slice(1));
+    if (ratio >= BACKDROP_MAX_CONTRAST) {
+      throw new Error(
+        `${name} on ${id} is ${ratio.toFixed(2)}:1, not below ${BACKDROP_MAX_CONTRAST}:1`,
+      );
+    }
   }
 }
 const tints = Object.fromEntries(
-  fields.map(({ id, lit }) => [
-    id,
-    { backdropLit: lit, backdropSide: multiply(lit, BACKDROP_SIDE) },
-  ]),
+  fields.map(({ id, lit, side }) => [id, { backdropLit: lit, backdropSide: side }]),
 );
 
 // ------------------------------------------------------------------ main
@@ -709,7 +720,7 @@ writeFileSync(
       asteroids,
       backdrop: {
         sideScale: BACKDROP_SIDE,
-        rule: { lift: BACKDROP_LIFT, chromaScale: BACKDROP_CHROMA },
+        rule: { lift: BACKDROP_LIFT, chromaScale: BACKDROP_CHROMA, lightDrop: BACKDROP_LIGHT_DROP },
         sprites,
       },
       tints,

@@ -12,8 +12,8 @@ scenery: greyscale sprites tinted per galaxy at runtime.
   class rules change in the generator.
 - The build reads the field colours from
   [space-palette.json](../public/art/space-palette.json) and
-  [galaxies.json](../public/art/galaxies.json), and fails if a backdrop colour
-  reaches 1.8:1 on its galaxy background.
+  [galaxies.json](../public/art/galaxies.json), and fails if `backdropLit` or
+  `backdropSide` reaches 1.8:1 on its galaxy background.
 
 ## Classes
 
@@ -80,13 +80,16 @@ Contrast on each background (WCAG):
 | Field       | `#8A8279` | `#766F66` | `#645C54` | `#534C44` | `#443D35` |    `backdropLit` |   `backdropSide` |
 | ----------- | --------: | --------: | --------: | --------: | --------: | ---------------: | ---------------: |
 | base        |    3.87:1 |    2.95:1 |    2.23:1 |    1.73:1 |    1.37:1 | `#49475D` 1.63:1 | `#3A394A` 1.30:1 |
-| `sunflower` |    3.85:1 |    2.94:1 |    2.22:1 |    1.73:1 |    1.36:1 | `#5B4724` 1.65:1 | `#49391D` 1.31:1 |
+| `sunflower` |    2.29:1 |    3.00:1 |    3.97:1 |    5.11:1 |    6.47:1 | `#C9BB86` 1.16:1 | `#A1966B` 1.79:1 |
 | `cartwheel` |    3.90:1 |    2.98:1 |    2.25:1 |    1.75:1 |    1.38:1 | `#643F39` 1.63:1 | `#50322E` 1.29:1 |
 | `whirlpool` |    3.83:1 |    2.92:1 |    2.21:1 |    1.71:1 |    1.35:1 | `#26515C` 1.66:1 | `#1E414A` 1.32:1 |
 | `black-eye` |    4.58:1 |    3.50:1 |    2.64:1 |    2.05:1 |    1.62:1 | `#4F2F48` 1.51:1 | `#3F263A` 1.28:1 |
 
-Lit stone stays at 3.8:1 or more on every background; backdrop rocks stay below
-1.8:1, so play rocks always stand in front of the field. Signals are unchanged.
+On the dark fields lit stone stays at 3.8:1 or more; on Sunflower's light
+field the shadow tones carry the contrast and the
+[light-field](galaxies.md#light-fields) ink keyline (10.90:1) outlines every
+play rock. Backdrop rocks stay below 1.8:1, so play rocks always stand in front
+of the field. Signals are unchanged.
 
 ## Backdrop
 
@@ -102,11 +105,17 @@ Density: one backdrop rock in 35% of the 320 by 320 world-unit cells.
 `tints` holds the computed colours for the base field and each galaxy id, from
 one rule (`backdrop.rule`):
 
-- `backdropLit`: Oklab L of the field's `environmentDetail` plus 0.035
-  (`lift`), at the galaxy tint hue with 1.5 times the galaxy tint chroma
-  (`chromaScale`). The base field uses the hue and chroma of its own
+- `backdropLit` on a dark field: Oklab L of the field's `environmentDetail`
+  plus 0.035 (`lift`), at the galaxy tint hue with 1.5 times the galaxy tint
+  chroma (`chromaScale`). The base field uses the hue and chroma of its own
   `environmentDetail`.
+- `backdropLit` on a light field (`tint.light`): Oklab L of the background
+  minus 0.045 (`lightDrop`), at the tint chroma and hue. The tops sit just
+  under the background and the sides are the darker tone, as Chibi's farm
+  layers step darker.
 - `backdropSide`: `backdropLit` times 0.8 per sRGB channel (`sideScale`).
+- Both tones stay below 1.8:1 on their background; on a light field the side
+  is the higher one (Sunflower 1.79:1).
 
 ## Placement and draw order
 
@@ -180,7 +189,7 @@ timing:
       Use it for drawing bounds and the drift cue, not for hits.
     - `footprint`: the rock's base on the world plane as convex `[x, y]`
       parts in world units from the pivot. Use it for hits and placement.
-- `backdrop`: `sideScale`, `rule` (`lift`, `chromaScale`) and `sprites`, each
+- `backdrop`: `sideScale`, `rule` (`lift`, `chromaScale`, `lightDrop`) and `sprites`, each
   with `id`, `file`, `frame`, `display`, `pivot` and `tint` (`backdropLit`).
 - `tints`: `backdropLit` and `backdropSide` for `base` and each galaxy id.
 
