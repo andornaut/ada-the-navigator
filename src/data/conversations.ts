@@ -36,6 +36,7 @@ export type ConversationTrigger =
   | { readonly kind: "meeting"; readonly sector: SectorId; readonly destination: string }
   | { readonly kind: "mapped" }
   | { readonly kind: "capital" }
+  | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
   | { readonly kind: "general"; readonly sector: SectorId }
@@ -310,6 +311,16 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lore",
     repeat: "never",
     trigger: { kind: "quiet", sector: 3 },
+  },
+  {
+    id: "current:first",
+    lines: [
+      line("astra", "A space current. Ride it for speed, or push across it."),
+      happy("ada", "Like a river in space!"),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "current" },
   },
   {
     id: "quiet:3:rock",

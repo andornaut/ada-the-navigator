@@ -676,7 +676,9 @@ describe("combat admission and subframe firing", () => {
           y: original.y + PROTOTYPE.tuning.chunkSize * 2,
         };
         second = ensureDestination(PROTOTYPE, "second", flight);
-        expect({ x: second.x, y: second.y }).toEqual(original);
+        // A current's clearance can shift both destinations, leaving rounding differences.
+        expect(second.x).toBeCloseTo(original.x, 9);
+        expect(second.y).toBeCloseTo(original.y, 9);
       } else {
         // Parallel approaches place oversized guard footprints across each other.
         second = {
@@ -716,7 +718,8 @@ describe("combat admission and subframe firing", () => {
 
 it("settles a translated route guard after destination relocation without resetting its combat state", () => {
   const flight = empty();
-  flight.sector = 3;
+  // Cartwheel's capital guard, where no current nudges the relocated destination.
+  flight.sector = 2;
   const destination: SpaceObject = {
     hp: 1,
     id: "moving-route",

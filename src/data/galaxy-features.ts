@@ -34,7 +34,7 @@ export const ORE_FIELDS = {
  */
 export const CURRENTS = {
   /** Placement grid; one current per occupied cell, confined to its inner band. */
-  cellSize: 4000,
+  cellSize: 3400,
   /** Chance that a cell holds a current. */
   chance: 0.85,
   /** Clearance from stations, story destinations, landmarks and quantum jump arrivals. */
@@ -48,7 +48,7 @@ export const CURRENTS = {
   /** Inclusive path length range. */
   length: [3000, 8000] as const,
   /** Gap between a current's path and its cell's edge. */
-  margin: 500,
+  margin: 400,
   /** Peak flow at the centre line, world units per second. */
   peakFlow: 70,
   /** Polyline points along each path. */

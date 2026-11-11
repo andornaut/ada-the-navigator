@@ -10,7 +10,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
-import { ORE_FIELDS } from "../data/galaxy-features.ts";
+import { CURRENTS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -28,6 +28,7 @@ import {
   sceneryShape,
 } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
+import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
 import {
   createEnemy,
   damageEnemy,
@@ -257,6 +258,75 @@ function resolveScenery(
     }
   }
 }
+/**
+ * A debris river's rocks for each current within the active region that carries one: evenly
+ * spaced along the current, each at a seeded offset across it.
+ */
+function ensureDebrisRivers(content: PrototypeContent, point: Vec, flight: FlightState): void {
+  if (!CURRENTS.sectors.includes(flight.sector)) {
+    return;
+  }
+  const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
+  const ids = new Set(flight.objects.map((object) => object.id));
+  for (const current of currentsNear(flight.sector, reach, point)) {
+    if (!current.debris) {
+      continue;
+    }
+    const count = Math.max(1, Math.round((current.length / 1000) * CURRENTS.debrisPerThousand));
+    const next = random(hash(flight.seed ^ 0x51e7, current.points[0]!.x, current.points[0]!.y));
+    for (let index = 0; index < count; index++) {
+      const id = `river:${current.id}:${index}`;
+      if (ids.has(id) || Object.hasOwn(flight.world.notables, id)) {
+        continue;
+      }
+      const river = {
+        arc: ((index + next() * 0.6) / count) * current.length,
+        current: current.id,
+        offset: (next() - 0.5) * current.width * 0.5,
+      };
+      const object: SpaceObject = {
+        hp: content.tuning.flight.rockHp,
+        id,
+        kind: "debris",
+        radius: content.tuning.flight.rockRadius,
+        river,
+        x: 0,
+        y: 0,
+      };
+      placeRiverRock(flight, object);
+      flight.objects.push(object);
+      ids.add(id);
+    }
+  }
+}
+
+/**
+ * A debris river rock's place: it follows its current at the peak flow speed, entering at one
+ * end and leaving at the other, then re-entering at the start.
+ */
+function placeRiverRock(flight: FlightState, object: SpaceObject): void {
+  const river = object.river!;
+  const match = /^current:(-?\d+),(-?\d+)$/.exec(river.current);
+  const current = match
+    ? currentInCell(flight.sector, { x: Number(match[1]), y: Number(match[2]) })
+    : null;
+  if (!current) {
+    object.hp = 0;
+    return;
+  }
+  const arc =
+    (((river.arc + CURRENTS.peakFlow * flight.time) % current.length) + current.length) %
+    current.length;
+  const { point, tangent } = pointOnCurrent(current, arc);
+  // Adding 0 turns -0 into 0, so a saved and restored rock compares equal.
+  object.x = point.x - tangent.y * river.offset + 0;
+  object.y = point.y + tangent.x * river.offset + 0;
+  object.velocity = {
+    x: tangent.x * CURRENTS.peakFlow + 0,
+    y: tangent.y * CURRENTS.peakFlow + 0,
+  };
+}
+
 /** Station sites within the active region become persistent station objects. */
 function ensureStations(content: PrototypeContent, point: Vec, flight: FlightState): void {
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
@@ -324,6 +394,7 @@ function generatedChunks(flight: FlightState): Set<string> {
 function generate(content: PrototypeContent, point: Vec, flight: FlightState): void {
   activateFlightRegion(content, point, flight);
   ensureStations(content, point, flight);
+  ensureDebrisRivers(content, point, flight);
   const size = content.tuning.chunkSize;
   const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
@@ -381,12 +452,15 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         if (object.kind === "pickup") {
           object.amount = ECONOMY.discoveryStardust;
         }
+        // Asteroids and resource rocks are not placed in currents, drift loops included.
+        const footprint = object.radius + (object.orbit?.radius ?? 0);
         if (
           !existing.has(object.id) &&
           !Object.hasOwn(flight.world.notables, object.id) &&
           clearOf(content.tuning.safeRadius, flight.player, object) &&
           clearOfSafeAreas(content, object, flight) &&
-          clearOfLandmarks(object, flight)
+          clearOfLandmarks(object, flight) &&
+          (object.kind === "pickup" || !inCurrent(flight.sector, footprint, object))
         ) {
           flight.objects.push(object);
           existing.add(object.id);
@@ -534,6 +608,9 @@ export function encounterSpacing(content: PrototypeContent, sector: SectorId): n
   );
   return base / Math.sqrt(sectorEnemyTuning[sector].encounterRate);
 }
+
+/** Ships too heavy to drift with a current, and the fixed platform. */
+const DRIFT_PROOF: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
 
 /** Flight starts and Travel arrivals, which encounters keep clear of. */
 function arrivalPoints(flight: FlightState): Vec[] {
@@ -962,17 +1039,36 @@ export function ensureDestination(
   };
   // Story destinations keep clear of each other and of the sector's fixed stations and
   // landmarks.
-  while (
+  const crowded = (point: Vec) =>
     flight.objects.some(
-      (o) => o.kind === "destination" && distance(o, target) < content.tuning.safeRadius * 2,
+      (o) => o.kind === "destination" && distance(o, point) < content.tuning.safeRadius * 2,
     ) ||
-    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, target).length > 0 ||
+    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, point).length > 0 ||
     landmarkSites(flight.sector).some(
-      (site) => distance(site, target) < LANDMARK_TUNING.placeClearance,
-    )
-  ) {
+      (site) => distance(site, point) < LANDMARK_TUNING.placeClearance,
+    );
+  while (crowded(target)) {
     target.x -= heading.y * content.tuning.safeRadius * 2.5;
     target.y += heading.x * content.tuning.safeRadius * 2.5;
+  }
+  // They also keep a current's clearance: the nearest clear point within a short reach, so
+  // the destination stays near where it would have been and its chunks stay in one region.
+  if (inCurrent(flight.sector, CURRENTS.clearance, target)) {
+    const step = CURRENTS.width[1] / 2;
+    search: for (let ring = 1; ring <= 8; ring++) {
+      for (let spoke = 0; spoke < 16; spoke++) {
+        const angle = (spoke * Math.PI) / 8;
+        const point = {
+          x: target.x + Math.cos(angle) * ring * step,
+          y: target.y + Math.sin(angle) * ring * step,
+        };
+        if (!inCurrent(flight.sector, CURRENTS.clearance, point) && !crowded(point)) {
+          target.x = point.x;
+          target.y = point.y;
+          break search;
+        }
+      }
+    }
   }
   generate(content, target, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
@@ -1269,12 +1365,15 @@ function move(
   const onContact = adaSceneryContact(content, flight);
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
   resolveScenery(flight, shipRadius, onContact, flight.player);
-  const steps = Math.max(1, Math.ceil((length(flight.velocity) * dt) / 4));
+  // A current's flow adds drift outside Ada's physics and speed cap.
+  const drift = flowAt(flight.sector, flight.player);
+  const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
+  const steps = Math.max(1, Math.ceil((length(travel) * dt) / 4));
   for (let i = 0; i < steps; i++) {
     const before = { ...flight.player };
     const key = chunk(content, before);
-    flight.player.x += (flight.velocity.x * dt) / steps;
-    flight.player.y += (flight.velocity.y * dt) / steps;
+    flight.player.x += (travel.x * dt) / steps;
+    flight.player.y += (travel.y * dt) / steps;
     resolveScenery(flight, shipRadius, onContact, flight.player);
     const afterKey = chunk(content, flight.player);
     if (flight.freshChunk === key) {
@@ -1356,11 +1455,18 @@ function enemies(
       velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, velocity);
       object.enemy!.velocity = { ...velocity };
     };
-    const steps = Math.max(1, Math.ceil((length(velocity) * dt) / 4));
+    // Small craft drift with a current; frigates, capitals and platforms are too heavy.
+    const drift = DRIFT_PROOF.includes(state.archetype)
+      ? { x: 0, y: 0 }
+      : flowAt(flight.sector, object);
+    const steps = Math.max(
+      1,
+      Math.ceil((Math.hypot(velocity.x + drift.x, velocity.y + drift.y) * dt) / 4),
+    );
     for (let i = 0; i < steps; i++) {
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
-        point[axis] += (velocity[axis] * dt) / steps;
+        point[axis] += ((velocity[axis] + drift[axis]) * dt) / steps;
         const blocked = flight.objects.some(
           (other) =>
             other !== object &&
@@ -1420,6 +1526,21 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
 /** Ballistic debris keeps constant velocity and damages; drifting asteroids follow their path. */
 function moveDebris(content: PrototypeContent, dt: number, flight: FlightState): void {
   for (const object of flight.objects) {
+    if (object.river) {
+      // River debris follows its current and harms Ada on contact like other traveling debris.
+      const from = { x: object.x, y: object.y };
+      placeRiverRock(flight, object);
+      object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
+      if (
+        segmentDistance(flight.player, from, object) <
+          object.radius + content.tuning.flight.shipRadius &&
+        !object.cooldown
+      ) {
+        damage(content, flight);
+        object.cooldown = content.tuning.flight.damageInterval;
+      }
+      continue;
+    }
     if (object.orbit) {
       const motion = orbitMotion(flight.time, object.orbit);
       object.x = motion.position.x;
@@ -2061,6 +2182,10 @@ export function stepFlight(
       if (object.kind !== "pickup" || object.hp <= 0) {
         continue;
       }
+      // Stardust and weapon pickups drift with a current until they leave it.
+      const drift = flowAt(flight.sector, object);
+      object.x += drift.x * slice;
+      object.y += drift.y * slice;
       pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
       if (distance(object, flight.player) > object.radius + content.tuning.flight.pickupReach) {
         continue;

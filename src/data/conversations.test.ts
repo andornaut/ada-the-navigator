@@ -135,6 +135,7 @@ describe("in-flight conversations", () => {
       ["Ada", "That's what exploring is for."],
       ["Ada", "You sound more like yourself."],
       ["Ada", "Our maps."],
+      ["Ada", "Like a river in space!"],
       ["Ada", "Me too."],
     ]);
     expect(DATA_LINES.filter(({ mood }) => mood === "upset")).toEqual([

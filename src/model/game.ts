@@ -25,6 +25,7 @@ import {
   unlockAchievements,
 } from "./achievements.ts";
 import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
+import { inCurrent } from "./currents.ts";
 import { carriesStardust } from "./drops.ts";
 import {
   activateRouteEncounter,
@@ -905,6 +906,7 @@ export class GameModel {
       capitalInSight: capitalInSight(SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: events.some((event) => event.type === "docked"),
+      inCurrent: inCurrent(f.sector, 0, f.player),
       inDanger: this.inDanger,
       jobMoments,
       lostItemNear: this.lostItemNear(f),

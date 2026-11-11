@@ -25,6 +25,8 @@ export interface ConversationFacts {
   readonly capitalInSight: boolean;
   readonly collectedStardust: boolean;
   readonly docked: boolean;
+  /** Ada is inside a space current. */
+  readonly inCurrent: boolean;
   readonly inDanger: boolean;
   /** Held-job moments this step; jobComplete asks Astra for a lore line. */
   readonly jobMoments: readonly (JobMoment | "jobComplete")[];
@@ -290,6 +292,9 @@ export class ConversationDirector {
     }
     if (facts.capitalInSight) {
       this.request((trigger) => trigger.kind === "capital");
+    }
+    if (facts.inCurrent) {
+      this.request((trigger) => trigger.kind === "current");
     }
     if (facts.inDanger && !this.inFight) {
       this.inFight = true;

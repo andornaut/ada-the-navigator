@@ -297,6 +297,12 @@ function spaceObject(
         nonnegative(value.orbit.radius) &&
         finite(value.orbit.rate) &&
         finite(value.orbit.phase))) &&
+    (value.river === undefined ||
+      (value.kind === "debris" &&
+        record(value.river) &&
+        typeof value.river.current === "string" &&
+        finite(value.river.arc) &&
+        finite(value.river.offset))) &&
     (value.enemy === undefined ||
       (value.kind === "enemy" &&
         enemyState(value.enemy) &&

@@ -5,6 +5,7 @@ import { ASTEROID_ART, type AsteroidArt } from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import { CURRENTS } from "../data/galaxy-features.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GALAXIES, galaxyPreview, OVERNIGHT_SLEEP, SELECTOR_BACKDROP } from "../data/storybook.ts";
@@ -13,6 +14,7 @@ import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
+import { currentsNear, pointOnCurrent } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
@@ -26,7 +28,7 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
-import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
+import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
   coverStartScreen,
@@ -182,6 +184,8 @@ import {
   readLoopArt,
 } from "./world-art.ts";
 
+// CLEANUP (added 2026-11-11): the placeholder current streak colour, until Art's streak art.
+const CURRENT_STREAK = 0x5fd4c8;
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
 const FLASH_SUFFIX = "#flash";
@@ -1342,6 +1346,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
+    this.drawCurrents(flight);
     this.drawJobs();
     for (const object of flight.objects) {
       this.drawObject(object);
@@ -1837,6 +1842,52 @@ export class PrototypeScene extends Phaser.Scene {
    * An arrow at the view's edge toward each marked place off screen, at any distance
    * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
    */
+  /**
+   * CLEANUP (added 2026-11-11): placeholder teal streaks for Whirlpool's currents until Art's
+   * streak art lands. Dashes run along three lanes of each current and move with its flow, so
+   * its direction reads at a glance.
+   */
+  private drawCurrents(flight: FlightState): void {
+    const reach = Math.max(SCREEN.width, SCREEN.height) * 1.5;
+    const dash = 46;
+    const period = 140;
+    const offset = this.reducedMotion ? 0 : ((this.time.now / 1000) * CURRENTS.peakFlow) % period;
+    for (const current of currentsNear(flight.sector, reach, flight.player)) {
+      for (const [lane, alpha] of [
+        [0, 0.45],
+        [-0.25, 0.25],
+        [0.25, 0.25],
+      ] as const) {
+        this.ink.lineStyle(2, CURRENT_STREAK, alpha);
+        for (let arc = offset + lane * period; arc < current.length; arc += period) {
+          if (arc < 0) {
+            continue;
+          }
+          const from = pointOnCurrent(current, arc);
+          const to = pointOnCurrent(current, Math.min(current.length, arc + dash));
+          const across = lane * current.width;
+          const a = this.project({
+            x: from.point.x - from.tangent.y * across,
+            y: from.point.y + from.tangent.x * across,
+          });
+          const b = this.project({
+            x: to.point.x - to.tangent.y * across,
+            y: to.point.y + to.tangent.x * across,
+          });
+          if (
+            Math.max(a.x, b.x) < 0 ||
+            Math.min(a.x, b.x) > SCREEN.width ||
+            Math.max(a.y, b.y) < 0 ||
+            Math.min(a.y, b.y) > SCREEN.height
+          ) {
+            continue;
+          }
+          this.ink.lineBetween(a.x, a.y, b.x, b.y);
+        }
+      }
+    }
+  }
+
   private drawIndicators(): void {
     const cx = SCREEN.width / 2;
     const cy = SCREEN.height / 2;

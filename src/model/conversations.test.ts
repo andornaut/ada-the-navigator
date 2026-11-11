@@ -27,6 +27,7 @@ const calm: ConversationFacts = {
   capitalInSight: false,
   collectedStardust: false,
   docked: false,
+  inCurrent: false,
   inDanger: false,
   jobMoments: [],
   lostItemNear: null,
