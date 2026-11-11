@@ -1,7 +1,9 @@
 // Storybook backgrounds: seven isometric Earth dioramas with treatment d, on the shared
-// 960 by 540 logical canvas at 2x.
+// 960 by 540 logical canvas at 2x, and Ada's room overnight with its sleep scene overlays.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+import { blankImage } from "@andornaut/art-kit/rgbaImage";
 
 import {
   box,
@@ -20,10 +22,13 @@ import {
   R3,
   render,
   rgb,
+  type RgbaImage,
   Scene,
   slab,
+  TREATMENT,
   treatmentD,
 } from "./diorama.ts";
+import { fromOklab, hex, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json } from "./projection.ts";
 
@@ -242,8 +247,28 @@ const ROOM: Palette = {
 // The rock on the desk, in model units.
 export const ROCK: Point = [3.0, 1.4, 3.05];
 
-// glow: undefined draws the unpolished rock; 0 the faint polished pattern; 1 fills the room.
-function room(P: Palette, glow?: number): Scene {
+// The rock's glow: radius in model units and peak alpha.
+interface RockGlow {
+  peak: number;
+  radius: number;
+}
+
+// The polished rock's glow at amount g: 0 the faint pattern, 1 fills the room.
+const glowAmount = (g: number): RockGlow => ({
+  peak: 150 + Math.trunc(g * 105),
+  radius: 1.4 + g * 16,
+});
+
+interface RoomOptions {
+  // Without a glow the rock is unpolished.
+  glow?: RockGlow;
+  // The night window: the moon and stars on the glass.
+  moon?: boolean;
+  // Ada and Penny on the bed.
+  figures?: { colours: Colours; pose: Pose };
+}
+
+function room(P: Palette, { figures, glow, moon }: RoomOptions = {}): Scene {
   const [nx, ny, wall] = [16, 12, 7];
   const s = fitted(nx, ny, wall);
   s.solid(box(0, nx, 0, ny, -0.8, 0), P.slab!, 0, 0);
@@ -256,11 +281,19 @@ function room(P: Palette, glow?: number): Scene {
   const right: Decal[] = [
     [onY(0.001, 8.0, 12.6, 2.6, 5.8), P.trim!],
     [onY(0.002, 8.3, 12.3, 2.9, 5.5), P.glass!],
+  ];
+  if (moon) {
+    right.push([discOnY(0.0025, 11.3, 4.75, 0.42), P.moon!]);
+    for (const [sx, sz, r] of STARS) {
+      right.push([onY(0.0026, sx - r, sx + r, sz - r, sz + r), P.starlight!]);
+    }
+  }
+  right.push(
     [onY(0.003, 10.2, 10.4, 2.9, 5.5), P.trim!],
     [onY(0.004, 7.4, 8.4, 2.2, 6.2), P.curtain!],
     [onY(0.004, 12.2, 13.2, 2.2, 6.2), P.curtain!],
     [onY(0.002, 1.2, 3.6, 3.6, 6.2), P.poster!],
-  ];
+  );
   for (const [sx, sz] of [
     [1.8, 5.4],
     [2.9, 4.6],
@@ -280,6 +313,9 @@ function room(P: Palette, glow?: number): Scene {
   s.solid(box(0, 3.6, 7.0, 11.8, 0, 1.2), P.bed!, 2, 9.4);
   s.solid(box(0, 3.6, 7.0, 11.8, 1.2, 1.8), P.blanket!, 2, 9.6);
   s.solid(box(0.4, 3.2, 7.2, 8.4, 1.8, 2.2), P.pillow!, 2, 9.8);
+  if (figures) {
+    (figures.pose === "asleep" ? asleep : waking)(s, P, figures.colours);
+  }
   // Desk against the right wall, chair, lamp and the rock.
   s.solid(box(1.2, 1.5, 0.2, 2.6, 0, 2.3), P.drawer!, 2, 3.0);
   s.solid(box(4.6, 6.6, 0.2, 2.6, 0, 2.3), P.drawer!, 2, 5.5, [
@@ -291,16 +327,12 @@ function room(P: Palette, glow?: number): Scene {
   s.solid(frustum(6.0, 0.9, 0.62, 0.32, 8, 3.6, 4.2), P.shade!, 2, 6.8);
   s.solid(box(4.0, 5.0, 1.8, 2.5, 2.6, 2.65), P.cloth!, 2, 6.4);
   const [rx, ry, rz] = ROCK;
-  const line: Decal[] =
-    glow === undefined ? [] : [[flat(octagon(rx, ry, 0.22, 0, 8, 0.2), rz + 0.001), P.glowline!]];
+  const line: Decal[] = glow
+    ? [[flat(octagon(rx, ry, 0.22, 0, 8, 0.2), rz + 0.001), P.glowline!]]
+    : [];
   s.solid(frustum(rx, ry, 0.62, 0.42, 8, 2.6, rz, 0.2), P.rock!, 2, 6.5, line);
-  if (glow !== undefined) {
-    s.glows.push({
-      at: ROCK,
-      colour: rgb(P.glow!),
-      peak: 150 + Math.trunc(glow * 105),
-      radius: 1.4 + glow * 16,
-    });
+  if (glow) {
+    s.glows.push({ at: ROCK, colour: rgb(P.glow!), peak: glow.peak, radius: glow.radius });
   }
   s.solid(box(2.0, 3.6, 3.2, 4.8, 1.3, 1.5), P.chair!, 2, 7.4);
   for (const [cx, cy] of [
@@ -312,6 +344,323 @@ function room(P: Palette, glow?: number): Scene {
     s.solid(box(cx, cx + 0.15, cy, cy + 0.15, 0, 1.3), P.chair!, 2, 7.3);
   }
   s.solid(box(2.0, 3.6, 4.6, 4.8, 1.5, 3.2), P.chair!, 2, 7.6);
+  return s;
+}
+
+/* Ada's room overnight: night, Ada and Penny asleep, and waking in the morning */
+
+type Colours = Readonly<Record<string, string>>;
+type Pose = "asleep" | "waking";
+
+// An Oklab grade: L' = l0 + l1 L, chroma scaled by c, then shifted by (da, db).
+type Grade = readonly [l0: number, l1: number, c: number, da: number, db: number];
+
+function graded([l0, l1, c, da, db]: Grade, colours: Colours): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(colours).map(([key, value]) => {
+      const [L, a, b] = toOklab(rgb(value));
+      return [key, hex(fromOklab(l0 + l1 * L, a * c + da, b * c + db))];
+    }),
+  );
+}
+
+// The room's colours the grades change: all but its backdrop and the rock's glow colours.
+const KEPT = { glow: ROOM.glow!, glowline: ROOM.glowline! };
+const ROOM_SOLIDS: Colours = Object.fromEntries(
+  Object.entries(ROOM).filter(
+    (pair): pair is [string, string] => pair[0] !== "back" && !(pair[0] in KEPT),
+  ),
+);
+
+// Moonlight: dark, desaturated and blue; the lamp is off and the rock keeps its teal.
+const NIGHT_GRADE: Grade = [0.08, 0.42, 0.5, -0.012, -0.075];
+const NIGHT: Palette = {
+  ...graded(NIGHT_GRADE, ROOM_SOLIDS),
+  ...KEPT,
+  back: ["#1d2452", "#2a2f5e"],
+  haze: "#585c8c",
+  glass: "#16245e",
+  moon: "#f1ecd6",
+  moonlight: "#b9c9f2",
+  shade: "#6c6a72",
+  starlight: "#e8e6ff",
+};
+
+// Early sun: warm and a little more saturated.
+const MORNING_GRADE: Grade = [0.02, 0.99, 1.1, 0.014, 0.05];
+const MORNING: Palette = {
+  ...graded(MORNING_GRADE, ROOM_SOLIDS),
+  ...KEPT,
+  back: ["#f6d9b4", "#efcfb4"],
+  glass: "#fad98a",
+  sun: "#ffdf96",
+  sunlight: "#ffe2a0",
+};
+
+// Ada and Penny from their portrait palettes (art/portraits.md), Penny's golden coat included.
+const FIGURES: Colours = {
+  bow: "#b55088",
+  bowlight: "#f6757a",
+  coat: "#feae34",
+  collar: "#0099db",
+  ear: "#f77622",
+  hair: "#262b44",
+  muzzle: "#fee761",
+  nose: "#181425",
+  shirt: "#fee761",
+  skin: "#b86f50",
+};
+// Figures take a lighter grade than the room so they stay the subject. At night it keeps full
+// chroma with no blue shift, so under the night haze Penny reads as a dusky gold (about #7f6755).
+const NIGHT_FIGURE_GRADE: Grade = [0.12, 0.6, 1.0, -0.015, 0.01];
+const MORNING_FIGURE_GRADE: Grade = [0.01, 1.0, 1.0, 0.006, 0.02];
+const NIGHT_FIGURES = graded(NIGHT_FIGURE_GRADE, FIGURES);
+const MORNING_FIGURES = graded(MORNING_FIGURE_GRADE, FIGURES);
+
+// Stars on the night glass, as (x, z, half size) on the window wall.
+const STARS = [
+  [8.8, 5.05, 0.07],
+  [9.5, 3.6, 0.06],
+  [9.9, 4.7, 0.08],
+  [8.9, 3.25, 0.05],
+  [11.0, 3.4, 0.07],
+  [11.85, 3.95, 0.05],
+  [10.75, 5.2, 0.05],
+] as const;
+
+// A disc decal on the window wall (the moon).
+const discOnY = (y: number, cx: number, cz: number, r: number, n = 12): Face =>
+  Array.from({ length: n }, (_, i): Point => {
+    const a = (2 * Math.PI * i) / n;
+    return [cx + r * Math.cos(a), y, cz + r * Math.sin(a)];
+  });
+
+// A convex lump: an elliptical ring at z0 tapering by t to a smaller ring at z1, its rx axis
+// turned by rot in the floor plane.
+function lump(
+  [cx, cy]: readonly [number, number],
+  [rx, ry]: readonly [number, number],
+  z0: number,
+  z1: number,
+  t = 0.72,
+  rot = 0,
+): Face[] {
+  const n = 10;
+  const ringAt = (k: number, z: number) =>
+    Array.from({ length: n }, (_, i): Point => {
+      const a = 0.31 + (2 * Math.PI * i) / n;
+      const [u, v] = [k * rx * Math.cos(a), k * ry * Math.sin(a)];
+      return [
+        cx + u * Math.cos(rot) - v * Math.sin(rot),
+        cy + u * Math.sin(rot) + v * Math.cos(rot),
+        z,
+      ];
+    });
+  const a = ringAt(1, z0);
+  const b = ringAt(t, z1);
+  return [b, a, ...a.map((p, i) => [p, a[(i + 1) % n]!, b[(i + 1) % n]!, b[i]!])];
+}
+
+type Xy = readonly [number, number];
+
+// A square beam of half-width w from a to b, its ends level: limbs.
+function beam(a: Point, b: Point, w: number): Face[] {
+  const square = ([x, y, z]: Point): Point[] => [
+    [x - w, y - w, z],
+    [x + w, y - w, z],
+    [x + w, y + w, z],
+    [x - w, y + w, z],
+  ];
+  const lo = square(a);
+  const hi = square(b);
+  return [hi, lo, ...lo.map((p, i) => [p, lo[(i + 1) % 4]!, hi[(i + 1) % 4]!, hi[i]!])];
+}
+
+// Ada asleep on her back, head on the pillow and the blanket to her chin; Penny asleep across
+// the foot of the bed, over Ada's feet.
+function asleep(s: Scene, P: Palette, F: Colours) {
+  s.solid([flat(octagon(1.8, 7.75, 1.2, 0, 10, 0.3, 0.55), 2.201)], F.hair!, 2, 9.82);
+  s.solid(lump([1.8, 9.6], [1.15, 1.15], 1.8, 2.4, 0.88), P.blanket!, 2, 9.9);
+  s.solid(box(0.6, 3.0, 8.45, 8.75, 1.8, 2.32), P.pillow!, 2, 9.91);
+  // Face up with her eyes closed, the bow toward the headboard.
+  s.solid(lump([1.78, 7.68], [0.76, 0.66], 2.2, 2.95, 0.8), F.hair!, 2, 9.92);
+  s.solid(lump([1.92, 8.16], [0.52, 0.42], 2.3, 2.7, 0.86), F.skin!, 2, 9.93);
+  s.solid(lump([1.92, 8.16], [0.42, 0.33], 2.7, 2.8, 0.7), F.skin!, 2, 9.931, [
+    [onZ(2.801, 1.64, 1.84, 8.07, 8.13), F.nose!],
+    [onZ(2.801, 2.0, 2.2, 8.07, 8.13), F.nose!],
+  ]);
+  s.solid(lump([2.66, 7.38], [0.3, 0.2], 2.58, 3.18, 0.7), F.bow!, 2, 9.94);
+  s.solid(lump([2.34, 7.22], [0.24, 0.16], 2.58, 3.15, 0.7), F.bowlight!, 2, 9.945);
+  penny(s, F, { at: [1.3, 10.65], awake: false });
+}
+
+// Ada sitting up and stretching, arms up and out; Penny sitting up awake at the foot of the bed.
+function waking(s: Scene, P: Palette, F: Colours) {
+  // Her legs under the blanket; she sits back against the pillow so her head clears the story
+  // panel on the morning page.
+  s.solid(lump([1.8, 9.6], [1.2, 1.45], 1.8, 2.3, 0.86), P.blanket!, 2, 9.9);
+  s.solid(lump([1.8, 7.7], [0.8, 0.58], 2.05, 3.95, 0.84), F.shirt!, 2, 9.91);
+  for (const side of [-1, 1]) {
+    const at = (dx: number, z: number): Point => [1.8 + side * dx, 7.7, z];
+    // The arm nearer the viewer draws over her head.
+    const key = side > 0 ? 9.95 : 9.912;
+    s.solid(beam(at(0.6, 3.55), at(0.78, 4.15), 0.18), F.shirt!, 2, key);
+    s.solid(beam(at(0.78, 4.15), at(1.15, 5.4), 0.13), F.skin!, 2, key + 0.001);
+  }
+  s.solid(lump([1.8, 7.58], [0.72, 0.66], 3.85, 5.05, 0.84), F.hair!, 2, 9.92);
+  s.solid(lump([1.98, 7.9], [0.45, 0.36], 3.91, 4.81, 0.84), F.skin!, 2, 9.93);
+  for (const [x, y] of [
+    [2.37, 7.98],
+    [2.08, 8.21],
+  ] as const) {
+    s.solid(box(x - 0.05, x + 0.05, y - 0.05, y + 0.05, 4.39, 4.51), F.nose!, 2, 9.932);
+  }
+  s.solid(lump([1.71, 7.46], [0.63, 0.57], 5.05, 5.32, 0.7), F.hair!, 2, 9.935);
+  s.solid(lump([2.43, 7.13], [0.27, 0.18], 4.87, 5.38, 0.7), F.bow!, 2, 9.94);
+  s.solid(lump([2.16, 6.98], [0.22, 0.15], 4.9, 5.35, 0.7), F.bowlight!, 2, 9.945);
+  penny(s, F, { at: [1.4, 10.7], awake: true });
+}
+
+interface PennyPose {
+  // Body centre on the blanket.
+  at: Xy;
+  // Asleep she lies with her head down and eyes closed; awake she sits up, eyes open.
+  awake: boolean;
+}
+
+// Penny on the blanket, facing the bed's open side and the viewer: golden coat, darker floppy
+// ears and tail, pale muzzle, blue collar.
+function penny(s: Scene, F: Colours, { at, awake }: PennyPose) {
+  const k = 1.7;
+  const z = 1.8;
+  // Offsets and lumps in a frame turned by `turn` in the floor plane, in Penny's units.
+  const frame = (turn: number) => {
+    const [ux, uy] = [Math.cos(turn), Math.sin(turn)];
+    return {
+      along: (p: Xy, du: number, dv: number): Xy => [
+        p[0] + (du * ux - dv * uy) * k,
+        p[1] + (du * uy + dv * ux) * k,
+      ],
+      dot: (p: Xy, r: number, top: number, sy = 1): Face =>
+        flat(octagon(p[0], p[1], r * k, 0, 6, turn, sy), z + top * k + 0.001),
+      L: (p: Xy, rx: number, ry: number, z0: number, z1: number, t: number) =>
+        lump(p, [rx * k, ry * k], z + z0 * k, z + z1 * k, t, turn),
+    };
+  };
+  // Asleep she lies along the foot of the bed, her head turned to the viewer; awake she sits
+  // up facing the bed's open side.
+  const body = frame(awake ? 0.55 : 0);
+  const { along, dot, L } = frame(awake ? 0.55 : 0.8);
+  let head: Xy;
+  let zh: number;
+  if (awake) {
+    s.solid(body.L(body.along(at, -0.2, 0), 0.5, 0.45, 0, 0.42, 0.8), F.coat!, 2, 9.96);
+    s.solid(body.L(body.along(at, -0.5, -0.38), 0.3, 0.12, 0, 0.26, 0.7), F.ear!, 2, 9.961);
+    s.solid(body.L(body.along(at, 0.22, 0), 0.3, 0.3, 0, 1.0, 0.8), F.coat!, 2, 9.962);
+    head = body.along(at, 0.3, 0);
+    zh = 0.95;
+  } else {
+    s.solid(body.L(at, 0.72, 0.5, 0, 0.5, 0.76), F.coat!, 2, 9.96);
+    s.solid(body.L(body.along(at, -0.55, -0.3), 0.36, 0.14, 0, 0.22, 0.7), F.ear!, 2, 9.961);
+    head = body.along(at, 0.7, 0.2);
+    zh = 0.3;
+  }
+  // Eyes open as dots, closed as slits.
+  const eyes: Decal[] = [0.156, -0.156].map((dv) => [
+    dot(along(head, 0.17, dv), awake ? 0.065 : 0.07, zh + 0.58, awake ? 1 : 0.4),
+    F.nose!,
+  ]);
+  s.solid(L(along(head, -0.17, 0), 0.3, 0.3, zh - 0.08, zh + 0.04, 0.9), F.collar!, 2, 9.963);
+  s.solid(L(head, 0.34, 0.34, zh, zh + 0.48, 0.8), F.coat!, 2, 9.97);
+  s.solid(L(head, 0.26, 0.26, zh + 0.48, zh + 0.58, 0.7), F.coat!, 2, 9.971, eyes);
+  s.solid(L(along(head, 0.37, 0), 0.17, 0.17, zh, zh + 0.34, 0.76), F.muzzle!, 2, 9.973, [
+    [dot(along(head, 0.47, 0), 0.075, zh + 0.34), F.nose!],
+  ]);
+  for (const dv of [-0.34, 0.34]) {
+    s.solid(L(along(head, -0.02, dv), 0.22, 0.09, zh + 0.08, zh + 0.42, 0.85), F.ear!, 2, 9.975);
+  }
+}
+
+// Window light: each pane's light on the floor along d (dz < 0), and the beam of air from the
+// pane to that patch as one hull. Panes split at the mullion.
+const PANES = [
+  [8.3, 10.2],
+  [10.4, 12.3],
+] as const;
+const PANE_Z = [2.9, 5.5] as const;
+
+function paneLight(d: Point): Face[] {
+  const [z0, z1] = PANE_Z;
+  const hit = (x: number, z: number): Point => {
+    const t = -z / d[2];
+    const k = Math.min(1, 12 / (d[1] * t));
+    return [x + d[0] * t * k, d[1] * t * k, 0.003];
+  };
+  return PANES.map(([x0, x1]) => [hit(x0, z0), hit(x1, z0), hit(x1, z1), hit(x0, z1)]);
+}
+
+function paneBeam(d: Point): Face[] {
+  const [z0, z1] = PANE_Z;
+  const floor = paneLight(d);
+  return PANES.map(([x0, x1], i) => [
+    [x0, 0.003, z0],
+    [x1, 0.003, z0],
+    [x1, 0.003, z1],
+    [x0, 0.003, z1],
+    ...floor[i]!,
+  ]);
+}
+
+const WINDOW: Point = [10.3, 0.05, 4.2];
+const MOON_LIGHT: Point = [0.25, 1, -1.6];
+const SUN_LIGHT: Point = [-0.42, 1, -0.42];
+
+// The rock's glow through the night, and at the top of its breath.
+const NIGHT_GLOW: RockGlow = { peak: 170, radius: 3.0 };
+const BREATH_GLOW: RockGlow = { peak: 215, radius: 3.8 };
+
+// Night: moonlight through the window, a faint beam and its patch on the floor.
+function night(P: Palette, glow: RockGlow, figures?: Colours): Scene {
+  const s = room(P, {
+    glow,
+    moon: true,
+    ...(figures && { figures: { colours: figures, pose: "asleep" as const } }),
+  });
+  const colour = rgb(P.moonlight!);
+  s.glows.unshift({ at: WINDOW, colour, peak: 70, radius: 3.4 });
+  s.lights.push(
+    { alpha: 0.07, colour, hull: true, quads: paneBeam(MOON_LIGHT), soft: 5.7 },
+    { alpha: 0.26, colour, quads: paneLight(MOON_LIGHT), soft: 3.0 },
+  );
+  return s;
+}
+
+// Morning: low sun, a long soft beam and bright patches across the floor, the rock's faint glow
+// as by day, Ada sitting up and Penny awake.
+function morning(P: Palette): Scene {
+  const s = room(P, {
+    figures: { colours: MORNING_FIGURES, pose: "waking" },
+    glow: glowAmount(0),
+  });
+  s.glows.unshift({ at: WINDOW, colour: rgb(P.sun!), peak: 80, radius: 3.0 });
+  const colour = rgb(P.sunlight!);
+  s.lights.push(
+    {
+      alpha: 0.22,
+      colour,
+      fade: { amount: 0.6, from: [10, 0, 4], to: [5.5, 12, 0] },
+      hull: true,
+      quads: paneBeam(SUN_LIGHT),
+      soft: 6.8,
+    },
+    {
+      alpha: 0.75,
+      colour,
+      fade: { amount: 0.55, from: [8.5, 7, 0], to: [5.5, 12, 0] },
+      quads: paneLight(SUN_LIGHT),
+      soft: 3.5,
+    },
+  );
   return s;
 }
 
@@ -639,30 +988,34 @@ interface Background {
   build: Builder;
 }
 
-// Scene order follows the story.
+// Scene order follows the story; the overnight recharge follows the chapters' scenes.
 export const BACKGROUNDS: readonly Background[] = [
   { id: "story-park", palette: PARK, build: park },
   { id: "story-ada-room-unpolished", palette: ROOM, build: (P) => room(P) },
-  { id: "story-ada-room", palette: ROOM, build: (P) => room(P, 0) },
+  { id: "story-ada-room", palette: ROOM, build: (P) => room(P, { glow: glowAmount(0) }) },
   ...GLOW.map((glow, i) => ({
     id: `story-ada-room-glow-${i + 1}`,
     palette: ROOM,
-    build: (P: Palette) => room(P, glow),
+    build: (P: Palette) => room(P, { glow: glowAmount(glow) }),
   })),
   { id: "story-grandma-garden", palette: GARDEN, build: garden },
   { id: "story-community-garden", palette: LOT, build: lot },
   { id: "story-schoolyard", palette: YARD, build: schoolyard },
   { id: "story-school-hallway", palette: HALL, build: hallway },
   { id: "story-front-door", palette: DOOR, build: frontDoor },
+  { id: "story-ada-room-night", palette: NIGHT, build: (P) => night(P, NIGHT_GLOW) },
+  { id: "story-ada-room-morning", palette: MORNING, build: morning },
 ];
 
 export function paint(palette: Palette, scene: Scene) {
-  return treatmentD(CANVAS, render(CANVAS, palette.back, scene));
+  return treatmentD(CANVAS, palette.haze ?? TREATMENT.haze, render(CANVAS, palette.back, scene));
 }
+
+const storyPath = (id: string) => `/art/story/${id.replace(/^story-/, "")}.png`;
 
 export const entry = (id: string) => ({
   id,
-  path: `/art/story/${id.replace(/^story-/, "")}.png`,
+  path: storyPath(id),
   width: CANVAS.width * CANVAS.density,
   height: CANVAS.height * CANVAS.density,
   displayWidth: CANVAS.width,
@@ -671,29 +1024,169 @@ export const entry = (id: string) => ({
   pivot: { x: 0.5, y: 0.5 },
 });
 
+/* Overnight overlays: the sleep scene is the night background with Ada and Penny over it, and
+   the rock's breath is a glow patch over that */
+
+// The pixels where `top` differs from `base`, grown by GROW px and cropped with PAD px more to
+// an even box on the 2x canvas: opaque inside the grown difference, clear outside it. Drawn
+// over `base` at `at` (logical px, top-left corner) it reproduces `top` exactly.
+const GROW = 2;
+const PAD = 6;
+
+interface Overlay {
+  at: { x: number; y: number };
+  image: RgbaImage;
+}
+
+function overlay(base: RgbaImage, top: RgbaImage): Overlay {
+  const { height, width } = top;
+  const grown = new Uint8Array(width * height);
+  let [x0, y0, x1, y1] = [width, height, 0, 0];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if ([0, 1, 2].every((ch) => base.data[i + ch] === top.data[i + ch])) continue;
+      for (let j = Math.max(0, y - GROW); j <= Math.min(height - 1, y + GROW); j++) {
+        grown.fill(1, j * width + Math.max(0, x - GROW), j * width + Math.min(width, x + GROW + 1));
+      }
+      [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
+    }
+  }
+  const even = (v: number) => v - (v % 2);
+  const left = even(Math.max(0, x0 - GROW - PAD));
+  const upper = even(Math.max(0, y0 - GROW - PAD));
+  const right = Math.min(width, even(x1 + GROW + PAD + 2));
+  const lower = Math.min(height, even(y1 + GROW + PAD + 2));
+  const image = blankImage(right - left, lower - upper);
+  for (let y = upper; y < lower; y++) {
+    for (let x = left; x < right; x++) {
+      const from = (y * width + x) * 4;
+      const to = ((y - upper) * image.width + x - left) * 4;
+      image.data.set(top.data.subarray(from, from + 3), to);
+      image.data[to + 3] = grown[y * width + x] ? 255 : 0;
+    }
+  }
+  return { at: { x: left / CANVAS.density, y: upper / CANVAS.density }, image };
+}
+
+const SLEEP = "story-ada-room-sleep";
+const SLEEP_FIGURES = "story-ada-room-sleep-figures";
+const SLEEP_GLOW = "story-ada-room-sleep-glow";
+const OVERLAYS = [SLEEP_FIGURES, SLEEP_GLOW] as const;
+
+// The night background, the sleep scene's figures over it, and the breath's glow over those.
+function overnightOverlays(): Record<(typeof OVERLAYS)[number], Overlay> {
+  const base = paint(NIGHT, night(NIGHT, NIGHT_GLOW));
+  const sleep = paint(NIGHT, night(NIGHT, NIGHT_GLOW, NIGHT_FIGURES));
+  const breath = paint(NIGHT, night(NIGHT, BREATH_GLOW, NIGHT_FIGURES));
+  return { [SLEEP_FIGURES]: overlay(base, sleep), [SLEEP_GLOW]: overlay(sleep, breath) };
+}
+
+const overlayEntry = (id: string, { at, image }: Overlay) => ({
+  id,
+  path: storyPath(id),
+  width: image.width,
+  height: image.height,
+  displayWidth: image.width / CANVAS.density,
+  displayHeight: image.height / CANVAS.density,
+  facing: "front",
+  pivot: { x: 0, y: 0 },
+  at,
+});
+
+// The sleep scene's background: the night background under the figures overlay.
+const sleepEntry = () => ({
+  ...entry(SLEEP),
+  path: storyPath("story-ada-room-night"),
+  overlays: [SLEEP_FIGURES],
+});
+
+// The overnight sleep scene, from the night page to the morning page, its steps in order:
+// `overlay` fades that overlay in over fadeMs (0 shows it at once), then holds for holdMs;
+// `breath` runs that overlay's alpha (1 - cos(2 pi t / ms)) / 2 over ms, 0 at both ends and 1
+// midway; `background` cross-fades the whole picture to that background over fadeMs, then holds.
+type Step =
+  | { overlay: string; fadeMs: number; holdMs: number }
+  | { breath: string; ms: number }
+  | { background: string; fadeMs: number; holdMs: number };
+
+const stepMs = (steps: readonly Step[]) =>
+  steps.reduce((sum, step) => sum + ("ms" in step ? step.ms : step.fadeMs + step.holdMs), 0);
+
+function overnight(at: (id: string) => Overlay["at"]) {
+  const steps: Step[] = [
+    { overlay: SLEEP_FIGURES, fadeMs: 400, holdMs: 0 },
+    { breath: SLEEP_GLOW, ms: 1500 },
+    { background: "story-ada-room-morning", fadeMs: 600, holdMs: 0 },
+  ];
+  const reducedMotion: Step[] = [
+    { overlay: SLEEP_FIGURES, fadeMs: 0, holdMs: 2000 },
+    { background: "story-ada-room-morning", fadeMs: 400, holdMs: 0 },
+  ];
+  return {
+    version: 1,
+    overnight: {
+      from: "story-ada-room-night",
+      sleep: SLEEP,
+      to: "story-ada-room-morning",
+      overlays: Object.fromEntries(OVERLAYS.map((id) => [id, { at: at(id) }])),
+      steps,
+      durationMs: stepMs(steps),
+      reducedMotion,
+      reducedMotionMs: stepMs(reducedMotion),
+    },
+  };
+}
+
 // Root manifest groups after the ship and portraits, in order; the story group leads.
 const LATER = ["cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
 
+const MANIFEST = `${art}manifest.json`;
+
+interface Manifest {
+  assets: { id: string }[];
+  storyOvernight?: string;
+  storyTransition?: string;
+}
+
+const readManifest = () => JSON.parse(readFileSync(MANIFEST, "utf8")) as Manifest;
+
 export function placeStoryEntries(entries: readonly { id: string }[]) {
-  const path = `${art}manifest.json`;
-  const manifest = JSON.parse(readFileSync(path, "utf8")) as {
-    assets: { id: string }[];
-    storyTransition?: string;
-  };
+  const manifest = readManifest();
   const kept = manifest.assets.filter(({ id }) => !id.startsWith("story-"));
   const next = kept.findIndex(({ id }) => LATER.some((prefix) => id.startsWith(prefix)));
   const at = next === -1 ? kept.length : next;
   manifest.assets = [...kept.slice(0, at), ...entries, ...kept.slice(at)];
   manifest.storyTransition = "/art/story-transition.json";
-  writeFileSync(path, json(manifest));
+  manifest.storyOvernight = "/art/story-overnight.json";
+  writeFileSync(MANIFEST, json(manifest));
 }
+
+const file = (id: string) => `${art}${storyPath(id).slice("/art/".length)}`;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const only = process.argv[2];
   for (const { build, id, palette } of BACKGROUNDS) {
     if (only && only !== id) continue;
-    writePng(`${art}${entry(id).path.slice("/art/".length)}`, paint(palette, build(palette)), true);
+    writePng(file(id), paint(palette, build(palette)), true);
   }
-  placeStoryEntries(BACKGROUNDS.map(({ id }) => entry(id)));
+  // The overlays rebuild with the night background; other single-id runs keep their entries.
+  const rebuild = !only || only === "story-ada-room-night" || OVERLAYS.some((id) => id === only);
+  let overlays: { at: Overlay["at"]; id: string }[];
+  if (rebuild) {
+    const sprites = overnightOverlays();
+    for (const id of OVERLAYS) writePng(file(id), sprites[id].image);
+    overlays = OVERLAYS.map((id) => overlayEntry(id, sprites[id]));
+  } else {
+    const assets = readManifest().assets as { at: Overlay["at"]; id: string }[];
+    overlays = OVERLAYS.map((id) => assets.find((asset) => asset.id === id)!);
+  }
+  placeStoryEntries(
+    BACKGROUNDS.flatMap(({ id }) =>
+      id === "story-ada-room-night" ? [entry(id), sleepEntry(), ...overlays] : [entry(id)],
+    ),
+  );
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));
+  const at = (id: string) => overlays.find((asset) => asset.id === id)!.at;
+  writeFileSync(`${art}story-overnight.json`, json(overnight(at)));
 }

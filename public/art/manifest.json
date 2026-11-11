@@ -3370,6 +3370,80 @@
       }
     },
     {
+      "id": "story-ada-room-night",
+      "path": "/art/story/ada-room-night.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "id": "story-ada-room-sleep",
+      "path": "/art/story/ada-room-night.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "overlays": ["story-ada-room-sleep-figures"]
+    },
+    {
+      "id": "story-ada-room-sleep-figures",
+      "path": "/art/story/ada-room-sleep-figures.png",
+      "width": 334,
+      "height": 230,
+      "displayWidth": 167,
+      "displayHeight": 115,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 168,
+        "y": 325
+      }
+    },
+    {
+      "id": "story-ada-room-sleep-glow",
+      "path": "/art/story/ada-room-sleep-glow.png",
+      "width": 440,
+      "height": 302,
+      "displayWidth": 220,
+      "displayHeight": 151,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 361,
+        "y": 194
+      }
+    },
+    {
+      "id": "story-ada-room-morning",
+      "path": "/art/story/ada-room-morning.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "id": "cockpit",
       "path": "/art/cockpit.png",
       "width": 1920,
@@ -19518,5 +19592,6 @@
   "galaxies": "/art/galaxies.json",
   "asteroids": "/art/asteroids.json",
   "shipNose": "/art/ship-nose.json",
-  "whales": "/art/whales.json"
+  "whales": "/art/whales.json",
+  "storyOvernight": "/art/story-overnight.json"
 }

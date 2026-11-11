@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "overnight": {
+    "from": "story-ada-room-night",
+    "sleep": "story-ada-room-sleep",
+    "to": "story-ada-room-morning",
+    "overlays": {
+      "story-ada-room-sleep-figures": {
+        "at": {
+          "x": 168,
+          "y": 325
+        }
+      },
+      "story-ada-room-sleep-glow": {
+        "at": {
+          "x": 361,
+          "y": 194
+        }
+      }
+    },
+    "steps": [
+      {
+        "overlay": "story-ada-room-sleep-figures",
+        "fadeMs": 400,
+        "holdMs": 0
+      },
+      {
+        "breath": "story-ada-room-sleep-glow",
+        "ms": 1500
+      },
+      {
+        "background": "story-ada-room-morning",
+        "fadeMs": 600,
+        "holdMs": 0
+      }
+    ],
+    "durationMs": 2500,
+    "reducedMotion": [
+      {
+        "overlay": "story-ada-room-sleep-figures",
+        "fadeMs": 0,
+        "holdMs": 2000
+      },
+      {
+        "background": "story-ada-room-morning",
+        "fadeMs": 400,
+        "holdMs": 0
+      }
+    ],
+    "reducedMotionMs": 2400
+  }
+}

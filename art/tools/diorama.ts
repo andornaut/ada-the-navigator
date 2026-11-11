@@ -222,11 +222,24 @@ export interface Glow {
   peak: number;
 }
 
+// Soft light (moonlight, sunlight) screened over the image after the glows: each quad filled, as
+// its convex hull when `hull` is set, blurred by `soft` design px and screened toward `colour`
+// at up to `alpha`. `fade` thins it by up to `amount` along the projected line `from` to `to`.
+export interface Light {
+  quads: readonly Face[];
+  colour: Rgb;
+  alpha: number;
+  soft: number;
+  hull?: boolean;
+  fade?: { amount: number; from: Point; to: Point };
+}
+
 export class Scene {
   readonly k: number;
   readonly pivot: readonly [number, number];
   readonly layers: [number, readonly Painted[]][][] = [[], [], []];
   readonly glows: Glow[] = [];
+  readonly lights: Light[] = [];
 
   // k: design px per model unit; pivot: design px of the model origin.
   constructor(k: number, pivot: readonly [number, number]) {
@@ -298,7 +311,68 @@ export function render(canvas: Canvas, backdrop: readonly [string, string], scen
       glow,
     );
   }
+  for (const light of scene.lights) {
+    addLight(
+      out,
+      light,
+      (p) => {
+        const [dx, dy] = scene.project(p);
+        return { x: (dx - v.x0) * v.scale, y: (dy - v.y0) * v.scale };
+      },
+      v.scale,
+    );
+  }
   return out;
+}
+
+type Xy = { x: number; y: number };
+
+// Convex hull of points (Andrew's monotone chain).
+function hull(points: readonly Xy[]): Xy[] {
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o: Xy, a: Xy, b: Xy) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const half = (list: readonly Xy[]) => {
+    const out: Xy[] = [];
+    for (const q of list) {
+      while (out.length >= 2 && cross(out[out.length - 2]!, out[out.length - 1]!, q) <= 0) {
+        out.pop();
+      }
+      out.push(q);
+    }
+    out.pop();
+    return out;
+  };
+  return [...half(sorted), ...half([...sorted].reverse())];
+}
+
+function addLight(image: RgbaImage, light: Light, at: (p: Point) => Xy, scale: number) {
+  const { width, height } = image;
+  const mask = blankImage(width, height);
+  for (const quad of light.quads) {
+    const points = quad.map(at);
+    polygon({ fill: [255, 255, 255, 255] }, light.hull ? hull(points) : points, mask);
+  }
+  const plane = Float64Array.from({ length: width * height }, (_, i) => mask.data[i * 4]! / 255);
+  boxBlur(light.soft * scale, width, height, plane);
+  const from = light.fade && at(light.fade.from);
+  const to = light.fade && at(light.fade.to);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      let a = plane[i]! * light.alpha;
+      if (a <= 0) continue;
+      if (light.fade && from && to) {
+        const [vx, vy] = [to.x - from.x, to.y - from.y];
+        const t = ((x - from.x) * vx + (y - from.y) * vy) / (vx * vx + vy * vy);
+        a *= 1 - light.fade.amount * Math.min(1, Math.max(0, t));
+      }
+      for (let ch = 0; ch < 3; ch++) {
+        const d = image.data[i * 4 + ch]!;
+        const screen = 255 - ((255 - d) * (255 - light.colour[ch]!)) / 255;
+        image.data[i * 4 + ch] = Math.round(d + (screen - d) * a);
+      }
+    }
+  }
 }
 
 function downsample(factor: number, source: RgbaImage): RgbaImage {
@@ -404,14 +478,15 @@ export const TREATMENT = {
   hazeBottom: 0.63,
 } as const;
 
-export function treatmentD(canvas: Canvas, image: RgbaImage): RgbaImage {
+// Haze in `hazeColour`: TREATMENT.haze by day, a night colour for night scenes.
+export function treatmentD(canvas: Canvas, hazeColour: string, image: RgbaImage): RgbaImage {
   const { height, width } = image;
   const v = view(canvas);
   const planes = [0, 1, 2].map((ch) =>
     Float64Array.from({ length: width * height }, (_, i) => image.data[i * 4 + ch]!),
   );
   for (const plane of planes) boxBlur(TREATMENT.blur * v.scale, width, height, plane);
-  const haze = rgb(TREATMENT.haze);
+  const haze = rgb(hazeColour);
   const out = blankImage(width, height);
   for (let y = 0; y < height; y++) {
     const t = rampAt(v, y);
