@@ -176,6 +176,47 @@ describe("casualty-preserving pack retention", () => {
     },
   );
 
+  it("regenerates every survivor of a saved pack larger than its sector one roll", () => {
+    const content = structuredClone(PROTOTYPE);
+    content.tuning.flight.objectsPerChunk = 0;
+    content.tuning.enemyDamage = 0;
+    let found: { flight: ReturnType<typeof createFlight>; packId: string } | undefined;
+    for (let seed = 0; seed < 512 && !found; seed++) {
+      const flight = createFlight(content, 1, seed, progress);
+      const solo = flight.objects.find(
+        (object) =>
+          (object.enemy?.archetype === "interceptor" || object.enemy?.archetype === "retaliator") &&
+          object.enemy.packId?.startsWith("pack:"),
+      );
+      if (solo?.enemy?.packId) {
+        found = { flight, packId: solo.enemy.packId };
+      }
+    }
+    if (!found) {
+      throw new Error("No sector one solo fixture");
+    }
+    const { flight, packId } = found;
+    const model = new GameModel(content);
+    model.state.flight = flight;
+    model.state.mode = "space";
+    expect(members(model, packId)).toHaveLength(1);
+    // A save from the earlier shared roster: four members, one lost, two unloaded.
+    flight.combat!.initialPackSizes[packId] = 4;
+    flight.combat!.unloadedPackMembers = { [packId]: 2 };
+    const resumed = new GameModel(content, model.save());
+    expect(resumed.state).toEqual(model.state);
+
+    regenerate(content, resumed, packId);
+    const restored = resumed.state.flight!;
+    expect(members(resumed, packId)).toHaveLength(3);
+    expect(restored.combat!.initialPackSizes[packId]).toBe(4);
+    expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
+    expect(resumed.state.progress[1].disabledEnemies).toBe(0);
+    expect(members(resumed, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
+    expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
+    expect(restoreSave(resumed.save())).toEqual(resumed.state);
+  });
+
   it("prunes a completely cleared ordinary pack before an interaction can serialize it", () => {
     const { content, model, packId } = fixture();
     const flight = model.state.flight!;

@@ -256,7 +256,9 @@ function generateRegion(
   const existing = flight.objects.filter(
     (object) => object.hp > 0 && object.enemy?.packId === packId,
   ).length;
-  for (let i = 0; i < count && budget > 0; i++) {
+  // A pack recorded under an earlier roster can exceed this cell's roll; keep its slots.
+  const slots = initialized ? Math.max(count, state.initialPackSizes[packId] ?? 0) : count;
+  for (let i = 0; i < slots && budget > 0; i++) {
     const object = spawnEnemy(
       content,
       archetype,
