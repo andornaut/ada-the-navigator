@@ -255,7 +255,8 @@ amber or Ada's white and blue, and no Gadget insignia.
   `#c9a978` to `#ffe9b8`, core `#efe4cf` to `#ffffff`. Two mouths 3 wide at
   the nacelle tails, `(u, v, z)` `(0.5, ±7, 4.8)`, clear of the fuselage at
   every heading.
-- The same file carries `nose`, 16 entries, as the story craft do. `nose[k]`
+- The same file carries `nose`, 16 entries, as the story craft do, from
+  [art/tools/nose.ts](tools/nose.ts), shared with Pip's mail scooter. `nose[k]`
   gives `distance`, the world units from the pivot to the point under the nose
   on the centre line (the hull's tip, reach 23), and `tip`, the drawn tip in
   frame px; the build fails unless each tip lies within 0.5 frame px of a drawn

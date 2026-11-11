@@ -3,6 +3,7 @@
 // Usage: node art/tools/needle-craft.ts
 import { writeFileSync } from "node:fs";
 
+import { jetsFile, type JetColors } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
 import {
   blueSide,
@@ -22,16 +23,8 @@ import {
   steelSide,
   svgFile,
 } from "./needle-common.ts";
-import {
-  anchor,
-  ENEMY_HEADINGS,
-  json,
-  type Point,
-  projectAt,
-  rotate,
-  round,
-  vector,
-} from "./projection.ts";
+import { noses } from "./nose.ts";
+import { anchor, ENEMY_HEADINGS, type Point, rotate, round, vector } from "./projection.ts";
 import {
   along,
   blue,
@@ -151,7 +144,7 @@ const MOUTHS = [
 ] as const;
 const MOUTH_WIDTH = 3;
 // The story craft's civil jet palette (art/cartwheel.md).
-const JETS = { outer: ["#c9a978", "#ffe9b8"], core: ["#efe4cf", "#ffffff"] };
+const JETS: JetColors = { outer: ["#c9a978", "#ffe9b8"], core: ["#efe4cf", "#ffffff"] };
 
 const view = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, point);
 const visibleAt = (yaw: number) => (nx: number, ny: number) => {
@@ -167,74 +160,22 @@ const frame = squareFrame(
 );
 const centre = frame / 2;
 
-// The nose tip: the midpoint of the forward-most top edge of the solid parts, nearest the centre
-// line; window panes are left out.
-function noseTip(): { reach: number; tip: Point } {
-  const parts = glider(() => false).flat();
-  const ys = parts.flatMap(({ plan }) => plan.map(([, y]) => -y));
-  const reach = Math.max(...ys);
-  const edges = parts.flatMap(({ plan, z1 }) => {
-    const front = plan.filter(([, y]) => Math.abs(y + reach) < 1e-9).map(([x]) => x);
-    return front.length === 0 ? [] : [{ v: (Math.min(...front) + Math.max(...front)) / 2, z: z1 }];
-  });
-  const { v, z } = edges.sort(
-    (a, b) => Math.abs(a.v) - Math.abs(b.v) || a.v - b.v || b.z - a.z,
-  )[0]!;
-  return { reach, tip: [...uv(reach, v), z] };
-}
-
-// World units from the pivot to the point under the nose on the centre line: the art's projection
-// at display scale through the inverse of the game's (x - y, (x + y) / 2).
-function noseDistance(reach: number, yaw: number): number {
-  const [x, y] = projectAt(0, 0, rotate(ENEMY_HEADINGS, yaw, [...uv(reach, 0), 0]));
-  const [sx, sy] = [x * DISPLAY_SCALE, y * DISPLAY_SCALE];
-  return round(Math.hypot(sy + sx / 2, sy - sx / 2));
-}
-
-type Point2 = readonly [number, number];
-const segmentDistance = ([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2) => {
-  const [ex, ey] = [bx - ax, by - ay];
-  const t = Math.max(0, Math.min(1, ((px - ax) * ex + (py - ay) * ey) / (ex * ex + ey * ey)));
-  return Math.hypot(px - ax - t * ex, py - ay - t * ey);
-};
-
-const { reach, tip } = noseTip();
-const nose = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-  const point = anchor(ENEMY_HEADINGS, centre, yaw, tip);
-  const gap = Math.min(
-    ...headingFaces(yaw).flatMap(({ points }) => {
-      const drawn = points.map((p) => projectAt(centre, centre, p));
-      return drawn.map((a, i) => segmentDistance(point, a, drawn[(i + 1) % drawn.length]!));
-    }),
-  );
-  if (gap > 0.5) {
-    throw new Error(`${NAME}-${yaw} nose is ${gap.toFixed(2)} frame px off the hull`);
-  }
-  return { distance: noseDistance(reach, yaw), tip: point };
-});
+const nose = noses(headingFaces, frame, { name: NAME, build: glider });
 
 const half = MOUTH_WIDTH / 2;
-const scale = Math.sqrt(frame / 96);
 writeFileSync(
   `${OUT}${NAME}-jets.json`,
-  json({
-    version: 1,
+  jetsFile(
     frame,
-    length: { base: round(6 * scale), scale: round(24 * scale), exponent: 2 },
-    layers: [
-      { name: "outer", colors: JETS.outer, width: 1.6, length: 1 },
-      { name: "core", colors: JETS.core, width: 0.8, length: 0.55 },
-    ],
-    headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
-      index: yaw,
-      mouths: MOUTHS.map(([u, v, z]) => ({
+    (yaw) =>
+      MOUTHS.map(([u, v, z]) => ({
         anchor: anchor(ENEMY_HEADINGS, centre, yaw, [...uv(u, v), z]),
         axis: vector(ENEMY_HEADINGS, yaw, [0, 1, 0]),
         half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
       })),
-    })),
-    nose,
-  }),
+    JETS,
+    { nose },
+  ),
 );
 
 const display = round(frame * DISPLAY_SCALE);
@@ -258,6 +199,4 @@ const entries = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
 });
 
 replaceEntries("needle", (id) => id.startsWith(`craft-${NAME}-`), entries);
-console.log(
-  `${NAME} frame ${frame}, reach ${reach}, nose ${nose.map(({ distance }) => distance).join(" ")}`,
-);
+console.log(`${NAME} frame ${frame}, nose ${nose.map(({ distance }) => distance).join(" ")}`);
