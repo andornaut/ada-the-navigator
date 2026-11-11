@@ -40,6 +40,10 @@ it("serves landing and play independently and builds both public URLs with worki
     expect(await (await fetch(`${address}src/main.ts`)).text()).toContain(
       'dataset.booted = "game"',
     );
+    expect(await (await fetch(`${address}play/entry.ts`)).text()).toContain("dataset.relative");
+    const canonical = await fetch(`${address}play?from=bookmark`, { redirect: "manual" });
+    expect(canonical.status).toBe(308);
+    expect(canonical.headers.get("location")).toBe("/play/?from=bookmark");
   } finally {
     await server.close();
   }

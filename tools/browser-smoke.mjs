@@ -1245,7 +1245,20 @@ try {
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
   observe(page);
-  assert.equal((await page.goto("http://ada-preview:4173/play/")).status(), 200);
+  assert.equal((await page.goto("http://ada-preview:4173/")).status(), 200);
+  await page.locator("body.site").waitFor({ state: "visible" });
+  assert.equal(await page.locator("#game-canvas").count(), 0);
+  assert.equal(
+    await page.locator("body").evaluate((body) => getComputedStyle(body).transform),
+    "none",
+    "The mobile website must remain upright before entering the landscape game",
+  );
+  await page.screenshot({ path: `${output}/site-mobile.png` });
+  await Promise.all([
+    page.waitForURL("**/play/"),
+    page.locator('a[href="/play/"]').first().click(),
+  ]);
+  events.checks.push("Mobile website stays upright and its Play link enters the rotated game");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.locator('[data-control="aim-joystick"]').waitFor({ state: "visible" });
   // Wait for the kit/Phaser viewport synchronization after its first painted frame.

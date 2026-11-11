@@ -35,6 +35,7 @@ export function sitePages(): Plugin {
         next();
       });
     },
+    enforce: "post",
     generateBundle: {
       handler(_options, bundle) {
         if (!Object.values(pages).some((page) => page.source in bundle)) {
