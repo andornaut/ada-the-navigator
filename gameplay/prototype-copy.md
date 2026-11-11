@@ -284,7 +284,12 @@ Sunflower:
 
 ## Shared interface text
 
-- Start screen: Ada the Navigator, Begin.
+- Start screen: Ada the Navigator; Start on first launch, then Continue and
+  Restart.
+- Restart card: Restart? with Restart and Cancel.
+- Galaxy selection Home button: Home.
+- Home with nothing new: Narration: "Penny thumps her tail. Time for another
+  adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Travel, Settings, Return home.

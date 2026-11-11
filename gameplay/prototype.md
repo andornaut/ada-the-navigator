@@ -21,6 +21,24 @@ brown-skinned 12-year-old girl. Use Chibi as the settings dialog, positioning,
 fonts, joystick and general UI reference. These explicit reuse permissions apply
 to the prototype; do not modify the source games.
 
+## Start, Home and Space
+
+The game has two halves: Home, the storybook scenes on Earth, and Space, the
+flights. The first launch shows only Start, which begins galaxy one's home opening
+and then the prologue. Start stays alone until the first flight begins. Later
+launches show Continue and Restart.
+
+Continue goes to galaxy selection in the cockpit, open on the farthest unlocked
+galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+chapter's opening, plays first. When Ada goes home with no new scene, her room
+shows one short repeatable line and "Pick up the rock."; old scenes never replay,
+and new ones unlock with progress.
+
+Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
+cancel. Confirming clears all story progress, galaxies, holodisks, Stardust,
+purchases and seen conversations, keeps device settings and achievements, and
+replays from Start.
+
 ## Story progression
 
 Home is an interactive story styled after choose-your-own-adventure books.
@@ -72,8 +90,9 @@ galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
 hue and one line of flavor text, with Jump. Every galaxy has its own main
 background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
 number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. Closing galaxy selection (its close X, an outside tap,
-back or Escape) leaves the cockpit and returns Ada to her room, without a jump.
+galaxy one is unlocked. A Home button beside Jump, and closing galaxy selection
+(its close X, an outside tap, back or Escape), leave the cockpit and return Ada to
+her room without a jump.
 Galaxies are named after real galaxies' nicknames:
 Sunflower (one), Cartwheel (two), Whirlpool (three) and Black Eye (four). Unlocked galaxies remain
 replayable. Completing a quest invites a return home without forcing immediate
