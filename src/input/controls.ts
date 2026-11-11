@@ -117,6 +117,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     settings.isOpen() || cheats.isOpen() || (update?.isOpen() ?? false);
   function syncModal(): void {
     const open = modalOpen();
+    settings.root.classList.toggle("ada-modal-open", open);
     if (open) {
       state.openModal();
     } else {

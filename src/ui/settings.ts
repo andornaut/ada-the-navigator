@@ -68,6 +68,11 @@ const STYLE = `
   z-index:10
 }
 
+/* An open card covers the story panel (z-index 20) and the save status (21). */
+.ada-controls.ada-modal-open{
+  z-index:30
+}
+
 .ada-controls button{
   font:inherit;
   min-height:48px;
