@@ -34,7 +34,12 @@ try {
   // the pause button (a touch control) or Escape opens.
   async function openPause() {
     const button = page.locator('[data-action="pause"]');
-    if (await button.isVisible()) {
+    // A reloaded game shows the pause button once its controls exist; a fine pointer never does.
+    const shown = await button.waitFor({ state: "visible", timeout: 5000 }).then(
+      () => true,
+      () => false,
+    );
+    if (shown) {
       await button.click();
     } else {
       await page.keyboard.press("Escape");
@@ -59,7 +64,7 @@ try {
     }
   }
   async function closeSettings() {
-    await closeSettings();
+    await page.locator('[data-action="close-settings"]').click();
     await resumeIfPaused();
   }
   function observe(observed) {
@@ -598,7 +603,8 @@ try {
     .locator('[data-dialog="pause"]')
     .getByText(PROTOTYPE.labels.travelUnavailable, { exact: true })
     .waitFor({ state: "visible" });
-  await page.locator('[data-action="pause-returnHome"]').click();
+  // A refused action stays pressable (aria-disabled), which Playwright treats as disabled.
+  await page.locator('[data-action="pause-returnHome"]').click({ force: true });
   await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
   assert.equal(
     await page.locator('#game-status[data-mode="space"]').count(),
