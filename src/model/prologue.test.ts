@@ -133,7 +133,7 @@ describe("prologue", () => {
         "cockpit",
         "",
         "Light swirls around Ada and Penny. When it fades, they are standing in a tiny cockpit " +
-          "under a glass canopy. Outside, colors shimmer like nowhere at all.",
+          "under a blue dome. Through it, colors shimmer like nowhere at all.",
         "Next",
       ],
       [

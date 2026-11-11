@@ -83,7 +83,7 @@ export const PREMISE: PremiseContent = {
     {
       text: [
         "Light swirls around Ada and Penny. When it fades, they are standing in a tiny ",
-        "cockpit under a glass canopy. Outside, colors shimmer like nowhere at all.",
+        "cockpit under a blue dome. Through it, colors shimmer like nowhere at all.",
       ].join(""),
     },
     { text: "Penny's tail thumps. She sniffs the two seats as if she has been here before." },
