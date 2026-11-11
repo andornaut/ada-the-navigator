@@ -12,7 +12,7 @@ interface ManifestIcon {
   type: string;
 }
 
-it("uses one play-route app identity with correctly sized local any and maskable PNGs", () => {
+it("uses one play-route app identity", () => {
   const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
   expect(manifest.id).toBe("/play/");
   expect(manifest.start_url).toBe("/play/");
@@ -20,6 +20,20 @@ it("uses one play-route app identity with correctly sized local any and maskable
   expect(
     new URL(manifest.start_url, "https://example.invalid").pathname.startsWith(manifest.scope),
   ).toBe(true);
+});
+
+it("names the installed app in full and describes it as the landing page does", () => {
+  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
+  const landing = readFileSync(resolve(root, "pages/index.html"), "utf8");
+  const description = /<meta\s+name="description"\s+content="([^"]+)"/u.exec(landing)?.[1];
+  expect(manifest.name).toBe("Ada the Navigator");
+  expect(manifest.short_name).toBe(manifest.name);
+  expect(description).toBeDefined();
+  expect(manifest.description).toBe(description);
+});
+
+it("declares correctly sized local any and maskable PNGs", () => {
+  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
   const icons = manifest.icons as ManifestIcon[];
   expect(icons.map(({ purpose, sizes }) => `${purpose}:${sizes}`).sort()).toEqual([
     "any:192x192",
