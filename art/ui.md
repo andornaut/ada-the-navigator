@@ -12,7 +12,8 @@ Serve these outputs under `/art/ui/`. The nested `manifest.json` retains only
 The [settings navigation icon](settings-icon.md) supplies `icon-settings-nav`
 from its separately pinned source. Its entry uses the same sprite schema.
 The [touch joystick sheets](touch-joystick.md) supply `ui-move-hint` and
-`ui-move-knob` the same way.
+`ui-move-knob` the same way. The [Settings row icons](settings-icons.md) supply
+one `icon-*` sheet per Settings row and the install steps glyphs the same way.
 Resolve those paths against `/art/ui/` instead of `/art/`; no entry rewrite is needed.
 The root manifest is owned by integration. Sprite JSON data and palette schema are unchanged. JSON whitespace is normalized.
 

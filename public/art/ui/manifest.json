@@ -13,9 +13,51 @@
   ],
   "sprites": [
     {
+      "key": "icon-aim-controls",
+      "png": "sprites/icon-aim-controls.png",
+      "json": "sprites/icon-aim-controls.json",
+      "once": []
+    },
+    {
+      "key": "icon-browser-menu",
+      "png": "sprites/icon-browser-menu.png",
+      "json": "sprites/icon-browser-menu.json",
+      "once": []
+    },
+    {
+      "key": "icon-install",
+      "png": "sprites/icon-install.png",
+      "json": "sprites/icon-install.json",
+      "once": []
+    },
+    {
+      "key": "icon-ios-share",
+      "png": "sprites/icon-ios-share.png",
+      "json": "sprites/icon-ios-share.json",
+      "once": []
+    },
+    {
+      "key": "icon-move-controls",
+      "png": "sprites/icon-move-controls.png",
+      "json": "sprites/icon-move-controls.json",
+      "once": []
+    },
+    {
+      "key": "icon-reduced-motion",
+      "png": "sprites/icon-reduced-motion.png",
+      "json": "sprites/icon-reduced-motion.json",
+      "once": []
+    },
+    {
       "key": "icon-settings-nav",
       "png": "sprites/icon-settings-nav.png",
       "json": "sprites/icon-settings-nav.json",
+      "once": []
+    },
+    {
+      "key": "icon-sound",
+      "png": "sprites/icon-sound.png",
+      "json": "sprites/icon-sound.json",
       "once": []
     },
     {
