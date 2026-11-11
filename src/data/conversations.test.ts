@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { STATUS_PILL } from "../ui/layout/playView.ts";
 import {
   BOX_PRIORITIES,
   CONVERSATION_PRIORITIES,
@@ -35,7 +36,9 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
   );
 }
 
-const IN_FLIGHT = passage("## In-flight conversations");
+// Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
+const IN_FLIGHT = passage("## In-flight conversations", " Black Eye: - First arrival");
+const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("General's broadcasts", "Outposts handing over");
 
 // The data's lines as the copy names their speakers, with any mood.
@@ -66,6 +69,30 @@ describe("in-flight conversations", () => {
     expect(copied).toHaveLength(DATA_LINES.length);
   });
 
+  it("leave out Black Eye's pool, which has no flight to play in", () => {
+    const pool = spokenLines(BLACK_EYE);
+    expect(pool).toHaveLength(6);
+    for (const line of pool) {
+      expect(DATA_LINES).not.toContainEqual(line);
+    }
+    expect(CONVERSATIONS.some(({ trigger }) => "sector" in trigger && trigger.sector > 3)).toBe(
+      false,
+    );
+  });
+
+  it("grow Astra with an arrival and two quiet stretches in each of Cartwheel and Whirlpool", () => {
+    for (const sector of [2, 3]) {
+      expect(
+        CONVERSATIONS.filter(
+          ({ priority, trigger }) =>
+            priority === "lore" &&
+            (trigger.kind === "arrival" || trigger.kind === "quiet") &&
+            trigger.sector === sector,
+        ).map(({ id }) => id.split(":")[0]),
+      ).toEqual(["arrival", "quiet", "quiet"]);
+    }
+  });
+
   it("give Ada's and Penny's lines the copy's moods, neutral when unmarked", () => {
     const happy = DATA_LINES.filter(({ mood }) => mood === "happy").map(({ name, text }) => [
       name,
@@ -80,6 +107,14 @@ describe("in-flight conversations", () => {
       ["Ada", "Then let's make new memories."],
       ["Ada", "Maybe they can fix you too, Astra!"],
       ["Ada", "She thinks you're fun."],
+      ["Ada", "Noisy is good. Busy means people."],
+      ["Ada", "That's what exploring is for."],
+      ["Ada", "You sound more like yourself."],
+      ["Ada", "Our maps."],
+      ["Ada", "Me too."],
+    ]);
+    expect(DATA_LINES.filter(({ mood }) => mood === "upset")).toEqual([
+      { mood: "upset", name: "Penny", text: "Whimper..." },
     ]);
     for (const { lines } of CONVERSATIONS) {
       for (const { mood, speaker } of lines) {
@@ -116,6 +151,10 @@ describe("in-flight conversations", () => {
     expect(
       CONVERSATIONS.filter(({ id }) => id.startsWith("general:")).map((c) => c.priority),
     ).toEqual(["warning", "warning"]);
+  });
+
+  it("warn of a low shield at the same share that turns the status pill low", () => {
+    expect(CONVERSATION_TUNING.shieldLowFraction).toBe(STATUS_PILL.low);
   });
 
   it("use the provisional timing and ranges", () => {

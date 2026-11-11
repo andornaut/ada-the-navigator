@@ -132,7 +132,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
   },
   {
     id: "warning:shieldLow",
-    lines: [line("astra", "Shield low!")],
+    lines: [line("astra", "Shield low!"), { mood: "upset", speaker: "penny", text: "Whimper..." }],
     priority: "warning",
     repeat: "fight",
     trigger: { kind: "shieldLow" },
@@ -237,6 +237,59 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lore",
     repeat: "never",
     trigger: { kind: "quiet", sector: 1 },
+  },
+  // Cartwheel: Astra warmer and surer as her memory returns.
+  {
+    id: "arrival:2",
+    lines: [
+      line("astra", "Cartwheel. I remember the noise of this place."),
+      happy("ada", "Noisy is good. Busy means people."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "arrival", sector: 2 },
+  },
+  {
+    id: "quiet:2:notice",
+    lines: [
+      line("astra", "I used to rush everywhere. With you, I notice more."),
+      happy("ada", "That's what exploring is for."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "quiet", sector: 2 },
+  },
+  {
+    id: "quiet:2:dream",
+    lines: [line("ada", "Do you dream, Astra?"), line("astra", "Not yet. Maybe I'll learn.")],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "quiet", sector: 2 },
+  },
+  // Whirlpool: Astra warmer and surer as her memory returns.
+  {
+    id: "arrival:3",
+    lines: [
+      line("astra", "Whirlpool. I'm sure of my course now, Navigator."),
+      happy("ada", "You sound more like yourself."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "arrival", sector: 3 },
+  },
+  {
+    id: "quiet:3:maps",
+    lines: [line("astra", "My maps feel fuller every day."), happy("ada", "Our maps.")],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "quiet", sector: 3 },
+  },
+  {
+    id: "quiet:3:rock",
+    lines: [line("astra", "I'm glad it was you who found the rock."), happy("ada", "Me too.")],
+    priority: "lore",
+    repeat: "never",
+    trigger: { kind: "quiet", sector: 3 },
   },
   {
     id: "general:2",

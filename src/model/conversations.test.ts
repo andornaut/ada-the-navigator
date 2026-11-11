@@ -166,9 +166,14 @@ describe("conversation schedule", () => {
     talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
     expect(showing(talk)).toBe("warning:shieldLow:0");
     expect(talk.warningShowing).toBe(true);
-    // A warning showing over a notice keeps its own time.
+    // A warning showing over a notice keeps its own time, line by line.
+    const step = () => talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
     for (let i = 0; i < 100; i++) {
-      talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
+      step();
+    }
+    expect(showing(talk)).toBe("warning:shieldLow:1");
+    for (let i = 0; i < 100; i++) {
+      step();
     }
     expect(talk.showing).toBeNull();
   });
@@ -261,6 +266,12 @@ describe("conversation triggers", () => {
     expect(talk.showing).toBeNull();
     run(talk, 0.05, { inDanger: true, shieldFraction: 0.25 });
     expect(showing(talk)).toBe("warning:shieldLow:0");
+    // One warning: Astra's line, then Penny's whimper with her upset frame.
+    expect(talk.showing?.line).toEqual({ speaker: "astra", text: "Shield low!" });
+    talk.advance();
+    expect(showing(talk)).toBe("warning:shieldLow:1");
+    expect(talk.showing?.line).toEqual({ mood: "upset", speaker: "penny", text: "Whimper..." });
+    expect(talk.warningShowing).toBe(true);
     tapThrough(talk);
     run(talk, 1, { inDanger: true, shieldFraction: 0.1 });
     expect(talk.showing).toBeNull();
@@ -309,6 +320,33 @@ describe("conversation triggers", () => {
     tapThrough(talk);
     run(talk, quietSeconds + 0.05);
     expect(showing(talk)).toBe("quiet:1:tail:0");
+  });
+
+  it.each([
+    [2, ["quiet:2:notice:0", "quiet:2:dream:0"]],
+    [3, ["quiet:3:maps:0", "quiet:3:rock:0"]],
+  ] as const)(
+    "greet galaxy %i with Astra's arrival line, then draw quiet lines from its own pool",
+    (sector, quiet) => {
+      const { talk } = director(sector, [...lessonsHeard, `general:${sector}`]);
+      run(talk, 0.05);
+      expect(tapThrough(talk)).toEqual([`arrival:${sector}:0`, `arrival:${sector}:1`]);
+      const drawn: string[] = [];
+      for (let line = 0; line < quiet.length; line++) {
+        for (let step = 0; step < 4000 && !talk.showing; step++) {
+          run(talk, 0.05);
+        }
+        drawn.push(showing(talk) ?? "");
+        tapThrough(talk);
+      }
+      expect(drawn).toEqual(quiet);
+    },
+  );
+
+  it("keep each galaxy's quiet lines to its own pool", () => {
+    const { talk } = director(2, [...lessonsHeard, "arrival:2", "quiet:2:notice", "quiet:2:dream"]);
+    run(talk, 3 * (quietSeconds + cooldownSeconds));
+    expect(talk.showing).toBeNull();
   });
 
   it("let Penny sense each point of interest once, while it is still near", () => {
