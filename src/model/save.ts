@@ -2,6 +2,7 @@ import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyOrientation, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
 import { stationById } from "./stations.ts";
@@ -180,6 +181,17 @@ function spaceObject(
     (value.routeId === undefined ||
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
+    (value.asteroid === undefined ||
+      (value.kind === "rock" &&
+        typeof value.asteroid === "string" &&
+        ASTEROID_SHAPES.has(value.asteroid))) &&
+    (value.orbit === undefined ||
+      (value.kind === "rock" &&
+        record(value.orbit) &&
+        vector(value.orbit) &&
+        nonnegative(value.orbit.radius) &&
+        finite(value.orbit.rate) &&
+        finite(value.orbit.phase))) &&
     (value.enemy === undefined ||
       (value.kind === "enemy" &&
         enemyState(value.enemy) &&

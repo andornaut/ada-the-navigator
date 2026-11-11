@@ -1,9 +1,34 @@
+import type { AsteroidSize } from "./asteroid-catalog.ts";
 import type { SectorId } from "./types.ts";
 
 export type ChunkTemplateId = "quiet" | "cluster" | "passage" | "poi";
 export type ChunkCatalog = Readonly<
   Record<SectorId, readonly { id: ChunkTemplateId; weight: number }[]>
 >;
+
+/** Per-sector asteroid mix: slot and feature size weights, feature chance per template. */
+export interface AsteroidField {
+  readonly driftChance: number;
+  readonly featureChance: Readonly<Record<ChunkTemplateId, number>>;
+  readonly featureSizes: Readonly<Partial<Record<AsteroidSize, number>>>;
+  /** Shot hit points by size class. */
+  readonly hp: Readonly<Record<AsteroidSize, number>>;
+  readonly slotSizes: Readonly<Partial<Record<AsteroidSize, number>>>;
+}
+
+// Provisional playtest field shared by every galaxy until galaxies are themed.
+const SHARED_ASTEROID_FIELD: AsteroidField = {
+  driftChance: 0.25,
+  featureChance: { cluster: 0.35, passage: 0.2, poi: 0, quiet: 0.45 },
+  featureSizes: { huge: 0.35, large: 0.65 },
+  hp: { huge: 16, large: 10, medium: 5, small: 3 },
+  slotSizes: { medium: 0.4, small: 0.6 },
+};
+export const ASTEROID_FIELDS: Readonly<Record<SectorId, AsteroidField>> = {
+  1: SHARED_ASTEROID_FIELD,
+  2: SHARED_ASTEROID_FIELD,
+  3: SHARED_ASTEROID_FIELD,
+};
 
 // Provisional neutral weights for all sectors.
 export const CHUNK_CATALOG: ChunkCatalog = {

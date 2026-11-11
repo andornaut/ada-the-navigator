@@ -32,6 +32,7 @@ import { backReleased } from "../ui/back-stack.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createStardustCounter } from "../ui/stardust-counter.ts";
 import { createStationView } from "../ui/station.ts";
+import { asteroidArt, type AsteroidOutline, cellTint, tinted } from "./asteroid-art.ts";
 import {
   type DestructionData,
   flashAt,
@@ -601,13 +602,14 @@ export class PrototypeScene extends Phaser.Scene {
     const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
-    this.ink.fillStyle(this.palette.environmentDetail, 0.6);
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.project({
           x: x * cell + ((y * 37) % 83),
           y: y * cell + ((x * 53) % 79),
         });
+        // Background markers stay muted but carry a light per-cell tint.
+        this.ink.fillStyle(tinted(0.3, cellTint(x, y), this.palette.environmentDetail), 0.6);
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
@@ -1278,7 +1280,12 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.fillCircle(point.x, point.y, radius);
         break;
       case "rock":
-      case "debris":
+      case "debris": {
+        const art = object.asteroid ? asteroidArt(object.asteroid) : undefined;
+        if (art) {
+          this.drawAsteroid(point, art.entry.tint, art.outline);
+          break;
+        }
         this.ink.fillEllipse(point.x, point.y, radius * 2, radius * 1.4);
         this.ink.strokeEllipse(point.x, point.y, radius * 2, radius * 1.4);
         if (object.kind === "rock") {
@@ -1300,6 +1307,22 @@ export class PrototypeScene extends Phaser.Scene {
           }
         }
         break;
+      }
+    }
+  }
+
+  /** Placeholder asteroid: its collision parts filled as one mass, outlined on the union. */
+  private drawAsteroid(point: Vec, tint: string, outline: AsteroidOutline): void {
+    this.ink.fillStyle(tinted(0.14, tint, this.palette.environment));
+    for (const part of outline.parts) {
+      this.ink.fillPoints(
+        part.map((at) => new Phaser.Math.Vector2(point.x + at.x, point.y + at.y)),
+        true,
+      );
+    }
+    this.ink.lineStyle(1.5, tinted(0.3, tint, this.palette.environmentDetail));
+    for (const [start, end] of outline.edges) {
+      this.ink.lineBetween(point.x + start.x, point.y + start.y, point.x + end.x, point.y + end.y);
     }
   }
 }

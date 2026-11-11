@@ -91,6 +91,10 @@ export interface PrototypeContent {
       shipRadius: number;
       enemyRadius: number;
       rockRadius: number;
+      /** Share of the approaching speed returned when a ship bounces off scenery. */
+      sceneryRestitution: number;
+      /** Minimum speed away from scenery after a bounce, in world units per second. */
+      sceneryRecoil: number;
       pickupRadius: number;
       pieceRadius: number;
       pickupReach: number;

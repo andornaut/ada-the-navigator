@@ -329,6 +329,8 @@ export const PROTOTYPE: PrototypeContent = {
       pursuitSpeedFactor: 0.55,
       rockHp: 3,
       rockRadius: 20,
+      sceneryRecoil: 24,
+      sceneryRestitution: 0.4,
       shipRadius: 10,
       spawnWeights: { enemy: 0.1, pickup: 0.12, resource: 0.4, rock: 0.38 },
     },

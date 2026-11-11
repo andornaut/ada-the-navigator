@@ -1,4 +1,4 @@
-import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
@@ -11,6 +11,14 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import {
+  ASTEROID_SHAPES,
+  bounce,
+  orbitMotion,
+  reflectDirection,
+  sceneryBlocksSegment,
+  sceneryContact,
+} from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import {
   createEnemy,
@@ -92,6 +100,49 @@ function safe(content: PrototypeContent, point: Vec, flight: FlightState): boole
     const radius = protectedRadius(content, o);
     return radius !== null && distance(point, o) <= radius;
   });
+}
+/** Whether a whole object, not only its center, stays outside every safe area. */
+function clearOfSafeAreas(content: PrototypeContent, object: SpaceObject, flight: FlightState) {
+  return !flight.objects.some((o) => {
+    const radius = protectedRadius(content, o);
+    return radius !== null && distance(object, o) <= radius + object.radius;
+  });
+}
+const SCENERY = ["rock", "resource", "debris"];
+const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
+/**
+ * Push a circle out of overlapping scenery along each contact normal and report every contact
+ * once, with the obstacle's own velocity, so movers bounce and never stay embedded.
+ */
+function resolveScenery(
+  flight: FlightState,
+  radius: number,
+  onContact: (normal: Vec, surface: Vec) => void,
+  position: Vec,
+): void {
+  const touched = new Set<SpaceObject>();
+  for (let pass = 0; pass < 4; pass++) {
+    let deepest: { contact: { normal: Vec; depth: number }; object: SpaceObject } | null = null;
+    for (const object of flight.objects) {
+      if (!SCENERY.includes(object.kind) || object.hp <= 0) {
+        continue;
+      }
+      const contact = sceneryContact(object, position, radius);
+      if (contact && (!deepest || contact.depth > deepest.contact.depth)) {
+        deepest = { contact, object };
+      }
+    }
+    if (!deepest) {
+      return;
+    }
+    const { depth, normal } = deepest.contact;
+    position.x += normal.x * (depth + 0.01);
+    position.y += normal.y * (depth + 0.01);
+    if (!touched.has(deepest.object)) {
+      touched.add(deepest.object);
+      onContact(normal, deepest.object.velocity ?? { x: 0, y: 0 });
+    }
+  }
 }
 /** Station sites within the active region become persistent station objects. */
 function ensureStations(content: PrototypeContent, point: Vec, flight: FlightState): void {
@@ -175,7 +226,9 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       flight.chunks.push(key);
       generated.add(key);
       chunkIndexes.get(flight)!.length = flight.chunks.length;
+      const field = ASTEROID_FIELDS[flight.sector];
       const plan = planChunk(CHUNK_CATALOG, {
+        asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
         clearance: content.tuning.flight.shipRadius,
         objectsPerChunk: tuning.objectsPerChunk,
         rockRadius: tuning.rockRadius,
@@ -189,10 +242,30 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       });
       generateRegion(content, x, y, flight);
       for (const placement of plan.placements) {
+        const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
         const object: SpaceObject = {
-          ...placement,
-          hp: placement.kind === "pickup" ? 1 : tuning.rockHp,
-          radius: placement.kind === "pickup" ? tuning.pickupRadius : tuning.rockRadius,
+          hp: placement.kind === "pickup" ? 1 : shape ? field.hp[shape.size] : tuning.rockHp,
+          id: placement.id,
+          kind: placement.kind,
+          radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
+          x: placement.x,
+          y: placement.y,
+          ...(shape ? { asteroid: shape.id } : {}),
+        };
+        // A drifting asteroid's place on its seeded path follows flight time, so paging and
+        // saves resume it where it would be.
+        if (placement.orbit) {
+          object.orbit = { ...placement.orbit, x: placement.x, y: placement.y };
+          const motion = orbitMotion(flight.time, object.orbit);
+          object.x = motion.position.x;
+          object.y = motion.position.y;
+          object.velocity = motion.velocity;
+        }
+        const reach = {
+          ...object,
+          radius: object.radius + (placement.orbit?.radius ?? 0),
+          x: placement.x,
+          y: placement.y,
         };
         if (object.kind !== "rock") {
           object.role = "discovery";
@@ -204,8 +277,8 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         if (
           !existing.has(object.id) &&
           !Object.hasOwn(flight.world.notables, object.id) &&
-          distance(object, flight.player) > content.tuning.safeRadius &&
-          !safe(content, object, flight)
+          distance(reach, flight.player) - reach.radius > content.tuning.safeRadius &&
+          clearOfSafeAreas(content, reach, flight)
         ) {
           flight.objects.push(object);
           existing.add(object.id);
@@ -850,24 +923,24 @@ function move(
   }
   flight.velocity = motion.velocity;
   const start = { ...flight.player };
+  const { sceneryRecoil, sceneryRestitution, shipRadius } = content.tuning.flight;
+  // Scenery reflects velocity and the smoothed heading together, so recoil carries momentum.
+  const onContact = (normal: Vec, surface: Vec): void => {
+    flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
+    const heading = movementHeadings.get(flight);
+    if (heading) {
+      movementHeadings.set(flight, reflectDirection(normal, heading));
+    }
+  };
+  // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
+  resolveScenery(flight, shipRadius, onContact, flight.player);
   const steps = Math.max(1, Math.ceil((length(flight.velocity) * dt) / 4));
   for (let i = 0; i < steps; i++) {
     const before = { ...flight.player };
     const key = chunk(content, before);
-    for (const axis of ["x", "y"] as const) {
-      flight.player[axis] += (flight.velocity[axis] * dt) / steps;
-      if (
-        flight.objects.some(
-          (o) =>
-            ["rock", "resource", "debris"].includes(o.kind) &&
-            o.hp > 0 &&
-            distance(o, flight.player) < o.radius + content.tuning.flight.shipRadius,
-        )
-      ) {
-        flight.player[axis] = before[axis];
-        flight.velocity[axis] = 0;
-      }
-    }
+    flight.player.x += (flight.velocity.x * dt) / steps;
+    flight.player.y += (flight.velocity.y * dt) / steps;
+    resolveScenery(flight, shipRadius, onContact, flight.player);
     const afterKey = chunk(content, flight.player);
     if (flight.freshChunk === key) {
       flight.freshDistance += distance(before, flight.player);
@@ -912,8 +985,9 @@ function enemies(
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = !flight.objects.some(
       (obstacle) =>
-        ["rock", "resource", "debris"].includes(obstacle.kind) &&
-        segmentDistance(obstacle, object, flight.player) < obstacle.radius,
+        SCENERY.includes(obstacle.kind) &&
+        obstacle.hp > 0 &&
+        sceneryBlocksSegment(obstacle, object, flight.player, 0),
     );
     const intent = stepEnemy(
       definition,
@@ -937,17 +1011,24 @@ function enemies(
       events.push({ type: "enemyDisabled" });
       continue;
     }
-    const steps = Math.max(1, Math.ceil((length(intent.velocity) * dt) / 4));
+    let velocity = intent.velocity;
+    // Enemies bounce off scenery by the same rule as Ada; safe areas and peers still block.
+    const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
+    const onContact = (normal: Vec, surface: Vec): void => {
+      velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, velocity);
+      object.enemy!.velocity = { ...velocity };
+    };
+    const steps = Math.max(1, Math.ceil((length(velocity) * dt) / 4));
     for (let i = 0; i < steps; i++) {
       for (const axis of ["x", "y"] as const) {
         const point = { x: object.x, y: object.y };
-        point[axis] += (intent.velocity[axis] * dt) / steps;
+        point[axis] += (velocity[axis] * dt) / steps;
         const blocked = flight.objects.some(
           (other) =>
             other !== object &&
             (protectedRadius(content, other) !== null
               ? distance(other, point) < (protectedRadius(content, other) ?? 0) + object.radius
-              : ["rock", "resource", "debris", "enemy"].includes(other.kind) &&
+              : other.kind === "enemy" &&
                 other.hp > 0 &&
                 distance(other, point) < enemySpacing(object, other)),
         );
@@ -957,6 +1038,10 @@ function enemies(
           object.enemy.velocity[axis] = 0;
         }
       }
+      const point = { x: object.x, y: object.y };
+      resolveScenery(flight, object.radius, onContact, point);
+      object.x = point.x;
+      object.y = point.y;
     }
     object.enemy.position = { x: object.x, y: object.y };
     threatening ||=
@@ -1002,8 +1087,16 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
   return distance(point, { x: start.x + dx * t, y: start.y + dy * t });
 }
 
+/** Ballistic debris keeps constant velocity and damages; drifting asteroids follow their path. */
 function moveDebris(content: PrototypeContent, dt: number, flight: FlightState): void {
   for (const object of flight.objects) {
+    if (object.orbit) {
+      const motion = orbitMotion(flight.time, object.orbit);
+      object.x = motion.position.x;
+      object.y = motion.position.y;
+      object.velocity = motion.velocity;
+      continue;
+    }
     if (object.kind !== "debris" || !object.velocity) {
       continue;
     }
@@ -1062,9 +1155,7 @@ function shots(
         if (
           flight.objects.some(
             (object) =>
-              ["rock", "resource", "debris"].includes(object.kind) &&
-              object.hp > 0 &&
-              distance(shot, object) <= object.radius + 3,
+              SCENERY.includes(object.kind) && object.hp > 0 && sceneryContact(object, shot, 3),
           )
         ) {
           shot.life = 0;
@@ -1077,10 +1168,12 @@ function shots(
       }
       for (const object of flight.objects) {
         if (
-          !["enemy", "rock", "resource", "debris"].includes(object.kind) ||
+          !["enemy", ...SCENERY].includes(object.kind) ||
           object.hp <= 0 ||
           shot.hitIds.includes(object.id) ||
-          distance(shot, object) > object.radius + 3
+          (object.kind === "enemy"
+            ? distance(shot, object) > object.radius + 3
+            : !sceneryContact(object, shot, 3))
         ) {
           continue;
         }

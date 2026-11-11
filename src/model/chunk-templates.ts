@@ -1,8 +1,17 @@
-import type { ChunkCatalog, ChunkTemplateId } from "../data/chunk-catalog.ts";
+import type { AsteroidSize } from "../data/asteroid-catalog.ts";
+import type { AsteroidField, ChunkCatalog, ChunkTemplateId } from "../data/chunk-catalog.ts";
 import type { SectorId } from "../data/types.ts";
+import type { AsteroidShape } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 
+/** Asteroid variants and the sector's field weights; without them rocks use `rockRadius`. */
+export interface ChunkAsteroids {
+  readonly field: AsteroidField;
+  readonly shapes: readonly AsteroidShape[];
+}
+
 export interface ChunkPlanOptions {
+  readonly asteroids?: ChunkAsteroids;
   readonly clearance: number;
   readonly objectsPerChunk: number;
   readonly rockRadius: number;
@@ -14,9 +23,19 @@ export interface ChunkPlanOptions {
   readonly x: number;
   readonly y: number;
 }
+/** A slow closed drift path around the placement point: angle `phase + rate * time`. */
+export interface AsteroidOrbit {
+  readonly phase: number;
+  readonly radius: number;
+  /** Signed angular rate in radians per second. */
+  readonly rate: number;
+}
 export interface ChunkPlacement extends Vec {
+  readonly asteroid?: string;
   readonly id: string;
   readonly kind: "rock" | "resource" | "pickup";
+  readonly orbit?: AsteroidOrbit;
+  readonly radius: number;
 }
 export interface ChunkPort {
   readonly center: Vec;
@@ -77,6 +96,62 @@ function mix(seed: number, value: number): number {
   hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
   return (hash ^ (hash >>> 16)) >>> 0;
 }
+const unit = (seed: number, value: number) => mix(seed, value) / 0x100000000;
+
+function weighted<T extends string>(
+  weights: Readonly<Partial<Record<T, number>>>,
+  roll: number,
+): T | undefined {
+  const entries = (Object.entries(weights) as [T, number][]).filter(([, weight]) => weight > 0);
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  let threshold = roll * total;
+  for (const [key, weight] of entries) {
+    if (threshold < weight) {
+      return key;
+    }
+    threshold -= weight;
+  }
+  return entries.at(-1)?.[0];
+}
+
+interface Drift {
+  readonly phase: number;
+  readonly roll: number;
+  readonly sign: number;
+  readonly speed: number;
+}
+// Drift paths stay small and slow so they read as drifting, not circling.
+const ORBIT_RADIUS: readonly [number, number] = [16, 96];
+const ORBIT_MAX_RATE = 0.3;
+
+/** A seeded variant of a weighted size, with drift parameters when the variant may drift. */
+function asteroid(
+  asteroids: ChunkAsteroids,
+  sizes: Readonly<Partial<Record<AsteroidSize, number>>>,
+  seed: number,
+  salt: number,
+): { shape: AsteroidShape; drift?: Drift } | undefined {
+  const size = weighted(sizes, unit(seed, salt));
+  const variants = asteroids.shapes.filter((shape) => shape.size === size);
+  if (!variants.length) {
+    return undefined;
+  }
+  const shape = variants[mix(seed, salt + 1) % variants.length]!;
+  if (!shape.drift.eligible || unit(seed, salt + 2) >= asteroids.field.driftChance) {
+    return { shape };
+  }
+  const [slow, fast] = shape.drift.speed;
+  return {
+    drift: {
+      phase: unit(seed, salt + 3) * Math.PI * 2,
+      roll: unit(seed, salt + 5),
+      sign: mix(seed, salt + 6) % 2 ? 1 : -1,
+      speed: slow + unit(seed, salt + 4) * (fast - slow),
+    },
+    shape,
+  };
+}
+
 function seedFor(options: ChunkPlanOptions): number {
   return mix(mix(mix(options.seed, options.sector), options.x), options.y);
 }
@@ -133,6 +208,28 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
   const weights = options.spawnWeights;
   const totalSpawn = weights.resource + weights.rock + weights.enemy + weights.pickup;
   const placements: ChunkPlacement[] = [];
+  const asteroids = options.asteroids;
+  // At most one large feature per chunk sits at a quadrant center, clear of edges and corridors.
+  let feature: ChunkPlacement | undefined;
+  if (asteroids && weights.rock > 0 && unit(seed, 997) < (asteroids.field.featureChance[id] ?? 0)) {
+    const chosen = asteroid(asteroids, asteroids.field.featureSizes, seed, 1009);
+    const quadrant = mix(seed, 991) % 4;
+    const local = {
+      x: (quadrant % 2 ? 0.75 : 0.25) * options.size,
+      y: (quadrant < 2 ? 0.25 : 0.75) * options.size,
+    };
+    if (chosen && chosen.shape.radius + halfWidth <= options.size / 4) {
+      feature = {
+        asteroid: chosen.shape.id,
+        id: `chunk:${options.x},${options.y}:feature`,
+        kind: "rock",
+        radius: chosen.shape.radius,
+        x: origin.x + local.x,
+        y: origin.y + local.y,
+      };
+    }
+  }
+  const drifting = new Map<number, { drift: Drift; free: number }>();
   for (let slot = 0; slot < count; slot++) {
     const local = slots[(slot + (seed % slots.length)) % slots.length]!;
     const x = local[0] * options.size;
@@ -150,7 +247,11 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
     if (kind === "enemy") {
       continue;
     }
-    const radius = options.rockRadius;
+    const chosen =
+      kind === "rock" && asteroids
+        ? asteroid(asteroids, asteroids.field.slotSizes, seed, 2000 + slot * 16)
+        : undefined;
+    const radius = chosen?.shape.radius ?? options.rockRadius;
     const boundary = radius + halfWidth;
     if (
       x < boundary ||
@@ -162,12 +263,65 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
     ) {
       continue;
     }
+    const at = { x: origin.x + x, y: origin.y + y };
+    // Slots beside the feature keep a ship-width gap so the feature never seals them in.
+    if (
+      feature &&
+      Math.hypot(at.x - feature.x, at.y - feature.y) < feature.radius + radius + 2 * halfWidth
+    ) {
+      continue;
+    }
+    if (chosen?.drift) {
+      const edges = Math.min(
+        x,
+        y,
+        options.size - x,
+        options.size - y,
+        Math.abs(x - options.size / 2),
+        Math.abs(y - options.size / 2),
+      );
+      drifting.set(placements.length, { drift: chosen.drift, free: edges - boundary });
+    }
     placements.push({
+      ...(chosen ? { asteroid: chosen.shape.id } : {}),
       id: `chunk:${options.x},${options.y}:${slot}`,
       kind,
-      x: origin.x + x,
-      y: origin.y + y,
+      radius,
+      ...at,
     });
+  }
+  if (feature) {
+    placements.push(feature);
+  }
+  // A drift path never leaves the slot's corridor clearance or reaches a neighbor's gap.
+  for (const [index, { drift, free }] of drifting) {
+    const placement = placements[index]!;
+    const room = placements.reduce(
+      (limit, other, at) =>
+        at === index
+          ? limit
+          : Math.min(
+              limit,
+              Math.hypot(other.x - placement.x, other.y - placement.y) -
+                other.radius -
+                placement.radius -
+                2 * halfWidth,
+            ),
+      free,
+    );
+    if (room < ORBIT_RADIUS[0]) {
+      continue;
+    }
+    const radius =
+      ORBIT_RADIUS[0] + drift.roll * (Math.min(room, ORBIT_RADIUS[1]) - ORBIT_RADIUS[0]);
+    placements[index] = {
+      ...placement,
+      orbit: {
+        phase: drift.phase,
+        radius,
+        rate: drift.sign * Math.min(drift.speed / radius, ORBIT_MAX_RATE),
+      },
+    };
   }
   return {
     id,

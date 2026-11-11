@@ -42,6 +42,10 @@ export interface PickupRelease {
 export interface SpaceObject extends Vec {
   id: string;
   kind: ObjectKind;
+  /** Asteroid variant id for a rock with a polygon collision shape. */
+  asteroid?: string;
+  /** Seeded drift path of an asteroid around its anchor `x`, `y`. */
+  orbit?: Vec & { phase: number; radius: number; rate: number };
   radius: number;
   hp: number;
   role?: string;
