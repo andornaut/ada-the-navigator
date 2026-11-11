@@ -73,8 +73,10 @@ The persistence contract distinguishes an interrupted flight from leaving a gala
   starts without carried cargo. Story progress, known destinations, discovered
   stations, deposited resources, activity counters, Stardust, owned weapons, levels,
   ship upgrades and paint schemes persist.
-- Shield depletion jumps Ada home: she loses the equipped weapon and its levels
-  unless it is Basic, and pays a recharging fee in Stardust.
+- Shield depletion jumps Ada home and costs only the flight: its layout, open-space
+  enemies, pickups, carried cargo and any towed pod. Weapons, levels, Stardust and
+  accepted quests are kept. She lands at night, sleeps while Astra recharges
+  overnight, and wakes in the morning.
 
 Combat includes data-defined solo ships and packs, independent large-ship
 hardpoints and straight-flying missiles. Required approach encounters stay outside
