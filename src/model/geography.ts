@@ -233,6 +233,20 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
 }
 
 /** Unloaded counts alone never retain an otherwise unrepresented ordinary pack. */
+/** Role packs of one encounter: a capital battle's escorts pack beside its capital's. */
+const ESCORT_ROLE = ":escorts";
+export function escortPackId(packId: string): string {
+  return `${packId}${ESCORT_ROLE}`;
+}
+/** The encounter a pack belongs to; each role keeps its own pack and survivor count. */
+export function encounterOf(packId: string): string {
+  return packId.endsWith(ESCORT_ROLE) ? packId.slice(0, -ESCORT_ROLE.length) : packId;
+}
+
+/**
+ * Forgets an encounter once none of its members is loaded or retained. Role packs stay
+ * while any role survives, so a destroyed role is not restored with the others.
+ */
 export function prunePackState(flight: FlightState): void {
   if (flight.combat) {
     const retained = indexes.get(flight.world)?.packs;
@@ -247,8 +261,9 @@ export function prunePackState(flight: FlightState): void {
         .filter(liveEnemy)
         .flatMap((object) => (object.enemy?.packId ? [object.enemy.packId] : [])),
     ]);
+    const encounters = new Set([...packs].map(encounterOf));
     for (const id of Object.keys(flight.combat.initialPackSizes)) {
-      if (!packs.has(id)) {
+      if (!encounters.has(encounterOf(id))) {
         delete flight.combat.initialPackSizes[id];
         if (flight.combat.unloadedPackMembers) {
           delete flight.combat.unloadedPackMembers[id];

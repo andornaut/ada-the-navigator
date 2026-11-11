@@ -35,6 +35,7 @@ import {
   activateFlightRegion,
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
+  escortPackId,
   persistentObject,
   prunePackState,
   recordObjectRemoval,
@@ -431,7 +432,7 @@ function generateRegion(
       content,
       flight,
       next,
-      { ...escorts, escortOf: `${packId}:0`, packId: `${packId}:escorts` },
+      { ...escorts, escortOf: `${packId}:0`, packId: escortPackId(packId) },
       (_, phase) => ({ x: center.x + Math.cos(phase) * gap, y: center.y + Math.sin(phase) * gap }),
     );
   }

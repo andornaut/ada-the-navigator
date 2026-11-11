@@ -4,7 +4,7 @@ import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
-import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
+import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { stationById } from "./stations.ts";
 import type {
   EconomyState,
@@ -350,8 +350,13 @@ function unloadedPackState(
         Object.hasOwn(combat.initialPackSizes, id) &&
         count + (unloaded[id] ?? 0) <= combat.initialPackSizes[id]!,
     ) &&
+    // A role's unloaded survivors need a represented member somewhere in their encounter.
     Object.entries(unloaded).every(
-      ([id, count]) => Number.isSafeInteger(count) && count > 0 && represented.has(id),
+      ([id, count]) =>
+        Number.isSafeInteger(count) &&
+        count > 0 &&
+        Object.hasOwn(combat.initialPackSizes, id) &&
+        [...represented.keys()].some((pack) => encounterOf(pack) === encounterOf(id)),
     )
   );
 }
