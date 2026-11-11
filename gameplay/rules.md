@@ -153,6 +153,19 @@ better piloting skills. No instant apology or friendship is required. Subsequent
 visits preserve the changed relationships. The hub sells the galaxy's holodisk for
 a provisional 300 Stardust.
 
+Cartwheel's story ships are the miner, two regular visitors and the blocking
+pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
+shots pass through and which never fight. Each scene is a short scripted path
+near the hub that plays without Ada steering it. At the first deposit milestone
+the blocking pilot cuts across the miner's approach and the miner turns away. At
+the final milestone the miner and the visitors fly in together and dock, and the
+blocking pilot flies off. Between scenes the miner and visitors wait near the
+hub. The hub looks worn but working until its Hub repairs project is funded.
+
+Resource rocks come in medium and large classes, colliding on Art's footprints
+like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
+and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
+
 Cartwheel's space is an industrial ring of mining platforms in rust and ember
 tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
 run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
