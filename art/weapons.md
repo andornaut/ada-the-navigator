@@ -1,8 +1,8 @@
 # Weapons
 
-Projectiles, missile blasts, the Multi-Laser fan and the Phaser beam. Tech draws
-every effect in code (Phaser Graphics); none uses a sprite or sheet. The HUD and
-shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
+Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam and weapon
+pickups. Tech draws every effect in code (Phaser Graphics); none uses a sprite or
+sheet. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
 
 ## Gameplay values
 
@@ -192,6 +192,16 @@ A steady 2 px cream line (alpha `a`) over a 4 px amber edge (alpha `0.35 a`),
 without taper, width change or bloom, alpha 1 to 90 ms then linear to 0 at
 150 ms. A miss keeps the 28 px end fade. The spark becomes an unrotated cream
 ring, radius 3, 1.5 px stroke, alpha `1 - p` over 160 ms.
+
+## Pickups
+
+A weapon pickup in space is the existing square: a 1.5 px amber `#f0bd68`
+outline, no fill, centred on the pickup's projected point, half-size
+`pickupRadius` (10, so 20 px across). Inside it, the weapon's 20 px HUD mask SVG,
+`weapon-<id>.svg`, draws at 14 px in amber, centred on the same point. This
+applies to `scattershot`, `rapidMissile`, `multiLaser`, `heavyMissile` and
+`phaser`, and replaces the old line glyphs, Scattershot's dot fan and the missile
+line glyph included. Galaxy field retints leave the amber signal unchanged.
 
 ## Reduced motion summary
 
