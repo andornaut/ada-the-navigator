@@ -52,8 +52,9 @@ function recoverHolodisk(model: GameModel) {
     model.interact();
     model.choose("buy");
   }
-  model.choose("continue");
-  model.choose("continue");
+  while (model.state.dialogue?.context.startsWith("holodisk")) {
+    model.choose("continue");
+  }
   expect(model.state.progress[model.state.flight!.sector].holodisk).toBe(true);
 }
 function introduce(model: GameModel, id: string) {

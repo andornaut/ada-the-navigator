@@ -304,6 +304,12 @@ function pastStart(state: GameState): boolean {
     )
   );
 }
+/** Saves from before the announcement announce a later galaxy unlocked but not yet begun. */
+function unvisitedUnlock(state: GameState): boolean {
+  const latest = Math.max(...state.unlocked) as SectorId;
+  const p = state.progress[latest];
+  return latest > 1 && p.stage === 0 && !p.introduced && !p.resolved && p.known.length === 0;
+}
 function boundedLevel(value: unknown, max: number): boolean {
   return Number.isInteger(value) && nonnegative(value) && Number(value) <= max;
 }
@@ -353,7 +359,8 @@ function stationIds(sector: SectorId, value: unknown): boolean {
  * from before the economy gain an empty economy (or their flight's weapons), no
  * discovered stations and no weapon lock; their unused ammunition count is dropped.
  * Saves from before the prologue count it as seen once play has begun, and saves from before
- * holodisks count the holodisks of galaxies before the last unlocked one as recovered.
+ * holodisks count the holodisks of galaxies before the last unlocked one as recovered. A later
+ * galaxy unlocked but not begun is announced at the next boarding.
  */
 export function restoreSave(saved: unknown): GameState | null {
   try {
@@ -377,7 +384,8 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (
       typeof value.notice !== "string" ||
-      (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean")
+      (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean") ||
+      (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean")
     ) {
       return null;
     }
@@ -553,6 +561,9 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (typeof value.prologueSeen !== "boolean") {
       restored.prologueSeen = pastStart(restored);
+    }
+    if (typeof value.announceGalaxy !== "boolean") {
+      restored.announceGalaxy = unvisitedUnlock(restored);
     }
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);

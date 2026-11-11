@@ -6,13 +6,12 @@ export const PREMISE: PremiseContent = {
     { text: "Ada holds Penny close and touches the rock's glow." },
     { speaker: "Astra", text: "Welcome back, Navigator." },
   ],
+  boardingNewGalaxy: { speaker: "Astra", text: "Welcome back, Navigator. A new galaxy is ready." },
   holodisk: {
+    handover: "We found this drifting near our outposts. Take it, with our thanks.",
     inserted: [
       { text: "Ada slides the holodisk into Astra's drive." },
-      {
-        speaker: "Astra",
-        text: "Memory restored. I've found new coordinates. A new galaxy is ready.",
-      },
+      { speaker: "Astra", text: "Memory restored. I've found new coordinates." },
     ],
     name: "Holodisk",
   },

@@ -12,7 +12,7 @@ import type { GameState, SectorProgress } from "./types.ts";
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const inserted = [
   "Ada slides the holodisk into Astra's drive.",
-  "Memory restored. I've found new coordinates. A new galaxy is ready.",
+  "Memory restored. I've found new coordinates.",
 ];
 
 /** A flight in `galaxy` whose space quest is complete and holodisk not yet recovered. */
@@ -38,10 +38,11 @@ function arrive(model: GameModel, id: string) {
   f.player = { x: target.x, y: target.y };
   f.dangerFor = 0;
 }
-/** Reads the insertion panels and continues past them. */
+const handover = "We found this drifting near our outposts. Take it, with our thanks.";
+/** Reads the handover and insertion panels and continues past them. */
 function insertion(model: GameModel): [string, string][] {
   const panels: [string, string][] = [];
-  while (model.state.dialogue?.context.startsWith("holodisk:")) {
+  while (model.state.dialogue?.context.startsWith("holodisk")) {
     panels.push([model.state.dialogue.title, model.state.dialogue.text]);
     model.choose("continue");
   }
@@ -70,12 +71,13 @@ describe("holodisk objectives", () => {
 });
 
 describe("galaxy one's holodisk", () => {
-  it("is given by the outposts once the exchange runs, then inserted", () => {
+  it("is handed over by the outpost Ada talks with once the exchange runs, then inserted", () => {
     const model = questDone(1, ["growers", "workshop", "salvagers"]);
     expect(model.objective).toBe("Collect the holodisk from the outposts.");
     arrive(model, "salvagers");
     model.interact();
     expect(insertion(model)).toEqual([
+      ["Salvager", handover],
       ["The Outposts", inserted[0]],
       ["Astra", inserted[1]],
     ]);
@@ -95,6 +97,91 @@ describe("galaxy one's holodisk", () => {
     model.interact();
     expect(model.state.dialogue?.context).toBe("grower");
     expect(model.state.progress[1].holodisk).toBe(false);
+  });
+});
+
+describe("galaxy one's handover", () => {
+  it.each([
+    ["growers", "Grower"],
+    ["workshop", "Workshop"],
+    ["salvagers", "Salvager"],
+  ])("is spoken by the %s", (id, speaker) => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    arrive(model, id);
+    model.interact();
+    expect(model.state.dialogue).toMatchObject({
+      context: "holodiskHandover",
+      text: handover,
+      title: speaker,
+    });
+    expect(model.state.progress[1].holodisk).toBe(true);
+    // A reload during the handover resumes it and continues to the insertion.
+    const resumed = new GameModel(PROTOTYPE, model.save());
+    resumed.choose("continue");
+    expect(resumed.state.dialogue?.text).toBe(inserted[0]);
+  });
+});
+
+describe("new galaxy announcement", () => {
+  const welcome = (model: GameModel, galaxy: SectorId) => {
+    model.startSector(galaxy);
+    expect(model.state.dialogue?.context).toBe("opening");
+    model.choose("0");
+    const lines: string[] = [];
+    while (model.state.dialogue?.context.startsWith("boarding")) {
+      lines.push(model.state.dialogue.text);
+      model.choose("continue");
+    }
+    expect(model.state.mode).toBe("space");
+    model.returnHome();
+    return lines.at(-1);
+  };
+
+  it("replaces the welcome once, at the first boarding after a galaxy unlocks", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    arrive(model, "workshop");
+    model.interact();
+    insertion(model);
+    expect(model.state.announceGalaxy).toBe(false);
+    resolveAtHome(model);
+    expect(model.state.unlocked).toEqual([1, 2]);
+    expect(model.state.announceGalaxy).toBe(true);
+    const saved = new GameModel(PROTOTYPE, model.save());
+    expect(saved.state.announceGalaxy).toBe(true);
+    expect(welcome(saved, 2)).toBe("Welcome back, Navigator. A new galaxy is ready.");
+    expect(saved.state.announceGalaxy).toBe(false);
+    expect(welcome(saved, 2)).toBe("Welcome back, Navigator.");
+  });
+
+  it("is not announced when the holodisk unlocks the galaxy in flight, until boarding", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    resolveAtHome(model);
+    expect(model.state.announceGalaxy).toBe(false);
+    model.startSector(1);
+    playOpening(model);
+    arrive(model, "growers");
+    model.interact();
+    expect(insertion(model).map(([, text]) => text)).not.toContain(
+      "Welcome back, Navigator. A new galaxy is ready.",
+    );
+    expect(model.state.announceGalaxy).toBe(true);
+  });
+
+  it("is skipped after galaxy three, whose next galaxy's story is in development", () => {
+    const model = questDone(3, ["whale", "family"]);
+    resolveAtHome(model);
+    model.startSector(3);
+    playOpening(model);
+    model.step(0.01, idle);
+    const f = model.state.flight!;
+    f.objects = f.objects.filter((o) => o.routeId !== "holodisk");
+    const disk = f.objects.find((o) => o.id === "holodisk")!;
+    f.player = { x: disk.x, y: disk.y };
+    model.step(0.01, idle);
+    insertion(model);
+    expect(model.state.progress[3].holodisk).toBe(true);
+    expect(model.state.unlocked).toEqual([1, 2, 3]);
+    expect(model.state.announceGalaxy).toBe(false);
   });
 });
 
@@ -258,5 +345,23 @@ describe("holodisk save", () => {
     const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     (state.progress as Record<string, Record<string, unknown>>)[1]!.holodisk = "yes";
     expect(restoreSave(state)).toBeNull();
+  });
+
+  it("migrates the announcement: a later galaxy unlocked but not begun is announced", () => {
+    const old = (unlocked: SectorId[], begun = false) => {
+      const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+      delete state.announceGalaxy;
+      state.unlocked = unlocked;
+      if (begun) {
+        (state.progress as Record<string, Record<string, unknown>>)[2]!.introduced = true;
+      }
+      return restoreSave(state)!.announceGalaxy;
+    };
+    expect(old([1])).toBe(false);
+    expect(old([1, 2])).toBe(true);
+    expect(old([1, 2], true)).toBe(false);
+    const malformed = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    malformed.announceGalaxy = 1;
+    expect(restoreSave(malformed)).toBeNull();
   });
 });

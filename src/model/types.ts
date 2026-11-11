@@ -156,6 +156,8 @@ export interface GameState {
   notice: string;
   /** The prologue plays once; saves already past the start count it as seen. */
   prologueSeen: boolean;
+  /** Astra announces a newly unlocked galaxy once, at the next boarding. */
+  announceGalaxy: boolean;
 }
 export type FlightEvent =
   | { type: "depleted" }

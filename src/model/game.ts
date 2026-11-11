@@ -71,6 +71,7 @@ export class GameModel {
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? {
+      announceGalaxy: false,
       dialogue: null,
       docked: null,
       economy: newEconomy(ECONOMY),
@@ -392,10 +393,15 @@ export class GameModel {
       !this.state.unlocked.includes(next as SectorId)
     ) {
       this.state.unlocked.push(next as SectorId);
+      // Galaxy four's story is in development, so only a galaxy with a story is announced.
+      this.state.announceGalaxy = Object.hasOwn(this.content.chapters, next);
     }
   }
-  /** Ada inserts a recovered holodisk into Astra's drive at once. */
-  private recoverHolodisk(): void {
+  /**
+   * Ada inserts a recovered holodisk into Astra's drive at once; `giver` names the outpost
+   * that hands it over first.
+   */
+  private recoverHolodisk(giver?: string): void {
     const p = this.current;
     p.holodisk = true;
     const f = this.state.flight;
@@ -408,7 +414,11 @@ export class GameModel {
     if (p.questComplete) {
       this.state.notice = this.label("chapterComplete");
     }
-    this.insertion(0);
+    if (giver) {
+      this.panel("holodiskHandover", this.content.premise.holodisk.handover, giver);
+    } else {
+      this.insertion(0);
+    }
   }
   private insertion(index: number): void {
     const line = this.content.premise.holodisk.inserted[index];
@@ -644,7 +654,7 @@ export class GameModel {
     if (f.sector === 1) {
       // Once their exchange is running, any outpost gives Ada the holodisk.
       if (p.questComplete && !p.holodisk) {
-        this.recoverHolodisk();
+        this.recoverHolodisk(this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker);
       } else if (id === "growers" && p.stage === 1) {
         p.questItem = "food";
         this.exchange("grower");
@@ -761,6 +771,10 @@ export class GameModel {
       this.buyHolodisk();
       return;
     }
+    if (dialogue.context === "holodiskHandover") {
+      this.insertion(0);
+      return;
+    }
     const inserted = /^holodisk:(\d+)$/.exec(dialogue.context);
     if (inserted) {
       this.insertion(Number(inserted[1]) + 1);
@@ -789,7 +803,13 @@ export class GameModel {
   }
   /** Shows boarding panel `index`, then jumps after the last. */
   private boarding(index: number): void {
-    const line = this.content.premise.boarding[index];
+    const { boarding, boardingNewGalaxy } = this.content.premise;
+    let line = boarding[index];
+    // The first boarding after a galaxy unlocks announces it once, in place of the last line.
+    if (line && index === boarding.length - 1 && this.state.announceGalaxy) {
+      line = boardingNewGalaxy;
+      this.state.announceGalaxy = false;
+    }
     if (line) {
       this.panel(`boarding:${index}`, line.text, line.speaker ?? this.content.premise.title);
     } else {

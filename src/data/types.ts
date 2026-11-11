@@ -28,7 +28,11 @@ export interface PrologueStep extends PremiseLine {
 export interface PremiseContent {
   /** The boarding panels before each later chapter's jump. */
   boarding: readonly PremiseLine[];
+  /** Replaces the last boarding line once, at the first boarding after a galaxy unlocks. */
+  boardingNewGalaxy: Required<PremiseLine>;
   holodisk: {
+    /** Said by whichever outpost gives Ada galaxy one's holodisk, before the insertion. */
+    handover: string;
     /** Plays as each recovered holodisk is inserted into Astra's drive. */
     inserted: readonly PremiseLine[];
     /** The holodisk's name in the hub's purchase confirm. */
