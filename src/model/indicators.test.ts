@@ -43,6 +43,7 @@ function context(overrides: Partial<IndicatorContext> = {}): IndicatorContext {
         object("station:1:0", "station", 400),
         object("drone", "enemy", 300),
         object("cache", "pickup", 200, { role: "discovery" }),
+        object("ore", "resource", 250, { role: "discovery" }),
       ],
       player: ORIGIN,
     },
@@ -81,9 +82,53 @@ describe("direction indicators", () => {
     expect(marked(context({ objective: null }))).toEqual([]);
   });
 
-  it("never mark ordinary enemies or optional discoveries", () => {
+  it("never mark ordinary enemies, optional discovery caches or resource rocks", () => {
     const all = marked(context({ holodiskWaypoint: true, questItem: "growers" }));
-    expect(all.some((target) => /drone|cache/u.test(target))).toBe(false);
+    expect(all).toEqual(["holodisk:holodisk", "objective:workshop", "questItem:growers"]);
+    expect(all.some((target) => /drone|cache|ore/u.test(target))).toBe(false);
+  });
+
+  it("mark the hub while a mining objective sends Ada to deposit there", () => {
+    const mining = context({
+      flight: { objects: [object("hub", "destination", FAR)], player: ORIGIN },
+      objective: objectiveDestination(
+        2,
+        { holodisk: false, introduced: true, questComplete: false, questItem: null, stage: 1 },
+        false,
+      ),
+      progress: { known: ["hub"], stations: NEAR_STATIONS },
+      sector: 2,
+    });
+    expect(marked(mining)).toEqual(["objective:hub"]);
+  });
+
+  it("mark a station only while it is undiscovered and within 2000 of Ada", () => {
+    const range = ECONOMY.station.indicatorRange;
+    expect(range).toBe(2000);
+    // Points across galaxy one: any station marked is the nearest undiscovered site in range.
+    for (let i = 0; i < 40; i++) {
+      const player = { x: i * 1234 - 20_000, y: i * 777 - 15_000 };
+      const sites = stationsNear(ECONOMY, 1, range, player);
+      const targets = INDICATOR_SOURCES.station({
+        ...context(),
+        flight: { objects: [], player },
+        progress: { known: [], stations: [] },
+      });
+      const [target] = targets;
+      if (sites.length === 0) {
+        expect(targets).toEqual([]);
+        continue;
+      }
+      expect(target).toBeDefined();
+      expect(Math.hypot(target!.x - player.x, target!.y - player.y)).toBeLessThanOrEqual(range);
+      expect(
+        INDICATOR_SOURCES.station({
+          ...context(),
+          flight: { objects: [], player },
+          progress: { known: [], stations: sites.map(({ id }) => id) },
+        }),
+      ).toEqual([]);
+    }
   });
 
   it("mark the nearest undiscovered station within the indicator range", () => {
