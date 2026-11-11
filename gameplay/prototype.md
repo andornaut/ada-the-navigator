@@ -260,7 +260,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   damping. Centered aim does not fire.
 - Basic fire and all upgrades have unlimited ammunition.
 - Basic is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
-  Multi-Laser and Scattershot, bought at station shops or found as rare drops; see
+  Multi-Laser, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
   automatically equip their weapon outside combat and retain other owned weapons.
 - Every weapon and the shield have three levels. Each level multiplies effective
@@ -277,6 +277,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     then 9, then 11, each level reaching a little farther. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. Dots do not apply
     damage over time.
+  - Phaser: a long beam bolt, 4 times the length of a laser bolt, that damages
+    every enemy it touches anywhere along its length, including side contact, once
+    per enemy per shot, and continues past them. It fires 3.5 times slower than
+    basic fire with much higher damage per contact; levels grow its length and
+    damage.
 - A missile's blast damages every enemy within its radius, never Ada.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve the weapon's world-speed ratio.
@@ -284,7 +289,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   own rotated heading, fades after 65% of that range and vanishes at the limit.
 - Weapon intervals, speed and damage ratios, angles, range and fade are provisional
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
-  ratios multiply base shot damage. No homing, piercing or reload is added.
+  ratios multiply base shot damage. No homing or reload is added; only the Phaser
+  passes through what it hits.
 - Top-right weapon icons select basic fire or an owned upgrade. Switching preserves
   ownership of the other upgrades. Weapons cannot be changed during combat or for 5
   seconds after it.

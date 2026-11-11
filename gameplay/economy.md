@@ -69,6 +69,7 @@ not yet designed, so the station card shows no quest board until it is.
 | Multi-Laser     | Owned weapon                                                                 | 250      |
 | Heavy Missile   | Owned weapon                                                                 | 300      |
 | Scattershot     | Owned weapon                                                                 | 350      |
+| Phaser          | Owned weapon                                                                 | 400      |
 | Weapon upgrade  | Per weapon, Basic included: levels 2 and 3, each about ×1.5 effective output | 150, 300 |
 | Shield          | Levels 2 and 3: capacity 150, then 225                                       | 150, 300 |
 | Shield recharge | Levels 2 and 3: each about ×1.5 recharge (shorter delay, faster rate)        | 150, 300 |
@@ -140,6 +141,7 @@ The shield shop row reuses the existing `shield` label. `jumpHome` replaces
 | `aboutRapidMissile` | Quick missiles with a small blast.                                 |
 | `aboutMultiLaser`   | A fan of laser bolts that grows with each level.                   |
 | `aboutScattershot`  | A shotgun spread, strongest up close.                              |
+| `aboutPhaser`       | A long beam that cuts through everything it touches.               |
 | `weaponLocked`      | Weapons can't be changed in combat.                                |
 | `jumpHome`          | Astra jumped you home to recharge. Your story progress is saved.   |
 | `jumpWeaponLost`    | Your {weapon} was lost.                                            |
