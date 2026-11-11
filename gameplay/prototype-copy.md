@@ -264,7 +264,8 @@ Sunflower:
 - Meeting the growers: Ada: "Who grows food out here?" Astra: "The growers farm
   starlight on their outpost."
 - Meeting the workshop: Astra: "The workshop can fix almost anything." Ada:
-  "Except their friendships, maybe."
+  "Maybe they can fix you
+  too, Astra!"
 - Meeting the salvagers: Ada: "What do salvagers do?" Astra: "They find lost
   things and use them again."
 - Quiet stretch: Ada: "Astra, do you ever get lonely?" Astra: "Not with a
