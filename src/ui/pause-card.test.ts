@@ -180,12 +180,12 @@ describe("Paused card", () => {
     expect(actions.className).toContain("ada-actions");
     pause.setState({
       inDanger: false,
-      job: "Chart a nebula",
+      job: "Chart the Sleepy Tug",
       map: MAP,
       objective: "Find the growers.",
       towing: false,
     });
-    expect(job.textContent).toBe("Job: Chart a nebula");
+    expect(job.textContent).toBe("Job: Chart the Sleepy Tug");
     expect(job.hidden).toBe(false);
     pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
     expect(objective.hidden).toBe(true);

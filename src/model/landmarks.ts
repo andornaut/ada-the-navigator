@@ -1,5 +1,10 @@
 import { ECONOMY } from "../data/economy.ts";
-import { LANDMARK_KINDS, LANDMARK_TUNING, type LandmarkKind } from "../data/jobs.ts";
+import {
+  LANDMARK_KINDS,
+  LANDMARK_TUNING,
+  type LandmarkKind,
+  landmarkNameKey,
+} from "../data/jobs.ts";
 import type { SectorId } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { stationsNear } from "./stations.ts";
@@ -13,6 +18,8 @@ import type { SectorProgress, Vec } from "./types.ts";
 export interface LandmarkSite extends Vec {
   readonly id: string;
   readonly kind: LandmarkKind;
+  /** The player-string key of its name (landmarkNameKey). */
+  readonly name: string;
 }
 
 /** Fixed per-galaxy seeds, so every flight places the same landmarks. */
@@ -25,8 +32,24 @@ const LANDMARK_SEEDS: Readonly<Record<SectorId, number>> = {
 const sites = new Map<SectorId, readonly LandmarkSite[]>();
 
 /**
+ * The galaxy's seeded kinds, a third of each in an order its seed shuffles. Their own stream keeps
+ * the placement's positions unchanged.
+ */
+function seededKinds(sector: SectorId): LandmarkKind[] {
+  const next = dropRandom(LANDMARK_SEEDS[sector], `landmark-kinds:${sector}`);
+  const per = LANDMARK_TUNING.count / LANDMARK_KINDS.length;
+  const kinds = LANDMARK_KINDS.flatMap((kind) => Array.from({ length: per }, () => kind));
+  for (let index = kinds.length - 1; index > 0; index--) {
+    const swap = Math.floor(next() * (index + 1));
+    [kinds[index], kinds[swap]] = [kinds[swap]!, kinds[index]!];
+  }
+  return kinds;
+}
+
+/**
  * The galaxy's landmarks in id order: within LANDMARK_TUNING.radius of the world origin, spacing
- * apart and placeClearance from its stations, kinds in turn.
+ * apart and placeClearance from its stations. The seed assigns the kinds, and each kind's names
+ * follow quests.md's table order in id order, so a landmark keeps its name on every flight.
  */
 export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
   const cached = sites.get(sector);
@@ -35,6 +58,8 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
   }
   const { count, placeClearance, radius, spacing } = LANDMARK_TUNING;
   const next = dropRandom(LANDMARK_SEEDS[sector], `landmarks:${sector}`);
+  const kinds = seededKinds(sector);
+  const named = { beacon: 0, nebula: 0, wreck: 0 };
   const placed: LandmarkSite[] = [];
   for (let attempt = 0; placed.length < count && attempt < 10000; attempt++) {
     // Uniform over the disc's area.
@@ -48,7 +73,13 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
       continue;
     }
     const index = placed.length;
-    placed.push({ ...at, id: `landmark:${sector}:${index}`, kind: LANDMARK_KINDS[index % 3]! });
+    const kind = kinds[index]!;
+    placed.push({
+      ...at,
+      id: `landmark:${sector}:${index}`,
+      kind,
+      name: landmarkNameKey(sector, kind, ++named[kind]),
+    });
   }
   sites.set(sector, placed);
   return placed;

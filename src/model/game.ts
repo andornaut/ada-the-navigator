@@ -1001,7 +1001,7 @@ export class GameModel {
       landmarks: {
         charted: galaxyLandmarks(f.sector, this.current)
           .filter(({ charted }) => charted)
-          .map(({ id, kind, x, y }) => ({ id, label: this.landmarkLabel(kind), x, y })),
+          .map(({ id, name, x, y }) => ({ id, label: this.label(name), x, y })),
         total: landmarkSites(f.sector).length,
       },
       objective: this.objectiveId(f.sector),
@@ -1235,7 +1235,9 @@ export class GameModel {
       }),
       hunt: fill(this.label("huntTitle"), { item: job.item }),
       rescue: fill(this.label("rescueTitle"), { craft: job.item }),
-      survey: fill(this.label("surveyTitle"), { landmark: job.item }),
+      survey: fill(this.label("surveyTitle"), {
+        landmark: this.label(landmarkById(this.state.selectedSector, job.target.id)?.name ?? ""),
+      }),
     };
     return { detail: this.label(`${job.type}About`), title: titles[job.type] };
   }
@@ -1406,10 +1408,6 @@ export class GameModel {
     return target && title !== null
       ? { id: target.id, label: title, x: target.x, y: target.y }
       : null;
-  }
-  /** A landmark's name on the Map. */
-  private landmarkLabel(kind: string): string {
-    return this.label(`landmark${kind[0]!.toUpperCase()}${kind.slice(1)}`);
   }
   /** Where the held job sends Ada now, for the indicator and the Map. */
   private jobTarget(f: FlightState): IndicatorTarget | null {

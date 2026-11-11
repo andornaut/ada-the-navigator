@@ -93,11 +93,23 @@ export const JOB_LORE: Readonly<Record<SectorId, readonly string[]>> = {
 export type LandmarkKind = "nebula" | "wreck" | "beacon";
 export const LANDMARK_KINDS: readonly LandmarkKind[] = ["nebula", "wreck", "beacon"];
 
+/** Galaxies one to four, Black Eye included: each names four landmarks of each kind. */
+export type LandmarkGalaxy = 1 | 2 | 3 | 4;
+export const LANDMARK_GALAXIES: readonly LandmarkGalaxy[] = [1, 2, 3, 4];
+
+/**
+ * The player-string key of a galaxy's nth landmark (1 to 4) of a kind, in quests.md's
+ * "Landmarks" table order, such as landmark1Wreck3 for Sunflower's Sleepy Tug.
+ */
+export function landmarkNameKey(galaxy: LandmarkGalaxy, kind: LandmarkKind, nth: number): string {
+  return `landmark${galaxy}${kind[0]!.toUpperCase()}${kind.slice(1)}${nth}`;
+}
+
 /** Landmark placement and charting (quests.md "Landmarks"), in world units. */
 export const LANDMARK_TUNING = {
   /** Charting range: flying this close charts a landmark at once. */
   chart: 300,
-  /** Landmarks per galaxy. */
+  /** Landmarks per galaxy, a third of each kind. */
   count: 12,
   /** Clearance from stations and story destinations. */
   placeClearance: 1500,

@@ -1,8 +1,17 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { JOB_REWARDS, JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
+import {
+  JOB_REWARDS,
+  JOB_TUNING,
+  LANDMARK_GALAXIES,
+  LANDMARK_KINDS,
+  LANDMARK_TUNING,
+  landmarkNameKey,
+} from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { ensureStation, stationDock, stepFlight, towing } from "./flight.ts";
@@ -21,6 +30,26 @@ import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
+
+const QUESTS = readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8");
+/** A Markdown table's body rows as trimmed cells, from the table after a heading or lead-in. */
+function tableRows(after: string): string[][] {
+  const from = QUESTS.indexOf(after);
+  expect(from, after).toBeGreaterThanOrEqual(0);
+  const lines = QUESTS.slice(from).split("\n");
+  const start = lines.findIndex((line) => line.startsWith("|"));
+  const table = lines
+    .slice(start)
+    .filter((_, index, all) => all.slice(0, index + 1).every((line) => line.startsWith("|")));
+  return table.slice(2).map((line) =>
+    line
+      .split("|")
+      .slice(1, -1)
+      .map((cell) => cell.trim()),
+  );
+}
+const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Black Eye"];
+const label = (key: string) => PROTOTYPE.labels[key];
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const use = { ...idle, use: true };
@@ -111,6 +140,64 @@ describe("landmarks", () => {
         }
       }
     }
+  });
+
+  it("have four of each kind per galaxy, the seed's kinds and names on every flight", () => {
+    for (const sector of [1, 2, 3] as const) {
+      const sites = landmarkSites(sector);
+      for (const kind of LANDMARK_KINDS) {
+        // Names follow the table's order within a kind, in id order.
+        expect(sites.filter((site) => site.kind === kind).map(({ name }) => name)).toEqual(
+          [1, 2, 3, 4].map((nth) => landmarkNameKey(sector, kind, nth)),
+        );
+      }
+      // The seed assigns the kinds: not the plain nebula, wreck, beacon cycle.
+      expect(sites.map(({ kind }) => kind)).not.toEqual(
+        sites.map((_, index) => LANDMARK_KINDS[index % 3]),
+      );
+    }
+    // Two flights with different seeds chart the same landmark under the same name.
+    const names = [11, 22].map((seed) => {
+      const model = new GameModel(PROTOTYPE);
+      model.startSector(1);
+      const flight = model.state.flight!;
+      flight.seed = seed;
+      const site = landmarkSites(1)[5]!;
+      model.state.progress[1].charted.push(site.id);
+      return model.map?.places.find(({ id }) => id === site.id)?.label;
+    });
+    expect(names[0]).toBe(label(landmarkSites(1)[5]!.name));
+    expect(names[1]).toBe(names[0]);
+  });
+
+  it("name all 48 landmarks, Black Eye's included, as quests.md's table does", () => {
+    const rows = tableRows("Each galaxy has four landmarks of each kind.");
+    expect(rows.map(([galaxy]) => galaxy)).toEqual(GALAXY_NAMES);
+    const named = LANDMARK_GALAXIES.flatMap((galaxy) =>
+      LANDMARK_KINDS.flatMap((kind) =>
+        [1, 2, 3, 4].map((nth) => label(landmarkNameKey(galaxy, kind, nth))),
+      ),
+    );
+    expect(named).toHaveLength(48);
+    expect(new Set(named).size).toBe(48);
+    for (const galaxy of LANDMARK_GALAXIES) {
+      const cells = rows[galaxy - 1]!.slice(1).map((cell) => cell.split(", "));
+      // Table columns: nebulae, wrecks, beacons.
+      expect(cells).toEqual(
+        LANDMARK_KINDS.map((kind) =>
+          [1, 2, 3, 4].map((nth) => label(landmarkNameKey(galaxy, kind, nth))),
+        ),
+      );
+    }
+  });
+
+  it("use quests.md's player strings", () => {
+    const rows = tableRows("### Player strings");
+    expect(rows.length).toBeGreaterThan(20);
+    for (const [key, text] of rows) {
+      expect(label(key!.replaceAll("`", "")), key).toBe(text);
+    }
+    expect(PROTOTYPE.labels.surveyTitle).toBe("Chart the {landmark}");
   });
 
   it("chart within 300 of Ada at once and only once", () => {
@@ -335,6 +422,8 @@ describe("jobs in play", () => {
     const held = take(model, "survey");
     const title = model.jobObjective!;
     const site = landmarkSites(1).find(({ id }) => id === held.target.id)!;
+    // Surveys name their landmark.
+    expect(title).toBe(`Chart the ${label(site.name)}`);
     // An uncharted landmark is not on the Map, so the target shows as the job's own spot.
     expect(model.map?.places.find(({ job }) => job)).toMatchObject({
       kind: "job",
@@ -347,7 +436,7 @@ describe("jobs in play", () => {
     flyTo(model, site);
     const charted = model.map!.places.find(({ id }) => id === site.id)!;
     expect(charted).toMatchObject({ job: false, kind: "landmark", travel: false });
-    expect(charted.label).toBe({ beacon: "Beacon", nebula: "Nebula", wreck: "Wreck" }[site.kind]);
+    expect(charted.label).toBe(label(site.name));
     expect(model.map!.places.some(({ job }) => job)).toBe(false);
     expect(model.map!.mapped).toBeGreaterThanOrEqual(before);
   });
