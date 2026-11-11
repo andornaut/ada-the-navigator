@@ -285,7 +285,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   compact strip at the top center below the safe inset, clear of the pause button
   and weapon icons.
 - One forgiving difficulty; no overall exploration timer.
-- Ordinary scenery blocks or slides the ship without damage. Attacks and marked
+- Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
+  and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe.
 
@@ -392,7 +393,10 @@ once per point of interest. Exact lines are in
 
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
-Nearby optional discoveries show a direction indicator; this does not add a map.
+Direction indicators are rare. They mark only the current objective's
+destination, a quest item or quest event, the holodisk waypoint and an
+undiscovered station within range. Ordinary enemies and optional discoveries get
+none; Penny senses those instead. This does not add a map.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
@@ -401,6 +405,9 @@ Visual effects distinguish hits, shield damage, destroyed ships, pickups and
 deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Other space objects retain monochrome placeholder graphics.
 
+Asteroids come in more sizes, including much larger ones, with irregular shapes
+and variety; some drift on their own trajectories. Background objects stay muted
+but carry a light tint of color; asteroids are play objects, not background.
 Moving inanimate obstacles have constant velocity and direction. Regions of
 traveling debris create navigation challenges along exploration and quest routes.
 They do not chase Ada or change direction to intercept her.

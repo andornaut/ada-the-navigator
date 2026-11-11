@@ -53,23 +53,46 @@ coasts for over a second when the stick is released, and swings wide on sharp
 turns. Small enemies are nimble, the interceptor is fast but carries its momentum
 through overshooting passes, and larger ships are progressively heavier.
 
+## Behaviours
+
+Enemy movement comes from a data-driven behaviour library, so each archetype
+mixes and matches behaviours and their parameters. Enemies never pace or kite:
+none holds a fixed distance or circles at a standoff band. Each one chases,
+escapes, or alternates between the two.
+
+| Behaviour   | Movement                                                                                     |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| `chase`     | Pursues Ada directly and keeps pressing in, firing as it comes.                              |
+| `hitAndRun` | Rushes in, then pulls away when hit or after a burst of fire, and comes back.                |
+| `strafe`    | Flies straight through past Ada, carried by momentum, then loops back for another pass.      |
+| `swarm`     | Chases with erratic wobble and peer separation, so a pack surrounds Ada.                     |
+| `flee`      | Runs away; triggered by morale (low hull, pack losses) and ends the encounter for that ship. |
+| `retaliate` | Ignores Ada until hit, then switches to its attack behaviour.                                |
+| `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
+| `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
+
+Finite pursuit, return home and the speed cap still apply. Galaxy one is mildly
+more aggressive than before, and later galaxies ramp difficulty quickly.
+
 ## Galaxy one roster
 
-Galaxy one enemies are four small and medium archetypes from one visual family,
-with distinct sizes, behaviours and physics. Frigates and capitals keep their
-existing route roles.
+Galaxy one is a playtest roster with a few more enemies than before.
 
-| Archetype     | Encounter | Group | Weight |  HP | Behaviour                                                                                                    |
-| ------------- | --------- | ----: | -----: | --: | ------------------------------------------------------------------------------------------------------------ |
-| `swarm`       | Pack      |   3–5 |   0.35 |   2 | Attacks on sight; erratic circling (orbit 0.9, wobble 0.65, separation 85). Packs retreat after losses.      |
-| `fighter`     | Solo/pair |   1–2 |   0.35 |   4 | Attacks on sight; loose orbit (0.4) at its engagement band. A pair shares pack morale.                       |
-| `interceptor` | Solo      |     1 |   0.15 |   3 | Attacks on sight; no orbit, engagement band 260, so its momentum carries it past Ada in repeated passes.     |
-| `retaliator`  | Solo      |     1 |   0.15 |   8 | Ignores Ada until hit; slow loose orbit (0.2); fires a three-bolt spread (angles −0.2, 0, 0.2; every 2.2 s). |
+| Archetype      | Encounter | Group | Weight |  HP | Behaviours                                             |
+| -------------- | --------- | ----: | -----: | --: | ------------------------------------------------------ |
+| `swarm`        | Pack      |   4–6 |   0.35 |   2 | `swarm`; packs `flee` after losses                     |
+| `fighter`      | Solo/pair |   1–3 |   0.30 |   4 | `hitAndRun`; a pair shares pack morale                 |
+| `interceptor`  | Solo      |     1 |   0.15 |   3 | `strafe`                                               |
+| `retaliator`   | Solo      |     1 |   0.10 |   8 | `retaliate`, then `chase`; three-bolt spread           |
+| `frigate`      | Solo      |     1 |   0.07 |  10 | `siege`; size 4 Ada widths                             |
+| Capital battle | Group     |     1 |   0.03 |   – | A capital with many hardpoints and 4 `escort` fighters |
 
-Weights choose each galaxy-one encounter's archetype; the group size range replaces
-the shared range for that archetype. Values not listed keep the current catalog
-values. Other galaxies keep the current shared encounter table until they are
-themed.
+Weights choose each galaxy-one encounter; the group size range replaces the
+shared range for that archetype. Galaxy one enemies notice Ada from 20% farther
+away and fire 15% more often than the base catalog. Encounters come about 20%
+more often. Values not listed keep the current catalog values. Other galaxies
+keep the current shared encounter table until they are themed. All values are
+provisional playtest tuning.
 
 ## Presentation
 

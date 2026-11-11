@@ -62,7 +62,7 @@ fractions of hull width in the hull's local frame. Hulls rotate to face their
 movement, and hardpoint collision and muzzle offsets rotate with them.
 
 Sight aggression latches on visible perception. Retaliators remain idle until hit.
-Engaged craft approach their engagement band, orbit if configured, and separate from
+Engaged craft move by their behaviours ([Ships](ships.md#behaviours)) and separate from
 peers. Sinusoidal phase makes swarm movement erratic without query-dependent RNG.
 Flee direction is away from the observed or last-seen player position. Safe-zone collision policy
 must still reject unsafe movement. There is no pathfinder or reachability oracle.
