@@ -394,7 +394,8 @@ Black Eye:
   destinations mapped yet.
 - Map tools, accessible labels: Center on Ada; Zoom in; Zoom out.
 - Map place panel: under the place's name, a line naming its kind: Station,
-  Outpost, Story place (other story destinations), Holodisk, Nebula, Wreck or
+  Outpost, Story place (other story destinations, such as the whale and its family;
+  the mining hub is a Station), Holodisk, Nebula, Wreck or
   Beacon, then " · " and the distance from Ada. When the place is the held
   job's target, the job's "Job: {objective}" line follows. The holodisk
   waypoint's name is Lost holodisk. A job's own spot, such as a search area,
