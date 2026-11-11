@@ -4,8 +4,9 @@ import { stationById, stationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
 
 // The pause menu's Map (gameplay/rules.md "Pause"): the current galaxy with Ada's position, the
-// discovered destinations and stations, charted landmarks and the current objective's destination
-// once mapped, and how much of the galaxy is mapped. Undiscovered places never appear.
+// discovered destinations and stations, charted landmarks, the current objective's destination
+// once mapped and the held station job's target (gameplay/quests.md), and how much of the galaxy
+// is mapped. Undiscovered places never appear.
 
 /**
  * The charted area: a circle of this many world units around the galaxy's origin, which holds its
@@ -33,11 +34,16 @@ export interface LandmarkChart {
 /** No landmarks yet: the slot the landmark model fills. */
 export const NO_LANDMARKS: LandmarkChart = { charted: [], total: 0 };
 
-export type MapPlaceKind = "destination" | "landmark" | "station";
+export type MapPlaceKind = "destination" | "job" | "landmark" | "station";
 
-/** A place the map shows. Destinations and stations offer Travel here; landmarks do not. */
+/**
+ * A place the map shows. Destinations and stations offer Travel here; landmarks and a job's own
+ * spot do not.
+ */
 export interface MapPlace {
   readonly id: string;
+  /** Whether it is the held job's target. */
+  readonly job: boolean;
   readonly kind: MapPlaceKind;
   readonly label: string;
   /** Whether it is the current objective's destination. */
@@ -59,6 +65,11 @@ export interface MapContext {
   /** The galaxy's story destinations, every one of which counts toward the percent. */
   readonly destinations: readonly string[];
   readonly flight: Pick<FlightState, "objects" | "player" | "sector">;
+  /**
+   * The held job's target, with the job's title: it marks the place there, or shows as its own
+   * spot when no shown place is there. It never counts toward the percent.
+   */
+  readonly job: (Vec & { readonly id: string; readonly label: string }) | null;
   /** Each discovered destination's and station's label, by id. */
   readonly label: (id: string, kind: "destination" | "station") => string;
   readonly landmarks: LandmarkChart;
@@ -80,6 +91,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
       ? [
           {
             id,
+            job: false,
             kind: "destination",
             label: context.label(id, "destination"),
             objective: id === objective,
@@ -96,6 +108,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
       ? [
           {
             id,
+            job: false,
             kind: "station",
             label: context.label(id, "station"),
             objective: false,
@@ -108,6 +121,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
   });
   const charted: MapPlace[] = landmarks.charted.map((landmark) => ({
     ...landmark,
+    job: false,
     kind: "landmark",
     objective: false,
     travel: false,
@@ -120,9 +134,27 @@ export function galaxyMap(context: MapContext): GalaxyMap {
     context.destinations.length +
     stationsNear(catalog, sector, CHARTING_RADIUS, ORIGIN).length +
     landmarks.total;
+  const places = [...destinations, ...stations, ...charted];
+  const { job } = context;
+  const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));
+  const spot: MapPlace[] =
+    job && !places.some((entry) => entry.id === job.id)
+      ? [
+          {
+            id: job.id,
+            job: true,
+            kind: "job",
+            label: job.label,
+            objective: false,
+            travel: false,
+            x: job.x,
+            y: job.y,
+          },
+        ]
+      : [];
   return {
     mapped: total > 0 ? Math.floor((100 * Math.min(found, total)) / total) : 0,
-    places: [...destinations, ...stations, ...charted],
+    places: [...marked, ...spot],
     player: { x: flight.player.x, y: flight.player.y },
   };
 }

@@ -45,12 +45,17 @@ const IN_FLIGHT = passage("## In-flight conversations", " Black Eye: - First arr
 const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("General's broadcasts", "Outposts handing over");
 
-// The data's lines as the copy names their speakers, with any mood.
-const DATA_LINES = CONVERSATIONS.flatMap(({ lines }) =>
-  lines.map(({ mood, speaker, text }) =>
-    mood ? { mood, name: SPEAKERS[speaker].name, text } : { name: SPEAKERS[speaker].name, text },
-  ),
-);
+// Conversations' lines as the documents name their speakers, with any mood.
+const spoken = (conversations: typeof CONVERSATIONS) =>
+  conversations.flatMap(({ lines }) =>
+    lines.map(({ mood, speaker, text }) =>
+      mood ? { mood, name: SPEAKERS[speaker].name, text } : { name: SPEAKERS[speaker].name, text },
+    ),
+  );
+// Job lines are the quests document's; every other line is the player copy's.
+const isJob = ({ trigger }: (typeof CONVERSATIONS)[number]) =>
+  trigger.kind === "job" || trigger.kind === "jobLore";
+const DATA_LINES = spoken(CONVERSATIONS.filter((conversation) => !isJob(conversation)));
 
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
@@ -78,6 +83,14 @@ describe("in-flight conversations", () => {
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
     expect(copied).toHaveLength(DATA_LINES.length);
+  });
+
+  it("speak the quests document's in-flight job lines with their moods", () => {
+    const start = QUESTS.indexOf("In-flight lines");
+    const copied = spokenLines(QUESTS.slice(start, QUESTS.indexOf(" ## ", start)));
+    const jobs = spoken(CONVERSATIONS.filter(({ trigger }) => trigger.kind === "job"));
+    expect(jobs).toEqual(copied);
+    expect(jobs).toContainEqual({ mood: "happy", name: "Ada", text: "Hold on, we've got you!" });
   });
 
   it("leave out Black Eye's pool, which has no flight to play in", () => {

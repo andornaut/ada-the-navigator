@@ -563,6 +563,7 @@ export class PrototypeScene extends Phaser.Scene {
         buttonLabel: PROTOTYPE.labels.pause ?? "",
         labels: {
           close: PROTOTYPE.labels.close ?? "",
+          jobObjective: PROTOTYPE.labels.jobObjective ?? "",
           map: PROTOTYPE.labels.map ?? "",
           mapPercent: PROTOTYPE.labels.mapPercent ?? "",
           resume: PROTOTYPE.labels.resume ?? "",
@@ -1091,7 +1092,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.controls.setSettingsButton(state.mode !== "space");
     this.controls.setPause({
       inDanger: this.model.inDanger,
+      job: this.model.jobObjective,
       map: this.model.map,
+      objective: this.model.objective,
       towing: this.model.towing,
     });
     this.shell.render(state, screen);

@@ -63,6 +63,7 @@ class FakeElement {
 
 const LABELS: PauseLabels = {
   close: "Close",
+  jobObjective: "Job: {objective}",
   map: "Map",
   mapPercent: "{percent}% mapped",
   resume: "Resume",
@@ -115,6 +116,7 @@ const MAP: GalaxyMap = {
   places: [
     {
       id: "workshop",
+      job: false,
       kind: "destination",
       label: "Workshop",
       objective: true,
@@ -124,6 +126,7 @@ const MAP: GalaxyMap = {
     },
     {
       id: "station:0,0",
+      job: false,
       kind: "station",
       label: "Station",
       objective: false,
@@ -148,10 +151,49 @@ function cards(onTravel = vi.fn()) {
   return { body: mapBody(root), pause };
 }
 
+describe("Paused card", () => {
+  it("shows the story objective above the buttons, and the Job line only while a job is held", () => {
+    const root = new FakeElement();
+    const pause = createPauseCards(root as unknown as HTMLElement, {
+      labels: LABELS,
+      onOpenChange: vi.fn(),
+      onReturnHome: vi.fn(),
+      onSettings: vi.fn(),
+      onTravel: vi.fn(),
+      reducedMotion: () => true,
+    });
+    const body = root.children[0]!.children[0]!.children[0]!.children[1]!;
+    const [objective, job, actions] = body.children as [FakeElement, FakeElement, FakeElement];
+    pause.setState({
+      inDanger: false,
+      job: null,
+      map: MAP,
+      objective: "Find the growers.",
+      towing: false,
+    });
+    expect(objective.textContent).toBe("Find the growers.");
+    expect(objective.hidden).toBe(false);
+    expect(job.hidden).toBe(true);
+    expect(actions.className).toContain("ada-actions");
+    pause.setState({
+      inDanger: false,
+      job: "Chart a nebula",
+      map: MAP,
+      objective: "Find the growers.",
+      towing: false,
+    });
+    expect(job.textContent).toBe("Job: Chart a nebula");
+    expect(job.hidden).toBe(false);
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
+    expect(objective.hidden).toBe(true);
+    expect(job.hidden).toBe(true);
+  });
+});
+
 describe("Map card", () => {
   it("shows the percent mapped and one marker per discovered place, Ada's first", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: MAP, towing: false });
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
     expect(body.percent.textContent).toBe("25% mapped");
     expect(body.markers().map((marker) => marker.dataset.place)).toEqual([
       "workshop",
@@ -164,7 +206,13 @@ describe("Map card", () => {
 
   it("says nothing is mapped yet with no places, and offers no Travel here", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: { ...MAP, mapped: 0, places: [] }, towing: false });
+    pause.setState({
+      inDanger: false,
+      job: null,
+      map: { ...MAP, mapped: 0, places: [] },
+      objective: "",
+      towing: false,
+    });
     expect(body.markers()).toEqual([]);
     expect(body.empty.hidden).toBe(false);
     expect(body.travelGroup.hidden).toBe(true);
@@ -172,10 +220,16 @@ describe("Map card", () => {
 
   it("keeps marker nodes across repeated identical states", () => {
     const { body, pause } = cards();
-    pause.setState({ inDanger: false, map: MAP, towing: false });
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
     const first = body.markers();
     for (let frame = 0; frame < 5; frame++) {
-      pause.setState({ inDanger: false, map: structuredClone(MAP), towing: false });
+      pause.setState({
+        inDanger: false,
+        job: null,
+        map: structuredClone(MAP),
+        objective: "",
+        towing: false,
+      });
     }
     expect(body.markers().every((marker, index) => marker === first[index])).toBe(true);
   });
@@ -183,7 +237,7 @@ describe("Map card", () => {
   it("offers Travel here for a chosen place, and travels there", () => {
     const onTravel = vi.fn();
     const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: false, map: MAP, towing: false });
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
     expect(body.travelGroup.hidden).toBe(true);
     body.markers()[1]!.click();
     expect(body.name.textContent).toBe("Station");
@@ -196,7 +250,7 @@ describe("Map card", () => {
   it("keeps Travel here visible but refused in danger, with the danger note", () => {
     const onTravel = vi.fn();
     const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: true, map: MAP, towing: false });
+    pause.setState({ inDanger: true, job: null, map: MAP, objective: "", towing: false });
     body.markers()[0]!.click();
     expect(body.travelGroup.hidden).toBe(false);
     expect(body.travel.getAttribute("aria-disabled")).toBe("true");
@@ -208,7 +262,7 @@ describe("Map card", () => {
   it("keeps Travel here visible but refused while towing, with the towing note", () => {
     const onTravel = vi.fn();
     const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: false, map: MAP, towing: true });
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: true });
     body.markers()[1]!.click();
     expect(body.travel.getAttribute("aria-disabled")).toBe("true");
     expect(body.towNote.textContent).toBe(LABELS.towTravel);
@@ -216,7 +270,7 @@ describe("Map card", () => {
     expect(body.danger.hidden).toBe(true);
     body.travel.click();
     expect(onTravel).not.toHaveBeenCalled();
-    pause.setState({ inDanger: false, map: MAP, towing: false });
+    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
     expect(body.travel.getAttribute("aria-disabled")).toBeNull();
     expect(body.towNote.hidden).toBe(true);
   });
@@ -225,6 +279,7 @@ describe("Map card", () => {
     const { body, pause } = cards();
     const landmark = {
       id: "comet",
+      job: false,
       kind: "landmark" as const,
       label: "Comet",
       objective: false,
@@ -232,7 +287,13 @@ describe("Map card", () => {
       x: 9000,
       y: 9000,
     };
-    pause.setState({ inDanger: false, map: { ...MAP, places: [landmark] }, towing: false });
+    pause.setState({
+      inDanger: false,
+      job: null,
+      map: { ...MAP, places: [landmark] },
+      objective: "",
+      towing: false,
+    });
     body.markers()[0]!.click();
     expect(body.name.textContent).toBe("Comet");
     expect(body.travelGroup.hidden).toBe(true);

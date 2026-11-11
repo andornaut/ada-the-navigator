@@ -326,6 +326,47 @@ describe("jobs in play", () => {
     expect(listen(model, held.target, 60)).toContain("jobLore:1:0");
   });
 
+  it("mark the job's target on the Map and show charted landmarks there by name", () => {
+    const { model } = docked();
+    const held = take(model, "survey");
+    const title = model.jobObjective!;
+    const site = landmarkSites(1).find(({ id }) => id === held.target.id)!;
+    // An uncharted landmark is not on the Map, so the target shows as the job's own spot.
+    expect(model.map?.places.find(({ job }) => job)).toMatchObject({
+      kind: "job",
+      label: title,
+      travel: false,
+      x: site.x,
+      y: site.y,
+    });
+    const before = model.map!.mapped;
+    flyTo(model, site);
+    const charted = model.map!.places.find(({ id }) => id === site.id)!;
+    expect(charted).toMatchObject({ job: false, kind: "landmark", travel: false });
+    expect(charted.label).toBe({ beacon: "Beacon", nebula: "Nebula", wreck: "Wreck" }[site.kind]);
+    expect(model.map!.places.some(({ job }) => job)).toBe(false);
+    expect(model.map!.mapped).toBeGreaterThanOrEqual(before);
+  });
+
+  it("mark a delivery's station on the Map once known, and show the Job line's objective", () => {
+    const { model, station } = docked();
+    model.state.progress[1].stations.push(station.id);
+    model.state.tasks[1] = {
+      carrying: false,
+      id: "job:map",
+      item: "seeds",
+      kind: "job",
+      reward: 15,
+      station: station.id,
+      target: { id: "growers", x: 0, y: 0 },
+      type: "delivery",
+    };
+    model.undock();
+    // Without the item, Ada goes back to the issuing station, which the Map marks.
+    expect(model.map?.places.find(({ id }) => id === station.id)?.job).toBe(true);
+    expect(model.jobObjective).toBe("Deliver seeds to Grower");
+  });
+
   it("tow a rescue: Tow within 120, Travel refused, the tow saved and returned on Return home", () => {
     const { model, station } = docked();
     model.state.progress[1].stations.push(station.id);

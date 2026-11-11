@@ -47,8 +47,14 @@ import {
   pullTow,
   stationBoard,
 } from "./jobs.ts";
-import { chartLandmarks, galaxyLandmarks, landmarkById, unchartedNear } from "./landmarks.ts";
-import { type GalaxyMap, galaxyMap, NO_LANDMARKS } from "./map.ts";
+import {
+  chartLandmarks,
+  galaxyLandmarks,
+  landmarkById,
+  landmarkSites,
+  unchartedNear,
+} from "./landmarks.ts";
+import { type GalaxyMap, galaxyMap } from "./map.ts";
 import {
   donate,
   type DonationRequest,
@@ -937,8 +943,8 @@ export class GameModel {
     });
   }
   /**
-   * The pause menu's Map of the current galaxy (map.ts), or null outside a flight. Landmarks join
-   * through NO_LANDMARKS's slot once the landmark model charts them.
+   * The pause menu's Map of the current galaxy (map.ts), or null outside a flight: with its
+   * charted landmarks (landmarks.ts) and the held job's target.
    */
   get map(): GalaxyMap | null {
     const f = this.state.flight;
@@ -950,8 +956,14 @@ export class GameModel {
       catalog: ECONOMY,
       destinations: galaxyRoute(f.sector),
       flight: f,
+      job: this.jobMapTarget(f),
       label: (id) => labels.get(id) ?? id,
-      landmarks: NO_LANDMARKS,
+      landmarks: {
+        charted: galaxyLandmarks(f.sector, this.current)
+          .filter(({ charted }) => charted)
+          .map(({ id, kind, x, y }) => ({ id, label: this.landmarkLabel(kind), x, y })),
+        total: landmarkSites(f.sector).length,
+      },
       objective: this.objectiveId(f.sector),
       progress: this.current,
     });
@@ -1165,11 +1177,14 @@ export class GameModel {
   private jobStation(job: HeldJob): StationSite | null {
     return stationById(ECONOMY, this.state.selectedSector, job.station);
   }
-  /** A place's name in job titles: its travel list label. */
+  /** A place's name in job titles: its Map name. */
   private placeLabel(id: string): string {
-    return id.startsWith("station:")
-      ? this.label("station")
-      : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name);
+    return (
+      this.destinations().find((place) => place.id === id)?.label ??
+      (id.startsWith("station:")
+        ? this.label("station")
+        : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name))
+    );
   }
   /** A job's title and one line of detail (gameplay/quests.md "Player strings"). */
   jobText(job: JobOffer): { readonly detail: string; readonly title: string } {
@@ -1337,6 +1352,27 @@ export class GameModel {
    */
   private jobIndicator(f: FlightState): IndicatorTarget | null {
     const held = this.held;
+    const target = this.jobTarget(f);
+    // A hunt's indicator hides while Ada is inside its search area.
+    return held?.type === "hunt" && distance(held.target, f.player) <= JOB_TUNING.hunt.radius
+      ? null
+      : target;
+  }
+  /** The held job's target on the Map, named by the job's title. */
+  private jobMapTarget(f: FlightState): (JobTarget & { readonly label: string }) | null {
+    const target = this.jobTarget(f);
+    const title = this.jobObjective;
+    return target && title !== null
+      ? { id: target.id, label: title, x: target.x, y: target.y }
+      : null;
+  }
+  /** A landmark's name on the Map. */
+  private landmarkLabel(kind: string): string {
+    return this.label(`landmark${kind[0]!.toUpperCase()}${kind.slice(1)}`);
+  }
+  /** Where the held job sends Ada now, for the indicator and the Map. */
+  private jobTarget(f: FlightState): IndicatorTarget | null {
+    const held = this.held;
     if (!held) {
       return null;
     }
@@ -1364,7 +1400,7 @@ export class GameModel {
         : held.target;
       return place ? mark(place) : null;
     }
-    return distance(held.target, f.player) > JOB_TUNING.hunt.radius ? mark(held.target) : null;
+    return mark(held.target);
   }
   /** Landmarks and the held job's craft, search area and glint, for the scene. */
   get jobScenery(): JobScenery {

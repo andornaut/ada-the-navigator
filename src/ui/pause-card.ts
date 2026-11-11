@@ -7,6 +7,8 @@ import { refuse } from "./refusal.ts";
 
 export interface PauseLabels {
   readonly close: string;
+  /** "Job: {objective}". */
+  readonly jobObjective: string;
   readonly map: string;
   /** "{percent}% mapped". */
   readonly mapPercent: string;
@@ -33,8 +35,12 @@ export interface PauseOptions {
 
 export interface PauseState {
   readonly inDanger: boolean;
+  /** The held station job's objective, or null without one. */
+  readonly job: string | null;
   /** The current galaxy's map, or null outside a flight. */
   readonly map: GalaxyMap | null;
+  /** The current story objective, or empty. */
+  readonly objective: string;
   /** A rescue's tow line is attached: Travel here refuses. */
   readonly towing: boolean;
 }
@@ -99,7 +105,14 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   }
   const danger = note(labels.travelUnavailable);
   danger.hidden = true;
-  paused.body.append(actions, danger);
+  // Above the buttons: the story objective, then the held job's.
+  const objective = note("");
+  objective.classList.add("ada-pause-objective");
+  objective.dataset.inkTop = "0";
+  const job = note("");
+  job.classList.add("ada-pause-job");
+  job.dataset.inkTop = "0";
+  paused.body.append(objective, job, actions, danger);
   // The Map card: the percent mapped, the chart, then the chosen place and Travel here.
   const mapCard = createCard({
     closeAction: "close-map",
@@ -130,7 +143,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   modal.append(paused.frame, mapCard.frame);
   root.append(modal, style);
   let open = false;
-  let state: PauseState = { inDanger: false, map: null, towing: false };
+  let state: PauseState = { inDanger: false, job: null, map: null, objective: "", towing: false };
   // Travel here refuses in danger and while towing.
   const travelRefused = () => state.inDanger || state.towing;
   const mapOpen = () => open && !mapCard.frame.hidden;
@@ -164,11 +177,23 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     const map = state.map ?? NO_MAP;
     const place = selected && map.places.find(({ id }) => id === selected!.id);
     selected = place ?? null;
-    const signature = JSON.stringify([map, selected?.id ?? null, state.inDanger, state.towing]);
+    const signature = JSON.stringify([
+      map,
+      selected?.id ?? null,
+      state.inDanger,
+      state.towing,
+      state.objective,
+      state.job,
+    ]);
     if (signature === shown) {
       return;
     }
     shown = signature;
+    objective.textContent = state.objective;
+    objective.hidden = state.objective === "";
+    job.textContent =
+      state.job === null ? "" : labels.jobObjective.replace("{objective}", state.job);
+    job.hidden = state.job === null;
     for (const { available, id } of pauseActions(state.inDanger)) {
       setAvailable(buttons.get(id)!, available);
     }

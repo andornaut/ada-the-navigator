@@ -11,6 +11,7 @@ import { TEXT_TOKENS } from "./modal.ts";
 // designs the map card.
 const FACE = {
   ada: "#4f9fe0",
+  job: "#feae34",
   objective: TEXT_TOKENS.title,
   place: TEXT_TOKENS.label,
   ring: TEXT_TOKENS.title,
@@ -75,6 +76,14 @@ export const MAP_STYLE = `
 .ada-controls .ada-card .ada-map-chart .ada-map-place[data-objective]::before{
   background:${FACE.objective}
 }
+/* The held job's target: its own colour, and a diamond where it is a spot of its own. */
+.ada-controls .ada-card .ada-map-chart .ada-map-place[data-job]::before{
+  background:${FACE.job}
+}
+.ada-controls .ada-card .ada-map-chart .ada-map-place[data-kind="job"]::before{
+  border-radius:0;
+  transform:translate(-50%, -50%) rotate(45deg)
+}
 .ada-controls .ada-card .ada-map-chart .ada-map-place[aria-pressed="true"]::before,
 .ada-controls .ada-card .ada-map-chart .ada-map-place:focus-visible::before{
   outline:${units(MAP_CARD.marker.ring)} solid ${FACE.ring};
@@ -133,6 +142,7 @@ export function createMapChart(onSelect: (place: MapPlace) => void) {
         button.dataset.place = entry.id;
         button.dataset.kind = entry.kind;
         button.toggleAttribute("data-objective", entry.objective);
+        button.toggleAttribute("data-job", entry.job);
         button.setAttribute("aria-label", entry.label);
         button.setAttribute("aria-pressed", String(entry.id === selected));
         place(button, points[index + 1]!);

@@ -34,11 +34,13 @@ function context(
   progress: MapContext["progress"],
   landmarks: LandmarkChart = NO_LANDMARKS,
   objective: string | null = null,
+  job: MapContext["job"] = null,
 ): MapContext {
   return {
     catalog: ECONOMY,
     destinations: galaxyRoute(1),
     flight: model.state.flight!,
+    job,
     label: (id, kind) => `${kind}:${id}`,
     landmarks,
     objective,
@@ -73,6 +75,7 @@ describe("galaxy map", () => {
     expect(map.places).toEqual([
       {
         id: "growers",
+        job: false,
         kind: "destination",
         label: "destination:growers",
         objective: true,
@@ -125,6 +128,7 @@ describe("galaxy map", () => {
     expect(map.places).toEqual([
       {
         id: "comet",
+        job: false,
         kind: "landmark",
         label: "Comet",
         objective: false,
@@ -134,6 +138,41 @@ describe("galaxy map", () => {
       },
     ]);
     expect(map.mapped).toBe(Math.floor(100 / (galaxyRoute(1).length + inside.length + 2)));
+  });
+
+  it("marks the held job's target: a shown place, or its own spot that counts for nothing", () => {
+    const model = flying();
+    const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
+    const onPlace = galaxyMap(
+      context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
+        id: "growers",
+        label: "Deliver seeds to Grower",
+        x: growers.x,
+        y: growers.y,
+      }),
+    );
+    expect(onPlace.places.map(({ id, job, kind }) => [id, job, kind])).toEqual([
+      ["growers", true, "destination"],
+    ]);
+    const spot = galaxyMap(
+      context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
+        id: "job:7",
+        label: "Find a lost toolbox",
+        x: 5000,
+        y: 0,
+      }),
+    );
+    expect(spot.places.at(-1)).toEqual({
+      id: "job:7",
+      job: true,
+      kind: "job",
+      label: "Find a lost toolbox",
+      objective: false,
+      travel: false,
+      x: 5000,
+      y: 0,
+    });
+    expect(spot.mapped).toBe(onPlace.mapped);
   });
 
   it("is the model's Map in flight, labelled as the destinations list, and absent at home", () => {

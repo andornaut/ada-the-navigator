@@ -342,7 +342,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     id: "job:towAttached",
     lines: [
       line("astra", "Tow line attached. We'll be slow and heavy."),
-      line("ada", "Hold on, we've got you!"),
+      happy("ada", "Hold on, we've got you!"),
     ],
     priority: "lore",
     repeat: "never",
