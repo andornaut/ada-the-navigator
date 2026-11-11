@@ -522,7 +522,6 @@ export const PROTOTYPE: PrototypeContent = {
       pickupRadius: 10,
       pickupReach: 14,
       pieceRadius: 7,
-      piecesPerRock: 3,
       playerShotDamage: 1,
       projectileLifetime: 2,
       projectileSpeedFactor: 3,
@@ -546,8 +545,14 @@ export const PROTOTYPE: PrototypeContent = {
     shieldRechargeDelay: 3,
     shieldRechargeRate: 18,
     speedCurveExponent: 2.5,
-    // A ring 76 from the whale's centre clears Art's 48 footprint plus each rock's 24.
-    whaleDebris: { count: 3, hp: 3, radius: 24, spacing: 76 },
+    // Small stone rocks from the asteroid set; a ring 76 from the whale's centre clears
+    // Art's 48 footprint plus the largest of their footprints (17.2).
+    whaleDebris: {
+      asteroids: ["asteroid-s2", "asteroid-s4", "asteroid-s1"],
+      count: 3,
+      hp: 3,
+      spacing: 76,
+    },
   },
   update: { accept: "Update now", cancel: "Cancel", title: "Update available" },
 };

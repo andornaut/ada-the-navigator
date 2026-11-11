@@ -107,7 +107,12 @@ describe("stateless chunk plans", () => {
   });
 
   it("drops scenery that cannot fit clearances instead of sealing a passage", () => {
-    const constrained = { ...options, rockRadius: options.size / 2 };
+    // Resource rocks take their class radius, so only plain rocks read the wide rockRadius.
+    const constrained = {
+      ...options,
+      rockRadius: options.size / 2,
+      spawnWeights: { ...options.spawnWeights, resource: 0 },
+    };
     const plan = planChunk(catalogFor("passage"), constrained);
     expect(plan.placements).toEqual([]);
     expect(plan.ports.east.halfWidth).toBe(options.shipRadius + options.clearance);

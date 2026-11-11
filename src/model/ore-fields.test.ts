@@ -4,6 +4,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemy-ai.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { type OreField, oreFieldInCell, oreFieldsNear } from "./ore-fields.ts";
@@ -48,6 +49,20 @@ describe("ore fields", () => {
     expect(new Set(fields.map((field) => field.rocks.length)).size).toBeGreaterThan(3);
   });
 
+  it("makes every third rock of a field large from a seeded start", () => {
+    const starts = new Set<number>();
+    for (const field of fields) {
+      const large = field.rocks.flatMap((rock, index) =>
+        rock.resource === "large" ? [index] : [],
+      );
+      expect(large.length).toBeGreaterThanOrEqual(Math.floor(field.rocks.length / 3));
+      expect(large.length).toBeLessThanOrEqual(Math.ceil(field.rocks.length / 3));
+      expect(large.every((index) => index % 3 === large[0]! % 3)).toBe(true);
+      starts.add(large[0]! % 3);
+    }
+    expect(starts.size).toBe(3);
+  });
+
   it("guards at most half of the fields, each guard at its field's edge", () => {
     const guarded = fields.filter((field) => field.guard);
     expect(guarded.length).toBeGreaterThan(fields.length * 0.3);
@@ -73,6 +88,11 @@ describe("ore fields", () => {
     const rocks = flight.objects.filter((object) => object.id.startsWith(`${field.id}:`));
     expect(rocks.length).toBeGreaterThan(0);
     expect(rocks.every((rock) => rock.kind === "resource")).toBe(true);
+    for (const rock of rocks) {
+      const resource = field.rocks[Number(rock.id.split(":").at(-1))]!.resource;
+      const { hp, radius } = RESOURCE_ROCKS.classes[resource];
+      expect(rock).toMatchObject({ hp, radius, resource });
+    }
     const platform = flight.objects.find((object) => object.id === `platform:${field.id}`)!;
     expect(platform.enemy?.archetype).toBe("platform");
     expect(platform.enemy?.facing).toEqual(field.guard!.facing);

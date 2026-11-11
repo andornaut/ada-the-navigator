@@ -106,14 +106,13 @@ export interface PrototypeContent {
     encounterFreshDistance: number;
     safeRadius: number;
     dangerReleaseSeconds: number;
-    whaleDebris: { count: number; radius: number; hp: number; spacing: number };
+    whaleDebris: { asteroids: string[]; count: number; hp: number; spacing: number };
     flight: {
       objectsPerChunk: number;
       spawnWeights: { resource: number; rock: number; enemy: number; pickup: number };
       rockHp: number;
       enemyHp: number;
       playerShotDamage: number;
-      piecesPerRock: number;
       pursuitSpeedFactor: number;
       damageInterval: number;
       enemyFireInterval: number;

@@ -13,6 +13,7 @@ import {
 import { CURRENTS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
+import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
@@ -428,13 +429,21 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       for (const placement of plan.placements) {
         const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
         const object: SpaceObject = {
-          hp: placement.kind === "pickup" ? 1 : shape ? field.hp[shape.size] : tuning.rockHp,
+          hp:
+            placement.kind === "pickup"
+              ? 1
+              : shape
+                ? field.hp[shape.size]
+                : placement.resource
+                  ? RESOURCE_ROCKS.classes[placement.resource].hp
+                  : tuning.rockHp,
           id: placement.id,
           kind: placement.kind,
           radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
           x: placement.x,
           y: placement.y,
           ...(shape ? { asteroid: shape.id } : {}),
+          ...(placement.resource ? { resource: placement.resource } : {}),
         };
         // A drifting asteroid's place on its seeded path follows flight time, so paging and
         // saves resume it where it would be.
@@ -485,7 +494,6 @@ function placeOreFields(
 ): void {
   const size = content.tuning.chunkSize;
   const centre = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-  const tuning = content.tuning.flight;
   for (const field of oreFieldsNear(flight.sector, size, centre)) {
     if (Math.floor(field.x / size) !== x || Math.floor(field.y / size) !== y) {
       continue;
@@ -504,10 +512,10 @@ function placeOreFields(
     field.rocks.forEach((rock, index) => {
       const object: SpaceObject = {
         ...rock,
-        hp: tuning.rockHp,
+        hp: RESOURCE_ROCKS.classes[rock.resource].hp,
         id: `${field.id}:${index}`,
         kind: "resource",
-        radius: tuning.rockRadius,
+        radius: RESOURCE_ROCKS.classes[rock.resource].radius,
         role: "discovery",
       };
       if (
@@ -1752,16 +1760,16 @@ function hit(
     destroyEnemy(object, flight);
     events.push({ type: "enemyDisabled" });
   }
+  if (object.asteroid) {
+    events.push({
+      asteroid: object.asteroid,
+      id: object.id,
+      type: "asteroidDestroyed",
+      x: object.x,
+      y: object.y,
+    });
+  }
   if (object.kind === "rock") {
-    if (object.asteroid) {
-      events.push({
-        asteroid: object.asteroid,
-        id: object.id,
-        type: "asteroidDestroyed",
-        x: object.x,
-        y: object.y,
-      });
-    }
     const next = dropRandom(flight.seed, object.id);
     const stardust = rollAsteroidStardust(ECONOMY, asteroidSize(object), next);
     // The pickups are collectable at once; they draw from Art's release time (art/asteroids.md).
@@ -1772,14 +1780,15 @@ function hit(
     events.push({ id: object.id, type: "debrisCleared" });
   }
   if (object.kind === "resource") {
-    for (let p = 0; p < content.tuning.flight.piecesPerRock; p++) {
+    const { pieces } = resourceRock(object);
+    for (let p = 0; p < pieces; p++) {
       flight.objects.push({
         hp: 1,
         id: `piece:${flight.nextId++}`,
         kind: "pickup",
         radius: content.tuning.flight.pieceRadius,
         role: "cargo",
-        x: object.x + (p - 1) * 12,
+        x: object.x + (p - (pieces - 1) / 2) * 12,
         y: object.y,
       });
     }

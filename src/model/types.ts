@@ -1,6 +1,8 @@
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
 import type { JobType } from "../data/jobs.ts";
+import type { ResourceClass } from "../data/resource-rocks.ts";
+import type { StorySceneId } from "../data/story-ships.ts";
 import type { SectorId, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemy-ai.ts";
@@ -55,6 +57,8 @@ export interface SpaceObject extends Vec {
   orbit?: Vec & { phase: number; radius: number; rate: number };
   /** A debris river rock's current, its arc position at flight time 0 and offset across. */
   river?: { arc: number; current: string; offset: number };
+  /** A resource rock's class; a rock saved without one is medium. */
+  resource?: ResourceClass;
   radius: number;
   hp: number;
   role?: string;
@@ -101,6 +105,8 @@ export interface FlightState {
   sector: SectorId;
   seed: number;
   time: number;
+  /** Cartwheel's story ship scene started this flight, if any. */
+  storyScene?: { at: number; id: StorySceneId };
   player: Vec;
   velocity: Vec;
   facing: Vec;
@@ -157,6 +163,8 @@ export interface SectorProgress {
    * visited (model/map.ts recordExplored). Restart clears it.
    */
   explored: string[];
+  /** Funded community project ids (`DONATION_PROJECTS`); absent before any is funded. */
+  funded?: string[];
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {

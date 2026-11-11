@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import type { PrototypeContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createEnemy } from "./enemy-ai.ts";
@@ -195,7 +196,7 @@ describe("flight boundaries", () => {
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ type: "enemyDisabled" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
-      PROTOTYPE.tuning.flight.piecesPerRock,
+      RESOURCE_ROCKS.classes.medium.pieces,
     );
     expect(flight.objects.some((o) => ["debris", "enemy", "resource"].includes(o.id))).toBe(false);
   });

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import {
   ensureDestination,
   ensureRouteEncounter,
@@ -180,11 +181,16 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   introduce(model, "hub");
   model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[1];
   talk(model, "hub");
+  expect(model.state.flight!.storyScene?.id).toBe("blocked");
   talk(model, "miner");
   talk(model, "visitors");
   model.state.flight!.cargo =
     PROTOTYPE.tuning.miningMilestones[2] - model.state.progress[2].deposited;
   talk(model, "hub");
+  expect(model.state.flight!.storyScene).toEqual({
+    at: model.state.flight!.time,
+    id: "docking",
+  });
   recoverHolodisk(model);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2, 3]);
@@ -192,8 +198,10 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   launch(model, 3);
   introduce(model, "whale");
   const f = model.state.flight!;
-  expect(f.objects.filter((o) => o.id.startsWith("whale-debris:"))).toHaveLength(
-    PROTOTYPE.tuning.whaleDebris.count,
+  const stones = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
+  expect(stones).toHaveLength(PROTOTYPE.tuning.whaleDebris.count);
+  expect(stones.map((o) => [o.asteroid, o.radius])).toEqual(
+    PROTOTYPE.tuning.whaleDebris.asteroids.map((id) => [id, ASTEROID_SHAPES.get(id)!.radius]),
   );
   // Exercise the actual projectile/event path at each obstruction, without ambient enemies.
   f.objects = f.objects.filter((o) => o.kind === "destination" || o.id.startsWith("whale-debris:"));
@@ -204,6 +212,9 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
       model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     }
     expect(f.objects.some((o) => o.id === debris.id)).toBe(false);
+    expect(model.flightEvents).toContainEqual(
+      expect.objectContaining({ asteroid: debris.asteroid, type: "asteroidDestroyed" }),
+    );
   }
   expect(model.state.progress[3].stage).toBe(2);
   model.returnHome();

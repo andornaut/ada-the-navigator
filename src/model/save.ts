@@ -5,6 +5,8 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
+import { CARTWHEEL_STORY_SHIPS, DONATION_PROJECTS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { newAchievements } from "./achievements.ts";
@@ -287,7 +289,7 @@ function spaceObject(
       (typeof value.routeId === "string" && routes.includes(value.routeId))) &&
     (value.velocity === undefined || vector(value.velocity)) &&
     (value.asteroid === undefined ||
-      (value.kind === "rock" &&
+      ((value.kind === "rock" || value.kind === "debris") &&
         typeof value.asteroid === "string" &&
         ASTEROID_SHAPES.has(value.asteroid))) &&
     (value.orbit === undefined ||
@@ -297,6 +299,10 @@ function spaceObject(
         nonnegative(value.orbit.radius) &&
         finite(value.orbit.rate) &&
         finite(value.orbit.phase))) &&
+    (value.resource === undefined ||
+      (value.kind === "resource" &&
+        typeof value.resource === "string" &&
+        Object.hasOwn(RESOURCE_ROCKS.classes, value.resource))) &&
     (value.river === undefined ||
       (value.kind === "debris" &&
         record(value.river) &&
@@ -811,7 +817,15 @@ export function restoreSave(saved: unknown): GameState | null {
         (p.revealed !== undefined && !revealedProjects(id as SectorId, p.donated, p.revealed)) ||
         (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
-        (p.opened !== undefined && typeof p.opened !== "boolean")
+        (p.opened !== undefined && typeof p.opened !== "boolean") ||
+        (p.funded !== undefined &&
+          !(
+            strings(p.funded) &&
+            (p.funded as string[]).every((project) =>
+              DONATION_PROJECTS[id as SectorId].includes(project),
+            ) &&
+            new Set(p.funded as string[]).size === (p.funded as string[]).length
+          ))
       ) {
         return null;
       }
@@ -900,6 +914,17 @@ export function restoreSave(saved: unknown): GameState | null {
         return null;
       }
       if (f.ownedWeapons !== undefined && !weaponOwnership(f.ownedWeapons, f.weapon)) {
+        return null;
+      }
+      if (
+        f.storyScene !== undefined &&
+        !(
+          record(f.storyScene) &&
+          nonnegative(f.storyScene.at) &&
+          typeof f.storyScene.id === "string" &&
+          Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, f.storyScene.id)
+        )
+      ) {
         return null;
       }
       // Travel arrivals are bounded by the destinations and stations Ada can reach.

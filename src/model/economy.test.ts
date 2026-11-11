@@ -6,6 +6,7 @@ import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
@@ -373,8 +374,65 @@ describe("Stardust drops", () => {
     );
     expect(released.every((object) => object.x > 0)).toBe(true);
     expect(value.objects.filter((object) => object.role === "cargo")).toHaveLength(
-      PROTOTYPE.tuning.flight.piecesPerRock,
+      RESOURCE_ROCKS.classes.medium.pieces,
     );
+  });
+
+  it("releases each resource rock class's pieces, centred on the rock", () => {
+    for (const resource of ["medium", "large"] as const) {
+      const value = flight();
+      const { hp, pieces } = RESOURCE_ROCKS.classes[resource];
+      const deposit: SpaceObject = {
+        hp,
+        id: "deposit",
+        kind: "resource",
+        radius: RESOURCE_ROCKS.classes[resource].radius,
+        resource,
+        x: -400,
+        y: 0,
+      };
+      value.objects.push(deposit);
+      value.shots.push({ ...killShot(deposit), damage: hp - 1, id: "chip" });
+      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      expect(value.objects.some((object) => object.id === "deposit")).toBe(true);
+      value.shots.push(killShot(deposit));
+      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      const cargo = value.objects.filter((object) => object.role === "cargo");
+      expect(cargo).toHaveLength(pieces);
+      expect(cargo.reduce((sum, piece) => sum + piece.x, 0) / pieces).toBeCloseTo(-400, 9);
+    }
+    expect([RESOURCE_ROCKS.classes.medium, RESOURCE_ROCKS.classes.large]).toMatchObject([
+      { hp: 3, pieces: 3 },
+      { hp: 5, pieces: 5 },
+    ]);
+  });
+
+  it("makes two of every three chunk resource rocks medium", () => {
+    const counts = { large: 0, medium: 0 };
+    for (let x = -20; x < 20; x++) {
+      for (let y = -20; y < 20; y++) {
+        const plan = planChunk(CHUNK_CATALOG, {
+          clearance: PROTOTYPE.tuning.flight.shipRadius,
+          objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
+          rockRadius: PROTOTYPE.tuning.flight.rockRadius,
+          sector: 2,
+          seed: 11,
+          shipRadius: PROTOTYPE.tuning.flight.shipRadius,
+          size: PROTOTYPE.tuning.chunkSize,
+          spawnWeights: PROTOTYPE.tuning.flight.spawnWeights,
+          x,
+          y,
+        });
+        for (const placement of plan.placements.filter((entry) => entry.kind === "resource")) {
+          counts[placement.resource!]++;
+          expect(placement.radius).toBe(RESOURCE_ROCKS.classes[placement.resource!].radius);
+        }
+      }
+    }
+    const share = counts.medium / (counts.medium + counts.large);
+    expect(counts.large).toBeGreaterThan(50);
+    expect(share).toBeGreaterThan(0.6);
+    expect(share).toBeLessThan(0.75);
   });
 });
 

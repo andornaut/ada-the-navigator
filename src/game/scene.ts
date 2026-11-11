@@ -8,6 +8,7 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import { GALAXIES, galaxyPreview, OVERNIGHT_SLEEP, SELECTOR_BACKDROP } from "../data/storybook.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
@@ -28,6 +29,7 @@ import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
+import { drawnHeading, storyShips } from "../model/story-ships.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -186,6 +188,9 @@ import {
 
 // CLEANUP (added 2026-11-11): the placeholder current streak colour, until Art's streak art.
 const CURRENT_STREAK = 0x5fd4c8;
+// CLEANUP (added 2026-11-11): placeholder story ship hull and jet colours, until Art's
+// art-cartwheel miner, visitors and blocking pilot land.
+const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6, jet: 0xffa24a } as const;
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
 const FLASH_SUFFIX = "#flash";
@@ -1351,6 +1356,7 @@ export class PrototypeScene extends Phaser.Scene {
     for (const object of flight.objects) {
       this.drawObject(object);
     }
+    this.drawStoryShips(flight);
     this.drawRockBreaks();
     this.startRockLoads();
     // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
@@ -1847,6 +1853,46 @@ export class PrototypeScene extends Phaser.Scene {
    * streak art lands. Dashes run along three lanes of each current and move with its flow, so
    * its direction reads at a glance.
    */
+  /**
+   * Cartwheel's story ships around the hub, each in the nearest of its 16 drawn headings with
+   * its jet while it moves. CLEANUP (added 2026-11-11): vector darts stand in until Art's
+   * art-cartwheel ships land; then each draws its heading frames by manifest id.
+   */
+  private drawStoryShips(flight: FlightState): void {
+    const hub =
+      flight.sector === CARTWHEEL_STORY_SHIPS.sector
+        ? flight.objects.find((object) => object.kind === "destination" && object.id === "hub")
+        : undefined;
+    if (!hub) {
+      return;
+    }
+    const progress = this.model.state.progress[flight.sector];
+    for (const ship of storyShips(hub, progress, flight.storyScene, flight.time)) {
+      const heading = drawnHeading(ship.heading);
+      const at = (along: number, across: number) =>
+        this.project({
+          x: ship.x + heading.x * along - heading.y * across,
+          y: ship.y + heading.y * along + heading.x * across,
+        });
+      const nose = at(10, 0);
+      const left = at(-8, 7);
+      const right = at(-8, -7);
+      if (Math.max(nose.x, left.x) < -40 || Math.min(nose.x, left.x) > SCREEN.width + 40) {
+        continue;
+      }
+      if (ship.thrust) {
+        const from = at(-8, 0);
+        const to = at(-18, 0);
+        this.ink.lineStyle(3, STORY_SHIP.jet, 0.9);
+        this.ink.lineBetween(from.x, from.y, to.x, to.y);
+      }
+      this.ink.fillStyle(ship.id === "blocker" ? STORY_SHIP.blocker : STORY_SHIP.hull);
+      this.ink.fillTriangle(nose.x, nose.y, left.x, left.y, right.x, right.y);
+      this.ink.lineStyle(1, this.palette.environmentDetail);
+      this.ink.strokeTriangle(nose.x, nose.y, left.x, left.y, right.x, right.y);
+    }
+  }
+
   private drawCurrents(flight: FlightState): void {
     const reach = Math.max(SCREEN.width, SCREEN.height) * 1.5;
     const dash = 46;

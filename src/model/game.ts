@@ -24,6 +24,7 @@ import {
   recordSensed,
   unlockAchievements,
 } from "./achievements.ts";
+import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { capitalInSight, ConversationDirector, pennyPoints, speakerName } from "./conversations.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust } from "./drops.ts";
@@ -1108,11 +1109,13 @@ export class GameModel {
     const tuning = this.content.tuning.whaleDebris;
     for (let i = 0; i < tuning.count; i++) {
       const angle = (i * Math.PI * 2) / tuning.count;
+      const asteroid = tuning.asteroids[i % tuning.asteroids.length]!;
       f.objects.push({
+        asteroid,
         hp: tuning.hp,
         id: `whale-debris:${i}`,
         kind: "debris",
-        radius: tuning.radius,
+        radius: ASTEROID_SHAPES.get(asteroid)!.radius,
         x: whale.x + Math.cos(angle) * tuning.spacing,
         y: whale.y + Math.sin(angle) * tuning.spacing,
       });
@@ -1174,9 +1177,11 @@ export class GameModel {
         const [a, b, c] = this.content.tuning.miningMilestones;
         if (p.stage === 1 && p.deposited >= a) {
           p.stage = 2;
+          f.storyScene = { at: f.time, id: "blocked" };
           this.exchange("firstDeposit");
         } else if (p.stage === 4 && p.deposited >= c) {
           p.stage = 5;
+          f.storyScene = { at: f.time, id: "docking" };
           this.complete();
           this.exchange("approach");
         } else {

@@ -1,5 +1,6 @@
 import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { AsteroidField, ChunkCatalog, ChunkTemplateId } from "../data/chunk-catalog.ts";
+import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
 import type { AsteroidShape } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
@@ -36,6 +37,7 @@ export interface ChunkPlacement extends Vec {
   readonly kind: "rock" | "resource" | "pickup";
   readonly orbit?: AsteroidOrbit;
   readonly radius: number;
+  readonly resource?: ResourceClass;
 }
 export interface ChunkPort {
   readonly center: Vec;
@@ -230,6 +232,8 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
     }
   }
   const drifting = new Map<number, { drift: Drift; free: number }>();
+  // Placed resource rocks follow the large-every pattern from a seeded start.
+  let resources = mix(seed, 3001) % RESOURCE_ROCKS.largeEvery;
   for (let slot = 0; slot < count; slot++) {
     const local = slots[(slot + (seed % slots.length)) % slots.length]!;
     const x = local[0] * options.size;
@@ -251,7 +255,10 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
       kind === "rock" && asteroids
         ? asteroid(asteroids, asteroids.field.slotSizes, seed, 2000 + slot * 16)
         : undefined;
-    const radius = chosen?.shape.radius ?? options.rockRadius;
+    const resource = kind === "resource" ? resourceClass(resources) : undefined;
+    const radius =
+      chosen?.shape.radius ??
+      (resource ? RESOURCE_ROCKS.classes[resource].radius : options.rockRadius);
     const boundary = radius + halfWidth;
     if (
       x < boundary ||
@@ -282,11 +289,15 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
       );
       drifting.set(placements.length, { drift: chosen.drift, free: edges - boundary });
     }
+    if (resource) {
+      resources++;
+    }
     placements.push({
       ...(chosen ? { asteroid: chosen.shape.id } : {}),
       id: `chunk:${options.x},${options.y}:${slot}`,
       kind,
       radius,
+      ...(resource ? { resource } : {}),
       ...at,
     });
   }

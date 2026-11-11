@@ -492,6 +492,69 @@ describe("asteroid save boundary", () => {
     saved.flight!.objects = [...saved.flight!.objects.slice(0, -1), { ...legacy, asteroid: "x" }];
     expect(restoreSave(JSON.stringify(saved))).toBeNull();
   });
+
+  it("keeps whale debris stone shapes and resource rock classes, rejecting misplaced ones", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.startSector(1);
+    playOpening(model);
+    const saved = JSON.parse(model.save()) as GameState;
+    const base = saved.flight!.objects;
+    const stone: SpaceObject = {
+      asteroid: "asteroid-s2",
+      hp: 3,
+      id: "whale-debris:0",
+      kind: "debris",
+      radius: 17.2,
+      x: 4800,
+      y: 4800,
+    };
+    const ore: SpaceObject = {
+      hp: 5,
+      id: "chunk:9,9:1",
+      kind: "resource",
+      radius: 54,
+      resource: "large",
+      x: 5200,
+      y: 4800,
+    };
+    saved.flight!.objects = [...base, stone, ore];
+    const restored = restoreSave(JSON.stringify(saved))!.flight!.objects;
+    expect(restored.slice(-2)).toEqual([stone, ore]);
+    for (const bad of [
+      { ...ore, resource: "huge" },
+      { ...stone, resource: "medium" },
+      { ...ore, asteroid: "asteroid-s2", kind: "pickup" },
+    ]) {
+      saved.flight!.objects = [...base, bad as SpaceObject];
+      expect(restoreSave(JSON.stringify(saved))).toBeNull();
+    }
+  });
+
+  it("keeps a story scene and funded projects, rejecting unknown ones", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.startSector(1);
+    playOpening(model);
+    const saved = JSON.parse(model.save()) as GameState;
+    saved.flight!.storyScene = { at: 3, id: "blocked" };
+    saved.progress[2].funded = ["hubRepairs"];
+    const restored = restoreSave(JSON.stringify(saved))!;
+    expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked" });
+    expect(restored.progress[2].funded).toEqual(["hubRepairs"]);
+    for (const [scene, funded] of [
+      [{ at: 3, id: "duel" }, ["hubRepairs"]],
+      [{ at: -1, id: "blocked" }, ["hubRepairs"]],
+      [{ at: 3, id: "blocked" }, ["nurseryBeacon"]],
+      [{ at: 3, id: "blocked" }, ["hubRepairs", "hubRepairs"]],
+    ] as const) {
+      const bad = JSON.parse(JSON.stringify(saved)) as {
+        flight: { storyScene: unknown };
+        progress: Record<number, { funded: unknown }>;
+      };
+      bad.flight.storyScene = scene;
+      bad.progress[2]!.funded = funded;
+      expect(restoreSave(JSON.stringify(bad))).toBeNull();
+    }
+  });
 });
 
 describe("current generation save boundary", () => {

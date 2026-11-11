@@ -1,4 +1,5 @@
 import { ORE_FIELDS } from "../data/galaxy-features.ts";
+import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 
@@ -7,7 +8,7 @@ export interface OreField extends Vec {
   /** The guard's position and fixed hull facing, or null for an unguarded field. */
   guard: (Vec & { facing: Vec }) | null;
   id: string;
-  rocks: readonly Vec[];
+  rocks: readonly (Vec & { resource: ResourceClass })[];
 }
 
 /** Fixed per-sector seeds, so ore fields are the same on every flight. */
@@ -49,14 +50,19 @@ export function oreFieldInCell(sector: SectorId, cell: Vec): OreField | null {
     return null;
   }
   const total = count[0] + Math.floor(roll(0x51ed) * (count[1] - count[0] + 1));
-  const rocks: Vec[] = [];
+  const rocks: OreField["rocks"][number][] = [];
   // Rocks fill rings on a sunflower spiral, evenly spread across the field.
   const turn = Math.PI * (3 - Math.sqrt(5));
   const start = roll(0x2b3c) * Math.PI * 2;
+  const pattern = Math.floor(roll(0x7f4a) * RESOURCE_ROCKS.largeEvery);
   for (let index = 0; index < total; index++) {
     const radius = (diameter / 2) * Math.sqrt((index + 0.5) / total);
     const angle = start + index * turn;
-    rocks.push({ x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius });
+    rocks.push({
+      resource: resourceClass(pattern + index),
+      x: x + Math.cos(angle) * radius,
+      y: y + Math.sin(angle) * radius,
+    });
   }
   // A checkerboard keeps guarded fields to at most half; the seed picks among them.
   const eligible = (((cell.x + cell.y) % 2) + 2) % 2 === 0;

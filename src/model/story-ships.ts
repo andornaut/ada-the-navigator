@@ -1,0 +1,105 @@
+import {
+  CARTWHEEL_STORY_SHIPS,
+  type StoryPath,
+  type StorySceneId,
+  type StoryShipId,
+} from "../data/story-ships.ts";
+import type { SectorProgress, Vec } from "./types.ts";
+
+/** A story ship's world position, unit heading and whether its thrust jets fire. */
+export interface StoryShip extends Vec {
+  heading: Vec;
+  id: StoryShipId;
+  thrust: boolean;
+}
+
+/** The scene playing in a flight: which, and the flight time it started. */
+export interface StorySceneState {
+  at: number;
+  id: StorySceneId;
+}
+
+const STAGE_DOCKED = 5;
+
+function unit(v: Vec): Vec {
+  const size = Math.hypot(v.x, v.y);
+  return size > 0 ? { x: v.x / size, y: v.y / size } : { x: 0, y: -1 };
+}
+
+/** Position, heading and thrust along a path `t` seconds in; holds the ends outside it. */
+function along(path: StoryPath, t: number): { heading: Vec; point: Vec; thrust: boolean } {
+  const first = path[0]!;
+  const last = path.at(-1)!;
+  if (t <= first.at || path.length === 1) {
+    const next = path[1] ?? first;
+    return {
+      heading: unit({ x: next.x - first.x, y: next.y - first.y }),
+      point: first,
+      thrust: false,
+    };
+  }
+  for (let index = 1; index < path.length; index++) {
+    const from = path[index - 1]!;
+    const to = path[index]!;
+    if (t <= to.at) {
+      const span = to.at - from.at;
+      const f = span > 0 ? (t - from.at) / span : 1;
+      return {
+        heading: unit({ x: to.x - from.x, y: to.y - from.y }),
+        point: { x: from.x + (to.x - from.x) * f, y: from.y + (to.y - from.y) * f },
+        thrust: true,
+      };
+    }
+  }
+  const before = path.at(-2)!;
+  return {
+    heading: unit({ x: last.x - before.x, y: last.y - before.y }),
+    point: last,
+    thrust: false,
+  };
+}
+
+/**
+ * Cartwheel's story ships around the hub at flight time `time`. They are not flight objects,
+ * so shots pass through them and they never fight. The miner and the visitors wait at their
+ * holding points until the docking scene, after which they stay docked; the blocking pilot
+ * flies only in its scenes.
+ */
+export function storyShips(
+  hub: Vec,
+  progress: Pick<SectorProgress, "stage">,
+  scene: StorySceneState | undefined,
+  time: number,
+): StoryShip[] {
+  const data = CARTWHEEL_STORY_SHIPS;
+  const playing =
+    scene && time >= scene.at && time < scene.at + data.scenes[scene.id].duration
+      ? data.scenes[scene.id]
+      : undefined;
+  const ships: StoryShip[] = [];
+  const place = (id: StoryShipId, local: Vec, heading: Vec, thrust: boolean) =>
+    ships.push({ heading, id, thrust, x: hub.x + local.x, y: hub.y + local.y });
+  for (const id of ["miner", "visitor-1", "visitor-2", "blocker"] as const) {
+    const path = playing?.paths[id];
+    if (path) {
+      const { heading, point, thrust } = along(path, time - scene!.at);
+      place(id, point, heading, thrust);
+    } else if (id !== "blocker" && progress.stage < STAGE_DOCKED) {
+      const hold = data.hold[id];
+      place(id, hold, unit({ x: -hold.x, y: -hold.y }), false);
+    }
+  }
+  return ships;
+}
+
+/** A heading snapped to the nearest of the 16 drawn headings. */
+export function drawnHeading(heading: Vec): Vec {
+  const step = (Math.PI * 2) / 16;
+  const angle = Math.round(Math.atan2(heading.y, heading.x) / step) * step;
+  return { x: Math.cos(angle), y: Math.sin(angle) };
+}
+
+/** The hub looks worn until its Hub repairs project is funded. */
+export function hubWorn(progress: Pick<SectorProgress, "funded">): boolean {
+  return !(progress.funded ?? []).includes("hubRepairs");
+}

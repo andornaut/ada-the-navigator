@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../../public/art/manifest.json";
 import whales from "../../public/art/whales.json";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import {
   readWhaleArt,
   type WhaleFrame,
@@ -43,7 +44,8 @@ describe("whale art", () => {
     const footprints = art.kinds.get("whale")!.footprints;
     expect(Math.min(...footprints)).toBeCloseTo(42.63, 2);
     expect(Math.max(...footprints)).toBeCloseTo(48.22, 2);
-    const { radius, spacing } = PROTOTYPE.tuning.whaleDebris;
+    const { asteroids, spacing } = PROTOTYPE.tuning.whaleDebris;
+    const radius = Math.max(...asteroids.map((id) => ASTEROID_SHAPES.get(id)!.radius));
     expect(spacing).toBe(76);
     expect(spacing - radius).toBeGreaterThan(Math.max(...footprints));
   });
