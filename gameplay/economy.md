@@ -17,16 +17,19 @@ is 100 world units and base pull speed is 150 world units per second. Enemy ship
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A multipart ship is defeated when all its required parts are disabled.
 
-| Source          | Stardust |
-| --------------- | -------: |
-| Asteroid        |      0–1 |
-| Discovery cache |        5 |
-| `swarm`         |        1 |
-| `fighter`       |        2 |
-| `interceptor`   |        1 |
-| `retaliator`    |        4 |
-| `frigate`       |        5 |
-| `capital`       |       12 |
+| Source           | Stardust |
+| ---------------- | -------: |
+| Asteroid, small  |      0–1 |
+| Asteroid, medium |        1 |
+| Asteroid, large  |        2 |
+| Asteroid, huge   |        3 |
+| Discovery cache  |        5 |
+| `swarm`          |        1 |
+| `fighter`        |        2 |
+| `interceptor`    |        1 |
+| `retaliator`     |        4 |
+| `frigate`        |        5 |
+| `capital`        |       12 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
 multipart ship counts all its parts' hit points.

@@ -202,7 +202,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
 - Maximum movement speed is provisionally 200 world units per second.
-- The space screen shows only essentials: the joysticks, weapon icons, shield bar,
+- The space screen shows only essentials: the joysticks, weapon icons, the
   status pill (shield and Stardust) and a pause button. There is no travel or destinations panel and
   no settings gear in space.
 - Space shows no in-world name labels. Each named destination has a distinct
@@ -444,7 +444,11 @@ Other space objects retain monochrome placeholder graphics.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
-loops around their starting point. Bigger asteroids take more shots. Background objects stay muted
+loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
+Stardust. Drifting asteroids follow fixed loops that never overlap other rocks,
+stations or destinations; ships bounce off them, and they deal no damage. Large
+and huge asteroids stay out of passages and clear of stations, destinations and
+launch points. Background objects stay muted
 but carry a light tint of color; asteroids are play objects, not background.
 Moving inanimate obstacles have constant velocity and direction. Regions of
 traveling debris create navigation challenges along exploration and quest routes.
