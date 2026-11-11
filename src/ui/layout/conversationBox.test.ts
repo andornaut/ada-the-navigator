@@ -97,9 +97,9 @@ describe("conversation box", () => {
   });
 
   it("measures the ship's hull top from the play view's centre", () => {
-    expect(shipHullTop(BASE)).toBeCloseTo(167.2, 9);
+    expect(shipHullTop(BASE)).toBeCloseTo(168.17, 9);
     const play = playView(DESKTOP);
-    expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 12.8, 9);
+    expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 11.83, 9);
   });
 
   it("rises to the highest drawn hull point of Art's 32 idle headings, at heading 4", () => {
@@ -111,15 +111,17 @@ describe("conversation box", () => {
     });
     const highest = Math.max(...rises);
     expect(rises.indexOf(highest)).toBe(4);
+    // The pyramid hull's measured 11.82125; the rise is never below it, rounded up to 0.01.
+    expect(highest).toBeCloseTo(11.82125, 9);
     expect(highest).toBeLessThanOrEqual(CONVERSATION_BOX.ship.hullRise);
-    expect(highest).toBeCloseTo(CONVERSATION_BOX.ship.hullRise, 1);
+    expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });
 
-  it("keeps 31.2 clear above Ada's ship at the 360 high view and 53.7 at 405", () => {
-    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(31.2, 9);
-    // At 405 high the pivot sits at 202.5 and the hull top at 189.7.
+  it("keeps 32.17 clear above Ada's ship at the 360 high view and 54.67 at 405", () => {
+    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(32.17, 9);
+    // At 405 high the pivot sits at 202.5 and the hull top at 190.67.
     const box = conversationBoxRect(NO_INSETS, BASE);
-    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(53.7, 9);
+    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(54.67, 9);
   });
 
   it.each(VIEWS)("keeps at least 24 clear above Ada's ship on %s", (_name, view, insets) => {

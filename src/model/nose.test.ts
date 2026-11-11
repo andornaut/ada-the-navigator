@@ -17,9 +17,9 @@ const headingDirection = (index: number) => ({
   y: Math.sin((index * Math.PI) / 16),
 });
 const project = (v: { x: number; y: number }) => ({ x: v.x - v.y, y: (v.x + v.y) / 2 });
-// The nose is the hull top's forward tip, local (0, -32, 4) in frame px (art/ship.md).
+// The nose is the pyramid hull's forward tip, local (0, -32, 1.2) in frame px (art/ship.md).
 const FORWARD = 32;
-const HEIGHT = 4;
+const HEIGHT = 1.2;
 
 describe("Ada's ship nose", () => {
   it("reads Art's 32 noses from the file the manifest links as shipNose", () => {
@@ -28,8 +28,8 @@ describe("Ada's ship nose", () => {
     expect(SHIP_NOSE.frame).toBe(96);
     expect(SHIP_NOSE.displayScale).toBe(0.4375);
     expect(SHIP_NOSE.noses).toHaveLength(32);
-    expect(SHIP_NOSE.noses[28]).toEqual({ x: 87.192, y: 44 });
-    expect(SHIP_NOSE.noses[20]).toEqual({ x: 48, y: 21.373 });
+    expect(SHIP_NOSE.noses[28]).toEqual({ x: 87.192, y: 46.8 });
+    expect(SHIP_NOSE.noses[20]).toEqual({ x: 48, y: 24.173 });
   });
 
   it.each([
@@ -56,10 +56,10 @@ describe("Ada's ship nose", () => {
     const right = noseScreenOffset(28);
     expect(right.x).toBeCloseTo((87.192 - 48) * 0.4375, 9);
     expect(right.x).toBeCloseTo(17.15, 2);
-    expect(right.y).toBeCloseTo(-4 * 0.4375, 9);
+    expect(right.y).toBeCloseTo(-HEIGHT * 0.4375, 9);
     // Pointing up, the nose is above the centre by its forward reach and its height.
     expect(noseScreenOffset(20).x).toBeCloseTo(0, 9);
-    expect(noseScreenOffset(20).y).toBeCloseTo((21.373 - 48) * 0.4375, 9);
+    expect(noseScreenOffset(20).y).toBeCloseTo((24.173 - 48) * 0.4375, 9);
   });
 
   it.each(Array.from({ length: 32 }, (_, index) => index))(

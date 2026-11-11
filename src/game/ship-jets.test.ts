@@ -37,7 +37,7 @@ describe("ship jet metadata", () => {
     expect(jets.headings).toHaveLength(32);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(jets.layers).toHaveLength(3);
-    expect(jets.headings[0]![0]!.anchor).toEqual({ x: 47.302, y: 26.637 });
+    expect(jets.headings[0]![0]!.anchor).toEqual({ x: 43.55, y: 30.579 });
   });
 
   it("takes the heading count from the file", () => {
@@ -145,21 +145,22 @@ describe("jet triangles", () => {
     expect(outerTriangle!.points[1].y).toBeCloseTo((72 - 48) * scale);
   });
 
-  it("matches Art's 8-heading jet mock-up for its heading 3 (now 12) at full speed", () => {
-    // Mock-up polygons are drawn in a 128px canvas with a 16px pad around the 96px frame.
-    const reference = [
-      [89.55, 77.99, 128.62, 75.41, 86.87, 72.83],
-      [89.1, 77.13, 124.95, 75.41, 87.31, 73.69],
-      [88.66, 76.27, 108.42, 75.41, 87.76, 74.55],
-      [89.55, 46.01, 128.62, 48.59, 86.87, 51.17],
-      [89.1, 46.87, 124.95, 48.59, 87.31, 50.31],
-      [88.66, 47.73, 108.42, 48.59, 87.76, 49.45],
-    ];
-    const triangles = jetTriangles(jets, framePixels, 12, 1);
-    expect(triangles).toHaveLength(reference.length);
-    triangles.forEach((triangle, index) => {
-      const points = triangle.points.flatMap(({ x, y }) => [x + 16, y + 16]);
-      points.forEach((value, at) => expect(value).toBeCloseTo(reference[index]![at]!, 1));
+  it("anchors each mouth at local (±12.25, 17.39, 2.60) on the pyramid hull at every heading", () => {
+    // Art's projection (art/tools/projection.ts): heading k turns local forward (negative y) to
+    // world angle k * 360 / 32, then the view along (1, 1, 1) raises +z, pivot (48, 48).
+    const mouth = (sign: -1 | 1, heading: number) => {
+      const angle = (heading * Math.PI) / 16 + Math.PI / 2;
+      const [x, y, z] = [sign * 12.25, 17.39, 2.6];
+      const wx = x * Math.cos(angle) - y * Math.sin(angle);
+      const wy = x * Math.sin(angle) + y * Math.cos(angle);
+      return { x: 48 + ((wx - wy) * Math.sqrt(3)) / 2, y: 48 + (wx + wy) / 2 - z };
+    };
+    jets.headings.forEach((mouths, heading) => {
+      ([-1, 1] as const).forEach((sign, index) => {
+        const expected = mouth(sign, heading);
+        expect(mouths[index]!.anchor.x).toBeCloseTo(expected.x, 2);
+        expect(mouths[index]!.anchor.y).toBeCloseTo(expected.y, 2);
+      });
     });
   });
 });
