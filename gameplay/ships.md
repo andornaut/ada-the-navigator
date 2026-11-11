@@ -70,7 +70,13 @@ escapes, or alternates between the two.
 | `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
-Finite pursuit, return home and the speed cap still apply. Galaxy one is mildly
+Provisional parameters: `hitAndRun` retreats for 1.6 s after 3 volleys or a
+hit; `strafe` passes within 90 world units and loops back beyond 420; `siege`
+advances at half top speed; `escort` holds station 60 beyond its capital's hull,
+intercepts Ada within 600 and falls back to `hitAndRun` without its capital.
+Chasers press in to close range and bounce off on contact. Finite pursuit, return home and the speed cap still apply.
+When an encounter regenerates, its survivors are restored by role, so a destroyed
+capital never returns as an escort or the reverse. Galaxy one is mildly
 more aggressive than before, and later galaxies ramp difficulty quickly.
 
 ## Galaxy one roster

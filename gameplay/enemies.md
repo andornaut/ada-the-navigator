@@ -11,7 +11,8 @@ the overall placement contract remains in the prototype document.
 ## Data and state
 
 The catalog interface defines typed aggression, size, physics ([Ships](ships.md)),
-perception and engagement radii, orbit and wobble, separation, firing patterns,
+perception and engagement radii, behaviours and their parameters, wobble,
+separation, firing patterns,
 morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
 galaxy one's solo and pack archetypes. Frigates have three independent parts: one engine and two
 weapons. A capital hull is about 5 Ada widths across and covers at most a sixth of
