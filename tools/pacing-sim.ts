@@ -26,6 +26,7 @@ import {
   sectorEncounters,
 } from "../src/data/enemy-catalog.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
+import { PROJECTS } from "../src/data/projects.ts";
 import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
 import type { SectorId, Weapon } from "../src/data/types.ts";
@@ -105,6 +106,8 @@ export interface Prices {
   firstWeapon: number;
   /** Galaxy two's hub holodisk price; every sector reports the time to save it. */
   holodisk: number;
+  /** The sector's community projects in total: the time to save enough to fund them all. */
+  projects: number;
 }
 
 export interface EconomyOverrides {
@@ -223,6 +226,7 @@ export interface RunResult {
   /** Seconds at which the balance first reached each price, or null. */
   firstWeaponSeconds: number | null;
   holodiskSeconds: number | null;
+  projectsSeconds: number | null;
   stardust: Record<Source, number>;
   enemyStardust: Partial<Record<EnemyArchetype, number>>;
   /** Encounters within reach, those fought, and enemies destroyed, by archetype. */
@@ -525,6 +529,7 @@ export function simulate(input: SimulationInput): RunResult {
     jumps: 0,
     met: {},
     minutes: input.minutes,
+    projectsSeconds: null,
     sector,
     seed: input.seed,
     stardust: { asteroids: 0, caches: 0, duplicates: 0, enemies: 0, guards: 0 },
@@ -563,6 +568,9 @@ export function simulate(input: SimulationInput): RunResult {
     }
     if (result.holodiskSeconds === null && balance >= prices.holodisk) {
       result.holodiskSeconds = time;
+    }
+    if (result.projectsSeconds === null && balance >= prices.projects) {
+      result.projectsSeconds = time;
     }
   };
   const newFlight = () => {
@@ -894,6 +902,8 @@ export interface Summary {
   firstWeaponUnreached: number;
   holodiskMinutes: Distribution;
   holodiskUnreached: number;
+  projectsMinutes: Distribution;
+  projectsUnreached: number;
   /** Stardust per minute excluding the one-off story guards. */
   stardustPerMinute: Distribution;
   stardustPerMinuteFirst20: Distribution;
@@ -983,6 +993,8 @@ export function summarise(scenario: string, prices: Prices, runs: readonly RunRe
     metPerMinute: byArchetype((run) => run.met),
     minutes,
     prices,
+    projectsMinutes: distribution(times((run) => run.projectsSeconds)),
+    projectsUnreached: runs.filter((run) => run.projectsSeconds === null).length,
     runs: runs.length,
     runsWithWeaponFound: runs.filter((run) => run.weaponsFound.length > 0).length,
     weaponFoundBy: {
@@ -1023,6 +1035,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
   const prices: Prices = {
     firstWeapon: Math.min(...Object.values(ECONOMY.weaponPrices)),
     holodisk: HOLODISKS.hubPrice,
+    projects: PROJECTS[options.sector].reduce((sum, { cost }) => sum + cost, 0),
     ...scenario.prices,
   };
   const spawnWeights = {
@@ -1215,11 +1228,14 @@ function formatDistribution(value: Distribution, digits = 1): string {
 export function formatSummary(summary: Summary): string {
   const lines = [
     `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
-    `Prices: first weapon ${summary.prices.firstWeapon}, holodisk ${summary.prices.holodisk}`,
+    `Prices: first weapon ${summary.prices.firstWeapon}, holodisk ${summary.prices.holodisk}, ` +
+      `projects ${summary.prices.projects}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}`,
     `Minutes to holodisk: ${formatDistribution(summary.holodiskMinutes)}; ` +
       `unreached ${summary.holodiskUnreached}`,
+    `Minutes to save for every project: ${formatDistribution(summary.projectsMinutes)}; ` +
+      `unreached ${summary.projectsUnreached}`,
     `Stardust/min without guards: ${formatDistribution(summary.stardustPerMinute)}`,
     `Balance/min over first 20 min (with guards): ${formatDistribution(summary.stardustPerMinuteFirst20)}`,
     `Per minute by source: ${SOURCES.map((s) => `${s} ${round(summary.sourcePerMinute[s], 2)}`).join(", ")}`,
