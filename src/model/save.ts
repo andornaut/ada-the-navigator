@@ -54,7 +54,7 @@ function strings(value: unknown): boolean {
 const destinationIds: Record<number, readonly string[]> = {
   1: ["growers", "workshop", "salvagers"],
   2: ["hub", "miner", "visitors"],
-  3: ["whale", "family"],
+  3: ["whale", "family", "holodisk"],
 };
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
@@ -352,7 +352,8 @@ function stationIds(sector: SectorId, value: unknown): boolean {
  * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
  * from before the economy gain an empty economy (or their flight's weapons), no
  * discovered stations and no weapon lock; their unused ammunition count is dropped.
- * Saves from before the prologue count it as seen once play has begun.
+ * Saves from before the prologue count it as seen once play has begun, and saves from before
+ * holodisks count the holodisks of galaxies before the last unlocked one as recovered.
  */
 export function restoreSave(saved: unknown): GameState | null {
   try {
@@ -397,7 +398,8 @@ export function restoreSave(saved: unknown): GameState | null {
       if (
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
-        (p.stations !== undefined && !stationIds(id as SectorId, p.stations))
+        (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
+        (p.holodisk !== undefined && typeof p.holodisk !== "boolean")
       ) {
         return null;
       }
@@ -542,6 +544,13 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     const restored = structuredClone(value) as unknown as GameState;
     migrateEconomy(restored);
+    // Galaxies unlocked before holodisks count each earlier galaxy's holodisk as recovered.
+    for (const id of [1, 2, 3] as const) {
+      const p = restored.progress[id] as Partial<GameState["progress"][1]>;
+      if (typeof p.holodisk !== "boolean") {
+        p.holodisk = restored.unlocked.some((unlocked) => unlocked > id);
+      }
+    }
     if (typeof value.prologueSeen !== "boolean") {
       restored.prologueSeen = pastStart(restored);
     }

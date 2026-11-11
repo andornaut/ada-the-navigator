@@ -18,8 +18,8 @@ Three story galaxies are designed:
 - Whale family: clear debris, locate the whale's family and relay coordinates,
   then help Ada understand her dog's need to explore.
 
-Space quests and their resolutions at home unlock galaxies in order. Completed
-galaxies remain replayable. Galaxy four's conclusion is deferred and has no
+A galaxy's space quest, its resolution at home and its recovered holodisk unlock
+the next galaxy. Completed galaxies remain replayable. Galaxy four's conclusion is deferred and has no
 playable story. See [dialogue and objectives](gameplay/prototype-copy.md).
 
 The flight target includes independent movement and aim, a rechargeable shield,

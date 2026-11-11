@@ -1,10 +1,12 @@
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import type { GameState } from "../model/types.ts";
+import { refuse } from "../ui/refusal.ts";
 
 export interface ShellActions {
   start: (sector: SectorId) => void;
   choose: (id: string) => void;
+  reducedMotion: () => boolean;
 }
 
 function button(label: string, action: () => void): HTMLButtonElement {
@@ -66,7 +68,18 @@ export class StoryShell {
       text.textContent = state.dialogue.text;
       this.panel.append(heading, text);
       for (const choice of state.dialogue.choices) {
-        const node = button(choice.label, () => this.actions.choose(choice.id));
+        // A refused choice looks disabled but stays enabled, focusable and tappable, so a tap
+        // plays the shared refusal; aria-disabled would announce it as unusable.
+        const node = button(choice.label, () => {
+          if (choice.refused) {
+            refuse(node, this.actions.reducedMotion());
+          } else {
+            this.actions.choose(choice.id);
+          }
+        });
+        if (choice.refused) {
+          node.dataset.refused = "true";
+        }
         node.dataset.choice = choice.id;
         node.dataset.action = "dialogue-choice";
         this.panel.append(node);

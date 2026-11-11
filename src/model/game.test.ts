@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import {
@@ -39,6 +40,21 @@ function finishHome(model: GameModel) {
   model.returnHome();
   model.choose("1");
   model.choose("continue");
+}
+/** Recovers the current galaxy one or two holodisk and continues past its insertion. */
+function recoverHolodisk(model: GameModel) {
+  if (model.state.flight!.sector === 1) {
+    arrive(model, "workshop");
+    model.interact();
+  } else {
+    model.state.economy.stardust += HOLODISKS.hubPrice;
+    arrive(model, "hub");
+    model.interact();
+    model.choose("buy");
+  }
+  model.choose("continue");
+  model.choose("continue");
+  expect(model.state.progress[model.state.flight!.sector].holodisk).toBe(true);
 }
 function introduce(model: GameModel, id: string) {
   arrive(model, id);
@@ -89,6 +105,7 @@ describe("prototype story and persistence", () => {
       expect(model.state.progress[1].questComplete).toBe(false);
       talk(model, "workshop");
       expect(model.state.progress[1].questComplete).toBe(true);
+      recoverHolodisk(model);
       finishHome(model);
       expect(model.state.unlocked).toEqual([1, 2]);
       expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
@@ -110,6 +127,7 @@ describe("prototype story and persistence", () => {
     model.state.flight!.cargo = 12;
     talk(model, "hub");
     expect(model.state.progress[2].questComplete).toBe(true);
+    recoverHolodisk(model);
     finishHome(model);
     expect(model.state.unlocked).toEqual([1, 2, 3]);
     expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
@@ -148,6 +166,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   talk(model, "workshop");
   talk(model, "salvagers");
   talk(model, "workshop");
+  recoverHolodisk(model);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2]);
   expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
@@ -160,6 +179,7 @@ it("finishes all three chapters in order and resumes each terminal state", () =>
   model.state.flight!.cargo =
     PROTOTYPE.tuning.miningMilestones[2] - model.state.progress[2].deposited;
   talk(model, "hub");
+  recoverHolodisk(model);
   finishHome(model);
   expect(model.state.unlocked).toEqual([1, 2, 3]);
   expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);

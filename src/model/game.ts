@@ -1,4 +1,5 @@
 import { ECONOMY } from "../data/economy.ts";
+import { HOLODISKS } from "../data/holodisks.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
   activateRouteEncounter,
@@ -44,6 +45,7 @@ export function newProgress(): SectorProgress {
     deposited: 0,
     disabledEnemies: 0,
     discoveries: 0,
+    holodisk: false,
     introduced: false,
     known: [],
     questComplete: false,
@@ -101,8 +103,10 @@ export class GameModel {
       2: [0, 1, 2, 3, 4, 5],
       3: [0, 1, 2, 3, 4, 5],
     };
+    // After the space quest, recovering the holodisk comes before the return home.
+    const last = this.chapter.objectives.length - 1;
     const index = p.questComplete
-      ? this.chapter.objectives.length - 1
+      ? last - (p.holodisk ? 0 : 1)
       : (stages[this.state.selectedSector][p.stage] ?? 0);
     return this.chapter.objectives[index] ?? "";
   }
@@ -372,7 +376,80 @@ export class GameModel {
   }
   private complete(): void {
     this.current.questComplete = true;
-    this.state.notice = this.label("chapterComplete");
+    if (this.current.holodisk) {
+      this.state.notice = this.label("chapterComplete");
+    }
+  }
+  /** Unlocks the next galaxy once its holodisk, space quest and home resolution are done. */
+  private unlockNext(): void {
+    const p = this.current;
+    const next = this.state.selectedSector + 1;
+    if (
+      p.holodisk &&
+      p.questComplete &&
+      p.resolved &&
+      next <= 3 &&
+      !this.state.unlocked.includes(next as SectorId)
+    ) {
+      this.state.unlocked.push(next as SectorId);
+    }
+  }
+  /** Ada inserts a recovered holodisk into Astra's drive at once. */
+  private recoverHolodisk(): void {
+    const p = this.current;
+    p.holodisk = true;
+    const f = this.state.flight;
+    if (f) {
+      f.objects = f.objects.filter(
+        (object) => !(object.kind === "destination" && object.id === "holodisk"),
+      );
+    }
+    this.unlockNext();
+    if (p.questComplete) {
+      this.state.notice = this.label("chapterComplete");
+    }
+    this.insertion(0);
+  }
+  private insertion(index: number): void {
+    const line = this.content.premise.holodisk.inserted[index];
+    if (line) {
+      this.panel(`holodisk:${index}`, line.text, line.speaker);
+    } else {
+      this.state.dialogue = null;
+    }
+  }
+  /** The hub's holodisk confirm; while Ada is short of Stardust, Buy refuses. */
+  private offerHolodisk(): void {
+    const price = HOLODISKS.hubPrice;
+    const left = this.state.economy.stardust - price;
+    this.state.dialogue = {
+      choices: [
+        { id: "buy", label: this.label("confirmBuy"), ...(left < 0 ? { refused: true } : {}) },
+        { id: "cancel", label: this.label("confirmCancel") },
+      ],
+      context: "holodiskOffer",
+      text: [
+        fill(this.label("stardustAmount"), { amount: price }),
+        left < 0 ? "" : fill(this.label("confirmLeft"), { amount: left }),
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      title: fill(this.label("confirmTitle"), { name: this.content.premise.holodisk.name }),
+    };
+  }
+  /** Buys the hub's holodisk; a balance short of the price refuses and keeps the confirm. */
+  buyHolodisk(): boolean {
+    const economy = this.state.economy;
+    if (
+      this.state.dialogue?.context !== "holodiskOffer" ||
+      this.current.holodisk ||
+      economy.stardust < HOLODISKS.hubPrice
+    ) {
+      return false;
+    }
+    economy.stardust -= HOLODISKS.hubPrice;
+    this.recoverHolodisk();
+    return true;
   }
   step(dt: number, input: FlightInput): void {
     const f = this.state.flight;
@@ -406,6 +483,13 @@ export class GameModel {
       }
       if (event.type === "enemyDisabled") {
         this.current.disabledEnemies++;
+      }
+      // Reaching the guarded holodisk recovers it; it never becomes a travel destination.
+      if (event.type === "discovered" && event.id === "holodisk") {
+        if (this.holodiskWaypoint) {
+          this.recoverHolodisk();
+        }
+        continue;
       }
       if (event.type === "discovered" && !this.current.known.includes(event.id)) {
         this.current.known.push(event.id);
@@ -444,6 +528,9 @@ export class GameModel {
         }
       }
     }
+    if (this.holodiskWaypoint) {
+      ensureDestination(this.content, "holodisk", f);
+    }
     this.ensureRequiredApproaches();
     this.ensureWhaleDebris();
     const intro = first[f.sector];
@@ -468,9 +555,13 @@ export class GameModel {
       this.interact();
     }
   }
+  /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
+  private get holodiskWaypoint(): boolean {
+    return this.state.flight?.sector === 3 && this.current.questComplete && !this.current.holodisk;
+  }
   private ensureRequiredApproaches(): void {
     const f = this.state.flight;
-    if (!f || this.current.questComplete) {
+    if (!f || (this.current.questComplete && !this.holodiskWaypoint)) {
       return;
     }
     for (const object of [...f.objects]) {
@@ -551,7 +642,10 @@ export class GameModel {
     }
     const p = this.current;
     if (f.sector === 1) {
-      if (id === "growers" && p.stage === 1) {
+      // Once their exchange is running, any outpost gives Ada the holodisk.
+      if (p.questComplete && !p.holodisk) {
+        this.recoverHolodisk();
+      } else if (id === "growers" && p.stage === 1) {
         p.questItem = "food";
         this.exchange("grower");
       } else if (id === "workshop" && p.stage === 1 && p.questItem === "food") {
@@ -577,7 +671,11 @@ export class GameModel {
         this.exchange(dialogueKeys[id] ?? id);
       }
     } else if (f.sector === 2) {
-      if (id === "hub") {
+      if (id === "hub" && p.questComplete && !p.holodisk) {
+        p.deposited += f.cargo;
+        f.cargo = 0;
+        this.offerHolodisk();
+      } else if (id === "hub") {
         p.deposited += f.cargo;
         f.cargo = 0;
         const [a, b, c] = this.content.tuning.miningMilestones;
@@ -655,11 +753,17 @@ export class GameModel {
     }
     if (dialogue.context === "resolution") {
       this.current.resolved = true;
-      const next = this.state.selectedSector + 1;
-      if (next <= 3 && !this.state.unlocked.includes(next as SectorId)) {
-        this.state.unlocked.push(next as SectorId);
-      }
+      this.unlockNext();
       this.panel("closing", this.chapter.closing);
+      return;
+    }
+    if (dialogue.context === "holodiskOffer" && id === "buy") {
+      this.buyHolodisk();
+      return;
+    }
+    const inserted = /^holodisk:(\d+)$/.exec(dialogue.context);
+    if (inserted) {
+      this.insertion(Number(inserted[1]) + 1);
       return;
     }
     this.state.dialogue = null;

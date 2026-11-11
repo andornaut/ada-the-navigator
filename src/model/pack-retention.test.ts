@@ -18,6 +18,7 @@ const progress: SectorProgress = {
   deposited: 0,
   disabledEnemies: 0,
   discoveries: 0,
+  holodisk: false,
   introduced: false,
   known: [],
   questComplete: false,

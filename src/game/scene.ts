@@ -184,6 +184,7 @@ export class PrototypeScene extends Phaser.Scene {
     };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
+      reducedMotion: () => this.controls.reducedMotion(),
       start: (sector) => apply(() => this.model.startSector(sector)),
     });
     this.controls = createControls(this, {

@@ -104,6 +104,13 @@ button:disabled {
   margin-top: 12px;
   text-align: left;
 }
+/* A refused choice keeps a flat disabled face and stays tappable. */
+.story-panel button[data-refused] {
+  border-color: #555;
+  background: #202020;
+  box-shadow: none;
+  color: #8a8a8a;
+}
 .home-portraits {
   width: 64px;
   height: 64px;

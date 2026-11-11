@@ -1107,6 +1107,7 @@ try {
     questItem: null,
     known: ["growers", "workshop", "salvagers"],
     discoveries: 3,
+    holodisk: true,
   });
   fixture.returnHome();
   assert.equal(fixture.state.dialogue.context, "resolution");

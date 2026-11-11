@@ -1,0 +1,262 @@
+import { describe, expect, it } from "vitest";
+
+import { HOLODISKS } from "../data/holodisks.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import type { SectorId } from "../data/types.ts";
+import { ensureDestination, routeBlocked } from "./flight.ts";
+import { GameModel } from "./game.ts";
+import { restoreSave } from "./save.ts";
+import { playOpening } from "./test-launch.ts";
+import type { GameState, SectorProgress } from "./types.ts";
+
+const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+const inserted = [
+  "Ada slides the holodisk into Astra's drive.",
+  "Memory restored. I've found new coordinates. A new galaxy is ready.",
+];
+
+/** A flight in `galaxy` whose space quest is complete and holodisk not yet recovered. */
+function questDone(galaxy: SectorId, known: string[]): GameModel {
+  const model = new GameModel(PROTOTYPE);
+  model.state.prologueSeen = true;
+  model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as SectorId[];
+  model.startSector(galaxy);
+  playOpening(model);
+  Object.assign(model.state.progress[galaxy], {
+    discoveries: known.length,
+    introduced: true,
+    known,
+    questComplete: true,
+    stage: galaxy === 1 ? 4 : 5,
+  } satisfies Partial<SectorProgress>);
+  model.state.dialogue = null;
+  return model;
+}
+function arrive(model: GameModel, id: string) {
+  const f = model.state.flight!;
+  const target = ensureDestination(PROTOTYPE, id, f);
+  f.player = { x: target.x, y: target.y };
+  f.dangerFor = 0;
+}
+/** Reads the insertion panels and continues past them. */
+function insertion(model: GameModel): [string, string][] {
+  const panels: [string, string][] = [];
+  while (model.state.dialogue?.context.startsWith("holodisk:")) {
+    panels.push([model.state.dialogue.title, model.state.dialogue.text]);
+    model.choose("continue");
+  }
+  return panels;
+}
+function resolveAtHome(model: GameModel) {
+  model.returnHome();
+  expect(model.state.dialogue?.context).toBe("resolution");
+  model.choose("0");
+  model.choose("continue");
+}
+
+describe("holodisk objectives", () => {
+  it("come after each space quest and before the return home", () => {
+    for (const [id, objective] of [
+      [1, "Collect the holodisk from the outposts."],
+      [2, "Buy the holodisk at the hub."],
+      [3, "Fight your way to the holodisk."],
+    ] as const) {
+      expect(PROTOTYPE.chapters[id].objectives.slice(-2)).toEqual([
+        objective,
+        "Return home when ready.",
+      ]);
+    }
+  });
+});
+
+describe("galaxy one's holodisk", () => {
+  it("is given by the outposts once the exchange runs, then inserted", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    expect(model.objective).toBe("Collect the holodisk from the outposts.");
+    arrive(model, "salvagers");
+    model.interact();
+    expect(insertion(model)).toEqual([
+      ["The Outposts", inserted[0]],
+      ["Astra", inserted[1]],
+    ]);
+    expect(model.state.dialogue).toBeNull();
+    expect(model.state.progress[1].holodisk).toBe(true);
+    expect(model.objective).toBe("Return home when ready.");
+    expect(model.state.notice).toBe(PROTOTYPE.labels.chapterComplete);
+    // The exchange is still running, so the outposts do not give it again.
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("salvager");
+  });
+
+  it("is not given before the exchange runs", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    Object.assign(model.state.progress[1], { questComplete: false, stage: 1 });
+    arrive(model, "growers");
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("grower");
+    expect(model.state.progress[1].holodisk).toBe(false);
+  });
+});
+
+describe("unlocking the next galaxy", () => {
+  it("needs the holodisk as well as the space quest and home resolution", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    resolveAtHome(model);
+    expect(model.state.progress[1].resolved).toBe(true);
+    expect(model.state.unlocked).toEqual([1]);
+    // A resolved galaxy relaunches straight into flight, where the holodisk unlocks the next.
+    model.startSector(1);
+    playOpening(model);
+    expect(model.state.mode).toBe("space");
+    expect(model.objective).toBe("Collect the holodisk from the outposts.");
+    arrive(model, "growers");
+    model.interact();
+    insertion(model);
+    expect(model.state.unlocked).toEqual([1, 2]);
+  });
+
+  it("unlocks at the home resolution when the holodisk came first", () => {
+    const model = questDone(1, ["growers", "workshop", "salvagers"]);
+    arrive(model, "workshop");
+    model.interact();
+    insertion(model);
+    expect(model.state.unlocked).toEqual([1]);
+    resolveAtHome(model);
+    expect(model.state.unlocked).toEqual([1, 2]);
+  });
+});
+
+describe("galaxy two's holodisk", () => {
+  it("refuses Buy while Ada is short of the price and keeps the confirm", () => {
+    const model = questDone(2, ["hub", "miner", "visitors"]);
+    expect(model.objective).toBe("Buy the holodisk at the hub.");
+    model.state.economy.stardust = HOLODISKS.hubPrice - 1;
+    arrive(model, "hub");
+    model.interact();
+    const offer = model.state.dialogue!;
+    expect(offer).toEqual({
+      choices: [
+        { id: "buy", label: "Buy", refused: true },
+        { id: "cancel", label: "Cancel" },
+      ],
+      context: "holodiskOffer",
+      text: "300 Stardust",
+      title: "Buy Holodisk?",
+    });
+    expect(model.buyHolodisk()).toBe(false);
+    model.choose("buy");
+    expect(model.state.dialogue).toEqual(offer);
+    expect(model.state.economy.stardust).toBe(HOLODISKS.hubPrice - 1);
+    expect(model.state.progress[2].holodisk).toBe(false);
+    model.choose("cancel");
+    expect(model.state.dialogue).toBeNull();
+  });
+
+  it("sells it for 300 Stardust at the hub after depositing cargo", () => {
+    const model = questDone(2, ["hub", "miner", "visitors"]);
+    model.state.economy.stardust = 350;
+    const deposited = model.state.progress[2].deposited;
+    arrive(model, "hub");
+    model.state.flight!.cargo = 5;
+    model.interact();
+    expect(model.state.progress[2].deposited).toBe(deposited + 5);
+    expect(model.state.dialogue?.text).toBe("300 Stardust\n50 left after");
+    expect(model.state.dialogue?.choices[0]).toEqual({ id: "buy", label: "Buy" });
+    model.choose("buy");
+    expect(model.state.economy.stardust).toBe(50);
+    expect(insertion(model)).toEqual([
+      ["The Mining Hub", inserted[0]],
+      ["Astra", inserted[1]],
+    ]);
+    expect(model.state.progress[2].holodisk).toBe(true);
+    expect(model.objective).toBe("Return home when ready.");
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("hub");
+    resolveAtHome(model);
+    expect(model.state.unlocked).toEqual([1, 2, 3]);
+  });
+});
+
+describe("galaxy three's holodisk", () => {
+  it("waits behind a frigate and its pack after the reunion", () => {
+    const model = questDone(3, ["whale", "family"]);
+    expect(model.objective).toBe("Fight your way to the holodisk.");
+    model.step(0.01, idle);
+    const f = model.state.flight!;
+    const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")!;
+    expect(disk).toBeDefined();
+    const leader = f.objects.find((o) => o.routeId === "holodisk")!;
+    expect(leader.enemy?.archetype).toBe(HOLODISKS.guard.leader);
+    const pack = f.objects.filter((o) => o.enemy?.packId === "route:holodisk:pack");
+    expect(pack.map((o) => o.enemy?.archetype)).toEqual(
+      Array(HOLODISKS.guard.packSize).fill(HOLODISKS.guard.pack),
+    );
+    expect(pack.every((o) => o.persistent)).toBe(true);
+    expect(f.combat?.initialPackSizes["route:holodisk:pack"]).toBe(HOLODISKS.guard.packSize);
+    expect(routeBlocked("holodisk", f)).toBe(true);
+    expect(new GameModel(PROTOTYPE, model.save()).state).toEqual(model.state);
+    // A guarded holodisk is never a travel destination and cannot be reached early.
+    expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
+    f.player = { x: disk.x, y: disk.y };
+    model.step(0.01, idle);
+    expect(model.state.progress[3].holodisk).toBe(false);
+    // Winning the fight against the leader opens the way.
+    f.objects = f.objects.filter((o) => o !== leader);
+    f.player = { x: disk.x, y: disk.y };
+    f.dangerFor = 0;
+    model.step(0.01, idle);
+    expect(insertion(model)).toEqual([
+      ["The Whale Family", inserted[0]],
+      ["Astra", inserted[1]],
+    ]);
+    expect(model.state.progress[3].holodisk).toBe(true);
+    expect(model.state.progress[3].known).not.toContain("holodisk");
+    expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
+    expect(model.objective).toBe("Return home when ready.");
+    model.step(0.01, idle);
+    expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
+  });
+
+  it("has no waypoint before the reunion", () => {
+    const model = questDone(3, ["whale", "family"]);
+    Object.assign(model.state.progress[3], { questComplete: false, stage: 4 });
+    model.step(0.01, idle);
+    expect(model.state.flight!.objects.some((o) => o.id === "holodisk")).toBe(false);
+  });
+});
+
+describe("holodisk save", () => {
+  const legacy = (unlocked: SectorId[]) => {
+    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as GameState;
+    state.unlocked = unlocked;
+    for (const id of [1, 2, 3] as const) {
+      delete (state.progress[id] as Partial<SectorProgress>).holodisk;
+    }
+    return restoreSave(state)!;
+  };
+
+  it("round-trips the recovered flags", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.state.progress[2].holodisk = true;
+    const restored = restoreSave(model.save())!;
+    expect([1, 2, 3].map((id) => restored.progress[id as SectorId].holodisk)).toEqual([
+      false,
+      true,
+      false,
+    ]);
+  });
+
+  it("counts earlier holodisks as recovered for galaxies already unlocked", () => {
+    const flags = (state: GameState) =>
+      [1, 2, 3].map((id) => state.progress[id as SectorId].holodisk);
+    expect(flags(legacy([1]))).toEqual([false, false, false]);
+    expect(flags(legacy([1, 2]))).toEqual([true, false, false]);
+    expect(flags(legacy([1, 2, 3]))).toEqual([true, true, false]);
+  });
+
+  it("rejects a malformed flag", () => {
+    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    (state.progress as Record<string, Record<string, unknown>>)[1]!.holodisk = "yes";
+    expect(restoreSave(state)).toBeNull();
+  });
+});

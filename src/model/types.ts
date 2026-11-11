@@ -111,6 +111,8 @@ export interface SectorProgress {
   disabledEnemies: number;
   /** Discovered station ids, which are travel destinations. */
   stations: string[];
+  /** The galaxy's holodisk is recovered and inserted into Astra's drive. */
+  holodisk: boolean;
 }
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
@@ -131,6 +133,8 @@ export interface EconomyState {
 export interface DialogueChoice {
   id: string;
   label: string;
+  /** A choice that cannot act looks disabled, stays tappable and plays the shared refusal. */
+  refused?: boolean;
 }
 export interface DialogueState {
   title: string;

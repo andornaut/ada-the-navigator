@@ -28,6 +28,12 @@ export interface PrologueStep extends PremiseLine {
 export interface PremiseContent {
   /** The boarding panels before each later chapter's jump. */
   boarding: readonly PremiseLine[];
+  holodisk: {
+    /** Plays as each recovered holodisk is inserted into Astra's drive. */
+    inserted: readonly PremiseLine[];
+    /** The holodisk's name in the hub's purchase confirm. */
+    name: string;
+  };
   /** Plays once, after galaxy one's home opening and before the first flight. */
   prologue: readonly PrologueStep[];
   /** The title of narration panels in the prologue and boarding. */

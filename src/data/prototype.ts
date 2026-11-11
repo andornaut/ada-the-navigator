@@ -58,6 +58,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Take food from the growers to the workshop.",
         "Take the workshop's tool kit to the salvagers.",
         "Bring spare parts from the salvagers to the workshop.",
+        "Collect the holodisk from the outposts.",
         "Return home when ready.",
       ],
       opening: [
@@ -130,6 +131,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Keep depositing resources and talk with the miner.",
         "Speak with regular visitors about approaching together.",
         "Join the miner's approach at the hub.",
+        "Buy the holodisk at the hub.",
         "Return home when ready.",
       ],
       opening: [
@@ -200,6 +202,7 @@ export const PROTOTYPE: PrototypeContent = {
         "Talk with the freed whale.",
         "Explore to find the whale's family.",
         "Return to the whale and share the coordinates.",
+        "Fight your way to the holodisk.",
         "Return home when ready.",
       ],
       opening: [

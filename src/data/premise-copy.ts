@@ -6,6 +6,16 @@ export const PREMISE: PremiseContent = {
     { text: "Ada holds Penny close and touches the rock's glow." },
     { speaker: "Astra", text: "Welcome back, Navigator." },
   ],
+  holodisk: {
+    inserted: [
+      { text: "Ada slides the holodisk into Astra's drive." },
+      {
+        speaker: "Astra",
+        text: "Memory restored. I've found new coordinates. A new galaxy is ready.",
+      },
+    ],
+    name: "Holodisk",
+  },
   prologue: [
     {
       choice: "Touch the glow.",

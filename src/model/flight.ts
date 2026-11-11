@@ -7,6 +7,7 @@ import {
   enemyEncounterTuning,
   sectorEncounters,
 } from "../data/enemy-catalog.ts";
+import { HOLODISKS } from "../data/holodisks.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
@@ -501,6 +502,29 @@ export function routeBlocked(id: string, flight: FlightState): boolean {
   );
 }
 
+/**
+ * The holodisk leader's pack. Its members persist so the fight cannot reroll, but only the
+ * leader blocks the route, so a fleeing member never strands the holodisk.
+ */
+function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState): void {
+  const { pack, packSize } = HOLODISKS.guard;
+  const packId = "route:holodisk:pack";
+  for (let i = 0; i < packSize; i++) {
+    const angle = (i * Math.PI * 2) / packSize;
+    const member = spawnEnemy(
+      content,
+      pack,
+      `${packId}:${i}`,
+      { x: leader.x + Math.cos(angle) * 90, y: leader.y + Math.sin(angle) * 90 },
+      packId,
+      angle,
+    );
+    member.persistent = true;
+    flight.objects.push(member);
+  }
+  combat(flight).initialPackSizes[packId] = packSize;
+}
+
 export function ensureRouteEncounter(
   content: PrototypeContent,
   id: string,
@@ -524,8 +548,14 @@ export function ensureRouteEncounter(
   if (!destination) {
     return null;
   }
-  const archetype =
-    flight.sector === 1 ? "frigate" : flight.sector === 2 ? "capital" : "oversizedCapital";
+  const holodisk = id === "holodisk";
+  const archetype: EnemyArchetype = holodisk
+    ? HOLODISKS.guard.leader
+    : flight.sector === 1
+      ? "frigate"
+      : flight.sector === 2
+        ? "capital"
+        : "oversizedCapital";
   activateFlightRegion(content, destination, flight);
   const radius = enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius;
   const heading = direction({
@@ -543,6 +573,9 @@ export function ensureRouteEncounter(
     flight,
   );
   flight.objects.push(object);
+  if (holodisk) {
+    guardPack(content, point, flight);
+  }
   relocateRouteGuards(content, flight);
   combat(flight).routeEncounters.push(id);
   return object;
