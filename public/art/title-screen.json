@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "background": "#292734",
+  "field": {
+    "id": "title-field",
+    "at": [-120, 0]
+  },
+  "ship": {
+    "frame": 26,
+    "jetSpeed": 0.8,
+    "animated": false
+  },
+  "wordmark": {
+    "id": "title-wordmark"
+  }
+}

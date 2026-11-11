@@ -327,36 +327,72 @@ amount in `TYPE.label`, on a 20 line. The shop's row and well geometry is in
 
 ### Start screen
 
-The start card is a page card (no close X, no dim) centred in the available
-rect. Groups: header (Gameplay's title), the two 64 portraits `SPACING.gap`
-apart, the action stack (Start, or Continue and Restart) and the note
-(supporting prose, one 20 line). Its width is the 360 floor and its height
-`58 + 64 + 8 + stack + 8 + 20 + 16`: 222 with Start, 278 with Continue and
-Restart. The HUD row's top right holds Achievements then Settings, left to
-right, at `hudButtonTarget(1)` and `hudButtonTarget(0)`; neither moves with the
-card or the saved state.
+A full screen modelled on Chibi's start screen (`chibis-way-home`
+`src/ui/layout/startScreen.ts`, `START_SCREEN`): Ada's ship in flight above the
+two-line wordmark, the action row under it, then the note. There is no card,
+header, dim or portrait; the Ada and Penny portraits and the start card are
+removed. Art, colours and contrast are in [Title screen art](title-screen.md).
+The HUD row's top right holds Achievements then Settings, left to right, at
+`hudButtonTarget(1)` and `hudButtonTarget(0)`, in the
+[nav disc states](achievements-icon.md#states). Nothing moves with the saved
+state except the action row's contents.
 
-At 720x360 with phone insets (left and right 43, bottom 19, top 0):
+Every part except the field and the nav discs is placed in play-view px, from
+`playView(view)`'s top-left (`x0`, 0), so it stays centred on the game area at
+every aspect.
 
-| Part             | Arithmetic                                                                                  | Result                                               |
-| ---------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| HUD rect         | left `max(0 + 8, 43)`, right `min(720 - 8, 720 - 43)`, top `max(0 + 8, 8)`                  | 43, 677, 8                                           |
-| Settings target  | `677 - 48` to 677, 8 to `8 + 48`; disc `+ 7.5`, glyph `+ 14`                                | 629 to 677; disc 636.5 to 669.5                      |
-| Achievements     | `677 - 48 - 56` to `677 - 56`; disc `+ 7.5`, glyph `+ 14`; focus ring 4 outside the disc    | 573 to 621; disc 580.5 to 613.5; ring 576.5 to 617.5 |
-| Row spacing      | Targets 621 to 629; disc centres 597 and 653                                                | 8 gap, 56 pitch                                      |
-| Available rect   | left `max(16, 43)`, right `720 - max(16, 43)`, top `max(16, 0)`, bottom `360 - max(16, 19)` | 43, 677, 16, 341                                     |
-| Start card       | x `43 + (634 - 360) / 2`; y `16 + (325 - 278) / 2` (`16 + (325 - 222) / 2` with Start)      | 180 to 540; 39.5 to 317.5 (67.5 to 289.5)            |
-| Card to the row  | Achievements target left minus card right: `573 - 540`                                      | 33, at least `SPACING.pageInset`                     |
-| Title to the row | The title lies in the card's inner width, `180 + 16` to `540 - 16`: `573 - 524`             | At least 49                                          |
+| Token             | Value                                               | Rule                                                                                                                 | Constant                                                |
+| ----------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Field             | `title-field`, 960x540, top-left (-120, 0)          | Under everything; the space background fills beyond it                                                               | `titleScreen.field.at`, `title-screen.json`             |
+| Ship              | 280 square frame centred on (378, 84)               | The selected paint's `ship-26` with speed jets at `titleScreen.ship.jetSpeed` (0.8)                                  | `START_SCREEN.ship`, `startScreen.ts`, to implement     |
+| Wordmark          | `title-wordmark`, 270x102, top-left (225, 148)      | Centred on the play view (`360 - 270 / 2`); Chibi's logo top is 60 under its nav bar                                 | `START_SCREEN.wordmark`, `startScreen.ts`, to implement |
+| Action row        | Top 264, buttons 192 wide, `TEXT_BUTTON.height`     | 14 below the wordmark (Chibi's 15 from logo to actions); Chibi's row is at 268                                       | `START_SCREEN.actions`, `startScreen.ts`, to implement  |
+| Start             | x 264 (`360 - 192 / 2`)                             | Primary, `ui-button-primary`; first run only                                                                         | `START_SCREEN.actions`                                  |
+| Restart, Continue | x 164 and 364 (`360 - 192 - 4`, `360 + 4`)          | With saved progress: Restart secondary (`ui-button`) on the left, Continue primary on the right, `SPACING.gap` apart | `START_SCREEN.actions`                                  |
+| Note              | One `TYPE.body` line box, top 320, centred on x 360 | Cream `#ead4aa`, no panel or shadow; `SPACING.gap` below the action row                                              | `START_SCREEN.note`, `startScreen.ts`, to implement     |
 
-- With Continue and Restart the row and the card share rows 39.5 to 56, but
-  never columns, so the horizontal 33 is the clearance; Settings's right edge
-  is the safe rect's right edge, where the 43 inset replaces `CONTROL_EDGE`.
-- This is the smallest clearance: without insets at 720x360 and at 1280x720 the
-  HUD rect's right is 712 and Achievements starts at 608, 68 from the card; at
-  844x390 with insets it starts at 632.08 and the card ends at 569.54, 62.54.
-- The press areas are the two targets, 8 apart, so a press never reaches the
-  card; the focus ring stays inside the Achievements target.
+- Labels and actions are Gameplay's: Start, Continue, Restart and the
+  `deferred` note; the wordmark's accessible name is the `home` string.
+- Continue (or Start) is the default Enter and Space action and the first Tab
+  stop, then Restart, Achievements and Settings, as in Chibi. Each button's
+  face box is its press area (at least 48 per axis); the 8 gap separates
+  Restart and Continue.
+- Draw order: field, jets, ship frame, wordmark, actions, note, nav discs.
+- Taller views (1280x720 is 720x405) keep every part at its play-view place
+  from the top and show more field below; the field covers to 540.
+
+Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
+the logical view is 779.08x360 and `x0` is 29.
+
+| Part           | 720x360                 | 720x360, insets         | 844x390                 | 844x390, insets           |
+| -------------- | ----------------------- | ----------------------- | ----------------------- | ------------------------- |
+| HUD rect       | 8 to 712, top 8         | 43 to 677, top 8        | 37 to 741, top 8        | 43 to 736.08, top 8       |
+| Available rect | 16 to 704, 16 to 344    | 43 to 677, 16 to 341    | 16 to 763.08, 16 to 344 | 43 to 736.08, 16 to 341   |
+| Field          | -120 to 840, 0 to 540   | -120 to 840, 0 to 540   | -91 to 869, 0 to 540    | -91 to 869, 0 to 540      |
+| Ship frame     | 238 to 518, -56 to 224  | 238 to 518, -56 to 224  | 267 to 547, -56 to 224  | 267 to 547, -56 to 224    |
+| Ship ink       | 226.3 to 484, 48 to 141 | 226.3 to 484, 48 to 141 | 255.3 to 513, 48 to 141 | 255.3 to 513, 48 to 141   |
+| Wordmark       | 225 to 495, 148 to 250  | 225 to 495, 148 to 250  | 254 to 524, 148 to 250  | 254 to 524, 148 to 250    |
+| Start          | 264 to 456, 264 to 312  | 264 to 456, 264 to 312  | 293 to 485, 264 to 312  | 293 to 485, 264 to 312    |
+| Restart        | 164 to 356, 264 to 312  | 164 to 356, 264 to 312  | 193 to 385, 264 to 312  | 193 to 385, 264 to 312    |
+| Continue       | 364 to 556, 264 to 312  | 364 to 556, 264 to 312  | 393 to 585, 264 to 312  | 393 to 585, 264 to 312    |
+| Note line box  | Centre 360, 320 to 340  | Centre 360, 320 to 340  | Centre 389, 320 to 340  | Centre 389, 320 to 340    |
+| Achievements   | 608 to 656, 8 to 56     | 573 to 621, 8 to 56     | 637 to 685, 8 to 56     | 632.08 to 680.08, 8 to 56 |
+| Settings       | 664 to 712, 8 to 56     | 629 to 677, 8 to 56     | 693 to 741, 8 to 56     | 688.08 to 736.08, 8 to 56 |
+
+Clearances, smallest at 720x360 with insets:
+
+| Pair                              | Arithmetic  | Result                                 |
+| --------------------------------- | ----------- | -------------------------------------- |
+| Ship ink to Achievements          | `573 - 484` | 89, beside the HUD row, never under it |
+| Wordmark to Achievements          | `573 - 495` | 78 (108.08 at 844x390 with insets)     |
+| Ship ink to wordmark              | `148 - 141` | 7                                      |
+| Wordmark to the action row        | `264 - 250` | 14                                     |
+| Action row to the note            | `320 - 312` | 8, `SPACING.gap`                       |
+| Note to the available rect bottom | `341 - 340` | 1 (4 without a bottom inset)           |
+| Restart to the available rect     | `164 - 43`  | 121                                    |
+
+- The focus ring (4 outside a face) stays inside the 8 gap and the 14 above
+  the row; the press areas of the nav discs are their targets, 8 apart.
 
 ### Shop item row
 
@@ -497,29 +533,30 @@ the 20 name, 4 and the flavour's two 20 lines.
 
 ## Changes from current values
 
-| Change                                                                                                                                                  | Was                                                                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| ------------------------------------------------------------------------------------------------------------------------------                          | ----------------------------------------------------------------------------------- |
-| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                                              | CSS px at 1x, independent of the canvas                                             |
-| Safe insets clamp HUD controls, cards and page content                                                                                                  | Insets not read                                                                     |
-| Sticks and Use anchor to the game area: 24 from its sides (an inset replaces it) and 20 above its bottom (a bottom inset adds)                          | From the view's safe edges                                                          |
-| Every action stack fills the inner width with `SPACING.gap`                                                                                             | Generic stacks 4 apart                                                              |
-| Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                                                                   | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons |
-| Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                                                        | Panels at 0.70; opaque ink track                                                    |
-| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                                                                   | The HUD safe rect's corners                                                         |
-| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area                                                  | 48 squares, 24 glyph, cream ring                                                    |
-| Ammunition counts: an ink count pill under each non-Basic weapon disc                                                                                   | No counts; ammunition was unlimited                                                 |
-| Pause draws `pause.svg` with smooth sampling                                                                                                            | `ui-pause` PNG, nearest neighbour                                                   |
-| Settings draws `settings.svg` as a mask with smooth sampling                                                                                            | `icon-settings-nav` PNG mask                                                        |
-| Start screen Achievements: a `HUD_BUTTON` with `achievements.svg`, one pitch left of Settings; the start card keeps only Start, or Continue and Restart | A secondary button at the end of the start card's action stack                      |
-| Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                            | Idle in every state                                                                 |
-| Cards scroll one scroll group with the header and close fixed                                                                                           | The whole card scrolls                                                              |
-| Prose never widens a card; cheats headings and notes use group and row gaps                                                                             | 36em prose cap; 16 and 4 margins                                                    |
-| Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                        | A `NOTICE` strip on the HUD rect's top                                              |
-| Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                  | 640x64, 48 frame, name tab inside over one line                                     |
-| Story pages use `STORY_PANEL`                                                                                                                           | `.story-panel` clamp and rem sizes                                                  |
-| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                   | 16; a 24 line                                                                       |
-| Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                              | A 288x160 chart in a Map card (`MAP_CARD`)                                          |
+| Change                                                                                                                                                  | Was                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ------------------------------------------------------------------------------------------------------------------------------                          | -----------------------------------------------------------------------------------  |
+| UI is logical px scaled by `s`: about 8% larger on an 844x390 phone, 1.78x at 1280x720, 2.67x at 1920x1080                                              | CSS px at 1x, independent of the canvas                                              |
+| Safe insets clamp HUD controls, cards and page content                                                                                                  | Insets not read                                                                      |
+| Sticks and Use anchor to the game area: 24 from its sides (an inset replaces it) and 20 above its bottom (a bottom inset adds)                          | From the view's safe edges                                                           |
+| Every action stack fills the inner width with `SPACING.gap`                                                                                             | Generic stacks 4 apart                                                               |
+| Status pill beside pause: the shield bar (96x12) and the Stardust count in one `PILL`                                                                   | Shield bar 3 high across the bottom; Stardust count a 14 px plate under the weapons  |
+| Conversation, notice and status pill panels and the shield track are ink at 0.65 in every galaxy                                                        | Panels at 0.70; opaque ink track                                                     |
+| HUD top controls anchor to `hudRect`: the centred base view, clamped by the safe rect                                                                   | The HUD safe rect's corners                                                          |
+| Weapon buttons: 48 targets 8 apart, 33 disc, 20 glyph, ink selection annulus; target is the press area                                                  | 48 squares, 24 glyph, cream ring                                                     |
+| Ammunition counts: an ink count pill under each non-Basic weapon disc                                                                                   | No counts; ammunition was unlimited                                                  |
+| Pause draws `pause.svg` with smooth sampling                                                                                                            | `ui-pause` PNG, nearest neighbour                                                    |
+| Settings draws `settings.svg` as a mask with smooth sampling                                                                                            | `icon-settings-nav` PNG mask                                                         |
+| Start screen Achievements: a `HUD_BUTTON` with `achievements.svg`, one pitch left of Settings; the action row keeps only Start, or Restart and Continue | A secondary button at the end of the start card's action stack                       |
+| Start screen: ship, wordmark and an action row of 192-wide buttons over the title field, Start and Continue primary (`START_SCREEN`)                    | A page card with a heading, the Ada and Penny portraits and a secondary action stack |
+| Start screen nav discs show a pressed state: white glyph on a `#3a4466` face                                                                            | Idle in every state                                                                  |
+| Cards scroll one scroll group with the header and close fixed                                                                                           | The whole card scrolls                                                               |
+| Prose never widens a card; cheats headings and notes use group and row gaps                                                                             | 36em prose cap; 16 and 4 margins                                                     |
+| Notices show in the conversation box's slot (`CONVERSATION_BOX`)                                                                                        | A `NOTICE` strip on the HUD rect's top                                               |
+| Conversation box 480x60: 48 portrait slot in a 52 frame, overhanging name tab, up to two wrapped lines                                                  | 640x64, 48 frame, name tab inside over one line                                      |
+| Story pages use `STORY_PANEL`                                                                                                                           | `.story-panel` clamp and rem sizes                                                   |
+| Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                   | 16; a 24 line                                                                        |
+| Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                              | A 288x160 chart in a Map card (`MAP_CARD`)                                           |
 
 ## Exceptions
 
@@ -571,8 +608,10 @@ Tests:
   `playView` inset by `CONTROL_EDGE`.
 - On the start screen at 720x360 with phone insets, the Achievements target
   is `hudButtonTarget(1)` (573 to 621, top 8), `HUD_BUTTON.gap` left of the
-  Settings target, and keeps at least `SPACING.pageInset` from the start card
-  (33) with Start alone and with Continue and Restart.
+  Settings target, and keeps 78 from the wordmark and 89 from the ship's ink;
+  the action row (top 264), the note (320 to 340) and every rect in the
+  [Start screen](#start-screen) table match at 720x360 and 844x390, with and
+  without insets.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
 - The galaxy card keeps one size across pages. The story panel keeps its width,

@@ -3449,6 +3449,32 @@
       }
     },
     {
+      "id": "title-field",
+      "path": "/art/title-field.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "title-wordmark",
+      "path": "/art/ui/title-wordmark.svg",
+      "width": 270,
+      "height": 102,
+      "displayWidth": 270,
+      "displayHeight": 102,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
       "id": "cockpit",
       "path": "/art/cockpit.png",
       "width": 1920,
@@ -11144,5 +11170,6 @@
   "shipNose": "/art/ship-nose.json",
   "storyOvernight": "/art/story-overnight.json",
   "resourceRocks": "/art/resource-rocks.json",
-  "tow": "/art/cartwheel/tow.json"
+  "tow": "/art/cartwheel/tow.json",
+  "titleScreen": "/art/title-screen.json"
 }
