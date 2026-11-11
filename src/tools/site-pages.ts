@@ -47,8 +47,7 @@ export function sitePages(): Plugin {
             this.error(`Missing built page: ${page.source}`);
           }
           delete bundle[page.source];
-          asset.fileName = page.output;
-          bundle[page.output] = asset;
+          this.emitFile({ fileName: page.output, source: asset.source, type: "asset" });
         }
       },
       order: "post",

@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -54,6 +54,7 @@ it("serves landing and play independently and builds both public URLs with worki
     plugins: [sitePages()],
     root,
   });
+  expect(readdirSync(join(root, "dist"), { recursive: true })).toContain("index.html");
   const landing = readFileSync(join(root, "dist/index.html"), "utf8");
   const play = readFileSync(join(root, "dist/play/index.html"), "utf8");
   expect(landing).toContain('href="/play/"');
