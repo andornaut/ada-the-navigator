@@ -1,10 +1,23 @@
 import { CHUNK_CATALOG } from "../data/chunk-catalog.ts";
-import { type EnemyArchetype, enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
+import {
+  type EncounterEntry,
+  type EnemyArchetype,
+  enemyCatalog,
+  enemyEncounterTuning,
+  sectorEncounters,
+} from "../data/enemy-catalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { planChunk } from "./chunk-templates.ts";
-import { createEnemy, damageEnemy, enemyEffects, stepDebris, stepEnemy } from "./enemy-ai.ts";
+import {
+  createEnemy,
+  damageEnemy,
+  enemyEffects,
+  hardpointOffset,
+  stepDebris,
+  stepEnemy,
+} from "./enemy-ai.ts";
 import {
   activateFlightRegion,
   beginFlightStep,
@@ -19,6 +32,7 @@ import {
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
+import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -37,34 +51,6 @@ import {
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
-function direction(v: Vec): Vec {
-  const size = length(v);
-  return size ? { x: v.x / size, y: v.y / size } : { x: 0, y: 0 };
-}
-/**
- * Rotates the unit `current` toward `target` along the shorter arc, removing the
- * fraction `1 - exp(-dt / response)` of the angle and snapping within half a degree.
- */
-function turnToward(dt: number, response: number, target: Vec, current: Vec): Vec {
-  const requested = direction(target);
-  if (!length(current)) {
-    return requested;
-  }
-  let delta = Math.atan2(
-    current.x * requested.y - current.y * requested.x,
-    current.x * requested.x + current.y * requested.y,
-  );
-  // Choose a consistent side for an exact half-turn.
-  if (Math.abs(Math.abs(delta) - Math.PI) < 1e-12) {
-    delta = Math.PI;
-  }
-  const remaining = Math.exp(-dt / Math.max(0.001, response));
-  if (Math.abs(delta) * remaining <= Math.PI / 360) {
-    return requested;
-  }
-  const angle = Math.atan2(current.y, current.x) + delta * (1 - remaining);
-  return { x: Math.cos(angle), y: Math.sin(angle) };
-}
 /**
  * Smoothed requested movement direction per flight. It is transient so saves gain
  * no field; a restored or newly pressed stick starts from the velocity heading.
@@ -184,6 +170,34 @@ function spawnEnemy(
   };
 }
 
+/**
+ * Chooses an encounter's archetype by weight and its group size from that archetype's
+ * inclusive range. Rolls are uniform in [0, 1); the count roll is drawn first so the
+ * equal-weight shared table keeps its original seeded results.
+ */
+export function rollEncounter(
+  table: readonly EncounterEntry[],
+  countRoll: number,
+  archetypeRoll: number,
+): { archetype: EnemyArchetype; count: number } {
+  const total = table.reduce((sum, entry) => sum + Math.max(0, entry.weight), 0);
+  let threshold = archetypeRoll * total;
+  let chosen = table.at(-1);
+  for (const entry of table) {
+    const weight = Math.max(0, entry.weight);
+    if (threshold < weight) {
+      chosen = entry;
+      break;
+    }
+    threshold -= weight;
+  }
+  const [low, high] = chosen?.groupSize ?? [1, 1];
+  return {
+    archetype: chosen?.archetype ?? "fighter",
+    count: low + Math.floor(countRoll * (high - low + 1)),
+  };
+}
+
 function generateRegion(
   content: PrototypeContent,
   x: number,
@@ -232,10 +246,8 @@ function generateRegion(
     return;
   }
   const packId = `pack:${x},${y}`;
-  const [low, high] = enemyEncounterTuning.groupSize;
-  const count = low + Math.floor(next() * (high - low + 1));
-  const choices: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
-  const archetype = choices[Math.floor(next() * choices.length)] ?? "fighter";
+  const countRoll = next();
+  const { archetype, count } = rollEncounter(sectorEncounters[flight.sector], countRoll, next());
   const state = combat(flight);
   const initialized = Object.hasOwn(state.initialPackSizes, packId);
   // Preserve the casualty count and admit only the represented pack's unloaded survivor budget.
@@ -624,30 +636,6 @@ function damage(content: PrototypeContent, flight: FlightState): void {
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
 /**
- * Direction fed to the vector acceleration: the request, damped while already moving.
- * Returns the smoothed heading at the slice midpoint so results barely depend on frame rate.
- */
-function movementHeading(
-  content: PrototypeContent,
-  dt: number,
-  input: FlightInput,
-  flight: FlightState,
-): Vec {
-  const requested = direction(input.move);
-  if (!length(requested)) {
-    movementHeadings.delete(flight);
-    return requested;
-  }
-  if (length(flight.velocity) < 0.01) {
-    movementHeadings.set(flight, requested);
-    return requested;
-  }
-  const previous = movementHeadings.get(flight) ?? direction(flight.velocity);
-  const response = content.tuning.movementTurnSeconds;
-  movementHeadings.set(flight, turnToward(dt, response, requested, previous));
-  return turnToward(dt / 2, response, requested, previous);
-}
-/**
  * Fraction of maxSpeed requested by a movement deflection from 0 (just past the dead zone)
  * to 1 (full reach). No input requests no speed; any input requests at least minSpeedFraction.
  */
@@ -661,15 +649,16 @@ export function movementSpeedFraction(
   }
   return tuning.minSpeedFraction + (1 - tuning.minSpeedFraction) * m ** tuning.speedCurveExponent;
 }
-/** Current ship speed as a fraction of maxSpeed, clamped to [0, 1], for speed-scaled jets. */
+/** Ada's maximum speed: the base maximum scaled by her physics speedRatio. */
+function adaMaxSpeed(tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">): number {
+  return tuning.maxSpeed * tuning.physics.speedRatio;
+}
+/** Current ship speed as a fraction of Ada's maximum speed, clamped to [0, 1], for jets. */
 export function shipSpeedFraction(
-  tuning: Pick<PrototypeContent["tuning"], "maxSpeed">,
+  tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">,
   flight: Pick<FlightState, "velocity">,
 ): number {
-  if (!(tuning.maxSpeed > 0)) {
-    return 0;
-  }
-  return Math.min(1, Math.max(0, length(flight.velocity) / tuning.maxSpeed));
+  return speedFraction(adaMaxSpeed(tuning), flight.velocity);
 }
 function move(
   content: PrototypeContent,
@@ -678,16 +667,21 @@ function move(
   flight: FlightState,
 ): void {
   const magnitude = Math.min(1, length(input.move));
-  const heading = movementHeading(content, dt, input, flight);
-  const speed = movementSpeedFraction(content.tuning, magnitude) * content.tuning.maxSpeed;
-  const response = magnitude ? content.tuning.accelerationSeconds : content.tuning.brakingSeconds;
-  const blend = 1 - Math.exp(-dt / Math.max(0.001, response));
-  flight.velocity.x += (heading.x * speed - flight.velocity.x) * blend;
-  flight.velocity.y += (heading.y * speed - flight.velocity.y) * blend;
-  // Stop subpixel drift so released controls stop advancing exploration.
-  if (!magnitude && length(flight.velocity) < 0.01) {
-    flight.velocity = { x: 0, y: 0 };
+  const motion = stepShipMotion(
+    content.tuning.physics,
+    dt,
+    {
+      direction: input.move,
+      speed: movementSpeedFraction(content.tuning, magnitude) * adaMaxSpeed(content.tuning),
+    },
+    { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
+  );
+  if (motion.heading) {
+    movementHeadings.set(flight, motion.heading);
+  } else {
+    movementHeadings.delete(flight);
   }
+  flight.velocity = motion.velocity;
   const start = { ...flight.player };
   const steps = Math.max(1, Math.ceil((length(flight.velocity) * dt) / 4));
   for (let i = 0; i < steps; i++) {
@@ -721,7 +715,12 @@ function move(
     distance(start, flight.player) > 0.001 &&
     length(flight.velocity)
   ) {
-    flight.facing = turnToward(dt, content.tuning.aimTurnSeconds, flight.velocity, flight.facing);
+    flight.facing = turnToward(
+      dt,
+      content.tuning.physics.aimTurnSeconds,
+      flight.velocity,
+      flight.facing,
+    );
   }
 }
 function enemies(
@@ -926,16 +925,18 @@ function shots(
         shot.hitIds.push(object.id);
         if (object.kind === "enemy" && object.enemy) {
           const definition = enemyCatalog[object.enemy.archetype];
-          const width = definition.sizeRatio * content.tuning.flight.shipRadius * 2;
-          const part = definition.hardpoints.find(
-            (part) =>
-              object.enemy!.hardpoints.some((value) => value.id === part.id && value.hp > 0) &&
-              distance(shot, {
-                x: object.x + part.offset.x * width,
-                y: object.y + part.offset.y * width,
-              }) <=
-                content.tuning.flight.shipRadius + 6,
-          );
+          const enemy = object.enemy;
+          const adaWidth = content.tuning.flight.shipRadius * 2;
+          const part = definition.hardpoints.find((part) => {
+            if (!enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0)) {
+              return false;
+            }
+            const offset = hardpointOffset(definition, adaWidth, enemy.facing, part);
+            return (
+              distance(shot, { x: object.x + offset.x, y: object.y + offset.y }) <=
+              content.tuning.flight.shipRadius + 6
+            );
+          });
           // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
           if (definition.hardpoints.length && !part) {
             shot.hitIds.pop();
@@ -1018,7 +1019,12 @@ export function stepFlight(
     syncFlightRegion(content, flight);
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
-      flight.facing = turnToward(slice, content.tuning.aimTurnSeconds, input.aim, flight.facing);
+      flight.facing = turnToward(
+        slice,
+        content.tuning.physics.aimTurnSeconds,
+        input.aim,
+        flight.facing,
+      );
     }
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
     if (aiming && flight.fireCooldown <= 0) {

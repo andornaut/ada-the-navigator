@@ -1,3 +1,4 @@
+import { SHIP_PHYSICS } from "./ship-physics.ts";
 import type { PrototypeContent } from "./types.ts";
 export const PROTOTYPE: PrototypeContent = {
   chapters: {
@@ -267,9 +268,6 @@ export const PROTOTYPE: PrototypeContent = {
   },
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
-    accelerationSeconds: 0.18,
-    aimTurnSeconds: 0.045,
-    brakingSeconds: 0.22,
     chunkSize: 512,
     dangerReleaseSeconds: 3,
     encounterFreshDistance: 600,
@@ -300,7 +298,7 @@ export const PROTOTYPE: PrototypeContent = {
     maxSpeed: 200,
     minSpeedFraction: 0.04,
     miningMilestones: [12, 24, 36],
-    movementTurnSeconds: 0.1,
+    physics: SHIP_PHYSICS.ada,
     safeRadius: 160,
     shieldMax: 100,
     shieldRechargeDelay: 3,

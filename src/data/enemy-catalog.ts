@@ -1,3 +1,6 @@
+import { SHIP_PHYSICS, type ShipPhysics } from "./ship-physics.ts";
+import type { SectorId } from "./types.ts";
+
 export interface Point {
   x: number;
   y: number;
@@ -12,6 +15,7 @@ export interface FireProfile {
 interface HardpointBase {
   hp: number;
   id: string;
+  /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
   offset: Point;
   required: boolean;
 }
@@ -25,10 +29,10 @@ export interface EnemyDefinition {
   hp: number;
   morale: { individualHpRatio: number; packLossRatio: number };
   perception: number;
+  physics: ShipPhysics;
   pursuit: { homeRadius: number; maxSeconds: number; unseenSeconds: number };
   sizeRatio: number;
-  speedRatio: number;
-  steering: { orbit: number; response: number; separation: number; wobble: number };
+  steering: { orbit: number; separation: number; wobble: number };
 }
 
 const engine = (id: string, x: number, y: number): HardpointDefinition => ({
@@ -67,7 +71,8 @@ const weapon = (fire: FireProfile, id: string, x: number, y: number): HardpointD
   offset: { x, y },
   required: true,
 });
-const fighter: EnemyDefinition = {
+/** Shared ship-sized defaults; each archetype states its own physics. */
+const base: Omit<EnemyDefinition, "physics"> = {
   aggression: "sight",
   engagement: 360,
   fire: bolt,
@@ -77,14 +82,13 @@ const fighter: EnemyDefinition = {
   perception: 650,
   pursuit: { homeRadius: 1400, maxSeconds: 18, unseenSeconds: 3 },
   sizeRatio: 1,
-  speedRatio: 0.8,
-  steering: { orbit: 0, response: 0.6, separation: 70, wobble: 0 },
+  steering: { orbit: 0, separation: 70, wobble: 0 },
 };
 
 /** Provisional tuning in world units and seconds, not user-selected values. */
 export const enemyCatalog = {
   capital: {
-    ...fighter,
+    ...base,
     engagement: 750,
     hardpoints: [
       command,
@@ -96,12 +100,16 @@ export const enemyCatalog = {
     hp: 18,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     perception: 1100,
+    physics: SHIP_PHYSICS.capital,
     sizeRatio: 10,
-    speedRatio: 0.2,
   },
-  fighter,
+  fighter: {
+    ...base,
+    physics: SHIP_PHYSICS.fighter,
+    steering: { ...base.steering, orbit: 0.4 },
+  },
   frigate: {
-    ...fighter,
+    ...base,
     engagement: 500,
     hardpoints: [
       engine("engine", 0, 0.3),
@@ -109,12 +117,18 @@ export const enemyCatalog = {
       weapon(bolt, "starboard", 0.3, 0),
     ],
     hp: 10,
+    physics: SHIP_PHYSICS.frigate,
     sizeRatio: 3,
-    speedRatio: 0.4,
   },
-  interceptor: { ...fighter, speedRatio: 1.1 },
+  interceptor: {
+    ...base,
+    engagement: 260,
+    hp: 3,
+    physics: SHIP_PHYSICS.interceptor,
+    sizeRatio: 0.9,
+  },
   oversizedCapital: {
-    ...fighter,
+    ...base,
     engagement: 1000,
     hardpoints: [
       command,
@@ -127,26 +141,58 @@ export const enemyCatalog = {
     hp: 24,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     perception: 1500,
+    physics: SHIP_PHYSICS.oversizedCapital,
     sizeRatio: 30,
-    speedRatio: 0.12,
   },
-  retaliator: { ...fighter, aggression: "retaliate" },
+  retaliator: {
+    ...base,
+    aggression: "retaliate",
+    fire: { ...bolt, angles: [-0.2, 0, 0.2], id: "retaliator-spread", interval: 2.2 },
+    hp: 8,
+    physics: SHIP_PHYSICS.retaliator,
+    sizeRatio: 2,
+    steering: { ...base.steering, orbit: 0.2 },
+  },
   swarm: {
-    ...fighter,
+    ...base,
     fire: { ...bolt, id: "swarm-bolt", interval: 1.8, projectileSpeedRatio: 1.5 },
     hp: 2,
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
-    speedRatio: 0.9,
-    steering: { orbit: 0.9, response: 0.35, separation: 85, wobble: 0.65 },
+    physics: SHIP_PHYSICS.swarm,
+    sizeRatio: 0.6,
+    steering: { orbit: 0.9, separation: 85, wobble: 0.65 },
   },
 } satisfies Record<string, EnemyDefinition>;
 
 export type EnemyArchetype = keyof typeof enemyCatalog;
 
+/** One weighted encounter choice; groupSize is an inclusive member range. */
+export interface EncounterEntry {
+  archetype: EnemyArchetype;
+  groupSize: readonly [number, number];
+  weight: number;
+}
+
+/** Equal weights in this order preserve the unthemed sectors' seeded encounters. */
+const sharedEncounters: readonly EncounterEntry[] = (
+  ["fighter", "swarm", "interceptor", "retaliator"] as const
+).map((archetype) => ({ archetype, groupSize: [1, 4], weight: 0.25 }));
+
+/** Open-space encounter tables per sector; frigates and capitals keep their route roles. */
+export const sectorEncounters: Readonly<Record<SectorId, readonly EncounterEntry[]>> = {
+  1: [
+    { archetype: "swarm", groupSize: [3, 5], weight: 0.35 },
+    { archetype: "fighter", groupSize: [1, 2], weight: 0.35 },
+    { archetype: "interceptor", groupSize: [1, 1], weight: 0.15 },
+    { archetype: "retaliator", groupSize: [1, 1], weight: 0.15 },
+  ],
+  2: sharedEncounters,
+  3: sharedEncounters,
+};
+
 /** Small encounters separated by quiet travel; the adapter owns seeded placement. */
 export const enemyEncounterTuning = {
   debris: { count: [3, 7], speedRatio: [0.08, 0.25] },
-  groupSize: [1, 4],
   quietDistance: 1800,
   quietSeconds: 12,
   speedCapRatio: 1.1,

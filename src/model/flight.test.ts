@@ -70,7 +70,7 @@ describe("flight boundaries", () => {
   it("keeps movement independent of aim and fires an upgrade only while aiming with unlimited ammo", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
-    stepFlight(PROTOTYPE, 0.3, { ...idle, move: { x: 1, y: 0 } }, flight);
+    stepFlight(PROTOTYPE, 0.4, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.facing).toEqual({ x: 1, y: 0 });
     flight.weapon = "tripleLaser";
@@ -201,7 +201,7 @@ it("stops movement and fresh exploration after released controls finish braking"
   const flight = empty();
   flight.player = { x: 100, y: 100 };
   stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
-  stepFlight(PROTOTYPE, 4, idle, flight);
+  stepFlight(PROTOTYPE, 6, idle, flight);
   const position = { ...flight.player };
   const explored = flight.freshDistance;
   stepFlight(PROTOTYPE, 1, idle, flight);
@@ -211,11 +211,11 @@ it("stops movement and fresh exploration after released controls finish braking"
 
 it("retains nonzero movement-facing through released coasting and rest before placing the next quest", () => {
   const flight = empty();
-  stepFlight(PROTOTYPE, 0.2, { ...idle, move: { x: 1, y: 0 } }, flight);
+  stepFlight(PROTOTYPE, 0.4, { ...idle, move: { x: 1, y: 0 } }, flight);
   stepFlight(PROTOTYPE, 0.1, idle, flight);
   expect(flight.velocity.x).toBeGreaterThan(0);
   expect(flight.facing).toEqual({ x: 1, y: 0 });
-  stepFlight(PROTOTYPE, 4, idle, flight);
+  stepFlight(PROTOTYPE, 6, idle, flight);
   expect(flight.velocity).toEqual({ x: 0, y: 0 });
   expect(flight.facing).toEqual({ x: 1, y: 0 });
   const before = { ...flight.player };
@@ -245,13 +245,14 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
 
 describe("directional handling", () => {
   const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const physics = PROTOTYPE.tuning.physics;
   const vectorOnly: PrototypeContent = {
     ...PROTOTYPE,
-    tuning: { ...PROTOTYPE.tuning, movementTurnSeconds: 0 },
+    tuning: { ...PROTOTYPE.tuning, physics: { ...PROTOTYPE.tuning.physics, turnSeconds: 0 } },
   };
   const instantAim: PrototypeContent = {
     ...PROTOTYPE,
-    tuning: { ...PROTOTYPE.tuning, aimTurnSeconds: 0 },
+    tuning: { ...PROTOTYPE.tuning, physics: { ...PROTOTYPE.tuning.physics, aimTurnSeconds: 0 } },
   };
   const east = { x: 1, y: 0 };
   const speed = (flight: FlightState) => Math.hypot(flight.velocity.x, flight.velocity.y);
@@ -281,13 +282,13 @@ describe("directional handling", () => {
     stepFlight(vectorOnly, 0.1, request, reference);
     const turned = degrees(damped.velocity, east);
     const referenceTurned = degrees(reference.velocity, east);
-    expect(referenceTurned).toBeCloseTo(36.6, 0);
+    expect(referenceTurned).toBeCloseTo(21.6, 0);
     expect(turned).toBeLessThanOrEqual(referenceTurned);
-    expect(turned).toBeGreaterThan(12);
-    expect(turned).toBeLessThan(22);
+    expect(turned).toBeGreaterThan(4);
+    expect(turned).toBeLessThan(9);
     stepFlight(PROTOTYPE, 0.1, request, damped);
-    expect(speed(damped)).toBeLessThan(0.9 * maxSpeed);
-    stepFlight(PROTOTYPE, 0.8, request, damped);
+    expect(speed(damped)).toBeLessThan(0.95 * maxSpeed);
+    stepFlight(PROTOTYPE, 1.8, request, damped);
     expect(degrees(damped.velocity, request.move)).toBeLessThan(1);
     expect(degrees(damped.facing, request.move)).toBeLessThan(1);
     expect(speed(damped)).toBeGreaterThan(0.95 * maxSpeed);
@@ -318,13 +319,13 @@ describe("directional handling", () => {
     const damped = empty();
     const reference = empty();
     const input = { ...idle, aim: { x: 0, y: -1 }, move: east };
-    stepFlight(PROTOTYPE, 0.18, input, damped);
-    stepFlight(vectorOnly, 0.18, input, reference);
+    stepFlight(PROTOTYPE, physics.accelerationSeconds, input, damped);
+    stepFlight(vectorOnly, physics.accelerationSeconds, input, reference);
     expect(damped.velocity.x).toBeCloseTo(maxSpeed * (1 - Math.exp(-1)), 6);
     expect(damped.velocity.y).toBe(0);
     expect(damped.facing).toEqual(input.aim);
-    stepFlight(PROTOTYPE, 0.22, idle, damped);
-    stepFlight(vectorOnly, 0.22, idle, reference);
+    stepFlight(PROTOTYPE, physics.brakingSeconds, idle, damped);
+    stepFlight(vectorOnly, physics.brakingSeconds, idle, reference);
     expect(damped.velocity).toEqual(reference.velocity);
     stepFlight(PROTOTYPE, 4, idle, damped);
     stepFlight(vectorOnly, 4, idle, reference);
@@ -339,12 +340,19 @@ describe("directional handling", () => {
     const aim = { ...idle, aim: { x: 0, y: -1 } };
     stepFlight(PROTOTYPE, 1 / 60, aim, flight);
     expect(flight.shots).toHaveLength(1);
-    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(90 * Math.exp(-1 / 60 / 0.045), 6);
+    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(
+      90 * Math.exp(-1 / 60 / physics.aimTurnSeconds),
+      6,
+    );
     expect(degrees(flight.shots[0]!.velocity, flight.facing)).toBeLessThan(1e-9);
     expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic.intervalSeconds, 9);
     frames(PROTOTYPE, 5, aim, flight);
-    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(90 * Math.exp(-0.1 / 0.045), 6);
-    frames(PROTOTYPE, 8, aim, flight);
+    expect(degrees(flight.facing, aim.aim)).toBeCloseTo(
+      90 * Math.exp(-0.1 / physics.aimTurnSeconds),
+      6,
+    );
+    // The half-degree snap lands on frame 22 at aimTurnSeconds 0.07.
+    frames(PROTOTYPE, 15, aim, flight);
     expect(flight.facing).not.toEqual(aim.aim);
     frames(PROTOTYPE, 1, aim, flight);
     expect(flight.facing).toEqual(aim.aim);
@@ -369,14 +377,17 @@ describe("directional handling", () => {
   it("turns back to movement-facing without a snap and stops firing when aim is released", () => {
     const flight = cruising();
     const move = { ...idle, move: east };
-    stepFlight(PROTOTYPE, 0.3, { ...move, aim: { x: -1, y: 0 } }, flight);
+    stepFlight(PROTOTYPE, 0.5, { ...move, aim: { x: -1, y: 0 } }, flight);
     expect(flight.facing).toEqual({ x: -1, y: 0 });
     const fired = new Set(flight.shots.map((s) => s.id));
     expect(fired.size).toBeGreaterThan(0);
     stepFlight(PROTOTYPE, 1 / 60, move, flight);
-    expect(degrees(flight.facing, east)).toBeCloseTo(180 * Math.exp(-1 / 60 / 0.045), 6);
+    expect(degrees(flight.facing, east)).toBeCloseTo(
+      180 * Math.exp(-1 / 60 / physics.aimTurnSeconds),
+      6,
+    );
     expect(degrees(flight.facing, east)).toBeGreaterThan(100);
-    frames(PROTOTYPE, 14, move, flight);
+    frames(PROTOTYPE, 21, move, flight);
     expect(degrees(flight.facing, east)).toBeLessThan(1);
     frames(PROTOTYPE, 3, move, flight);
     expect(flight.facing).toEqual(east);
@@ -386,7 +397,7 @@ describe("directional handling", () => {
 
   it("keeps the current facing when aim is released at rest", () => {
     const flight = empty();
-    stepFlight(PROTOTYPE, 0.3, { ...idle, aim: { x: -1, y: 0 } }, flight);
+    stepFlight(PROTOTYPE, 0.5, { ...idle, aim: { x: -1, y: 0 } }, flight);
     expect(flight.facing).toEqual({ x: -1, y: 0 });
     stepFlight(PROTOTYPE, 0.5, idle, flight);
     expect(flight.velocity).toEqual({ x: 0, y: 0 });
@@ -466,7 +477,7 @@ describe("analog movement speed", () => {
   function cruise(move: Vec): FlightState {
     const flight = empty();
     flight.player = { x: 256, y: 256 };
-    for (let frame = 0; frame < 90; frame++) {
+    for (let frame = 0; frame < 180; frame++) {
       stepFlight(PROTOTYPE, 1 / 60, { ...idle, move }, flight);
     }
     return flight;
@@ -533,6 +544,11 @@ describe("ship speed fraction", () => {
   });
 
   it("is zero for a non-positive maxSpeed", () => {
-    expect(shipSpeedFraction({ maxSpeed: 0 }, { velocity: { x: 1, y: 0 } })).toBe(0);
+    expect(
+      shipSpeedFraction(
+        { maxSpeed: 0, physics: PROTOTYPE.tuning.physics },
+        { velocity: { x: 1, y: 0 } },
+      ),
+    ).toBe(0);
   });
 });

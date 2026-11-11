@@ -6,10 +6,13 @@ import {
   damageEnemy,
   type EnemyContext,
   enemyEffects,
+  enemySpeedFraction,
   type EnemyState,
+  hardpointOffset,
   stepDebris,
   stepEnemy,
 } from "./enemy-ai.ts";
+import { stepShipMotion } from "./ship-physics.ts";
 
 const spawn = (archetype: EnemyArchetype): EnemyState =>
   createEnemy(
@@ -149,7 +152,9 @@ describe("enemy rules", () => {
     expect(idle.velocity).toEqual({ x: 0, y: 0 });
     expect(idle.fire).toEqual([]);
     const hit = damageEnemy(definition, { amount: 1, hardpointId: null }, state);
-    expect(stepEnemy(definition, observation(hit), hit).fire).toHaveLength(1);
+    expect(stepEnemy(definition, observation(hit), hit).fire.map((shot) => shot.profileId)).toEqual(
+      ["retaliator-spread", "retaliator-spread", "retaliator-spread"],
+    );
     const unknown = { ...observation(hit), visibility: "unknown" as const };
     expect(stepEnemy(definition, unknown, hit).fire).toEqual([]);
     expect(stepEnemy(definition, unknown, hit).state.lastSeen).toBeNull();
@@ -319,4 +324,205 @@ it("counts dormant pack survivors for morale without exposing hidden positions t
   const unknown = stepEnemy(enemyCatalog.swarm, { ...context, visibility: "unknown" }, state);
   expect(unknown.state.lastSeen).toBeNull();
   expect(unknown.fire).toEqual([]);
+});
+
+describe("enemy ship physics and hull rotation", () => {
+  const archetypes = Object.keys(enemyCatalog) as EnemyArchetype[];
+  const degreesBetween = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
+
+  it("states the sector one catalog values and keeps the others", () => {
+    const pick = (archetype: EnemyArchetype) => {
+      const definition = enemyCatalog[archetype];
+      return {
+        engagement: definition.engagement,
+        hp: definition.hp,
+        orbit: definition.steering.orbit,
+        sizeRatio: definition.sizeRatio,
+      };
+    };
+    expect(pick("swarm")).toEqual({ engagement: 360, hp: 2, orbit: 0.9, sizeRatio: 0.6 });
+    expect(pick("fighter")).toEqual({ engagement: 360, hp: 4, orbit: 0.4, sizeRatio: 1 });
+    expect(pick("interceptor")).toEqual({ engagement: 260, hp: 3, orbit: 0, sizeRatio: 0.9 });
+    expect(pick("retaliator")).toEqual({ engagement: 360, hp: 8, orbit: 0.2, sizeRatio: 2 });
+    expect(enemyCatalog.retaliator.fire).toMatchObject({ angles: [-0.2, 0, 0.2], interval: 2.2 });
+    expect(enemyCatalog.retaliator.aggression).toBe("retaliate");
+    for (const archetype of ["frigate", "capital", "oversizedCapital"] as const) {
+      expect(enemyCatalog[archetype].steering).toEqual({ orbit: 0, separation: 70, wobble: 0 });
+    }
+    expect(pick("frigate")).toEqual({ engagement: 500, hp: 10, orbit: 0, sizeRatio: 3 });
+  });
+
+  it.each(archetypes)("moves %s with the shared ship movement model", (archetype) => {
+    const definition = enemyCatalog[archetype];
+    const state: EnemyState = {
+      ...spawn(archetype),
+      heading: { x: 0, y: 1 },
+      home: { x: -5000, y: 0 },
+      returning: true,
+      velocity: { x: 0, y: 10 },
+    };
+    const context = { ...observation(state), visibility: "unknown" as const };
+    const speed = context.adaSpeed * Math.min(1.1, definition.physics.speedRatio);
+    const expected = stepShipMotion(
+      definition.physics,
+      context.dt,
+      { direction: { x: -1, y: 0 }, speed },
+      { heading: state.heading, velocity: state.velocity },
+    );
+    const result = stepEnemy(definition, context, state);
+    expect(result.velocity).toEqual(expected.velocity);
+    expect(result.state.heading).toEqual(expected.heading);
+  });
+
+  it("brakes with brakingSeconds when nothing is requested", () => {
+    const definition = enemyCatalog.fighter;
+    const state = { ...spawn("fighter"), velocity: { x: 40, y: 0 } };
+    const context = { ...observation(state), visibility: "unknown" as const };
+    const result = stepEnemy(definition, context, state);
+    expect(result.velocity.x).toBeCloseTo(
+      40 * Math.exp(-context.dt / definition.physics.brakingSeconds),
+      9,
+    );
+    expect(result.state.heading).toBeNull();
+  });
+
+  it("turns the hull toward its movement with turnSeconds and holds it when stopped", () => {
+    const definition = enemyCatalog.frigate;
+    let state: EnemyState = { ...spawn("frigate"), home: { x: 5000, y: 0 }, returning: true };
+    const context = { ...observation(state), visibility: "unknown" as const };
+    expect(state.facing).toEqual({ x: 0, y: -1 });
+    const first = stepEnemy(definition, context, state);
+    expect(first.state.heading).toEqual({ x: 1, y: 0 });
+    expect(degreesBetween(first.state.facing, { x: 1, y: 0 })).toBeCloseTo(
+      90 * Math.exp(-context.dt / definition.physics.turnSeconds),
+      9,
+    );
+    state = first.state;
+    for (let i = 0; i < 600; i++) {
+      state = stepEnemy(definition, context, state).state;
+    }
+    expect(state.facing).toEqual({ x: 1, y: 0 });
+    // Arriving home stops movement; the hull keeps its last facing.
+    const stopped = stepEnemy(definition, context, { ...state, position: { ...state.home } });
+    expect(stopped.velocity).toEqual({ x: 0, y: 0 });
+    expect(stopped.state.facing).toEqual({ x: 1, y: 0 });
+    const idle = { ...stopped.state, returning: false };
+    expect(stepEnemy(definition, context, idle).state.facing).toEqual({ x: 1, y: 0 });
+  });
+
+  it("keeps the hull still when a disabled engine stops movement", () => {
+    const definition = enemyCatalog.frigate;
+    const moving = {
+      ...spawn("frigate"),
+      facing: { x: 1, y: 0 },
+      heading: { x: 1, y: 0 },
+      velocity: { x: 30, y: 0 },
+    };
+    const engineLost = damageEnemy(definition, { amount: 99, hardpointId: "engine" }, moving);
+    const context = { ...observation(engineLost), player: { x: 0, y: 300 } };
+    const result = stepEnemy(definition, context, engineLost);
+    expect(result.velocity).toEqual({ x: 0, y: 0 });
+    expect(result.state.heading).toBeNull();
+    expect(result.state.facing).toEqual({ x: 1, y: 0 });
+  });
+
+  it("rotates hardpoint muzzle origins with the hull at exactly 90 degrees", () => {
+    const definition = enemyCatalog.capital;
+    const state = { ...spawn("capital"), facing: { x: 1, y: 0 }, position: { x: 100, y: 50 } };
+    const context = { ...observation(state), player: { x: 700, y: 50 } };
+    const result = stepEnemy(definition, context, state);
+    const origin = (id: string) => result.fire.find((shot) => shot.hardpointId === id)!.origin;
+    // Hull width is 200. Facing east, forward is +x and port is -y.
+    expect(origin("weapon-left").x).toBeCloseTo(100 + 0.2 * 200, 9);
+    expect(origin("weapon-left").y).toBeCloseTo(50 - 0.4 * 200, 9);
+    expect(origin("weapon-right").x).toBeCloseTo(100 + 0.2 * 200, 9);
+    expect(origin("weapon-right").y).toBeCloseTo(50 + 0.4 * 200, 9);
+    const engine = hardpointOffset(definition, context.adaWidth, state.facing, {
+      offset: { x: 0.3, y: 0.35 },
+    });
+    expect(engine.x).toBeCloseTo(-70, 9);
+    expect(engine.y).toBeCloseTo(60, 9);
+  });
+
+  it("aims weapons independently of the hull with aimTurnSeconds", () => {
+    const definition = enemyCatalog.frigate;
+    const response = definition.physics.aimTurnSeconds;
+    const base = spawn("frigate");
+    // A last-seen point straight south while the starboard weapon still points east.
+    const aimed = {
+      ...base,
+      hardpoints: base.hardpoints.map((part) =>
+        part.id === "starboard" ? { ...part, aim: { x: 1, y: 0 } } : part,
+      ),
+      lastSeen: { x: 0, y: 3000 },
+    };
+    const context = { ...observation(aimed), visibility: "unknown" as const };
+    const part = (state: EnemyState, id: string) =>
+      state.hardpoints.find((value) => value.id === id)!.aim!;
+    const turned = stepEnemy(definition, context, aimed).state;
+    // Facing up, starboard sits at (18, 0) and port at (-18, 0).
+    const wanted = { x: -18, y: 3000 };
+    expect(degreesBetween(part(turned, "starboard"), wanted)).toBeCloseTo(
+      degreesBetween({ x: 1, y: 0 }, wanted) * Math.exp(-context.dt / response),
+      6,
+    );
+    // A weapon with no previous aim acquires its target directly.
+    expect(degreesBetween(part(turned, "port"), { x: 18, y: 3000 })).toBeLessThan(1e-9);
+    // Facing east moves the starboard muzzle to (0, 18); its aim still turns from east.
+    const rotated = stepEnemy(definition, context, { ...aimed, facing: { x: 1, y: 0 } }).state;
+    expect(degreesBetween(part(rotated, "starboard"), { x: 0, y: 1 })).toBeCloseTo(
+      90 * Math.exp(-context.dt / response),
+      6,
+    );
+    expect(rotated.facing).toEqual({ x: 1, y: 0 });
+  });
+
+  it("fires along the smoothed aim rather than straight at the target", () => {
+    const definition = enemyCatalog.fighter;
+    const state = { ...spawn("fighter"), aim: { x: 0, y: 1 }, engaged: true };
+    const context = observation(state);
+    const result = stepEnemy(definition, context, state);
+    expect(result.fire).toHaveLength(1);
+    expect(result.fire[0]!.aim).toEqual(result.state.aim);
+    expect(degreesBetween(result.fire[0]!.aim, { x: 1, y: 0 })).toBeCloseTo(
+      90 * Math.exp(-context.dt / definition.physics.aimTurnSeconds),
+      6,
+    );
+  });
+
+  it("reports speed as a fraction of the archetype's capped maximum", () => {
+    const state = { ...spawn("interceptor"), velocity: { x: 0, y: 55 } };
+    expect(enemySpeedFraction(enemyCatalog.interceptor, 100, 1.1, state)).toBeCloseTo(0.5, 12);
+    expect(enemySpeedFraction(enemyCatalog.interceptor, 100, 1, state)).toBeCloseTo(0.55, 12);
+    expect(enemySpeedFraction(enemyCatalog.capital, 100, 1.1, state)).toBe(1);
+    expect(enemySpeedFraction(enemyCatalog.fighter, 0, 1.1, state)).toBe(0);
+  });
+
+  it.each(archetypes)("returns %s home through its momentum and stops there", (archetype) => {
+    const definition = enemyCatalog[archetype];
+    const speed = 200 * Math.min(1.1, definition.physics.speedRatio);
+    let state: EnemyState = {
+      ...spawn(archetype),
+      heading: { x: 0, y: 1 },
+      position: { x: 300, y: 0 },
+      returning: true,
+      velocity: { x: 0, y: speed },
+    };
+    const context = { ...observation(state), adaSpeed: 200, visibility: "unknown" as const };
+    let elapsed = 0;
+    while (elapsed < 150 && Math.hypot(state.velocity.x, state.velocity.y) > 0) {
+      const result = stepEnemy(definition, context, state);
+      state = {
+        ...result.state,
+        position: {
+          x: state.position.x + result.velocity.x * context.dt,
+          y: state.position.y + result.velocity.y * context.dt,
+        },
+      };
+      elapsed += context.dt;
+    }
+    expect(Math.hypot(state.position.x, state.position.y)).toBeLessThanOrEqual(5);
+    expect(state.velocity).toEqual({ x: 0, y: 0 });
+  });
 });

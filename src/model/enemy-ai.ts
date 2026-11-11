@@ -1,16 +1,37 @@
-import type { EnemyArchetype, EnemyDefinition, FireProfile, Point } from "../data/enemy-catalog.ts";
+import type {
+  EnemyArchetype,
+  EnemyDefinition,
+  FireProfile,
+  HardpointDefinition,
+  Point,
+} from "../data/enemy-catalog.ts";
+import {
+  direction,
+  hullOffset,
+  speedFraction,
+  stepShipMotion,
+  turnToward,
+} from "./ship-physics.ts";
 
 export interface HardpointState {
+  /** Smoothed weapon aim; null until the weapon first has a target direction. */
+  aim: Point | null;
   cooldown: number;
   hp: number;
   id: string;
 }
 export interface EnemyState {
   age: number;
+  /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
+  aim: Point | null;
   archetype: EnemyArchetype;
   engaged: boolean;
+  /** Unit hull facing; hardpoint offsets rotate with it. */
+  facing: Point;
   fleeing: boolean;
   hardpoints: HardpointState[];
+  /** Smoothed movement heading; null at rest or with no movement request. */
+  heading: Point | null;
   home: Point;
   hp: number;
   id: string;
@@ -59,10 +80,68 @@ export interface EnemyIntent {
 }
 
 const magnitude = (point: Point): number => Math.hypot(point.x, point.y);
-const unit = (point: Point): Point => {
-  const size = magnitude(point);
-  return size ? { x: point.x / size, y: point.y / size } : { x: 0, y: 0 };
+const unit = direction;
+const UP: Point = { x: 0, y: -1 };
+
+/** Maximum speed after the shared speed cap. */
+export function enemyMaxSpeed(
+  definition: EnemyDefinition,
+  adaSpeed: number,
+  speedCapRatio: number,
+): number {
+  return adaSpeed * Math.max(0, Math.min(speedCapRatio, definition.physics.speedRatio));
+}
+
+/** Current speed as a fraction of the enemy's maximum speed, clamped to [0, 1], for jets. */
+export function enemySpeedFraction(
+  definition: EnemyDefinition,
+  adaSpeed: number,
+  speedCapRatio: number,
+  state: Pick<EnemyState, "velocity">,
+): number {
+  return speedFraction(enemyMaxSpeed(definition, adaSpeed, speedCapRatio), state.velocity);
+}
+
+/** World-axis offset of a hardpoint from the hull centre for the given hull facing. */
+export function hardpointOffset(
+  definition: EnemyDefinition,
+  adaWidth: number,
+  facing: Point,
+  part: Pick<HardpointDefinition, "offset">,
+): Point {
+  const width = definition.sizeRatio * adaWidth;
+  return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
+}
+
+/** Saved enemy state, which older saves record without orientation or aim. */
+export type SavedEnemyState = Omit<EnemyState, "aim" | "facing" | "hardpoints" | "heading"> & {
+  aim?: Point | null;
+  facing?: Point;
+  hardpoints: (Omit<HardpointState, "aim"> & { aim?: Point | null })[];
+  heading?: Point | null;
 };
+
+/** Keeps a saved unit vector bit-for-bit so restored simulation stays deterministic. */
+const savedDirection = (value: Point | null | undefined): Point | null => {
+  if (!value || !magnitude(value)) {
+    return null;
+  }
+  return Math.abs(magnitude(value) - 1) <= 1e-9 ? { ...value } : direction(value);
+};
+
+/**
+ * Completes orientation state from a save: a missing facing starts from the velocity
+ * direction, or up when stopped; a missing heading or aim starts unset.
+ */
+export function restoreEnemyOrientation(saved: SavedEnemyState): EnemyState {
+  return {
+    ...saved,
+    aim: savedDirection(saved.aim),
+    facing: savedDirection(saved.facing) ?? savedDirection(saved.velocity) ?? { ...UP },
+    hardpoints: saved.hardpoints.map((part) => ({ ...part, aim: savedDirection(part.aim) })),
+    heading: savedDirection(saved.heading),
+  };
+}
 
 export function enemyEffects(definition: EnemyDefinition, state: EnemyState): EnemyEffects {
   const disabledHardpoints = definition.hardpoints
@@ -87,10 +166,18 @@ export function createEnemy(
 ): EnemyState {
   return {
     age: 0,
+    aim: null,
     ...identity,
     engaged: false,
+    facing: { ...UP },
     fleeing: false,
-    hardpoints: definition.hardpoints.map((part) => ({ cooldown: 0, hp: part.hp, id: part.id })),
+    hardpoints: definition.hardpoints.map((part) => ({
+      aim: null,
+      cooldown: 0,
+      hp: part.hp,
+      id: part.id,
+    })),
+    heading: null,
     home: { ...position },
     hp: definition.hp,
     lastSeen: null,
@@ -130,15 +217,26 @@ export function damageEnemy(
   };
 }
 
+/** Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. */
 function steering(
   definition: EnemyDefinition,
   context: EnemyContext,
+  maxSpeed: number,
   aim: Point,
   state: EnemyState,
 ): Point {
   if (state.returning) {
     const home = { x: state.home.x - state.position.x, y: state.home.y - state.position.y };
-    return magnitude(home) <= 5 ? { x: 0, y: 0 } : unit(home);
+    const distance = magnitude(home);
+    if (distance <= 5) {
+      return { x: 0, y: 0 };
+    }
+    // Slow on approach so momentum cannot carry the ship around home.
+    const arrival = Math.min(
+      1,
+      distance / Math.max(0.001, maxSpeed * definition.physics.brakingSeconds),
+    );
+    return { x: (home.x / distance) * arrival, y: (home.y / distance) * arrival };
   }
   if (state.fleeing) {
     return { x: -aim.x, y: -aim.y };
@@ -248,17 +346,26 @@ export function stepEnemy(
       next.pursuitSeconds = 0;
     }
   }
-  const heading = steering(definition, context, aim, next);
-  const speed =
-    context.adaSpeed * Math.max(0, Math.min(context.speedCapRatio, definition.speedRatio));
-  const blend = 1 - Math.exp(-context.dt / Math.max(0.001, definition.steering.response));
-  next.velocity =
-    effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)
-      ? { x: 0, y: 0 }
-      : {
-          x: state.velocity.x + (heading.x * speed - state.velocity.x) * blend,
-          y: state.velocity.y + (heading.y * speed - state.velocity.y) * blend,
-        };
+  const speed = enemyMaxSpeed(definition, context.adaSpeed, context.speedCapRatio);
+  const request = steering(definition, context, speed, aim, next);
+  const physics = definition.physics;
+  if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
+    next.velocity = { x: 0, y: 0 };
+    next.heading = null;
+  } else {
+    const motion = stepShipMotion(
+      physics,
+      context.dt,
+      { direction: request, speed: speed * Math.min(1, magnitude(request)) },
+      { heading: state.heading, velocity: state.velocity },
+    );
+    next.velocity = motion.velocity;
+    next.heading = motion.heading;
+    // The hull turns smoothly even when movement starts directly from rest.
+    if (magnitude(request)) {
+      next.facing = turnToward(context.dt, physics.turnSeconds, request, state.facing);
+    }
+  }
   const velocitySize = magnitude(next.velocity);
   if (velocitySize > speed && velocitySize > 0) {
     next.velocity = {
@@ -275,9 +382,18 @@ export function stepEnemy(
     context.targetable &&
     context.visibility === "visible" &&
     magnitude(delta) <= definition.engagement;
+  /** Weapons track the target independently of the hull, turning with aimTurnSeconds. */
+  const track = (origin: Point, current: Point | null): Point | null => {
+    const wanted = unit({ x: target.x - origin.x, y: target.y - origin.y });
+    if (!magnitude(wanted)) {
+      return current;
+    }
+    return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
+  };
   const cycle = (
     profile: FireProfile,
-    offset: Point,
+    origin: Point,
+    muzzleAim: Point,
     hardpointId: string | null,
     cooldown: number,
   ): number => {
@@ -285,8 +401,6 @@ export function stepEnemy(
     if (!canFire) {
       return Math.max(0, cooldown - context.dt);
     }
-    const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
-    const muzzleAim = unit({ x: target.x - origin.x, y: target.y - origin.y });
     let delay = Math.max(0, cooldown);
     while (delay < context.dt) {
       for (const angle of profile.angles) {
@@ -307,24 +421,28 @@ export function stepEnemy(
     }
     return delay - context.dt;
   };
+  next.aim = track(state.position, state.aim);
+  const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0
-    : cycle(definition.fire, { x: 0, y: 0 }, null, state.primaryCooldown);
+    : cycle(definition.fire, state.position, hullAim, null, state.primaryCooldown);
   for (const part of definition.hardpoints) {
     const value = next.hardpoints.find((entry) => entry.id === part.id);
     if (part.kind === "weapon" && value && value.hp > 0) {
+      // Muzzles sit on the hull as it faced at the start of the step.
+      const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
+      const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
+      value.aim = track(origin, value.aim);
       value.cooldown = cycle(
         part.fire,
-        {
-          x: part.offset.x * definition.sizeRatio * context.adaWidth,
-          y: part.offset.y * definition.sizeRatio * context.adaWidth,
-        },
+        origin,
+        value.aim ?? { x: 0, y: 0 },
         part.id,
         value.cooldown,
       );
     }
   }
-  return { aim, effects, fire, state: next, velocity: next.velocity };
+  return { aim: hullAim, effects, fire, state: next, velocity: next.velocity };
 }
 
 export interface BallisticDebris {

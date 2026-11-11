@@ -310,6 +310,67 @@ function notableSnapshot(): GameState & { flight: FlightState } {
   };
 }
 
+describe("enemy orientation save boundary", () => {
+  function oriented() {
+    const snapshot = combatSnapshot();
+    const enemy = snapshot.flight.objects[0]!.enemy!;
+    enemy.facing = { x: 0.6, y: 0.8 };
+    enemy.heading = { x: -0.8, y: 0.6 };
+    enemy.aim = { x: 0, y: 1 };
+    enemy.hardpoints[3]!.aim = { x: 1, y: 0 };
+    return snapshot;
+  }
+  const strip = (enemy: object) => {
+    for (const key of ["facing", "heading", "aim"]) {
+      Reflect.deleteProperty(enemy, key);
+    }
+    for (const part of (enemy as { hardpoints: object[] }).hardpoints) {
+      Reflect.deleteProperty(part, "aim");
+    }
+  };
+
+  it("roundtrips hull facing, movement heading and weapon aims exactly", () => {
+    const snapshot = oriented();
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+  });
+
+  it("starts older saves facing their velocity with unset heading and aims", () => {
+    const snapshot = oriented();
+    strip(snapshot.flight.objects[0]!.enemy!);
+    const enemy = restoreSave(JSON.stringify(snapshot))!.flight!.objects[0]!.enemy!;
+    const speed = Math.hypot(-4, 12);
+    expect(enemy.facing.x).toBeCloseTo(-4 / speed, 12);
+    expect(enemy.facing.y).toBeCloseTo(12 / speed, 12);
+    expect(enemy.heading).toBeNull();
+    expect(enemy.aim).toBeNull();
+    expect(enemy.hardpoints.every((part) => part.aim === null)).toBe(true);
+  });
+
+  it("starts stopped older saves facing up, including inactive notables", () => {
+    const snapshot = notableSnapshot();
+    const notable = snapshot.flight.world.notables.guard!.enemy!;
+    notable.velocity = { x: 0, y: 0 };
+    strip(notable);
+    const restored = restoreSave(JSON.stringify(snapshot))!;
+    expect(restored.flight!.world.notables.guard!.enemy!.facing).toEqual({ x: 0, y: -1 });
+  });
+
+  it.each([{ facing: { x: NaN, y: 0 } }, { facing: null }, { heading: {} }, { aim: "east" }])(
+    "rejects malformed enemy orientation %j",
+    (change) => {
+      const snapshot = oriented();
+      Object.assign(snapshot.flight.objects[0]!.enemy!, change);
+      expect(restoreSave(snapshot)).toBeNull();
+    },
+  );
+
+  it("rejects a malformed hardpoint aim", () => {
+    const snapshot = oriented();
+    Object.assign(snapshot.flight.objects[0]!.enemy!.hardpoints[3]!, { aim: { x: 1 } });
+    expect(restoreSave(snapshot)).toBeNull();
+  });
+});
+
 describe("current generation save boundary", () => {
   it("roundtrips inactive notable parts, AI and active projectiles exactly", () => {
     const snapshot = notableSnapshot();

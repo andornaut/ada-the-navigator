@@ -1,6 +1,6 @@
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
-import { enemyEffects } from "./enemy-ai.ts";
+import { enemyEffects, restoreEnemyOrientation, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, persistentObject } from "./geography.ts";
 import type { FlightState, GameState, PersistentWorldState, SpaceObject } from "./types.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
@@ -62,6 +62,9 @@ function enemyState(value: unknown): boolean {
       nonnegative(value[key]),
     ) ||
     !finite(value.phase) ||
+    !(value.facing === undefined || vector(value.facing)) ||
+    !optionalDirection(value.heading) ||
+    !optionalDirection(value.aim) ||
     !Array.isArray(value.hardpoints)
   ) {
     return false;
@@ -73,8 +76,24 @@ function enemyState(value: unknown): boolean {
     definition.hardpoints.every(
       (part) => hardpoints.filter((entry) => record(entry) && entry.id === part.id).length === 1,
     ) &&
-    hardpoints.every((part) => record(part) && nonnegative(part.hp) && nonnegative(part.cooldown))
+    hardpoints.every(
+      (part) =>
+        record(part) &&
+        nonnegative(part.hp) &&
+        nonnegative(part.cooldown) &&
+        optionalDirection(part.aim),
+    )
   );
+}
+/** Orientation fields are absent from older saves and null when unset. */
+function optionalDirection(value: unknown): boolean {
+  return value === undefined || value === null || vector(value);
+}
+/** Completes enemy orientation for older saves; validation has already run. */
+function restoreOrientation(object: SpaceObject | null): void {
+  if (object?.enemy) {
+    object.enemy = restoreEnemyOrientation(object.enemy as SavedEnemyState);
+  }
 }
 function combatState(
   routes: readonly string[],
@@ -370,7 +389,12 @@ export function restoreSave(saved: unknown): GameState | null {
     if (value.mode === "space" && value.flight === null) {
       return null;
     }
-    return structuredClone(value) as unknown as GameState;
+    const restored = structuredClone(value) as unknown as GameState;
+    if (restored.flight) {
+      restored.flight.objects.forEach(restoreOrientation);
+      Object.values(restored.flight.world.notables).forEach(restoreOrientation);
+    }
+    return restored;
   } catch {
     return null;
   }

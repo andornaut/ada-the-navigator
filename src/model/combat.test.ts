@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype, enemyCatalog, sectorEncounters } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy, hardpointOffset } from "./enemy-ai.ts";
 import {
   createFlight,
   ensureDestination,
   ensureRouteEncounter,
   placeDestinationAhead,
+  rollEncounter,
   routeBlocked,
   settleRouteEncounters,
   stepFlight,
@@ -62,8 +63,9 @@ function hit(flight: FlightState, point: Vec, count = 1): void {
 function partPosition(object: SpaceObject, id: string): Vec {
   const definition = enemyCatalog[object.enemy!.archetype];
   const part = definition.hardpoints.find((part) => part.id === id)!;
-  const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
-  return { x: object.x + part.offset.x * width, y: object.y + part.offset.y * width };
+  const adaWidth = PROTOTYPE.tuning.flight.shipRadius * 2;
+  const offset = hardpointOffset(definition, adaWidth, object.enemy!.facing, part);
+  return { x: object.x + offset.x, y: object.y + offset.y };
 }
 
 describe("integrated combat", () => {
@@ -243,7 +245,7 @@ describe("integrated combat", () => {
     }
     const packs = flight.combat?.initialPackSizes ?? {};
     expect(Object.keys(packs).length).toBeGreaterThan(2);
-    expect(Object.values(packs).every((size) => size >= 1 && size <= 4)).toBe(true);
+    expect(Object.values(packs).every((size) => size >= 1 && size <= 5)).toBe(true);
     expect(
       flight.objects.some(
         (object) => object.id.startsWith("chunk:") && ["rock", "resource"].includes(object.kind),
@@ -269,6 +271,110 @@ describe("integrated combat", () => {
       ensureDestination(PROTOTYPE, `scan:${i}`, replay);
     }
     expect(replay).toEqual(flight);
+  });
+});
+
+describe("rotating hulls", () => {
+  it("hits hardpoints where the rotated hull carries them", () => {
+    const flight = empty();
+    const target = ship("capital", { x: 400, y: 0 });
+    target.enemy!.facing = { x: 1, y: 0 };
+    target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
+    flight.objects.push(target);
+    const width = enemyCatalog.capital.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
+    const hp = (id: string) => target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
+    // weapon-left's unrotated world-axis spot is empty hull once the capital faces east.
+    hit(flight, { x: target.x - 0.4 * width, y: target.y - 0.2 * width });
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual([5, 4, 4, 3, 3]);
+    // Facing east, its forward-port offset lies ahead (+x) and to port (-y).
+    hit(flight, { x: target.x + 0.2 * width, y: target.y - 0.4 * width });
+    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(hp("weapon-left")).toBe(2);
+    expect(partPosition(target, "weapon-left").x).toBeCloseTo(target.x + 0.2 * width, 0);
+  });
+});
+
+describe("sector encounter tables", () => {
+  function rolls(seed: number): () => number {
+    let n = seed;
+    return () => {
+      n = (Math.imul(n, 1664525) + 1013904223) >>> 0;
+      return n / 4294967296;
+    };
+  }
+
+  it("weights sector one archetypes and draws each group from its own range", () => {
+    const next = rolls(20261110);
+    const total = 20000;
+    const seen = new Map<EnemyArchetype, number[]>();
+    for (let i = 0; i < total; i++) {
+      const count = next();
+      const { archetype, count: size } = rollEncounter(sectorEncounters[1], count, next());
+      seen.set(archetype, [...(seen.get(archetype) ?? []), size]);
+    }
+    expect([...seen.keys()].sort()).toEqual(["fighter", "interceptor", "retaliator", "swarm"]);
+    const share = (archetype: EnemyArchetype) => (seen.get(archetype)?.length ?? 0) / total;
+    expect(Math.abs(share("swarm") - 0.35)).toBeLessThan(0.015);
+    expect(Math.abs(share("fighter") - 0.35)).toBeLessThan(0.015);
+    expect(Math.abs(share("interceptor") - 0.15)).toBeLessThan(0.015);
+    expect(Math.abs(share("retaliator") - 0.15)).toBeLessThan(0.015);
+    const sizes = (archetype: EnemyArchetype) => seen.get(archetype) ?? [];
+    const fraction = (archetype: EnemyArchetype, size: number) =>
+      sizes(archetype).filter((value) => value === size).length / sizes(archetype).length;
+    // Swarms are packs of three to five.
+    expect(new Set(sizes("swarm"))).toEqual(new Set([3, 4, 5]));
+    for (const size of [3, 4, 5]) {
+      expect(Math.abs(fraction("swarm", size) - 1 / 3)).toBeLessThan(0.03);
+    }
+    // Fighters fly solo or as a pair.
+    expect(new Set(sizes("fighter"))).toEqual(new Set([1, 2]));
+    expect(Math.abs(fraction("fighter", 2) - 0.5)).toBeLessThan(0.03);
+    // Interceptors and retaliators are always solo.
+    expect(new Set(sizes("interceptor"))).toEqual(new Set([1]));
+    expect(new Set(sizes("retaliator"))).toEqual(new Set([1]));
+  });
+
+  it.each([2, 3] as const)("keeps sector %i's shared table and seeded results", (sector) => {
+    const legacy: EnemyArchetype[] = ["fighter", "swarm", "interceptor", "retaliator"];
+    const next = rolls(sector * 7919);
+    const edges = [0, 0.25, 0.5, 0.75, 1 - 2 ** -32];
+    const samples = [...edges.map((edge) => [edge, edge]), ...edges.map((edge) => [0.6, edge])];
+    for (let i = 0; i < 5000; i++) {
+      samples.push([next(), next()]);
+    }
+    for (const [count, archetype] of samples) {
+      expect(rollEncounter(sectorEncounters[sector], count!, archetype!)).toEqual({
+        archetype: legacy[Math.floor(archetype! * 4)],
+        count: 1 + Math.floor(count! * 4),
+      });
+    }
+  });
+
+  it("generates only sector one's roster and group sizes in sector one", () => {
+    const flight = empty();
+    const packs = new Map<string, Set<EnemyArchetype>>();
+    for (let i = 1; i <= 30; i++) {
+      flight.player = { x: i * 4096, y: (i % 3) * 4096 };
+      ensureDestination(PROTOTYPE, `scan:${i}`, flight);
+      for (const object of flight.objects) {
+        if (object.enemy?.packId?.startsWith("pack:")) {
+          const members = packs.get(object.enemy.packId) ?? new Set();
+          members.add(object.enemy.archetype);
+          packs.set(object.enemy.packId, members);
+        }
+      }
+    }
+    const ranges = new Map(sectorEncounters[1].map((entry) => [entry.archetype, entry.groupSize]));
+    expect(packs.size).toBeGreaterThan(3);
+    for (const [id, archetypes] of packs) {
+      expect(archetypes.size).toBe(1);
+      const range = ranges.get([...archetypes][0]!)!;
+      expect(range).toBeDefined();
+      const size = flight.combat!.initialPackSizes[id]!;
+      expect(size).toBeGreaterThanOrEqual(1);
+      expect(size).toBeLessThanOrEqual(range[1]);
+    }
   });
 });
 

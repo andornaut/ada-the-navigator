@@ -1,3 +1,5 @@
+import type { ShipPhysics } from "./ship-physics.ts";
+
 export type SectorId = 1 | 2 | 3;
 export type Weapon = "basic" | "missiles" | "tripleLaser" | "scattershot";
 
@@ -21,17 +23,14 @@ export interface PrototypeContent {
   update: { accept: string; cancel: string; title: string };
   tuning: {
     chunkSize: number;
+    /** Base maximum speed; every ship's physics speedRatio scales it. */
     maxSpeed: number;
-    /** Fraction of maxSpeed requested by the smallest movement input past the dead zone. */
+    /** Fraction of Ada's maximum speed requested by the smallest movement input past the dead zone. */
     minSpeedFraction: number;
-    /** Exponent applied to movement deflection before scaling toward maxSpeed. */
+    /** Exponent applied to movement deflection before scaling toward Ada's maximum speed. */
     speedCurveExponent: number;
-    accelerationSeconds: number;
-    brakingSeconds: number;
-    /** Exponential time constant for turning the requested movement direction. */
-    movementTurnSeconds: number;
-    /** Exponential time constant for turning the aim-facing toward the aim input. */
-    aimTurnSeconds: number;
+    /** Ada's ship physics. */
+    physics: ShipPhysics;
     shieldMax: number;
     shieldRechargeDelay: number;
     shieldRechargeRate: number;

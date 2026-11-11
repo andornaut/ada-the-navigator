@@ -10,6 +10,7 @@ import { grantAllWeapons } from "../model/cheats.ts";
 import { shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
+import { hullOffset } from "../model/ship-physics.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -482,9 +483,11 @@ export class PrototypeScene extends Phaser.Scene {
     }
     const definition = enemyCatalog[enemy.archetype];
     const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
-    // Hull and hardpoints share the runtime's fixed world axes.
-    const local = (x: number, y: number): Vec =>
-      this.project({ x: object.x + x * width, y: object.y + y * width });
+    // Hull and hardpoints share the hull's rotating local frame.
+    const local = (x: number, y: number): Vec => {
+      const offset = hullOffset(enemy.facing, { x: x * width, y: y * width });
+      return this.project({ x: object.x + offset.x, y: object.y + offset.y });
+    };
     const large = enemy.archetype === "capital" || enemy.archetype === "oversizedCapital";
     const frigate = enemy.archetype === "frigate";
     const pack = enemy.packId !== null;
