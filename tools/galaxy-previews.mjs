@@ -115,8 +115,8 @@ function serve(dist) {
   });
 }
 
-// CLEANUP (added 2026-11-11): the committed captures predate this framing and the destination
-// art; recapture galaxies one to three with `make previews` once destinations draw as art.
+// CLEANUP (added 2026-11-11): recapture Sunflower once its light field lands, and Cartwheel and
+// Whirlpool once the hub and the whale draw as art; they still draw the placeholder ellipse.
 // A save in flight in galaxy `number` with the ship beside the first destination of its route, or,
 // for a galaxy with no flight yet, the base field with no objects at the same framing.
 // CLEANUP (added 2026-11-11): galaxy four has no flight (SectorId is 1 to 3), so it captures the
