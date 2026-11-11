@@ -1,3 +1,4 @@
+import { GALAXIES } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 
 const ROLES = [
@@ -69,4 +70,10 @@ export function spaceObjectColor(palette: SpacePalette, object: SpaceObject): nu
 
 export function spaceColorCss(color: number): string {
   return `#${color.toString(16).padStart(6, "0")}`;
+}
+
+/** In flight, space takes the galaxy's own hue as its background (Sunflower is gold). */
+export function galaxyBackground(palette: SpacePalette, galaxy: number | null): number {
+  const hue = galaxy === null ? undefined : GALAXIES[galaxy - 1]?.hue;
+  return hue ? Number.parseInt(hue.slice(1), 16) : palette.background;
 }

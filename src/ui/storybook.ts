@@ -2,6 +2,7 @@ import type { Background } from "../data/storybook.ts";
 import { font, safeEdge, units } from "./layout/css.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, TEXT_TOKENS } from "./modal.ts";
 
 export interface StoryLabels {
@@ -88,21 +89,18 @@ const STYLE = `
   color:${TEXT_TOKENS.label}
 }
 
+/* Skip at the inner left; Previous and Next right-aligned a gap apart. The three share one width,
+   set from the widest label as each page renders. */
 .ada-controls .ada-story-controls{
   flex:none;
-  display:grid;
-  grid-template-columns:1fr 1fr;
+  display:flex;
+  justify-content:space-between;
   gap:${units(STORY_PANEL.gap)}
 }
 
 .ada-controls .ada-story-controls .ada-story-pages{
   display:flex;
-  justify-content:flex-end;
   gap:${units(STORY_PANEL.gap)}
-}
-
-.ada-controls .ada-story-controls .ada-button{
-  width:100%
 }
 `;
 
@@ -191,6 +189,18 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.disabled = !page.canGoBack;
     next.hidden = buttons.length > 0;
     next.textContent = page.action ?? labels.next;
+    // Skip, Previous and Next share the widest one's width, in logical px.
+    const pageControls = [skip, previous, next];
+    for (const button of pageControls) {
+      button.style.width = "";
+    }
+    const unit = readViewUnit(panel);
+    const widest = Math.max(
+      ...pageControls.filter((button) => !button.hidden).map((button) => button.offsetWidth),
+    );
+    for (const button of pageControls) {
+      button.style.width = units(widest / unit);
+    }
     // Focus starts on the first choice, the default; otherwise on Next.
     if (focusFirst || buttons.length > 0) {
       (buttons[0] ?? next).focus();

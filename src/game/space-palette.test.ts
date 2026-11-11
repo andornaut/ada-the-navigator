@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { SpaceObject } from "../model/types.ts";
-import { readSpacePalette, spaceColorCss, spaceObjectColor } from "./space-palette.ts";
+import {
+  FALLBACK_SPACE_PALETTE,
+  galaxyBackground,
+  readSpacePalette,
+  spaceColorCss,
+  spaceObjectColor,
+} from "./space-palette.ts";
 
 const colors = {
   active: "#65C9BF",
@@ -64,5 +70,14 @@ describe("space palette boundary", () => {
       palette.weapon,
     );
     expect(spaceObjectColor(palette, object("destination"))).not.toBe(palette.obstacle);
+  });
+});
+
+describe("galaxy background", () => {
+  it("tints space with the flight's galaxy hue and keeps the palette's elsewhere", () => {
+    expect(
+      [1, 2, 3, 4].map((galaxy) => spaceColorCss(galaxyBackground(FALLBACK_SPACE_PALETTE, galaxy))),
+    ).toEqual(["#332712", "#39221e", "#132d33", "#271423"]);
+    expect(galaxyBackground(FALLBACK_SPACE_PALETTE, null)).toBe(FALLBACK_SPACE_PALETTE.background);
   });
 });

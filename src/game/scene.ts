@@ -69,6 +69,7 @@ import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
 import {
   FALLBACK_SPACE_PALETTE,
+  galaxyBackground,
   readSpacePalette,
   spaceColorCss,
   spaceObjectColor,
@@ -148,6 +149,8 @@ export class PrototypeScene extends Phaser.Scene {
   private feedbackSound = new FeedbackSound();
   private screenShake = true;
   private palette = FALLBACK_SPACE_PALETTE;
+  // The space background in use: the flight's galaxy hue, else the palette's.
+  private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
   private storybook!: ReturnType<typeof createStorybook>;
   private galaxies!: ReturnType<typeof createGalaxySelect>;
@@ -210,6 +213,7 @@ export class PrototypeScene extends Phaser.Scene {
       background & 255,
     );
     this.cameras.main.setBackgroundColor(background);
+    this.spaceBackground = background;
     const fit = (): void => {
       this.cameras.main.setViewport(
         Math.floor((this.scale.gameSize.width - SCREEN.width) / 2),
@@ -593,6 +597,14 @@ export class PrototypeScene extends Phaser.Scene {
       inDanger: this.model.inDanger,
     });
     this.shell.render(state, screen);
+    const background = galaxyBackground(
+      this.palette,
+      state.mode === "space" ? (state.flight?.sector ?? null) : null,
+    );
+    if (background !== this.spaceBackground) {
+      this.spaceBackground = background;
+      this.cameras.main.setBackgroundColor(background);
+    }
     const story = this.model.storyView;
     const selected = this.model.selectedGalaxy;
     this.storybook.show(
@@ -886,7 +898,7 @@ export class PrototypeScene extends Phaser.Scene {
       const hp = enemy.hardpoints.find((value) => value.id === part.id)?.hp ?? 0;
       const size = Math.max(7, Math.min(18, width * 0.065));
       const accent = part.kind === "weapon" ? this.palette.weapon : this.palette.shipHardpoint;
-      this.ink.fillStyle(hp > 0 ? this.palette.environment : this.palette.background);
+      this.ink.fillStyle(hp > 0 ? this.palette.environment : this.spaceBackground);
       this.ink.lineStyle(2, hp > 0 ? accent : this.palette.environmentDetail);
       if (part.kind === "command") {
         this.ink.fillTriangle(
@@ -1094,7 +1106,7 @@ export class PrototypeScene extends Phaser.Scene {
     if (!label) {
       label = this.add
         .text(0, 0, destination.label, {
-          backgroundColor: spaceColorCss(this.palette.background),
+          backgroundColor: spaceColorCss(this.spaceBackground),
           color: spaceColorCss(this.palette.pointOfInterest),
           fontFamily: '"Liberation Sans", sans-serif',
           fontSize: "14px",
