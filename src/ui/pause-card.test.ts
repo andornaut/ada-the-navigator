@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GalaxyMap } from "../model/map.ts";
-import { createPauseCards, type PauseLabels } from "./pause-card.ts";
+import { createPauseCards, type PauseLabels, type PauseState } from "./pause-card.ts";
 
-// A stand-in for the few DOM members the pause cards use.
+// A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
   readonly attributes = new Map<string, string>();
   children: FakeElement[] = [];
@@ -67,6 +67,9 @@ const LABELS: PauseLabels = {
   jobObjective: "Job: {objective}",
   map: "Map",
   mapPercent: "{percent}% mapped",
+  mapRecentre: "Recentre",
+  mapZoomIn: "Zoom in",
+  mapZoomOut: "Zoom out",
   resume: "Resume",
   returnHome: "Return home",
   settings: "Settings",
@@ -78,7 +81,10 @@ const LABELS: PauseLabels = {
 };
 
 beforeEach(() => {
-  vi.stubGlobal("document", { createElement: () => new FakeElement() });
+  vi.stubGlobal("document", {
+    createElement: () => new FakeElement(),
+    createElementNS: () => new FakeElement(),
+  });
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
 });
 
@@ -86,60 +92,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// The Map card's body groups: percent, chart, empty note, name, Travel here, danger and towing
-// notes.
-function mapBody(root: FakeElement) {
-  const modal = root.children[0]!;
-  const body = modal.children[1]!.children[0]!.children[1]!;
-  const [percent, chart, empty, name, travelGroup, danger, towNote] = body.children as [
-    FakeElement,
-    FakeElement,
-    FakeElement,
-    FakeElement,
-    FakeElement,
-    FakeElement,
-    FakeElement,
-  ];
-  return {
-    danger,
-    empty,
-    markers: () => chart.children.slice(1),
-    name,
-    percent,
-    towNote,
-    travel: travelGroup.children[0]!,
-    travelGroup,
-  };
-}
-
 const MAP: GalaxyMap = {
+  explored: [],
+  facing: { x: 0, y: -1 },
+  landmarks: { charted: 0, total: 12 },
   mapped: 25,
-  places: [
-    {
-      id: "workshop",
-      job: false,
-      kind: "destination",
-      label: "Workshop",
-      objective: true,
-      travel: true,
-      x: 400,
-      y: -800,
-    },
-    {
-      id: "station:0,0",
-      job: false,
-      kind: "station",
-      label: "Station",
-      objective: false,
-      travel: true,
-      x: 2000,
-      y: 300,
-    },
-  ],
+  places: [],
   player: { x: 0, y: 0 },
 };
+const state = (change: Partial<PauseState> = {}): PauseState => ({
+  field: null,
+  inDanger: false,
+  job: null,
+  map: MAP,
+  objective: "",
+  towing: false,
+  ...change,
+});
 
-function cards(onTravel = vi.fn()) {
+function cards() {
   const root = new FakeElement();
   const pause = createPauseCards(root as unknown as HTMLElement, {
     labels: LABELS,
@@ -147,158 +118,60 @@ function cards(onTravel = vi.fn()) {
     onOpenChange: vi.fn(),
     onReturnHome: vi.fn(),
     onSettings: vi.fn(),
-    onTravel,
+    onTravel: vi.fn(),
     reducedMotion: () => true,
   });
-  return { body: mapBody(root), pause };
+  const body = root.children[0]!.children[0]!.children[0]!.children[1]!;
+  return { body, pause, root };
 }
 
 describe("Paused card", () => {
   it("shows the story objective above the buttons, and the Job line only while a job is held", () => {
-    const root = new FakeElement();
-    const pause = createPauseCards(root as unknown as HTMLElement, {
-      labels: LABELS,
-      onAchievements: vi.fn(),
-      onOpenChange: vi.fn(),
-      onReturnHome: vi.fn(),
-      onSettings: vi.fn(),
-      onTravel: vi.fn(),
-      reducedMotion: () => true,
-    });
-    const body = root.children[0]!.children[0]!.children[0]!.children[1]!;
+    const { body, pause } = cards();
     const [objective, job, actions] = body.children as [FakeElement, FakeElement, FakeElement];
-    pause.setState({
-      inDanger: false,
-      job: null,
-      map: MAP,
-      objective: "Find the growers.",
-      towing: false,
-    });
+    pause.setState(state({ objective: "Find the growers." }));
     expect(objective.textContent).toBe("Find the growers.");
     expect(objective.hidden).toBe(false);
     expect(job.hidden).toBe(true);
     expect(actions.className).toContain("ada-actions");
-    pause.setState({
-      inDanger: false,
-      job: "Chart the Sleepy Tug",
-      map: MAP,
-      objective: "Find the growers.",
-      towing: false,
-    });
+    pause.setState(state({ job: "Chart the Sleepy Tug", objective: "Find the growers." }));
     expect(job.textContent).toBe("Job: Chart the Sleepy Tug");
     expect(job.hidden).toBe(false);
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
+    pause.setState(state());
     expect(objective.hidden).toBe(true);
     expect(job.hidden).toBe(true);
   });
-});
 
-describe("Map card", () => {
-  it("shows the percent mapped and one marker per discovered place, Ada's first", () => {
-    const { body, pause } = cards();
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
-    expect(body.percent.textContent).toBe("25% mapped");
-    expect(body.markers().map((marker) => marker.dataset.place)).toEqual([
-      "workshop",
-      "station:0,0",
+  it("keeps main's five actions in order: Resume, Map, Settings, Achievements, Return home", () => {
+    const { body } = cards();
+    const actions = body.children[2]!;
+    expect(actions.children.map((button) => button.dataset.action)).toEqual([
+      "pause-resume",
+      "pause-map",
+      "pause-settings",
+      "pause-achievements",
+      "pause-returnHome",
     ]);
-    expect(body.markers()[0]!.getAttribute("data-objective")).toBe("");
-    expect(body.markers()[1]!.getAttribute("data-objective")).toBeNull();
-    expect(body.empty.hidden).toBe(true);
   });
 
-  it("says nothing is mapped yet with no places, and offers no Travel here", () => {
+  it("refuses Return home in danger while Map stays available", () => {
     const { body, pause } = cards();
-    pause.setState({
-      inDanger: false,
-      job: null,
-      map: { ...MAP, mapped: 0, places: [] },
-      objective: "",
-      towing: false,
-    });
-    expect(body.markers()).toEqual([]);
-    expect(body.empty.hidden).toBe(false);
-    expect(body.travelGroup.hidden).toBe(true);
+    pause.setState(state({ inDanger: true }));
+    const actions = body.children[2]!.children;
+    expect(actions.map((button) => button.getAttribute("aria-disabled"))).toEqual([
+      null,
+      null,
+      null,
+      null,
+      "true",
+    ]);
+    expect(body.children[3]!.hidden).toBe(false);
   });
 
-  it("keeps marker nodes across repeated identical states", () => {
-    const { body, pause } = cards();
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
-    const first = body.markers();
-    for (let frame = 0; frame < 5; frame++) {
-      pause.setState({
-        inDanger: false,
-        job: null,
-        map: structuredClone(MAP),
-        objective: "",
-        towing: false,
-      });
-    }
-    expect(body.markers().every((marker, index) => marker === first[index])).toBe(true);
-  });
-
-  it("offers Travel here for a chosen place, and travels there", () => {
-    const onTravel = vi.fn();
-    const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
-    expect(body.travelGroup.hidden).toBe(true);
-    body.markers()[1]!.click();
-    expect(body.name.textContent).toBe("Station");
-    expect(body.travelGroup.hidden).toBe(false);
-    expect(body.markers()[1]!.getAttribute("aria-pressed")).toBe("true");
-    body.travel.click();
-    expect(onTravel).toHaveBeenCalledWith("station:0,0");
-  });
-
-  it("keeps Travel here visible but refused in danger, with the danger note", () => {
-    const onTravel = vi.fn();
-    const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: true, job: null, map: MAP, objective: "", towing: false });
-    body.markers()[0]!.click();
-    expect(body.travelGroup.hidden).toBe(false);
-    expect(body.travel.getAttribute("aria-disabled")).toBe("true");
-    expect(body.danger.hidden).toBe(false);
-    body.travel.click();
-    expect(onTravel).not.toHaveBeenCalled();
-  });
-
-  it("keeps Travel here visible but refused while towing, with the towing note", () => {
-    const onTravel = vi.fn();
-    const { body, pause } = cards(onTravel);
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: true });
-    body.markers()[1]!.click();
-    expect(body.travel.getAttribute("aria-disabled")).toBe("true");
-    expect(body.towNote.textContent).toBe(LABELS.towTravel);
-    expect(body.towNote.hidden).toBe(false);
-    expect(body.danger.hidden).toBe(true);
-    body.travel.click();
-    expect(onTravel).not.toHaveBeenCalled();
-    pause.setState({ inDanger: false, job: null, map: MAP, objective: "", towing: false });
-    expect(body.travel.getAttribute("aria-disabled")).toBeNull();
-    expect(body.towNote.hidden).toBe(true);
-  });
-
-  it("never offers Travel here for a charted landmark", () => {
-    const { body, pause } = cards();
-    const landmark = {
-      id: "comet",
-      job: false,
-      kind: "landmark" as const,
-      label: "Comet",
-      objective: false,
-      travel: false,
-      x: 9000,
-      y: 9000,
-    };
-    pause.setState({
-      inDanger: false,
-      job: null,
-      map: { ...MAP, places: [landmark] },
-      objective: "",
-      towing: false,
-    });
-    body.markers()[0]!.click();
-    expect(body.name.textContent).toBe("Comet");
-    expect(body.travelGroup.hidden).toBe(true);
+  it("builds the full-screen map hidden beside the Paused card", () => {
+    const { root } = cards();
+    const screen = root.children.find((node) => node.className === "ada-map-screen");
+    expect(screen?.dataset.dialog).toBe("map");
+    expect(screen?.hidden).toBe(true);
   });
 });

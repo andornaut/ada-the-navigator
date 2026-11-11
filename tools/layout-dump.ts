@@ -17,7 +17,7 @@ import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
 import * as galaxySelectCard from "../src/ui/layout/galaxySelectCard.ts";
 import * as hitAreas from "../src/ui/layout/hitAreas.ts";
-import * as mapCard from "../src/ui/layout/mapCard.ts";
+import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as storyPage from "../src/ui/layout/storyPage.ts";
@@ -34,7 +34,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "css.ts": css,
   "galaxySelectCard.ts": galaxySelectCard,
   "hitAreas.ts": hitAreas,
-  "mapCard.ts": mapCard,
+  "mapScreen.ts": mapScreen,
   "playView.ts": playView,
   "shopCard.ts": shopCard,
   "storyPage.ts": storyPage,
@@ -310,43 +310,93 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("css.ts", "viewProperty slice", css.VIEW_PROPERTIES.slice, edge);
   }
   call("css.ts", "viewStyle", css.viewStyle, controls.WHOLE_PX_EDGES);
-  // The map chart: projections, a lone place, close places and a spread galaxy.
+  // The map screen: projections, fit regions, zoom limits and opening fits.
   for (const point of [
     { x: 0, y: 0 },
     { x: 1000, y: 0 },
     { x: 0, y: 1000 },
     { x: -2500, y: 4000 },
   ]) {
-    call("mapCard.ts", "chartProjection", mapCard.chartProjection, point);
+    call("mapScreen.ts", "mapProjection", mapScreen.mapProjection, point);
   }
-  for (const points of [
-    [],
-    [{ x: 300, y: 700 }],
+  for (const [view, insets] of [
+    [{ height: 360, width: 720 }, playView.NO_INSETS],
+    [{ height: 405, width: 720 }, playView.NO_INSETS],
     [
-      { x: 0, y: 0 },
-      { x: 10, y: 0 },
+      { height: 360, width: 779 },
+      { bottom: 19, left: 43, right: 43, top: 0 },
     ],
-    [
-      { x: 0, y: 0 },
-      { x: 20000, y: -5000 },
-      { x: -8000, y: 12000 },
-    ],
-  ]) {
-    call("mapCard.ts", "chartPoints", mapCard.chartPoints, points);
+  ] as const) {
+    const fit = call("mapScreen.ts", "fitRegion", mapScreen.fitRegion, insets, view) as Rect;
+    const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit) as Rect;
+    call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner);
+    for (const places of [
+      [],
+      [{ x: 300, y: 700 }],
+      [
+        { x: 20000, y: -5000 },
+        { x: -8000, y: 12000 },
+      ],
+      [{ x: 200000, y: -200000 }],
+    ]) {
+      call("mapScreen.ts", "openingView", mapScreen.openingView, inner, places, { x: 0, y: 0 });
+    }
   }
-  const markers = [
-    { x: 100, y: 80 },
-    { x: 110, y: 80 },
-    { x: 200, y: 40 },
-  ];
-  for (const press of [
-    { x: 100, y: 80 },
-    { x: 104, y: 81 },
-    { x: 200, y: 64 },
-    { x: 200, y: 65 },
-  ]) {
-    call("mapCard.ts", "pickedPlace", mapCard.pickedPlace, markers, press);
+  {
+    const fit = mapScreen.fitRegion(playView.NO_INSETS, { height: 360, width: 720 });
+    const inner = mapScreen.innerRegion(fit);
+    const places = [
+      { x: 2000, y: 300 },
+      { x: 400, y: -800 },
+    ];
+    const limit = call("mapScreen.ts", "panLimit", mapScreen.panLimit, places);
+    const view = { centre: { x: 0, y: 0 }, scale: 0.02 };
+    call("mapScreen.ts", "toScreen", mapScreen.toScreen, inner, view, places[0]!);
+    call("mapScreen.ts", "clampView", mapScreen.clampView, inner, limit, {
+      centre: { x: 1e6, y: -1e6 },
+      scale: 1,
+    });
+    for (const factor of [1.5, 1 / 1.5]) {
+      call(
+        "mapScreen.ts",
+        "zoomView",
+        mapScreen.zoomView,
+        inner,
+        limit,
+        factor,
+        { x: 300, y: 180 },
+        view,
+      );
+    }
+    call("mapScreen.ts", "panView", mapScreen.panView, inner, limit, { x: 40, y: -20 }, view);
+    call(
+      "mapScreen.ts",
+      "recentreView",
+      mapScreen.recentreView,
+      inner,
+      limit,
+      { x: 500, y: 500 },
+      view,
+    );
+    for (const panelTop of [null, 250]) {
+      call(
+        "mapScreen.ts",
+        "keepClear",
+        mapScreen.keepClear,
+        fit,
+        inner,
+        panelTop,
+        { x: 4000, y: 4000 },
+        view,
+      );
+    }
+    call("mapScreen.ts", "readingOrder", mapScreen.readingOrder, places);
+    call("mapScreen.ts", "chipRect", mapScreen.chipRect, { x: 100, y: 50 });
+    call("mapScreen.ts", "fogBlur", mapScreen.fogBlur, 4.5);
   }
+  call("mapScreen.ts", "fogColor", mapScreen.fogColor, 0xc9b98a, 0xbbad74);
+  call("mapScreen.ts", "fogReveal", mapScreen.fogReveal, 0.02);
+  call("mapScreen.ts", "adaAngle", mapScreen.adaAngle, { x: 0, y: -1 });
 }
 
 /** The dump: each module's constants, and every function case's arguments and result. */

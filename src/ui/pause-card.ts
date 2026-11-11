@@ -1,8 +1,8 @@
-import type { GalaxyMap, MapPlace } from "../model/map.ts";
+import type { GalaxyMap } from "../model/map.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createMapChart, MAP_STYLE } from "./map-chart.ts";
+import { createMapScreen, MAP_SCREEN_STYLE, type MapField } from "./map-screen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
-import { mapShowsEmpty, type PauseAction, pauseActions } from "./pause.ts";
+import { type PauseAction, pauseActions } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 
 export interface PauseLabels {
@@ -13,6 +13,10 @@ export interface PauseLabels {
   readonly map: string;
   /** "{percent}% mapped". */
   readonly mapPercent: string;
+  /** The map tools' accessible labels. */
+  readonly mapRecentre: string;
+  readonly mapZoomIn: string;
+  readonly mapZoomOut: string;
   readonly resume: string;
   readonly returnHome: string;
   readonly settings: string;
@@ -36,6 +40,8 @@ export interface PauseOptions {
 }
 
 export interface PauseState {
+  /** The current galaxy's map field: its name, background and fog. */
+  readonly field: MapField | null;
   readonly inDanger: boolean;
   /** The held station job's objective, or null without one. */
   readonly job: string | null;
@@ -47,7 +53,14 @@ export interface PauseState {
   readonly towing: boolean;
 }
 
-const NO_MAP: GalaxyMap = { mapped: 0, places: [], player: { x: 0, y: 0 } };
+const NO_MAP: GalaxyMap = {
+  explored: [],
+  facing: { x: 0, y: -1 },
+  landmarks: { charted: 0, total: 0 },
+  mapped: 0,
+  places: [],
+  player: { x: 0, y: 0 },
+};
 
 // An action stack: full-width actions a gap apart, filling the card's inner width.
 function stack(): HTMLDivElement {
@@ -76,12 +89,13 @@ function note(text: string): HTMLParagraphElement {
   return line;
 }
 
-// The Paused card and its Map card, as in Chibi: one card shows at a time over the dimmed game.
-// The X, an outside tap, back and Escape resume from the Paused card; from Map they return to it.
+// The Paused card and its full-screen map (art/map.md), as in Chibi: one shows at a time, the
+// card over the dimmed game and the map in the dim's place. The X, an outside tap, back and Escape
+// resume from the Paused card; from the map, its close tool, back and Escape return to the card.
 export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
   const style = document.createElement("style");
-  style.textContent = MAP_STYLE;
+  style.textContent = MAP_SCREEN_STYLE;
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -116,47 +130,48 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   job.classList.add("ada-pause-job");
   job.dataset.inkTop = "0";
   paused.body.append(objective, job, actions, danger);
-  // The Map card: the percent mapped, the chart, then the chosen place and Travel here.
-  const mapCard = createCard({
-    closeAction: "close-map",
-    closeLabel: labels.close,
-    title: labels.map,
-  });
-  mapCard.card.dataset.dialog = "map";
-  mapCard.frame.hidden = true;
-  const percent = note("");
-  percent.classList.add("ada-map-percent");
-  percent.dataset.inkTop = "0";
-  let selected: MapPlace | null = null;
-  const chart = createMapChart((place) => {
-    selected = place;
-    shown = undefined;
-    render();
-  });
-  const empty = note(labels.travelEmpty);
-  const name = document.createElement("p");
-  name.className = "ada-map-name";
-  const travel = createButton(labels.travelHere, "primary");
-  travel.dataset.action = "map-travel";
-  const travelGroup = stack();
-  travelGroup.append(travel);
-  const mapDanger = note(labels.travelUnavailable);
-  const towNote = note(labels.towTravel);
-  mapCard.body.append(percent, chart.element, empty, name, travelGroup, mapDanger, towNote);
-  modal.append(paused.frame, mapCard.frame);
+  modal.append(paused.frame);
   root.append(modal, style);
+  const mapScreen = createMapScreen(root, {
+    labels: {
+      close: labels.close,
+      map: labels.map,
+      mapPercent: labels.mapPercent,
+      recentre: labels.mapRecentre,
+      towTravel: labels.towTravel,
+      travelEmpty: labels.travelEmpty,
+      travelHere: labels.travelHere,
+      travelUnavailable: labels.travelUnavailable,
+      zoomIn: labels.mapZoomIn,
+      zoomOut: labels.mapZoomOut,
+    },
+    onClose: () => closeMap(),
+    onTravel: (id) => {
+      setOpen(false);
+      options.onTravel(id);
+    },
+    reducedMotion: options.reducedMotion,
+  });
   let open = false;
-  let state: PauseState = { inDanger: false, job: null, map: null, objective: "", towing: false };
-  // Travel here refuses in danger and while towing.
-  const travelRefused = () => state.inDanger || state.towing;
-  const mapOpen = () => open && !mapCard.frame.hidden;
-  const show = (card: "map" | "paused") => {
-    paused.frame.hidden = card !== "paused";
-    mapCard.frame.hidden = card !== "map";
-    (card === "paused" ? paused : mapCard).fit();
-    const first =
-      card === "paused" ? actions.querySelector("button") : (chart.buttons()[0] ?? null);
-    (first ?? (card === "paused" ? paused.close : mapCard.close)).focus();
+  let state: PauseState = {
+    field: null,
+    inDanger: false,
+    job: null,
+    map: null,
+    objective: "",
+    towing: false,
+  };
+  const mapOpen = () => open && mapScreen.isOpen();
+  // The map shows in the card's and the dim's place.
+  const show = (view: "map" | "paused") => {
+    modal.hidden = view !== "paused";
+    if (view === "map") {
+      mapScreen.open();
+      return;
+    }
+    mapScreen.close();
+    paused.fit();
+    (actions.querySelector("button") ?? paused.close).focus();
   };
   const setOpen = (value: boolean) => {
     if (value === open) {
@@ -164,30 +179,26 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     open = value;
     modal.hidden = !value;
-    selected = null;
     shown = undefined;
     if (value) {
       render();
       show("paused");
+    } else {
+      mapScreen.close();
     }
     options.onOpenChange(value);
   };
-  // What the cards last showed, and the chart's map. Rendering only on a change keeps each
-  // button's node across frames, so a press is never lost to a rebuilt button.
+  // What the card last showed. Rendering only on a change keeps each button's node across
+  // frames, so a press is never lost to a rebuilt button.
   let shown: string | undefined;
-  let shownMap: string | undefined;
   const render = () => {
-    const map = state.map ?? NO_MAP;
-    const place = selected && map.places.find(({ id }) => id === selected!.id);
-    selected = place ?? null;
-    const signature = JSON.stringify([
-      map,
-      selected?.id ?? null,
-      state.inDanger,
-      state.towing,
-      state.objective,
-      state.job,
-    ]);
+    mapScreen.setState({
+      field: state.field,
+      inDanger: state.inDanger,
+      map: state.map ?? NO_MAP,
+      towing: state.towing,
+    });
+    const signature = JSON.stringify([state.inDanger, state.objective, state.job]);
     if (signature === shown) {
       return;
     }
@@ -201,25 +212,8 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       setAvailable(buttons.get(id)!, available);
     }
     danger.hidden = !state.inDanger;
-    percent.textContent = labels.mapPercent.replace("{percent}", String(map.mapped));
-    const mapSignature = JSON.stringify(map);
-    if (mapSignature !== shownMap) {
-      shownMap = mapSignature;
-      chart.render(map, selected?.id ?? null);
-    } else {
-      for (const button of chart.buttons()) {
-        button.setAttribute("aria-pressed", String(button.dataset.place === selected?.id));
-      }
-    }
-    empty.hidden = !mapShowsEmpty(map.places);
-    name.hidden = selected === null;
-    name.textContent = selected?.label ?? "";
-    travelGroup.hidden = !selected?.travel;
-    setAvailable(travel, !travelRefused());
-    mapDanger.hidden = !state.inDanger || travelGroup.hidden;
-    towNote.hidden = !state.towing || state.inDanger || travelGroup.hidden;
-    if (open) {
-      (mapCard.frame.hidden ? paused : mapCard).fit();
+    if (open && !mapScreen.isOpen()) {
+      paused.fit();
     }
   };
   const act = (id: PauseAction) => {
@@ -248,27 +242,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   for (const [id, button] of buttons) {
     button.addEventListener("click", () => act(id));
   }
-  travel.addEventListener("click", () => {
-    if (!selected?.travel) {
-      return;
-    }
-    if (travelRefused()) {
-      refuse(travel, options.reducedMotion());
-      return;
-    }
-    const { id } = selected;
-    setOpen(false);
-    options.onTravel(id);
-  });
   paused.close.addEventListener("click", () => setOpen(false));
-  const closeMap = () => {
+  function closeMap(): void {
     if (mapOpen()) {
-      selected = null;
-      render();
       show("paused");
+      buttons.get("map")?.focus();
     }
-  };
-  mapCard.close.addEventListener("click", closeMap);
+  }
   // A full outside tap resumes from the Paused card and returns to it from Map.
   let outside: { readonly x: number; readonly y: number } | undefined;
   modal.addEventListener("pointerdown", (event) => {
@@ -280,18 +260,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       event.target === modal &&
       isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
     ) {
-      if (mapOpen()) {
-        closeMap();
-      } else {
-        setOpen(false);
-      }
+      setOpen(false);
     }
     outside = undefined;
   });
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
-      const frame = mapCard.frame.hidden ? paused.frame : mapCard.frame;
-      const targets = [...frame.querySelectorAll<HTMLButtonElement>("button")].filter(
+      const targets = [...paused.frame.querySelectorAll<HTMLButtonElement>("button")].filter(
         (button) => !button.closest("[hidden]"),
       );
       const first = targets[0];
@@ -310,7 +285,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     closeMap,
     dispose(): void {
       paused.dispose();
-      mapCard.dispose();
+      mapScreen.dispose();
       modal.remove();
       style.remove();
     },

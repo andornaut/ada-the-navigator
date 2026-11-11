@@ -50,6 +50,27 @@ export function markVisited(pages: Record<string, string>, key: string): void {
     bytes.slice(0, at.byte) + String.fromCharCode(value) + bytes.slice(at.byte + 1),
   );
 }
+/** Every visited chunk's coordinates, page by page in key order. */
+export function visitedChunks(pages: Readonly<Record<string, string>>): Vec[] {
+  const chunks: Vec[] = [];
+  for (const key of Object.keys(pages).sort()) {
+    const page = chunkCoordinates(key);
+    const encoded = pages[key];
+    if (!page || encoded === undefined) {
+      continue;
+    }
+    const bytes = atob(encoded);
+    for (let bit = 0; bit < bytes.length * 8; bit++) {
+      if (bytes.charCodeAt(Math.floor(bit / 8)) & (1 << (bit % 8))) {
+        chunks.push({
+          x: page.x * VISITED_PAGE_SIDE + (bit % VISITED_PAGE_SIDE),
+          y: page.y * VISITED_PAGE_SIDE + Math.floor(bit / VISITED_PAGE_SIDE),
+        });
+      }
+    }
+  }
+  return chunks;
+}
 export function validVisitedPages(value: unknown): value is Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;

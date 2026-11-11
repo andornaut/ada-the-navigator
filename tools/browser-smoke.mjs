@@ -188,9 +188,11 @@ try {
     "Root website links to the real game at /play/ without starting Phaser on the landing page",
   );
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
-  await page.locator("canvas").waitFor({ state: "visible" });
+  await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
   assert.ok(
-    await page.locator("canvas").evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
+    await page
+      .locator("#game-canvas > canvas")
+      .evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
   );
   events.checks.push("Real renderer and accessible home status");
   async function contextControlProof(expected, phase) {
@@ -207,7 +209,7 @@ try {
   }
   await contextControlProof(0, "home");
   async function frameProof(portrait = false) {
-    const frame = await page.locator("canvas").evaluate((canvas) => {
+    const frame = await page.locator("#game-canvas > canvas").evaluate((canvas) => {
       const bounds = canvas.getBoundingClientRect();
       const style = getComputedStyle(document.body);
       const matrix = new DOMMatrixReadOnly(
@@ -678,7 +680,7 @@ try {
     const beforeGrant = await readSave();
     await page.waitForTimeout(250);
     assert.deepEqual(await position(), paused, "Cheat modal must pause held flight input");
-    const behindModal = await page.locator("canvas").boundingBox();
+    const behindModal = await page.locator("#game-canvas > canvas").boundingBox();
     assert.ok(behindModal);
     await page.mouse.move(behindModal.x + 12, behindModal.y + behindModal.height - 20);
     await page.mouse.down();
@@ -872,23 +874,61 @@ try {
     1,
     "A refused Return home keeps the flight",
   );
-  // Map opens in danger and shows how much is mapped; nothing undiscovered appears.
+  // Map opens in danger as a full-screen map in the Paused card's place, with the galaxy's
+  // name and how much is mapped in its header; nothing undiscovered appears.
   await page.locator('[data-action="pause-map"]').click();
-  const mapCard = page.locator('[data-dialog="map"]');
-  await mapCard.waitFor({ state: "visible" });
+  const mapScreen = page.locator('[data-dialog="map"]');
+  await mapScreen.waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator('[data-dialog="pause"]').isVisible(),
+    false,
+    "The map hides the Paused card",
+  );
+  const mapBox = await mapScreen.boundingBox();
+  const viewport = page.viewportSize();
+  assert.ok(
+    mapBox &&
+      viewport &&
+      Math.abs(mapBox.width - viewport.width) <= 1 &&
+      Math.abs(mapBox.height - viewport.height) <= 1,
+    "The map fills the view",
+  );
   assert.match(
-    (await mapCard.locator(".ada-map-percent").textContent()) ?? "",
+    (await mapScreen.locator(".ada-map-percent").textContent()) ?? "",
     /^\d+% mapped$/u,
     "Map shows the percent mapped",
   );
+  assert.equal(
+    (await mapScreen.locator(".ada-map-galaxy").textContent()) ?? "",
+    "Sunflower",
+    "Map names the galaxy",
+  );
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-tool")),
+    "close",
+    "Focus starts on the map's close tool",
+  );
+  assert.deepEqual(
+    await mapScreen
+      .locator(".ada-map-tool")
+      .evaluateAll((tools) => tools.map((tool) => tool.dataset.tool)),
+    ["close", "zoomIn", "zoomOut", "recentre"],
+    "The map's tools are close, zoom in, zoom out and recentre",
+  );
   const known = dangerInput.state.progress[dangerInput.state.flight.sector];
   assert.ok(
-    (await mapCard.locator(".ada-map-place").count()) <= known.known.length + known.stations.length,
+    (await mapScreen.locator(".ada-map-places .ada-map-place").count()) <=
+      known.known.length + known.stations.length,
     "Map shows only discovered places",
   );
   await page.keyboard.press("Escape");
   await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
-  assert.equal(await mapCard.isVisible(), false, "Back and Escape close Map to the Paused card");
+  assert.equal(await mapScreen.isVisible(), false, "Back and Escape close Map to the Paused card");
+  await page.locator('[data-action="pause-map"]').click();
+  await mapScreen.waitFor({ state: "visible" });
+  await page.locator('[data-action="map-close"]').click();
+  await page.locator('[data-dialog="pause"]').waitFor({ state: "visible" });
+  assert.equal(await mapScreen.isVisible(), false, "The close tool returns to the Paused card");
   // Achievements stays available in danger and returns to the Paused card.
   await page.locator('[data-action="pause-achievements"]').click();
   assert.equal((await achievementsPage()).count, "1/3");
@@ -897,7 +937,8 @@ try {
   await page.locator('[data-action="pause-resume"]').click();
   await contextControlProof(0, "danger outside a friendly destination");
   events.checks.push(
-    "Danger blocks Return home, Map still opens with its percent and closes on Escape, and " +
+    "Danger blocks Return home, the full-screen Map still opens with its galaxy, percent and " +
+      "tools, focus on close, and closes on Escape and its close tool, and " +
       "no inapplicable or duplicate contextual control shows",
   );
   events.checks.push(
@@ -1726,7 +1767,7 @@ try {
       { archetype: view.archetype, key: storageKey, missile: view.missile },
     );
     combatSnapshots[view.archetype] = await readSave();
-    const canvas = page.locator("canvas");
+    const canvas = page.locator("#game-canvas > canvas");
     await canvas.waitFor({ state: "visible" });
     // The pixel regions sample the canvas alone; the conversation box and notices draw over it.
     const overlays = await page.addStyleTag({
@@ -1896,7 +1937,7 @@ try {
   save("combat-proof.json", {
     scope: "Rendered canonical combat fixture; screenshot review required for visual correctness",
     states: combatSnapshots,
-    canvas: await page.locator("canvas").boundingBox(),
+    canvas: await page.locator("#game-canvas > canvas").boundingBox(),
     capitalSizeRatio: enemyCatalog.capital.sizeRatio,
     pixels,
     paletteColors,
@@ -2011,7 +2052,9 @@ try {
     const overlays = await page.addStyleTag({
       content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
     });
-    const image = await page.locator("canvas").screenshot({ path: `${output}/${name}` });
+    const image = await page
+      .locator("#game-canvas > canvas")
+      .screenshot({ path: `${output}/${name}` });
     await overlays.evaluate((node) => node.remove());
     const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
     const pixels = await stonePixels(image, ramps);
@@ -2037,7 +2080,7 @@ try {
         ),
       storageKey,
     );
-    await page.locator("canvas").waitFor({ state: "visible" });
+    await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
     asteroidCaptures[sector] = [];
     const first = await captureRocks(sector, `asteroids-galaxy-${sector}.png`);
     assert.ok(first.stone > 2000, `Galaxy ${sector} must draw Art's stone rocks`);
@@ -2061,7 +2104,7 @@ try {
   await page
     .locator('#game-status[data-asteroids="art"]')
     .waitFor({ state: "attached", timeout: 30000 });
-  const overlayCanvas = page.locator("canvas");
+  const overlayCanvas = page.locator("#game-canvas > canvas");
   await overlayCanvas.waitFor({ state: "visible" });
   const overlayImage = await overlayCanvas.screenshot();
   const overlayState = await readSave();
@@ -2221,7 +2264,7 @@ try {
   const turnedControls = await page.evaluate(() => {
     const weapon = document.querySelector('button[data-weapon="basic"]').getBoundingClientRect();
     const pause = document.querySelector('[data-action="pause"]').getBoundingClientRect();
-    const canvas = document.querySelector("canvas").getBoundingClientRect();
+    const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
     const inverse = new DOMMatrixReadOnly(getComputedStyle(document.body).transform).inverse();
     const relative = new DOMPoint(
       weapon.x + weapon.width / 2 - pause.x - pause.width / 2,

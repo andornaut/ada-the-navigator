@@ -994,6 +994,7 @@ export class GameModel {
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
     return galaxyMap({
       catalog: ECONOMY,
+      chunkSize: this.content.tuning.chunkSize,
       destinations: galaxyRoute(f.sector),
       flight: f,
       job: this.jobMapTarget(f),
@@ -1001,7 +1002,7 @@ export class GameModel {
       landmarks: {
         charted: galaxyLandmarks(f.sector, this.current)
           .filter(({ charted }) => charted)
-          .map(({ id, name, x, y }) => ({ id, label: this.label(name), x, y })),
+          .map(({ id, kind, name, x, y }) => ({ id, kind, label: this.label(name), x, y })),
         total: landmarkSites(f.sector).length,
       },
       objective: this.objectiveId(f.sector),

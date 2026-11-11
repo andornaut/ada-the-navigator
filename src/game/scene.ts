@@ -44,6 +44,8 @@ import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
+import { fogColor } from "../ui/layout/mapScreen.ts";
+import type { MapField } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
@@ -576,6 +578,9 @@ export class PrototypeScene extends Phaser.Scene {
           jobObjective: PROTOTYPE.labels.jobObjective ?? "",
           map: PROTOTYPE.labels.map ?? "",
           mapPercent: PROTOTYPE.labels.mapPercent ?? "",
+          mapRecentre: PROTOTYPE.labels.mapRecentre ?? "",
+          mapZoomIn: PROTOTYPE.labels.mapZoomIn ?? "",
+          mapZoomOut: PROTOTYPE.labels.mapZoomOut ?? "",
           resume: PROTOTYPE.labels.resume ?? "",
           returnHome: PROTOTYPE.labels.returnHome ?? "",
           settings: PROTOTYPE.labels.settings ?? "",
@@ -1106,6 +1111,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
     this.controls.setPause({
+      field: this.mapField(),
       inDanger: this.model.inDanger,
       job: this.model.jobObjective,
       map: this.model.map,
@@ -1190,6 +1196,20 @@ export class PrototypeScene extends Phaser.Scene {
       this.readEnemyArt();
     });
     this.load.start();
+  }
+
+  /** The flight's galaxy for the map: its name, its field's background and its fog. */
+  private mapField(): MapField | null {
+    const sector = this.model.state.mode === "space" ? this.model.state.flight?.sector : undefined;
+    if (!sector) {
+      return null;
+    }
+    const palette = this.galaxyPalettes.get(sector) ?? this.basePalette;
+    return {
+      background: `#${palette.background.toString(16).padStart(6, "0")}`,
+      fog: fogColor(palette.environment, palette.environmentDetail),
+      name: GALAXIES[sector - 1]?.name ?? "",
+    };
   }
 
   /**

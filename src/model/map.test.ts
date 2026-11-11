@@ -40,6 +40,7 @@ function context(
 ): MapContext {
   return {
     catalog: ECONOMY,
+    chunkSize: PROTOTYPE.tuning.chunkSize,
     destinations: galaxyRoute(1),
     flight: model.state.flight!,
     job,
@@ -81,6 +82,7 @@ describe("galaxy map", () => {
         kind: "destination",
         label: "destination:growers",
         objective: true,
+        symbol: "growers",
         travel: true,
         x: growers.x,
         y: growers.y,
@@ -123,7 +125,7 @@ describe("galaxy map", () => {
   it("charts landmarks through their slot: shown, counted, and never a Travel target", () => {
     const model = flying();
     const landmarks: LandmarkChart = {
-      charted: [{ id: "comet", label: "Comet", x: 1000, y: 2000 }],
+      charted: [{ id: "comet", kind: "nebula", label: "Comet", x: 1000, y: 2000 }],
       total: 2,
     };
     const map = galaxyMap(context(model, { known: [], stations: [] }, landmarks));
@@ -134,6 +136,7 @@ describe("galaxy map", () => {
         kind: "landmark",
         label: "Comet",
         objective: false,
+        symbol: "nebula",
         travel: false,
         x: 1000,
         y: 2000,
@@ -170,11 +173,40 @@ describe("galaxy map", () => {
       kind: "job",
       label: "Find a lost toolbox",
       objective: false,
+      symbol: "job",
       travel: false,
       x: 5000,
       y: 0,
     });
     expect(spot.mapped).toBe(onPlace.mapped);
+  });
+
+  it("gives each place its symbol and keeps Ada's facing, the landmark pips and explored chunks", () => {
+    const model = flying();
+    const flight = model.state.flight!;
+    ensureDestination(PROTOTYPE, "workshop", flight);
+    ensureDestination(PROTOTYPE, "growers", flight);
+    const map = galaxyMap(
+      context(
+        model,
+        { known: ["workshop", "growers"], stations: [inside[0]!.id] },
+        {
+          charted: [{ id: "w", kind: "wreck", label: "Sleepy Tug", x: 0, y: 0 }],
+          total: 12,
+        },
+      ),
+    );
+    expect(map.places.map(({ symbol }) => symbol)).toEqual([
+      "workshop",
+      "growers",
+      "station",
+      "wreck",
+    ]);
+    expect(map.landmarks).toEqual({ charted: 1, total: 12 });
+    expect(map.facing).toEqual(flight.facing);
+    // The flight starts in chunk 0,0: its centre is explored.
+    const size = PROTOTYPE.tuning.chunkSize;
+    expect(map.explored).toContainEqual({ x: size / 2, y: size / 2 });
   });
 
   it("is the model's Map in flight, labelled as the destinations list, and absent at home", () => {
@@ -207,6 +239,7 @@ describe("galaxy map", () => {
         kind: "landmark",
         label,
         objective: false,
+        symbol: landmark.kind,
         travel: false,
         x: landmark.x,
         y: landmark.y,
