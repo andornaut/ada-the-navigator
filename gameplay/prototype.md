@@ -196,6 +196,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - The space screen shows only essentials: the joysticks, weapon icons, shield bar,
   Stardust count and a pause button. There is no travel or destinations panel and
   no settings gear in space.
+- Space shows no in-world name labels. Each named destination has a distinct
+  look by role, the current objective's destination is marked by the direction
+  indicator, and the Talk or Use button and the conversation name tab identify
+  speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, stacked: "Resume" (primary), "Travel", "Settings" and "Return home".
