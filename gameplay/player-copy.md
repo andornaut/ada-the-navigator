@@ -379,9 +379,9 @@ Black Eye:
   adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
-- Pause: Pause (button label), Paused, Resume, Map, Settings, Achievements,
-  Back to title, Return to Earth. On Ada's room page: Settings, Achievements,
-  Back to title.
+- Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title,
+  Return to Earth. On Ada's room page: Settings, Back to title.
+- Start screen top right: Achievements, Settings.
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
   text: ...

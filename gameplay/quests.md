@@ -231,8 +231,8 @@ Activity lines:
 ## Achievements
 
 Achievements cover story, map charting, helping, donations, Penny's finds and
-collections. The start screen and the pause card have an Achievements button
-that opens an Achievements card, as in Chibi. Achievements and their progress
+collections. The start screen has an Achievements button, immediately left
+of Settings, that opens an Achievements card, as in Chibi. Achievements and their progress
 survive Restart. None needs a missable dialogue choice. Unlocking one shows the
 notice "Achievement: {name}"; one earned at home is announced at the start of
 the next flight. A Penny find is a point of interest Penny sensed that Ada then
@@ -272,9 +272,8 @@ achievement also shows its progress as `{have}/{need}`:
 | Full Palette       | Ship paints ever owned, Classic included; kept on Restart |
 
 The other achievements show no count. When the list is longer than the card, it
-pages with Previous, the page count and Next, as in Chibi. The pause card's
-buttons are Resume, Map, Settings, Achievements, Back to title and Return to
-Earth.
+pages with Previous, the page count and Next, as in Chibi. Achievements is
+not on the pause card.
 
 | Key                   | Text                |
 | --------------------- | ------------------- |

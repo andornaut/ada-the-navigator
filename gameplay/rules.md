@@ -39,7 +39,7 @@ and new ones unlock with progress.
 Player-visible labels use "Earth" for travel to Ada's room and "title" for the
 start screen; story dialogue may still call Ada's house home. Every arrival on
 Earth lands in Ada's room. Ada's room page has the pause button at the top left,
-opening the Paused card with Settings, Achievements and Back to title; its close
+opening the Paused card with Settings and Back to title; its close
 X, an outside tap, back and Escape close it. Back to title opens the start
 screen, where Continue resumes as above.
 
@@ -281,8 +281,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, stacked: "Resume" (primary), "Map", "Settings", "Achievements",
-  "Back to title" and "Return to Earth".
+  one shape: "Resume" (primary), "Map", "Settings", "Back to title" and "Return
+  to Earth".
   Above the buttons, the card shows the current story objective and, when a
   station job is held, its "Job:" line. Space shows no objective text.
   Map shows the current galaxy: Ada's position, discovered destinations and
@@ -303,7 +303,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   here and Return to Earth stay visible but disabled, refuse with the shared refusal feedback, and the card
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
-  On the start screen, Settings opens from its own button, as in Chibi.
+  On the start screen, Settings opens from its own button, as in Chibi, and
+  Achievements sits immediately left of it in the same form; the start card
+  holds only Start, or Continue and Restart. Achievements is on the start
+  screen only.
 - Weapon and pause controls use icons inspired by Chibi, with accessible labels.
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
