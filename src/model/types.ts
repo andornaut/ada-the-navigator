@@ -78,6 +78,8 @@ export interface PersistentWorldState {
   notables: Record<string, SpaceObject | null>;
 }
 export interface FlightState {
+  /** Travel arrival points; encounters stay clear of them as of the flight's start. */
+  arrivals?: Vec[];
   world: PersistentWorldState;
   visited: Record<string, string>;
   combat?: {

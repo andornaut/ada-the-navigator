@@ -396,6 +396,7 @@ export const PROTOTYPE: PrototypeContent = {
     enemyDamage: 6,
     enemyProjectileSpeed: 150,
     flight: {
+      arrivalCalm: 2000,
       damageInterval: 1,
       enemyFireInterval: 2.5,
       enemyHp: 2,

@@ -498,10 +498,13 @@ function pack(flight: FlightState, points: Vec[]): SpaceObject[] {
 
 describe("combat admission and subframe firing", () => {
   it("records only admitted pack members when a safezone excludes part of a seeded group", () => {
+    // The fixture uses an encounter at the flight start, which launches otherwise keep clear.
+    const content = structuredClone(PROTOTYPE);
+    content.tuning.flight.arrivalCalm = 0;
     let template: FlightState | undefined;
     let members: SpaceObject[] = [];
     for (let seed = 0; seed < 64; seed++) {
-      const candidate = createFlight(PROTOTYPE, 1, seed, progress);
+      const candidate = createFlight(content, 1, seed, progress);
       const group = candidate.objects.filter((object) => object.enemy?.archetype === "swarm");
       if (group.length >= 3) {
         template = candidate;
@@ -516,7 +519,7 @@ describe("combat admission and subframe firing", () => {
     flight.chunks = [];
     flight.combat = { initialPackSizes: {}, routeEncounters: [] };
     flight.objects = [{ hp: 1, id: "safe", kind: "destination", radius: 30, x: last.x, y: last.y }];
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(content, 0.001, idle, flight);
     const admitted = flight.objects.filter((object) => object.enemy?.packId === packId);
     expect(admitted.length).toBeGreaterThan(0);
     expect(admitted.length).toBeLessThan(members.length);

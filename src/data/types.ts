@@ -103,6 +103,8 @@ export interface PrototypeContent {
       sceneryRestitution: number;
       /** Minimum speed away from scenery after a bounce, in world units per second. */
       sceneryRecoil: number;
+      /** No encounter ship is placed this close to a flight's start or a jump arrival. */
+      arrivalCalm: number;
       pickupRadius: number;
       pieceRadius: number;
       pickupReach: number;

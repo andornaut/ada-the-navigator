@@ -432,6 +432,40 @@ export function encounterSpacing(content: PrototypeContent, sector: SectorId): n
   return base / Math.sqrt(sectorEnemyTuning[sector].encounterRate);
 }
 
+/** Flight starts and Travel arrivals, which encounters keep clear of. */
+function arrivalPoints(flight: FlightState): Vec[] {
+  return [FLIGHT_START, ...(flight.arrivals ?? [])];
+}
+const FLIGHT_START: Vec = { x: 0, y: 0 };
+
+/** Farthest an encounter's ships are placed from its cell centre, hulls included. */
+function encounterReach(
+  content: PrototypeContent,
+  archetype: EnemyArchetype,
+  count: number,
+  escorts: EncounterEntry["escorts"],
+): number {
+  const radius = (type: EnemyArchetype) =>
+    enemyCatalog[type].sizeRatio * content.tuning.flight.shipRadius;
+  const line = Math.max(0, count - 1) * 85 + radius(archetype);
+  const ring = escorts
+    ? radius(archetype) + escortTuning.stationGap + radius(escorts.archetype)
+    : 0;
+  return Math.max(line, ring);
+}
+
+/** Whether ships placed within `reach` of `point` could come within the calm radius. */
+function nearArrival(
+  content: PrototypeContent,
+  flight: FlightState,
+  reach: number,
+  point: Vec,
+): boolean {
+  return arrivalPoints(flight).some(
+    (arrival) => distance(arrival, point) < content.tuning.flight.arrivalCalm + reach,
+  );
+}
+
 function generateRegion(
   content: PrototypeContent,
   x: number,
@@ -486,6 +520,10 @@ function generateRegion(
     countRoll,
     next(),
   );
+  // Launches and jump arrivals begin calm: the whole encounter stays clear of them.
+  if (nearArrival(content, flight, encounterReach(content, archetype, count, escorts), center)) {
+    return;
+  }
   admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) => ({
     x: center.x + index * 85,
     y: center.y,
@@ -898,12 +936,24 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
     return false;
   }
   beginFlightStep(flight);
-  generate(content, object, flight);
   // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
-  flight.player =
+  const arrival =
     object.kind === "station"
       ? outsideDock(stationDockRadius(content) + 40, object)
       : { x: object.x, y: object.y };
+  // A jump arrival begins calm: no new encounter is placed near it, and ordinary encounter
+  // ships already near it leave without counting as casualties. Guards keep their posts.
+  if (!arrivalPoints(flight).some((point) => point.x === arrival.x && point.y === arrival.y)) {
+    flight.arrivals = [...(flight.arrivals ?? []), { ...arrival }];
+  }
+  clearLayoutObjects(
+    (other) =>
+      other.kind !== "enemy" ||
+      distance(other, arrival) >= content.tuning.flight.arrivalCalm + other.radius,
+    flight,
+  );
+  generate(content, object, flight);
+  flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
   const key = chunk(content, object);

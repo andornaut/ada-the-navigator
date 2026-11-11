@@ -594,6 +594,13 @@ export function restoreSave(saved: unknown): GameState | null {
       if (f.ownedWeapons !== undefined && !weaponOwnership(f.ownedWeapons, f.weapon)) {
         return null;
       }
+      // Travel arrivals are bounded by the destinations and stations Ada can reach.
+      if (
+        f.arrivals !== undefined &&
+        !(Array.isArray(f.arrivals) && f.arrivals.length <= 256 && f.arrivals.every(vector))
+      ) {
+        return null;
+      }
       // Run-only granted weapons are a subset of the flight's roster.
       if (
         f.grantedWeapons !== undefined &&

@@ -30,6 +30,8 @@ const progress: SectorProgress = {
 };
 function fixture() {
   const content = structuredClone(PROTOTYPE);
+  // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
+  content.tuning.flight.arrivalCalm = 0;
   content.tuning.flight.objectsPerChunk = 0;
   content.tuning.enemyDamage = 0;
   for (let seed = 0; seed < 256; seed++) {
@@ -181,6 +183,8 @@ describe("casualty-preserving pack retention", () => {
 
   it("regenerates every survivor of a saved pack larger than its sector one roll", () => {
     const content = structuredClone(PROTOTYPE);
+    // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
+    content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
     content.tuning.enemyDamage = 0;
     let found: { flight: ReturnType<typeof createFlight>; packId: string } | undefined;
@@ -362,6 +366,8 @@ describe("per-role encounter restore", () => {
   /** A galaxy one start whose region holds a capital battle: a capital and its escort pack. */
   function battle() {
     const content = structuredClone(PROTOTYPE);
+    // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
+    content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
     content.tuning.enemyDamage = 0;
     for (let seed = 0; seed < 4000; seed++) {
