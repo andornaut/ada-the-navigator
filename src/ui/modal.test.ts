@@ -109,10 +109,19 @@ describe("modal buttons", () => {
     expect(rule(".ada-controls .ada-actions")).toContain("grid-auto-columns:1fr");
   });
 
-  it("centres each action group in the card at one shared width", () => {
-    const actions = rule(".ada-controls .ada-actions");
-    expect(actions).toContain("width:max-content");
-    expect(actions).toContain("margin:8px auto 0");
+  it("stacks groups 8px apart, each at its own width and centred in the card", () => {
+    const card = rule(".ada-controls .ada-card");
+    expect(card).toContain("flex-direction:column");
+    expect(card).toContain("align-items:center");
+    expect(card).toContain("gap:8px");
+    expect(rule(".ada-controls .ada-actions")).toContain("width:max-content");
+    const rows = rule(".ada-controls .ada-rows");
+    expect(rows).toContain("width:max-content");
+    expect(rows).toContain("gap:4px");
+  });
+
+  it("reserves the close target's clearance on both sides of the title", () => {
+    expect(rule(".ada-controls .ada-card header")).toContain("padding:0 34px");
   });
 
   it("draws a row's compact button as a 72x28 face with an 8px inset", () => {
@@ -125,8 +134,9 @@ describe("modal buttons", () => {
   });
 
   it("keeps 16px below the last control when a card scrolls to its end", () => {
-    expect(rule(".ada-controls .ada-card")).toContain("padding:16px 16px 0");
-    expect(rule(".ada-controls .ada-card::after")).toContain("height:16px");
+    // The trailing spacer follows the last group's 8px gap.
+    expect(rule(".ada-controls .ada-card")).toContain("padding:0 16px");
+    expect(rule(".ada-controls .ada-card::after")).toContain("height:8px");
   });
 });
 

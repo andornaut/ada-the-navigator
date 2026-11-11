@@ -236,16 +236,13 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const {
-    card,
-    close: closeButton,
-    frame: cardFrame,
-  } = createCard({
+  const settingsCard = createCard({
     closeAction: "close-settings",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
     title: options.labels.settings,
   });
+  const { card, close: closeButton, frame: cardFrame } = settingsCard;
   // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
   // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
   // Install joins last, shown only while the game can be installed.
@@ -277,6 +274,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   };
   const rows = document.createElement("div");
   rows.className = "ada-rows";
+  // The first row's label line sits centred in its 48px row.
+  rows.dataset.inkTop = "14";
   rows.append(
     switchRow("move", options.labels.moveControls),
     switchRow("aim", options.labels.aimControls),
@@ -309,17 +308,13 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
   });
   rows.append(installRow);
-  const {
-    card: stepsCard,
-    close: stepsX,
-    frame: stepsFrame,
-    title: stepsTitle,
-  } = createCard({
+  const stepsParts = createCard({
     closeAction: "close-install-steps",
     closeLabel: options.labels.close,
     fontRole: FONT_ROLES.heading,
     title: "",
   });
+  const { card: stepsCard, close: stepsX, frame: stepsFrame, title: stepsTitle } = stepsParts;
   stepsFrame.hidden = true;
   stepsCard.dataset.dialog = "install-steps";
   // Chibi's steps glyphs: the browser's own button for the first step, then Install.
@@ -345,6 +340,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (stepsOpen()) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
+      settingsCard.fit();
       installButton.focus();
     }
   };
@@ -356,14 +352,16 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     stepsTitle.textContent = words.title;
     stepsText.textContent = words.steps;
     showIcon(stepsGlyph, STEPS_GLYPHS[browser]);
-    stepsCard.setAttribute("aria-label", words.title);
+    stepsFrame.setAttribute("aria-label", words.title);
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
+    stepsParts.fit();
     stepsClose.focus();
   };
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
         installRow.hidden = !shown;
+        settingsCard.fit();
         if (!shown) {
           closeSteps();
         }
@@ -387,6 +385,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     open = value;
     modal.hidden = !open;
+    if (open) {
+      settingsCard.fit();
+    }
     openButton.setAttribute("aria-expanded", String(open));
     if (open) {
       previousFocus =
@@ -452,6 +453,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       setOpen(false);
       disposed = true;
       stopInstallRow();
+      settingsCard.dispose();
+      stepsParts.dispose();
       root.remove();
     },
     isOpen: () => open,

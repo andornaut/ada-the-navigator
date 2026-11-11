@@ -1,3 +1,5 @@
+import { CARD, cardHeaderLayout, cardTitleReserve, cardWidth } from "./card-layout.ts";
+
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
 // the dark lavender palette): Settings, the install steps, the update offer, the cheats card and
 // the cards still to come share these styles and builders.
@@ -68,20 +70,25 @@ export const MODAL_STYLE = `
 /* The last control keeps the card's 16px padding below it when the card scrolls to its end. */
 .ada-controls .ada-card::after{
   content:"";
-  display:block;
-  height:16px
+  flex:none;
+  height:${CARD.padding - CARD.gap}px
 }
 
+/* Chibi's content-fitted card (card-layout.ts sets its width and header gaps): groups stack 8px
+   apart, each at its own width, centred in the card's inner width. */
 .ada-controls .ada-card{
   box-sizing:border-box;
   width:max-content;
-  min-width:min(50vw,480px);
   max-width:100%;
   max-height:100%;
   min-height:0;
   flex:0 1 auto;
   overflow:auto;
-  padding:16px 16px 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:${CARD.gap}px;
+  padding:0 ${CARD.padding}px;
   color:${TEXT_TOKENS.label};
   background:#3b3850;
   border:2px solid #6b6685;
@@ -90,16 +97,25 @@ export const MODAL_STYLE = `
   image-rendering:pixelated
 }
 
+/* The title centres across the card with the close target's clearance reserved on each side. */
 .ada-controls .ada-card header{
-  display:grid;
-  grid-template-columns:48px minmax(0,1fr) 48px;
-  align-items:center;
-  min-height:48px;
-  margin-bottom:8px
+  flex:none;
+  align-self:stretch;
+  box-sizing:border-box;
+  margin-top:var(--title-top,${CARD.padding}px);
+  padding:0 ${cardTitleReserve(true) - CARD.padding}px
+}
+
+.ada-controls .ada-card > header + *{
+  margin-top:var(--body-gap,0)
+}
+
+.ada-controls .ada-card > *{
+  flex:none;
+  max-width:100%
 }
 
 .ada-controls .ada-card h2{
-  grid-column:2;
   font-size:24px;
   line-height:28px;
   text-align:center;
@@ -203,10 +219,18 @@ export const MODAL_STYLE = `
   display:grid;
   grid-auto-columns:1fr;
   grid-auto-flow:column;
-  gap:8px;
+  gap:${CARD.gap}px;
   width:max-content;
   max-width:100%;
-  margin:8px auto 0
+  margin:0
+}
+
+/* Control rows form one group as wide as its widest row, rows 4px apart. */
+.ada-controls .ada-rows{
+  display:grid;
+  gap:${CARD.rowGap}px;
+  width:max-content;
+  max-width:100%
 }
 
 /* Chibi's compact exception for a button inside a control row: a 72x28 face with an 8px
@@ -281,7 +305,9 @@ export const MODAL_STYLE = `
   display:flex;
   align-items:center;
   gap:8px;
-  margin:0 0 16px
+  width:max-content;
+  max-width:100%;
+  margin:0
 }
 
 .ada-controls .ada-steps p{
@@ -304,6 +330,53 @@ export interface CardParts {
   readonly frame: HTMLDivElement;
   readonly header: HTMLElement;
   readonly title: HTMLHeadingElement;
+  // Stops refitting the card as the view resizes.
+  dispose(): void;
+  // Sizes the shown card to its content (card-layout.ts); call after its content changes.
+  fit(): void;
+}
+
+// Fits a shown card: measures each visible group and the title at their natural widths, sets the
+// card's width, then the title's top and the first group's gap so the header's gaps balance. A
+// group's data-ink-top gives the distance from its top to its first visible content.
+function fitCard(card: HTMLElement, header: HTMLElement, title: HTMLElement): void {
+  const layer = card.closest<HTMLElement>(".ada-modal");
+  if (!layer || card.getClientRects().length === 0) {
+    return;
+  }
+  card.style.width = "max-content";
+  const groups = [...card.children].filter(
+    (child): child is HTMLElement =>
+      child instanceof HTMLElement && child !== header && child.getClientRects().length > 0,
+  );
+  const text = title.textContent ?? "";
+  let titleWidth = 0;
+  if (text) {
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    title.style.whiteSpace = "nowrap";
+    titleWidth = range.getBoundingClientRect().width;
+    title.style.whiteSpace = "";
+  }
+  const styles = getComputedStyle(layer);
+  const viewportWidth = layer.clientWidth;
+  const availableWidth =
+    viewportWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
+  const width = cardWidth(
+    { availableWidth, viewportWidth },
+    groups.map((group) => group.offsetWidth),
+    text ? { close: true, width: titleWidth } : undefined,
+  );
+  card.style.width = `${width}px`;
+  const titleHeight = text ? title.offsetHeight : undefined;
+  const first = groups[0];
+  const { bodyTop, titleTop } = cardHeaderLayout(
+    true,
+    first ? Number(first.dataset.inkTop ?? 0) : undefined,
+    titleHeight,
+  );
+  card.style.setProperty("--title-top", `${titleTop}px`);
+  card.style.setProperty("--body-gap", `${bodyTop - titleTop - (titleHeight ?? 0) - CARD.gap}px`);
 }
 
 // A dialog card in its frame, with its title and close X. Show or hide it through frame.hidden.
@@ -317,9 +390,9 @@ export function createCard(options: {
   frame.className = "ada-card-frame";
   const card = document.createElement("section");
   card.className = "ada-card";
-  card.setAttribute("role", "dialog");
-  card.setAttribute("aria-modal", "true");
-  card.setAttribute("aria-label", options.title);
+  frame.setAttribute("role", "dialog");
+  frame.setAttribute("aria-modal", "true");
+  frame.setAttribute("aria-label", options.title);
   const header = document.createElement("header");
   const title = document.createElement("h2");
   title.textContent = options.title;
@@ -334,7 +407,17 @@ export function createCard(options: {
   close.dataset.action = options.closeAction;
   close.setAttribute("aria-label", options.closeLabel);
   frame.append(card, close);
-  return { card, close, frame, header, title };
+  const fit = () => fitCard(card, header, title);
+  window.addEventListener("resize", fit);
+  return {
+    card,
+    close,
+    dispose: () => window.removeEventListener("resize", fit),
+    fit,
+    frame,
+    header,
+    title,
+  };
 }
 
 // A control row's parts, left to right, as in Chibi: icon, label (with any note) and switch.
@@ -405,6 +488,7 @@ export function createActions(
 ): HTMLDivElement {
   const row = document.createElement("div");
   row.className = "ada-actions";
+  row.dataset.inkTop = "0";
   row.append(...actionOrder(buttons).map(({ button }) => button));
   return row;
 }

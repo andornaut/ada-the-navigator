@@ -23,12 +23,13 @@ export function createUpdateDialog(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const { card, close, frame } = createCard({
+  const parts = createCard({
     closeAction: "close-update",
     closeLabel: labels.close,
     fontRole: FONT_ROLES.heading,
     title: labels.title,
   });
+  const { card, close, frame } = parts;
   card.dataset.dialog = "update";
   const cancel = createButton(labels.cancel);
   cancel.dataset.action = "cancel-update";
@@ -49,6 +50,9 @@ export function createUpdateDialog(
     }
     open = visible;
     modal.hidden = !visible;
+    if (visible) {
+      parts.fit();
+    }
     if (visible) {
       accept.focus();
     }
@@ -86,6 +90,7 @@ export function createUpdateDialog(
     defer,
     dispose(): void {
       stop();
+      parts.dispose();
       modal.remove();
     },
     isOpen: () => open,

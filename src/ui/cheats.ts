@@ -44,11 +44,12 @@ export function createCheats(
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
-  const { card, close, frame } = createCard({
+  const parts = createCard({
     closeAction: "close-cheats",
     closeLabel: options.labels.close,
     title: options.labels.title,
   });
+  const { card, close, frame } = parts;
   const buttons: HTMLButtonElement[] = [];
   for (const scope of ["save", "run"] as const) {
     const section = document.createElement("section");
@@ -102,6 +103,9 @@ export function createCheats(
     }
     open = value;
     modal.hidden = !value;
+    if (value) {
+      parts.fit();
+    }
     launcher.setAttribute("aria-expanded", String(value));
     options.onOpenChange(value);
     if (value) {
@@ -188,6 +192,7 @@ export function createCheats(
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
       document.removeEventListener("focusin", retainFocus);
+      parts.dispose();
       modal.remove();
       launcherGroup.remove();
     },
