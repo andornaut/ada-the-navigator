@@ -182,7 +182,7 @@ out of every inset. Other HUD elements anchor to
 | Sticks       | 75 frames; ring drawn edge `max(24, inset)` from the left (move) or right (aim) and 20 above the bottom safe edge (`inset + 20` from the view bottom), so the two sticks mirror each other; drawn knob reach 12 inside the ring; move input reach 40 and deadzone 2.4 (logical); the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line                                     | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`             |
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the safe rect, bottom level with the sticks' drawn bottom (20 above the bottom safe edge); press `hitAround(face)`; shown only while an interaction is available                                                                                              | `USE_BUTTON`, `touchControls.ts`, to implement                               |
 | Settings     | Start screen only: a `HUD_BUTTON` in the idle state with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling, on the HUD rect's top-right corner                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `playView.ts`                                                  |
-| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, no input; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                         | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
+| Notice       | The conversation box's slot and panel: same rect and ink panel at 0.70, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                    | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts` |
 | Conversation | In-flight dialogue box below the weapon row: name tab top `SPACING.gap` below the weapon press areas, box top 10 lower, centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                   | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                       |
 
 Overlap rules:
@@ -365,8 +365,9 @@ values with its own sprites and fonts.
   It shows only during flight; one box shows at a time, and the next line
   replaces the current one in place.
 - Notices use the same box without a portrait or tab: one or two `TYPE.body`
-  lines centred in the box width minus `2 * SPACING.gap` (464). Gameplay gives
-  notices no tap rule, so a notice takes no input.
+  lines centred in the box width minus `2 * SPACING.gap` (464). The whole box
+  is its press area: a tap dismisses the notice, otherwise it clears on its own
+  (Gameplay's rule).
 - Both sides use the same left-aligned text column; the frame and the tab
   change ends with the speaker.
 - The tab top (64) clears the weapon press areas (56), the pause press area
