@@ -13,6 +13,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import * as cardFrame from "../src/ui/layout/cardFrame.ts";
 import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";
+import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
 import * as galaxySelectCard from "../src/ui/layout/galaxySelectCard.ts";
 import * as hitAreas from "../src/ui/layout/hitAreas.ts";
@@ -28,6 +29,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "cardFrame.ts": cardFrame,
   "contentCard.ts": contentCard,
   "controls.ts": controls,
+  "conversationBox.ts": conversationBox,
   "css.ts": css,
   "galaxySelectCard.ts": galaxySelectCard,
   "hitAreas.ts": hitAreas,
@@ -131,6 +133,20 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       }
       call("playView.ts", "playView", playView.playView, view);
       call("playView.ts", "hudRect", playView.hudRect, logical, view);
+      call(
+        "conversationBox.ts",
+        "conversationBoxRect",
+        conversationBox.conversationBoxRect,
+        logical,
+        view,
+      );
+      call(
+        "conversationBox.ts",
+        "conversationShipClearance",
+        conversationBox.conversationShipClearance,
+        logical,
+        view,
+      );
       call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
       call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
       // Cards and the shop fit the page safe rect's width.
@@ -159,9 +175,6 @@ function stateCases(call: ReturnType<typeof recorder>): void {
   for (const count of COUNTS) {
     call("playView.ts", "hudButtonTarget", playView.hudButtonTarget, count);
     call("playView.ts", "hudRowWidth", playView.hudRowWidth, count);
-    for (const pill of [undefined, 0, 64]) {
-      call("playView.ts", "noticeReserve", playView.noticeReserve, count, pill);
-    }
   }
   const arts: readonly Rect[] = [
     { height: 8, width: 12, x: 0, y: 0 },
@@ -186,6 +199,17 @@ function stateCases(call: ReturnType<typeof recorder>): void {
     { x: 200, y: 200 },
   ]) {
     call("hitAreas.ts", "pressedArea", hitAreas.pressedArea, areas, point);
+  }
+  for (const side of ["left", "right"] as const) {
+    for (const width of [320, 480, 640]) {
+      call(
+        "conversationBox.ts",
+        "conversationSpeakerLayout",
+        conversationBox.conversationSpeakerLayout,
+        side,
+        width,
+      );
+    }
   }
   for (const close of [false, true]) {
     call("cardFrame.ts", "cardTitleReserve", cardFrame.cardTitleReserve, close);

@@ -96,6 +96,36 @@
         6
       ]
     },
+    "conversationBox.ts": {
+      "CONVERSATION_BOX": {
+        "height": 64,
+        "inset": 8,
+        "maxWidth": 640,
+        "name": {
+          "lineHeight": 20,
+          "size": 16,
+          "weight": 700
+        },
+        "panel": {
+          "alpha": 0.7,
+          "ink": "#181425"
+        },
+        "portrait": 48,
+        "rowGap": 4,
+        "ship": {
+          "centreY": 180,
+          "display": 42
+        },
+        "shipClearance": 24,
+        "tabInset": 6,
+        "text": {
+          "lineHeight": 20,
+          "size": 16,
+          "weight": 400
+        },
+        "top": 56
+      }
+    },
     "css.ts": {
       "HUD_SIDES": [
         "top",
@@ -105,7 +135,6 @@
       "VIEW_HOST_ID": "app",
       "VIEW_PROPERTIES": {
         "hud": "#function",
-        "noticeReserve": "--ada-notice-reserve",
         "safe": "#function",
         "slice": "#function",
         "unit": "--ada-unit"
@@ -161,17 +190,6 @@
       "HUD_BUTTON_INSET": {
         "disc": 7.5,
         "glyph": 14
-      },
-      "NOTICE": {
-        "gap": 8,
-        "height": 28,
-        "inset": 16,
-        "maxWidth": 640,
-        "text": {
-          "lineHeight": 20,
-          "size": 16,
-          "weight": 400
-        }
       },
       "NO_INSETS": {
         "bottom": 0,
@@ -3334,6 +3352,818 @@
         }
       ]
     },
+    "conversationBox.ts": {
+      "conversationBoxRect": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 11.8125,
+              "left": 26.4375,
+              "right": 26.4375,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 19.125,
+              "left": 0,
+              "right": 0,
+              "top": 26.4375
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 82.4375
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 21,
+              "left": 47,
+              "right": 47,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 626,
+            "x": 47,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 34,
+              "left": 0,
+              "right": 0,
+              "top": 47
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 103
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 85,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 18.9,
+              "left": 42.3,
+              "right": 42.3,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 85,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 30.599999999999998,
+              "left": 0,
+              "right": 0,
+              "top": 42.3
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 85,
+            "y": 98.3
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.53846153846155,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 19.384615384615387,
+              "left": 43.38461538461539,
+              "right": 43.38461538461539,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.53846153846155,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 31.384615384615387,
+              "left": 0,
+              "right": 0,
+              "top": 43.38461538461539
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.53846153846155,
+            "y": 99.38461538461539
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 38.769230769230774,
+              "left": 86.76923076923077,
+              "right": 86.76923076923077,
+              "top": 0
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 546.4615384615386,
+            "x": 86.76923076923072,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 62.769230769230774,
+              "left": 0,
+              "right": 0,
+              "top": 86.76923076923077
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 40,
+            "y": 142.76923076923077
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.74017321785476,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 20.14656895403065,
+              "left": 45.08994003997335,
+              "right": 45.08994003997335,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.74017321785476,
+            "y": 64
+          }
+        },
+        {
+          "args": [
+            {
+              "bottom": 32.618254497002,
+              "left": 0,
+              "right": 0,
+              "top": 45.08994003997335
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": {
+            "height": 64,
+            "width": 640,
+            "x": 69.74017321785476,
+            "y": 101.08994003997336
+          }
+        }
+      ],
+      "conversationShipClearance": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 11.8125,
+              "left": 26.4375,
+              "right": 26.4375,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 19.125,
+              "left": 0,
+              "right": 0,
+              "top": 26.4375
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 12.5625
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 21,
+              "left": 47,
+              "right": 47,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 34,
+              "left": 0,
+              "right": 0,
+              "top": 47
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": -8
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 18.9,
+              "left": 42.3,
+              "right": 42.3,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 30.599999999999998,
+              "left": 0,
+              "right": 0,
+              "top": 42.3
+            },
+            {
+              "height": 360,
+              "width": 810
+            }
+          ],
+          "result": -3.3000000000000114
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 19.384615384615387,
+              "left": 43.38461538461539,
+              "right": 43.38461538461539,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 31.384615384615387,
+              "left": 0,
+              "right": 0,
+              "top": 43.38461538461539
+            },
+            {
+              "height": 360,
+              "width": 779.0769230769231
+            }
+          ],
+          "result": -4.384615384615387
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 38.769230769230774,
+              "left": 86.76923076923077,
+              "right": 86.76923076923077,
+              "top": 0
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 62.769230769230774,
+              "left": 0,
+              "right": 0,
+              "top": 86.76923076923077
+            },
+            {
+              "height": 1558.1538461538462,
+              "width": 720
+            }
+          ],
+          "result": -47.769230769230774
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 20.14656895403065,
+              "left": 45.08994003997335,
+              "right": 45.08994003997335,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": 31
+        },
+        {
+          "args": [
+            {
+              "bottom": 32.618254497002,
+              "left": 0,
+              "right": 0,
+              "top": 45.08994003997335
+            },
+            {
+              "height": 360,
+              "width": 779.4803464357095
+            }
+          ],
+          "result": -6.0899400399733565
+        }
+      ],
+      "conversationSpeakerLayout": [
+        {
+          "args": [
+            "left",
+            320
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 64,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 64,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 8,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 248,
+              "x": 64,
+              "y": 8
+            }
+          }
+        },
+        {
+          "args": [
+            "left",
+            480
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 64,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 64,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 8,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 408,
+              "x": 64,
+              "y": 8
+            }
+          }
+        },
+        {
+          "args": [
+            "left",
+            640
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 64,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 64,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 8,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 568,
+              "x": 64,
+              "y": 8
+            }
+          }
+        },
+        {
+          "args": [
+            "right",
+            320
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 8,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 8,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 264,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 248,
+              "x": 8,
+              "y": 8
+            }
+          }
+        },
+        {
+          "args": [
+            "right",
+            480
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 8,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 8,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 424,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 408,
+              "x": 8,
+              "y": 8
+            }
+          }
+        },
+        {
+          "args": [
+            "right",
+            640
+          ],
+          "result": {
+            "line": {
+              "align": "left",
+              "x": 8,
+              "y": 32
+            },
+            "nameTab": {
+              "x": 8,
+              "y": 8
+            },
+            "portrait": {
+              "height": 48,
+              "width": 48,
+              "x": 584,
+              "y": 8
+            },
+            "text": {
+              "height": 48,
+              "width": 568,
+              "x": 8,
+              "y": 8
+            }
+          }
+        }
+      ]
+    },
     "css.ts": {
       "font": [
         {
@@ -3975,7 +4805,7 @@
               6
             ]
           ],
-          "result": "\n#app{\n  --ada-unit:1;\n  --ada-notice-reserve:calc(var(--ada-unit) * 50.75px);\n  --ada-hud-top:calc(var(--ada-unit) * 8px);\n  --ada-hud-right:calc(var(--ada-unit) * 8px);\n  --ada-hud-left:calc(var(--ada-unit) * 8px);\n  --ada-safe-top:0px;\n  --ada-safe-right:0px;\n  --ada-safe-bottom:0px;\n  --ada-safe-left:0px;\n  --ada-slice-1:1px;\n  --ada-slice-2:2px;\n  --ada-slice-4:4px;\n  --ada-slice-6:6px;\n}\n\n.ada-safe-probe{\n  position:absolute;\n  top:0;\n  left:0;\n  width:0;\n  height:0;\n  visibility:hidden;\n  pointer-events:none;\n  padding:var(--inset-top,0px) var(--inset-right,0px) var(--inset-bottom,0px) var(--inset-left,0px)\n}\n"
+          "result": "\n#app{\n  --ada-unit:1;\n  --ada-hud-top:calc(var(--ada-unit) * 8px);\n  --ada-hud-right:calc(var(--ada-unit) * 8px);\n  --ada-hud-left:calc(var(--ada-unit) * 8px);\n  --ada-safe-top:0px;\n  --ada-safe-right:0px;\n  --ada-safe-bottom:0px;\n  --ada-safe-left:0px;\n  --ada-slice-1:1px;\n  --ada-slice-2:2px;\n  --ada-slice-4:4px;\n  --ada-slice-6:6px;\n}\n\n.ada-safe-probe{\n  position:absolute;\n  top:0;\n  left:0;\n  width:0;\n  height:0;\n  visibility:hidden;\n  pointer-events:none;\n  padding:var(--inset-top,0px) var(--inset-right,0px) var(--inset-bottom,0px) var(--inset-left,0px)\n}\n"
         }
       ]
     },
@@ -4997,134 +5827,6 @@
             "height": 360,
             "width": 779.4803464357095
           }
-        }
-      ],
-      "noticeReserve": [
-        {
-          "args": [
-            0,
-            null
-          ],
-          "result": 50.75
-        },
-        {
-          "args": [
-            0,
-            0
-          ],
-          "result": 50.75
-        },
-        {
-          "args": [
-            0,
-            64
-          ],
-          "result": 122.75
-        },
-        {
-          "args": [
-            1,
-            null
-          ],
-          "result": 56
-        },
-        {
-          "args": [
-            1,
-            0
-          ],
-          "result": 56
-        },
-        {
-          "args": [
-            1,
-            64
-          ],
-          "result": 122.75
-        },
-        {
-          "args": [
-            2,
-            null
-          ],
-          "result": 112
-        },
-        {
-          "args": [
-            2,
-            0
-          ],
-          "result": 112
-        },
-        {
-          "args": [
-            2,
-            64
-          ],
-          "result": 122.75
-        },
-        {
-          "args": [
-            3,
-            null
-          ],
-          "result": 168
-        },
-        {
-          "args": [
-            3,
-            0
-          ],
-          "result": 168
-        },
-        {
-          "args": [
-            3,
-            64
-          ],
-          "result": 168
-        },
-        {
-          "args": [
-            4,
-            null
-          ],
-          "result": 224
-        },
-        {
-          "args": [
-            4,
-            0
-          ],
-          "result": 224
-        },
-        {
-          "args": [
-            4,
-            64
-          ],
-          "result": 224
-        },
-        {
-          "args": [
-            5,
-            null
-          ],
-          "result": 280
-        },
-        {
-          "args": [
-            5,
-            0
-          ],
-          "result": 280
-        },
-        {
-          "args": [
-            5,
-            64
-          ],
-          "result": 280
         }
       ],
       "playView": [
