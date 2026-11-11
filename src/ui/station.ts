@@ -64,10 +64,6 @@ export const STATION_STYLE = `
   color:#5b5a55
 }
 
-.ada-controls .ada-station-row[data-state=unaffordable].ada-refused{
-  background:#f0c8c0
-}
-
 .ada-controls .ada-station-row[data-state=inUse]{
   outline:3px solid #36764f;
   outline-offset:1px
