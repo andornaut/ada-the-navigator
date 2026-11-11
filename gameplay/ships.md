@@ -25,8 +25,10 @@ aim direction at the weapon's normal cadence. Thrust jets scale with current spe
 as a fraction of the ship's maximum speed.
 
 Ada's ship faces its aim while aiming and its movement otherwise. Enemy hulls
-rotate smoothly to face their movement, turning with `turnSeconds`, and keep their
-last facing when stopped. A returning enemy slows as it nears home, scaling its
+face their velocity direction, turning toward it with the shared
+`hullTurnSeconds` of 0.08 so collision slides do not snap, and keep their last
+facing when stopped. Because an enemy's heading starts from its hull and turns with
+`turnSeconds`, its velocity and hull swing round together. A returning enemy slows as it nears home, scaling its
 speed by `min(1, distance / (maxSpeed * brakingSeconds))`, and stops within five
 world units. Each weapon's aim starts on its first target and then turns with
 `aimTurnSeconds`. Hardpoint hit areas and fire origins rotate with the
