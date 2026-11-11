@@ -270,8 +270,8 @@ Branch pages, then the story rejoins:
 - "Let's go exploring.": "Ada lets Penny choose the way. They take a new path
   through the park, and Penny sniffs every exciting thing."
 
-Closing: "Ada takes the dog out and gives it time to stop, sniff and explore.
-Caring means making time for what the dog needs."
+Closing: "Ada takes Penny out and gives her time to stop, sniff and explore.
+Caring means making time for what Penny needs."
 
 Objectives, in order:
 
