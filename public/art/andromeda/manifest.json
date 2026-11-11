@@ -130,6 +130,85 @@
       },
       "outpost": "settlement",
       "variant": "lamphouse"
+    },
+    {
+      "id": "beacon-guide-lit-a",
+      "path": "/art/andromeda/beacon-lit-a.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.75
+      },
+      "frameMs": 700,
+      "beacon": "guide",
+      "state": "lit"
+    },
+    {
+      "id": "beacon-guide-lit-b",
+      "path": "/art/andromeda/beacon-lit-b.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.75
+      },
+      "frameMs": 700,
+      "beacon": "guide",
+      "state": "lit"
+    },
+    {
+      "id": "beacon-guide-relit-a",
+      "path": "/art/andromeda/beacon-relit-a.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.75
+      },
+      "frameMs": 700,
+      "beacon": "guide",
+      "state": "relit"
+    },
+    {
+      "id": "beacon-guide-relit-b",
+      "path": "/art/andromeda/beacon-relit-b.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.75
+      },
+      "frameMs": 700,
+      "beacon": "guide",
+      "state": "relit"
+    },
+    {
+      "id": "beacon-guide-dented",
+      "path": "/art/andromeda/beacon-dented.svg",
+      "width": 48,
+      "height": 64,
+      "displayWidth": 21,
+      "displayHeight": 28,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.75
+      },
+      "beacon": "guide",
+      "state": "dented"
     }
   ]
 }

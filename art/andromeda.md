@@ -22,11 +22,12 @@ fraction; each SVG's intrinsic `width` and `height` are its display size
 and `height` are the frame, so pivots and docks are frame px; `displayWidth`
 and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset             | Ids                                          | Frame px | Display  | Pivot           |
-| ----------------- | -------------------------------------------- | -------- | -------- | --------------- |
-| Settlers' station | `station-settlers-a`, `station-settlers-b`   | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
-| Hamlet            | `outpost-hamlet-a`, `outpost-hamlet-b`       | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
-| Lamp house        | `outpost-lamphouse-a`, `outpost-lamphouse-b` | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
+| Asset             | Ids                                                                         | Frame px | Display  | Pivot           |
+| ----------------- | --------------------------------------------------------------------------- | -------- | -------- | --------------- |
+| Settlers' station | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 63 by 77 | `(0.5, 0.5)`    |
+| Hamlet            | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 35 by 35 | `(0.5, 0.4375)` |
+| Lamp house        | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 28 by 35 | `(0.5, 0.6)`    |
+| Guide beacon      | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 21 by 28 | `(0.5, 0.75)`   |
 
 ## Settlers' station
 
@@ -95,10 +96,37 @@ assigns a design to each settlement. Fixed orientation, the station blink
 Dock values are frame px with `outward` `[0, 1]`, in the station's dock
 schema.
 
+## Guide beacons
+
+The chain of guide beacons ships follow between the settlements. They are
+story objects, separate from the galaxy's beacon landmarks: the dark beacon is
+a story place, and the rest of the chain is scenery. Entries carry `beacon`
+`guide` and `state`; there is no dock, and the pivot is the float's centre on
+the world plane. Every state shares one frame and pivot, so a state change
+swaps the sprite in place.
+
+- A pearl float with three fins, a banded pearl tower (marker-dark band
+  `#6f78b8`), a cream gallery, an eight-sided lantern and a slate-blue cap.
+  About 33 units across the fins and 41 tall: larger than Sunflower's salvage
+  beacons (8.75 by 17.5 display px).
+- `lit` (`beacon-guide-lit-a`, `-b`): the chain. Frame A shows the lantern
+  `#b8c1ff` with a white core, frame B `#8f9cf0`. Neighbouring beacons in a
+  chain blink opposite: the n-th beacon along the chain shows frame A while
+  its neighbours show B.
+- `dented` (`beacon-guide-dented`): the dark beacon before it is relit, one
+  frame with no `frameMs`. The lantern is dark glass `#2a2d48`; the head is
+  knocked askew toward screen right, the front of the gallery is caved in,
+  and a crease `#7d7a9c` and a scrape `#cfcde0` mark the tower. It is dented,
+  not shot: no scorch, breach or ember.
+- `relit` (`beacon-guide-relit-a`, `-b`): the dark beacon once relit,
+  straight again with a cream patch plate over the crease, blinking as `lit`.
+- Reduced motion shows frame A of a blinking beacon.
+
 ## Palette
 
 Contrast is WCAG against Andromeda's field background `#232641`; the table
-lists top colours, which carry each silhouette.
+lists top colours, which carry each silhouette. The dark beacon's glass reads
+against its pearl tower and cream gallery, not the field.
 
 | Asset   | Role                | Colour    | Contrast |
 | ------- | ------------------- | --------- | -------: |
@@ -110,6 +138,11 @@ lists top colours, which carry each silhouette.
 | Station | Lantern, frame A    | `#b8c1ff` |   8.50:1 |
 | Station | Lantern, frame B    | `#8f9cf0` |   5.74:1 |
 | Station | Tanks               | `#8d9bb0` |   5.23:1 |
+| Beacons | Lantern, frame A    | `#b8c1ff` |   8.50:1 |
+| Beacons | Lantern, frame B    | `#8f9cf0` |   5.74:1 |
+| Beacons | Dark glass          | `#2a2d48` |   1.10:1 |
+| Beacons | Dent crease         | `#7d7a9c` |   3.60:1 |
+| Beacons | Scrape              | `#cfcde0` |   9.45:1 |
 | All     | Warm windows        | `#ffe9b8` |  12.35:1 |
 | All     | Blue lights         | `#70ace8` |   6.14:1 |
 

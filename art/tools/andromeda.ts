@@ -150,3 +150,34 @@ replaceEntries(
   settlementEntries,
   (id) => !id.startsWith("station-settlers-"),
 );
+
+// ---------------------------------------------------------------- guide beacons
+
+// The chain's beacons share one frame and pivot, so a state change swaps sprites in place. Lit and
+// relit beacons blink; the dark, dented beacon is a single frame.
+const beacons: (Fixed & { state: m.BeaconState; blink: boolean })[] = [
+  ...(["lit", "relit"] as const).flatMap((state) =>
+    pair(`beacon-guide-${state}`, `beacon-${state}`, `Guide beacon, ${state}`, (lit) =>
+      m.beacon(state, lit),
+    ).map((item) => ({ ...item, state, blink: true })),
+  ),
+  {
+    id: "beacon-guide-dented",
+    file: "beacon-dented",
+    title: "Guide beacon, dark and dented",
+    faces: polygons(m.beacon("dented", false)),
+    state: "dented",
+    blink: false,
+  },
+];
+const beaconFrame = layout(allFaces(beacons));
+for (const item of beacons) writeFixed(beaconFrame, item);
+const beaconEntries = beacons.map((item) =>
+  fixedEntry(beaconFrame, item, { beacon: "guide", state: item.state }, item.blink),
+);
+replaceEntries(
+  "andromeda",
+  (id) => /^beacon-guide-((lit|relit)-[ab]|dented)$/.test(id),
+  beaconEntries,
+  (id) => /^(enemy-|craft-|andromeda-haze)|portrait/.test(id),
+);
