@@ -335,7 +335,7 @@ export const STATION_STYLE = `
 .ada-controls [data-state=unaffordable] .ada-job-action{
   color:inherit
 }
-/* Placeholder until Art's icon-job-* sheets: a flat mark per job type. */
+/* Placeholder until Art's icon-job-* sheets: a flat mark per job type and for an activity. */
 .ada-controls .ada-job-glyph{
   width:${units(SHOP_ROW.glyph.icon)};
   height:${units(SHOP_ROW.glyph.icon)};
@@ -346,6 +346,7 @@ export const STATION_STYLE = `
 .ada-controls .ada-job-glyph[data-type=delivery]{background:#be4a2f}
 .ada-controls .ada-job-glyph[data-type=rescue]{background:#0099db}
 .ada-controls .ada-job-glyph[data-type=hunt]{background:#feae34}
+.ada-controls .ada-job-glyph[data-type=activity]{background:#b55088}
 .ada-controls [data-state=unaffordable] .ada-job-glyph{background:#5a6988}
 
 /* Measuring: rows at their natural widths, off screen. */

@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { ACTIVITIES, CALF, MINING_CONTRACT_DEPOSITS } from "../data/activities.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
+import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
 import { activityOffer, heldActivity } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination, ensureStation, stationDock } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
@@ -35,9 +36,21 @@ function atPlace(sector: SectorId, place: string, resolved = true) {
   const flight = model.state.flight!;
   flight.objects = [];
   const at = ensureDestination(PROTOTYPE, place, flight);
+  // Sunflower's supply runs go to a known station at least 3000 from the issuer.
+  if (sector === 1) {
+    progress.stations = [supplyStation(at).id];
+  }
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
   return model;
+}
+
+/** Galaxy one's nearest station at least the delivery minimum from a point. */
+function supplyStation(from: Vec) {
+  const gap = (site: Vec) => Math.hypot(site.x - from.x, site.y - from.y);
+  return stationsNear(ECONOMY, 1, 40_000, from)
+    .filter((site) => gap(site) >= JOB_TUNING.delivery.min)
+    .sort((a, b) => gap(a) - gap(b))[0]!;
 }
 
 /** Ada at a known place in the flight, at rest. */
@@ -53,9 +66,9 @@ function flyTo(model: GameModel, place: string) {
 }
 
 const OFFERS = [
-  [1, "growers", "Fresh food for the salvagers. Would you carry it?", "Grower"],
-  [1, "workshop", "These repaired tools belong to the growers. Could you take them?", "Workshop"],
-  [1, "salvagers", "We found parts the workshop needs. Will you bring them?", "Salvager"],
+  [1, "growers", "Fresh food for the station traders. Would you carry it?", "Grower"],
+  [1, "workshop", "A station ordered these repaired tools. Could you take them?", "Workshop"],
+  [1, "salvagers", "A station shop needs these spare parts. Will you bring them?", "Salvager"],
   [2, "hub", "Contract open: deposit 30 resources here. Partial loads count.", "Station"],
   [
     3,
@@ -107,7 +120,6 @@ describe("repeatable activities", () => {
         id: ACTIVITIES[sector]!.id,
         kind: "activity",
         place,
-        reward: ACTIVITIES[sector]!.reward,
       });
     },
   );
@@ -172,6 +184,7 @@ describe("repeatable activities", () => {
     model.state.docked = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 })[0]!.id;
     const rows = model.jobBoard();
     expect(rows[0]).toMatchObject({
+      detail: "Deposit 30 resources at the hub.",
       kind: "activity",
       reward: 35,
       state: "held",
@@ -236,24 +249,35 @@ describe("repeatable activities", () => {
     expect(model.state.dialogue?.context).toBe("activity:hub");
   });
 
-  it("carries a supply run's item to its outpost, losing it on Return to Earth and replacing it at the issuer", () => {
+  it("sends a supply run to the nearest known station 3000 away, paying the delivery reward", () => {
     const model = atPlace(1, "growers");
+    const flight = model.state.flight!;
+    const growers = flight.objects.find((o) => o.kind === "destination" && o.id === "growers")!;
+    const site = supplyStation(growers);
+    // A nearer station under the minimum and a farther one do not change the destination.
+    const others = stationsNear(ECONOMY, 1, 40_000, growers).filter(({ id }) => id !== site.id);
+    model.state.progress[1].stations = [site.id, ...others.map(({ id }) => id)];
     model.interact();
     model.choose("take");
-    expect(heldActivity(1, model.state)).toMatchObject({ carrying: true, place: "growers" });
-    expect(model.jobObjective).toBe("Carry fresh food to the salvagers.");
-    const salvagers = ensureDestination(PROTOTYPE, "salvagers", model.state.flight!);
+    const length = Math.hypot(site.x - growers.x, site.y - growers.y);
+    const reward = length >= JOB_TUNING.delivery.longFrom ? 25 : 15;
+    expect(heldActivity(1, model.state)).toMatchObject({
+      carrying: true,
+      place: "growers",
+      reward,
+      target: { id: site.id, x: site.x, y: site.y },
+    });
+    expect(model.jobObjective).toBe("Carry fresh food to the Station.");
     expect(model.indicatorTargets).toContainEqual(
-      expect.objectContaining({ id: "salvagers", kind: "job", x: salvagers.x, y: salvagers.y }),
+      expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),
     );
-    // Lost on Return to Earth.
-    model.state.flight!.dangerFor = 0;
+    // Lost on Return to Earth, and the issuer is the target until Talk there replaces it.
+    flight.dangerFor = 0;
     model.returnHome();
     expect(heldActivity(1, model.state)?.carrying).toBe(false);
     model.startSector(1);
     playOpening(model);
     model.state.dialogue = null;
-    // The issuer is the indicator's target until the item is replaced there through Talk.
     flyTo(model, "growers");
     expect(model.indicatorTargets.some(({ id, kind }) => id === "growers" && kind === "job")).toBe(
       true,
@@ -261,14 +285,42 @@ describe("repeatable activities", () => {
     model.interact();
     expect(model.state.dialogue).toMatchObject({ context: "activityActive:growers" });
     expect(heldActivity(1, model.state)?.carrying).toBe(true);
-    model.state.dialogue = null;
+    // Docking at the station delivers.
     const before = model.state.economy.stardust;
-    flyTo(model, "salvagers");
-    expect(model.contextLabel).toBe("Deliver");
-    model.interact();
+    ensureStation(PROTOTYPE, site.id, model.state.flight!);
+    const next = model.state.flight!;
+    next.player = { ...stationDock(site) };
+    next.velocity = { x: 0, y: 0 };
+    next.dangerFor = 0;
+    model.state.dialogue = null;
+    model.step(0.05, idle);
+    expect(model.state.docked).toBe(site.id);
     expect(model.state.tasks[1]).toBeUndefined();
-    expect(model.state.economy.stardust).toBe(before + 15);
-    expect(model.state.notice).toBe("Job complete: +15 Stardust");
+    expect(model.state.economy.stardust).toBe(before + reward);
+    expect(model.state.notice).toBe(`Job complete: +${reward} Stardust`);
+  });
+
+  it("makes no supply run offer without a known station 3000 from the outpost", () => {
+    const model = atPlace(1, "growers");
+    model.state.progress[1].stations = [];
+    model.interact();
+    expect(model.state.dialogue).toMatchObject({ context: "grower" });
+    expect(model.state.tasks[1]).toBeUndefined();
+  });
+
+  it("refuses Accept at another outpost while one outpost's supply run is held", () => {
+    const model = atPlace(1, "growers");
+    model.interact();
+    model.choose("take");
+    flyTo(model, "workshop");
+    model.interact();
+    expect(model.state.dialogue).toMatchObject({
+      choices: [{ id: "take", refused: true }, { id: "skip" }],
+      context: "activity:workshop",
+    });
+    model.choose("take");
+    expect(model.state.notice).toBe("Finish your activity first.");
+    expect(heldActivity(1, model.state)?.place).toBe("growers");
   });
 
   it("keeps an accepted activity through save and restore, and rejects one not the galaxy's", () => {
@@ -290,6 +342,14 @@ describe("repeatable activities", () => {
         kind: "activity",
         place: "hub",
         reward: 35,
+      },
+      {
+        deposited: 0,
+        id: "miningContract",
+        kind: "activity",
+        place: "hub",
+        reward: 35,
+        target: { id: "x", x: 0, y: 0 },
       },
     ]) {
       const broken = JSON.parse(JSON.stringify(saved)) as { tasks: Record<number, unknown> };

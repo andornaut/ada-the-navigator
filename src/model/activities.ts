@@ -3,8 +3,11 @@ import {
   type ActivityDefinition,
   MINING_CONTRACT_DEPOSITS,
 } from "../data/activities.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { JOB_REWARDS, JOB_TUNING } from "../data/jobs.ts";
 import type { SectorId } from "../data/types.ts";
-import type { GameState, HeldActivity, SectorProgress, Vec } from "./types.ts";
+import { stationById, type StationSite } from "./stations.ts";
+import type { GameState, HeldActivity, JobTarget, SectorProgress, Vec } from "./types.ts";
 
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
 // complete, its story places offer its activity through Talk. An accepted activity takes the
@@ -44,16 +47,46 @@ export function activityOffer(
   return book.tasks[sector] ? undefined : placeActivity(sector, progress, place);
 }
 
+/** What one run of an activity is fixed with when accepted: its reward and targets. */
+export interface ActivityTerms {
+  readonly reward: number;
+  /** A guide's calf start, from the family. */
+  readonly start?: Vec;
+  /** A supply run's destination station. */
+  readonly target?: JobTarget;
+}
+
 /**
- * Accepts the place's activity into the empty slot, with a guide's calf start; false when it is
- * not on offer.
+ * A supply run's destination and pay by the delivery job rules: the known station nearest the
+ * issuing outpost at least the delivery minimum away, paying the short or long delivery reward.
+ * Null when no known station qualifies, so the outpost makes no offer.
  */
+export function supplyTerms(
+  sector: SectorId,
+  stations: readonly StationSite[],
+  issuer: Vec,
+): ActivityTerms | null {
+  const length = (site: Vec) => Math.hypot(site.x - issuer.x, site.y - issuer.y);
+  const site = stations
+    .filter((station) => length(station) >= JOB_TUNING.delivery.min)
+    .sort((a, b) => length(a) - length(b))[0];
+  if (!site) {
+    return null;
+  }
+  const long = length(site) >= JOB_TUNING.delivery.longFrom;
+  return {
+    reward: JOB_REWARDS[sector][long ? "deliveryLong" : "deliveryShort"],
+    target: { id: site.id, x: site.x, y: site.y },
+  };
+}
+
+/** Accepts the place's activity into the empty slot on its terms; false when it is not on offer. */
 export function acceptActivity(
   sector: SectorId,
   progress: Pick<SectorProgress, "resolved">,
   book: Tasks,
   place: string,
-  start?: Vec,
+  terms: ActivityTerms,
 ): boolean {
   const activity = activityOffer(sector, progress, book, place);
   if (!activity) {
@@ -63,11 +96,12 @@ export function acceptActivity(
     id: activity.id,
     kind: "activity",
     place,
-    reward: activity.reward,
+    reward: terms.reward,
     ...(activity.id === "miningContract" ? { deposited: 0 } : {}),
     // A supply run's item loads at once into the job carried-item slot.
     ...(activity.id === "supplyRun" ? { carrying: true } : {}),
-    ...(start ? { start: { ...start } } : {}),
+    ...(terms.start ? { start: { ...terms.start } } : {}),
+    ...(terms.target ? { target: { ...terms.target } } : {}),
   };
   return true;
 }
@@ -112,7 +146,14 @@ export function validActivity(sector: SectorId, value: Record<string, unknown>):
     value.id === activity.id &&
     typeof value.place === "string" &&
     Object.hasOwn(activity.places, value.place) &&
-    value.reward === activity.reward &&
+    (activity.id === "supplyRun"
+      ? (value.reward === JOB_REWARDS[sector].deliveryShort ||
+          value.reward === JOB_REWARDS[sector].deliveryLong) &&
+        typeof value.target === "object" &&
+        value.target !== null &&
+        vector(value.target) &&
+        stationById(ECONOMY, sector, String((value.target as JobTarget).id)) !== null
+      : value.reward === activity.reward && value.target === undefined) &&
     (activity.id === "miningContract"
       ? Number.isSafeInteger(value.deposited) && (value.deposited as number) >= 0
       : value.deposited === undefined) &&

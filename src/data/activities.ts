@@ -6,40 +6,47 @@ import type { SectorId } from "./types.ts";
 export type ActivityId = "guideCalf" | "miningContract" | "supplyRun";
 
 export interface ActivityDefinition {
+  /** The board row's detail line: the goal's label key. */
+  readonly goal: string;
   readonly id: ActivityId;
   /** Each offering story place's id, to its activity line's label key. */
   readonly places: Readonly<Record<string, string>>;
-  readonly reward: number;
+  /** Its reward; a supply run pays the delivery rewards for its length instead. */
+  readonly reward?: number;
 }
 
 /** Each galaxy's activity; Black Eye has none yet. */
 export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>> = {
   1: {
+    goal: "supplyGoal",
     id: "supplyRun",
     places: {
       growers: "activityGrower",
       salvagers: "activitySalvager",
       workshop: "activityWorkshop",
     },
-    reward: 15,
   },
-  2: { id: "miningContract", places: { hub: "activityStation" }, reward: 35 },
-  3: { id: "guideCalf", places: { family: "activityFamily" }, reward: 50 },
+  2: {
+    goal: "contractGoal",
+    id: "miningContract",
+    places: { hub: "activityStation" },
+    reward: 35,
+  },
+  3: { goal: "calfGoal", id: "guideCalf", places: { family: "activityFamily" }, reward: 50 },
 };
 
 /** The mining contract's goal: resources deposited at the hub after accepting. */
 export const MINING_CONTRACT_DEPOSITS = 30;
 
 /**
- * Sunflower's supply runs by issuing outpost: the carried item and the outpost it goes to, as
- * the objective names them. The 3000 delivery minimum does not apply.
+ * Sunflower's supply run items by issuing outpost. Each goes to a known station by the delivery
+ * job rules (data/jobs.ts JOB_TUNING.delivery).
  */
-export const SUPPLY_RUNS: Readonly<Record<string, { readonly item: string; readonly to: string }>> =
-  {
-    growers: { item: "fresh food", to: "salvagers" },
-    salvagers: { item: "spare parts", to: "workshop" },
-    workshop: { item: "repaired tools", to: "growers" },
-  };
+export const SUPPLY_ITEMS: Readonly<Record<string, string>> = {
+  growers: "fresh food",
+  salvagers: "spare parts",
+  workshop: "repaired tools",
+};
 
 /** Guide a calf, in world units and as a fraction of Ada's base top speed. */
 export const CALF = {

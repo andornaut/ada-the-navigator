@@ -1,5 +1,5 @@
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
-import { SUPPLY_RUNS } from "../data/activities.ts";
+import { ACTIVITIES, SUPPLY_ITEMS } from "../data/activities.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -29,11 +29,13 @@ import {
 } from "./achievements.ts";
 import {
   acceptActivity,
+  type ActivityTerms,
   completeActivity,
   contractDeposit,
   dropActivity,
   heldActivity,
   placeActivity,
+  supplyTerms,
 } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
@@ -686,9 +688,9 @@ export class GameModel {
       };
       return;
     }
-    // The family offers a guide only while a calf start qualifies for where it is this flight.
-    const start = activity.id === "guideCalf" ? this.calfStartHere(f) : undefined;
-    if (start === null) {
+    // No offer without its terms: a calf start for the family where it is this flight, or a
+    // known station far enough for a supply run.
+    if (!this.activityTerms(f, place)) {
       this.exchange(key);
       return;
     }
@@ -703,10 +705,28 @@ export class GameModel {
       title: speaker,
     };
   }
-  /** The next guide's calf start from the family where it is this flight, or null. */
-  private calfStartHere(f: FlightState): Vec | null {
-    const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
-    return family ? calfStart(f.sector, family, this.current.guides ?? 0) : null;
+  /**
+   * The terms a place's activity would be accepted on now, or null when it makes no offer: the
+   * next guide's calf start from the family where it is this flight, a supply run's destination
+   * and pay from the known stations, or the activity's own reward.
+   */
+  private activityTerms(f: FlightState, place: string): ActivityTerms | null {
+    const activity = placeActivity(f.sector, this.current, place);
+    const at = f.objects.find((o) => o.kind === "destination" && o.id === place);
+    if (!activity || !at) {
+      return null;
+    }
+    if (activity.id === "supplyRun") {
+      const stations = this.current.stations.flatMap(
+        (id) => stationById(ECONOMY, f.sector, id) ?? [],
+      );
+      return supplyTerms(f.sector, stations, at);
+    }
+    if (activity.id === "guideCalf") {
+      const start = calfStart(f.sector, at, this.current.guides ?? 0);
+      return start ? { reward: activity.reward!, start } : null;
+    }
+    return { reward: activity.reward! };
   }
   /** Accepts the offered activity, or refuses while the galaxy's slot is taken. */
   private takeActivity(place: string): void {
@@ -719,12 +739,11 @@ export class GameModel {
       this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
       return;
     }
-    const activity = placeActivity(f.sector, this.current, place);
-    const start = activity?.id === "guideCalf" ? this.calfStartHere(f) : undefined;
-    if (start === null || !acceptActivity(f.sector, this.current, this.state, place, start)) {
+    const terms = this.activityTerms(f, place);
+    if (!terms || !acceptActivity(f.sector, this.current, this.state, place, terms)) {
       return;
     }
-    if (start) {
+    if (terms.start) {
       this.current.guides = (this.current.guides ?? 0) + 1;
     }
     this.state.dialogue = null;
@@ -1060,6 +1079,7 @@ export class GameModel {
       this.recordAchievement({ galaxy: f.sector, id, kind: "landmarkCharted" });
     }
     this.stepJob(events, f);
+    this.stepSupply(events, f);
     this.stepCalf(dt, f);
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
@@ -1500,7 +1520,7 @@ export class GameModel {
     const activityRow: JobRow[] = activity
       ? [
           {
-            detail: "",
+            detail: this.label(ACTIVITIES[f.sector]?.goal ?? ""),
             id: activity.id,
             kind: "activity",
             reward: activity.reward,
@@ -1551,8 +1571,10 @@ export class GameModel {
     }
     const activity = this.activity;
     if (activity?.id === "supplyRun") {
-      const run = SUPPLY_RUNS[activity.place]!;
-      return fill(this.label("supplyObjective"), { destination: run.to, item: run.item });
+      return fill(this.label("supplyObjective"), {
+        destination: this.placeLabel(activity.target?.id ?? ""),
+        item: SUPPLY_ITEMS[activity.place] ?? "",
+      });
     }
     if (activity?.id === "miningContract") {
       return fill(this.label("contractObjective"), { have: activity.deposited ?? 0 });
@@ -1585,14 +1607,6 @@ export class GameModel {
     if (!f || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
       return null;
     }
-    const activity = this.activity;
-    if (
-      activity?.id === "supplyRun" &&
-      activity.carrying &&
-      this.nearest() === SUPPLY_RUNS[activity.place]!.to
-    ) {
-      return "deliver";
-    }
     if (!held) {
       return null;
     }
@@ -1614,10 +1628,6 @@ export class GameModel {
     const use = this.jobUse();
     const f = this.state.flight;
     const held = this.held;
-    if (use && f && this.activity) {
-      this.finishActivity(f.sector);
-      return true;
-    }
     if (!use || !f || !held) {
       return false;
     }
@@ -1678,6 +1688,17 @@ export class GameModel {
       if (held.spot && distance(held.spot, f.player) <= pickupRadius + pickupReach) {
         this.finishJob(f);
       }
+    }
+  }
+  /** A supply run completes on docking at its destination station while its item is aboard. */
+  private stepSupply(events: readonly FlightEvent[], f: FlightState): void {
+    const activity = heldActivity(f.sector, this.state);
+    if (
+      activity?.id === "supplyRun" &&
+      activity.carrying &&
+      events.some((event) => event.type === "docked" && event.id === activity.target?.id)
+    ) {
+      this.finishActivity(f.sector);
     }
   }
   /**
@@ -1800,14 +1821,13 @@ export class GameModel {
           ? mark(family, "family")
           : null;
     }
-    const id =
-      activity.id === "supplyRun"
-        ? activity.carrying
-          ? SUPPLY_RUNS[activity.place]!.to
-          : activity.place
-        : activity.place;
-    const at = place(id);
-    return at ? mark(at, id) : null;
+    // A supply run's item goes to its station; a lost one is replaced at the issuing outpost.
+    if (activity.id === "supplyRun" && activity.carrying && activity.target) {
+      const site = stationById(ECONOMY, f.sector, activity.target.id) ?? activity.target;
+      return mark(site, activity.target.id);
+    }
+    const at = place(activity.place);
+    return at ? mark(at, activity.place) : null;
   }
   /** Landmarks and the held job's craft, search area and glint, for the scene. */
   get jobScenery(): JobScenery {

@@ -217,6 +217,8 @@ export interface HeldActivity {
   carrying?: boolean;
   /** A guide's calf start, as an offset from the family. */
   start?: Vec;
+  /** A supply run's destination station, fixed when accepted. */
+  target?: JobTarget;
 }
 /** The guided calf: where it is, how it moves and whether it follows Ada. */
 export interface GuidedCalf extends Vec {
