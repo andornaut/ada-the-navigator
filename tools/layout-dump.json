@@ -8915,6 +8915,53 @@
           }
         }
       ],
+      "panelMaxWidth": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": 592
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 592
+        },
+        {
+          "args": [
+            {
+              "bottom": 19,
+              "left": 43,
+              "right": 43,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779
+            }
+          ],
+          "result": 581
+        }
+      ],
       "readingOrder": [
         {
           "args": [
@@ -9046,6 +9093,53 @@
             "x": 370,
             "y": 227
           }
+        }
+      ],
+      "toolColumnLeft": [
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 720
+            }
+          ],
+          "result": 664
+        },
+        {
+          "args": [
+            {
+              "bottom": 0,
+              "left": 0,
+              "right": 0,
+              "top": 0
+            },
+            {
+              "height": 405,
+              "width": 720
+            }
+          ],
+          "result": 664
+        },
+        {
+          "args": [
+            {
+              "bottom": 19,
+              "left": 43,
+              "right": 43,
+              "top": 0
+            },
+            {
+              "height": 360,
+              "width": 779
+            }
+          ],
+          "result": 688
         }
       ],
       "zoomView": [

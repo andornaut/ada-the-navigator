@@ -965,6 +965,65 @@ try {
     "Achievements open from the start screen and the Paused card in Gameplay's order, paging " +
       "six at a time, and close back to where they opened",
   );
+  // A held job's long Job line wraps inside the place panel, which stays clear of the tool
+  // column, and selecting its target pans the chip clear of the panel's rendered height.
+  const { ECONOMY } = await import(new URL("../src/data/economy.ts", import.meta.url));
+  const { stationsNear } = await import(new URL("../src/model/stations.ts", import.meta.url));
+  const jobInput = new GameModel(PROTOTYPE, safeSerialized);
+  const issuer = stationsNear(ECONOMY, 1, 25000, { x: 0, y: 0 })[0];
+  const growersAt = jobInput.state.flight.objects.find(
+    (o) => o.kind === "destination" && o.id === "growers",
+  );
+  jobInput.state.progress[1].stations = [issuer.id];
+  jobInput.state.tasks = {
+    1: {
+      carrying: true,
+      id: "job:smoke",
+      item: "a crate of seedling trays for the far greenhouse ring",
+      kind: "job",
+      reward: 20,
+      station: issuer.id,
+      target: { id: "growers", x: growersAt.x, y: growersAt.y },
+      type: "delivery",
+    },
+  };
+  await seedOnce(jobInput.save(), "ada-browser.map-job-line.v1");
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
+  // The fixture opened a new page, so the map is found afresh.
+  const jobMap = page.locator('[data-dialog="map"]');
+  await jobMap.waitFor({ state: "visible" });
+  await jobMap.locator('.ada-map-places [data-place="growers"]').dispatchEvent("click");
+  const jobPanel = await jobMap.evaluate((screen) => {
+    const box = (node) => node.getBoundingClientRect();
+    const lines = [...screen.querySelectorAll(".ada-map-detail:not([hidden])")];
+    const jobLine = lines.at(-1);
+    return {
+      chip: box(screen.querySelector('.ada-map-places [data-place="growers"]')),
+      jobHeight: jobLine ? box(jobLine).height : 0,
+      jobText: jobLine?.textContent ?? "",
+      lineHeight: jobLine ? parseFloat(getComputedStyle(jobLine).lineHeight) : 0,
+      panel: box(screen.querySelector(".ada-map-panel")),
+      tools: box(screen.querySelector(".ada-map-tools")),
+    };
+  });
+  assert.match(jobPanel.jobText, /^Job: Deliver /u, "The job's target shows its Job line");
+  assert.ok(
+    jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
+    `A long Job line wraps inside the panel: ${JSON.stringify(jobPanel)}`,
+  );
+  assert.ok(
+    jobPanel.panel.right < jobPanel.tools.left,
+    `The panel stays left of the tool column: ${JSON.stringify(jobPanel)}`,
+  );
+  assert.ok(
+    jobPanel.chip.bottom < jobPanel.panel.top,
+    `Selecting pans the chip clear of the wrapped panel: ${JSON.stringify(jobPanel)}`,
+  );
+  events.checks.push(
+    "A held job's long Job line wraps in the place panel, left of the tool column, and the " +
+      "selected target pans clear of the panel's rendered height",
+  );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });

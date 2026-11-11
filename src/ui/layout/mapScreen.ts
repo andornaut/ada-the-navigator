@@ -190,9 +190,25 @@ export function fitRegion(insets: Insets, view: Size): Rect {
   const hud = hudRect(insets, view);
   const left = page.x;
   const top = hud.y + MAP_SCREEN.header.height + SPACING.gap;
-  const right = hud.x + hud.width - HUD_BUTTON.target - SPACING.gap;
+  const right = toolColumnLeft(insets, view) - SPACING.gap;
   const bottom = page.y + page.height;
   return { height: bottom - top, width: right - left, x: left, y: top };
+}
+
+/** The tool column's left edge: one HUD button target in from the HUD rect's right. */
+export function toolColumnLeft(insets: Insets, view: Size): number {
+  const hud = hudRect(insets, view);
+  return hud.x + hud.width - HUD_BUTTON.target;
+}
+
+/**
+ * The place panel's widest: inside the page safe rect and, centred there, SPACING.gap clear of
+ * the tool column on each side, so a tall panel never reaches under it (592 at the 720 base).
+ */
+export function panelMaxWidth(insets: Insets, view: Size): number {
+  const page = safeRect(insets, SPACING.pageInset, view);
+  const centre = page.x + page.width / 2;
+  return Math.min(page.width, 2 * (toolColumnLeft(insets, view) - SPACING.gap - centre));
 }
 
 /** The fit region inset by fitMargin on every side. */

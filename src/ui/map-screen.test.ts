@@ -134,4 +134,27 @@ describe("map screen place panel", () => {
     expect(MAP_SCREEN_STYLE).toContain('.ada-map-place[data-kind="job"]{');
     expect(MAP_SCREEN_STYLE).toContain("rotate(45deg)");
   });
+
+  it("rotates only the job diamond's face, so its selection ring is the round chips' ring", () => {
+    const rule = (selector: string) => {
+      const from = MAP_SCREEN_STYLE.indexOf(`${selector}{`);
+      expect(from, selector).toBeGreaterThanOrEqual(0);
+      return MAP_SCREEN_STYLE.slice(from, MAP_SCREEN_STYLE.indexOf("}", from));
+    };
+    const spot = '.ada-controls .ada-map-screen .ada-map-place[data-kind="job"]';
+    expect(rule(spot)).not.toContain("transform");
+    expect(rule(`${spot}::before`)).toContain("transform:rotate(45deg) scale(0.78)");
+    // The one ring rule serves every chip, the diamond's unrotated button included.
+    expect(MAP_SCREEN_STYLE.match(/\[aria-pressed="true"\]::after\{/gu)).toHaveLength(1);
+  });
+
+  it("sizes the panel to its content between the card floor and the script-set maximum", () => {
+    const panel = (() => {
+      const from = MAP_SCREEN_STYLE.indexOf("/* The place panel:");
+      return MAP_SCREEN_STYLE.slice(from, MAP_SCREEN_STYLE.indexOf("}", from));
+    })();
+    expect(panel).toContain("width:max-content");
+    expect(panel).toContain("min-width:");
+    expect(panel).not.toContain("max-width");
+  });
 });

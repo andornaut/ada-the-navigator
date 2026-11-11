@@ -19,14 +19,17 @@ import {
   MAP_TOOLS,
   mapProjection,
   openingView,
+  panelMaxWidth,
   panLimit,
   readingOrder,
   recentreView,
   scaleLimits,
+  toolColumnLeft,
   toScreen,
   zoomView,
 } from "./mapScreen.ts";
-import { logicalView, NO_INSETS, safeInsets, viewScale } from "./playView.ts";
+import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "./playView.ts";
+import { SPACING } from "./tokens.ts";
 
 const BASE = { height: 360, width: 720 };
 const regionsAt = (css: { height: number; width: number }, cssInsets = NO_INSETS) => {
@@ -108,6 +111,33 @@ describe("map projection and fit", () => {
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([640, 325]);
     expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04683);
+  });
+
+  it("keeps the centred place panel a gap clear of the tool column: 592 at the 720 base", () => {
+    expect(toolColumnLeft(NO_INSETS, BASE)).toBe(664);
+    expect(panelMaxWidth(NO_INSETS, BASE)).toBe(592);
+    for (const [css, cssInsets] of [
+      [
+        { height: 390, width: 844 },
+        { bottom: 21, left: 47, right: 47, top: 0 },
+      ],
+      [{ height: 720, width: 1280 }, NO_INSETS],
+      [
+        { height: 390, width: 844 },
+        { bottom: 0, left: 47, right: 0, top: 0 },
+      ],
+    ] as const) {
+      const view = logicalView(css);
+      const insets = safeInsets(cssInsets, viewScale(css));
+      const page = safeRect(insets, SPACING.pageInset, view);
+      const width = panelMaxWidth(insets, view);
+      const centre = page.x + page.width / 2;
+      expect(width).toBeLessThanOrEqual(page.width);
+      expect(centre + width / 2).toBeCloseTo(
+        Math.min(page.x + page.width, toolColumnLeft(insets, view) - SPACING.gap),
+        9,
+      );
+    }
   });
 
   it("opens on the box of Ada and every place, clamped between the disc and the minimum box", () => {

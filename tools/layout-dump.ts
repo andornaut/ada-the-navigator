@@ -330,6 +330,8 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     const fit = call("mapScreen.ts", "fitRegion", mapScreen.fitRegion, insets, view) as Rect;
     const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit) as Rect;
     call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner);
+    call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
+    call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
     for (const places of [
       [],
       [{ x: 300, y: 700 }],

@@ -25,6 +25,7 @@ import {
   type MapTool,
   type MapView,
   openingView,
+  panelMaxWidth,
   panLimit,
   panView,
   type Point,
@@ -266,13 +267,21 @@ export const MAP_SCREEN_STYLE = `
   -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
   mask:var(--glyph) center / 100% 100% no-repeat
 }
-/* A held job's own spot: main's orange diamond, with an ink edge and no glyph. */
+/* A held job's own spot: main's orange diamond, with an ink edge and no glyph, drawn inside the
+   unrotated chip so its selection and focus rings match the round chips'. */
 .ada-controls .ada-map-screen .ada-map-place[data-kind="job"]{
-  border-radius:0;
-  transform:rotate(45deg) scale(0.78)
+  background:none;
+  box-shadow:none
 }
 .ada-controls .ada-map-screen .ada-map-place[data-kind="job"]::before{
-  content:none
+  width:${units(MAP_SYMBOL.chip)};
+  height:${units(MAP_SYMBOL.chip)};
+  box-sizing:border-box;
+  background:var(--face);
+  box-shadow:inset 0 0 0 ${units(MAP_SYMBOL.edge)} ${MAP_COLORS.ink};
+  -webkit-mask:none;
+  mask:none;
+  transform:rotate(45deg) scale(0.78)
 }
 /* Selected: the cream ring with an ink fringe on each side, outside the face. */
 .ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]::after{
@@ -392,10 +401,6 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   /* Its own text width: shrink-to-fit would stop at the half view right of a centred left. */
   width:max-content;
   min-width:${units(MAP_PANEL.minWidth)};
-  max-width:calc(100% - ${safeEdge("left", SAFE_MARGIN.page)} - ${safeEdge(
-    "right",
-    SAFE_MARGIN.page,
-  )});
   padding:calc(${units(MAP_PANEL.padding)} - ${slice(CARD_SLICE)});
   display:grid;
   gap:${units(MAP_PANEL.reasonGap)};
@@ -424,6 +429,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 }
 .ada-controls .ada-map-text{
   flex:1;
+  min-width:0;
   display:grid;
   padding:${units(MAP_PANEL.textTop)} 0;
   margin-right:${units(MAP_PANEL.actionGap - MAP_PANEL.markGap)}
@@ -646,13 +652,22 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     travelState(state?.inDanger ?? false, state?.towing ?? false, selectedPlace());
   const detailLines = (place: MapPlace) =>
     state ? placeLines(labels, state.map.player, state.job, place) : [];
-  // The panel's top, while it shows: the page safe rect's bottom less its height.
-  const panelTop = (size: { height: number }, insets: { bottom: number }): number | null => {
+  // The panel's top, while it shows: the page safe rect's bottom less its height, as rendered
+  // once its text is in, so a wrapped name or Job line counts; panelHeight before it lays out.
+  const panelTop = (
+    size: { height: number },
+    insets: { bottom: number },
+    unit: number,
+  ): number | null => {
     const shown = selectedPlace() !== null || mapShowsEmpty(places());
     if (!shown) {
       return null;
     }
     const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
+    const measured = panel.hidden ? 0 : panel.offsetHeight / unit;
+    if (measured > 0) {
+      return bottom - measured;
+    }
     const place = selectedPlace();
     const lines = place ? 1 + detailLines(place).length : 2;
     return bottom - panelHeight(travelNow().reason !== null, lines);
@@ -738,9 +753,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chip.addEventListener("focus", () => {
           if (view && state) {
             const target = places().find((entry) => entry.id === id);
-            const { fit: region, inner: room, insets, size } = layout();
+            const { fit: region, inner: room, insets, size, unit } = layout();
             if (target) {
-              view = keepClear(region, room, panelTop(size, insets), target, view);
+              view = keepClear(region, room, panelTop(size, insets, unit), target, view);
               render();
             }
           }
@@ -771,7 +786,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     ada.style.left = units(at.x - MAP_SYMBOL.ada.size / 2);
     ada.style.top = units(at.y - MAP_SYMBOL.ada.size / 2);
     ada.style.transform = `rotate(${adaAngle(state.map.facing)}rad)`;
-    // Panel.
+    dressPanel();
+    drawFog(inner, unit, current);
+  };
+
+  // The panel's content and width for the selection.
+  const dressPanel = () => {
+    const { insets, size } = layout();
+    panel.style.maxWidth = units(panelMaxWidth(insets, size));
     const place = selectedPlace();
     const travelling = travelNow();
     panel.hidden = place === null && !mapShowsEmpty(places());
@@ -795,7 +817,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
-    drawFog(inner, unit, current);
   };
 
   // Selecting pans the chip clear of the panel at once; an empty press clears the selection.
@@ -803,8 +824,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     selected = id;
     const place = selectedPlace();
     if (place && view) {
-      const { fit, inner, insets, size } = layout();
-      view = keepClear(fit, inner, panelTop(size, insets), place, view);
+      // The panel takes the new place's text first, so the pan clears its rendered height.
+      dressPanel();
+      const { fit, inner, insets, size, unit } = layout();
+      view = keepClear(fit, inner, panelTop(size, insets, unit), place, view);
     }
     render();
   };
