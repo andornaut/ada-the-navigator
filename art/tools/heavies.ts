@@ -6,6 +6,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { format, resolveConfig } from "prettier";
+
 import {
   amber,
   amberSide,
@@ -854,7 +856,12 @@ async function main() {
   const entries: Entry[] = [];
   for (const result of results) {
     for (const [file, content] of result.files) {
-      writeFileSync(`${dir}${file}`, content);
+      const path = `${dir}${file}`;
+      // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
+      const text = file.endsWith(".json")
+        ? await format(content, { ...(await resolveConfig(path)), filepath: path })
+        : content;
+      writeFileSync(path, text);
     }
     entries.push(...result.entries);
   }
