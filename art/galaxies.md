@@ -131,6 +131,7 @@ and where each asset sits:
 | Stardust                                                                                               | Shared                                                          |
 | [Current streaks and river debris](whirlpool.md)                                                       | Whirlpool                                                       |
 | Backdrop rocks                                                                                         | Shared, tinted per galaxy (`tints` in `asteroids.json`)         |
+| [Backdrop haze](#backdrop-haze) (spiral arms and core)                                                 | Andromeda                                                       |
 | Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`)                                          | `bank`, no galaxy: a field for a later dark galaxy              |
 
 ## Markers
@@ -186,6 +187,40 @@ galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
   galaxy shares one grey range, so a locked preview gives away no hue.
 - Placeholder: the galaxy's [placeholder preview](#placeholder-previews)
   until its galaxy is built and captured; locked, its locked file.
+
+## Backdrop haze
+
+A galaxy may add a backdrop haze: soft field-coloured shapes fixed to the
+screen, like a distant sky. Rebuild with `node art/tools/haze.ts`. A galaxy
+with a haze links `backdropHaze` from its manifest to its `haze.json`; a
+galaxy without the link draws none. Andromeda's is two spiral arms round a
+pale core ([Andromeda](andromeda.md)).
+
+`haze.json`, version 1:
+
+| Key        | Value           | Rule                                                                                                                                                                                    |
+| ---------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `asset`    | `{galaxy}-haze` | The texture's manifest entry: a PNG at half resolution (`width`, `height` in texels) with `displayWidth` and `displayHeight` in logical px, 960 by 480 for Andromeda                    |
+| `layer`    | `backdrop`      | Drawn over the field background fill, under the dust specks, backdrop rocks, current streaks and every play object                                                                      |
+| `anchor`   | `view`          | The texture's centre on the play view's centre at its display size, fixed to the screen: it never scrolls, turns or scales with the camera. The 720 by 360 view sits inside its margins |
+| `parallax` | 0               | No movement with the camera; the specks and backdrop rocks carry motion                                                                                                                 |
+| `filter`   | `linear`        | Draw the texture with linear filtering at its display size; every edge is blurred, so the half-resolution texels never show                                                             |
+
+- Straight alpha over the field: each texel's colour is the field colours the
+  generator painted, blurred with a Gaussian of sigma 20 logical px.
+- Andromeda's arms are logarithmic spirals `r = 36 e^(0.42 t)` for `t` from 0
+  to 4.2 radians, squashed to 0.55 vertically, two arms half a turn apart: an
+  `environment` stroke 92 px wide at alpha 0.9 and an `environmentDetail`
+  stroke 28 px wide at alpha 0.55, a quarter radian ahead. The core is two
+  ellipses at (660, 186) of the texture, which lands at (540, 126) of the play
+  view: `#6E76AE` 92 by 52 px at alpha 0.55 and `#A3ABE6` 40 by 22 px at alpha
+  0.45.
+- Over the field the arms stay at or below 1.22:1 and the core peaks at 3.07:1
+  (`#686FA0`); 4% of the view is above 1.8:1. The core is the one backdrop
+  tone allowed above the [backdrop rule](asteroids.md#backdrop)'s 1.8:1: it is
+  a single soft glow, below every signal's 5:1.
+- The same in every state: no blink, so reduced motion changes nothing. The
+  [selector preview](#selector-preview) capture includes it.
 
 ## Placeholder previews
 

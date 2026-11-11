@@ -295,6 +295,19 @@
       "project": "spareBeacon"
     },
     {
+      "id": "andromeda-haze",
+      "path": "/art/andromeda/haze.png",
+      "width": 480,
+      "height": 240,
+      "displayWidth": 960,
+      "displayHeight": 480,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "id": "enemy-garnet-swarm-0",
       "path": "/art/andromeda/enemies/swarm-0.svg",
       "width": 80,
@@ -8450,5 +8463,6 @@
         "worried": 2
       }
     }
-  ]
+  ],
+  "backdropHaze": "/art/andromeda/haze.json"
 }

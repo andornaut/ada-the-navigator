@@ -13,6 +13,9 @@ portraits of Pip and the settlers.
   approach lights, and warm lit windows `#ffe9b8`.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
+- The space look adds a [backdrop haze](galaxies.md#backdrop-haze): two soft
+  spiral arms round a pale core, fixed to the screen, built by
+  `node art/tools/haze.ts` and linked as `backdropHaze`.
 
 ## Sizes and frames
 

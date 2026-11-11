@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "asset": "andromeda-haze",
+  "layer": "backdrop",
+  "anchor": "view",
+  "parallax": 0,
+  "filter": "linear"
+}

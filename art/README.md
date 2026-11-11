@@ -63,7 +63,8 @@ and `oreField` links; Whirlpool the whales, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers'
 station, the settlements, the guide beacons, Pip's mail scooter, their
-project frames, the garnet drones and Pip's and the settler's portraits. The station, discovery cache,
+project frames, the garnet drones, Pip's and the settler's portraits, the
+backdrop haze and the `backdropHaze` link. The station, discovery cache,
 coral family, ore nugget and `tow` serve every galaxy and stay in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
