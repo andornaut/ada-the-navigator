@@ -63,9 +63,9 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 326.75
-  wide at the smallest view (720 logical, phone insets 43), 388.75 at the 720
-  base. At 326.75 the column may be 153.75 wide, room for 19 pips; each galaxy
+- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 318.25
+  wide at the smallest view (720 logical, phone insets 43), 380.25 at the 720
+  base. At 318.25 the column may be 145.25 wide, room for 18 pips; each galaxy
   has 12 landmarks, 4 of each kind.
 - The header keeps the 48 row, so the fit region's top, `maxScale` and the
   1020 separation are unchanged.
@@ -81,9 +81,9 @@ so the discs span `hudRect.right - 33` to `hudRect.right` and the close disc's
 drawn top is the HUD rect's top. The column's left (`toolColumnLeft`) is
 `hudRect.right - 40.5`: 667.5 at the 720 base, 636.5 with phone insets.
 
-| Token                    | Value | Rule                                 |
-| ------------------------ | ----- | ------------------------------------ |
-| `MAP_SCREEN.tools.pitch` | 56    | `HUD_BUTTON.target + HUD_BUTTON.gap` |
+| Token                    | Value | Rule                                                                                                                    |
+| ------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------- |
+| `MAP_SCREEN.tools.pitch` | 57    | Disc 33 plus `SMALL_BUTTON_GAP` (24): the discs are small, so stacked they stay 24 apart face to face (targets 9 apart) |
 
 | Tool     | Glyph              | Glyph colour         | Action                                               |
 | -------- | ------------------ | -------------------- | ---------------------------------------------------- |
@@ -98,12 +98,16 @@ drawn top is the HUD rect's top. The column's left (`toolColumnLeft`) is
 - At `maxScale`, zoom in plays the [refusal cue](controls.md#refusal-cue) with
   its glyph as the label and does not zoom; zoom out does the same at
   `minScale`. Neither changes face.
-- The column's targets end at HUD rect top + 208.5 (220.5 at a top of 12); the
-  last disc's drawn bottom is at + 201 (213). At the 360-high view a two-line
-  panel with the reason line (108) tops at 236 (233 with phone insets), 15.5
-  (12.5) below the targets. The three-line panel with the reason line (128)
-  tops at 216 (213), 4.5 (7.5) above the targets' end, so the two stay apart
-  only across. The panel's width is capped at
+- At a top of 12 the targets are 4.5 to 52.5 (close), 61.5 to 109.5 (zoom
+  in), 118.5 to 166.5 (zoom out) and 175.5 to 223.5 (recentre), and the discs
+  12 to 45, 69 to 102, 126 to 159 and 183 to 216; across, the targets span
+  667.5 to 715.5 and the discs 675 to 708 at the 720 base (636.5 to 684.5 and
+  644 to 677 with phone insets). The column's targets end at HUD rect top +
+  211.5 (223.5) and the last disc's drawn bottom at + 204 (216). At the
+  360-high view a two-line panel with the reason line (108) tops at 236 (233
+  with phone insets), 12.5 (9.5) below the targets. The three-line panel with
+  the reason line (128) tops at 216 (213), 7.5 (10.5) above the targets' end,
+  so the two stay apart only across. The panel's width is capped at
   `2 * (column left - SPACING.gap - view centre)`, 599 at the 720 base
   (`2 * (667.5 - 8 - 360)`), 537 with phone insets, so it always clears the
   column.
@@ -117,18 +121,19 @@ right: "Quests", then "Return to Earth" (Gameplay). Constant:
 
 - Geometry: 48 high, top on the Map's HUD row (`mapRowTop`, HUD rect top -
   7.5). Each is its own label plus
-  `2 * TEXT_BUTTON.inset` wide: Quests 54.3 + 32 = 86.3, Return to Earth
+  `2 * TEXT_BUTTON.inset` wide: Quests 54.25 + 32 = 86.25, Return to Earth
   116.5 + 32 = 148.5. They are separate controls, not an action row: one
-  shared width (148.5 each) would reach 592.9 of the 577.5 available with
-  phone insets.
-- Return to Earth's right edge is the tool column's left (`toolColumnLeft`)
-  less `SPACING.pageInset`; Quests ends `SPACING.gap` left of Return to Earth.
-  Neither moves with the header's width.
+  shared width (148.5 each) would reach 600.8 (with the widest header) of the
+  577 available with phone insets.
+- Return to Earth's right edge is `SMALL_BUTTON_GAP` (24) left of the close
+  tool's disc, which is small: `hudRect.right - 33 - 24`. Quests ends
+  `BUTTON_GAP` (16) left of Return to Earth. Neither moves with the header's
+  width.
 
-| View, logical            | Header, up to | Quests        | Return to Earth | Tool column left |
-| ------------------------ | ------------- | ------------- | --------------- | ---------------- |
-| 720x360                  | 12 to 400.75  | 408.75 to 495 | 503 to 651.5    | 667.5            |
-| 720x360, phone insets 43 | 43 to 369.75  | 377.75 to 464 | 472 to 620.5    | 636.5            |
+| View, logical            | Header, up to | Quests          | Return to Earth | Tool column left |
+| ------------------------ | ------------- | --------------- | --------------- | ---------------- |
+| 720x360                  | 12 to 392.25  | 400.25 to 486.5 | 502.5 to 651    | 667.5            |
+| 720x360, phone insets 43 | 43 to 361.25  | 369.25 to 455.5 | 471.5 to 620    | 636.5            |
 
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
   the tool column and the place panel are unchanged: the row sits above the
@@ -217,14 +222,14 @@ leaving the map's view and selection unchanged. Focus starts on the first line
 button, or on the close X without one. Constants: `MAP_SCREEN.quests`, to
 implement.
 
-| Token                          | Value | Rule                                                                   |
-| ------------------------------ | ----- | ---------------------------------------------------------------------- |
-| `MAP_SCREEN.quests.lineGap`    | 8     | Between lines (`SPACING.gap`)                                          |
-| `MAP_SCREEN.quests.chip`       | 28    | A line button's chip (`MAP_SYMBOL.chip`)                               |
-| `MAP_SCREEN.quests.overhang`   | 4     | The chip past the label's 20 line box, above and below, in the 44 face |
-| `MAP_SCREEN.quests.markGap`    | 6     | Chip to label (`SPACING.markGap`)                                      |
-| `MAP_SCREEN.quests.textColumn` | 50    | Text start from the inner edge: `TEXT_BUTTON.inset + chip + markGap`   |
-| `MAP_SCREEN.quests.ring`       | 1     | The unmapped ring's width, `#b8b3c9`                                   |
+| Token                          | Value | Rule                                                                                   |
+| ------------------------------ | ----- | -------------------------------------------------------------------------------------- |
+| `MAP_SCREEN.quests.lineGap`    | 8     | Between lines (`SPACING.gap`), the same as `STACK_BUTTON_GAP` between two line buttons |
+| `MAP_SCREEN.quests.chip`       | 28    | A line button's chip (`MAP_SYMBOL.chip`)                                               |
+| `MAP_SCREEN.quests.overhang`   | 4     | The chip past the label's 20 line box, above and below, in the 44 face                 |
+| `MAP_SCREEN.quests.markGap`    | 6     | Chip to label (`SPACING.markGap`)                                                      |
+| `MAP_SCREEN.quests.textColumn` | 50    | Text start from the inner edge: `TEXT_BUTTON.inset + chip + markGap`                   |
+| `MAP_SCREEN.quests.ring`       | 1     | The unmapped ring's width, `#b8b3c9`                                                   |
 
 Lines, in Gameplay's order: the story objective, or "Story complete." once the
 chapter is resolved; the held job or activity as "Job: {objective}"; with no
