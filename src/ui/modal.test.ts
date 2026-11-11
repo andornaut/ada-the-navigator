@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CARD_CLOSE } from "./layout/cardFrame.ts";
+import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
+import { slice, units } from "./layout/css.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import {
   actionOrder,
   BUTTON_SLICE,
@@ -27,15 +31,15 @@ const rule = (selector: string) => {
 };
 
 describe("Settings control rows", () => {
-  it("hold icon, label and switch, left to right, in one 48px press target", () => {
+  it("hold icon, label and switch, left to right, in one control-row press target", () => {
     expect(SWITCH_ROW_PARTS).toEqual(["icon", "text", "switch"]);
-    expect(rule(".ada-controls .ada-row")).toContain("min-height:48px");
+    expect(rule(".ada-controls .ada-row")).toContain(`min-height:${units(CONTROL_ROW.height)}`);
     expect(rule(".ada-controls .ada-row")).toContain("cursor:pointer");
   });
 
   it.each([
     [true, "on", "true", "0 0"],
-    [false, "off", "false", "-32px 0"],
+    [false, "off", "false", `${units(-CONTROL_ROW.switch.width)} 0`],
   ])("shows a setting %s with the switch's %s frame", (on, tag, ariaChecked, position) => {
     expect(switchState(on)).toEqual({ ariaChecked, tag });
     const sheet = json("sprites/ui-switch.json") as {
@@ -44,7 +48,7 @@ describe("Settings control rows", () => {
     };
     const from = sheet.meta.frameTags.find((frameTag) => frameTag.name === tag)!.from;
     const x = Object.values(sheet.frames)[from]!.frame.x;
-    expect(position).toBe(x === 0 ? "0 0" : `-${x}px 0`);
+    expect(position).toBe(x === 0 ? "0 0" : `${units(-x)} 0`);
     if (tag === "off") {
       expect(rule(".ada-controls .ada-switch[data-tag=off]")).toContain(position);
     } else {
@@ -54,14 +58,14 @@ describe("Settings control rows", () => {
     }
   });
 
-  it("draws the shared focus ring 4px outside a focused row, button or close X", () => {
+  it("draws the shared focus ring its outset outside a focused row, button or close X", () => {
     const start = MODAL_STYLE.indexOf(".ada-controls .ada-card .ada-button:focus-visible");
     const focus = MODAL_STYLE.slice(start, MODAL_STYLE.indexOf("}", start));
     expect(focus).toContain(".ada-controls .ada-row:focus-visible");
     expect(focus).toContain(".ada-controls .ada-close:focus-visible");
-    expect(focus).toContain("outline:2px solid #ead4aa");
-    expect(focus).toContain("outline-offset:1px");
-    expect(focus).toContain("0 0 0 4px #181425");
+    expect(focus).toContain(`outline:${units(FOCUS_RING.band)} solid #ead4aa`);
+    expect(focus).toContain(`outline-offset:${units(FOCUS_RING.fringe)}`);
+    expect(focus).toContain(`0 0 0 ${units(FOCUS_RING.outset)} #181425`);
   });
 });
 
@@ -98,53 +102,67 @@ describe("modal buttons", () => {
     },
   );
 
-  it("is 48px high with 16px insets, drops 2px when pressed and stays flat when disabled", () => {
+  it("is an action high with its insets inside whole-pixel slices, sinking when pressed", () => {
     const button = rule(".ada-controls .ada-button");
-    expect(button).toContain("height:48px");
-    expect(button).toContain("border-width:4px 2px 6px 2px");
-    expect(button).toContain("padding:0 14px 2px");
-    expect(rule(".ada-controls .ada-button:active:not(:disabled)")).toContain("padding:2px 14px 0");
+    expect(button).toContain(`min-height:${units(TEXT_BUTTON.height)}`);
+    expect(button).toContain(`border-width:${slice(4)} ${slice(2)} ${slice(6)} ${slice(2)}`);
+    // 12 down to the label's line box, 16 across, inside the 4, 2 and 6 slices; the 4 lip below.
+    expect(button).toContain(
+      `padding:calc(${units(12)} - ${slice(4)}) calc(${units(16)} - ${slice(2)}) calc(${units(
+        16,
+      )} - ${slice(6)})`,
+    );
+    expect(rule(".ada-controls .ada-button:active:not(:disabled)")).toContain(
+      `padding:calc(${units(14)} - ${slice(4)}) calc(${units(16)} - ${slice(2)}) calc(${units(
+        14,
+      )} - ${slice(6)})`,
+    );
     expect(rule(".ada-controls .ada-button:disabled")).toContain(TEXT_TOKENS.disabledLabel);
-    expect(rule(".ada-controls .ada-actions")).toContain("gap:8px");
+    expect(rule(".ada-controls .ada-actions")).toContain(`gap:${units(SPACING.gap)}`);
     expect(rule(".ada-controls .ada-actions")).toContain("grid-auto-columns:1fr");
   });
 
-  it("stacks groups 8px apart, each at its own width and centred in the card", () => {
-    const card = rule(".ada-controls .ada-card");
-    expect(card).toContain("flex-direction:column");
-    expect(card).toContain("align-items:center");
-    expect(card).toContain("gap:8px");
+  it("stacks groups a gap apart in the scrolling body, each at its own width and centred", () => {
+    const body = rule(".ada-controls .ada-card-body");
+    expect(body).toContain("flex-direction:column");
+    expect(body).toContain("align-items:center");
+    expect(body).toContain(`gap:${units(SPACING.gap)}`);
+    expect(body).toContain("overflow-y:auto");
+    expect(rule(".ada-controls .ada-card")).toContain("overflow:hidden");
     expect(rule(".ada-controls .ada-actions")).toContain("width:max-content");
     const rows = rule(".ada-controls .ada-rows");
     expect(rows).toContain("width:max-content");
-    expect(rows).toContain("gap:4px");
+    expect(rows).toContain(`gap:${units(SPACING.rowGap)}`);
   });
 
   it("reserves the close target's clearance on both sides of the title", () => {
-    expect(rule(".ada-controls .ada-card header")).toContain("padding:0 34px");
+    expect(rule(".ada-controls .ada-card header")).toContain(`padding:0 ${units(34)}`);
   });
 
-  it("draws a row's compact button as a 72x28 face with an 8px inset", () => {
+  it("draws a row's compact button as a 72x28 face with an 8 inset", () => {
     const compact = rule(".ada-controls .ada-button.ada-compact");
-    expect(compact).toContain("min-width:72px");
-    expect(compact).toContain("height:28px");
-    // The 2px nine-slice edge plus 6px padding makes the 8px inset.
-    expect(compact).toContain("padding:0 6px");
+    expect(compact).toContain(`min-width:${units(TEXT_BUTTON.compactWidth)}`);
+    expect(compact).toContain(`height:${units(TEXT_BUTTON.compactHeight)}`);
+    // The 2 nine-slice edge plus the padding makes the 8 inset.
+    expect(compact).toContain(`padding:0 calc(${units(8)} - ${slice(2)})`);
     expect(rule(".ada-controls .ada-row")).toContain("align-items:center");
   });
 
-  it("keeps 16px below the last control when a card scrolls to its end", () => {
-    // Chibi's 16px padding includes the 2px frame; the trailing spacer follows the last group's
-    // 8px gap.
-    expect(rule(".ada-controls .ada-card")).toContain("padding:0 14px");
-    expect(rule(".ada-controls .ada-card::after")).toContain("height:6px");
+  it("keeps the end pad below the last control when a card scrolls to its end", () => {
+    // Chibi's 16 padding includes the 2 frame; the trailing spacer follows the last group's gap.
+    expect(rule(".ada-controls .ada-card")).toContain(`padding:0 calc(${units(16)} - ${slice(2)})`);
+    expect(rule(".ada-controls .ada-card-body::after")).toContain(
+      `height:calc(${units(8)} - ${slice(2)})`,
+    );
   });
 });
 
 describe("modal text", () => {
-  it("keeps notes at the 16px body size and lets their rows grow", () => {
-    expect(rule(".ada-controls .ada-setting-note")).toContain("font-size:16px");
-    expect(rule(".ada-controls .ada-row")).toContain("min-height:48px");
+  it("keeps notes at the body size, never widening their rows, and lets rows grow", () => {
+    expect(rule(".ada-controls .ada-setting-note")).toContain(`font-size:${units(TYPE.body.size)}`);
+    expect(rule(".ada-controls .ada-setting-note")).toContain("contain:inline-size");
+    expect(rule(".ada-controls .ada-prose")).toContain("contain:inline-size");
+    expect(rule(".ada-controls .ada-row")).toContain(`min-height:${units(CONTROL_ROW.height)}`);
     expect(rule(".ada-controls .ada-row")).not.toMatch(/(^|;)\s*height:/);
   });
 
@@ -156,15 +174,15 @@ describe("modal text", () => {
       supporting: "#b8b3c9",
       title: "#ffffff",
     });
-    expect(rule(".ada-controls .ada-card h2")).toContain("font-size:24px");
+    expect(rule(".ada-controls .ada-card h2")).toContain(`font-size:${units(TYPE.heading.size)}`);
     expect(rule(".ada-controls .ada-card h2")).toContain("color:#ffffff");
   });
 
-  it("places the close X's 24px face 6px from the card's corner in a 48px target", () => {
+  it("places the close X's 24 face 6 from the card's corner in its hitAround target", () => {
     const close = rule(".ada-controls .ada-close");
-    expect(close).toContain("top:-6px");
-    expect(close).toContain("right:-6px");
-    expect(close).toContain("width:48px");
-    expect(rule(".ada-controls .ada-close::before")).toContain("width:24px");
+    expect(close).toContain(`top:${units(CARD_CLOSE.hit.y)}`);
+    expect(close).toContain(`right:${units(-6)}`);
+    expect(close).toContain(`width:${units(48)}`);
+    expect(rule(".ada-controls .ada-close::before")).toContain(`width:${units(24)}`);
   });
 });

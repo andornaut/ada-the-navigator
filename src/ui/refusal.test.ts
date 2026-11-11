@@ -27,7 +27,7 @@ describe("refusal cue", () => {
     vi.useRealTimers();
   });
 
-  it("alternates red every 80ms while shaking 3px, for 320ms", () => {
+  it("alternates red every 80ms while shaking 3 logical px, for 320ms", () => {
     const frames = refusalFrames(false);
     expect(frames.map(({ at }) => at)).toEqual([0, 80, 160, 240, 320]);
     expect(frames.map(({ red }) => red)).toEqual([true, false, true, false, false]);
@@ -36,10 +36,10 @@ describe("refusal cue", () => {
     refuse(element, false);
     vi.advanceTimersByTime(0);
     expect(element.values.get("color")).toBe(REFUSAL.color);
-    expect(element.values.get("transform")).toBe("translateX(-3px)");
+    expect(element.values.get("transform")).toBe("translateX(calc(var(--ada-unit) * -3px))");
     vi.advanceTimersByTime(80);
     expect(element.values.has("color")).toBe(false);
-    expect(element.values.get("transform")).toBe("translateX(3px)");
+    expect(element.values.get("transform")).toBe("translateX(calc(var(--ada-unit) * 3px))");
     vi.advanceTimersByTime(240);
     expect(element.values.size).toBe(0);
   });

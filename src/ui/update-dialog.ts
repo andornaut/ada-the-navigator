@@ -1,5 +1,6 @@
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
-import { createActions, createButton, createCard } from "./modal.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { createActions, createButton, createCard, isTap } from "./modal.ts";
 import { FONT_ROLES } from "./settings.ts";
 
 export interface UpdateLabels {
@@ -29,13 +30,13 @@ export function createUpdateDialog(
     fontRole: FONT_ROLES.heading,
     title: labels.title,
   });
-  const { card, close, frame } = parts;
+  const { body, card, close, frame } = parts;
   card.dataset.dialog = "update";
   const cancel = createButton(labels.cancel);
   cancel.dataset.action = "cancel-update";
   const accept = createButton(labels.accept, "primary");
   accept.dataset.action = "accept-update";
-  card.append(
+  body.append(
     createActions([
       { button: accept, role: "primary" },
       { button: cancel, role: "secondary" },
@@ -71,7 +72,7 @@ export function createUpdateDialog(
     if (
       outside &&
       event.target === modal &&
-      Math.hypot(event.clientX - outside.x, event.clientY - outside.y) <= 10
+      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
     ) {
       defer();
     }

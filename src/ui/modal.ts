@@ -1,9 +1,26 @@
-import { CARD, cardHeaderLayout, cardTitleReserve, cardWidth } from "./card-layout.ts";
-import { PAUSE_BUTTON, pauseButtonPlacement } from "./pause.ts";
+import {
+  CARD_CLOSE,
+  CARD_CONTENT,
+  cardHeaderLayout,
+  cardTitleReserve,
+} from "./layout/cardFrame.ts";
+import { cardWidth, SCROLL } from "./layout/contentCard.ts";
+import {
+  BUTTON_SLICE,
+  CARD_SLICE,
+  CONTROL_ROW,
+  FOCUS_RING,
+  TEXT_BUTTON,
+} from "./layout/controls.ts";
+import { font, fromSafeEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
-// the dark lavender palette): Settings, the install steps, the update offer, the cheats card and
-// the cards still to come share these styles and builders.
+// the dark lavender palette) and art/layout.md sizes them: Settings, the install steps, the update
+// offer, the cheats card, Paused and Travel share these styles and builders. Every size is a
+// logical px through src/ui/layout.
 
 // Text colours on the card face #3b3850.
 export const TEXT_TOKENS = {
@@ -14,8 +31,7 @@ export const TEXT_TOKENS = {
   title: "#ffffff",
 } as const;
 
-// The button sheets' nine-slice margins (left, top, right, bottom), as the UI manifest gives them.
-export const BUTTON_SLICE = { bottom: 6, left: 2, right: 2, top: 4 } as const;
+export { BUTTON_SLICE } from "./layout/controls.ts";
 
 export type ButtonRole = "primary" | "secondary";
 export type ButtonTag = "disabled" | "normal" | "pressed";
@@ -38,16 +54,43 @@ export function actionOrder<T extends { readonly role: ButtonRole }>(actions: re
 
 const { bottom, left, right, top } = BUTTON_SLICE;
 const SLICE = `${top} ${right} ${bottom} ${left}`;
-const WIDTHS = `${top}px ${right}px ${bottom}px ${left}px`;
+const SLICE_WIDTHS = `${slice(top)} ${slice(right)} ${slice(bottom)} ${slice(left)}`;
+const FRAME = slice(CARD_SLICE);
 
-// Focus: a cream band between ink fringes, 4px outside the control (the HTML form of ui-focus).
-const FOCUS = `
-  outline:2px solid #ead4aa;
-  outline-offset:1px;
-  box-shadow:0 0 0 1px #181425,0 0 0 4px #181425`;
+// A logical length less a whole-pixel nine-slice edge.
+const lessSlice = (length: number, edge: number) => `calc(${units(length)} - ${slice(edge)})`;
+
+// Button content insets: the label's line box 12 below the face's top and above its bottom, 16 in
+// from each side, inside the nine-slice edges. Normal faces sit on the lip; pressed and disabled
+// faces sink by pressedSink.
+const { inset, lipHeight, pressedSink, verticalInset } = TEXT_BUTTON;
+const BUTTON_SIDE = lessSlice(inset, left);
+const NORMAL_PADDING = `${lessSlice(verticalInset, top)} ${BUTTON_SIDE} ${lessSlice(
+  verticalInset + lipHeight,
+  bottom,
+)}`;
+const SUNK_PADDING = `${lessSlice(verticalInset + pressedSink, top)} ${BUTTON_SIDE} ${lessSlice(
+  verticalInset + lipHeight - pressedSink,
+  bottom,
+)}`;
+const COMPACT_SIDE = lessSlice(TEXT_BUTTON.compactInset, left);
+
+// Focus: a cream band between ink fringes, FOCUS_RING.outset outside the control (the HTML form
+// of ui-focus).
+export const FOCUS_STYLE = `
+  outline:${units(FOCUS_RING.band)} solid #ead4aa;
+  outline-offset:${units(FOCUS_RING.fringe)};
+  box-shadow:0 0 0 ${units(FOCUS_RING.fringe)} #181425,0 0 0 ${units(FOCUS_RING.outset)} #181425`;
+
+// The close X's press area relative to the card's top-right corner.
+const CLOSE_HIT = CARD_CLOSE.hit;
+
+// The pause sheet's frames sit side by side.
+const PAUSE_SHEET_FRAMES = 4;
 
 export const MODAL_STYLE = `
-/* A modal fills the controls layer; its card shrinks to fit and scrolls on a short screen. */
+/* A modal dims the whole play area; its card centres in the page safe rect, shrinks to fit and
+   scrolls its body on a short screen. */
 .ada-controls .ada-modal{
   position:absolute;
   inset:0;
@@ -56,7 +99,10 @@ export const MODAL_STYLE = `
   justify-content:center;
   background:#101926b3;
   pointer-events:auto;
-  padding:16px;
+  padding:${safeEdge("top", SAFE_MARGIN.page)} ${safeEdge("right", SAFE_MARGIN.page)} ${safeEdge(
+    "bottom",
+    SAFE_MARGIN.page,
+  )} ${safeEdge("left", SAFE_MARGIN.page)};
   box-sizing:border-box
 }
 
@@ -68,15 +114,8 @@ export const MODAL_STYLE = `
   flex-direction:column
 }
 
-/* The last control keeps the card's 16px padding below it when the card scrolls to its end. */
-.ada-controls .ada-card::after{
-  content:"";
-  flex:none;
-  height:${CARD.padding - CARD.frameBorder - CARD.gap}px
-}
-
-/* Chibi's content-fitted card (card-layout.ts sets its width and header gaps): groups stack 8px
-   apart, each at its own width, centred in the card's inner width. */
+/* Chibi's content-fitted card (src/ui/layout sets its width and header gaps): the header and close
+   X stay fixed while the body scrolls. */
 .ada-controls .ada-card{
   box-sizing:border-box;
   width:max-content;
@@ -84,17 +123,16 @@ export const MODAL_STYLE = `
   max-height:100%;
   min-height:0;
   flex:0 1 auto;
-  overflow:auto;
+  overflow:hidden;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  gap:${CARD.gap}px;
-  padding:0 ${CARD.padding - CARD.frameBorder}px;
+  padding:0 ${lessSlice(CARD_CONTENT.padding, CARD_SLICE)};
+  font:${font(TYPE.body)};
   color:${TEXT_TOKENS.label};
   background:#3b3850;
-  border:2px solid #6b6685;
+  border:${FRAME} solid #6b6685;
   border-radius:0;
-  border-image:url('/art/ui/sprites/ui-settings-card.png') 2 fill / 2px stretch;
+  border-image:url('/art/ui/sprites/ui-settings-card.png') ${CARD_SLICE} fill / ${FRAME} stretch;
   image-rendering:pixelated
 }
 
@@ -103,50 +141,91 @@ export const MODAL_STYLE = `
   flex:none;
   align-self:stretch;
   box-sizing:border-box;
-  margin-top:var(--title-top,${CARD.padding}px);
-  padding:0 ${cardTitleReserve(true) - CARD.padding}px
+  margin-top:var(--title-top,${units(CARD_CONTENT.padding)});
+  padding:0 ${units(cardTitleReserve(true) - CARD_CONTENT.padding)}
 }
 
-.ada-controls .ada-card > header + *{
-  margin-top:var(--body-gap,0)
+/* The scroll group: groups stack a gap apart, each at its own width, centred in the inner width.
+   A scrolling body reserves a gap and a track on its right, inside the padding. */
+.ada-controls .ada-card-body{
+  flex:0 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:${units(CARD_CONTENT.gap)};
+  margin-top:var(--body-gap,0);
+  scrollbar-color:#9690b4 #2f2d3d
+}
+.ada-controls .ada-card-body::-webkit-scrollbar{
+  width:${units(SCROLL.gap + SCROLL.track)}
+}
+.ada-controls .ada-card-body::-webkit-scrollbar-track{
+  background:linear-gradient(to right,transparent ${units(SCROLL.gap)},#2f2d3d ${units(SCROLL.gap)})
+}
+.ada-controls .ada-card-body::-webkit-scrollbar-thumb{
+  background:#9690b4;
+  background-clip:padding-box;
+  border:solid transparent;
+  border-width:${units(SCROLL.thumbInset)} ${units(SCROLL.thumbInset)} ${units(
+    SCROLL.thumbInset,
+  )} ${units(SCROLL.gap + SCROLL.thumbInset)}
 }
 
-.ada-controls .ada-card > *{
+/* The last control keeps the end pad below it at the scroll end: the frame and the last gap
+   count toward it. */
+.ada-controls .ada-card-body::after{
+  content:"";
+  flex:none;
+  height:${lessSlice(SCROLL.endPad - CARD_CONTENT.gap, CARD_SLICE)}
+}
+
+.ada-controls .ada-card-body > *{
   flex:none;
   max-width:100%
 }
 
+/* Prose never widens a card: it wraps to the inner width the other groups and the floor set. */
+.ada-controls .ada-prose{
+  contain:inline-size;
+  align-self:stretch
+}
+
 .ada-controls .ada-card h2{
-  font-size:24px;
-  line-height:28px;
+  font-size:${units(TYPE.heading.size)};
+  line-height:${units(TYPE.heading.lineHeight)};
   text-align:center;
   margin:0;
-  font-weight:700;
+  font-weight:${TYPE.heading.weight};
   color:${TEXT_TOKENS.title};
   overflow-wrap:anywhere
 }
 
 .ada-controls .ada-card h3{
-  margin:16px 0 4px;
-  font-size:16px;
+  margin:0;
+  font-size:${units(TYPE.label.size)};
+  line-height:${units(TYPE.label.lineHeight)};
+  font-weight:${TYPE.label.weight};
   color:${TEXT_TOKENS.title}
 }
 
 .ada-controls .ada-card p{
-  margin:0 0 16px;
-  line-height:20px;
-  max-width:36em;
+  margin:0;
   color:${TEXT_TOKENS.supporting}
 }
 
-/* The close X: a 24x24 face 6px from the card's top and right, in a 48x48 target. */
+/* The close X: a 24 face closeInset from the card's top and right, in its hitAround target. */
 .ada-controls .ada-close{
   position:absolute;
-  top:-6px;
-  right:-6px;
-  width:48px;
-  height:48px;
-  min-width:48px;
+  top:${units(CLOSE_HIT.y)};
+  right:${units(CLOSE_HIT.x)};
+  width:${units(CLOSE_HIT.width)};
+  height:${units(CLOSE_HIT.height)};
+  min-width:0;
+  min-height:0;
   padding:0;
   border:0;
   border-radius:0;
@@ -158,35 +237,38 @@ export const MODAL_STYLE = `
 }
 .ada-controls .ada-close::before{
   content:"";
-  width:24px;
-  height:24px;
-  background:url('/art/ui/sprites/ui-close.png') 0 0 / 48px 24px;
+  width:${units(CARD_CLOSE.art.width)};
+  height:${units(CARD_CLOSE.art.height)};
+  background:url('/art/ui/sprites/ui-close.png') 0 0 / ${units(2 * CARD_CLOSE.art.width)} ${units(
+    CARD_CLOSE.art.height,
+  )};
   image-rendering:pixelated
 }
 .ada-controls .ada-close:active::before{
-  background-position:-24px 0
+  background-position:${units(-CARD_CLOSE.art.width)} 0
 }
 
-/* Buttons: 48px, a 44px face over a 4px lip; pressed drops 2px; disabled is flat. */
+/* Buttons: 48 high, a 44 face over a 4 lip; pressed sinks 2; disabled is flat. A wrapped label
+   grows the face by a line box per line. */
 .ada-controls .ada-button{
   box-sizing:border-box;
-  min-width:48px;
-  height:48px;
-  min-height:48px;
+  min-width:${units(TEXT_BUTTON.height)};
+  height:auto;
+  min-height:${units(TEXT_BUTTON.height)};
   margin:0;
-  padding:0 14px 2px;
+  padding:${NORMAL_PADDING};
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
-  font:700 16px AdaUI,'Liberation Sans',sans-serif;
+  gap:${units(SPACING.markGap)};
+  font:${font(TYPE.label)};
   color:${TEXT_TOKENS.buttonLabel};
   background:#9690b4;
   border-style:solid;
   border-color:#9690b4 #9690b4 #5f5980;
-  border-width:${WIDTHS};
+  border-width:${SLICE_WIDTHS};
   border-radius:0;
-  border-image:var(--ui-button-normal) ${SLICE} fill / ${WIDTHS};
+  border-image:var(--ui-button-normal) ${SLICE} fill / ${SLICE_WIDTHS};
   image-rendering:pixelated;
   cursor:pointer;
   pointer-events:auto
@@ -197,14 +279,14 @@ export const MODAL_STYLE = `
   border-image-source:var(--ui-button-primary-normal)
 }
 .ada-controls .ada-button:active:not(:disabled){
-  padding:2px 14px 0;
+  padding:${SUNK_PADDING};
   border-image-source:var(--ui-button-pressed)
 }
 .ada-controls .ada-button.ada-primary:active:not(:disabled){
   border-image-source:var(--ui-button-primary-pressed)
 }
 .ada-controls .ada-button:disabled{
-  padding:2px 14px 0;
+  padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
   background:#2f2d3d;
   border-color:#2f2d3d;
@@ -218,7 +300,7 @@ export const MODAL_STYLE = `
 /* An unavailable action keeps the disabled face but stays pressable, so it can refuse. */
 .ada-controls .ada-button.ada-unavailable,
 .ada-controls .ada-button.ada-unavailable:active{
-  padding:2px 14px 0;
+  padding:${SUNK_PADDING};
   color:${TEXT_TOKENS.disabledLabel};
   background:#2f2d3d;
   border-color:#2f2d3d;
@@ -226,26 +308,26 @@ export const MODAL_STYLE = `
   cursor:default
 }
 
-/* A stacked action group fills the card's body width, its faces 8px apart. */
+/* An action stack fills the card's inner width, its faces a gap apart. */
 .ada-controls .ada-actions.ada-stack{
   grid-auto-flow:row;
-  width:100%;
-  gap:${CARD.gap}px
+  align-self:stretch;
+  width:auto;
+  gap:${units(CARD_CONTENT.gap)}
 }
 
 .ada-controls .ada-card .ada-card-note{
-  margin:0;
   text-align:center
 }
 
-/* Chibi's pause button: a 35px frame, its disc edge 8px in from the view's corner, in a 52.5px
+/* Chibi's pause button: the 35 frame on the HUD safe rect's top-left corner, in its hitAround
    press area. */
 .ada-controls .ada-pause{
   position:absolute;
-  left:calc(max(0px,var(--inset-left)) + ${pauseButtonPlacement().press}px);
-  top:calc(max(0px,var(--inset-top)) + ${pauseButtonPlacement().press}px);
-  width:${PAUSE_BUTTON.press}px;
-  height:${PAUSE_BUTTON.press}px;
+  left:${fromSafeEdge("left", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.x)};
+  top:${fromSafeEdge("top", SAFE_MARGIN.hud, PAUSE_BUTTON.hit.y)};
+  width:${units(PAUSE_BUTTON.hit.width)};
+  height:${units(PAUSE_BUTTON.hit.height)};
   min-width:0;
   min-height:0;
   padding:0;
@@ -259,56 +341,59 @@ export const MODAL_STYLE = `
 }
 .ada-controls .ada-pause::before{
   content:"";
-  width:${PAUSE_BUTTON.frame}px;
-  height:${PAUSE_BUTTON.frame}px;
-  background:url('/art/ui/sprites/ui-pause.png') var(--pause-frame,0px) 0;
-  background-size:${4 * PAUSE_BUTTON.frame}px ${PAUSE_BUTTON.frame}px;
+  width:${units(PAUSE_BUTTON.art.width)};
+  height:${units(PAUSE_BUTTON.art.height)};
+  background:url('/art/ui/sprites/ui-pause.png') var(--pause-frame,0) 0;
+  background-size:${units(PAUSE_SHEET_FRAMES * PAUSE_BUTTON.art.width)} ${units(
+    PAUSE_BUTTON.art.height,
+  )};
   image-rendering:pixelated
 }
-.ada-controls .ada-pause:focus-visible{${FOCUS}
+.ada-controls .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
-/* Action groups sit centred in the card, one shared width per group. */
+/* An action row shares one width, the widest label plus the insets, a gap apart, centred. */
 .ada-controls .ada-actions{
   display:grid;
   grid-auto-columns:1fr;
   grid-auto-flow:column;
-  gap:${CARD.gap}px;
+  gap:${units(SPACING.gap)};
   width:max-content;
   max-width:100%;
   margin:0
 }
 
-/* Control rows form one group as wide as its widest row, rows 4px apart. */
+/* Control rows form one group as wide as its widest row, rows a row gap apart. */
 .ada-controls .ada-rows{
   display:grid;
-  gap:${CARD.rowGap}px;
+  gap:${units(CARD_CONTENT.rowGap)};
   width:max-content;
   max-width:100%
 }
 
-/* Chibi's compact exception for a button inside a control row: a 72x28 face with an 8px
-   horizontal inset, centred in the row, full-size label; the whole row stays the target. */
+/* Chibi's compact exception for a button inside a control row: a 72x28 face, wider when its label
+   and compact insets need it, full-size label; the whole row stays the target. */
 .ada-controls .ada-button.ada-compact{
   flex:none;
-  min-width:72px;
-  height:28px;
-  min-height:28px;
-  padding:0 6px
+  min-width:${units(TEXT_BUTTON.compactWidth)};
+  height:${units(TEXT_BUTTON.compactHeight)};
+  min-height:${units(TEXT_BUTTON.compactHeight)};
+  padding:0 ${COMPACT_SIDE}
 }
 .ada-controls .ada-button.ada-compact:active:not(:disabled){
-  padding:0 6px;
+  padding:0 ${COMPACT_SIDE};
   border-image-source:var(--ui-button-pressed)
 }
 
-/* Control rows: 48 high, icon, label and switch; the whole row is the press target. */
+/* Control rows: at least 48 high (their text plus a row gap above and below), icon, label and
+   action; the whole row is the press target. */
 .ada-controls .ada-row{
   box-sizing:border-box;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:${units(CONTROL_ROW.gap)};
   width:100%;
-  min-height:48px;
+  min-height:${units(CONTROL_ROW.height)};
   margin:0;
   padding:0;
   font:inherit;
@@ -323,54 +408,71 @@ export const MODAL_STYLE = `
 
 .ada-controls .ada-switch{
   flex:none;
-  width:32px;
-  height:16px;
-  background:url('/art/ui/sprites/ui-switch.png') 0 0 / 64px 16px;
+  width:${units(CONTROL_ROW.switch.width)};
+  height:${units(CONTROL_ROW.switch.height)};
+  background:url('/art/ui/sprites/ui-switch.png') 0 0 / ${units(
+    2 * CONTROL_ROW.switch.width,
+  )} ${units(CONTROL_ROW.switch.height)};
   image-rendering:pixelated
 }
 .ada-controls .ada-switch[data-tag=off]{
-  background-position:-32px 0
+  background-position:${units(-CONTROL_ROW.switch.width)} 0
 }
 
 .ada-controls .ada-icon{
   flex:none;
-  width:16px;
-  height:16px;
-  background:center / 16px 16px no-repeat;
+  width:${units(CONTROL_ROW.icon)};
+  height:${units(CONTROL_ROW.icon)};
+  background:center / ${units(CONTROL_ROW.icon)} ${units(CONTROL_ROW.icon)} no-repeat;
   image-rendering:pixelated
 }
 
 .ada-controls .ada-setting-text{
   flex:1;
   display:grid;
-  gap:2px;
-  padding:4px 0;
+  padding:${units(CONTROL_ROW.textInset)} 0;
   overflow-wrap:anywhere
 }
 
-/* Supporting text keeps the body size, as in Chibi: it wraps and its row grows instead. */
+/* Supporting text keeps the body size, as in Chibi: it wraps and its row grows instead, and never
+   widens the rows. */
 .ada-controls .ada-setting-note{
-  font-size:16px;
-  line-height:20px;
+  contain:inline-size;
+  font-size:${units(TYPE.body.size)};
+  line-height:${units(TYPE.body.lineHeight)};
   color:${TEXT_TOKENS.supporting}
 }
 
+/* Install steps: the row icons, a gap, then the wrapped body text. */
 .ada-controls .ada-steps{
   display:flex;
   align-items:center;
-  gap:8px;
-  width:max-content;
-  max-width:100%;
+  gap:${units(CONTROL_ROW.gap)};
   margin:0
 }
 
-.ada-controls .ada-steps p{
-  margin:0 0 0 4px
+/* Cheats: per scope a heading, its persistence, then items a gap apart, each a button with its
+   description a row gap below. */
+.ada-controls .ada-cheat-section{
+  display:flex;
+  flex-direction:column;
+  gap:${units(CARD_CONTENT.rowGap)};
+  align-self:stretch
+}
+.ada-controls .ada-cheat-items{
+  display:flex;
+  flex-direction:column;
+  gap:${units(CARD_CONTENT.gap)}
+}
+.ada-controls .ada-cheat-item{
+  display:flex;
+  flex-direction:column;
+  gap:${units(CARD_CONTENT.rowGap)}
 }
 
 .ada-controls .ada-card .ada-button:focus-visible,
 .ada-controls .ada-row:focus-visible,
-.ada-controls .ada-close:focus-visible{${FOCUS}
+.ada-controls .ada-close:focus-visible{${FOCUS_STYLE}
 }
 
 .ada-controls [hidden]{
@@ -379,6 +481,8 @@ export const MODAL_STYLE = `
 `;
 
 export interface CardParts {
+  // The scroll group: append the card's groups here.
+  readonly body: HTMLDivElement;
   readonly card: HTMLElement;
   readonly close: HTMLButtonElement;
   readonly frame: HTMLDivElement;
@@ -386,55 +490,64 @@ export interface CardParts {
   readonly title: HTMLHeadingElement;
   // Stops refitting the card as the view resizes.
   dispose(): void;
-  // Sizes the shown card to its content (card-layout.ts); call after its content changes.
+  // Sizes the shown card to its content (src/ui/layout/contentCard.ts); call after its content
+  // changes.
   fit(): void;
 }
 
-// Fits a shown card: measures each visible group and the title at their natural widths, sets the
-// card's width, then the title's top and the first group's gap so the header's gaps balance. A
-// group's data-ink-top gives the distance from its top to its first visible content.
-function fitCard(card: HTMLElement, header: HTMLElement, title: HTMLElement): void {
+// An element's laid-out size in logical px, independent of the frame turn's transform.
+function logicalSize(element: HTMLElement, unit: number): { height: number; width: number } {
+  const style = getComputedStyle(element);
+  return { height: parseFloat(style.height) / unit, width: parseFloat(style.width) / unit };
+}
+
+// Fits a shown card: measures each visible group and the title at their natural widths in logical
+// px, sets the card's width, then the title's top and the body's gap so the header's gaps balance.
+// A group's data-ink-top gives the distance from its top to its first visible content.
+function fitCard(parts: Pick<CardParts, "body" | "card" | "title">): void {
+  const { body, card, title } = parts;
   const layer = card.closest<HTMLElement>(".ada-modal");
   if (!layer || card.getClientRects().length === 0) {
     return;
   }
+  const unit = readViewUnit(card);
   card.style.width = "max-content";
-  const groups = [...card.children].filter(
+  const groups = [...body.children].filter(
     (child): child is HTMLElement =>
-      child instanceof HTMLElement && child !== header && child.getClientRects().length > 0,
+      child instanceof HTMLElement && child.getClientRects().length > 0,
   );
   const text = title.textContent ?? "";
   let titleWidth = 0;
   if (text) {
-    const range = document.createRange();
-    range.selectNodeContents(title);
     title.style.whiteSpace = "nowrap";
-    titleWidth = range.getBoundingClientRect().width;
+    title.style.width = "max-content";
+    titleWidth = logicalSize(title, unit).width;
     title.style.whiteSpace = "";
+    title.style.width = "";
   }
   const styles = getComputedStyle(layer);
-  const viewportWidth = layer.clientWidth;
   const availableWidth =
-    viewportWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
+    (layer.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight)) / unit;
   const width = cardWidth(
-    { availableWidth, viewportWidth },
-    groups.map((group) => group.offsetWidth),
+    availableWidth,
+    groups.map((group) => logicalSize(group, unit).width),
     text ? { close: true, width: titleWidth } : undefined,
   );
-  card.style.width = `${width}px`;
-  const titleHeight = text ? title.offsetHeight : undefined;
+  card.style.width = units(width);
+  const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
   const { bodyTop, titleTop } = cardHeaderLayout(
     true,
     first ? Number(first.dataset.inkTop ?? 0) : undefined,
     titleHeight,
   );
-  // Layout measures from the card's outer edge; its content starts inside the 2px frame.
-  card.style.setProperty("--title-top", `${titleTop - CARD.frameBorder}px`);
-  card.style.setProperty("--body-gap", `${bodyTop - titleTop - (titleHeight ?? 0) - CARD.gap}px`);
+  // Layout measures from the card's outer edge; its content starts inside the frame.
+  card.style.setProperty("--title-top", units(titleTop - CARD_CONTENT.frameBorder));
+  card.style.setProperty("--body-gap", units(bodyTop - titleTop - (titleHeight ?? 0)));
 }
 
-// A dialog card in its frame, with its title and close X. Show or hide it through frame.hidden.
+// A dialog card in its frame, with its title, close X and scrolling body. Show or hide it through
+// frame.hidden.
 export function createCard(options: {
   readonly closeAction: string;
   readonly closeLabel: string;
@@ -455,24 +568,48 @@ export function createCard(options: {
     title.dataset.fontRole = options.fontRole;
   }
   header.append(title);
-  card.append(header);
+  const body = document.createElement("div");
+  body.className = "ada-card-body";
+  card.append(header, body);
   const close = document.createElement("button");
   close.type = "button";
   close.className = "ada-close";
   close.dataset.action = options.closeAction;
   close.setAttribute("aria-label", options.closeLabel);
   frame.append(card, close);
-  const fit = () => fitCard(card, header, title);
+  const fit = () => fitCard({ body, card, title });
+  // Keyboard focus scrolls the focused control fully into view, its focus ring included.
+  body.addEventListener("focusin", (event) => {
+    if (event.target instanceof HTMLElement) {
+      event.target.style.scrollMargin = units(FOCUS_RING.outset);
+      event.target.scrollIntoView({ block: "nearest" });
+    }
+  });
   window.addEventListener("resize", fit);
+  window.addEventListener(VIEW_SCALE_EVENT, fit);
   return {
+    body,
     card,
     close,
-    dispose: () => window.removeEventListener("resize", fit),
+    dispose: () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener(VIEW_SCALE_EVENT, fit);
+    },
     fit,
     frame,
     header,
     title,
   };
+}
+
+// Whether a press that began at from and ended at to is a tap: it moved no further than the
+// scroll drag threshold, in logical px at unit CSS px each.
+export function isTap(
+  unit: number,
+  from: { readonly x: number; readonly y: number },
+  to: { readonly x: number; readonly y: number },
+): boolean {
+  return Math.hypot(to.x - from.x, to.y - from.y) <= SCROLL.dragThreshold * unit;
 }
 
 // A control row's parts, left to right, as in Chibi: icon, label (with any note) and switch.
@@ -488,7 +625,7 @@ export function switchState(on: boolean): {
   return { ariaChecked: String(on), tag: on ? "on" : "off" };
 }
 
-// A control row: one 48px switch button holding icon, label, optional note and switch, so the
+// A control row: one switch button at least a control row high holding icon, label, optional note and switch, so the
 // whole row is the press target. show sets its state.
 export function createSwitchRow(options: {
   readonly icon: HTMLElement;

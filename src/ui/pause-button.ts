@@ -1,3 +1,4 @@
+import { units } from "./layout/css.ts";
 import { type PauseFrame, pauseFrames } from "./pause.ts";
 
 const UI_ROOT = "/art/ui/";
@@ -21,7 +22,7 @@ export function createPauseButton(
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const showFrame = (frame: PauseFrame | undefined) => {
-    button.style.setProperty("--pause-frame", `${-(frame?.x ?? 0)}px`);
+    button.style.setProperty("--pause-frame", units(-(frame?.x ?? 0)));
   };
   const rest = () => {
     clearTimeout(timer);

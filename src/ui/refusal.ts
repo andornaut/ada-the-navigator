@@ -1,14 +1,16 @@
 // The shared refusal cue for an action that cannot act (art/controls.md "Refusal cue"): for 320ms
-// the label or glyph alternates red every 80ms while the face shakes 3px. With reduced motion the
-// label holds red for the 320ms and nothing moves. The Paused card, the shop and the weapon
-// buttons share it.
+// the label or glyph alternates red every 80ms while the face shakes 3 logical px. With reduced
+// motion the label holds red for the 320ms and nothing moves. The Paused card, the shop, the
+// weapon buttons and the story panel share it.
+
+import { units } from "./layout/css.ts";
 
 export const REFUSAL = { color: "#e4574e", durationMs: 320, shakePx: 3, stepMs: 80 } as const;
 
 export interface RefusalFrame {
   // Milliseconds from the press.
   readonly at: number;
-  // The face's sideways offset in pixels.
+  // The face's sideways offset in logical px.
   readonly offset: number;
   readonly red: boolean;
 }
@@ -47,7 +49,7 @@ export function refuse(element: CueTarget, reducedMotion: boolean): void {
         element.style.removeProperty("color");
       }
       if (frame.offset) {
-        element.style.setProperty("transform", `translateX(${frame.offset}px)`);
+        element.style.setProperty("transform", `translateX(${units(frame.offset)})`);
       } else {
         element.style.removeProperty("transform");
       }

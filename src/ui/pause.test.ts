@@ -6,9 +6,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { createBackStack, pressBack } from "./back-stack.ts";
 import {
   escapeTarget,
-  PAUSE_BUTTON,
   pauseActions,
-  pauseButtonPlacement,
   pauseButtonShown,
   pauseFrames,
   travelShowsEmpty,
@@ -56,12 +54,6 @@ describe("Travel card", () => {
 });
 
 describe("pause button", () => {
-  it("puts its disc edge 8px from the view's corner in a 52.5px press area", () => {
-    const { frame, press } = pauseButtonPlacement();
-    expect(frame + 1).toBe(8);
-    expect(press + PAUSE_BUTTON.press / 2).toBe(frame + PAUSE_BUTTON.frame / 2);
-  });
-
   it("shows only on a touch screen in flight with no card open", () => {
     expect(pauseButtonShown(true, true, false)).toBe(true);
     expect(pauseButtonShown(false, true, false)).toBe(false);

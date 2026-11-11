@@ -7,7 +7,22 @@ import {
   writeSetting,
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
-import { createActions, createButton, createCard, createSwitchRow, MODAL_STYLE } from "./modal.ts";
+import { CONTROL_ROW, NINE_SLICE_EDGES, TEXT_BUTTON } from "./layout/controls.ts";
+import { font, safeEdge, units, viewStyle } from "./layout/css.ts";
+import { HUD_BUTTON, SAFE_MARGIN, SHIELD_BAR } from "./layout/playView.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
+import { TOUCH_STICK } from "./layout/touchControls.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import {
+  createActions,
+  createButton,
+  createCard,
+  createSwitchRow,
+  FOCUS_STYLE,
+  isTap,
+  MODAL_STYLE,
+} from "./modal.ts";
+import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
 import { STATION_STYLE } from "./station.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
@@ -49,6 +64,11 @@ export interface SettingsOptions {
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
 }
 
+// The start screen's Settings glyph until the 24 HUD glyph is published.
+// CLEANUP (added 2026-11-11): draw icon-settings-nav-24 at HUD_BUTTON.glyph once Art's 24 HUD
+// glyphs are on main, and drop this.
+const SETTINGS_GLYPH = { key: "icon-settings-nav", size: 20 } as const;
+
 const STYLE = `
 @font-face{
   font-family:AdaUI;
@@ -64,11 +84,13 @@ const STYLE = `
   font-display:swap
 }
 
+${viewStyle(NINE_SLICE_EDGES)}
+
 .ada-controls{
   position:absolute;
   inset:0;
   pointer-events:none;
-  font:16px AdaUI,'Liberation Sans',sans-serif;
+  font:${font(TYPE.body)};
   color:#172335;
   z-index:10
 }
@@ -78,6 +100,7 @@ const STYLE = `
   z-index:30
 }
 
+/* The base button of the weapon selector and the station rows. */
 .ada-controls button{
   font:inherit;
   min-height:48px;
@@ -96,16 +119,18 @@ const STYLE = `
   outline-offset:4px
 }
 
+/* The start screen's Settings: a HUD button on the HUD safe rect's top-right corner. */
 .ada-controls .ada-settings-open{
   position:absolute;
-  right:max(8px,var(--inset-right));
-  top:max(8px,var(--inset-top))
-}
-
-.ada-controls .ada-settings-open{
-  width:48px;
-  height:48px;
+  right:${safeEdge("right", SAFE_MARGIN.hud)};
+  top:${safeEdge("top", SAFE_MARGIN.hud)};
+  width:${units(HUD_BUTTON.size)};
+  height:${units(HUD_BUTTON.size)};
+  min-width:0;
+  min-height:0;
   padding:0;
+  border-width:${units(HUD_BUTTON.border)};
+  border-radius:${units(HUD_BUTTON.radius)};
   display:grid;
   place-items:center
 }
@@ -122,23 +147,24 @@ const STYLE = `
 
 .ada-controls .ada-settings-open::before{
   content:"";
-  width:20px;
-  height:20px;
-  background:url('/art/ui/sprites/icon-settings-nav.png') center / 20px 20px no-repeat;
+  width:${units(SETTINGS_GLYPH.size)};
+  height:${units(SETTINGS_GLYPH.size)};
+  background:url('/art/ui/sprites/${SETTINGS_GLYPH.key}.png') center / ${units(
+    SETTINGS_GLYPH.size,
+  )} ${units(SETTINGS_GLYPH.size)} no-repeat;
   image-rendering:pixelated
 }
 
-.ada-controls .ada-settings-open:focus-visible{
-  outline:3px solid #ead4aa;
-  outline-offset:4px
+.ada-controls .ada-settings-open:focus-visible{${FOCUS_STYLE}
 }
 
+/* The shield bar across the shield safe rect, on its bottom edge. */
 .ada-controls .ada-shield-meter{
   position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
-  height:3px;
+  left:${safeEdge("left", SHIELD_BAR.margin)};
+  right:${safeEdge("right", SHIELD_BAR.margin)};
+  bottom:${safeEdge("bottom", SHIELD_BAR.margin)};
+  height:${units(SHIELD_BAR.height)};
   background:#525252;
   pointer-events:none
 }
@@ -151,20 +177,31 @@ const STYLE = `
   transform-origin:left center
 }
 
+/* Each joystick's pointer target, placed over its rest ring (touchControls.ts). */
 .ada-controls [data-control]{
   position:absolute;
-  width:75px;
-  height:75px;
+  width:${units(TOUCH_STICK.frame)};
+  height:${units(TOUCH_STICK.frame)};
   pointer-events:auto;
   touch-action:none
 }
 
+/* The touch Use button: an action one row high, centred across, its bottom level with the sticks'
+   drawn bottom edge. */
 .ada-controls .ada-use{
   position:absolute;
   left:50%;
-  bottom:max(24px,var(--inset-bottom));
+  bottom:${safeEdge("bottom", TOUCH_STICK.bottom)};
   transform:translateX(-50%);
-  max-width:calc(100% - 32px)
+  max-width:calc(100% - 2 * ${units(SPACING.pageInset)});
+  min-width:${units(TEXT_BUTTON.height)};
+  min-height:${units(TEXT_BUTTON.height)};
+  padding:0 ${units(TEXT_BUTTON.inset)};
+  border-width:${units(HUD_BUTTON.border)};
+  border-radius:${units(HUD_BUTTON.radius)}
+}
+
+.ada-controls .ada-use:focus-visible{${FOCUS_STYLE}
 }
 
 ${MODAL_STYLE}
@@ -177,7 +214,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
-  style.textContent = STYLE + STATION_STYLE + WEAPON_STYLE;
+  style.textContent = STYLE + NOTICE_STYLE + STATION_STYLE + WEAPON_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
@@ -207,7 +244,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     fontRole: FONT_ROLES.heading,
     title: options.labels.settings,
   });
-  const { card, close: closeButton, frame: cardFrame } = settingsCard;
+  const { body: card, close: closeButton, frame: cardFrame } = settingsCard;
   // Rows in Chibi's and Archie's order: Move controls and Aim controls show or hide each
   // joystick's drawing; Sound and Reduced motion are switches with a note under the label.
   // Install joins last, shown only while the game can be installed.
@@ -239,8 +276,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   };
   const rows = document.createElement("div");
   rows.className = "ada-rows";
-  // The first row's label line sits centred in its 48px row.
-  rows.dataset.inkTop = "14";
+  // The first row's label line sits centred in its row.
+  rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
   rows.append(
     switchRow("move", options.labels.moveControls),
     switchRow("aim", options.labels.aimControls),
@@ -279,18 +316,19 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     fontRole: FONT_ROLES.heading,
     title: "",
   });
-  const { card: stepsCard, close: stepsX, frame: stepsFrame, title: stepsTitle } = stepsParts;
+  const { body: stepsBody, card: stepsCard, close: stepsX, frame: stepsFrame } = stepsParts;
+  const stepsTitle = stepsParts.title;
   stepsFrame.hidden = true;
   stepsCard.dataset.dialog = "install-steps";
   // Chibi's steps glyphs: the browser's own button for the first step, then Install.
   const stepsLine = document.createElement("div");
-  stepsLine.className = "ada-steps";
+  stepsLine.className = "ada-steps ada-prose";
   const stepsGlyph = settingsIcon(STEPS_GLYPHS.ios);
   const stepsText = document.createElement("p");
   stepsLine.append(stepsGlyph, settingsIcon(SETTING_ICONS.install), stepsText);
   const stepsClose = createButton(options.labels.close);
   stepsClose.dataset.action = "close-install-steps";
-  stepsCard.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
+  stepsBody.append(stepsLine, createActions([{ button: stepsClose, role: "secondary" }]));
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
   modal.append(cardFrame, stepsFrame);
@@ -380,7 +418,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (
       outsidePress &&
       event.target === modal &&
-      Math.hypot(event.clientX - outsidePress.x, event.clientY - outsidePress.y) <= 10
+      isTap(readViewUnit(modal), outsidePress, { x: event.clientX, y: event.clientY })
     ) {
       if (stepsOpen()) {
         closeSteps();

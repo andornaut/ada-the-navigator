@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { ControlState } from "../input/state.ts";
-import {
-  centredAt,
-  MARKER_THRESHOLD,
-  STICK_DEPTHS,
-  stickRestCentres,
-  stickViews,
-} from "./sticks.ts";
+import { NO_INSETS } from "./layout/playView.ts";
+import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
 import {
   KNOB_OUTER_RADIUS,
   MARKER_INK_WIDTH,
@@ -23,6 +18,7 @@ import {
 
 const layout = {
   height: 360,
+  insets: NO_INSETS,
   visibility: { aim: true, move: true },
   visible: true,
   width: 720,
@@ -34,20 +30,12 @@ const knobCentre = (point: { x: number; y: number }) => ({
 
 describe("joystick placement", () => {
   it("rests both same-sized rings where Chibi's move hint rests, mirrored across the view", () => {
-    expect(stickRestCentres(layout)).toEqual({ aim: { x: 598, y: 303 }, move: { x: 121, y: 303 } });
     const views = stickViews(layout, new ControlState());
     expect(views.move?.ring).toEqual(centredAt({ x: 121, y: 303 }, TOUCH_CHROME_FRAME));
     expect(views.aim?.ring).toEqual(centredAt({ x: 598, y: 303 }, TOUCH_CHROME_FRAME));
     expect(views.move?.ringPose).toBe("rest");
     expect(views.move?.knobPose).toBe("rest");
     expect(knobCentre(views.move!.knob)).toEqual({ x: 121, y: 303 });
-  });
-
-  it("follows the centred view across and the canvas bottom down in a wider, taller canvas", () => {
-    expect(stickRestCentres({ height: 400, width: 900 })).toEqual({
-      aim: { x: 688, y: 343 },
-      move: { x: 211, y: 343 },
-    });
   });
 
   it("omits a side hidden by its setting and both while controls do not show", () => {

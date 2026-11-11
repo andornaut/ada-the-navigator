@@ -1,4 +1,5 @@
-import { createButton, createCard } from "./modal.ts";
+import { readViewUnit } from "./layout/viewScale.ts";
+import { createButton, createCard, isTap } from "./modal.ts";
 import { type PauseAction, pauseActions, travelShowsEmpty } from "./pause.ts";
 import { refuse } from "./refusal.ts";
 
@@ -29,7 +30,7 @@ export interface PauseState {
   readonly inDanger: boolean;
 }
 
-// A stack of full-width actions, 8px apart, filling the card's body width.
+// An action stack: full-width actions a gap apart, filling the card's inner width.
 function stack(): HTMLDivElement {
   const group = document.createElement("div");
   group.className = "ada-actions ada-stack";
@@ -77,10 +78,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     actions.append(button);
   }
   const note = document.createElement("p");
-  note.className = "ada-card-note";
+  note.className = "ada-card-note ada-prose";
   note.textContent = labels.travelUnavailable;
   note.hidden = true;
-  paused.card.append(actions, note);
+  paused.body.append(actions, note);
   const travel = createCard({
     closeAction: "close-travel",
     closeLabel: labels.close,
@@ -90,10 +91,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   travel.frame.hidden = true;
   const places = stack();
   const empty = document.createElement("p");
-  empty.className = "ada-card-note";
+  empty.className = "ada-card-note ada-prose";
   empty.dataset.inkTop = "0";
   empty.textContent = labels.travelEmpty;
-  travel.card.append(places, empty);
+  travel.body.append(places, empty);
   modal.append(paused.frame, travel.frame);
   root.append(modal);
   let open = false;
@@ -183,7 +184,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     if (
       outside &&
       event.target === modal &&
-      Math.hypot(event.clientX - outside.x, event.clientY - outside.y) <= 10
+      isTap(readViewUnit(modal), outside, { x: event.clientX, y: event.clientY })
     ) {
       if (travelOpen()) {
         closeTravel();

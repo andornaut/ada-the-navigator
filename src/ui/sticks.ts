@@ -1,4 +1,3 @@
-import { SCREEN } from "../data/screen.ts";
 import {
   type ControlState,
   MOVE_STICK_GEOMETRY,
@@ -6,6 +5,8 @@ import {
   stickVector,
 } from "../input/state.ts";
 import type { ControlVisibility } from "./device-settings.ts";
+import type { Insets } from "./layout/playView.ts";
+import { stickRestCentres, TOUCH_STICK } from "./layout/touchControls.ts";
 import {
   MOVE_KNOB_REACH,
   type Point,
@@ -21,6 +22,8 @@ interface Size {
 }
 
 interface StickLayout extends Size {
+  // The safe-area insets in logical px.
+  readonly insets: Insets;
   readonly visibility: ControlVisibility;
   readonly visible: boolean;
 }
@@ -44,36 +47,6 @@ export const STICK_DEPTHS = { knob: 10002, line: 10001, ring: 10000 } as const;
 // degrees of that side: the unit direction's x is at least sin(22.5 degrees) that way.
 export const MARKER_THRESHOLD = Math.sin(Math.PI / 8);
 
-// The aim knob moves at most this many game pixels from its ring's centre, as Chibi's knob does.
-export const AIM_KNOB_REACH = 12;
-
-// Chibi's bottom controls sit CONTROL_BOTTOM above the canvas's bottom, drawn edge to edge; its
-// move hint rests as far in from the view's left as its Use button is from the view's right.
-const CONTROL_BOTTOM = 20;
-const CONTROL_SIDE = 85;
-const DRAWN_HALF = (TOUCH_CHROME_FRAME - 1) / 2 - 1;
-const REST_Y = SCREEN.height - 1 - CONTROL_BOTTOM - DRAWN_HALF;
-const MOVE_REST_X = CONTROL_SIDE + DRAWN_HALF;
-
-// How far the bottom controls move from where they sit in a canvas the game's own size: across
-// with the centred view and down to the canvas's bottom.
-function bottomShift(canvas: Size): Point {
-  return {
-    x: Math.floor((Math.floor(canvas.width) - SCREEN.width) / 2),
-    y: Math.floor(canvas.height) - SCREEN.height,
-  };
-}
-
-// Each joystick's ring centre at rest: the move ring where Chibi's move hint rests and the aim
-// ring mirrored across the view.
-export function stickRestCentres(canvas: Size): Readonly<Record<StickSide, Point>> {
-  const shift = bottomShift(canvas);
-  return {
-    aim: { x: shift.x + SCREEN.width - 1 - MOVE_REST_X, y: shift.y + REST_Y },
-    move: { x: shift.x + MOVE_REST_X, y: shift.y + REST_Y },
-  };
-}
-
 // The top-left of an odd-sized frame whose centre pixel sits on centre.
 export function centredAt(centre: Point, frame: number): Point {
   return { x: centre.x - (frame - 1) / 2, y: centre.y - (frame - 1) / 2 };
@@ -85,7 +58,7 @@ const rounded = (point: Point): Point => ({ x: Math.round(point.x), y: Math.roun
 // show. A held stick's ring centres on where its drag began; at rest it sits at its rest centre.
 // The move knob moves in proportion to the sampled deflection, at most MOVE_KNOB_REACH pixels,
 // so it stays inside the markers; the aim knob moves at most
-// AIM_KNOB_REACH pixels.
+// TOUCH_STICK.knobReach pixels.
 export function stickViews(
   layout: StickLayout,
   state: ControlState,
@@ -94,7 +67,7 @@ export function stickViews(
   if (!layout.visible) {
     return views;
   }
-  const rest = stickRestCentres(layout);
+  const rest = stickRestCentres(layout, layout.insets);
   for (const side of ["move", "aim"] as const) {
     if (!layout.visibility[side]) {
       continue;
@@ -125,7 +98,7 @@ export function stickViews(
     } else {
       const dx = stick ? stick.position.x - stick.origin.x : 0;
       const dy = stick ? stick.position.y - stick.origin.y : 0;
-      const divisor = Math.max(1, Math.hypot(dx, dy) / AIM_KNOB_REACH);
+      const divisor = Math.max(1, Math.hypot(dx, dy) / TOUCH_STICK.knobReach);
       knob = { x: centre.x + Math.round(dx / divisor), y: centre.y + Math.round(dy / divisor) };
     }
     const offset = { x: knob.x - centre.x, y: knob.y - centre.y };

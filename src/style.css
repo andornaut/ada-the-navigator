@@ -31,9 +31,10 @@ html {
   width: 100%;
   margin: 0;
 }
+/* The play area fills the screen under the safe-area insets; the UI keeps clear of them through
+   the safe-margin clamp (src/ui/layout/playView.ts). */
 body {
   overflow: hidden;
-  padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   touch-action: none;
 }
 #app {
@@ -118,40 +119,12 @@ button:disabled {
   image-rendering: pixelated;
   margin-bottom: 16px;
 }
-#game-status {
-  position: absolute;
-  z-index: 3;
-  left: 50%;
-  top: 100px;
-  transform: translateX(-50%);
-  max-width: min(600px, 85%);
-  text-align: center;
-  background: #101010dc;
-  font-size: 14px;
-}
-#game-status:empty {
-  display: none;
-}
-@container (max-height: 500px) {
-  #game-status {
-    top: 70px;
-  }
-}
 .dog-portrait {
   display: block;
   width: 64px;
   height: 64px;
   margin-left: 72px;
   background: url("/art/portraits/dog.png") 0 0 / 192px 64px no-repeat;
-}
-
-/* DOM controls use the turned frame's safe edges, as the canvas does. */
-#game-canvas .ada-controls .ada-settings-open {
-  right: max(8px, var(--inset-right));
-  top: max(8px, var(--inset-top));
-}
-#game-canvas .ada-controls .ada-use {
-  bottom: max(24px, var(--inset-bottom));
 }
 
 @media (orientation: portrait) and (pointer: coarse) {
@@ -163,21 +136,4 @@ button:disabled {
   html #game-canvas canvas {
     flex: none;
   }
-}
-
-#save-status {
-  position: absolute;
-  z-index: 21;
-  bottom: 104px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(36rem, calc(100% - 32px));
-  font-size: 14px;
-  line-height: 1.4;
-  background: #101010ed;
-  pointer-events: none;
-}
-#save-status:not(:empty) {
-  padding: 8px 12px;
-  border: 1px solid #969696;
 }

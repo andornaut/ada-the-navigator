@@ -48,22 +48,27 @@ export function createCheats(
     closeLabel: options.labels.close,
     title: options.labels.title,
   });
-  const { card, close, frame } = parts;
+  const { body, card, close, frame } = parts;
   const buttons: HTMLButtonElement[] = [];
   for (const scope of cheatGroups(options.actions)) {
     const section = document.createElement("section");
+    section.className = "ada-cheat-section";
     const heading = document.createElement("h3");
     heading.textContent = scope === "save" ? options.labels.saveGroup : options.labels.runGroup;
     const persistence = document.createElement("p");
+    persistence.className = "ada-prose";
     persistence.textContent =
       scope === "save" ? options.labels.savePersistence : options.labels.runPersistence;
     section.setAttribute("aria-label", heading.textContent);
     section.append(heading, persistence);
     const actions = options.actions.filter((action) => action.scope === scope);
+    const items = document.createElement("div");
+    items.className = "ada-cheat-items";
     for (const action of actions) {
       const button = createButton(action.label);
       button.dataset.cheat = action.id;
       const description = document.createElement("p");
+      description.className = "ada-prose";
       description.textContent = action.description;
       description.id = `cheat-description-${action.id}`;
       button.setAttribute("aria-describedby", description.id);
@@ -77,10 +82,14 @@ export function createCheats(
           .catch((error: unknown) => window.reportError(error))
           .finally(refresh);
       });
-      section.append(button, description);
+      const item = document.createElement("div");
+      item.className = "ada-cheat-item";
+      item.append(button, description);
+      items.append(item);
       buttons.push(button);
     }
-    card.append(section);
+    section.append(items);
+    body.append(section);
   }
   modal.append(frame);
   parent.append(modal);

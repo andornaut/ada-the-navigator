@@ -19,6 +19,10 @@ import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { units, VIEW_HOST_ID, VIEW_PROPERTIES } from "../ui/layout/css.ts";
+import { noticeReserve } from "../ui/layout/playView.ts";
+import { stickTargets } from "../ui/layout/touchControls.ts";
+import { createViewScaleBridge } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
 import { createPauseButton } from "../ui/pause-button.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pause-card.ts";
@@ -29,8 +33,7 @@ import {
   type SettingsOptions,
 } from "../ui/settings.ts";
 import { createShieldMeter } from "../ui/shield.ts";
-import { STICK_DEPTHS, stickRestCentres, stickViews } from "../ui/sticks.ts";
-import { TOUCH_CHROME_FRAME } from "../ui/touch-chrome.ts";
+import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
@@ -214,35 +217,25 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   scene.cameras.main.ignore(stickParts);
   const stickSet = new Set<GameObjects.GameObject>(stickParts);
   const camera = scene.cameras.add(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
-  // Keep each joystick's pointer target over its drawn rest ring, in the canvas's CSS pixels.
+  // The play area's view scale (src/ui/layout/viewScale.ts): the DOM UI's logical px, the safe
+  // insets and the nine-slice edges, from the canvas's display size.
+  const host = parent.closest<HTMLElement>(`#${VIEW_HOST_ID}`) ?? parent;
+  const view = createViewScaleBridge(host, scene.scale.displaySize);
+  let layout = view.update();
+  // Keep each joystick's pointer target over its drawn rest ring, in logical canvas px.
   let placedTargets = "";
   const placeTargets = (): void => {
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    const placement = [
-      width,
-      height,
-      canvas.offsetLeft,
-      canvas.offsetTop,
-      scene.scale.gameSize.width,
-      scene.scale.gameSize.height,
-    ].join();
-    if (width <= 0 || height <= 0 || placement === placedTargets) {
+    const { gameSize } = scene.scale;
+    const placement = JSON.stringify([gameSize.width, gameSize.height, layout.insets]);
+    if (placement === placedTargets) {
       return;
     }
     placedTargets = placement;
-    const scale = {
-      x: width / scene.scale.gameSize.width,
-      y: height / scene.scale.gameSize.height,
-    };
-    const rest = stickRestCentres(scene.scale.gameSize);
+    const targets = stickTargets(gameSize, layout.insets);
     settings.joystickTargets.forEach((target, index) => {
-      const centre = rest[index === 0 ? "move" : "aim"];
-      const size = { x: TOUCH_CHROME_FRAME * scale.x, y: TOUCH_CHROME_FRAME * scale.y };
-      target.style.left = `${canvas.offsetLeft + (centre.x + 0.5) * scale.x - size.x / 2}px`;
-      target.style.top = `${canvas.offsetTop + (centre.y + 0.5) * scale.y - size.y / 2}px`;
-      target.style.width = `${size.x}px`;
-      target.style.height = `${size.y}px`;
+      const rect = targets[index === 0 ? "move" : "aim"];
+      target.style.left = units(rect.x);
+      target.style.top = units(rect.y);
     });
   };
   const fitControls = (): void => {
@@ -252,6 +245,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }
     camera.setViewport(0, 0, scene.scale.gameSize.width, scene.scale.gameSize.height);
     camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
+    layout = view.update();
     placeTargets();
   };
   scene.events.on("prerender", fitControls);
@@ -363,6 +357,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const views = stickViews(
       {
         height: scene.scale.height,
+        insets: layout.insets,
         visibility,
         visible: touch,
         width: scene.scale.width,
@@ -411,6 +406,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pause.dispose();
       settings.dispose();
       scene.events.off("prerender", fitControls);
+      view.dispose();
       scene.cameras.remove(camera);
       for (const part of stickParts) {
         part.destroy();
@@ -462,7 +458,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     setShield: (maximum, value) => shield.setShield(maximum, value),
     setTravel: (travel) => pause.setState(travel),
-    setWeapons: (choices) => weapons.setWeapons(choices),
+    setWeapons(choices) {
+      // A notice keeps clear of the weapon row's press areas.
+      host.style.setProperty(VIEW_PROPERTIES.noticeReserve, units(noticeReserve(choices.length)));
+      weapons.setWeapons(choices);
+    },
   };
   scene.events.once("shutdown", controls.dispose);
   draw();

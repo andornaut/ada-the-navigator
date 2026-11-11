@@ -1,5 +1,6 @@
 // Pause, as in Chibi (art/controls.md "Pause"): a touch pause button in the view's top-left
-// corner, and a Paused card with Resume, Travel, Settings and Return home stacked full width.
+// corner (PAUSE_BUTTON, src/ui/layout/playView.ts), and a Paused card with Resume, Travel,
+// Settings and Return home stacked full width.
 
 export type PauseAction = "resume" | "returnHome" | "settings" | "travel";
 
@@ -23,15 +24,6 @@ export function pauseActions(inDanger: boolean): readonly PauseActionView[] {
 // The Travel card lists the discovered destinations, or says none are mapped yet.
 export function travelShowsEmpty(destinations: readonly unknown[]): boolean {
   return destinations.length === 0;
-}
-
-// The pause button: a 35px frame whose disc edge sits 8px in from the view's top and left (the
-// disc is drawn 1px inside its frame), in a 52.5px press area centred on the frame.
-export const PAUSE_BUTTON = { edge: 8, frame: 35, press: 52.5 } as const;
-
-export function pauseButtonPlacement(): { readonly frame: number; readonly press: number } {
-  const frame = PAUSE_BUTTON.edge - 1;
-  return { frame, press: frame - (PAUSE_BUTTON.press - PAUSE_BUTTON.frame) / 2 };
 }
 
 // The pause button is a touch control shown only in flight; on a fine pointer Escape pauses.
