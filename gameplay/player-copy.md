@@ -356,6 +356,9 @@ Whirlpool:
 - Quiet stretch: Astra: "My maps feel fuller every day." Ada: "Our maps." (happy)
 - Quiet stretch: Astra: "I'm glad it was you who found the rock." Ada: "Me too."
   (happy)
+- First space current, once per save when Ada first enters a current: Astra: "A
+  space current. Ride it for speed, or push across it." Ada: "Like a river in
+  space!" (happy)
 
 Black Eye:
 
