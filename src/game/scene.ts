@@ -1466,6 +1466,7 @@ export class PrototypeScene extends Phaser.Scene {
       story && {
         background: story.page.background,
         canGoBack: story.canGoBack,
+        canSkip: story.canSkip,
         text: story.page.text,
         ...(story.page.speaker ? { speaker: story.page.speaker } : {}),
         ...(story.choices.length ? { choices: story.choices } : {}),

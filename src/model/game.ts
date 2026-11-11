@@ -99,6 +99,7 @@ import {
 import { stationById, type StationSite } from "./stations.ts";
 import {
   advance,
+  atRunEnd,
   boardingScene,
   canGoBack,
   currentPage,
@@ -108,14 +109,17 @@ import {
   prologueScene,
   resolutionScene,
   roomScene,
+  runTrail,
   type Scene,
+  sceneEnd,
   shownChoices,
-  skip,
+  stepOf,
   type StoryChoice,
   type StoryLabels,
   type StoryPage,
   type StoryPosition,
   storyStart,
+  type StoryStep,
 } from "./storybook.ts";
 import type {
   FlightEvent,
@@ -187,6 +191,8 @@ export type Screen = "selector" | "space" | "start" | "story";
 export interface StoryView {
   readonly page: StoryPage;
   readonly canGoBack: boolean;
+  /** Skip shows on every page but the story run's end and the sleep scene. */
+  readonly canSkip: boolean;
   /** The choices shown: a choice page's, or the optional questions not yet asked. */
   readonly choices: readonly StoryChoice[];
 }
@@ -357,6 +363,7 @@ export class GameModel {
     return this.story && this.screen === "story"
       ? {
           canGoBack: canGoBack(this.story),
+          canSkip: !atRunEnd(this.story) && !currentPage(this.story).sleep,
           choices: shownChoices(this.story),
           page: currentPage(this.story),
         }
@@ -1632,10 +1639,32 @@ export class GameModel {
       this.story = goBack(this.story);
     }
   }
-  /** Skip: the scene's end by the default path; the sleep scene shows no Skip. */
+  /**
+   * Skip passes every remaining page and scene of the story run by the default path, each scene
+   * applying its effect as it ends, and stops where play resumes: galaxy selection, or Ada's room
+   * page with its named action, whose Previous returns to the page Skip left. The sleep scene and
+   * the run's end show no Skip.
+   */
   storySkip(): void {
-    if (this.story && this.screen === "story" && !this.sleeping) {
-      this.moveStory(skip(this.story));
+    const from = this.story;
+    if (!from || this.screen !== "story" || this.sleeping || atRunEnd(from)) {
+      return;
+    }
+    // Each pass ends one scene; a run holds only a few, so the bound only guards a cycle.
+    for (let scenes = 0; this.story && this.screen === "story"; scenes++) {
+      if (scenes > 32) {
+        throw new Error(`Skip found no end to the story run from ${from.scene.id}`);
+      }
+      const end = sceneEnd(this.story);
+      if (atRunEnd(end)) {
+        this.story = { ...end, trail: [...from.trail, stepOf(from)] };
+        this.showPage();
+        return;
+      }
+      // Passing a scene's last page counts as showing it, as Skip landing there once did.
+      this.story = end;
+      this.showPage();
+      this.moveStory(null);
     }
   }
   /** Pages galaxy selection by delta, within galaxies one to four. */
@@ -1681,14 +1710,19 @@ export class GameModel {
   private get storyLabels(): StoryLabels {
     return { continue: this.label("continue"), pickUpRock: this.label("pickUpRock") };
   }
-  /** A home visit: waiting scenes, then Ada's room; an empty visit adds Penny's line. */
-  private beginVisit(): void {
+  /**
+   * A home visit: waiting scenes, then Ada's room; an empty visit adds Penny's line. `trail`
+   * continues a story run that leads into the visit; a visit from the start screen or galaxy
+   * selection starts one.
+   */
+  private beginVisit(trail: readonly StoryStep[] = []): void {
     this.selection = null;
     const waiting = this.waitingScene();
-    this.showScene(waiting ?? this.roomScene(true));
+    this.showScene(waiting ?? this.roomScene(true), trail);
   }
-  private showScene(scene: Scene): void {
-    this.story = storyStart(scene);
+  /** A scene's first page; `trail` carries the story run's earlier pages, empty at a run's start. */
+  private showScene(scene: Scene, trail: readonly StoryStep[] = []): void {
+    this.story = storyStart(scene, trail);
     this.showPage();
   }
   private showPage(): void {
@@ -1712,24 +1746,29 @@ export class GameModel {
       this.moveStory(advance(this.story!));
     }
   }
-  /** Moves to a page, or past a scene's end to what the scene leads to. */
+  /**
+   * Moves to a page, or past a scene's end to what the scene leads to. The scene's effect applies
+   * as it ends; the next scene continues the story run's trail unless the run ended there.
+   */
   private moveStory(next: StoryPosition | null): void {
-    const ended = this.story?.scene;
+    const position = this.story;
     if (next) {
       this.story = next;
       this.showPage();
       return;
     }
-    if (!ended) {
+    if (!position) {
       return;
     }
+    const ended = position.scene;
+    const trail = runTrail(position);
     this.applyEffect(ended);
     if (ended.lead === "home") {
-      this.showScene(this.waitingScene() ?? this.roomScene(false));
+      this.showScene(this.waitingScene() ?? this.roomScene(false), trail);
     } else if (ended.lead === "visit") {
-      this.beginVisit();
+      this.beginVisit(trail);
     } else if (ended.lead === "board") {
-      this.showScene(boardingScene(this.content, this.state.announceGalaxy));
+      this.showScene(boardingScene(this.content, this.state.announceGalaxy), trail);
     } else {
       this.openSelection();
     }

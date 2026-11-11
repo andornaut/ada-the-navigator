@@ -35,6 +35,8 @@ export interface StoryPageView {
   readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
+  /** Whether Skip shows: every page but the story run's end and the sleep scene. */
+  readonly canSkip: boolean;
   /**
    * The overnight sleep scene: no panel or Skip, and a tap anywhere moves on. Art's overnight
    * sequence plays over it, or its reduced-motion steps when motion is reduced.
@@ -180,8 +182,9 @@ export const STORYBOOK_STYLE = `
 
 /**
  * A storybook page: the full location background with its bottom panel of text, choices and
- * page controls, with Skip apart at the top right on every page. Previous (left) uses the
- * disabled face on a scene's first page; Next (right) is absent on a choice page and shows a
+ * page controls, with Skip apart at the top right on every page but the story run's end and the
+ * sleep scene. Previous (left) uses the disabled face on the run's first page; Next (right) is
+ * absent on a choice page and shows a
  * page's named action in its slot. A question page shows its
  * remaining questions with Continue in Next's slot. Between two pages whose images Art's story
  * transition joins (Ada's room to the cockpit), the panel hides while its frames play.
@@ -447,7 +450,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     speak(page);
     layer.hidden = page === null && backdrop === null;
     panel.hidden = page === null || page.sleep === true;
-    skip.hidden = page === null || page.sleep === true;
+    skip.hidden = page === null || !page.canSkip;
     if (!page) {
       if (backdrop) {
         setBackground(backdrop);

@@ -49,13 +49,24 @@ export interface Scene {
   /** Applied when the scene ends. */
   readonly effect?: SceneEffect;
   readonly lead: SceneLead;
+  /**
+   * The story run ends on this scene's last page, where play resumes (Ada's room with its named
+   * action): Skip stops there and hides on it, and the scene it leads to starts a new run.
+   */
+  readonly endsRun?: boolean;
 }
-/** A place in a scene, with the pages read before it for Previous and the questions asked. */
-export interface StoryPosition {
-  readonly scene: Scene;
-  readonly page: string;
-  readonly trail: readonly string[];
+/** A page shown earlier in the story run: its scene, its id and the questions asked by then. */
+export interface StoryStep {
   readonly asked: readonly string[];
+  readonly page: string;
+  readonly scene: Scene;
+}
+/**
+ * A place in a story run: the page on show, with the questions asked in its scene and the pages
+ * shown before it in the run, across scene boundaries, for Previous.
+ */
+export interface StoryPosition extends StoryStep {
+  readonly trail: readonly StoryStep[];
 }
 
 export interface StoryLabels {
@@ -86,28 +97,48 @@ export function shownChoices(position: StoryPosition): readonly StoryChoice[] {
   );
 }
 
-export function storyStart(scene: Scene): StoryPosition {
+/** The page a position shows, as a step of the run's trail. */
+export function stepOf(position: StoryPosition): StoryStep {
+  return { asked: position.asked, page: position.page, scene: position.scene };
+}
+
+/**
+ * A scene's first page. `trail` holds the run's pages shown before it: empty when the scene
+ * starts a run, so Previous is disabled there.
+ */
+export function storyStart(scene: Scene, trail: readonly StoryStep[] = []): StoryPosition {
   const first = scene.pages[0];
   if (!first) {
     throw new Error(`Empty scene ${scene.id}`);
   }
-  return { asked: [], page: first.id, scene, trail: [] };
+  return { asked: [], page: first.id, scene, trail };
 }
 
-/** Previous is disabled on a scene's first page. */
+/** The trail the scene after this position's continues: none past the run's end. */
+export function runTrail(position: StoryPosition): readonly StoryStep[] {
+  return position.scene.endsRun ? [] : [...position.trail, stepOf(position)];
+}
+
+/** Previous is disabled only on the story run's first page. */
 export function canGoBack(position: StoryPosition): boolean {
   return position.trail.length > 0;
 }
 
+/** The page shown before, in this scene or an earlier one of the run. */
 export function goBack(position: StoryPosition): StoryPosition {
-  const page = position.trail.at(-1);
-  return page === undefined ? position : { ...position, page, trail: position.trail.slice(0, -1) };
+  const step = position.trail.at(-1);
+  return step === undefined ? position : { ...step, trail: position.trail.slice(0, -1) };
+}
+
+/** Whether the run ends on this page: the last page of a scene that ends it. */
+export function atRunEnd(position: StoryPosition): boolean {
+  return Boolean(position.scene.endsRun) && position.page === position.scene.last;
 }
 
 function moveTo(position: StoryPosition, next: string | undefined): StoryPosition | null {
   return next === undefined
     ? null
-    : { ...position, page: next, trail: [...position.trail, position.page] };
+    : { ...position, page: next, trail: [...position.trail, stepOf(position)] };
 }
 
 /**
@@ -129,19 +160,17 @@ export function advance(position: StoryPosition, choice?: number): StoryPosition
 }
 
 /**
- * Skip: follows the default path (a choice page's first choice, a question page's Continue) to
- * the scene's last page. On the last page itself, it takes the default and ends the scene (null).
+ * The scene's last page by the default path (a choice page's first choice, a question page's
+ * Continue, no optional question asked).
  */
-export function skip(position: StoryPosition): StoryPosition | null {
-  if (position.page === position.scene.last) {
-    return advance(position);
-  }
-  let here: StoryPosition | null = position;
-  for (let steps = 0; here && here.page !== here.scene.last; steps++) {
-    if (steps > position.scene.pages.length) {
+export function sceneEnd(position: StoryPosition): StoryPosition {
+  let here = position;
+  for (let steps = 0; here.page !== here.scene.last; steps++) {
+    const next = advance(here);
+    if (!next || steps > position.scene.pages.length) {
       throw new Error(`No default path to the end of ${position.scene.id}`);
     }
-    here = advance(here);
+    here = next;
   }
   return here;
 }
@@ -273,6 +302,7 @@ export function jumpHomeScene(jumpHome: string, morning: string): Scene {
 /** Ada's room with the glowing rock, after a scene that leads aboard; empty visits show Penny. */
 export function roomScene(content: PrototypeContent, labels: StoryLabels, empty: boolean): Scene {
   return {
+    endsRun: true,
     id: empty ? "room:empty" : "room",
     last: "room",
     lead: "board",

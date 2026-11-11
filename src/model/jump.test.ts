@@ -258,6 +258,32 @@ describe("quantum jump home", () => {
     });
   });
 
+  it("starts a story run at the flight's end that the visit continues to Ada's room", () => {
+    const model = launched();
+    seenHome(model);
+    deplete(model);
+    expect(model.storyView?.canGoBack).toBe(false);
+    model.storyNext();
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
+    model.storyNext();
+    // The visit's room page follows morning in the same run, so Previous returns to morning.
+    expect(model.storyView).toMatchObject({
+      canGoBack: true,
+      canSkip: false,
+      page: { id: "room" },
+    });
+    model.storyPrevious();
+    expect(model.storyView?.page.id).toBe("morning");
+    // Skip from the night passes the sleep and morning and stops on the room page.
+    const skipped = launched();
+    seenHome(skipped);
+    deplete(skipped);
+    skipped.storySkip();
+    expect(skipped.storyView).toMatchObject({ canSkip: false, page: { id: "room" } });
+    skipped.storyPrevious();
+    expect(skipped.storyView?.page.id).toBe("jumpHome");
+  });
+
   it("moves to morning after the sleep length it is given, as Art's reduced-motion 2.4 s", () => {
     const model = launched();
     seenHome(model);
@@ -308,10 +334,15 @@ describe("quantum jump home", () => {
     seenHome(model);
     model.state.progress[1].questComplete = true;
     deplete(model);
-    model.storySkip();
+    model.storyNext();
+    model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
     expect(model.storyView?.page.id).toBe("morning");
     model.storyNext();
     expect(model.storyView?.page.background).toBe("gardenLot");
+    // The waiting scene continues the jump's story run, so Skip passes it to Ada's room.
+    model.storySkip();
+    expect(model.storyView?.page.id).toBe("room");
+    expect(model.state.progress[1].resolved).toBe(true);
   });
 
   it("has no night or sleep after a voluntary Return to Earth", () => {
