@@ -35,12 +35,16 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 | `gadget-portrait`, `gadget-portrait-compact` | `unknown-idle` 0, `unknown-speaking-1` to `-4` 1 to 4, `named-idle` 5, `named-speaking-1` to `-4` 6 to 9 |
 | `penny-portrait`, `penny-portrait-compact`   | `happy` 0, `neutral` 1, `upset` 2                                                                        |
 
-- Speaking loops run 120 ms per frame (480 ms per loop) while the speaker's
-  line shows. Reduced motion holds the loop's first frame (`speaking-1`,
-  `unknown-speaking-1` or `named-speaking-1`).
+- Speaking loops run 120 ms per frame (480 ms per loop) while that speaker's
+  line shows; when the line ends the portrait shows its idle frame. Reduced
+  motion holds the loop's first frame (`speaking-1`, `unknown-speaking-1` or
+  `named-speaking-1`).
 - Idle frames (1000 ms) are for a speaker on screen but silent, such as the
   storybook panel. The conversation box shows only the current speaker.
-- Ada and Penny have no speaking loop; Gameplay picks the mood frame per line.
+- Ada and Penny have no speaking loop. Each line takes the mood Gameplay marks
+  after it in [prototype-copy.md](../gameplay/prototype-copy.md): a line
+  marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`
+  frame is unused for now.
 - General Gadget uses the `unknown-*` frames while his tab reads "Unknown
   voice" and the `named-*` frames once it reads "General Gadget".
 

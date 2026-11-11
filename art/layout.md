@@ -364,6 +364,12 @@ values with its own sprites and fonts.
   closes the conversation (Gameplay's rule). The box holds no other controls.
   It shows only during flight; one box shows at a time, and the next line
   replaces the current one in place.
+- Slot priority (Gameplay's rule), highest first: warning (including the
+  General's broadcasts), notice, lesson, Penny, lore, save status. A
+  higher-priority item takes the slot at once; a notice over an ordinary line
+  shows at once, and the line resumes after it.
+- Save status is persistent and lowest: it yields the slot to every other item
+  and returns when they clear. It stays non-interactive.
 - Notices use the same box without a portrait or tab: one or two `TYPE.body`
   lines centred in the box width minus `2 * SPACING.gap` (464). The whole box
   is its press area: a tap dismisses the notice, otherwise it clears on its own
