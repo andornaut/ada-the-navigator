@@ -158,6 +158,7 @@ describe("Paused card", () => {
     const root = new FakeElement();
     const pause = createPauseCards(root as unknown as HTMLElement, {
       labels: LABELS,
+      onAchievements: vi.fn(),
       onOpenChange: vi.fn(),
       onReturnHome: vi.fn(),
       onSettings: vi.fn(),

@@ -1,4 +1,4 @@
-import { ACHIEVEMENT_TOTALS, ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
+import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -15,6 +15,7 @@ import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { PrototypeContent, SectorId, Weapon } from "../data/types.ts";
 import {
+  ACHIEVEMENT_TOTALS,
   type AchievementEvent,
   achievementProgress,
   newAchievements,
@@ -572,6 +573,7 @@ export class GameModel {
       if (result.funded) {
         this.undock();
         this.talk.thank(id);
+        this.recordAchievement({ id, kind: "projectFunded" });
       }
     }
     return result;
@@ -867,6 +869,9 @@ export class GameModel {
     }
     const charted = chartLandmarks(f.sector, this.current, f.player);
     mapped.push(...charted);
+    for (const id of charted) {
+      this.recordAchievement({ galaxy: f.sector, id, kind: "landmarkCharted" });
+    }
     this.stepJob(events, f);
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
@@ -1332,6 +1337,7 @@ export class GameModel {
     this.state.economy.stardust += reward;
     this.notify(fill(this.label("jobComplete"), { amount: reward }));
     this.jobMoments.push("jobComplete");
+    this.recordAchievement({ kind: "jobCompleted" });
   }
   /** One flight step of the held job: surveys, delivery docking, the tow line and the hunt. */
   private stepJob(events: readonly FlightEvent[], f: FlightState): void {

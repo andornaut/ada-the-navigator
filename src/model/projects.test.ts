@@ -185,11 +185,15 @@ describe("donating at a station", () => {
       stillNeeded: cost("salvageBeacons") - 100,
     });
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: false, kind: "paid" });
+    expect(model.state.achievements.projects).toEqual([]);
     expect(model.state.economy.stardust).toBe(0);
     expect(model.state.docked).not.toBeNull();
     expect(model.donationRequest("salvageBeacons")).toEqual({ kind: "refused" });
     model.state.economy.stardust = 1000;
     expect(model.donate("salvageBeacons")).toMatchObject({ funded: true, kind: "paid" });
+    // A funded project counts toward Good Cause and Community Builder.
+    expect(model.state.achievements.projects).toEqual(["salvageBeacons"]);
+    expect(model.state.achievements.unlocked).toContain("goodCause");
     expect(model.state.economy.stardust).toBe(1000 - (cost("salvageBeacons") - 100));
     expect(model.state.docked).toBeNull();
     const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

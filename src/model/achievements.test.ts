@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ACHIEVEMENT_TOTALS, ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
+import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import {
+  ACHIEVEMENT_TOTALS,
   achievementProgress,
   type AchievementTotals,
   newAchievements,
@@ -15,6 +17,7 @@ import {
   unlockAchievements,
 } from "./achievements.ts";
 import { GameModel, newGameState } from "./game.ts";
+import { landmarkSites } from "./landmarks.ts";
 import { restoreSave } from "./save.ts";
 import { boardAndJump, playOpening, readStory } from "./test-launch.ts";
 import type { FlightInput } from "./types.ts";
@@ -44,9 +47,9 @@ function tables(text: string): string[][][] {
   }
   return found.map((rows) => rows.slice(1));
 }
-const [list, counts, keys] = tables(
-  readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8"),
-);
+const quests = readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8");
+// The Achievements section's tables: the list, the counts and the strings.
+const [list, counts, keys] = tables(quests.slice(quests.indexOf("## Achievements")));
 const id = (name: string) => ACHIEVEMENTS.find((achievement) => achievement.name === name)!.id;
 const unlocked = (model: GameModel) => model.state.achievements.unlocked;
 const view = (model: GameModel, name: string) =>
@@ -199,20 +202,40 @@ describe("collections and helping", () => {
     expect(unlocked(model)).toEqual([id("Blockade Breaker")]);
   });
 
-  it("keeps the unbuilt systems' achievements locked and uncounted until their totals exist", () => {
+  it("counts landmarks and projects toward the game's own totals", () => {
+    expect(ACHIEVEMENT_TOTALS).toEqual({
+      allies: 0,
+      landmarks: { 1: 12, 2: 12, 3: 12 },
+      paints: Object.keys(ECONOMY.paints).length,
+      projects: Object.values(PROJECTS).flat().length,
+    });
     const model = new GameModel(PROTOTYPE);
-    model.recordAchievement({ galaxy: 1, id: "nebula", kind: "landmarkCharted" });
-    model.recordAchievement({ id: "growers", kind: "allyMade" });
-    model.recordAchievement({ id: "garden", kind: "projectFunded" });
-    for (const name of ["Cartographer", "Astra's Atlas", "Friends Everywhere", "Good Cause"]) {
-      expect(view(model, name).unlocked).toBe(false);
+    for (const site of landmarkSites(2).slice(0, 3)) {
+      model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
     }
-    for (const name of [
-      "Cartographer",
-      "Astra's Atlas",
-      "Friends Everywhere",
-      "Community Builder",
-    ]) {
+    model.recordAchievement({ id: PROJECTS[1][0]!.id, kind: "projectFunded" });
+    expect(view(model, "Cartographer").progress).toEqual({ have: 3, need: 12 });
+    expect(view(model, "Community Builder").progress).toEqual({
+      have: 1,
+      need: ACHIEVEMENT_TOTALS.projects,
+    });
+    expect(unlocked(model)).toEqual([id("Good Cause")]);
+    for (const site of landmarkSites(2).slice(3)) {
+      model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
+    }
+    expect(unlocked(model)).toContain(id("Cartographer"));
+  });
+
+  it("keeps the allies and four-galaxy achievements locked and uncounted until they exist", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.recordAchievement({ id: "growers", kind: "allyMade" });
+    for (const sector of [1, 2, 3] as const) {
+      for (const site of landmarkSites(sector)) {
+        model.recordAchievement({ galaxy: sector, id: site.id, kind: "landmarkCharted" });
+      }
+    }
+    for (const name of ["Astra's Atlas", "Friends Everywhere"]) {
+      expect(view(model, name)).toMatchObject({ unlocked: false });
       expect(view(model, name).progress).toBeUndefined();
     }
   });

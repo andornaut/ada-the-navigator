@@ -315,6 +315,10 @@ describe("jobs in play", () => {
     });
     flyTo(model, held.target);
     expect(model.state.progress[1].charted).toContain(held.target.id);
+    // Charting and the completed job count toward Cartographer and Helping Hand.
+    expect(model.state.achievements.charted[1]).toEqual([held.target.id]);
+    expect(model.state.achievements.jobs).toBe(1);
+    expect(model.state.achievements.unlocked).toContain("helpingHand");
     expect(model.state.tasks[1]).toBeUndefined();
     expect(model.state.economy.stardust).toBe(stardust + held.reward);
     expect(model.state.notice).toBe(`Job complete: +${held.reward} Stardust`);

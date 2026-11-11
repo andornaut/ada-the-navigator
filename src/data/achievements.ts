@@ -1,4 +1,3 @@
-import { ECONOMY } from "./economy.ts";
 import type { SectorId } from "./types.ts";
 
 /**
@@ -137,15 +136,3 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
 
 /** A Penny find: a point she sensed that Ada then reaches within this many world units. */
 export const PENNY_FIND_RANGE = 160;
-
-/**
- * What the counted achievements count toward. Landmarks, optional allies and community projects
- * are not built yet, so their totals are zero and their achievements stay locked without a count;
- * each total becomes its catalog's size when that system lands.
- */
-export const ACHIEVEMENT_TOTALS = {
-  allies: 0,
-  landmarks: {},
-  paints: Object.keys(ECONOMY.paints).length,
-  projects: 0,
-} as const;

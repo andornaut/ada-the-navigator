@@ -1,5 +1,8 @@
 import type { Achievement, AchievementGoal } from "../data/achievements.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { PROJECTS } from "../data/projects.ts";
 import type { SectorId } from "../data/types.ts";
+import { landmarkSites } from "./landmarks.ts";
 import type { GameState } from "./types.ts";
 
 // Achievements (gameplay/quests.md "Achievements"). They and their progress survive Restart, so
@@ -38,7 +41,21 @@ export interface AchievementTotals {
   readonly projects: number;
 }
 
-/** What the systems still to be built record when they happen. */
+/**
+ * The game's totals: each galaxy's landmarks, every community project and every paint. Optional
+ * allies stay at zero until the ally roster exists; Black Eye has no landmarks yet, so Astra's
+ * Atlas, which needs all four galaxies, stays locked without a count.
+ */
+export const ACHIEVEMENT_TOTALS: AchievementTotals = {
+  allies: 0,
+  landmarks: Object.fromEntries(
+    ([1, 2, 3] as const).map((sector) => [sector, landmarkSites(sector).length]),
+  ),
+  paints: Object.keys(ECONOMY.paints).length,
+  projects: Object.values(PROJECTS).flat().length,
+};
+
+/** What the game's systems record when they happen; activities, allies and the finale to come. */
 export type AchievementEvent =
   | { readonly kind: "activityCompleted" }
   | { readonly id: string; readonly kind: "allyMade" }

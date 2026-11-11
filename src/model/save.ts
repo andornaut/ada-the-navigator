@@ -11,6 +11,7 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
+import { fundedProjects } from "./projects.ts";
 import { stationById } from "./stations.ts";
 import type {
   AmmoCounts,
@@ -973,9 +974,18 @@ export function restoreSave(saved: unknown): GameState | null {
     if (!Array.isArray(value.seenConversations)) {
       restored.seenConversations = playedConversations(restored);
     }
-    // Saves from before achievements start with none; the model unlocks what they reached.
+    // CLEANUP (added 2026-11-11): saves from before achievements start with their charted
+    // landmarks and funded projects counted, and the model unlocks what they reached. Remove once
+    // no save from before achievements remains in play.
     if (value.achievements === undefined) {
       restored.achievements = newAchievements();
+      for (const sector of [1, 2, 3] as const) {
+        const progress = restored.progress[sector];
+        restored.achievements.charted[sector] = [...progress.charted];
+        restored.achievements.projects.push(
+          ...fundedProjects(PROJECTS[sector], progress).map(({ id }) => id),
+        );
+      }
     }
     if (restored.flight) {
       restored.flight.objects.forEach(restoreOrientation);
