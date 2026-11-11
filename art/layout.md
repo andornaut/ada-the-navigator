@@ -23,16 +23,20 @@ the value currently lives, in CSS px.
 
 - Measure all UI in logical px. The Phaser canvas already draws the logical
   view (`Scale.EXPAND`, `pixelArt`). The DOM overlay root carries the same
-  factor `s` (a CSS variable or a scaled root sized to the logical view; Tech
-  chooses the mechanism), so layout code reads and writes logical px only.
+  factor `s` as the CSS variable `--ada-unit` (one logical px in CSS px),
+  updated on resize and orientation change; every size is
+  `calc(var(--ada-unit) * N)` through the layout helpers. The root is not
+  transform-scaled, so text stays crisp and hit testing stays native. Layout
+  code reads and writes logical px only.
   CSS px reach device px through `devicePixelRatio`; the canvas backing store
   stays at the logical size with nearest-neighbour upscaling.
 - `Scale.EXPAND` makes the logical width vary with aspect (720 at 2:1 or
   narrower, 779 on an 844x390 phone). Anchor every element from the safe
   rect's edges, never from the base 720 view or a centred sub-view.
-- Review at a native scale and at fractional scales (1.083 and 1.778): UI
-  nine-slices drawn with `image-rendering: pixelated` may render a 2 px edge
-  as 2 or 3 device px.
+- Nine-slice edges are whole CSS px: each slice edge is `round(edge * s)`, set
+  as a variable for `border-image-width` and outset, so edges never blur while
+  the body scales freely. Review at native and fractional scales (1.083 and
+  1.778).
 
 All current Ada specs give CSS px at 1x. Every token keeps its number and
 becomes logical px, so UI now grows with the canvas:
@@ -99,7 +103,7 @@ space nor a gap.
 | Lip, pressed sink    | 4, 2                                                                    | Face geometry per state, in [Controls](controls.md)                   | `TEXT_BUTTON.lipHeight`, `TEXT_BUTTON.pressedSink`                    |
 | Action inset         | 16 horizontal, 12 vertical                                              | Content inset per side; a wrapped label grows the face by 20 per line | `TEXT_BUTTON.inset`, `TEXT_BUTTON.verticalInset`; now `BUTTON_INSET`  |
 | Compact height       | 28                                                                      | Row actions and pills: the native 16x28 nine-slice frame              | `TEXT_BUTTON.compactHeight`, `controls.ts`, to implement              |
-| Compact width        | Label plus `2 * TEXT_BUTTON.inset`                                      | Install row action                                                    | `cardActionsSize`, `contentCard.ts`; now fixed `ROW.action.button` 72 |
+| Compact width        | 72, or the label plus 8 px insets when that is wider                    | Install row action (Chibi's 72x28 face)                               | `cardActionsSize`, `contentCard.ts`; now fixed `ROW.action.button` 72 |
 | Control row          | 48 high, 16 icon, 8, label, 8, action                                   | Whole row is one control; action at the row's right end               | `CONTROL_ROW`, `controls.ts`, to implement; now `ROW`                 |
 | Row growth           | `max(48, text + 2 * SPACING.rowGap)`                                    | A row with a wrapped note grows by 20 per line                        | `CONTROL_ROW`, `controls.ts`, to implement                            |
 | Switch               | 32x16                                                                   | `ui-switch` frame                                                     | `CONTROL_ROW.switch`; now `ROW.action.switch`                         |
@@ -116,18 +120,18 @@ the face of each state, never the press area.
 
 ## Modals
 
-| Token           | Value                                                                | Rule                                                             | Constant                                                                      |
-| --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Card width      | `min(availableWidth, max(contentWidth + 32, viewportWidth * 0.5))`   | Content-fitted, 50% floor, capped by the available rect          | game-kit `modalWidth`, `MODAL_CONTENT`; `contentCardLayout`, `contentCard.ts` |
-| Card height     | Content-fitted, capped by the available height                       | No minimum, no reserved space                                    | `contentCardLayout`, `contentCard.ts`, to implement                           |
-| Frame border    | 2                                                                    | Counts inside the 16 padding                                     | `CARD_CONTENT.frameBorder`, `cardFrame.ts`; now `CARD.frameBorder`            |
-| Close face      | 24x24                                                                | `ui-close`                                                       | `CARD_CONTENT.closeSize`, `cardFrame.ts`; now `CARD.closeSize`                |
-| Close inset     | 6 from the top and right edges                                       | Press area `hitAround(face)` = 48x48, may extend 6 past the card | `CARD_CONTENT.closeInset`; now `CARD.closeInset`                              |
-| Title clearance | `max(padding, closeHitRight + SPACING.gap)` = `max(16, 42 + 8)` = 50 | Mirrored on both sides of the title                              | `cardTitleReserve(close)`, `cardFrame.ts`; now `card-layout.ts`               |
-| Header balance  | Frame inner edge to title equals title to first group                | Measured on line boxes in DOM                                    | `cardHeaderLayout`, `cardFrame.ts`; now `card-layout.ts`                      |
-| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding  | `SCROLL`, `contentCard.ts`, to implement                                      |
-| Scroll end pad  | 16                                                                   | Below the last control at the scroll end                         | `SCROLL.endPad` = `SPACING.panelPadding`                                      |
-| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate           | `SCROLL.dragThreshold`, to implement                                          |
+| Token           | Value                                                                | Rule                                                                                                   | Constant                                                                      |
+| --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Card width      | `min(availableWidth, max(contentWidth + 32, viewportWidth * 0.5))`   | Content-fitted; 50% floor of the fixed 720 base width (360), as in Chibi; capped by the available rect | game-kit `modalWidth`, `MODAL_CONTENT`; `contentCardLayout`, `contentCard.ts` |
+| Card height     | Content-fitted, capped by the available height                       | No minimum, no reserved space                                                                          | `contentCardLayout`, `contentCard.ts`, to implement                           |
+| Frame border    | 2                                                                    | Counts inside the 16 padding                                                                           | `CARD_CONTENT.frameBorder`, `cardFrame.ts`; now `CARD.frameBorder`            |
+| Close face      | 24x24                                                                | `ui-close`                                                                                             | `CARD_CONTENT.closeSize`, `cardFrame.ts`; now `CARD.closeSize`                |
+| Close inset     | 6 from the top and right edges                                       | Press area `hitAround(face)` = 48x48, may extend 6 past the card                                       | `CARD_CONTENT.closeInset`; now `CARD.closeInset`                              |
+| Title clearance | `max(padding, closeHitRight + SPACING.gap)` = `max(16, 42 + 8)` = 50 | Mirrored on both sides of the title                                                                    | `cardTitleReserve(close)`, `cardFrame.ts`; now `card-layout.ts`               |
+| Header balance  | Frame inner edge to title equals title to first group                | Measured on line boxes in DOM                                                                          | `cardHeaderLayout`, `cardFrame.ts`; now `card-layout.ts`                      |
+| Scroll reserve  | 6 gap plus an 8 track, thumb inset 1                                 | A scrolling region reserves 14 on its right, inside the padding                                        | `SCROLL`, `contentCard.ts`, to implement                                      |
+| Scroll end pad  | 16                                                                   | Below the last control at the scroll end                                                               | `SCROLL.endPad` = `SPACING.panelPadding`                                      |
+| Drag threshold  | 8                                                                    | A pointer moving further scrolls and does not activate                                                 | `SCROLL.dragThreshold`, to implement                                          |
 
 - `contentWidth` is the widest group, or the title's single-line width plus
   `2 * (titleClearance - padding)`. `viewportWidth` is the full logical view
@@ -271,7 +275,6 @@ card is `58 + 138 + 8 + 48 + 16 = 268` high, inside the 328 available.
 | Safe insets clamp HUD controls, cards and page content                                                     | Insets not read                         |
 | Sticks anchor from the safe rect's edges                                                                   | From the centred 720 view               |
 | Every action stack fills the inner width with `SPACING.gap`                                                | Generic stacks 4 apart                  |
-| Compact Install width is measured                                                                          | Fixed 72                                |
 | Stardust pill: 28 high, radius 4, padding 8, mark gap 6, count 16 bold, 8 from the weapons                 | 26, 6, 7, 4, 15, 6                      |
 | Weapon buttons use the shared focus ring and `hitAround` press areas (72)                                  | 3 px outline at 4; 48 press area        |
 | Cards scroll one scroll group with the header and close fixed                                              | The whole card scrolls                  |
@@ -312,7 +315,8 @@ Tests:
 - `cardTitleReserve(true)` equals 50, derived from `hitAround` of the close
   face, not stored.
 - Card width equals game-kit `modalWidth` for content widths below, at and
-  above the floor, at 720 and 779 logical wide.
+  above the floor, at 720 and 779 logical wide; the floor stays 360 (half the
+  fixed 720 base) at both widths.
 - Every action in a row shares one width and sits `SPACING.gap` apart.
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
