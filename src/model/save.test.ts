@@ -537,9 +537,14 @@ describe("asteroid save boundary", () => {
     const saved = JSON.parse(model.save()) as GameState;
     saved.flight!.storyScene = { at: 3, id: "blocked", lineDue: false };
     saved.progress[2].funded = ["hubRepairs"];
+    saved.progress[2].replayScene = "docking";
     const restored = restoreSave(JSON.stringify(saved))!;
     expect(restored.flight!.storyScene).toEqual({ at: 3, id: "blocked", lineDue: false });
     expect(restored.progress[2].funded).toEqual(["hubRepairs"]);
+    expect(restored.progress[2].replayScene).toBe("docking");
+    const replay = JSON.parse(JSON.stringify(saved)) as { progress: Record<number, unknown> };
+    Object.assign(replay.progress[2]!, { replayScene: "duel" });
+    expect(restoreSave(JSON.stringify(replay))).toBeNull();
     for (const [scene, funded] of [
       [{ at: 3, id: "duel", lineDue: false }, ["hubRepairs"]],
       [{ at: -1, id: "blocked", lineDue: false }, ["hubRepairs"]],

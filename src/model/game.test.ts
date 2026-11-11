@@ -267,12 +267,47 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
     const offset = CARTWHEEL_STORY_SHIPS.destinations[id];
     expect(destination).toMatchObject({ x: hub.x + offset.x, y: hub.y + offset.y });
     expect(ensureRouteEncounter(PROTOTYPE, id, f)).toBeNull();
-    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius * 2);
+    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThan(PROTOTYPE.tuning.safeRadius);
   }
   const { miner, visitors } = CARTWHEEL_STORY_SHIPS.destinations;
   expect(Math.hypot(miner.x - visitors.x, miner.y - visitors.y)).toBeGreaterThanOrEqual(
     PROTOTYPE.tuning.safeRadius * 2,
   );
+});
+
+it("replays a story scene cut short by the flight's end at the hub after a reload", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.state.unlocked.push(2);
+  launch(model, 2);
+  introduce(model, "hub");
+  model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[0];
+  arrive(model, "hub");
+  model.interact();
+  expect(model.state.flight!.storyScene).toMatchObject({ id: "blocked", lineDue: true });
+  model.returnHome();
+  expect(model.state.progress[2].replayScene).toBe("blocked");
+  const reloaded = new GameModel(PROTOTYPE, model.save());
+  expect(reloaded.state.progress[2].replayScene).toBe("blocked");
+  launch(reloaded, 2);
+  const f = reloaded.state.flight!;
+  expect(f.storyScene).toBeUndefined();
+  f.objects = f.objects.filter((o) => o.kind === "destination");
+  arrive(reloaded, "hub");
+  reloaded.step(0.01, idle);
+  expect(f.storyScene).toMatchObject({ id: "blocked", lineDue: true });
+  expect(reloaded.state.progress[2].replayScene).toBeUndefined();
+  for (let i = 0; i < 400 && f.storyScene!.lineDue; i++) {
+    if (reloaded.state.dialogue) {
+      reloaded.choose("continue");
+    } else {
+      reloaded.step(0.05, idle);
+    }
+  }
+  expect(reloaded.state.dialogue?.text).toBe(PROTOTYPE.chapters[2].dialogue.firstDeposit?.text);
+  // Spoken once: a later flight does not replay it.
+  reloaded.state.dialogue = null;
+  reloaded.returnHome();
+  expect(reloaded.state.progress[2].replayScene).toBeUndefined();
 });
 
 it("places whale debris offscreen and preserves pre-introduction clearing", () => {

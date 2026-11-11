@@ -167,6 +167,8 @@ export interface SectorProgress {
   explored: string[];
   /** Funded community project ids (`DONATION_PROJECTS`); absent before any is funded. */
   funded?: string[];
+  /** A story ship scene cut short by the end of a flight, replayed at the hub. */
+  replayScene?: StorySceneId;
 }
 /** A job's fixed place: a station, outpost or landmark by id, or a spot ("" id). */
 export interface JobTarget extends Vec {

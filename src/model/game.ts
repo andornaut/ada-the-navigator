@@ -676,6 +676,11 @@ export class GameModel {
     if (held?.type === "delivery") {
       held.carrying = false;
     }
+    // A story scene still due its line replays at the hub on the next flight.
+    const scene = this.state.flight?.storyScene;
+    if (scene?.lineDue) {
+      this.current.replayScene = scene.id;
+    }
     this.pullLoadout();
     this.previousSeed = this.state.flight?.seed ?? this.previousSeed;
     this.talk.endFlight();
@@ -964,6 +969,18 @@ export class GameModel {
     this.ensureRequiredApproaches();
     ensureHuntingPacks(this.content, f);
     this.ensureWhaleDebris();
+    // A scene cut short by an earlier flight's end replays once Ada reaches the hub.
+    const replay = this.current.replayScene;
+    const hub = replay && f.objects.find((o) => o.kind === "destination" && o.id === "hub");
+    if (
+      replay &&
+      hub &&
+      !f.storyScene?.lineDue &&
+      Math.hypot(hub.x - f.player.x, hub.y - f.player.y) <= this.content.tuning.safeRadius
+    ) {
+      f.storyScene = { at: f.time, id: replay, lineDue: true };
+      delete this.current.replayScene;
+    }
     // A story ship scene plays first; its line follows when it ends.
     const scene = f.storyScene;
     if (

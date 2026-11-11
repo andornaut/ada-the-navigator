@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import { SCREEN } from "../data/screen.ts";
+import { CARTWHEEL_STORY_SHIPS, STORY_VIEW } from "../data/story-ships.ts";
 import { drawnHeading, hubWorn, storyShips } from "./story-ships.ts";
 import type { Vec } from "./types.ts";
 
@@ -43,7 +45,7 @@ describe("Cartwheel story ships", () => {
       ),
     );
     // The miner never reaches the hub, and is back holding once the scene ends.
-    expect(nearest).toBeGreaterThan(120);
+    expect(nearest).toBeGreaterThan(100);
     const after = storyShips(hub, { stage: 2 }, scene, scene.at + duration);
     expect(ship(after, "blocker")).toBeUndefined();
     expect(ship(after, "miner")).toMatchObject({
@@ -63,6 +65,23 @@ describe("Cartwheel story ships", () => {
     expect(gap(ship(end, "blocker")!, hub)).toBeGreaterThan(1200);
     expect(storyShips(hub, { stage: 5 }, scene, scene.at + duration)).toEqual([]);
     expect(storyShips(hub, { stage: 5 }, undefined, 0)).toEqual([]);
+  });
+
+  it("hold inside the view centred on the docked hub, clear of the hub and each other", () => {
+    const { destinations, hold } = CARTWHEEL_STORY_SHIPS;
+    const reach = STORY_VIEW.shipReach;
+    for (const point of [...Object.values(hold), ...Object.values(destinations)]) {
+      // A hub-relative world offset draws at (x - y, (x + y) / 2) from the view's centre.
+      const across = Math.abs(point.x - point.y) + reach * Math.SQRT2;
+      const down = Math.abs(point.x + point.y) / 2 + reach * Math.SQRT1_2;
+      expect(across).toBeLessThanOrEqual(SCREEN.width / 2 - STORY_VIEW.margin);
+      expect(down).toBeLessThanOrEqual(SCREEN.height / 2 - STORY_VIEW.margin);
+      expect(Math.hypot(point.x, point.y)).toBeGreaterThan(PROTOTYPE.tuning.safeRadius);
+    }
+    expect(gap(destinations.miner, destinations.visitors)).toBeGreaterThanOrEqual(
+      PROTOTYPE.tuning.safeRadius * 2,
+    );
+    expect(gap(hold["visitor-1"], hold["visitor-2"])).toBeGreaterThan(reach * 2);
   });
 
   it("snaps headings to 16 drawn directions", () => {

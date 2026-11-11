@@ -821,6 +821,11 @@ export function restoreSave(saved: unknown): GameState | null {
         (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
         (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
         (p.opened !== undefined && typeof p.opened !== "boolean") ||
+        (p.replayScene !== undefined &&
+          !(
+            typeof p.replayScene === "string" &&
+            Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, p.replayScene)
+          )) ||
         (p.funded !== undefined &&
           !(
             strings(p.funded) &&
