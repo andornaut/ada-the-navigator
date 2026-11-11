@@ -327,11 +327,14 @@ for (const frame of ["a", "b"] as const) {
   writeFileSync(`${art}station-${frame}.svg`, svg(frame));
 }
 
-// Station entries sit before the enemy entries, which enemies.ts keeps last.
+// Station entries sit before the outposts, the discovery cache and the enemy entries, which
+// enemies.ts keeps last.
 const manifestPath = `${art}manifest.json`;
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: { id: string }[] };
 const kept = manifest.assets.filter(({ id }) => !id.startsWith("station-"));
-const enemies = kept.findIndex(({ id }) => id.startsWith("enemy-"));
-const insert = enemies === -1 ? kept.length : enemies;
+const later = kept.findIndex(
+  ({ id }) => id.startsWith("outpost-") || id === "discovery-cache" || id.startsWith("enemy-"),
+);
+const insert = later === -1 ? kept.length : later;
 manifest.assets = [...kept.slice(0, insert), ...entries, ...kept.slice(insert)];
 writeFileSync(manifestPath, json(manifest));
