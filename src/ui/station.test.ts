@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { rowAction, STATION_STYLE, stationBack } from "./station.ts";
+import { rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
 import { buttonProperty } from "./ui-skin.ts";
 
 describe("station card back steps", () => {
@@ -24,6 +24,22 @@ describe("shop row taps", () => {
     expect(rowAction("selectable")).toBe("select");
     expect(rowAction("owned")).toBe("none");
     expect(rowAction("inUse")).toBe("none");
+  });
+});
+
+describe("weapon shop glyphs", () => {
+  it("draws a weapon's two-frame shop sheet, or its HUD glyph as a mask without one", () => {
+    expect(weaponItemGlyph("basic")).toEqual({ key: "icon-shop-weapon-basic", kind: "sprite" });
+    expect(weaponItemGlyph("heavyMissile")).toEqual({
+      key: "icon-shop-weapon-heavyMissile",
+      kind: "sprite",
+    });
+    expect(weaponItemGlyph("scattershot")).toEqual({ kind: "weapon", weapon: "scattershot" });
+  });
+
+  it("places an upgrade composite's weapon glyph, sheet or mask, at (0, 4) under its badge", () => {
+    expect(STATION_STYLE).toContain(".ada-controls .ada-glyph-upgrade > .ada-glyph{");
+    expect(STATION_STYLE).not.toContain(".ada-glyph-upgrade .ada-glyph-weapon{");
   });
 });
 

@@ -159,6 +159,18 @@ export function flashAt(
 }
 
 /**
+ * A wreck's flash at its age: none for a wreck a missile blast destroyed, whose blast flash
+ * stands in for it (art/weapons.md "Missile blasts"); its shards and drops still play.
+ */
+export function wreckFlashAt(
+  data: DestructionData,
+  timing: DestructionTiming,
+  wreck: { readonly age: number; readonly blasted?: boolean },
+): { alpha: number; width: number } | null {
+  return wreck.blasted ? null : flashAt(data, timing, wreck.age * 1000);
+}
+
+/**
  * Reduced motion: the idle frame shrinks about its pivot to 80%, darkens by a multiply tint
  * toward #c1b9b8 and fades out linearly over the reduced duration; null once it has gone.
  */

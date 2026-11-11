@@ -217,7 +217,8 @@ function wreckState(value: unknown): boolean {
     Object.hasOwn(enemyCatalog, value.archetype) &&
     nonnegative(value.age) &&
     vector(value.facing) &&
-    (value.released === undefined || typeof value.released === "boolean")
+    (value.released === undefined || typeof value.released === "boolean") &&
+    (value.blasted === undefined || typeof value.blasted === "boolean")
   );
 }
 const OBJECT_KINDS = [

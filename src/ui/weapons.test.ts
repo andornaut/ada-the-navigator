@@ -2,7 +2,8 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { PROTOTYPE } from "../data/prototype.ts";
+import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { HUD_BUTTON } from "./layout/playView.ts";
 import { HUD_DISC_STATES, WEAPON_STYLE, weaponButtonState } from "./weapons.ts";
 
@@ -30,21 +31,30 @@ describe("HUD weapon buttons", () => {
     expect(WEAPON_STYLE.match(/#ead4aa/gu)).toHaveLength(1);
   });
 
-  it("draws Art's single-colour 20px glyphs as masks on the discs, with placeholders", () => {
-    expect(weaponGlyphPath("multiLaser")).toBe("/art/ui/icons/weapon-tripleLaser.svg");
-    expect(weaponGlyphPath("rapidMissile")).toBe("/art/ui/icons/weapon-missiles.svg");
-    expect(weaponGlyphPath("heavyMissile")).toBe("/art/ui/icons/weapon-missiles.svg");
-    expect(weaponGlyphPath("phaser")).toBe("/art/ui/icons/weapon-basic.svg");
-    for (const weapon of [
-      "basic",
+  it.each([
+    "basic",
+    "rapidMissile",
+    "multiLaser",
+    "heavyMissile",
+    "scattershot",
+    "phaser",
+  ] as const)("draws %s's own single-colour 20px glyph as a mask on its disc", (weapon) => {
+    expect(weaponGlyphPath(weapon)).toBe(`/art/ui/icons/weapon-${weapon}.svg`);
+    const file = new URL(`../../public${weaponGlyphPath(weapon)}`, import.meta.url);
+    expect(existsSync(file)).toBe(true);
+  });
+
+  it("draws each pickup weapon's HUD glyph at 14px inside its pickup square", () => {
+    expect(PICKUP_GLYPH.size).toBe(14);
+    expect(PICKUP_GLYPH.weapons).toEqual([
+      "scattershot",
       "rapidMissile",
       "multiLaser",
       "heavyMissile",
-      "scattershot",
       "phaser",
-    ] as const) {
-      const file = new URL(`../../public${weaponGlyphPath(weapon)}`, import.meta.url);
-      expect(existsSync(file)).toBe(true);
-    }
+    ]);
+    expect(new Set(PICKUP_GLYPH.weapons.map(pickupGlyphKey)).size).toBe(5);
+    // The glyph fits inside the square, 20 across at pickupRadius 10.
+    expect(PICKUP_GLYPH.size).toBeLessThan(2 * PROTOTYPE.tuning.flight.pickupRadius);
   });
 });

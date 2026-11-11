@@ -944,7 +944,7 @@ try {
     0,
     "The removed top-left information HUD must not be recreated",
   );
-  // Placeholder glyphs map new weapons onto existing icons until Art supplies their own.
+  // Each weapon masks its own 20px glyph.
   const { weaponGlyphPath } = await import(
     new URL("../src/data/weapon-glyphs.ts", import.meta.url)
   );

@@ -33,6 +33,8 @@ export interface WreckState {
   facing: Vec;
   /** Whether the wreck has released its drops; it stays until its destruction ends. */
   released?: boolean;
+  /** Whether a missile blast destroyed it, so the blast's flash stands in for its own. */
+  blasted?: boolean;
 }
 /** Where and when a released pickup left its wreck, for the view's settle. */
 export interface PickupRelease {

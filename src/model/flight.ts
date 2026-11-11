@@ -1498,7 +1498,9 @@ function hit(
 
 /**
  * A missile's blast damages every other live enemy within its radius of the impact, and never
- * Ada; a multipart ship takes it at its nearest live hardpoint in reach.
+ * Ada; a multipart ship takes it at its nearest live hardpoint in reach. The blast shows one
+ * flash, which stands in for the destruction flash of every enemy the impact destroys, the
+ * struck one included.
  */
 function blast(
   content: PrototypeContent,
@@ -1521,6 +1523,19 @@ function blast(
       continue;
     }
     hit(content, amount, part, object, flight, events);
+    markBlasted(object, flight);
+  }
+  markBlasted(struck, flight);
+}
+
+/** Marks a destroyed enemy's wreck as destroyed by a blast. */
+function markBlasted(object: SpaceObject, flight: FlightState): void {
+  if (object.kind !== "enemy" || object.hp > 0) {
+    return;
+  }
+  const wreck = flight.objects.find((other) => other.id === wreckId(object.id))?.wreck;
+  if (wreck) {
+    wreck.blasted = true;
   }
 }
 

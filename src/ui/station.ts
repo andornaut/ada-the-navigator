@@ -1,5 +1,5 @@
 import type { Weapon } from "../data/types.ts";
-import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { weaponGlyphPath, weaponShopSheet } from "../data/weapon-glyphs.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -219,7 +219,7 @@ export const STATION_STYLE = `
   width:${scaled(SHOP_ROW.glyph.upgrade)};
   height:${scaled(SHOP_ROW.glyph.upgrade)}
 }
-.ada-controls .ada-glyph-upgrade .ada-glyph-weapon{
+.ada-controls .ada-glyph-upgrade > .ada-glyph{
   position:absolute;
   left:0;
   top:${scaled(SHOP_ROW.upgrade.weaponY)}
@@ -412,6 +412,12 @@ export function rowAction(state: StationRowState): "request" | "select" | "none"
   return state === "owned" || state === "inUse" ? "none" : "request";
 }
 
+/** A weapon's shop glyph: its two-frame shop sheet, or its HUD glyph as a mask without one. */
+export function weaponItemGlyph(weapon: Weapon): ItemGlyph {
+  const key = weaponShopSheet(weapon);
+  return key ? { key, kind: "sprite" } : { kind: "weapon", weapon };
+}
+
 function glyphElement(glyph: ItemGlyph): HTMLElement {
   if (glyph.kind === "swatch") {
     const image = document.createElement("img");
@@ -427,7 +433,7 @@ function glyphElement(glyph: ItemGlyph): HTMLElement {
     node.className = "ada-glyph-upgrade";
     const badge = document.createElement("span");
     badge.className = "ada-glyph-badge";
-    node.append(glyphElement({ kind: "weapon", weapon: glyph.weapon }), badge);
+    node.append(glyphElement(weaponItemGlyph(glyph.weapon)), badge);
     return node;
   }
   node.className =

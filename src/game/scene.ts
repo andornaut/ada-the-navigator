@@ -11,7 +11,8 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts";
-import { BEAM, weaponAt } from "../data/weapon-catalog.ts";
+import { BEAM } from "../data/weapon-catalog.ts";
+import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { carriesStardust } from "../model/drops.ts";
@@ -64,12 +65,12 @@ import {
 } from "./asteroid-art.ts";
 import {
   type DestructionData,
-  flashAt,
   readDestruction,
   readShards,
   reducedAt,
   type ShardData,
   shardPolygons,
+  wreckFlashAt,
 } from "./destruction-art.ts";
 import {
   type EnemyArt,
@@ -266,6 +267,13 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
+    // Weapon pickups draw their HUD glyphs rasterised at the pickup size, one canvas px each.
+    for (const weapon of PICKUP_GLYPH.weapons) {
+      this.load.svg(pickupGlyphKey(weapon), weaponGlyphPath(weapon), {
+        height: PICKUP_GLYPH.size,
+        width: PICKUP_GLYPH.size,
+      });
+    }
     preloadTouchChrome(this);
   }
 
@@ -1594,7 +1602,7 @@ export class PrototypeScene extends Phaser.Scene {
       this.overlay.fillStyle(polygon.color, polygon.alpha);
       this.overlay.fillPoints(points, true);
     }
-    const flash = flashAt(data, timing, time);
+    const flash = wreckFlashAt(data, timing, wreck);
     if (flash && this.textures.exists("destruction-flash")) {
       const flashWidth = flash.width * scale;
       this.objectSprite(`${object.id}${FLASH_SUFFIX}`, "destruction-flash")
@@ -1690,32 +1698,14 @@ export class PrototypeScene extends Phaser.Scene {
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
-        } else if (object.weapon && weaponAt(object.weapon, 1).projectileKind === "missile") {
-          this.ink.lineBetween(point.x, point.y - radius * 0.65, point.x, point.y + radius * 0.65);
-          this.ink.lineBetween(
-            point.x,
-            point.y + radius * 0.2,
-            point.x - radius * 0.4,
-            point.y + radius * 0.6,
-          );
-          this.ink.lineBetween(
-            point.x,
-            point.y + radius * 0.2,
-            point.x + radius * 0.4,
-            point.y + radius * 0.6,
-          );
-        } else if (object.weapon) {
-          for (const degrees of weaponAt(object.weapon, 1).anglesDegrees) {
-            const angle = (degrees * Math.PI) / 180;
-            const x = point.x + Math.cos(angle) * radius * 0.7;
-            const y = point.y + Math.sin(angle) * radius * 0.7;
-            if (object.weapon === "scattershot") {
-              this.ink.fillStyle(color);
-              this.ink.fillCircle(x, y, 1);
-            } else {
-              this.ink.lineBetween(point.x - radius * 0.5, point.y, x, y);
-            }
-          }
+        } else if (object.weapon && this.textures.exists(pickupGlyphKey(object.weapon))) {
+          // The weapon's HUD glyph at 14px, filled in the square's amber.
+          this.objectSprite(object.id, pickupGlyphKey(object.weapon))
+            .setDisplaySize(PICKUP_GLYPH.size, PICKUP_GLYPH.size)
+            .setOrigin(0.5)
+            .setPosition(point.x, point.y)
+            .setTint(color)
+            .setTintMode(Phaser.TintModes.FILL);
         }
         break;
       case "resource":

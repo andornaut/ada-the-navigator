@@ -172,6 +172,44 @@ describe("integrated weapon projectiles", () => {
     expect(activeBlastFlashes(flight)).toMatchObject([{ radius: 60 }]);
   });
 
+  it("lets one blast flash stand in for the destruction flash of every enemy it destroys", () => {
+    const { flight, model } = launched("heavyMissile");
+    flight.ownedWeapons = ["heavyMissile"];
+    flight.facing = { x: 1, y: 0 };
+    flight.objects = [retaliator("struck", 60, 0), retaliator("inside", 40, 60)];
+    for (let slice = 0; slice < 30 && alive(flight, "struck"); slice++) {
+      stepFlight(PROTOTYPE, 1 / 60, slice ? idle : right, flight);
+    }
+    const wreck = (id: string) => flight.objects.find((object) => object.id === `wreck:${id}`);
+    expect(activeBlastFlashes(flight)).toHaveLength(1);
+    expect(wreck("struck")?.wreck?.blasted).toBe(true);
+    expect(wreck("inside")?.wreck?.blasted).toBe(true);
+    const saved = JSON.parse(model.save());
+    expect(restoreSave(saved)?.flight?.objects.find(({ id }) => id === "wreck:struck")).toEqual(
+      wreck("struck"),
+    );
+    saved.flight.objects.find(({ id }: SpaceObject) => id === "wreck:struck").wreck.blasted = 1;
+    expect(restoreSave(saved)).toBeNull();
+  });
+
+  it("keeps the destruction flash of an enemy a bolt destroys", () => {
+    const { flight } = launched("basic");
+    flight.ownedWeapons = [];
+    flight.facing = { x: 1, y: 0 };
+    // One bolt's damage destroys it.
+    const target = retaliator("target", 60, 0);
+    target.enemy!.hp = 1;
+    target.hp = 1;
+    flight.objects = [target];
+    for (let slice = 0; slice < 30 && alive(flight, "target"); slice++) {
+      stepFlight(PROTOTYPE, 1 / 60, slice ? idle : right, flight);
+    }
+    expect(alive(flight, "target")).toBe(false);
+    const wreck = flight.objects.find((object) => object.id === "wreck:target")?.wreck;
+    expect(wreck).toBeDefined();
+    expect(wreck?.blasted).toBeUndefined();
+  });
+
   it("passes fractional scatter damage through the canonical collision path", () => {
     const { flight } = launched("scattershot");
     flight.facing = { x: 1, y: 0 };

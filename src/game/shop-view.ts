@@ -1,6 +1,6 @@
 import type { EconomyCatalog, UpgradeTrack } from "../data/economy.ts";
 import { fill, itemName, type ShopItem, type ShopRow, shopRowState } from "../model/shop.ts";
-import type { ItemGlyph, StationRow } from "../ui/station.ts";
+import { type ItemGlyph, type StationRow, weaponItemGlyph } from "../ui/station.ts";
 
 // Maps the model's shop rows to the station view's rows (art/shop.md, art/shop-icons.md).
 
@@ -19,7 +19,7 @@ export function paintSwatchPath(scheme: string, defaultPaint: string): string {
 export function itemGlyph(catalog: EconomyCatalog, item: ShopItem): ItemGlyph {
   switch (item.kind) {
     case "weapon":
-      return { kind: "weapon", weapon: item.weapon };
+      return weaponItemGlyph(item.weapon);
     case "weaponUpgrade":
       return { kind: "upgrade", weapon: item.weapon };
     case "track":
