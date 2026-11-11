@@ -56,6 +56,10 @@ dock facing screen-down and a free berth on each side.
   schema with its own outward screen direction: `(21.374, 175.72)` outward
   `[-0.924, 0.382]` and `(218.626, 175.72)` outward `[0.924, 0.382]`, width
   28.169. A craft docks moving opposite `outward`.
+- A docked craft holds just outside its dock: its pivot sits on the dock or
+  berth point moved along `outward` by the craft's nose distance (pivot to nose
+  tip at its docking heading), so the nose meets the dock face and the pier
+  stays visible. The same rule holds at the second bay's berth.
 
 ### Worn and repaired
 
