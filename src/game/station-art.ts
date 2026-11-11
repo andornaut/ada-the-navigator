@@ -1,12 +1,4 @@
-import type { ObjectKind, Vec } from "../model/types.ts";
-
-/**
- * Placeholder destinations carry an in-world name; a station, an outpost or the holodisk reads
- * from its art alone.
- */
-export function nameLabelled(kind: ObjectKind): boolean {
-  return kind === "destination";
-}
+import type { Vec } from "../model/types.ts";
 
 // Art's station (art/station.md) and outposts (art/outposts.md): two fixed-facing blink frames
 // and a dock entrance.

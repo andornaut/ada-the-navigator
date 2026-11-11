@@ -27,7 +27,6 @@ import { GameModel } from "../model/game.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
-import { stationIndicatorTarget } from "../model/stations.ts";
 import type { FlightInput, SpaceObject, Vec } from "../model/types.ts";
 import {
   beginStartUpdateVisit,
@@ -99,7 +98,6 @@ import {
   galaxyPalettes,
   readGalaxyFields,
   readSpacePalette,
-  spaceColorCss,
   spaceObjectColor,
   type SpacePalette,
 } from "./space-palette.ts";
@@ -111,7 +109,6 @@ import {
   stardustPhase,
 } from "./stardust-art.ts";
 import {
-  nameLabelled,
   readOutpostArt,
   readStationArt,
   type StationArt,
@@ -233,7 +230,6 @@ export class PrototypeScene extends Phaser.Scene {
   // Painted ship frames load only for the scheme in use.
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
-  private labels = new Map<string, Phaser.GameObjects.Text>();
   private settingsOpen = false;
   private startShown = false;
   private enabled: boolean | undefined;
@@ -707,7 +703,6 @@ export class PrototypeScene extends Phaser.Scene {
       this.conversationBox.dispose();
       this.controls.dispose();
       this.shell.dispose();
-      this.labels.clear();
     });
     this.observeFeedback();
     this.refresh();
@@ -1016,9 +1011,6 @@ export class PrototypeScene extends Phaser.Scene {
       rock.sprite?.setVisible(false);
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
-    for (const label of this.labels.values()) {
-      label.setVisible(false);
-    }
     if (!flight || this.model.state.mode !== "space") {
       return;
     }
@@ -1119,7 +1111,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.overlay.lineBetween(tail.x, tail.y, point.x, point.y);
       }
     }
-    this.drawDiscovery();
+    this.drawIndicators();
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     // Ada sorts with the rocks by pivot screen y; her jets sit just behind her.
@@ -1168,12 +1160,6 @@ export class PrototypeScene extends Phaser.Scene {
       if (!activeIds.has(spriteOwner(id))) {
         sprite.destroy();
         this.enemySprites.delete(id);
-      }
-    }
-    for (const [id, label] of this.labels) {
-      if (!activeIds.has(id)) {
-        label.destroy();
-        this.labels.delete(id);
       }
     }
   }
@@ -1356,61 +1342,45 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
-  private drawDiscovery(): void {
-    const flight = this.model.state.flight;
-    if (!flight) {
-      return;
-    }
+  /**
+   * An arrow at the view's edge toward each marked place off screen, at any distance
+   * (model/indicators.ts), and the holodisk's placeholder beacon ring while it is on screen.
+   */
+  private drawIndicators(): void {
     const cx = SCREEN.width / 2;
     const cy = SCREEN.height / 2;
-    const candidates = flight.objects
-      .filter(
-        (object) =>
-          object.role === "discovery" && (object.kind === "pickup" || object.kind === "resource"),
-      )
-      .map((object) => this.project(object))
-      .filter(
-        (point) => point.x < 0 || point.y < 0 || point.x > SCREEN.width || point.y > SCREEN.height,
-      )
-      .sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
-    // An undiscovered station within its world indicator range takes precedence.
-    const site = stationIndicatorTarget(
-      ECONOMY,
-      flight.sector,
-      this.model.state.progress[flight.sector].stations,
-      flight.player,
-    );
-    const station = site ? this.project(site) : null;
-    const offscreen =
-      station &&
-      (station.x < 0 || station.y < 0 || station.x > SCREEN.width || station.y > SCREEN.height);
-    const target = offscreen ? station : candidates[0];
-    // Provisional nearby range scales with the viewport, without revealing distant targets.
-    if (
-      !target ||
-      (!offscreen &&
-        Math.hypot(target.x - cx, target.y - cy) > Math.max(SCREEN.width, SCREEN.height) * 1.5)
-    ) {
-      return;
+    for (const target of this.model.indicatorTargets) {
+      const point = this.project(target);
+      const onScreen =
+        point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height;
+      if (onScreen) {
+        if (target.kind === "holodisk") {
+          // Placeholder until Art's beacon ring sprite.
+          const pulse = (this.time.now / 1000) % 1;
+          this.overlay.lineStyle(2, this.palette.pointOfInterest, 0.9 - pulse * 0.6);
+          this.overlay.strokeCircle(point.x, point.y, 24 + pulse * 16);
+        }
+        continue;
+      }
+      const dx = point.x - cx;
+      const dy = point.y - cy;
+      const length = Math.hypot(dx, dy);
+      const ux = dx / length;
+      const uy = dy / length;
+      const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
+      const x = cx + dx * Math.max(0, scale);
+      const y = cy + dy * Math.max(0, scale);
+      this.overlay.lineStyle(2, this.palette.pointOfInterest, 0.8);
+      this.overlay.strokeTriangle(
+        x + ux * 8,
+        y + uy * 8,
+        x - ux * 5 - uy * 5,
+        y - uy * 5 + ux * 5,
+        x - ux * 5 + uy * 5,
+        y - uy * 5 - ux * 5,
+      );
+      this.overlay.strokeCircle(x - ux * 13, y - uy * 13, 3);
     }
-    const dx = target.x - cx;
-    const dy = target.y - cy;
-    const length = Math.hypot(dx, dy);
-    const ux = dx / length;
-    const uy = dy / length;
-    const scale = Math.min((cx - 44) / Math.abs(dx), (cy - 100) / Math.abs(dy));
-    const x = cx + dx * Math.max(0, scale);
-    const y = cy + dy * Math.max(0, scale);
-    this.overlay.lineStyle(2, this.palette.pointOfInterest, 0.8);
-    this.overlay.strokeTriangle(
-      x + ux * 8,
-      y + uy * 8,
-      x - ux * 5 - uy * 5,
-      y - uy * 5 + ux * 5,
-      x - ux * 5 + uy * 5,
-      y - uy * 5 - ux * 5,
-    );
-    this.overlay.strokeCircle(x - ux * 13, y - uy * 13, 3);
   }
 
   /** The scene the quantum jump plays over now: the flight, the cockpit or the home page. */
@@ -1513,29 +1483,6 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
-  private drawDestinationLabel(object: SpaceObject, point: Vec, radius: number): void {
-    const destination = nameLabelled(object.kind)
-      ? this.model.destinations().find((entry) => entry.id === object.id)
-      : undefined;
-    if (!destination) {
-      return;
-    }
-    let label = this.labels.get(object.id);
-    if (!label) {
-      label = this.add
-        .text(0, 0, destination.label, {
-          backgroundColor: spaceColorCss(this.spaceBackground),
-          color: spaceColorCss(this.palette.pointOfInterest),
-          fontFamily: '"Liberation Sans", sans-serif',
-          fontSize: "14px",
-        })
-        .setOrigin(0.5, 0)
-        .setDepth(5);
-      this.labels.set(object.id, label);
-    }
-    label.setPosition(point.x, point.y + radius + 8).setVisible(true);
-  }
-
   /** A reusable sprite for an object, reset to opaque and untinted each frame. */
   private objectSprite(id: string, texture: string, frame?: number): Phaser.GameObjects.Image {
     let sprite = this.enemySprites.get(id);
@@ -1569,7 +1516,7 @@ export class PrototypeScene extends Phaser.Scene {
       .setPosition(point.x, point.y);
   }
 
-  /** A destination: its outpost or holodisk art, else the placeholder rings and name label. */
+  /** A destination: its outpost or holodisk art, else the placeholder rings. */
   private drawDestination(object: SpaceObject, point: Vec, radius: number): void {
     const outpost = this.outpostArt.get(object.id);
     if (outpost) {
@@ -1583,7 +1530,6 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.fillEllipse(point.x, point.y, radius * 2, radius);
     this.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
     this.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
-    this.drawDestinationLabel(object, point, radius);
   }
 
   /**

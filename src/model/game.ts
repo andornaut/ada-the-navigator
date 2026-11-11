@@ -18,6 +18,13 @@ import {
   teleport as teleportFlight,
   undockFlight,
 } from "./flight.ts";
+import {
+  INDICATOR_SOURCES,
+  type IndicatorTarget,
+  indicatorTargets,
+  objectiveDestination,
+  questItemDestination,
+} from "./indicators.ts";
 import { restoreSave } from "./save.ts";
 import {
   buy,
@@ -746,6 +753,26 @@ export class GameModel {
     } else if (input.use) {
       this.interact();
     }
+  }
+  /** The places the direction indicators mark (indicators.ts). */
+  get indicatorTargets(): IndicatorTarget[] {
+    const f = this.state.flight;
+    if (!f || this.state.mode !== "space") {
+      return [];
+    }
+    const p = this.current;
+    return indicatorTargets(INDICATOR_SOURCES, {
+      flight: f,
+      holodiskWaypoint: this.holodiskWaypoint,
+      objective: objectiveDestination(
+        f.sector,
+        p,
+        p.deposited >= this.content.tuning.miningMilestones[1],
+      ),
+      progress: p,
+      questItem: questItemDestination(p),
+      sector: f.sector,
+    });
   }
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {

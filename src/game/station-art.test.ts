@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import {
-  nameLabelled,
   readOutpostArt,
   readStationArt,
   stationDockWorld,
@@ -46,11 +45,6 @@ describe("station art", () => {
     // 37.967 frame px is 16.61 display px across; a world circle draws 2 sqrt 2 radii wide.
     expect(dock.mouthRadius).toBeCloseTo((37.967 * 0.4375) / (2 * Math.SQRT2), 9);
     expect(dock.mouthRadius).toBeCloseTo(ECONOMY.station.dockMouthRadius, 3);
-  });
-
-  it("draws no in-world name label on a station", () => {
-    expect(nameLabelled("station")).toBe(false);
-    expect(nameLabelled("destination")).toBe(true);
   });
 
   it("keeps the placeholder when the station frames are missing", () => {
