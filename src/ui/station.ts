@@ -304,6 +304,14 @@ export const STATION_STYLE = `
   background:url('${SPRITES}icon-shop-check.png') 0 0 / 100% 100% no-repeat;
   image-rendering:pixelated
 }
+/* A project's Donate is an action, not a held item: no check, in the label colour. Funded keeps
+   the check. */
+.ada-controls .ada-donate{
+  color:${TEXT_TOKENS.label}
+}
+.ada-controls .ada-donate::before{
+  display:none
+}
 
 /* Measuring: rows at their natural widths, off screen. */
 .ada-controls .ada-shop-measure{
@@ -604,7 +612,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     slot.className = "ada-shop-slot";
     const trailing = document.createElement("span");
     if (row.donate) {
-      trailing.className = "ada-owned";
+      trailing.className = row.state === "owned" ? "ada-owned" : "ada-owned ada-donate";
       trailing.textContent = row.state === "owned" ? labels.projectFunded : labels.donate;
     } else if (row.state === "owned" || row.state === "selectable" || row.state === "inUse") {
       trailing.className = "ada-owned";
