@@ -1,6 +1,12 @@
 import type { EconomyCatalog, UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import type { SpaceObject } from "./types.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
+
+/** Stardust pickups, from drops or discovery caches, carry an amount. */
+export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind">): boolean {
+  return object.kind === "pickup" && object.amount !== undefined;
+}
 
 export interface Drop {
   stardust: number;

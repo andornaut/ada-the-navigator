@@ -24,6 +24,12 @@ export function ensureOwnedWeapons(flight: FlightState) {
   return owned;
 }
 
+/** Ada's real weapon ownership: the flight's roster without run-only granted weapons. */
+export function ownedForSave(flight: FlightState): UpgradeWeapon[] {
+  const granted = flight.grantedWeapons ?? [];
+  return ensureOwnedWeapons(flight).filter((weapon) => !granted.includes(weapon));
+}
+
 export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const locked = weaponsLocked(flight);
   const choices: WeaponChoice[] = [];
@@ -54,6 +60,11 @@ export function selectFlightWeapon(weapon: Weapon, flight: FlightState): boolean
  */
 export function collectWeapon(weapon: UpgradeWeapon, flight: FlightState): boolean {
   const owned = ensureOwnedWeapons(flight);
+  // Finding a run-only granted weapon makes it really owned.
+  if (flight.grantedWeapons?.includes(weapon)) {
+    flight.grantedWeapons = flight.grantedWeapons.filter((entry) => entry !== weapon);
+    return true;
+  }
   if (owned.includes(weapon)) {
     return false;
   }
@@ -74,7 +85,12 @@ export function loseEquippedWeapon(flight: FlightState): UpgradeWeapon | null {
   }
   const lost = flight.weapon;
   flight.ownedWeapons = ensureOwnedWeapons(flight).filter((weapon) => weapon !== lost);
-  flight.levels.weapons[lost] = 0;
+  if (flight.grantedWeapons?.includes(lost)) {
+    // A run-only granted weapon costs nothing beyond the flight.
+    flight.grantedWeapons = flight.grantedWeapons.filter((weapon) => weapon !== lost);
+  } else {
+    flight.levels.weapons[lost] = 0;
+  }
   flight.weapon = "basic";
   return lost;
 }

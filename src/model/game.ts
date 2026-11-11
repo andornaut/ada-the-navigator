@@ -12,6 +12,7 @@ import {
   stepFlight,
   syncFlightRegion,
   teleport as teleportFlight,
+  undockFlight,
 } from "./flight.ts";
 import { restoreSave } from "./save.ts";
 import {
@@ -30,8 +31,8 @@ import {
 import type { FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
-  ensureOwnedWeapons,
   loseEquippedWeapon,
+  ownedForSave,
   ownedWeapons,
   selectFlightWeapon,
   type WeaponChoice,
@@ -178,8 +179,14 @@ export class GameModel {
       return;
     }
     const economy = this.state.economy;
-    economy.ownedWeapons = [...ensureOwnedWeapons(flight)];
-    economy.weapon = flight.weapon;
+    const owned = ownedForSave(flight);
+    economy.ownedWeapons = owned;
+    // A granted weapon in use saves as the last real selection that is still owned.
+    if (flight.weapon === "basic" || owned.includes(flight.weapon)) {
+      economy.weapon = flight.weapon;
+    } else if (economy.weapon !== "basic" && !owned.includes(economy.weapon)) {
+      economy.weapon = "basic";
+    }
     economy.levels = structuredClone(flight.levels);
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
@@ -190,8 +197,16 @@ export class GameModel {
     }
     const economy = this.state.economy;
     const before = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
-    flight.ownedWeapons = [...economy.ownedWeapons];
-    flight.weapon = economy.weapon;
+    // A bought weapon stops being granted; other granted weapons stay for the flight.
+    const granted = (flight.grantedWeapons ?? []).filter(
+      (weapon) => !economy.ownedWeapons.includes(weapon),
+    );
+    flight.ownedWeapons = [...economy.ownedWeapons, ...granted];
+    if (granted.length) {
+      flight.grantedWeapons = granted;
+    } else {
+      delete flight.grantedWeapons;
+    }
     flight.levels = structuredClone(economy.levels);
     // A bought shield level adds its capacity to the current charge.
     const after = shipTuning(ECONOMY, this.content, flight.levels).shieldMax;
@@ -219,6 +234,10 @@ export class GameModel {
     return selectPaint(ECONOMY, scheme, this.state.economy);
   }
   undock(): void {
+    const id = this.state.docked;
+    if (id && this.state.flight) {
+      undockFlight(id, this.state.flight);
+    }
     this.state.docked = null;
   }
   private panel(context: string, text: string, title = this.chapter.name): void {
@@ -331,6 +350,9 @@ export class GameModel {
     if (!flight) {
       return;
     }
+    // Losing a run-only granted weapon loses nothing saved, so the notice omits it.
+    const equipped = flight.weapon;
+    const granted = equipped !== "basic" && (flight.grantedWeapons ?? []).includes(equipped);
     const lost = loseEquippedWeapon(flight);
     this.pullLoadout();
     const economy = this.state.economy;
@@ -339,7 +361,7 @@ export class GameModel {
     this.home(true);
     this.state.notice = [
       this.label("jumpHome"),
-      lost
+      lost && !granted
         ? fill(this.label("jumpWeaponLost"), { weapon: weaponName(this.content.labels, lost) })
         : "",
       fee > 0 ? fill(this.label("jumpRecharge"), { amount: fee }) : "",

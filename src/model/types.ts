@@ -83,6 +83,8 @@ export interface FlightState {
   cargo: number;
   weapon: Weapon;
   ownedWeapons?: Exclude<Weapon, "basic">[];
+  /** Run-only weapons from the grant cheat; they never enter saved ownership. */
+  grantedWeapons?: Exclude<Weapon, "basic">[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
   /** Seconds weapon changes stay locked after combat ends. */

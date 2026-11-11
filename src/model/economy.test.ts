@@ -248,6 +248,43 @@ describe("Stardust drops", () => {
   });
 });
 
+describe("discovery caches", () => {
+  it("generates Stardust caches worth 25 instead of weapon pickups", () => {
+    const value = createFlight(PROTOTYPE, 1, 4242, { known: [] });
+    for (let step = 0; step < 40; step++) {
+      value.player = { x: step * PROTOTYPE.tuning.chunkSize * 2, y: 0 };
+      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    }
+    const discoveries = [...value.objects, ...Object.values(value.world.notables)].filter(
+      (object) => object?.kind === "pickup" && object.role === "discovery",
+    );
+    expect(discoveries.length).toBeGreaterThan(0);
+    for (const cache of discoveries) {
+      expect(cache).toMatchObject({ amount: 25 });
+      expect(cache?.weapon).toBeUndefined();
+    }
+  });
+
+  it("collects a cache as 25 Stardust and pulls it with the tractor beam", () => {
+    const value = flight();
+    value.objects.push({
+      amount: 25,
+      hp: 1,
+      id: "cache",
+      kind: "pickup",
+      radius: PROTOTYPE.tuning.flight.pickupRadius,
+      role: "discovery",
+      x: 60,
+      y: 0,
+    });
+    stepFlight(PROTOTYPE, 0.1, idle, value);
+    expect(value.objects[0]!.x).toBeCloseTo(60 - 15, 6);
+    expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(25);
+    expect(value.weapon).toBe("basic");
+    expect(value.ownedWeapons).toEqual([]);
+  });
+});
+
 describe("tractor beam and pickup reach", () => {
   it("pulls Stardust inside the pull radius toward Ada at the pull speed", () => {
     const value = flight();

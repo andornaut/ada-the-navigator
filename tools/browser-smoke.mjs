@@ -451,6 +451,11 @@ try {
     }, storageKey);
     const granted = await readSave();
     assert.deepEqual(granted.progress, beforeGrant.progress);
+    assert.deepEqual(
+      granted.economy,
+      beforeGrant.economy,
+      "Run-only granted weapons must not enter saved ownership, levels or Stardust",
+    );
     for (const field of ["weapon", "shield", "cargo", "fireCooldown"]) {
       assert.deepEqual(
         granted.flight[field],
@@ -486,7 +491,7 @@ try {
   assert.deepEqual(
     (await readSave()).flight.ownedWeapons ?? [],
     [],
-    "Direct hidden-button dispatch in the installed-window fixture must not grant saved ownership",
+    "Direct hidden-button dispatch in the installed-window fixture must not grant weapons",
   );
   save("installed-window-proof.json", {
     scope:
@@ -502,7 +507,7 @@ try {
   );
   await seedOnce(safeSerialized, "ada-browser.after-cheats.v1");
   events.checks.push(
-    "Browser-only cheats pause input, retain focus and save only granted ownership; " +
+    "Browser-only cheats pause input, retain focus and grant run-only weapons to the flight; " +
       "an installed-window fixture closes and rejects direct dispatch",
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });

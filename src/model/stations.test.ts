@@ -179,16 +179,13 @@ describe("station discovery and docking", () => {
     expect(restoreSave(saved)?.docked).toBe(site.id);
     model.undock();
     expect(model.state.docked).toBeNull();
-    // Staying in the dock after undocking does not dock again.
+    // Undocking places Ada at rest just outside the dock, along its outward direction.
+    expect(flight.velocity).toEqual({ x: 0, y: 0 });
+    expect(distance(flight.player, site)).toBeCloseTo(dockRadius + 1, 9);
+    expect(flight.player.y).toBeGreaterThan(site.y);
     model.step(1 / 30, idle);
     expect(model.state.docked).toBeNull();
-    const down = { ...idle, move: { x: 0, y: 1 } };
-    for (let step = 0; step < 60 && distance(flight.player, site) <= dockRadius; step++) {
-      model.step(1 / 30, down);
-    }
-    // Come to rest outside the dock, then fly straight back in.
-    model.step(5, idle);
-    expect(flight.velocity).toEqual({ x: 0, y: 0 });
+    // Flying straight back in docks again.
     for (let step = 0; step < 120 && !model.state.docked; step++) {
       model.step(1 / 30, up);
     }

@@ -8,6 +8,7 @@ import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
+import { carriesStardust } from "../model/drops.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import { shipSpeedFraction, stationDock } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
@@ -1035,7 +1036,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.drawEnemy(point, object);
         break;
       case "pickup":
-        if (object.role === "stardust") {
+        if (carriesStardust(object)) {
           this.drawStardust(object, point, radius);
           break;
         }

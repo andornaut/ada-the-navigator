@@ -33,7 +33,13 @@ import {
 } from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
+import {
+  carriesStardust,
+  dropRandom,
+  rollAsteroidStardust,
+  rollEnemyDrop,
+  splitStardust,
+} from "./drops.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
@@ -48,7 +54,7 @@ import type {
 } from "./types.ts";
 import { noLevels, shipTuning, upgradedWeapon } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { collectWeapon, ensureOwnedWeapons, UPGRADE_WEAPONS } from "./weapons.ts";
+import { collectWeapon, ensureOwnedWeapons, ownedForSave } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -180,7 +186,6 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         x,
         y,
       });
-      const next = random(hash(flight.seed ^ 17, x, y));
       generateRegion(content, x, y, flight);
       for (const placement of plan.placements) {
         const object: SpaceObject = {
@@ -191,9 +196,9 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
         if (object.kind !== "rock") {
           object.role = "discovery";
         }
+        // A discovery cache holds Stardust; weapons come only from shops and enemy drops.
         if (object.kind === "pickup") {
-          object.weapon =
-            UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "missiles";
+          object.amount = ECONOMY.discoveryStardust;
         }
         if (
           !existing.has(object.id) &&
@@ -664,10 +669,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
   // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
   flight.player =
     object.kind === "station"
-      ? (() => {
-          const dock = stationDock(object);
-          return { x: dock.x, y: dock.y + ECONOMY.station.dockRadius + 40 };
-        })()
+      ? outsideDock(ECONOMY.station.dockRadius + 40, object)
       : { x: object.x, y: object.y };
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
@@ -758,6 +760,27 @@ export function stationDock(station: Vec): Vec {
     x: station.x + ECONOMY.station.dockOffset.x,
     y: station.y + ECONOMY.station.dockOffset.y,
   };
+}
+/** The point `distance` from a station's dock along its outward direction. */
+function outsideDock(distance: number, station: Vec): Vec {
+  const dock = stationDock(station);
+  const outward = ECONOMY.station.dockOutward;
+  return { x: dock.x + outward.x * distance, y: dock.y + outward.y * distance };
+}
+/**
+ * Undocking places Ada at rest just outside the dock, so flying back in docks again.
+ * Returns false without a flight at that station.
+ */
+export function undockFlight(id: string, flight: FlightState): boolean {
+  const station = flight.objects.find((object) => object.kind === "station" && object.id === id);
+  if (!station) {
+    return false;
+  }
+  flight.player = outsideDock(ECONOMY.station.dockRadius + 1, station);
+  flight.velocity = { x: 0, y: 0 };
+  flight.dockId = null;
+  movementHeadings.delete(flight);
+  return true;
 }
 function move(
   content: PrototypeContent,
@@ -1155,7 +1178,7 @@ function stepWrecks(content: PrototypeContent, dt: number, flight: FlightState):
     object.hp = 0;
     const drop = rollEnemyDrop(
       ECONOMY,
-      ensureOwnedWeapons(flight),
+      ownedForSave(flight),
       object.wreck.archetype,
       dropRandom(flight.seed, object.id),
     );
@@ -1184,7 +1207,7 @@ function pullStardust(
   flight: FlightState,
 ) {
   const gap = distance(object, flight.player);
-  if (object.role !== "stardust" || gap > radius || gap === 0) {
+  if (!carriesStardust(object) || gap > radius || gap === 0) {
     return;
   }
   const step = Math.min(gap, speed * dt);
@@ -1255,7 +1278,7 @@ export function stepFlight(
       if (object.role === "cargo") {
         flight.cargo++;
         object.hp = 0;
-      } else if (object.role === "stardust") {
+      } else if (carriesStardust(object)) {
         events.push({ amount: object.amount ?? 0, type: "stardust" });
         object.hp = 0;
       } else if (object.weapon) {

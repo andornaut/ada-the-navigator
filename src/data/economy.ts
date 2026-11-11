@@ -45,6 +45,8 @@ export interface EconomyCatalog {
   paints: Readonly<Record<string, PaintScheme>>;
   /** The free starting scheme, always owned. */
   defaultPaint: string;
+  /** Stardust in a discovery cache. */
+  discoveryStardust: number;
   /** Flat Stardust fee for recharging after a quantum jump home. */
   jumpFee: number;
   /** Seconds weapon changes stay locked after combat ends. */
@@ -68,6 +70,8 @@ export interface EconomyCatalog {
     radius: number;
     /** World offset of the dock from the station's centre, from the station art's dock point. */
     dockOffset: { x: number; y: number };
+    /** World unit direction out of the dock, from the station art; undocking and travel arrive along it. */
+    dockOutward: { x: number; y: number };
     dockRadius: number;
     safeRadius: number;
   };
@@ -80,6 +84,7 @@ export const ECONOMY: EconomyCatalog = {
   asteroidStardust: [1, 3],
   breakApartSeconds: 0.6,
   defaultPaint: "classic",
+  discoveryStardust: 25,
   effects: {
     engineSeconds: -0.1,
     engineSpeed: 0.05,
@@ -122,6 +127,7 @@ export const ECONOMY: EconomyCatalog = {
     chance: 0.5,
     destinationClearance: 1200,
     dockOffset: { x: 0, y: 0 },
+    dockOutward: { x: 0, y: 1 },
     dockRadius: 48,
     jitter: 4000,
     originClearance: 3000,
