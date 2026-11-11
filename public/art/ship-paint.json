@@ -9,7 +9,8 @@
       "canopySides": "#1767b3",
       "frontSides": "#d4dfe9",
       "rearSides": "#abbfce",
-      "top": "#ffffff"
+      "top": "#ffffff",
+      "canopyHighlight": "#87bce5"
     },
     {
       "id": "cobalt",
@@ -19,7 +20,8 @@
       "canopySides": "#b4c8e6",
       "frontSides": "#4f7fd0",
       "rearSides": "#3a62a8",
-      "top": "#6f9ff0"
+      "top": "#6f9ff0",
+      "canopyHighlight": "#f6faff"
     },
     {
       "id": "seafoam",
@@ -29,7 +31,8 @@
       "canopySides": "#0d4c59",
       "frontSides": "#a7dcc9",
       "rearSides": "#80bba8",
-      "top": "#d4f6ea"
+      "top": "#d4f6ea",
+      "canopyHighlight": "#7eadb6"
     },
     {
       "id": "graphite",
@@ -39,7 +42,8 @@
       "canopySides": "#2a92cc",
       "frontSides": "#858ea4",
       "rearSides": "#666f86",
-      "top": "#aab2c4"
+      "top": "#aab2c4",
+      "canopyHighlight": "#a4e5ff"
     },
     {
       "id": "iris",
@@ -49,7 +53,8 @@
       "canopySides": "#271c66",
       "frontSides": "#b2a0ec",
       "rearSides": "#8f7cd0",
-      "top": "#d9ccff"
+      "top": "#d9ccff",
+      "canopyHighlight": "#938ac0"
     }
   ]
 }

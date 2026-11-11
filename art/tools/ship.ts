@@ -8,20 +8,29 @@ import {
   HEADINGS,
   json,
   type Point,
-  project,
+  projectAt,
   rotate,
   vector,
 } from "./projection.ts";
 
-type Face = { color: string; layer: number; points: Point[]; twoSided?: boolean };
+// A silhouette face draws the convex hull of its projected points, as an underlay that
+// hides antialiasing seams between the facets of a convex solid.
+type Face = {
+  color: string;
+  layer: number;
+  points: Point[];
+  silhouette?: boolean;
+  twoSided?: boolean;
+};
 
-// The five painted face colours. Mouths and thrust flames keep their own colours on every scheme.
+// The five authored paint colours; the canopy highlight derives from canopyRoof.
+// Mouths and thrust flames keep their own colours on every scheme.
 interface Paint {
   readonly canopyRoof: string;
   readonly canopySides: string;
   readonly frontSides: string;
   readonly rearSides: string;
-  // Hull top and tail.
+  // Hull top.
   readonly top: string;
 }
 
@@ -169,41 +178,192 @@ function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
       });
     }
   }
-  const roof = plan(7.5, [
-    [-55, 0],
-    [-24, -27],
-    [24, -25],
-    [35, 0],
-    [24, 25],
-    [-24, 27],
-  ]);
-  // Flat hexagonal roof and opaque vertical sides share the selected footprint.
-  for (let i = 0; i < roof.length; i++) {
-    const a = roof[(i + 1) % roof.length]!;
-    const b = roof[i]!;
-    faces.push({
-      color: paint.canopySides,
-      layer: 5,
-      points: [a, b, [b[0], b[1], 4], [a[0], a[1], 4]],
-    });
+  dome(faces, yaw, paint);
+  fin(faces, yaw, paint);
+  return faces;
+}
+
+// Newell normal of a polygon, unnormalized.
+function normal(points: readonly Point[]): Point {
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (const [i, a] of points.entries()) {
+    const b = points[(i + 1) % points.length]!;
+    nx += (a[1] - b[1]) * (a[2] + b[2]);
+    ny += (a[2] - b[2]) * (a[0] + b[0]);
+    nz += (a[0] - b[0]) * (a[1] + b[1]);
   }
-  faces.push({ color: paint.canopyRoof, layer: 6, points: roof });
-  const tail = rotate(yaw, [0, 18.5, 0]);
-  faces.push({
-    color: paint.top,
-    layer: tail[0] + tail[1] > 0 ? 7 : 4,
-    points: [
-      [0, 12.16, 4],
-      [0, 24, 4],
-      [0, 21.44, 8],
+  return [nx, ny, nz];
+}
+
+function unit([x, y, z]: Point): Point {
+  const length = Math.hypot(x, y, z);
+  return [x / length, y / length, z / length];
+}
+
+const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+// Wind a face of a convex solid so its normal points away from the solid's centre.
+function outward(centre: Point, points: Point[]): Point[] {
+  const mid = points.reduce<Point>(
+    (sum, [x, y, z]) => [
+      sum[0] + x / points.length,
+      sum[1] + y / points.length,
+      sum[2] + z / points.length,
     ],
+    [0, 0, 0],
+  );
+  const offset: Point = [mid[0] - centre[0], mid[1] - centre[1], mid[2] - centre[2]];
+  return dot(normal(points), offset) < 0 ? points.toReversed() : points;
+}
+
+// World light for the canopy highlight, from above and screen-left of the viewer.
+const LIGHT = unit([-0.25, 0.45, 1]);
+
+// Canopy: opaque faceted half-ellipsoid on the hull top. Semi-axes a (across) and
+// b (along), height h above the hull, centre on local Y; ring latitudes in degrees.
+const DOME = { a: 9.2, b: 12.8, centre: -4.2, h: 5.5, rings: [0, 30, 60, 90], segments: 16 };
+
+function dome(faces: Face[], yaw: number, paint: Paint): void {
+  const { a, b, centre, h, rings, segments } = DOME;
+  const at = (u: number, v: number): Point => {
+    const theta = (u / segments) * 2 * Math.PI;
+    const phi = (v * Math.PI) / 180;
+    return [
+      a * Math.cos(phi) * Math.cos(theta),
+      centre + b * Math.cos(phi) * Math.sin(theta),
+      4 + h * Math.sin(phi),
+    ];
+  };
+  const middle: Point = [0, centre, 4];
+  const shell: Point[][] = [];
+  for (let ring = 0; ring < rings.length - 1; ring++) {
+    const [low, high] = [rings[ring]!, rings[ring + 1]!];
+    for (let u = 0; u < segments; u++) {
+      const points =
+        high === 90
+          ? [at(u, low), at(u + 1, low), at(u, high)]
+          : [at(u, low), at(u + 1, low), at(u + 1, high), at(u, high)];
+      shell.push(outward(middle, points));
+    }
+  }
+  // The lowest ring takes the side colour and the rest the roof colour; the two
+  // facets facing the light most directly take the highlight.
+  const lit = shell.map((points) => dot(unit(rotate(yaw, normal(points))), LIGHT));
+  const brightest = new Set(
+    lit
+      .map((value, i) => [value, i] as const)
+      .toSorted((x, y) => y[0] - x[0])
+      .slice(0, 2)
+      .map(([, i]) => i),
+  );
+  for (const [i, points] of shell.entries()) {
+    const color = brightest.has(i)
+      ? highlight(paint.canopyRoof)
+      : i < segments
+        ? paint.canopySides
+        : paint.canopyRoof;
+    faces.push({ color, layer: 5, points });
+  }
+  faces.push({
+    color: paint.canopyRoof,
+    layer: 4.5,
+    points: shell.flat(),
+    silhouette: true,
     twoSided: true,
   });
-  return faces;
+}
+
+// Fin: tapered vertical fin on the rear centreline with a swept leading edge.
+// Profile is (localY, z): leading base, leading tip, trailing tip, trailing base.
+// Each flank carries a leading-edge stripe that ends at `stripe` on the base and tip.
+const FIN = {
+  half: { base: 1.2, tip: 0.6 },
+  profile: [
+    [14.5, 4],
+    [21.5, 12.5],
+    [23.6, 12.5],
+    [24.2, 4],
+  ],
+  stripe: { base: 18, tip: 22.6 },
+} as const;
+
+function fin(faces: Face[], yaw: number, paint: Paint): void {
+  const { half, profile, stripe } = FIN;
+  const [[y0, z0], [y1, z1], [y2], [y3]] = profile;
+  const at = (sign: number, y: number, z: number): Point => [
+    sign * (z > z0 ? half.tip : half.base),
+    y,
+    z,
+  ];
+  const outline = (sign: number) => profile.map(([y, z]) => at(sign, y, z));
+  const [left, right] = [outline(-1), outline(1)];
+  const centre: Point = [0, 21, 7];
+  // The tail draws after the canopy when the rear points toward the viewer.
+  const rear = rotate(yaw, [0, 18.5, 0]);
+  const layer = rear[0] + rear[1] > 0 ? 7 : 4;
+  for (const sign of [-1, 1]) {
+    const band = [
+      at(sign, y0, z0),
+      at(sign, y1, z1),
+      at(sign, stripe.tip, z1),
+      at(sign, stripe.base, z0),
+    ];
+    const body = [
+      at(sign, stripe.base, z0),
+      at(sign, stripe.tip, z1),
+      at(sign, y2, z1),
+      at(sign, y3, z0),
+    ];
+    const facing = outward(centre, body);
+    const color =
+      dot(unit(rotate(yaw, normal(facing))), LIGHT) > 0 ? paint.frontSides : paint.rearSides;
+    faces.push({ color, layer, points: facing });
+    faces.push({ color: paint.canopyRoof, layer, points: outward(centre, band) });
+  }
+  // Edges in profile order: leading edge, tip, trailing edge.
+  const edgeColors = [paint.canopyRoof, paint.canopyRoof, paint.canopySides];
+  for (const [i, color] of edgeColors.entries()) {
+    const points = [left[i]!, left[i + 1]!, right[i + 1]!, right[i]!];
+    faces.push({ color, layer, points: outward(centre, points) });
+  }
+}
+
+// Canopy highlight: the roof colour mixed 45 percent toward white.
+function highlight(roof: string): string {
+  const channels = [1, 3, 5].map((i) => Number.parseInt(roof.slice(i, i + 2), 16));
+  return `#${channels
+    .map((c) =>
+      Math.round(c + (255 - c) * 0.45)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
 }
 
 function visible(face: Face): boolean {
   return face.twoSided === true || facesViewer(face.points);
+}
+
+// Monotone chain hull of 2D points, counterclockwise in screen coordinates.
+function convexHull(points: readonly (readonly [number, number])[]): [number, number][] {
+  const sorted = points
+    .map(([x, y]): [number, number] => [Number(x.toFixed(2)), Number(y.toFixed(2))])
+    .toSorted((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const chain = (input: [number, number][]) => {
+    const out: [number, number][] = [];
+    for (const point of input) {
+      while (out.length >= 2 && cross(out.at(-2)!, out.at(-1)!, point) <= 0) {
+        out.pop();
+      }
+      out.push(point);
+    }
+    return out.slice(0, -1);
+  };
+  return [...chain(sorted), ...chain(sorted.toReversed())];
 }
 
 function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
@@ -211,9 +371,11 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
     .map((face) => ({ ...face, points: face.points.map((point) => rotate(yaw, point)) }))
     .filter(visible)
     .sort((a, b) => a.layer - b.layer || depth(b.points) - depth(a.points))
-    .map(({ color, points }) => {
-      const projected = points.map((point) => project(48, point));
-      return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
+    .map(({ color, points, silhouette }) => {
+      const projected = points.map((point) => projectAt(48, 48, point));
+      const outline = silhouette === true ? convexHull(projected) : projected;
+      const text = outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
+      return `  <polygon fill="${color}" points="${text.join(" ")}"/>`;
     });
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
@@ -279,7 +441,13 @@ writeFileSync(
   `${output}ship-paint.json`,
   json({
     version: 1,
-    schemes: SCHEMES.map(({ id, name, paint, price }) => ({ id, name, price, ...paint })),
+    schemes: SCHEMES.map(({ id, name, paint, price }) => ({
+      id,
+      name,
+      price,
+      ...paint,
+      canopyHighlight: highlight(paint.canopyRoof),
+    })),
   }),
 );
 
