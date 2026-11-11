@@ -17,7 +17,7 @@ export interface GalaxySelectLabels {
 
 export interface GalaxyPage {
   readonly flavor: string;
-  /** The preview for the page's state: tinted when unlocked, the locked greyscale otherwise. */
+  /** The page's preview: the galaxy in its own field colours when unlocked, else the locked greyscale. */
   readonly preview: string;
   readonly name: string;
   readonly number: number;

@@ -43,7 +43,7 @@ export interface GalaxyCard {
 }
 
 /**
- * A galaxy's selector preview (tools/galaxy-previews.mjs): tinted, or the locked greyscale.
+ * A galaxy's selector preview (tools/galaxy-previews.mjs): in its own field colours, or the locked greyscale.
  * CLEANUP (added 2026-11-11): the committed captures for galaxies one to three predate the
  * framing on each route's first destination; recapture them once destinations draw as art.
  */
