@@ -291,16 +291,17 @@ function routePlacementRandom(seed: number, id: string): () => number {
   return random(placementSeed);
 }
 
+/** Move only capitals inside the gap of an earlier kept capital; paged-in capitals come last. */
 function settleResumedCapitals(content: PrototypeContent, flight: FlightState): void {
-  const capitals = flight.objects.filter(capital);
-  if (
-    capitals.some((first, index) =>
-      capitals
-        .slice(index + 1)
-        .some((second) => distance(first, second) < enemySpacing(first, second)),
-    )
-  ) {
-    placeGuards(content, capitals, flight);
+  const kept: SpaceObject[] = [];
+  const displaced: SpaceObject[] = [];
+  for (const object of flight.objects.filter(capital)) {
+    const crowded = kept.some((other) => distance(object, other) < enemySpacing(object, other));
+    (crowded ? displaced : kept).push(object);
+  }
+  // Kept capitals are fixed obstacles, so each displaced capital fails reservation and searches.
+  if (displaced.length) {
+    placeGuards(content, displaced, flight);
   }
 }
 

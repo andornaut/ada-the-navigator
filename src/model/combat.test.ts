@@ -746,6 +746,39 @@ describe("capital local-area separation", () => {
     expect({ x: third.x, y: third.y }).toEqual({ x: 240, y: 600 });
   });
 
+  it("settles a paged-in capital without moving an engaged capital beside a rock", () => {
+    const flight = empty();
+    const engaged = ship("capital", { x: 300, y: 0 });
+    const rockRadius = 30;
+    const rock: SpaceObject = {
+      hp: 100,
+      id: "close-rock",
+      kind: "rock",
+      radius: rockRadius,
+      x: engaged.x + engaged.radius + rockRadius + 10,
+      y: 0,
+    };
+    const paged = ship("capital", { x: 900, y: 0 });
+    engaged.id = engaged.enemy!.id = "engaged";
+    paged.id = paged.enemy!.id = "paged";
+    for (const object of [engaged, paged]) {
+      stopEngines(object);
+      silence(object);
+    }
+    flight.objects.push(engaged, rock);
+    flight.world = { ...flight.world, notables: { [paged.id]: paged } };
+    expect(Math.hypot(engaged.x - paged.x, engaged.y - paged.y)).toBeLessThan(
+      engaged.radius + paged.radius + capitalHullGap,
+    );
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect({ x: engaged.x, y: engaged.y }).toEqual({ x: 300, y: 0 });
+    expect(engaged.enemy!.home).toEqual({ x: 300, y: 0 });
+    expect({ x: paged.x, y: paged.y }).not.toEqual({ x: 900, y: 0 });
+    expect(Math.hypot(engaged.x - paged.x, engaged.y - paged.y)).toBeGreaterThanOrEqual(
+      engaged.radius + paged.radius + capitalHullGap,
+    );
+  });
+
   it("uses reproducible placement without changing the layout seed or introducing saved RNG state", () => {
     const prepare = (): FlightState => {
       const flight = empty();
