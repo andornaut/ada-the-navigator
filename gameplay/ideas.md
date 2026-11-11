@@ -2,7 +2,7 @@
 
 Ideas are proposals outside the current version. Recording an idea does not
 approve implementation. Version one has four galaxies; the fourth remains deferred
-within that version. See [the prototype contract](prototype.md) for current rules.
+within that version. See [the version one rules](rules.md) for current rules.
 
 ## Future candidates
 

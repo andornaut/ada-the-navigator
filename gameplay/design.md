@@ -1,6 +1,6 @@
 # Ada the Navigator design
 
-[The prototype contract](prototype.md) defines the current version one stories,
+[The version one rules](rules.md) define the current version one stories,
 mechanics, presentation and persistence rules. [Ideas](ideas.md) contains proposals
 outside the current version. These documents describe intended behavior; they do
 not claim that features are implemented.

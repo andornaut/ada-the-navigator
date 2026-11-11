@@ -1,12 +1,12 @@
 # Enemy rule interface
 
 This module supplies pure observation-to-intent rules. Overall encounter placement,
-quiet travel and optional versus required fights belong to the prototype contract.
+quiet travel and optional versus required fights belong to the version one rules.
 All numeric catalog values are provisional tuning, not user-selected values.
 Most archetypes remain at or below Ada's speed. The selected small interceptor has
 an approved maximum ratio of 1.1, and the default configurable speed cap is 1.1.
 Frigates and capitals may block required quest routes in the first three chapters;
-the overall placement contract remains in the prototype document.
+the overall placement contract remains in the version one rules.
 
 ## Data and state
 

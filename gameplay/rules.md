@@ -1,4 +1,4 @@
-# Playable prototype contract
+# Version one rules
 
 This contract records approved story and mechanics decisions for version one.
 It supersedes conflicting undecided details in the initial design. Numerical
@@ -241,7 +241,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     The row and the landing page's Install button show in every browser that is
     not running the installed app. The button opens the browser's install prompt
     when it holds one; otherwise it shows that browser's steps. Strings are under
-    "Install steps" in [the player copy](prototype-copy.md#install-steps).
+    "Install steps" in [the player copy](player-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
 - Updates, as in Archie and Chibi: when a new version is waiting, the start screen
@@ -430,7 +430,7 @@ Penny rides in the second seat and never barks aloud. When an undiscovered point
 of interest comes within a provisional 900 world units of Ada, even off screen,
 one conversation shows Penny's "Woof! Woof!" and then Ada's reaction; it plays
 once per point of interest, at most once per 60 seconds (provisional). Exact lines are in
-[the player copy](prototype-copy.md#in-flight-conversations).
+[the player copy](player-copy.md#in-flight-conversations).
 
 ## Space encounters and feedback
 

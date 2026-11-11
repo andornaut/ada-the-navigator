@@ -1,4 +1,4 @@
-# Prototype dialogue and objectives
+# Dialogue and objectives
 
 Working player text for the three designed chapters. Speaker labels identify
 roles rather than final names. Each space dialogue panel shows one speaker label
