@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
 import { SCREEN } from "../../data/screen.ts";
-import { PILL } from "./controls.ts";
+import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { HIT_RULE, hitAround } from "./hitAreas.ts";
 import { SPACING } from "./tokens.ts";
 
