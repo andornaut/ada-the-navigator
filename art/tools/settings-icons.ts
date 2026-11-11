@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/grid";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 
-// Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear 16 by 16 frame.
+// Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear frame: 16 by 16
+// for Settings rows, 24 by 24 for the top-right HUD settings button.
 const INK = "ead4aa";
 const output = fileURLToPath(new URL("../../public/art/ui/sprites/", import.meta.url));
 
@@ -46,6 +47,33 @@ const ICONS: Readonly<Record<string, readonly string[]>> = {
     "################",
     "................",
     "................",
+  ],
+  // Gear for the top-right settings button: a ring with four orthogonal and four diagonal teeth.
+  "icon-settings-nav-24": [
+    "..........####..........",
+    "..........####..........",
+    "..........####..........",
+    "...####...####...####...",
+    "...####.########.####...",
+    "...##################...",
+    "...##################...",
+    ".....##############.....",
+    "....######....######....",
+    "....#####......#####....",
+    "########........########",
+    "########........########",
+    "########........########",
+    "########........########",
+    "....#####......#####....",
+    "....######....######....",
+    ".....##############.....",
+    "...##################...",
+    "...##################...",
+    "...####.########.####...",
+    "...####...####...####...",
+    "..........####..........",
+    "..........####..........",
+    "..........####..........",
   ],
   // Speaker with two sound waves.
   "icon-sound": [

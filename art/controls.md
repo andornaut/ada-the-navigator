@@ -146,10 +146,36 @@ against the card, and 5.91:1 and 4.84:1 against the page background.
 
 ## Top-right HUD icon buttons
 
-Navigation and HUD buttons in the top-right corner draw a 24px glyph, not 20px,
-for readability. The active or selected state is a 2px cream `#ead4aa` ring with
-a 2px gap around the face, its corner radius following the face's radius, not an
-offset square ring. These buttons keep the 48px press target.
+Navigation and HUD buttons in the top-right corner are 48x48 faces with a 2px
+ink `#181425` border and corner radius 8, and draw a 24px glyph for
+readability: `weapon-<id>-24.svg` for the weapon selector and
+`icon-settings-nav-24` for the settings button. The weapon buttons sit 8px
+apart, so a selection ring clears its neighbours.
+
+| Weapon state | Face      | Glyph                    | Ring |
+| ------------ | --------- | ------------------------ | ---- |
+| Idle         | `#262b44` | `#ead4aa`                | None |
+| Selected     | `#f0bd68` | `#181425`                | Yes  |
+| Locked       | `#1d2032` | `#6f7891`                | None |
+| Refused      | `#1d2032` | `#e4574e` during the cue | None |
+
+- Selected follows Chibi's power-up face: amber with an ink glyph, plus a 2px
+  cream `#ead4aa` ring 2px outside the face (4px outset). The ring's corner
+  radius follows the face: 8 at the face, 12 at the ring's outer edge.
+- Locked applies to every unselected weapon in combat and through the 5 seconds
+  after it ends, until weapon changes unlock; the selected weapon keeps its
+  selected look. The locked look is fully opaque, with no ring.
+- A tap on a locked weapon plays the [refusal cue](#refusal-cue) with the
+  glyph as its label.
+- The settings button stays idle navy with a cream gear in every state.
+- Focus-visible is a 3px cream outline at 4px offset, over any state.
+- Contrast: idle glyph 9.59:1, selected glyph 10.45:1, locked glyph 3.66:1 and
+  refused glyph 4.42:1 on their faces.
+
+Weapon glyphs are single-colour SVGs; draw each state's glyph colour by using
+the SVG as a CSS mask (`mask: url(...) center / 24px 24px no-repeat`) over a
+background in that colour. The 20px weapon SVGs stay published for existing
+references.
 
 ## Touch sticks
 

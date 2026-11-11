@@ -13,6 +13,14 @@ at least 2 px padding. Laser strokes and scatter dots are 2 px thick.
 | `tripleLaser` | `public/art/ui/icons/weapon-tripleLaser.svg` | Three long thin bolts in a tight fan    |
 | `scattershot` | `public/art/ui/icons/weapon-scattershot.svg` | Seven separate solid dots in a wide fan |
 
+## HUD glyphs
+
+The top-right weapon selector draws 24 × 24 px versions with heavier strokes,
+`public/art/ui/icons/weapon-${id}-24.svg`, `viewBox="0 0 24 24"`, in the same
+cream. Shapes follow the 20 px icons with 4 px dots and exhaust, 3 px laser
+strokes and a larger bolt head. [Controls](controls.md#top-right-hud-icon-buttons)
+defines their states and colours. The 20 px icons remain the shop row glyphs.
+
 Filename case matches the direct DOM URL `weapon-${id}.svg`. Legacy rapid, spread
 and pierce icons remain available for existing references.
 
