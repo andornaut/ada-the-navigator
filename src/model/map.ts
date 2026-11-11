@@ -1,3 +1,4 @@
+import { DESTINATION_MAP_KINDS } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
@@ -133,11 +134,9 @@ export type MapSymbol =
   | "workshop"
   | "wreck";
 
-const NAMED_OUTPOSTS: readonly MapSymbol[] = ["growers", "workshop", "salvagers", "holodisk"];
-
-/** A story destination's symbol: its own for the named outposts and the holodisk. */
+/** A story destination's symbol: the Map kind its data declares (data/destinations.ts). */
 function destinationSymbol(id: string): MapSymbol {
-  return NAMED_OUTPOSTS.find((symbol) => symbol === id) ?? "destination";
+  return DESTINATION_MAP_KINDS[id] ?? "destination";
 }
 
 /** The place panel's type line kinds (gameplay/player-copy.md "Map place panel"). */

@@ -45,7 +45,8 @@ describe("map screen strings", () => {
     ]);
     const { beacon, holodisk, nebula, outpost, station, story, wreck } = LABELS.types;
     expect(COPY).toContain(
-      `a line naming its kind: ${station}, ${outpost}, ${story} (other story destinations), ` +
+      `a line naming its kind: ${station}, ${outpost}, ${story} (other story destinations, ` +
+        `such as the whale and its family; the mining hub is a ${station}), ` +
         `${holodisk}, ${nebula}, ${wreck} or ${beacon}, then " · " and the distance from Ada.`,
     );
     expect(LABELS.typeLine).toBe("{type} · {distance}");
