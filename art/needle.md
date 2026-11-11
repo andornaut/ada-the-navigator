@@ -274,3 +274,22 @@ amber or Ada's white and blue, and no Gadget insignia.
 | Wingtip lights | `#70ace8` |   6.58:1 |
 
 The silhouette's edge median is 6.07:1.
+
+## Elder Loom's portrait
+
+Rebuild with `node art/tools/needle-portraits.ts`. It writes `loom.png` and
+`loom-compact.png` with their Aseprite data to `public/art/needle/portraits/`
+and replaces the `loom-portrait` entries in Needle's manifest.
+
+- Adapted from Archie's elder owner portrait `face-owner-kilo`
+  (CC BY-NC-SA 4.0; provenance and SHA-256 in [Portraits](portraits.md)): the
+  hair and long braid in silver and pearl, the clothes in a lavender Weaver
+  tunic with a pearl collar and a rose thread badge, and pilot goggles pushed
+  up on the hair (strap `#4a4360`, glass `#8fd6e0`).
+- The [conversation portrait](conversation.md) format, as for Ada and Penny:
+  `loom-portrait` is two 32 × 32 frames for the storybook panel, drawn 2x in
+  the 68 frame; `loom-portrait-compact` is their exact 22 × 22 crops at
+  (4, 5), drawn 2x in the conversation box (`displayWidth` and `displayHeight`
+  44). Frames `happy` 0 and `neutral` 1, 1000 ms each, no speaking loop: a line
+  Gameplay marks `(happy)` shows `happy`, any other `neutral`. Integer scale,
+  nearest neighbour.

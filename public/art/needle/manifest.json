@@ -946,6 +946,42 @@
         "y": 0.5
       },
       "craft": "glider"
+    },
+    {
+      "id": "loom-portrait",
+      "path": "/art/needle/portraits/loom.png",
+      "width": 64,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
+    },
+    {
+      "id": "loom-portrait-compact",
+      "path": "/art/needle/portraits/loom-compact.png",
+      "width": 44,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "happy": 0,
+        "neutral": 1
+      }
     }
   ],
   "needleGates": "/art/needle/gates.json",
