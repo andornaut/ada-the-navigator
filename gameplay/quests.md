@@ -145,7 +145,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
 | `jobComplete`   | Job complete: +{amount} Stardust           |
 | `tow`           | Tow                                        |
 | `towTravel`     | Unavailable while towing.                  |
-| `surveyTitle`   | Chart a {landmark}                         |
+| `surveyTitle`   | Chart the {landmark}                       |
 | `surveyAbout`   | Astra's map has a gap here. Fly close.     |
 | `deliveryTitle` | Deliver {item} to {place}                  |
 | `deliveryAbout` | They're waiting for it.                    |
@@ -174,6 +174,17 @@ Chunk generation keeps their space clear.
 - Flying within 300 world units of a landmark charts it at once and plays the
   existing "New place mapped." conversation.
 - Charted landmarks persist across flights and regeneration. Restart clears them.
+
+Each galaxy has four landmarks of each kind. The seed assigns the kinds, and the
+names go in table order within a kind, so each landmark keeps its name on every
+flight. The Map and survey titles use these names.
+
+| Galaxy    | Nebulae                                                 | Wrecks                                                               | Beacons                                             |
+| --------- | ------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| Sunflower | Petal Nebula, Honey Cloud, Pollen Haze, Dandelion Drift | Old Seed Barge, Rusty Planter Ship, Sleepy Tug, Patchwork Shuttle    | Daisy Beacon, Bee Light, Sunrise Buoy, Lantern Post |
+| Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker  |
+| Whirlpool | Tide Nebula, Bubble Cloud, Swirl Haze, Kelp Glow        | Sunken Skimmer, Coral Hull, Driftwood Hull, Old Diving Bell          | Song Buoy, Wave Light, Shell Beacon, Current Marker |
+| Black Eye | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker      |
 
 ## Achievements
 
