@@ -2,7 +2,8 @@
 
 - Rebuild with `node art/tools/ship.ts` when resources are available.
   The single module uses Node builtins and writes directly to `public/art/`.
-- Exports: `ship-{0..15}.svg`, `ship-thrust-{0..15}.svg` and `ship-jets.json`.
+- Exports: `ship-{0..15}.svg`, `ship-thrust-{0..15}.svg`, `ship-jets.json`,
+  and the [paint schemes](#paint-schemes).
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 10 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.
@@ -31,6 +32,38 @@
   `nx + ny + nz > 0`, and depth `-(x + y + z)` orders faces far to near within
   each component layer.
 - No raster assets, filters, strokes, external dependencies or screen rotation.
+
+## Paint schemes
+
+Ship paint recolours five faces: the hull top and tail, the front side faces
+(hull edges 0 and 5), the rear side faces, the canopy roof and the canopy
+sides. Engine mouths `#64caff`, thrust flames and speed jets are the same on
+every scheme. Geometry, culling and draw order are shared, so each painted
+frame has exactly the polygons of the matching Classic frame.
+
+| Scheme   | Price | Top       | Front sides | Rear sides | Canopy roof | Canopy sides |
+| -------- | ----: | --------- | ----------- | ---------- | ----------- | ------------ |
+| Classic  |     0 | `#ffffff` | `#d4dfe9`   | `#abbfce`  | `#2585d0`   | `#1767b3`    |
+| Cobalt   |    50 | `#6f9ff0` | `#4f7fd0`   | `#3a62a8`  | `#eef5ff`   | `#b4c8e6`    |
+| Seafoam  |    50 | `#d4f6ea` | `#a7dcc9`   | `#80bba8`  | `#14697a`   | `#0d4c59`    |
+| Graphite |    50 | `#aab2c4` | `#858ea4`   | `#666f86`  | `#59d0ff`   | `#2a92cc`    |
+| Iris     |    50 | `#d9ccff` | `#b2a0ec`   | `#8f7cd0`  | `#3a2b8c`   | `#271c66`    |
+
+- Classic is the free default and is the existing `ship-{0..15}.svg` set,
+  unchanged.
+- Other schemes export idle frames only:
+  `paint/{cobalt,seafoam,graphite,iris}/ship-{0..15}.svg`. Draw speed jets
+  behind them exactly as for Classic. There are no painted thrust frames.
+- `ship-paint.json` (version 1) lists every scheme in shop order with `id`,
+  `name`, `price` and the five colours as `top`, `frontSides`, `rearSides`,
+  `canopyRoof` and `canopySides`. Gameplay owns the player-facing names.
+- Manifest entries `ship-{scheme}-{N}` follow the ship entries and copy
+  `ship-N`'s fields, with their own `path` and a `paint` field holding the
+  scheme id. Classic frames have no `paint` field. Select by `paint` and
+  `directionIndex`; a lookup by `ship-` prefix alone must exclude entries with
+  `paint`.
+- `art/tools/ship.ts` writes the frames, `ship-paint.json` and the paint
+  manifest entries, replacing any earlier paint entries.
 
 ## Speed jets
 

@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -15,9 +15,88 @@ import {
 
 type Face = { color: string; layer: number; points: Point[]; twoSided?: boolean };
 
+// The five painted face colours. Mouths and thrust flames keep their own colours on every scheme.
+interface Paint {
+  readonly canopyRoof: string;
+  readonly canopySides: string;
+  readonly frontSides: string;
+  readonly rearSides: string;
+  // Hull top and tail.
+  readonly top: string;
+}
+
+interface Scheme {
+  readonly id: string;
+  readonly name: string;
+  readonly paint: Paint;
+  readonly price: number;
+}
+
 const white = "#ffffff";
-const side = "#d4dfe9";
-const rear = "#abbfce";
+// Classic is the free default and writes the unprefixed ship frames.
+const SCHEMES: readonly Scheme[] = [
+  {
+    id: "classic",
+    name: "Classic",
+    paint: {
+      canopyRoof: "#2585d0",
+      canopySides: "#1767b3",
+      frontSides: "#d4dfe9",
+      rearSides: "#abbfce",
+      top: white,
+    },
+    price: 0,
+  },
+  {
+    id: "cobalt",
+    name: "Cobalt",
+    paint: {
+      canopyRoof: "#eef5ff",
+      canopySides: "#b4c8e6",
+      frontSides: "#4f7fd0",
+      rearSides: "#3a62a8",
+      top: "#6f9ff0",
+    },
+    price: 50,
+  },
+  {
+    id: "seafoam",
+    name: "Seafoam",
+    paint: {
+      canopyRoof: "#14697a",
+      canopySides: "#0d4c59",
+      frontSides: "#a7dcc9",
+      rearSides: "#80bba8",
+      top: "#d4f6ea",
+    },
+    price: 50,
+  },
+  {
+    id: "graphite",
+    name: "Graphite",
+    paint: {
+      canopyRoof: "#59d0ff",
+      canopySides: "#2a92cc",
+      frontSides: "#858ea4",
+      rearSides: "#666f86",
+      top: "#aab2c4",
+    },
+    price: 50,
+  },
+  {
+    id: "iris",
+    name: "Iris",
+    paint: {
+      canopyRoof: "#3a2b8c",
+      canopySides: "#271c66",
+      frontSides: "#b2a0ec",
+      rearSides: "#8f7cd0",
+      top: "#d9ccff",
+    },
+    price: 50,
+  },
+];
+const [classic] = SCHEMES;
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // UP projects straight up.
 const UP = 10;
@@ -35,7 +114,7 @@ function mouthEdge(sign: number): [Point, Point] {
   ];
 }
 
-function model(yaw: number, thrust: boolean): Face[] {
+function model(yaw: number, thrust: boolean, paint: Paint): Face[] {
   const faces: Face[] = [];
   const hull = plan(4, [
     [-100, 0],
@@ -46,12 +125,12 @@ function model(yaw: number, thrust: boolean): Face[] {
     [64, 67],
   ]);
   // One continuous concave delta top includes both rear wing corners.
-  faces.push({ color: white, layer: 3, points: hull });
+  faces.push({ color: paint.top, layer: 3, points: hull });
   for (let i = 0; i < hull.length; i++) {
     const a = hull[(i + 1) % hull.length]!;
     const b = hull[i]!;
     faces.push({
-      color: i === 0 || i === 5 ? side : rear,
+      color: i === 0 || i === 5 ? paint.frontSides : paint.rearSides,
       layer: 2,
       points: [a, b, [b[0], b[1], 0], [a[0], a[1], 0]],
     });
@@ -103,15 +182,15 @@ function model(yaw: number, thrust: boolean): Face[] {
     const a = roof[(i + 1) % roof.length]!;
     const b = roof[i]!;
     faces.push({
-      color: "#1767b3",
+      color: paint.canopySides,
       layer: 5,
       points: [a, b, [b[0], b[1], 4], [a[0], a[1], 4]],
     });
   }
-  faces.push({ color: "#2585d0", layer: 6, points: roof });
+  faces.push({ color: paint.canopyRoof, layer: 6, points: roof });
   const tail = rotate(yaw, [0, 18.5, 0]);
   faces.push({
-    color: white,
+    color: paint.top,
     layer: tail[0] + tail[1] > 0 ? 7 : 4,
     points: [
       [0, 12.16, 4],
@@ -127,8 +206,8 @@ function visible(face: Face): boolean {
   return face.twoSided === true || facesViewer(face.points);
 }
 
-function svg(yaw: number, thrust: boolean): string {
-  const polygons = model(yaw, thrust)
+function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
+  const polygons = model(yaw, thrust, scheme.paint)
     .map((face) => ({ ...face, points: face.points.map((point) => rotate(yaw, point)) }))
     .filter(visible)
     .sort((a, b) => a.layer - b.layer || depth(b.points) - depth(a.points))
@@ -138,7 +217,7 @@ function svg(yaw: number, thrust: boolean): string {
     });
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
-    `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}</title>`,
+    `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
     ...polygons,
     "</svg>",
     "",
@@ -187,3 +266,47 @@ for (let yaw = 0; yaw < HEADINGS; yaw++) {
 }
 writeFileSync(`${output}ship.svg`, svg(UP, false));
 writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
+
+// Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
+const painted = SCHEMES.filter((scheme) => scheme !== classic);
+for (const scheme of painted) {
+  mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
+  for (let yaw = 0; yaw < HEADINGS; yaw++) {
+    writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
+  }
+}
+writeFileSync(
+  `${output}ship-paint.json`,
+  json({
+    version: 1,
+    schemes: SCHEMES.map(({ id, name, paint, price }) => ({ id, name, price, ...paint })),
+  }),
+);
+
+// Paint frame entries mirror ship-N with a paint id and follow the ship entries in the manifest.
+interface Asset {
+  readonly directionIndex?: number;
+  readonly id: string;
+  readonly paint?: string;
+  readonly path: string;
+}
+const manifestPath = `${output}manifest.json`;
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { assets: Asset[] };
+const kept = manifest.assets.filter((asset) => asset.paint === undefined);
+const entries = painted.flatMap((scheme) =>
+  Array.from({ length: HEADINGS }, (_, yaw) => {
+    const base = kept.find(({ id }) => id === `ship-${yaw}`);
+    if (!base) {
+      throw new Error(`The manifest lacks ship-${yaw}`);
+    }
+    return {
+      ...base,
+      id: `ship-${scheme.id}-${yaw}`,
+      path: `/art/paint/${scheme.id}/ship-${yaw}.svg`,
+      paint: scheme.id,
+    };
+  }),
+);
+const after = kept.findLastIndex(({ id }) => id.startsWith("ship-")) + 1;
+manifest.assets = [...kept.slice(0, after), ...entries, ...kept.slice(after)];
+writeFileSync(manifestPath, json(manifest));

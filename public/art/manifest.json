@@ -482,6 +482,966 @@
       }
     },
     {
+      "id": "ship-cobalt-0",
+      "path": "/art/paint/cobalt/ship-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-1",
+      "path": "/art/paint/cobalt/ship-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-2",
+      "path": "/art/paint/cobalt/ship-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-3",
+      "path": "/art/paint/cobalt/ship-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-4",
+      "path": "/art/paint/cobalt/ship-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-5",
+      "path": "/art/paint/cobalt/ship-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-6",
+      "path": "/art/paint/cobalt/ship-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-7",
+      "path": "/art/paint/cobalt/ship-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-8",
+      "path": "/art/paint/cobalt/ship-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-9",
+      "path": "/art/paint/cobalt/ship-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-10",
+      "path": "/art/paint/cobalt/ship-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-11",
+      "path": "/art/paint/cobalt/ship-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-12",
+      "path": "/art/paint/cobalt/ship-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-13",
+      "path": "/art/paint/cobalt/ship-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-14",
+      "path": "/art/paint/cobalt/ship-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-cobalt-15",
+      "path": "/art/paint/cobalt/ship-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "cobalt"
+    },
+    {
+      "id": "ship-seafoam-0",
+      "path": "/art/paint/seafoam/ship-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-1",
+      "path": "/art/paint/seafoam/ship-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-2",
+      "path": "/art/paint/seafoam/ship-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-3",
+      "path": "/art/paint/seafoam/ship-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-4",
+      "path": "/art/paint/seafoam/ship-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-5",
+      "path": "/art/paint/seafoam/ship-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-6",
+      "path": "/art/paint/seafoam/ship-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-7",
+      "path": "/art/paint/seafoam/ship-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-8",
+      "path": "/art/paint/seafoam/ship-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-9",
+      "path": "/art/paint/seafoam/ship-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-10",
+      "path": "/art/paint/seafoam/ship-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-11",
+      "path": "/art/paint/seafoam/ship-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-12",
+      "path": "/art/paint/seafoam/ship-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-13",
+      "path": "/art/paint/seafoam/ship-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-14",
+      "path": "/art/paint/seafoam/ship-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-seafoam-15",
+      "path": "/art/paint/seafoam/ship-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "seafoam"
+    },
+    {
+      "id": "ship-graphite-0",
+      "path": "/art/paint/graphite/ship-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-1",
+      "path": "/art/paint/graphite/ship-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-2",
+      "path": "/art/paint/graphite/ship-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-3",
+      "path": "/art/paint/graphite/ship-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-4",
+      "path": "/art/paint/graphite/ship-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-5",
+      "path": "/art/paint/graphite/ship-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-6",
+      "path": "/art/paint/graphite/ship-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-7",
+      "path": "/art/paint/graphite/ship-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-8",
+      "path": "/art/paint/graphite/ship-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-9",
+      "path": "/art/paint/graphite/ship-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-10",
+      "path": "/art/paint/graphite/ship-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-11",
+      "path": "/art/paint/graphite/ship-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-12",
+      "path": "/art/paint/graphite/ship-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-13",
+      "path": "/art/paint/graphite/ship-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-14",
+      "path": "/art/paint/graphite/ship-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-graphite-15",
+      "path": "/art/paint/graphite/ship-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "graphite"
+    },
+    {
+      "id": "ship-iris-0",
+      "path": "/art/paint/iris/ship-0.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-1",
+      "path": "/art/paint/iris/ship-1.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-2",
+      "path": "/art/paint/iris/ship-2.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-3",
+      "path": "/art/paint/iris/ship-3.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-4",
+      "path": "/art/paint/iris/ship-4.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-5",
+      "path": "/art/paint/iris/ship-5.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-6",
+      "path": "/art/paint/iris/ship-6.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-7",
+      "path": "/art/paint/iris/ship-7.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-8",
+      "path": "/art/paint/iris/ship-8.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-9",
+      "path": "/art/paint/iris/ship-9.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-10",
+      "path": "/art/paint/iris/ship-10.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-11",
+      "path": "/art/paint/iris/ship-11.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-12",
+      "path": "/art/paint/iris/ship-12.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-13",
+      "path": "/art/paint/iris/ship-13.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-14",
+      "path": "/art/paint/iris/ship-14.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
+      "id": "ship-iris-15",
+      "path": "/art/paint/iris/ship-15.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "paint": "iris"
+    },
+    {
       "id": "ada-portrait",
       "path": "/art/portraits/ada.png",
       "width": 64,

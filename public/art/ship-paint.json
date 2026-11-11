@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "schemes": [
+    {
+      "id": "classic",
+      "name": "Classic",
+      "price": 0,
+      "canopyRoof": "#2585d0",
+      "canopySides": "#1767b3",
+      "frontSides": "#d4dfe9",
+      "rearSides": "#abbfce",
+      "top": "#ffffff"
+    },
+    {
+      "id": "cobalt",
+      "name": "Cobalt",
+      "price": 50,
+      "canopyRoof": "#eef5ff",
+      "canopySides": "#b4c8e6",
+      "frontSides": "#4f7fd0",
+      "rearSides": "#3a62a8",
+      "top": "#6f9ff0"
+    },
+    {
+      "id": "seafoam",
+      "name": "Seafoam",
+      "price": 50,
+      "canopyRoof": "#14697a",
+      "canopySides": "#0d4c59",
+      "frontSides": "#a7dcc9",
+      "rearSides": "#80bba8",
+      "top": "#d4f6ea"
+    },
+    {
+      "id": "graphite",
+      "name": "Graphite",
+      "price": 50,
+      "canopyRoof": "#59d0ff",
+      "canopySides": "#2a92cc",
+      "frontSides": "#858ea4",
+      "rearSides": "#666f86",
+      "top": "#aab2c4"
+    },
+    {
+      "id": "iris",
+      "name": "Iris",
+      "price": 50,
+      "canopyRoof": "#3a2b8c",
+      "canopySides": "#271c66",
+      "frontSides": "#b2a0ec",
+      "rearSides": "#8f7cd0",
+      "top": "#d9ccff"
+    }
+  ]
+}
