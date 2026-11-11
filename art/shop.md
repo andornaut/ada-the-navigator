@@ -10,22 +10,22 @@ string keys.
 
 ## Shared parts
 
-| Part                | Asset or token                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| Card, close, focus  | `ui-settings-card`, `ui-close`, `ui-focus`                                             |
-| Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                           |
-| Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                        |
-| Stardust            | `icon-stardust`, 16px in price pills, 20px in balances and the confirm price           |
-| Item glyphs         | `icon-shop-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md)            |
-| Owned and In use    | `icon-shop-check`, 12x8                                                                |
-| Ship paint swatches | The scheme's `ship-12` frame: `ship-12` for Classic, `ship-<scheme>-12` for the others |
+| Part                | Asset or token                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Card, close, focus  | `ui-settings-card`, `ui-close`, `ui-focus`                                                  |
+| Buttons and tabs    | `ui-button` (secondary), `ui-button-primary`                                                |
+| Item row            | `ui-button-tile`: normal, pressed, disabled; nine-slice 2/4/2/6                             |
+| Stardust            | `icon-stardust` (16px) in price pills; `icon-stardust-20` in balances and the confirm price |
+| Item glyphs         | `icon-shop-*` sheets and `weapon-<id>.svg`; see [Shop icons](shop-icons.md)                 |
+| Owned and In use    | `icon-shop-check`, 12x8                                                                     |
+| Ship paint swatches | The scheme's `ship-12` frame: `ship-12` for Classic, `ship-<scheme>-12` for the others      |
 
 Text uses the controls text tokens: titles 24px bold white `#ffffff`, body and
 names 16px cream `#ead4aa`, supporting text 16px `#b8b3c9`, disabled text 16px
 `#9a96ad`. Body text groups never widen a card: they wrap within the inner width
 the other groups and the 50% viewport floor set.
 
-A balance is one centred group: `icon-stardust` at 20px, 6px, then the amount
+A balance is one centred group: `icon-stardust-20`, 6px, then the amount
 16px bold cream, both centred vertically on a 20px line.
 
 ## Station card
@@ -139,7 +139,7 @@ Escape and Cancel all cancel.
    swatch at 48x48, centred.
 3. Weapons only: the weapon's description (`aboutMissiles`, `aboutTripleLaser`,
    `aboutScattershot`), body text, centred lines.
-4. Price: `icon-stardust` at 20px, 6px, then the price 24px bold cream, centred.
+4. Price: `icon-stardust-20`, 6px, then the price 24px bold cream, centred.
 5. `confirmLeft` ("{amount} left after"), supporting text, centred.
 6. Action group: Cancel (`confirmCancel`, secondary) left, Buy (`confirmBuy`,
    primary) right.
@@ -159,5 +159,5 @@ The shared card layout takes precedence over these mock-up measurements:
   text, not 14px. Owned and In use labels are 16px.
 - Row insets are 8px throughout; the mock-up's well inset was 7, its name gap
   9 and its pill inset 10.
-- `icon-stardust` is 16px and 20px rather than the mock-up's 11px and 15px
+- `icon-stardust` (16px) and `icon-stardust-20` replace the mock-up's 11px and 15px
   sparkle, and the pills share a content-fitted width instead of a fixed 70px.
