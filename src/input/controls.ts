@@ -9,7 +9,9 @@ import type { GameObjects, Scene } from "phaser";
 
 import type { Weapon } from "../data/types.ts";
 import { createTouchChrome, showTouchChrome } from "../game/touch-chrome.ts";
+import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
+import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import {
@@ -50,6 +52,8 @@ export interface ControlsOptions {
 
 export interface Controls {
   closeSettings(): void;
+  // Adds a card that back and Escape close while it is open, innermost so far.
+  registerBack(layer: BackLayer): () => void;
   dispose(): void;
   openSettings(): void;
   reset(): void;
@@ -226,20 +230,30 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     window,
   );
+  // Back and Escape close the innermost open card, innermost registered last; other cards join
+  // through registerBack.
+  const backStack = createBackStack();
+  const leaveBack = [
+    backStack.register({ back: () => cheats.close(), isOpen: () => cheats.isOpen() }),
+    backStack.register({
+      back: () => settings.close(),
+      isOpen: () => settings.isOpen() && !settings.stepsOpen(),
+    }),
+    backStack.register({ back: () => settings.closeSteps(), isOpen: () => settings.stepsOpen() }),
+  ];
+  if (update) {
+    leaveBack.push(backStack.register({ back: update.defer, isOpen: update.isOpen }));
+  }
+  // Back during flight with nothing open pauses, which Settings does.
+  const onBack = () => {
+    pressBack(backStack, enabled, () => settings.open());
+  };
   const reset = () => state.reset();
   const keyDown = (event: KeyboardEvent) => {
     if (event.code === "Escape") {
       event.preventDefault();
       if (!event.repeat) {
-        if (update?.isOpen()) {
-          update.defer();
-        } else if (cheats.isOpen()) {
-          cheats.close();
-        } else if (settings.stepsOpen()) {
-          settings.closeSteps();
-        } else if (settings.isOpen()) {
-          settings.close();
-        } else {
+        if (!backStack.back()) {
           settings.open();
         }
       }
@@ -266,6 +280,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   const use = () => state.requestUse();
   settings.useButton.addEventListener("click", use);
+  window.addEventListener(PHONE_EVENTS.backPressed, onBack);
   window.addEventListener("keydown", keyDown);
   window.addEventListener("keyup", keyUp);
   window.addEventListener("blur", reset);
@@ -330,6 +345,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       for (const part of stickParts) {
         part.destroy();
       }
+      window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
+      for (const leave of leaveBack) {
+        leave();
+      }
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
       window.removeEventListener("blur", reset);
@@ -348,6 +367,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       cheats.close();
       settings.open();
     },
+    registerBack: (layer) => backStack.register(layer),
     reset,
     sample: () => state.sample(),
     setContext(label) {

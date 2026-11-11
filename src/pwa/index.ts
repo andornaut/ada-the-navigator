@@ -1,9 +1,14 @@
 // The game as an installable app that plays offline: the service worker, persistent storage, the
-// install offer and the update offer. setupPhoneApp runs once from main.ts as the page loads; the
+// install offer, the update offer and the back gesture. setupPhoneApp runs once from main.ts as the page loads; the
 // Settings Install row reads the install functions below, and the start screen the update offer.
 //
 // Waiting updates activate only through the start screen's update offer, never automatically
 // before input or during play.
+import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
+import {
+  browserCloseWatcher,
+  guardBackNavigation,
+} from "@andornaut/game-kit/web/pwa/dom/backNavigation";
 import {
   type InstallFlow,
   type InstallOutcome,
@@ -19,6 +24,7 @@ import type { InstallState, MenuInstallBrowser } from "@andornaut/game-kit/web/p
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
 
+import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import {
   createUpdateOffer,
   type StartCover,
@@ -26,6 +32,7 @@ import {
   trackStartScreen,
 } from "./updateOffer.ts";
 
+export { PHONE_EVENTS } from "./events.ts";
 export type { InstallOutcome } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 export {
   type InstallState,
@@ -34,6 +41,8 @@ export {
 } from "@andornaut/game-kit/web/pwa/installState";
 
 const SERVICE_WORKER_URL = "/sw.js";
+// The history state key of the extra entry that back pops instead of leaving the game.
+const BACK_GUARD_KEY = "adaBackGuard";
 // A startup check holds the kit's boot signal for at most this long; activation remains manual.
 const BOOT_WAIT_MS = 4000;
 
@@ -77,10 +86,32 @@ function setupOfflinePlay(): void {
   startScreen = trackStartScreen(play.flow.setOfferVisible);
 }
 
-// Sets up offline play, the install offer and persistent storage.
+// Keeps back on the game, as in Chibi: each back dispatches PHONE_EVENTS.backPressed on window.
+// Before the player's first input, and where the browser cannot hand back to the game, back is
+// the browser's own.
+function guardBack(): void {
+  // Firefox for Android's installed app keeps its own back.
+  // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
+  if (isFirefoxAndroidApp(navigator.userAgent, (query) => window.matchMedia(query).matches)) {
+    return;
+  }
+  guardBackNavigation(
+    {
+      onBack: () => dispatchPhoneEvent(window, PHONE_EVENTS.backPressed),
+      stateKey: BACK_GUARD_KEY,
+    },
+    window,
+    window,
+    backCloseWatcher(navigator.userAgent, browserCloseWatcher()),
+    history,
+  );
+}
+
+// Sets up offline play, the install offer, the back gesture and persistent storage.
 export function setupPhoneApp(): void {
   installFlow();
   setupOfflinePlay();
+  guardBack();
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
   // runs whatever the browser answers, or if it never does.
   void requestPersistentStorage(

@@ -34,7 +34,7 @@ const CHROME = "Mozilla/5.0 (X11; Linux x86_64) Chrome/142.0 Safari/537.36";
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1";
 const FIREFOX_ANDROID = "Mozilla/5.0 (Android 15; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0";
 
-// The browser's window as the kit's install flow reads it.
+// The browser's window as the kit's install flow and back guard read it.
 function stubDevice({ app = false, maxTouchPoints = 0, userAgent = CHROME }: Device): EventTarget {
   const navigator = { maxTouchPoints, standalone: false, userAgent };
   const page = Object.assign(new EventTarget(), {
@@ -43,6 +43,7 @@ function stubDevice({ app = false, maxTouchPoints = 0, userAgent = CHROME }: Dev
   });
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
+  stubHistory();
   return page;
 }
 
@@ -116,6 +117,60 @@ describe("offline play", () => {
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     expect(vi.mocked(requestPersistentStorage)).toHaveBeenCalledExactlyOnceWith(app, undefined);
+  });
+});
+
+// The page's history as the back guard reads it, with no entry before the game.
+function stubHistory() {
+  const history = {
+    length: 1,
+    pushState: vi.fn((state: unknown) => {
+      history.state = state;
+      history.length += 1;
+    }),
+    state: null as unknown,
+  };
+  vi.stubGlobal("history", history);
+  return history;
+}
+
+describe("back gesture", () => {
+  it("leaves back to the browser until the player's first input", async () => {
+    const page = stubDevice({});
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const backs = vi.fn();
+    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    expect(history.pushState).not.toHaveBeenCalled();
+    page.dispatchEvent(new Event("pointerup"));
+    expect(history.pushState).toHaveBeenCalledOnce();
+    // Back pops the guard entry: the game hears back and the guard returns.
+    history.state = null;
+    page.dispatchEvent(new Event("popstate"));
+    expect(backs).toHaveBeenCalledOnce();
+    expect(history.pushState).toHaveBeenCalledTimes(2);
+  });
+
+  it("ignores forward onto the guard entry", async () => {
+    const page = stubDevice({});
+    stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const backs = vi.fn();
+    page.addEventListener(pwa.PHONE_EVENTS.backPressed, backs);
+    page.dispatchEvent(new Event("pointerup"));
+    page.dispatchEvent(new Event("popstate"));
+    expect(backs).not.toHaveBeenCalled();
+  });
+
+  it("keeps the browser's back in Firefox for Android's installed app", async () => {
+    const page = stubDevice({ app: true, userAgent: FIREFOX_ANDROID });
+    const history = stubHistory();
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    page.dispatchEvent(new Event("pointerup"));
+    expect(history.pushState).not.toHaveBeenCalled();
   });
 });
 
