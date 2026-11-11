@@ -118,11 +118,15 @@ export const STORYBOOK_STYLE = `
   gap:${units(STORY_PANEL.gap)}
 }
 
-/* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP). */
+/* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or
+   on the HUD rect's top-right corner while the settings button is hidden. */
 .ada-controls .ada-story-skip{
   position:absolute;
   top:${fromHudEdge("top", STORY_SKIP.top)};
-  right:${fromHudEdge("right", STORY_SKIP.right)}
+  right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}
+}
+.ada-controls.ada-no-settings-button .ada-story-skip{
+  right:${fromHudEdge("right", STORY_SKIP.right.corner)}
 }
 `;
 

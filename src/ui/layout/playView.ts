@@ -108,10 +108,10 @@ export const HUD_BUTTON = {
 
 // Where a disc and a glyph sit inside their target.
 // Storybook Skip: a compact secondary control apart from page navigation, in the top-right HUD
-// row one gap left of the settings button, centred on the row's 48 targets. Offsets from the HUD
-// rect's top-right corner.
+// row centred on the row's 48 targets, one gap left of the settings button's target when it
+// shows, otherwise on the HUD rect's top-right corner. Offsets from that corner.
 export const STORY_SKIP = {
-  right: HUD_BUTTON.target + SPACING.gap,
+  right: { besideSettings: HUD_BUTTON.target + SPACING.gap, corner: 0 },
   top: (HUD_BUTTON.target - TEXT_BUTTON.compactHeight) / 2,
 } as const;
 

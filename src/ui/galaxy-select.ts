@@ -1,5 +1,5 @@
 import { units } from "./layout/css.ts";
-import { GALAXY_CARD } from "./layout/galaxySelectCard.ts";
+import { GALAXY_CARD, type GalaxyAction } from "./layout/galaxySelectCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
 import { refuse } from "./refusal.ts";
@@ -77,6 +77,18 @@ const STYLE = `
 }
 `;
 
+// The action row's buttons in GALAXY_CARD.actions' roles, each tagged galaxy-<id>.
+function galaxyActionButtons(
+  labels: GalaxySelectLabels,
+): Readonly<Record<GalaxyAction, HTMLButtonElement>> {
+  const entries = GALAXY_CARD.actions.map(({ id, role }) => {
+    const button = createButton(labels[id], role);
+    button.dataset.action = `galaxy-${id}`;
+    return [id, button] as const;
+  });
+  return Object.fromEntries(entries) as Record<GalaxyAction, HTMLButtonElement>;
+}
+
 /**
  * Galaxy selection over the cockpit, one galaxy per page as in Chibi's stage cards: the header
  * "Galaxy {number}", the screenshot, name and flavor line, then Previous, Home, Jump and Next.
@@ -111,15 +123,9 @@ export function createGalaxySelect(root: HTMLElement, options: GalaxySelectOptio
   const actions = document.createElement("div");
   actions.className = "ada-actions";
   actions.dataset.inkTop = "0";
-  const previous = createButton(labels.previous);
-  previous.dataset.action = "galaxy-previous";
-  const home = createButton(labels.home);
-  home.dataset.action = "galaxy-home";
-  const jump = createButton(labels.jump, "primary");
-  jump.dataset.action = "galaxy-jump";
-  const next = createButton(labels.next);
-  next.dataset.action = "galaxy-next";
-  actions.append(previous, home, jump, next);
+  const buttons = galaxyActionButtons(labels);
+  const { home, jump, next, previous } = buttons;
+  actions.append(...GALAXY_CARD.actions.map(({ id }) => buttons[id]));
   card.body.append(galaxy, actions);
   modal.append(card.frame);
   root.append(style, modal);

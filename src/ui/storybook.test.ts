@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { TEXT_BUTTON } from "./layout/controls.ts";
 import { fromHudEdge, safeEdge } from "./layout/css.ts";
 import { HUD_BUTTON, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
@@ -28,12 +29,24 @@ describe("storybook page", () => {
     expect(rule(".ada-controls .ada-story-controls")).toContain("justify-content:space-between");
   });
 
-  it("sets Skip apart at the top right, clear of the settings button", () => {
+  it("sets Skip apart at the top right, one gap left of the settings button's target", () => {
     expect(STORY_PANEL.pageControls).not.toContain("skip");
     const skip = rule(".ada-controls .ada-story-skip");
     expect(skip).toContain(`top:${fromHudEdge("top", STORY_SKIP.top)};`);
-    expect(skip).toContain(`right:${fromHudEdge("right", STORY_SKIP.right)}`);
-    expect(STORY_SKIP.right).toBe(HUD_BUTTON.target + SPACING.gap);
+    expect(skip).toContain(`right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}`);
+    expect(STORY_SKIP.right.besideSettings).toBe(HUD_BUTTON.target + SPACING.gap);
+  });
+
+  it("puts Skip on the HUD rect's top-right corner while the settings button is hidden", () => {
+    const alone = rule(".ada-controls.ada-no-settings-button .ada-story-skip");
+    expect(STORY_SKIP.right.corner).toBe(0);
+    expect(alone).toContain(`right:${fromHudEdge("right")}`);
+    // Only the side moves: Skip stays centred on the HUD row's targets.
+    expect(alone).not.toContain("top:");
+  });
+
+  it("centres the compact Skip on the HUD row's 48 targets", () => {
+    expect(STORY_SKIP.top * 2 + TEXT_BUTTON.compactHeight).toBe(HUD_BUTTON.target);
   });
 
   it("keeps the panel's top a gap below the HUD row, clear of Skip and Settings", () => {
