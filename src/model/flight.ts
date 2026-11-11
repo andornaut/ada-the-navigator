@@ -1464,6 +1464,15 @@ function hit(
     events.push({ type: "enemyDisabled" });
   }
   if (object.kind === "rock") {
+    if (object.asteroid) {
+      events.push({
+        asteroid: object.asteroid,
+        id: object.id,
+        type: "asteroidDestroyed",
+        x: object.x,
+        y: object.y,
+      });
+    }
     const next = dropRandom(flight.seed, object.id);
     const stardust = rollAsteroidStardust(ECONOMY, asteroidSize(object), next);
     // An asteroid scatters its Stardust, more for bigger sizes, about its own radius.

@@ -49,7 +49,7 @@ import {
   type StoryPosition,
   storyStart,
 } from "./storybook.ts";
-import type { FlightInput, GameState, SectorProgress } from "./types.ts";
+import type { FlightEvent, FlightInput, GameState, SectorProgress } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
   loseEquippedWeapon,
@@ -115,6 +115,8 @@ const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "sa
 
 export class GameModel {
   state: GameState;
+  /** The last flight step's events, for view effects; empty when no step ran. */
+  flightEvents: readonly FlightEvent[] = [];
   private readonly content: PrototypeContent;
   private previousSeed = 0;
   // The home half's place is not saved: a launch at home shows the start screen, and Continue
@@ -540,6 +542,7 @@ export class GameModel {
     return true;
   }
   step(dt: number, input: FlightInput): void {
+    this.flightEvents = [];
     const f = this.state.flight;
     if (
       !f ||
@@ -554,6 +557,7 @@ export class GameModel {
     this.ensureRequiredApproaches();
     const previousFreshDistance = f.freshDistance;
     const events = stepFlight(this.content, dt, input, f);
+    this.flightEvents = events;
     this.pullLoadout();
     for (const event of events) {
       if (event.type === "depleted") {

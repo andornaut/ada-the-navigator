@@ -120,6 +120,11 @@ export class StoryShell {
     }
   }
 
+  /** Marks the status line once Art's rock sprites replace the footprint placeholders. */
+  setAsteroidArt(ready: boolean): void {
+    this.status.dataset.asteroids = ready ? "art" : "placeholder";
+  }
+
   setSavingAvailable(available: boolean): void {
     const text = available ? "" : (PROTOTYPE.labels.savingUnavailable ?? "");
     if (this.savingStatus.textContent !== text) {

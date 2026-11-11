@@ -1,5 +1,10 @@
 import Phaser from "phaser";
 
+import {
+  type AsteroidArt,
+  type AsteroidArtCatalog,
+  readAsteroidCatalog,
+} from "../data/asteroid-catalog.ts";
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
@@ -43,7 +48,20 @@ import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-ove
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
-import { asteroidArt, type AsteroidOutline, cellTint, tinted } from "./asteroid-art.ts";
+import {
+  artVariant,
+  type AsteroidOutline,
+  BACKDROP_FIELD,
+  backdropRock,
+  backdropTint,
+  cellTint,
+  driftChips,
+  footprintOutline,
+  hexNumber,
+  playDepth,
+  spinFrame,
+  tinted,
+} from "./asteroid-art.ts";
 import {
   type DestructionData,
   flashAt,
@@ -145,6 +163,21 @@ export class PrototypeScene extends Phaser.Scene {
   private stardustArt: StardustArt<Asset> | undefined;
   private destruction: DestructionData | undefined;
   private shards = new Map<string, ShardData>();
+  // Art's rocks and backdrop, once its catalog and every frame have loaded.
+  private asteroidArt: AsteroidArtCatalog | undefined;
+  private backdropSprites = new Map<string, Phaser.GameObjects.Image>();
+  // Rock SVGs requested from the loader, and whether new ones wait for a start.
+  private rockRequests = new Set<string>();
+  private rockQueued = false;
+  // Destroyed rocks breaking at their pivot: the rock, its last frame, world position and start.
+  private rockBreaks: {
+    art: AsteroidArt;
+    at: Vec;
+    frame: number;
+    id: string;
+    sprite?: Phaser.GameObjects.Image;
+    startedMs: number;
+  }[] = [];
   private reducedMotion = false;
   // Art's quantum jump: the overlay, whether a jump is playing (flight pauses), whether the
   // presentation holds the source scene, and the last drawn space scene's specks.
@@ -185,6 +218,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.load.once("filecomplete-json-art-manifest", () => {
       const manifest = this.cache.json.get("art-manifest") as {
         assets: Asset[];
+        asteroids?: string;
         galaxies?: string;
         quantumJump?: string;
         spacePalette?: string;
@@ -197,6 +231,9 @@ export class PrototypeScene extends Phaser.Scene {
       }
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
+      }
+      if (manifest.asteroids) {
+        this.load.json("asteroids", manifest.asteroids);
       }
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -613,6 +650,69 @@ export class PrototypeScene extends Phaser.Scene {
     });
     this.observeFeedback();
     this.refresh();
+    this.loadAsteroidArt();
+  }
+
+  /**
+   * Art's rock frames load after the scene starts, at display size (the canvas draws logical
+   * px): each rock's frame 0 and the backdrop sprites first, then each spin frame the first
+   * time it is drawn, so starting the scene never waits on 202 SVGs.
+   */
+  private loadAsteroidArt(): void {
+    const catalog = readAsteroidCatalog(this.cache.json.get("asteroids"));
+    this.asteroidArt = catalog;
+    this.shell.setAsteroidArt(false);
+    if (!catalog) {
+      return;
+    }
+    const first = [
+      ...catalog.asteroids.map((rock) => rock.frames[0]!.file),
+      ...catalog.backdrop.sprites.map((sprite) => sprite.file),
+    ];
+    const ready = (): void => {
+      if (first.every((file) => this.textures.exists(file))) {
+        this.shell.setAsteroidArt(true);
+      }
+    };
+    first.forEach((file) => this.rockTexture(file));
+    if (!this.startRockLoads()) {
+      ready();
+      return;
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, ready);
+  }
+
+  /** Whether a rock or backdrop SVG is ready; a missing one is queued for the next load. */
+  private rockTexture(file: string): boolean {
+    if (this.textures.exists(file)) {
+      return true;
+    }
+    if (!this.rockRequests.has(file) && this.asteroidArt) {
+      this.rockRequests.add(file);
+      this.load.svg(file, file, { scale: this.asteroidArt.displayScale });
+      this.rockQueued = true;
+    }
+    return false;
+  }
+
+  /** Starts loading any queued rock SVGs; false when none were queued. */
+  private startRockLoads(): boolean {
+    if (!this.rockQueued) {
+      return false;
+    }
+    this.rockQueued = false;
+    this.load.start();
+    return true;
+  }
+
+  /** The loaded texture for a rock frame: that frame, else frame 0, else none yet. */
+  private rockFrameTexture(art: AsteroidArt, frame: number): string | undefined {
+    const wanted = art.frames[frame]!.file;
+    if (this.rockTexture(wanted)) {
+      return wanted;
+    }
+    const still = art.frames[0]!.file;
+    return this.rockTexture(still) ? still : undefined;
   }
 
   override update(time: number, milliseconds: number): void {
@@ -640,6 +740,7 @@ export class PrototypeScene extends Phaser.Scene {
       };
       this.model.step(Math.min(milliseconds / 1000, 0.05), input);
       this.observeFeedback();
+      this.startRockBreaks(time);
     }
     // A failed shield already sent Ada home; hold the last drawn flight as the source scene
     // until Astra's emergency jump covers it.
@@ -676,6 +777,27 @@ export class PrototypeScene extends Phaser.Scene {
       this.flush();
       this.durable = durable;
       this.savedAt = time;
+    }
+  }
+
+  /** Each rock destroyed this step breaks where it stood, in the frame it last showed. */
+  private startRockBreaks(nowMs: number): void {
+    const flight = this.model.state.flight;
+    const catalog = this.asteroidArt;
+    if (!flight || !catalog) {
+      return;
+    }
+    for (const event of this.model.flightEvents) {
+      const art = event.type === "asteroidDestroyed" && artVariant(catalog, event.asteroid);
+      if (art && event.type === "asteroidDestroyed") {
+        this.rockBreaks.push({
+          art,
+          at: { x: event.x, y: event.y },
+          frame: spinFrame(art, flight.seed, this.reducedMotion, event.id, flight.time),
+          id: event.id,
+          startedMs: nowMs,
+        });
+      }
     }
   }
 
@@ -815,6 +937,12 @@ export class PrototypeScene extends Phaser.Scene {
     for (const sprite of this.enemySprites.values()) {
       sprite.setVisible(false);
     }
+    for (const sprite of this.backdropSprites.values()) {
+      sprite.setVisible(false);
+    }
+    for (const rock of this.rockBreaks) {
+      rock.sprite?.setVisible(false);
+    }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     for (const label of this.labels.values()) {
       label.setVisible(false);
@@ -822,12 +950,17 @@ export class PrototypeScene extends Phaser.Scene {
     if (!flight || this.model.state.mode !== "space") {
       return;
     }
+    this.drawBackdrop(flight);
     // Stationary world markers provide motion cues without a navigation map.
     const cell = 160;
     const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
     const gx = Math.floor(flight.player.x / cell);
     const gy = Math.floor(flight.player.y / cell);
     this.specks = [];
+    // Dust specks take the galaxy's backdropSide; without Art they keep a light per-cell tint.
+    const speckColor = this.asteroidArt
+      ? hexNumber(backdropTint(this.asteroidArt, flight.sector).backdropSide)
+      : undefined;
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.project({
@@ -837,14 +970,18 @@ export class PrototypeScene extends Phaser.Scene {
         if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
           this.specks.push(point);
         }
-        // Background markers stay muted but carry a light per-cell tint.
-        this.ink.fillStyle(tinted(0.3, cellTint(x, y), this.palette.environmentDetail), 0.6);
+        this.ink.fillStyle(
+          speckColor ?? tinted(0.3, cellTint(x, y), this.palette.environmentDetail),
+          0.6,
+        );
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
     for (const object of flight.objects) {
       this.drawObject(object);
     }
+    this.drawRockBreaks();
+    this.startRockLoads();
     // Placeholder blast flash until Art supplies one: the blast's ground-plane ellipse, half-width
     // R x 1.414 and half-height R x 0.707, fading out.
     for (const flash of activeBlastFlashes(flight)) {
@@ -908,6 +1045,9 @@ export class PrototypeScene extends Phaser.Scene {
     this.drawDiscovery();
     this.drawFeedback();
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
+    // Ada sorts with the rocks by pivot screen y; her jets sit just behind her.
+    this.ship.setDepth(playDepth(this.ship.y));
+    this.jets.setDepth(playDepth(this.ship.y) - 1e-6);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
     const speed = thrusting ? shipSpeedFraction(PROTOTYPE, flight) : 0;
@@ -1118,6 +1258,7 @@ export class PrototypeScene extends Phaser.Scene {
       .setOrigin(frame.pivot.x, frame.pivot.y)
       .setPosition(point.x, point.y)
       .setRotation(0)
+      .setDepth(playDepth(point.y))
       .setVisible(true);
     const speed = enemySpeedFraction(
       enemyCatalog[enemy.archetype],
@@ -1491,11 +1632,17 @@ export class PrototypeScene extends Phaser.Scene {
     const radius = definition
       ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2)
       : object.radius;
+    const rock =
+      object.asteroid && this.asteroidArt
+        ? artVariant(this.asteroidArt, object.asteroid)
+        : undefined;
+    // Art's rocks reach past their footprint; cull by the drawn reach.
+    const reach = rock ? Math.max(radius, rock.radius * this.asteroidArt!.displayScale) : radius;
     if (
-      point.x < -radius - 60 ||
-      point.y < -radius - 60 ||
-      point.x > SCREEN.width + radius + 60 ||
-      point.y > SCREEN.height + radius + 60
+      point.x < -reach - 60 ||
+      point.y < -reach - 60 ||
+      point.x > SCREEN.width + reach + 60 ||
+      point.y > SCREEN.height + reach + 60
     ) {
       return;
     }
@@ -1577,7 +1724,11 @@ export class PrototypeScene extends Phaser.Scene {
         break;
       case "rock":
       case "debris": {
-        const art = object.asteroid ? asteroidArt(object.asteroid) : undefined;
+        if (rock) {
+          this.drawAsteroidSprite(object, point, rock);
+          break;
+        }
+        const art = object.asteroid ? footprintOutline(object.asteroid) : undefined;
         if (art) {
           this.drawAsteroid(point, art.entry.tint, art.outline);
           break;
@@ -1605,6 +1756,128 @@ export class PrototypeScene extends Phaser.Scene {
         break;
       }
     }
+  }
+
+  /**
+   * Art's rock at its pivot, in the spin frame for flight time, sorted by pivot screen y; a
+   * drifting rock trails its stone chips (art/asteroids.md "Drift cue").
+   */
+  private drawAsteroidSprite(object: SpaceObject, point: Vec, art: AsteroidArt): void {
+    const flight = this.model.state.flight!;
+    const frame = spinFrame(art, flight.seed, this.reducedMotion, object.id, flight.time);
+    const texture = this.rockFrameTexture(art, frame);
+    if (!texture) {
+      const placeholder = object.asteroid ? footprintOutline(object.asteroid) : undefined;
+      if (placeholder) {
+        this.drawAsteroid(point, placeholder.entry.tint, placeholder.outline);
+      }
+      return;
+    }
+    this.objectSprite(object.id, texture)
+      .setOrigin(art.pivot.x, art.pivot.y)
+      .setDisplaySize(art.display.width, art.display.height)
+      .setPosition(point.x, point.y)
+      .setDepth(playDepth(point.y));
+    const velocity = object.orbit ? object.velocity : undefined;
+    if (!velocity) {
+      return;
+    }
+    // The reverse drift, projected to screen.
+    const behind = { x: velocity.y - velocity.x, y: -(velocity.x + velocity.y) / 2 };
+    for (const chip of driftChips(art, flight.seed, frame, object.id, behind)) {
+      this.ink.fillStyle(hexNumber(this.asteroidArt!.stone[1]!), chip.alpha);
+      this.ink.fillRect(
+        point.x + chip.x - chip.size / 2,
+        point.y + chip.y - chip.size / 2,
+        chip.size,
+        chip.size,
+      );
+    }
+  }
+
+  /**
+   * Backdrop rocks under every play object: one greyscale sprite per filled field cell,
+   * multiplied by the galaxy's backdropLit, at 0.6 to 1 times its display size.
+   */
+  private drawBackdrop(flight: NonNullable<typeof this.model.state.flight>): void {
+    const catalog = this.asteroidArt;
+    if (!catalog) {
+      return;
+    }
+    const tint = hexNumber(backdropTint(catalog, flight.sector).backdropLit);
+    const { cell } = BACKDROP_FIELD;
+    const span = Math.ceil((Math.max(SCREEN.width, SCREEN.height) * 1.5) / cell) + 1;
+    const gx = Math.floor(flight.player.x / cell);
+    const gy = Math.floor(flight.player.y / cell);
+    const used = new Set<string>();
+    for (let x = gx - span; x <= gx + span; x++) {
+      for (let y = gy - span; y <= gy + span; y++) {
+        const rock = backdropRock(catalog, flight.seed, x, y);
+        if (!rock || !this.rockTexture(rock.sprite.file)) {
+          continue;
+        }
+        const point = this.project(rock);
+        const width = rock.sprite.display.width * rock.scale;
+        const height = rock.sprite.display.height * rock.scale;
+        if (
+          point.x < -width ||
+          point.y < -height ||
+          point.x > SCREEN.width + width ||
+          point.y > SCREEN.height + height
+        ) {
+          continue;
+        }
+        const key = `${x},${y}`;
+        used.add(key);
+        let sprite = this.backdropSprites.get(key);
+        if (!sprite) {
+          sprite = this.add.image(0, 0, rock.sprite.file).setDepth(-1);
+          this.backdropSprites.set(key, sprite);
+        }
+        sprite
+          .setTexture(rock.sprite.file)
+          .setOrigin(rock.sprite.pivot.x, rock.sprite.pivot.y)
+          .setDisplaySize(width, height)
+          .setPosition(point.x, point.y)
+          .setTint(tint)
+          .setVisible(true);
+      }
+    }
+    for (const [key, sprite] of this.backdropSprites) {
+      if (!used.has(key)) {
+        sprite.destroy();
+        this.backdropSprites.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Destroyed rocks take the archetype-independent destruction (art/asteroids.md
+   * "Destruction"): shrink about the pivot, multiply darken and fade linearly, at every motion
+   * setting. Asteroid timings are not authored; the fighter's reduced timing stands in.
+   */
+  private drawRockBreaks(): void {
+    const data = this.destruction;
+    const timing = data?.archetypes.fighter;
+    this.rockBreaks = this.rockBreaks.filter((rock) => {
+      const state = data && timing ? reducedAt(data, timing, this.time.now - rock.startedMs) : null;
+      const texture = this.rockFrameTexture(rock.art, rock.frame);
+      if (!state || !texture) {
+        rock.sprite?.destroy();
+        return false;
+      }
+      const point = this.project(rock.at);
+      rock.sprite ??= this.add.image(0, 0, texture);
+      rock.sprite
+        .setOrigin(rock.art.pivot.x, rock.art.pivot.y)
+        .setDisplaySize(rock.art.display.width * state.scale, rock.art.display.height * state.scale)
+        .setPosition(point.x, point.y)
+        .setDepth(playDepth(point.y))
+        .setAlpha(state.alpha)
+        .setTint(state.tint)
+        .setVisible(true);
+      return true;
+    });
   }
 
   /** Placeholder asteroid: its collision parts filled as one mass, outlined on the union. */

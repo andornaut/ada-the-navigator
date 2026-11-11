@@ -1361,6 +1361,42 @@ try {
     import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
+  const [{ ASTEROID_FOOTPRINTS, readAsteroidCatalog }, asteroidArt, { orbitMotion }] =
+    await Promise.all([
+      import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
+      import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
+      import(new URL("../src/model/asteroids.ts", import.meta.url)),
+    ]);
+  const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
+  assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
+  const rockArt = readAsteroidCatalog(await asteroidResponse.json());
+  assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
+  const toScreen = (world) => ({ x: 360 + world.x - world.y, y: 180 + (world.x + world.y) / 2 });
+  // The first flight seed whose backdrop field shows a rock in the asteroid fixture's open
+  // top-centre area, clear of its play rocks (shown), or none in view at all.
+  function backdropSeed(shown, player) {
+    const { cell } = asteroidArt.BACKDROP_FIELD;
+    const cx = Math.floor(player.x / cell);
+    const cy = Math.floor(player.y / cell);
+    for (let seed = 1; seed < 2000; seed++) {
+      let near = false;
+      let visible = false;
+      for (let x = cx - 4; x <= cx + 4; x++) {
+        for (let y = cy - 4; y <= cy + 4; y++) {
+          const rock = asteroidArt.backdropRock(rockArt, seed, x, y);
+          if (rock) {
+            const at = toScreen({ x: rock.x - player.x, y: rock.y - player.y });
+            near ||= at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140;
+            visible ||= at.x > -120 && at.x < 840 && at.y > -80 && at.y < 440;
+          }
+        }
+      }
+      if (shown ? near : !visible) {
+        return seed;
+      }
+    }
+    throw new Error(`No backdrop seed ${shown ? "shows" : "hides"} a rock near Ada`);
+  }
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
@@ -1373,6 +1409,8 @@ try {
     combat.state.dialogue = null;
     flight.objects = [];
     flight.shots = [];
+    // No backdrop rock in view, so the sampled regions see only the combat and empty space.
+    flight.seed = backdropSeed(false, flight.player);
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
@@ -1620,6 +1658,153 @@ try {
   events.checks.push(
     "Canonical combat save restores a capital, partial hardpoint damage " +
       "and missile with renderer screenshots",
+  );
+
+  // Art review captures (art/asteroids.md): one rock of each size and a drifting rock around
+  // Ada in each galaxy, with a backdrop rock in view, and galaxy one's spin over four seconds.
+  // Pivots sit at rock bases, so each rock rises above its point; the top centre stays open.
+  const ROCK_SCREEN = {
+    small: { x: -280, y: -110 },
+    medium: { x: -230, y: 120 },
+    large: { x: -40, y: 165 },
+    huge: { x: 235, y: 150 },
+  };
+  const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
+  function asteroidFixture(sector) {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked = [1, 2, 3];
+    model.startSector(sector);
+    playOpening(model);
+    assert.ok(model.state.flight, `Asteroid fixture requires galaxy ${sector}'s flight`);
+    const flight = model.state.flight;
+    model.state.progress[sector].introduced = true;
+    model.state.dialogue = null;
+    flight.objects = [];
+    flight.shots = [];
+    flight.seed = backdropSeed(true, flight.player);
+    const origin = { ...flight.player };
+    for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
+      const footprint = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.size === size);
+      const offset = toWorld(screen);
+      flight.objects.push({
+        asteroid: footprint.id,
+        hp: 99,
+        id: `browser-rock:${size}`,
+        kind: "rock",
+        radius: footprint.radius,
+        x: origin.x + offset.x,
+        y: origin.y + offset.y,
+      });
+    }
+    const small = ASTEROID_FOOTPRINTS.asteroids.find((entry) => entry.size === "small");
+    const centre = toWorld({ x: -200, y: -130 });
+    // Adding 0 turns -0 into 0, which a save's JSON round-trip would otherwise change.
+    const orbit = {
+      phase: 0 - 0.3 * flight.time,
+      radius: 30,
+      rate: 0.3,
+      x: origin.x + centre.x,
+      y: origin.y + centre.y,
+    };
+    const motion = orbitMotion(flight.time, orbit);
+    flight.objects.push({
+      asteroid: small.id,
+      hp: 99,
+      id: "browser-rock:drifting",
+      kind: "rock",
+      orbit,
+      radius: small.radius,
+      velocity: { x: motion.velocity.x + 0, y: motion.velocity.y + 0 },
+      x: motion.position.x + 0,
+      y: motion.position.y + 0,
+    });
+    const serialized = model.save();
+    assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts rocks");
+    return serialized;
+  }
+  async function stonePixels(image, ramps) {
+    return page.evaluate(
+      async ({ encoded, ramps }) => {
+        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+        const sample = document.createElement("canvas");
+        sample.width = bitmap.width;
+        sample.height = bitmap.height;
+        const drawing = sample.getContext("2d");
+        drawing.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        const data = drawing.getImageData(0, 0, sample.width, sample.height).data;
+        const rgb = (hex) =>
+          [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
+        return Object.fromEntries(
+          Object.entries(ramps).map(([name, colors]) => {
+            const targets = colors.map(rgb);
+            let count = 0;
+            for (let offset = 0; offset < data.length; offset += 4) {
+              if (
+                targets.some((target) =>
+                  target.every((channel, index) => Math.abs(data[offset + index] - channel) <= 3),
+                )
+              ) {
+                count++;
+              }
+            }
+            return [name, count];
+          }),
+        );
+      },
+      { encoded: image.toString("base64"), ramps },
+    );
+  }
+  const asteroidCaptures = {};
+  async function captureRocks(sector, name) {
+    const tint = asteroidArt.backdropTint(rockArt, sector);
+    const image = await page.locator("canvas").screenshot({ path: `${output}/${name}` });
+    const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
+    const pixels = await stonePixels(image, ramps);
+    asteroidCaptures[sector].push({ name, pixels });
+    return pixels;
+  }
+  async function captureGalaxy(sector) {
+    const serialized = asteroidFixture(sector);
+    save(`asteroid-fixture-${sector}.json`, {
+      scope: "Canonical rock layout for Art review of sprites, drift chips and the backdrop field",
+      state: JSON.parse(serialized),
+    });
+    await seedOnce(serialized, `ada-browser.asteroid-fixture-${sector}.v1`);
+    await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+    // Rock frames load after the scene starts; placeholders draw until they all arrive.
+    await page
+      .locator('#game-status[data-asteroids="art"]')
+      .waitFor({ state: "attached", timeout: 30000 });
+    await page.waitForFunction(
+      (key) =>
+        JSON.parse(localStorage.getItem(key))?.flight?.objects.some((object) =>
+          object.id.startsWith("browser-rock:"),
+        ),
+      storageKey,
+    );
+    await page.locator("canvas").waitFor({ state: "visible" });
+    asteroidCaptures[sector] = [];
+    const first = await captureRocks(sector, `asteroids-galaxy-${sector}.png`);
+    assert.ok(first.stone > 2000, `Galaxy ${sector} must draw Art's stone rocks`);
+    assert.ok(first.backdrop > 20, `Galaxy ${sector} must draw its tinted backdrop rocks`);
+  }
+  await captureGalaxy(1);
+  // Small and medium rocks turn 4 to 18 degrees a second: 15 degree frames change within seconds.
+  await page.waitForTimeout(2000);
+  await captureRocks(1, "asteroids-spin-1.png");
+  await page.waitForTimeout(2000);
+  await captureRocks(1, "asteroids-spin-2.png");
+  await captureGalaxy(2);
+  await captureGalaxy(3);
+  save("asteroid-art-proof.json", {
+    scope: "Rendered canonical rock fixtures; screenshot review by Art required",
+    captures: asteroidCaptures,
+  });
+  events.checks.push(
+    "Art's rocks draw in neutral stone in every galaxy over a tinted backdrop field, with spin " +
+      "captures for review",
   );
 
   await openSettings();

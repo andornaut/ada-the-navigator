@@ -188,4 +188,6 @@ export type FlightEvent =
   | { type: "docked"; id: string }
   | { type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
+  /** A destroyed rock, for the view's break at its pivot; it changes no state. */
+  | { type: "asteroidDestroyed"; asteroid: string; id: string; x: number; y: number }
   | { type: "discovered"; id: string };

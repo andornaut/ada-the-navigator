@@ -1,7 +1,7 @@
 import {
-  ASTEROID_CATALOG,
-  type AsteroidCatalog,
-  type AsteroidEntry,
+  ASTEROID_FOOTPRINTS,
+  type AsteroidFootprint,
+  type AsteroidFootprints,
   type AsteroidSize,
 } from "../data/asteroid-catalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
@@ -12,7 +12,7 @@ export interface AsteroidShape {
   readonly size: AsteroidSize;
   readonly radius: number;
   readonly parts: readonly (readonly Vec[])[];
-  readonly drift: AsteroidEntry["drift"];
+  readonly drift: AsteroidFootprint["drift"];
   readonly tint: string;
 }
 export interface Contact {
@@ -25,7 +25,7 @@ export interface Contact {
 /** Inverse of the isometric projection `screen = (x - y, (x + y) / 2)`. */
 const unproject = (at: Vec): Vec => ({ x: at.x / 2 + at.y, y: at.y - at.x / 2 });
 
-export function asteroidShape(entry: AsteroidEntry): AsteroidShape {
+export function asteroidShape(entry: AsteroidFootprint): AsteroidShape {
   const scale = {
     x: entry.display.width / entry.frame.width,
     y: entry.display.height / entry.frame.height,
@@ -44,11 +44,11 @@ export function asteroidShape(entry: AsteroidEntry): AsteroidShape {
   };
 }
 
-export function asteroidShapes(catalog: AsteroidCatalog): ReadonlyMap<string, AsteroidShape> {
+export function asteroidShapes(catalog: AsteroidFootprints): ReadonlyMap<string, AsteroidShape> {
   return new Map(catalog.asteroids.map((entry) => [entry.id, asteroidShape(entry)]));
 }
 
-export const ASTEROID_SHAPES = asteroidShapes(ASTEROID_CATALOG);
+export const ASTEROID_SHAPES = asteroidShapes(ASTEROID_FOOTPRINTS);
 
 function closestOnSegment(point: Vec, a: Vec, b: Vec): Vec {
   const dx = b.x - a.x;

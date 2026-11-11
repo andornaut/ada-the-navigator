@@ -3,29 +3,61 @@ import type { Vec } from "../model/types.ts";
 export const ASTEROID_SIZES = ["small", "medium", "large", "huge"] as const;
 export type AsteroidSize = (typeof ASTEROID_SIZES)[number];
 
+interface Size2 {
+  readonly width: number;
+  readonly height: number;
+}
+
+/** One drawn frame of an Art asteroid: its SVG and its silhouette as convex parts in frame px. */
+export interface AsteroidArtFrame {
+  readonly file: string;
+  readonly collision: readonly (readonly Vec[])[];
+}
 /**
- * One asteroid variant in Art's `asteroids.json` version 1 contract. Frame values are
- * projected sprite pixels; `collision` lists convex parts so a concave outline is their union.
+ * One asteroid in Art's `asteroids.json` version 1 (art/asteroids.md "Data"). Frame values are
+ * frame px in the art's projection; `display` is `frame * displayScale`. Spinning rocks carry 24
+ * frames, still ones one.
  */
-export interface AsteroidEntry {
+export interface AsteroidArt {
   readonly id: string;
   readonly size: AsteroidSize;
-  readonly frame: { readonly width: number; readonly height: number };
-  readonly display: { readonly width: number; readonly height: number };
-  /** Fraction of the frame at the object's world position. */
+  readonly frame: Size2;
+  readonly display: Size2;
+  /** Fraction of the frame at the rock's base centre: its world position and sort point. */
   readonly pivot: Vec;
-  readonly collision: readonly (readonly Vec[])[];
-  /** Bounding radius in frame pixels. */
+  /** Frame px from the pivot to the farthest outline point over all frames. */
   readonly radius: number;
-  /** Optional spin range in degrees per second. */
-  readonly spin?: readonly [number, number];
-  /** Drift speed range in world units per second for eligible variants. */
+  /** Drift speed range in logical px per second for eligible rocks. */
   readonly drift: { readonly eligible: boolean; readonly speed: readonly [number, number] };
-  readonly tint: string;
+  /** Spin range in degrees per second, or false for one still frame. */
+  readonly spin: { readonly degPerSecond: readonly [number, number] } | false;
+  readonly frames: readonly AsteroidArtFrame[];
 }
-export interface AsteroidCatalog {
+/** A greyscale backdrop rock, multiplied at runtime by the galaxy's `backdropLit`. */
+export interface BackdropSprite {
+  readonly id: string;
+  readonly file: string;
+  readonly frame: Size2;
+  readonly display: Size2;
+  readonly pivot: Vec;
+}
+export interface BackdropTint {
+  readonly backdropLit: string;
+  readonly backdropSide: string;
+}
+export interface AsteroidArtCatalog {
   readonly version: 1;
-  readonly asteroids: readonly AsteroidEntry[];
+  readonly displayScale: number;
+  /** The play stone ramp, lit to shadow. */
+  readonly stone: readonly string[];
+  readonly asteroids: readonly AsteroidArt[];
+  readonly backdrop: {
+    readonly sideScale: number;
+    readonly rule: { readonly lift: number; readonly chromaScale: number };
+    readonly sprites: readonly BackdropSprite[];
+  };
+  /** Backdrop colours for `base` and each galaxy id. */
+  readonly tints: Readonly<Record<string, BackdropTint>>;
 }
 
 type Fields = Record<string, unknown>;
@@ -34,17 +66,21 @@ const fields = (value: unknown): Fields | undefined =>
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 const positive = (value: unknown): value is number => finite(value) && value > 0;
+const text = (value: unknown): value is string => typeof value === "string" && value.length > 0;
+const hex = (value: unknown): value is string =>
+  typeof value === "string" && /^#[0-9a-f]{6}$/iu.test(value);
 const pair = (value: unknown): value is [number, number] =>
   Array.isArray(value) &&
   value.length === 2 &&
   finite(value[0]) &&
   finite(value[1]) &&
+  value[0] >= 0 &&
   value[0] <= value[1];
 const point = (value: unknown): Vec | undefined =>
   Array.isArray(value) && value.length === 2 && finite(value[0]) && finite(value[1])
     ? { x: value[0], y: value[1] }
     : undefined;
-const size = (value: unknown) => {
+const size = (value: unknown): Size2 | undefined => {
   const entry = fields(value);
   return entry && positive(entry.width) && positive(entry.height)
     ? { height: entry.height, width: entry.width }
@@ -73,76 +109,189 @@ function convex(part: readonly Vec[]): boolean {
   return sign !== 0;
 }
 
-function readEntry(value: unknown): AsteroidEntry | undefined {
+function readParts(value: unknown): Vec[][] | undefined {
+  if (!Array.isArray(value) || !value.length) {
+    return undefined;
+  }
+  const parts: Vec[][] = [];
+  for (const part of value as unknown[]) {
+    const points = Array.isArray(part) ? part.map(point) : [];
+    if (!points.length || points.some((at) => !at) || !convex(points as Vec[])) {
+      return undefined;
+    }
+    parts.push(points as Vec[]);
+  }
+  return parts;
+}
+
+function readFrame(value: unknown): AsteroidArtFrame | undefined {
+  const entry = fields(value);
+  const collision = readParts(entry?.collision);
+  return entry && text(entry.file) && entry.file.startsWith("/") && collision
+    ? { collision, file: entry.file }
+    : undefined;
+}
+
+function readAsteroid(value: unknown): AsteroidArt | undefined {
   const entry = fields(value);
   const frame = size(entry?.frame);
   const display = size(entry?.display);
   const pivot = point(entry?.pivot);
   const drift = fields(entry?.drift);
+  const spin = entry?.spin === false ? false : fields(entry?.spin);
+  const frames = Array.isArray(entry?.frames) ? entry.frames.map(readFrame) : [];
   if (
     !entry ||
-    typeof entry.id !== "string" ||
-    !entry.id ||
+    !text(entry.id) ||
     !ASTEROID_SIZES.includes(entry.size as AsteroidSize) ||
     !frame ||
     !display ||
     !pivot ||
     !positive(entry.radius) ||
-    typeof entry.tint !== "string" ||
-    !entry.tint ||
     !drift ||
     typeof drift.eligible !== "boolean" ||
     !pair(drift.speed) ||
-    drift.speed[0] < 0 ||
-    (entry.spin !== undefined && !pair(entry.spin)) ||
-    !Array.isArray(entry.collision) ||
-    !entry.collision.length
+    spin === undefined ||
+    (spin && !pair(spin.degPerSecond)) ||
+    !frames.length ||
+    frames.some((at) => !at) ||
+    // A still rock has one frame; a spinning one turns through several.
+    (spin === false) !== (frames.length === 1)
   ) {
     return undefined;
   }
-  const collision: Vec[][] = [];
-  for (const part of entry.collision as unknown[]) {
-    const points = Array.isArray(part) ? part.map(point) : [];
-    if (!points.length || points.some((at) => !at) || !convex(points as Vec[])) {
-      return undefined;
-    }
-    collision.push(points as Vec[]);
-  }
   return {
-    collision,
     display,
     drift: { eligible: drift.eligible, speed: [drift.speed[0], drift.speed[1]] },
     frame,
+    frames: frames as AsteroidArtFrame[],
     id: entry.id,
     pivot,
     radius: entry.radius,
     size: entry.size as AsteroidSize,
-    ...(entry.spin ? { spin: [entry.spin[0], entry.spin[1]] as const } : {}),
-    tint: entry.tint,
+    spin: spin
+      ? { degPerSecond: [(spin.degPerSecond as number[])[0]!, (spin.degPerSecond as number[])[1]!] }
+      : false,
   };
 }
 
-/** Validate Art's asteroid catalog; any malformed entry rejects the file. */
-export function readAsteroidCatalog(value: unknown): AsteroidCatalog | undefined {
-  const root = fields(value);
-  if (!root || root.version !== 1 || !Array.isArray(root.asteroids) || !root.asteroids.length) {
+function readBackdropSprite(value: unknown): BackdropSprite | undefined {
+  const entry = fields(value);
+  const frame = size(entry?.frame);
+  const display = size(entry?.display);
+  const pivot = point(entry?.pivot);
+  return entry &&
+    text(entry.id) &&
+    text(entry.file) &&
+    entry.file.startsWith("/") &&
+    frame &&
+    display &&
+    pivot &&
+    entry.tint === "backdropLit"
+    ? { display, file: entry.file, frame, id: entry.id, pivot }
+    : undefined;
+}
+
+function readTints(value: unknown): Record<string, BackdropTint> | undefined {
+  const entries = fields(value);
+  if (!entries || !fields(entries.base)) {
     return undefined;
   }
-  const asteroids: AsteroidEntry[] = [];
+  const tints: Record<string, BackdropTint> = {};
+  for (const [id, tint] of Object.entries(entries)) {
+    const colors = fields(tint);
+    if (!colors || !hex(colors.backdropLit) || !hex(colors.backdropSide)) {
+      return undefined;
+    }
+    tints[id] = { backdropLit: colors.backdropLit, backdropSide: colors.backdropSide };
+  }
+  return tints;
+}
+
+/** Validate Art's asteroid catalog, version 1; any malformed part rejects the file. */
+export function readAsteroidCatalog(value: unknown): AsteroidArtCatalog | undefined {
+  const root = fields(value);
+  const backdrop = fields(root?.backdrop);
+  const rule = fields(backdrop?.rule);
+  const tints = readTints(root?.tints);
+  if (
+    !root ||
+    root.version !== 1 ||
+    !positive(root.displayScale) ||
+    !Array.isArray(root.stone) ||
+    !root.stone.length ||
+    !root.stone.every(hex) ||
+    !Array.isArray(root.asteroids) ||
+    !root.asteroids.length ||
+    !backdrop ||
+    !positive(backdrop.sideScale) ||
+    !rule ||
+    !finite(rule.lift) ||
+    !positive(rule.chromaScale) ||
+    !Array.isArray(backdrop.sprites) ||
+    !backdrop.sprites.length ||
+    !tints
+  ) {
+    return undefined;
+  }
+  const asteroids: AsteroidArt[] = [];
   const ids = new Set<string>();
   for (const value of root.asteroids as unknown[]) {
-    const entry = readEntry(value);
+    const entry = readAsteroid(value);
     if (!entry || ids.has(entry.id)) {
       return undefined;
     }
     ids.add(entry.id);
     asteroids.push(entry);
   }
-  return { asteroids, version: 1 };
+  const sprites: BackdropSprite[] = [];
+  for (const value of backdrop.sprites as unknown[]) {
+    const sprite = readBackdropSprite(value);
+    if (!sprite) {
+      return undefined;
+    }
+    sprites.push(sprite);
+  }
+  return {
+    asteroids,
+    backdrop: {
+      rule: { chromaScale: rule.chromaScale, lift: rule.lift },
+      sideScale: backdrop.sideScale,
+      sprites,
+    },
+    displayScale: root.displayScale,
+    stone: [...(root.stone as string[])],
+    tints,
+    version: 1,
+  };
 }
 
-// Placeholder variants until Art delivers public/art/asteroids.json. World bounding radii per
-// size, variant counts, drift eligibility and speeds are provisional playtest values.
+/**
+ * The model's collision footprint of one asteroid variant, in a projected frame like Art's:
+ * convex parts whose union is the rock's base on the world plane. Collision and placement read
+ * these, so gameplay keeps its sizes while the view draws Art's taller rocks over them.
+ */
+export interface AsteroidFootprint {
+  readonly id: string;
+  readonly size: AsteroidSize;
+  readonly frame: Size2;
+  readonly display: Size2;
+  /** Fraction of the frame at the object's world position. */
+  readonly pivot: Vec;
+  readonly collision: readonly (readonly Vec[])[];
+  /** Bounding radius in frame pixels. */
+  readonly radius: number;
+  /** Drift speed range in world units per second for eligible variants. */
+  readonly drift: { readonly eligible: boolean; readonly speed: readonly [number, number] };
+  /** Outline tint for the drawing fallback when Art's sprites are unavailable. */
+  readonly tint: string;
+}
+export interface AsteroidFootprints {
+  readonly asteroids: readonly AsteroidFootprint[];
+}
+
+// The model's footprints: seeded irregular bases. World bounding radii per size, variant counts,
+// drift eligibility and speeds are provisional playtest values.
 const PLACEHOLDER_SIZES: Readonly<
   Record<
     AsteroidSize,
@@ -200,10 +349,10 @@ function blob(next: () => number, center: Vec, radius: number): Vec[] {
 
 const project = (at: Vec): Vec => ({ x: at.x - at.y, y: (at.x + at.y) / 2 });
 
-/** Seeded irregular placeholders in Art's frame format: convex parts, lobed for large sizes. */
-export function placeholderAsteroids(seed: number): AsteroidCatalog {
+/** Seeded irregular footprints in a projected frame: convex parts, lobed for large sizes. */
+export function footprintAsteroids(seed: number): AsteroidFootprints {
   const next = placeholderRandom(seed);
-  const asteroids: AsteroidEntry[] = [];
+  const asteroids: AsteroidFootprint[] = [];
   for (const size of ASTEROID_SIZES) {
     const plan = PLACEHOLDER_SIZES[size];
     for (let variant = 0; variant < plan.variants; variant++) {
@@ -249,8 +398,8 @@ export function placeholderAsteroids(seed: number): AsteroidCatalog {
       });
     }
   }
-  return { asteroids, version: 1 };
+  return { asteroids };
 }
 
-/** The runtime catalog: placeholders now, Art's file once delivered. */
-export const ASTEROID_CATALOG: AsteroidCatalog = placeholderAsteroids(0x5eed);
+/** The model's footprints, one per Art variant of each size. */
+export const ASTEROID_FOOTPRINTS: AsteroidFootprints = footprintAsteroids(0x5eed);

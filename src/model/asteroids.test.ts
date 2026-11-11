@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  ASTEROID_CATALOG,
+  ASTEROID_FOOTPRINTS,
   ASTEROID_SIZES,
-  type AsteroidEntry,
-  placeholderAsteroids,
-  readAsteroidCatalog,
+  footprintAsteroids,
 } from "../data/asteroid-catalog.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -59,13 +57,6 @@ const options: ChunkPlanOptions = {
   x: 2,
   y: -3,
 };
-const pair = (at: Vec) => [at.x, at.y];
-/** Art's on-disk form: vectors as [x, y] pairs. */
-const artJson = (entry: AsteroidEntry) => ({
-  ...entry,
-  collision: entry.collision.map((part) => part.map(pair)),
-  pivot: pair(entry.pivot),
-});
 const rock = (id: string, extra: Partial<SpaceObject> = {}): SpaceObject => ({
   hp: 99,
   id,
@@ -77,51 +68,16 @@ const rock = (id: string, extra: Partial<SpaceObject> = {}): SpaceObject => ({
 });
 const huge = shapes.find((shape) => shape.size === "huge")!;
 
-describe("asteroid catalog", () => {
-  it("reads Art's version 1 format, including the seeded placeholders", () => {
-    const file = { asteroids: ASTEROID_CATALOG.asteroids.map(artJson), version: 1 };
-    expect(readAsteroidCatalog(JSON.parse(JSON.stringify(file)))).toEqual(ASTEROID_CATALOG);
-    expect(placeholderAsteroids(0x5eed)).toEqual(ASTEROID_CATALOG);
-  });
-
-  it.each([
-    ["an unknown version", (file: { version: number }) => ({ ...file, version: 2 })],
-    [
-      "a duplicate id",
-      (file: { asteroids: unknown[] }) => ({
-        ...file,
-        asteroids: [file.asteroids[0], file.asteroids[0]],
-      }),
-    ],
-    [
-      "a concave collision part",
-      (file: { asteroids: Record<string, unknown>[] }) => ({
-        ...file,
-        asteroids: [
-          {
-            ...file.asteroids[0],
-            collision: [
-              [
-                [0, 0],
-                [10, 0],
-                [2, 2],
-                [0, 10],
-              ],
-            ],
-          },
-        ],
-      }),
-    ],
-    [
-      "an unknown size class",
-      (file: { asteroids: Record<string, unknown>[] }) => ({
-        ...file,
-        asteroids: [{ ...file.asteroids[0], size: "giant" }],
-      }),
-    ],
-  ])("rejects %s", (_, change) => {
-    const file = { asteroids: ASTEROID_CATALOG.asteroids.map(artJson), version: 1 };
-    expect(readAsteroidCatalog(change(file as never))).toBeUndefined();
+describe("asteroid footprints", () => {
+  it("are the model's seeded collision bases, one variant per Art rock of each size", () => {
+    expect(footprintAsteroids(0x5eed)).toEqual(ASTEROID_FOOTPRINTS);
+    const counts = Object.fromEntries(
+      ASTEROID_SIZES.map((size) => [
+        size,
+        ASTEROID_FOOTPRINTS.asteroids.filter((entry) => entry.size === size).length,
+      ]),
+    );
+    expect(counts).toEqual({ huge: 3, large: 3, medium: 4, small: 4 });
   });
 
   it("varies sizes from small to much larger, lobed irregular shapes", () => {
@@ -146,7 +102,7 @@ describe("asteroid catalog", () => {
   });
 
   it("converts frame pixels back to world units through the inverse projection", () => {
-    const entry = ASTEROID_CATALOG.asteroids[0]!;
+    const entry = ASTEROID_FOOTPRINTS.asteroids[0]!;
     const shape = asteroidShape(entry);
     const origin = { x: entry.pivot.x * entry.frame.width, y: entry.pivot.y * entry.frame.height };
     shape.parts.forEach((part, index) =>
