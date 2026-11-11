@@ -76,8 +76,10 @@ The precache version is a hash of that content, so any change installs a new
 worker. Hashed `/assets/` files are served cache-first; the page, art and
 manifest are network-first, so an online load shows the latest deploy and an
 offline load uses the cached copy. A first visit registers the worker once the
-game has drawn. A new worker takes over on a later launch, after every page the
-old one controls has closed. The landing page at `/` is not precached.
+game has drawn. While a new worker waits, the start screen offers it: Update now
+switches to it and reloads, and Cancel keeps the current version for that visit.
+Otherwise it takes over on a later launch, after every page the old one controls
+has closed. The landing page at `/` is not precached.
 
 Both pages link `/manifest.webmanifest`, which installs the game at `/play/`.
 The build writes each icon in `src/pwa/icons.ts` again under a content-hashed
