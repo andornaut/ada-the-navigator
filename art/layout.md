@@ -266,9 +266,11 @@ Panel groups, `SPACING.gap` apart:
    disabled face on a scene's first page. A page whose primary action is named
    ("Pick up the rock.") uses that label in Next's slot.
 
-The panel is paged: it measures every page of the scene and keeps the largest
-size, up to the available height; beyond that the text column scrolls and the
-choices and page controls stay fixed. Space
+Each page sizes its own panel to its content, up to the available height;
+beyond that the text column scrolls and the choices and page controls stay
+fixed. Ordinary pages keep a short panel so the background stays visible; only
+a choice page grows to fit its choices. The panel's width, bottom edge and
+page-control row stay fixed across pages. Space
 conversations use the same panel over the paused, dimmed space view, without
 a background.
 
@@ -353,4 +355,6 @@ Tests:
   `playView` inset by `CONTROL_EDGE`.
 - Each card, filled with Gameplay's longest strings at 720x360, fits the
   available rect or scrolls only its scroll group; no text is below 16.
-- The galaxy card and the story panel keep one size across pages.
+- The galaxy card keeps one size across pages. The story panel keeps its width,
+  bottom edge and control row across pages, and each page's height fits that
+  page's content.
