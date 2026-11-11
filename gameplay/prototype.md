@@ -171,7 +171,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   are defined per ship type in data; see [Ships](ships.md). Ada's ship has
   noticeable momentum and swings wide on sharp turns.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
-  speed. Provisional movement reach is 40 CSS pixels with a 2.4 CSS pixel deadzone,
+  speed. Provisional movement reach is 40 logical pixels with a 2.4 logical pixel
+  deadzone, scaling with the view like every layout value,
   doubled for finer low-speed control. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
