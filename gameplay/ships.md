@@ -15,16 +15,21 @@ same fields and the same movement model. All values are provisional tuning.
 
 Movement is the same for every ship. The requested direction (Ada's stick, or an
 enemy's steering result) sets a target heading. While moving, the heading turns
-toward it along the shorter arc with `turnSeconds`; from rest it starts on the
-target directly. Velocity approaches `heading * speed` with `accelerationSeconds`,
-or approaches zero with `brakingSeconds` when there is no target. The aim direction
+toward it along the shorter arc with `turnSeconds`. From rest, Ada's heading
+starts on the target directly; an enemy's heading starts from its hull facing, so
+it turns into motion instead of sliding sideways. Velocity approaches `heading * speed` with `accelerationSeconds`,
+or approaches zero with `brakingSeconds` when there is no target. A ship with no
+target comes to rest once it is below 1% of its maximum speed. The aim direction
 turns toward its target with `aimTurnSeconds`, and shots leave along the current
 aim direction at the weapon's normal cadence. Thrust jets scale with current speed
 as a fraction of the ship's maximum speed.
 
 Ada's ship faces its aim while aiming and its movement otherwise. Enemy hulls
 rotate smoothly to face their movement, turning with `turnSeconds`, and keep their
-last facing when stopped. Hardpoint hit areas and fire origins rotate with the
+last facing when stopped. A returning enemy slows as it nears home, scaling its
+speed by `min(1, distance / (maxSpeed * brakingSeconds))`, and stops within five
+world units. Each weapon's aim starts on its first target and then turns with
+`aimTurnSeconds`. Hardpoint hit areas and fire origins rotate with the
 hull. Hardpoint and hull weapons aim independently of the hull with
 `aimTurnSeconds`. An enemy's facing is saved with its other state.
 
