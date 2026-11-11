@@ -20,6 +20,7 @@ import * as hitAreas from "../src/ui/layout/hitAreas.ts";
 import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
+import * as startScreen from "../src/ui/layout/startScreen.ts";
 import * as storyPage from "../src/ui/layout/storyPage.ts";
 import * as tokens from "../src/ui/layout/tokens.ts";
 import * as touchControls from "../src/ui/layout/touchControls.ts";
@@ -37,6 +38,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
   "shopCard.ts": shopCard,
+  "startScreen.ts": startScreen,
   "storyPage.ts": storyPage,
   "tokens.ts": tokens,
   "touchControls.ts": touchControls,
@@ -162,6 +164,7 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
         view,
       );
       call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
+      call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
       call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
       call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
       // Cards and the shop fit the page safe rect's width.
@@ -301,6 +304,9 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   call("css.ts", "hudCentreX", css.hudCentreX);
   for (const offset of [0, 20, -4]) {
     call("css.ts", "fromAreaBottom", css.fromAreaBottom, offset);
+  }
+  for (const offset of [0, 225, -120]) {
+    call("css.ts", "fromAreaLeft", css.fromAreaLeft, offset);
   }
   for (const role of Object.values(tokens.TYPE)) {
     call("css.ts", "font", css.font, role);

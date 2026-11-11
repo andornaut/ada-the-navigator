@@ -210,7 +210,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   achievementsDisc.setAttribute("aria-hidden", "true");
   achievementsButton.append(achievementsDisc);
   achievementsButton.addEventListener("click", () => achievements.open());
-  settings.root.append(achievementsButton);
+  // Before Settings in the overlay, so the start screen tabs Achievements, then Settings.
+  const settingsDisc = settings.root.querySelector(".ada-settings-open");
+  if (settingsDisc) {
+    settingsDisc.before(achievementsButton);
+  } else {
+    settings.root.append(achievementsButton);
+  }
   const pauseButton = createPauseButton(settings.root, options.pause.buttonLabel, () =>
     pause.open(),
   );

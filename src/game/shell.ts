@@ -1,8 +1,10 @@
+import { ECONOMY } from "../data/economy.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Screen } from "../model/game.ts";
 import type { GameState } from "../model/types.ts";
 import { refuse } from "../ui/refusal.ts";
-import { createStartCard } from "../ui/start-card.ts";
+import { createStartScreen } from "../ui/start-screen.ts";
+import type { TitleScreenArt } from "../ui/title-screen.ts";
 
 export interface ShellActions {
   choose: (id: string) => void;
@@ -26,7 +28,9 @@ export class StoryShell {
   private readonly status = document.createElement("div");
   private readonly panel = document.createElement("section");
   private signature = "";
-  private startCard: ReturnType<typeof createStartCard> | undefined;
+  private startScreen: ReturnType<typeof createStartScreen> | undefined;
+  // Art's title art, once the scene has read it; the start screen draws without it until then.
+  private titleArt: TitleScreenArt | null = null;
 
   private readonly actions: ShellActions;
 
@@ -51,7 +55,13 @@ export class StoryShell {
     this.status.dataset.x = String(flight?.player.x ?? 0);
     this.status.dataset.y = String(flight?.player.y ?? 0);
     this.status.textContent = state.notice;
-    const nextSignature = JSON.stringify([screen, state.started, state.dialogue]);
+    const nextSignature = JSON.stringify([
+      screen,
+      state.started,
+      state.dialogue,
+      state.economy.paint,
+      this.titleArt !== null,
+    ]);
     if (nextSignature === this.signature) {
       return;
     }
@@ -59,11 +69,11 @@ export class StoryShell {
     const active = document.activeElement as HTMLElement | null;
     const focusedAction = active?.dataset.action;
     const focusedChoice = active?.dataset.choice;
-    this.startCard?.dispose();
-    this.startCard = undefined;
+    this.startScreen?.dispose();
+    this.startScreen = undefined;
     this.panel.replaceChildren();
-    // The panel holds space dialogue and the start screen; storybook pages draw their own.
-    this.panel.hidden = !(screen === "start" || (screen === "space" && state.dialogue));
+    // The panel holds space dialogue; the start screen and storybook pages draw their own.
+    this.panel.hidden = !(screen === "space" && state.dialogue);
     this.panel.dataset.context = state.dialogue?.context.split(":")[0] ?? "";
     if (screen === "space" && state.dialogue) {
       const heading = document.createElement("h2");
@@ -90,28 +100,41 @@ export class StoryShell {
       }
       this.panel.setAttribute("aria-label", state.dialogue.title);
     } else if (screen === "start") {
-      // The start screen's card: Start until the first flight begins, then Continue and
-      // Restart, as the shared card's action stack. Achievements sits left of Settings instead.
+      // Start until the first flight begins, then Continue (primary, the default and first Tab
+      // stop) and Restart (secondary, on its left).
       const actions = state.started
-        ? [
+        ? ([
             {
               action: "continue",
-              label: PROTOTYPE.labels.continue,
+              label: PROTOTYPE.labels.continue ?? "",
+              role: "primary",
               run: this.actions.continueGame,
             },
-            { action: "restart", label: PROTOTYPE.labels.restart, run: this.actions.restart },
-          ]
-        : [{ action: "start", label: PROTOTYPE.labels.start, run: this.actions.start }];
-      this.startCard = createStartCard(this.panel, {
-        actions: actions.map(({ label, run }) => ({ label: label ?? "", run })),
+            {
+              action: "restart",
+              label: PROTOTYPE.labels.restart ?? "",
+              role: "secondary",
+              run: this.actions.restart,
+            },
+          ] as const)
+        : ([
+            {
+              action: "start",
+              label: PROTOTYPE.labels.start ?? "",
+              role: "primary",
+              run: this.actions.start,
+            },
+          ] as const);
+      const paint = state.economy.paint;
+      this.startScreen = createStartScreen(this.host, this.titleArt, {
+        actions,
         note: PROTOTYPE.labels.deferred ?? "",
+        paint: paint === ECONOMY.defaultPaint ? null : paint,
         title: PROTOTYPE.labels.home ?? "",
       });
-      this.startCard.buttons.forEach((node, index) => {
-        node.dataset.action = actions[index]?.action ?? "";
-      });
     }
-    const restore = [...this.panel.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
+    const shown = this.startScreen?.root ?? this.panel;
+    const restore = [...shown.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
       focusedChoice
         ? node.dataset.choice === focusedChoice
         : Boolean(focusedAction) && node.dataset.action === focusedAction,
@@ -119,8 +142,18 @@ export class StoryShell {
     if (restore) {
       restore.focus();
     } else if (screen === "start" || state.dialogue) {
-      this.panel.querySelector<HTMLButtonElement>("button")?.focus();
+      shown.querySelector<HTMLButtonElement>("button")?.focus();
     }
+  }
+
+  /** Art's start screen art; the start screen redraws with it. */
+  setTitleArt(art: TitleScreenArt | null): void {
+    this.titleArt = art;
+  }
+
+  // The play area the start screen covers.
+  private get host(): HTMLElement {
+    return document.getElementById("app") ?? document.body;
   }
 
   /** Marks the status line once Art's rock sprites replace the footprint placeholders. */
@@ -136,7 +169,7 @@ export class StoryShell {
   }
 
   dispose(): void {
-    this.startCard?.dispose();
+    this.startScreen?.dispose();
     this.savingStatus.remove();
     this.status.remove();
     this.panel.remove();

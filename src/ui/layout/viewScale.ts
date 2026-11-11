@@ -77,6 +77,7 @@ export function viewProperties(layout: PlayLayout): readonly (readonly [string, 
       (edge) => [VIEW_PROPERTIES.slice(edge), `${layout.slices[edge]}px`] as const,
     ),
     [VIEW_PROPERTIES.areaBottom, `${areaBottom * layout.s}px`],
+    [VIEW_PROPERTIES.areaLeft, `${area.x * layout.s}px`],
   ];
 }
 

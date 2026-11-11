@@ -18,6 +18,8 @@ export interface CoreManifest<T> {
   readonly quantumJump?: string;
   readonly resourceRocks?: string;
   readonly spacePalette?: string;
+  /** The start screen's field, ship and wordmark placement (public/art/title-screen.json). */
+  readonly titleScreen?: string;
   readonly tow?: string;
 }
 

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
 const output = "/tmp/evidence";
@@ -341,10 +341,10 @@ try {
   }
   assert.deepEqual(
     await page
-      .locator(".story-panel button")
+      .locator(".ada-start button")
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
     ["start"],
-    "The start card holds only Start before the first flight",
+    "The start screen holds only Start before the first flight",
   );
   const [achievementsBox, settingsBox] = await Promise.all(
     ['[data-action="achievements"]', '[data-action="settings"]'].map((selector) =>
@@ -1200,7 +1200,7 @@ try {
   );
   events.checks.push(
     "Achievements open from the start screen's button left of Settings in Gameplay's order, " +
-      "paging six at a time; the start card and the Paused card hold no Achievements",
+      "paging six at a time; the start screen and the Paused card hold no Achievements",
   );
   // A held job's long Job line wraps inside the place panel, which stays clear of the tool
   // column, and selecting its target pans the chip clear of the panel's rendered height.
@@ -1288,10 +1288,10 @@ try {
   await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
   assert.deepEqual(
     await page
-      .locator(".story-panel button")
+      .locator(".ada-start button")
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
     ["continue", "restart"],
-    "The start card holds only Continue and Restart",
+    "The start screen holds only Continue and Restart",
   );
   await page.locator('[data-action="continue"]').click();
   await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
@@ -1907,6 +1907,184 @@ try {
     "A story run's Previous crosses from the prologue across Grandma's garden into chapter one, " +
       "Skip from the cockpit passes the run to galaxy selection, and Ada's room page ends a run " +
       "with Skip hidden",
+  );
+
+  // The start screen (art/layout.md "Start screen"): every part in play-view px from the game
+  // area's left edge, at 720x360 and on an 844x390 phone, without and with insets (left and right
+  // 43, bottom 19 logical), first run and with a save. START_SCREEN comes from the layout dump,
+  // which its test keeps equal to the source, since the source imports the kit by package name.
+  const { START_SCREEN } = JSON.parse(
+    readFileSync(new URL("layout-dump.json", import.meta.url), "utf8"),
+  ).constants["startScreen.ts"];
+  const startScreenAt = async (name, size, insets) => {
+    await page.setViewportSize(size);
+    await page.evaluate((logical) => {
+      const unit = Number(
+        getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
+      );
+      for (const [side, value] of Object.entries(logical)) {
+        document.documentElement.style.setProperty(`--inset-${side}`, `${value * unit}px`);
+      }
+    }, insets);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `${output}/start-screen-${name}.png` });
+    return page.evaluate(() => {
+      const app = document.querySelector("#app");
+      const unit = Number(getComputedStyle(app).getPropertyValue("--ada-unit"));
+      const x0 = parseFloat(getComputedStyle(app).getPropertyValue("--ada-area-left")) / unit;
+      const origin = app.getBoundingClientRect();
+      const box = (selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return rect
+          ? [
+              (rect.x - origin.x) / unit - x0,
+              (rect.y - origin.y) / unit,
+              rect.width / unit,
+              rect.height / unit,
+            ].map((value) => Math.round(value * 10) / 10)
+          : null;
+      };
+      return {
+        actions: [...document.querySelectorAll(".ada-start-actions > button")].map((button) => [
+          button.dataset.action,
+          box(`.ada-start-actions > [data-action="${button.dataset.action}"]`),
+          button.classList.contains("ada-primary") ? "primary" : "secondary",
+        ]),
+        achievements: box('[data-action="achievements"]'),
+        focused: document.activeElement?.dataset.action ?? null,
+        note: box(".ada-start-note"),
+        settings: box('[data-action="settings"]'),
+        ship: box(".ada-start-ship"),
+        shipSrc: document.querySelector(".ada-start-ship")?.getAttribute("src"),
+        title: document.querySelector(".ada-start-title img")?.getAttribute("alt"),
+        unit,
+        wordmark: box(".ada-start-title"),
+        x0,
+      };
+    });
+  };
+  const sizes = [
+    ["720", { height: 360, width: 720 }, {}],
+    ["720-insets", { height: 360, width: 720 }, { bottom: 19, left: 43, right: 43, top: 0 }],
+    ["844", { height: 390, width: 844 }, {}],
+    ["844-insets", { height: 390, width: 844 }, { bottom: 19, left: 43, right: 43, top: 0 }],
+  ];
+  const fresh = new GameModel(PROTOTYPE);
+  const saved = new GameModel(PROTOTYPE);
+  saved.state.started = true;
+  const startScreens = {};
+  // One at a time, in order: each seeds or resizes the one page.
+  const inTurn = (items, run) =>
+    items.reduce((prior, item) => prior.then(() => run(item)), Promise.resolve());
+  await inTurn(
+    [
+      ["new", fresh],
+      ["saved", saved],
+    ],
+    async ([kind, model]) => {
+      await seedOnce(model.save(), `ada-browser.start-screen-${kind}.v1`);
+      await page.locator(".ada-start-actions > button").first().waitFor({ state: "visible" });
+      await page.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+      await inTurn(sizes, async ([name, size, insets]) => {
+        startScreens[`${kind}-${name}`] = await startScreenAt(`${kind}-${name}`, size, insets);
+      });
+    },
+  );
+  await page.setViewportSize({ height: 720, width: 1280 });
+  save("start-screen-proof.json", startScreens);
+  const { actions, note, ship, wordmark } = START_SCREEN;
+  for (const [name, shot] of Object.entries(startScreens)) {
+    assert.deepEqual(
+      shot.wordmark,
+      [wordmark.left, wordmark.top, wordmark.width, wordmark.height],
+      `${name}: the wordmark sits at its play-view place`,
+    );
+    assert.deepEqual(
+      shot.ship,
+      [ship.centre.x - ship.size / 2, ship.centre.y - ship.size / 2, ship.size, ship.size],
+      `${name}: the ship frame is 280 square on its centre`,
+    );
+    assert.equal(shot.note[1], note.top, `${name}: the note's line box starts at its top`);
+    assert.ok(
+      Math.abs(shot.note[0] + shot.note[2] / 2 - note.centre) < 0.6,
+      `${name}: the note is centred on the game area`,
+    );
+    assert.equal(shot.title, PROTOTYPE.labels.home, `${name}: the wordmark is named by home`);
+    assert.equal(shot.shipSrc, "/art/ship-26.svg", `${name}: Classic's ship-26 before a paint`);
+    for (const [action, box, role] of shot.actions) {
+      assert.deepEqual(
+        box,
+        [actions.left[action], actions.top, actions.width, actions.height],
+        `${name}: ${action} sits at its play-view place`,
+      );
+      assert.equal(
+        role,
+        action === "restart" ? "secondary" : "primary",
+        `${name}: ${action}'s role`,
+      );
+    }
+    // The HUD row's nav discs, Achievements one pitch left of Settings, inside the game area.
+    assert.ok(Math.abs(shot.settings[0] - shot.achievements[0] - 56) < 0.1, `${name}: nav pitch`);
+    assert.ok(
+      shot.settings[0] + shot.settings[2] <= 720 + 0.1,
+      `${name}: Settings in the game area`,
+    );
+  }
+  assert.deepEqual(
+    startScreens["new-720"].actions.map(([action]) => action),
+    ["start"],
+    "A first run offers Start alone",
+  );
+  assert.deepEqual(
+    startScreens["saved-720"].actions.map(([action]) => action),
+    ["continue", "restart"],
+    "A save offers Continue, then Restart, in tab order",
+  );
+  assert.equal(startScreens["new-720"].focused, "start", "Start is the default");
+  assert.equal(startScreens["saved-720"].focused, "continue", "Continue is the default");
+  assert.equal(startScreens["new-844"].x0, 29, "The 844x390 phone's game area starts at 29");
+  // Insets move the nav discs, never the start screen's parts (Art's table).
+  assert.equal(
+    Math.round(
+      startScreens["saved-720-insets"].achievements[0] + startScreens["saved-720-insets"].x0,
+    ),
+    573,
+    "Achievements clears the right inset",
+  );
+  // Tab order: Continue, Restart, Achievements, Settings.
+  const order = [];
+  await page.setViewportSize({ height: 360, width: 720 });
+  await seedOnce(saved.save(), "ada-browser.start-screen-tabs.v1");
+  await page.locator('.ada-start-actions > [data-action="continue"]').waitFor({ state: "visible" });
+  await inTurn([0, 1, 2], async () => {
+    await page.keyboard.press("Tab");
+    order.push(await page.evaluate(() => document.activeElement?.dataset.action ?? null));
+  });
+  await page.setViewportSize({ height: 720, width: 1280 });
+  assert.deepEqual(order, ["restart", "achievements", "settings"], "Tab follows Continue's lead");
+  // An open modal is the topmost layer: over Achievements' own disc, Achievements' card shows.
+  await page.locator('[data-action="achievements"]').click();
+  await page.locator('[data-dialog="achievements"]').waitFor({ state: "visible" });
+  const topmost = await page.evaluate(() => {
+    const disc = document.querySelector('[data-action="achievements"]').getBoundingClientRect();
+    const hit = document.elementFromPoint(disc.x + disc.width / 2, disc.y + disc.height / 2);
+    return {
+      button: Boolean(hit?.closest('[data-action="achievements"]')),
+      modal: Boolean(hit?.closest(".ada-modal")),
+      start: Boolean(hit?.closest(".ada-start")),
+    };
+  });
+  await page.locator('[data-action="close-achievements"]').click();
+  await page.locator('[data-dialog="achievements"]').waitFor({ state: "hidden" });
+  assert.deepEqual(
+    topmost,
+    { button: false, modal: true, start: false },
+    "An open modal draws over the start screen and its nav discs",
+  );
+  events.checks.push(
+    "The start screen draws the field, ship, wordmark, actions and note at their play-view places " +
+      "at 720x360 and 844x390, with and without insets, defaults to Start or Continue and tabs " +
+      "Continue, Restart, Achievements, Settings",
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));

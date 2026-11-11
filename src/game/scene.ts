@@ -66,6 +66,7 @@ import { returnToEarthAvailable } from "../ui/pause.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
+import { readTitleScreen } from "../ui/title-screen.ts";
 import {
   type CoreManifest,
   galaxyLoadsAtOnce,
@@ -249,6 +250,8 @@ import {
 
 // Story craft darts while their frames load.
 const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;
+// Art's start screen placement, linked from the core manifest as titleScreen.
+const TITLE_SCREEN_KEY = "title-screen";
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
 
@@ -455,6 +458,9 @@ export class PrototypeScene extends Phaser.Scene {
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
       }
+      if (manifest.titleScreen) {
+        this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
+      }
       const composed = composedArchetypes(manifest.assets);
       for (const [archetype, frames] of enemyFrameSets(manifest.assets)) {
         this.load.json(`enemy-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
@@ -641,6 +647,10 @@ export class PrototypeScene extends Phaser.Scene {
       restart: () => this.restartCard.open(),
       start: () => apply(() => this.model.start()),
     });
+    // The start screen's art: its field, wordmark, each paint's ship frame and the speed jets.
+    this.shell.setTitleArt(
+      readTitleScreen(manifest?.assets ?? [], this.shipJets, this.cache.json.get(TITLE_SCREEN_KEY)),
+    );
     this.controls = createControls(this, {
       achievements: {
         close: PROTOTYPE.labels.close ?? "",

@@ -26,7 +26,7 @@ import {
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
-import { START_STYLE } from "./start-card.ts";
+import { START_SCREEN_STYLE } from "./start-screen.ts";
 import { STATION_STYLE } from "./station.ts";
 import { STATUS_PILL_STYLE } from "./status-pill.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
@@ -218,7 +218,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.dataset.fontRole = FONT_ROLES.body;
   const style = document.createElement("style");
   style.textContent =
-    STYLE + NOTICE_STYLE + START_STYLE + STATION_STYLE + WEAPON_STYLE + STATUS_PILL_STYLE;
+    STYLE + NOTICE_STYLE + START_SCREEN_STYLE + STATION_STYLE + WEAPON_STYLE + STATUS_PILL_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
