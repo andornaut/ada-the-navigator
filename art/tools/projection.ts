@@ -30,9 +30,15 @@ export function depth(points: readonly Point[]): number {
   return points.reduce((sum, [x, y, z]) => sum - (x + y + z), 0) / points.length;
 }
 
+// Frame px for a rotated point, with the pivot at (pivotX, pivotY).
+export function projectAt(pivotX: number, pivotY: number, [x, y, z]: Point): [number, number] {
+  return [pivotX + ((x - y) * Math.sqrt(3)) / 2, pivotY + (x + y) / 2 - z];
+}
+
 // Frame px for a rotated point, with the pivot at (centre, centre).
-export function project(centre: number, [x, y, z]: Point): string {
-  return `${(centre + ((x - y) * Math.sqrt(3)) / 2).toFixed(2)},${(centre + (x + y) / 2 - z).toFixed(2)}`;
+export function project(centre: number, point: Point): string {
+  const [sx, sy] = projectAt(centre, centre, point);
+  return `${sx.toFixed(2)},${sy.toFixed(2)}`;
 }
 
 export const round = (value: number) => Math.round(value * 1000) / 1000 + 0;
