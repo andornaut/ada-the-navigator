@@ -116,13 +116,20 @@ function fixedEntry(frame: Layout, item: Fixed, extra: Record<string, unknown>, 
   };
 }
 
-// A blink pair, frame A lit and frame B the other phase.
-function pair(id: string, file: string, title: string, build: (lit: boolean) => Part[][]): Fixed[] {
+// A blink pair, frame A lit and frame B the other phase. `levels` are the deck heights buildings
+// rest on.
+function pair(
+  id: string,
+  file: string,
+  title: string,
+  build: (lit: boolean) => Part[][],
+  levels: readonly number[] = [],
+): Fixed[] {
   return (["a", "b"] as const).map((letter) => ({
     id: `${id}-${letter}`,
     file: `${file}-${letter}`,
     title: `${title} ${letter.toUpperCase()}`,
-    faces: polygons(build(letter === "a")),
+    faces: polygons(build(letter === "a"), undefined, levels),
   }));
 }
 
@@ -133,7 +140,13 @@ mkdirSync(output, { recursive: true });
 // ---------------------------------------------------------------- settlers' station
 
 // Every Andromeda station draws this pair in place of the trading station, with its live dock.
-const station = pair("station-settlers", "settlers-station", "Settlers' station", m.station);
+const station = pair(
+  "station-settlers",
+  "settlers-station",
+  "Settlers' station",
+  m.station,
+  m.STATION_LEVELS,
+);
 const stationFrame = layout(allFaces(station));
 for (const item of station) writeFixed(stationFrame, item);
 const stationDock = dockAt(stationFrame, m.STATION.dockFace, m.STATION.mouth);
@@ -156,7 +169,13 @@ const settlements = [
   { variant: "lamphouse", title: "Lamp house", build: m.lampHouse, dock: m.LAMPHOUSE_DOCK },
 ] as const;
 const settlementEntries = settlements.flatMap(({ build, dock, title, variant }) => {
-  const items = pair(`outpost-${variant}`, variant, `Settlement, ${title.toLowerCase()}`, build);
+  const items = pair(
+    `outpost-${variant}`,
+    variant,
+    `Settlement, ${title.toLowerCase()}`,
+    build,
+    m.SETTLEMENT_LEVELS,
+  );
   const frame = layout(allFaces(items));
   for (const item of items) writeFixed(frame, item);
   const at = dockAt(frame, dock.face, dock.mouth);

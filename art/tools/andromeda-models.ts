@@ -112,6 +112,12 @@ function float(n: number, r: number, height: number, cx = 0, cy = 0): Part[] {
 
 // ---------------------------------------------------------------- settlers' station
 
+// Deck heights that buildings rest on: a group based at or above a level draws after every group
+// below it, so a deck never covers the buildings standing on it (solid.ts `polygons`).
+export const STATION_LEVELS = [7] as const;
+export const SCHOOL_LEVELS = [4.6] as const;
+export const SETTLEMENT_LEVELS = [5.6] as const;
+
 // The live dock: mouth width and face distance on the dock axis, as on the trading station.
 export const STATION = { deckR: 52, dockFace: 90, mouth: 30, collar: 42, height: 16 } as const;
 
