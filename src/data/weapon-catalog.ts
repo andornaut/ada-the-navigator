@@ -21,8 +21,11 @@ export type WeaponLevels = readonly [WeaponDefinition, WeaponDefinition, WeaponD
 
 export const WEAPON_LEVEL_COUNT = 3;
 
-/** The beam half-width that lets a near miss graze, and how long its flash shows. */
-export const BEAM = { flashSeconds: 0.15, halfWidth: 4 } as const;
+/**
+ * The beam half-width that lets a near miss graze, how long its flash shows and how long a hit's
+ * spark shows (art/weapons.md "Phaser beam").
+ */
+export const BEAM = { flashSeconds: 0.15, halfWidth: 4, sparkSeconds: 0.16 } as const;
 
 const projectile = {
   beamRange: null,

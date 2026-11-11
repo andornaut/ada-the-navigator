@@ -11,7 +11,6 @@ import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { GALAXIES, galaxyPreview, SELECTOR_BACKDROP } from "../data/storybook.ts";
-import { BEAM } from "../data/weapon-catalog.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { createControls } from "../input/controls.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
@@ -20,7 +19,6 @@ import { enemySpeedFraction } from "../model/enemy-ai.ts";
 import {
   activeBeamFlashes,
   activeBlastFlashes,
-  BLAST_FLASH_SECONDS,
   shipSpeedFraction,
   stationDock,
 } from "../model/flight.ts";
@@ -118,6 +116,17 @@ import {
   stationFrame,
 } from "./station-art.ts";
 import { preloadTouchChrome } from "./touch-chrome.ts";
+import {
+  beam as beamEffect,
+  blast as blastEffect,
+  type EffectShape,
+  heavyMissile,
+  missileFrame,
+  missileKind,
+  rapidMissile,
+  spark as sparkEffect,
+  type TaperShape,
+} from "./weapon-effects.ts";
 
 // Art's destruction data; a wreck's flash sprite shares its id plus this suffix.
 const DESTRUCTION_PATH = "/art/enemies/destruction.json";
@@ -990,24 +999,22 @@ export class PrototypeScene extends Phaser.Scene {
     }
     this.drawRockBreaks();
     this.startRockLoads();
-    // Placeholder blast flash until Art supplies one: the blast's ground-plane ellipse, half-width
-    // R x 1.414 and half-height R x 0.707, fading out.
+    // Art's missile blasts, each with its one flash (art/weapons.md "Missile blasts").
     for (const flash of activeBlastFlashes(flight)) {
-      const point = this.project(flash);
-      this.overlay.lineStyle(2, this.palette.weapon, 1 - flash.age / BLAST_FLASH_SECONDS);
-      this.overlay.strokeEllipse(
-        point.x,
-        point.y,
-        flash.radius * Math.SQRT2 * 2,
-        flash.radius * Math.SQRT1_2 * 2,
+      this.drawEffect(
+        blastEffect(this.project(flash), flash.radius, this.reducedMotion, flash.age * 1000),
       );
     }
-    // Placeholder beam flash until Art supplies one: a line that fades over the flash.
+    // Art's Phaser beam from the nose, and a hit's spark at the contact.
     for (const flash of activeBeamFlashes(flight)) {
       const from = this.project(flash.from);
       const to = this.project(flash.to);
-      this.overlay.lineStyle(2, this.palette.weapon, 1 - flash.age / BEAM.flashSeconds);
-      this.overlay.lineBetween(from.x, from.y, to.x, to.y);
+      const ms = flash.age * 1000;
+      this.drawEffect(beamEffect(from, to, flash.hit, this.reducedMotion, ms));
+      if (flash.hit) {
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        this.drawEffect(sparkEffect(to, angle, this.reducedMotion, ms));
+      }
     }
     for (const shot of flight.shots) {
       const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
@@ -1020,6 +1027,13 @@ export class PrototypeScene extends Phaser.Scene {
       if (shot.projectile === "dot") {
         this.overlay.fillStyle(color, alpha);
         this.overlay.fillCircle(point.x, point.y, 1.5);
+      } else if (shot.projectile === "missile" && !shot.enemy && shot.blast !== undefined) {
+        // Art's Rapid or Heavy missile, its exhaust flickering unless motion is reduced.
+        const kind = missileKind(shot.blast);
+        const frame = missileFrame(kind, this.reducedMotion, this.time.now);
+        this.drawEffect(
+          (kind === "rapid" ? rapidMissile : heavyMissile)(point, shot.velocity, frame),
+        );
       } else if (shot.projectile === "missile") {
         const angle = Math.atan2(point.y - tail.y, point.x - tail.x);
         const dx = Math.cos(angle);
@@ -1841,6 +1855,52 @@ export class PrototypeScene extends Phaser.Scene {
     }
   }
 
+  /** Fills and strokes Art's weapon effect shapes on the overlay, in order. */
+  private drawEffect(shapes: readonly EffectShape[]): void {
+    const graphics = this.overlay;
+    for (const shape of shapes) {
+      switch (shape.kind) {
+        case "polygon":
+          graphics.fillStyle(shape.colour, shape.alpha);
+          graphics.fillPoints(
+            shape.points.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
+            true,
+          );
+          break;
+        case "disc":
+          graphics.fillStyle(shape.colour, shape.alpha);
+          graphics.fillCircle(shape.at.x, shape.at.y, shape.radius);
+          break;
+        case "ellipse":
+          if (shape.stroke === undefined) {
+            graphics.fillStyle(shape.colour, shape.alpha);
+            graphics.fillEllipse(shape.at.x, shape.at.y, shape.halfWidth * 2, shape.halfHeight * 2);
+          } else {
+            graphics.lineStyle(shape.stroke, shape.colour, shape.alpha);
+            graphics.strokeEllipse(
+              shape.at.x,
+              shape.at.y,
+              shape.halfWidth * 2,
+              shape.halfHeight * 2,
+            );
+          }
+          break;
+        case "line":
+          graphics.lineStyle(shape.width, shape.colour, shape.alpha);
+          graphics.lineBetween(shape.from.x, shape.from.y, shape.to.x, shape.to.y);
+          if (shape.round) {
+            graphics.fillStyle(shape.colour, shape.alpha);
+            graphics.fillCircle(shape.from.x, shape.from.y, shape.width / 2);
+            graphics.fillCircle(shape.to.x, shape.to.y, shape.width / 2);
+          }
+          break;
+        case "taper":
+          this.drawTaper(shape);
+          break;
+      }
+    }
+  }
+
   /**
    * Destroyed rocks take the archetype-independent destruction (art/asteroids.md
    * "Destruction"): shrink about the pivot, multiply darken and fade linearly, at every motion
@@ -1868,6 +1928,41 @@ export class PrototypeScene extends Phaser.Scene {
         .setVisible(true);
       return true;
     });
+  }
+
+  /** A taper as two triangles whose vertex alphas run linearly from tail to head. */
+  private drawTaper(shape: TaperShape): void {
+    const { colour, head, tail } = shape;
+    const dx = head.at.x - tail.at.x;
+    const dy = head.at.y - tail.at.y;
+    const length = Math.hypot(dx, dy);
+    if (length === 0) {
+      return;
+    }
+    const nx = -dy / length;
+    const ny = dx / length;
+    const side = (end: TaperShape["head"], sign: number) => ({
+      x: end.at.x + (sign * nx * end.width) / 2,
+      y: end.at.y + (sign * ny * end.width) / 2,
+    });
+    const tailLeft = side(tail, 1);
+    const tailRight = side(tail, -1);
+    const headLeft = side(head, 1);
+    const headRight = side(head, -1);
+    const graphics = this.overlay;
+    // Each triangle takes its three corners' alphas from the first three gradient slots.
+    graphics.fillGradientStyle(colour, colour, colour, colour, tail.alpha, head.alpha, tail.alpha);
+    graphics.fillTriangle(tailLeft.x, tailLeft.y, headLeft.x, headLeft.y, tailRight.x, tailRight.y);
+    graphics.fillGradientStyle(colour, colour, colour, colour, head.alpha, head.alpha, tail.alpha);
+    graphics.fillTriangle(
+      headLeft.x,
+      headLeft.y,
+      headRight.x,
+      headRight.y,
+      tailRight.x,
+      tailRight.y,
+    );
+    graphics.fillStyle(colour, 1);
   }
 
   /** Placeholder asteroid: its collision parts filled as one mass, outlined on the union. */

@@ -55,6 +55,7 @@ import {
   rollEnemyDrop,
   splitStardust,
 } from "./drops.ts";
+import { nosePoint } from "./nose.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
@@ -64,6 +65,7 @@ import type {
   FlightInput,
   FlightState,
   SectorProgress,
+  Shot,
   SpaceObject,
   Vec,
 } from "./types.ts";
@@ -987,8 +989,10 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
+  // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
+  const origin = nosePoint(flight.facing, flight.player);
   if (definition.projectileKind === "beam") {
-    fireBeam(content, definition, aim, flight, events);
+    fireBeam(content, definition, aim, origin, flight, events);
     flight.fireCooldown += definition.intervalSeconds;
     return;
   }
@@ -997,17 +1001,20 @@ function fire(
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
     baseSpeed: content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
-    origin: flight.player,
+    origin,
     viewportWidth,
   });
   for (const projectile of volley.projectiles) {
-    flight.shots.push({
+    const shot: Shot = {
       ...projectile,
       enemy: false,
       hitIds: [],
       id: `shot:${flight.nextId++}`,
       piercing: false,
-    });
+    };
+    flight.shots.push(shot);
+    // A shot that starts inside an obstacle Ada is touching strikes it at once.
+    strike(content, shot, flight, events);
   }
   flight.fireCooldown += volley.interval;
 }
@@ -1346,35 +1353,7 @@ function shots(
         shot.life = 0;
         continue;
       }
-      for (const object of flight.objects) {
-        if (
-          !["enemy", ...SCENERY].includes(object.kind) ||
-          object.hp <= 0 ||
-          shot.hitIds.includes(object.id) ||
-          (object.kind === "enemy"
-            ? distance(shot, object) > object.radius + 3
-            : !sceneryContact(object, shot, 3))
-        ) {
-          continue;
-        }
-        shot.hitIds.push(object.id);
-        const part = hitPart(content, partReach(content), shot, object);
-        // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
-        if (part === undefined) {
-          shot.hitIds.pop();
-          continue;
-        }
-        hit(content, shot.damage, part, object, flight, events);
-        if (shot.blast !== undefined) {
-          blast(content, shot.damage, shot.blast, shot, object, flight, events);
-        }
-        if (!shot.piercing) {
-          shot.life = 0;
-        }
-        if (shot.life <= 0) {
-          break;
-        }
-      }
+      strike(content, shot, flight, events);
     }
     shot.life = Math.max(0, shot.life - elapsed);
   }
@@ -1385,6 +1364,50 @@ function shots(
     }
   }
   flight.objects = flight.objects.filter((o) => o.hp > 0);
+}
+
+/**
+ * Ada's shot strikes every enemy and obstacle it touches at its position that it has not struck,
+ * until it is spent; a large hull only takes it at a live hardpoint.
+ */
+function strike(
+  content: PrototypeContent,
+  shot: Shot,
+  flight: FlightState,
+  events: FlightEvent[],
+): void {
+  if (shot.damage === undefined) {
+    return;
+  }
+  for (const object of flight.objects) {
+    if (
+      !["enemy", ...SCENERY].includes(object.kind) ||
+      object.hp <= 0 ||
+      shot.hitIds.includes(object.id) ||
+      (object.kind === "enemy"
+        ? distance(shot, object) > object.radius + 3
+        : !sceneryContact(object, shot, 3))
+    ) {
+      continue;
+    }
+    shot.hitIds.push(object.id);
+    const part = hitPart(content, partReach(content), shot, object);
+    // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
+    if (part === undefined) {
+      shot.hitIds.pop();
+      continue;
+    }
+    hit(content, shot.damage, part, object, flight, events);
+    if (shot.blast !== undefined) {
+      blast(content, shot.damage, shot.blast, shot, object, flight, events);
+    }
+    if (!shot.piercing) {
+      shot.life = 0;
+    }
+    if (shot.life <= 0) {
+      break;
+    }
+  }
 }
 
 /** How near a point must be to a live hardpoint to strike it. */
@@ -1539,10 +1562,11 @@ function markBlasted(object: SpaceObject, flight: FlightState): void {
   }
 }
 
-/** A hitscan beam's visible flash, view-only and never saved. */
+/** A hitscan beam's visible flash, view-only and never saved; a hit also shows a spark at `to`. */
 export interface BeamFlash {
   from: Vec;
   to: Vec;
+  hit: boolean;
   age: number;
 }
 const beamFlashes = new WeakMap<FlightState, BeamFlash[]>();
@@ -1553,8 +1577,8 @@ export interface BlastFlash extends Vec {
   age: number;
 }
 const blastFlashes = new WeakMap<FlightState, BlastFlash[]>();
-/** How long a blast's placeholder flash shows. */
-export const BLAST_FLASH_SECONDS = 0.25;
+/** How long a blast shows: the longest blast effect, the Heavy Missile's 340 ms. */
+export const BLAST_FLASH_SECONDS = 0.34;
 
 /** The flight's beam flashes still showing. */
 export function activeBeamFlashes(flight: FlightState): readonly BeamFlash[] {
@@ -1572,7 +1596,7 @@ function ageFlashes(dt: number, flight: FlightState): void {
     beams.forEach((flash) => (flash.age += dt));
     beamFlashes.set(
       flight,
-      beams.filter((flash) => flash.age < BEAM.flashSeconds),
+      beams.filter((flash) => flash.age < Math.max(BEAM.flashSeconds, BEAM.sparkSeconds)),
     );
   }
   const blasts = blastFlashes.get(flight);
@@ -1644,6 +1668,7 @@ function fireBeam(
   content: PrototypeContent,
   definition: WeaponDefinition,
   aim: Vec,
+  origin: Vec,
   flight: FlightState,
   events: FlightEvent[],
 ): void {
@@ -1653,7 +1678,6 @@ function fireBeam(
     return;
   }
   const direction = { x: aim.x / span, y: aim.y / span };
-  const origin = { ...flight.player };
   let first: { object: SpaceObject; part: string | null; at: number } | null = null;
   const nearer = (object: SpaceObject, part: string | null, at: number | null) => {
     if (at !== null && (!first || at < first.at)) {
@@ -1684,6 +1708,7 @@ function fireBeam(
   flashes.push({
     age: 0,
     from: origin,
+    hit: struck !== null,
     to: { x: origin.x + direction.x * reach, y: origin.y + direction.y * reach },
   });
   beamFlashes.set(flight, flashes);
