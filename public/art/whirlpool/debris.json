@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "displayScale": 0.4375,
+  "body": ["#5B8089", "#4C717A", "#3E636C", "#335860", "#2B4F58"],
+  "contour": {
+    "color": "#D68B72",
+    "width": 1.5
+  },
+  "tumble": {
+    "frames": 8,
+    "degPerSecond": [60, 120]
+  },
+  "marks": {
+    "color": "#D68B72",
+    "width": 2,
+    "dashes": [
+      {
+        "length": 9,
+        "alpha": 0.95,
+        "behind": 7.5,
+        "side": -3
+      },
+      {
+        "length": 6,
+        "alpha": 0.7,
+        "behind": 14.5,
+        "side": 3
+      },
+      {
+        "length": 4,
+        "alpha": 0.45,
+        "behind": 21.5,
+        "side": 0
+      }
+    ]
+  },
+  "debris": [
+    {
+      "id": "whirlpool-debris-plate",
+      "frame": {
+        "width": 118,
+        "height": 115
+      },
+      "display": {
+        "width": 51.625,
+        "height": 50.3125
+      },
+      "pivot": [0.5, 0.50435],
+      "radius": 56.35,
+      "frames": [
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-0.svg",
+          "bounds": [12.27, 23.95, 95.4, 72.05]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-1.svg",
+          "bounds": [23.31, 5.68, 95.86, 87.17]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-2.svg",
+          "bounds": [40.49, 3.99, 99.15, 103.63]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-3.svg",
+          "bounds": [23.51, 25.14, 111.11, 99.59]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-4.svg",
+          "bounds": [9.25, 45.87, 113.51, 88.02]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-5.svg",
+          "bounds": [12.32, 31.57, 91.43, 109.32]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-6.svg",
+          "bounds": [35.81, 15.6, 66.82, 110.51]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-plate-7.svg",
+          "bounds": [13.11, 17.77, 79.24, 92.13]
+        }
+      ]
+    },
+    {
+      "id": "whirlpool-debris-girder",
+      "frame": {
+        "width": 108,
+        "height": 95
+      },
+      "display": {
+        "width": 47.25,
+        "height": 41.5625
+      },
+      "pivot": [0.5, 0.48421],
+      "radius": 50.62,
+      "frames": [
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-0.svg",
+          "bounds": [8.74, 11.52, 99.26, 81.63]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-1.svg",
+          "bounds": [18.98, 7.41, 89.02, 86.25]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-2.svg",
+          "bounds": [39.07, 3.85, 68.93, 85.25]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-3.svg",
+          "bounds": [34.03, 6.96, 83.22, 72.75]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-4.svg",
+          "bounds": [31.28, 20.05, 98.92, 71.31]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-5.svg",
+          "bounds": [17.29, 14.04, 97.69, 77.75]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-6.svg",
+          "bounds": [7.79, 13.03, 102.11, 90.53]
+        },
+        {
+          "file": "/art/whirlpool/whirlpool-debris-girder-7.svg",
+          "bounds": [6.12, 22.86, 104.2, 87.1]
+        }
+      ]
+    }
+  ]
+}

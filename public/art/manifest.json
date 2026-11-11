@@ -21724,6 +21724,246 @@
         "y": 0.5
       },
       "craft": "stranded-hauler"
+    },
+    {
+      "id": "whirlpool-debris-plate-0",
+      "path": "/art/whirlpool/whirlpool-debris-plate-0.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-1",
+      "path": "/art/whirlpool/whirlpool-debris-plate-1.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-2",
+      "path": "/art/whirlpool/whirlpool-debris-plate-2.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-3",
+      "path": "/art/whirlpool/whirlpool-debris-plate-3.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-4",
+      "path": "/art/whirlpool/whirlpool-debris-plate-4.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-5",
+      "path": "/art/whirlpool/whirlpool-debris-plate-5.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-6",
+      "path": "/art/whirlpool/whirlpool-debris-plate-6.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-plate-7",
+      "path": "/art/whirlpool/whirlpool-debris-plate-7.svg",
+      "width": 118,
+      "height": 115,
+      "displayWidth": 51.625,
+      "displayHeight": 50.3125,
+      "facing": "front",
+      "tumbleIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.50435
+      },
+      "debris": "whirlpool-debris-plate"
+    },
+    {
+      "id": "whirlpool-debris-girder-0",
+      "path": "/art/whirlpool/whirlpool-debris-girder-0.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-1",
+      "path": "/art/whirlpool/whirlpool-debris-girder-1.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-2",
+      "path": "/art/whirlpool/whirlpool-debris-girder-2.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-3",
+      "path": "/art/whirlpool/whirlpool-debris-girder-3.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-4",
+      "path": "/art/whirlpool/whirlpool-debris-girder-4.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-5",
+      "path": "/art/whirlpool/whirlpool-debris-girder-5.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-6",
+      "path": "/art/whirlpool/whirlpool-debris-girder-6.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
+    },
+    {
+      "id": "whirlpool-debris-girder-7",
+      "path": "/art/whirlpool/whirlpool-debris-girder-7.svg",
+      "width": 108,
+      "height": 95,
+      "displayWidth": 47.25,
+      "displayHeight": 41.5625,
+      "facing": "front",
+      "tumbleIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.48421
+      },
+      "debris": "whirlpool-debris-girder"
     }
   ],
   "spacePalette": "/art/space-palette.json",
@@ -21736,5 +21976,7 @@
   "storyOvernight": "/art/story-overnight.json",
   "resourceRocks": "/art/resource-rocks.json",
   "cartwheelDebris": "/art/cartwheel/debris.json",
-  "tow": "/art/cartwheel/tow.json"
+  "tow": "/art/cartwheel/tow.json",
+  "whirlpoolCurrents": "/art/whirlpool/currents.json",
+  "whirlpoolDebris": "/art/whirlpool/debris.json"
 }

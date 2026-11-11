@@ -111,6 +111,7 @@ and where each asset sits:
 | Coral drone family (swarm, fighter, interceptor, retaliator)  | Sunflower, keylined                                     |
 | Play asteroids                                                | Shared                                                  |
 | Stardust                                                      | Shared                                                  |
+| [Current streaks and river debris](whirlpool.md)              | Whirlpool                                               |
 | Backdrop rocks                                                | Shared, tinted per galaxy (`tints` in `asteroids.json`) |
 | Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`) | `bank`, no galaxy: a field for a later dark galaxy      |
 

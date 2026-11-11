@@ -15,6 +15,7 @@ const GROUPS = [
   "station-",
   "enemy-",
   "whale-",
+  "whirlpool-",
 ] as const;
 
 export function placeEntries(group: (typeof GROUPS)[number], entries: readonly { id: string }[]) {

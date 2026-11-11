@@ -12,7 +12,8 @@ stranded craft and the tow line), [Stardust](stardust.md),
 [the rock](rock.md), the
 [cockpit background](cockpit.md), the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
-[Whirlpool whales](whales.md), character portraits and the
+[Whirlpool whales](whales.md), the
+[Whirlpool current streaks and river debris](whirlpool.md), character portraits and the
 [storybook](storybook.md) Earth backgrounds.
 [Community projects](projects.md) add the Projects shop tab and the world
 changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
@@ -62,11 +63,11 @@ the jets file is unavailable. [Ship geometry](ship.md),
 [sector one enemies](enemies.md) and [portrait provenance](portraits.md) describe
 the authored and reused assets.
 
-Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid and whale SVGs are
-deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
+Ship, enemy, station, outpost, Cartwheel, Cartwheel prop, asteroid, whale and Whirlpool
+debris SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemies.ts`,
 `art/tools/station.ts`, `art/tools/outposts.ts`, `art/tools/cartwheel.ts`,
-`art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts` and `art/tools/whales.ts`, with the
-heavies' layered
+`art/tools/cartwheel-props.ts`, `art/tools/asteroids.ts`, `art/tools/whales.ts` and
+`art/tools/whirlpool.ts`, with the heavies' layered
 sprites from `art/tools/heavies.ts`; edit the generators and
 regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.

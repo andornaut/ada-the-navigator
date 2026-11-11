@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "streaks": {
+    "color": "#296362",
+    "minFlow": 0.06,
+    "lanes": {
+      "spacing": 46,
+      "min": 3,
+      "jitter": 0.12,
+      "jitterStep": 0.618034
+    },
+    "rows": {
+      "spacing": 64,
+      "stagger": 0.5,
+      "phase": 0.3,
+      "phaseStep": 0.414214
+    },
+    "chevron": {
+      "arm": [6, 7],
+      "tip": 0.6,
+      "back": 0.6
+    },
+    "stroke": [1.1, 0.7],
+    "alpha": [0.3, 0.7],
+    "join": "round",
+    "cap": "butt",
+    "reducedMotion": {
+      "time": 0
+    }
+  }
+}
