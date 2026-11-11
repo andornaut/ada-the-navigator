@@ -80,6 +80,9 @@ game has drawn. A new worker takes over on a later launch, after every page the
 old one controls has closed. The landing page at `/` is not precached.
 
 Both pages link `/manifest.webmanifest`, which installs the game at `/play/`.
+The build writes each icon in `src/pwa/icons.ts` again under a content-hashed
+name in `/assets/` and points the built pages and manifest there, so a redrawn
+icon reaches an installed app; the source pages and manifest keep plain URLs.
 `src/pwa/index.ts` exposes the install state, its change listener, the install
 prompt and the browser whose own menu installs the game (iOS and Firefox for
 Android). The dev server registers no service worker.
