@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { ControlState, MOVE_STICK_GEOMETRY } from "../input/state.ts";
-import { NO_INSETS } from "./layout/playView.ts";
+import { logicalView, NO_INSETS, safeInsets, viewScale } from "./layout/playView.ts";
+import { stickTargets } from "./layout/touchControls.ts";
 import { centredAt, MARKER_THRESHOLD, STICK_DEPTHS, stickViews } from "./sticks.ts";
 import {
   KNOB_OUTER_RADIUS,
@@ -42,6 +43,27 @@ describe("joystick placement", () => {
     expect(views.move?.ringPose).toBe("rest");
     expect(views.move?.knobPose).toBe("rest");
     expect(knobCentre(views.move!.knob)).toEqual({ x: 60, y: 299 });
+  });
+
+  it.each([
+    ["no insets", { bottom: 0, left: 0, right: 0, top: 0 }],
+    ["phone insets", { bottom: 21, left: 47, right: 47, top: 0 }],
+  ])("keeps both DOM targets concentric with their drawn rings at 844x390 with %s", (_, css) => {
+    const screen = { height: 390, width: 844 };
+    const view = logicalView(screen);
+    const insets = safeInsets(css, viewScale(screen));
+    const views = stickViews(
+      { ...view, insets, visibility: layout.visibility, visible: true },
+      new ControlState(),
+    );
+    const targets = stickTargets(view, insets);
+    for (const side of ["move", "aim"] as const) {
+      const ring = views[side]!.ring;
+      const target = targets[side];
+      expect(target.x + target.width / 2).toBe(ring.x + TOUCH_CHROME_FRAME / 2);
+      expect(target.y + target.height / 2).toBe(ring.y + TOUCH_CHROME_FRAME / 2);
+      expect(target.width).toBe(TOUCH_CHROME_FRAME);
+    }
   });
 
   it("omits a side hidden by its setting and both while controls do not show", () => {

@@ -25,12 +25,17 @@ export const TOUCH_STICK = {
 // edge on each side.
 const DRAWN_HALF = (TOUCH_STICK.frame - 1) / 2 - 1;
 
-// Each joystick's ring centre at rest in a logical view view big with insets.
+// Each joystick's ring centre at rest in a logical view view big with insets, on whole pixels, so
+// the drawn ring and its DOM target share one centre.
 export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<StickSide, Point>> {
   const y = Math.floor(view.height - insets.bottom) - 1 - TOUCH_STICK.bottom - DRAWN_HALF;
   return {
     aim: {
-      x: Math.floor(view.width) - 1 - Math.max(TOUCH_STICK.side, insets.right) - DRAWN_HALF,
+      x:
+        Math.floor(view.width) -
+        1 -
+        Math.ceil(Math.max(TOUCH_STICK.side, insets.right)) -
+        DRAWN_HALF,
       y,
     },
     move: { x: Math.ceil(Math.max(TOUCH_STICK.side, insets.left)) + DRAWN_HALF, y },
