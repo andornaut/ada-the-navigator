@@ -307,7 +307,7 @@ done:
 
 Warnings:
 
-- Shield low, once per fight: Astra: "Shield low!"
+- Shield low, once per fight: Astra: "Shield low!" Penny: "Whimper..." (upset)
 - Drones arrive: Astra: "Drones ahead." Ada: "I see them."
 
 Penny senses a point of interest: Penny: "Woof! Woof!" (happy) Ada: "Penny, did you sense
@@ -337,6 +337,34 @@ Sunflower:
   thinks you're fun." (happy)
 - Quiet stretch: Ada: "Why is it called Sunflower?" Astra: "Its arms spiral like
   the seeds of a sunflower."
+
+Astra grows as her memory returns: tentative in Sunflower, warmer and surer in
+Cartwheel and Whirlpool, and worried but steady in Black Eye.
+
+Cartwheel:
+
+- First arrival: Astra: "Cartwheel. I remember the noise of this place." Ada:
+  "Noisy is good. Busy means people." (happy)
+- Quiet stretch: Astra: "I used to rush everywhere. With you, I notice more."
+  Ada: "That's what exploring is for." (happy)
+- Quiet stretch: Ada: "Do you dream, Astra?" Astra: "Not yet. Maybe I'll learn."
+
+Whirlpool:
+
+- First arrival: Astra: "Whirlpool. I'm sure of my course now, Navigator." Ada:
+  "You sound more like yourself." (happy)
+- Quiet stretch: Astra: "My maps feel fuller every day." Ada: "Our maps." (happy)
+- Quiet stretch: Astra: "I'm glad it was you who found the rock." Ada: "Me too."
+  (happy)
+
+Black Eye:
+
+- First arrival: Astra: "Black Eye. I don't like it here." Ada: "We'll face it
+  together."
+- Quiet stretch: Astra: "If I'm whole again, will you still fly with me?" Ada:
+  "Always." (happy)
+- Quiet stretch: Astra: "Whatever is waiting, I'm not running this time." Ada:
+  "Neither am I."
 
 ## Shared interface text
 

@@ -19,7 +19,9 @@ brings her aboard, and jumping home returns her, holding the rock, to the moment
 she left.
 
 The ship's AI is Astra, who presents as female. She is warm and curious, a
-little formal, delighted by new places, and learns human expressions from Ada.
+little formal, delighted by new places, and learns human expressions from Ada. She grows as her memory returns:
+tentative at first, warmer and surer with each holodisk, and worried but steady
+before Black Eye.
 Her mission is to explore and map the universe. Her holodisks hold the coordinates
 and data needed for quantum jumps, and also parts of her mind: memories and
 abilities. Whole, she navigates on her own. With all but one of her holodisks
