@@ -75,7 +75,8 @@ describe("view scale", () => {
 
   it("writes logical sizes as calc(var(--ada-unit) * N), never raw px", () => {
     expect(units(48)).toBe("calc(var(--ada-unit) * 48px)");
-    expect(units(0)).toBe("0");
+    expect(units(0)).toBe("0px");
+    expect(safeEdge("bottom", 0)).toBe("max(var(--ada-safe-bottom), 0px)");
     expect(safeEdge("top", 8)).toBe("max(var(--ada-safe-top), calc(var(--ada-unit) * 8px))");
     expect(fromSafeEdge("left", 8, -1.75)).toBe(
       "calc(max(var(--ada-safe-left), calc(var(--ada-unit) * 8px)) + var(--ada-unit) * -1.75px)",

@@ -17,7 +17,8 @@ const scaled = (value: number) => `var(${VIEW_PROPERTIES.unit}) * ${value}px`;
 
 // A logical length: calc(var(--ada-unit) * N).
 export function units(value: number): string {
-  return value === 0 ? "0" : `calc(${scaled(value)})`;
+  // Zero stays a length, so it is valid inside max() and calc().
+  return value === 0 ? "0px" : `calc(${scaled(value)})`;
 }
 
 // A safe rect's edge on side, for margin m: the view edge moved in by max(m, inset).
