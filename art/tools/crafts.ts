@@ -326,7 +326,10 @@ export type JetMouth = {
 
 // Outer and core colour ramps, slow to fast.
 export type JetColors = { outer: [string, string]; core: [string, string] };
-const gadgetJets: JetColors = { outer: ["#b8644c", "#f0a07c"], core: ["#d68b72", "#ffe2c8"] };
+export const gadgetJets: JetColors = {
+  outer: ["#b8644c", "#f0a07c"],
+  core: ["#d68b72", "#ffe2c8"],
+};
 
 // Family speed jets (version 1): Tech draws outer and core triangles per mouth behind the frame.
 export function jetsFile(

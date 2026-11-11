@@ -203,10 +203,11 @@ platform. Sunflower keeps the coral originals.
   entries in place, after the heavies and before Cartwheel's story craft.
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
   coral family; only fills change. Every SVG and shards file goes through the
-  colour swap below, and the tool stops on any colour outside the family.
-- The jets and hardpoints files are the coral family's, unchanged: the jets keep
-  Gadget's family jet colours. Destruction uses the shared `destruction.json`
-  timing and flash with the claim shards.
+  colour swap below, every jets file through the claim jet colours, and the
+  tool stops on any colour outside the family.
+- Jets files keep the coral shape, lengths, layers and mouth data; hardpoints
+  files are the coral family's, unchanged. Destruction uses the shared
+  `destruction.json` timing and flash with the claim shards.
 
 ### Claim files and entries
 
@@ -240,6 +241,16 @@ Contrast is WCAG against Cartwheel's field `#39221E`.
 | Scorch side           | `#42291f`            | `#33211b` |   1.03:1 |
 | Burn (deck paint)     | `#6e4436`            | `#613e30` |   1.58:1 |
 | Claw ink, wreck ember | `#181425`, `#f0a07c` | unchanged |          |
+
+Speed jets ramp slow to fast, in place of Gadget's jet colours:
+
+| Layer | Gadget                 | Claim                  | Contrast, slow and fast |
+| ----- | ---------------------- | ---------------------- | ----------------------: |
+| Outer | `#b8644c` to `#f0a07c` | `#bc4524` to `#fa6d38` |          2.82:1, 5.14:1 |
+| Core  | `#d68b72` to `#ffe2c8` | `#fa6d38` to `#ffebda` |         5.14:1, 12.77:1 |
+
+The outer tail is the ember side; the hot core end is a warm near-white (OKLab
+L 0.95, C 0.03).
 
 The platform adds deep rust `#7d4427` (painted spokes, 1.92:1) and steel side
 `#85786a` (3.44:1). Claim scorch is 3.29:1 on rust, so wrecks read on the hull;

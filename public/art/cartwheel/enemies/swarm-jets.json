@@ -9,13 +9,13 @@
   "layers": [
     {
       "name": "outer",
-      "colors": ["#b8644c", "#f0a07c"],
+      "colors": ["#bc4524", "#fa6d38"],
       "width": 1.6,
       "length": 1
     },
     {
       "name": "core",
-      "colors": ["#d68b72", "#ffe2c8"],
+      "colors": ["#fa6d38", "#ffebda"],
       "width": 0.8,
       "length": 0.55
     }

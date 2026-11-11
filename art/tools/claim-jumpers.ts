@@ -15,9 +15,11 @@ import {
   coralRear,
   coralSide,
   crafts,
+  gadgetJets,
   hullEntries,
   ink,
   insignia,
+  type JetColors,
   type Plan,
   plate,
   turretTop,
@@ -87,17 +89,42 @@ export const swap: Readonly<Record<string, string>> = {
 // Gadget's claw ink and the wreck ember stay as in the coral family.
 const family = new Set<string>([...Object.values(claim), ink, wreckEmber]);
 
-// Swaps every coral family colour in an SVG or shards file and fails on any colour outside the
-// claim-jumper family, so a new coral colour cannot slip through unmapped.
-export function recolour(file: string, text: string): string {
-  const result = text.replace(/#[0-9a-f]{6}\b/gi, (color) => swap[color.toLowerCase()] ?? color);
+// Speed jets, slow to fast: a dark ember tail opening to ember, round an ember core that runs
+// to a near-white hot centre (OKLab L 0.95, C 0.03, warm).
+export const claimJets: JetColors = {
+  outer: [claim.emberSide, claim.ember],
+  core: [claim.ember, "#ffebda"],
+};
+// Gadget's jet colour to claim jet colour, ramp stop by ramp stop.
+const jetSwap: Readonly<Record<string, string>> = Object.fromEntries(
+  (["outer", "core"] as const).flatMap((layer) =>
+    gadgetJets[layer].map((color, i) => [color, claimJets[layer][i]!]),
+  ),
+);
+const jetFamily = new Set<string>([...claimJets.outer, ...claimJets.core]);
+
+// Swaps every coral colour in a file through `map` and fails on any colour outside `allowed`,
+// so a new coral colour cannot slip through unmapped.
+function swapColours(
+  map: Readonly<Record<string, string>>,
+  allowed: ReadonlySet<string>,
+  file: string,
+  text: string,
+): string {
+  const result = text.replace(/#[0-9a-f]{6}\b/gi, (color) => map[color.toLowerCase()] ?? color);
   for (const color of result.match(/#[0-9a-f]{6}\b/gi) ?? []) {
-    if (!family.has(color.toLowerCase())) {
+    if (!allowed.has(color.toLowerCase())) {
       throw new Error(`${file}: ${color} is not a claim-jumper colour`);
     }
   }
   return result;
 }
+
+// An SVG or shards file in the claim-jumper palette.
+export const recolour = (file: string, text: string) => swapColours(swap, family, file, text);
+// A jets file in the claim jet colours; shape, lengths and anchors are unchanged.
+export const recolourJets = (file: string, text: string) =>
+  swapColours(jetSwap, jetFamily, file, text);
 
 // ---------------------------------------------------------------- turret platform
 
@@ -380,9 +407,13 @@ async function main() {
   mkdirSync(dir, { recursive: true });
   for (const [file, content] of files) {
     const path = `${dir}${file}`;
-    // Jets keep the family jet colours and hardpoint layouts carry no colour.
+    // Hardpoint layouts carry no colour.
     const drawn = file.endsWith(".svg") || file.endsWith("-shards.json");
-    const text = drawn ? recolour(file, content) : content;
+    const text = file.endsWith("-jets.json")
+      ? recolourJets(file, content)
+      : drawn
+        ? recolour(file, content)
+        : content;
     // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
     writeFileSync(
       path,
