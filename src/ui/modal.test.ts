@@ -134,9 +134,10 @@ describe("modal buttons", () => {
   });
 
   it("keeps 16px below the last control when a card scrolls to its end", () => {
-    // The trailing spacer follows the last group's 8px gap.
-    expect(rule(".ada-controls .ada-card")).toContain("padding:0 16px");
-    expect(rule(".ada-controls .ada-card::after")).toContain("height:8px");
+    // Chibi's 16px padding includes the 2px frame; the trailing spacer follows the last group's
+    // 8px gap.
+    expect(rule(".ada-controls .ada-card")).toContain("padding:0 14px");
+    expect(rule(".ada-controls .ada-card::after")).toContain("height:6px");
   });
 });
 

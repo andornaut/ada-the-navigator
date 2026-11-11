@@ -72,7 +72,7 @@ export const MODAL_STYLE = `
 .ada-controls .ada-card::after{
   content:"";
   flex:none;
-  height:${CARD.padding - CARD.gap}px
+  height:${CARD.padding - CARD.frameBorder - CARD.gap}px
 }
 
 /* Chibi's content-fitted card (card-layout.ts sets its width and header gaps): groups stack 8px
@@ -89,7 +89,7 @@ export const MODAL_STYLE = `
   flex-direction:column;
   align-items:center;
   gap:${CARD.gap}px;
-  padding:0 ${CARD.padding}px;
+  padding:0 ${CARD.padding - CARD.frameBorder}px;
   color:${TEXT_TOKENS.label};
   background:#3b3850;
   border:2px solid #6b6685;
@@ -444,7 +444,8 @@ function fitCard(card: HTMLElement, header: HTMLElement, title: HTMLElement): vo
     first ? Number(first.dataset.inkTop ?? 0) : undefined,
     titleHeight,
   );
-  card.style.setProperty("--title-top", `${titleTop}px`);
+  // Layout measures from the card's outer edge; its content starts inside the 2px frame.
+  card.style.setProperty("--title-top", `${titleTop - CARD.frameBorder}px`);
   card.style.setProperty("--body-gap", `${bodyTop - titleTop - (titleHeight ?? 0) - CARD.gap}px`);
 }
 
