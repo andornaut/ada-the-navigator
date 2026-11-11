@@ -159,24 +159,33 @@ export class GameModel {
     }
   }
   /**
-   * A notice shows at once in the conversation box's slot, ahead of conversation lines, which
-   * wait under it and resume after. A game notice clears after a line's time in flight.
+   * A notice shows at once in the conversation box's slot, ahead of every line but a warning's
+   * (BOX_PRIORITIES); lower lines wait under it and resume after. A warning interrupts a notice,
+   * which resumes after it. A game notice clears after a line's time shown in flight.
    */
   private notify(text: string): void {
     this.state.notice = text;
     this.noticeShownFor = 0;
   }
-  /** The save status, which the scene reports, also holds the box while it shows. */
+  /** The save status, which the scene reports, ranks as a notice while it shows. */
   setSaveNotice(text: string): void {
     this.saveNotice = text;
   }
   private get noticeShowing(): boolean {
     return this.state.notice !== "" || this.saveNotice !== "";
   }
-  /** The line the conversation box shows now, if any; none while a notice shows. */
+  /** A warning shows in the box, over any notice. */
+  get warningShowing(): boolean {
+    return this.state.mode === "space" && this.talk.warningShowing;
+  }
+  /** The line the conversation box shows now, if any: a warning's, or another with no notice. */
   get conversation(): ConversationView | null {
     const showing = this.talk.showing;
-    if (!showing || this.state.mode !== "space" || this.noticeShowing) {
+    if (
+      !showing ||
+      this.state.mode !== "space" ||
+      (this.noticeShowing && !this.talk.warningShowing)
+    ) {
       return null;
     }
     const { desktop, speaker, text } = showing.line;
@@ -677,7 +686,8 @@ export class GameModel {
     const near = (range: number) => (object: { x: number; y: number }) =>
       Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
     const held = this.noticeShowing;
-    if (this.state.notice) {
+    // A game notice's time runs only while it shows, not under a warning.
+    if (this.state.notice && !this.talk.warningShowing) {
       this.noticeShownFor += dt;
       if (this.noticeShownFor >= CONVERSATION_TUNING.lineSeconds - 1e-9) {
         this.state.notice = "";

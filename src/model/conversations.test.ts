@@ -15,7 +15,8 @@ import { restoreSave } from "./save.ts";
 import { playOpening } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
-const { cooldownSeconds, lineSeconds, pennyRange, quietSeconds } = CONVERSATION_TUNING;
+const { cooldownSeconds, lineSeconds, pennyIntervalSeconds, pennyRange, quietSeconds } =
+  CONVERSATION_TUNING;
 
 const calm: ConversationFacts = {
   aimed: false,
@@ -56,6 +57,8 @@ function tapThrough(talk: ConversationDirector): string[] {
   return lines;
 }
 const lessonsHeard = ["lesson:move", "lesson:aim", "lesson:stardust", "lesson:dock"];
+// Galaxy one's quiet pool, heard, so a quiet minute brings no line.
+const quietHeard = ["quiet:1:lonely", "quiet:1:tail", "quiet:1:name"];
 
 describe("conversation schedule", () => {
   it("shows each line for its time or until tapped, and the last tap closes", () => {
@@ -80,45 +83,90 @@ describe("conversation schedule", () => {
     expect(showing(talk)).toBe("reaction:capital:0");
   });
 
-  it("orders waiting conversations warning, Penny, lesson, lore", () => {
+  it("orders waiting conversations warning, lesson, Penny, lore", () => {
     const { talk } = director(1, ["lesson:move", "lesson:aim", "lesson:dock", "arrival:1"]);
     run(talk, 0.05, {
       newlyMapped: ["growers"],
       pennyPoints: ["cache"],
       stardustInSight: true,
     });
-    expect(showing(talk)).toBe(`${pennyInstance(1, "cache")}:0`);
-    tapThrough(talk);
-    run(talk, cooldownSeconds + 0.05, { pennyPoints: ["cache"], stardustInSight: true });
     expect(showing(talk)).toBe("lesson:stardust:0");
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 0.05, { pennyPoints: ["cache"] });
+    expect(showing(talk)).toBe(`${pennyInstance(1, "cache")}:0`);
     tapThrough(talk);
     run(talk, cooldownSeconds + 0.05);
     expect(talk.showing?.conversation.priority).toBe("lore");
   });
 
-  it("lets a warning skip the cooldown and replace an ordinary conversation", () => {
+  it("lets a higher conversation interrupt a lower one, which resumes after it", () => {
+    const { talk } = director(1, ["lesson:move", "lesson:aim", "lesson:dock", "arrival:1"]);
+    run(talk, 0.05, { pennyPoints: ["cache"] });
+    talk.advance();
+    run(talk, 2, { pennyPoints: ["cache"] });
+    expect(showing(talk)).toBe("penny:1:cache:1");
+    run(talk, 0.05, { pennyPoints: ["cache"], stardustInSight: true });
+    expect(showing(talk)).toBe("lesson:stardust:0");
+    tapThrough(talk);
+    // Penny resumes at once, on the line she was on, ahead of the cooldown.
+    run(talk, 0.05, { pennyPoints: ["cache"] });
+    expect(showing(talk)).toBe("penny:1:cache:1");
+    run(talk, lineSeconds - 2.1, { pennyPoints: ["cache"] });
+    expect(showing(talk)).toBe("penny:1:cache:1");
+    run(talk, 0.1, { pennyPoints: ["cache"] });
+    expect(talk.showing).toBeNull();
+  });
+
+  it("drops an interrupted conversation that is no longer relevant", () => {
+    const { talk } = director(1, ["lesson:move", "lesson:aim", "lesson:dock", "arrival:1"]);
+    run(talk, 0.05, { pennyPoints: ["cache"] });
+    run(talk, 0.05, { pennyPoints: ["cache"], stardustInSight: true });
+    expect(showing(talk)).toBe("lesson:stardust:0");
+    tapThrough(talk);
+    // The cache was found meanwhile, so Penny's sense has nothing left to point at.
+    run(talk, cooldownSeconds - 1);
+    expect(talk.showing).toBeNull();
+  });
+
+  it("lets a warning skip the cooldown and interrupt an ordinary conversation", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, 0.05);
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 0.05, { inDanger: true });
     expect(showing(talk)).toBe("warning:drones:0");
     tapThrough(talk);
+    run(talk, 0.05, { inDanger: true });
+    expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 1, { inDanger: true, shieldFraction: 0.2 });
     expect(showing(talk)).toBe("warning:shieldLow:0");
   });
 
-  it("holds a line under a notice, then resumes it where it was and the queue after it", () => {
+  it("holds a lower line under a notice, then resumes it where it was", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, lineSeconds - 0.5, { capitalInSight: true });
     expect(showing(talk)).toBe("arrival:1:0");
     for (let i = 0; i < 400; i++) {
-      talk.step(0.05, true, { ...calm, inDanger: i > 200 });
+      talk.step(0.05, true, calm);
     }
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 0.4);
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 0.15);
     expect(showing(talk)).toBe("arrival:1:1");
+  });
+
+  it("never holds a warning behind a notice", () => {
+    const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    run(talk, 0.05, { inDanger: true });
+    tapThrough(talk);
+    talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
+    expect(showing(talk)).toBe("warning:shieldLow:0");
+    expect(talk.warningShowing).toBe(true);
+    // A warning showing over a notice keeps its own time.
+    for (let i = 0; i < 100; i++) {
+      talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
+    }
+    expect(talk.showing).toBeNull();
   });
 });
 
@@ -260,17 +308,28 @@ describe("conversation triggers", () => {
   });
 
   it("let Penny sense each point of interest once, while it is still near", () => {
-    const { heard, talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    const { heard, talk } = director(1, [...lessonsHeard, "arrival:1", ...quietHeard]);
     run(talk, 0.05, { pennyPoints: ["a"] });
     expect(tapThrough(talk)).toEqual(["penny:1:a:0", "penny:1:a:1"]);
-    run(talk, cooldownSeconds + 0.05, { pennyPoints: ["a", "b"] });
-    expect(showing(talk)).toBe("penny:1:b:0");
-    expect(heard).toEqual(expect.arrayContaining(["penny:1:a", "penny:1:b"]));
-    tapThrough(talk);
-    // A point found before Penny could speak is not sensed.
-    run(talk, 1, { pennyPoints: ["c"] });
-    run(talk, cooldownSeconds);
+    run(talk, pennyIntervalSeconds + 0.05, { pennyPoints: ["a"] });
     expect(talk.showing).toBeNull();
+    expect(heard.filter((entry) => entry === "penny:1:a")).toHaveLength(1);
+  });
+
+  it("let Penny sense at most once a minute, passing points that come near meanwhile", () => {
+    const { heard, talk } = director(1, [...lessonsHeard, "arrival:1", ...quietHeard]);
+    run(talk, 0.05, { pennyPoints: ["a"] });
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 1, { pennyPoints: ["b"] });
+    expect(talk.showing).toBeNull();
+    expect(heard).toContain("penny:1:b");
+    run(talk, pennyIntervalSeconds - cooldownSeconds - 1.2);
+    run(talk, 0.05, { pennyPoints: ["c"] });
+    expect(talk.showing).toBeNull();
+    run(talk, 0.3);
+    run(talk, 0.05, { pennyPoints: ["d"] });
+    expect(showing(talk)).toBe("penny:1:d:0");
+    expect(heard).toEqual(expect.arrayContaining(["penny:1:c", "penny:1:d"]));
   });
 });
 
@@ -367,6 +426,8 @@ describe("conversations in the game", () => {
     expect(key).toBe("lesson:move:0");
     model.state.flight!.dangerFor = 3;
     model.returnHome();
+    // Danger ends at once, so no warning comes over the notice.
+    model.state.flight!.dangerFor = 0;
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     for (let i = 0; i < 98; i++) {
@@ -378,6 +439,36 @@ describe("conversations in the game", () => {
     model.step(0.05, idle);
     expect(model.state.notice).toBe("");
     expect(model.conversation?.key).toBe(key);
+  });
+
+  it("show a warning over a notice, which waits with its time and resumes after", () => {
+    const model = flying();
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe("lesson:move:0");
+    const flight = model.state.flight!;
+    // Far from any friendly place with danger running, as in a fight.
+    flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
+    flight.dangerFor = 5;
+    model.returnHome();
+    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe("warning:drones:0");
+    expect(model.warningShowing).toBe(true);
+    for (let i = 0; i < 60; i++) {
+      model.step(0.05, idle);
+    }
+    model.advanceConversation();
+    model.advanceConversation();
+    expect(model.warningShowing).toBe(false);
+    expect(model.conversation).toBeNull();
+    for (let i = 0; i < 98; i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    model.step(0.05, idle);
+    model.step(0.05, idle);
+    expect(model.state.notice).toBe("");
+    expect(model.conversation?.key).toBe("lesson:move:0");
   });
 
   it("hold the box under the save status until saving works again", () => {

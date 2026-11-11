@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { CONVERSATION_TUNING, CONVERSATIONS, GENERAL_NAMED, SPEAKERS } from "./conversations.ts";
+import {
+  BOX_PRIORITIES,
+  CONVERSATION_PRIORITIES,
+  CONVERSATION_TUNING,
+  CONVERSATIONS,
+  GENERAL_NAMED,
+  SPEAKERS,
+} from "./conversations.ts";
 
 // The player copy, with its line wrapping undone.
 const COPY = readFileSync(new URL("../../gameplay/prototype-copy.md", import.meta.url), "utf8")
@@ -40,10 +47,21 @@ describe("in-flight conversations", () => {
     ]);
   });
 
+  it("rank warnings, notices, lessons, Penny, then lore", () => {
+    expect(BOX_PRIORITIES).toEqual(["warning", "notice", "lesson", "penny", "lore"]);
+    expect(CONVERSATION_PRIORITIES).toEqual(
+      BOX_PRIORITIES.filter((priority) => priority !== "notice"),
+    );
+    expect(
+      CONVERSATIONS.filter(({ id }) => id.startsWith("general:")).map((c) => c.priority),
+    ).toEqual(["warning", "warning"]);
+  });
+
   it("use the provisional timing and ranges", () => {
     expect(CONVERSATION_TUNING).toMatchObject({
       cooldownSeconds: 20,
       lineSeconds: 5,
+      pennyIntervalSeconds: 60,
       pennyRange: 900,
       quietSeconds: 60,
       shieldLowFraction: 0.25,

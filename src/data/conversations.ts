@@ -5,9 +5,15 @@ import type { SectorId } from "./types.ts";
 
 export type Speaker = "ada" | "astra" | "general" | "penny";
 
-/** Highest first: a warning, then Penny, then a first-flight lesson, then lore. */
-export const CONVERSATION_PRIORITIES = ["warning", "penny", "lesson", "lore"] as const;
+/**
+ * Highest first: a warning (the General's broadcasts among them), then a first-flight lesson,
+ * then Penny, then lore. Notices rank between warnings and lessons (BOX_PRIORITIES).
+ */
+export const CONVERSATION_PRIORITIES = ["warning", "lesson", "penny", "lore"] as const;
 export type ConversationPriority = (typeof CONVERSATION_PRIORITIES)[number];
+
+/** What the box shows, highest first; a higher one interrupts a lower one, which resumes after. */
+export const BOX_PRIORITIES = ["warning", "notice", "lesson", "penny", "lore"] as const;
 
 /** The first flight's lessons, each skipped once Ada has already done what it teaches. */
 export type Lesson = "aim" | "dock" | "move" | "stardust";
@@ -64,6 +70,8 @@ export const CONVERSATION_TUNING = {
   cooldownSeconds: 20,
   /** Seconds each line shows unless tapped. */
   lineSeconds: 5,
+  /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
+  pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */
   pennyRange: 900,
   /** Seconds without danger that make a quiet stretch. */

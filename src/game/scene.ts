@@ -45,6 +45,8 @@ import { type ConversationBox, createConversationBox } from "../ui/conversation.
 import { screenShakes } from "../ui/device-settings.ts";
 import { createGalaxySelect } from "../ui/galaxy-select.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
+import { VIEW_HOST_ID } from "../ui/layout/css.ts";
+import { NOTICE_UNDER_WARNING } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restart-card.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
@@ -863,6 +865,10 @@ export class PrototypeScene extends Phaser.Scene {
   /** The conversation box, in the desktop wording without a coarse pointer. */
   private renderConversation(): void {
     this.conversationBox.render(this.model.conversation, !coarsePointer(window));
+    // A warning shows over a notice, which waits under it (notice.ts).
+    document
+      .getElementById(VIEW_HOST_ID)
+      ?.toggleAttribute(NOTICE_UNDER_WARNING, this.model.warningShowing);
   }
 
   private observeFeedback(): void {

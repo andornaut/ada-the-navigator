@@ -12,10 +12,10 @@ import type { SectorId } from "../data/types.ts";
 import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 
 // The in-flight conversation box's schedule (gameplay/prototype.md "Astra and Penny in flight"):
-// one conversation at a time, chosen by priority; ordinary ones wait out a cooldown after the last
-// one ends, while warnings skip it and replace an ordinary one already showing. Each line shows
-// for its time or until tapped. The director only advances while the flight runs, so pausing,
-// a story panel or a station card freezes it.
+// one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
+// one showing, which resumes after it if still relevant. Ordinary ones wait out a cooldown after
+// the last one ends; warnings skip it. Each line shows for its time or until tapped. The director
+// only advances while the flight runs, so pausing, a story panel or a station card freezes it.
 
 /** What the flight did and what is around Ada this step. */
 export interface ConversationFacts {
@@ -49,6 +49,8 @@ interface Request {
   readonly instance: string;
   /** Penny's point of interest, which must still be undiscovered to show. */
   readonly point?: string;
+  /** Where an interrupted conversation resumes. */
+  readonly resume?: { readonly elapsed: number; readonly line: number };
 }
 
 interface Active extends Request {
@@ -111,6 +113,8 @@ export class ConversationDirector {
   private done: Record<Lesson, boolean> = { aim: false, dock: false, move: false, stardust: false };
   private inFight = false;
   private pennyPoints: readonly string[] = [];
+  /** Seconds until Penny can sense another point. */
+  private pennyWait = 0;
   private playedThisFlight = new Set<string>();
   private queue: Request[] = [];
   private quietFor = 0;
@@ -163,16 +167,23 @@ export class ConversationDirector {
   }
 
   /**
-   * One flight step. While held, as under a notice, requests still queue but nothing advances or
-   * starts: a line showing waits and resumes where it was.
+   * One flight step. A notice ranks below warnings and above everything else (BOX_PRIORITIES):
+   * while one shows, requests still queue and a warning may start or keep showing, but any other
+   * line waits where it was and resumes once the notice clears.
    */
-  step(dt: number, held: boolean, facts: ConversationFacts): void {
+  step(dt: number, notice: boolean, facts: ConversationFacts): void {
     const sector = this.sector;
     if (sector === null || !Number.isFinite(dt) || dt <= 0) {
       return;
     }
+    this.pennyWait = Math.max(0, this.pennyWait - dt);
     this.observe(sector, facts);
-    if (held) {
+    if (notice && !this.warningShowing) {
+      this.queue = this.queue.filter((request) => this.valid(request));
+      const warning = this.queue.find((request) => request.conversation.priority === "warning");
+      if (warning) {
+        this.start(warning);
+      }
       return;
     }
     if (this.active) {
@@ -253,7 +264,17 @@ export class ConversationDirector {
       this.shieldWarned = true;
       this.request((trigger) => trigger.kind === "shieldLow");
     }
-    const point = facts.pennyPoints.find((id) => !this.seen.includes(pennyInstance(sector, id)));
+    const unsensed = facts.pennyPoints.filter(
+      (id) => !this.seen.includes(pennyInstance(sector, id)),
+    );
+    if (this.pennyWait > 0) {
+      // Points that come into range while Penny rests pass unsensed.
+      for (const id of unsensed) {
+        this.seen.push(pennyInstance(sector, id));
+      }
+      return;
+    }
+    const [point] = unsensed;
     const penny = this.conversations.find((conversation) => conversation.trigger.kind === "penny");
     if (point !== undefined && penny && !this.queue.some((entry) => entry.point !== undefined)) {
       this.enqueue({ conversation: penny, instance: pennyInstance(sector, point), point });
@@ -294,29 +315,57 @@ export class ConversationDirector {
     return request.point === undefined || this.pennyPoints.includes(request.point);
   }
 
+  /**
+   * The highest waiting request interrupts a lower one showing, which waits to resume. With
+   * nothing showing, an interrupted one resumes at once, a warning starts at once, and any other
+   * waits out the cooldown.
+   */
   private schedule(): void {
     this.queue = this.queue.filter((request) => this.valid(request));
-    const warning = this.queue.find((request) => request.conversation.priority === "warning");
-    if (this.active?.conversation.priority === "warning") {
+    // By rank, interrupted ones first within a rank, then in request order (a stable sort).
+    const [next] = [...this.queue].sort(
+      (a, b) =>
+        rank(a.conversation) - rank(b.conversation) ||
+        Number(b.resume !== undefined) - Number(a.resume !== undefined),
+    );
+    if (!next) {
       return;
     }
-    if (warning) {
-      this.start(warning);
+    if (this.active) {
+      if (rank(next.conversation) < rank(this.active.conversation)) {
+        this.start(next);
+      }
       return;
     }
-    if (this.active || this.cooldown > EPSILON) {
-      return;
-    }
-    const next = [...this.queue].sort((a, b) => rank(a.conversation) - rank(b.conversation))[0];
-    if (next) {
+    if (
+      next.resume !== undefined ||
+      next.conversation.priority === "warning" ||
+      this.cooldown <= EPSILON
+    ) {
       this.start(next);
     }
   }
 
   private start(request: Request): void {
+    const interrupted = this.active;
     this.queue = this.queue.filter((entry) => entry !== request);
-    this.markSeen(request);
-    this.active = { ...request, elapsed: 0, line: 0 };
+    if (interrupted) {
+      const { elapsed, line, ...waiting } = interrupted;
+      this.queue.unshift({ ...waiting, resume: { elapsed, line } });
+    }
+    if (request.resume === undefined) {
+      this.markSeen(request);
+      if (request.conversation.trigger.kind === "penny") {
+        this.pennyWait = CONVERSATION_TUNING.pennyIntervalSeconds;
+      }
+    }
+    const { resume, ...shown } = request;
+    this.active = { ...shown, elapsed: resume?.elapsed ?? 0, line: resume?.line ?? 0 };
+  }
+
+  /** Whether a warning shows, which a notice waits under. */
+  get warningShowing(): boolean {
+    return this.active?.conversation.priority === "warning";
   }
 
   private markSeen({ conversation, instance }: Request): void {
@@ -348,6 +397,7 @@ export class ConversationDirector {
     this.cooldown = 0;
     this.inFight = false;
     this.pennyPoints = [];
+    this.pennyWait = 0;
     this.playedThisFlight = new Set();
     this.queue = [];
     this.quietFor = 0;
