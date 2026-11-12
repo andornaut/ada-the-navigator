@@ -19,7 +19,6 @@ import {
   check,
   convexParts,
   cross,
-  dist,
   grow,
   rasterize,
   segDist,
@@ -480,7 +479,6 @@ interface Built {
   file: string;
   collision: V2[][];
   footprint: V2[][];
-  outline: V2[];
 }
 
 // `drawn` defaults to the model's facets in `ramp`; a resource rock passes its stone facets plus
@@ -538,7 +536,7 @@ function build(
       ),
       SEAM / 2,
     );
-    const { collision, outline, tips } = trace(drawn);
+    const { collision, tips } = trace(drawn);
     // A tip takes the colour of the topmost facet over its apex.
     const filled = tips.map((pts) => ({
       fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
@@ -546,13 +544,12 @@ function build(
     }));
     writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared, filled));
     check(`${id} ${k}`, collision, union(drawn, rasterize(tips, w, h)));
-    return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!), outline };
+    return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!) };
   });
-  const radius = Math.max(...built.flatMap((b) => b.outline.map((p) => dist(p, pivot))));
   const footprintRadius = Math.max(
     ...bases.flatMap((ring) => ring.map((p) => Math.hypot(...world(p)))),
   );
-  return { built, footprintRadius, h, pivot, radius, w };
+  return { built, footprintRadius, h, pivot, w };
 }
 
 // ------------------------------------------------------------------ tint
@@ -627,7 +624,7 @@ function rock(
   const spec = CLASSES[shape.size];
   const model = rockModel(spec, shape.seed, shape.aspect);
   const frames = spec.spin?.frames ?? 1;
-  const { built, footprintRadius, h, pivot, radius, w } = build(
+  const { built, footprintRadius, h, pivot, w } = build(
     shape.id,
     model,
     frames,
@@ -641,7 +638,6 @@ function rock(
     frame: { width: w, height: h },
     display: { width: r2(w * DISPLAY), height: r2(h * DISPLAY) },
     pivot: [r5(pivot[0] / w), r5(pivot[1] / h)],
-    radius: r2(radius),
     footprintRadius: r2(footprintRadius),
     drift: spec.drift,
     spin: spec.spin ? { degPerSecond: spec.spin.degPerSecond } : false,

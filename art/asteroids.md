@@ -178,7 +178,7 @@ timing:
 
 ## Data
 
-`asteroids.json`, version 1. Drawn values (`frame`, `pivot`, `radius`,
+`asteroids.json`, version 1. Drawn values (`frame`, `pivot`,
 `collision`) are frame px in the art's own projection; multiply by
 `displayScale` (0.4375) for display px. Footprints are world units.
 
@@ -190,8 +190,6 @@ timing:
   - `pivot`: `[x, y]` as a fraction of the frame. It is the centre of the
     rock's base on the world plane: place it at the world position and sort by
     it.
-  - `radius`: frame px from the pivot to the farthest drawn outline point over
-    all frames.
   - `footprintRadius`: world units from the pivot to the farthest footprint
     point over all frames.
   - `drift`: `eligible` and `speed`, a `[min, max]` range in logical px per
@@ -223,7 +221,6 @@ Sample (one small rock, first frame only):
     "height": 30.19
   },
   "pivot": [0.5, 0.66667],
-  "radius": 52.5,
   "footprintRadius": 13,
   "drift": {
     "eligible": true,

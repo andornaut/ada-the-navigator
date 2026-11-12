@@ -16,7 +16,6 @@
         "height": 79.19
       },
       "pivot": [0.5, 0.70718],
-      "radius": 126.11,
       "footprintRadius": 31.43,
       "drift": {
         "eligible": true,
@@ -1725,7 +1724,6 @@
         "height": 72.19
       },
       "pivot": [0.5, 0.66667],
-      "radius": 122.73,
       "footprintRadius": 32.2,
       "drift": {
         "eligible": true,
@@ -3714,7 +3712,6 @@
         "height": 90.56
       },
       "pivot": [0.5, 0.72947],
-      "radius": 149.05,
       "footprintRadius": 33,
       "drift": {
         "eligible": true,
@@ -5894,7 +5891,6 @@
         "height": 74.38
       },
       "pivot": [0.5, 0.66471],
-      "radius": 130.33,
       "footprintRadius": 33.8,
       "drift": {
         "eligible": true,
@@ -7634,7 +7630,6 @@
         "height": 120.31
       },
       "pivot": [0.5, 0.69091],
-      "radius": 193.7,
       "footprintRadius": 58.28,
       "drift": {
         "eligible": false,
@@ -7777,7 +7772,6 @@
         "height": 94.94
       },
       "pivot": [0.5, 0.64516],
-      "radius": 206.52,
       "footprintRadius": 61.01,
       "drift": {
         "eligible": false,
@@ -7903,7 +7897,6 @@
         "height": 112.44
       },
       "pivot": [0.5, 0.64981],
-      "radius": 219.6,
       "footprintRadius": 61.37,
       "drift": {
         "eligible": false,

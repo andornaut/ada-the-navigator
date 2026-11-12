@@ -15,7 +15,6 @@
         "height": 29.31
       },
       "pivot": [0.5, 0.62687],
-      "radius": 54.4,
       "footprintRadius": 13.94,
       "drift": {
         "eligible": true,
@@ -1041,7 +1040,6 @@
         "height": 35.44
       },
       "pivot": [0.5, 0.62963],
-      "radius": 64.9,
       "footprintRadius": 17.2,
       "drift": {
         "eligible": true,
@@ -1949,7 +1947,6 @@
         "height": 30.19
       },
       "pivot": [0.5, 0.66667],
-      "radius": 52.5,
       "footprintRadius": 13,
       "drift": {
         "eligible": true,
@@ -2759,7 +2756,6 @@
         "height": 36.31
       },
       "pivot": [0.5, 0.6506],
-      "radius": 63.33,
       "footprintRadius": 16.43,
       "drift": {
         "eligible": true,
@@ -3908,7 +3904,6 @@
         "height": 63.44
       },
       "pivot": [0.5, 0.63448],
-      "radius": 119.81,
       "footprintRadius": 31.43,
       "drift": {
         "eligible": true,
@@ -5011,7 +5006,6 @@
         "height": 66.94
       },
       "pivot": [0.5, 0.64052],
-      "radius": 122.73,
       "footprintRadius": 32.2,
       "drift": {
         "eligible": true,
@@ -6432,7 +6426,6 @@
         "height": 73.5
       },
       "pivot": [0.5, 0.66667],
-      "radius": 130.21,
       "footprintRadius": 33,
       "drift": {
         "eligible": true,
@@ -7957,7 +7950,6 @@
         "height": 69.56
       },
       "pivot": [0.5, 0.64151],
-      "radius": 130.33,
       "footprintRadius": 33.8,
       "drift": {
         "eligible": true,
@@ -9071,7 +9063,6 @@
         "height": 111.56
       },
       "pivot": [0.5, 0.66667],
-      "radius": 193.7,
       "footprintRadius": 58.28,
       "drift": {
         "eligible": false,
@@ -9180,7 +9171,6 @@
         "height": 93.19
       },
       "pivot": [0.5, 0.6385],
-      "radius": 206.52,
       "footprintRadius": 61.01,
       "drift": {
         "eligible": false,
@@ -9273,7 +9263,6 @@
         "height": 112.44
       },
       "pivot": [0.5, 0.64981],
-      "radius": 219.6,
       "footprintRadius": 61.37,
       "drift": {
         "eligible": false,
@@ -9353,7 +9342,6 @@
         "height": 165.81
       },
       "pivot": [0.5, 0.61741],
-      "radius": 340.21,
       "footprintRadius": 97.25,
       "drift": {
         "eligible": false,
@@ -9449,7 +9437,6 @@
         "height": 193.38
       },
       "pivot": [0.5, 0.63348],
-      "radius": 331.77,
       "footprintRadius": 99.5,
       "drift": {
         "eligible": false,
@@ -9541,7 +9528,6 @@
         "height": 165.81
       },
       "pivot": [0.5, 0.63325],
-      "radius": 379.42,
       "footprintRadius": 102,
       "drift": {
         "eligible": false,
