@@ -159,9 +159,9 @@ the current environment; Make selects the container profile below.
 
 Native lint requires ShellCheck 0.11.0 on PATH; the container image supplies it.
 Native npm scripts never invoke Make: `npm run lint` checks shell helpers, formatting and
-source lint, `npm test` runs Vitest, and `npm run build` builds Vite output and
-retains assets. `npm run check` combines scratch-owned hook verification,
-TypeScript, lint, tests, build and both packaging dry runs.
+source lint, `npm test` runs Vitest, and `npm run build` builds the Vite output
+in `dist/`. `npm run check` combines scratch-owned hook verification,
+TypeScript, lint, tests, build and the Wrangler packaging dry run.
 
 `make check` enters the canonical container launcher. This repository also keeps
 optional `make lint`, `make test` and `make build` aliases, and `make previews`
@@ -180,18 +180,13 @@ pinned delivery-kit 3.0.0. Only the existing bus deploys, after the isolated gat
 and required CI pass for the exact commit. The monitor schedule is unchanged.
 Desired control remains paused; game-dev enables only Ada after READY review.
 
-Cloudflare setup uses typed `cloudflare.config.ts` for the existing assets-only
-Worker `ada-the-navigator` and custom domain `navigator.adabekele.com`. The
-Cloudflare Vite plugin writes static assets and deployment metadata into
-`.cloudflare/output/v0/`. The gate build also retains those assets as `dist/`.
+The bus uses pinned Wrangler with root `wrangler.jsonc`, which defines the
+assets-only Worker `ada-the-navigator`, its custom domain
+`navigator.adabekele.com` and the gated `dist/` as its assets. Deployment does
+not rebuild. No application Worker entrypoint or deploy-time build command is
+configured. The account, disabled workers.dev and preview URLs, logs and traces
+are set there.
 
-The bus uses pinned Wrangler with root `wrangler.jsonc` and the retained gated
-`dist/`. Deployment neither rebuilds nor depends on hidden Cloudflare output.
-No application Worker entrypoint or deploy-time build command is configured.
-The existing account, disabled workers.dev and preview URLs, logs and traces
-are preserved in both configurations.
-
-The isolated gate validates both CF prebuilt output and Wrangler packaging with
-`npm run deploy:prebuilt:dry-run` and `npm run deploy:wrangler:dry-run`. These
-commands do not deploy. See [isolated checks](docs/checks.md) for gate evidence.
+The isolated gate validates Wrangler packaging with
+`npm run deploy:wrangler:dry-run`, which does not deploy. See [isolated checks](docs/checks.md) for gate evidence.
 Credentials are not part of this repository.

@@ -60,13 +60,8 @@ if (action === "begin") {
   if (proof.stable && proof.exitCode === 0 && mode === "test") {
     try {
       const dist = join(root, "dist");
-      const output = join(root, ".cloudflare/output/v0");
       const artifact = artifactHash(dist);
-      if (artifact !== artifactHash(join(output, "workers/default/assets"))) {
-        throw new Error("Retained assets differ from Cloudflare Build Output");
-      }
       cpSync(dist, join(directory, "dist"), { recursive: true });
-      cpSync(output, join(directory, "cloudflare-output"), { recursive: true });
       if (artifact !== artifactHash(join(directory, "dist"))) {
         throw new Error("Evidence copy differs from the exported build");
       }

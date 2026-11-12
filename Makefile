@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := check
 
 CHECK_TASKS := lint test build
-BUILD_OUTPUTS := dist .cloudflare/output/v0
+BUILD_OUTPUTS := dist
 TEST_OUTPUTS :=
 CHECK_ADMISSION := tests/container/admit
 

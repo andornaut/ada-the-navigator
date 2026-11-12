@@ -516,6 +516,35 @@ try {
     [true],
     "The open Settings modal draws above the Achievements button",
   );
+  // The build line: the card's last text, after the rows, naming package.json's version and the
+  // gated revision, read with the card and never focused.
+  const { version } = JSON.parse(readFileSync("/source/package.json", "utf8"));
+  const commit = process.env.CHECK_REVISION?.slice(0, 8) ?? "dev";
+  const buildLine = await page.locator(".ada-build").evaluate((line) => ({
+    afterRows: line.previousElementSibling?.classList.contains("ada-rows") ?? false,
+    color: getComputedStyle(line).color,
+    hidden: line.closest("[aria-hidden='true']") !== null,
+    inCard: line.closest(".ada-card") !== null,
+    tag: line.tagName,
+    tabIndex: line.tabIndex,
+    text: line.textContent,
+    visible: line.getBoundingClientRect().height > 0,
+  }));
+  assert.deepEqual(
+    buildLine,
+    {
+      afterRows: true,
+      color: "rgb(184, 179, 201)",
+      hidden: false,
+      inCard: true,
+      tag: "P",
+      tabIndex: -1,
+      text: `v${version} · ${commit}`,
+      visible: true,
+    },
+    "Settings shows this build's version and commit after its rows",
+  );
+  events.checks.push(`Settings shows the build label v${version} · ${commit}`);
   await page.locator('[data-action="close-settings"]').click();
   await page.locator('[data-action="close-settings"]').waitFor({ state: "hidden" });
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });

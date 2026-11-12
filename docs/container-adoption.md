@@ -18,8 +18,8 @@ There is no separate native-command container interface.
 
 The delivery runner and detached receipt adapter keep their direct
 `tests/container/check` categories and `internal:*` commands. Hook and type
-checks belong to `lint`; tests use at most four workers; build retains assets
-and performs both packaging dry runs. The custom Node.js 24.22.2 Dockerfile
+checks belong to `lint`; tests use at most four workers; build writes `dist/`
+and performs the Wrangler packaging dry run. The custom Node.js 24.22.2 Dockerfile
 and published kit pins are unchanged.
 
 Hook proof uses an owned scratch Git repository and explicit container evidence

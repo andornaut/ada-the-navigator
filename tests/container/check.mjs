@@ -18,10 +18,15 @@ if (
   process.exit(2);
 }
 const [category, ...args] = process.argv.slice(2);
+// The build's commit for the kit's gameViteConfig: a deploy gate's own WORKERS_CI_COMMIT_SHA, else
+// the checked revision, since the container has no Git metadata.
+if (!process.env.WORKERS_CI_COMMIT_SHA && process.env.CHECK_REVISION) {
+  process.env.WORKERS_CI_COMMIT_SHA = process.env.CHECK_REVISION;
+}
 const categories = {
   lint: ["internal:hooks", "internal:types", "internal:lint"],
   test: ["internal:test", "internal:worlds"],
-  build: ["internal:build", "internal:cloudflare", "internal:wrangler"],
+  build: ["internal:build", "internal:wrangler"],
 };
 if (!Object.hasOwn(categories, category) || (category !== "test" && args.length)) {
   console.error("Usage: tests/container/check <lint|test|build> [test arguments]");

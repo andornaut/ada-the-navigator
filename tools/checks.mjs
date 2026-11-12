@@ -61,10 +61,8 @@ export function snapshot() {
     "lint-staged.config.mjs",
     ".lintstagedrc",
     "vite.config.ts",
-    "vitest.config.ts",
     "tsconfig.json",
     "tsconfig.node.json",
-    "cloudflare.config.ts",
     "wrangler.jsonc",
   ]);
   const folders = new Set([
@@ -250,10 +248,6 @@ try {
     const result = spawnSync(command,args,{cwd:'/tmp/work',env:process.env,stdio:['ignore',log,log]});
     if (result.error || result.status !== 0) {code=result.status || 1;break;}
   }
-  const cloudflareOutput = '/tmp/work/.cloudflare/output/v0';
-  if (existsSync(cloudflareOutput)) {
-    cpSync(cloudflareOutput, '/tmp/evidence/.cloudflare/output/v0', {recursive:true});
-  }
   if (existsSync('/tmp/work/dist')) {
     cpSync('/tmp/work/dist','/tmp/evidence/dist',{recursive:true});
   }
@@ -324,6 +318,8 @@ function start(mode, ci) {
       "HOME=/tmp",
       "--env",
       "CI=true",
+      "--env",
+      `CHECK_REVISION=${source.head}`,
       "--env",
       `SOURCE_LIST=${relative(root, sourceList)}`,
       "--env",

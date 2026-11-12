@@ -132,6 +132,9 @@ function start(argument) {
       name,
       "--shm-size",
       "256m",
+      // The gate built this revision, so the Settings build label names it.
+      "--env",
+      `CHECK_REVISION=${source.head}`,
       "mcr.microsoft.com/playwright/mcp:v0.0.83",
       "/source/tools/browser-smoke.mjs",
     ]);

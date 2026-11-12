@@ -1,3 +1,4 @@
+import { BUILD_LABEL } from "../build-label.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   type ControlVisibility,
@@ -23,6 +24,7 @@ import {
   isTap,
   MODAL_STYLE,
   setScrollGroup,
+  TEXT_TOKENS,
 } from "./modal.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
@@ -207,6 +209,15 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
 .ada-controls .ada-use:focus-visible{${FOCUS_STYLE}
 }
 
+/* This build's version and commit, the Settings card's last line as in Chibi: body text in the
+   supporting colour. */
+.ada-controls .ada-build{
+  margin:0;
+  font:${font(TYPE.body)};
+  color:${TEXT_TOKENS.supporting};
+  text-align:center
+}
+
 ${MODAL_STYLE}
 
 `;
@@ -292,7 +303,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     switchRow("sound", options.labels.sound, options.labels.soundNote),
     switchRow("reducedMotion", options.labels.reducedMotion, options.labels.motionNote),
   );
-  card.append(rows);
+  // The build line, after the rows as in Chibi: plain text screen readers read with the card.
+  const build = document.createElement("p");
+  build.className = "ada-build";
+  build.textContent = BUILD_LABEL;
+  card.append(rows, build);
   setScrollGroup(settingsCard, rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
   // prompt or opens that browser's menu steps in the Settings card's place.

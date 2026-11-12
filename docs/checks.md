@@ -8,10 +8,10 @@ load below 20, four CPUs, four test workers and the configured memory ceilings.
 
 | Command                                | Work                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run check`                        | Scratch hook proof, types, lint, tests, build and both packaging dry runs |
+| `npm run check`                        | Scratch hook proof, types, lint, tests, build and the Wrangler dry run    |
 | `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and Markdown lint                     |
 | `npm test`                             | Vitest, with at most four workers                                         |
-| `npm run build`                        | Vite and retained assets                                                  |
+| `npm run build`                        | Vite, writing `dist/`                                                     |
 | `make check`                           | Complete container profile, the default Make target                       |
 | `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                         |
 | `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews` |
@@ -40,15 +40,15 @@ Make exports the category list, build/test output paths and resource admission
 callback. The launcher calls `tests/container/admit` before every image and
 category start, with a five-second limit. It preserves revision, source hash,
 dirty inventory and `SOURCE_DATE_EPOCH` provenance, and rejects changed source.
-`make check` exports no artifacts. Explicit `make build` exports `dist/` and
-`.cloudflare/output/v0/`; explicit `make test` exports only configured
+`make check` exports no artifacts. Explicit `make build` exports `dist/`;
+explicit `make test` exports only configured
 `TEST_OUTPUTS`, empty by default. Exports validate and replace ignored generated
 paths, removing stale content.
 
 CI uses Make with this custom Dockerfile: `Lint` runs `make lint`; `Test` runs
 `make test build`. `tools/ci-evidence.mjs` records source fingerprints around
 those commands and copies the actual exported build into `.check-results/ci-test/`.
-It verifies that retained `dist/`, CF assets and the evidence copy match.
+It verifies that the exported `dist/` and its evidence copy match.
 Receipts label these explicit Make commands separately from detached adapter
 execution. Both matrix jobs preserve their logs and receipts as CI artifacts.
 `AI attributions` remains unchanged.
@@ -120,7 +120,7 @@ reuses Make's layers. The image supplies ShellCheck and the locked dependencies;
 the container runs without a network and copies source into writable `/tmp/work`
 scratch. `startup.json` records the image ID. The `lint` mode dispatches inner `lint`;
 `test` and `all` dispatch inner `lint`, `test` and `build`. This includes hook
-acceptance/rejection, types, the full tests, build and both packaging dry runs.
+acceptance/rejection, types, the full tests, build and the Wrangler packaging dry run.
 All categories invoke `tests/container/check` directly, without Make or Docker
 inside the container. `internal:*` scripts are the only category command source.
 Published kit API coverage belongs to the application tests.
@@ -130,11 +130,11 @@ four CPUs and a four-worker test limit. The checkout mount
 is read-only. The container layer is disposable writable scratch. An explicit source-file allowlist is copied to writable `/tmp`
 scratch; Git metadata, nested worktrees, dependency directories, instruction
 files and credential files are excluded. Host files receive no writable mount.
-Logs and build outputs leave through `docker cp`. The Cloudflare Vite plugin
-writes `.cloudflare/output/v0/`; the gate preserves that complete directory under
-its evidence directory for prebuilt validation. The build retains an identical
-`dist/` for the bus and browser harness, verifying its SHA-256 asset fingerprint
-against the generated assets. The gate copies that retained `dist/` into evidence.
+Logs and build outputs leave through `docker cp`. The gate copies the built
+`dist/` into evidence for the bus and the browser harness. It passes the checked
+revision as `CHECK_REVISION`; the inner checks build with it as
+`WORKERS_CI_COMMIT_SHA` unless a deploy gate sets that itself, so the build
+names its commit without Git metadata.
 
 Local starts are refused when one-minute load is at least 20. `--ci` skips only
 this local resource check and requires `GITHUB_ACTIONS=true` plus
@@ -149,24 +149,12 @@ to the allowlist.
 
 ## Cloudflare build and deployment checks
 
-`cloudflare.config.ts` defines the existing assets-only Worker `ada-the-navigator`
+`wrangler.jsonc` defines the existing assets-only Worker `ada-the-navigator`
 with compatibility date `2026-11-10`, its shared account and custom domain, and
-logs and traces enabled. The Cloudflare Vite plugin emits `.cloudflare/output/v0/`.
-The inner build refreshes `dist/` from the generated assets and verifies
-matching asset fingerprints. No application Worker entrypoint is configured.
+logs and traces enabled. No application Worker entrypoint is configured.
 
-Use the native dry-run scripts in the chosen Node.js 24.22.2 environment. The CF
-prebuilt check validates production Build Output without rebuilding:
-
-```bash
-npm run deploy:prebuilt:dry-run
-```
-
-This runs `cf deploy --prebuilt --mode production --dry-run`. Vite records the
-production mode, so the matching `--mode` is required. CF prebuilt validation
-requires the complete reviewed `.cloudflare/output/v0/` directory.
-
-The bus-compatible Wrangler packaging check uses the retained assets:
+The bus-compatible Wrangler packaging check uses the built assets, in the chosen
+Node.js 24.22.2 environment:
 
 ```bash
 npm run deploy:wrangler:dry-run
@@ -175,8 +163,8 @@ npm run deploy:wrangler:dry-run
 This runs pinned Wrangler with `deploy --config wrangler.jsonc --no-bundle --dry-run`.
 Root `wrangler.jsonc` points `assets.directory` to `./dist` and defines no Worker
 entrypoint or build command. This route needs the gated `dist/` and locked
-`node_modules/`, without Cloudflare's hidden output or a deployment rebuild.
-Both dry runs are included in the isolated `all` and `test` gates.
+`node_modules/`, without a deployment rebuild. The dry run is part of the
+isolated `all` gate's build category.
 
 Only delivery-kit 3.0.0 deploys the admitted gated artifact after exact-commit CI
 passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
