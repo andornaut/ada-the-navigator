@@ -10,8 +10,8 @@
     "timezone": "America/Toronto"
   },
   "gate": {
-    "image": "sha256:8e211cfb182cd88e2243c38113016c8f22f35de4873e9da58a6685481173a4df",
-    "install": "npm ci --maxsockets=1",
+    "image": "sha256:73513bb781aa550a4b8254c4beea08377de5c1075eccd25fa72472d9a64da68b",
+    "install": "npm ci",
     "steps": [
       {
         "name": "lint",
@@ -37,7 +37,8 @@
     "timeoutSeconds": 1800
   },
   "deploy": {
-    "mode": "wrangler"
+    "mode": "wrangler",
+    "skipPattern": "(\\.md$|^art/|^gameplay/)"
   },
   "reports": {
     "project": "Ada the Navigator",

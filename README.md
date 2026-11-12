@@ -132,7 +132,8 @@ evidence](docs/checks.md) and [container compatibility](docs/container-adoption.
 
 `delivery-kit.json` schedules Ada departures hourly at :00 America/Toronto using
 pinned delivery-kit 3.0.1. Only the existing bus deploys, after the isolated gate
-and required CI pass for the exact commit. The monitor schedule is unchanged.
+and required CI pass for the exact commit; a push that changes only Markdown,
+`art/` or `gameplay/` files does not deploy. The monitor schedule is unchanged.
 Desired control remains paused; game-dev enables only Ada after READY review.
 
 The bus uses pinned Wrangler with root `wrangler.jsonc`, which defines the

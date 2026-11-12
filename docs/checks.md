@@ -60,8 +60,11 @@ See [container compatibility](container-adoption.md) for runner boundaries.
 
 ## Scheduled gate image
 
-The scheduled gate uses the immutable local image ID in `delivery-kit.json`.
-Prepare that image on the delivery host before approving config adoption:
+The scheduled gate uses the immutable local image ID in `delivery-kit.json`: the
+Dockerfile's `toolchain` stage, which holds Node, ShellCheck and the non-root
+check user but no project dependencies. The gate runs its own `npm ci`, so a
+dependency change never changes the gate image or `delivery-kit.json`. Prepare
+that image on the delivery host before approving config adoption:
 
 ```bash
 mkdir -p .check-results
@@ -69,7 +72,7 @@ tar --create --file .check-results/gate-context.tar \
   --mode='u+rwX,go+rX' --files-from tests/container/context
 tests/container/admit build-image
 docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
-  --resource memory=4g --ulimit nofile=256:256 \
+  --resource memory=4g --ulimit nofile=256:256 --target toolchain \
   --iidfile .check-results/gate-image.id \
   --file tests/container/Dockerfile - < .check-results/gate-context.tar
 node --input-type=module -e \
@@ -81,10 +84,12 @@ review and verify that image before changing the pin. Keep the prepared image
 available on the delivery host. Config changes require separate operational
 approval and do not start or restart the runner.
 
-The shared Dockerfile supplies Node 24.22.2, ShellCheck 0.11.0 and the locked
-dependencies. Its empty entrypoint permits delivery-kit 3.0.1 to start
-`sleep infinity`; Make selects `/bin/sh` explicitly and dispatches the same inner
-checks. The kit copies the read-only checkout into `/tmp/work`, installs locked
+The `toolchain` stage pins `node:24.22.2` and ShellCheck 0.11.0 by digest. Its
+empty entrypoint permits delivery-kit 3.0.1 to start `sleep infinity`. The
+default `check` stage adds the locked dependencies (`npm ci --ignore-scripts`)
+and the inner dispatcher; Make and `tools/checks.mjs` build it on demand, and
+`delivery-kit.json` never names it. Make selects `/bin/sh` explicitly and
+dispatches the same inner checks. The kit copies the read-only checkout into `/tmp/work`, installs locked
 dependencies as UID 19001, disconnects networking and runs the three configured
 `tests/container/check` categories directly. Native and scheduled lint both use
 `internal:lint`, including ShellCheck. No runtime download provisions ShellCheck.
@@ -171,7 +176,9 @@ isolated `all` gate's build category.
 
 Only delivery-kit 3.0.1 deploys the admitted gated artifact after exact-commit CI
 passes and the remote commit matches. `delivery-kit.json` schedules hourly :00
-America/Toronto with `deploy.mode` set to `wrangler`. Desired control remains
+America/Toronto with `deploy.mode` set to `wrangler`. A pushed range that changes
+only Markdown, `art/` or `gameplay/` files (`deploy.skipPattern`) is gated but not
+deployed. Desired control remains
 paused; game-dev enables only Ada after READY review. The monitor schedule is
 unchanged. Existing OAuth authentication remains in place; credentials are not
 part of the repository. No manual deployment is part of this procedure.
