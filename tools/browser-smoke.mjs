@@ -3111,6 +3111,77 @@ try {
     "Fixture-based home resolution, closing and the next opening lead to galaxy selection on " +
       "the newly unlocked galaxy",
   );
+  // The route runs left to right along one arc, so Left and Right follow screen order and skip
+  // locked galaxies; galaxy selection has no close X, and Escape returns Ada to her room.
+  const routeMarkers = selector().locator(".ada-route-marker");
+  const markerLefts = await routeMarkers.evaluateAll((markers) =>
+    markers.map((marker) => marker.getBoundingClientRect().left),
+  );
+  assert.deepEqual(
+    markerLefts,
+    [...markerLefts].sort((a, b) => a - b),
+    "The markers run left to right in route order",
+  );
+  assert.equal(
+    await page.locator('.ada-route .ada-close, [data-action="close-galaxies"]').count(),
+    0,
+    "Galaxy selection has no close X",
+  );
+  await page.screenshot({ path: `${output}/route-map.png` });
+  const panelNumber = (number) => PROTOTYPE.labels.galaxyNumber.replace("{number}", number);
+  const selectedMarker = () =>
+    routeMarkers.evaluateAll((markers) =>
+      markers.findIndex((marker) => marker.hasAttribute("data-selected")),
+    );
+  // The panel switches at the input; the selected ring returns once the ship's move ends.
+  const shipRestsOn = (number, message) =>
+    page
+      .waitForFunction(
+        ({ index, label }) => {
+          const route = document.querySelector('.ada-route[data-dialog="galaxies"]');
+          const markers = [...(route?.querySelectorAll(".ada-route-marker") ?? [])];
+          return (
+            route?.querySelector("h2")?.textContent?.trim() === label &&
+            markers.findIndex((marker) => marker.hasAttribute("data-selected")) === index
+          );
+        },
+        { index: Number(number) - 1, label: panelNumber(number) },
+        { timeout: 5000 },
+      )
+      .then(
+        () => true,
+        () => false,
+      )
+      .then((rests) => assert.ok(rests, message));
+  // The arrows walk the route wherever focus is on the map; focus starts on Jump.
+  await page.locator('[data-action="galaxy-jump"]').focus();
+  await page.keyboard.press("ArrowLeft");
+  await shipRestsOn("1", "Left moves the ship left on screen, to Sunflower");
+  await page.keyboard.press("ArrowRight");
+  await shipRestsOn("2", "Right moves the ship right on screen, to Whirlpool");
+  // Every galaxy right of Whirlpool is locked, so Right skips them all and the ship stays.
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(500);
+  assert.equal(
+    (await selector().locator("h2").textContent())?.trim(),
+    panelNumber("2"),
+    "Right skips locked galaxies",
+  );
+  assert.equal(await selectedMarker(), 1);
+  await page.keyboard.press("Escape");
+  await selector().waitFor({ state: "hidden" });
+  const escapedRoom = await page
+    .locator('.ada-story-background[data-background="adaRoom"]')
+    .waitFor({ state: "attached", timeout: 10000 })
+    .then(
+      () => true,
+      () => false,
+    );
+  assert.ok(escapedRoom, "Escape from galaxy selection shows Ada's room");
+  events.checks.push(
+    "Galaxy selection lays the markers left to right on one arc with no close X; Left and Right " +
+      "follow screen order and skip locked galaxies, and Escape returns Ada to her room",
+  );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
     import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),

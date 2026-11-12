@@ -464,9 +464,9 @@ function noticeCases(call: ReturnType<typeof recorder>): void {
 }
 
 function routeCases(call: ReturnType<typeof recorder>): void {
-  const [first, second] = routeMap.ROUTE_MAP.centres;
-  call("routeMap.ts", "bentCurve", routeMap.bentCurve, 0.08, first, second, 0);
-  call("routeMap.ts", "bentCurve", routeMap.bentCurve, 0.08, first, second, 1);
+  for (const angle of [routeMap.ROUTE_ARC.first, 0, routeMap.ROUTE_ARC.step]) {
+    call("routeMap.ts", "arcPoint", routeMap.arcPoint, angle);
+  }
   const leg = routeMap.ROUTE_LEGS[2]!;
   call(
     "routeMap.ts",

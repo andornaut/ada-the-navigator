@@ -47,7 +47,7 @@ describe("route map art", () => {
     const art = readRouteArt(CORE_MANIFEST.assets, markers, () => []);
     expect(art).toMatchObject({
       figures: [
-        { height: 53, url: "/art/story/ada-skywatch.png", width: 26, x: 201, y: 59 },
+        { height: 52, url: "/art/story/ada-skywatch.png", width: 28, x: 199, y: 60 },
         { height: 28, url: "/art/story/penny-sitting.png", width: 23, x: 228, y: 84 },
       ],
       ground: "/art/route-ground.png",

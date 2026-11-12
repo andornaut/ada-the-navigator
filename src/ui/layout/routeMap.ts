@@ -1,39 +1,63 @@
 import type { Rect } from "@andornaut/game-kit/rect";
-import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
-import { CARD_CLOSE } from "./cardFrame.ts";
 import { FRAME_LINE, TEXT_BUTTON } from "./controls.ts";
-import { hudRect, type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
+import { type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
 import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // Galaxy selection's route map (art/layout.md "Galaxy selector", art/route-sky.md), after Chibi's
-// zone map: six markers on two rows of three over the route sky, a panel for the chosen galaxy,
-// and Earth and Jump below it. The chart is in play-view px from the game area's top-left; the
-// panel and actions anchor to the available rect's bottom, so a taller view opens the gap.
+// zone map: six markers left to right along one arc over the route sky, a panel for the chosen
+// galaxy, and Earth and Jump below it. The chart is in play-view px from the game area's top-left;
+// the panel and actions anchor to the available rect's bottom, so a taller view opens the gap.
 
 export interface Point {
   readonly x: number;
   readonly y: number;
 }
 
+/**
+ * The arc the markers sit on (art/layout.md "Marker centres"): the circle through route
+ * positions 1 and 6 whose top is `top`, its radius (half chord² + rise²) / (2 rise) about the
+ * point that far below the top, and the six centres at equal angles off vertical across it.
+ */
+const ARC_POINTS = { first: { x: 96, y: 122 }, last: { x: 624, y: 122 }, top: { x: 360, y: 46 } };
+const HALF_CHORD = (ARC_POINTS.last.x - ARC_POINTS.first.x) / 2;
+const RISE = ARC_POINTS.first.y - ARC_POINTS.top.y;
+const RADIUS = (HALF_CHORD ** 2 + RISE ** 2) / (2 * RISE);
+const HALF_ANGLE = Math.asin(HALF_CHORD / RADIUS);
+
+export const ROUTE_ARC = {
+  centre: { x: ARC_POINTS.top.x, y: ARC_POINTS.top.y + RADIUS },
+  /** Route position 1's angle off vertical, in radians; position 6's is its negative. */
+  first: -HALF_ANGLE,
+  radius: RADIUS,
+  /** The angle between consecutive markers. */
+  step: (2 * HALF_ANGLE) / (GALAXY_COUNT - 1),
+} as const;
+
+/** The point on the route's circle at an angle off vertical, clockwise from its top. */
+export function arcPoint(angle: number): Point {
+  return {
+    x: ROUTE_ARC.centre.x + ROUTE_ARC.radius * Math.sin(angle),
+    y: ROUTE_ARC.centre.y - ROUTE_ARC.radius * Math.cos(angle),
+  };
+}
+
+/** Each route position's angle off vertical, in route order. */
+const MARKER_ANGLES = Array.from(
+  { length: GALAXY_COUNT },
+  (_, index) => ROUTE_ARC.first + index * ROUTE_ARC.step,
+);
+
 const CREAM = "#EAD4AA";
 const INK = "#181425";
 const GREY = "#B8B3C9";
 
 export const ROUTE_MAP = {
-  // Route positions 1 to 3 along the top, 4 to 6 back along the bottom: Chibi's 228 column
-  // spacing centred, rows 72 apart.
-  centres: [
-    { x: 132, y: 53 },
-    { x: 360, y: 53 },
-    { x: 588, y: 53 },
-    { x: 588, y: 125 },
-    { x: 360, y: 125 },
-    { x: 132, y: 125 },
-  ],
+  // Route positions 1 to 6 left to right along the arc (ROUTE_ARC).
+  centres: MARKER_ANGLES.map(arcPoint),
   colors: { cream: CREAM, grey: GREY, ink: INK },
   // Each name on an ink pill: 20 high, the label plus 12 wide, its top 19 below the centre.
   label: { alpha: 0.85, height: 20, padding: 6, radius: 4, top: 19 },
@@ -46,10 +70,9 @@ export const ROUTE_MAP = {
     frame: 36,
     ring: { color: CREAM, radius: 17, width: 2 },
   },
-  // Chibi's bentCurve per leg, stamped every 0.5, stopping 15 from each centre; its look is its
-  // destination's.
+  // The arc between consecutive markers, stamped every 0.5, stopping 15 from each centre; its
+  // look is its destination's.
   path: {
-    bend: 0.08,
     locked: { color: GREY, kind: "dashes", off: 4, on: 6, width: 2 },
     open: { color: CREAM, kind: "solid", width: 4 },
     step: 0.5,
@@ -59,8 +82,8 @@ export const ROUTE_MAP = {
   press: 48,
   // The available rect's inset rules: 1 px, the inner 3 inside the outer.
   rules: { inner: "#4A4660", inset: 3, outer: "#6B6685", width: FRAME_LINE },
-  // The ship frame drawn 32 on (centre x, centre y - 25).
-  ship: { lift: 25, size: 32 },
+  // The ship frame drawn 42, the game area's in-flight size, on (centre x, centre y - 33).
+  ship: { lift: 33, size: 42 },
 } as const;
 
 // The route sky (top-centre on the play view's top-centre) and ground (bottom on the view's
@@ -129,7 +152,6 @@ export const ROUTE_MOVE = {
 export interface RouteMapRects {
   readonly available: Rect;
   readonly capture: Rect;
-  readonly close: { readonly face: Rect; readonly target: Rect };
   readonly earth: Rect;
   readonly jump: Rect;
   /** Each route position's 48 press area, in route order. */
@@ -152,13 +174,6 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
   const panelTop = actionsTop - SPACING.gap - ROUTE_PANEL.height;
   const panelLeft = x0 + (SCREEN.width - ROUTE_PANEL.width) / 2;
   const inner = { x: panelLeft + ROUTE_PANEL.padding, y: panelTop + ROUTE_PANEL.padding };
-  const hud = hudRect(insets, view);
-  const face: Rect = {
-    height: CARD_CLOSE.art.height,
-    width: CARD_CLOSE.art.width,
-    x: hud.x + hud.width - CARD_CLOSE.art.width,
-    y: hud.y,
-  };
   const action = (left: number): Rect => ({
     height: ROUTE_ACTIONS.height,
     width: ROUTE_ACTIONS.width,
@@ -172,7 +187,6 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
       width: ROUTE_PANEL.capture.width + 2 * ROUTE_PANEL.capture.frame,
       ...inner,
     },
-    close: { face, target: hitAround(HIT_RULE, face) },
     earth: action(ROUTE_ACTIONS.earth),
     jump: action(ROUTE_ACTIONS.jump),
     markers: ROUTE_MAP.centres.map(({ x, y }) => ({
@@ -191,14 +205,17 @@ export function routeMapRects(insets: Insets, view: Size): RouteMapRects {
   };
 }
 
-// Chibi's map paths (chibis-way-home src/ui/map/mapPath.ts): each leg a quadratic Bezier from one
-// centre to the next, inked by squares stamped along it.
+// The route's legs: each the arc of the route's circle from one centre to the next, inked by
+// squares stamped along it as Chibi's map paths are (chibis-way-home src/ui/map/mapPath.ts).
 
-/** A leg: a quadratic Bezier from one centre to the next. */
+/** A leg: the arc of a circle from one centre to the next, by angle off vertical. */
 export interface Curve {
-  readonly control: Point;
+  readonly centre: Point;
   readonly from: Point;
+  readonly fromAngle: number;
+  readonly radius: number;
   readonly to: Point;
+  readonly toAngle: number;
 }
 
 /** How a leg is inked: squares `width` wide, solid or dashed (on and off in px along it). */
@@ -208,29 +225,11 @@ export type PathStroke =
 
 const SAMPLES = 1024;
 
-/**
- * The curve between two centres, its control point the chord's midpoint pushed sideways by bend
- * times the chord's length: left of travel on an even leg, right on an odd one.
- */
-export function bentCurve(bend: number, from: Point, to: Point, index: number): Curve {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const side = index % 2 === 0 ? 1 : -1;
+function pointAt({ centre, fromAngle, radius, toAngle }: Curve, t: number): Point {
+  const angle = fromAngle + (toAngle - fromAngle) * t;
   return {
-    control: {
-      x: (from.x + to.x) / 2 + side * bend * dy,
-      y: (from.y + to.y) / 2 - side * bend * dx,
-    },
-    from,
-    to,
-  };
-}
-
-function pointAt({ control, from, to }: Curve, t: number): Point {
-  const u = 1 - t;
-  return {
-    x: u * u * from.x + 2 * u * t * control.x + t * t * to.x,
-    y: u * u * from.y + 2 * u * t * control.y + t * t * to.y,
+    x: centre.x + radius * Math.sin(angle),
+    y: centre.y - radius * Math.cos(angle),
   };
 }
 
@@ -329,9 +328,14 @@ export function pathStamps(step: number, stroke: PathStroke, trim: number, curve
 }
 
 /** The five legs in play-view px: leg i runs from route position i + 1 to i + 2. */
-export const ROUTE_LEGS: readonly Curve[] = ROUTE_MAP.centres
-  .slice(1)
-  .map((to, i) => bentCurve(ROUTE_MAP.path.bend, ROUTE_MAP.centres[i]!, to, i));
+export const ROUTE_LEGS: readonly Curve[] = ROUTE_MAP.centres.slice(1).map((to, i) => ({
+  centre: ROUTE_ARC.centre,
+  from: ROUTE_MAP.centres[i]!,
+  fromAngle: MARKER_ANGLES[i]!,
+  radius: ROUTE_ARC.radius,
+  to,
+  toAngle: MARKER_ANGLES[i + 1]!,
+}));
 
 const ARCS = ROUTE_LEGS.map(arcOf);
 const LEG_LENGTHS = ARCS.map((arc) => arc.lengths.at(-1) ?? 0);

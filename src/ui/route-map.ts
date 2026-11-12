@@ -1,9 +1,8 @@
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { RouteFlight } from "../model/game.ts";
-import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CARD_SLICE } from "./layout/controls.ts";
-import { font, fromAreaLeft, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
+import { font, fromAreaLeft, safeEdge, slice, units } from "./layout/css.ts";
 import { SAFE_MARGIN } from "./layout/playView.ts";
 import {
   easeInOutSine,
@@ -25,18 +24,16 @@ import {
   unlockFlightSeconds,
 } from "./layout/routeMap.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createButton, FOCUS_STYLE, isTap, MODAL_LAYER } from "./modal.ts";
+import { createButton, FOCUS_STYLE, MODAL_LAYER } from "./modal.ts";
 import { refuse } from "./refusal.ts";
 
 // Galaxy selection as a route map (art/layout.md "Galaxy selector"), after Chibi's MapScene:
 // the route sky and ground, the chart's legs, markers, labels and Ada's ship, the panel for the
-// chosen galaxy, Earth and Jump, and the close X on the HUD rect's corner. The model holds the
+// chosen galaxy, and Earth and Jump; there is no close X. The model holds the
 // ship's galaxy, a locked galaxy viewed in the panel and the unlock flight; this draws them and
 // animates the ship between them.
 
 export interface RouteMapLabels {
-  readonly close: string;
   /** A placeholder galaxy's line under its flavour line. */
   readonly development: string;
   readonly home: string;
@@ -88,7 +85,7 @@ export interface RouteMapArt {
 
 export interface RouteMapOptions {
   readonly labels: RouteMapLabels;
-  /** Earth, the close X and an outside tap: Ada's room, without a jump. */
+  /** Earth: Ada's room, without a jump, as back and Escape (the scene's back layer). */
   readonly onEarth: () => void;
   /** The unlock flight ended or was skipped. */
   readonly onFlightEnd: () => void;
@@ -318,11 +315,6 @@ export const ROUTE_MAP_STYLE = `
 .ada-controls .ada-route-action[data-action="galaxy-jump"]{
   left:${fromAreaLeft(ROUTE_ACTIONS.jump)}
 }
-/* The close X: its 24 face's top and right edges on the HUD rect's top-right corner. */
-.ada-controls .ada-route .ada-close{
-  top:${fromHudEdge("top", -(CARD_CLOSE.hit.height - CARD_CLOSE.art.height) / 2)};
-  right:${fromHudEdge("right", -(CARD_CLOSE.hit.width - CARD_CLOSE.art.width) / 2)}
-}
 `;
 
 /** A leg's open and locked stamps in play-view px, and where each sits along the route. */
@@ -461,12 +453,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   const jump = createButton(labels.jump, "primary");
   jump.classList.add("ada-route-action");
   jump.dataset.action = "galaxy-jump";
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "ada-close";
-  close.dataset.action = "close-galaxies";
-  close.setAttribute("aria-label", labels.close);
-  screen.append(sky, rules, ground, chart, panel, earth, jump, close);
+  screen.append(sky, rules, ground, chart, panel, earth, jump);
   root.append(screen);
 
   let view: RouteMapView | null = null;
@@ -736,7 +723,6 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   );
 
   earth.addEventListener("click", () => options.onEarth());
-  close.addEventListener("click", () => options.onEarth());
   jump.addEventListener("click", () => {
     const galaxy = view?.galaxies[view.panel - 1];
     if (galaxy?.unlocked) {
@@ -746,7 +732,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     }
   });
   // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
-  // then Earth, Jump and the close X.
+  // then Earth and Jump.
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -756,33 +742,13 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     if (event.key !== "Tab") {
       return;
     }
-    const order = [...markers.map(({ button }) => button), earth, jump, close];
+    const order = [...markers.map(({ button }) => button), earth, jump];
     event.preventDefault();
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;
     const next = at < 0 ? (event.shiftKey ? order.length - 1 : 0) : at + step;
     order[(next + order.length) % order.length]!.focus();
   });
-  // An outside tap: one on the sky or ground, off every control and the panel.
-  let outside: Point | undefined;
-  screen.addEventListener("pointerdown", (event) => {
-    const target = event.target as Element;
-    outside = target.closest("button, .ada-route-panel")
-      ? undefined
-      : { x: event.clientX, y: event.clientY };
-  });
-  screen.addEventListener("click", (event) => {
-    const target = event.target as Element;
-    if (
-      outside &&
-      !target.closest("button, .ada-route-panel") &&
-      isTap(readViewUnit(screen), outside, { x: event.clientX, y: event.clientY })
-    ) {
-      options.onEarth();
-    }
-    outside = undefined;
-  });
-
   return {
     dispose(): void {
       stop();

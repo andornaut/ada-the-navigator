@@ -6,6 +6,7 @@ import { NO_INSETS } from "./playView.ts";
 import {
   pathStamps,
   restingTangent,
+  ROUTE_ARC,
   ROUTE_LEGS,
   ROUTE_MAP,
   routeDistance,
@@ -27,7 +28,7 @@ const inside = (outer: Rect, inner: Rect) =>
   inner.y + inner.height <= outer.y + outer.height + 1e-9;
 
 describe("route map layout", () => {
-  it("places the panel, capture, text, Earth, Jump and close X as Art's table at 720x360", () => {
+  it("places the panel, capture, text, Earth and Jump as Art's table at 720x360, with no close X", () => {
     const plain = routeMapRects(NO_INSETS, BASE);
     const phone = routeMapRects(PHONE, BASE);
     expect([plain, phone].map((rects) => box(rects.available))).toEqual([
@@ -56,46 +57,73 @@ describe("route map layout", () => {
         [368, 293, 192, 48],
       ],
     ]);
-    expect([plain, phone].map(({ close }) => [box(close.target), box(close.face)])).toEqual([
-      [
-        [672, 0, 48, 48],
-        [684, 12, 24, 24],
-      ],
-      [
-        [641, 0, 48, 48],
-        [653, 12, 24, 24],
-      ],
-    ]);
+    expect(Object.keys(plain)).not.toContain("close");
   });
 
-  it("puts the close face on the HUD rect's corner at 844x390 with phone insets", () => {
-    const view = { height: 360, width: (844 * 360) / 390 };
-    expect(routeMapRects(PHONE, view).close.face.x).toBeCloseTo(712.08, 2);
-  });
-
-  it("keeps every rect in the available rect, the row 2 labels a gap above the panel", () => {
-    for (const insets of [NO_INSETS, PHONE]) {
+  it("keeps every rect in the available rect, the end labels 15 and 12 above the panel", () => {
+    // Markers 1 and 6 sit lowest on the arc, so their label pills end lowest, at 161.
+    const labelBottoms = ROUTE_MAP.centres.map(
+      ({ y }) => y + ROUTE_MAP.label.top + ROUTE_MAP.label.height,
+    );
+    expect(labelBottoms[0]).toBeCloseTo(161, 9);
+    expect(labelBottoms[5]).toBeCloseTo(161, 9);
+    expect(Math.max(...labelBottoms)).toBeCloseTo(161, 9);
+    for (const [insets, gap] of [
+      [NO_INSETS, 15],
+      [PHONE, 12],
+    ] as const) {
       const rects = routeMapRects(insets, BASE);
       for (const rect of [rects.panel, rects.earth, rects.jump, ...rects.markers]) {
         expect(inside(rects.available, rect)).toBe(true);
       }
-      const labelBottom = ROUTE_MAP.centres[3]!.y + ROUTE_MAP.label.top + ROUTE_MAP.label.height;
-      expect(rects.panel.y - labelBottom).toBeGreaterThanOrEqual(SPACING.gap);
+      expect(rects.panel.y - Math.max(...labelBottoms)).toBeCloseTo(gap, 9);
+      expect(gap).toBeGreaterThanOrEqual(SPACING.gap);
     }
   });
 
-  it("keeps marker press areas apart from each other and from the close target", () => {
+  it("keeps marker press areas apart from each other", () => {
     for (const insets of [NO_INSETS, PHONE]) {
-      const { close, markers } = routeMapRects(insets, BASE);
+      const { markers } = routeMapRects(insets, BASE);
       const overlap = (a: Rect, b: Rect) =>
         a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
       for (const [index, marker] of markers.entries()) {
-        expect(overlap(marker, close.target)).toBe(false);
         for (const other of markers.slice(index + 1)) {
           expect(overlap(marker, other)).toBe(false);
         }
       }
     }
+  });
+});
+
+describe("route arc", () => {
+  it("draws the circle through markers 1 and 6 whose top is (360, 46)", () => {
+    expect(ROUTE_ARC.radius).toBeCloseTo(496.53, 2);
+    expect(ROUTE_ARC.centre.x).toBe(360);
+    expect(ROUTE_ARC.centre.y).toBeCloseTo(542.53, 2);
+    expect(ROUTE_ARC.centre.y - ROUTE_ARC.radius).toBeCloseTo(46, 9);
+    expect((-ROUTE_ARC.first * 180) / Math.PI).toBeCloseTo(32.12, 2);
+    expect((ROUTE_ARC.step * 180) / Math.PI).toBeCloseTo(12.85, 2);
+  });
+
+  it("puts the six markers left to right along it at equal angles, as Art's table", () => {
+    const art = [
+      [96, 122],
+      [196.12, 73.82],
+      [304.45, 49.12],
+      [415.55, 49.12],
+      [523.88, 73.82],
+      [624, 122],
+    ];
+    for (const [index, { x, y }] of ROUTE_MAP.centres.entries()) {
+      expect(x).toBeCloseTo(art[index]![0]!, 2);
+      expect(y).toBeCloseTo(art[index]![1]!, 2);
+      expect(Math.hypot(x - ROUTE_ARC.centre.x, y - ROUTE_ARC.centre.y)).toBeCloseTo(
+        ROUTE_ARC.radius,
+        9,
+      );
+    }
+    const lefts = ROUTE_MAP.centres.map(({ x }) => x);
+    expect(lefts).toEqual([...lefts].sort((a, b) => a - b));
   });
 });
 
@@ -120,26 +148,37 @@ describe("route legs", () => {
     expect(locked.length).toBeLessThan(open.length);
   });
 
-  it("bends the legs alternately, so the row legs are a little longer than their chords", () => {
-    expect(routeDistance(2)).toBeCloseTo(229, 0);
-    expect(routeDistance(5) - routeDistance(2)).toBeCloseTo(530, -1);
+  it("follows the arc, each leg 111.34 long, longer than its 111.1 chord", () => {
+    expect(routeDistance(1)).toBe(0);
+    expect(routeDistance(2)).toBeCloseTo(111.34, 2);
+    expect(routeDistance(5) - routeDistance(2)).toBeCloseTo(334.02, 2);
+    expect(routeDistance(6)).toBeCloseTo(ROUTE_ARC.radius * ROUTE_ARC.step * 5, 3);
+    const [first, second] = ROUTE_MAP.centres;
+    expect(Math.hypot(second!.x - first!.x, second!.y - first!.y)).toBeCloseTo(111.1, 1);
   });
 });
 
 describe("route moves", () => {
-  it("moves the ship at 360 px/s, clamped to 0.3 to 0.9 s", () => {
-    expect([50, 229, 530].map(selectionSeconds)).toEqual([0.3, 229 / 360, 0.9]);
+  it("moves the ship at 360 px/s, clamped to 0.3 to 0.9 s: one leg in 0.309 s", () => {
+    expect([50, 111.34, 530].map(selectionSeconds)).toEqual([0.3, 111.34 / 360, 0.9]);
+    expect(selectionSeconds(routeDistance(2))).toBeCloseTo(0.309, 3);
   });
 
-  it("arrives from Sunflower at Whirlpool at 1672 ms: 400 ms, then 229 px at 180 px/s", () => {
-    expect(unlockSeconds(1, 2)).toBeCloseTo(1.672, 2);
+  it("flies an unlock's trip at clamp(length / 180, 0.8, 2.0) s by its whole arc length", () => {
+    const legs = (count: number) => routeDistance((1 + count) as 2 | 3 | 4 | 5 | 6);
+    // One leg flies the 0.8 s floor; two legs, 222.68 px, fly 1.237 s, not two floors.
+    expect(unlockFlightSeconds(legs(1))).toBe(0.8);
+    expect(unlockFlightSeconds(legs(2))).toBeCloseTo(1.237, 3);
+    expect(unlockFlightSeconds(359)).toBeLessThan(2);
+    expect([360, legs(4), legs(5)].map(unlockFlightSeconds)).toEqual([2, 2, 2]);
   });
 
-  it("flies one unlock opening several galaxies in at most 2.4 s in all, Whirlpool to Cartwheel", () => {
-    // Three legs at 180 px/s would take 2.94 s of flight; the legs speed up to fit.
-    expect((routeDistance(5) - routeDistance(2)) / 180).toBeGreaterThan(2);
-    expect(unlockSeconds(2, 5)).toBe(2.4);
-    expect(unlockFlightSeconds(10)).toBe(0.8);
+  it("arrives 400 ms after the flight starts its departure: Sunflower to Whirlpool at 1200 ms", () => {
+    expect(unlockSeconds(1, 2)).toBeCloseTo(1.2, 9);
+    // Whirlpool to Cartwheel, three legs of 334.02: 1856 ms of flight, arrival at 2256 ms.
+    expect(unlockFlightSeconds(routeDistance(5) - routeDistance(2))).toBeCloseTo(1.856, 3);
+    expect(unlockSeconds(2, 5)).toBeCloseTo(2.256, 3);
+    expect(unlockSeconds(1, 6)).toBe(2.4);
   });
 });
 
@@ -152,11 +191,20 @@ describe("route ship", () => {
   });
 
   it("rests facing the outgoing leg, and at galaxy 6 the incoming leg's end", () => {
-    // Row 1 runs right; row 2 runs left on screen.
-    expect(restingTangent(1).x).toBeGreaterThan(0);
-    expect(restingTangent(5).x).toBeLessThan(0);
-    expect(restingTangent(6).x).toBeLessThan(0);
-    // Galaxy 3's leg runs down to galaxy 4.
-    expect(restingTangent(3).y).toBeGreaterThan(0);
+    const positions = [1, 2, 3, 4, 5, 6] as const;
+    // The arc runs right throughout, rising to its top between galaxies 3 and 4, then falling.
+    expect(positions.map((position) => restingTangent(position).x > 0)).toEqual(
+      positions.map(() => true),
+    );
+    expect(positions.map((position) => Math.sign(restingTangent(position).y))).toEqual([
+      -1, -1, -1, 1, 1, 1,
+    ]);
+    // Galaxy 6 faces along the circle's tangent at its own centre, the incoming leg's end.
+    const end = restingTangent(6);
+    const angle = ROUTE_ARC.first + 5 * ROUTE_ARC.step;
+    expect(Math.atan2(end.y, end.x)).toBeCloseTo(angle, 2);
+    expect(positions.map((position) => routeHeading(restingTangent(position)))).toEqual([
+      24, 25, 27, 29, 31, 0,
+    ]);
   });
 });

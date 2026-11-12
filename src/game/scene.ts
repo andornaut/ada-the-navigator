@@ -1147,7 +1147,6 @@ export class PrototypeScene extends Scene {
     });
     this.galaxies = createRouteMap(this.controls.overlay, {
       labels: {
-        close: label("close"),
         development: label("galaxyInDevelopment"),
         home: label("homeButton"),
         jump: label("jump"),
