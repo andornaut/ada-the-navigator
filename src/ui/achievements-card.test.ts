@@ -8,11 +8,15 @@ import {
   achievementColumnWidth,
   achievementPage,
   achievementPages,
+  achievementRows,
   ACHIEVEMENTS_CARD,
+  ACHIEVEMENTS_LIST_TOP,
   ACHIEVEMENTS_PER_PAGE,
   fillCount,
   fillPage,
 } from "./achievements-card.ts";
+import { listCardHeader } from "./layout/cardFrame.ts";
+import { TEXT_BUTTON } from "./layout/controls.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 
 describe("Achievements card", () => {
@@ -42,7 +46,6 @@ describe("Achievements card", () => {
       columns: 2,
       conditionLines: 2,
       rowGap: 8,
-      rows: 3,
     });
     expect([SPACING.gap, SPACING.panelPadding, TYPE.body.lineHeight]).toEqual([8, 16, 20]);
     const { columnGap, columnWidth, columns } = ACHIEVEMENTS_CARD;
@@ -63,9 +66,33 @@ describe("Achievements card", () => {
     expect(achievementColumnWidth(available(779.08, 43))).toBe(312);
     // 720x360 with phone insets, the narrowest view: 634 across.
     expect(achievementColumnWidth(available(SCREEN.width, 43))).toBe(293);
+    // The card follows its columns, never wider than the room, so it never scales.
+    expect(cardWidth(achievementColumnWidth(available(SCREEN.width, 43)))).toBe(634);
     for (const room of [available(SCREEN.width, 43), available(SCREEN.width), 900]) {
       expect(cardWidth(achievementColumnWidth(room))).toBeLessThanOrEqual(room);
     }
+  });
+
+  it("starts the list 50 down and fits three rows in a 318 card at every view", () => {
+    // The close X's press area bottom (42) and a gap; the title's 28 line box 14.2 down.
+    expect(ACHIEVEMENTS_LIST_TOP).toBe(50);
+    expect(listCardHeader(TYPE.label).titleTop).toBeCloseTo(14.2, 1);
+    // Available heights: 720x360, with phone insets, and 1280x720 (a 720x405 view).
+    for (const height of [328, 325, 373]) {
+      const rows = achievementRows(height);
+      expect(rows, String(height)).toBe(3);
+      const card =
+        ACHIEVEMENTS_LIST_TOP +
+        rows * 60 +
+        (rows - 1) * ACHIEVEMENTS_CARD.rowGap +
+        SPACING.gap +
+        TEXT_BUTTON.height +
+        SPACING.panelPadding;
+      expect(card).toBe(318);
+      expect(card).toBeLessThanOrEqual(height);
+    }
+    expect(ACHIEVEMENTS_PER_PAGE).toBe(6);
+    expect(achievementPages(ACHIEVEMENTS.length, 2 * achievementRows(325))).toBe(3);
   });
 
   it("fits each name and count on one line and each condition in two at the narrowest view", () => {

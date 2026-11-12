@@ -5,6 +5,7 @@ import {
   CARD_CONTENT,
   cardHeaderLayout,
   cardTitleReserve,
+  listCardHeader,
 } from "./layout/cardFrame.ts";
 import { cardWidth, SCROLL } from "./layout/contentCard.ts";
 import {
@@ -586,7 +587,11 @@ function logicalSize(element: HTMLElement, unit: number): { height: number; widt
 // Fits a shown card: measures each visible group and the title at their natural widths in logical
 // px, sets the card's width, then the title's top and the body's gap so the header's gaps balance.
 // A group's data-ink-top gives the distance from its top to its first visible content.
-function fitCard(parts: Pick<CardParts, "body" | "card" | "title">, close: boolean): void {
+function fitCard(
+  parts: Pick<CardParts, "body" | "card" | "title">,
+  close: boolean,
+  list: boolean,
+): void {
   const { body, card, title } = parts;
   const layer = card.closest<HTMLElement>(".ada-modal, .ada-start");
   if (!layer || card.getClientRects().length === 0) {
@@ -618,7 +623,9 @@ function fitCard(parts: Pick<CardParts, "body" | "card" | "title">, close: boole
   card.style.width = units(width);
   const titleHeight = text ? logicalSize(title, unit).height : undefined;
   const first = groups[0];
-  const { bodyTop, titleTop } = cardHeaderLayout(
+  const { bodyTop, titleTop } = list
+    ? listCardHeader(TYPE.label)
+    : cardHeaderLayout(
     close,
     first ? Number(first.dataset.inkTop ?? 0) : undefined,
     titleHeight,
@@ -637,6 +644,8 @@ export function createCard(
         readonly closeAction: string;
         readonly closeLabel: string;
         readonly fontRole?: string;
+        /** Chibi's list header (listCardHeader), for a card whose body opens with a list. */
+        readonly list?: boolean;
         readonly title: string;
       }
     | { readonly fontRole?: string; readonly page: true; readonly title: string },
@@ -671,7 +680,8 @@ export function createCard(
     close.setAttribute("aria-label", options.closeLabel);
     frame.append(card, close);
   }
-  const fit = () => fitCard({ body, card, title }, !page);
+  const list = !("page" in options) && options.list === true;
+  const fit = () => fitCard({ body, card, title }, !page, list);
   // Keyboard focus scrolls the focused control fully into view, its focus ring included.
   body.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLElement) {
