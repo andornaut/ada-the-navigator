@@ -540,7 +540,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
-    control hides only its drawing; its input still works. As in Chibi, on-screen
+    control hides only its drawing; its input still works. Each row has the note
+    "Touch still works when hidden". As in Chibi, on-screen
     joysticks appear only when the primary pointer is coarse (a touch screen).
   - Each row has its icon and a switch, as in Archie and Chibi.
   - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
