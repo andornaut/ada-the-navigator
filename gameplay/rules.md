@@ -714,8 +714,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   [Ships](ships.md#enemy-weapons)). An enemy Heavy Missile hit
   (10) can empty a full base shield, so it flies slowly and fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
-  every level, so flight time follows speed. Rapid Missile flies at 500, 600 and
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 370 world units at
+  every level, one play view with a small margin, so flight time follows speed. Rapid Missile flies at 500, 600 and
   700, and Heavy Missile at a fixed 400; both missiles reach a fixed 220 at every
   level, so a missile that hits nothing explodes on screen. Enemy missiles share
   this reach. Scattershot dots use a fixed base
