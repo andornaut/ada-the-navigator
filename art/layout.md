@@ -697,6 +697,8 @@ Docking states:
 
 - A line replaces the last in place, as the conversation box's do, with no
   transition, so reduced motion changes nothing. The pips are static.
+- On the third line the block stops being a button and becomes a status. If
+  it had focus, focus moves to Shop, where the card's focus starts.
 - Undock, Jobs and Shop stay live throughout; the block never blocks them, and
   closing the card or leaving for the shop or job board ends the greeting where
   it is (Gameplay saves greetings seen per place).
@@ -705,7 +707,7 @@ Docking states:
   before the action row. The pips are decorative (`aria-hidden`); the line is
   the block's text.
 - Every first-docking line fits two lines in 374 (the widest, Needle's "We Avi
-  stand still a long time before we move. It is how we see clearly.", 498.0,
+  stand still a long time before we move. It is how we see clearly.", 500.65,
   wraps to two), and every later line two lines in 408.
 - Contrast: cream lines 10.80:1 on the block over the card face (`#242134`),
   the coming-line rings 7.70:1; tab labels 7.71:1 or more on every keeper's tab.
@@ -958,7 +960,7 @@ Panel height and top by page:
 | -------------------------------------------------------------- | --------------- | --------------- | -------- | -------- |
 | One line, Next only                                            | 68, top 273     | 68, top 273     | 68, 276  | 68, 321  |
 | Three-line narration (78 text over a 36 control row)           | 110, top 231    | 110, top 231    | 110, 234 | 110, 279 |
-| Two choices: the garden opening with its heading (205)         | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
+| The longest: chapter one's resolution (206)                    | 228, top 113    | 228, top 113    | 228, 116 | 228, 161 |
 | Gameplay's limit case: 220 characters, heading and two choices | 228, top 113    | 228, top 113    | 208, 136 | 228, 161 |
 | Astra's three questions with Continue (the tallest)            | 248, top 93     | 248, top 93     | 248, 96  | 248, 141 |
 
@@ -985,7 +987,7 @@ Gameplay's copy, by group:
 | Overnight  | 3     | Night, the sleep scene and morning                                                             |
 
 That is 60 pages, 59 of them with text: the sleep scene has none. The longest is chapter
-one's opening at 205 characters. Gameplay's limit is 220 characters: with the
+one's resolution at 206 characters, a 228 panel at all four screens. Gameplay's limit is 220 characters: with the
 heading and two wrapped choices it is six lines in the 349 column and five in
 the wider ones, a 192 or 166 text column beside the 196 choice column (176 at
 844x390 without insets), so panels of 228, 228, 208 and 228 at the four screens
