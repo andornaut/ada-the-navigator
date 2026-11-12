@@ -58,7 +58,12 @@ import { createStatusPill, type StatusView } from "../ui/status-pill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { USE_PRESS_MS } from "../ui/touch-chrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
-import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
+import {
+  ammoCount,
+  createWeaponSelector,
+  type WeaponChoice,
+  type WeaponLabels,
+} from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarse-pointer.ts";
 import { type ControlSample, ControlState } from "./state.ts";
@@ -413,9 +418,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const noticePlaces = (): NoticePlaces => {
     const hud = hudRect(layout.insets, canvasSize(sceneFit(scene)));
     const left = pauseButton.hidden ? STATUS_PILL.xAlone : STATUS_PILL.x;
-    const ore = (statusView?.ore ?? 0) > 0;
+    const ore = statusView?.ore ?? 0;
     const aboard = Boolean(statusView?.aboard);
-    const width = statusPillWidth(ore, aboard);
+    // The pill's width as it draws now, from the counts it shows.
+    const width = statusPillWidth(
+      { ore: ore > 0 ? ammoCount(ore) : null, stardust: ammoCount(statusView?.stardust ?? 0) },
+      aboard,
+    );
     const count = weaponIds.length;
     const target = (index: number) => hud.width + hudButtonTarget(count - 1 - index).x;
     return {

@@ -196,23 +196,29 @@ export function hudRowWidth(count: number): number {
   return count > 0 ? count * HUD_BUTTON.target + (count - 1) * HUD_BUTTON.gap : 0;
 }
 
+// TYPE.label's advance, in font units, for each character a count holds (Liberation Sans Bold,
+// 2048 units per em): its digits are tabular, every one 1139, as is k; m is 1821.
+const COUNT_ADVANCE = { digit: 1139, k: 1139, m: 1821 } as const;
+const COUNT_EM = TYPE.label.size / 2048;
+
 // The status pill (art/layout.md "Status pill"): one PILL holding the Stardust count. Its left
 // edge is a gap right of the pause press area while the pause button shows, and on the HUD rect's
 // left edge (xAlone) while it is hidden, so the leftmost drawn art always sits HUD_EDGE in; it
 // centres on the HUD row's centre line, relative to the HUD rect's top-left corner. Parts, left
-// to right: the 20 Stardust icon, a mark gap and the count in its fixed slot; while Ada carries
-// ore, a divider (12, 1x16, 12), the 20 ore icon, a mark gap and its count in another; while she
-// carries a job or story item or tows a craft, a divider and its 20 icon last. The segments shown
-// fix the width, so a count never moves the pill's edge. A +N tick sits under its count, centred across on
-// it, its 20 line box top tick.top below the count's (HUD rect top + 36.5, on the item notice's
-// row).
+// to right: the 20 Stardust icon, a mark gap and the count in its slot; while Ada carries ore, a
+// divider (12, 1x16, 12), the 20 ore icon, a mark gap and its count in another; while she carries
+// a job or story item or tows a craft, a divider and its 20 icon last. Each slot is as wide as its
+// count's rendered width (countSlot), so the left edge stays put and the right edge follows the
+// counts and the segments shown, snapping in the frame they change. A +N tick sits under its
+// count, centred across on its slot, its 20 line box top tick.top below the count's (HUD rect top
+// + 36.5, on the item notice's row).
 export const STATUS_PILL = {
   cargoIcon: 20,
-  // A count's slot: "999m", the widest four-character count, in TYPE.label.
-  count: 40.92,
   divider: { height: 16, width: 1 },
   dividerGap: 12,
   markGap: SPACING.markGap,
+  // The narrowest slot: one digit, so "0" keeps its icon and gap.
+  minCount: COUNT_ADVANCE.digit * COUNT_EM,
   pill: PILL,
   stardustIcon: 20,
   tick: {
@@ -226,24 +232,63 @@ export const STATUS_PILL = {
   y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
-// The pill's width for the segments shown: the padding, the Stardust icon, its mark gap and count
-// slot; ore adds a divider with its gaps, the ore icon, a mark gap and a count slot, and something
-// aboard a divider with its gaps and its icon.
-export function statusPillWidth(ore: boolean, aboard: boolean): number {
-  const { cargoIcon, count, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
-  const segment = 2 * dividerGap + divider.width + cargoIcon;
+/** A count's rendered width in TYPE.label: the sum of its characters' advances. */
+export function countWidth(text: string): number {
+  let units = 0;
+  for (const character of text) {
+    const advance = /\d/u.test(character)
+      ? COUNT_ADVANCE.digit
+      : COUNT_ADVANCE[character as keyof typeof COUNT_ADVANCE];
+    if (advance === undefined) {
+      throw new Error(`No count advance for ${JSON.stringify(character)}`);
+    }
+    units += advance;
+  }
+  return units * COUNT_EM;
+}
+
+/** A count's slot: its rendered width, at least STATUS_PILL.minCount. */
+export function countSlot(text: string): number {
+  return Math.max(STATUS_PILL.minCount, countWidth(text));
+}
+
+/** The counts the pill shows: the Stardust count, and the ore count while Ada carries ore. */
+export interface StatusCounts {
+  readonly ore: string | null;
+  readonly stardust: string;
+}
+
+// The Stardust segment before its slot (padding, icon, mark gap), and the ore segment before its
+// slot (a divider with its gaps, the ore icon, a mark gap).
+const STARDUST_LEAD = STATUS_PILL.pill.padding + STATUS_PILL.stardustIcon + STATUS_PILL.markGap;
+const DIVIDED = 2 * STATUS_PILL.dividerGap + STATUS_PILL.divider.width + STATUS_PILL.cargoIcon;
+const ORE_LEAD = DIVIDED + STATUS_PILL.markGap;
+
+// The pill's width for the counts and segments shown: the padding, the Stardust icon, its mark gap
+// and count slot; ore adds a divider with its gaps, the ore icon, a mark gap and its count slot,
+// and something aboard a divider with its gaps and its icon.
+export function statusPillWidth(counts: StatusCounts, aboard: boolean): number {
   return (
-    2 * pill.padding +
-    stardustIcon +
-    markGap +
-    count +
-    (ore ? segment + markGap + count : 0) +
-    (aboard ? segment : 0)
+    STARDUST_LEAD +
+    countSlot(counts.stardust) +
+    STATUS_PILL.pill.padding +
+    (counts.ore === null ? 0 : ORE_LEAD + countSlot(counts.ore)) +
+    (aboard ? DIVIDED : 0)
   );
 }
 
-// The bottom controls' drawn bottom above the game area's bottom, which a bottom safe inset
-// raises: the joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it.
+/** Each shown count's +N tick centre across, from the pill's left edge. */
+export function statusTickCentres(counts: StatusCounts): { ore: number | null; stardust: number } {
+  const stardust = countSlot(counts.stardust);
+  return {
+    ore:
+      counts.ore === null ? null : STARDUST_LEAD + stardust + ORE_LEAD + countSlot(counts.ore) / 2,
+    stardust: STARDUST_LEAD + stardust / 2,
+  };
+}
+
+// The bottom controls' drawn bottom above the view's bottom, inside the bottom safe inset: the
+// joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it (controlsBottom).
 export const CONTROLS_BOTTOM = 40;
 
 // The least gap from each stick's drawn ring, and the shield pill level with them, to the game

@@ -410,13 +410,13 @@
       },
       "STATUS_PILL": {
         "cargoIcon": 20,
-        "count": 40.92,
         "divider": {
           "height": 16,
           "width": 1
         },
         "dividerGap": 12,
         "markGap": 6,
+        "minCount": 8.8984375,
         "pill": {
           "height": 28,
           "padding": 8,
@@ -12362,6 +12362,118 @@
           "result": 352
         }
       ],
+      "countSlot": [
+        {
+          "args": [
+            ""
+          ],
+          "result": 8.8984375
+        },
+        {
+          "args": [
+            "0"
+          ],
+          "result": 8.8984375
+        },
+        {
+          "args": [
+            "42"
+          ],
+          "result": 17.796875
+        },
+        {
+          "args": [
+            "999"
+          ],
+          "result": 26.6953125
+        },
+        {
+          "args": [
+            "9999"
+          ],
+          "result": 35.59375
+        },
+        {
+          "args": [
+            "10k"
+          ],
+          "result": 26.6953125
+        },
+        {
+          "args": [
+            "999k"
+          ],
+          "result": 35.59375
+        },
+        {
+          "args": [
+            "1m"
+          ],
+          "result": 23.125
+        },
+        {
+          "args": [
+            "999m"
+          ],
+          "result": 40.921875
+        }
+      ],
+      "countWidth": [
+        {
+          "args": [
+            ""
+          ],
+          "result": 0
+        },
+        {
+          "args": [
+            "0"
+          ],
+          "result": 8.8984375
+        },
+        {
+          "args": [
+            "42"
+          ],
+          "result": 17.796875
+        },
+        {
+          "args": [
+            "999"
+          ],
+          "result": 26.6953125
+        },
+        {
+          "args": [
+            "9999"
+          ],
+          "result": 35.59375
+        },
+        {
+          "args": [
+            "10k"
+          ],
+          "result": 26.6953125
+        },
+        {
+          "args": [
+            "999k"
+          ],
+          "result": 35.59375
+        },
+        {
+          "args": [
+            "1m"
+          ],
+          "result": 23.125
+        },
+        {
+          "args": [
+            "999m"
+          ],
+          "result": 40.921875
+        }
+      ],
       "gameAreaGap": [
         {
           "args": [
@@ -19790,31 +19902,293 @@
       "statusPillWidth": [
         {
           "args": [
-            false,
+            {
+              "ore": null,
+              "stardust": "0"
+            },
             false
           ],
-          "result": 82.92
+          "result": 50.8984375
         },
         {
           "args": [
-            false,
+            {
+              "ore": null,
+              "stardust": "0"
+            },
             true
           ],
-          "result": 127.92
+          "result": 95.8984375
         },
         {
           "args": [
-            true,
+            {
+              "ore": "0",
+              "stardust": "0"
+            },
             false
           ],
-          "result": 174.84
+          "result": 110.796875
         },
         {
           "args": [
-            true,
+            {
+              "ore": "0",
+              "stardust": "0"
+            },
             true
           ],
-          "result": 219.84
+          "result": 155.796875
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "0"
+            },
+            false
+          ],
+          "result": 142.8203125
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "0"
+            },
+            true
+          ],
+          "result": 187.8203125
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "42"
+            },
+            false
+          ],
+          "result": 59.796875
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "42"
+            },
+            true
+          ],
+          "result": 104.796875
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "42"
+            },
+            false
+          ],
+          "result": 119.6953125
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "42"
+            },
+            true
+          ],
+          "result": 164.6953125
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "42"
+            },
+            false
+          ],
+          "result": 151.71875
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "42"
+            },
+            true
+          ],
+          "result": 196.71875
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "999m"
+            },
+            false
+          ],
+          "result": 82.921875
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "999m"
+            },
+            true
+          ],
+          "result": 127.921875
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "999m"
+            },
+            false
+          ],
+          "result": 142.8203125
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "999m"
+            },
+            true
+          ],
+          "result": 187.8203125
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "999m"
+            },
+            false
+          ],
+          "result": 174.84375
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "999m"
+            },
+            true
+          ],
+          "result": 219.84375
+        }
+      ],
+      "statusTickCentres": [
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "0"
+            }
+          ],
+          "result": {
+            "ore": null,
+            "stardust": 38.44921875
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "0"
+            }
+          ],
+          "result": {
+            "ore": 98.34765625,
+            "stardust": 38.44921875
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "0"
+            }
+          ],
+          "result": {
+            "ore": 114.359375,
+            "stardust": 38.44921875
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "42"
+            }
+          ],
+          "result": {
+            "ore": null,
+            "stardust": 42.8984375
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "42"
+            }
+          ],
+          "result": {
+            "ore": 107.24609375,
+            "stardust": 42.8984375
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "42"
+            }
+          ],
+          "result": {
+            "ore": 123.2578125,
+            "stardust": 42.8984375
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": null,
+              "stardust": "999m"
+            }
+          ],
+          "result": {
+            "ore": null,
+            "stardust": 54.4609375
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "0",
+              "stardust": "999m"
+            }
+          ],
+          "result": {
+            "ore": 130.37109375,
+            "stardust": 54.4609375
+          }
+        },
+        {
+          "args": [
+            {
+              "ore": "999m",
+              "stardust": "999m"
+            }
+          ],
+          "result": {
+            "ore": 146.3828125,
+            "stardust": 54.4609375
+          }
         }
       ],
       "viewScale": [

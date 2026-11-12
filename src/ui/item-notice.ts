@@ -389,6 +389,8 @@ export function createItemNotices(
   const queue = new NoticeQueue(options.reducedMotion);
   let shown: { readonly notice: Notice; count: number; width: number } | null = null;
   let last: number | undefined;
+  // The chip's left edge, fixed when its notice appears.
+  let anchor: { readonly left: number; readonly notice: Notice } | null = null;
 
   const showNotice = (frame: NoticeFrame, room: number) => {
     const text = countedLabel(options.labels, frame.notice.label, frame.count);
@@ -459,8 +461,13 @@ export function createItemNotices(
       }
       const right = (places.leftmostTarget ?? places.right) - SPACING.pageInset;
       const width = chipWidth(showNotice(frame, right - places.pill.left - chipWidth(0)));
+      // The fly reads its destination every frame, as the pill's right edge moves with its counts;
+      // the chip keeps the place it appeared at.
       const target = noticeDestination(places, frame.notice.target);
-      const left = chipLeft(target, width, places.pill.left, right);
+      if (anchor?.notice !== frame.notice) {
+        anchor = { left: chipLeft(target, width, places.pill.left, right), notice: frame.notice };
+      }
+      const { left } = anchor;
       const iconLeft = ITEM_NOTICE.padding;
       icon.style.left = units(iconLeft);
       let opacity = 1;

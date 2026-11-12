@@ -1,6 +1,6 @@
 import { LIGHT_FIELD } from "../game/light-field.ts";
 import { controlsLine, font, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
-import { SHIELD_PILL, STATUS_PILL, STICK_AREA_MARGIN } from "./layout/playView.ts";
+import { countSlot, SHIELD_PILL, STATUS_PILL, STICK_AREA_MARGIN } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { ammoCount } from "./weapons.ts";
@@ -314,13 +314,13 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-cargo[data-kind=towing]{
   ${cargoIcon(CARGO_ICONS.towing)}
 }
-/* A count's fixed slot, the count left-aligned in it: the tick hangs from it, so neither a count
-   nor its bump moves the tick or the pill's edge. */
+/* A count's slot, as wide as the count (countSlot, set with the count): the tick hangs from its
+   centre, and the pill's right edge follows it in the same frame, with no transition. */
 .ada-controls .ada-status-slot{
   position:relative;
   flex:none;
   display:inline-block;
-  width:${units(STATUS_PILL.count)}
+  width:${units(STATUS_PILL.minCount)}
 }
 .ada-controls .ada-status-slot[hidden]{
   display:none
@@ -328,6 +328,7 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-count{
   display:inline-block;
   line-height:${units(TYPE.label.lineHeight)};
+  font-variant-numeric:tabular-nums;
   transform-origin:left center
 }
 /* The +N tick under its count, centred across on it, its line box on the item notice's row. */
@@ -434,6 +435,7 @@ function createCounter(
       const next = ammoCount(value);
       if (text.data !== next) {
         text.data = next;
+        slot.style.width = units(countSlot(next));
       }
       const spoken = label ?? stardustCount(value);
       if (count.getAttribute("aria-label") !== spoken) {

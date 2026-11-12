@@ -227,10 +227,19 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
 }
 
 function stateCases(call: ReturnType<typeof recorder>): void {
-  // The segments shown: Stardust alone, with ore, with cargo, and with both.
-  for (const ore of [false, true]) {
-    for (const aboard of [false, true]) {
-      call("playView.ts", "statusPillWidth", playView.statusPillWidth, ore, aboard);
+  // Counts from one digit to the widest, and the segments shown: Stardust alone, with ore, with
+  // cargo, and with both.
+  for (const text of ["", "0", "42", "999", "9999", "10k", "999k", "1m", "999m"]) {
+    call("playView.ts", "countWidth", playView.countWidth, text);
+    call("playView.ts", "countSlot", playView.countSlot, text);
+  }
+  for (const stardust of ["0", "42", "999m"]) {
+    for (const ore of [null, "0", "999m"]) {
+      const counts = { ore, stardust };
+      call("playView.ts", "statusTickCentres", playView.statusTickCentres, counts);
+      for (const aboard of [false, true]) {
+        call("playView.ts", "statusPillWidth", playView.statusPillWidth, counts, aboard);
+      }
     }
   }
   for (const inner of [400, 602, 661.08, 715.08, 1000]) {

@@ -2489,6 +2489,61 @@ try {
     "Owned upgrade weapons support accessible selection, the switch wait's refusal, saved " +
       "ammunition, reload, modal guards and the bottom-centre shield meter",
   );
+  // The status pill's width follows its counts (art/layout.md "Status pill"): 42 plus the
+  // Stardust slot, ore 51 plus its slot, cargo or tow 45; each slot the count's width in
+  // Liberation Sans Bold at 16 px (digits and k 1139/2048 em, m 1821/2048), at least one digit.
+  // Its left edge stays put while its right edge follows a small and a large Stardust count.
+  const countAdvance = (character) => (character === "m" ? 1821 : 1139) * (16 / 2048);
+  const countSlot = (text) =>
+    Math.max(
+      countAdvance("0"),
+      [...text].reduce((sum, c) => sum + countAdvance(c), 0),
+    );
+  const pillAt = async (stardust, marker) => {
+    const model = relaunch(PROTOTYPE, safeSerialized);
+    model.state.economy.stardust = stardust;
+    await seedOnce(model.save(), marker);
+    await settledBox(".ada-status");
+    const shown = await page.locator(".ada-status").evaluate((pill) => {
+      const unit = Number(
+        getComputedStyle(document.getElementById("app")).getPropertyValue("--ada-unit"),
+      );
+      const box = pill.getBoundingClientRect();
+      const visible = (selector) => !pill.querySelector(selector).hidden;
+      return {
+        aboard: visible(".ada-status-aboard"),
+        left: box.left / unit,
+        ore: visible(".ada-status-ore-slot")
+          ? pill.querySelector(".ada-status-ore-count").textContent
+          : null,
+        stardust: pill.querySelector(".ada-status-stardust-count").textContent,
+        transition: getComputedStyle(pill).transitionProperty,
+        width: box.width / unit,
+      };
+    });
+    const expected =
+      42 +
+      countSlot(shown.stardust) +
+      (shown.ore === null ? 0 : 51 + countSlot(shown.ore)) +
+      (shown.aboard ? 45 : 0);
+    assert.ok(
+      Math.abs(shown.width - expected) < 0.5,
+      `The status pill is ${expected} wide for its counts: ${JSON.stringify(shown)}`,
+    );
+    await page.locator(".ada-status").screenshot({ path: `${output}/${marker}.png` });
+    return { ...shown, expected };
+  };
+  const smallPill = await pillAt(7, "status-pill-small");
+  const largePill = await pillAt(999_999_999, "status-pill-large");
+  assert.equal(smallPill.stardust, "7");
+  assert.equal(largePill.stardust, "999m");
+  assert.ok(Math.abs(largePill.left - smallPill.left) < 0.01, "The pill's left edge stays put");
+  assert.ok(
+    Math.abs(largePill.width - smallPill.width - (countSlot("999m") - countSlot("7"))) < 0.5,
+    `Only the right edge moves, by the Stardust slot's growth: ${JSON.stringify({ largePill, smallPill })}`,
+  );
+  save("status-pill-proof.json", { largePill, smallPill });
+  events.checks.push("The status pill grows with its counts, its left edge fixed");
 
   const damaged = relaunch(PROTOTYPE, equipmentSave);
   assert.ok(damaged.selectWeapon("rapidMissile"));

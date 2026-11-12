@@ -8,6 +8,8 @@ import { conversationBoxRect } from "./conversationBox.ts";
 import { fromSafeEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./css.ts";
 import {
   CONTROL_EDGE,
+  countSlot,
+  countWidth,
   gameAreaGap,
   HUD_BUTTON,
   HUD_BUTTON_INSET,
@@ -30,6 +32,7 @@ import {
   startNavOrder,
   STATUS_PILL,
   statusPillWidth,
+  statusTickCentres,
   STICK_AREA_MARGIN,
   viewScale,
 } from "./playView.ts";
@@ -296,24 +299,57 @@ describe("HUD anchors", () => {
     expect(countTop + STATUS_PILL.tick.top - (STATUS_PILL.y + PILL.height)).toBe(SPACING.markGap);
   });
 
-  it("fix the pill's width by its segments: 82.92, 174.84 with ore, 219.84 with both, 127.92 with cargo", () => {
-    expect(STATUS_PILL.count).toBe(40.92);
-    expect(statusPillWidth(false, false)).toBeCloseTo(82.92, 9);
-    expect(statusPillWidth(true, false)).toBeCloseTo(174.84, 9);
-    expect(statusPillWidth(true, true)).toBeCloseTo(219.84, 9);
-    expect(statusPillWidth(false, true)).toBeCloseTo(127.92, 9);
-    expect("bar" in STATUS_PILL).toBe(false);
+  it("measure each count in TYPE.label's tabular digits, at least one digit wide", () => {
+    // Liberation Sans Bold at 16 px: a digit or k is 1139/2048 em, 8.90; m is 1821/2048, 14.23.
+    expect(STATUS_PILL.minCount).toBeCloseTo(8.9, 2);
+    expect(countWidth("0")).toBe(STATUS_PILL.minCount);
+    expect(countWidth("42")).toBeCloseTo(17.8, 2);
+    expect(countWidth("999m")).toBeCloseTo(40.92, 2);
+    expect(countWidth("999k")).toBeCloseTo(35.59, 2);
+    expect(countWidth("9999")).toBe(countWidth("1000"));
+    expect(countSlot("")).toBe(STATUS_PILL.minCount);
+    expect(() => countWidth("1,000")).toThrow(/,/u);
+    expect("count" in STATUS_PILL).toBe(false);
   });
 
-  it("centre each +N tick on its count slot, pill left + 54.46 for Stardust and + 146.38 for ore", () => {
-    const { cargoIcon, count, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
-    const stardust = pill.padding + stardustIcon + markGap + count / 2;
-    const ore =
-      stardust + count / 2 + 2 * dividerGap + divider.width + cargoIcon + markGap + count / 2;
-    expect(stardust).toBeCloseTo(54.46, 9);
-    expect(ore).toBeCloseTo(146.38, 9);
-    // The widest label, "+9,999" with its outline, 51.38: the two never meet.
-    expect(ore - stardust - 51.38).toBeGreaterThan(0);
+  it.each([
+    // Art's widths (art/layout.md "Status pill"): 42 plus the Stardust slot, ore 51 plus its slot,
+    // cargo or tow 45.
+    ["0", null, false, 50.9],
+    ["42", null, false, 59.8],
+    ["999", null, false, 68.7],
+    ["999m", null, false, 82.92],
+    ["0", "0", false, 110.8],
+    ["42", "7", false, 119.7],
+    ["999m", "999m", false, 174.84],
+    ["0", null, true, 95.9],
+    ["999m", null, true, 127.92],
+    ["0", "0", true, 155.8],
+    ["999m", "999m", true, 219.84],
+  ] as const)(
+    "size the pill to Stardust %s, ore %s, cargo %s: %d",
+    (stardust, ore, aboard, width) => {
+      expect(statusPillWidth({ ore, stardust }, aboard)).toBeCloseTo(width, 1);
+    },
+  );
+
+  it("move only the right edge as a count grows: the left stays and the ore slot shifts", () => {
+    const small = statusTickCentres({ ore: "3", stardust: "7" });
+    const large = statusTickCentres({ ore: "3", stardust: "999m" });
+    expect(small.stardust).toBeCloseTo(34 + STATUS_PILL.minCount / 2, 9);
+    expect(large.stardust).toBeCloseTo(34 + countWidth("999m") / 2, 9);
+    // The ore tick follows the Stardust slot's growth.
+    expect(large.ore! - small.ore!).toBeCloseTo(countWidth("999m") - STATUS_PILL.minCount, 9);
+    expect(statusTickCentres({ ore: null, stardust: "0" }).ore).toBeNull();
+  });
+
+  it("centre each +N tick on its count slot, far enough apart that two labels never meet", () => {
+    const { ore, stardust } = statusTickCentres({ ore: "0", stardust: "0" });
+    expect(stardust).toBeCloseTo(34 + STATUS_PILL.minCount / 2, 9);
+    expect(ore).toBeCloseTo(85 + STATUS_PILL.minCount + STATUS_PILL.minCount / 2, 9);
+    // Closest at the one-digit minimum, 59.90; the widest label, "+9,999" with its outline, 51.38.
+    expect(ore! - stardust).toBeCloseTo(59.9, 1);
+    expect(ore! - stardust - 51.38).toBeGreaterThan(0);
   });
 
   it("make the shield pill 202 wide: padding, the 20 icon, a mark gap and the 160x12 bar", () => {
@@ -360,10 +396,14 @@ describe("HUD anchors", () => {
     expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(102);
   });
 
-  it("add 45 for the cargo segment and 91.92 for the ore segment", () => {
+  it("add 45 for the cargo segment and 51 plus its slot for the ore segment", () => {
     expect(STATUS_PILL.cargoIcon).toBe(20);
-    expect(statusPillWidth(false, true) - statusPillWidth(false, false)).toBeCloseTo(45, 9);
-    expect(statusPillWidth(true, false) - statusPillWidth(false, false)).toBeCloseTo(91.92, 9);
+    const alone = statusPillWidth({ ore: null, stardust: "42" }, false);
+    expect(statusPillWidth({ ore: null, stardust: "42" }, true) - alone).toBeCloseTo(45, 9);
+    expect(statusPillWidth({ ore: "999m", stardust: "42" }, false) - alone).toBeCloseTo(
+      51 + countWidth("999m"),
+      9,
+    );
   });
 
   it.each([
@@ -375,7 +415,7 @@ describe("HUD anchors", () => {
       PHONE,
       93.75,
       410.58,
-      80.99,
+      80.98,
     ],
   ] as const)(
     "keep the widest pill a page inset clear of six weapons at %s",
@@ -385,10 +425,9 @@ describe("HUD anchors", () => {
       const first = hud.x + hud.width + hudButtonTarget(5).x;
       expect(pillLeft).toBeCloseTo(left, 2);
       expect(first).toBeCloseTo(leftmost, 2);
-      expect(first - SPACING.pageInset - pillLeft - statusPillWidth(true, true)).toBeCloseTo(
-        clearance,
-        2,
-      );
+      const widest = statusPillWidth({ ore: "999m", stardust: "999m" }, true);
+      expect(widest).toBeCloseTo(219.84, 2);
+      expect(first - SPACING.pageInset - pillLeft - widest).toBeCloseTo(clearance, 2);
     },
   );
 });
@@ -451,7 +490,7 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }))).toBe(true);
       const pill = {
         height: 28,
-        width: statusPillWidth(true, true),
+        width: statusPillWidth({ ore: "999m", stardust: "999m" }, true),
         x: STATUS_PILL.x,
         y: STATUS_PILL.y,
       };

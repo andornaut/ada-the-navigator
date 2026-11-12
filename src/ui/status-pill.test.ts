@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { units } from "./layout/css.ts";
+import { countSlot, STATUS_PILL } from "./layout/playView.ts";
 import {
   blendHex,
   CARGO_ICONS,
@@ -203,10 +204,10 @@ describe("status pill count", () => {
       shieldLabel: "Shield",
     });
     const root = parent.children[0]!;
-    const count = (kind: string) =>
-      root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!
-        .children[0]!;
-    return { count, status };
+    const slot = (kind: string) =>
+      root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!;
+    const count = (kind: string) => slot(kind).children[0]!;
+    return { count, slot, status };
   };
 
   it.each([
@@ -238,9 +239,39 @@ describe("status pill count", () => {
     expect(count("ore").getAttribute("aria-label")).toBe(exact);
   });
 
-  it("sets each count in its fixed 40.92 slot", () => {
-    const slot = STATUS_PILL_STYLE.split("}").find((part) => part.includes(".ada-status-slot{"));
-    expect(slot).toContain(`width:${units(40.92)}`);
+  it("sizes each count's slot to the count, at least one digit, in tabular figures", () => {
+    const style = (selector: string) =>
+      STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+    expect(style(".ada-status-slot")).toContain(`width:${units(STATUS_PILL.minCount)}`);
+    expect(style(".ada-status-slot")).not.toContain("transition:");
+    expect(style(".ada-status-count")).toContain("font-variant-numeric:tabular-nums");
+    const view = (stardust: number) => ({
+      aboard: null,
+      capacity: 100,
+      lightField: false,
+      ore: 0,
+      oreLabel: "Ore",
+      recharging: false,
+      shield: 100,
+      stardust,
+      stardustLabel: `${stardust} Stardust`,
+    });
+    for (const [stardust, shown] of [
+      [0, "0"],
+      [42, "42"],
+      [999_999_999, "999m"],
+    ] as const) {
+      // A fresh pill each time, so no gain animates.
+      const { slot, status } = pill();
+      status.setStatus(view(stardust), 0);
+      // The right edge snaps with the count: the slot's width changes in the same update.
+      expect(slot("stardust").style.width).toBe(units(countSlot(shown)));
+    }
+    // A falling count narrows its slot at once, with no gain to animate.
+    const { slot, status } = pill();
+    status.setStatus(view(999_999_999), 0);
+    status.setStatus(view(7), 16);
+    expect(slot("stardust").style.width).toBe(units(countSlot("7")));
   });
 });
 
