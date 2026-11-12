@@ -749,7 +749,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   count. While Ada carries ore, a divider and an ore icon with its count follow;
   while she carries a job or story item or tows a craft, a divider and its icon
   follow last. Each segment leaves when empty. Stardust and ore gains show "+N"
-  ticks just below their counts.
+  ticks just below their counts, with the gain in the same at most five
+  character format as the count ("+44.4k").
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
   a story item, a lost item, a job item, anything from an upgrade drop, or a
   towed craft), a small notice shows just below the status

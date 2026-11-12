@@ -278,7 +278,8 @@ the exact number below 10,000 without a separator ("9999"); from 10,000 to
 a value that rounds to 100.0k shows "100k"; from 100,000, whole thousands,
 rounded ("100k" to "9999k"); from 10,000,000, whole millions ("10m"). Their
 accessible labels give the exact count, en-US grouped; Stardust's is
-`stardustAmount`. The Ship card shows exact counts, en-US grouped ("12,500"). Pickup ticks read "+N".
+`stardustAmount`. The Ship card shows exact counts, en-US grouped ("12,500"). Pickup gain ticks read
+"+" then the gain in the same format as the count ("+9999", "+44.4k", "+100k").
 
 The shield shop row reuses the existing `shield` label.
 
