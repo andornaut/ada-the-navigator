@@ -37,6 +37,12 @@
       "once": []
     },
     {
+      "key": "icon-cargo-20",
+      "png": "sprites/icon-cargo-20.png",
+      "json": "sprites/icon-cargo-20.json",
+      "once": []
+    },
+    {
       "key": "icon-holodisk",
       "png": "sprites/icon-holodisk.png",
       "json": "sprites/icon-holodisk.json",
@@ -94,6 +100,12 @@
       "key": "icon-move-controls",
       "png": "sprites/icon-move-controls.png",
       "json": "sprites/icon-move-controls.json",
+      "once": []
+    },
+    {
+      "key": "icon-ore-20",
+      "png": "sprites/icon-ore-20.png",
+      "json": "sprites/icon-ore-20.json",
       "once": []
     },
     {
@@ -292,6 +304,12 @@
       "key": "icon-stardust-20",
       "png": "sprites/icon-stardust-20.png",
       "json": "sprites/icon-stardust-20.json",
+      "once": []
+    },
+    {
+      "key": "icon-tow-20",
+      "png": "sprites/icon-tow-20.png",
+      "json": "sprites/icon-tow-20.json",
       "once": []
     },
     {

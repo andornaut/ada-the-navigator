@@ -261,7 +261,10 @@ Overlap rules:
   `+9,999` label (51.38 with its outline): the pill may reach
   `465.5 - 16 - 51.38 - 6 - 93.75` = 298.37 wide, a count up to 109.37 wide
   ("999,999,999" is 88.98, "1,234,567" 71.18). With the pause button hidden
-  the pill starts at 43 and may reach 349.12, a count up to 160.12.
+  the pill starts at 43 and may reach 349.12, a count up to 160.12. The ore
+  and cargo segments do not fit that room: with "12,500", 30 ore and a tow the
+  pill is 351.74 wide, 53.37 past the 298.37 the four weapon targets leave
+  with the `+N` room.
 - The weapon count pills end at HUD rect top + 46.5 (58.5), 5 above the
   conversation box top; they stay inside their targets' columns (the widest,
   "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
@@ -288,17 +291,19 @@ Constants: `STATUS_PILL`, `playView.ts`, to implement. Colours and contrast
 are in [Controls](controls.md#status-pill). Parts, left to right, each centred
 on the pill's row:
 
-| Part          | Geometry                                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------- |
-| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel         |
-| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour            |
-| Mark gap      | `SPACING.markGap`                                                                                       |
-| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim around the track (ink at 0.65 over the panel), fill area 92x8 at inset 2 |
-| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                         |
-| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                   |
-| Mark gap      | `SPACING.markGap`                                                                                       |
-| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                                 |
-| Width         | 189 plus the count width: 215.70 at "125", 237.94 at "12,500"; grows rightward, never shrinks text      |
+| Part          | Geometry                                                                                                                                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel         | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65, as the conversation panel                                                                                                                |
+| Shield icon   | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour                                                                                                                   |
+| Mark gap      | `SPACING.markGap`                                                                                                                                                                                              |
+| Shield bar    | `STATUS_PILL.bar` 96x12: 1 rim around the track (ink at 0.65 over the panel), fill area 92x8 at inset 2                                                                                                        |
+| Divider       | `STATUS_PILL.dividerGap` 12, a 1x16 divider, 12                                                                                                                                                                |
+| Stardust icon | `icon-stardust-20`, nearest neighbour                                                                                                                                                                          |
+| Mark gap      | `SPACING.markGap`                                                                                                                                                                                              |
+| Count         | Gameplay's count string in `TYPE.label`, on its 20 line                                                                                                                                                        |
+| Ore segment   | While Ada carries ore: a divider, `icon-ore-20`, `SPACING.markGap`, the ore count in `TYPE.label`                                                                                                              |
+| Cargo segment | While she carries a job item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                             |
+| Width         | 189 plus the Stardust count; the ore segment adds 51 plus its count, the cargo segment 45: 215.70 at "125", 237.94 at "12,500", 306.74 with 30 ore, 351.74 with a tow too; grows rightward, never shrinks text |
 
 The fill area maps the current capacity (Gameplay: 100 plus 20% per level) to
 92, so a full bar has one length at every level. Fill width is
@@ -326,8 +331,14 @@ with fractional widths.
   card or storybook page shows. On desktop, where the pause button is hidden,
   the pill is the leftmost art and moves to the HUD rect's left edge, so the
   left side keeps `HUD_EDGE` in both input modes.
+- A segment shows while it has something to show and leaves when empty, at
+  once; the pill's right edge moves with it. The ore segment holds ore
+  carried this flight; the cargo segment the carried job item or the towed
+  craft, one at a time.
 - The pill takes no input. The shield bar is a meter (Gameplay's shield label,
-  value and capacity) and the count a status; both icons are decorative.
+  value and capacity) and the counts a status (Gameplay's Stardust and Ore
+  labels, and the item or craft name for the cargo segment); the icons are
+  decorative.
 
 ### Weapon count pill
 
@@ -404,18 +415,78 @@ token above; strings are Gameplay's.
 | Install steps | Header, close. Step rows: row icon, `SPACING.gap`, wrapped body text, rows `SPACING.rowGap` apart (not buttons), height fits text (not controls)                                                                                               | Steps        |
 | Update offer  | Header, close. Action row: decline (secondary), accept (primary)                                                                                                                                                                               | None         |
 | Cheats        | Header, close. Per scope a section group: heading (`TYPE.label`), persistence (supporting prose), `SPACING.rowGap`, then items `SPACING.gap` apart, each an action stack of one with its description (supporting prose) `SPACING.rowGap` below | Sections     |
-| Paused        | Header, close. Action stack: Resume (primary), Map, Settings, Back to title                                                                                                                                                                    | None         |
+| Paused        | Header, close. Resume (primary, full width). Control grid, two columns: Map and Ship, then Settings and Back to title                                                                                                                          | None         |
 | Paused (room) | Header, close. Action stack: Settings, Back to title                                                                                                                                                                                           | None         |
+| Ship          | Header, close. Cargo section. Equipment section ([Ship card](#ship-card))                                                                                                                                                                      | None         |
 | Station card  | Header, close. Balance. Welcome (supporting prose, centred). Action row: Undock, Jobs, Shop                                                                                                                                                    | None         |
 | Shop          | Header, close. Balance. Tabs (action row). Item list (control grid)                                                                                                                                                                            | Item list    |
 | Job board     | Header, close. Balance. Intro (supporting prose, centred). Refusal line (supporting prose, when shown). Job list (one column of job rows)                                                                                                      | Job list     |
 | Buy confirm   | Header, close. Item well. Description (weapons). Price. Remaining (supporting). Action row: Cancel, Buy                                                                                                                                        | None         |
 
-The Paused card shows no objective or job lines. At 720x360 with phone insets
-the flight card is `58 + 216 + 16` = 290 high (four buttons, `4 * 48 + 3 *
-8`), y 33.5 to 323.5, and the room card `58 + 104 + 16` = 178, y 89.5 to
-267.5, both 360 wide, inside the 325 available. Ada's room page opens the room card from its pause button
+The Paused card shows no objective or job lines. Its flight card puts Resume
+across the inner width, then the other four actions as a two-column control
+grid: tiles `(360 - 32 - BUTTON_GAP) / 2` = 156 wide ("Back to title" needs
+122.69), `BUTTON_GAP` across and `STACK_BUTTON_GAP` down. Five stacked
+actions would be `58 + 272 + 16` = 346 high, past the 325 available. At
+720x360 with phone insets the flight card is `58 + 48 + 8 + 48 + 8 + 48 + 16`
+= 234 high, y 61.5 to 295.5, and the room card `58 + 104 + 16` = 178, y 89.5
+to 267.5, both 360 wide, inside the 325 available. Ada's room page opens the room card from its pause button
 ([Storybook page](#storybook-page)).
+
+### Ship card
+
+The Paused card's Ship opens a content-fitted card titled "Ship" with the
+close X; the close X, back and Escape return to Paused. It lists what Ada
+carries and her equipment in two sections, each a section heading
+(`TYPE.label`, supporting `#b8b3c9`, on a 20 line), `SPACING.rowGap`, then
+rows. Strings are Gameplay's. Constants: `SHIP_CARD`, to implement.
+
+| Token                 | Value | Rule                                                                                   |
+| --------------------- | ----- | -------------------------------------------------------------------------------------- |
+| `SHIP_CARD.columnGap` | 16    | Between the two columns of both sections (see [Exceptions](#exceptions))               |
+| `SHIP_CARD.column`    | 279   | Each column: the widest row, a weapon's (below)                                        |
+| `SHIP_CARD.row`       | 20    | A row: a 20 icon and one 20 line; rows `SPACING.rowGap` apart                          |
+| `SHIP_CARD.icon`      | 20    | The row icon at the column's left, `SPACING.markGap` to the label                      |
+| `SHIP_CARD.valueGap`  | 8     | `SPACING.gap` between a label and its value, and between a level and the ammunition    |
+| `SHIP_CARD.ammo`      | 55.14 | The ammunition column: "999 left" in `TYPE.label`, right-aligned at the column's right |
+
+Rows: the label in `TYPE.body` cream `#ead4aa`; a count right-aligned at the
+column's right in `TYPE.label` cream; a level ("Level {n} of 3")
+right-aligned in `TYPE.body` supporting `#b8b3c9`, at the column's right or,
+on a weapon row, `SHIP_CARD.valueGap` left of the ammunition column. A label
+wider than its column wraps and grows its row by 20; it never shrinks.
+
+1. Cargo: a two-column grid, left to right then down: Stardust
+   (`icon-stardust-20`, count), Ore (`icon-ore-20`, the ore carried this
+   flight), "Holodisks: {n} of 6" (`icon-holodisk-20`), and, when there is
+   one, "Carrying: {item}" (`icon-cargo-20`) or "Towing: {craft}"
+   (`icon-tow-20`).
+2. Equipment, two columns. Left: Shield (`icon-shop-shield`), Engine
+   (`icon-shop-engine-tuning`), Tractor beam (`icon-shop-tractor-beam`), each
+   with its level, then "Paint: {paint}" (`icon-shop-ship-paint`). Right: every
+   owned weapon in Ada's weapon order (Laser, Multi-Laser, Rapid Missile,
+   Heavy Missile, Scattershot, Phaser), its 20 vector icon as a cream mask
+   ([Weapon icons](weapon-icons.md)), its level and, apart from Laser, "{count}
+   left". The shop icons draw their `normal` frame.
+
+Widths: a weapon row is `20 + 6 + 98.69 + 8 + 82.73 + 8 + 55.14` = 278.56 at
+"Heavy Missile", "Level 3 of 3" and "999 left", so a column is 279 and the
+inner width `2 * 279 + 16` = 574, the card 606 wide. The widest left rows are
+211.28 (Tractor beam with its level) and 189.02 ("Carrying: Watering can").
+
+Height: `58 + 68 + 8 + (20 + 4 + rows) + 16`, with Cargo two rows (`20 + 4 +
+20 + 4 + 20` = 68) and Equipment the taller column: six weapons `6 * 20 + 5 *
+4` = 140, so 314 at most; Laser alone with the four left rows, 266.
+
+| At 720x360, view px | No insets            | Phone insets             |
+| ------------------- | -------------------- | ------------------------ |
+| Available           | 688 by 328           | 634 by 325               |
+| Card                | (57, 23) 606x314     | (57, 21.5) 606x314       |
+| Cargo row tops      | 105 and 129          | 103.5 and 127.5          |
+| Equipment row tops  | 181 to 301, 24 apart | 179.5 to 299.5, 24 apart |
+
+It fits without scrolling at every supported view; at 844x390 with phone
+insets the card is (86.54, 21.5) on the 779.08-wide view.
 
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, a header panel on the Map's HUD row at the
@@ -961,6 +1032,7 @@ leaves and lands standing above the markers.
 | Landing page        | Responsive HTML outside the game canvas                                                                                                                                   | Same token numbers in CSS px, CSS safe insets                                                          |
 | Procedural chrome   | Stick rings, knobs and the speed line draw in frame px                                                                                                                    | Frames and opacity from [touch joystick sheets](touch-joystick.md)                                     |
 | Route panel padding | At 360 high the chart (labels end at 164), the 112 panel and the 48 actions fill the available height; padding 16 makes the panel 128 and runs it 7 into the row 2 labels | `SPACING.gap` (8) as padding, the 2 px frame inside it; type roles, row gaps and the capture unchanged |
+| Ship card columns   | Two tables side by side: at 8 a right-aligned level meets the next column's icon                                                                                          | `SPACING.columnGap` elsewhere; 16 is `BUTTON_GAP`'s value                                              |
 
 ## Verification
 

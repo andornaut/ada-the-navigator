@@ -83,29 +83,52 @@ difference is the coral that means damage. Reduced motion keeps them, static.
 
 ## Ore nugget
 
-The cargo piece a resource rock releases, collected on contact.
+The ore piece a resource rock releases, collected on contact: a chunky,
+irregular, matte rock nugget, never animated, so it reads apart from the small
+twinkling [Stardust](stardust.md) star by silhouette, colour, surface, size and
+lightness, in greyscale too.
 
 - Manifest `ore-nugget`: an 11 by 11 sheet with one `rest` frame, displayed at
   11 by 11 logical px with the pivot at the centre, nearest-neighbour filtered.
   Its Aseprite data is `ore-nugget.json`.
-- Pixel art from a character grid; every pixel is opaque or clear.
+- Pixel art from a character grid; every pixel is opaque or clear. Lit from
+  the upper left and pitted, with no white or glint pixel.
+- Ore's palette is shared with the resource rocks' crystals and the ore HUD
+  icon (`art/tools/ore.ts`): an ember-brown body inside a rust rim. Every
+  outline pixel (one with a clear neighbour) is rim, the lit rim where the
+  clear side is up or left and the rim shade where it is down or right.
 - Collision: the `rest` frame of `ore-nugget.json` carries `collision`, its
   drawn silhouette: an array of convex parts, each an array of `[x, y]` in frame px of that
   frame (one frame px is one display px), the schema of the ship's
   `collision[k]`. Traced by the
   [shared tracer](ship.md#shared-tracer) at 0.4 frame px, the first of the
-  ladder that passes: 13 parts, intersection over union 0.998.
+  ladder that passes: 15 parts, intersection over union 0.998.
 
-| Role      | Colour    |
-| --------- | --------- |
-| Highlight | `#d2f7f2` |
-| Light     | `#9ee5dd` |
-| Body      | `#65c9bf` |
-| Shade     | `#3e9189` |
-| Deep      | `#2f6f69` |
+| Role       | Colour    |
+| ---------- | --------- |
+| Rim, lit   | `#eaa070` |
+| Rim, shade | `#d68a54` |
+| Light      | `#a86a42` |
+| Body       | `#7a4a30` |
+| Shade      | `#5c3424` |
+| Deep       | `#40241a` |
 
-The faceted teal nugget matches the rocks' crystals and reads apart from the
-mint Stardust gem by hue and shape.
+The rim carries the nugget's contrast; the body inside it is 1.96:1 to 2.35:1
+on the dark fields, so the nugget reads as dark rock with a warm edge.
+
+| Field     | Lit rim | Rim shade |
+| --------- | ------- | --------- |
+| Base      | 6.81:1  | 5.32:1    |
+| Cartwheel | 6.87:1  | 5.36:1    |
+| Whirlpool | 6.73:1  | 5.25:1    |
+| Needle    | 7.33:1  | 5.73:1    |
+| Andromeda | 6.85:1  | 5.35:1    |
+| Black Eye | 8.06:1  | 6.30:1    |
+
+On Sunflower's light field the nugget draws over the ink keyline
+([Light fields](galaxies.md#light-fields)), 10.90:1. The body is 0.25 from the
+obstacle coral `#D68B72` in Oklab, so ore never reads as a hazard; only its
+rim is warm.
 
 ## Stranded craft
 
@@ -156,7 +179,7 @@ logical px):
 ## Ore field
 
 An ore field is a cluster of crystal resource rocks and nothing else: no ore
-dust or other field marks, so the teal crystals alone set it apart from plain
+dust or other field marks, so the ore crystals alone set it apart from plain
 rock clusters, and no field speck can read as a nugget or Stardust.
 
 - Rebuild with `node art/tools/ore-field.ts` after `node art/tools/asteroids.ts`.

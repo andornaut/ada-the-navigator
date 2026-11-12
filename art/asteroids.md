@@ -318,7 +318,7 @@ for medium, 3 to 8 for large and 4 to 8 for huge.
 ## Resource rocks
 
 Cartwheel's resource rocks are every medium and large shape with a cluster of
-teal ore crystals on its crown: three crystals on a medium rock, five on a
+ore crystals on its crown: three crystals on a medium rock, five on a
 large one. The crystals change the silhouette as well as the colour, so a
 resource rock reads apart from plain stone at 1x without relying on hue.
 
@@ -332,10 +332,10 @@ resource rock reads apart from plain stone at 1x without relying on hue.
   crystal tilted out along its facet's normal and never leaning down-screen
   past the rock. Seat facets under the cluster take the ore shadow tones. The
   cluster turns with the rock, lit by the same world light.
-- Ore ramp (`ore`), lit to shadow: `#9EE5DD`, `#65C9BF`, `#4EADA4`,
-  `#3E9189` and `#347770`, built around the palette's `active` signal (tone 1)
-  at Oklab L steps +0.1, 0, -0.085, -0.17 and -0.25, so the crystals read as
-  the same ore as the [ore nugget](cartwheel-props.md#ore-nugget) and the hub.
+- Ore ramp (`ore`), lit to shadow: `#EAA070`, `#D68A54`, `#A86A42`,
+  `#7A4A30` and `#5C3424`, ore's rim and body tones (`art/tools/ore.ts`), so
+  the crystals read as the same ore as the
+  [ore nugget](cartwheel-props.md#ore-nugget) a rock releases.
 - HP and pieces are Gameplay values (medium 3 HP and 3 pieces, large 5 and 5,
   two medium for every large), listed here for reference.
 

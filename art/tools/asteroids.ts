@@ -11,6 +11,7 @@ import { contrast } from "@andornaut/art-kit/colour";
 import { format, resolveConfig } from "prettier";
 
 import { linkData } from "./manifest.ts";
+import { ORE_RAMP } from "./ore.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, json, type Point, projectAt } from "./projection.ts";
 import {
@@ -43,11 +44,6 @@ const STONE_HUE = 70;
 const STONE_CHROMA = 0.016;
 const STONE_L = [0.61, 0.545, 0.48, 0.42, 0.365] as const;
 const STONE = STONE_L.map((L) => oklch(L, STONE_CHROMA, STONE_HUE));
-
-// Ore ramp, lit to shadow, around the `active` signal (tone 1): resource rock crystals read as the
-// same ore as cargo pieces and the hub's ore. Lightness steps and chroma scales per tone.
-const ORE_L_STEP = [0.1, 0, -0.085, -0.17, -0.25] as const;
-const ORE_CHROMA_SCALE = [0.75, 1, 0.95, 0.85, 0.72] as const;
 
 // Backdrop rocks: greyscale, white tops and BACKDROP_SIDE sides, multiplied at runtime by the
 // galaxy's backdropLit colour (Phaser setTint), so side = backdropLit * BACKDROP_SIDE exactly.
@@ -620,15 +616,9 @@ const tints = Object.fromEntries(
 
 // ------------------------------------------------------------------ main
 
-// Ore ramp from the palette's `active` signal.
-const [activeL, activeA, activeB] = toOklab(rgb(palette.colors.active!));
-const ORE = ORE_L_STEP.map((step, i) =>
-  oklch(
-    activeL + step,
-    Math.hypot(activeA, activeB) * ORE_CHROMA_SCALE[i]!,
-    (Math.atan2(activeB, activeA) * 180) / Math.PI,
-  ),
-);
+// Ore ramp, lit to shadow (art/tools/ore.ts): resource rock crystals read as the same ore as the
+// nugget a rock releases.
+const ORE = ORE_RAMP;
 
 function rock(
   shape: { id: string; size: SizeClass; width: number; seed: number; aspect: number },

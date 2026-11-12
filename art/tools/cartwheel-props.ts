@@ -1,5 +1,5 @@
 // Cartwheel props: traveling debris (a bent hull plate tumbling through 8 frames), the ore
-// nugget cargo piece, and the two stranded craft a tow job brings home (the ore pod and the stuck
+// nugget pickup, and the two stranded craft a tow job brings home (the ore pod and the stuck
 // hauler) at sixteen headings, with the tow line spec. Writes SVGs, the nugget sheet and
 // debris.json and tow.json to public/art/cartwheel/, and their core and Cartwheel manifest
 // entries and links.
@@ -33,6 +33,7 @@ import {
   unit,
 } from "./debris.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
+import { ORE_PALETTE, rimmed } from "./ore.ts";
 import {
   depth,
   ENEMY_HEADINGS,
@@ -279,29 +280,23 @@ const BODY = bodyRamp(
 
 // ------------------------------------------------------------------ ore nugget
 
-// 11 by 11 ore nugget, pixel art: "W" highlight, "L" light, "M" body, "S" shade, "D" deep.
-const NUGGET_PALETTE: Readonly<Record<string, string>> = {
-  W: "d2f7f2",
-  L: "9ee5dd",
-  M: "65c9bf",
-  S: "3e9189",
-  D: "2f6f69",
-};
-const NUGGET = [
+// 11 by 11 ore nugget, pixel art: a chunky lumpy rock, lit from the upper left and pitted, in ore's
+// palette (art/tools/ore.ts); its outline takes the rust rim.
+const NUGGET = rimmed([
   "...........",
-  "....LL.....",
-  "...LWMM....",
-  "..LWWMMS...",
-  ".LWWMMMSS..",
-  ".LWMMMSSSD.",
-  "..MMMSSSSD.",
-  "..MMSSSDD..",
-  "...SSDDD...",
+  "...LLM.....",
+  "..LLMMMS...",
+  ".LLMMSMMS..",
+  ".LMMMMMMSD.",
+  "..MSMMMSSD.",
+  ".LMMMSMMSDD",
+  ".MMMMMMSSDD",
+  "..SMMSSSDD.",
+  "...SDSDDD..",
   "....DD.....",
-  "...........",
-];
+]);
 const nuggetFrame = (rows: readonly string[]): Frame =>
-  rows.map((row) => [...row].map((cell) => NUGGET_PALETTE[cell] ?? null));
+  rows.map((row) => [...row].map((cell) => ORE_PALETTE[cell] ?? null));
 
 // ------------------------------------------------------------------ main
 

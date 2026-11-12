@@ -116,25 +116,26 @@ A repeat activation during the cue does not restart it.
 
 ## Colour tokens
 
-| Token          | Colour    | Use                                           |
-| -------------- | --------- | --------------------------------------------- |
-| Card face      | `#3b3850` | Settings card and modal ground                |
-| Card shade     | `#2f2d3d` | Card lower-right edge                         |
-| Card rim       | `#6b6685` | Card upper-left edge                          |
-| Ink            | `#181425` | Outlines, fringes and button labels           |
-| Primary face   | `#bfa06f` | Muted gold main action                        |
-| Primary lip    | `#8a7148` | Primary lower lip                             |
-| Primary rim    | `#d2b886` | Primary top highlight                         |
-| Secondary face | `#9690b4` | Other actions                                 |
-| Secondary lip  | `#5f5980` | Secondary lower lip                           |
-| Secondary rim  | `#aaa4c6` | Secondary top highlight                       |
-| Disabled face  | `#2f2d3d` | Flat unavailable control                      |
-| Focus ring     | `#ead4aa` | Cream band with ink fringes                   |
-| Close X        | `#ead4aa` | Normal close mark; white on `#403d55` pressed |
-| Switch on      | `#2f7d76` | Track, with `#1f5a55` edge                    |
-| Switch off     | `#57536e` | Track, with `#403d55` edge                    |
-| Switch knob    | `#ffffff` | Knob, shaded `#c9c4d8`                        |
-| Card icons     | `#ead4aa` | Settings row and install step icons           |
+| Token          | Colour    | Use                                                                      |
+| -------------- | --------- | ------------------------------------------------------------------------ |
+| Card face      | `#3b3850` | Settings card and modal ground                                           |
+| Card shade     | `#2f2d3d` | Card lower-right edge                                                    |
+| Card rim       | `#6b6685` | Card upper-left edge                                                     |
+| Ink            | `#181425` | Outlines, fringes and button labels                                      |
+| Primary face   | `#bfa06f` | Muted gold main action                                                   |
+| Primary lip    | `#8a7148` | Primary lower lip                                                        |
+| Primary rim    | `#d2b886` | Primary top highlight                                                    |
+| Secondary face | `#9690b4` | Other actions                                                            |
+| Secondary lip  | `#5f5980` | Secondary lower lip                                                      |
+| Secondary rim  | `#aaa4c6` | Secondary top highlight                                                  |
+| Disabled face  | `#2f2d3d` | Flat unavailable control                                                 |
+| Focus ring     | `#ead4aa` | Cream band with ink fringes                                              |
+| Close X        | `#ead4aa` | Normal close mark; white on `#403d55` pressed                            |
+| Switch on      | `#2f7d76` | Track, with `#1f5a55` edge                                               |
+| Switch off     | `#57536e` | Track, with `#403d55` edge                                               |
+| Switch knob    | `#ffffff` | Knob, shaded `#c9c4d8`                                                   |
+| Card icons     | `#ead4aa` | Settings row and install step icons                                      |
+| Modal dim      | `#101926` | At alpha 0.70 over the whole view, under every modal card (`.ada-modal`) |
 
 Runtime text is drawn by the game, never baked into sprites.
 
@@ -280,8 +281,9 @@ backdrop.
 
 ## Status pill
 
-The in-flight status pill holds the shield bar and the Stardust count beside
-the pause button. Geometry, states and timing are `STATUS_PILL` in
+The in-flight status pill holds the shield bar, the Stardust count and, while
+Ada carries them, her ore and her job item or towed craft, beside the pause
+button. Geometry, states and timing are `STATUS_PILL` in
 [Layout](layout.md#status-pill). The panel and the bar's track are
 translucent ink; every mark and the count draw fully opaque over them.
 
@@ -295,9 +297,9 @@ translucent ink; every mark and the count draw fully opaque over them.
 | Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge             |
 | Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                       |
 | Shield track    | `#181425` | Ink at alpha 0.65 inside the rim, over the panel        |
-| Divider         | `#57536e` | 1x16 rule between the shield and the Stardust count     |
-| Count           | `#ead4aa` | Cream `TYPE.label`                                      |
-| Stardust tick   | `#8ee8a8` | `+N` label, Stardust body mint, with a 1 px ink outline |
+| Divider         | `#57536e` | 1x16 rule between segments                              |
+| Count           | `#ead4aa` | Cream `TYPE.label`, the Stardust and ore counts         |
+| Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline |
 
 The panel is ink at 0.65 over the field. The track is its own ink layer at
 0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
@@ -344,12 +346,36 @@ the fill.
   track; it stays told from the fill by lightness.
 - The delay part is told from the fill by lightness (1.88:1) and from the low
   fill by hue; it holds 3:1 against the track over every galaxy field.
-- The `+N` label sits on the field, not the panel: mint is 9.94:1 on
-  `#292734` and 1.12:1 on Sunflower's `#D8C994`, where its ink outline
-  (10.90:1 on the field) carries it; the outline (12.23:1 against mint) keeps
+- The `+N` label sits on the field, not the panel: gold is 10.56:1 on
+  `#292734` and 1.19:1 on Sunflower's `#D8C994`, where its ink outline
+  (10.90:1 on the field) carries it; the outline (12.99:1 against gold) keeps
   it legible over bright objects.
 - The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
   is one 100 ms flash per hit, at most three per second. Nothing flickers.
+
+### Cargo icons
+
+The pill's segment icons and the [Ship card](layout.md#ship-card)'s cargo rows:
+20 by 20 pixel art in the UI subset, single `rest` frame, nearest-neighbour.
+`icon-stardust-20` is in [Stardust](stardust.md#hud-icon); the other three
+rebuild with `node art/tools/cargo-icons.ts`, each inside its own 1 px ink
+edge `#181425`, so on a light field it needs no added outline.
+
+| Key             | Shows                                   | Colours                                                                                         |
+| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#eaa070`, shade `#d68a54` |
+| `icon-cargo-20` | A strapped crate, any job item          | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
+| `icon-tow-20`   | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                |
+
+| Mark          | Colour    | Base, on the panel | Dark fields, on the panel | Sunflower, on the panel | On its ink edge |
+| ------------- | --------- | -----------------: | ------------------------: | ----------------------: | --------------: |
+| Stardust body | `#f4d98a` |            12.16:1 |           12.18:1 or more |                  5.43:1 |         12.99:1 |
+| Ore rim shade | `#d68a54` |             6.12:1 |            6.13:1 or more |                  2.74:1 |          6.54:1 |
+| Cargo orange  | `#feae34` |             9.09:1 |            9.10:1 or more |                  4.06:1 |          9.71:1 |
+| Tow steel     | `#b8bfc9` |             9.10:1 |            9.12:1 or more |                  4.07:1 |          9.72:1 |
+
+On Sunflower the ore, cargo and tow icons read against their own ink edges,
+as the shield icon does against its outline.
 
 `public/art/ui/icons/shield.svg` is the HUD shield glyph: a 20x20 single-colour
 vector of the `icon-shop-shield` silhouette (a heater shield with its left
