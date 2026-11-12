@@ -216,6 +216,16 @@ export const PROTOTYPE: PrototypeContent = {
             "Would you look for them? They'll be searching for me too.",
           ].join(""),
         },
+        // The family's lead as the holodisk waypoint appears, after the reunion.
+        holodiskLead: {
+          speaker: "Whale family",
+          text: "You listened when nobody else did. Now listen to us.",
+          then: "holodiskLeadSong",
+        },
+        holodiskLeadSong: {
+          speaker: "Whale family",
+          text: "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
+        },
         reunion: {
           speaker: "Whale",
           text: "You found my family! Now I know where to go. Thank you for listening.",
@@ -223,6 +233,7 @@ export const PROTOTYPE: PrototypeContent = {
         },
         reunionDeparture: {
           text: "The whale swims off, and soon the family is traveling together again.",
+          then: "holodiskLead",
         },
         trapped: {
           speaker: "Ada",

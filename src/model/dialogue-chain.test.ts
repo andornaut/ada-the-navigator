@@ -31,12 +31,17 @@ function walk(sector: SectorId, key: string): (readonly [string, string])[] {
 }
 
 describe("space dialogue panels", () => {
-  it("shows the whale's thanks, then the narration of its leaving", () => {
+  it("shows the whale's thanks, the narration of its leaving, then the family's holodisk lead", () => {
     expect(walk(3, "reunion")).toEqual([
       ["Whale", "You found my family! Now I know where to go. Thank you for listening."],
       [
         PROTOTYPE.chapters[3]!.name,
         "The whale swims off, and soon the family is traveling together again.",
+      ],
+      ["Whale family", "You listened when nobody else did. Now listen to us."],
+      [
+        "Whale family",
+        "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
       ],
     ]);
   });

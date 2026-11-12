@@ -4,6 +4,7 @@ import type { CastKey } from "../data/cast.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
+  type EncounterCue,
   GENERAL_NAMED,
   type JobMoment,
   type Mood,
@@ -53,9 +54,10 @@ import {
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import {
-  capitalInSight,
   ConversationDirector,
+  heavyInSight,
   holodisksHeld,
+  onScreen,
   pennyPoints,
   speakerName,
 } from "./conversations.ts";
@@ -1303,7 +1305,7 @@ export class GameModel {
     this.flightEvents = events;
     this.pullLoadout();
     const mapped: string[] = [];
-    let newStation = false;
+    const stationsDiscovered: string[] = [];
     for (const event of events) {
       if (event.type === "depleted") {
         this.jumpHome();
@@ -1317,7 +1319,7 @@ export class GameModel {
       }
       if (event.type === "stationDiscovered" && !this.current.stations.includes(event.id)) {
         this.current.stations.push(event.id);
-        newStation = true;
+        stationsDiscovered.push(event.id);
       }
       if (event.type === "enemyDestroyed") {
         this.current.destroyedEnemies++;
@@ -1354,6 +1356,7 @@ export class GameModel {
       !this.current.stations.includes(HUB_STATION)
     ) {
       this.current.stations.push(HUB_STATION);
+      stationsDiscovered.push(HUB_STATION);
     }
     const charted = chartLandmarks(f.sector, this.current, f.player);
     mapped.push(...charted);
@@ -1376,10 +1379,12 @@ export class GameModel {
     }
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
-      capitalInSight: capitalInSight(SCREEN, f),
+      capitalInSight: heavyInSight("capital", SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(this.content, f),
+      encounters: this.encounterCues(f),
+      frigateInSight: heavyInSight("frigate", SCREEN, f),
       guardCues: events.flatMap((event) =>
         event.type === "guardCue"
           ? [{ destination: event.id, pick: dropRandom(f.seed, `guard-line:${event.id}`)() }]
@@ -1392,7 +1397,8 @@ export class GameModel {
       jobMoments,
       lostItemNear: this.lostItemNear(f),
       moved: Math.hypot(input.move.x, input.move.y) > 0,
-      newStation,
+      // The hub counts as a station for returns, but its mapping is a new place's.
+      newStation: stationsDiscovered.some((id) => id !== HUB_STATION),
       newlyMapped: mapped,
       pennyPoints: pennyPoints(
         this.current,
@@ -1404,6 +1410,10 @@ export class GameModel {
       stardustInSight: f.objects.some(
         (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
       ),
+      stationsDiscovered,
+      stationsNear: this.stationsInRange(f)
+        .filter(({ id }) => this.current.stations.includes(id))
+        .map(({ id }) => id),
     });
     recordSensed(this.state.achievements, this.talk.takeSensed());
     this.syncAchievements();
@@ -1548,6 +1558,37 @@ export class GameModel {
   private objectiveId(sector: SectorId): string | null {
     const p = this.current;
     return objectiveDestination(sector, p, p.deposited >= this.content.tuning.miningMilestones[1]);
+  }
+  /** Stations, the hub among them, within station discovery range of Ada. */
+  private stationsInRange(f: FlightState): SpaceObject[] {
+    return f.objects.filter(
+      (object) =>
+        (object.kind === "station" ||
+          (object.kind === "destination" && f.sector === 2 && object.id === HUB_STATION)) &&
+        Math.hypot(object.x - f.player.x, object.y - f.player.y) <= ECONOMY.station.safeRadius,
+    );
+  }
+  /**
+   * First-meeting cues (gameplay/player-copy.md "In-flight conversations"): Cartwheel's hub
+   * within station discovery range, Whirlpool's whale family on screen, and one of Whirlpool's
+   * Voron stations within station discovery range.
+   */
+  private encounterCues(f: FlightState): EncounterCue[] {
+    const near = this.stationsInRange(f);
+    const cues: EncounterCue[] = [];
+    if (f.sector === 2 && near.some(({ id }) => id === HUB_STATION)) {
+      cues.push("hubNear");
+    }
+    if (f.sector === 3) {
+      const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
+      if (family && onScreen(SCREEN, f.player, family)) {
+        cues.push("familyInSight");
+      }
+      if (near.some(({ kind }) => kind === "station")) {
+        cues.push("stationNear");
+      }
+    }
+    return cues;
   }
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {

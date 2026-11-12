@@ -35,7 +35,14 @@ export type ConversationTrigger =
   | { readonly kind: "lesson"; readonly lesson: Lesson }
   | { readonly kind: "arrival"; readonly sector: SectorId }
   | { readonly kind: "meeting"; readonly sector: SectorId; readonly destination: string }
+  /** A first meeting with a galaxy's people, on its cue. */
+  | { readonly kind: "encounter"; readonly sector: SectorId; readonly cue: EncounterCue }
+  /** A newly mapped destination or landmark. */
   | { readonly kind: "mapped" }
+  | { readonly kind: "stationMapped" }
+  /** Ada back in range of a station mapped before, once per station each flight. */
+  | { readonly kind: "stationReturn" }
+  | { readonly kind: "frigate" }
   | { readonly kind: "capital" }
   /** A heavy disabled with its hull holding. */
   | { readonly kind: "disabled" }
@@ -53,6 +60,12 @@ export type ConversationTrigger =
   | { readonly kind: "job"; readonly moment: JobMoment }
   /** Astra's lore line after a job completes, one unseen line per job. */
   | { readonly kind: "jobLore"; readonly sector: SectorId };
+
+/**
+ * What first shows a galaxy's people: the whale family on screen, the mining hub within station
+ * discovery range, or one of the galaxy's stations within it.
+ */
+export type EncounterCue = "familyInSight" | "hubNear" | "stationNear";
 
 /** Held-job moments with their own lines. */
 export type JobMoment = "searchEntered" | "towAttached";
@@ -72,12 +85,18 @@ export interface ConversationLine {
 export interface Conversation {
   readonly id: string;
   readonly lines: readonly ConversationLine[];
+  /**
+   * The repeating trigger's pool this is one variant of; each request draws one variant in a
+   * shuffled order (model/conversations.ts).
+   */
+  readonly pool?: string;
   readonly priority: ConversationPriority;
   /**
-   * How often it may play: once ever (saved as seen), once per fight, or once per flight. Penny's
-   * plays once per point of interest.
+   * How often it may play: once ever (saved as seen), once per fight, once per flight, or each
+   * time its trigger fires. Penny's plays once per point of interest, a station return once per
+   * station each flight.
    */
-  readonly repeat: "fight" | "flight" | "never";
+  readonly repeat: "always" | "fight" | "flight" | "never";
   readonly trigger: ConversationTrigger;
 }
 
@@ -126,6 +145,21 @@ const happy = (speaker: "ada" | "penny", text: string): ConversationLine => ({
   speaker,
   text,
 });
+const upset = (speaker: "ada" | "penny", text: string): ConversationLine => ({
+  mood: "upset",
+  speaker,
+  text,
+});
+
+/** A repeating trigger's variants, ids `{pool}:1` on, in the player copy's order. */
+const pool = (
+  id: string,
+  shared: Pick<Conversation, "priority" | "repeat" | "trigger">,
+  variants: readonly (readonly ConversationLine[])[],
+): Conversation[] =>
+  variants.map((lines, index) => ({ ...shared, id: `${id}:${index + 1}`, lines, pool: id }));
+
+const WOOF = happy("penny", "Woof! Woof!");
 
 export const CONVERSATIONS: readonly Conversation[] = [
   {
@@ -166,54 +200,126 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { kind: "lesson", lesson: "dock" },
   },
-  {
-    id: "warning:shieldLow",
-    lines: [line("astra", "Shield low!"), { mood: "upset", speaker: "penny", text: "Whimper..." }],
-    priority: "warning",
-    repeat: "fight",
-    trigger: { kind: "shieldLow" },
-  },
-  {
-    id: "warning:drones",
-    lines: [line("astra", "Drones ahead."), line("ada", "I see them.")],
-    priority: "warning",
-    repeat: "flight",
-    trigger: { kind: "drones" },
-  },
-  {
-    id: "penny",
-    lines: [happy("penny", "Woof! Woof!"), happy("ada", "Penny, did you sense something, girl?")],
-    priority: "penny",
-    repeat: "never",
-    trigger: { kind: "penny" },
-  },
-  {
-    id: "reaction:mapped",
-    lines: [line("astra", "New place mapped."), happy("ada", "Our map is growing!")],
-    priority: "lore",
-    repeat: "never",
-    trigger: { kind: "mapped" },
-  },
-  {
-    id: "reaction:capital",
-    lines: [
-      line("ada", "That ship is huge!"),
-      line("astra", "No crew aboard. Aim for the glowing parts."),
+  ...pool(
+    "warning:shieldLow",
+    { priority: "warning", repeat: "fight", trigger: { kind: "shieldLow" } },
+    [
+      [line("astra", "Shield low!"), upset("penny", "Whimper...")],
+      [line("astra", "Shield low! Pull back."), upset("penny", "Whimper...")],
+      [line("astra", "Shield low! Let's get clear."), line("ada", "Hang on, Penny.")],
+      [
+        line("astra", "Shield low! Find somewhere quiet to recharge."),
+        upset("penny", "Whimper..."),
+      ],
     ],
-    priority: "lore",
-    repeat: "never",
-    trigger: { kind: "capital" },
-  },
-  {
-    id: "reaction:disabled",
-    lines: [
-      line("astra", "Its weapons are down. We could salvage parts and let it go."),
-      happy("ada", "No need to wreck it."),
+  ),
+  ...pool(
+    "warning:drones",
+    { priority: "warning", repeat: "flight", trigger: { kind: "drones" } },
+    [
+      [line("astra", "Drones ahead."), line("ada", "I see them.")],
+      [line("astra", "Drones, coming our way."), line("ada", "Stay close, Penny.")],
+      [line("ada", "Drones!"), line("astra", "Shield's ready. Steady aim.")],
+      [line("astra", "Incoming drones."), upset("penny", "Grr...")],
+      [line("astra", "Here they come."), line("ada", "We can handle this.")],
     ],
-    priority: "lore",
-    repeat: "flight",
-    trigger: { kind: "disabled" },
-  },
+  ),
+  ...pool(
+    "reaction:frigate",
+    { priority: "lore", repeat: "flight", trigger: { kind: "frigate" } },
+    [
+      [
+        line("astra", "A frigate. Its guns are the glowing parts."),
+        line("ada", "Then that's where I'll aim."),
+      ],
+      [
+        line("ada", "That one's bigger than a drone."),
+        line("astra", "A frigate. Knock out its guns to stop it."),
+      ],
+      [line("astra", "Frigate ahead. Take out its weapons first."), line("ada", "Got it.")],
+    ],
+  ),
+  ...pool(
+    "reaction:capital",
+    { priority: "lore", repeat: "flight", trigger: { kind: "capital" } },
+    [
+      [
+        line("ada", "That ship is huge!"),
+        line("astra", "No crew aboard. Aim for the glowing parts."),
+      ],
+      [
+        line("ada", "Look at the size of that!"),
+        line("astra", "Big, but empty. Hit the glowing parts."),
+      ],
+      [
+        line("astra", "A capital ship. Nobody aboard, just machines."),
+        line("ada", "Then let's find its glowing parts."),
+      ],
+    ],
+  ),
+  // Penny's line is always the same, so players learn it.
+  ...pool("penny", { priority: "penny", repeat: "never", trigger: { kind: "penny" } }, [
+    [WOOF, happy("ada", "Penny, did you sense something, girl?")],
+    [WOOF, line("ada", "What is it, Penny? Something out there?")],
+    [WOOF, happy("ada", "Your nose is never wrong. Let's look around.")],
+    [WOOF, happy("ada", "Okay, okay! I'll find it.")],
+    [WOOF, line("ada", "Ears up! Astra, Penny found something.")],
+  ]),
+  ...pool("reaction:mapped", { priority: "lore", repeat: "always", trigger: { kind: "mapped" } }, [
+    [line("astra", "New place mapped."), happy("ada", "Our map is growing!")],
+    [line("astra", "Marking it on the map."), happy("ada", "We're real explorers.")],
+    [happy("ada", "Astra, put that on the map!"), line("astra", "Already done, Navigator.")],
+    [
+      line("astra", "Saved to the map. We can come back any time."),
+      happy("ada", "Good. I want to visit again."),
+    ],
+  ]),
+  ...pool(
+    "reaction:station",
+    { priority: "lore", repeat: "always", trigger: { kind: "stationMapped" } },
+    [
+      [
+        line("astra", "A station. Shops, jobs and friendly faces."),
+        happy("ada", "Let's say hello."),
+      ],
+      [line("astra", "Station on the map. A good place to rest."), happy("ada", "And to shop!")],
+      [happy("ada", "Look, a station!"), line("astra", "Mapped. Come close and we can dock.")],
+      [
+        line("astra", "Another station. Someone always has a job for us."),
+        happy("ada", "I like helping."),
+      ],
+    ],
+  ),
+  ...pool(
+    "reaction:return",
+    { priority: "lore", repeat: "flight", trigger: { kind: "stationReturn" } },
+    [
+      [line("astra", "Our station again."), happy("ada", "It feels like a second home.")],
+      [line("ada", "I wonder what jobs they have today."), line("astra", "Let's dock and see.")],
+      [
+        line("astra", "Welcome back, Navigator. The dock is waiting."),
+        happy("ada", "Thanks, Astra."),
+      ],
+    ],
+  ),
+  ...pool(
+    "reaction:disabled",
+    { priority: "lore", repeat: "flight", trigger: { kind: "disabled" } },
+    [
+      [
+        line("astra", "Its weapons are down. We could salvage parts and let it go."),
+        happy("ada", "No need to wreck it."),
+      ],
+      [
+        line("astra", "Its guns are out. We can salvage it, or finish it."),
+        happy("ada", "Salvage. It can't hurt anyone now."),
+      ],
+      [
+        line("astra", "Disabled. Come close and I can salvage parts."),
+        line("ada", "Let's take what we need and go."),
+      ],
+    ],
+  ),
   // A guard still blocks the destination Ada reached: once per destination each flight, one
   // variant at random.
   {
@@ -328,6 +434,17 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { kind: "arrival", sector: 2 },
   },
   {
+    id: "meeting:2:cobbles",
+    lines: [
+      happy("ada", "Astra, did that rock just wave at us?"),
+      line("astra", "That's a Cobble. They're made of stone, and they eat the ore they mine."),
+      happy("ada", "Rocks that eat rocks!"),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { cue: "hubNear", kind: "encounter", sector: 2 },
+  },
+  {
     id: "quiet:2:notice",
     lines: [
       line("astra", "I used to rush everywhere. With you, I notice more."),
@@ -357,6 +474,27 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lore",
     repeat: "never",
     trigger: { kind: "arrival", sector: 3 },
+  },
+  {
+    id: "meeting:3:family",
+    lines: [
+      happy("ada", "So many whales! Why do they sing like that?"),
+      line("astra", "Whale songs carry far. It's how families find each other in the dark."),
+      line("ada", "No wonder it missed them."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { cue: "familyInSight", kind: "encounter", sector: 3 },
+  },
+  {
+    id: "meeting:3:voron",
+    lines: [
+      line("ada", "Who are the squid folk by the currents?"),
+      line("astra", "The Voron. They ride the currents with the whales and write in glowing ink."),
+    ],
+    priority: "lore",
+    repeat: "never",
+    trigger: { cue: "stationNear", kind: "encounter", sector: 3 },
   },
   {
     id: "quiet:3:maps",

@@ -47,17 +47,6 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
 // Needle's and Andromeda's pools wait for their chapters.
-const UNBUILT_LINES = [
-  // The first meetings, whose triggers come with Gameplay's rules for them.
-  "Astra, did that rock just wave at us?",
-  "That's a Cobble. They're made of stone, and they eat the ore they mine.",
-  "Rocks that eat rocks!",
-  "So many whales! Why do they sing like that?",
-  "Whale songs carry far. It's how families find each other in the dark.",
-  "No wonder it missed them.",
-  "Who are the squid folk by the currents?",
-  "The Voron. They ride the currents with the whales and write in glowing ink.",
-];
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
@@ -110,9 +99,7 @@ describe("in-flight conversations", () => {
   });
 
   it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
-    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)].filter(
-      ({ text }) => !UNBUILT_LINES.includes(text),
-    );
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
     expect(copied.length).toBeGreaterThan(30);
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
@@ -158,30 +145,18 @@ describe("in-flight conversations", () => {
   });
 
   it("give Ada's and Penny's lines the copy's moods, neutral when unmarked", () => {
-    const happy = DATA_LINES.filter(({ mood }) => mood === "happy").map(({ name, text }) => [
-      name,
-      text,
-    ]);
-    expect(happy).toEqual([
-      ["Ada", "Like a magnet!"],
-      ["Ada", "Shopping in space!"],
-      ["Penny", "Woof! Woof!"],
-      ["Ada", "Penny, did you sense something, girl?"],
-      ["Ada", "Our map is growing!"],
-      ["Ada", "No need to wreck it."],
-      ["Ada", "Then let's make new memories."],
-      ["Ada", "Maybe they can fix you too, Astra!"],
-      ["Ada", "She thinks you're fun."],
-      ["Ada", "Noisy is good. Busy means people."],
-      ["Ada", "That's what exploring is for."],
-      ["Ada", "You sound more like yourself."],
-      ["Ada", "Our maps."],
-      ["Ada", "Like a river in space!"],
-      ["Ada", "Me too."],
-    ]);
-    expect(DATA_LINES.filter(({ mood }) => mood === "upset")).toEqual([
-      { mood: "upset", name: "Penny", text: "Whimper..." },
-    ]);
+    // Every mood the copy marks, and only those: its other lines show neutral.
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
+    for (const mood of ["happy", "upset"] as const) {
+      const marked = (lines: readonly { mood?: string; name: string; text: string }[]) =>
+        lines
+          .filter((spoken) => spoken.mood === mood)
+          .map(({ name, text }) => `${name}: ${text}`)
+          .sort();
+      expect(marked(DATA_LINES), mood).toEqual(marked(copied));
+    }
+    expect(DATA_LINES).toContainEqual({ mood: "happy", name: "Ada", text: "Like a magnet!" });
+    expect(DATA_LINES).toContainEqual({ mood: "upset", name: "Penny", text: "Grr..." });
     for (const { lines } of CONVERSATIONS) {
       for (const { mood, speaker } of lines) {
         if (mood !== undefined) {

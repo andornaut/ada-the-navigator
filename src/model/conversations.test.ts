@@ -7,9 +7,9 @@ import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import {
-  capitalInSight,
   ConversationDirector,
   type ConversationFacts,
+  heavyInSight,
   pennyInstance,
   pennyPoints,
   speakerName,
@@ -28,6 +28,8 @@ const calm: ConversationFacts = {
   collectedStardust: false,
   docked: false,
   dronesNear: false,
+  encounters: [],
+  frigateInSight: false,
   guardCues: [],
   heavyDisabled: false,
   holodisks: 0,
@@ -41,12 +43,17 @@ const calm: ConversationFacts = {
   pennyPoints: [],
   shieldFraction: 1,
   stardustInSight: false,
+  stationsDiscovered: [],
+  stationsNear: [],
 };
+
+// A shuffle that keeps each pool in the copy's order, so the first draw is the first variant.
+const inOrder = () => 1 - 1e-9;
 
 /** A director in sector whose saved list already holds seen. */
 function director(sector: SectorId, seen: string[] = [], done = {}) {
   const heard = [...seen];
-  const talk = new ConversationDirector(CONVERSATIONS, heard);
+  const talk = new ConversationDirector(CONVERSATIONS, heard, inOrder);
   talk.beginFlight(sector, done);
   return { heard, talk };
 }
@@ -256,13 +263,15 @@ describe("conversation triggers", () => {
   });
 
   it("teach docking on a new station, unless Ada has docked first", () => {
-    const seen = ["lesson:move", "lesson:aim", "arrival:1", "reaction:mapped"];
+    const seen = ["lesson:move", "lesson:aim", "arrival:1"];
     const fresh = director(1, seen);
     run(fresh.talk, 0.05, { newStation: true });
     expect(showing(fresh.talk)).toBe("lesson:dock:0");
     const docked = director(1, seen);
     run(docked.talk, 0.05, { docked: true, newStation: true });
-    expect(docked.talk.showing).toBeNull();
+    // The new station's own reaction plays instead.
+    expect(showing(docked.talk)).toBe("reaction:station:0");
+    expect(docked.heard).toContain("lesson:dock");
   });
 
   it("greet a first arrival in a galaxy with lines, and only once", () => {
@@ -276,7 +285,7 @@ describe("conversation triggers", () => {
     expect(heard).toContain("arrival:1");
   });
 
-  it("meet each alien group and react to a new place once", () => {
+  it("meet each alien group, then react to the new place", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
     run(talk, 0.05, { newlyMapped: ["workshop"] });
     const lines = [tapThrough(talk)];
@@ -292,14 +301,18 @@ describe("conversation triggers", () => {
     expect(showing(talk)).toBe("meeting:1:growers:0");
   });
 
-  it("react to a capital ship once", () => {
+  it("react to a capital ship and a frigate once each flight", () => {
     const { heard, talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    run(talk, 0.05, { capitalInSight: true, frigateInSight: true });
+    expect(tapThrough(talk)).toEqual(["reaction:frigate:0", "reaction:frigate:1"]);
+    run(talk, cooldownSeconds + 0.05, { capitalInSight: true, frigateInSight: true });
+    expect(tapThrough(talk)).toEqual(["reaction:capital:0", "reaction:capital:1"]);
+    run(talk, cooldownSeconds + 1, { capitalInSight: true, frigateInSight: true });
+    expect(talk.showing).toBeNull();
+    expect(heard).not.toContain("reaction:capital");
+    talk.beginFlight(1);
     run(talk, 0.05, { capitalInSight: true });
     expect(showing(talk)).toBe("reaction:capital:0");
-    tapThrough(talk);
-    run(talk, cooldownSeconds + 1, { capitalInSight: true });
-    expect(talk.showing).toBeNull();
-    expect(heard).toContain("reaction:capital");
   });
 
   it("warn of a low shield once per fight, at a quarter or less", () => {
@@ -535,7 +548,7 @@ describe("capital sightings", () => {
     y: 0,
   });
   const sighted = (objects: SpaceObject[]) =>
-    capitalInSight(SCREEN, { objects, player: { x: 0, y: 0 } });
+    heavyInSight("capital", SCREEN, { objects, player: { x: 0, y: 0 } });
 
   it("count a live capital on screen, hull and all", () => {
     expect(sighted([enemy("capital", "capital", 300)])).toBe(true);
@@ -845,5 +858,142 @@ describe("conversations in the game", () => {
   it("rejects a malformed seen-conversations list", () => {
     const fresh = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     expect(restoreSave({ ...fresh, seenConversations: [1] })).toBeNull();
+  });
+});
+
+describe("line pools", () => {
+  /** The variant ids a pool shows over plays, each tapped through and its cooldown waited out. */
+  function plays(talk: ConversationDirector, count: number, facts: Partial<ConversationFacts>) {
+    const ids: string[] = [];
+    for (let play = 0; play < count; play++) {
+      for (let guard = 0; guard < 1000 && !talk.showing; guard++) {
+        run(talk, 0.05, facts);
+      }
+      ids.push(talk.showing?.conversation.id ?? "");
+      tapThrough(talk);
+    }
+    return ids;
+  }
+
+  it("give every repeating trigger a pool of variants on one theme", () => {
+    const pools = new Map<string, (typeof CONVERSATIONS)[number][]>();
+    for (const conversation of CONVERSATIONS) {
+      if (conversation.pool) {
+        pools.set(conversation.pool, [...(pools.get(conversation.pool) ?? []), conversation]);
+      }
+    }
+    expect(
+      Object.fromEntries([...pools].map(([pool, variants]) => [pool, variants.length])),
+    ).toEqual({
+      penny: 5,
+      "reaction:capital": 3,
+      "reaction:disabled": 3,
+      "reaction:frigate": 3,
+      "reaction:mapped": 4,
+      "reaction:return": 3,
+      "reaction:station": 4,
+      "warning:drones": 5,
+      "warning:shieldLow": 4,
+    });
+    for (const variants of pools.values()) {
+      expect(
+        new Set(
+          variants.map(({ priority, repeat, trigger }) =>
+            JSON.stringify([priority, repeat, trigger]),
+          ),
+        ).size,
+      ).toBe(1);
+    }
+    for (const { lines } of pools.get("warning:shieldLow")!) {
+      expect(lines[0]!.text.startsWith("Shield low!")).toBe(true);
+    }
+    for (const { lines } of pools.get("penny")!) {
+      expect(lines[0]).toEqual({ mood: "happy", speaker: "penny", text: "Woof! Woof!" });
+    }
+  });
+
+  it("draw a pool in a shuffled order, each variant once a shuffle, never one twice in a row", () => {
+    // The first shuffle keeps the copy's order; the second would open on the fourth variant, the
+    // last one drawn, so it moves to the shuffle's end.
+    const values = [0.99, 0.99, 0.99, 0, 0.99, 0.99];
+    const random = () => values.shift() ?? 0.99;
+    const talk = new ConversationDirector(CONVERSATIONS, [...lessonsHeard, "arrival:1"], random);
+    talk.beginFlight(1);
+    expect(plays(talk, 8, { newlyMapped: ["landmark"] }).map((id) => id.split(":")[2])).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "2",
+      "3",
+      "1",
+      "4",
+    ]);
+  });
+
+  it("react to each newly mapped place and station, with their own pools", () => {
+    const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    expect(plays(talk, 2, { newlyMapped: ["landmark"] })).toEqual([
+      "reaction:mapped:1",
+      "reaction:mapped:2",
+    ]);
+    expect(plays(talk, 2, { newStation: true })).toEqual([
+      "reaction:station:1",
+      "reaction:station:2",
+    ]);
+  });
+
+  it("greet a return to a mapped station once per station each flight", () => {
+    const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    // In range as the flight starts: no return.
+    run(talk, 0.05, { stationsNear: ["a"] });
+    run(talk, cooldownSeconds);
+    expect(talk.showing).toBeNull();
+    // Mapped as Ada arrives: the station's own reaction, no return.
+    run(talk, 0.05, { newStation: true, stationsDiscovered: ["b"], stationsNear: ["b"] });
+    expect(showing(talk)).toBe("reaction:station:0");
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 0.05);
+    run(talk, 0.05, { stationsNear: ["a"] });
+    expect(showing(talk)).toBe("return:1:a:0");
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 0.05);
+    run(talk, 0.05, { stationsNear: ["a"] });
+    run(talk, 0.05, { stationsNear: ["b"] });
+    expect(showing(talk)).toBe("return:1:b:0");
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 0.05);
+    run(talk, cooldownSeconds, { stationsNear: ["a"] });
+    expect(talk.showing).toBeNull();
+    // A return left before it plays is dropped.
+    talk.beginFlight(1);
+    run(talk, 0.05);
+    run(talk, 0.05, { dronesNear: true, inDanger: true, stationsNear: ["a"] });
+    tapThrough(talk);
+    run(talk, cooldownSeconds + 0.05);
+    expect(talk.showing).toBeNull();
+  });
+
+  it("meet the Cobbles, the whale family and the Voron once per save, on their cues", () => {
+    const { heard, talk } = director(3, [...lessonsHeard, "arrival:3"]);
+    run(talk, 0.05, { encounters: ["familyInSight", "stationNear"] });
+    expect(tapThrough(talk)).toEqual([
+      "meeting:3:family:0",
+      "meeting:3:family:1",
+      "meeting:3:family:2",
+    ]);
+    run(talk, cooldownSeconds + 0.05, { encounters: ["stationNear"] });
+    expect(tapThrough(talk)).toEqual(["meeting:3:voron:0", "meeting:3:voron:1"]);
+    talk.beginFlight(3);
+    run(talk, cooldownSeconds + 0.05, { encounters: ["familyInSight", "stationNear"] });
+    expect(talk.showing).toBeNull();
+    const cartwheel = director(2, [...lessonsHeard, "arrival:2"]);
+    run(cartwheel.talk, 0.05, { encounters: ["hubNear"] });
+    expect(showing(cartwheel.talk)).toBe("meeting:2:cobbles:0");
+    // Each galaxy's cue names its own people.
+    expect(heard).toEqual(expect.arrayContaining(["meeting:3:family", "meeting:3:voron"]));
+    const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
+    run(sunflower.talk, cooldownSeconds, { encounters: ["hubNear", "stationNear"] });
+    expect(sunflower.talk.showing).toBeNull();
   });
 });

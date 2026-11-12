@@ -1,9 +1,12 @@
+import { type Random, seededRandom, shuffled } from "@andornaut/game-kit/random";
+
 import { CAST, SPEAKER_CAST } from "../data/cast.ts";
 import {
   type Conversation,
   CONVERSATION_PRIORITIES,
   CONVERSATION_TUNING,
   type ConversationLine,
+  type EncounterCue,
   GENERAL_NAMED,
   type JobMoment,
   type Lesson,
@@ -20,7 +23,9 @@ import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 // it re-checks against the current facts whenever it could show, and a request whose trigger no
 // longer holds is dropped. Ordinary ones wait out a cooldown after the last one ends; warnings
 // skip it. Each line shows for its time or until tapped. The director only advances while the
-// flight runs, so pausing, a story panel or a station card freezes it.
+// flight runs, so pausing, a story panel or a station card freezes it. A repeating trigger's pool
+// waits as one request and shows one variant, drawn as it starts: the pool plays in a shuffled
+// order, never one variant twice in a row, and reshuffles once all have played.
 
 /** What the flight did and what is around Ada this step. */
 export interface ConversationFacts {
@@ -29,6 +34,10 @@ export interface ConversationFacts {
   readonly capitalInSight: boolean;
   readonly collectedStardust: boolean;
   readonly docked: boolean;
+  /** First-meeting cues this step, in the current galaxy. */
+  readonly encounters: readonly EncounterCue[];
+  /** A frigate within sight range. */
+  readonly frigateInSight: boolean;
   /** A live enemy presses Ada (flight.ts dronesNear); damage from debris or hazards is not one. */
   readonly dronesNear: boolean;
   /**
@@ -59,6 +68,10 @@ export interface ConversationFacts {
   /** Shield over its capacity, 0 to 1. */
   readonly shieldFraction: number;
   readonly stardustInSight: boolean;
+  /** Stations mapped this step, the hub included, by id. */
+  readonly stationsDiscovered: readonly string[];
+  /** Mapped stations, the hub included, within station discovery range of Ada, by id. */
+  readonly stationsNear: readonly string[];
 }
 
 export interface ShowingConversation {
@@ -130,28 +143,39 @@ export function speakerName(
 }
 
 /**
- * Whether a capital ship's battle is in sight: a live capital on screen (the view's isometric
- * projection around Ada, with its hull), or a capital or one of its escorts engaging Ada, so a
- * battle that opens with its escorts still counts. The view is the 720x360 play view.
+ * Whether object shows on Ada's screen: the view's isometric projection around her, with its hull.
+ * The view is the 720x360 play view.
  */
-export function capitalInSight(
+export function onScreen(
+  view: { readonly height: number; readonly width: number },
+  player: Vec,
+  object: Pick<SpaceObject, "radius" | "x" | "y">,
+): boolean {
+  const dx = object.x - player.x;
+  const dy = object.y - player.y;
+  return (
+    Math.abs(dx - dy) <= view.width / 2 + object.radius &&
+    Math.abs((dx + dy) / 2) <= view.height / 2 + object.radius
+  );
+}
+
+/**
+ * Whether a heavy ship's battle is in sight: a live frigate or capital on screen, or one or its
+ * escorts engaging Ada, so a battle that opens with its escorts still counts.
+ */
+export function heavyInSight(
+  archetype: "capital" | "frigate",
   view: { readonly height: number; readonly width: number },
   flight: Pick<FlightState, "objects" | "player">,
 ): boolean {
-  const capitals = flight.objects.filter(
-    (object) => object.kind === "enemy" && object.hp > 0 && object.enemy?.archetype === "capital",
+  const heavies = flight.objects.filter(
+    (object) => object.kind === "enemy" && object.hp > 0 && object.enemy?.archetype === archetype,
   );
-  const ids = new Set(capitals.map((object) => object.id));
-  const onScreen = (object: SpaceObject) => {
-    const dx = object.x - flight.player.x;
-    const dy = object.y - flight.player.y;
-    return (
-      Math.abs(dx - dy) <= view.width / 2 + object.radius &&
-      Math.abs((dx + dy) / 2) <= view.height / 2 + object.radius
-    );
-  };
+  const ids = new Set(heavies.map((object) => object.id));
   return (
-    capitals.some((object) => onScreen(object) || object.enemy?.engaged === true) ||
+    heavies.some(
+      (object) => onScreen(view, flight.player, object) || object.enemy?.engaged === true,
+    ) ||
     flight.objects.some(
       (object) =>
         object.kind === "enemy" &&
@@ -196,6 +220,8 @@ export class ConversationDirector {
   private active: Active | null = null;
   private cooldown = 0;
   private readonly conversations: readonly Conversation[];
+  /** Each pool's variants still to play in this shuffle, by index, and the last one drawn. */
+  private readonly decks = new Map<string, { order: number[]; last: number | null }>();
   private done: Record<Lesson, boolean> = { aim: false, dock: false, move: false, stardust: false };
   /** Danger since it last cleared: a fight, which a low shield warns of once. */
   private inFight = false;
@@ -206,16 +232,27 @@ export class ConversationDirector {
   private playedThisFlight = new Set<string>();
   /** Penny's sensed points since the last takeSensed, as their instances; rested-past ones never. */
   private sensedPoints: string[] = [];
+  /** Mapped stations in range last step; null until the flight's first step. */
+  private nearStations: ReadonlySet<string> | null = null;
   private queue: Request[] = [];
   private quietFor = 0;
+  private readonly random: Random;
   private sector: SectorId | null = null;
   private readonly seen: string[];
   private shieldWarned = false;
 
-  /** seen is the saved list, which the director extends as conversations show. */
-  constructor(conversations: readonly Conversation[], seen: string[]) {
+  /**
+   * seen is the saved list, which the director extends as conversations show; random shuffles the
+   * pools.
+   */
+  constructor(
+    conversations: readonly Conversation[],
+    seen: string[],
+    random: Random = seededRandom(crypto.getRandomValues(new Uint32Array(1))[0] ?? 1),
+  ) {
     this.conversations = conversations;
     this.seen = seen;
+    this.random = random;
   }
 
   get showing(): ShowingConversation | null {
@@ -323,14 +360,20 @@ export class ConversationDirector {
     if (facts.newStation) {
       this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "dock");
     }
-    // A group's own meeting comes before the general reaction to a new place.
+    // A people's first meeting, and a group's own, come before the general reaction to a new place.
+    for (const cue of facts.encounters) {
+      this.request(
+        (trigger) =>
+          trigger.kind === "encounter" && trigger.sector === sector && trigger.cue === cue,
+      );
+    }
     for (const id of facts.newlyMapped) {
       this.request(
         (trigger) =>
           trigger.kind === "meeting" && trigger.sector === sector && trigger.destination === id,
       );
     }
-    if (facts.newlyMapped.length > 0 || facts.newStation) {
+    if (facts.newlyMapped.length > 0) {
       this.request((trigger) => trigger.kind === "mapped");
     }
     if (facts.heavyDisabled) {
@@ -344,6 +387,16 @@ export class ConversationDirector {
       if (conversation) {
         this.enqueue({ conversation, holds: always, instance: `guard:${sector}:${destination}` });
       }
+    }
+    if (facts.newStation) {
+      this.request((trigger) => trigger.kind === "stationMapped");
+    }
+    this.observeReturns(sector, facts);
+    if (facts.frigateInSight) {
+      this.request(
+        (trigger) => trigger.kind === "frigate",
+        (now) => now.frigateInSight,
+      );
     }
     if (facts.capitalInSight) {
       this.request(
@@ -416,6 +469,28 @@ export class ConversationDirector {
     }
   }
 
+  /**
+   * Ada back in range of a station mapped before she entered it, once per station each flight; one
+   * mapped as she arrives, or in range as the flight starts, is no return.
+   */
+  private observeReturns(sector: SectorId, facts: ConversationFacts): void {
+    const before = this.nearStations;
+    this.nearStations = new Set(facts.stationsNear);
+    const back = this.conversations.find(({ trigger }) => trigger.kind === "stationReturn");
+    if (!before || !back) {
+      return;
+    }
+    for (const id of facts.stationsNear) {
+      if (!before.has(id) && !facts.stationsDiscovered.includes(id)) {
+        this.enqueue({
+          conversation: back,
+          holds: (now) => now.stationsNear.includes(id),
+          instance: `return:${sector}:${id}`,
+        });
+      }
+    }
+  }
+
   /** A held job's lines, a completed job's lore line and Penny's lost-item sense. */
   private observeJob(sector: SectorId, facts: ConversationFacts): void {
     for (const moment of facts.jobMoments) {
@@ -447,22 +522,50 @@ export class ConversationDirector {
     }
   }
 
-  /** Each conversation whose trigger matches, held by holds (an event's by default). */
+  /**
+   * Each conversation whose trigger matches, held by holds (an event's by default); a pool waits
+   * as one request under its name.
+   */
   private request(
     matches: (trigger: Conversation["trigger"]) => boolean,
     holds: Holds = always,
   ): void {
+    const pools = new Set<string>();
     for (const conversation of this.conversations) {
-      if (matches(conversation.trigger)) {
-        this.enqueue({ conversation, holds, instance: conversation.id });
+      if (!matches(conversation.trigger) || (conversation.pool && pools.has(conversation.pool))) {
+        continue;
+      }
+      if (conversation.pool) {
+        pools.add(conversation.pool);
+      }
+      this.enqueue({ conversation, holds, instance: conversation.pool ?? conversation.id });
+    }
+  }
+
+  /** The pool's next variant: the next in its shuffle, never the last one drawn again. */
+  private draw(pool: string): Conversation {
+    const variants = this.conversations.filter((conversation) => conversation.pool === pool);
+    const deck = this.decks.get(pool) ?? { last: null, order: [] };
+    if (deck.order.length === 0) {
+      deck.order = shuffled(
+        this.random,
+        variants.map((_, index) => index),
+      );
+      if (deck.order.length > 1 && deck.order[0] === deck.last) {
+        deck.order.push(deck.order.shift()!);
       }
     }
+    const index = deck.order.shift()!;
+    deck.last = index;
+    this.decks.set(pool, deck);
+    return variants[index]!;
   }
 
   private enqueue(request: Request): void {
     const { conversation, instance } = request;
     if (
       (conversation.repeat === "never" && this.seen.includes(instance)) ||
+      // A station return's instance is its station's, once each flight.
       (conversation.repeat === "flight" && this.playedThisFlight.has(instance)) ||
       this.active?.instance === instance ||
       this.queue.some((entry) => entry.instance === instance)
@@ -531,7 +634,14 @@ export class ConversationDirector {
       }
     }
     const { resume, ...shown } = request;
-    this.active = { ...shown, elapsed: resume?.elapsed ?? 0, line: resume?.line ?? 0 };
+    const pool = request.conversation.pool;
+    const conversation = resume === undefined && pool ? this.draw(pool) : request.conversation;
+    this.active = {
+      ...shown,
+      conversation,
+      elapsed: resume?.elapsed ?? 0,
+      line: resume?.line ?? 0,
+    };
   }
 
   /** The points Penny sensed since the last call, as `penny:{sector}:{point}` instances. */
@@ -575,6 +685,7 @@ export class ConversationDirector {
     this.cooldown = 0;
     this.dronesCalled = false;
     this.inFight = false;
+    this.nearStations = null;
     this.pennyWait = 0;
     this.playedThisFlight = new Set();
     this.queue = [];
