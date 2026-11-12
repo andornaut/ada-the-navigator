@@ -218,8 +218,11 @@ progress.
 
 ## Player strings
 
-The status pill shows the Stardust count as a bare number with en-US grouping
-("12,500"); its accessible label is `stardustAmount`. Pickup ticks read "+N".
+The status pill shows the Stardust and ore counts in at most four characters, as
+weapon counts do: the exact number up to 9,999 without a separator ("9999"), then
+whole thousands as "10k" to "999k", then whole millions as "1m" to "999m". Their
+accessible labels give the exact count, en-US grouped; Stardust's is
+`stardustAmount`. The Ship card shows exact counts, en-US grouped ("12,500"). Pickup ticks read "+N".
 
 The shield shop row reuses the existing `shield` label.
 
