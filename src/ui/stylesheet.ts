@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS_STYLE } from "./achievements-card.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
+import { ITEM_NOTICE_STYLE } from "./item-notice.ts";
 import { LOADING_STYLE } from "./loading-bar.ts";
 import { MAP_SCREEN_STYLE } from "./map-screen.ts";
 import { NOTICE_STYLE } from "./notice.ts";
@@ -28,6 +29,7 @@ export const UI_STYLESHEET = [
   STATION_STYLE,
   WEAPON_STYLE,
   STATUS_PILL_STYLE,
+  ITEM_NOTICE_STYLE,
   MAP_SCREEN_STYLE,
   PAUSE_GRID_STYLE,
   SHIP_CARD_STYLE,

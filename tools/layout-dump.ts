@@ -16,6 +16,7 @@ import * as controls from "../src/ui/layout/controls.ts";
 import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
 import * as hitAreas from "../src/ui/layout/hitAreas.ts";
+import * as itemNotice from "../src/ui/layout/itemNotice.ts";
 import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
 import * as routeMap from "../src/ui/layout/routeMap.ts";
@@ -34,6 +35,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "conversationBox.ts": conversationBox,
   "css.ts": css,
   "hitAreas.ts": hitAreas,
+  "itemNotice.ts": itemNotice,
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
   "routeMap.ts": routeMap,
@@ -466,6 +468,27 @@ function cssCases(call: ReturnType<typeof recorder>): void {
 }
 
 /** The route map's legs, travel and timings, which no view changes. */
+function noticeCases(call: ReturnType<typeof recorder>): void {
+  // Art's labels: none, "+ Phaser", "+ Spare parts" and "+ Heavy Missile ammo ×9".
+  for (const label of [0, 62.16, 106.33, 193]) {
+    call("itemNotice.ts", "chipWidth", itemNotice.chipWidth, label);
+  }
+  // Centred, clamped at the pill's left, and clamped at the weapons' inset.
+  for (const centre of [223.67, 40, 691.5]) {
+    call("itemNotice.ts", "chipLeft", itemNotice.chipLeft, centre, 148.33, 50.75, 466.5);
+  }
+  for (const t of [0, 0.25, 0.5, 1]) {
+    call(
+      "itemNotice.ts",
+      "flyPoint",
+      itemNotice.flyPoint,
+      { x: 120, y: 46.5 },
+      { x: 411.59, y: 16.5 },
+      t,
+    );
+  }
+}
+
 function routeCases(call: ReturnType<typeof recorder>): void {
   const [first, second] = routeMap.ROUTE_MAP.centres;
   call("routeMap.ts", "bentCurve", routeMap.bentCurve, 0.08, first, second, 0);
@@ -512,6 +535,7 @@ export function layoutDump(): unknown {
   viewportCases(call);
   stateCases(call);
   cssCases(call);
+  noticeCases(call);
   routeCases(call);
   const constants = Object.fromEntries(
     Object.entries(LAYOUT_MODULES).map(([module, exports]) => [

@@ -513,6 +513,17 @@ export function createStatusPill(
   };
 
   return {
+    /** An item notice landed on the cargo segment: its icon bumps, as the count does. */
+    bumpCargo(): void {
+      aboardIcon.animate(
+        [
+          { transform: "scale(1)" },
+          { transform: `scale(${STATUS_TIMING.bumpScale})` },
+          { transform: "scale(1)" },
+        ],
+        { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
+      );
+    },
     dispose: () => {
       root.remove();
       shieldRoot.remove();

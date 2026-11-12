@@ -33,7 +33,7 @@ const watchdog = setTimeout(() => {
 // that shows it again. Each element's own style is set through CSSOM, which the page's CSP allows
 // where an injected <style> is blocked.
 async function hideOverCanvas(target) {
-  const selector = ".ada-conversation,.ada-shield,#game-status,#save-status";
+  const selector = ".ada-conversation,.ada-shield,.ada-item-notice,#game-status,#save-status";
   await target.evaluate((list) => {
     for (const node of document.querySelectorAll(list)) {
       node.style.setProperty("visibility", "hidden", "important");
@@ -1208,6 +1208,20 @@ try {
     await page.screenshot({ path: `${output}/cheats.png` });
     await cheatDialog.getByRole("button", { name: CHEAT_COPY.close, exact: true }).click();
     await resumeIfPaused();
+    // Each new weapon queues an item notice: the chip shows under the pill once play resumes,
+    // hidden from assistive technology, and its label is announced politely.
+    const chip = page.locator(".ada-item-notice");
+    await chip.waitFor({ state: "visible" });
+    assert.equal(await chip.getAttribute("aria-hidden"), "true");
+    const weaponNames = ["RapidMissile", "MultiLaser", "HeavyMissile", "Scattershot", "Phaser"].map(
+      (id) => `+ ${PROTOTYPE.labels[`weapon${id}`]}`,
+    );
+    const announced = page.locator(".ada-item-notice-live");
+    assert.equal(await announced.getAttribute("aria-live"), "polite");
+    assert.ok(
+      weaponNames.includes((await announced.textContent()) ?? ""),
+      `A granted weapon's notice reads + {weapon}: ${await announced.textContent()}`,
+    );
   } finally {
     await page.keyboard.up("d");
   }

@@ -46,6 +46,7 @@ import {
   stationDock,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
+import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { hullOffset } from "../model/ship-physics.ts";
@@ -380,6 +381,8 @@ export class PrototypeScene extends Scene {
   private ink!: GameObjects.Graphics;
   private ship!: GameObjects.Image;
   private shipAssets: readonly Asset[] = [];
+  // What Ada held last frame in this flight, for the item notices' gains.
+  private held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   private jets!: GameObjects.Graphics;
   private shipJets: ShipJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
@@ -862,6 +865,7 @@ export class PrototypeScene extends Scene {
         sound: PROTOTYPE.labels.sound ?? "",
         soundNote: PROTOTYPE.labels.soundNote ?? "",
       },
+      noticeLabels: PROTOTYPE.labels,
       onFeedbackChange: (settings) => {
         this.feedbackSound.enabled = settings.sound;
         this.screenShake = screenShakes(settings);
@@ -1722,6 +1726,34 @@ export class PrototypeScene extends Scene {
     return { ...ship, paint: (paint && PROTOTYPE.labels[paint]) ?? "" };
   }
 
+  // Queues item notices for what Ada gained since last frame; a new flight starts from what she
+  // holds, and leaving flight clears them.
+  private noticeGains(): void {
+    const { flight, mode } = this.model.state;
+    if (mode !== "space" || !flight) {
+      if (this.held) {
+        this.held = undefined;
+        this.controls.setGains(null);
+      }
+      return;
+    }
+    const ship = this.model.ship;
+    const snapshot: GainSnapshot = {
+      aboard: ship.aboard,
+      holodisks: ship.holodisks,
+      weapons: ship.weapons.map(({ ammo, id }) => ({ ammo, id })),
+    };
+    if (this.held?.flight === flight) {
+      const gains = itemGains(Boolean(this.model.state.docked), this.held.snapshot, snapshot);
+      if (gains.length > 0) {
+        this.controls.setGains(gains);
+      }
+    } else if (this.held) {
+      this.controls.setGains(null);
+    }
+    this.held = { flight, snapshot };
+  }
+
   private refresh(): void {
     const state = this.model.state;
     const enabled = state.mode === "space" && !state.dialogue && !state.docked;
@@ -1733,6 +1765,7 @@ export class PrototypeScene extends Scene {
     const action = enabled ? this.model.contextAction : undefined;
     this.controls.setContext(action && { action, label: this.model.contextLabel ?? "" });
     this.controls.setWeapons(this.model.weapons());
+    this.noticeGains();
     const aboard = this.model.aboard;
     this.controls.setStatus({
       aboard: aboard && { kind: aboard.kind, label: aboardLabel(PROTOTYPE.labels, aboard) },

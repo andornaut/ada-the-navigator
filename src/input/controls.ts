@@ -20,6 +20,7 @@ import {
   showTouchChrome,
   useDiscFrame,
 } from "../game/touch-chrome.ts";
+import type { ItemGain } from "../model/item-gains.ts";
 import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
@@ -31,7 +32,16 @@ import {
 import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { createItemNotices, type NoticePlaces } from "../ui/item-notice.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
+import {
+  HUD_BUTTON,
+  HUD_ROW,
+  hudButtonTarget,
+  hudRect,
+  STATUS_PILL,
+  statusPillWidth,
+} from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
@@ -90,6 +100,8 @@ export interface ControlsOptions {
   };
   // Returns whether the switch was refused.
   readonly onWeaponSelect: (weapon: Weapon) => boolean;
+  // Player copy for the item notices (src/ui/item-notice.ts).
+  readonly noticeLabels: Readonly<Record<string, string>>;
   readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;
 }
@@ -128,6 +140,8 @@ export interface Controls {
   setPause(state: PauseState): void;
   // The status pill's shield and Stardust count.
   setStatus(view: StatusView): void;
+  // Queues item notices for gains; null clears them, as on leaving flight.
+  setGains(gains: readonly ItemGain[] | null): void;
   setWeapons(weapons: readonly WeaponChoice[]): void;
 }
 
@@ -298,6 +312,23 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     reducedMotion: () => reducedMotion,
     shieldLabel: options.shieldLabel,
   });
+  // The chip draws under the HUD controls: it goes first among them.
+  const notices = createItemNotices(settings.root, {
+    labels: options.noticeLabels,
+    onArrive: (target) => {
+      if (reducedMotion) {
+        return;
+      }
+      if (target.kind === "cargo") {
+        status.bumpCargo();
+      } else if (target.kind === "weapon") {
+        weapons.bump(target.weapon);
+      }
+    },
+    reducedMotion: () => reducedMotion,
+  });
+  let weaponIds: readonly Weapon[] = [];
+  let statusView: StatusView | undefined;
   const update = options.update
     ? createUpdateDialog(
         settings.root,
@@ -375,6 +406,26 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const joystickTarget = (target: EventTarget | null) => {
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
+  };
+  // Where the item notice's chip and destinations sit now, in HUD rect px.
+  const noticePlaces = (): NoticePlaces => {
+    const hud = hudRect(layout.insets, canvasSize(sceneFit(scene)));
+    const left = pauseButton.hidden ? STATUS_PILL.xAlone : STATUS_PILL.x;
+    const ore = (statusView?.ore ?? 0) > 0;
+    const aboard = Boolean(statusView?.aboard);
+    const width = statusPillWidth(ore, aboard);
+    const count = weaponIds.length;
+    const target = (index: number) => hud.width + hudButtonTarget(count - 1 - index).x;
+    return {
+      cargo: aboard ? left + width - 18 : null,
+      leftmostTarget: count > 0 ? target(0) : null,
+      pill: { left, width },
+      right: hud.width,
+      row: HUD_ROW.centre,
+      weapons: new Map(
+        weaponIds.map((id, index) => [id, target(index) + HUD_BUTTON.target / 2] as const),
+      ),
+    };
   };
   const release = (pointerId: number) => {
     if (usePress?.id === pointerId) {
@@ -499,6 +550,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     // The pill shows in flight and hides with the pause button under a card; on desktop, where the
     // pause button is hidden, it keeps its place.
     status.setShown(enabled && !modalOpen());
+    notices.update(performance.now(), enabled && !modalOpen(), noticePlaces());
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
@@ -565,6 +617,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       stopPointers();
       state.setEnabled(false);
       status.dispose();
+      notices.dispose();
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
@@ -635,6 +688,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);
       }
     },
+    setGains(gains) {
+      if (gains === null) {
+        notices.clear();
+      } else {
+        notices.push(gains);
+      }
+    },
     setPause(view) {
       pausable = view.place !== null;
       pause.setState(view);
@@ -644,8 +704,12 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       settings.openButton.hidden = !shown;
       settings.root.classList.toggle("ada-no-settings-button", !shown);
     },
-    setStatus: (view) => status.setStatus(view, performance.now()),
+    setStatus(view) {
+      statusView = view;
+      status.setStatus(view, performance.now());
+    },
     setWeapons(choices) {
+      weaponIds = choices.map((choice) => choice.id);
       weapons.setWeapons(choices);
     },
   };

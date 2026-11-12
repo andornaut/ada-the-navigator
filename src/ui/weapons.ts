@@ -262,6 +262,16 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     }
   };
   return {
+    /** An item notice landed on a weapon's disc: its glyph bumps, scale 1 to 1.12 to 1. */
+    bump(weapon: string): void {
+      buttons
+        .get(weapon as Weapon)
+        ?.querySelector(".ada-disc")
+        ?.animate(
+          [{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }],
+          { duration: 200, easing: "ease-out" },
+        );
+    },
     dispose: () => root.remove(),
     setEnabled(value: boolean): void {
       enabled = value;
