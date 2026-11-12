@@ -32,7 +32,6 @@ export function noLevels(): UpgradeLevels {
   return {
     engine: 1,
     shield: 1,
-    shieldRecharge: 1,
     tractor: 1,
     weapons: {
       basic: 1,
@@ -77,11 +76,9 @@ export function shipTuning(
     },
     shieldMax: content.tuning.shieldMax * multiplier(effects.shieldCapacity, levels.shield),
     shieldRechargeDelay:
-      content.tuning.shieldRechargeDelay *
-      multiplier(effects.shieldRechargeDelay, levels.shieldRecharge),
+      content.tuning.shieldRechargeDelay * multiplier(effects.shieldRechargeDelay, levels.shield),
     shieldRechargeRate:
-      content.tuning.shieldRechargeRate *
-      multiplier(effects.shieldRechargeRate, levels.shieldRecharge),
+      content.tuning.shieldRechargeRate * multiplier(effects.shieldRechargeRate, levels.shield),
     tractorRadius: leveledValue(catalog.tractorRadius, levels.tractor),
     tractorSpeed: leveledValue(catalog.tractorSpeed, levels.tractor),
   };

@@ -36,7 +36,6 @@ describe("shop rows on the station view", () => {
     });
     for (const [track, key] of [
       ["shield", "icon-shop-shield"],
-      ["shieldRecharge", "icon-shop-shield-recharge"],
       ["engine", "icon-shop-engine-tuning"],
       ["tractor", "icon-shop-tractor-beam"],
     ] as const) {
@@ -74,11 +73,11 @@ describe("shop rows on the station view", () => {
       group: "items",
       level: "Level 1 of 3",
       name: "Shield",
-      price: 150,
+      price: 300,
       state: "unaffordable",
     });
-    expect(rows[3]).toMatchObject({ name: "Tractor beam", price: 80, state: "forSale" });
-    expect(rows.slice(4).map((row) => [row.group, row.name, row.state])).toEqual([
+    expect(rows[2]).toMatchObject({ name: "Tractor beam", price: 80, state: "forSale" });
+    expect(rows.slice(3).map((row) => [row.group, row.name, row.state])).toEqual([
       ["paint", "Classic", "inUse"],
       ["paint", "Cobalt", "forSale"],
       ["paint", "Seafoam", "forSale"],

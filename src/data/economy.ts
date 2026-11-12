@@ -4,7 +4,7 @@ import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "basic">;
-export type UpgradeTrack = "shield" | "shieldRecharge" | "engine" | "tractor";
+export type UpgradeTrack = "shield" | "engine" | "tractor";
 
 /** A tuning value with its level 1 base and one value per bought level from level 2. */
 export interface LeveledValue {
@@ -169,8 +169,8 @@ export const ECONOMY: EconomyCatalog = {
     },
   },
   discoveryStardust: 5,
-  // Engine tuning: -10% acceleration and braking seconds per level. Shield capacity 100, 150,
-  // 225. Recharge about x1.5 per level: delay /1.2 and rate x1.25 each.
+  // Engine tuning: -10% acceleration and braking seconds per level. The Shield's levels raise
+  // its capacity to 150 and 225 and its recharge about x1.5 each: delay /1.2, rate x1.25.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
     shieldCapacity: [1, 1.5, 2.25],
@@ -220,8 +220,7 @@ export const ECONOMY: EconomyCatalog = {
   },
   trackPrices: {
     engine: [120, 240],
-    shield: [150, 300],
-    shieldRecharge: [150, 300],
+    shield: [300, 600],
     tractor: [80, 160],
   },
   // The tractor beam's pull radius and speed by level, alike for every pickup.

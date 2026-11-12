@@ -15,7 +15,6 @@ import { type ItemGlyph, type StationRow, weaponItemGlyph } from "../ui/station.
 const TRACK_ICONS: Readonly<Record<UpgradeTrack, string>> = {
   engine: "icon-shop-engine-tuning",
   shield: "icon-shop-shield",
-  shieldRecharge: "icon-shop-shield-recharge",
   tractor: "icon-shop-tractor-beam",
 };
 

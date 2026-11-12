@@ -720,7 +720,7 @@ describe("upgrade effects", () => {
   ])(
     "applies shield, recharge and engine level %i",
     (level, shield, delay, rate, speed, seconds) => {
-      const levels = { ...noLevels(), engine: level, shield: level, shieldRecharge: level };
+      const levels = { ...noLevels(), engine: level, shield: level };
       const tuning = shipTuning(ECONOMY, PROTOTYPE, levels);
       const base = PROTOTYPE.tuning;
       expect(tuning.shieldMax).toBeCloseTo(shield, 9);
@@ -762,7 +762,7 @@ describe("upgrade effects", () => {
   });
 
   it("starts a flight at the upgraded shield capacity and recharges toward it", () => {
-    const levels = { ...noLevels(), shield: 2, shieldRecharge: 2 };
+    const levels = { ...noLevels(), shield: 2 };
     const value = createFlight(
       PROTOTYPE,
       1,
@@ -915,8 +915,7 @@ describe("shop purchases", () => {
 
   it.each([
     [{ kind: "weaponUpgrade", weapon: "basic" }, [150, 300]],
-    [{ kind: "track", track: "shield" }, [150, 300]],
-    [{ kind: "track", track: "shieldRecharge" }, [150, 300]],
+    [{ kind: "track", track: "shield" }, [300, 600]],
     [{ kind: "track", track: "engine" }, [120, 240]],
     [{ kind: "track", track: "tractor" }, [80, 160]],
   ] as const)("prices levels 2 and 3 of %j and stops at level 3", (item, prices) => {
@@ -1023,10 +1022,9 @@ describe("shop purchases", () => {
       "unaffordable",
       "forSale",
     ]);
-    // Shield, recharge, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris.
+    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Graphite, Iris.
     expect(states("ship")).toEqual([
-      "forSale",
-      "forSale",
+      "unaffordable",
       "forSale",
       "forSale",
       "inUse",
@@ -1036,14 +1034,14 @@ describe("shop purchases", () => {
       "selectable",
     ]);
     economy.stardust = 40;
-    expect(states("ship").slice(5)).toEqual([
+    expect(states("ship").slice(4)).toEqual([
       "unaffordable",
       "unaffordable",
       "unaffordable",
       "selectable",
     ]);
     economy.levels.tractor = 3;
-    expect(states("ship")[3]).toBe("owned");
+    expect(states("ship")[2]).toBe("owned");
   });
 
   it("shows a weapon's one-line description or a pack's size in the buy confirm", () => {
@@ -1084,7 +1082,6 @@ describe("shop purchases", () => {
     expect(name({ kind: "track", track: "shield" })).toBe("Shield");
     expect(name({ kind: "track", track: "engine" })).toBe("Engine tuning");
     expect(name({ kind: "track", track: "tractor" })).toBe("Tractor beam");
-    expect(name({ kind: "track", track: "shieldRecharge" })).toBe("Shield recharge");
     expect(Object.keys(ECONOMY.paints).map((scheme) => name({ kind: "paint", scheme }))).toEqual([
       "Classic",
       "Cobalt",

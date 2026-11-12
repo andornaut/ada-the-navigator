@@ -259,8 +259,8 @@ export interface JobsState {
 export type AmmoCounts = Record<UpgradeWeapon, number>;
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
+  /** The Shield upgrade, which sets both its capacity and its recharge. */
   shield: number;
-  shieldRecharge: number;
   engine: number;
   tractor: number;
 }
@@ -288,7 +288,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 2;
+  version: 3;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];

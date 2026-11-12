@@ -14,12 +14,7 @@ export type ShopItem =
   | { kind: "holodisk" };
 export type ShopTab = "weapons" | "ship";
 export const SHOP_TABS: readonly ShopTab[] = ["weapons", "ship"];
-export const SHIP_TRACKS: readonly UpgradeTrack[] = [
-  "shield",
-  "shieldRecharge",
-  "engine",
-  "tractor",
-];
+export const SHIP_TRACKS: readonly UpgradeTrack[] = ["shield", "engine", "tractor"];
 
 export interface ShopRow {
   item: ShopItem;
@@ -241,7 +236,6 @@ const WEAPON_LABELS: Readonly<Record<Weapon, string>> = {
 const TRACK_LABELS: Readonly<Record<UpgradeTrack, string>> = {
   engine: "engineTuning",
   shield: "shield",
-  shieldRecharge: "shieldRecharge",
   tractor: "tractorBeam",
 };
 

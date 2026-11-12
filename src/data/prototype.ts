@@ -518,7 +518,6 @@ export const PROTOTYPE: PrototypeContent = {
     ].join(""),
     settings: "Settings",
     shield: "Shield",
-    shieldRecharge: "Shield recharge",
     ship: "Ship",
     shipAmmoLeft: "{count} left",
     shipCarrying: "Carrying: {item}",

@@ -448,7 +448,7 @@ describe("shop through the model", () => {
 
   it("raises the shield capacity and current charge when a shield level is bought", () => {
     const model = docked();
-    model.state.economy.stardust = 150;
+    model.state.economy.stardust = 300;
     model.state.flight!.shield = 50;
     model.buy({ kind: "track", track: "shield" });
     expect(model.shieldMax).toBeCloseTo(150, 9);
