@@ -459,8 +459,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
   drag. Both joysticks' drawn rings sit 32 logical pixels in from the game area's
-  outer side edges and 32 above its bottom, mirrored, as in Chibi, with the Use
-  button's bottom also 32 above it. The move ring lights its left or right marker only when the
+  outer side edges and 32 above its bottom, mirrored, as in Chibi. Use is
+  Chibi's touch disc, placed beside the aim stick as in Chibi. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
@@ -478,11 +478,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Ada's maximum movement speed is provisionally 160 world units per second,
   190 and 220 at engine levels 2 and 3.
 - The space screen shows only essentials: the joysticks, weapon icons, the
-  status pill (shield, Stardust and what Ada carries) and a pause button. There is no travel or destinations panel and
+  status pill (Stardust and what Ada carries), the shield bar and a pause
+  button. There is no travel or destinations panel and
   no settings gear in space.
 - Space shows no in-world name labels. Each named destination has a distinct
   look by role, the current objective's destination is marked by the direction
-  indicator, and the Talk or Use button and the conversation name tab identify
+  indicator, and the Use disc's action symbol and the conversation name tab identify
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
@@ -646,15 +647,16 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
   flight is lost; weapons, levels, Stardust, purchases and story progress persist,
   and the next flight generates a new layout. See [Economy](economy.md).
-- The shield and Stardust share one status pill at the top left, beside the pause
-  button: a shield icon and bar, a divider and the Stardust count. While Ada
-  carries ore, a divider and an ore icon with its count follow; while she carries
-  a job or story item or tows a craft, a divider and its icon follow last. Each
-  segment leaves when empty. Ore gains show "+N" ticks like Stardust's. The bar
-  is blue, turning red when the shield is low (below 25%) or empty, and shows
-  hits, the recharge delay and regeneration. Low shield never relies on color
-  alone: the bar also pulses, held steady under reduced motion, and Astra says
-  "Shield low!".
+- The shield is a 160 logical pixel bar at the bottom centre, between the sticks,
+  with a shield icon. The bar is blue, turning red when the shield is low (below
+  25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
+  never relies on color alone: the bar also pulses, held steady under reduced
+  motion, and Astra says "Shield low!".
+- The status pill at the top left, beside the pause button, shows the Stardust
+  count. While Ada carries ore, a divider and an ore icon with its count follow;
+  while she carries a job or story item or tows a craft, a divider and its icon
+  follow last. Each segment leaves when empty. Stardust and ore gains show "+N"
+  ticks just below their counts.
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
   a story item, a lost item, a job item, a new weapon or an ammunition pack from
   a weapon drop, or a towed craft), a small notice shows just below the status
@@ -700,8 +702,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 
 ## Interactions and navigation
 
-Use one contextual button, visible only when an interaction is available, with
-an action label. Resources collect on contact. Mining cargo has no capacity limit.
+Use is one contextual control, Chibi's touch disc beside the aim stick, visible
+only when an interaction is available. It shows the action's symbol with no text;
+the action's name is its accessible name. On desktop the disc is hidden, as in
+Chibi, and the Use key still acts. Where the disc's press area overlaps the
+conversation box, the box takes the press. Resources collect on contact. Mining cargo has no capacity limit.
 No map or minimap.
 
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks

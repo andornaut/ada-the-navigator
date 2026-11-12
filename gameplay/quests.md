@@ -66,7 +66,7 @@ layout regeneration like stations. Restart clears jobs and boards.
 
 ### Tow handling
 
-Ada attaches the tow with the Use button, labelled Tow, within 120 world units of
+Ada attaches the tow with Use (Tow) within 120 world units of
 the stranded craft. The craft trails on an 80 world unit line, pulled along when
 the line is taut, and passes through scenery so it never snags. While towing:
 

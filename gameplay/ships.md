@@ -192,8 +192,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 - **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,
   whatever its hull HP. It stops attacking and steering, coasts to rest, no longer
   counts for battle, and shows a red "Disabled" banner above its hull.
-- **Salvage:** within Talk range of a disabled heavy, the contextual button reads
-  "Salvage". Salvaging drops the ship's Stardust and five times its usual weapon
+- **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. Salvaging drops the ship's Stardust and five times its usual weapon
   chance, and spares the ship: it powers down, its banner goes, it is drawn dimmed,
   and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
   until its hull breaks; that drops the usual reward.

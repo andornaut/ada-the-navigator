@@ -674,7 +674,9 @@ beacon light. Welcome!"
 - Galaxy selection Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Time for another
   adventure?" then Pick up the rock.
-- Actions: Talk, Deliver, Deposit, Continue, Ask more, Use, Salvage.
+- Use actions, each the disc's accessible name and drawn as a symbol: Talk,
+  Deliver, Deposit, Tow, Salvage, and Use for any other interaction.
+- Conversation buttons: Continue, Ask more.
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.
 - Item notices, always "+ {item}": "+ Holodisk", "+ Spare parts", "+ {weapon}",
