@@ -1,29 +1,20 @@
 import { modalWidth } from "@andornaut/game-kit/modalLayout";
 
-import { SCREEN } from "../../data/screen.ts";
-import { CARD_CONTENT, cardTitleReserve } from "./cardFrame.ts";
-import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
-import { BUTTON_GAP, SPACING } from "./tokens.ts";
+import {
+  CARD_CONTENT,
+  CARD_FLOOR_VIEW_WIDTH,
+  CONTROL_ROW,
+  TEXT_BUTTON,
+} from "../../data/layout.ts";
+import { cardTitleReserve } from "./cardFrame.ts";
+import { BUTTON_GAP } from "./tokens.ts";
+export { CARD_FLOOR_VIEW_WIDTH, SCROLL } from "../../data/layout.ts";
 
 // The content-fitted card (art/layout.md "Modals" and "Groups"), as Chibi's
 // src/ui/layout/contentCard.ts, in logical px, shared by every Ada modal. The width source is
 // game-kit's modalWidth.
 
 export { CARD_CONTENT, cardHeaderLayout, cardTitleReserve } from "./cardFrame.ts";
-
-// The 50% width floor is half the fixed 720 base view, as in Chibi, at every logical width.
-export const CARD_FLOOR_VIEW_WIDTH = SCREEN.width;
-
-// A card's scrolling region: it reserves a 6 gap and an 8 track on its right inside the padding,
-// the thumb inset 1 in the track, and keeps endPad below its last control at the scroll end. A
-// pointer moving further than dragThreshold scrolls and does not activate.
-export const SCROLL = {
-  dragThreshold: 8,
-  endPad: SPACING.panelPadding,
-  gap: 6,
-  thumbInset: 1,
-  track: 8,
-} as const;
 
 // The card's width: min(availableWidth, max(contentWidth + 32, 720 / 2)), where contentWidth is
 // the widest group or the title with its reserved clearance; prose groups do not count.

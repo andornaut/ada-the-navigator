@@ -1,67 +1,31 @@
 import { clamp } from "@andornaut/game-kit/numbers";
 import type { Rect } from "@andornaut/game-kit/rect";
 
+import {
+  HUD_BUTTON,
+  HUD_ROW,
+  MAP_HUD_LABEL_WIDTHS,
+  MAP_SCREEN_LAYOUT,
+  MAP_SYMBOL,
+  SPACING,
+  TEXT_BUTTON,
+} from "../../data/layout.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
-import { SCROLL } from "./contentCard.ts";
-import { TEXT_BUTTON } from "./controls.ts";
-import { HUD_BUTTON, HUD_ROW, hudRect, type Insets, safeRect, type Size } from "./playView.ts";
-import { BUTTON_GAP, SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
+import { hudRect, type Insets, safeRect, type Size } from "./playView.ts";
+import { BUTTON_GAP, SMALL_BUTTON_GAP } from "./tokens.ts";
+export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
 
 // The pause menu's full-screen map (art/map.md): the screen's header, tools, fog and fit
 // (MAP_SCREEN), the place panel (MAP_PANEL) and the place symbols (MAP_SYMBOL), in logical px, and
 // the projection, fit, zoom and pan that place them. Projected units are the flight's projection
 // of world units; a view's scale is logical px per projected unit.
 
-/**
- * The local map's HUD row labels' TYPE.label widths, up to the quarter pixel (art/map.md "Quests
- * and Galaxies"): both buttons take the wider plus TEXT_BUTTON.inset each side.
- */
-const HUD_LABEL_WIDTHS = { galaxies: 66, quests: 54.25 } as const;
-const HUD_ACTION_WIDTH = Math.max(...Object.values(HUD_LABEL_WIDTHS)) + 2 * TEXT_BUTTON.inset;
+const HUD_ACTION_WIDTH = Math.max(...Object.values(MAP_HUD_LABEL_WIDTHS)) + 2 * TEXT_BUTTON.inset;
 
 export const MAP_SCREEN = {
+  ...MAP_SCREEN_LAYOUT,
   /** The charting disc minScale fits (model/map.ts CHARTING_RADIUS). */
   chartRadius: CHARTING_RADIUS,
-  /** Movement past this pans and never selects (SCROLL.dragThreshold). */
-  dragThreshold: SCROLL.dragThreshold,
-  /** Chip radius plus SPACING.gap: symbols keep this far inside the fit region. */
-  fitMargin: 22,
-  fog: {
-    /** Gaussian edge sigma as a share of the reveal's on-screen x radius. */
-    feather: 0.16,
-    /** Sigma never below this. */
-    minFeather: 3,
-    /** World units explored around each explored point, each discovered place and Ada. */
-    reveal: 1500,
-    /** Most world units flown between explored points. */
-    sample: 250,
-  },
-  header: {
-    /** Ink panel alpha, the HUD panel's. */
-    alpha: 0.65,
-    /** The divider between the name and the percent. */
-    divider: { height: 16, width: 1 },
-    /** Name, this gap, the divider, this gap, the column of the pips over the percent. */
-    dividerGap: 12,
-    /** The HUD row: HUD_BUTTON.target. */
-    height: HUD_BUTTON.target,
-    /** The percent's 20 line box top when the galaxy has no landmarks. */
-    labelTop: 14,
-    /** The name's 28 line box top. */
-    nameTop: 10,
-    padding: 16,
-    /** Pip diameter. */
-    pip: 6,
-    /** Pip centre to centre. */
-    pipPitch: 8,
-    /** An uncharted pip's ring. */
-    pipRing: 1,
-    radius: 4,
-    /** The pips to the percent's line box (SPACING.rowGap). */
-    stackGap: SPACING.rowGap,
-    /** The column's top: (48 - 30) / 2 for the 6 pips, the gap and the 20 line. */
-    stackTop: 9,
-  },
   /**
    * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Galaxies, one action
    * row of one width (HUD_ACTION_WIDTH), BUTTON_GAP apart. Galaxies ends right in from
@@ -74,79 +38,6 @@ export const MAP_SCREEN = {
     height: TEXT_BUTTON.height,
     quests: { width: HUD_ACTION_WIDTH },
     right: HUD_BUTTON.disc + SMALL_BUTTON_GAP,
-  },
-  /** The opening box is at least this many projected units across and down. */
-  minBox: { height: 6000, width: 12000 },
-  /**
-   * The Quests modal's lines (art/map.md "Quests modal"): a mapped line's chip (MAP_SYMBOL.chip)
-   * overhanging its label's 20 line box by 4 each way, markGap to the label, lines lineGap apart,
-   * plain text from textColumn, and an unmapped line's hollow ring.
-   */
-  quests: {
-    chip: 28,
-    lineGap: SPACING.gap,
-    markGap: SPACING.markGap,
-    overhang: 4,
-    ring: 1,
-    textColumn: TEXT_BUTTON.inset + 28 + SPACING.markGap,
-  },
-  tools: {
-    /** Tool targets top to top: HUD_BUTTON.target + HUD_BUTTON.gap, so the small discs keep
-     * SMALL_BUTTON_GAP apart. */
-    pitch: HUD_BUTTON.target + HUD_BUTTON.gap,
-  },
-  /** Wheel deltaY px per zoom step. */
-  wheelStep: 100,
-  /** One zoom step. */
-  zoomStep: 1.5,
-} as const;
-
-export const MAP_PANEL = {
-  /** Text block to Travel here, at least. */
-  actionGap: 16,
-  /** Chip to the text block (SPACING.gap). */
-  markGap: SPACING.gap,
-  /** The card floor: half the 720 base width. */
-  minWidth: 360,
-  /** SPACING.panelPadding, including the 2 frame. */
-  padding: SPACING.panelPadding,
-  /** Row to the reason line (SPACING.gap). */
-  reasonGap: SPACING.gap,
-  /** The panel's row, TEXT_BUTTON.height. */
-  row: 48,
-  /** The two 20 lines' top inside the 48 row. */
-  textTop: 4,
-} as const;
-
-export const MAP_SYMBOL = {
-  ada: {
-    /** Ink keyline outside the hull: a 3 ink stroke under the fill. */
-    keyline: 1.5,
-    /** Arrow box, centred on Ada's position. */
-    size: 28,
-  },
-  /** Disc diameter. */
-  chip: 28,
-  /** Ink edge inside the disc. */
-  edge: 1,
-  /** Ink glyph mask, centred. */
-  glyph: 20,
-  /** Press area: hitAround of the chip, HIT_RULE.minTarget. */
-  hit: 48,
-  objective: {
-    /** The indicator's drawing box around the chip centre: across, down, and its top above it. */
-    box: { height: 28, top: 48, width: 16 },
-    /** Ink stroke under the lavender one. */
-    ink: 4,
-    stroke: 2,
-    /** Indicator tip above the chip centre. */
-    tip: 23,
-  },
-  ring: {
-    band: 2,
-    fringe: 1,
-    /** Selection ring centre radius: 2 outside the face. */
-    radius: 17,
   },
 } as const;
 

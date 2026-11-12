@@ -1,26 +1,6 @@
-import { type Insets, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
-
-// The storybook page panel (art/layout.md "Storybook page"), in logical px: a light spread with a
-// text column and a choice column side by side, the available rect's width up to maxWidth,
-// centred, its bottom on the available rect's bottom, panel padding inside, no dim. It is only as
-// tall as its page needs, up to its top cap; past that only the text column scrolls. The column
-// gap holds a 1 rule in the card rim, 12 from each column. The choice column takes its share of
-// the inner width less the gap, within its min and max; the text column takes the rest. A
-// portrait is the 32 storybook frame at 2x in a 68 frame.
-export const STORY_PANEL = {
-  choiceColumn: { max: 300, min: 228, share: 0.38 },
-  columnGap: 25,
-  maxWidth: 760,
-  padding: SPACING.panelPadding,
-  pageControls: ["previous", "next"],
-  portrait: { frame: 68, image: 64, inset: 2 },
-  rule: { colour: "#6b6685", width: 1 },
-} as const;
-
-// A storybook background's canvas in logical px (art/storybook.md), centred across the view and
-// scaled by max(1, viewW / width, viewH / height) so it always covers.
-export const STORY_BACKGROUND = { height: 540, width: 960 } as const;
+import { SAFE_MARGIN, STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
+import { type Insets, safeRect, type Size } from "./playView.ts";
+export { STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
 
 /** A background's subject band: the canvas rows its key objects span (art/storybook.md). */
 export interface SubjectBand {

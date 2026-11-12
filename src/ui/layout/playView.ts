@@ -1,9 +1,38 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
+import {
+  CONTROLS_BOTTOM,
+  COUNT_ADVANCE,
+  COUNT_EM,
+  HUD_BUTTON,
+  HUD_EDGE,
+  HUD_ROW,
+  PAUSE_ART,
+  PILL,
+  SAFE_MARGIN,
+  SHIELD_BARS,
+  SHIELD_PILL,
+  SPACING,
+  STATUS_PILL_LAYOUT,
+  STICK_AREA_MARGIN,
+} from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
-import { PILL, TEXT_BUTTON } from "./controls.ts";
-import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
+export {
+  CONTROL_EDGE,
+  CONTROLS_BOTTOM,
+  HUD_AMMO_COUNT,
+  HUD_BUTTON,
+  HUD_BUTTON_INSET,
+  HUD_EDGE,
+  HUD_ROW,
+  HUD_WEAPON_LEVEL,
+  SAFE_MARGIN,
+  SHIELD_PILL,
+  STICK_AREA_MARGIN,
+  STORY_PANEL_TOP,
+  STORY_SKIP,
+} from "../../data/layout.ts";
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
 // and "Page bounds"), and the HUD's anchors ("HUD and overlays"). The canvas draws the logical
@@ -58,17 +87,6 @@ export function safeRect(insets: Insets, margin: number, view: Size): Rect {
     y: top,
   };
 }
-
-// HUD controls' safe-rect margin, and the gap between HUD buttons.
-export const CONTROL_EDGE = 8;
-
-// The HUD edge: from the game area's top and side edges to the drawn art (never a press area) of
-// the outermost element on each top corner, the same on both sides and the top, as in Chibi.
-export const HUD_EDGE = 12;
-
-// Margins of the safe rects: the bare safe edge (the shield bar and the sticks' bottom); HUD
-// controls; modals and page content.
-export const SAFE_MARGIN = { edge: 0, hud: CONTROL_EDGE, page: SPACING.pageInset } as const;
 
 // Chibi's play view, the game area: the 720x360 base view centred across the logical view, at
 // its top. The camera draws only it; screens of other aspects show bands outside it, and every
@@ -127,71 +145,7 @@ export function hudRect(insets: Insets, view: Size): Rect {
   return { height: bottom - top, width: view.width - 2 * side, x: side, y: top };
 }
 
-// The pause button on the HUD rect's top-left corner: the 35 frame, its 33 disc drawn 1 inside it
-// on the corner, in the press area hitAround(frame) (52.5). Relative to the corner.
-const PAUSE_ART: Rect = { height: 35, width: 35, x: -1, y: -1 };
 export const PAUSE_BUTTON = { art: PAUSE_ART, hit: hitAround(HIT_RULE, PAUSE_ART) } as const;
-
-// The HUD's disc buttons (the weapons, and the start screen's Settings), Chibi's SKILL_BUTTON: a
-// 48 target that is the press area, a 33 disc centred in it with a 1 ink edge (a 4 ink annulus
-// when selected), and a 20 glyph centred on the disc. The discs are small buttons, so neighbouring
-// discs sit SMALL_BUTTON_GAP apart: targets gap (9) apart, a 57 pitch.
-const DISC = 33;
-const TARGET = HIT_RULE.minTarget;
-export const HUD_BUTTON = {
-  annulus: 4,
-  disc: DISC,
-  edge: 1,
-  gap: SMALL_BUTTON_GAP - (TARGET - DISC),
-  glyph: 20,
-  target: TARGET,
-} as const;
-
-// The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
-// non-Laser disc, height high with radius corners and padding at each end around the count in
-// TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
-// lower edge; the conversation box's top sits clearance below its bottom.
-export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;
-
-// A weapon disc's level marks (art/controls.md "Weapon level"): at levels 2 and 3 the disc's
-// HUD_BUTTON.edge takes the tier colour, with a halo `halo.spread` wide and `halo.blur` soft just
-// outside it and, on a light field, an `outline` ink line under the halo. One to three pips, each
-// `pip.size` across in a `pip.outline` ink outline, centres `pip.pitch` apart, the row centred
-// across and `below` the disc's centre.
-export const HUD_WEAPON_LEVEL = {
-  below: 12,
-  halo: { blur: 2, spread: 1 },
-  outline: 1,
-  pip: { outline: 1, pitch: 7, size: 4 },
-} as const;
-
-// Where a disc and a glyph sit inside their target.
-export const HUD_BUTTON_INSET = {
-  disc: (HUD_BUTTON.target - HUD_BUTTON.disc) / 2,
-  glyph: (HUD_BUTTON.target - HUD_BUTTON.glyph) / 2,
-} as const;
-
-// The HUD button row, from the HUD rect's top-right corner: its targets reach the disc inset past
-// the corner, so the outermost disc's drawn edge and every disc's drawn top sit on the rect, and
-// each disc centres on the row's centre line, the pause disc's centre. bottom is the targets'.
-export const HUD_ROW = {
-  bottom: HUD_BUTTON.target - HUD_BUTTON_INSET.disc,
-  centre: HUD_BUTTON.disc / 2,
-  reach: HUD_BUTTON_INSET.disc,
-} as const;
-
-// Storybook Skip: a compact secondary control apart from page navigation, centred on the HUD
-// row's centre line. Both are small buttons, so while the settings button shows Skip ends
-// SMALL_BUTTON_GAP left of its disc, whose drawn right edge is on the HUD rect's top-right corner;
-// otherwise Skip's drawn right edge is on that corner. Offsets from that corner.
-export const STORY_SKIP = {
-  right: { besideSettings: HUD_BUTTON.disc + SMALL_BUTTON_GAP, corner: 0 },
-  top: HUD_ROW.centre - TEXT_BUTTON.compactHeight / 2,
-} as const;
-
-// The storybook panel's highest top: the HUD row's bottom plus a gap, from the HUD rect's top, so
-// the panel never runs under Skip or the settings button.
-export const STORY_PANEL_TOP = HUD_ROW.bottom + SPACING.gap;
 
 // On Ada's room page, the pause button's press area's bottom plus a gap, from the HUD rect's top.
 export const STORY_ROOM_PANEL_TOP = PAUSE_BUTTON.hit.y + PAUSE_BUTTON.hit.height + SPACING.gap;
@@ -221,11 +175,6 @@ export function hudRowWidth(count: number): number {
   return count > 0 ? count * HUD_BUTTON.target + (count - 1) * HUD_BUTTON.gap : 0;
 }
 
-// TYPE.label's advance, in font units, for each character a count holds (Liberation Sans Bold,
-// 2048 units per em): its digits are tabular, every one 1139, as is k; m is 1821.
-const COUNT_ADVANCE = { digit: 1139, k: 1139, m: 1821 } as const;
-const COUNT_EM = TYPE.label.size / 2048;
-
 // The status pill (art/layout.md "Status pill"): one PILL holding the Stardust count. Its left
 // edge is a gap right of the pause press area while the pause button shows, and on the HUD rect's
 // left edge (xAlone) while it is hidden, so the leftmost drawn art always sits HUD_EDGE in; it
@@ -238,23 +187,8 @@ const COUNT_EM = TYPE.label.size / 2048;
 // count, centred across on its slot, its 20 line box top tick.top below the count's (HUD rect top
 // + 36.5, on the item notice's row).
 export const STATUS_PILL = {
-  cargoIcon: 20,
-  divider: { height: 16, width: 1 },
-  dividerGap: 12,
-  markGap: SPACING.markGap,
-  // The narrowest slot: one digit, so "0" keeps its icon and gap.
-  minCount: COUNT_ADVANCE.digit * COUNT_EM,
-  pill: PILL,
-  stardustIcon: 20,
-  tick: {
-    outline: 1,
-    rise: 4,
-    // From the count's line box top: the count's line, the pill's padding below it and a mark gap.
-    top: (PILL.height + TYPE.label.lineHeight) / 2 + SPACING.markGap,
-  },
+  ...STATUS_PILL_LAYOUT,
   x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
-  xAlone: 0,
-  y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
 /** A count's rendered width in TYPE.label: the sum of its characters' advances. */
@@ -312,15 +246,6 @@ export function statusTickCentres(counts: StatusCounts): { ore: number | null; s
   };
 }
 
-// The bottom controls' drawn bottom above the view's bottom, inside the bottom safe inset: the
-// joysticks' rings (TOUCH_STICK.bottom) and the shield pill sit level on it (controlsBottom).
-export const CONTROLS_BOTTOM = 40;
-
-// The least gap from each stick's drawn ring, and the shield pill level with them, to the game
-// area's edge (art/layout.md "Stick area margin"). Here rather than touchControls.ts, which
-// imports this module, so the shield pill can read it.
-export const STICK_AREA_MARGIN = 8;
-
 /**
  * The bottom controls' drawn bottom in a logical view view big with insets: CONTROLS_BOTTOM above
  * the view's bottom inside the bottom safe inset, as in Chibi, clamped STICK_AREA_MARGIN above the
@@ -333,26 +258,6 @@ export function controlsBottom(insets: Insets, view: Size): number {
     area.y + area.height - STICK_AREA_MARGIN,
   );
 }
-
-// The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
-// shield icon, a mark gap and the bar, whose length follows Shield level: 120, 180 or 240 by 12
-// (a 1 rim, 1 ink, then the fill area 4 shorter by 8 at inset 2), so the pill is the bar plus 42
-// wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
-// bar grows both ways; its bottom sits level with the sticks' drawn bottom (controlsBottom). The
-// same place on touch and desktop.
-const SHIELD_BARS = [120, 180, 240] as const;
-export const SHIELD_PILL = {
-  bar: { height: 12, inset: 2, rim: 1 },
-  bars: SHIELD_BARS,
-  bottom: CONTROLS_BOTTOM,
-  // The leading edge inside the fill's right end while the shield regenerates.
-  edge: 2,
-  icon: HUD_BUTTON.glyph,
-  // Below this share of capacity the shield is low.
-  low: 0.25,
-  markGap: SPACING.markGap,
-  pill: PILL,
-} as const;
 
 /** The shield bar's length at Shield level `level`, 1 to 3 (outside that, the nearest). */
 export function shieldBarWidth(level: number): number {

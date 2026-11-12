@@ -2,9 +2,9 @@
  * Deterministic dump of every computed UI layout result, as canonical JSON: every exported
  * constant of each src/ui/layout module, and every exported layout function over a fixed set
  * of viewports, safe-area insets and state variants. A layout refactor is behaviour-preserving
- * when the dump stays byte-identical to tools/layout-dump.json.
+ * when the dumps from before and after it are byte-identical.
  *
- * Usage: node tools/layout-dump.ts > tools/layout-dump.json
+ * Usage: node tools/layout-dump.ts > layout-dump.json
  */
 import { pathToFileURL } from "node:url";
 

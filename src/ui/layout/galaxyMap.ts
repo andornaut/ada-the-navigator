@@ -2,12 +2,26 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
 import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
+import {
+  GALAXY_MAP_ACTIONS,
+  GALAXY_MAP_ARC_POINTS,
+  GALAXY_MAP_LAYOUT,
+  GALAXY_MAP_MOVE,
+  GALAXY_MAP_PANEL,
+  SAFE_MARGIN,
+  SPACING,
+} from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { SHIP_HEADINGS, SHIP_NOSE } from "../../model/nose.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
-import { FRAME_LINE, TEXT_BUTTON } from "./controls.ts";
-import { hudRect, type Insets, playView, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
-import { BUTTON_GAP, SPACING } from "./tokens.ts";
+import { hudRect, type Insets, playView, safeRect, type Size } from "./playView.ts";
+export {
+  GALAXY_MAP_ACTIONS,
+  GALAXY_MAP_MOVE,
+  GALAXY_MAP_PANEL,
+  GALAXY_MAP_SKY,
+  GALAXY_MAP_SKY_LEFT,
+} from "../../data/layout.ts";
 
 // Galaxy selection's route map (art/layout.md "Galaxy selector", art/route-sky.md), after Chibi's
 // zone map: six markers left to right along one arc over the route sky, a panel for the chosen
@@ -19,19 +33,13 @@ export interface Point {
   readonly y: number;
 }
 
-/**
- * The arc the markers sit on (art/layout.md "Marker centres"): the circle through route
- * positions 1 and 6 whose top is `top`, its radius (half chord² + rise²) / (2 rise) about the
- * point that far below the top, and the six centres at equal angles off vertical across it.
- */
-const ARC_POINTS = { first: { x: 96, y: 122 }, last: { x: 624, y: 122 }, top: { x: 360, y: 46 } };
-const HALF_CHORD = (ARC_POINTS.last.x - ARC_POINTS.first.x) / 2;
-const RISE = ARC_POINTS.first.y - ARC_POINTS.top.y;
+const HALF_CHORD = (GALAXY_MAP_ARC_POINTS.last.x - GALAXY_MAP_ARC_POINTS.first.x) / 2;
+const RISE = GALAXY_MAP_ARC_POINTS.first.y - GALAXY_MAP_ARC_POINTS.top.y;
 const RADIUS = (HALF_CHORD ** 2 + RISE ** 2) / (2 * RISE);
 const HALF_ANGLE = Math.asin(HALF_CHORD / RADIUS);
 
 export const GALAXY_MAP_ARC = {
-  centre: { x: ARC_POINTS.top.x, y: ARC_POINTS.top.y + RADIUS },
+  centre: { x: GALAXY_MAP_ARC_POINTS.top.x, y: GALAXY_MAP_ARC_POINTS.top.y + RADIUS },
   /** Route position 1's angle off vertical, in radians; position 6's is its negative. */
   first: -HALF_ANGLE,
   radius: RADIUS,
@@ -53,101 +61,10 @@ const MARKER_ANGLES = Array.from(
   (_, index) => GALAXY_MAP_ARC.first + index * GALAXY_MAP_ARC.step,
 );
 
-const CREAM = "#EAD4AA";
-const INK = "#181425";
-const GREY = "#B8B3C9";
-
 export const GALAXY_MAP = {
+  ...GALAXY_MAP_LAYOUT,
   // Route positions 1 to 6 left to right along the arc (GALAXY_MAP_ARC).
   centres: MARKER_ANGLES.map(arcPoint),
-  colors: { cream: CREAM, grey: GREY, ink: INK },
-  // Each name on an ink pill: 20 high, the label plus 12 wide, its top 19 below the centre.
-  label: { alpha: 0.85, height: 20, padding: 6, radius: 4, top: 19 },
-  // The 36 frame: a radius 12 disc with a 1.5 ink edge over an ink backing disc, radius 15 at
-  // 0.85; the cream selected ring at radius 17 (band 16 to 18).
-  marker: {
-    backing: { alpha: 0.85, radius: 15 },
-    disc: 12,
-    edge: 1.5,
-    frame: 36,
-    ring: { color: CREAM, radius: 17, width: 2 },
-  },
-  // The arc between consecutive markers, stamped every 0.5, stopping 15 from each centre; its
-  // look is its destination's.
-  path: {
-    locked: { color: GREY, kind: "dashes", off: 4, on: 6, width: 2 },
-    open: { color: CREAM, kind: "solid", width: 4 },
-    step: 0.5,
-    trim: 15,
-  },
-  // A 48 press area and the 44 focus ring centred on each marker.
-  press: 48,
-  // The available rect's inset rules: 1 px, the inner 3 inside the outer.
-  rules: { inner: "#4A4660", inset: 3, outer: "#6B6685", width: FRAME_LINE },
-  // The ship frame drawn 42, the game area's in-flight size, on (centre x, centre y - 33).
-  ship: { lift: 33, size: 42 },
-} as const;
-
-// The route sky (top-centre on the play view's top-centre) and ground (bottom on the view's
-// bottom), at 2 image px per logical px; the figures on the ground at their canvas points.
-export const GALAXY_MAP_SKY = {
-  ground: { height: 120, width: 960 },
-  sky: { height: 540, width: 960 },
-  // Past the sky, the view shows its top colour.
-  top: "#1F1A38",
-} as const;
-
-/** The sky and ground's left edge in play-view px: centred on the play view. */
-export const GALAXY_MAP_SKY_LEFT = (SCREEN.width - GALAXY_MAP_SKY.sky.width) / 2;
-
-const CAPTURE = { frame: FRAME_LINE, height: 90, width: 180 } as const;
-const PANEL_PADDING = SPACING.gap;
-const CAPTURE_GAP = 12;
-
-export const GALAXY_MAP_PANEL = {
-  capture: { ...CAPTURE, frameColor: INK },
-  // The supporting colour for "Galaxy {number}", locked text and the development line.
-  colors: { development: GREY, flavor: CREAM, name: "#FFFFFF", number: GREY },
-  height: 112,
-  // SPACING.gap with the 2 px frame inside it (art/layout.md "Exceptions").
-  padding: PANEL_PADDING,
-  rowGap: SPACING.rowGap,
-  text: {
-    left: PANEL_PADDING + CAPTURE.width + 2 * CAPTURE.frame + CAPTURE_GAP,
-    width: 404,
-  },
-  width: 614,
-} as const;
-
-const ACTION_WIDTH = 192;
-const CENTRE = SCREEN.width / 2;
-
-export const GALAXY_MAP_ACTIONS = {
-  // Earth secondary left, Jump primary right, BUTTON_GAP apart about the play view's centre.
-  earth: CENTRE - BUTTON_GAP / 2 - ACTION_WIDTH,
-  height: TEXT_BUTTON.height,
-  jump: CENTRE + BUTTON_GAP / 2,
-  width: ACTION_WIDTH,
-} as const;
-
-export const GALAXY_MAP_MOVE = {
-  // The unlock's arrival: the selected ring fades in, the panel crossfades.
-  arrival: { panel: 160, ring: 120 },
-  // A reduced-motion unlock: the ship fades out, the markers switch, the ship fades in.
-  reduced: { fade: 150 },
-  // A selection move: 360 px/s along the legs, clamped, easeInOutSine on arc length.
-  selection: { max: 0.9, min: 0.3, speed: 360 },
-  // The unlock: the markers crossfade and their legs draw over 300 ms, a ring pulses in the
-  // farthest new marker's hue over 400 ms, then the ship flies to it at 180 px/s, clamped so
-  // the whole unlock takes at most 2.4 s (gameplay/rules.md).
-  unlock: {
-    depart: 0.4,
-    fade: 0.3,
-    max: 2.4,
-    min: 0.8,
-    pulse: { alpha: 0.8, from: 13, to: 26, width: 2 },
-    speed: 180,
-  },
 } as const;
 
 /** The view's route map rects, in logical px from the view's top-left. */

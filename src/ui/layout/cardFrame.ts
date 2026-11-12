@@ -1,34 +1,13 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-import type { Rect } from "@andornaut/game-kit/rect";
 import { HIT_RULE, hitAround } from "@andornaut/game-kit/ui/hitAreas";
 
-import { CARD_SLICE } from "./controls.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { CARD_CLOSE_ART, CARD_CONTENT, TYPE, UI_FONT_FACE } from "../../data/layout.ts";
 
-// The modal card's frame and header (art/layout.md "Modals"), as Chibi's
-// src/ui/layout/cardFrame.ts, in logical px.
-export const CARD_CONTENT = {
-  closeInset: 6,
-  closeSize: 24,
-  // The frame's nine-slice edge, counted inside the padding; a title's top gap is measured inside
-  // it.
-  frameBorder: CARD_SLICE,
-  gap: SPACING.gap,
-  lineHeight: TYPE.body.lineHeight,
-  padding: MODAL_CONTENT.padding,
-  rowGap: SPACING.rowGap,
+export { CARD_CONTENT, UI_FONT_FACE } from "../../data/layout.ts";
+
+export const CARD_CLOSE = {
+  art: CARD_CLOSE_ART,
+  hit: hitAround(HIT_RULE, CARD_CLOSE_ART),
 } as const;
-
-// The close X's face, closeInset in from the card's top and right edges (x measured in from the
-// right edge), and its press area: hitAround(face), which may extend past the card.
-const CLOSE_ART: Rect = {
-  height: CARD_CONTENT.closeSize,
-  width: CARD_CONTENT.closeSize,
-  x: CARD_CONTENT.closeInset,
-  y: CARD_CONTENT.closeInset,
-};
-
-export const CARD_CLOSE = { art: CLOSE_ART, hit: hitAround(HIT_RULE, CLOSE_ART) } as const;
 
 // The title's clearance on each side: the full positioned close target plus a gap, mirrored, or
 // the ordinary padding without a close control.
@@ -37,13 +16,6 @@ export function cardTitleReserve(close: boolean): number {
     ? Math.max(CARD_CONTENT.padding, CARD_CLOSE.hit.x + CARD_CLOSE.hit.width + CARD_CONTENT.gap)
     : CARD_CONTENT.padding;
 }
-
-// art: Liberation Sans's vertical metrics in both weights, as fractions of the font size.
-export const UI_FONT_FACE = {
-  ascent: 1854 / 2048,
-  capHeight: 1409 / 2048,
-  descent: 434 / 2048,
-} as const;
 
 // How far the cap height's top sits below the top of a CSS line box of a type role in the UI
 // font: the half-leading, then the ascent above the cap height.

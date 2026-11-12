@@ -5,7 +5,10 @@
 // art, painted at the scene's SVG raster scale (texels per logical px) with antialiased edges and
 // shown TOUCH_CHROME_ALPHA opaque.
 
+import { TOUCH_CHROME_FRAME } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
+
+export { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../data/layout.ts";
 
 export interface Point {
   readonly x: number;
@@ -34,8 +37,6 @@ export const TOUCH_CHROME_COLOURS: TouchChromeColours = {
   white: 0xffffff,
 };
 
-export const TOUCH_CHROME_FRAME = 75;
-export const TOUCH_KNOB_FRAME = 11;
 export const TOUCH_CHROME_ALPHA = 0.85;
 
 // The UI manifest sheet each kind reads its frames, tags and timing from. Both rings use the

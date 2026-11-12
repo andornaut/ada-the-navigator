@@ -10,4 +10,3 @@ package-lock.json
 .worktrees/
 .check-results/
 .cloudflare/
-tools/layout-dump.json

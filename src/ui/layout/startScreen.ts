@@ -1,46 +1,14 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { SCREEN } from "../../data/screen.ts";
-import { TEXT_BUTTON } from "./controls.ts";
+import { START_SCREEN } from "../../data/layout.ts";
 import { playView, type Size } from "./playView.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
+export { START_SCREEN } from "../../data/layout.ts";
 
 // The start screen (art/layout.md "Start screen"), after Chibi's START_SCREEN: Ada's ship above
 // the two-line wordmark, the action row under it, then the note. Every part is in play-view px,
 // from the game area's top-left (playView(view)), so it stays centred on the game area at every
 // aspect and is untouched by insets. The field is placed by title-screen.json; the nav discs keep
 // the HUD row (hudButtonTarget).
-
-const CENTRE = SCREEN.width / 2;
-const BUTTON_WIDTH = 192;
-const WORDMARK = { height: 102, width: 270 } as const;
-const WORDMARK_TOP = 148;
-// The action row sits 14 below the wordmark, as Chibi's row sits 15 under its logo.
-const ACTIONS_TOP = WORDMARK_TOP + WORDMARK.height + 14;
-
-export const START_SCREEN = {
-  actions: {
-    height: TEXT_BUTTON.height,
-    // Restart left and Continue right of the centre, BUTTON_GAP apart; Start alone on the centre.
-    left: {
-      continue: CENTRE + BUTTON_GAP / 2,
-      restart: CENTRE - BUTTON_WIDTH - BUTTON_GAP / 2,
-      start: CENTRE - BUTTON_WIDTH / 2,
-    },
-    top: ACTIONS_TOP,
-    width: BUTTON_WIDTH,
-  },
-  // One body line box, a gap below the action row, centred on the game area.
-  note: {
-    centre: CENTRE,
-    height: TYPE.body.lineHeight,
-    top: ACTIONS_TOP + TEXT_BUTTON.height + SPACING.gap,
-  },
-  // The selected paint's ship-26, its 96 frame drawn 280 square on this centre; its speed jets
-  // draw behind it at the same scale.
-  ship: { centre: { x: 378, y: 84 }, frame: 96, size: 280 },
-  wordmark: { ...WORDMARK, left: CENTRE - WORDMARK.width / 2, top: WORDMARK_TOP },
-} as const;
 
 export type StartAction = keyof typeof START_SCREEN.actions.left;
 

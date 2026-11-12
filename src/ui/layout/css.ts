@@ -1,4 +1,5 @@
-import { HUD_EDGE, type Side } from "./playView.ts";
+import { HUD_EDGE } from "../../data/layout.ts";
+import { type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
 // play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI

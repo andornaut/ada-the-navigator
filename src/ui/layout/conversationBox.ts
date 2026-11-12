@@ -1,16 +1,8 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import {
-  HUD_AMMO_COUNT,
-  HUD_ROW,
-  hudRect,
-  type Insets,
-  playView,
-  SAFE_MARGIN,
-  safeRect,
-  type Size,
-} from "./playView.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { CONVERSATION_BOX, SAFE_MARGIN } from "../../data/layout.ts";
+import { hudRect, type Insets, playView, safeRect, type Size } from "./playView.ts";
+export { CONVERSATION_BOX } from "../../data/layout.ts";
 
 // The in-flight conversation box (art/layout.md "Conversation box"), shared with Chibi, in logical
 // px: a fixed 60 high panel, centred, at most 480 wide within the page safe rect. A 48 portrait
@@ -19,42 +11,6 @@ import { SPACING, TYPE } from "./tokens.ts";
 // left-aligned body lines centred on the panel. The 20 high name tab overhangs the panel's top by
 // half its height at the panel's left end. The box top sits a clearance below the weapon count
 // pills, so every top button stays live.
-
-const SLOT = 48;
-const FRAME_EDGE = 2;
-const FRAME = SLOT + 2 * FRAME_EDGE;
-const PADDING = 4;
-const TAB = { edge: 1, height: 20, inset: SPACING.gap, overhang: 10, radius: 2 };
-
-export const CONVERSATION_BOX = {
-  height: FRAME + 2 * PADDING,
-  // At most this many wrapped lines; the text never shrinks.
-  lines: 2,
-  maxWidth: 480,
-  // The name tab's label, a mark gap inside each side of the tab.
-  name: TYPE.label,
-  // Notices: no portrait or tab, their lines centred a gap inside each side.
-  noticeInset: SPACING.gap,
-  padding: PADDING,
-  // The ink panel, translucent so space shows through; text, tab and portrait stay opaque.
-  panel: { alpha: 0.65, ink: "#181425" },
-  // A 22 compact frame at 2x, centred in the navy slot inside the 2 ink frame edge.
-  portrait: { art: 44, edge: FRAME_EDGE, face: "#262b44", frame: FRAME, slot: SLOT },
-  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 32
-  // headings (heading 4) is this far above the pivot.
-  ship: { hullRise: 11.83 },
-  // Space kept clear between the box's bottom and the top of Ada's ship.
-  shipClearance: 24,
-  tab: { ...TAB, labelInset: SPACING.markGap },
-  text: TYPE.body,
-  // The text column's gap from the portrait frame and from the panel's far edge.
-  textGap: SPACING.gap,
-  // From the HUD rect's top: the weapon count pills' bottom (the targets reach HUD_ROW.reach above
-  // the rect) plus HUD_AMMO_COUNT.clearance, + 51.5. The tab, overhang above it, clears the status
-  // pill and its +N tick, and starts clear of every weapon column across (art/layout.md "Tab
-  // clearance").
-  top: -HUD_ROW.reach + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + HUD_AMMO_COUNT.clearance,
-} as const;
 
 /** The box in the logical view: centred, below the HUD rect's row, at most maxWidth within the page rect. */
 export function conversationBoxRect(insets: Insets, view: Size): Rect {

@@ -3012,11 +3012,8 @@ try {
 
   // The start screen (art/layout.md "Start screen"): every part in play-view px from the game
   // area's left edge, at 720x360 and on an 844x390 phone, without and with insets (left and right
-  // 43, bottom 19 logical), first run and with a save. START_SCREEN comes from the layout dump,
-  // which its test keeps equal to the source, since the source imports the kit by package name.
-  const { START_SCREEN } = JSON.parse(
-    readFileSync(new URL("layout-dump.json", import.meta.url), "utf8"),
-  ).constants["startScreen.ts"];
+  // 43, bottom 19 logical), first run and with a save.
+  const { START_SCREEN } = await import(new URL("../src/data/layout.ts", import.meta.url));
   const startScreenAt = async (name, size, insets) => {
     await page.setViewportSize(size);
     await page.evaluate((logical) => {

@@ -1,28 +1,5 @@
-import { PILL } from "./controls.ts";
-import { SPACING } from "./tokens.ts";
-
-// The item notice's chip (art/layout.md "Item notice"), in logical px from the HUD rect's top-left
-// corner: 24 high, its top HUD rect top + 34.5 (SPACING.rowGap below the status pill), opaque ink
-// with a 1 rim inside the edge, holding the 20 icon PILL.padding in, a mark gap, then the label
-// and PILL.padding. It centres across on where its gain lands, clamped between the pill's left
-// edge and SPACING.pageInset left of the leftmost weapon target.
-export const ITEM_NOTICE = {
-  /** The appear's start offset: out from under the pill. */
-  appearDrop: -8,
-  /** The fly's control point lies this far below its start. */
-  flyDip: 6,
-  height: 24,
-  icon: 20,
-  markGap: SPACING.markGap,
-  padding: PILL.padding,
-  radius: PILL.radius,
-  rim: 1,
-  /** A holodisk's notice rises this far as it fades in place. */
-  rise: 4,
-  /** The collapsed square round the icon. */
-  square: 24,
-  top: 34.5,
-} as const;
+import { ITEM_NOTICE } from "../../data/layout.ts";
+export { ITEM_NOTICE } from "../../data/layout.ts";
 
 /** The chip's width for a label: padding, the icon and its mark gap, the label and padding. */
 export function chipWidth(label: number): number {

@@ -1,19 +1,25 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
-import { CARD_CONTENT, cardHeaderLayout } from "./cardFrame.ts";
-import { TEXT_BUTTON } from "./controls.ts";
-import { CONVERSATION_BOX, conversationSpeakerLayout } from "./conversationBox.ts";
-import { type Insets, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
-import { BALANCE } from "./shopCard.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import {
+  BALANCE,
+  CARD_CONTENT,
+  CONVERSATION_BOX,
+  KEEPER_PIP,
+  KEEPER_PIPS_WIDTH,
+  SAFE_MARGIN,
+  SPACING,
+  TEXT_BUTTON,
+  TYPE,
+} from "../../data/layout.ts";
+import { cardHeaderLayout } from "./cardFrame.ts";
+import { conversationSpeakerLayout } from "./conversationBox.ts";
+import { type Insets, safeRect, type Size } from "./playView.ts";
 
 // The station card (art/layout.md "Station card"), in logical px: header, the balance, the
 // keeper's block and the action row. The block is the conversation box's panel inside the card:
 // its width, height, ink, portrait frame on the right and name tab, overhanging its top. On a
 // first docking three pips follow the text column, which narrows to make room for them.
 
-const PIP = { count: 3, disc: 6, gap: 4 };
-const PIPS_WIDTH = PIP.count * PIP.disc + (PIP.count - 1) * PIP.gap;
 // A keeper's text column, beside the portrait frame on the panel's right.
 const TEXT = conversationSpeakerLayout(true, "right", CONVERSATION_BOX.maxWidth).text;
 
@@ -22,10 +28,10 @@ export const KEEPER_BLOCK = {
   genericInset: CONVERSATION_BOX.noticeInset,
   height: CONVERSATION_BOX.height,
   // Static and decorative: shown lines filled cream, coming lines ringed.
-  pips: { ...PIP, offset: SPACING.gap, ring: 1, width: PIPS_WIDTH },
+  pips: { ...KEEPER_PIP, offset: SPACING.gap, width: KEEPER_PIPS_WIDTH },
   text: TEXT,
   // The text column while the pips show: the pips and their offset come out of it.
-  textWithPips: TEXT.width - SPACING.gap - PIPS_WIDTH,
+  textWithPips: TEXT.width - SPACING.gap - KEEPER_PIPS_WIDTH,
   width: CONVERSATION_BOX.maxWidth,
 } as const;
 
@@ -36,7 +42,7 @@ export function keeperPips(lineCount: number): { readonly x: number; readonly y:
   const textTop = (KEEPER_BLOCK.height - lines * lineHeight) / 2;
   return {
     x: TEXT.x + KEEPER_BLOCK.textWithPips + KEEPER_BLOCK.pips.offset,
-    y: textTop + (lines - 1) * lineHeight + (lineHeight - PIP.disc) / 2,
+    y: textTop + (lines - 1) * lineHeight + (lineHeight - KEEPER_PIP.disc) / 2,
   };
 }
 
