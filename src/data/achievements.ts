@@ -12,7 +12,7 @@ export type AchievementGoal =
   | { readonly kind: "blockade" }
   /** Landmarks charted in the galaxy with the most charted, of that galaxy's landmarks. */
   | { readonly kind: "chartOne" }
-  /** Landmarks charted across every galaxy, of all their landmarks. */
+  /** Landmarks charted across all six galaxies, of all their landmarks. */
   | { readonly kind: "chartAll" }
   | { readonly kind: "jobs"; readonly need: number }
   /** Station jobs and repeatable activities together. */
@@ -77,7 +77,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: "Cartographer",
   },
   {
-    condition: "Chart every landmark in all four galaxies.",
+    condition: "Chart every landmark in all six galaxies.",
     counted: true,
     goal: { kind: "chartAll" },
     id: "astrasAtlas",
