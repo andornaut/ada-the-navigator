@@ -60,11 +60,12 @@ Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story craft other than the miner, stranded craft, traveling debris
 and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves,
-river debris, project frames and the `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
-Andromeda the settlers' station, the settlements, the guide beacons, their
-project frames, the garnet drones, Pip's and the settler's portraits, the
-backdrop haze and the `backdropHaze` link. Sunflower, Whirlpool and Cartwheel each
-also hold their cast's portraits; General Gadget's and Grandma's are in core. The station, discovery cache, coral
+river debris, project frames and the `whales`, `whirlpoolCurrents`,
+`whirlpoolDebris` and `whirlpoolProjects` links; Andromeda the settlers'
+station, the settlements, the guide beacons, their project frames, the garnet
+drones, the Munix portraits, the backdrop haze and the `backdropHaze` link.
+Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
+General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget and `tow` serve every galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
 finale also draws. Core entries keep their files' paths, so a galaxy's art

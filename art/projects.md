@@ -86,9 +86,9 @@ plays.
 them, keyed by project id; each generator replaces only its own projects
 through `art/tools/projects.ts`, so reruns in any order leave the file
 byte-identical. Cartwheel's are [hub frames](cartwheel.md#world-changes) and
-Whirlpool's are in [whirlpool.md](whirlpool.md#project-world-changes), placed by
-`public/art/whirlpool/projects.json`. A project absent from `projects.json` has no world art yet, so
-funding it changes nothing in the world.
+Whirlpool's are placed by `public/art/whirlpool/projects.json`
+([Whirlpool](whirlpool.md#project-world-changes)). A project with no world art
+in any of these changes nothing in the world when funded.
 
 A change is one of two kinds:
 
