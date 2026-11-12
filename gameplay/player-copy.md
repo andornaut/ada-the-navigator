@@ -48,7 +48,7 @@ Ada's room, rock unpolished:
 
 - Narration: "That evening, Ada polishes the rock at her desk. Under the dirt,
   thin lines appear, like a map of somewhere far away."
-- Narration: "Miso and Pepper watch from the bed, tails twitching."
+- Narration: "Archie and Kiwi watch from the bed, tails twitching."
 
 Ada's room, rock glowing:
 
@@ -463,7 +463,7 @@ Black Eye:
 - Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
-  morning, the rock is warm again, and Miso and Pepper are curled at her feet."
+  morning, the rock is warm again, and Archie and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
