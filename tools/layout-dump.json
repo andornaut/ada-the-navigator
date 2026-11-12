@@ -360,6 +360,19 @@
         "centre": 16.5,
         "reach": 7.5
       },
+      "HUD_WEAPON_LEVEL": {
+        "below": 12,
+        "halo": {
+          "blur": 2,
+          "spread": 1
+        },
+        "outline": 1,
+        "pip": {
+          "outline": 1,
+          "pitch": 7,
+          "size": 4
+        }
+      },
       "NO_INSETS": {
         "bottom": 0,
         "left": 0,
