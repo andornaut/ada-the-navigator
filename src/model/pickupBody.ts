@@ -1,6 +1,7 @@
 import ore from "../../public/art/cartwheel/ore-nugget.json" with { type: "json" };
 import cache from "../../public/art/discovery-cache.json" with { type: "json" };
 import huntGlint from "../../public/art/hunt-glint.json" with { type: "json" };
+import ammoPack from "../../public/art/pickups/ammo-pack.json" with { type: "json" };
 import stardust from "../../public/art/stardust.json" with { type: "json" };
 import type { Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
@@ -43,11 +44,13 @@ const CACHE = sheetOutline(cache as Sheet, [" 1.aseprite", " 2.aseprite"]);
 export const HUNT_GLINT = sheetOutline(huntGlint as Sheet);
 /** A cargo piece, Art's ore nugget. */
 const ORE = sheetOutline(ore as Sheet);
+/** An ammo pack's cartridge clip: every frame of its glint loop. */
+export const AMMO_PACK = sheetOutline(ammoPack as Sheet);
 const SQUARES = new Map<number, Parts>();
 
 /**
  * A pickup's drawn outline in screen px from its position, or null to keep its circle: the
- * discovery cache, the Stardust gem, the ore nugget, or an upgrade pickup's screen-aligned square
+ * discovery cache, the Stardust gem, the ore nugget, the ammo pack, or an upgrade pickup's screen-aligned square
  * reaching half its 1.5 px outline past its radius.
  */
 export function pickupOutline(object: SpaceObject): Parts | null {
@@ -63,8 +66,10 @@ export function pickupOutline(object: SpaceObject): Parts | null {
   if (object.role === "cargo") {
     return ORE ?? null;
   }
-  // The upgrade and ammo pack pickups share one square.
-  if (object.upgrade || object.ammoPack) {
+  if (object.ammoPack) {
+    return AMMO_PACK ?? null;
+  }
+  if (object.upgrade) {
     const half = object.radius + 0.75;
     let square = SQUARES.get(half);
     if (!square) {

@@ -265,6 +265,7 @@ export class GameScene extends Scene {
   cacheArt: LoopArt<Asset> | undefined;
   holodiskArt: LoopArt<Asset> | undefined;
   beaconArt: LoopArt<Asset> | undefined;
+  ammoPackArt: LoopArt<Asset> | undefined;
   // Discovery caches Ada has approached in this flight; a lit cache stays lit.
   litCaches = new Set<string>();
   litFlight: number | undefined;

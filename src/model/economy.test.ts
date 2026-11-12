@@ -555,6 +555,7 @@ describe("tractor beam and pickup reach", () => {
     ["cache", { amount: 3, radius: 10, role: "discovery" }],
     ["ore nugget", { radius: 7, role: "cargo" }],
     ["upgrade pickup", { radius: 10, upgrade: true }],
+    ["ammo pack", { ammoPack: true, radius: 10 }],
   ] as const;
 
   it.each(KINDS.flatMap(([name, extra]) => TRACTOR.map((row) => [name, ...row, extra] as const)))(
@@ -576,6 +577,22 @@ describe("tractor beam and pickup reach", () => {
       });
     },
   );
+
+  it("collects an ammo pack at the one pickup reach, its pack chosen as Ada collects it", () => {
+    const value = flight();
+    value.objects.push({
+      ammoPack: true,
+      hp: 1,
+      id: "pack",
+      kind: "pickup",
+      radius: 10,
+      x: 0,
+      y: 0,
+    });
+    const events = stepFlight(CONTENT, 0.001, idle, value);
+    expect(events).toContainEqual({ id: "pack", type: "ammoCollected" });
+    expect(value.objects.some((object) => object.id === "pack")).toBe(false);
+  });
 
   it("zips Stardust into the ship as it collects, as every pickup does", () => {
     const value = flight();

@@ -90,13 +90,20 @@ import { readStardustArt } from "./stardustArt.ts";
 import { readOutpostArt, readStationArt } from "./stationArt.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
-import { BEACON_FRAMES, CACHE_FRAMES, HOLODISK_FRAMES, readLoopArt } from "./worldArt.ts";
+import {
+  AMMO_PACK_FRAMES,
+  BEACON_FRAMES,
+  CACHE_FRAMES,
+  HOLODISK_FRAMES,
+  readLoopArt,
+} from "./worldArt.ts";
 
 /** The scene state and methods this module's functions use. */
 export type UiContext = Scene &
   Pick<
     GameScene,
     | "add"
+    | "ammoPackArt"
     | "asteroidArt"
     | "backdropRules"
     | "backdrops"
@@ -288,6 +295,7 @@ export function buildScene(scene: UiContext): void {
   scene.cacheArt = readLoopArt(scene.shipAssets, "discovery-cache", CACHE_FRAMES);
   scene.upgradePickupArt = readUpgradePickup(manifest?.assets ?? []);
   scene.holodiskArt = readLoopArt(scene.shipAssets, "holodisk", HOLODISK_FRAMES);
+  scene.ammoPackArt = readLoopArt(scene.shipAssets, "ammo-pack", AMMO_PACK_FRAMES);
   scene.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);
   scene.manifest = {
     assets: bootAssets,

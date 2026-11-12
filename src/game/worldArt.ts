@@ -1,8 +1,9 @@
 import { carriesStardust } from "../model/drops.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 
-// Art's looping world sheets: the discovery cache (art/outposts.md) and the holodisk pickup and
-// beacon (art/holodisk.md). Each names its frames and loops through `loop` steps.
+// Art's looping world sheets: the discovery cache (art/outposts.md), the holodisk pickup and
+// beacon (art/holodisk.md) and the ammo pack (art/weapons.md "Ammo pack"). Each names its frames
+// and loops through `loop` steps.
 
 export interface LoopAsset {
   readonly displayHeight?: number;
@@ -69,6 +70,7 @@ export function loopFrame(
 export const CACHE_FRAMES = ["hidden", "litA", "litB"] as const;
 export const HOLODISK_FRAMES = ["rest", "turn1", "edge", "turn2"] as const;
 export const BEACON_FRAMES = ["base", "bright"] as const;
+export const AMMO_PACK_FRAMES = ["rest", "glint1", "glint2", "glint3"] as const;
 
 /** A discovery cache: a Stardust pickup placed as a discovery, not a drop. */
 export function isDiscoveryCache(object: SpaceObject): boolean {
@@ -104,6 +106,14 @@ export function holodiskFrame(
   timeMs: number,
 ): number {
   return reducedMotion ? art.frames.rest! : loopFrame(art, phaseMs, timeMs);
+}
+
+/**
+ * The ammo pack's glint `ms` after the pack appeared, its loop starting from rest; reduced motion
+ * holds rest.
+ */
+export function ammoPackFrame(art: LoopArt, reducedMotion: boolean, ms: number): number {
+  return reducedMotion ? art.frames.rest! : loopFrame(art, 0, ms);
 }
 
 /** The beacon pulses base and bright; reduced motion holds base. */

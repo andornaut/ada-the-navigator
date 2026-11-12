@@ -195,7 +195,7 @@ describe("Art's collision data", () => {
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
-  it("draws the cache, Stardust, ore nugget and upgrade pickups with outlines", () => {
+  it("draws the cache, Stardust, ore nugget, ammo pack and upgrade pickups with outlines", () => {
     const pickup = (extra: Partial<SpaceObject>): SpaceObject => ({
       hp: 1,
       id: "pickup",
@@ -208,6 +208,23 @@ describe("Art's collision data", () => {
     expect(pickupOutline(pickup({ amount: 5, role: "discovery" }))).not.toBeNull();
     expect(pickupOutline(pickup({ amount: 1, role: "stardust" }))).not.toBeNull();
     expect(pickupOutline(pickup({ role: "cargo" }))).not.toBeNull();
+    // The ammo pack's clip, 16 by 14 about its centre on every frame, inside the upgrade square.
+    const frames = (
+      json("pickups/ammo-pack.json") as { frames: Record<string, { collision: unknown }> }
+    ).frames;
+    expect(Object.values(frames)).toHaveLength(4);
+    expect(Object.values(frames).every((frame) => parts(frame.collision))).toBe(true);
+    const clip = pickupOutline(pickup({ ammoPack: true }))!;
+    expect(clip).toHaveLength(4);
+    for (const part of clip) {
+      expect(part).toEqual([
+        { x: -8, y: -7 },
+        { x: 8, y: -7 },
+        { x: 8, y: 7 },
+        { x: -8, y: 7 },
+      ]);
+    }
+    expect(Math.max(...clip.flat().map((at) => Math.hypot(at.x, at.y)))).toBeLessThan(10.75);
     // The upgrade pickup's square reaches half its 1.5 px outline past its radius.
     const square = pickupOutline(pickup({ upgrade: true }))!;
     expect(Math.max(...square.flat().map((at) => at.x))).toBe(10.75);

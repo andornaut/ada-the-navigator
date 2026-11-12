@@ -44,7 +44,14 @@ describe("light-field rule", () => {
       shotEdge: 1,
     });
     expect(LIGHT_FIELD.keylined).toEqual(
-      expect.arrayContaining(["ship", "fighter", "asteroid", "stardust", "upgradePickup"]),
+      expect.arrayContaining([
+        "ship",
+        "fighter",
+        "asteroid",
+        "stardust",
+        "upgradePickup",
+        "ammoPickup",
+      ]),
     );
     // Each jet set is a flat dark outer layer and a core gradient, with no halo. Ada's take her
     // Engine level's dark set: blue, orange and purple.

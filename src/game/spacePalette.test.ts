@@ -15,6 +15,7 @@ import {
 
 const colors = {
   active: "#65C9BF",
+  ammo: "#8FD14F",
   background: "#292734",
   environment: "#34333F",
   environmentDetail: "#403F4D",
@@ -40,7 +41,7 @@ describe("space palette boundary", () => {
     expect(palette.obstacle).toBe(0xd68b72);
     expect(palette.weapon).toBe(0xf0bd68);
     expect(spaceColorCss(0x001122)).toBe("#001122");
-    expect(Object.keys(palette)).toHaveLength(9);
+    expect(Object.keys(palette)).toHaveLength(10);
   });
 
   it("rejects missing roles, unsupported versions and malformed colors instead of mixing partial palettes", () => {
@@ -73,6 +74,7 @@ describe("space palette boundary", () => {
     expect(spaceObjectColor(palette, object("resource"))).toBe(palette.pointOfInterest);
     expect(spaceObjectColor(palette, { ...object("pickup"), role: "cargo" })).toBe(palette.active);
     expect(spaceObjectColor(palette, { ...object("pickup"), upgrade: true })).toBe(palette.weapon);
+    expect(spaceObjectColor(palette, { ...object("pickup"), ammoPack: true })).toBe(palette.ammo);
     expect(spaceObjectColor(palette, object("destination"))).not.toBe(palette.obstacle);
   });
 
@@ -81,6 +83,7 @@ describe("space palette boundary", () => {
     expect(art).toBeDefined();
     expect(art!.threat).toBe(0xff6b6b);
     expect(art!.pointOfInterest).toBe(0xc4afcc);
+    expect(art!.ammo).toBe(0x8fd14f);
   });
 });
 

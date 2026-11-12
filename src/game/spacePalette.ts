@@ -4,6 +4,7 @@ import type { SpaceObject } from "../model/types.ts";
 
 const ROLES = [
   "active",
+  "ammo",
   "background",
   "environment",
   "environmentDetail",
@@ -18,6 +19,7 @@ export type SpacePalette = Readonly<Record<(typeof ROLES)[number], number>>;
 // Preserve the existing placeholder contrast when palette data cannot load or validate.
 export const FALLBACK_SPACE_PALETTE: SpacePalette = {
   active: 0xffffff,
+  ammo: 0xffffff,
   background: 0x101010,
   environment: 0x222222,
   environmentDetail: 0x525252,
@@ -64,7 +66,7 @@ export function spaceObjectColor(palette: SpacePalette, object: SpaceObject): nu
     case "resource":
       return palette.pointOfInterest;
     case "pickup":
-      return object.upgrade ? palette.weapon : palette.active;
+      return object.ammoPack ? palette.ammo : object.upgrade ? palette.weapon : palette.active;
     case "rock":
       return palette.environmentDetail;
   }

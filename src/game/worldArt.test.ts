@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import type { SpaceObject } from "../model/types.ts";
 import {
+  AMMO_PACK_FRAMES,
+  ammoPackFrame,
   BEACON_FRAMES,
   beaconFrame,
   CACHE_FRAMES,
@@ -24,6 +26,7 @@ const manifest = JSON.parse(
 const cache = readLoopArt(manifest.assets, "discovery-cache", CACHE_FRAMES)!;
 const holodisk = readLoopArt(manifest.assets, "holodisk", HOLODISK_FRAMES)!;
 const beacon = readLoopArt(manifest.assets, "holodisk-beacon", BEACON_FRAMES)!;
+const ammoPack = readLoopArt(manifest.assets, "ammo-pack", AMMO_PACK_FRAMES)!;
 
 const object = (overrides: Partial<SpaceObject>): SpaceObject => ({
   hp: 1,
@@ -33,6 +36,37 @@ const object = (overrides: Partial<SpaceObject>): SpaceObject => ({
   x: 0,
   y: 0,
   ...overrides,
+});
+
+describe("ammo pack art", () => {
+  it("reads the core manifest's 16 by 16 clip, centred, and its four named frames", () => {
+    expect(ammoPack.asset).toMatchObject({
+      displayHeight: 16,
+      displayWidth: 16,
+      frameHeight: 16,
+      frameWidth: 16,
+      path: "/art/pickups/ammo-pack.png",
+      pivot: { x: 0.5, y: 0.5 },
+    });
+    expect(ammoPack.frames).toEqual({ glint1: 1, glint2: 2, glint3: 3, rest: 0 });
+    expect(ammoPack.loopMs).toBe(1310);
+  });
+
+  it("glints from rest: rest 1100 ms, then each glint 70 ms, and round again", () => {
+    expect(ammoPackFrame(ammoPack, false, 0)).toBe(0);
+    expect(ammoPackFrame(ammoPack, false, 1099)).toBe(0);
+    expect(ammoPackFrame(ammoPack, false, 1100)).toBe(1);
+    expect(ammoPackFrame(ammoPack, false, 1170)).toBe(2);
+    expect(ammoPackFrame(ammoPack, false, 1240)).toBe(3);
+    expect(ammoPackFrame(ammoPack, false, 1309)).toBe(3);
+    expect(ammoPackFrame(ammoPack, false, 1310)).toBe(0);
+  });
+
+  it("holds rest under reduced motion", () => {
+    for (const ms of [0, 1100, 1170, 1240]) {
+      expect(ammoPackFrame(ammoPack, true, ms)).toBe(0);
+    }
+  });
 });
 
 describe("discovery cache art", () => {

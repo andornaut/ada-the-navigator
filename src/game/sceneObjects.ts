@@ -62,6 +62,7 @@ import { litChevron, UPGRADE_CHEVRON } from "./upgradePickup.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 import { familyMembers, type WhaleKind, whaleLoopFrame, whalePhase } from "./whaleArt.ts";
 import {
+  ammoPackFrame,
   beaconFrame,
   cacheApproached,
   cacheFrame,
@@ -77,6 +78,7 @@ export type ObjectsContext = Scene &
     GameScene,
     | "add"
     | "asteroidArt"
+    | "ammoPackArt"
     | "backdropRules"
     | "backdrops"
     | "banners"
@@ -620,6 +622,23 @@ export function drawHolodisk(scene: ObjectsContext, object: SpaceObject, point: 
   scene.passes(sprite);
 }
 
+/**
+ * The ammo pack's cartridge clip, its glint looping from rest from when the pack first draws;
+ * reduced motion holds rest. On a light field it draws over its ink keyline.
+ */
+export function drawAmmoPack(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
+  const art = scene.ammoPackArt!;
+  const since = scene.pickupSeen.get(object.id) ?? scene.time.now;
+  scene.pickupSeen.set(object.id, since);
+  const frame = ammoPackFrame(art, scene.reducedMotion, scene.time.now - since);
+  const sprite = objectSprite(scene, object.id, art.asset.id, frame)
+    .setDisplaySize(art.asset.displayWidth!, art.asset.displayHeight!)
+    .setOrigin(art.asset.pivot.x, art.asset.pivot.y)
+    .setPosition(point.x, point.y)
+    .setDepth(playDepth(point.y));
+  keylineSprite(scene, "ammoPickup", object.id, sprite);
+}
+
 /** A discovery cache stays hidden until Ada first approaches it, then loops its lights. */
 export function drawCache(scene: ObjectsContext, object: SpaceObject, point: Vec): void {
   const flight = scene.model.state.flight!;
@@ -859,11 +878,11 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         drawStardust(scene, object, point, radius);
         break;
       }
-      if (
-        scene.light &&
-        (object.upgrade || object.ammoPack) &&
-        LIGHT_FIELD.keylined.includes("upgradePickup")
-      ) {
+      if (scene.ammoPackArt && object.ammoPack) {
+        drawAmmoPack(scene, object, point);
+        break;
+      }
+      if (scene.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
         // The square's ink keyline: a stroke 2 keyline wider on the same path.
         scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
         scene.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
@@ -882,8 +901,7 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
       if (object.role === "cargo") {
         scene.ink.fillStyle(color);
         scene.ink.fillCircle(point.x, point.y, radius / 3);
-      } else if (object.upgrade || object.ammoPack) {
-        // An ammo pack draws the upgrade pickup's square and chevrons in the pickup colour.
+      } else if (object.upgrade) {
         drawUpgradeChevrons(scene, object, point, color);
       }
       break;
