@@ -94,7 +94,13 @@ describe("Cartwheel art", () => {
     ).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     // Sunflower's outposts load with the boot set from Sunflower's own manifest.
-    expect(sets.get(1)!.every((id) => id.startsWith("outpost-") || portrait(id))).toBe(true);
+    expect(
+      sets
+        .get(1)!
+        .every(
+          (id) => id.startsWith("outpost-") || id.startsWith("craft-stranded-") || portrait(id),
+        ),
+    ).toBe(true);
     expect(sets.get(1)).toEqual(
       expect.arrayContaining(["outpost-growers-a", "outpost-workshop-b"]),
     );
