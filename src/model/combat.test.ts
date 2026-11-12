@@ -91,7 +91,7 @@ function partPosition(object: SpaceObject, id: string): Vec {
         return sum + at.x * next.y - next.x * at.y;
       }, 0),
     );
-  const centres = [...enemyPartOutline(enemy, id)!]
+  const centres = [...enemyPartOutline(1, enemy, id)!]
     .sort((a, b) => area(b) - area(a))
     .map((part) => {
       const centre = fromScreen({
@@ -102,7 +102,7 @@ function partPosition(object: SpaceObject, id: string): Vec {
     });
   const others = enemy.hardpoints
     .filter((part) => part.id !== id)
-    .map((part) => enemyPartOutline(enemy, part.id)!);
+    .map((part) => enemyPartOutline(1, enemy, part.id)!);
   return (
     centres.find((at) => others.every((outline) => !outlineContact(outline, object, at, 3))) ??
     centres[0]!

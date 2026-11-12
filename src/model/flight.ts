@@ -11,7 +11,7 @@ import {
   sectorEncounters,
   sectorEnemyTuning,
 } from "../data/enemy-catalog.ts";
-import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
+import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
@@ -2017,13 +2017,20 @@ function strike(
       object.hp <= 0 ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? !enemyTouched(object, shot, 3)
+        ? !enemyTouched(ROUTE_POSITION[flight.sector], object, shot, 3)
         : !sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)))
     ) {
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, partReach(content), 3, shot, object);
+    const part = hitPart(
+      content,
+      ROUTE_POSITION[flight.sector],
+      partReach(content),
+      3,
+      shot,
+      object,
+    );
     // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
     if (part === undefined) {
       shot.hitIds.pop();
@@ -2070,7 +2077,12 @@ function liveParts(
  * Whether a strike of `reach` at `point` touches an enemy where it is drawn: its hull or, on a
  * heavy, a hardpoint's base or top; its hull circle without Art's outline.
  */
-function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
+function enemyTouched(
+  position: RoutePosition,
+  object: SpaceObject,
+  point: Vec,
+  reach: number,
+): boolean {
   const enemy = object.enemy;
   const hull = enemy && enemyHull(enemy);
   if (!enemy || !hull) {
@@ -2079,7 +2091,7 @@ function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
   return (
     outlineContact(hull, object, point, reach) !== null ||
     enemy.hardpoints.some((part) => {
-      const outline = enemyPartOutline(enemy, part.id);
+      const outline = enemyPartOutline(position, enemy, part.id);
       return outline !== null && outlineContact(outline, object, point, reach) !== null;
     })
   );
@@ -2093,6 +2105,7 @@ function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
  */
 function hitPart(
   content: PrototypeContent,
+  position: RoutePosition,
   reach: number,
   tolerance: number,
   point: Vec,
@@ -2107,7 +2120,7 @@ function hitPart(
   }
   let nearest: { id: string; gap: number } | undefined;
   for (const part of liveParts(content, object)) {
-    const outline = enemyPartOutline(enemy, part.id);
+    const outline = enemyPartOutline(position, enemy, part.id);
     const contact = outline && outlineContact(outline, object, point, tolerance);
     // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
     const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
@@ -2202,8 +2215,9 @@ function blast(
     if (object === struck || object.kind !== "enemy" || object.hp <= 0) {
       continue;
     }
-    const part = hitPart(content, radius + partReach(content), radius, at, object);
-    if (part === undefined || (part === null && !enemyTouched(object, at, radius))) {
+    const position = ROUTE_POSITION[flight.sector];
+    const part = hitPart(content, position, radius + partReach(content), radius, at, object);
+    if (part === undefined || (part === null && !enemyTouched(position, object, at, radius))) {
       continue;
     }
     hit(content, amount, part, object, flight, events);
@@ -2385,7 +2399,7 @@ function fireBeam(
       const hull = enemyHull(object.enemy);
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
         for (const part of liveParts(content, object)) {
-          const outline = enemyPartOutline(object.enemy, part.id);
+          const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
           if (outline) {
             drawn(object, part.id, outline);
           } else {

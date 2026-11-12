@@ -1,14 +1,16 @@
-# Galaxy one heavies
+# Heavies
 
-The frigate and the capital are a hull plus destructible hardpoints, and every
-turret aims at Ada independently of the hull. Tech composes each frame from
-layers; Gameplay owns hardpoint ids, positions, hit areas and the rules for
-damage, speed and defeat. Hit areas are flat circles in the world plane, so
-art heights never affect collision.
+The frigate, the capital and Gadget's own capital are a hull plus destructible
+hardpoints, and every turret aims at Ada independently of the hull. Each class
+is drawn once with every weapon mount it can carry; a mount its position tier
+leaves unused shows a capped plate. Tech composes each frame from layers;
+Gameplay owns the rules for damage, speed, disabling and defeat. Contact uses
+each sprite's drawn silhouette ([Collision](#collision)).
 
-- Rebuild with `node art/tools/heavies.ts`. It reads
-  `tools/enemy-hardpoints.json`, writes `public/art/enemies/` and replaces its
-  own manifest entries in place, after the sector one enemies.
+- Rebuild with `node art/tools/heavies.ts`. It checks
+  `tools/enemy-hardpoints.json` against Art's layout, writes
+  `public/art/enemies/` and replaces its own manifest entries in the core
+  manifest in place, after the sector one enemies.
   `--offsets <file.json>` reads another file in the same format; `--out <dir>`
   writes the files and a `manifest-entries.json` to that directory and leaves
   the manifest alone.
@@ -22,39 +24,97 @@ art heights never affect collision.
 `display = frame * 0.4375`, as for every enemy. Spans and lengths are the drawn
 craft in Ada widths of 42.88 model units.
 
-| Archetype | Frame | Display | `sizeRatio` | Span x length | Files |
-| --------- | ----: | ------: | ----------: | ------------- | ----: |
-| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |   130 |
-| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |   258 |
+| Archetype | Frame | Display | `sizeRatio` | Span x length | Weapon mounts | Files |
+| --------- | ----: | ------: | ----------: | ------------- | ------------: | ----: |
+| `frigate` |   384 |     168 |           4 | 3.27 x 4.26   |             4 |   258 |
+| `capital` |   480 |     210 |           5 | 5.04 x 5.50   |             8 |   530 |
+| `gadget`  |   560 |     245 |           5 | 5.78 x 5.74   |             8 |   530 |
 
-- Frigate: long hunter with twin prow tines, a single-barrel gun turret on each
-  sponson (`port`, `starboard`) and a raised `engine` block that caps the
-  stern, with two jet mouths.
+- Frigate: long hunter with twin prow tines, a raised `engine` block that caps
+  the stern with two jet mouths, and four weapon mounts: one on each sponson
+  (`port`, `starboard`) and two on the centreline, `spine` on the dorsal spine
+  plate and `bow` between the tine roots. The insignia sits on bare deck
+  between the spine plate and the engine block.
 - Capital: broad flagship with a great claw prow, a `command` tower at the
   centre, a nacelle on each side of the stern (`engine-left`, `engine-right`)
-  and four twin-barrel deck turrets: `weapon-left` and `weapon-right` on the
-  shoulders, `weapon-rear-left` and `weapon-rear-right` on the wings. Its four
-  escorts are the existing `fighter` frames.
+  and eight weapon mounts in four pairs: `weapon-left` and `weapon-right` on the
+  shoulders, `weapon-rear-left` and `weapon-rear-right` on the wings,
+  `claw-left` and `claw-right` on the claw arms, `stern-left` and
+  `stern-right` on the stern deck. Its four escorts are the existing `fighter`
+  frames.
+- Gadget: General Gadget's own capital, Black Eye's heavy ([Gadget](#gadget)).
 
-## Offsets input
+## Layout and the catalog
 
-Positions have one source: `tools/enemy-hardpoints.json`, which Tech exports
-from Gameplay's catalog. The tool places each hardpoint's drawing at its offset
-and projects it per heading; no art file authors a hardpoint position or a hit
-radius.
+Art's layout in `art/tools/heavies.ts` lists every hardpoint and weapon mount
+with its `offset`, and the hardpoints file publishes it. The catalog export
+`tools/enemy-hardpoints.json`, which Tech generates from Gameplay's catalog, may
+list a subset: every hardpoint it lists must match Art's id, role and offset
+exactly, and its `sizeRatio` must match, or the tool stops without writing.
+Mounts the export does not list yet are kept, so the catalog adopts them by
+copying Art's offsets.
 
-- `version` 1; `archetypes[a]` has `sizeRatio` and `hardpoints`, each with
-  `id`, `role` (`command`, `engine` or `turret`), `offset` and `order`. Other
-  fields are ignored.
+- Export format: `version` 1; `archetypes[a]` has `sizeRatio` and
+  `hardpoints`, each with `id`, `role` (`command`, `engine` or `turret`),
+  `offset` and `order`. Other fields are ignored.
 - `offset` is `[x, y]` in fractions of the hull width (`sizeRatio` Ada widths)
   in the hull's local frame: `-y` forward, `+x` starboard. Model units are
-  `offset * sizeRatio * 42.88`.
-- Each drawn archetype's id set and every `role` must match the art exactly, or
-  the tool stops without writing. Output lists hardpoints in `order`.
-- Art owns the heights, the drawing around each origin, the jet mouths around an
-  engine's origin and the barrel muzzles around a turret's pivot. The hulls are
-  shaped so every hardpoint sits on the deck or against the hull edge at the
-  catalog positions.
+  `offset * sizeRatio * 42.88`. Output lists hardpoints in Art's order: the
+  catalog's, then the new mounts in fill order.
+- Art owns the positions, the heights, the drawing around each origin, the jet
+  mouths around an engine's origin and the barrel muzzles around a turret's
+  pivot. Every mount sits on bare deck or a deck plate.
+
+## Mounts
+
+Weapons fill mounts pairs first, so the loadout stays symmetric; an odd count
+adds a centreline mount. The fill order and each position tier's weapons are
+in the hardpoints file (`fill`, `tiers`), from Gameplay's
+[enemy weapons](../gameplay/ships.md#enemy-weapons).
+
+| Frigate mount        | Offset       | Positions 1 to 2 | 3 to 4        | 5 to 6        |
+| -------------------- | ------------ | ---------------- | ------------- | ------------- |
+| `port`, `starboard`  | `[∓0.3, 0]`  | Laser            | Laser         | Laser         |
+| `spine` (centreline) | `[0, 0.025]` | capped           | Rapid Missile | Rapid Missile |
+| `bow` (centreline)   | `[0, -0.22]` | capped           | capped        | Charged lance |
+
+| Capital and Gadget mounts         | Capital offset   | Gadget offset    | Positions 1 to 2 | 3 to 4                       | 5 to 6                 |
+| --------------------------------- | ---------------- | ---------------- | ---------------- | ---------------------------- | ---------------------- |
+| `weapon-left`, `weapon-right`     | `[∓0.35, -0.3]`  | `[∓0.36, -0.3]`  | Laser            | Laser                        | Laser                  |
+| `weapon-rear-left`, `-rear-right` | `[∓0.42, 0.08]`  | `[∓0.44, 0.1]`   | Multi-Laser      | Multi-Laser                  | Rapid Missile          |
+| `claw-left`, `claw-right`         | `[∓0.15, -0.45]` | `[∓0.16, -0.48]` | capped           | Rapid Missile, Heavy Missile | Phaser, Heavy Missile  |
+| `stern-left`, `stern-right`       | `[∓0.1, 0.31]`   | `[∓0.11, 0.33]`  | capped           | capped                       | Ring burst, Mine layer |
+
+A pair cell with two weapons lists the left mount's first. Heavy Missile stays
+on `claw-right` from positions 3 to 6; the mine layer sits at the stern because
+its mines drop behind the ship.
+
+### Weapon tops
+
+Each weapon kind has one top design per class (`{a}-{t}-top-{i}`). Laser and
+Multi-Laser keep the barrel tops; the other kinds have their own, so the threat
+reads before it fires.
+
+| Weapon (`weapon`) | Top (`t`)                            | Look                                             | Aim      |
+| ----------------- | ------------------------------------ | ------------------------------------------------ | -------- |
+| `laser`           | `gun` (frigate), `turret` (capitals) | One or two amber barrels on the turret head      | `target` |
+| `multiLaser`      | `turret`                             | Two amber barrels                                | `target` |
+| `rapidMissile`    | `pod`                                | A squared pod with four amber missile caps       | `target` |
+| `heavyMissile`    | `rail`                               | One plate missile on a rail, amber warhead, band | `target` |
+| `phaser`          | `dish`                               | Round dish, dark lens, one long thin emitter     | `target` |
+| `chargedLance`    | `lance`                              | Twin plate rails, amber charge crystal between   | `target` |
+| `ringBurst`       | `dome`                               | Twelve-sided dome with eight amber rim studs     | `target` |
+| `mineLayer`       | `hopper`                             | Hopper with two amber mines and a dark aft chute | `aft`    |
+
+`aim` `target` turns with the turret's world aim; `aft` holds aim index
+`(k + 8) mod 16` for hull heading `k`. Every top's pivot sits on the collar,
+1.5 units above the deck, so a mount's `pivot` serves whichever top it carries.
+
+### Capped plate
+
+An unused mount draws `{a}-{h}-capped-{k}`: a low plate disc (`plate` top,
+`coralSide` sides, 0.8 units high) with a `coralRear` seam ring and four bolts,
+no hardpoint and no top. It neither fires nor counts as a hardpoint.
 
 ## Files
 
@@ -62,16 +122,16 @@ All in `public/art/enemies/`. `{a}` is the archetype, `{h}` a hardpoint id
 exactly as in the catalog, `{t}` a turret top design, `{k}` a hull heading and
 `{i}` an aim index, each `0..15`.
 
-| File                      | One per                   | Content                                     |
-| ------------------------- | ------------------------- | ------------------------------------------- |
-| `{a}-{k}.svg`             | heading                   | Hull with no hardpoints                     |
-| `{a}-{h}-{state}-{k}.svg` | hardpoint, state, heading | The hardpoint base, centred on its anchor   |
-| `{a}-{t}-top-{i}.svg`     | top design, aim           | The turret top, centred on its pivot        |
-| `{a}-hardpoints.json`     | archetype                 | Anchors, pivots, layer order and muzzles    |
-| `{a}-jets.json`           | archetype                 | Speed jets, each mouth tagged by its engine |
+| File                      | One per                   | Content                                          |
+| ------------------------- | ------------------------- | ------------------------------------------------ |
+| `{a}-{k}.svg`             | heading                   | Hull with no hardpoints                          |
+| `{a}-{h}-{state}-{k}.svg` | hardpoint, state, heading | The hardpoint base, centred on its anchor        |
+| `{a}-{h}-capped-{k}.svg`  | cappable mount, heading   | The capped plate, centred on its anchor          |
+| `{a}-{t}-top-{i}.svg`     | top design, aim           | The turret top, centred on its pivot             |
+| `{a}-hardpoints.json`     | archetype                 | Anchors, pivots, order, tiers, banner, collision |
+| `{a}-jets.json`           | archetype                 | Speed jets, each mouth tagged by its engine      |
 
-Turrets with identical drawings share one top set: the frigate's two guns use
-`gun` and the capital's four turrets, bolt and missile alike, use `turret`.
+Mounts with identical drawings share one top set per design.
 
 Sprite frames are square, a multiple of 8 px, and hold every heading and state
 of that hardpoint around a centred pivot. Every heavies SVG keeps its `viewBox`
@@ -79,15 +139,19 @@ in frame px and declares its display size (frame times 0.4375) as `width` and
 `height`, so it rasterizes at the size it is drawn. Anchors, pivots, muzzles
 and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 
-| Sprite                     | Base frame | Base display | Top frame | Top display |
-| -------------------------- | ---------: | -----------: | --------: | ----------: |
-| Frigate hull               |        384 |          168 |           |             |
-| Capital hull               |        480 |          210 |           |             |
-| Frigate gun                |         48 |           21 |        88 |        38.5 |
-| Frigate engine             |         80 |           35 |           |             |
-| Capital command            |         72 |         31.5 |           |             |
-| Capital engine (each side) |         88 |         38.5 |           |             |
-| Capital turret             |         48 |           21 |        80 |          35 |
+| Sprite                            |         Frame |       Display |
+| --------------------------------- | ------------: | ------------: |
+| Frigate, capital and Gadget hulls | 384, 480, 560 | 168, 210, 245 |
+| Weapon mount base (every state)   |            48 |            21 |
+| Frigate engine                    |            80 |            35 |
+| Capital command; Gadget command   |        72; 80 |      31.5; 35 |
+| Capital engine; Gadget engine     |        88; 96 |      38.5; 42 |
+| Top `pod`                         |            40 |          17.5 |
+| Tops `dome`, `hopper`             |            48 |            21 |
+| Tops `turret`, `rail`             |            80 |            35 |
+| Top `gun`                         |            88 |          38.5 |
+| Top `dish`                        |            96 |            42 |
+| Top `lance`                       |           104 |          45.5 |
 
 ## Manifest entries
 
@@ -98,7 +162,7 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 - Hardpoint base: `enemy-{a}-{h}-{state}-{k}` with `path`, `width`, `height`,
   `displayWidth`, `displayHeight` (frame times 0.4375), `facing` `world-{k}`,
   `directionIndex` `k`, `hardpoint`, `state`, `pivot` `{ 0.5, 0.5 }` and
-  `archetype`.
+  `archetype`. A capped plate is the same with `state` `capped`.
 - Turret top: `enemy-{a}-{t}-top-{i}` with the same fields except `aimIndex`
   `i` and `facing` `world-{i}` in place of `directionIndex`, and `top` `t` in
   place of `hardpoint` and `state`.
@@ -112,26 +176,68 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 like the hull frame.
 
 - `archetype`, `frame`: the hull archetype and frame size.
-- `hardpoints[]`, in catalog order: `id`, `role`, `states`
-  (`["intact", "destroyed"]`) and `top` (the top design, or `null`).
+- `hardpoints[]`, in Art's order: `id`, `role`, `states`
+  (`["intact", "destroyed"]`) and `top`: the one top design the hardpoint
+  carries at every position tier, or `null` when it has none or its tier
+  decides. A mount heavy (frigate, capital, Gadget) adds `capped`, whether the
+  mount has capped plate sprites.
+- `fill` (mount heavies): the weapon mount ids in fill order.
+- `tiers[]` (mount heavies): `positions` (`[1, 2]`, `[3, 4]`, `[5, 6]`) and
+  `mounts`, every mount id in fill order mapped to `{ "weapon", "top", "aim" }`
+  or `null` for a capped plate. Pick the tier whose `positions` holds the
+  galaxy's route position.
 - `headings[k]`: `index`; `order`, the layer ids for hull heading `k` far to
   near, with `hull` among them; `hardpoints[]` with `id`, `anchor` (the
   projected hardpoint origin at its anchor height, where that hardpoint's base
-  sprite centre goes) and, for turrets, `pivot` (the projected top pivot, where
-  the top sprite centre goes).
+  sprite centre goes) and, for every hardpoint that can carry a top, `pivot`
+  (the projected top pivot, where the top sprite centre goes); `banner`, the
+  [Disabled banner](#disabled-banner)'s centre.
 - `tops[t][i]`: `index` (aim `i`) and `muzzles`, one `[x, y]` per barrel tip in
   frame px relative to the pivot.
+
+The platform has no `fill` or `tiers`: its two turrets carry their `top` at
+every position.
+
+Sample (capital, positions 3 to 4, abridged):
+
+```json
+{
+  "fill": [
+    "weapon-left",
+    "weapon-right",
+    "weapon-rear-left",
+    "weapon-rear-right",
+    "claw-left",
+    "claw-right",
+    "stern-left",
+    "stern-right"
+  ],
+  "tiers": [
+    {
+      "positions": [3, 4],
+      "mounts": {
+        "weapon-left": { "weapon": "laser", "top": "turret", "aim": "target" },
+        "claw-right": { "weapon": "heavyMissile", "top": "rail", "aim": "target" },
+        "stern-left": null
+      }
+    }
+  ]
+}
+```
 
 ## Composing a frame
 
 1. Pick hull heading `k` from the hull facing with the existing enemy rule.
 2. For each id in `headings[k].order`: `hull` draws `{a}-{k}`; a hardpoint
-   draws its base for its current state with the sprite centre at `anchor`.
-   An intact turret then draws its top `{a}-{t}-top-{i}` at `pivot`.
+   draws its base for its current state with the sprite centre at `anchor`. A
+   mount its tier leaves `null` draws `{a}-{h}-capped-{k}` there instead.
+   An intact turret then draws its top `{a}-{t}-top-{i}` at `pivot`, `t` being
+   its tier's `top` (or the hardpoint's `top` without tiers).
 3. Pick each top's aim index `i` from that turret's world aim angle with the
    same rule as hull headings: index `i` faces world angle `i * 22.5` degrees,
    whatever the hull heading. Tech turns each aim with the ship's
-   `aimTurnSeconds`. `pivot` plus a muzzle is that barrel tip in hull frame px.
+   `aimTurnSeconds`. An `aft` top holds `(k + 8) mod 16`. `pivot` plus a
+   muzzle is that barrel tip in hull frame px.
 4. Draw speed jets behind the composed frame.
 
 Layer order: a hardpoint whose intact base rests on the hull top (base at or
@@ -151,6 +257,32 @@ straight after it.
   aimed top carries the head, barrels and hatch.
 - Hit flash is a tint over the hardpoint's base and top. There are no flash
   frames.
+- Disabled: every weapon mount the tier fills is destroyed. The heavy draws its
+  stumps and the [Disabled banner](#disabled-banner).
+- Salvaged: the banner goes and the heavy draws [dimmed](#salvaged-dimming).
+
+### Disabled banner
+
+Procedural, drawn by Tech over the disabled heavy: no sprite.
+
+- Face: `threat` `#FF6B6B` ([space palette](space-palette.md)), 24 logical px
+  high, radius 4, a 1 px ink `#181425` border, 8 px insets either side of the
+  label.
+- Label: Gameplay's "Disabled" string in `TYPE.label` (16 bold on 20,
+  [layout](layout.md)) in ink, centred in the face. Ink on threat is 6.86:1;
+  the border carries the edge on a light field, where bare threat is 1.75:1.
+- Position: the face centred on `headings[k].banner`, the pivot x and the
+  centre y of the hull layer's drawn bounds (from `headings[k].collision`) in
+  hull frame px, so it overlays the ship. It follows the drawn heading, sits
+  above every layer of the heavy and is not dimmed or keylined.
+
+### Salvaged dimming
+
+A salvaged heavy draws as one composed group, so overlapping layers never show
+through each other: each pixel's colour `c` becomes `c + 0.85 (L - c)` with
+`L = 0.299 r + 0.587 g + 0.114 b`, then the group's alpha is 0.6. On a light
+field the [keyline](galaxies.md#light-fields) belongs to the group, so it dims
+with it. Speed jets stay off.
 
 ## Collision
 
@@ -163,34 +295,38 @@ which are relative to the pivot like muzzles.
 - `headings[k].collision`: the hull layer drawn for heading `k`. The platform's
   hull never turns, so every heading holds `platform.svg`'s.
 - `headings[k].hardpoints[j].collision`: `{ "intact": parts, "destroyed": parts }`,
-  one per state in `states`, for that hardpoint's base at heading `k`, placed
-  at its `anchor` in hull frame px.
+  one per state in `states`, plus `capped` for a cappable mount, for that
+  hardpoint's base at heading `k`, placed at its `anchor` in hull frame px.
 - `tops[t][i].collision`: top `t` at aim `i`, relative to the pivot.
 
 `art/tools/heavies.ts` traces every sprite's fills with the
 [shared tracer](ship.md#shared-tracer); the frames have no strokes, so nothing
 grows. Each sprite takes the first Douglas-Peucker tolerance of 0.4 and 0.3
-frame px that passes the 0.98 floor. Only the destroyed deck turret stump at
-heading 7 needs 0.3 (six sprites: the frigate's `port` and `starboard`, the
-capital's four weapons); at 0.4 its ragged scorch paint, quantized by the cell
-grid, reaches 0.9797. The frigate hull cuts 8 notch tips between its prow
-tines; its frames draw them under the faces.
+frame px that passes the 0.98 floor. Only the destroyed weapon mount stump at
+heading 7 needs 0.3 (20 sprites, every frigate, capital and Gadget weapon
+mount); at 0.4 its ragged scorch paint, quantized by the cell grid, reaches
+0.9797. The frigate hull cuts 8 notch tips between its prow tines; its frames
+draw them under the faces.
 
 Checked against the fills plus the tips: every part strictly convex and every
 boundary within 0.36 frame px of the drawing. librsvg renders at 4 px per frame
 px agree within 0.002.
 
-| Sprite                                  | Parts    | Intersection over union |
-| --------------------------------------- | -------- | ----------------------- |
-| Frigate hull                            | 12 to 15 | 0.996 to 0.997          |
-| Capital hull                            | 15 to 21 | 0.998                   |
-| Platform hull                           | 26       | 0.997                   |
-| Engines and command, intact             | 1 to 4   | 0.992 to 0.999          |
-| Engines and command, destroyed          | 1 to 5   | 0.991 to 0.998          |
-| Deck turret bases, intact               | 1        | 0.981 to 0.992          |
-| Deck turret bases, destroyed            | 4 to 7   | 0.982 to 0.989          |
-| Platform turret bases                   | 1 to 12  | 0.988 to 0.995          |
-| Turret tops (`gun`, `turret`, platform) | 2 to 9   | 0.983 to 0.998          |
+| Sprite                                 | Parts    | Intersection over union |
+| -------------------------------------- | -------- | ----------------------- |
+| Frigate hull                           | 12 to 15 | 0.996 to 0.997          |
+| Capital hull                           | 15 to 21 | 0.998                   |
+| Gadget hull                            | 17 to 24 | 0.998 to 0.999          |
+| Platform hull                          | 26       | 0.997                   |
+| Engines and command, intact            | 1 to 18  | 0.992 to 0.999          |
+| Engines and command, destroyed         | 1 to 10  | 0.991 to 0.998          |
+| Weapon mount bases, intact             | 1        | 0.980 to 0.992          |
+| Weapon mount bases, destroyed          | 4 to 7   | 0.982 to 0.989          |
+| Capped plates                          | 1        | 0.980 to 0.987          |
+| Platform turret bases                  | 1 to 12  | 0.988 to 0.995          |
+| Tops `gun`, `turret`, `pod`, `rail`    | 1 to 8   | 0.983 to 0.998          |
+| Tops `dish`, `lance`, `dome`, `hopper` | 2 to 22  | 0.980 to 0.999          |
+| Platform turret top                    | 3 to 9   | 0.988 to 0.997          |
 
 ## Speed jets
 
@@ -202,6 +338,27 @@ Draw a mouth only while that engine is intact.
 | --------- | -----: | ---------------------------------------- | ----: | -----: |
 | `frigate` |      2 | `engine` (both)                          |    10 |     11 |
 | `capital` |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
+| `gadget`  |      2 | `engine-left`, `engine-right` (one each) |    12 |      6 |
+
+## Gadget
+
+General Gadget's own capital, Black Eye's heavy: the capital class's mounts,
+tiers and tops on a more threatening hull, in the coral family palette.
+
+- Archetype `gadget`: files `gadget-*` in `public/art/enemies/`, manifest ids
+  `enemy-gadget-{k}`, `enemy-gadget-{h}-{state}-{k}` and
+  `enemy-gadget-{t}-top-{i}` in the core manifest, `gadget-hardpoints.json`
+  and `gadget-jets.json`. Frame 560 at the capital's scale; `sizeRatio` 5
+  scales its offsets.
+- Hull: a serrated claw hull whose prongs reach 142 units forward, saw-toothed
+  wing edges, two wing patch plates, a raised `coralRear` dorsal ridge from the
+  tower to the stern, and the insignia on bare deck ahead of the tower.
+- `command`: an octagonal tower 16 units above the deck with a dark visor and
+  two stepped ear fins on its rear shoulders, each three shrinking prisms 18
+  units high with a plate-coloured middle step. No face. Destroyed: a scorched
+  tower stump with the ears' stumps, a broken visor, a breach and one ember.
+- `engine-left`, `engine-right`: the capital's nacelles 1.1 times larger at
+  `[∓0.27, 0.44]`.
 
 Mouth width and height are model units.
 
@@ -248,8 +405,9 @@ platform. Sunflower keeps the coral originals. Andromeda's
   colour swap below, every jets file through the claim jet colours, and the
   tool stops on any colour outside the family.
 - Jets files keep the coral shape, lengths, layers, mouth data and
-  [collision](enemies.md#collision); hardpoints files, collision included, are
-  the coral family's, unchanged. Claim frames draw the coral notch tips. Destruction uses the shared
+  [collision](enemies.md#collision); hardpoints files, mounts, tiers and
+  collision included, are the coral family's, unchanged. Claim frames draw the
+  coral notch tips, capped plates and tops. Gadget has no claim version. Destruction uses the shared
   `destruction.json` timing and flash with the claim shards.
 
 ### Claim files and entries

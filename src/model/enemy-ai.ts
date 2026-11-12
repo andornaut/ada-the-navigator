@@ -9,7 +9,7 @@ import {
   type HardpointDefinition,
   type Point,
 } from "../data/enemy-catalog.ts";
-import { MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
+import { MUZZLE_ART, muzzleLayout } from "../data/enemy-muzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import { muzzleOffset } from "./muzzles.ts";
 import {
@@ -689,7 +689,7 @@ export function stepEnemy(
   // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
   // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
   // the continuous aim. Other weapons fire from the model origin.
-  const layout = MUZZLE_LAYOUTS[state.archetype];
+  const layout = muzzleLayout(definition, MUZZLE_ART[state.archetype]);
   const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
     const offset =
       turret === null ? undefined : muzzleOffset(layout, turret, state.facing, muzzleAim, volley);

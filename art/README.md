@@ -2,8 +2,9 @@
 
 Art owns `art/` and `public/art/`. Tech owns adapters and runtime integration.
 Gameplay supplies semantic requirements. Prototype art covers Ada's ship,
-sector one enemy ships and their [destruction](destruction.md), the galaxy one
-[heavies](heavies.md) with destructible hardpoints and aimed turrets, the
+sector one enemy ships and their [destruction](destruction.md), the
+[heavies](heavies.md) with destructible hardpoints, aimed turrets and capped
+weapon mounts, General Gadget's own capital, the
 [station](station.md), the [outposts and discovery cache](outposts.md),
 Cartwheel's [hub, mooring buoy and story craft](cartwheel.md) and its
 [claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers),

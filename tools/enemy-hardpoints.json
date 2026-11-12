@@ -24,6 +24,20 @@
           "order": 2,
           "required": true,
           "role": "turret"
+        },
+        {
+          "id": "spine",
+          "offset": [0, 0.025],
+          "order": 3,
+          "required": false,
+          "role": "turret"
+        },
+        {
+          "id": "bow",
+          "offset": [0, -0.22],
+          "order": 4,
+          "required": false,
+          "role": "turret"
         }
       ],
       "sizeRatio": 4
@@ -81,6 +95,34 @@
           "offset": [0.42, 0.08],
           "order": 6,
           "required": true,
+          "role": "turret"
+        },
+        {
+          "id": "claw-left",
+          "offset": [-0.15, -0.45],
+          "order": 7,
+          "required": false,
+          "role": "turret"
+        },
+        {
+          "id": "claw-right",
+          "offset": [0.15, -0.45],
+          "order": 8,
+          "required": false,
+          "role": "turret"
+        },
+        {
+          "id": "stern-left",
+          "offset": [-0.1, 0.31],
+          "order": 9,
+          "required": false,
+          "role": "turret"
+        },
+        {
+          "id": "stern-right",
+          "offset": [0.1, 0.31],
+          "order": 10,
+          "required": false,
           "role": "turret"
         }
       ],

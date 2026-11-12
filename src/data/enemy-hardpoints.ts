@@ -1,4 +1,4 @@
-import { type EnemyArchetype, enemyCatalog } from "./enemy-catalog.ts";
+import { type EnemyArchetype, enemyCatalog, type EnemyDefinition } from "./enemy-catalog.ts";
 
 /** One hardpoint in the export Art's generator reads to anchor parts on each heading. */
 export interface ExportedHardpoint {
@@ -29,7 +29,11 @@ const MOUNTS: Partial<Record<EnemyArchetype, readonly { id: string; offset: [num
     retaliator: [{ id: "turret", offset: [0, 0] }],
   };
 
-/** The catalog's hardpoint layouts and Art's mounts in the shape of `tools/enemy-hardpoints.json`. */
+/**
+ * The catalog's hardpoint layouts and Art's mounts in the shape of `tools/enemy-hardpoints.json`:
+ * each archetype's hardpoints, then its weapon mounts the catalog does not list as hardpoints yet
+ * in fill order at Art's offsets (art/heavies.md "Layout and the catalog"), then Art-only mounts.
+ */
 export function exportHardpoints(): {
   archetypes: Record<string, { hardpoints: ExportedHardpoint[]; sizeRatio: number }>;
   version: 1;
@@ -37,8 +41,8 @@ export function exportHardpoints(): {
   return {
     archetypes: Object.fromEntries(
       HARDPOINT_ARCHETYPES.map((archetype) => {
-        const definition = enemyCatalog[archetype];
-        const parts: ExportedHardpoint[] = definition.hardpoints.map((part, order) => ({
+        const definition: EnemyDefinition = enemyCatalog[archetype];
+        const hardpoints: ExportedHardpoint[] = definition.hardpoints.map((part, order) => ({
           ...(part.kind === "weapon" ? { fire: part.fire.projectile } : {}),
           id: part.id,
           offset: [part.offset.x, part.offset.y],
@@ -46,6 +50,22 @@ export function exportHardpoints(): {
           required: part.required,
           role: part.kind === "weapon" ? "turret" : part.kind,
         }));
+        const unlisted = (definition.mounts?.fill ?? []).filter(
+          (id) => !hardpoints.some((part) => part.id === id),
+        );
+        const parts: ExportedHardpoint[] = [
+          ...hardpoints,
+          ...unlisted.map((id, index) => {
+            const offset = definition.mounts!.offsets[id]!;
+            return {
+              id,
+              offset: [offset.x, offset.y] as [number, number],
+              order: hardpoints.length + index,
+              required: false,
+              role: "turret" as const,
+            };
+          }),
+        ];
         const mounts: ExportedHardpoint[] = (MOUNTS[archetype] ?? []).map((mount, index) => ({
           fire: definition.fire.projectile,
           id: mount.id,

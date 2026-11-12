@@ -53,7 +53,7 @@ describe("claim jumper art loading", () => {
         return [archetype, due.length];
       }),
     );
-    expect(counts).toEqual({ capital: 240, frigate: 112, platform: 80 });
+    expect(counts).toEqual({ capital: 512, frigate: 240, platform: 80 });
   });
 
   it("asks again, rather than marking the parts loaded, while the galaxy's manifest is unknown", () => {

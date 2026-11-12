@@ -21,7 +21,7 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { BUILT, GALAXY_ID, ROUTE } from "../data/galaxies.ts";
+import { BUILT, GALAXY_ID, ROUTE, ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -2938,10 +2938,12 @@ export class PrototypeScene extends Scene {
     const frame = selectEnemyFrame(art, enemy.facing);
     const state = (hardpoint: string) => enemy.hardpoints.find((part) => part.id === hardpoint);
     // A turret mount without hardpoint state, such as the retaliator's, aims with the hull
-    // weapon and stands while the hull does.
+    // weapon and stands while the hull does. The galaxy's route position picks the mount tier.
+    const sector = this.model.state.flight?.sector;
     const pose: PartPose = {
       aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
       intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
+      position: sector === undefined ? 1 : ROUTE_POSITION[sector],
     };
     composeEnemy(art, pose, frame).forEach((part, index) => {
       const key = part.hardpoint === null ? id : `${id}#${part.layer}:${part.hardpoint}`;
