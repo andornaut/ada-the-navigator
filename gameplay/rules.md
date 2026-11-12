@@ -203,7 +203,7 @@ movement and exploration. Her space experience changes her understanding of care
 
 Ada encounters an intelligent space whale trapped by debris: 3 medium stone
 rocks of 3 HP, evenly spaced on a ring 86 world units from the whale's centre,
-clear of its footprint. She shoots the
+clear of its drawn outline. She shoots the
 obstructions clear without harming the whale, learns about its needs and culture,
 explores until she finds its family, then returns and relays their coordinates.
 A short departure scene confirms reunion. The whale's family gives Ada a waypoint
@@ -436,6 +436,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   conversation box's slot and style, without a portrait. A notice shows at once,
   ahead of ordinary conversation lines, which resume after it.
 - One forgiving difficulty; no overall exploration timer.
+- Objects in flight meet where they are drawn, on each one's current frame's
+  silhouette: every hit, bounce, pickup, dock and tow contact between Ada's
+  ship, enemies and their heavy parts, stations and docks, outposts, asteroids
+  and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
+  and shots. Which objects interact is unchanged. Nothing passes behind another
+  object on screen, and placement and spawning keep drawn objects from
+  overlapping on screen.
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.
@@ -566,10 +573,7 @@ deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
 loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
-Stardust. Ships, Ada's and enemies' alike, and shots, the phaser's included,
-contact an asteroid or resource rock where it is drawn, on its current frame's
-silhouette, so nothing ever passes behind a rock on screen. Placement and
-spawning use Art's footprint. Drifting asteroids follow fixed loops that never overlap other rocks,
+Stardust. Drifting asteroids follow fixed loops that never overlap other rocks,
 stations or destinations; ships bounce off them, and they deal no damage. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted

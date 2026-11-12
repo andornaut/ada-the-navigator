@@ -59,7 +59,7 @@ station becomes a travel destination like other destinations. An undiscovered st
 within 2000 world units of Ada is marked by the direction indicator, so stations
 stay rare but findable. A station is a safe
 area. The dock is the station sprite's visible entrance. Ada docks when her
-hull circle overlaps the mouth circle: half the drawn mouth width in world units,
+drawn ship overlaps the mouth circle: half the drawn mouth width in world units,
 scaled by a forgiving `dockForgiveness` of 3.
 Undocking places Ada at rest just outside the dock, so flying back in docks again. Flying into its dock opens the station card, which pauses action like a
 conversation. The card shows the Stardust balance, a welcome line, Undock, Shop and Jobs; Jobs
