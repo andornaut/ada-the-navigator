@@ -107,27 +107,37 @@ Astra: "Memory restored. I've found new coordinates."
 
 Then Astra's memory line for that galaxy:
 
-- Sunflower: "I remember a fleet... and someone giving orders."
-- Cartwheel: "I carried that fleet from galaxy to galaxy. But whose fleet?"
-- Whirlpool: "General Gadget. I was his navigator. I scattered my holodisks to
-  keep them from him."
-- Black Eye: written with the finale.
+- First holodisk: "I remember a fleet... and someone giving orders."
+- Second: "I carried that fleet from galaxy to galaxy. But whose fleet?"
+- Third: "General Gadget. I was his navigator. I scattered my holodisks to keep
+  them from him."
+- Fourth: "I remember running from him. I scattered the disks in one wild jump,
+  and it broke something in me. That's how I ended up near Earth."
+- Fifth: "Now I remember what he wants: copies of my mind that always obey. If
+  I'm whole again, he'll want me even more."
+- Sixth: written with the finale.
 
-General's broadcasts, in the conversation box when his drones first engage Ada in
-each galaxy from Cartwheel on. His name tab reads "Unknown voice" until the
-Whirlpool holodisk is inserted, then "General Gadget":
+Memory lines and broadcasts follow route position. The General's broadcasts play
+in the conversation box when his drones first engage Ada in each galaxy from the
+second position on. His name tab reads "Unknown voice" until the third holodisk
+is inserted, then "General Gadget". While the tab reads "Unknown voice", his
+portrait is a dark silhouette with no face; once named, it shows him:
 
-- Cartwheel: Unknown voice: "All drones: find the holodisks. Bring them to me."
+- Second: Unknown voice: "All drones: find the holodisks. Bring them to me."
   Astra: "That voice... I don't know why it scares me."
-- Whirlpool: Unknown voice: "Someone is collecting my holodisks. Stop them." Ada:
+- Third: Unknown voice: "Someone is collecting my holodisks. Stop them." Ada:
   "Your holodisks? They're Astra's!"
+- Fourth: General Gadget: "Little navigator, you can't hide from me. My drones
+  will wait at every exit." Ada: "Then we'll take our time."
+- Fifth: General Gadget: "Astra. I know you can hear me. Come back, and bring my
+  disks." Astra: "I'm not yours, General. I never was."
 
 Outposts handing over the holodisk, said by whichever outpost Ada is talking to:
 "We found this drifting near our outposts. Take it, with our thanks."
 
 Boarding after a new galaxy unlocks, once, instead of "Welcome back, Navigator.":
-Astra: "Welcome back, Navigator. A new galaxy is ready." Not shown when the
-unlocked galaxy's story is still in development.
+Astra: "Welcome back, Navigator. A new galaxy is ready." Shown when any newly
+unlocked galaxy has a built story.
 
 Hub holodisk purchase confirm: "Buy Holodisk?" with the shared shop strings.
 
@@ -201,83 +211,7 @@ Objectives, in order:
 5. Collect the holodisk from the outposts.
 6. Return to Earth when ready.
 
-## Chapter two: the mining hub
-
-Panel title: The Mining Hub.
-
-Opening: "At school, Ada sees a child being pushed out of a playground game. Other
-children look away. There is no excuse for treating someone that way. Ada
-wonders who else noticed."
-
-Choices:
-
-- "Notice who might help."
-- "Think about how to offer support."
-
-Branch pages, then the story rejoins:
-
-- "Notice who might help.": "A few children look uncomfortable, not amused. Ada
-  guesses they don't like it either. They just don't know what to do yet."
-- "Think about how to offer support.": "Ada thinks about what she would want:
-  someone beside her, and an invitation to join in. No speeches, just company."
-
-At dinner, after the branch page: Narration: "At dinner, Ada tells Dad what she
-saw at school." Dad: "That sounds hard to watch. What do you think you could do?"
-
-Space dialogue, in story order:
-
-Station, on arrival and on deposits between milestones: "Welcome. Shoot resource
-rocks and collect what they release. Bring cargo here to deposit it. Partial
-loads count, and you can travel back when you're out of danger."
-Ask more: "Independent miners bring resources here for transport. There is
-docking space for everyone."
-
-Ada, first deposit milestone: "That pilot cut across the miner's approach and made
-them retreat. There are free docks. Why won't they let that miner through?"
-
-Miner, after the second deposit milestone: "It keeps happening. I've started
-waiting until they're gone. Would I like company next time? Yes. That would
-help."
-Ask more: "I know how to dock. I just need them to stop blocking me."
-
-Regular visitor: "I've seen it. I didn't know what to do. I'll come in with you.
-We can make room and stay nearby."
-
-Regular visitor, final deposit milestone: "There's room for everyone here. Let
-them dock. We are staying. The miner approaches with company, docks and unloads.
-'Thank you for staying. See you next trip.'"
-
-Home resolution: "Back at school, Ada speaks privately with the child: 'I saw what
-happened. Would you like to join us?' They would. Ada talks with her friends
-about making room and refusing to laugh along."
-
-Choices:
-
-- "Make room in the game."
-- "Sit with them and invite friends."
-
-Branch pages, then the story rejoins:
-
-- "Make room in the game.": "Ada's friends shuffle over and make a gap. The child
-  steps in. When someone laughs, nobody laughs along."
-- "Sit with them and invite friends.": "At lunch, Ada and the child sit
-  together. One by one, Ada's friends join them, and the table gets louder and
-  happier."
-
-Closing: "Ada and her friends include the child. When the behavior happens again,
-they stay supportive instead of leaving them alone."
-
-Objectives, in order:
-
-1. Explore the galaxy.
-2. Mine resource rocks and deposit cargo at the hub.
-3. Keep depositing resources and talk with the miner.
-4. Speak with regular visitors about approaching together.
-5. Join the miner's approach at the hub.
-6. Buy the holodisk at the hub.
-7. Return to Earth when ready.
-
-## Chapter three: the whale
+## Chapter two: the whale
 
 Panel title: The Whale Family.
 
@@ -349,6 +283,236 @@ Objectives, in order:
 6. Fight your way to the holodisk.
 7. Return to Earth when ready.
 
+## Chapter three: the needle
+
+Panel title: Threading the Needle.
+
+Opening: "Ada is learning the recorder for the school concert. Her song squeaks
+on the same hard part every time. She puts the recorder down. 'I'm just not good
+at this,' she says."
+
+Choices:
+
+- "Think about quitting."
+- "Wonder how anyone gets good at it."
+
+Branch pages, then the story rejoins:
+
+- "Think about quitting.": "If she quits now, nobody will hear the squeaks. But
+  nobody will hear her song either."
+- "Wonder how anyone gets good at it.": "Ada's music teacher plays so smoothly.
+  Ada wonders if she ever squeaked too."
+
+Space dialogue, in story order:
+
+Elder Loom, on arrival: "Welcome to Needle, young pilot. Our channels are narrow,
+and they cannot be rushed."
+Ask more: "We Avi fly between the star clouds through channels thin as
+thread. Every pilot learns them one gate at a time."
+
+Elder Loom, when Ada asks about the holodisk: "A shining disc drifted into the
+Eye, our narrowest channel. To reach it you must thread every gate, slowly."
+
+Elder Loom, after a gate passed too fast: "Too quick, and the gate stays dark.
+Back to the first gate. Slow is not the same as stuck."
+
+Elder Loom, before the practice run: "Try our practice channel first. Three
+gates. Breathe, and go slowly."
+
+Elder Loom, after the practice run: "There. You learned it one gate at a time.
+The Eye is waiting."
+
+Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
+
+Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
+
+Home resolution: "Ada returns to the same moment, holding her recorder. She
+remembers Elder Loom: one gate at a time. She picks out the hard part and plays
+just that, slowly."
+
+Choices:
+
+- "Practise the hard part every day."
+- "Ask her teacher for help."
+
+Branch pages, then the story rejoins:
+
+- "Practise the hard part every day.": "Every evening, Ada plays the hard part
+  five times, slowly. By the end of the week, it only squeaks once."
+- "Ask her teacher for help.": "Her teacher shows her how to cover the holes
+  gently. 'Everyone squeaks at first,' she says. 'I did too.'"
+
+Dad, looking in after the branch page: "Sounding better every day."
+
+Closing: "At the concert, Ada plays the whole song. One note wobbles, and she
+keeps going. Everyone claps, and Ada is proud of every gate she threaded to get
+there."
+
+Objectives, in order:
+
+1. Explore the galaxy.
+2. Meet Elder Loom.
+3. Light the practice gates.
+4. Light the Eye's gates.
+5. Collect the holodisk.
+6. Return to Earth when ready.
+
+## Chapter four: the beacon
+
+Panel title: The Dark Beacon.
+
+Opening: "At Grandma's house, Ada reaches past a tray of seedlings Grandma has
+been raising for the community garden. Her elbow catches it, and soil spills
+everywhere. Ada pushes the little pots back into place and says nothing."
+
+Choices:
+
+- "Hope nobody notices."
+- "Tell herself it was an accident."
+
+Branch pages, then the story rejoins:
+
+- "Hope nobody notices.": "Later, Grandma finds the spilled soil. 'I wonder what
+  happened to my seedlings,' she says quietly. Ada's stomach twists."
+- "Tell herself it was an accident.": "It was an accident. But when Grandma
+  looks so puzzled and sad, Ada knows that staying quiet isn't."
+
+Space dialogue, in story order:
+
+Settler, on arrival: "A traveler! Be careful. One of our guide beacons has gone
+dark, and ships keep getting lost. It must be Gadget's drones. Everyone is
+scared to fly."
+Ask more: "Our beacons have guided ships between the settlements for as long as
+anyone remembers. Without them, the bright spiral is easy to get lost in."
+
+Ada, at the dark beacon: "This beacon isn't shot. It's dented, like something
+bumped into it."
+
+Pip, a young courier, when Ada finds him near the beacon: "You saw the dent? It
+was me. I was late, I flew too fast, and I clipped it. I've been too scared to
+tell anyone."
+Ask more: "I'm a courier. I carry mail between the settlements. I'm good at it,
+mostly. I just hurry."
+
+Pip, after he admits it: "There's something else. I found this disc in the
+wreckage. It's so strange and shiny. I kept it."
+
+Ada: "I won't tell on you, Pip. But I'll come with you while you tell them."
+
+Settler, after Pip owns up: "So it wasn't the drones at all. Thank you for
+telling us, Pip. That took courage. Now, who can help us fix it?"
+
+Settler, when Ada brings the beacon parts: "There. The beacon is lit again, and
+ships can find their way."
+
+Pip, handing over the holodisk: "This is yours, isn't it? I should have said so
+right away. Here."
+
+Home resolution: "Ada returns to the same moment, at Grandma's house. Grandma is
+still looking at the spilled soil. Ada takes a breath and tells her what really
+happened."
+
+Choices:
+
+- "Say sorry, and offer to help."
+- "Explain why she stayed quiet."
+
+Branch pages, then the story rejoins:
+
+- "Say sorry, and offer to help.": "'I'm sorry, Grandma. I knocked it over. Can I
+  help you replant?' Grandma hands her a trowel."
+- "Explain why she stayed quiet.": "'I was scared you'd be upset,' Ada says.
+  Grandma nods. 'I'd much rather know. Thank you for telling me.'"
+
+Closing: "Ada and Grandma replant every seedling together. 'Accidents happen,'
+Grandma says. 'Telling the truth is the part that counts.' Ada feels light again."
+
+Objectives, in order:
+
+1. Explore the galaxy.
+2. Find out why ships are getting lost.
+3. Talk with Pip.
+4. Go with Pip to the settlers.
+5. Bring beacon parts to the dark beacon.
+6. Take the holodisk from Pip.
+7. Return to Earth when ready.
+
+## Chapter five: the mining hub
+
+Panel title: The Mining Hub.
+
+Opening: "At school, Ada sees Sam, a child in her class, being pushed out of a playground game. Other
+children look away. There is no excuse for treating someone that way. Ada
+wonders who else noticed."
+
+Choices:
+
+- "Notice who might help."
+- "Think about how to offer support."
+
+Branch pages, then the story rejoins:
+
+- "Notice who might help.": "A few children look uncomfortable, not amused. Ada
+  guesses they don't like it either. They just don't know what to do yet."
+- "Think about how to offer support.": "Ada thinks about what she would want:
+  someone beside her, and an invitation to join in. No speeches, just company."
+
+At dinner, after the branch page: Narration: "At dinner, Ada tells Dad what she
+saw at school." Dad: "That sounds hard to watch. What do you think you could do?"
+
+Space dialogue, in story order:
+
+Station, on arrival and on deposits between milestones: "Welcome. Shoot resource
+rocks and collect what they release. Bring cargo here to deposit it. Partial
+loads count, and you can travel back when you're out of danger."
+Ask more: "Independent miners bring resources here for transport. There is
+docking space for everyone."
+
+Ada, first deposit milestone: "That pilot cut across the miner's approach and made
+them retreat. There are free docks. Why won't they let that miner through?"
+
+Miner, after the second deposit milestone: "It keeps happening. I've started
+waiting until they're gone. Would I like company next time? Yes. That would
+help."
+Ask more: "I know how to dock. I just need them to stop blocking me."
+
+Regular visitor: "I've seen it. I didn't know what to do. I'll come in with you.
+We can make room and stay nearby."
+
+Regular visitor, final deposit milestone: "There's room for everyone here. Let
+them dock. We are staying. The miner approaches with company, docks and unloads.
+'Thank you for staying. See you next trip.'"
+
+Home resolution: "Back at school, Ada speaks privately with Sam: 'I saw what
+happened. Would you like to join us?' They would. Ada talks with her friends
+about making room and refusing to laugh along."
+
+Choices:
+
+- "Make room in the game."
+- "Sit with them and invite friends."
+
+Branch pages, then the story rejoins:
+
+- "Make room in the game.": "Ada's friends shuffle over and make a gap. Sam
+  steps in. When someone laughs, nobody laughs along."
+- "Sit with them and invite friends.": "At lunch, Ada and Sam sit
+  together. One by one, Ada's friends join them, and the table gets louder and
+  happier."
+
+Closing: "Ada and her friends include Sam. When the behavior happens again,
+they stay supportive instead of leaving them alone."
+
+Objectives, in order:
+
+1. Explore the galaxy.
+2. Mine resource rocks and deposit cargo at the hub.
+3. Keep depositing resources and talk with the miner.
+4. Speak with regular visitors about approaching together.
+5. Join the miner's approach at the hub.
+6. Buy the holodisk at the hub.
+7. Return to Earth when ready.
+
 ## In-flight conversations
 
 Ada's and Penny's lines show the portrait mood in brackets after the line; an
@@ -378,6 +542,8 @@ Reactions:
   growing!" (happy)
 - Capital ship sighted: Ada: "That ship is huge!" Astra: "No crew aboard. Aim for
   the glowing parts."
+- A heavy disabled, first time each flight: Astra: "Its weapons are down. We
+  could salvage parts and let it go." Ada: "No need to wreck it." (happy)
 
 Sunflower:
 
@@ -397,8 +563,8 @@ Sunflower:
 - Quiet stretch: Ada: "Why is it called Sunflower?" Astra: "Its arms spiral like
   the seeds of a sunflower."
 
-Astra grows as her memory returns: tentative in Sunflower, warmer and surer in
-Cartwheel and Whirlpool, and worried but steady in Black Eye.
+Astra grows as her memory returns: tentative in the first galaxy, warmer and
+surer through the middle of the route, and worried but steady from the fifth on.
 
 Cartwheel:
 
@@ -406,7 +572,8 @@ Cartwheel:
   "Noisy is good. Busy means people." (happy)
 - Quiet stretch: Astra: "I used to rush everywhere. With you, I notice more."
   Ada: "That's what exploring is for." (happy)
-- Quiet stretch: Ada: "Do you dream, Astra?" Astra: "Not yet. Maybe I'll learn."
+- Quiet stretch: Astra: "Almost whole. I'm a little scared of that." Ada: "We'll
+  do it together."
 
 Whirlpool:
 
@@ -419,6 +586,23 @@ Whirlpool:
   space current. Ride it for speed, or push across it." Ada: "Like a river in
   space!" (happy)
 
+Needle:
+
+- First arrival: Astra: "Needle. So thin, and so long." Ada: "Like a road made of
+  stars."
+- Quiet stretch: Astra: "I used to jump without thinking. Now I like to look
+  first." Ada: "Me too." (happy)
+- Quiet stretch: Ada: "Do you dream, Astra?" Astra: "Not yet. Maybe I'll learn."
+
+Andromeda:
+
+- First arrival: Astra: "Andromeda. It feels like visiting a neighbor." Ada: "A
+  very big, very bright neighbor." (happy)
+- Quiet stretch: Astra: "When I scattered my disks, I didn't tell anyone. Not
+  even myself." Ada: "You can tell me now."
+- Quiet stretch: Astra: "I like that you never pretend, Ada." Ada: "Penny can
+  always tell when I do." (happy)
+
 Black Eye:
 
 - First arrival: Astra: "Black Eye. I don't like it here." Ada: "We'll face it
@@ -428,6 +612,58 @@ Black Eye:
 - Quiet stretch: Astra: "Whatever is waiting, I'm not running this time." Ada:
   "Neither am I."
 
+## Greeters
+
+Station keepers, first docking (three lines), then later dockings (one line, in
+turn):
+
+Sunflower, a Bumble keeper:
+
+- "Bzz, hello! A new face at our station. I'm the keeper here."
+- "We Bumbles hum while we work. It makes heavy jobs feel lighter."
+- "Trade your Stardust, or take a job. Every bit of help counts."
+- Later: "Welcome back! The whole station is humming today." / "Back again?
+  Good. Many wings make light work." / "Hello, friend. The shop is open, and the
+  job board is full."
+
+Whirlpool, a Voron keeper:
+
+- "Oh, a visitor! Welcome, welcome. I'm the keeper of this station."
+- "We Voron ride the currents with the whales. They're our oldest friends."
+- "Trade, rest or take a job. Mind the currents on your way out."
+- Later: "Welcome back! The currents brought you right to us." / "Hello again.
+  Eight arms, and every one of them waving at you." / "Back so soon? The whales
+  were singing about you."
+
+Needle, an Avi keeper:
+
+- "Welcome, young pilot. Rest your wings. Well, your engines."
+- "We Avi stand still a long time before we move. It is how we see clearly."
+- "Trade, or take a job. There is no hurry here."
+- Later: "Welcome back. Slowly in, slowly out." / "Ah, the young pilot. Your
+  docking was very smooth." / "Hello again. Stay as long as you need."
+
+Andromeda, a Munix keeper:
+
+- "Hello, traveler! Come into the light. I'm the keeper of this station."
+- "We Munix were built to follow the beacons. Their light shows us home."
+- "Trade your Stardust, or take a job. Fair dealing, plain and true."
+- Later: "Welcome back! Our lamps are always lit for you." / "Hello again,
+  traveler. Safe flying out there?" / "Back again! Come in, out of the dark."
+
+Cartwheel, a Cobble keeper:
+
+- "Welcome to the hub! Mind the dust. I'm the keeper here."
+- "We Cobbles are made of stone, so a little bump never bothers us."
+- "Trade your Stardust, or take a job. There's room for everyone."
+- Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
+  Find any good rocks out there?" / "Back again. There's always room at the
+  hub."
+
+Andromeda settler, first approach to a settlement: Settler: "Hello! You found
+our little settlement." Settler: "Mail comes by courier, and visitors come by
+beacon light. Welcome!"
+
 ## Shared interface text
 
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
@@ -436,19 +672,24 @@ Black Eye:
 - Galaxy selection Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Time for another
   adventure?" then Pick up the rock.
-- Actions: Talk, Deliver, Deposit, Continue, Ask more, Use.
+- Actions: Talk, Deliver, Deposit, Continue, Ask more, Use, Salvage.
+- Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings.
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
-- Galaxy selection: Galaxy {number}, Previous, Jump, Next. A locked galaxy's name and
-  text: ...
-- Galaxy names and flavor text:
-  - Galaxy 1, Sunflower: "Scattered outposts grow, build and salvage, each on
+- Galaxy selection: Galaxy {number}, Earth, Jump; Previous and Next as the
+  accessible labels for Left and Right. A locked galaxy's name and text: ... A
+  placeholder galaxy: its name and flavor text, then Story in development.
+- Galaxy names and flavor text, in route order:
+  - Sunflower: "Scattered outposts grow, build and salvage, each on
     their own."
-  - Galaxy 2, Cartwheel: "A busy mining hub where every rock is worth something."
-  - Galaxy 3, Whirlpool: "Swirling debris, and a song somewhere in the dark."
-  - Galaxy 4, Black Eye: "A shadowed rim where someone is watching."
+  - Whirlpool: "Swirling debris, and a song somewhere in the dark."
+  - Needle: "A thin silver line of stars, where nothing can be rushed."
+  - Andromeda: "A great bright spiral, close enough to feel like a
+    neighbor."
+  - Cartwheel: "A busy mining hub where every rock is worth something."
+  - Black Eye: "A shadowed rim where someone is watching."
 - Map: Map; {percent}% mapped; Travel here; Return to Earth; Quests.
 - Quests modal: Quests; Story complete.; Job: {objective}; Station job boards
   have more to do.; Explore to find something to do.
@@ -473,10 +714,7 @@ Black Eye:
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
 - Completed story: Chapter complete. You can keep exploring.
-- Galaxy four: story in development
-
-Galaxy four's home chapter is still being designed; until it is, its label reads
-"Galaxy four: story in development".
+- Placeholder galaxy: Story in development.
 
 ## Install steps
 

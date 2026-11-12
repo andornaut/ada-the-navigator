@@ -89,17 +89,16 @@ exactly.
 A job pays Stardust and a lore line. Rewards sit on top of ordinary earnings from
 asteroids and drones met on the way. The pacing target: a player who takes Sunflower
 jobs back to back affords the first weapon (150) in about 15 minutes instead of
-about 20, against typical income of about 8 per minute. Later galaxies multiply
-rewards by 1.5 (Cartwheel) and 2 (Whirlpool and Black Eye), rounded down to a
-multiple of 5.
+about 20, against typical income of about 8 per minute. Rewards follow route position: the second galaxy multiplies them by 1.5 and the
+third to sixth by 2, rounded down to a multiple of 5.
 
-| Job             | Typical minutes | Sunflower | Cartwheel | Whirlpool | Black Eye |
-| --------------- | --------------: | --------: | --------: | --------: | --------: |
-| Survey          |               2 |        10 |        15 |        20 |        20 |
-| Lost-item hunt  |               3 |        15 |        20 |        30 |         – |
-| Delivery, short |               3 |        15 |        20 |        30 |         – |
-| Delivery, long  |               4 |        25 |        35 |        50 |         – |
-| Rescue and tow  |               4 |        25 |        35 |        50 |        50 |
+| Job             | Typical minutes | Position 1 | Position 2 | Positions 3 to 5 | Position 6 |
+| --------------- | --------------: | ---------: | ---------: | ---------------: | ---------: |
+| Survey          |               2 |         10 |         15 |               20 |         20 |
+| Lost-item hunt  |               3 |         15 |         20 |               30 |          – |
+| Delivery, short |               3 |         15 |         20 |               30 |          – |
+| Delivery, long  |               4 |         25 |         35 |               50 |          – |
+| Rescue and tow  |               4 |         25 |         35 |               50 |         50 |
 
 A short delivery is under 6000 world units; a long one is 6000 or more. Black Eye
 boards offer only surveys and rescue and tow: travelers stranded by the blockades.
@@ -108,21 +107,27 @@ boards offer only surveys and rescue and tow: travelers stranded by the blockade
 
 Each galaxy's pool fills job titles with its own items.
 
-| Galaxy    | Delivery items                     | Stranded craft             | Lost items                          |
-| --------- | ---------------------------------- | -------------------------- | ----------------------------------- |
-| Sunflower | seeds, spare parts, a message      | a seed pod, a scrap barge  | a toolbox, a watering can           |
-| Cartwheel | ore samples, drill bits, a message | an ore pod, a stuck hauler | a lucky charm, a helmet             |
-| Whirlpool | song shells, star maps, a message  | a current skimmer, a pod   | a music shell, a whale-call whistle |
-| Black Eye | none                               | a traveler's pod           | none                                |
+| Galaxy    | Delivery items                        | Stranded craft                       | Lost items                          |
+| --------- | ------------------------------------- | ------------------------------------ | ----------------------------------- |
+| Sunflower | seeds, spare parts, a message         | a seed pod, a scrap barge            | a toolbox, a watering can           |
+| Whirlpool | song shells, star maps, a message     | a current skimmer, a pod             | a music shell, a whale-call whistle |
+| Needle    | thread spools, glass beads, a message | a stuck glider, a pod                | a weaving shuttle, a silver bell    |
+| Andromeda | beacon parts, mail, a message         | a lost courier, a drifting lamp buoy | a courier's badge, a lantern        |
+| Cartwheel | ore samples, drill bits, a message    | an ore pod, a stuck hauler           | a lucky charm, a helmet             |
+| Black Eye | none                                  | a traveler's pod                     | none                                |
 
 Job lore lines, said by Astra after a job completes, one unseen line per job:
 
 - Sunflower: "Nebulae are clouds where new stars are born." "The growers trade
   seeds the way some people trade stories."
-- Cartwheel: "Every rock here was once part of something bigger." "Miners name
-  their drills. I would like a name for my drive."
 - Whirlpool: "Whales sing to map the currents. We are both mapmakers."
   "Currents carry seeds, rocks and songs from one side of Whirlpool to the other."
+- Needle: "We see Needle from its edge, like a plate held sideways." "The Avi
+  say a channel is learned, not won."
+- Andromeda: "Andromeda is so bright that people on Earth can see it without a
+  telescope." "A beacon only helps if it tells the truth about where it is."
+- Cartwheel: "Every rock here was once part of something bigger." "Miners name
+  their drills. I would like a name for my drive."
 - Black Eye: "Not every traveler here chose to stay." "Even a dark rim has
   stars."
 
@@ -179,12 +184,14 @@ Each galaxy has four landmarks of each kind. The seed assigns the kinds, and the
 names go in table order within a kind, so each landmark keeps its name on every
 flight. The Map and survey titles use these names.
 
-| Galaxy    | Nebulae                                                 | Wrecks                                                               | Beacons                                             |
-| --------- | ------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
-| Sunflower | Petal Nebula, Honey Cloud, Pollen Haze, Dandelion Drift | Old Seed Barge, Rusty Planter Ship, Sleepy Tug, Patchwork Shuttle    | Daisy Beacon, Bee Light, Sunrise Buoy, Lantern Post |
-| Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker  |
-| Whirlpool | Tide Nebula, Bubble Cloud, Swirl Haze, Kelp Glow        | Sunken Skimmer, Coral Hull, Driftwood Hull, Old Diving Bell          | Song Buoy, Wave Light, Shell Beacon, Current Marker |
-| Black Eye | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker      |
+| Galaxy    | Nebulae                                                 | Wrecks                                                               | Beacons                                                |
+| --------- | ------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
+| Sunflower | Petal Nebula, Honey Cloud, Pollen Haze, Dandelion Drift | Old Seed Barge, Rusty Planter Ship, Sleepy Tug, Patchwork Shuttle    | Daisy Beacon, Bee Light, Sunrise Buoy, Lantern Post    |
+| Whirlpool | Tide Nebula, Bubble Cloud, Swirl Haze, Kelp Glow        | Sunken Skimmer, Coral Hull, Driftwood Hull, Old Diving Bell          | Song Buoy, Wave Light, Shell Beacon, Current Marker    |
+| Needle    | Silver Thread, Spindle Cloud, Loom Haze, Eye Nebula     | Tangled Glider, Snapped Spool Ship, Old Avi Hull, Quiet Shuttle      | Gate Light, Thread Marker, Stitch Beacon, Pin Lamp     |
+| Andromeda | Bright Veil, Neighbor Nebula, Pearl Cloud, Dawn Haze    | Old Mail Ship, Lost Courier Pod, Rusted Lamp Barge, Sleepy Ferry     | Guide Light, Harbor Beacon, Truth Lamp, Courier Marker |
+| Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker     |
+| Black Eye | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker         |
 
 ## Repeatable activities
 
@@ -196,6 +203,9 @@ being offered. An accepted activity, its galaxy and its progress persist across
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
 and is offered again on the next Talk. Black Eye has no repeatable activity yet.
+Activity rewards follow route position: 35 at the second, 50 at the third, 55 at
+the fourth and 60 at the fifth; the first galaxy's supply run pays the delivery
+rewards.
 
 - While an activity is active, the galaxy's boards show their jobs, and Accept
   refuses with "Finish your activity first." The activity shows at the top of
@@ -206,16 +216,19 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
   with "Finish or drop your current job first."
 - The Map's Quests modal shows an active activity as its "Job:" line.
 - On a board, the Active activity row's detail line is its goal: "Carry
-  supplies to a station.", "Guide a whale calf home." or "Deposit 30 resources
-  at the hub."
+  supplies to a station.", "Guide a whale calf home.", "Light the gates of a
+  practice channel.", "Fly a parcel with Pip." or "Deposit 30 resources at the
+  hub."
 - Holding one outpost's supply run, Talk at another outpost refuses Accept with
   "Finish your activity first."
 
-| Galaxy    | Activity        | Offered by          | Goal                                                     |   Reward |
-| --------- | --------------- | ------------------- | -------------------------------------------------------- | -------: |
-| Sunflower | Supply run      | Any of the outposts | Carry supplies to a station 3000 or more away.           | 15 or 25 |
-| Cartwheel | Mining contract | The hub             | Deposit 30 resources at the hub; partial loads count.    |       35 |
-| Whirlpool | Guide a calf    | The whale family    | Lead a whale calf 5000 to 8000 world units home to them. |       50 |
+| Galaxy    | Activity          | Offered by          | Goal                                                              |   Reward |
+| --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | -------: |
+| Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 15 or 25 |
+| Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |       35 |
+| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |       50 |
+| Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |       55 |
+| Cartwheel | Mining contract   | The hub             | Deposit 30 resources at the hub; partial loads count.             |       60 |
 
 - **Supply run**: follows the delivery job rules in full, 3000 minimum
   included: the outpost's item goes to a known station at least 3000 world
@@ -241,6 +254,16 @@ and is offered again on the next Talk. Black Eye has no repeatable activity yet.
   to the calf until it follows, then to the family. Closing the game resumes the
   guide exactly, as for a tow.
   Return to Earth, Back to title or a shield-depletion jump returns the calf to its start.
+- **Courier run**: Pip flies a parcel to a seeded settlement 5000 to 8000 world
+  units away at 0.7 of Ada's base top speed, and Ada escorts him. Pip waits
+  whenever Ada is more than 600 world units away and goes on when she returns.
+  Pip takes no damage, and drones ignore him; one drone patrol waits along the
+  way. Pip reaching the settlement completes the activity. Return to Earth, Back
+  to title or a shield-depletion jump returns Pip to his start.
+- **Thread the needle**: a gate run (see [Needle](rules.md#galaxy-three-needle-threading-the-needle))
+  through a seeded practice channel of 8 gates near Elder Loom. A gate passed too
+  fast sends Ada back to the first gate. Lighting the last gate completes the
+  activity.
 
 Activity lines:
 
@@ -250,6 +273,9 @@ Activity lines:
 - Station: "Contract open: deposit 30 resources here. Partial loads count."
 - Whale family: "One of our young ones swam off to play. Could you guide them
   home? Stay close. They follow friends."
+- Pip: "I've got a parcel for the far settlement. Fly with me? It's less scary
+  with company."
+- Elder Loom: "The practice channel is open. Thread it again, slowly."
 
 | Key                 | Text                                        |
 | ------------------- | ------------------------------------------- |
@@ -283,11 +309,13 @@ count and starts a new list of found points.
 | ------------------ | --------------------------------------------------- |
 | New Navigator      | Finish the prologue.                                |
 | The Garden Begins  | Complete the Sunflower chapter.                     |
-| Room for Everyone  | Complete the Cartwheel chapter.                     |
 | Time to Explore    | Complete the Whirlpool chapter.                     |
+| Steady Hands       | Complete the Needle chapter.                        |
+| Truth Teller       | Complete the Andromeda chapter.                     |
+| Room for Everyone  | Complete the Cartwheel chapter.                     |
 | Blockade Breaker   | Break General Gadget's blockade in Black Eye.       |
 | Cartographer       | Chart every landmark in one galaxy.                 |
-| Astra's Atlas      | Chart every landmark in all four galaxies.          |
+| Astra's Atlas      | Chart every landmark in all six galaxies.           |
 | Helping Hand       | Complete a station job.                             |
 | Good Neighbor      | Complete 25 station jobs or repeatable activities.  |
 | Friends Everywhere | Make every optional ally: quest and project allies. |
@@ -304,7 +332,7 @@ achievement also shows its progress as `{have}/{need}`:
 | Name               | Counts                                                    |
 | ------------------ | --------------------------------------------------------- |
 | Cartographer       | Landmarks charted in the galaxy with the most charted     |
-| Astra's Atlas      | Landmarks charted across all four galaxies                |
+| Astra's Atlas      | Landmarks charted across all six galaxies                 |
 | Good Neighbor      | Station jobs and repeatable activities completed, of 25   |
 | Friends Everywhere | Optional allies made                                      |
 | Community Builder  | Community projects funded                                 |

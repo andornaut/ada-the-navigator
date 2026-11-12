@@ -15,7 +15,8 @@ within its pull radius toward her at its pull speed; Stardust collects within 4 
 units of Ada's drawn ship, like every pickup. The beam pulls only Stardust. Base pull radius
 is 65 world units and base pull speed is 150 world units per second. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
-its Stardust. A multipart ship is defeated when all its required parts are disabled.
+its Stardust. A heavy is destroyed when its hull HP reaches 0; a disabled heavy
+drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disabling)).
 
 | Source           | Stardust |
 | ---------------- | -------: |
@@ -28,11 +29,12 @@ its Stardust. A multipart ship is defeated when all its required parts are disab
 | `fighter`        |        2 |
 | `interceptor`    |        1 |
 | `retaliator`     |        4 |
-| `frigate`        |        5 |
-| `capital`        |       12 |
+| `frigate`        |        6 |
+| `capital`        |       14 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
-multipart ship counts all its parts' hit points.
+heavy counts all its hardpoints' hit points, not its hull. The table shows
+position 1; values follow each position's hit points.
 Discovery caches are rare. These values come from a pacing simulation of typical
 play against the targets above; rerun it after changing any earning value.
 
@@ -45,7 +47,8 @@ drop is below its cap, so each pickup carries 1 Stardust.
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
 ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; in galaxy
 one, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
-Ada already owns gives one pack of its ammunition instead. Story mining deposits keep their
+Ada already owns gives one pack of its ammunition instead. Salvaging a disabled
+heavy multiplies its weapon chance by 5. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
 Station jobs also pay Stardust; see [Quests](quests.md#rewards).
@@ -62,7 +65,7 @@ area. The dock is the station sprite's visible entrance. Ada docks when her
 drawn ship overlaps the mouth circle: half the drawn mouth width in world units,
 scaled by a forgiving `dockForgiveness` of 3.
 Undocking places Ada at rest just outside the dock, so flying back in docks again. Flying into its dock opens the station card, which pauses action like a
-conversation. The card shows the Stardust balance, a welcome line, Undock, Shop and Jobs; Jobs
+conversation. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
 opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
 undock. Station quests are part of the station concept; their content is
@@ -70,22 +73,22 @@ not yet designed, so the station card shows no quest board until it is.
 
 ## Shop
 
-| Item            | Effect                                                                       | Prices   |
-| --------------- | ---------------------------------------------------------------------------- | -------- |
-| Rapid Missile   | Owned weapon                                                                 | 150      |
-| Multi-Laser     | Owned weapon                                                                 | 250      |
-| Heavy Missile   | Owned weapon                                                                 | 300      |
-| Scattershot     | Owned weapon                                                                 | 350      |
-| Phaser          | Owned weapon                                                                 | 400      |
-| Weapon upgrade  | Per weapon, Basic included: levels 2 and 3, each about ×1.5 effective output | 150, 300 |
-| Shield          | Levels 2 and 3: capacity 150, then 225                                       | 150, 300 |
-| Shield recharge | Levels 2 and 3: each about ×1.5 recharge (shorter delay, faster rate)        | 150, 300 |
-| Engine tuning   | Levels 2 and 3: each +5% top speed, −10% acceleration and braking seconds    | 120, 240 |
-| Tractor beam    | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300          | 80, 160  |
-| Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free | 50 each  |
+| Item            | Effect                                                                              | Prices   |
+| --------------- | ----------------------------------------------------------------------------------- | -------- |
+| Rapid Missile   | Owned weapon                                                                        | 150      |
+| Multi-Laser     | Owned weapon                                                                        | 250      |
+| Heavy Missile   | Owned weapon                                                                        | 300      |
+| Scattershot     | Owned weapon                                                                        | 350      |
+| Phaser          | Owned weapon                                                                        | 400      |
+| Weapon upgrade  | Per weapon, Basic included: levels 2 and 3, each about ×1.5 effective output        | 150, 300 |
+| Shield          | Levels 2 and 3: capacity 15, then 22                                                | 150, 300 |
+| Shield recharge | Levels 2 and 3: delay 10 s; empty to full 45, then 30 s                             | 150, 300 |
+| Engine tuning   | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds | 120, 240 |
+| Tractor beam    | Levels 2 and 3: pull radius 100, then 135; pull speed 220, then 300                 | 80, 160  |
+| Ship paint      | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free        | 50 each  |
 
-Enemy speed ratios stay relative to Ada's base speed, so engine tuning lets Ada
-outrun the fastest enemies. The shop follows Archie's Pet shop pattern: tabs, owned
+Enemy speeds are fixed, so engine tuning lets Ada outrun the swarm at level 2 and
+match the interceptor at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
 outside tap, back and Escape return to the station card. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
@@ -143,7 +146,9 @@ Once a galaxy's chapter is complete (its space story and its home page), every
 station in that galaxy offers its community projects, which Ada funds with
 Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
 counts toward achievements and makes one ally who joins the Black Eye finale.
-Projects give no combat power outside the finale. Prices target funding all of a galaxy's projects about an hour after its
+Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 250 and
+175; the second's two are 300 and 250, the third's 350 and 250, the fourth's 350
+and 300, and the fifth's 400 and 300. Prices target funding all of a galaxy's projects about an hour after its
 story ends, measured in the pacing simulation by Stardust earned without jobs,
 purchases not subtracted.
 
@@ -152,10 +157,14 @@ purchases not subtracted.
 | Greenhouse ring    | Sunflower |   300 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                        |
 | Workshop crane     | Sunflower |   250 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
 | Salvage beacons    | Sunflower |   175 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
-| Second docking bay | Cartwheel |   350 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
-| Hub repairs        | Cartwheel |   250 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
 | Nursery beacon     | Whirlpool |   300 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
 | Current-map buoys  | Whirlpool |   250 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
+| Channel lights     | Needle    |   350 | Elder Loom   | "Young pilots can practise even in the dark now. Patience needs light."    | Soft lamps along the practice channel                        | An Avi glider using `escort`                        |
+| Loom hall          | Needle    |   250 | Avi          | "A hall for teaching. Every pilot here started with a wobbly first gate."  | A new hall on the Avi station                                | A loom ship using `chase` against turrets           |
+| Courier school     | Andromeda |   350 | Pip          | "Now every new courier learns to slow down and speak up. Thanks, Ada."     | A small training dock beside the settlers' station           | A courier ship using `escort`                       |
+| Spare beacon       | Andromeda |   300 | Settler      | "If a beacon ever goes dark again, this one will light the way."           | A spare guide beacon beside the relit one                    | A beacon tender using `escort`                      |
+| Second docking bay | Cartwheel |   400 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
+| Hub repairs        | Cartwheel |   300 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
 
 Projects is the third shop tab, after Weapons and Ship, shown once the galaxy's
 projects are offered. It lists only that galaxy's projects, in table order, so a
@@ -173,19 +182,24 @@ and plays the thank-you line as a space conversation. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
 funding changes nothing in the world.
 
-| Project            | Id               | Effect line                | Description                                     |
-| ------------------ | ---------------- | -------------------------- | ----------------------------------------------- |
-| Greenhouse ring    | `greenhouseRing` | Domes for more crops       | A ring of greenhouse domes around the growers.  |
-| Workshop crane     | `workshopCrane`  | A crane for heavy lifts    | A big gantry crane for the workshop.            |
-| Salvage beacons    | `salvageBeacons` | Helps find lost things     | Bright beacons so lost things are easy to find. |
-| Second docking bay | `dockingBay`     | No miner waits alone       | A second docking bay at the mining hub.         |
-| Hub repairs        | `hubRepairs`     | Repairs the mining hub     | Patches and new lights for the mining hub.      |
-| Nursery beacon     | `nurseryBeacon`  | A light for resting calves | A soft light where whale calves can rest.       |
-| Current-map buoys  | `currentBuoys`   | Marks the currents         | Humming buoys that map the whales' current.     |
+| Project            | Id               | Effect line                 | Description                                             |
+| ------------------ | ---------------- | --------------------------- | ------------------------------------------------------- |
+| Greenhouse ring    | `greenhouseRing` | Domes for more crops        | A ring of greenhouse domes around the growers.          |
+| Workshop crane     | `workshopCrane`  | A crane for heavy lifts     | A big gantry crane for the workshop.                    |
+| Salvage beacons    | `salvageBeacons` | Helps find lost things      | Bright beacons so lost things are easy to find.         |
+| Nursery beacon     | `nurseryBeacon`  | A light for resting calves  | A soft light where whale calves can rest.               |
+| Current-map buoys  | `currentBuoys`   | Marks the currents          | Humming buoys that map the whales' current.             |
+| Channel lights     | `channelLights`  | Lights the practice channel | Soft lamps so young pilots can practise any time.       |
+| Loom hall          | `loomHall`       | A place to teach pilots     | A teaching hall for young Avi pilots.                   |
+| Courier school     | `courierSchool`  | Trains careful couriers     | A training dock where new couriers learn to fly safely. |
+| Spare beacon       | `spareBeacon`    | A backup guide light        | A spare beacon, ready if the chain ever goes dark.      |
+| Second docking bay | `dockingBay`     | No miner waits alone        | A second docking bay at the mining hub.                 |
+| Hub repairs        | `hubRepairs`     | Repairs the mining hub      | Patches and new lights for the mining hub.              |
 
 Effect lines use the keys `projectEffectGreenhouse`, `projectEffectCrane`,
 `projectEffectBeacons`, `projectEffectDockingBay`, `projectEffectHubRepairs`,
-`projectEffectNursery` and `projectEffectCurrentBuoys`; descriptions use the
+`projectEffectNursery`, `projectEffectCurrentBuoys`, `projectEffectCourierSchool`,
+`projectEffectSpareBeacon`, `projectEffectChannelLights` and `projectEffectLoomHall`; descriptions use the
 same suffixes after `projectAbout`.
 
 ## Quantum jump home

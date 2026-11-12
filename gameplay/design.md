@@ -52,7 +52,7 @@ restores part of her memory and reveals the next galaxy's coordinates.
 
 ## General Gadget
 
-General Gadget leads a fleet of uncrewed drones; destroying them hurts no one.
+General Gadget is a black-furred cat. He leads a fleet of uncrewed drones; destroying them hurts no one.
 Astra once believed he was good. She was his fleet's only jump navigator and
 jumped his drones from galaxy to galaxy while mapping the universe, until she
 realized he wanted to rule over all of it. She scattered all but one of her
@@ -65,25 +65,32 @@ mind into obedient navigator AIs and move his fleet anywhere instantly. Astra ha
 a will of her own; the copies would not. His drones search every galaxy for the
 holodisks. Astra has forgotten all of this.
 
-Each holodisk restores a jump ability and a memory, and the hints grow:
+Each holodisk restores a jump ability and a memory, and the hints grow along
+the route, whichever galaxy holds that holodisk:
 
-1. Sunflower: Astra remembers a fleet, and someone giving orders.
-2. Cartwheel: she remembers carrying that fleet from galaxy to galaxy. A faceless
-   voice starts broadcasting to the drones, and it frightens her without her
-   knowing why.
-3. Whirlpool: she names him. She was General Gadget's navigator, and she scattered
-   her holodisks to keep them from him.
-4. Black Eye: Gadget holds the last holodisk. Astra remembers what he wants and
-   fears that making her whole puts her at risk. She trusts Ada, takes it and no
-   longer needs to run or hide.
+1. First holodisk (Sunflower): Astra remembers a fleet, and someone giving
+   orders.
+2. Second (Whirlpool): she remembers carrying that fleet from galaxy to galaxy.
+   A faceless voice starts broadcasting to the drones, and it frightens her
+   without her knowing why.
+3. Third (Needle): she names him. She was General Gadget's navigator, and she
+   scattered her holodisks to keep them from him.
+4. Fourth (Andromeda): she remembers fleeing him: the scattering jump that damaged
+   her memory and stranded her near Earth.
+5. Fifth (Cartwheel): she remembers what he wants: obedient copies of her
+   navigation mind. She fears what being whole might cost.
+6. Sixth (Black Eye): Gadget holds the last holodisk. Astra remembers what he
+   wants and fears that making her whole puts her at risk. She trusts Ada, takes
+   it and no longer needs to run or hide.
 
 Ada makes friends and allies across the galaxies, and they help her defeat General
 Gadget in Black Eye. Ada shows him that there are infinitely many galaxies, so the
-universe cannot be controlled, and the General relents. With all four holodisks
+universe cannot be controlled, and the General relents. With all six holodisks
 Astra can navigate on her own again, but she chooses to keep flying with Ada.
 
 The interactive story at home and procedural space adventures continue together
-throughout the game. The first three chapters concern a community garden,
-playground bullying and caring for her dog. A fourth concluding chapter, the
-confrontation with General Gadget, is within version one; its home chapter and
-detailed scenes remain to be designed.
+throughout the game. The first five chapters, in route order, concern a
+community garden, caring for her dog, patience, honesty and playground
+bullying. A sixth
+concluding chapter, the confrontation with General Gadget, is within version
+one; its home chapter and detailed scenes remain to be designed.

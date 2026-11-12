@@ -6,10 +6,24 @@ balance values are provisional and must be tuned through playtesting.
 
 ## Scope and presentation
 
-Version one is the game now being built, with four galaxies; anything later
-belongs in [Ideas](ideas.md).
-The fourth galaxy, Black Eye, holds the finale; its home chapter is to be
-designed. Station jobs are in [Quests](quests.md).
+Version one is the game now being built, with six galaxies; anything later
+belongs in [Ideas](ideas.md). The route runs:
+
+| Position | Galaxy    | Home lesson                        |
+| -------: | --------- | ---------------------------------- |
+|        1 | Sunflower | Cooperation: the community garden  |
+|        2 | Whirlpool | Caring for Penny                   |
+|        3 | Needle    | Patience: practising a hard skill  |
+|        4 | Andromeda | Honesty: owning up to a mistake    |
+|        5 | Cartwheel | Inclusion: standing up to bullying |
+|        6 | Black Eye | The finale; home chapter to design |
+
+Tension rises, dips at Needle, builds again through Andromeda, and peaks with Cartwheel's stand against a bully
+before Black Eye's stand against General Gadget. Content tied to a galaxy, its
+story, places, roster and art, is named by galaxy. Difficulty, rewards, prices,
+Astra's memory lines and General Gadget's broadcasts follow route position, so
+reordering the route moves a galaxy's content and gives it its new position's
+values. Station jobs are in [Quests](quests.md).
 
 Space uses authored sprites for ships, stations, outposts, pickups and asteroids,
 with simple placeholders only where art has not landed yet.
@@ -26,7 +40,7 @@ the game; do not modify the source games.
 ## Start, Home and Space
 
 The game has two halves: Home, the storybook scenes on Earth, and Space, the
-flights. The first launch shows only Start, which begins galaxy one's home opening
+flights. The first launch shows only Start, which begins Sunflower's home opening
 and then the prologue. Start stays alone until the first flight begins. Later
 launches show Continue and Restart.
 
@@ -59,10 +73,10 @@ choices cannot cause permanent failure. Recover the current galaxy's holodisk,
 complete its space quest and complete its home resolution to unlock the next
 galaxy.
 
-On first launch, galaxy one's home opening is followed by the prologue: Ada digs
+On first launch, Sunflower's home opening is followed by the prologue: Ada digs
 up the rock, polishes it, touches its glow and arrives aboard with her dog Penny.
 Astra introduces herself, her corrupted memory, the time rule and the holodisk,
-and asks Ada to be her navigator. Ada straps Penny in and chooses galaxy one. The
+and asks Ada to be her navigator. Ada straps Penny in and chooses Sunflower. The
 prologue plays once. Later, Ada boards from her room with "Pick up the rock." and
 a brief boarding line, then chooses a galaxy.
 
@@ -92,10 +106,14 @@ the default. Locations include Grandma's house and garden, the community garden
 lot, Ada's room, the school hallway, the schoolyard, the front door and kitchen at home and
 the park where Ada finds the rock. A scene that leads aboard ends on Ada's room,
 with the narration "Ada's rock glows softly on her desk." and the named action.
-Backgrounds by scene: galaxy one opens in Grandma's garden and resolves and closes
-at the community garden lot; galaxy two opens in the school hallway, with dinner in the kitchen at home, and resolves
-and closes in the schoolyard; galaxy three opens at the front door and resolves
-and closes in the park; the prologue moves from the park to Ada's room. Narration
+Backgrounds by scene: Sunflower opens in Grandma's garden and resolves and closes
+at the community garden lot; Whirlpool opens at the front door and resolves and
+closes in the park; Needle opens and resolves in Ada's room with the recorder
+in view, its boarding pages included, and closes in the school concert hall, a
+new location, with Ada playing on stage; Andromeda opens, resolves and closes
+at Grandma's house and garden, with the seedling tray spilled from the opening
+through the resolution's branch pages and replanted on the closing; Cartwheel opens in the school hallway, with dinner in the kitchen at home, and resolves and
+closes in the schoolyard; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
 until Continue, so Ada can ask every question. Continue lands in the cockpit with
@@ -119,27 +137,52 @@ moment, then morning, when any waiting home scene plays as on any arrival home. 
 voluntary Return to Earth has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
-Every launch, including a replay of a resolved galaxy, boards and shows the
-cockpit with galaxy selection on top. Galaxies are paged one
-per page, in order, with Previous and Next, like Chibi's stage cards. An unlocked
-galaxy shows "Galaxy {number}", its name, a small screenshot in the galaxy's own
-hue and one line of flavor text, with Jump. Every galaxy has its own main
-background hue, as Chibi's zones do. A locked galaxy is shown but disabled: its
-number, a greyscale screenshot, and "..." for its name and text. At first only
-galaxy one is unlocked. An Earth button, between Previous and Jump, and closing galaxy selection
-(its close X, an outside tap, back or Escape), leave the cockpit and return Ada to
-her room without a jump.
-Galaxies are named after real galaxies' nicknames:
-Sunflower (one), Cartwheel (two), Whirlpool (three) and Black Eye (four). Unlocked galaxies remain
-replayable. Completing a quest invites a return to Earth without forcing immediate
-exit from space.
+Every boarding (picking up the rock or Continue from the start screen),
+including for a replay of a resolved galaxy, shows the cockpit's galaxy
+selection before the flight. The app itself always opens on the start screen. Galaxy selection is a route map, like Chibi's zone map,
+drawn over a galaxy or space scene, not over the ship. All six galaxies sit
+in route order on two rows of three, as on Chibi's map: 1 to 3 along the top,
+down to 4, and 5 and 6 back along the bottom, with names under the markers, each a marker in its galaxy's own main hue, as
+Chibi's zones have, with Ada's ship, drawn as her current ship sprite, on the selected galaxy. Right moves the ship to the next
+open galaxy in route order and Left to the previous one, even where the bottom
+row runs right to left on screen; both skip locked galaxies, as
+Chibi's walk skips unavailable zones. Tapping an open marker moves the ship
+there. The ship starts on the farthest unlocked galaxy, so on the first boarding
+it sits on Sunflower, the only open galaxy, with Jump as the default action. Tab focuses every marker in route order. Tapping, or focusing with Tab, a locked marker shows its panel while the ship stays
+on its open galaxy, and Jump is then disabled and refuses with the shared
+refusal feedback; Left or Right returns the panel to the
+ship's galaxy. A
+panel under the chart shows the selected galaxy's "Galaxy {number}", its name,
+a small screenshot and one line of flavor text. Earth is on the left and Jump
+on the right as the default action, as Chibi's map places Back to title and
+Continue. A locked galaxy's marker is greyscale, with "..." for its name and
+text. A placeholder galaxy, one whose story is not yet built, is flyable: it has
+generic space, enemies and rocks, its position's difficulty and its roster, but no
+story, holodisk or story destinations. Its panel shows its number, name and flavor
+line, then "Story in development.", and Jump works. Its marker is open, in its
+galaxy's hue, and its screenshot is a generic space view until its own art lands. At first only the first galaxy
+is unlocked. Recovering a galaxy's holodisk unlocks the next position, every
+placeholder after it and the next built galaxy, so placeholders never block the
+route: finishing Whirlpool opens Needle, Andromeda and Cartwheel while Needle and
+Andromeda are placeholders. Saves keep every unlock. The first boarding after an
+unlock shows the ship flying along the route to the farthest newly unlocked
+galaxy, then waits for the player's choice. The route map is the only galaxy
+selection; there is no separate selection card. Earth, in the panel, and closing galaxy selection (its close X, an
+outside tap, back or Escape) leave the cockpit and return Ada to her room
+without a jump.
+
+Galaxies are named after real galaxies' nicknames, in the route order above.
+Every unlocked galaxy stays replayable in any order. Its resolved story stays
+resolved, and its stations, shops, jobs, activities and any unfinished quests
+stay available. Completing a quest invites a return to Earth without forcing
+immediate exit from space.
 
 Space conversations pause action and use brief essential exchanges with optional
 questions about character and culture. The first mandatory introductory encounter
 occurs after roughly a minute of exploration, with precise pacing tunable. It
 happens only once per galaxy; repeat visits resume progress.
 
-### Galaxy one: cooperating outposts
+### Galaxy one, Sunflower: cooperating outposts
 
 Ada has gardened with her grandmother since she was little. Through her grandmother
 she learns about a stalled community garden initiative. Ada learns that people
@@ -154,49 +197,7 @@ skills, and salvagers with materials. Ada helps them begin an ongoing exchange.
 They are not enemies; lack of coordination is the obstacle. Once their exchange
 is running, the outposts give Ada the galaxy's holodisk as thanks.
 
-### Galaxy two: mining hub
-
-Ada notices another child being bullied at school. No reason is needed to explain
-why that child is targeted. Ada and other children choose inclusion, visible
-support and refusal to normalize bullying. Do not resolve this by a duel.
-
-The space station is a busy mining collection hub with adequate docking capacity.
-Ada shoots resource-bearing rocks, collects pieces on contact into the
-cargo hold, returns and deposits them. Cumulative deposited resource targets
-advance story milestones; partial loads count. The resource identity and exact
-quantities remain open.
-
-During returns, Ada observes a pilot deliberately blocking another miner's docking
-approach. She speaks with that miner and other regular visitors, establishes that
-company would be welcome, and helps arrange an approach together. Others make
-space and reject the intimidation. The targeted miner docks; they do not need
-better piloting skills. No instant apology or friendship is required. Subsequent
-visits preserve the changed relationships. The hub sells the galaxy's holodisk for
-a provisional 300 Stardust.
-
-Cartwheel's story ships are the miner, two regular visitors and the blocking
-pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
-shots pass through and which never fight. Each scene is a short scripted path
-near the hub that plays without Ada steering it. At the first deposit milestone
-the blocking pilot cuts across the miner's approach and the miner turns away. At
-the final milestone the miner and the visitors fly in together and dock, and the
-blocking pilot flies off. Between scenes the miner and visitors wait at
-holding points near the hub, inside the view while Ada is docked, which are
-their story destinations; these have no
-route guards, since Cartwheel's danger is at the ore fields. Each scene plays
-first, and its dialogue line follows when the scene ends. A scene cut short by
-the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
-
-Resource rocks come in medium and large classes, colliding and taking hits like
-asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
-and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
-
-Cartwheel's space is an industrial ring of mining platforms in rust and ember
-tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
-run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
-quickly from Sunflower; the roster is in [Ships](ships.md#galaxy-two-roster).
-
-### Galaxy three: whale family
+### Galaxy two, Whirlpool: whale family
 
 Ada loves her dog but resents walking it and overlooks its dependence on her for
 movement and exploration. Her space experience changes her understanding of care.
@@ -216,13 +217,13 @@ companion-following AI or escort is required. Back home, Ada chooses to meet her
 is expressed through her actions rather than a speech.
 
 Whirlpool's space is teal and full of swirling debris. Gadget's hunter drones
-chase the whale family; the roster is in [Ships](ships.md#galaxy-three-roster).
+chase the whale family; the roster is in [Ships](ships.md#whirlpool-roster).
 Its signature mechanic is space currents, flow fields that push every ship in
 them. All values are provisional tuning:
 
 - A current is an open curved path 3000 to 8000 world units long and 300 to 500
   wide. Its flow is strongest at the centre line, a peak of 70 world units per
-  second (0.35 of Ada's 200 base top speed), falls to zero at its edges and fades
+  second, falls to zero at its edges and fades
   out over the last 600 world units at each end.
 - Currents and their debris rivers are placed by the galaxy's seed, so they stay
   in the same places on every flight, like stations. They cover about a tenth of
@@ -248,9 +249,185 @@ them. All values are provisional tuning:
 - Currents show as flowing teal streaks whose direction reads at a glance,
   drawn as a placeholder until Art's streak art lands.
 
-### Galaxy four: deferred conclusion
+### Galaxy three, Needle: threading the needle
 
-A concluding home chapter draws on the first three experiences without adding
+Ada learns patience: sticking with a hard skill through practice.
+
+Ada is learning the recorder for the school concert, and her song keeps
+squeaking. She wants to quit. After the space story she practises a little every
+day, one hard part at a time, and plays the whole song at the concert. It is not
+perfect, and she is proud of it.
+
+Needle's space is a thin silver galaxy seen edge on. Its people, the Avi,
+fly the long narrow channels between its star clouds and teach young pilots to
+"thread the needle". Astra's holodisk has drifted to the far end of the Eye, a
+narrow channel of slow drifting debris. Ada's first try is too fast. Elder Loom,
+an old Avi pilot, teaches her at a short practice run, then sends her through
+the Eye. Elder Loom is an older Avi with silver feathers, a lavender
+tunic and pilot goggles, and has no pronoun: player text and these documents
+always use the name.
+
+A gate run is a chain of ring gates along a narrow channel. A gate lights only
+when Ada passes through it below 40% of her top speed; a gate passed too fast
+stays dark, and Elder Loom calls her back to the first gate of that run. Debris
+in the channel drifts slowly and bumps the ship aside without damage, as
+scenery does. The practice run has 3 gates; the Eye has 8, with the holodisk
+beyond the last. No enemies enter a gate run. Gadget's drones wait outside the
+Eye's exit, so Ada leaves with the holodisk and fights her way clear.
+
+Objectives: explore; meet Elder Loom; light the practice gates; light the Eye's
+gates; collect the holodisk; return to Earth.
+
+Channels are 210 world units wide, 150 in the Eye, and each ring gate's opening
+is 66. A gate counts as passed when Ada's centre crosses it inside the opening;
+its rim bumps the ship aside like scenery. Every gate stands at least 30 degrees
+off screen horizontal, so the upright hoop never reads edge-on. The Eye is an
+almond of drifting debris around its channel, with the 8 gates along it and the
+holodisk past the last. The drone pack waits beyond the exit, outside the
+channel.
+
+### Galaxy four, Andromeda: the dark beacon
+
+Ada learns honesty: owning up to a mistake and making it right.
+
+At Grandma's house, Ada knocks over a tray of seedlings Grandma has been raising
+for the community garden. She sets the pots back and says nothing. Later Grandma
+finds the spilled soil and is puzzled and a little sad; nobody is blamed. Ada
+feels uneasy all day. The resolution comes after the space story: she tells Grandma what
+happened, helps replant the tray, and Grandma thanks her for telling the truth.
+Nobody is punished for the accident; the hard part was saying it.
+
+Andromeda's space is a great bright spiral, the closest of the galaxies, with a
+chain of guide beacons that ships follow between its settlements. One beacon has
+gone dark and ships keep getting lost. The frightened settlers blame Gadget's drones. Ada meets Pip, a young courier, who admits to her that he
+clipped the beacon during a rushed delivery and was too scared to say. He also
+found a strange disc in the wreckage, Astra's holodisk, and has kept it as a
+treasure. Ada does not tell on him: she offers to go with him while he tells the
+settlers. He owns up, the settlers' fear eases, and Ada and Pip gather the
+parts to relight the beacon. Pip then hands Ada the holodisk himself.
+
+Objectives: explore; find out why ships are getting lost; talk with Pip; go with
+Pip to the settlers; bring beacon parts to the dark beacon; take the holodisk
+from Pip; return to Earth. Gadget's drones are hunting here openly. Andromeda's drones patrol in larger
+groups with more frigates than Needle's; its roster is tuned like the others.
+
+Andromeda's stations are settlers' stations, drawn with the settlers' art, as
+Cartwheel's station is the mining hub: each is a full station with dock, shop,
+Jobs and, once the chapter is complete, projects, and the Map calls it Station.
+Going with Pip to the settlers ends at the nearest settlers' station. The
+settlements are Andromeda's outposts: the Map calls them Outpost, Ada uses one
+like Sunflower's outposts rather than docking, and the courier run, deliveries
+and tows can end at one. Their sentence names are "the settlers' station" and
+"the settlement". The guide beacons are story objects, separate from the
+galaxy's beacon landmarks: the dark beacon is a story place, and the
+rest of the chain is scenery, not Map places.
+
+### Galaxy five, Cartwheel: mining hub
+
+Ada notices another child, Sam, being bullied at school. No reason is needed to explain
+why that child is targeted. Ada and other children choose inclusion, visible
+support and refusal to normalize bullying. Do not resolve this by a duel.
+
+The space station is a busy mining collection hub with adequate docking capacity.
+Ada shoots resource-bearing rocks, collects pieces on contact into the
+cargo hold, returns and deposits them. Cumulative deposited resource targets
+advance story milestones; partial loads count. The resource identity and exact
+quantities remain open.
+
+During returns, Ada observes a pilot deliberately blocking another miner's docking
+approach. She speaks with that miner and other regular visitors, establishes that
+company would be welcome, and helps arrange an approach together. Others make
+space and reject the intimidation. The targeted miner docks; they do not need
+better piloting skills. No instant apology or friendship is required. Subsequent
+visits preserve the changed relationships. The hub sells the galaxy's holodisk for
+a provisional 450 Stardust.
+
+Cartwheel's story ships are the miner, two regular visitors and the blocking
+pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
+shots pass through and which never fight. Each scene is a short scripted path
+near the hub that plays without Ada steering it. At the first deposit milestone
+the blocking pilot cuts across the miner's approach and the miner turns away. At
+the final milestone the miner and the visitors fly in together and dock, and the
+blocking pilot flies off. Between scenes the miner and visitors wait at
+holding points near the hub, inside the view while Ada is docked, which are
+their story destinations; these have no
+route guards, since Cartwheel's danger is at the ore fields. Each scene plays
+first, and its dialogue line follows when the scene ends. A scene cut short by
+the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
+
+Resource rocks come in medium and large classes, colliding and taking hits
+like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
+and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
+
+Cartwheel's space is an industrial ring of mining platforms in rust and ember
+tones. Gadget's claim-jumper drones harass miners at the ore fields with hit and
+run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
+along the route; the roster is in [Ships](ships.md#cartwheel-roster).
+
+### Species and greeters
+
+Each galaxy's people are one kid-friendly alien species: animal folk in
+Sunflower, Whirlpool and Needle, androids in Andromeda, living rock in Cartwheel
+and goo in Black Eye. Its role voices, story characters and greeters are all of
+that species, apart from Whirlpool's whales and General Gadget.
+
+| Galaxy    | People  | Form         | Lore                                                                                                                                               |
+| --------- | ------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sunflower | Bumbles | Bees         | Hive folk who farm starlight and hum while they work; the growers, workshop and salvagers are Bumbles.                                             |
+| Whirlpool | Voron   | Squid        | Current riders who live beside the whales and write in ink that glows.                                                                             |
+| Needle    | Avi     | Herons       | Long-legged pilots who stand still before they move; Elder Loom is an Avi.                                                                         |
+| Andromeda | Munix   | Androids     | Built settlers who steer by beacon light and keep their lamps lit; Pip and the settlers are Munix.                                                 |
+| Cartwheel | Cobbles | Living rock  | Stone folk who mine the ore that feeds them and never mind a bump; the young are pebble-sized. The miner, visitors and blocking pilot are Cobbles. |
+| Black Eye | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; their part is designed with the finale.                                          |
+
+Named characters show their names on name tabs in place of the role labels the
+copy uses:
+
+| Galaxy    | Role label                    | Name              |
+| --------- | ----------------------------- | ----------------- |
+| Sunflower | Grower                        | Clover            |
+| Sunflower | Workshop                      | Rivet             |
+| Sunflower | Salvager                      | Patch             |
+| Whirlpool | Whale (the trapped whale)     | Marlo             |
+| Needle    | Avi                           | Reed              |
+| Andromeda | Settler (the story's settler) | Wick              |
+| Cartwheel | Station (the hub's voice)     | Quartz            |
+| Cartwheel | Miner                         | Mica              |
+| Cartwheel | Regular visitor               | Opal, then Jasper |
+
+Cartwheel's first regular-visitor line is Opal's and the final-milestone line
+Jasper's. The bullied child at home is Sam (they). The blocking pilot, the whale
+family, settlement greeters and the calf stay unnamed.
+
+Every station in these five galaxies has a keeper of its people, and every
+Andromeda settlement a settler who greets Ada. Each galaxy has three keepers,
+each with a name and portrait of their own. A station's keeper follows its rank
+by distance from the galaxy's origin, cycling through the three, so the nearest
+three stations have different keepers. Cartwheel's mining hub is always
+Quartz's, and its other stations cycle through Slate and Garnet.
+
+| Galaxy    | Keepers                  |
+| --------- | ------------------------ |
+| Sunflower | Saffron, Bramble, Nectar |
+| Whirlpool | Ripple, Coral, Brine     |
+| Needle    | Sedge, Willow, Marsh     |
+| Andromeda | Lumen, Dial, Cog         |
+| Cartwheel | Quartz, Slate, Garnet    |
+
+A galaxy's keepers share its greeting lines; the name tab shows the keeper's
+name. Story destinations keep their
+story characters' arrival lines; landmarks have no greeter. The first time Ada
+docks at a station, its keeper's portrait and full greeting (three lines) show
+in the station card's welcome line, a tap on the line advancing it while Undock,
+Shop and Jobs stay live. Each later docking shows one short line, the galaxy's
+three in turn. The first time Ada comes within Talk range of a settlement, its
+settler's two-line greeting plays in the conversation box. Greetings seen are
+saved per place, and Restart clears them. Black Eye's stations keep the generic
+welcome line. Lines are in [the player copy](player-copy.md#greeters).
+
+### Galaxy six, Black Eye: the finale
+
+A concluding home chapter draws on the first five experiences without adding
 another community problem. Ada and the allies she made in earlier galaxies
 confront General Gadget's fleet here, take the last holodisk from him by force and
 defeat him; shown that the galaxies are infinite and cannot be controlled, he
@@ -287,7 +464,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
-- Maximum movement speed is provisionally 200 world units per second.
+- Ada's maximum movement speed is provisionally 160 world units per second,
+  190 and 220 at engine levels 2 and 3.
 - The space screen shows only essentials: the joysticks, weapon icons, the
   status pill (shield and Stardust) and a pause button. There is no travel or destinations panel and
   no settings gear in space.
@@ -402,7 +580,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     or obstacle it meets, then shows briefly as a visible beam. It fires
     intermittently, 4 times slower than basic fire, and deals 4 times basic damage
     to the enemy it hits; levels grow its range and damage.
-- A missile's blast damages every enemy within its radius, never Ada.
+- A missile's blast damages every enemy within its radius, never Ada. An enemy
+  missile's blast damages Ada, never enemies.
+- Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
+  Basic shot deals 1 damage. Enemies fire the same weapons, with the same damage,
+  blast and spread at the same level, plus three enemy-only weapons; each enemy
+  keeps its own cadence and projectile speed (see
+  [Ships](ships.md#enemy-weapons)).
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
@@ -418,12 +602,23 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   ownership of the other weapons. Ada can switch at any time, including in combat;
   after a switch the next switch waits 1 second (provisional).
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
-  solo ships, packs, frigates and capital ships. Galaxy one's roster is in
+  solo ships, packs, frigates and capital ships. Sunflower's roster is in
   [Ships](ships.md).
 - General Gadget's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
-- One rechargeable shield; avoiding damage briefly restores it. No hull resource.
+- One rechargeable shield of 10 HP, 15 and 22 at shield levels 2 and 3. No hull
+  resource.
+- The shield never recharges in battle. Ada is in battle while an enemy that is
+  chasing or attacking her is inside the battle square: centred on Ada, reaching
+  half the game area's width plus 64 world units along each axis (424 on the
+  720-wide view). Idle enemies, retaliators not yet hit, fleeing or returning
+  enemies and disabled heavies do not count. Recharge starts 15 seconds after
+  Ada was last in battle or last hit, and refills from empty to full in 60
+  seconds, whatever the capacity. Shield recharge levels 2 and 3 shorten the
+  delay to 10 seconds and the refill to 45, then 30 seconds. Pursuit is finite,
+  so Ada can always escape to recharge, but it is slow, and enemies keep their
+  damage.
 - No post-hit invulnerability or protection window.
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
   flight is lost; weapons, levels, Stardust, purchases and story progress persist,
@@ -436,7 +631,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Game and save notices, such as the save-failure notice, show briefly in the
   conversation box's slot and style, without a portrait. A notice shows at once,
   ahead of ordinary conversation lines, which resume after it.
-- One forgiving difficulty; no overall exploration timer.
+- One forgiving difficulty, rising along the route (see
+  [Ships](ships.md#difficulty)); no overall exploration timer.
 - Objects in flight meet where they are drawn, on each one's current frame's
   silhouette: every hit, bounce, pickup, dock and tow contact between Ada's
   ship, enemies and their heavy parts, stations and docks, outposts, asteroids
@@ -610,11 +806,15 @@ only after being attacked. Individual enemies can flee, and packs can retreat
 after losing members. Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
-Frigates have two or three designated hardpoints, such as an engine and weapons.
-Capital ships are prominent large targets that cover at most a sixth of the
-screen, about 5 Ada widths across, so the whole ship and its hardpoints stay
-readable. A capital has many hardpoints and can travel with escort fighters. All designated
-hardpoints must be disabled to defeat a ship. A disabled weapon hardpoint stops
+Frigates have an engine and two to four weapon hardpoints. Capital ships are
+prominent large targets that cover at most a sixth of the screen, about 5 Ada
+widths across, so the whole ship and its hardpoints stay readable. A capital has
+a command part, two engines and four to eight weapon hardpoints, and can travel
+with escort fighters. The weapon count rises with route position. Every heavy has
+hull HP: every hit lowers it, and at 0 the ship is destroyed. Destroying all its
+weapon hardpoints disables it instead: it stops attacking, shows a red "Disabled"
+banner, and Ada can salvage it and spare it, or keep firing to destroy it (see
+[Ships](ships.md#heavy-hull-and-disabling)). A destroyed weapon hardpoint stops
 firing. Each engine provides an equal share of thrust, so losing one of two engines
 halves a ship's speed and losing all of them stops it. Large-ship weapons and command areas
 must be visually distinguishable from the rest of the hull.
@@ -622,10 +822,10 @@ must be visually distinguishable from the rest of the hull.
 Missile launchers initially fire straight-flying missiles, visually distinct
 from ordinary shots. Homing is not part of this combat pass.
 
-Most enemy ships remain at or below Ada's speed. Selected small ships can reach
-110% of her speed, with a finite pursuit range. Frigates and capital ships can
-block required quest routes in the first three galaxies. This encounter expansion
-does not define galaxy four's story or conclusion.
+Enemy speeds are fixed in world units and the same in every galaxy (see
+[Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
+block required quest routes in the first five galaxies. This encounter expansion
+does not define galaxy six's story or conclusion.
 
 ## Verification priorities
 

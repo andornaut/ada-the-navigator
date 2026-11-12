@@ -3,9 +3,8 @@
 This module supplies pure observation-to-intent rules. Overall encounter placement,
 quiet travel and optional versus required fights belong to the version one rules.
 All numeric catalog values are provisional tuning, not user-selected values.
-Most archetypes remain at or below Ada's speed. The selected small interceptor has
-an approved maximum ratio of 1.1, and the default configurable speed cap is 1.1.
-Frigates and capitals may block required quest routes in the first three chapters;
+Each archetype's maximum speed is fixed in world units ([Ships](ships.md#values)).
+Frigates and capitals may block required quest routes in the first five chapters;
 the overall placement contract remains in the version one rules.
 
 ## Data and state
@@ -14,11 +13,10 @@ The catalog interface defines typed aggression, size, physics ([Ships](ships.md)
 perception and engagement radii, behaviours and their parameters, wobble,
 separation, firing patterns,
 morale, hardpoints and pursuit leashes. [Ships](ships.md) lists sizes, physics and
-galaxy one's solo and pack archetypes. Frigates have three independent parts: one engine and two
-weapons. A capital hull is about 5 Ada widths across and covers at most a sixth of
-the screen.
-No authored assets or story are introduced. Capital command parts are required but
-never fire. Each weapon carries its own typed fire profile, interval, spread and
+each galaxy's archetypes, and its [Difficulty](ships.md#difficulty) section
+sets hit points, weapon mounts and enemy weapons by route position. Frigates have
+one engine and two to four weapons. A capital hull is about 5 Ada widths across and
+covers at most a sixth of the screen. Capital command parts never fire. Each weapon carries its own typed fire profile, interval, spread and
 projectile speed. Missile profiles travel straight; there is no homing rule.
 
 `createEnemy(definition, identity, position)` creates JSON-serializable state. Identity
@@ -35,9 +33,11 @@ latches retaliation even when the target is currently unseen. Individual hull da
 can trigger flight without killing a craft. Pack losses latch flight for survivors.
 Fleeing craft do not shoot or resume aggression in this encounter.
 
-`enemyEffects(definition, state)` derives disabled part IDs and defeat. Every required
-part must be disabled to defeat a multipart ship, regardless of hull HP. A disabled
-weapon emits no further shots. Each engine provides an equal share of thrust: a
+`enemyEffects(definition, state)` derives destroyed part IDs, disablement and
+destruction. A hit on a heavy's hardpoint damages that hardpoint and the hull; a
+hull hit damages the hull. Hull HP at 0 destroys the ship. Destroying every weapon
+hardpoint disables it while its hull survives: it emits no intents, steers no
+more and coasts to rest. A destroyed weapon emits no further shots. Each engine provides an equal share of thrust: a
 ship's top speed scales with the fraction of its engines still working, and it
 stops when all are disabled. Other weapons keep firing independently. No primary hull weapon substitutes for a
 lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
@@ -47,7 +47,7 @@ lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
 Call `stepEnemy(definition, context, state)` on a fixed simulation slice, preferably
 1/60 second, using one immutable pre-movement peer snapshot for the entire slice.
 Context supplies Ada's maximum speed and width, player position, targeting permission,
-explicit visibility, initial pack sizes and speed cap ratio. Inputs must be finite;
+explicit visibility and initial pack sizes. Inputs must be finite;
 use positive dimensions, nonnegative speeds and stable unique entity/part IDs.
 Only positive finite dt advances rules. Unknown or occluded visibility grants no
 chase or fire permission. It does not classify space as safe or unreachable.
@@ -128,8 +128,9 @@ retaliators. Suppress all intents after defeat.
 Route player-shot collisions to explicit hardpoint hit volumes before hull damage.
 Apply one hit per collision policy, preserve piercing hit IDs at the appropriate
 entity/part granularity, and recalculate effects immediately. Do not filter multipart
-enemies out merely because hull HP reaches zero. Emit `enemyDisabled` exactly once
-when required parts transition to all disabled. Preserve disabled part state while
+enemies out while hull HP remains. Emit `enemyDisabled` exactly once when the
+last weapon hardpoint is destroyed, and the destroyed event exactly once when hull
+HP reaches 0. Preserve disabled part state while
 other parts remain active. No parallel flight loop is provided here.
 
 ## Integrated verification required
@@ -152,9 +153,10 @@ actual intents and adapter commands in the following scenarios:
   before the group. Initial counts persist and unloading is not a casualty.
 - A destroyed frigate weapon stops firing while the other weapon continues. A lost
   engine returns exactly zero velocity immediately, including prior momentum.
-- Capital hull HP reaching zero does not defeat it or disable intact weapons.
-  Every required part must be disabled, producing one defeat event.
-- Cap ratios of 1 and lower constrain actual velocity, including saved momentum.
-  The selected interceptor permits 1.1; other catalog ratios remain at or below 1.
+- Capital hull HP reaching zero destroys it, whatever its hardpoints. Destroying
+  every weapon hardpoint first disables it once, and salvaging or destroying a
+  disabled heavy produces one outcome event.
+- Each archetype's actual velocity stays within its maximum speed, including
+  saved momentum.
 - Quiet encounter placement, safe zones, collision routing, offscreen hardpoints,
   danger tracking and once-only defeat events pass the real integrated flight loop.
