@@ -3911,6 +3911,8 @@ try {
   function heavyFixture(sector, heavies) {
     const model = new GameModel(PROTOTYPE);
     model.state.unlocked = [1, 2, 3, 4, 5, 6];
+    // The highest shield outlasts every capture's hits on Ada.
+    model.state.economy.levels.shield = 3;
     model.startSector(sector);
     playOpening(model);
     assert.ok(model.state.flight, `Heavy fixture requires galaxy ${sector}'s flight`);
@@ -3959,7 +3961,7 @@ try {
   };
   const heavyCaptures = [];
   /** Seeds a fixture and saves `shots` canvas screenshots `every` ms apart from `after` ms. */
-  async function captureHeavies(name, serialized, { after = 1500, every = 250, shots = 1 } = {}) {
+  async function captureHeavies(name, serialized, { after = 800, every = 250, shots = 1 } = {}) {
     save(`art-fixture-${name}.json`, {
       scope: "Canonical heavy and enemy weapon fixture for Art review",
       state: JSON.parse(serialized),
@@ -3983,65 +3985,46 @@ try {
     }
     await frame(0);
   }
-  /** Captures each weapon fixture in turn, its frame names ending in `suffix`. */
-  const captureWeapons = (suffix) =>
-    weaponFixtures().reduce(
-      (done, [name, serialized]) =>
-        done.then(() =>
-          captureHeavies(`weapon-${name}${suffix}`, serialized, {
-            after: 500,
-            every: 150,
-            shots: 8,
-          }),
-        ),
-      Promise.resolve(),
-    );
   const pair = (fire = [], setup) => [
     { archetype: "frigate", fire, screen: { x: -170, y: -20 }, setup },
     { archetype: "capital", fire, screen: { x: 150, y: -40 }, setup },
   ];
-  // Sunflower (tier 1), Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn.
+  // Sunflower (tier 1), Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn,
+  // then a disabled frigate with its banner beside a salvaged capital.
   await captureHeavies("heavies-tier-1", heavyFixture(1, pair()));
   await captureHeavies("heavies-tier-2", heavyFixture(4, pair()));
   await captureHeavies("heavies-tier-3", heavyFixture(2, pair()));
-  await captureHeavies("heavies-disabled", heavyFixture(1, pair([], destroyWeapons)));
   await captureHeavies(
-    "heavies-salvaged",
-    heavyFixture(
-      1,
-      pair([], (enemy) => {
-        destroyWeapons(enemy);
-        enemy.salvaged = true;
-      }),
-    ),
+    "heavies-disabled-salvaged",
+    heavyFixture(1, [
+      { archetype: "frigate", screen: { x: -170, y: -20 }, setup: destroyWeapons },
+      {
+        archetype: "capital",
+        screen: { x: 150, y: -40 },
+        setup: (enemy) => {
+          destroyWeapons(enemy);
+          enemy.salvaged = true;
+        },
+      },
+    ]),
   );
-  // Black Eye's capital carries the Phaser, ring burst and mine layer; Cartwheel's frigate the
-  // lance. Each fires 0.6 s into the flight; the frames run from its tell to its end.
-  const weaponFixtures = () => [
-    [
-      "phaser",
-      heavyFixture(6, [{ archetype: "capital", fire: ["claw-left"], screen: { x: 150, y: -40 } }]),
-    ],
-    [
-      "ring-burst",
-      heavyFixture(6, [{ archetype: "capital", fire: ["stern-left"], screen: { x: 150, y: -40 } }]),
-    ],
-    [
-      "mines",
-      heavyFixture(6, [
-        { archetype: "capital", fire: ["stern-right"], screen: { x: 150, y: -40 } },
-      ]),
-    ],
-    [
-      "lance",
-      heavyFixture(2, [{ archetype: "frigate", fire: ["bow"], screen: { x: 170, y: -30 } }]),
-    ],
-  ];
-  await captureWeapons("");
+  // Black Eye's capital fires its Phaser, ring burst and mine layer, and its frigate the
+  // charged lance, each 0.6 s into the flight; the frames run from the tells to the beams' end.
+  const weapons = () =>
+    heavyFixture(6, [
+      { archetype: "frigate", fire: ["bow"], screen: { x: -170, y: -60 } },
+      {
+        archetype: "capital",
+        fire: ["claw-left", "stern-left", "stern-right"],
+        screen: { x: 150, y: -40 },
+      },
+    ]);
+  const frames = { after: 500, every: 200, shots: 7 };
+  await captureHeavies("weapons", weapons(), frames);
   const motionKey = DEVICE_STORAGE_KEYS.reducedMotion;
   const motionBefore = await page.evaluate((key) => localStorage.getItem(key), motionKey);
   await page.evaluate((key) => localStorage.setItem(key, "on"), motionKey);
-  await captureWeapons("-reduced");
+  await captureHeavies("weapons-reduced", weapons(), frames);
   await page.evaluate(
     ({ key, value }) =>
       value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value),
