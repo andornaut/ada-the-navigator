@@ -348,14 +348,17 @@ for a clamped placement), the page's panel top and the figures' view rows, at
 720x360 with insets 43/43/0/19, 844x390 with the same insets, and 1280x720
 (720x405). The Whirlpool and Needle runs assume a chapter page at Gameplay's
 limit (218 characters, the heading and two choices), as their bases' rows
-above do. Every figure clears its panel.
+above do. A dialogue page without a portrait adds its name tab and
+`SPACING.gap` (20 + 8) above the paragraph. The kitchen's run anchors from
+Dad's line, so both its pages share his placement. Every figure clears its
+panel.
 
 | Page background                  | Page                          | 720x360, insets                   | 844x390, insets                   | 1280x720                           |
 | -------------------------------- | ----------------------------- | --------------------------------- | --------------------------------- | ---------------------------------- |
-| `story-front-door-mom`           | Mom's line                    | y -171, top 225, figures 57..199  | y -171, top 225, figures 57..199  | y -135*, top 273, figures 93..235  |
-| `story-kitchen`                  | Dinner narration              | y -107, top 257, figures 39..133  | y -107, top 273, figures 39..133  | y -83, top 321, figures 63..157    |
-| `story-kitchen`                  | Dad's line                    | y -107, top 225, figures 39..133  | y -107, top 225, figures 39..133  | y -83, top 273, figures 63..157    |
-| `story-ada-room-recorder-dad`    | Dad looking in                | y -180*, top 251, figures 31..183 | y -180*, top 251, figures 31..183 | y -135*, top 299, figures 76..228  |
+| `story-front-door-mom`           | Mom's line                    | y -171, top 229, figures 57..199  | y -171, top 229, figures 57..199  | y -135*, top 277, figures 93..235  |
+| `story-kitchen`                  | Dinner narration              | y -105, top 257, figures 41..135  | y -105, top 273, figures 41..135  | y -81, top 321, figures 65..159    |
+| `story-kitchen`                  | Dad's line                    | y -105, top 229, figures 41..135  | y -105, top 229, figures 41..135  | y -81, top 277, figures 65..159    |
+| `story-ada-room-recorder-dad`    | Dad looking in                | y -180*, top 255, figures 31..183 | y -180*, top 255, figures 31..183 | y -135*, top 303, figures 76..228  |
 | `story-ada-room-unpolished-cats` | Archie and Kiwi on the bed    | y -162, top 257, figures 191..244 | y -162, top 257, figures 191..244 | y -135*, top 305, figures 218..271 |
 | `story-ada-room-morning-cats`    | Morning, the cats at her feet | y -180*, top 231, figures 84..226 | y -180*, top 231, figures 84..226 | y -135*, top 279, figures 129..271 |
 
