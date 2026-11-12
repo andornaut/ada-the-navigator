@@ -244,8 +244,9 @@ left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
 | Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5); grows rightward with the count. Parts and states in [Status pill](#status-pill)                                                                                                                                                                                                                                                                                                                                                                                                           | `STATUS_PILL`, `playView.ts`, to implement                                          |
 | Sticks       | 75 frames; ring drawn edges 32 in from the game area's side (`TOUCH_STICK.side`), `mirroredSide(insets, 32, view)` from each view edge (the larger side inset replaces the 32 on both sides), measured from the view's whole-pixel width, and 32 above the game area's bottom (`TOUCH_STICK.bottom`), `min(playView bottom - 32, view bottom - inset - 32)` (the bottom inset adds to the 32, clearing the home bar), so the two sticks mirror each other: rings 32 to 105 and 615 to 688, 255 to 328, at the 720 base; 43 to 116 and 604 to 677, 236 to 309, with phone insets (43, 43, 19); 61 to 134 and 645 to 718 at 844x390; drawn knob reach 12 inside the ring; move input reach 40 (`TOUCH_STICK.moveReach`) and deadzone 2.4 (logical); from the rest centre a thumb has about 68 to the outer and bottom edges; the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`                    |
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the HUD rect (the view's centre, as the rect mirrors), bottom level with the sticks' drawn bottom, `USE_BUTTON.bottom` = `TOUCH_STICK.bottom` 32 above the game area's bottom (face 280 to 328 at the 720 base, 261 to 309 with phone insets); press `hitAround(face)`; shown only while an interaction is available                                                                                                                                                                                                                                                                                                                                                                                                                                                | `USE_BUTTON`, `touchControls.ts`, to implement                                      |
-| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `HUD_BUTTON`, `playView.ts`                                                         |
-| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)`, one pitch (57) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen |
+| Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner; `hudButtonTarget(1)` while Exit shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `playView.ts`                                                         |
+| Achievements | Start screen only: the same `HUD_BUTTON` with `achievements.svg`; target `hudButtonTarget(1)` (`hudButtonTarget(2)` while Exit shows), one pitch (57) left of Settings's at the same top, so the targets are `HUD_BUTTON.gap` apart; the target is the press area. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `HUD_BUTTON`, `hudButtonTarget(1)`, `playView.ts`, to implement on the start screen |
+| Exit         | Start screen only, and only where the platform can close the app: the same `HUD_BUTTON` with `exit.svg` (20, vector, after Archie's `icon-exit`: a door frame open on the right with an arrow leaving it); target `hudButtonTarget(0)`, the rightmost disc, so Settings and Achievements each move one pitch left. See [Start screen](#start-screen)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Notice       | The conversation box's slot and panel: same rect and ink panel at 0.65, one or two `TYPE.body` cream lines centred in the box, no portrait or name tab, a tap on the box dismisses it; shows at once and holds the slot ahead of a conversation line, which resumes after; a newer notice replaces the current one in place. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `CONVERSATION_BOX`, `conversationBox.ts`, to implement; drawn by `notice.ts`        |
 | Conversation | In-flight dialogue box below the weapon row: box top `HUD_AMMO_COUNT.clearance` (5) below the count pills' bottom, HUD rect top + 51.5 (63.5 at a top of 12), name tab top 10 higher (53.5), centred, `min(availableWidth, 480)` wide, 60 high, one 48 portrait slot, a name tab overhanging the top edge and up to two lines; the whole box is one press area; non-modal, no dim. See [Conversation box](#conversation-box)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `CONVERSATION_BOX`, `conversationBox.ts`, to implement                              |
 
@@ -437,7 +438,9 @@ header, dim or portrait; the Ada and Penny portraits and the start card are
 removed. Art, colours and contrast are in [Title screen art](title-screen.md).
 The HUD row's top right holds Achievements then Settings, left to right, at
 `hudButtonTarget(1)` and `hudButtonTarget(0)`, in the
-[nav disc states](achievements-icon.md#states). Nothing moves with the saved
+[nav disc states](achievements-icon.md#states). Where the platform can close the
+app, Exit takes `hudButtonTarget(0)` and the other two move one pitch left, to
+`hudButtonTarget(2)` and `hudButtonTarget(1)`. Nothing moves with the saved
 state except the action row's contents.
 
 Every part except the field and the nav discs is placed in play-view px, from
@@ -457,7 +460,7 @@ every aspect.
 - Labels and actions are Gameplay's: Start, Continue, Restart and the
   `deferred` note; the wordmark's accessible name is the `home` string.
 - Continue (or Start) is the default Enter and Space action and the first Tab
-  stop, then Restart, Achievements and Settings, as in Chibi. Each button's
+  stop, then Restart, Achievements, Settings and Exit, as in Chibi. Each button's
   face box is its press area (at least 48 per axis); the 16 gap separates
   Restart and Continue.
 - Draw order: field, jets, ship frame, wordmark, actions, note, nav discs.
@@ -467,32 +470,37 @@ every aspect.
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
 
-| Part           | 720x360                     | 720x360, insets             | 844x390                       | 844x390, insets               |
-| -------------- | --------------------------- | --------------------------- | ----------------------------- | ----------------------------- |
-| HUD rect       | 12 to 708, top 12           | 43 to 677, top 12           | 41 to 738.08, top 12          | 43 to 736.08, top 12          |
-| Available rect | 16 to 704, 16 to 344        | 43 to 677, 16 to 341        | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
-| Field          | -120 to 840, 0 to 540       | -120 to 840, 0 to 540       | -91 to 869, 0 to 540          | -91 to 869, 0 to 540          |
-| Ship frame     | 238 to 518, -56 to 224      | 238 to 518, -56 to 224      | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
-| Ship ink       | 226.3 to 484, 48 to 141     | 226.3 to 484, 48 to 141     | 255.3 to 513, 48 to 141       | 255.3 to 513, 48 to 141       |
-| Wordmark       | 225 to 495, 148 to 250      | 225 to 495, 148 to 250      | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
-| Start          | 264 to 456, 264 to 312      | 264 to 456, 264 to 312      | 293 to 485, 264 to 312        | 293 to 485, 264 to 312        |
-| Restart        | 160 to 352, 264 to 312      | 160 to 352, 264 to 312      | 189 to 381, 264 to 312        | 189 to 381, 264 to 312        |
-| Continue       | 368 to 560, 264 to 312      | 368 to 560, 264 to 312      | 397 to 589, 264 to 312        | 397 to 589, 264 to 312        |
-| Note line box  | Centre 360, 320 to 340      | Centre 360, 320 to 340      | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
-| Achievements   | 610.5 to 658.5, 4.5 to 52.5 | 579.5 to 627.5, 4.5 to 52.5 | 640.58 to 688.58, 4.5 to 52.5 | 638.58 to 686.58, 4.5 to 52.5 |
-| Settings       | 667.5 to 715.5, 4.5 to 52.5 | 636.5 to 684.5, 4.5 to 52.5 | 697.58 to 745.58, 4.5 to 52.5 | 695.58 to 743.58, 4.5 to 52.5 |
+| Part                    | 720x360                     | 720x360, insets             | 844x390                       | 844x390, insets               |
+| ----------------------- | --------------------------- | --------------------------- | ----------------------------- | ----------------------------- |
+| HUD rect                | 12 to 708, top 12           | 43 to 677, top 12           | 41 to 738.08, top 12          | 43 to 736.08, top 12          |
+| Available rect          | 16 to 704, 16 to 344        | 43 to 677, 16 to 341        | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
+| Field                   | -120 to 840, 0 to 540       | -120 to 840, 0 to 540       | -91 to 869, 0 to 540          | -91 to 869, 0 to 540          |
+| Ship frame              | 238 to 518, -56 to 224      | 238 to 518, -56 to 224      | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
+| Ship ink                | 226.3 to 484, 48 to 141     | 226.3 to 484, 48 to 141     | 255.3 to 513, 48 to 141       | 255.3 to 513, 48 to 141       |
+| Wordmark                | 225 to 495, 148 to 250      | 225 to 495, 148 to 250      | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
+| Start                   | 264 to 456, 264 to 312      | 264 to 456, 264 to 312      | 293 to 485, 264 to 312        | 293 to 485, 264 to 312        |
+| Restart                 | 160 to 352, 264 to 312      | 160 to 352, 264 to 312      | 189 to 381, 264 to 312        | 189 to 381, 264 to 312        |
+| Continue                | 368 to 560, 264 to 312      | 368 to 560, 264 to 312      | 397 to 589, 264 to 312        | 397 to 589, 264 to 312        |
+| Note line box           | Centre 360, 320 to 340      | Centre 360, 320 to 340      | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
+| Achievements            | 610.5 to 658.5, 4.5 to 52.5 | 579.5 to 627.5, 4.5 to 52.5 | 640.58 to 688.58, 4.5 to 52.5 | 638.58 to 686.58, 4.5 to 52.5 |
+| Settings                | 667.5 to 715.5, 4.5 to 52.5 | 636.5 to 684.5, 4.5 to 52.5 | 697.58 to 745.58, 4.5 to 52.5 | 695.58 to 743.58, 4.5 to 52.5 |
+| With Exit: Achievements | 553.5 to 601.5, 4.5 to 52.5 | 522.5 to 570.5, 4.5 to 52.5 | 583.58 to 631.58, 4.5 to 52.5 | 581.58 to 629.58, 4.5 to 52.5 |
+| With Exit: Settings     | 610.5 to 658.5, 4.5 to 52.5 | 579.5 to 627.5, 4.5 to 52.5 | 640.58 to 688.58, 4.5 to 52.5 | 638.58 to 686.58, 4.5 to 52.5 |
+| With Exit: Exit         | 667.5 to 715.5, 4.5 to 52.5 | 636.5 to 684.5, 4.5 to 52.5 | 697.58 to 745.58, 4.5 to 52.5 | 695.58 to 743.58, 4.5 to 52.5 |
 
 Clearances, smallest at 720x360 with insets:
 
-| Pair                              | Arithmetic    | Result                                   |
-| --------------------------------- | ------------- | ---------------------------------------- |
-| Ship ink to Achievements          | `579.5 - 484` | 95.5, beside the HUD row, never under it |
-| Wordmark to Achievements          | `579.5 - 495` | 84.5 (114.58 at 844x390 with insets)     |
-| Ship ink to wordmark              | `148 - 141`   | 7                                        |
-| Wordmark to the action row        | `264 - 250`   | 14                                       |
-| Action row to the note            | `320 - 312`   | 8, `SPACING.gap`                         |
-| Note to the available rect bottom | `341 - 340`   | 1 (4 without a bottom inset)             |
-| Restart to the available rect     | `160 - 43`    | 117                                      |
+| Pair                                 | Arithmetic    | Result                                   |
+| ------------------------------------ | ------------- | ---------------------------------------- |
+| Ship ink to Achievements             | `579.5 - 484` | 95.5, beside the HUD row, never under it |
+| Ship ink to Achievements, Exit shown | `522.5 - 484` | 38.5                                     |
+| Wordmark to Achievements             | `579.5 - 495` | 84.5 (114.58 at 844x390 with insets)     |
+| Wordmark to Achievements, Exit shown | `522.5 - 495` | 27.5 (57.58 at 844x390 with insets)      |
+| Ship ink to wordmark                 | `148 - 141`   | 7                                        |
+| Wordmark to the action row           | `264 - 250`   | 14                                       |
+| Action row to the note               | `320 - 312`   | 8, `SPACING.gap`                         |
+| Note to the available rect bottom    | `341 - 340`   | 1 (4 without a bottom inset)             |
+| Restart to the available rect        | `160 - 43`    | 117                                      |
 
 - The focus ring (4 outside a face) stays inside the 16 gap and the 14 above
   the row; the press areas of the nav discs are their targets, 9 apart (discs

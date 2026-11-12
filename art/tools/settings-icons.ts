@@ -141,6 +141,14 @@ const NAV_GLYPHS: Readonly<Record<string, readonly (readonly string[])[]>> = {
       'd="M5 3.625H3.625Q2.625 3.625 2.625 4.625V5.25Q2.625 7.375 5 7.375M15 3.625H16.375Q17.375 3.625 17.375 4.625V5.25Q17.375 7.375 15 7.375"',
     ],
   ],
+  // A door frame open on the right, after Archie's icon-exit, with an arrow leaving through the
+  // gap: frame bars 2 wide, a shaft 2 wide and a head 8 tall.
+  exit: [
+    [
+      `fill="#${INK}"`,
+      'd="M3 2H12V7H10V4H5V16H10V13H12V18H3ZM7 9H14V6L18.5 10L14 14V11H7Z"',
+    ],
+  ],
   // The gear on icon-settings-nav's outline: a body of radius 7.5 around a hole of radius 4, four
   // orthogonal teeth 4 wide to the frame edges and four 3 by 3 diagonal teeth.
   settings: [
