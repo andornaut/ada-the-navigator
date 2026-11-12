@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { EDGE_MARKER_GLYPHS, EDGE_MARKERS, ENEMY_MARKER_KINDS } from "../data/edge-markers.ts";
+import {
+  EDGE_MARKER_GLYPHS,
+  EDGE_MARKERS,
+  edgeMarkerInset,
+  ENEMY_MARKER_KINDS,
+} from "../data/edge-markers.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
@@ -15,7 +20,9 @@ import {
 import { createEnemy } from "./enemy-ai.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
-const { inset, range } = EDGE_MARKERS;
+const { gap, range } = EDGE_MARKERS;
+// The heavy disc's dark-field inset, which the ray tests below use.
+const inset = edgeMarkerInset(0, "heavy");
 
 function enemy(archetype: EnemyArchetype, at: Vec, id = "drone"): SpaceObject {
   return {
@@ -76,7 +83,12 @@ describe("edge marker kinds", () => {
       station: { diamond: 10, stroke: 2 },
     });
     expect(range).toBe(1400);
-    expect(inset).toBe(8);
+    expect(gap).toBe(1);
+    // Half the drawn extent, plus the outline, plus 1.
+    expect(edgeMarkerInset(0, "enemy")).toBe(4);
+    expect(edgeMarkerInset(1, "enemy")).toBe(5);
+    expect(edgeMarkerInset(0, "heavy")).toBe(6);
+    expect(edgeMarkerInset(1, "station")).toBe(7);
   });
 });
 
@@ -180,6 +192,50 @@ describe("edge marker lifecycle", () => {
 });
 
 describe("edge marker placement", () => {
+  it.each(
+    (["enemy", "heavy", "station"] as const).flatMap((kind) =>
+      [0, 1].map((outline) => [kind, outline] as const),
+    ),
+  )(
+    "draws a %s marker's outermost pixel 1 in on every side and corner, outline %i",
+    (kind, outline) => {
+      const glyph: { readonly diamond?: number; readonly disc?: number } = EDGE_MARKER_GLYPHS[kind];
+      // The drawn half extent: the disc's radius or the diamond's vertex, with the outline around it.
+      const half = (glyph.disc ?? glyph.diamond ?? 0) / 2 + outline;
+      const from = { x: SCREEN.width / 2, y: SCREEN.height / 2 };
+      const far = 100000;
+      const inset = edgeMarkerInset(outline, kind);
+      // A target far along the ray through the inset rect's corner puts the marker in that corner.
+      const corner = (x: number, y: number) => ({
+        x: from.x + (x - from.x) * far,
+        y: from.y + (y - from.y) * far,
+      });
+      const edge = { bottom: SCREEN.height - inset, right: SCREEN.width - inset };
+      for (const [name, to, sides] of [
+        ["left", { x: -far, y: from.y }, ["left"]],
+        ["right", { x: far, y: from.y }, ["right"]],
+        ["top", { x: from.x, y: -far }, ["top"]],
+        ["bottom", { x: from.x, y: far }, ["bottom"]],
+        ["top-left", corner(inset, inset), ["left", "top"]],
+        ["top-right", corner(edge.right, inset), ["right", "top"]],
+        ["bottom-left", corner(inset, edge.bottom), ["left", "bottom"]],
+        ["bottom-right", corner(edge.right, edge.bottom), ["right", "bottom"]],
+      ] as const) {
+        const at = edgePoint(inset, from, to);
+        const room = {
+          bottom: SCREEN.height - (at.y + half),
+          left: at.x - half,
+          right: SCREEN.width - (at.x + half),
+          top: at.y - half,
+        };
+        for (const side of sides) {
+          expect(room[side], `${kind} ${name} ${side}`).toBeCloseTo(1, 9);
+        }
+        expect(Math.min(...Object.values(room)), `${kind} ${name}`).toBeCloseTo(1, 9);
+      }
+    },
+  );
+
   const centre = { x: SCREEN.width / 2, y: SCREEN.height / 2 };
   const right = SCREEN.width - inset;
   const bottom = SCREEN.height - inset;
@@ -188,10 +244,18 @@ describe("edge marker placement", () => {
     ["left", { x: -2000, y: 180 }, { x: inset, y: 180 }],
     ["top", { x: 360, y: -900 }, { x: 360, y: inset }],
     ["bottom", { x: 360, y: 900 }, { x: 360, y: bottom }],
-    ["top-right corner", { x: 360 + 3520, y: 180 - 1720 }, { x: right, y: inset }],
-    ["bottom-left corner", { x: 360 - 3520, y: 180 + 1720 }, { x: inset, y: bottom }],
-  ] as const)("sits on the rect 8 in along the ray, %s", (_, to, expected) => {
-    const point = edgePoint(centre, to);
+    [
+      "top-right corner",
+      { x: 360 + 10 * (right - 360), y: 180 + 10 * (inset - 180) },
+      { x: right, y: inset },
+    ],
+    [
+      "bottom-left corner",
+      { x: 360 + 10 * (inset - 360), y: 180 + 10 * (bottom - 180) },
+      { x: inset, y: bottom },
+    ],
+  ] as const)("sits on the inset rect along the ray, %s", (_, to, expected) => {
+    const point = edgePoint(inset, centre, to);
     expect(point.x).toBeCloseTo(expected.x, 9);
     expect(point.y).toBeCloseTo(expected.y, 9);
     // On the ray from the centre toward the object.
@@ -203,7 +267,7 @@ describe("edge marker placement", () => {
   it("follows the object's direction from Ada at any angle", () => {
     for (let turn = 0; turn < 16; turn++) {
       const angle = (turn / 16) * 2 * Math.PI;
-      const point = edgePoint(centre, {
+      const point = edgePoint(inset, centre, {
         x: centre.x + 5000 * Math.cos(angle),
         y: centre.y + 5000 * Math.sin(angle),
       });

@@ -47,11 +47,10 @@ export function inGameArea(point: Vec): boolean {
 }
 
 /**
- * Where the ray from `from` toward `to` meets the game area's rect inset by EDGE_MARKERS.inset:
- * the marker's centre. `from` is inside that rect.
+ * Where the ray from `from` toward `to` meets the game area's rect inset by `inset`
+ * (edgeMarkerInset): the marker's centre. `from` is inside that rect.
  */
-export function edgePoint(from: Vec, to: Vec): Vec {
-  const { inset } = EDGE_MARKERS;
+export function edgePoint(inset: number, from: Vec, to: Vec): Vec {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const room = (delta: number, start: number, size: number) =>

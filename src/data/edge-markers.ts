@@ -7,8 +7,8 @@ import type { EnemyArchetype } from "./enemy-catalog.ts";
 export type EdgeMarkerKind = "enemy" | "heavy" | "station";
 
 export const EDGE_MARKERS = {
-  /** The marker's centre sits this many logical px in from the game area's border. */
-  inset: 8,
+  /** The marker's outermost drawn pixel, its light-field outline included, sits this far in. */
+  gap: 1,
   /** A marked object past this many world units from Ada is forgotten, for every kind. */
   range: 1400,
 } as const;
@@ -23,6 +23,15 @@ export const EDGE_MARKER_GLYPHS = {
   heavy: { disc: 10 },
   station: { diamond: 10, stroke: 2 },
 } as const;
+
+/**
+ * How far in from the game area's edge a marker's centre sits: half its glyph's drawn extent,
+ * plus the ink `outline` drawn around it (0 on a dark field), plus EDGE_MARKERS.gap.
+ */
+export function edgeMarkerInset(outline: number, kind: EdgeMarkerKind): number {
+  const glyph: { readonly diamond?: number; readonly disc?: number } = EDGE_MARKER_GLYPHS[kind];
+  return (glyph.disc ?? glyph.diamond ?? 0) / 2 + outline + EDGE_MARKERS.gap;
+}
 
 /** Each enemy archetype's kind: the large ships are heavies, every other enemy an enemy. */
 export const ENEMY_MARKER_KINDS: Readonly<Record<EnemyArchetype, EdgeMarkerKind>> = {

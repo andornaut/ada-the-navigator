@@ -17,7 +17,7 @@ import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/aster
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { EDGE_MARKER_GLYPHS } from "../data/edge-markers.ts";
+import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
@@ -2708,7 +2708,12 @@ export class PrototypeScene extends Scene {
     const centre = this.project(flight.player);
     const outline = LIGHT_FIELD.markerOutline;
     for (const marker of this.edgeMarkers.update(flight, indicated)) {
-      const at = edgePoint(centre, this.project(marker));
+      // The outermost drawn pixel, the ink outline included on a light field, sits 1 in.
+      const at = edgePoint(
+        edgeMarkerInset(this.light ? outline : 0, marker.kind),
+        centre,
+        this.project(marker),
+      );
       if (marker.kind === "station") {
         const { diamond, stroke } = EDGE_MARKER_GLYPHS.station;
         // The stroke sits inside the diamond's extent.
