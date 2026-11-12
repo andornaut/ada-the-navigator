@@ -144,7 +144,7 @@ plane. Neither has jets. Files are `/art/cartwheel/{craft}-{k}[-{a,b}].svg`.
 | `stranded-ore-pod` | `craft-stranded-ore-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |
 | `stranded-hauler`  | `craft-stranded-hauler-{k}`        |   144 |      63 | one                      |
 
-- Ore pod: a sealed cream cargo capsule with an ore teal band, a steel tow lug
+- Ore pod: a sealed cream cargo capsule with an ore band, a steel tow lug
   forward and a mast light that blinks while it waits (`blink`, `frameMs`).
   Reduced motion shows `a`.
 - Stuck hauler: the story miner's geometry with its power off: dark cab glass,

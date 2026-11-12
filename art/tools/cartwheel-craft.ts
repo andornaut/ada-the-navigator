@@ -3,6 +3,7 @@
 // or off, and the ore pod. Models are groups of extruded parts; a renderer sorts the groups far
 // to near and draws each group's parts in list order.
 import { box, type Part, type Plan } from "./crafts.ts";
+import { ORE_SOLID } from "./ore.ts";
 
 export type { Part, Plan };
 
@@ -16,9 +17,9 @@ export const mouth = "#1e1a26";
 export const mouthInner = "#35304a";
 // Unlit window glass on a craft with its power off.
 export const glassOff = "#2a2433";
-export const ore = "#65c9bf";
-export const oreLit = "#a5ece4";
-export const oreSide = "#3f9890";
+export const ore = ORE_SOLID.top;
+export const oreLit = ORE_SOLID.lit;
+export const oreSide = ORE_SOLID.side;
 export const steelDark = "#6e7482";
 export const steelDarkSide = "#4f5462";
 export const sand = "#dcc49a";
@@ -145,7 +146,7 @@ export type HaulerState = {
 // Heights parts rest on (hull top, then cab top): groups based there draw after those below.
 export const HAULER_LEVELS = [16.5, 28.5] as const;
 
-// Miner A: a sand hauler with a forward cab, dark cradle rails and two open bins of ore teal.
+// Miner A: a sand hauler with a forward cab, dark cradle rails and two open bins of ore.
 export function hauler({ powered }: HaulerState, facing: Facing): Part[][] {
   const lit = powered ? blue : blueDim;
   const hull = craftPlan([
@@ -232,7 +233,7 @@ export const HAULER_TOW = [0, -34.5, 9.75] as const;
 
 // ---------------------------------------------------------------- ore pod
 
-// A sealed cream cargo capsule with an ore teal band, a mast light that blinks while it waits
+// A sealed cream cargo capsule with an ore band, a mast light that blinks while it waits
 // and a steel tow lug forward, from the approved mock-up's pod. Pod units (the export scales it).
 export function orePod(lit: boolean): Part[][] {
   return [

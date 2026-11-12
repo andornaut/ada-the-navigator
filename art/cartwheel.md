@@ -70,13 +70,13 @@ dock facing screen-down and a free berth on each side.
 
 The hub looks worn but working until the Hub repairs project is funded.
 
-| Detail      | Worn (`outpost-hub-a`, `-b`)                              | Repaired (`outpost-hub-repaired-a`, `-b`)               |
-| ----------- | --------------------------------------------------------- | ------------------------------------------------------- |
-| Hopper cap  | Two front segments broken to dark stubs, notching the rim | Whole cap ring                                          |
-| Tower       | Half the windows dark; tan patch plates; rust streaks     | Every window lit; ore teal band under the cap, lit in A |
-| Deck        | Three scorched plates on the deck top; one patched wall   | Eight blue rim lights alternating with the blink        |
-| Right berth | Corner lights out in both frames                          | Corner lights blink with the others                     |
-| Ore crates  | One crate knocked flat                                    | Both upright with ore tops                              |
+| Detail      | Worn (`outpost-hub-a`, `-b`)                              | Repaired (`outpost-hub-repaired-a`, `-b`)          |
+| ----------- | --------------------------------------------------------- | -------------------------------------------------- |
+| Hopper cap  | Two front segments broken to dark stubs, notching the rim | Whole cap ring                                     |
+| Tower       | Half the windows dark; tan patch plates; rust streaks     | Every window lit; ore band under the cap, lit in A |
+| Deck        | Three scorched plates on the deck top; one patched wall   | Eight blue rim lights alternating with the blink   |
+| Right berth | Corner lights out in both frames                          | Corner lights blink with the others                |
+| Ore crates  | One crate knocked flat                                    | Both upright with ore tops                         |
 
 ## World changes
 
@@ -88,7 +88,7 @@ Both project changes keep the hub's frame, pivot, live dock and berths.
   `outpost-hub-bay-a` over the current hub frame A and `-b` over B, at the hub's
   position with the same pivot, over either the worn or the repaired hub. The
   overlay is a new pier off the deck's front left with a fresh cap-slate collar
-  and an ore teal sign band (lit in A). The generator fails if any hub face
+  and an ore sign band (lit in A). The generator fails if any hub face
   drawn after the bay in a full render would overlap it, so overlay and full
   render match.
 - The overlay entry has `overlay` `true` and `berths` with the new bay:
@@ -139,7 +139,7 @@ through them, so they have no hit circle.
 
 | Craft      | Length, span (model units) | Shape                                                                        |
 | ---------- | -------------------------- | ---------------------------------------------------------------------------- |
-| `miner`    | 82.5, 31.6                 | Sand hauler: forward cab, dark cradle rails, two open bins of ore teal       |
+| `miner`    | 82.5, 31.6                 | Sand hauler: forward cab, dark cradle rails, two open bins of ore            |
 | `visitor1` | 40.1, 32                   | Sage shuttle with swept wings, a cab and tail lights                         |
 | `visitor2` | 40.1, 32                   | The same shuttle in periwinkle                                               |
 | `blocker`  | 53, 38.6                   | Chartreuse wedge, oversized graphite engine pods, a wide ram bar, high beams |
@@ -192,6 +192,12 @@ lamp); the 0.6-deep window panes on the walls do not count.
 
 ## Palettes
 
+Ore on the hub, the miner's bins, the stranded hauler's bins and the ore pod's
+band takes ore's solid tones (`ORE_SOLID` in `art/tools/ore.ts`): lit tops
+`#eaa070`, tops and bands `#d68a54`, sides `#a86a42` and the unlit band
+`#7a4a30`, so everything that means ore reads as the
+[ore nugget](cartwheel-props.md#ore-nugget).
+
 Contrast is WCAG against Cartwheel's field background `#39221E`; the table
 lists top colours, which carry each silhouette.
 
@@ -200,7 +206,8 @@ lists top colours, which carry each silhouette.
 | Hub, buoy | Cream structure      | `#efe4cf` |  11.73:1 |
 | Hub       | Slate tower, collars | `#9aaccb` |   6.43:1 |
 | Hub       | Slate cap            | `#c3cfe2` |   9.39:1 |
-| Hub       | Ore teal             | `#65c9bf` |   7.50:1 |
+| Hub       | Ore, lit tops        | `#eaa070` |   6.87:1 |
+| Hub       | Ore tops, bands      | `#d68a54` |   5.36:1 |
 | Hub       | Worn patch plate     | `#b3a68a` |   6.15:1 |
 | Hub       | Worn rust streak     | `#9a5f48` |   2.89:1 |
 | Hub       | Worn scorch          | `#a39784` |   5.15:1 |

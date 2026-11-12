@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { jetsFile } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
+import { ORE_SOLID } from "./ore.ts";
 import {
   anchor,
   ENEMY_HEADINGS,
@@ -52,15 +53,15 @@ const PAD = 4;
 const STEP = 16;
 
 // ---------------------------------------------------------------- palette
-// Hub: cool slate structure with ore teal (the `active` signal family) where deposits collect.
+// Hub: cool slate structure with ore (art/tools/ore.ts) where deposits collect.
 const slate = "#9aaccb";
 const slateSide = "#6a7c9e";
 const slateDark = "#4e5d7a";
 const slateCap = "#c3cfe2";
-const ore = "#65c9bf";
-const oreLit = "#a5ece4";
-const oreSide = "#3f9890";
-const oreDim = "#2f6f69";
+const ore = ORE_SOLID.top;
+const oreLit = ORE_SOLID.lit;
+const oreSide = ORE_SOLID.side;
+const oreDim = ORE_SOLID.dim;
 const steelDark = "#6e7482";
 const steelDarkSide = "#4f5462";
 // Wear on the unrepaired hub: mismatched patch plates, rust streaks and scorched deck plating.
@@ -90,7 +91,7 @@ function beacon(x: number, y: number, z0: number, height: number, lit: boolean):
   ];
 }
 
-// Ore heaped in an open top: a flat teal surface with lumps of a fixed lump size.
+// Ore heaped in an open top: a flat ore surface with lumps of a fixed lump size.
 function oreHeap(cx: number, cy: number, r: number, z: number, lumps: number): Part[] {
   const out: Part[] = [
     { plan: ngon(8, r, cx, cy, Math.PI / 8), z0: z - 0.6, z1: z, top: ore, side: oreSide },
@@ -233,7 +234,7 @@ function hubParts(lit: boolean, { repaired }: HubState): Part[][] {
   const left = (nx: number, ny: number) => nx < 0.2 && ny > 0.9;
   const right = (nx: number, ny: number) => nx > 0.9 && ny < 0.2;
   if (repaired) {
-    // A lit ore teal band below the restored cap.
+    // A lit ore band below the restored cap.
     towerGroup.push(...wallWindows(facing, 53, 57, 1, 24, tower, lit ? ore : oreDim));
   } else {
     // Patch plates over the window bands and rust streaks below the broken cap.
@@ -296,7 +297,7 @@ function hubParts(lit: boolean, { repaired }: HubState): Part[][] {
 }
 
 // The second docking bay project: a new pier and collar off the deck's front left, in fresh
-// cap slate with an ore teal sign band. Drawn as an overlay on either hub state.
+// cap slate with an ore sign band. Drawn as an overlay on either hub state.
 function bayParts(lit: boolean): Part[][] {
   const length = BAY_FACE - 4 - DECK_R + 6;
   return [
@@ -568,7 +569,7 @@ type Craft = {
   mouthWidth: number;
 };
 
-// Miner: a sand hauler with a forward cab, dark cradle rails and two open bins of ore teal.
+// Miner: a sand hauler with a forward cab, dark cradle rails and two open bins of ore.
 const sand = "#dcc49a";
 const sandSide = "#a8916a";
 const sandRear = "#8a7656";

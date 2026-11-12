@@ -16,6 +16,15 @@ export const ORE_PALETTE: Readonly<Record<string, string>> = {
 // The crystals' ramp, lit to shadow: the rim tones on the lit faces, the body on the shaded ones.
 export const ORE_RAMP = ["R", "r", "L", "M", "S"].map((k) => `#${ORE_PALETTE[k]!.toUpperCase()}`);
 
+// Ore on solid-model art (the Cartwheel hub's heaps, crates and sign bands, the miner's bins and
+// the ore pod's band): the rim tones on lit tops, the light tone on sides, the body where unlit.
+export const ORE_SOLID = {
+  lit: `#${ORE_PALETTE.R}`,
+  top: `#${ORE_PALETTE.r}`,
+  side: `#${ORE_PALETTE.L}`,
+  dim: `#${ORE_PALETTE.M}`,
+} as const;
+
 // Outline pixels (a clear 4-neighbour) take the rim: "R" where the clear side is up or left, "r"
 // where it is down or right. Interior pixels keep their tone.
 export function rimmed(rows: readonly string[]): string[] {
