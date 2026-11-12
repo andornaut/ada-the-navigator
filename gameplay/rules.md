@@ -253,12 +253,12 @@ them. All values are provisional tuning:
   open space, never overlap or close into loops, and keep 800 world units clear
   of stations, story destinations, landmarks and quantum jump arrivals. Asteroids
   are not placed in currents, and chunk generation keeps them clear.
-- The flow adds to a ship's own velocity as drift, outside its physics and speed
-  cap: riding a current gives Ada up to 270 world units per second, and pushing
-  against its centre still makes 130. Ada steers, docks and fights normally in a
+- The flow adds to a ship's own velocity as drift, outside its physics and
+  maximum speed: riding a current gives Ada at her base engine up to 230 world
+  units per second, and pushing against its centre still makes 90. Ada steers, docks and fights normally in a
   current.
 - Currents never trap Ada. The peak flow stays well below her slowest top speed,
-  towing included (130), every current ends in open space, and she can always
+  towing included (104), every current ends in open space, and she can always
   leave across it.
 - Small enemy craft drift fully. Frigates, capitals, platforms, stations and
   whales do not drift. Inactive retained ships do not drift.
