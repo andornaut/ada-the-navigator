@@ -34,6 +34,7 @@ drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disab
 | `retaliator`     |        4 |
 | `frigate`        |        6 |
 | `capital`        |       14 |
+| `platform`       |        4 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
 heavy counts all its hardpoints' hit points, not its hull. The table shows
@@ -44,8 +45,9 @@ play against the targets above; rerun it after changing any earning value.
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
 of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
-24 for capital ships, and one per Stardust for asteroids. With the values above, every
-drop is below its cap, so each pickup carries 1 Stardust.
+24 for capital ships, and one per Stardust for asteroids. Every drop is at or
+below its cap, so each pickup carries 1 Stardust, except a capital at positions 5
+and 6: its 33 Stardust splits into 24 pickups, 9 of 2 and 15 of 1.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
 ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; in galaxy
@@ -67,12 +69,10 @@ stay rare but findable. A station is a safe
 area. Ada docks with Use (Dock) within Talk range, 160 world units from the
 station's centre, like any other destination; the station has no dock mouth and
 flying over it does nothing. Undocking leaves Ada at rest where she docked, so
-Use offers Dock again at once. Docking opens the station card, which pauses action like a
-conversation. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
+Use offers Dock again at once. Docking opens the station card, which pauses play like other cards. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
 opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
-undock. Station quests are part of the station concept; their content is
-not yet designed, so the station card shows no quest board until it is.
+undock.
 
 ## Shop
 
