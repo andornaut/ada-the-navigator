@@ -48,8 +48,8 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 drop is below its cap, so each pickup carries 1 Stardust.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
-ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; in galaxy
-one, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
+ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; at route position
+1, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
 Ada already owns gives one pack of its ammunition instead. Salvaging a disabled
 heavy multiplies its weapon chance by 5. Story mining deposits keep their
 existing cargo role and do not drop Stardust.

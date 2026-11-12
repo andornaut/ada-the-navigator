@@ -98,7 +98,8 @@ a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
 fire rate and the encounter rate at every position, so the whole curve can be
-tuned at once. It is not a player setting: there is one forgiving difficulty.
+tuned at once. Stardust drops use the unscaled hit points, so tuning it leaves
+the economy unchanged. It is not a player setting: there is one forgiving difficulty.
 
 Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Laser shot
 deals 1 damage.
@@ -112,7 +113,7 @@ Small craft:
 |        3 |       3 |         5 |             4 |           10 |          +1 |               1.4 s |   +40% | +45% |       +35% |
 |        4 |       3 |         6 |             4 |           11 |          +1 |               1.2 s |   +45% | +50% |       +40% |
 |        5 |       3 |         6 |             5 |           11 |          +2 |               1.1 s |   +50% | +55% |       +40% |
-|        6 |       3 |         6 |             4 |           12 |          +2 |               1.0 s |   +50% | +60% |       +40% |
+|        6 |       3 |         6 |             5 |           12 |          +2 |               1.0 s |   +50% | +60% |       +40% |
 
 Heavies:
 
@@ -165,7 +166,8 @@ move off it.
 | Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                          |
 
 Intervals are before the position's fire rate. Projectile speeds multiply the
-base enemy projectile speed. The three enemy-only weapons:
+base enemy projectile speed, a fixed 200 world units per second. Damage at each
+level is the shared per-level damage of Ada's weapon. The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
   at ×1.2.
@@ -173,9 +175,9 @@ base enemy projectile speed. The three enemy-only weapons:
   4 at a time. A mine deals 3 damage when Ada's drawn ship touches its drawn
   silhouette, then is gone; Ada's shots
   destroy mines (1 HP), and mines vanish after 20 seconds.
-- **Charged lance:** a beam the width of the game area. A thin line tracks Ada for
-  0.7 seconds, then holds still for 0.3 seconds, then the beam fires along it for 3
-  damage. It stops at the first obstacle, like the Phaser.
+- **Charged lance:** every 6 seconds, a beam as long as the game area is wide.
+  A thin line tracks Ada for 0.7 seconds, then holds still for 0.3 seconds, then
+  the beam fires along it for 3 damage. It stops at the first obstacle, like the Phaser.
 
 Tell lines (the lance's tracking and locked lines and the Phaser's aim line) stop
 at the first obstacle, as their beams do, so cover reads. The ring burst has no
@@ -308,7 +310,7 @@ turrets fire while it advances, with no speed to advance.
   the frigate and capital, and the hull's hit circle follows the size column.
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
   a two-shot burst of the position's Laser, 0.15 seconds between shots, every 1.4
-  seconds before the galaxy's fire multiplier while Ada is within 520 world units.
+  seconds before the position's fire rate while Ada is within 520 world units.
   It stops firing beyond 520 and never pursues.
 - **State:** retained like a frigate, so destroyed turrets and a disabled,
   salvaged or destroyed platform persist until the galaxy regenerates. Ada

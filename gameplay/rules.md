@@ -490,8 +490,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   to 1 at full reach, target speed is
   `maxSpeed * (minSpeedFraction + (1 - minSpeedFraction) * m ^ speedCurveExponent)`.
   Provisional values are `minSpeedFraction` 0.04 and `speedCurveExponent` 2.5:
-  about 8 world units per second just past the deadzone, 14 at a quarter, 42 at
-  half, 102 at three quarters and 200 at full. Keyboard movement is full deflection.
+  at the base engine's 160, about 6 world units per second just past the
+  deadzone, 11 at a quarter, 34 at half, 82 at three quarters and 160 at full. Keyboard movement is full deflection.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
   not with stick deflection.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
@@ -663,6 +663,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   blast and spread at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
   [Ships](ships.md#enemy-weapons)).
+- Ada's base projectile speed is a fixed 600 world units per second, whatever
+  her engine level; weapon speed ratios multiply it.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
@@ -752,7 +754,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   same way (see [Economy](economy.md#earning-stardust)).
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
-  hazards damage the shield.
+  hazards damage the shield; traveling debris and hazards deal 1 damage per
+  hit, at most once per second.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
   encounter is placed within 2000 world units of a flight's start or any quantum
   jump arrival, so every launch begins calm.
