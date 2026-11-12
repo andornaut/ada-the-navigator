@@ -18,8 +18,10 @@ one pickup rule (see [Rules](rules.md)). Base pull radius is 60 world units and
 base pull speed is 120 world units per second; levels 2 and 3 raise them to 90
 and 160, then 120 and 200. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
-its Stardust. A heavy is destroyed when its hull HP reaches 0; a disabled heavy
-drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disabling)).
+its Stardust. A heavy is destroyed when its hull HP reaches 0. Destroying or salvaging a heavy
+is a trade-off: destroying it drops twice its Stardust and no weapon, and
+salvaging it drops its Stardust and twice its weapon chance (see
+[Ships](ships.md#heavy-hull-and-disabling)).
 
 | Source           | Stardust |
 | ---------------- | -------: |
@@ -32,11 +34,12 @@ drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disab
 | `fighter`        |        2 |
 | `interceptor`    |        1 |
 | `retaliator`     |        4 |
-| `frigate`        |        6 |
-| `capital`        |       14 |
+| `frigate`        |  12 or 6 |
+| `capital`        | 28 or 14 |
 
 An enemy's Stardust is half its hit points, rounded down, and at least 1; a
-heavy counts all its hardpoints' hit points, not its hull. The table shows
+heavy counts all its hardpoints' hit points, not its hull, and a destroyed heavy
+drops twice that; a heavy's row shows destroyed, then salvaged. The table shows
 position 1; values follow each position's hit points.
 Discovery caches are rare. These values come from a pacing simulation of typical
 play against the targets above; rerun it after changing any earning value.
@@ -44,14 +47,14 @@ play against the targets above; rerun it after changing any earning value.
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
 of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
-24 for capital ships, and one per Stardust for asteroids. With the values above, every
-drop is below its cap, so each pickup carries 1 Stardust.
+24 for capital ships, and one per Stardust for asteroids. A drop above its cap, such as a
+destroyed capital's, splits into pickups worth more than 1 Stardust.
 
 Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
-ships, 5% of frigates and 5% of capitals drop a random upgrade weapon; at route position
-1, small ships drop one 0.25% of the time and frigates 2%. A dropped weapon
-Ada already owns gives one pack of its ammunition instead. Salvaging a disabled
-heavy multiplies its weapon chance by 5. Story mining deposits keep their
+ships and 10% of salvaged frigates, platforms and capitals drop a random upgrade
+weapon; at route position 1, small ships drop one 0.25% of the time and salvaged
+frigates 4%. A destroyed heavy drops no weapon. A dropped weapon
+Ada already owns gives one pack of its ammunition instead. Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
 Station jobs also pay Stardust; see [Quests](quests.md#rewards).
