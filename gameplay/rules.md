@@ -148,11 +148,9 @@ drawn over a night sky full of stars, galaxies and nebulae above an evening
 grass strip about 50 pixels tall along the bottom, where Ada and Penny stand
 seen from behind, looking up. The panel sits above the grass, with Earth and
 Jump over it. All six galaxies sit
-in route order on two rows of three, as on Chibi's map: 1 to 3 along the top,
-down to 4, and 5 and 6 back along the bottom, with names under the markers, each a marker in its galaxy's own main hue, as
+in route order from left to right along one arc, with names under the markers, each a marker in its galaxy's own main hue, as
 Chibi's zones have, with Ada's ship, drawn as her current ship sprite, on the selected galaxy. Right moves the ship to the next
-open galaxy in route order and Left to the previous one, even where the bottom
-row runs right to left on screen; both skip locked galaxies, as
+open galaxy in route order and Left to the previous one; both skip locked galaxies, as
 Chibi's walk skips unavailable zones. Tapping an open marker moves the ship
 there. The ship starts on the farthest unlocked galaxy, so on the first boarding
 it sits on Sunflower, the only open galaxy, with Jump as the default action. Tab focuses every marker in route order. Tapping, or focusing with Tab, a locked marker shows its panel while the ship stays
@@ -177,9 +175,8 @@ unlock shows the ship flying along the route to the farthest newly unlocked
 galaxy. When one unlock opens several galaxies, their markers open together and the
 ship flies once along the route to the farthest, passing the markers between,
 in at most 2.4 seconds in all, then waits for the player's choice. The route map is the only galaxy
-selection; there is no separate selection card. Earth, in the panel, and closing galaxy selection (its close X, an
-outside tap, back or Escape) return Ada to her room
-without a jump.
+selection; there is no separate selection card. Galaxy selection has no close X. Earth, in the panel, back and Escape return
+Ada to her room without a jump.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays
