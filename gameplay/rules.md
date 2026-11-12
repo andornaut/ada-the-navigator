@@ -171,7 +171,9 @@ placeholder after it and the next built galaxy, so placeholders never block the
 route: finishing Whirlpool opens Needle, Andromeda and Cartwheel while Needle and
 Andromeda are placeholders. Saves keep every unlock. The first boarding after an
 unlock shows the ship flying along the route to the farthest newly unlocked
-galaxy, then waits for the player's choice. The route map is the only galaxy
+galaxy. When one unlock opens several galaxies, their markers open together and the
+ship flies once along the route to the farthest, passing the markers between,
+in at most 2.4 seconds in all, then waits for the player's choice. The route map is the only galaxy
 selection; there is no separate selection card. Earth, in the panel, and closing galaxy selection (its close X, an
 outside tap, back or Escape) leave the cockpit and return Ada to her room
 without a jump.
