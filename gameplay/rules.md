@@ -567,10 +567,22 @@ Combat occurs in small groups separated by quiet stretches. Terrain mixes open
 areas, asteroid clusters and narrow passages. There is no enemy-entry warning.
 Direction indicators are rare. They mark only the current objective's
 destination, a quest item or quest event, the holodisk waypoint and an
-undiscovered station within range. Ordinary enemies, optional discovery caches
-and ordinary resource rocks get none; Penny senses those instead. A discovery
+undiscovered station within range. Optional discovery caches and ordinary
+resource rocks get none; Penny senses those instead. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
 contact, like other pickups. The pause menu's Map is the only map; there is no minimap.
+Edge markers show where off-screen objects Ada has already seen are. Three kinds
+each have their own look: enemy (swarms, fighters, interceptors and
+retaliators), heavy (frigates, capital ships, platforms and General Gadget) and
+station (stations and outposts). Friendly objects she flies through (story ships,
+whales, wrecks and landmarks) get none. An object gets a marker only after it
+has been on Ada's screen and then left it. The marker stays while the object is
+within 1400 world units of Ada, one range for every kind; past 1400 the object is
+forgotten until it is on screen again. Destroying the object, leaving the zone
+or galaxy, and saving and reloading clear markers. A marker sits where the line
+from Ada to the object meets the game area's edge, flush on the border with its
+centre 8 logical pixels in, and may sit under the HUD. Where a direction
+indicator marks the same object, only the indicator shows.
 Discovery rewards use cargo and Stardust pickups; a discovery cache holds 5
 Stardust. Weapons come only from shops and rare enemy drops. Stations are rare
 points of interest with shops.
