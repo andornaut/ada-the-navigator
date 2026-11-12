@@ -729,6 +729,28 @@ beacon light. Welcome!"
 - Completed story: Chapter complete. You can keep exploring.
 - Placeholder galaxy: Story in development.
 
+### Carried item names
+
+The status pill's carried segment, the Ship card and item notices name a
+carried item, lost item or towed craft by its display name: the item's name
+without an article, starting with a capital.
+
+| Source                   | Display names                                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Sunflower story          | Food (growers), Tool kit (workshop), Spare parts (salvagers)                                                                        |
+| Andromeda story          | Beacon parts                                                                                                                        |
+| Supply run               | Fresh food, Repaired tools, Spare parts                                                                                             |
+| Delivery jobs, Sunflower | Seeds, Spare parts, Message                                                                                                         |
+| Delivery jobs, Whirlpool | Song shells, Star maps, Message                                                                                                     |
+| Delivery jobs, Needle    | Thread spools, Glass beads, Message                                                                                                 |
+| Delivery jobs, Andromeda | Beacon parts, Mail, Message                                                                                                         |
+| Delivery jobs, Cartwheel | Ore samples, Drill bits, Message                                                                                                    |
+| Lost-item hunts          | Toolbox, Watering can, Music shell, Whale-call whistle, Weaving shuttle, Silver bell, Courier's badge, Lantern, Lucky charm, Helmet |
+| Towed craft              | Seed pod, Scrap barge, Current skimmer, Pod, Stuck glider, Lost courier, Drifting lamp buoy, Ore pod, Stuck hauler                  |
+
+Whirlpool, Needle and Cartwheel have no carried story item; Cartwheel's ore is
+cargo, not a carried item.
+
 ## Install steps
 
 Shown when the browser holds no install prompt. Title, then steps:
