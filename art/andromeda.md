@@ -6,7 +6,10 @@ portraits of Pip and the settlers.
 
 - Rebuild with `node art/tools/andromeda.ts`. It writes
   `public/art/andromeda/` and replaces its own entries in place in
-  [Andromeda's manifest](../public/art/andromeda/manifest.json).
+  [Andromeda's manifest](../public/art/andromeda/manifest.json). Pip's
+  `craft-pip-` entries are in the [core manifest](../public/art/manifest.json),
+  since the Black Eye finale draws the scooter too; its files stay in
+  `public/art/andromeda/`.
 - [art/tools/andromeda-models.ts](tools/andromeda-models.ts) holds the solid
   models in the [station](station.md) projection, culling and family: the
   station's dock collar, mouth, lit floor strip, blue corner lights and

@@ -342,13 +342,11 @@ function writeCraft(craft: m.StoryCraft) {
   }));
 }
 
-// Story craft follow the drones, before the portraits.
-replaceEntries(
-  "andromeda",
-  (id) => /^craft-pip-\d+$/.test(id),
-  writeCraft(m.pip),
-  (id) => id.includes("portrait"),
-);
+// Pip's scooter is also a Black Eye finale ally, so its frames are shared art in core. Andromeda's
+// manifest drops them first, so no id is ever in both.
+const isPip = (id: string) => /^craft-pip-\d+$/.test(id);
+replaceEntries("andromeda", isPip, []);
+replaceEntries("core", isPip, writeCraft(m.pip));
 
 // ---------------------------------------------------------------- world changes
 

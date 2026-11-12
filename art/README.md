@@ -61,13 +61,13 @@ its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story craft other than the miner, stranded craft, traveling debris
 and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
-Andromeda the settlers' station, the settlements, the guide beacons, Pip's mail
-scooter, their project frames, the garnet drones, Pip's and the settler's
-portraits, the backdrop haze and the `backdropHaze` link. The station, discovery
-cache, coral family, ore nugget and `tow` serve every galaxy and stay in core,
-as do the miner, the whale and the smaller adult, which the Black Eye finale
-also draws. Core entries keep their files' paths, so a galaxy's art stays in its
-folder wherever its entries are listed.
+Andromeda the settlers' station, the settlements, the guide beacons, their
+project frames, the garnet drones, Pip's and the settler's portraits, the
+backdrop haze and the `backdropHaze` link. The station, discovery cache, coral
+family, ore nugget and `tow` serve every galaxy and stay in core, as do the
+miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
+finale also draws. Core entries keep their files' paths, so a galaxy's art
+stays in its folder wherever its entries are listed.
 Tech loads core at boot and a galaxy's manifest with its set.
 
 Generators write through `art/tools/manifest.ts`, naming the target manifest;
@@ -112,7 +112,7 @@ regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 collision parts, for [the ship](ship.md#collision), the
 [sector one enemies](enemies.md#collision), the
 [heavies](heavies.md#collision), the traveling debris
-([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision))
+([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision)),
 the pickups ([Stardust](stardust.md#pickup), the
 [discovery cache](outposts.md#discovery-cache),
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
