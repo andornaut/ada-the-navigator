@@ -127,7 +127,8 @@ Tech:
 - Every asteroid can be destroyed; HP and Stardust follow [Classes](#classes).
 - Drifting rocks follow seeded closed loops that never overlap other rocks, so
   rocks never bounce off each other.
-- Ships bounce off rocks' footprints. Rocks deal no damage.
+- Shots hit a rock's current frame's drawn silhouette (`collision`). Ships
+  bounce off rocks' footprints. Rocks deal no damage.
 - Large and huge rocks keep their `footprintRadius` plus 160 world units clear of
   stations, destinations and launch points, and stay out of passages.
 - Draw play objects in ascending pivot screen y.
@@ -188,9 +189,10 @@ timing:
   - `frames[k]`:
     - `file`: public path of the frame's SVG.
     - `collision`: the drawn silhouette as convex `[x, y]` parts in frame px.
-      Use it for drawing bounds and the drift cue, not for hits.
+      Use it for shot hits, drawing bounds and the drift cue.
     - `footprint`: the rock's base on the world plane as convex `[x, y]`
-      parts in world units from the pivot. Use it for hits and placement.
+      parts in world units from the pivot. Use it for ship contact and
+      placement.
 - `backdrop`: `sideScale`, `rule` (`lift`, `chromaScale`, `lightDrop`) and `sprites`, each
   with `id`, `file`, `frame`, `display`, `pivot` and `tint` (`backdropLit`).
 - `tints`: `backdropLit` and `backdropSide` for `base` and each galaxy id.
@@ -350,7 +352,7 @@ crystals (at most 1.31 frame px²) filled as the traced outline drops it:
 intersection over union 0.991 or more, and no boundary more than 1 frame px
 from the drawing. Six frames fill a notch tip between crystals: `resource-m1`
 frames 1 and 6 and `resource-m3` frames 1, 6, 7 and 14; no plain rock has one.
-The drawn silhouette is for drawing bounds only; hits use the footprints.
+Shots hit the drawn silhouette; ship contact and placement use the footprints.
 
 `resource-rocks.json`, version 1: `displayScale`, `stone`, `ore` and `rocks`.
 Each `rocks[i]` has the `asteroids[i]` schema ([Data](#data)), so the asteroid
