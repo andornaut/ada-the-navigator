@@ -79,6 +79,7 @@ export function editManifest(file: ManifestFile, edit: (manifest: Manifest) => v
 // in place, so each group stays contiguous and independent of the others.
 const GROUPS = [
   "cockpit",
+  "route-",
   "holodisk",
   "quantum-jump",
   "stardust",

@@ -1,7 +1,7 @@
 // Storybook backgrounds: isometric Earth dioramas with treatment d, on the shared 960 by 540
 // logical canvas at 2x, Ada's room overnight with its sleep scene overlays, and the pixel sprites
 // of Ada (art/tools/ada-sprites.ts) and her family (art/tools/family-sprites.ts) placed over their
-// backgrounds.
+// backgrounds, and over the route map's ground (art/tools/route-sky.ts).
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -16,14 +16,17 @@ import {
   WAKING_HEIGHT,
 } from "./ada-sprites.ts";
 import {
+  adaSkywatch,
   type Cat,
   catCurled,
   catSitting,
   dadAtDinner,
   dadAtDoor,
   momAtDoor,
+  pennySitting,
   type Sprite,
 } from "./family-sprites.ts";
+import { FIGURES as ROUTE_FIGURES } from "./route-sky.ts";
 
 import {
   box,
@@ -1700,6 +1703,9 @@ const DAD_DOOR_ID = "story-dad-door";
 const DAD_DINNER_ID = "story-dad-dinner";
 const CAT_BED_IDS = { archie: "story-archie-bed", kiwi: "story-kiwi-bed" } as const;
 const CAT_CURLED_IDS = { archie: "story-archie-curled", kiwi: "story-kiwi-curled" } as const;
+// Ada and Penny on the route map's ground (route-ground), at scale 1.
+const SKYWATCH_ID = "story-ada-skywatch";
+const PENNY_SITTING_ID = "story-penny-sitting";
 
 // Story figure pages: each composite draws its base background's image with the page's sprites
 // over it, and is placed as its base in the story run (art/storybook.md "Story figures").
@@ -2026,6 +2032,20 @@ function familySprites(): Record<string, Placed> {
   return placed;
 }
 
+// Ada and Penny on the route-ground canvas, each standing on her foot point at scale 1.
+function skywatchSprites(): Record<string, Placed> {
+  const ada = adaSkywatch();
+  const penny = pennySitting();
+  return {
+    [SKYWATCH_ID]: { image: ada.image, at: standing(ada, ROUTE_FIGURES.ada, 1), scale: 1 },
+    [PENNY_SITTING_ID]: {
+      image: penny.image,
+      at: standing(penny, ROUTE_FIGURES.penny, 1),
+      scale: 1,
+    },
+  };
+}
+
 // A story figure page's background: its base's image, subject band and run placement (`base`),
 // with the page's sprites drawn over it.
 const compositeEntry = ({ id, base, overlays }: Composite) => ({
@@ -2191,6 +2211,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     [PLAYING_ID]: { image: playingSprite(), ...places[PLAYING_ID] },
     [WAKING_ID]: { image: wakingSprite(blanket), ...places[WAKING_ID] },
     ...family,
+    ...skywatchSprites(),
   };
   for (const [id, { image }] of Object.entries(placedSprites)) writePng(file(id), image);
   // Each sprite's entry follows the first background or composite that draws it.
@@ -2217,13 +2238,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const assets = readManifest("core").assets as { at: Overlay["at"]; id: string }[];
     overlays = OVERLAYS.map((id) => assets.find((asset) => asset.id === id)!);
   }
-  placeStoryEntries(
-    BACKGROUNDS.flatMap(({ id }) =>
+  placeStoryEntries([
+    ...BACKGROUNDS.flatMap(({ id }) =>
       id === "story-ada-room-night"
         ? [entry(id), sleepEntry(), ...overlays]
         : [entry(id), ...spriteOf(id)],
     ),
-  );
+    // The route map's figures follow the story backgrounds; route-ground lists them.
+    ...[SKYWATCH_ID, PENNY_SITTING_ID].map((id) =>
+      spriteEntry(id, placedSprites[id]!.image, placedSprites[id]!),
+    ),
+  ]);
   writeFileSync(`${art}story-transition.json`, json(TRANSITION));
   const at = (id: string) => overlays.find((asset) => asset.id === id)!.at;
   writeFileSync(`${art}story-overnight.json`, json(overnight(at)));

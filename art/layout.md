@@ -656,8 +656,7 @@ Behaviour:
   [story figure](storybook.md#story-figures) page or the overnight sleep
   scene) is placed as its base: the run anchor counts its pages as pages on
   the base. The sleep scene's cross-fade to the morning draws each image at
-  its own page's placement. A backdrop without a panel (galaxy selection) keeps the centred
-  placement.
+  its own page's placement.
 - Speaker portraits follow [Conversation portraits](conversation.md): Astra
   plays her speaking loop while her page shows; Ada and Penny show the mood
   Gameplay marks. The tab and portrait carry the speaker.
@@ -762,8 +761,9 @@ Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 
 ### Galaxy selector
 
-A route map over the cockpit, after Chibi's zone map: six galaxy markers on two
-rows of three, a panel for the chosen galaxy, and Earth and Jump below it.
+A route map over the [route sky](route-sky.md), after Chibi's zone map: six
+galaxy markers on two rows of three, a panel for the chosen galaxy, and Earth
+and Jump below it.
 Constants: `ROUTE_MAP`, `ROUTE_PANEL`, `ROUTE_ACTIONS` and `ROUTE_MOVE`,
 `routeMap.ts`, to implement. Positions are logical px from the play view's
 top-left (add `playView.x`, 29 at 779 wide); "insets" means the phone insets 43
@@ -773,35 +773,35 @@ flavour lines are Gameplay's; marker colours and previews are in
 
 Chart (`ROUTE_MAP`):
 
-| Part           | Geometry                                                                                                                                                        |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chart layer    | Ink `#181425` at 0.62 over the whole view, under the insets (`ROUTE_MAP.scrim`); the cockpit shows through                                                      |
-| Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`ROUTE_MAP.rules`)                                        |
-| Marker centres | Route positions 1 (132, 53), 2 (360, 53), 3 (588, 53), 4 (588, 125), 5 (360, 125), 6 (132, 125): Chibi's 228 column spacing, centred, rows 72 apart (`centres`) |
-| Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)         |
-| Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the ship's galaxy (`marker.ring`)                                                                     |
-| Route line     | Chibi's `bentCurve` per leg: bend 0.08 of the chord, left of travel on even legs and right on odd; stamped every 0.5; stops 15 from each centre (`path`)        |
-| Line looks     | By the leg's destination: open 4 px solid cream; built and locked 2 px `#B8B3C9` dashes, 6 on and 4 off; not built 2x2 `#B8B3C9` dots every 6                   |
-| Label          | Name in `TYPE.label` centred on an ink pill at 0.85: 20 high, label + 12 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it  |
-| Ship           | Selected ship frame (`ship-N`) at 32 display, pivot at (centre x, centre y - 25) (`ship`)                                                                       |
-| Ship heading   | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the outgoing leg's tangent at the marker; at galaxy 6, the incoming leg's at its end |
-| Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); centres are at least 72 apart, so press areas never overlap                                                |
-| Focus ring     | `ui-focus`, 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side)                                                                               |
+| Part           | Geometry                                                                                                                                                                                                                                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind every marker, label, leg and the close X |
+| Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`ROUTE_MAP.rules`), over the sky and under the ground                                                                                                                                               |
+| Marker centres | Route positions 1 (132, 53), 2 (360, 53), 3 (588, 53), 4 (588, 125), 5 (360, 125), 6 (132, 125): Chibi's 228 column spacing, centred, rows 72 apart (`centres`)                                                                                                                                           |
+| Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                   |
+| Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the ship's galaxy (`marker.ring`)                                                                                                                                                                                                               |
+| Route line     | Chibi's `bentCurve` per leg: bend 0.08 of the chord, left of travel on even legs and right on odd; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                  |
+| Line looks     | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                             |
+| Label          | Name in `TYPE.label` centred on an ink pill at 0.85: 20 high, label + 12 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                            |
+| Ship           | Selected ship frame (`ship-N`) at 32 display, pivot at (centre x, centre y - 25) (`ship`)                                                                                                                                                                                                                 |
+| Ship heading   | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the outgoing leg's tangent at the marker; at galaxy 6, the incoming leg's at its end                                                                                                                                           |
+| Press area     | 48x48 centred on each marker (`HIT_RULE.minTarget`); centres are at least 72 apart, so press areas never overlap                                                                                                                                                                                          |
+| Focus ring     | `ui-focus`, 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side)                                                                                                                                                                                                                         |
 
 Row 2 runs right to left on screen (4, 5, 6) while Left and Right follow route
 order: on the bottom row Right moves the ship left on screen.
 
 Panel and actions (`ROUTE_PANEL`, `ROUTE_ACTIONS`):
 
-| Part        | Geometry                                                                                                                                                        |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel       | `ui-settings-card` face, 610x112, centred on the play view (x 55), bottom `SPACING.gap` above the actions; padding 8, the 2 px frame inside it (see Exceptions) |
-| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                  |
-| Text column | 12 right of the capture frame, 400 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour   |
-| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 400 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`                                           |
-| Earth, Jump | `TEXT_BUTTON.height` faces 192 wide (Chibi's map actions), `SPACING.gap` apart, centred on the play view; Earth secondary left, Jump primary right              |
-| Actions top | Available rect bottom - 48                                                                                                                                      |
-| Close X     | `ui-close` 24 face centred in a 48 target on the HUD rect's top-right corner                                                                                    |
+| Part        | Geometry                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Panel       | `ui-settings-card` face, 614x112, centred on the play view (x 53), bottom `SPACING.gap` above the actions; padding 8, the 2 px frame inside it (see Exceptions)                                                                                  |
+| Capture     | The 180x90 [selector preview](galaxies.md#selector-preview) in a 1 px ink frame (182x92) at the inner top-left                                                                                                                                   |
+| Text column | 12 right of the capture frame, 404 wide, top-aligned: `Galaxy {number}` (`TYPE.body`), `SPACING.rowGap`, the name (`TYPE.heading`), `SPACING.rowGap`, flavour                                                                                    |
+| Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second |
+| Earth, Jump | `TEXT_BUTTON.height` faces 192 wide (Chibi's map actions), `BUTTON_GAP` (16) apart at play view x 160 and 368, Chibi's positions, centred on the play view; Earth secondary left, Jump primary right                                             |
+| Actions top | Available rect bottom - 48                                                                                                                                                                                                                       |
+| Close X     | `ui-close` 24 face, its drawn top and right edges on the HUD rect's top-right corner at every inset, as every HUD top control's; press area `hitAround(face)` = 48 centred on the face                                                           |
 
 The chart anchors to the play view's top; the panel and actions anchor to the
 available rect's bottom, so a taller view opens the gap between them.
@@ -809,47 +809,48 @@ available rect's bottom, so a taller view opens the gap between them.
 | At 720x360      | No insets              | Phone insets           |
 | --------------- | ---------------------- | ---------------------- |
 | Available rect  | (16, 16) to (704, 344) | (43, 16) to (677, 341) |
-| Panel           | (55, 176) 610x112      | (55, 173) 610x112      |
-| Capture frame   | (63, 184) 182x92       | (63, 181) 182x92       |
-| Text column     | x 257, top 184, w 400  | x 257, top 181, w 400  |
-| Earth           | (164, 296) 192x48      | (164, 293) 192x48      |
-| Jump            | (364, 296) 192x48      | (364, 293) 192x48      |
-| Close target    | (664, 8) 48x48         | (629, 8) 48x48         |
-| Close face      | (676, 20) 24x24        | (641, 20) 24x24        |
+| Panel           | (53, 176) 614x112      | (53, 173) 614x112      |
+| Capture frame   | (61, 184) 182x92       | (61, 181) 182x92       |
+| Text column     | x 255, top 184, w 404  | x 255, top 181, w 404  |
+| Earth           | (160, 296) 192x48      | (160, 293) 192x48      |
+| Jump            | (368, 296) 192x48      | (368, 293) 192x48      |
+| Close target    | (672, 0) 48x48         | (641, 0) 48x48         |
+| Close face      | (684, 12) 24x24        | (653, 12) 24x24        |
 | Row 2 label gap | 164 to 176: 12         | 164 to 173: 9          |
 
 Markers, labels, rules inside the frame and the ship are the same in both.
-Across the 32 headings the ship's hull spans 7.25 to 23.25 of its 32 frame
-from the top. Row 1's hull starts at 19.25 or lower, below the rules at 16; a
-resting row 2 ship (headings 11 to 13 or 27 to 29) starts at 93.75 or lower,
-below the row 1 labels, which end at 92. Marker 3's press area (564 to 612)
-and the ship (to 604) keep clear of the close target.
+At 844x390 with the phone insets the HUD rect's right is 736.08, so the close
+face is (712.08, 12). Across the 32 headings the ship's hull spans 7.0 to 23.5
+of its 32 frame from the top. Row 1's hull starts at 19.0 or lower, below the
+rules at 16; a resting row 2 ship (headings 11 to 13 or 27 to 29) starts at
+93.67 or lower, below the row 1 labels, which end at 92. Marker 3's press area
+(564 to 612) and the ship (to 597) keep clear of the close target, which
+starts at 641 or more.
 
 Marker faces:
 
-| Face      | Disc                  | Edge                                                                       | Number            | Label            |
-| --------- | --------------------- | -------------------------------------------------------------------------- | ----------------- | ---------------- |
-| Selected  | The galaxy's `marker` | 1.5 ink edge and the cream selected ring; ship above it                    | Ink               | Name, cream      |
-| Unlocked  | The galaxy's `marker` | 1.5 ink edge                                                               | Ink               | Name, cream      |
-| Locked    | Shared grey `#8B8B8B` | 1.5 ink edge                                                               | Ink, 5.29:1       | "...", `#B8B3C9` |
-| Not built | `#2F2D3D`             | 2 px `#8B8B8B` ring at radius 12 in 8 dashes of 22.5 degrees, one every 45 | `#B8B3C9`, 6.61:1 | Name, `#B8B3C9`  |
-| Focused   | The face it has       | Plus the focus ring                                                        | As the face       | As the face      |
+| Face     | Disc                  | Edge                                                    | Number      | Label            |
+| -------- | --------------------- | ------------------------------------------------------- | ----------- | ---------------- |
+| Selected | The galaxy's `marker` | 1.5 ink edge and the cream selected ring; ship above it | Ink         | Name, cream      |
+| Unlocked | The galaxy's `marker` | 1.5 ink edge                                            | Ink         | Name, cream      |
+| Locked   | Shared grey `#8B8B8B` | 1.5 ink edge                                            | Ink, 5.29:1 | "...", `#B8B3C9` |
+| Focused  | The face it has       | Plus the focus ring                                     | As the face | As the face      |
 
-Locked is greyscale and not built is greyed and broken, so the state reads by
-shape as well as colour, as Chibi's padlock and broken ring do. Every marker is
-9.65:1 or more on the chart layer over the field and 3.81:1 or more over the
-lightest hull pixel; the backing disc keeps the locked grey at 4.5:1 or more.
-The cream line is 11.63:1 over the field and 4.60:1 over the hull, the
-`#B8B3C9` dashes and dots 8.28:1 and 3.28:1.
+A placeholder galaxy's marker is unlocked, in its galaxy's hue. Locked is
+greyscale with "..." for its name and dashes on its leg, so the state reads by
+its label and line as well as its colour. On the backing disc over the guarded
+sky every marker is 5.11:1 or more (the locked grey; the hues 9.97:1 or more).
+On the sky the cream line is 9.29:1 or more and the `#B8B3C9` dashes 6.62:1 or
+more ([route sky](route-sky.md#guard)).
 
-Panel states (the panel shows the ship's galaxy, or the locked or not built
-galaxy last tapped or focused):
+Panel states (the panel shows the ship's galaxy, or the locked galaxy last
+tapped or focused):
 
-| State     | `Galaxy {number}` | Name                | Flavour                           | Capture                | Jump                                    |
-| --------- | ----------------- | ------------------- | --------------------------------- | ---------------------- | --------------------------------------- |
-| Open      | `#B8B3C9`         | White, the name     | Cream, the flavour line           | Its own field          | Primary, live                           |
-| Locked    | `#B8B3C9`         | "...", `#B8B3C9`    | "...", `#B8B3C9`                  | The locked greyscale   | Unavailable: disabled face, refusal cue |
-| Not built | `#B8B3C9`         | The name, `#B8B3C9` | "Story in development", `#B8B3C9` | The greyed placeholder | Unavailable: disabled face, refusal cue |
+| State       | `Galaxy {number}` | Name             | Flavour                                                            | Capture                                                     | Jump                                    |
+| ----------- | ----------------- | ---------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------- |
+| Open        | `#B8B3C9`         | White, the name  | Cream, the flavour line                                            | Its own field                                               | Primary, live                           |
+| Placeholder | `#B8B3C9`         | White, the name  | Cream, the flavour line, then "Story in development." in `#B8B3C9` | Its [placeholder preview](galaxies.md#placeholder-previews) | Primary, live                           |
+| Locked      | `#B8B3C9`         | "...", `#B8B3C9` | "...", `#B8B3C9`                                                   | The locked greyscale                                        | Unavailable: disabled face, refusal cue |
 
 Greyed text is the supporting colour `#B8B3C9`, 5.53:1 on the card face; the
 disabled label colour `#9A96AD` is 3.93:1 there, below 4.5:1. The panel keeps
@@ -858,34 +859,34 @@ one size for every galaxy and state.
 Input and focus:
 
 - Right moves the ship to the next open galaxy in route order and Left to the
-  previous one, skipping locked and not built galaxies, as Chibi's walk skips
+  previous one, skipping locked galaxies, as Chibi's walk skips
   unavailable zones; at either end nothing moves. The arrows (and the gamepad
   d-pad) walk the route wherever focus is, and return the panel to the ship's
   galaxy.
-- Tapping an open marker moves the ship there. Tapping a locked or not built
+- Tapping an open marker moves the ship there. Tapping a locked
   marker shows its panel face while the ship stays on its open galaxy; Jump is
   then unavailable and refuses.
 - Tab focuses every marker in route order, then Earth, Jump and the close X.
-  Focus starts on Jump, the default action. A focused locked or not built
+  Focus starts on Jump, the default action. A focused locked
   marker shows its panel as a tap does; a focused open marker moves the ship
   there. Enter, Space and the gamepad's confirm activate the focused control;
   on a marker they act as a tap.
-- Earth, the close X, an outside tap, back and Escape leave the cockpit
-  without a jump.
+- Earth, the close X, an outside tap, back and Escape leave galaxy selection
+  and return Ada to her room without a jump.
 
 Moves (`ROUTE_MOVE`):
 
-| Move           | Rule                                                                                                                                                                                                  |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Selection      | The ship travels the legs between the two galaxies at 360 px/s, clamped to 0.3 to 0.9 s, easeInOutSine on arc length; the panel switches at the input; a new input retargets from the ship's position |
-| Unlock         | The first boarding after an unlock opens on the previous galaxy with the new one still locked, then plays the steps below and waits for the player's choice                                           |
-| 0 to 300 ms    | The new marker crossfades from its locked face to its hue (ease-out quad); its leg turns from dashes to the open line, drawn from the old marker to the new one                                       |
-| 0 to 400 ms    | A 2 px ring in the new marker's hue grows from radius 13 to 26, alpha 0.8 to 0                                                                                                                        |
-| 400 ms         | The ship departs on its thrust frame (`ship-thrust-N`), the heading re-chosen each frame from the path tangent; it flies the leg at clamp(length / 180 px/s, 0.8, 1.4) s, easeInOutSine on arc length |
-| Leg times      | A row leg (229 px) 1.27 s, so 1.67 s to arrival; the 3 to 4 leg (72 px) 0.8 s                                                                                                                         |
-| Arrival        | The idle frame; the selected ring fades in over 120 ms; the panel crossfades to the new galaxy over 160 ms; focus moves to Jump                                                                       |
-| Skip           | A tap, key or button press during the unlock jumps to the arrived state                                                                                                                               |
-| Reduced motion | No travel or pulse. Selection moves cut. The unlock fades the ship out over 150 ms, switches the marker and leg at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all        |
+| Move           | Rule                                                                                                                                                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selection      | The ship travels the legs between the two galaxies at 360 px/s, clamped to 0.3 to 0.9 s, easeInOutSine on arc length; the panel switches at the input; a new input retargets from the ship's position                                                    |
+| Unlock         | The first boarding after an unlock opens with the ship on the galaxy it flew from and every newly unlocked galaxy still locked, plays the steps below, then waits for the player's choice                                                                |
+| 0 to 300 ms    | Every newly unlocked marker crossfades from its locked face to its hue (ease-out quad); the legs to them turn from dashes to the open line, drawn along the route from the ship's marker                                                                 |
+| 0 to 400 ms    | A 2 px ring in the farthest new marker's hue grows from radius 13 to 26, alpha 0.8 to 0                                                                                                                                                                  |
+| 400 ms         | The ship departs on its thrust frame (`ship-thrust-N`), the heading re-chosen each frame from the path tangent; it flies the legs to the farthest newly unlocked galaxy as one path at clamp(length / 180 px/s, 0.8, 2.4) s, easeInOutSine on arc length |
+| Timeline       | Sunflower to Whirlpool, one row leg of 229 px: 1272 ms of flight, arrival at 1672 ms. Whirlpool to Cartwheel, 530 px over three legs: 2.4 s of flight, arrival at 2.8 s                                                                                  |
+| Arrival        | The idle frame; the selected ring fades in over 120 ms; the panel crossfades to the new galaxy over 160 ms; focus moves to Jump                                                                                                                          |
+| Skip           | A tap, key or button press during the unlock jumps to the arrived state                                                                                                                                                                                  |
+| Reduced motion | No travel or pulse. Selection moves cut. The unlock fades the ship out over 150 ms, switches the markers and legs at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all                                                         |
 
 The ship's path is the route curve offset by the ship pivot (0, -25), so it
 leaves and lands standing above the markers.

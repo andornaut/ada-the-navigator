@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { decodePng } from "@andornaut/art-kit/png";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { PALETTE as ADA } from "./ada-sprites.ts";
 import { rgb } from "./oklab.ts";
 
 const sources = fileURLToPath(new URL("../sources/", import.meta.url));
@@ -590,4 +591,150 @@ export function catCurled(cat: Cat): Sprite {
     ]),
   );
   return sprite(g, CATS[cat], 13);
+}
+
+/* Ada and Penny watching the sky: the route map's ground layer */
+
+// Evening light on a sprite: every colour but the ink edge mixed `DUSK.amount` toward the space
+// background, then a warm rim on the sunset side (the viewer's left) and along the top edges of
+// the left half, inside the ink outline.
+const DUSK = { colour: "#292734", amount: 0.42, rim: "#f0bd68", rimMix: 0.6 } as const;
+
+function eveningLight(image: RgbaImage): RgbaImage {
+  const { width, height, data } = image;
+  const ink = rgb(INK);
+  const dusk = rgb(DUSK.colour);
+  const rim = rgb(DUSK.rim);
+  const i = (x: number, y: number) => (y * width + x) * 4;
+  const opaque = (x: number, y: number) =>
+    x >= 0 && y >= 0 && x < width && y < height && data[i(x, y) + 3]! > 0;
+  const isInk = (x: number, y: number) =>
+    opaque(x, y) && [0, 1, 2].every((c) => data[i(x, y) + c] === ink[c]);
+  const out = blankImage(width, height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!opaque(x, y)) continue;
+      const p = i(x, y);
+      if (isInk(x, y)) {
+        out.data.set([...ink, 255], p);
+        continue;
+      }
+      const edge = (nx: number, ny: number) => !opaque(nx, ny) || isInk(nx, ny);
+      const lit = edge(x - 1, y) || (x < width * 0.55 && edge(x, y - 1));
+      const c = [0, 1, 2].map((k) => {
+        const v = data[p + k]! * (1 - DUSK.amount) + dusk[k]! * DUSK.amount;
+        return Math.round(lit ? v * (1 - DUSK.rimMix) + rim[k]! * DUSK.rimMix : v);
+      });
+      out.data.set([...c, 255], p);
+    }
+  }
+  return out;
+}
+
+/**
+ * Ada from behind, looking up at the sky: her head tipped back so the crown sits two rows lower
+ * than on her front sprites, the back hair over her shoulders to the shirt's middle, the bow on
+ * her crown, and her hands clasped behind her back. Walker-ada's colours, about 2.5 heads tall
+ * like her other storybook sprites. Feet on the bottom row; scale 1.
+ */
+export function adaSkywatch(): Sprite {
+  const g = grid(WIDTH, 56);
+  const cx = CENTRE;
+  // Shoes from behind: white heels, a grey shade row and the pink sole.
+  for (const [x0, x1] of [
+    [14, 19],
+    [24, 29],
+  ] as const) {
+    part(g, spans({ ...run(51, 53, x0 - 1, x1 + 1), 54: [x0, x1] }), (_x, y) =>
+      y === 53 ? "c" : y === 54 ? "q" : "W",
+    );
+  }
+  // Legs, weight on her left leg (the viewer's left): skin, lit on their left side.
+  legs(g, 43, 51, [14, 19], [24, 29], (x) => (x === 15 || x === 25 ? "L" : "w"));
+  // Shorts, shaded on the right, with the back seam.
+  part(g, spans(run(39, 44, 12, 31)), (x) => (x >= 25 ? "B" : "b"));
+  for (let y = 40; y <= 44; y++) put(g, 21, y, "H");
+  // The shirt: shoulders as wide as her head, to an A-line hem, shaded on the right.
+  part(
+    g,
+    spans({ 23: [14, 29], 24: [11, 32], ...run(25, 34, 10, 33), ...run(35, 39, 11, 32) }),
+    (x) => (x >= 26 ? "m" : "P"),
+  );
+  // Arms down her back to clasped hands over the hem: 3 px strokes, sleeves at the shoulder.
+  for (const path of [
+    [
+      [10, 26],
+      [10, 31],
+      [14, 35],
+      [19, 37],
+    ],
+    [
+      [33, 26],
+      [33, 31],
+      [29, 35],
+      [24, 37],
+    ],
+  ] as const) {
+    part(g, limb(path, 1), (_x, y) => (y <= 28 ? "P" : "w"));
+  }
+  part(g, union(disc(cx - 1.5, 37.5, 2.6, 2.2), disc(cx + 1.5, 37.5, 2.6, 2.2)), "w");
+  // The back hair: the head's oval and a tapering fall to the shirt's middle, the shoulders
+  // showing beside it; strands lit on the left.
+  const hair = union(
+    disc(cx, 13, 10.5, 10),
+    spans({ ...run(20, 27, 13, 30), 28: [14, 29], 29: [15, 28], 30: [17, 26] }),
+  );
+  part(g, hair, (x, y) => (x % 4 === 1 && x < cx + 2 && y > 5 && y < 29 ? "k" : "s"));
+  // The bow on her crown.
+  part(g, union(disc(cx + 2, 3, 2.4, 2), disc(cx + 7, 3, 2.4, 2)), "h");
+  put(g, cx + 4.5, 3, "y");
+  put(g, cx + 1.5, 2, "y");
+  return { ...sprite(g, ADA), image: eveningLight(sprite(g, ADA).image) };
+}
+
+// Archie's Penny: golden coat, shade and highlight, ears, and her blue harness.
+const PENNY: Readonly<Record<string, string>> = {
+  o: "#feae34", // coat
+  d: "#f77622", // coat shade, ears
+  l: "#fee761", // coat highlight
+  b: "#0099db", // harness light
+  B: "#124e89", // harness
+};
+
+/**
+ * Penny sitting beside Ada, from behind, her head lifted so her muzzle shows above her crown, her
+ * ears hanging, her harness across her back and her tail curled on the grass to her right.
+ * Archie's dog-penny colours at Ada's storybook scale. Paws on the bottom row; scale 1.
+ */
+export function pennySitting(): Sprite {
+  const g = grid(28, 31);
+  const cx = 12.5;
+  const coat: Fill = (x, y) => (x > cx + 3 ? "d" : x < cx - 1 && y < 22 ? "l" : "o");
+  part(
+    g,
+    limb(
+      [
+        [18, 29],
+        [22, 29],
+        [25, 27],
+        [25, 25],
+      ],
+      1,
+    ),
+    (x) => (x > 22 ? "d" : "o"),
+  );
+  const body = union(disc(cx, 19.5, 7, 7.5), disc(cx, 25.5, 9, 4.2));
+  part(g, body, coat);
+  for (const px of [cx - 6.5, cx + 6.5]) part(g, disc(px, 29, 2.2, 1.4), coat);
+  for (const [y, k] of [
+    [15, "b"],
+    [16, "B"],
+    [17, "B"],
+  ] as const) {
+    for (let x = 0; x < 28; x++) if (g[y]![x] !== "." && g[y]![x] !== "H") put(g, x, y, k);
+  }
+  // Her head over the neck, the muzzle lifted above the crown, ears hanging at its sides.
+  part(g, union(disc(cx, 9.5, 7, 5.5), disc(cx, 4.5, 3.6, 2)), coat);
+  part(g, union(disc(cx - 6.5, 11, 2.3, 4), disc(cx + 6.5, 11, 2.3, 4)), "d");
+  return { ...sprite(g, PENNY, cx), image: eveningLight(sprite(g, PENNY, cx).image) };
 }

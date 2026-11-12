@@ -3874,6 +3874,44 @@
       "sampling": "nearest"
     },
     {
+      "id": "story-ada-skywatch",
+      "path": "/art/story/ada-skywatch.png",
+      "width": 26,
+      "height": 53,
+      "displayWidth": 26,
+      "displayHeight": 53,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 201,
+        "y": 59
+      },
+      "scale": 1,
+      "sampling": "nearest"
+    },
+    {
+      "id": "story-penny-sitting",
+      "path": "/art/story/penny-sitting.png",
+      "width": 23,
+      "height": 28,
+      "displayWidth": 23,
+      "displayHeight": 28,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 228,
+        "y": 84
+      },
+      "scale": 1,
+      "sampling": "nearest"
+    },
+    {
       "id": "title-field",
       "path": "/art/title-field.png",
       "width": 1920,
@@ -3932,6 +3970,33 @@
         "top": 175,
         "bottom": 298
       }
+    },
+    {
+      "id": "route-sky",
+      "path": "/art/route-sky.png",
+      "width": 1920,
+      "height": 1080,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0
+      }
+    },
+    {
+      "id": "route-ground",
+      "path": "/art/route-ground.png",
+      "width": 1920,
+      "height": 240,
+      "displayWidth": 960,
+      "displayHeight": 120,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "overlays": ["story-ada-skywatch", "story-penny-sitting"]
     },
     {
       "id": "holodisk",

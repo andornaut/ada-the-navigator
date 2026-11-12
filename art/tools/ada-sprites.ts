@@ -14,7 +14,7 @@ import { rgb, type Rgb } from "./oklab.ts";
 const sources = fileURLToPath(new URL("../sources/", import.meta.url));
 
 // Palette keys: the portrait's colours, walker-ada's body colours, and the sprite's additions.
-const PALETTE: Readonly<Record<string, string>> = {
+export const PALETTE: Readonly<Record<string, string>> = {
   H: "#181425", // ink edge
   s: "#262b44", // hair
   k: "#3a4466", // hair light

@@ -177,7 +177,8 @@ galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
 - Locked: unchanged. A base-field capture in greyscale, each pixel `30 + 0.6 Y`
   (`preview.locked`), with `Y` the ITU-R 601 luma, truncated. Every locked
   galaxy shares one grey range, so a locked preview gives away no hue.
-- Not built: the locked preview, greyed the same way.
+- Placeholder: the galaxy's [placeholder preview](#placeholder-previews)
+  until its galaxy is built and captured; locked, its locked file.
 
 ## Placeholder previews
 

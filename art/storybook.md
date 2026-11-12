@@ -140,8 +140,9 @@ The game names each page's location by a background key
 `cockpit` is the empty cockpit, used only in the prologue: from the arrival
 narration through Astra's lines and the optional questions. `cockpitSeated`
 starts on the page where Ada sits and buckles Penny in, and covers every later
-ship-scene page: quantum jump, the galaxy selector, and every later chapter's
-boarding and Continue, where they sit at once. Gameplay owns the page marks.
+ship-scene page: quantum jump and every later chapter's boarding and Continue,
+where they sit at once. The galaxy selector draws over its own
+[route sky](route-sky.md). Gameplay owns the page marks.
 
 On a cockpit page whose speaker is Astra, she speaks with her dialogue
 portrait; the cockpit background stays still. See
@@ -230,18 +231,21 @@ row under a 220-character page at 360-high views.
 
 ## Ada's sprites
 
-Ada on the concert stage and waking on the morning page is a crisp pixel
-sprite drawn over the treated background, not painted into it. Each is an
+Ada on the concert stage, waking on the morning page and watching the sky on
+the route map's ground is a crisp pixel sprite drawn over its background, not
+painted into it. Each is an
 overlay of its background: the background entry's `overlays` names it, and
 its entry gives the PNG at one sprite px per image px, `scale` (logical px per
 sprite px), `displayWidth` and `displayHeight` (the image times `scale`),
 `pivot` (0, 0), `at` (its top-left corner on the canvas in whole logical px)
 and `sampling: "nearest"`.
 
-| Id                  | Size (px) | `scale` | `at`       | Background               | Pose                                        |
-| ------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
-| `story-ada-playing` | 44 x 56   | 1       | (480, 221) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
-| `story-ada-waking`  | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
+| Id                    | Size (px) | `scale` | `at`       | Background               | Pose                                        |
+| --------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
+| `story-ada-playing`   | 44 x 56   | 1       | (480, 221) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
+| `story-ada-waking`    | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
+| `story-ada-skywatch`  | 26 x 53   | 1       | (201, 59)  | `route-ground`           | From behind, looking up at the sky          |
+| `story-penny-sitting` | 23 x 28   | 1       | (228, 84)  | `route-ground`           | Penny sitting beside her, looking up        |
 
 - Scale: one sprite px is 1 logical px in the concert hall and 2 in Ada's room,
   each scene's furniture scale; that is 2 and 4 canvas px at the canvas's 2x.
@@ -276,8 +280,25 @@ and `sampling: "nearest"`.
   head, eyes shut and a small open yawn. The duvet's bunched edge covers her
   lap, in the morning page's treated blanket colour sampled at canvas px
   (492, 776), with a fold shade 24 darker and the ink edge.
-- Penny stays painted on the morning page; a crisp Penny sprite on the same
-  rule could follow.
+- Skywatch: Ada from behind in the same colours and build, her head tipped
+  back so the crown sits two rows lower than on her front sprites, the back
+  hair over her shoulders to the shirt's middle with strands `#3a4466` on its
+  left, the bow `#b55088` on her crown, shoulders as wide as her head showing
+  beside the hair, and her arms down her back to hands clasped over the hem.
+  Her shoes show their heels, a `#c0cbdc` shade row and the sole. On the route
+  ground's scale 1, beside Penny ([route sky](route-sky.md)).
+- Penny sitting: Archie's `dog-penny` colours (coat `#feae34`, shade and ears
+  `#f77622`, highlight `#fee761`, harness `#124e89` with a `#0099db` top row)
+  on the same ink edges and flat shading, from behind: her head lifted so the
+  muzzle shows above her crown, her ears hanging, the harness across her back
+  and her tail curled on the grass to her right. About half Ada's height
+  seated. `art/tools/family-sprites.ts` draws both.
+- Evening light, on the two route sprites only: every colour but the ink edge
+  mixed 42% toward `#292734`, then the pixels on the sunset side (the viewer's
+  left) and along the top edges of the left half mixed 60% toward amber
+  `#f0bd68`, inside the ink outline.
+- Penny stays painted on the morning page; her crisp sprite shows on the route
+  ground only.
 
 ## Story figures
 
