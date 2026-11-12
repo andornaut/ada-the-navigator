@@ -3939,10 +3939,63 @@ try {
   events.checks.push(
     "Portrait settings and contextual action remain accessible in the turned frame",
   );
+  // A save from a newer version: the start screen offers no action, the save stays as it was
+  // through the page hiding, and the update is required, the loading bar travelling while it
+  // downloads or the update-required message while it cannot. The kit's own update attempts and
+  // reloads are the point here, so only this page's CSP violations count as errors.
+  await portraitContext.close();
+  const newerSaved = JSON.stringify({ marker: "from a newer build", mode: "home", version: 2 });
+  const newerContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await newerContext.addInitScript(reportViolations);
+  await newerContext.addInitScript(
+    ({ key, value }) => {
+      if (!sessionStorage.getItem("ada-smoke.newer-seeded")) {
+        sessionStorage.setItem("ada-smoke.newer-seeded", "1");
+        localStorage.setItem(key, value);
+      }
+    },
+    { key: storageKey, value: newerSaved },
+  );
+  await newerContext.route("**/*", previewOnly);
+  page = await newerContext.newPage();
+  page.on("console", (message) => {
+    if (message.text().startsWith("CSP violation")) {
+      events.errors.push(message.text());
+    }
+  });
+  await page.goto("http://ada-preview:4173/play/");
+  await page.locator(".ada-start").waitFor({ state: "visible" });
+  await page.waitForFunction(
+    (label) =>
+      document.querySelector(".ada-start-note")?.textContent === label ||
+      document.querySelector(".progress-bar:not([hidden])") !== null,
+    PROTOTYPE.labels.updateRequired,
+    { timeout: 15000 },
+  );
+  const newerStart = await page.evaluate(() => ({
+    actions: document.querySelectorAll(".ada-start-actions > button").length,
+    note: document.querySelector(".ada-start-note")?.textContent ?? null,
+  }));
+  assert.equal(newerStart.actions, 0, "A newer save keeps Start closed");
+  assert.ok(
+    newerStart.note === null || newerStart.note === PROTOTYPE.labels.updateRequired,
+    "A newer save shows only Gameplay's update-required message",
+  );
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  assert.equal(
+    await page.evaluate((key) => localStorage.getItem(key), storageKey),
+    newerSaved,
+    "A newer save is never overwritten",
+  );
+  await page.screenshot({ path: `${output}/newer-save.png` });
+  events.checks.push("A newer save keeps Start closed and its save, and requires the update");
+  await newerContext.close();
   // A crash: the kit's crash screen over the game, in the game's words, with the build label in
   // the dev details, and the last save kept through the page hiding. The thrown error is the point
   // here, so only this page's CSP violations count as errors.
-  await portraitContext.close();
   const crashContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   await crashContext.addInitScript(reportViolations);
   await crashContext.route("**/*", previewOnly);
