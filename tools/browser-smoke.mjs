@@ -4006,29 +4006,37 @@ try {
     { archetype: "frigate", fire, screen: { x: -170, y: -20 }, setup },
     { archetype: "capital", fire, screen: { x: 150, y: -40 }, setup },
   ];
-  // Sunflower (tier 1), Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn,
-  // then a disabled frigate with its banner beside a salvaged capital.
-  await captureHeavies("heavies-tier-1", heavyFixture(1, pair()));
+  const upgradePickup = { x: 0, y: 70 };
+  // Sunflower's tier 1 heavies with every mount drawn, above a disabled frigate with its banner
+  // beside a salvaged capital, and an upgrade pickup below Ada. Ten back-to-back frames, about
+  // 100 ms apart, run from the still frame through the climb's lower and upper chevrons, lit
+  // 900 to 1140 ms after the pickup first draws.
+  await captureHeavies(
+    "sunflower",
+    heavyFixture(
+      1,
+      [
+        ...pair(),
+        { archetype: "frigate", screen: { x: -160, y: 130 }, setup: destroyWeapons },
+        {
+          archetype: "capital",
+          screen: { x: 160, y: 140 },
+          setup: (enemy) => {
+            destroyWeapons(enemy);
+            enemy.salvaged = true;
+          },
+        },
+      ],
+      [upgradePickup],
+    ),
+    { after: 500, every: 0, shots: 10 },
+  );
+  // Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn.
   await captureHeavies("heavies-tier-2", heavyFixture(4, pair()));
   await captureHeavies("heavies-tier-3", heavyFixture(2, pair()));
-  await captureHeavies(
-    "heavies-disabled-salvaged",
-    heavyFixture(1, [
-      { archetype: "frigate", screen: { x: -170, y: -20 }, setup: destroyWeapons },
-      {
-        archetype: "capital",
-        screen: { x: 150, y: -40 },
-        setup: (enemy) => {
-          destroyWeapons(enemy);
-          enemy.salvaged = true;
-        },
-      },
-    ]),
-  );
   // Black Eye's capital fires its Phaser, ring burst and mine layer, and its frigate the
   // charged lance, each 0.6 s into the flight; the frames run from the tells to the beams' end.
-  // An upgrade pickup lies below Ada, still under reduced motion.
-  const upgradePickup = { x: 0, y: 70 };
+  // The upgrade pickup lies below Ada, still under reduced motion.
   const weapons = () =>
     heavyFixture(
       6,
@@ -4044,13 +4052,6 @@ try {
     );
   const frames = { after: 500, every: 200, shots: 7 };
   await captureHeavies("weapons", weapons(), frames);
-  // Ten back-to-back frames, about 100 ms apart, run from the still frame through the climb's
-  // lower and upper chevrons, lit 900 to 1140 ms after the pickup first draws.
-  await captureHeavies("upgrade-pickup", heavyFixture(1, [], [upgradePickup]), {
-    after: 500,
-    every: 0,
-    shots: 10,
-  });
   const motionKey = DEVICE_STORAGE_KEYS.reducedMotion;
   const motionBefore = await page.evaluate((key) => localStorage.getItem(key), motionKey);
   await page.evaluate((key) => localStorage.setItem(key, "on"), motionKey);
