@@ -658,8 +658,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Phaser) is also the order of power and rarity: each later weapon costs more,
   drops less often, gets fewer seconds of fire per ammo pack and deals more
   single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3 per
-  bolt with 3 bolts, Rapid Missile 5, Heavy Missile 6.7, Scattershot 7.8 with
-  every dot hitting, Phaser 10.7).
+  bolt with 3 bolts, Rapid Missile 5, Heavy Missile 6.7, Scattershot 7.2 with
+  every dot hitting, Phaser 8.0).
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
@@ -689,12 +689,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     then 9, then 11. Its range is a fixed 360 world units on every device, and
     levels add only dots. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. A level 1 dot deals
-    0.5 times Laser damage, every 0.45 s; levels 2 and 3 share 1.5 and 2.25 times
+    0.46 times Laser damage, every 0.45 s; levels 2 and 3 share 1.5 and 2.25 times
     the level 1 volley across their dots. Dots do not apply damage over time.
   - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
     out to a set range (provisionally 320 world units), stopping at the first enemy
     or obstacle it meets, then shows briefly as a visible beam. It fires
-    intermittently, 4 times slower than Laser fire, and deals 12 times Laser damage
+    intermittently, 4 times slower than Laser fire, and deals 9 times Laser damage
     to the enemy it hits; levels grow its range and damage.
 - A missile, Ada's or an enemy's, explodes when it touches a ship it can hit or
   an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
