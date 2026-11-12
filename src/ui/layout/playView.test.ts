@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { MOVE_STICK_GEOMETRY, STICK_GEOMETRY, stickVector } from "../../input/state.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
+import { conversationBoxRect } from "./conversationBox.ts";
 import { fromSafeEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./css.ts";
-import { HIT_RULE, hitAround } from "./hitAreas.ts";
+import { HIT_RULE } from "./hitAreas.ts";
 import {
   CONTROL_EDGE,
   gameAreaGap,
@@ -30,7 +31,14 @@ import {
   viewScale,
 } from "./playView.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
-import { stickRestCentres, stickTargets, TOUCH_STICK, USE_BUTTON } from "./touchControls.ts";
+import {
+  stickRestCentres,
+  stickTargets,
+  TOUCH_STICK,
+  USE_DISC,
+  useDiscLayout,
+  usePressed,
+} from "./touchControls.ts";
 import { playLayout, uncoveredInsets, viewProperties } from "./viewScale.ts";
 
 describe("view scale", () => {
@@ -403,15 +411,15 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
       }
     });
 
-    it(`with ${name}, centres Use on the HUD rect, its bottom level with the sticks`, () => {
-      const centre = hud.x + hud.width / 2;
-      // Symmetric insets clamp the HUD rect within a pixel of the game area's centre.
-      expect(Math.abs(centre - (area.x + area.width / 2))).toBeLessThan(1);
-      // The Use bottom, max(band below the game area, bottom inset) + 32 from the view bottom.
-      const useBottom =
-        view.height -
-        (Math.max(view.height - (area.y + area.height), insets.bottom) + USE_BUTTON.bottom);
-      expect(Math.floor(useBottom)).toBe(sticksBottom);
+    it(`with ${name}, keeps the Use disc's ring in the game area and the safe rect`, () => {
+      const { frame } = useDiscLayout(view, insets);
+      expect(contains(area, ring({ x: frame.x + 37, y: frame.y + 37 }))).toBe(true);
+      expect(
+        contains(
+          safeRect(insets, SAFE_MARGIN.edge, view),
+          ring({ x: frame.x + 37, y: frame.y + 37 }),
+        ),
+      ).toBe(true);
     });
   }
 });
@@ -494,56 +502,63 @@ describe("touch controls", () => {
     expect(ringEdges(aim).bottom).toBe(ringEdges(move).bottom);
   });
 
-  it("keep the Use button's press area clear of both rings at 720x360 and the 844x390 phone", () => {
-    const phoneScreen = { height: 390, width: 844 };
-    const phoneView = logicalView(phoneScreen);
-    const phoneInsets = safeInsets(
-      { bottom: 21, left: 47, right: 47, top: 0 },
-      viewScale(phoneScreen),
-    );
-    for (const [size, insets, least] of [
-      [view, NO_INSETS, 486],
-      [view, phone, 464],
-      [phoneView, phoneInsets, 486],
-    ] as const) {
-      const { aim, move } = stickRestCentres(size, insets);
-      const rect = hudRect(insets, size);
-      const centre = rect.x + rect.width / 2;
-      // The widest Use face whose press area still clears both rings.
-      const widest =
-        2 * Math.min(centre - ringEdges(move).right, ringEdges(aim).left - centre) -
-        2 * USE_BUTTON.pressMargin;
-      expect(widest).toBeGreaterThanOrEqual(least);
-      // Its bottom sits level with the rings' drawn bottom.
-      const areaBottom = Math.min(
-        playView(size).y + playView(size).height,
-        size.height - insets.bottom,
-      );
-      expect(Math.floor(areaBottom) - USE_BUTTON.bottom).toBe(ringEdges(move).bottom);
+  it.each([
+    ["the 720 base", view, NO_INSETS, { x: 574, y: 191 }],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 574, y: 191 }],
+    ["the 720 base with phone insets", view, phone, { x: 563, y: 172 }],
+    [
+      "844x390 with phone insets",
+      logicalView({ height: 390, width: 844 }),
+      phone,
+      { x: 604, y: 172 },
+    ],
+  ] as const)(
+    "centre the Use disc (-77, -100) from the aim ring's centre at %s",
+    (_, size, insets, at) => {
+      const { aim } = stickRestCentres(size, insets);
+      const disc = useDiscLayout(size, insets);
+      expect(disc.centre).toEqual(at);
+      expect(disc.centre).toEqual({ x: aim.x - 77, y: aim.y - 100 });
+      expect(disc.awayFrom).toEqual(aim);
+      expect(disc.frame).toEqual({ height: 75, width: 75, x: at.x - 37, y: at.y - 37 });
+    },
+  );
+
+  it("press Use within 100 of its centre, cut on the line midway to the aim ring's centre", () => {
+    expect(USE_DISC).toEqual({ frame: 75, fromAim: { x: -77, y: -100 }, radius: 100 });
+    const disc = useDiscLayout(view, NO_INSETS);
+    const { centre } = disc;
+    expect(usePressed(disc, centre)).toBe(true);
+    expect(usePressed(disc, { x: centre.x - 99.9, y: centre.y })).toBe(true);
+    expect(usePressed(disc, { x: centre.x - 100, y: centre.y })).toBe(false);
+    expect(usePressed(disc, { x: centre.x, y: centre.y - 99.9 })).toBe(true);
+    // The midpoint to the aim centre (612.5, 241) and either side of it along the line.
+    const toward = (share: number) => ({ x: centre.x + 77 * share, y: centre.y + 100 * share });
+    expect(usePressed(disc, toward(0.49))).toBe(true);
+    expect(usePressed(disc, toward(0.5))).toBe(false);
+    // The aim ring's whole frame, and the stick's DOM target, stay with the aim stick.
+    const aim = stickTargets(view, NO_INSETS).aim;
+    for (const x of [aim.x, aim.x + aim.width]) {
+      for (const y of [aim.y, aim.y + aim.height]) {
+        expect(usePressed(disc, { x, y })).toBe(false);
+      }
     }
   });
 
-  it("give the Use button an action-high HUD face level with the sticks, in a hitAround area", () => {
-    expect(USE_BUTTON).toMatchObject({
-      border: 2,
-      bottom: TOUCH_STICK.bottom,
-      height: TEXT_BUTTON.height,
-      inset: TEXT_BUTTON.inset,
-      margin: CONTROL_EDGE,
-      radius: 8,
-      text: TYPE.label,
-    });
-    // Any face at least as wide as it is high grows by the same margin on every side.
-    for (const width of [USE_BUTTON.minWidth, 80, 200]) {
-      const face = { height: USE_BUTTON.height, width, x: 0, y: 0 };
-      expect(hitAround(face)).toEqual({
-        height: face.height + 2 * USE_BUTTON.pressMargin,
-        width: face.width + 2 * USE_BUTTON.pressMargin,
-        x: -USE_BUTTON.pressMargin,
-        y: -USE_BUTTON.pressMargin,
-      });
+  it("reach the conversation box's lower right by 32.5 at the 720 base and 51.5 with phone insets", () => {
+    for (const [insets, depth] of [
+      [NO_INSETS, 32.5],
+      [phone, 51.5],
+    ] as const) {
+      const disc = useDiscLayout(view, insets);
+      const box = conversationBoxRect(insets, view);
+      const boxBottom = box.y + box.height;
+      expect(boxBottom).toBe(123.5);
+      expect(boxBottom - (disc.centre.y - USE_DISC.radius)).toBe(depth);
+      // The circle does take the overlap's points: only the box, over the canvas, keeps them.
+      expect(usePressed(disc, { x: disc.centre.x, y: boxBottom - 1 })).toBe(true);
+      expect(disc.centre.x).toBeLessThan(box.x + box.width);
     }
-    expect(USE_BUTTON.pressMargin).toBe(12);
   });
 
   it("put each stick's DOM target over its ring's frame", () => {

@@ -169,6 +169,7 @@ import type {
   JobTarget,
   SectorProgress,
   ShipState,
+  UseAction,
   Vec,
 } from "./types.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
@@ -519,22 +520,28 @@ export class GameModel {
           Math.hypot(b.x - f.player.x, b.y - f.player.y),
       )[0]?.id;
   }
-  get contextLabel(): string | undefined {
+  /** What Use does here, or undefined with nothing in reach. */
+  get contextAction(): UseAction | undefined {
     const job = this.jobUse();
     if (job) {
-      return this.label(job);
+      return job;
     }
     const id = this.nearest();
     if (!id) {
       return undefined;
     }
     if (id === "hub" && (this.state.flight?.cargo ?? 0) > 0) {
-      return this.label("deposit");
+      return "deposit";
     }
     if ((id === "workshop" || id === "salvagers") && this.current.questItem) {
-      return this.label("deliver");
+      return "deliver";
     }
-    return this.label("talk");
+    return "talk";
+  }
+  /** The Use action's name, the disc's accessible name. */
+  get contextLabel(): string | undefined {
+    const action = this.contextAction;
+    return action === undefined ? undefined : this.label(action);
   }
   weapons(): WeaponChoice[] {
     return this.state.mode === "space" && this.state.flight ? ownedWeapons(this.state.flight) : [];

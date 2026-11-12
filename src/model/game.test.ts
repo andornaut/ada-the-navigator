@@ -141,6 +141,19 @@ describe("prototype story and persistence", () => {
     expect(model.state.unlocked).toEqual([1, 2, 6]);
     expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   });
+  it("offers Use as Talk at a known place and Deposit at the hub with ore", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.state.unlocked.push(2);
+    launch(model, 2);
+    introduce(model, "hub");
+    arrive(model, "hub");
+    expect([model.contextAction, model.contextLabel]).toEqual(["talk", "Talk"]);
+    model.state.flight!.cargo = 4;
+    expect([model.contextAction, model.contextLabel]).toEqual(["deposit", "Deposit"]);
+    model.state.dialogue = { context: "test" } as unknown as typeof model.state.dialogue;
+    expect(model.contextAction).toBeUndefined();
+    expect(model.contextLabel).toBeUndefined();
+  });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
     const model = new GameModel(PROTOTYPE);
     launch(model);

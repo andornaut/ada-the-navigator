@@ -74,21 +74,21 @@ size, with pixel art sampled nearest-neighbor and vector art smoothly.
 
 Prototype input mappings:
 
-| Input                    | Action                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| WASD                     | Move                                                                           |
-| Arrow keys               | Aim and fire while held                                                        |
-| Space                    | Use the available contextual action                                            |
-| Esc                      | Close the open card; with none open, pause in flight or open Settings at start |
-| Back                     | Close the open card; with none open, pause in flight                           |
-| Weapon buttons           | Equip an owned weapon                                                          |
-| Pause button (touch)     | Pause in flight and on Ada's room page                                         |
-| Left touch joystick      | Move                                                                           |
-| Right touch joystick     | Aim and fire while deflected                                                   |
-| Contextual action button | Talk, deliver or deposit when available                                        |
+| Input                | Action                                                                         |
+| -------------------- | ------------------------------------------------------------------------------ |
+| WASD                 | Move                                                                           |
+| Arrow keys           | Aim and fire while held                                                        |
+| Space                | Use the available contextual action                                            |
+| Esc                  | Close the open card; with none open, pause in flight or open Settings at start |
+| Back                 | Close the open card; with none open, pause in flight                           |
+| Weapon buttons       | Equip an owned weapon                                                          |
+| Pause button (touch) | Pause in flight and on Ada's room page                                         |
+| Left touch joystick  | Move                                                                           |
+| Right touch joystick | Aim and fire while deflected                                                   |
+| Use disc (touch)     | Talk, deliver, deposit or tow when available; its symbol names the action      |
 
-In flight the Paused card offers Resume, Map, Settings and Back to title; on
-Ada's room page it offers Settings and Back to title. Back to title opens the
+In flight the Paused card offers Resume, Map, Ship, Settings and Back to title;
+on Ada's room page it offers Settings and Back to title. Back to title opens the
 start screen, where Continue resumes. The start screen's Achievements button
 sits left of Settings.
 

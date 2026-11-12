@@ -504,6 +504,7 @@ export const PROTOTYPE: PrototypeContent = {
     restartTitle: "Restart?",
     resume: "Resume",
     returnHome: "Return to Earth",
+    salvage: "Salvage",
     savingUnavailable: [
       "Couldn't save progress. You can keep playing, but recent progress may be lost ",
       "if you close the game.",

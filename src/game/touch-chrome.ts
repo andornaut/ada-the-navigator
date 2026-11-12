@@ -8,6 +8,7 @@ import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
 import { GameObjects, Scene, Textures } from "phaser";
 
+import type { UseAction } from "../model/types.ts";
 import {
   isTouchChromePose,
   type Point,
@@ -25,6 +26,10 @@ import {
   touchChromeLayers,
   touchChromePixel,
   type TouchChromePose,
+  USE_DISC_POSES,
+  USE_SYMBOLS,
+  useDiscLayers,
+  type UseDiscPose,
 } from "../ui/touch-chrome.ts";
 
 export const UI_MANIFEST_KEY = "ui-manifest";
@@ -186,6 +191,36 @@ export function showTouchChrome(sprite: GameObjects.Sprite, tag: TouchChromePose
   }
 }
 
+const USE_DISC_KEY = "touch-chrome-use";
+
+/** The Use disc frame for an action and pose. */
+export const useDiscFrame = (action: UseAction, pose: UseDiscPose): string => `${action}-${pose}`;
+
+// The Use disc: every action's symbol in every pose, painted procedurally like the rings at scale
+// texels per logical px, as one sprite that shows the frame useDiscFrame names.
+export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
+  if (!scene.textures.exists(USE_DISC_KEY)) {
+    const frames = new Map<string, ReturnType<typeof useDiscLayers>>();
+    for (const action of Object.keys(USE_SYMBOLS) as UseAction[]) {
+      for (const pose of USE_DISC_POSES) {
+        frames.set(useDiscFrame(action, pose), useDiscLayers(TOUCH_CHROME_COLOURS, action, pose));
+      }
+    }
+    createChromeTexture(
+      scene,
+      scale,
+      USE_DISC_KEY,
+      { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME },
+      frames,
+    );
+  }
+  return scene.add
+    .sprite(0, 0, USE_DISC_KEY, useDiscFrame("use", "rest"))
+    .setOrigin(0)
+    .setDisplaySize(TOUCH_CHROME_FRAME, TOUCH_CHROME_FRAME)
+    .setAlpha(TOUCH_CHROME_ALPHA);
+}
+
 const SPEED_LINE_KEY = "touch-chrome-line";
 
 // The speed line's texels per logical px: its capsule's painted width over its logical width.
@@ -225,7 +260,7 @@ export function createSpeedLine(scene: Scene, scale: number): GameObjects.NineSl
 export function rasterTouchChrome(scene: Scene, scale: number): void {
   const textures = Object.keys(TOUCH_CHROME_SHEETS)
     .map((kind) => `touch-chrome-${kind}`)
-    .concat(SPEED_LINE_KEY)
+    .concat(USE_DISC_KEY, SPEED_LINE_KEY)
     .filter((key) => scene.textures.exists(key))
     .map((key) => scene.textures.get(key) as Textures.CanvasTexture);
   for (const texture of textures) {

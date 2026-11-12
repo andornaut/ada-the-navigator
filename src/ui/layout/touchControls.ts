@@ -2,10 +2,7 @@ import type { Point, Rect } from "@andornaut/game-kit/rect";
 
 import type { StickSide } from "../../input/state.ts";
 import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
-import { TEXT_BUTTON } from "./controls.ts";
-import { hitMargin } from "./hitAreas.ts";
-import { CONTROL_EDGE, type Insets, mirroredSide, playView, type Size } from "./playView.ts";
-import { TYPE } from "./tokens.ts";
+import { type Insets, mirroredSide, playView, type Size } from "./playView.ts";
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
 // frames, each ring's drawn edge side in from the game area's left (move) or right (aim)
@@ -41,24 +38,53 @@ export function stickRestCentres(view: Size, insets: Insets): Readonly<Record<St
   };
 }
 
-// The context Use button (art/layout.md "HUD and overlays", Use), shown only while an interaction
-// is available: an action-high face with a 2 ink border and radius 8, its label in the
-// label role, as wide as the label plus the action inset each side (at least one face high);
-// centred across the game area's control rect, its bottom level with the sticks' drawn bottom,
-// bottom above the game area's bottom clamped by the bottom safe inset; its press area
-// hitAround(face) reaches pressMargin past it.
-const USE_FACE: Rect = { height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 };
-export const USE_BUTTON = {
-  border: 2,
-  bottom: TOUCH_STICK.bottom,
-  height: USE_FACE.height,
-  inset: TEXT_BUTTON.inset,
-  margin: CONTROL_EDGE,
-  minWidth: USE_FACE.width,
-  pressMargin: hitMargin(USE_FACE),
-  radius: 8,
-  text: TYPE.label,
+// The Use disc (art/layout.md "HUD and overlays", Use), Chibi's touch Use button: a 75 frame
+// whose centre pixel is the aim ring's rest centre plus fromAim, as Chibi places Use from Jump.
+// Its press area is a circle of radius TOUCH_CIRCLE_RADIUS (63) plus the 37 hint radius about the
+// centre, cut on the line midway to the aim ring's centre, so the aim stick keeps its reach.
+export const USE_DISC = {
+  frame: TOUCH_CHROME_FRAME,
+  fromAim: { x: -77, y: -100 },
+  radius: 63 + 37,
 } as const;
+
+export interface UseDiscLayout {
+  /** The aim ring's rest centre, which the press circle is cut away from. */
+  readonly awayFrom: Point;
+  readonly centre: Point;
+  /** The 75 frame the disc draws in, its centre pixel on centre. */
+  readonly frame: Rect;
+}
+
+/** The Use disc in a logical view view big with insets. */
+export function useDiscLayout(view: Size, insets: Insets): UseDiscLayout {
+  const { aim } = stickRestCentres(view, insets);
+  const centre = { x: aim.x + USE_DISC.fromAim.x, y: aim.y + USE_DISC.fromAim.y };
+  const half = (USE_DISC.frame - 1) / 2;
+  return {
+    awayFrom: aim,
+    centre,
+    frame: {
+      height: USE_DISC.frame,
+      width: USE_DISC.frame,
+      x: centre.x - half,
+      y: centre.y - half,
+    },
+  };
+}
+
+/**
+ * Whether a press at point takes Use: inside the press circle and nearer the disc's centre than
+ * the aim ring's. The conversation box, a page element over the canvas, takes its own presses
+ * where it overlaps the circle, as the controls take presses only on the canvas.
+ */
+export function usePressed(disc: UseDiscLayout, point: Point): boolean {
+  const fromCentre = Math.hypot(point.x - disc.centre.x, point.y - disc.centre.y);
+  return (
+    fromCentre < USE_DISC.radius &&
+    fromCentre < Math.hypot(point.x - disc.awayFrom.x, point.y - disc.awayFrom.y)
+  );
+}
 
 // Each joystick's DOM pointer target: the ring's frame over its rest centre pixel.
 export function stickTargets(view: Size, insets: Insets): Readonly<Record<StickSide, Rect>> {

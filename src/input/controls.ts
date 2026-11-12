@@ -14,10 +14,13 @@ import { RASTER_SCALE_EVENT } from "../game/svg-rasters.ts";
 import {
   createSpeedLine,
   createTouchChrome,
+  createUseDisc,
   rasterTouchChrome,
   showSpeedLine,
   showTouchChrome,
+  useDiscFrame,
 } from "../game/touch-chrome.ts";
+import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
 import {
@@ -29,7 +32,7 @@ import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts"
 import type { CheatAction } from "../ui/cheat-actions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
-import { stickTargets } from "../ui/layout/touchControls.ts";
+import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
 import { createPauseButton } from "../ui/pause-button.ts";
@@ -43,10 +46,11 @@ import {
 } from "../ui/settings.ts";
 import { createStatusPill, type StatusView } from "../ui/status-pill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
+import { USE_PRESS_MS } from "../ui/touch-chrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frame-turn.ts";
-import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
+import { coarsePointer, touchControlsActive, useDiscShown } from "./coarse-pointer.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -90,6 +94,12 @@ export interface ControlsOptions {
   readonly weaponLabels: WeaponLabels;
 }
 
+/** What Use does here and the action's name, the Use disc's accessible name. */
+export interface UseContext {
+  readonly action: UseAction;
+  readonly label: string;
+}
+
 export interface Controls {
   closeSettings(): void;
   // Opens the Achievements card, as the start screen's Achievements does.
@@ -106,7 +116,8 @@ export interface Controls {
   sample(): ControlSample;
   // The Achievements card's entries.
   setAchievements(entries: readonly AchievementEntry[]): void;
-  setContext(label: string | undefined): void;
+  // What Use does here and its name, or undefined with nothing in reach.
+  setContext(context: UseContext | undefined): void;
   setEnabled(enabled: boolean): void;
   // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
   setSettingsButton(shown: boolean): void;
@@ -150,7 +161,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   // Whether the Paused card opens here: in flight or on Ada's room page (PauseState.place).
   let pausable = false;
   let disposed = false;
-  let contextLabel: string | undefined;
+  let context: UseContext | undefined;
+  // The pointer pressing the Use disc and when it went down, for the press frame.
+  let usePress: { readonly id: number; readonly since: number } | undefined;
+  let useShown = false;
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
   const settings = createSettings(parent, {
@@ -299,9 +313,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     ring: createTouchChrome(scene, options.rasterScale, kind)?.setDepth(STICK_DEPTHS.ring),
   });
   const sticks = { aim: stick("aim"), move: stick("move") };
-  const stickParts = [sticks.move, sticks.aim]
-    .flatMap(({ knob, line, ring }) => [ring, line, knob])
-    .filter((part) => part !== undefined);
+  const useDisc = createUseDisc(scene, options.rasterScale).setDepth(STICK_DEPTHS.ring);
+  const stickParts = [
+    ...[sticks.move, sticks.aim]
+      .flatMap(({ knob, line, ring }) => [ring, line, knob])
+      .filter((part) => part !== undefined),
+    useDisc,
+  ];
   for (const part of stickParts) {
     part.setScrollFactor(0).setVisible(false);
   }
@@ -317,6 +335,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let layout = view.update();
   // Keep each joystick's pointer target over its drawn rest ring, in logical canvas px.
   let placedTargets = "";
+  let useLayout = useDiscLayout(canvasSize(sceneFit(scene)), layout.insets);
   const placeTargets = (): void => {
     const size = canvasSize(sceneFit(scene));
     const placement = JSON.stringify([size.width, size.height, layout.insets]);
@@ -330,6 +349,10 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       target.style.left = units(rect.x);
       target.style.top = units(rect.y);
     });
+    useLayout = useDiscLayout(size, layout.insets);
+    useDisc.setPosition(useLayout.frame.x, useLayout.frame.y);
+    settings.useButton.style.left = units(useLayout.frame.x);
+    settings.useButton.style.top = units(useLayout.frame.y);
   };
   const fitControls = (): void => {
     camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
@@ -353,6 +376,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     const found = target instanceof Element ? target.closest("[data-control]") : null;
     return found && settings.root.contains(found) ? found : null;
   };
+  const release = (pointerId: number) => {
+    if (usePress?.id === pointerId) {
+      usePress = undefined;
+    } else {
+      state.release(pointerId);
+    }
+  };
   const stopPointers = listenPagePresses(
     (event) =>
       state.accepts() &&
@@ -361,13 +391,23 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       !onPageControl(event.target) &&
       (event.target === canvas || event.target === parent || joystickTarget(event.target) !== null),
     {
-      cancel: ({ pointerId }) => state.release(pointerId),
+      cancel: ({ pointerId }) => release(pointerId),
       down: ({ pointerId }, event) => {
         const at = point(event);
+        // Use's press circle takes a press first; the rest of the view starts a stick.
+        if (useShown && !usePress && usePressed(useLayout, at)) {
+          usePress = { id: pointerId, since: performance.now() };
+          state.requestUse();
+          return;
+        }
         state.down(at.x < canvasSize(sceneFit(scene)).width / 2 ? "move" : "aim", pointerId, at);
       },
-      move: ({ pointerId }, event) => state.move(pointerId, point(event)),
-      up: ({ pointerId }) => state.release(pointerId),
+      move: ({ pointerId }, event) => {
+        if (usePress?.id !== pointerId) {
+          state.move(pointerId, point(event));
+        }
+      },
+      up: ({ pointerId }) => release(pointerId),
     },
     window,
   );
@@ -462,6 +502,22 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     for (const target of settings.joystickTargets) {
       target.hidden = !touch;
     }
+    // Use is a touch control, as in Chibi: shown on a touch screen while an action is in reach;
+    // on desktop the Use key acts.
+    useShown = useDiscShown(window, enabled, modalOpen(), context !== undefined);
+    if (!useShown) {
+      usePress = undefined;
+    }
+    settings.useButton.hidden = !useShown;
+    useDisc.setVisible(useShown);
+    if (context) {
+      const held = usePress
+        ? performance.now() - usePress.since < USE_PRESS_MS
+          ? "press"
+          : "held"
+        : "rest";
+      useDisc.setFrame(useDiscFrame(context.action, held));
+    }
     const size = canvasSize(sceneFit(scene));
     const views = stickViews(
       {
@@ -554,18 +610,24 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setAchievementsButton(shown) {
       achievementsButton.hidden = !shown;
     },
-    setContext(label) {
-      contextLabel = label;
-      state.setUseAvailable(label !== undefined);
-      settings.useButton.hidden = !enabled || label === undefined;
-      settings.useButton.textContent = label ?? "";
+    setContext(next) {
+      state.setUseAvailable(next !== undefined);
+      if (next?.action === context?.action && next?.label === context?.label) {
+        return;
+      }
+      context = next;
+      if (next) {
+        settings.useButton.dataset.use = next.action;
+        settings.useButton.setAttribute("aria-label", next.label);
+      } else {
+        delete settings.useButton.dataset.use;
+        settings.useButton.removeAttribute("aria-label");
+      }
     },
     setEnabled(value) {
       enabled = value;
       state.setEnabled(value);
       weapons.setEnabled(value && !modalOpen());
-
-      settings.useButton.hidden = !value || contextLabel === undefined;
     },
     setExitButton(shown) {
       if (exitButton) {

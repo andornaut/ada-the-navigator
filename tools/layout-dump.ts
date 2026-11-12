@@ -191,6 +191,21 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       }
       call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
       call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
+      const disc = touchControls.useDiscLayout(view, logical);
+      call("touchControls.ts", "useDiscLayout", touchControls.useDiscLayout, view, logical);
+      // Use's press circle at its centre, its edge, the cut midway to the aim ring, and the aim
+      // ring's centre.
+      for (const point of [
+        disc.centre,
+        { x: disc.centre.x - 99, y: disc.centre.y },
+        {
+          x: (disc.centre.x + disc.awayFrom.x) / 2,
+          y: (disc.centre.y + disc.awayFrom.y) / 2,
+        },
+        disc.awayFrom,
+      ]) {
+        call("touchControls.ts", "usePressed", touchControls.usePressed, disc, point);
+      }
       // Cards and the shop fit the page safe rect's width.
       const available = playView.safeRect(logical, playView.SAFE_MARGIN.page, view).width;
       for (const groups of [[], [200], [400, 120], [900]]) {

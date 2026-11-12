@@ -284,6 +284,15 @@ try {
       .evaluate((canvas) => canvas.width > 0 && canvas.height > 0),
   );
   events.checks.push("Real renderer and accessible home status");
+  // Use is Chibi's touch disc, drawn on the canvas: its accessible button takes no pointer input,
+  // so a thumb taps the canvas at the disc's centre, where the press circle takes it.
+  async function tapUse(name) {
+    const use = page.getByRole("button", { name, exact: true });
+    await use.waitFor({ state: "visible" });
+    const box = await use.boundingBox();
+    assert.ok(box, `${name}: the Use disc has a frame`);
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  }
   async function contextControlProof(expected, phase) {
     assert.equal(
       await page.locator(".ada-use:visible").count(),
@@ -1236,7 +1245,10 @@ try {
   );
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
-  assert.equal((await page.locator(".ada-use").textContent()).trim(), PROTOTYPE.labels.talk);
+  // The disc shows the action's symbol, no text; its accessible name is the action's.
+  assert.equal(await page.locator(".ada-use").getAttribute("aria-label"), PROTOTYPE.labels.talk);
+  assert.equal(await page.locator(".ada-use").getAttribute("data-use"), "talk");
+  assert.equal((await page.locator(".ada-use").textContent()).trim(), "", "Use shows no text");
   const beforeStorageFailure = await page.evaluate((key) => {
     const saved = localStorage.getItem(key);
     window.__adaOriginalSetItem = Storage.prototype.setItem;
@@ -1266,7 +1278,7 @@ try {
     }
     await waitForRest(await position());
     assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
-    await page.locator(".ada-use").click();
+    await tapUse(PROTOTYPE.labels.talk);
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
     assert.equal(
@@ -2806,7 +2818,8 @@ try {
     0,
     "Wide cargo must not restore the removed information HUD",
   );
-  await page.getByRole("button", { name: PROTOTYPE.labels.deposit, exact: true }).click();
+  assert.equal(await page.locator(".ada-use").getAttribute("data-use"), "deposit");
+  await tapUse(PROTOTYPE.labels.deposit);
   await page.waitForFunction((key) => {
     const state = JSON.parse(localStorage.getItem(key));
     return state.flight.cargo === 0 && state.progress[2].deposited === 12345;

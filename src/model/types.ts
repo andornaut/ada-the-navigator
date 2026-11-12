@@ -9,6 +9,9 @@ import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
 
+/** What Use does here: the disc's symbol, and its name the disc's accessible name. */
+export type UseAction = "deliver" | "deposit" | "salvage" | "talk" | "tow" | "use";
+
 export interface Vec {
   x: number;
   y: number;

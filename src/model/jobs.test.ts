@@ -529,6 +529,7 @@ describe("jobs in play", () => {
     flyTo(model, { x: held.target.x + 121, y: held.target.y });
     expect(model.contextLabel).not.toBe("Tow");
     flyTo(model, { x: held.target.x + 100, y: held.target.y });
+    expect(model.contextAction).toBe("tow");
     expect(model.contextLabel).toBe("Tow");
     flyTo(model, { x: held.target.x + 100, y: held.target.y }, use);
     expect(flight.tow).toEqual({ x: held.target.x, y: held.target.y });

@@ -1729,7 +1729,8 @@ export class PrototypeScene extends Scene {
       this.controls.setEnabled(enabled);
       this.controls.reset();
     }
-    this.controls.setContext(enabled ? this.model.contextLabel : undefined);
+    const action = enabled ? this.model.contextAction : undefined;
+    this.controls.setContext(action && { action, label: this.model.contextLabel ?? "" });
     this.controls.setWeapons(this.model.weapons());
     const aboard = this.model.aboard;
     this.controls.setStatus({

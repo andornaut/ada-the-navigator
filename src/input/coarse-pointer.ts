@@ -20,3 +20,14 @@ export function touchControlsActive(
 ): boolean {
   return enabled && !modalOpen && coarsePointer(host);
 }
+
+// The Use disc is a touch control as well (art/controls.md "Use disc"): it shows with the sticks
+// while an action is in reach. On desktop it stays hidden and the Use key acts.
+export function useDiscShown(
+  host: Pick<Window, "matchMedia">,
+  enabled: boolean,
+  modalOpen: boolean,
+  available: boolean,
+): boolean {
+  return available && touchControlsActive(host, enabled, modalOpen);
+}

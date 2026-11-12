@@ -9,10 +9,10 @@ import {
 } from "./device-settings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
-import { font, fromAreaBottom, fromHudEdge, hudCentreX, units, viewStyle } from "./layout/css.ts";
+import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
-import { TOUCH_STICK, USE_BUTTON } from "./layout/touchControls.ts";
+import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import {
   createActions,
@@ -197,34 +197,23 @@ ${hudDiscStyle(".ada-controls .ada-exit-open", ".ada-disc")}
   touch-action:none
 }
 
-/* The touch Use button: an action one row high, centred across, its bottom level with the sticks'
-   drawn bottom edge, with the HUD's opaque navy face, an ink border and a cream label. */
+/* The Use disc's accessible button over its drawn frame (touchControls.ts useDiscLayout): it
+   draws nothing and takes no pointer input, so a press there reaches the canvas, where the disc's
+   press circle takes it, or the conversation box above the canvas where the two overlap. Its name
+   is the action's; assistive technology activates it. */
 .ada-controls .ada-use{
-  background:#262b44;
-  border-color:#181425;
-  border-style:solid;
-  color:#ead4aa;
   position:absolute;
-  left:${hudCentreX()};
-  bottom:${fromAreaBottom(USE_BUTTON.bottom)};
-  transform:translateX(-50%);
   box-sizing:border-box;
-  max-width:calc(100% - ${fromHudEdge("left")} - ${fromHudEdge("right")});
-  min-width:${units(USE_BUTTON.minWidth)};
-  height:${units(USE_BUTTON.height)};
-  min-height:${units(USE_BUTTON.height)};
-  padding:0 ${units(USE_BUTTON.inset - USE_BUTTON.border)};
-  border-width:${units(USE_BUTTON.border)};
-  border-radius:${units(USE_BUTTON.radius)};
-  font:${font(USE_BUTTON.text)};
-  white-space:nowrap
-}
-
-/* The Use button's press area: hitAround its face. */
-.ada-controls .ada-use::after{
-  content:"";
-  position:absolute;
-  inset:${units(-USE_BUTTON.pressMargin)}
+  width:${units(USE_DISC.frame)};
+  height:${units(USE_DISC.frame)};
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  pointer-events:none
 }
 
 .ada-controls .ada-use:focus-visible{${FOCUS_STYLE}
@@ -260,6 +249,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   openDisc.setAttribute("aria-hidden", "true");
   openButton.append(openDisc);
   const useButton = document.createElement("button");
+  useButton.type = "button";
   useButton.className = "ada-use";
   useButton.hidden = true;
   const joystickTargets = ["move", "aim"].map((side) => {

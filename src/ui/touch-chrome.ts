@@ -1,7 +1,11 @@
-// The on-screen joysticks' drawing, after Chibi's touch chrome: a hollow ring in a 75 pixel frame
-// (an ink ring 5 wide round a cream ring 3 wide) and an 11 pixel knob (a cream disc on an ink
-// disc 1 wider). Lit parts turn white. Frames are vector art, painted at the scene's SVG raster
-// scale (texels per logical px) with antialiased edges and shown TOUCH_CHROME_ALPHA opaque.
+// The on-screen joysticks' and the Use disc's drawing, after Chibi's touch chrome
+// (chibis-way-home src/ui/chrome/touchChrome.ts): a hollow ring in a 75 pixel frame (an ink ring 5
+// wide round a cream ring 3 wide), an 11 pixel knob (a cream disc on an ink disc 1 wider) and the
+// Use disc's action symbols (art/controls.md "Use disc"). Lit parts turn white. Frames are vector
+// art, painted at the scene's SVG raster scale (texels per logical px) with antialiased edges and
+// shown TOUCH_CHROME_ALPHA opaque.
+
+import type { UseAction } from "../model/types.ts";
 
 export interface Point {
   readonly x: number;
@@ -65,6 +69,16 @@ export type TouchChromeLayer =
       readonly kind: "stroke";
       readonly path: readonly Point[];
       readonly width: number;
+    }
+  | {
+      readonly colour: number;
+      readonly kind: "rect";
+      readonly rect: {
+        readonly height: number;
+        readonly width: number;
+        readonly x: number;
+        readonly y: number;
+      };
     };
 
 export const TOUCH_CHROME_CENTRE = { x: 37.5, y: 37.5 };
@@ -114,6 +128,208 @@ export function touchChromeLayers(
     stroke(RIGHT, pose === "held-right" ? colours.white : colours.cream);
   }
   return layers;
+}
+
+/** The Use disc's poses: at rest, the 60 ms press frame, then held until release. */
+export type UseDiscPose = "held" | "press" | "rest";
+export const USE_DISC_POSES: readonly UseDiscPose[] = ["rest", "press", "held"];
+/** The press frame's length before the disc shows held. */
+export const USE_PRESS_MS = 60;
+
+// An arc about centre of radius, from one angle to another in degrees (clockwise from +x, y down),
+// in 24 segments.
+function arc(centre: Point, radius: number, from: number, to: number): Point[] {
+  return Array.from({ length: 25 }, (_, index) => {
+    const angle = ((from + ((to - from) * index) / 24) * Math.PI) / 180;
+    return { x: centre.x + radius * Math.cos(angle), y: centre.y + radius * Math.sin(angle) };
+  });
+}
+
+// One symbol part, its core in the frame's px: Chibi's model draws each over an ink layer 1 wider
+// each side (a stroke's ink 2 wider than its core).
+type SymbolPart =
+  | { readonly centre: Point; readonly kind: "disc"; readonly radius: number }
+  | {
+      readonly centre: Point;
+      readonly inner: number;
+      readonly kind: "ring";
+      readonly outer: number;
+    }
+  | { readonly kind: "stroke"; readonly path: readonly Point[]; readonly width: number };
+
+// The symbols' cores with each one's whole-px shift already applied (art/controls.md "Use disc"),
+// so each one's drawn bounds, ink included, centre on the ring's centre.
+export const USE_SYMBOLS: Readonly<Record<UseAction, readonly SymbolPart[]>> = {
+  deliver: [
+    {
+      kind: "stroke",
+      path: [
+        { x: 22, y: 30 },
+        { x: 39, y: 30 },
+        { x: 39, y: 45 },
+        { x: 22, y: 45 },
+        { x: 22, y: 30 },
+      ],
+      width: 3,
+    },
+    {
+      kind: "stroke",
+      path: [
+        { x: 30.5, y: 30 },
+        { x: 30.5, y: 45 },
+      ],
+      width: 3,
+    },
+    {
+      kind: "stroke",
+      path: [
+        { x: 43, y: 37.5 },
+        { x: 52, y: 37.5 },
+      ],
+      width: 3,
+    },
+    {
+      kind: "stroke",
+      path: [
+        { x: 48, y: 33 },
+        { x: 52.5, y: 37.5 },
+        { x: 48, y: 42 },
+      ],
+      width: 3,
+    },
+  ],
+  deposit: [
+    {
+      kind: "stroke",
+      path: [
+        { x: 37.5, y: 23 },
+        { x: 37.5, y: 42 },
+      ],
+      width: 3,
+    },
+    {
+      kind: "stroke",
+      path: [
+        { x: 32.5, y: 37 },
+        { x: 37.5, y: 42 },
+        { x: 42.5, y: 37 },
+      ],
+      width: 3,
+    },
+    {
+      kind: "stroke",
+      path: [
+        { x: 25, y: 41 },
+        { x: 25, y: 53 },
+        { x: 50, y: 53 },
+        { x: 50, y: 41 },
+      ],
+      width: 3,
+    },
+  ],
+  salvage: [
+    {
+      kind: "stroke",
+      path: [{ x: 29, y: 27 }, ...arc({ x: 37.5, y: 40 }, 8.5, 180, 0), { x: 46, y: 27 }],
+      width: 4,
+    },
+  ],
+  talk: [28.5, 37.5, 46.5].map((x) => ({ centre: { x, y: 37.5 }, kind: "disc", radius: 4 })),
+  tow: [
+    { centre: { x: 42.5, y: 24 }, inner: 2.5, kind: "ring", outer: 4 },
+    {
+      kind: "stroke",
+      path: [{ x: 42.5, y: 28.5 }, ...arc({ x: 36.5, y: 48 }, 6, 0, 180), { x: 30.5, y: 43 }],
+      width: 3,
+    },
+  ],
+  use: [
+    { centre: CENTRE, inner: 6, kind: "ring", outer: 10 },
+    { centre: CENTRE, kind: "disc", radius: 3 },
+  ],
+};
+
+// Salvage's magnet pole gaps: ink rects over its core.
+const SALVAGE_GAPS = [
+  { height: 1.5, width: 8, x: 25, y: 31.5 },
+  { height: 1.5, width: 8, x: 42, y: 31.5 },
+] as const;
+
+/**
+ * One Use disc frame: the open ring (its radii 1 larger in the press frame) and the action's
+ * symbol, each part's ink before every core, cream at rest and white while pressed or held.
+ */
+export function useDiscLayers(
+  colours: TouchChromeColours,
+  action: UseAction,
+  pose: UseDiscPose,
+): readonly TouchChromeLayer[] {
+  const core = pose === "rest" ? colours.cream : colours.white;
+  const outer = 36.5 + (pose === "press" ? 1 : 0);
+  const layers: TouchChromeLayer[] = [
+    { centre: CENTRE, colour: colours.ink, inner: outer - 5, kind: "ring", outer },
+    { centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 },
+  ];
+  const parts = USE_SYMBOLS[action];
+  const paint = (part: SymbolPart, colour: number, grow: number): TouchChromeLayer =>
+    part.kind === "disc"
+      ? { centre: part.centre, colour, kind: "disc", radius: part.radius + grow }
+      : part.kind === "ring"
+        ? {
+            centre: part.centre,
+            colour,
+            inner: part.inner - grow,
+            kind: "ring",
+            outer: part.outer + grow,
+          }
+        : { colour, kind: "stroke", path: part.path, width: part.width + 2 * grow };
+  layers.push(...parts.map((part) => paint(part, colours.ink, 1)));
+  layers.push(...parts.map((part) => paint(part, core, 0)));
+  if (action === "salvage") {
+    layers.push(
+      ...SALVAGE_GAPS.map((rect) => ({ colour: colours.ink, kind: "rect" as const, rect })),
+    );
+  }
+  return layers;
+}
+
+/** A layer list's drawn bounds in frame px, ink included. */
+export function layerBounds(layers: readonly TouchChromeLayer[]): {
+  readonly bottom: number;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+} {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  const take = (x0: number, y0: number, x1: number, y1: number) => {
+    left = Math.min(left, x0);
+    top = Math.min(top, y0);
+    right = Math.max(right, x1);
+    bottom = Math.max(bottom, y1);
+  };
+  for (const layer of layers) {
+    if (layer.kind === "rect") {
+      const { rect } = layer;
+      take(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height);
+    } else if (layer.kind === "stroke") {
+      const half = layer.width / 2;
+      for (const point of layer.path) {
+        take(point.x - half, point.y - half, point.x + half, point.y + half);
+      }
+    } else {
+      const radius = layer.kind === "disc" ? layer.radius : layer.outer;
+      take(
+        layer.centre.x - radius,
+        layer.centre.y - radius,
+        layer.centre.x + radius,
+        layer.centre.y + radius,
+      );
+    }
+  }
+  return { bottom, left, right, top };
 }
 
 // The speed line from a stick's origin to the thumb: a cream stroke SPEED_LINE_WIDTH wide with an
@@ -177,7 +393,12 @@ export function touchChromePixel(
   let blue = 0;
   for (const layer of layers) {
     let amount: number;
-    if (layer.kind === "stroke") {
+    if (layer.kind === "rect") {
+      const { rect } = layer;
+      amount =
+        coverage(texels, Math.max(rect.x - point.x, point.x - rect.x - rect.width)) *
+        coverage(texels, Math.max(rect.y - point.y, point.y - rect.y - rect.height));
+    } else if (layer.kind === "stroke") {
       let distance = Infinity;
       for (let index = 1; index < layer.path.length; index++) {
         distance = Math.min(

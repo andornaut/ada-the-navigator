@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { coarsePointer, touchControlsActive } from "./coarse-pointer.ts";
+import { coarsePointer, touchControlsActive, useDiscShown } from "./coarse-pointer.ts";
 
 function host(matches: boolean) {
   const queries: string[] = [];
@@ -29,5 +29,13 @@ describe("touch-only joysticks", () => {
     expect(touchControlsActive(host(false), true, false)).toBe(false);
     expect(touchControlsActive(host(true), false, false)).toBe(false);
     expect(touchControlsActive(host(true), true, true)).toBe(false);
+  });
+
+  it("show the Use disc on a touch screen while an action is in reach, never on desktop", () => {
+    expect(useDiscShown(host(true), true, false, true)).toBe(true);
+    expect(useDiscShown(host(true), true, false, false)).toBe(false);
+    expect(useDiscShown(host(false), true, false, true)).toBe(false);
+    expect(useDiscShown(host(true), true, true, true)).toBe(false);
+    expect(useDiscShown(host(true), false, false, true)).toBe(false);
   });
 });
