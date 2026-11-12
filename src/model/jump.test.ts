@@ -457,7 +457,7 @@ describe("shop through the model", () => {
 
   it("applies an owned paint scheme at once and saves it with purchases", () => {
     const model = docked();
-    model.state.economy.stardust = 50;
+    model.state.economy.stardust = 75;
     model.buy({ kind: "paint", scheme: "iris" });
     expect(model.selectPaint("classic")).toBe(true);
     expect(model.selectPaint("seafoam")).toBe(false);

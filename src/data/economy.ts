@@ -182,10 +182,10 @@ export const ECONOMY: EconomyCatalog = {
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
     classic: { label: "paintClassic", price: 0 },
-    cobalt: { label: "paintCobalt", price: 50 },
-    graphite: { label: "paintGraphite", price: 50 },
-    iris: { label: "paintIris", price: 50 },
-    seafoam: { label: "paintSeafoam", price: 50 },
+    cobalt: { label: "paintCobalt", price: 75 },
+    graphite: { label: "paintGraphite", price: 75 },
+    iris: { label: "paintIris", price: 75 },
+    seafoam: { label: "paintSeafoam", price: 75 },
   },
   pickupCap: {
     capital: 24,

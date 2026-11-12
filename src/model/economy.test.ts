@@ -1021,28 +1021,28 @@ describe("shop purchases", () => {
     ).toEqual({ kind: "refused", reason: "notForSale" });
   });
 
-  it("sells four paint schemes at 50 and keeps Classic free, owned and in use", () => {
+  it("sells four paint schemes at 75 and keeps Classic free, owned and in use", () => {
     const economy = rich(110);
     const paints = () =>
       shopRows(ECONOMY, economy, "ship").filter((row) => row.item.kind === "paint");
     expect(paints().map((row) => [row.item, row.owned, row.inUse, row.price])).toEqual([
       [{ kind: "paint", scheme: "classic" }, true, true, null],
-      [{ kind: "paint", scheme: "cobalt" }, false, false, 50],
-      [{ kind: "paint", scheme: "seafoam" }, false, false, 50],
-      [{ kind: "paint", scheme: "graphite" }, false, false, 50],
-      [{ kind: "paint", scheme: "iris" }, false, false, 50],
+      [{ kind: "paint", scheme: "cobalt" }, false, false, 75],
+      [{ kind: "paint", scheme: "seafoam" }, false, false, 75],
+      [{ kind: "paint", scheme: "graphite" }, false, false, 75],
+      [{ kind: "paint", scheme: "iris" }, false, false, 75],
     ]);
     expect(selectPaint(ECONOMY, "cobalt", economy)).toBe(false);
     expect(buy(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy)).toEqual({
       kind: "bought",
-      price: 50,
+      price: 75,
     });
-    expect(economy).toMatchObject({ paint: "cobalt", paints: ["classic", "cobalt"], stardust: 60 });
+    expect(economy).toMatchObject({ paint: "cobalt", paints: ["classic", "cobalt"], stardust: 35 });
     expect(paints()[0]).toMatchObject({ inUse: false, owned: true });
     expect(paints()[1]).toMatchObject({ inUse: true, owned: true, price: null });
     // An owned scheme goes into use at once, with no purchase.
     expect(selectPaint(ECONOMY, "classic", economy)).toBe(true);
-    expect(economy).toMatchObject({ paint: "classic", stardust: 60 });
+    expect(economy).toMatchObject({ paint: "classic", stardust: 35 });
   });
 
   it("sets each row's tap behaviour from ownership, use and the balance", () => {
