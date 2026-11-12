@@ -12,7 +12,7 @@ import { ensureDestination, ensureStation, stationDock } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
+import { playOpening, relaunch } from "./test-launch.ts";
 import type { GameState, HeldActivity, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -462,7 +462,7 @@ describe("Guide a calf", () => {
     expect(flight.objects.some((o) => o.enemy?.packId === "hunt:calf")).toBe(true);
     // Closing the game resumes the guide exactly.
     Object.assign(flight.calf!, { following: true, x: start.x + 300, y: start.y });
-    const restored = new GameModel(PROTOTYPE, model.save());
+    const restored = relaunch(PROTOTYPE, model.save());
     expect(restored.state.flight!.calf).toEqual(flight.calf);
     // Return to Earth: the next flight's calf starts again from the family, wherever it is.
     flight.dangerFor = 0;
