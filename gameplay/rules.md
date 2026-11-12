@@ -47,8 +47,7 @@ launches show Continue and Restart.
 
 Every launch opens on the start screen; Continue resumes where the save left off.
 A flight closed mid-flight resumes exactly: galaxy, position, tow and danger (see
-the exact-resume rule below). Otherwise Continue goes to galaxy selection in the
-cockpit, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+the exact-resume rule below). Otherwise Continue goes to galaxy selection, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
@@ -87,7 +86,7 @@ Earth scenes are storybook pages. Each page has a full background of a place,
 colorful but low contrast, with no landmarks or signs naming the city, and its
 text or dialogue in a readable panel at the bottom.
 
-A story run is every Earth and cockpit page shown in a row between two points of
+A story run is every Earth and aboard page shown in a row between two points of
 play: it starts when Ada leaves the start screen, a flight or galaxy selection,
 and ends at galaxy selection or on Ada's room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
@@ -117,20 +116,22 @@ through the resolution's branch pages and replanted on the closing; Cartwheel op
 closes in the schoolyard; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
-until Continue, so Ada can ask every question. Continue lands in the cockpit with
-Astra's boarding line, then galaxy selection. Story position within a scene is not
+until Continue, so Ada can ask every question. Continue shows Astra's boarding line,
+then galaxy selection. Story position within a scene is not
 saved: a scene interrupted midway restarts from its first page.
 
-### Cockpit and galaxy selection
+### Aboard and galaxy selection
 
 The cockpit is retro-futurist: 1960s ideas of the future with 1980s and 1990s
 technology details, about the size of a closet, under a blue canopy: an opaque dome
 from outside that Ada sees through from within. It resembles a convertible's interior: two seats side by side
 for Ada and Penny, with a little room to walk around behind them. Ada pilots
-from the port seat, with Penny on the starboard seat. Pages aboard picture the ship from
-outside. Astra's portrait is geometric and softly glowing, and she speaks through
+from the port seat, with Penny on the starboard seat. No page shows the cockpit's interior: pages aboard picture
+the ship from outside, and the text carries where Ada and Penny are. Astra's portrait is geometric and softly glowing, and she speaks through
 it on story pages as in conversations. Every quantum jump uses one
-jump effect; Astra's emergency jump when the shield fails tints it red. Jumping
+jump effect, with Ada's ship shown in it, arriving on the heading she starts the
+flight with: jumps from the route map, Travel, Return to Earth and the
+emergency jump. Boarding from her room is the rock's glow, not a jump; Astra's emergency jump when the shield fails tints it red. Jumping
 home, the emergency jump included, arrives in Ada's room. An emergency jump
 lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
 asleep with Penny curled up, the rock glowing softly) that a tap skips after a
@@ -175,7 +176,7 @@ galaxy. When one unlock opens several galaxies, their markers open together and 
 ship flies once along the route to the farthest, passing the markers between,
 in at most 2.4 seconds in all, then waits for the player's choice. The route map is the only galaxy
 selection; there is no separate selection card. Earth, in the panel, and closing galaxy selection (its close X, an
-outside tap, back or Escape) leave the cockpit and return Ada to her room
+outside tap, back or Escape) return Ada to her room
 without a jump.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.

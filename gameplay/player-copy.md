@@ -15,7 +15,7 @@ Next.
 
 Plays once, on first launch, around chapter one's home opening. Panel title:
 The Glowing Rock.
-Cockpit pages picture the ship from outside, so the text carries whether Ada and
+Aboard pages picture the ship from outside, never the cockpit's interior, so the text carries whether Ada and
 Penny stand or sit. They stand from their arrival through the optional questions;
 from "Ada sits in the pilot's chair and buckles Penny in
 beside her." onward they are seated. Boarding in later chapters, Continue and
@@ -55,7 +55,7 @@ Ada's room, rock glowing:
 - Narration: "The lines begin to glow. The pattern pulses softly, as if it is
   waiting for her." Action: "Touch the glow."
 
-The cockpit, standing:
+Aboard, standing:
 
 - Narration: "Light swirls around Ada and Penny. When it fades, they are standing
   in a tiny cockpit under a blue dome. Through it, colors shimmer like nowhere at
@@ -91,7 +91,7 @@ Optional questions, each returning to the list until Continue:
 - "How do I get home?" Astra: "Ask me any time you're safe. I'll jump you back to
   the moment you left."
 
-The cockpit, seated:
+Aboard, seated:
 
 - Narration: "Ada sits in the pilot's chair and buckles Penny in beside her."
 - Astra: "You steer, and you aim. My shield will protect us. If it ever fails,
