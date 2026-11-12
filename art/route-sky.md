@@ -58,7 +58,7 @@ Phenomena sit in the chart's gaps, under the arc and over its ends (play view px
 | Tilted two-armed spiral         | (290, 126) | Andromeda `#B8C1FF`, core `#DCC3F2`    |
 | Ring galaxy with a nucleus      | (452, 120) | Cartwheel `#F3B6AC`, `#EAD4AA`         |
 | Edge-on galaxy with a bulge     | (200, 148) | Needle `#CFC5BD`, `#EAD4AA`            |
-| Nebula with a teal knot         | (48, 46)   | Phantom `#E9B4DC`, Whirlpool `#94D3E3` |
+| Nebula with a teal knot         | (48, 46)   | Phantom `#DCBAE3`, Whirlpool `#94D3E3` |
 | Planetary nebula ring           | (600, 196) | Whirlpool `#94D3E3`, shimmer `#8FE0F2` |
 | Comet, tail rising to the right | (470, 30)  | Shimmer `#8FE0F2`, head `#DCC3F2`      |
 | Star cluster                    | (128, 196) | `#DCC3F2`                              |
