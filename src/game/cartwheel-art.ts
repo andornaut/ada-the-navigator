@@ -131,6 +131,21 @@ export function craftFrameSets<T extends CartwheelAsset>(assets: readonly T[]): 
   return sets;
 }
 
+/**
+ * Each story craft's 16 heading frames for a galaxy: its own manifest's, then core's, where art
+ * that several galaxies draw is listed (art/README.md), so a craft moving to core needs no code.
+ */
+export function storyCraftSets<T extends CartwheelAsset>(
+  galaxy: readonly T[],
+  core: readonly T[],
+): Map<string, T[]> {
+  const sets = craftFrameSets(core);
+  for (const [craft, frames] of craftFrameSets(galaxy)) {
+    sets.set(craft, frames);
+  }
+  return sets;
+}
+
 /** A story craft's nose at one heading (art/cartwheel.md "Nose"). */
 export interface CraftNose {
   /** World units from the pivot to the point under the nose on the centre line. */

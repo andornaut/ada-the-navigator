@@ -34,7 +34,10 @@ function frameIn(manifest: string, id: string): Frame {
       Object.values(value).forEach(walk);
     }
   };
-  walk(JSON.parse(readFileSync(new URL(`../../public/art/${manifest}`, import.meta.url), "utf8")));
+  // The galaxy's manifest first, then core, where art several galaxies draw is listed.
+  for (const file of [manifest, "manifest.json"]) {
+    walk(JSON.parse(readFileSync(new URL(`../../public/art/${file}`, import.meta.url), "utf8")));
+  }
   expect(found.length, `${manifest}: ${id}`).toBeGreaterThan(0);
   return found[0]!;
 }

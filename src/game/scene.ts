@@ -112,6 +112,7 @@ import {
   hubLayers,
   readBuoyArt,
   readHubArt,
+  storyCraftSets,
   storyNoses,
 } from "./cartwheel-art.ts";
 import { readStreakSpec, streakMarks, type StreakSpec } from "./current-streaks.ts";
@@ -402,6 +403,8 @@ export class PrototypeScene extends Scene {
   private buoySprites = new Map<string, GameObjects.Image>();
   private whalesCurrentFor: { current: Current | null; family: Vec } | undefined;
   // The core manifest's assets and every loaded galaxy manifest's, with their data links.
+  // The core manifest's entry ids, apart from the galaxies' own.
+  private coreAssetIds: readonly string[] = [];
   private manifest: {
     assets: readonly Asset[];
     cartwheelDebris?: string;
@@ -568,11 +571,15 @@ export class PrototypeScene extends Scene {
           );
         }
       }
+      // Story craft that several galaxies fly are in core; their jets load with it.
+      for (const [craft, frames] of craftFrameSets(manifest.assets)) {
+        this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+      }
       for (const asset of manifest.assets) {
-        // Painted ship frames load for the scheme in use, thrust frames only without valid jets
-        // and a heavy's part frames when that craft first appears. A galaxy's own art is in its
-        // galaxy manifest, not here.
-        if (loadsOnDemand(asset) || enemyPartFrame(asset)) {
+        // Painted ship frames load for the scheme in use, thrust frames only without valid jets,
+        // a heavy's part frames when that craft first appears and whale frames for a whale. A
+        // galaxy's own art is in its galaxy manifest, not here.
+        if (loadsOnDemand(asset) || !galaxyLoadsAtOnce(asset)) {
           continue;
         }
         if (asset.path.endsWith(".svg")) {
@@ -696,6 +703,7 @@ export class PrototypeScene extends Scene {
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
+    this.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);
     this.manifest = {
       assets: bootAssets,
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
@@ -1272,7 +1280,9 @@ export class PrototypeScene extends Scene {
       this.loadGalaxyAsset(asset);
     }
     for (const [craft, frames] of craftFrameSets(assets)) {
-      this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+      if (!this.cache.json.exists(`craft-jets-${craft}`)) {
+        this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
+      }
     }
     for (const [archetype, frames] of enemyFrameSets(assets, CLAIM)) {
       if (!CLAIM_WIRED.has(archetype)) {
@@ -1317,9 +1327,14 @@ export class PrototypeScene extends Scene {
     this.strandedCraft = readStrandedCraft(this.cache.json.get("tow"), loaded);
     this.hubArt = readHubArt(loaded);
     this.buoyArt = readBuoyArt(loaded);
+    // Each craft's frames from a galaxy manifest, else core's shared craft.
+    const core = new Set(this.coreAssetIds);
     this.craftArt = craftArt(
       (craft) => this.cache.json.get(`craft-jets-${craft}`),
-      craftFrameSets(loaded),
+      storyCraftSets(
+        loaded.filter(({ id }) => !core.has(id)),
+        loaded.filter(({ id }) => core.has(id)),
+      ),
     );
     this.storyNoses = storyNoses((craft) => this.cache.json.get(`craft-jets-${craft}`));
     const debris = new Map<SectorId, DebrisArt>();

@@ -7,7 +7,7 @@ import { PROJECTS } from "../data/projects.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
 import { STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
-import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
   type CartwheelAsset,
   craftArt,
@@ -18,8 +18,10 @@ import {
   readBuoyArt,
   readCraftNose,
   readHubArt,
+  storyCraftSets,
   storyNoses,
 } from "./cartwheel-art.ts";
+import { enemyJetsPath } from "./enemy-art.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
@@ -44,18 +46,19 @@ describe("Cartwheel art", () => {
         "outpost-hub-repaired-b",
         "outpost-hub-bay-a",
         "mooring-buoy-b",
-        "craft-miner-0",
         "craft-blocker-15",
         "cartwheel-debris-7",
       ]),
     );
-    // Hub, buoy, four story craft, debris, the claim family's 97 hull frames, the stranded ore
+    // The miner, which other galaxies also fly, is in core with the shared art.
+    expect(sets.get(null)).toEqual(expect.arrayContaining(["craft-miner-0", "craft-miner-15"]));
+    // Hub, buoy, three story craft, debris, the claim family's 97 hull frames, the stranded ore
     // pod's blink pairs and hauler's frames, and the claim jumpers' part frames.
     const parts = cartwheel.filter((id) => {
       const entry = assets.find((asset) => asset.id === id)!;
       return entry.hardpoint !== undefined || entry.top !== undefined;
     });
-    expect(cartwheel).toHaveLength(6 + 2 + 4 * 16 + 8 + 6 * 16 + 1 + 16 * 2 + 16 + parts.length);
+    expect(cartwheel).toHaveLength(6 + 2 + 3 * 16 + 8 + 6 * 16 + 1 + 16 * 2 + 16 + parts.length);
     expect(cartwheel.filter((id) => id.startsWith("craft-stranded-"))).toHaveLength(48);
     expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id))).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
@@ -111,9 +114,14 @@ describe("Cartwheel art", () => {
   });
 
   it("reads each story craft's 16 headings and speed jets, leaving the stranded craft out", () => {
-    const sets = craftFrameSets(assets);
-    expect([...sets.keys()].sort()).toEqual(Object.values(STORY_SHIP_CRAFT).sort());
-    const art = craftArt((craft) => json(`/art/cartwheel/${craft}-jets.json`), sets);
+    // Cartwheel's own craft, then the shared ones in core (the miner).
+    const sets = storyCraftSets(
+      GALAXY_MANIFESTS.get(2)!.assets as unknown as CartwheelAsset[],
+      CORE_MANIFEST.assets as unknown as CartwheelAsset[],
+    );
+    expect(Object.values(STORY_SHIP_CRAFT).filter((craft) => !sets.has(craft))).toEqual([]);
+    expect(sets.has("stranded")).toBe(false);
+    const art = craftArt((craft) => json(enemyJetsPath(craft, sets.get(craft)![0]!)), sets);
     for (const [craft, entry] of art) {
       expect(entry.frames.map((frame) => frame.directionIndex)).toEqual(
         Array.from({ length: 16 }, (_, k) => k),
@@ -124,6 +132,13 @@ describe("Cartwheel art", () => {
     expect(
       craftFrameSets(assets.filter((asset) => asset.id !== "craft-miner-7")).has("miner"),
     ).toBe(false);
+  });
+
+  it("finds a story craft in its galaxy's manifest first, then in core", () => {
+    const core = craftFrameSets(assets).get("miner")!;
+    const own = core.map((frame) => ({ ...frame, path: frame.path.replace("/art/", "/art/own/") }));
+    expect(storyCraftSets([], core).get("miner")).toEqual(core);
+    expect(storyCraftSets(own, core).get("miner")).toEqual(own);
   });
 
   it("draws each resource rock on its plain shape's exact footprints", () => {
