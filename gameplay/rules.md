@@ -537,13 +537,20 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   holds only Start, or Continue and Restart. Achievements is on the start
   screen only.
 - Weapon and pause controls use icons inspired by Chibi, with accessible labels.
+- As in Chibi, wherever player text names an on-screen control (the left stick,
+  the right stick, Use), that control's own drawing follows its name inline at
+  text height. The drawing is decorative; the name stays for screen readers. This
+  covers the first-flight lessons and the landing page's mobile line. Keyboard
+  text stays words.
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
     control hides only its drawing; its input still works. Each row has the note
     "Touch still works when hidden". As in Chibi, on-screen
     joysticks appear only when the primary pointer is coarse (a touch screen).
-  - Each row has its icon and a switch, as in Archie and Chibi.
+  - Each row has its icon and a switch, as in Archie and Chibi. The Move controls
+    and Aim controls icons are the left and right joystick's own drawing at icon
+    size.
   - Sound, as in Archie: a switch, on when sound is enabled, with the note "Mutes
     sound effects".
   - Reduced motion, as in Archie: a switch, on when motion is reduced, with the

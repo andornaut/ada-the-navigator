@@ -522,7 +522,7 @@ unmarked line is neutral. Ada has happy and neutral; Penny has happy, neutral an
 upset.
 
 Each speaker line wraps to at most two lines. First flight lessons, once each, skipped if already
-done:
+done: (on touch, each named stick is drawn inline after its name, per the rules):
 
 - Astra: "Use the left stick to fly." (desktop: "Use WASD to fly.")
 - Astra: "Use the right stick to aim and fire." (desktop: "Use the arrow keys to
@@ -776,6 +776,6 @@ Shown when the browser holds no install prompt. Title, then steps:
 - Subline and meta description: Join Ada on space adventures and help her community
   back home with what she learns.
 - Mobile: Move with the left stick. Aim and fire with the right stick. Tap Use to
-  interact.
+  interact. Each named control is drawn inline after its name.
 - Desktop: Move with WASD. Aim and fire with the arrow keys. Press Space to
   interact and Escape to pause.
