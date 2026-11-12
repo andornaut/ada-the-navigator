@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/grid";
 import { decodePng } from "@andornaut/art-kit/png";
 import type { Tag } from "@andornaut/art-kit/raster";
-import { type Margins, writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import type { Margins } from "@andornaut/art-kit/spriteSheet";
+import { writeSprites } from "./sprite-sheet.ts";
 
 type Colours = Readonly<Record<string, string>>;
 
@@ -118,11 +119,7 @@ async function recolour(
       first.length - centre.y - centre.h,
     ];
   }
-  await writeSpriteSheet(
-    { data: `${output}${key}.json`, sheet: `${output}${key}.png` },
-    options,
-    tags,
-  );
+  await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, options, tags);
 }
 
 const [source] = process.argv.slice(2);

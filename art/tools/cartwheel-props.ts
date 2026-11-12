@@ -8,8 +8,6 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import {
   type Facing,
@@ -46,6 +44,7 @@ import {
   round,
 } from "./projection.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const dir = `${art}cartwheel/`;
@@ -83,10 +82,8 @@ const points = (list: readonly (readonly [number, number])[]) =>
 
 // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
 async function writeJson(path: string, value: unknown): Promise<void> {
-  writeFileSync(
-    path,
-    await format(json(value), { ...(await resolveConfig(path)), filepath: path }),
-  );
+  writeFileSync(path, json(value));
+  await prettify(path);
 }
 
 // ------------------------------------------------------------------ solids
@@ -318,7 +315,7 @@ const debris = exportDebris(dir, "/art/cartwheel/", BODY, CORAL, {
 });
 const craft = CRAFT.map(exportCraft);
 
-await writeSpriteSheet(
+await writeSprites(
   { data: `${dir}ore-nugget.json`, sheet: `${dir}ore-nugget.png` },
   { key: "ore-nugget" },
   [["rest", [nuggetFrame(NUGGET)], 100]],
@@ -328,13 +325,8 @@ const nuggetData = `${dir}ore-nugget.json`;
 const nuggetText = withCollision(readFileSync(nuggetData, "utf8"), [
   traceGrid("ore-nugget", nuggetFrame(NUGGET)).collision,
 ]);
-writeFileSync(
-  nuggetData,
-  await format(nuggetText, {
-    ...(await resolveConfig(nuggetData)),
-    filepath: nuggetData,
-  }),
-);
+writeFileSync(nuggetData, nuggetText);
+await prettify(nuggetData);
 const nugget = {
   id: "ore-nugget",
   path: "/art/cartwheel/ore-nugget.png",

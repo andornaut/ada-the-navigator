@@ -2,14 +2,13 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { dash, type DashScene, HOLO, PEARL } from "./dash.ts";
 import { placeEntries } from "./manifest.ts";
 import { region, resize, type RgbaImage } from "./paint.ts";
 import { INK } from "./palette.ts";
 import { roundHalfEven } from "./random.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -88,32 +87,25 @@ function beacon(colour: string): Frame {
   return px;
 }
 
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
 const ICONS = [
   ["icon-holodisk", 16],
   ["icon-holodisk-20", 20],
   ["icon-holodisk-24", 24],
 ] as const;
 for (const [key, n] of ICONS) {
-  await writeSpriteSheet(
-    { data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` },
-    { key },
-    [["rest", [holodisk(n)], 100]],
-  );
+  await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
+    ["rest", [holodisk(n)], 100],
+  ]);
   await prettify(`${sprites}${key}.json`);
 }
 
-await writeSpriteSheet(
+await writeSprites(
   { data: `${art}holodisk.json`, sheet: `${art}holodisk.png` },
   { key: "holodisk" },
   [["turn", TURN.map(([, squash], i) => holodisk(PICKUP, squash, i)), TURN.map(([, , ms]) => ms)]],
 );
 await prettify(`${art}holodisk.json`);
-await writeSpriteSheet(
+await writeSprites(
   { data: `${art}holodisk-beacon.json`, sheet: `${art}holodisk-beacon.png` },
   { key: "holodisk-beacon" },
   [["pulse", PULSE.map(([, colour]) => beacon(colour)), PULSE.map(([, , ms]) => ms)]],
@@ -136,7 +128,7 @@ const asFrame = ({ data, height, width }: RgbaImage): Frame =>
       [0, 1, 2].map((c) => data[(y * width + x) * 4 + c]!.toString(16).padStart(2, "0")).join(""),
     ),
   );
-await writeSpriteSheet(
+await writeSprites(
   { data: `${sprites}holodisk-insert.json`, sheet: `${sprites}holodisk-insert.png` },
   { key: "holodisk-insert" },
   [

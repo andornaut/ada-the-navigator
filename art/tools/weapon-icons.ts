@@ -2,10 +2,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { json } from "./projection.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Weapon and ammunition glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per
 // weapon writes both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
@@ -286,12 +285,6 @@ function frame(rows: readonly string[], colour: string): Frame {
   return rows.map((row) => [...row].map((cell) => (cell === "#" ? colour : null)));
 }
 
-// Written JSON goes through the project's Prettier settings so the files stay Prettier-clean.
-async function prettify(file: string): Promise<void> {
-  const options = await resolveConfig(file);
-  writeFileSync(file, await format(readFileSync(file, "utf8"), { ...options, filepath: file }));
-}
-
 function check(name: string, rows: readonly string[]): void {
   if (rows.length !== 20 || rows.some((row) => row.length !== 20 || /[^#.]/.test(row))) {
     throw new Error(`${name}: the glyph must be 20 rows of 20 "#" or "." cells`);
@@ -299,7 +292,7 @@ function check(name: string, rows: readonly string[]): void {
 }
 
 async function writeSheet(key: string, rows: readonly string[]): Promise<void> {
-  await writeSpriteSheet(
+  await writeSprites(
     { data: `${ui}sprites/${key}.json`, sheet: `${ui}sprites/${key}.png` },
     { key },
     [

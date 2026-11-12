@@ -1,13 +1,12 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Colour, Frame } from "@andornaut/art-kit/grid";
 import { decodePng } from "@andornaut/art-kit/png";
 import type { Tag } from "@andornaut/art-kit/raster";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { editManifest } from "./manifest.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const output = `${art}portraits/`;
@@ -561,18 +560,8 @@ const sheets: Sheet[] = [
   },
 ];
 
-// Sprite data goes through the project's Prettier settings so the files stay Prettier-clean.
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
 for (const { key, tags } of sheets) {
-  await writeSpriteSheet(
-    { data: `${output}${key}.json`, sheet: `${output}${key}.png` },
-    { key },
-    tags,
-  );
+  await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, tags);
   await prettify(`${output}${key}.json`);
 }
 

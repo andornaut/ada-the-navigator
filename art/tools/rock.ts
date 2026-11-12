@@ -2,11 +2,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { BAYER, IN_BETWEEN, INK } from "./palette.ts";
 import { Random, roundHalfEven } from "./random.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const sprites = fileURLToPath(new URL("../../public/art/ui/sprites/", import.meta.url));
 const uiManifest = fileURLToPath(new URL("../../public/art/ui/manifest.json", import.meta.url));
@@ -194,14 +193,9 @@ function aura(frame: Frame, strength: number): Frame {
 // A clear frame grown by the aura padding, so every close-up frame shares one size.
 const padded = (frame: Frame) => aura(frame, 0);
 
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
 async function sheet(name: string, frames: readonly [Frame, Frame, Frame, Frame]) {
   const [raw, polished, dim, bright] = frames;
-  await writeSpriteSheet(
+  await writeSprites(
     { data: `${sprites}${name}.json`, sheet: `${sprites}${name}.png` },
     { key: name },
     [

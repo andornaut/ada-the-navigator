@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
 import type { Tag } from "@andornaut/art-kit/raster";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import { writeSprites } from "./sprite-sheet.ts";
 
 // Shop item glyphs for the dark lavender card. "#" is the glyph colour, "o" is ink and "." is clear.
 // Sheets with a disabled tag draw "#" in cream for normal and in the disabled text colour for
@@ -403,9 +403,5 @@ for (const [key, { disabled, rows }] of Object.entries(ICONS)) {
         ["disabled", [frame(rows, DISABLED)], 100],
       ]
     : [["rest", [frame(rows, CREAM)], 100]];
-  await writeSpriteSheet(
-    { data: `${output}${key}.json`, sheet: `${output}${key}.png` },
-    { key },
-    tags,
-  );
+  await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, tags);
 }

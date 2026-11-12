@@ -2,11 +2,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { editManifest } from "./manifest.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
@@ -110,14 +109,8 @@ function frame(rows: readonly string[]): Frame {
   return rows.map((row) => [...row].map((cell) => PALETTE[cell] ?? null));
 }
 
-// Sprite data goes through the project's Prettier settings so the files stay Prettier-clean.
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
 const glint = LOOP.map(([name]) => frame(PICKUP[name]));
-await writeSpriteSheet(
+await writeSprites(
   { data: `${art}stardust.json`, sheet: `${art}stardust.png` },
   { key: "stardust" },
   [["glint", glint, LOOP.map(([, ms]) => ms)]],
@@ -132,11 +125,9 @@ writeFileSync(
 );
 await prettify(`${art}stardust.json`);
 for (const [key, rows] of Object.entries(ICONS)) {
-  await writeSpriteSheet(
-    { data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` },
-    { key },
-    [["rest", [frame(rows)], 100]],
-  );
+  await writeSprites({ data: `${sprites}${key}.json`, sheet: `${sprites}${key}.png` }, { key }, [
+    ["rest", [frame(rows)], 100],
+  ]);
   await prettify(`${sprites}${key}.json`);
 }
 

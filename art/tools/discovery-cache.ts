@@ -2,11 +2,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
 
 import { editManifest } from "./manifest.ts";
 import { traceGrid, withCollision } from "./silhouette.ts";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const SIZE = 21;
@@ -85,13 +84,7 @@ function frame(palette: Palette, halo: boolean): Frame {
   return px;
 }
 
-// Sprite data goes through the project's Prettier settings so the files stay Prettier-clean.
-async function prettify(path: string): Promise<void> {
-  const options = await resolveConfig(path);
-  writeFileSync(path, await format(readFileSync(path, "utf8"), { ...options, filepath: path }));
-}
-
-await writeSpriteSheet(
+await writeSprites(
   { data: `${art}discovery-cache.json`, sheet: `${art}discovery-cache.png` },
   { key: "discovery-cache" },
   [

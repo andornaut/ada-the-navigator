@@ -2,8 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
-import { format, resolveConfig } from "prettier";
+import { prettify, writeSprites } from "./sprite-sheet.ts";
 
 // Cream icon ink for the dark lavender card, drawn as 2-pixel strokes on a clear frame: 16 by 16
 // for Settings rows, 24 by 24 for the top-right HUD settings button. The 20 by 20 nav glyphs
@@ -157,7 +156,7 @@ function frame(rows: readonly string[]): Frame {
 }
 
 for (const [key, rows] of Object.entries(ICONS)) {
-  await writeSpriteSheet({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, [
+  await writeSprites({ data: `${output}${key}.json`, sheet: `${output}${key}.png` }, { key }, [
     ["rest", [frame(rows)], 100],
   ]);
 }
@@ -181,8 +180,5 @@ manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.includes(key)),
   ...keys.map((key) => ({ key, png: `sprites/${key}.png`, json: `sprites/${key}.json`, once: [] })),
 ].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-const options = await resolveConfig(manifestPath);
-writeFileSync(
-  manifestPath,
-  await format(JSON.stringify(manifest, null, 2), { ...options, filepath: manifestPath }),
-);
+writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+await prettify(manifestPath);
