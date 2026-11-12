@@ -20,6 +20,7 @@ export const CARRIED_ITEM_NAMES: Readonly<Record<string, string>> = {
   "a seed pod": "Seed pod",
   "a stuck glider": "Stuck glider",
   "a stuck hauler": "Stuck hauler",
+  "a traveler's pod": "Traveler's pod",
   "an ore pod": "Ore pod",
   "beacon parts": "Beacon parts",
   "courier's badge": "Courier's badge",
