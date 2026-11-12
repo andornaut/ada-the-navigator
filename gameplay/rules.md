@@ -261,8 +261,8 @@ them. All values are provisional tuning:
 - Projectiles, missiles and beams ignore currents, so aim stays readable.
 - The whales' current is the current that passes nearest the whale family,
   chosen by the seed with the rest. The Map shows no currents.
-- Stardust and weapon pickups drift with the flow until they leave the current;
-  the tractor beam pulls them as usual.
+- Pickups drift with the flow until they leave the current; the tractor beam
+  pulls them as usual.
 - A debris river is traveling debris that follows its current's centre line at
   the peak flow speed, entering at one end and leaving at the other. This is Whirlpool's one
   exception to constant-velocity moving obstacles; debris still never chases Ada.
@@ -736,10 +736,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   uses its silhouette radius, the greatest distance from its pivot to its drawn
   silhouette over all its frames, so a turning or spinning object stays clear
   on every frame; margins and centre-to-centre spacings stay as stated. Pickups
-  are deliberately forgiving: each collects near Ada's drawn ship. Stardust collects within 4 world units of the ship, since the tractor beam
-  gathers it. Every other pickup (discovery cache, ore nugget, weapon, a holodisk
-  floating in space or a hunt job's lost item) collects within 20 world units, about half the ship's length,
-  and zips into the ship over 0.15 seconds as it collects.
+  are deliberately forgiving: every pickup (Stardust, ore nugget, discovery
+  cache, weapon, a holodisk floating in space and a hunt job's lost item)
+  follows one rule: it collects within 20 world units of Ada's drawn ship, about
+  half the ship's length, measured to its own drawn outline, and zips into the
+  ship over 0.15 seconds as it collects. The tractor beam pulls every pickup the
+  same way (see [Economy](economy.md#earning-stardust)).
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.

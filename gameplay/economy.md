@@ -10,10 +10,13 @@ and exploring finds a station every few minutes.
 ## Earning Stardust
 
 Destroyed enemy ships and asteroids release Stardust as small glinting pickups.
-Ada's ship has a tractor beam, with no visual of its own, that draws Stardust
-within its pull radius toward her at its pull speed; Stardust collects within 4 world
-units of Ada's drawn ship; other pickups reach farther (see [Rules](rules.md)). The beam pulls only Stardust. Base pull radius
-is 65 world units and base pull speed is 150 world units per second. Enemy ships are
+Ada's ship has a tractor beam, with no visual of its own, that draws every
+pickup (Stardust, ore nuggets, discovery caches, weapons, a floating holodisk and
+a hunt job's lost item) within its pull radius toward her at its pull speed,
+all kinds alike. A pickup collects within 20 world units of Ada's drawn ship, the
+one pickup rule (see [Rules](rules.md)). Base pull radius is 65 world units and
+base pull speed is 150 world units per second; levels 2 and 3 raise them to 100
+and 220, then 135 and 300. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A heavy is destroyed when its hull HP reaches 0; a disabled heavy
 drops the same Stardust when salvaged (see [Ships](ships.md#heavy-hull-and-disabling)).
