@@ -91,16 +91,21 @@ describe("the loading bar", () => {
     expect(display.at(FULL_MS + FADE_MS)).toEqual({ kind: "hidden" });
   });
 
-  it("sets Art's look: 3 high, cream on ink at 0.6, a 250 ms hold, a 150 ms fade, a 30% segment", () => {
+  it("sets Art's look: cream on ink at 0.6 over an ink rule, a 250 ms hold, a 150 ms fade", () => {
     expect(LOADING_BAR).toEqual({
       fadeMs: 150,
       fill: "#ead4aa",
+      fillHeight: 2,
       fullMs: 250,
       height: 3,
+      rule: "#181425",
+      ruleHeight: 1,
       segment: 0.3,
       track: "#181425",
       trackAlpha: 0.6,
     });
+    // The 2 high band over the 1 high rule: 3 in all.
+    expect(LOADING_BAR.fillHeight + LOADING_BAR.ruleHeight).toBe(LOADING_BAR.height);
     // The kit draws the alphas: no frame, the ink track at 0.6 under the cream fill.
     expect(BAR_STYLE).toEqual({
       border: 0,
@@ -155,25 +160,39 @@ describe("the loading bar", () => {
 describe("tracking the loader", () => {
   function loader() {
     const listeners = new Map<string, (value?: unknown) => void>();
-    const fake: LoaderLike = {
+    const fake: LoaderLike & { loading: boolean; progress: number } = {
+      isLoading(): boolean {
+        return fake.loading;
+      },
+      loading: false,
       on: (event, listener) => listeners.set(event, listener),
+      progress: 0,
     };
-    const emit = (event: string, value?: unknown) => listeners.get(event)?.(value);
+    // Starts, reports and completes a run as Phaser's loader does.
+    const emit = (event: string, value?: unknown) => {
+      fake.loading = event !== "complete";
+      listeners.get(event)?.(value);
+    };
     return { emit, fake };
   }
-
-  it("reports each run from its start to full, never moving back as files queue", () => {
+  function tracked() {
     const state = createProgressState();
-    const seen: ProgressSnapshot[] = [];
-    state.subscribe((snapshot) => seen.push(snapshot));
+    const seen: [boolean, number | undefined][] = [];
+    state.subscribe(({ active, value }) => seen.push([active, value]));
     const { emit, fake } = loader();
-    trackLoader(state, fake);
+    const loads = trackLoader(state, fake);
+    return { emit, fake, loads, seen, state };
+  }
+
+  it("reports a waited-for run from its start to full, never moving back as files queue", () => {
+    const { emit, loads, seen } = tracked();
+    loads.waitFor("boot");
     emit("start");
     emit("progress", 0.6);
     // A galaxy manifest queues its art mid-run, so the share of files loaded drops.
     emit("progress", 0.3);
     emit("complete");
-    expect(seen.map(({ active, value }) => [active, value])).toEqual([
+    expect(seen).toEqual([
       [false, undefined],
       [true, undefined],
       [true, 0],
@@ -183,13 +202,62 @@ describe("tracking the loader", () => {
     ]);
   });
 
-  it("ignores a complete with no run, as for an empty queue", () => {
-    const state = createProgressState();
-    const seen: ProgressSnapshot[] = [];
-    state.subscribe((snapshot) => seen.push(snapshot));
-    const { emit, fake } = loader();
-    trackLoader(state, fake);
+  it("shows the boot preload and a galaxy's entry, and reports nothing for on-demand runs", () => {
+    const { emit, loads, seen } = tracked();
+    loads.waitFor("boot");
+    emit("start");
     emit("complete");
-    expect(seen).toEqual([{ active: false, value: undefined }]);
+    const shown = seen.length;
+    // On-demand art during play: scenery, rocks, ship parts.
+    for (let run = 0; run < 3; run++) {
+      emit("start");
+      emit("progress", 0.5);
+      emit("complete");
+    }
+    expect(seen).toHaveLength(shown);
+    loads.waitFor("galaxy");
+    emit("start");
+    emit("complete");
+    expect(seen.slice(shown)).toEqual([
+      [true, undefined],
+      [true, 0],
+      [true, 1],
+      [false, undefined],
+    ]);
+  });
+
+  it("shows a silent run a galaxy's entry joins, from its share so far", () => {
+    const { emit, fake, loads, seen } = tracked();
+    emit("start");
+    fake.progress = 0.4;
+    emit("progress", 0.4);
+    loads.waitFor("galaxy");
+    emit("progress", 0.7);
+    emit("complete");
+    expect(seen).toEqual([
+      [false, undefined],
+      [true, undefined],
+      [true, 0.4],
+      [true, 0.7],
+      [true, 1],
+      [false, undefined],
+    ]);
+  });
+
+  it("mounts no bar for an on-demand load during flight", () => {
+    const { advance, bars, foreground } = loading();
+    const { emit, fake } = loader();
+    trackLoader(foreground, fake);
+    emit("start");
+    emit("progress", 0.5);
+    emit("complete");
+    advance(FULL_MS + FADE_MS);
+    expect(bars).toHaveLength(0);
+  });
+
+  it("ignores a complete with no run, as for an empty queue", () => {
+    const { emit, seen } = tracked();
+    emit("complete");
+    expect(seen).toEqual([[false, undefined]]);
   });
 });

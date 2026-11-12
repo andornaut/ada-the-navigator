@@ -1,17 +1,24 @@
 import { TEXT_TOKENS } from "./modal.ts";
 
 // The loading bar's look, as Art sets it: along the view's top edge at full width, insets
-// ignored, 3 logical px high, above every UI layer including open modals. The cream fill runs on
-// the ink track at 0.6 alpha, with no frame showing; a measured load holds full for 250 ms and
-// then fades out over 150 ms before its element is removed; work of unknown total shows a segment
-// 30% of the width travelling across. src/loading/progress.ts mounts it with game-kit's DOM
-// progress bar, which draws the alphas, the hold and the fade.
+// ignored, 3 logical px high, above every UI layer including open modals. The cream fill
+// runs on the ink track at 0.6 alpha, 2 high, with no frame showing, over an opaque ink rule 1
+// high that keeps a full bar visible on every galaxy's field. A measured load holds full for
+// 250 ms and then fades out over 150 ms before its element is removed; work of unknown total
+// shows a segment 30% of the width travelling across. src/loading/progress.ts mounts it with
+// game-kit's DOM progress bar, which draws the alphas, the hold and the fade; the rule is a child
+// of the kit's bar, so it fades and goes with it.
 
 export const LOADING_BAR = {
   fadeMs: 150,
   fill: TEXT_TOKENS.label,
+  // The fill and track, y 0 to 2.
+  fillHeight: 2,
   fullMs: 250,
   height: 3,
+  rule: TEXT_TOKENS.buttonLabel,
+  // The rule, y 2 to 3.
+  ruleHeight: 1,
   segment: 0.3,
   track: TEXT_TOKENS.buttonLabel,
   trackAlpha: 0.6,

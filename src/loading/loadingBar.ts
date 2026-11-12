@@ -100,9 +100,11 @@ export function followLoading(
   };
 }
 
-/** The loader events trackLoader follows: Phaser's LoaderPlugin. */
+/** The loader trackLoader follows: Phaser's LoaderPlugin, its events and its state. */
 export interface LoaderLike {
+  isLoading(): boolean;
   on(event: "complete" | "progress" | "start", listener: (value?: unknown) => void): unknown;
+  readonly progress: number;
 }
 
 /** A progress state's operations (progressState createProgressState). */
@@ -111,16 +113,40 @@ export interface ProgressOperations {
 }
 
 /**
- * Reports each run of loader to state as a measured load: from its start, its share of files
- * loaded, never moving back when a run queues more files as it goes, until it completes.
+ * The loads the player waits for, which alone show the bar: the boot preload before the first
+ * screen, and a galaxy's own art as its first flight starts. On-demand art during play (scenery,
+ * rocks, ship parts, paint) loads silently. The precache is the background source.
  */
-export function trackLoader(state: ProgressOperations, loader: LoaderLike): void {
+export type WaitedLoad = "boot" | "galaxy";
+
+/** Marks loader runs the player waits for. */
+export interface LoadTracker {
+  /**
+   * Shows the loader's next run as load, from its start; or, while a silent run is under way
+   * that load's files join, that run from its share so far.
+   */
+  waitFor(load: WaitedLoad): void;
+}
+
+/**
+ * Reports each run of loader that waitFor marked to state as a measured load: from its start,
+ * its share of files loaded, never moving back when a run queues more files as it goes, until it
+ * completes. Every other run reports nothing.
+ */
+export function trackLoader(state: ProgressOperations, loader: LoaderLike): LoadTracker {
   let run: ReturnType<ProgressOperations["begin"]> | undefined;
+  let waiting: WaitedLoad | undefined;
   let share = 0;
-  loader.on("start", () => {
+  const begin = (from: number) => {
     run = state.begin();
-    share = 0;
+    share = from;
     run.progress(share);
+  };
+  loader.on("start", () => {
+    if (waiting !== undefined) {
+      waiting = undefined;
+      begin(0);
+    }
   });
   loader.on("progress", (value) => {
     if (run !== undefined && typeof value === "number" && Number.isFinite(value)) {
@@ -133,4 +159,16 @@ export function trackLoader(state: ProgressOperations, loader: LoaderLike): void
     run?.finish();
     run = undefined;
   });
+  return {
+    waitFor(load) {
+      if (run !== undefined) {
+        return;
+      }
+      if (loader.isLoading()) {
+        begin(Number.isFinite(loader.progress) ? loader.progress : 0);
+      } else {
+        waiting = load;
+      }
+    },
+  };
 }

@@ -41,7 +41,8 @@ export const BAR_TIMING: DomProgressTiming = {
   fullMs: LOADING_BAR.fullMs,
   segment: LOADING_BAR.segment,
 };
-const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
+// The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
+const FRAME = { height: LOADING_BAR.fillHeight, width: SCREEN.width, x: 0, y: 0 };
 
 let install: ProgressHandle | undefined;
 
@@ -72,7 +73,7 @@ export function mountLoading(parent: HTMLElement): () => void {
   const host = document.createElement("div");
   host.className = "ada-loading";
   host.style.width = `${FRAME.width}px`;
-  host.style.height = `${FRAME.height}px`;
+  host.style.height = `${LOADING_BAR.height}px`;
   const fit = () => {
     const unit = Number.parseFloat(getComputedStyle(parent).getPropertyValue(VIEW_PROPERTIES.unit));
     const across = parent.clientWidth / FRAME.width;
@@ -88,6 +89,18 @@ export function mountLoading(parent: HTMLElement): () => void {
       clearTimeout: (handle) => window.clearTimeout(handle as number),
       create: () => {
         const bar = createDomProgressBar(host, BAR_STYLE, FRAME, BAR_TIMING);
+        // The opaque ink rule under the band: inside the kit's bar, so it fades and goes with it.
+        const rule = document.createElement("div");
+        rule.className = "ada-loading-rule";
+        Object.assign(rule.style, {
+          backgroundColor: LOADING_BAR.rule,
+          height: `${LOADING_BAR.ruleHeight}px`,
+          left: "0",
+          position: "absolute",
+          top: `${FRAME.height}px`,
+          width: `${FRAME.width}px`,
+        });
+        bar.element.append(rule);
         // Named for the game, as Chibi's is, with no string of its own.
         const name = parent.getAttribute("aria-label");
         if (name) {
