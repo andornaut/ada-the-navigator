@@ -688,7 +688,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     or obstacle it meets, then shows briefly as a visible beam. It fires
     intermittently, 4 times slower than Laser fire, and deals 4 times Laser damage
     to the enemy it hits; levels grow its range and damage.
-- A missile's blast damages every enemy within its radius, never Ada. An enemy
+- A missile, Ada's or an enemy's, explodes when it touches a ship it can hit or
+  an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
   Laser shot deals 1 damage. Enemies fire the same weapons, with the same damage,
@@ -698,8 +699,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
   every level, so flight time follows speed. Rapid Missile flies at 500, 600 and
-  700, and Heavy Missile at a fixed 400; both missiles reach a fixed 800 at every
-  level. Scattershot dots use a fixed base
+  700, and Heavy Missile at a fixed 400; both missiles reach a fixed 240 at every
+  level, so a missile that hits nothing explodes on screen. Scattershot dots use a fixed base
   projectile speed of 600, multiplied by their speed ratio.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
