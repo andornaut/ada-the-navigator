@@ -27,7 +27,7 @@ size and lightness, so the two read apart in greyscale too.
 | Whirlpool | 10.43:1 | 6.02:1 |
 | Needle    | 11.37:1 | 6.56:1 |
 | Andromeda | 10.62:1 | 6.13:1 |
-| Black Eye | 12.51:1 | 7.21:1 |
+| Phantom   | 12.51:1 | 7.21:1 |
 
 On Sunflower's light field the pickup draws over the ink keyline
 ([Light fields](galaxies.md#light-fields)), 10.90:1. The body is 0.07 from the

@@ -37,9 +37,9 @@ type Tint = { lightness: number; chroma: number; hue: number; light?: true };
 // Gameplay's. Sunflower's background is Chibi's farm yellow #D8C994.
 const GALAXIES: Readonly<Record<string, Tint>> = {
   andromeda: { lightness: 0, chroma: 0.05, hue: 278 },
-  "black-eye": { lightness: -0.05, chroma: 0.034, hue: 320 },
   cartwheel: { lightness: 0, chroma: 0.036, hue: 30 },
   needle: { lightness: -0.025, chroma: 0.008, hue: 60 },
+  phantom: { lightness: -0.05, chroma: 0.034, hue: 320 },
   sunflower: { lightness: 0.5549, chroma: 0.0714, hue: 94.2, light: true },
   whirlpool: { lightness: 0, chroma: 0.034, hue: 215 },
 };

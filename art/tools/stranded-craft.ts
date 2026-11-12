@@ -1,6 +1,6 @@
 // Stranded craft for every galaxy's rescue tows but Cartwheel's (cartwheel-props.ts draws those):
 // Sunflower's seed pod and scrap barge, Whirlpool's current skimmer and shell pod, Needle's stuck
-// glider and spool pod, Andromeda's lost courier and drifting lamp buoy and Black Eye's
+// glider and spool pod, Andromeda's lost courier and drifting lamp buoy and Phantom's
 // traveler's pod, at sixteen headings in the stranded-craft schema (stranded.ts). Writes each
 // galaxy's frames and tow.json to public/art/<galaxy>/, replaces its craft-stranded- entries in
 // that galaxy's manifest and links tow.json from it as `tow`. Contract: art/cartwheel-props.md
@@ -84,7 +84,7 @@ const marker = "#b8c1ff";
 const markerDim = "#8f9cf0";
 const markerDark = "#6f78b8";
 const markerDeep = "#4a5080";
-// Black Eye travelers
+// Phantom travelers
 const mauve = "#ddd0e2";
 const mauveSide = "#a596ad";
 const mauveRear = "#7d6f86";
@@ -355,7 +355,7 @@ const lampBuoy = (lit: boolean) => (): Part[][] => [
   [part(craftBox(6.6, 0, 1.8, 1.6), 1.4, 3, steelDark, steelDarkSide)],
 ];
 
-// ---------------------------------------------------------------- Black Eye
+// ---------------------------------------------------------------- Phantom
 
 // Traveler's pod: a pale mauve capsule with a mauve band, dim warm portholes, two tan luggage
 // bundles strapped on its back and a pale lilac distress lamp that blinks; a tow lug forward.
@@ -494,7 +494,7 @@ const CRAFT: readonly Stranded[] = [
   },
   {
     id: "stranded-traveler-pod",
-    galaxy: "black-eye",
+    galaxy: "phantom",
     subject: "a traveler's pod",
     title: "Traveler's pod",
     scale: 1.6,

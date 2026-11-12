@@ -297,7 +297,7 @@ function writeCraft(craft: m.StoryCraft) {
   }));
 }
 
-// Pip's scooter is also a Black Eye finale ally, so its frames are shared art in core. Andromeda's
+// Pip's scooter is also a Phantom finale ally, so its frames are shared art in core. Andromeda's
 // manifest drops them first, so no id is ever in both.
 const isPip = (id: string) => /^craft-pip-\d+$/.test(id);
 replaceEntries("andromeda", isPip, []);

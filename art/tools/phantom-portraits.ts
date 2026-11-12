@@ -1,8 +1,8 @@
-// Black Eye's speakers as Blurbs (goo): Dollop, the third settlement's Blurb, and the settlements'
-// greeter, each one neutral frame in the conversation format. General Gadget, Black Eye's keeper
+// Phantom's speakers as Blurbs (goo): Dollop, the third settlement's Blurb, and the settlements'
+// greeter, each one neutral frame in the conversation format. General Gadget, Phantom's keeper
 // once the chapter is complete, uses his named portrait (art/conversation.md).
-// Contract: art/conversation.md (Cast portraits) and art/black-eye.md (Portraits).
-// Usage: node art/tools/black-eye-portraits.ts
+// Contract: art/conversation.md (Cast portraits) and art/phantom.md (Portraits).
+// Usage: node art/tools/phantom-portraits.ts
 import type { Frame } from "@andornaut/art-kit/grid";
 
 import {
@@ -121,8 +121,8 @@ function settler(): Frame {
 
 const KEYS = ["dollop", "blurb-settler"];
 const ids = await writePortraits(
-  "black-eye",
-  "black-eye/portraits",
+  "phantom",
+  "phantom/portraits",
   [
     { compact: [5, 2], frames: [["neutral", dollop()]], key: "dollop" },
     { compact: [5, 3], frames: [["neutral", settler()]], key: "blurb-settler" },

@@ -1,19 +1,19 @@
-// Black Eye's own station, entered by Use: the Bobbin, a long habitat cylinder of lilac goo that
+// Phantom's own station, entered by Use: the Bobbin, a long habitat cylinder of lilac goo that
 // turns under a helical band of set goo and a line of warm windows, with a goo dome aft, a blunt
 // command section and a lamp stalk forward, and two solar wings on a short truss. Eight rotation
-// frames; no dock. Contract: art/black-eye.md (Station).
-// Usage: node art/tools/black-eye-station.ts
+// frames; no dock. Contract: art/phantom.md (Station).
+// Usage: node art/tools/phantom-station.ts
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { blurb } from "./black-eye-models.ts";
+import { blurb } from "./phantom-models.ts";
 import { unit } from "./debris.ts";
 import { replaceEntries } from "./manifest.ts";
 import { depth, facesViewer, type Point, projectAt, round } from "./projection.ts";
 import { DESTINATION_SCALE, DISPLAY_SCALE, type Face } from "./solid.ts";
 
-const output = fileURLToPath(new URL("../../public/art/black-eye/", import.meta.url));
-const PATH = "/art/black-eye/";
+const output = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
+const PATH = "/art/phantom/";
 const PAD = 4;
 const STEP = 16;
 
@@ -247,14 +247,14 @@ const entries = frames.map((faces, k) => {
     `${output}station-${k}.svg`,
     [
       `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * scale)}" height="${round(frame.height * scale)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
-      `  <title>Black Eye station ${k}</title>`,
+      `  <title>Phantom station ${k}</title>`,
       ...shapes,
       "</svg>",
       "",
     ].join("\n"),
   );
   return {
-    id: `black-eye-station-${k}`,
+    id: `phantom-station-${k}`,
     path: `${PATH}station-${k}.svg`,
     width: frame.width,
     height: frame.height,
@@ -268,10 +268,10 @@ const entries = frames.map((faces, k) => {
   };
 });
 
-// The station opens Black Eye's manifest, before the settlements.
+// The station opens Phantom's manifest, before the settlements.
 replaceEntries(
-  "black-eye",
-  (id) => id.startsWith("black-eye-station-"),
+  "phantom",
+  (id) => id.startsWith("phantom-station-"),
   entries,
   () => true,
 );

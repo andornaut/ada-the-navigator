@@ -1,10 +1,10 @@
-// Black Eye's destinations: the three Blurb settlements, each in a cracked and a mended state with
-// an A/B blink. Usage: node art/tools/black-eye.ts writes public/art/black-eye/ and replaces its
-// own entries in place in Black Eye's manifest. Contract: art/black-eye.md.
+// Phantom's destinations: the three Blurb settlements, each in a cracked and a mended state with
+// an A/B blink. Usage: node art/tools/phantom.ts writes public/art/phantom/ and replaces its
+// own entries in place in Phantom's manifest. Contract: art/phantom.md.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import * as m from "./black-eye-models.ts";
+import * as m from "./phantom-models.ts";
 import { replaceEntries } from "./manifest.ts";
 import { type Point, projectAt, round } from "./projection.ts";
 import {
@@ -17,8 +17,8 @@ import {
   polygons,
 } from "./solid.ts";
 
-const output = fileURLToPath(new URL("../../public/art/black-eye/", import.meta.url));
-const PATH = "/art/black-eye/";
+const output = fileURLToPath(new URL("../../public/art/phantom/", import.meta.url));
+const PATH = "/art/phantom/";
 const PAD = 4;
 const STEP = 16;
 
@@ -121,7 +121,7 @@ const entries = settlements.flatMap(({ build, title, variant }) => {
   });
 });
 replaceEntries(
-  "black-eye",
+  "phantom",
   (id) => /^outpost-(homes|harbour|signal)-(cracked|mended)-[ab]$/.test(id),
   entries,
 );

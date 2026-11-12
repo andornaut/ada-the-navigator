@@ -925,7 +925,7 @@ replaceEntries(
   [...hubEntries, ...buoyEntries],
   () => true,
 );
-// The miner is also a Black Eye finale ally, so its frames are shared art in core; the other
+// The miner is also a Phantom finale ally, so its frames are shared art in core; the other
 // story craft are Cartwheel's alone. Cartwheel's entries go first, so no id is ever in both.
 const craftIds = (names: readonly string[]) => new RegExp(`^craft-(${names.join("|")})-\\d+$`);
 const SHARED = ["miner"];

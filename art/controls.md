@@ -224,7 +224,7 @@ sits on open space.
 | Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 5.20:1   |
 | Line           | `#ead4aa` | Panel over Cartwheel `#39221E`             | 11.71:1  |
 | Line           | `#ead4aa` | Panel over Whirlpool `#132D33`             | 11.66:1  |
-| Line           | `#ead4aa` | Panel over Black Eye `#241827`             | 12.24:1  |
+| Line           | `#ead4aa` | Panel over Phantom `#241827`               | 12.24:1  |
 | Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
 | Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
 | Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
@@ -265,7 +265,7 @@ sits on open space.
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1c1526` over
-Black Eye and `#696671` over pure white. Notices use the same panel and line.
+Phantom and `#696671` over pure white. Notices use the same panel and line.
 The line meets 4.5:1 over every galaxy field, lowest on Sunflower (5.20:1).
 Over a white object passing under the box it is 3.88:1, accepted: white
 objects pass under the box rarely and briefly, and Ada's ship stays 39.2 below
@@ -314,26 +314,26 @@ The panel is ink at 0.65 over the field. The track is its own ink layer at
 field, so it composites to `#1a1627` over the base field and
 `#2f2a33` over Sunflower.
 
-| Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
-| ---------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
-| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 |   12.24:1 |    3.88:1 |
-| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |    7.39:1 |    2.34:1 |
-| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |    4.87:1 |    1.54:1 |
-| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |    7.77:1 |    2.46:1 |
-| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |    6.20:1 |    1.96:1 |
-| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |    2.42:1 |    1.30:1 |
-| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |    1.05:1 |    5.62:1 |
+| Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
+| ---------------- | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
+| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 | 12.24:1 |    3.88:1 |
+| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |  7.39:1 |    2.34:1 |
+| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |  4.87:1 |    1.54:1 |
+| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |  7.77:1 |    2.46:1 |
+| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |  6.20:1 |    1.96:1 |
+| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |  2.42:1 |    1.30:1 |
+| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |  1.05:1 |    5.62:1 |
 
 Marks on the panel, against the field under it.
 
-| Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
-| --------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
-| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |    7.50:1 |    5.28:1 |
-| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |    4.00:1 |    2.81:1 |
-| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.94:1 |    3.48:1 |
-| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 |   17.98:1 |   12.66:1 |
-| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |    6.28:1 |    4.42:1 |
-| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.94:1 |    3.48:1 |
+| Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
+| --------------- | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
+| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |  7.50:1 |    5.28:1 |
+| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |  4.00:1 |    2.81:1 |
+| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |  4.94:1 |    3.48:1 |
+| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 | 17.98:1 |   12.66:1 |
+| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |  6.28:1 |    4.42:1 |
+| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |  4.94:1 |    3.48:1 |
 
 Bar parts on the track, against the field under the pill. The fill is 1.88:1
 against the delay part and the low fill 1.24:1; the flash is 2.40:1 against
@@ -432,20 +432,20 @@ shop's 24 by 24 upgrade composite (glyph plus badge) does not fit the chip's
 level. Pixel icons draw nearest
 neighbour; the weapon glyph is the HUD disc's mask with smooth sampling.
 
-| Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
-| ------------ | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
-| Panel        | `#181425` |  1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |    1.04:1 |   18.02:1 |
-| Cargo rim    | `#feae34` |  7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |    9.35:1 |    1.86:1 |
-| Tow rim      | `#b8bfc9` |  7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |    9.36:1 |    1.85:1 |
-| Weapon rim   | `#bfa06f` |  5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |    7.00:1 |    2.48:1 |
-| Holodisk rim | `#e868c8` |  5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |    5.98:1 |    2.90:1 |
-| Level 2 rim  | `#ff8f1f` |  6.42:1 |    1.38:1 |    6.47:1 |    6.34:1 |    7.60:1 |    2.28:1 |
-| Level 3 rim  | `#a66bff` |  4.30:1 |    2.06:1 |    4.34:1 |    4.25:1 |    5.10:1 |    3.40:1 |
-| Cobalt rim   | `#6f9ff0` |  5.50:1 |    1.61:1 |    5.55:1 |    5.44:1 |    6.52:1 |    2.66:1 |
-| Seafoam rim  | `#d4f6ea` | 12.67:1 |    1.43:1 |   12.78:1 |   12.52:1 |   15.01:1 |    1.16:1 |
-| Graphite rim | `#aab2c4` |  6.89:1 |    1.29:1 |    6.95:1 |    6.81:1 |    8.16:1 |    2.13:1 |
-| Iris rim     | `#d9ccff` |  9.78:1 |    1.10:1 |    9.87:1 |    9.67:1 |   11.59:1 |    1.50:1 |
-| Classic rim  | `#ffffff` | 14.64:1 |    1.65:1 |   14.77:1 |   14.47:1 |   17.35:1 |    1.00:1 |
+| Part         | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Phantom | `#ffffff` |
+| ------------ | --------- | ------: | --------: | --------: | --------: | ------: | --------: |
+| Panel        | `#181425` |  1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |  1.04:1 |   18.02:1 |
+| Cargo rim    | `#feae34` |  7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |  9.35:1 |    1.86:1 |
+| Tow rim      | `#b8bfc9` |  7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |  9.36:1 |    1.85:1 |
+| Weapon rim   | `#bfa06f` |  5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |  7.00:1 |    2.48:1 |
+| Holodisk rim | `#e868c8` |  5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |  5.98:1 |    2.90:1 |
+| Level 2 rim  | `#ff8f1f` |  6.42:1 |    1.38:1 |    6.47:1 |    6.34:1 |  7.60:1 |    2.28:1 |
+| Level 3 rim  | `#a66bff` |  4.30:1 |    2.06:1 |    4.34:1 |    4.25:1 |  5.10:1 |    3.40:1 |
+| Cobalt rim   | `#6f9ff0` |  5.50:1 |    1.61:1 |    5.55:1 |    5.44:1 |  6.52:1 |    2.66:1 |
+| Seafoam rim  | `#d4f6ea` | 12.67:1 |    1.43:1 |   12.78:1 |   12.52:1 | 15.01:1 |    1.16:1 |
+| Graphite rim | `#aab2c4` |  6.89:1 |    1.29:1 |    6.95:1 |    6.81:1 |  8.16:1 |    2.13:1 |
+| Iris rim     | `#d9ccff` |  9.78:1 |    1.10:1 |    9.87:1 |    9.67:1 | 11.59:1 |    1.50:1 |
+| Classic rim  | `#ffffff` | 14.64:1 |    1.65:1 |   14.77:1 |   14.47:1 | 17.35:1 |    1.00:1 |
 
 Parts against the field under the chip.
 
@@ -555,7 +555,7 @@ one to three pips, so the level never relies on colour alone.
 | Edge                | Navy face `#262b44`      | 6.09:1 | 4.08:1 |            - |
 | Edge, selected disc | Ink annulus              | 7.89:1 | 5.29:1 |            - |
 | Edge                | Darkest field, Whirlpool | 6.34:1 | 4.25:1 |            - |
-| Edge                | Black Eye `#241827`      | 7.45:1 | 4.99:1 |            - |
+| Edge                | Phantom `#241827`        | 7.45:1 | 4.99:1 |            - |
 | Pip                 | Its ink outline          | 7.89:1 | 5.29:1 |       8.86:1 |
 
 The lavender pip is the idle glyph colour, 6.83:1 on the navy face, where an

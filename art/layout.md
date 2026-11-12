@@ -766,7 +766,7 @@ Docking states:
 | ------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | First docking | The galaxy's three greeting lines, one at a time                                | Shown lines cream `#ead4aa`, coming lines 1 px `#b8b3c9` rings | The block advances one line per tap; the third line holds and the block stops advancing |
 | Later docking | One short line, the galaxy's three in turn                                      | None                                                           | None: the block is a status                                                             |
-| Black Eye     | Gameplay's generic welcome, centred in the panel's width less `2 * SPACING.gap` | None                                                           | None; no portrait or tab                                                                |
+| Phantom       | Gameplay's generic welcome, centred in the panel's width less `2 * SPACING.gap` | None                                                           | None; no portrait or tab                                                                |
 
 - A line replaces the last in place, as the conversation box's do, with no
   transition, so reduced motion changes nothing. The pips are static.

@@ -85,7 +85,7 @@ Contrast on each background (WCAG):
 | `sunflower` |    2.29:1 |    3.00:1 |    3.97:1 |    5.11:1 |    6.47:1 | `#C9BB86` 1.16:1 | `#A1966B` 1.79:1 |
 | `cartwheel` |    3.90:1 |    2.98:1 |    2.25:1 |    1.75:1 |    1.38:1 | `#643F39` 1.63:1 | `#50322E` 1.29:1 |
 | `whirlpool` |    3.83:1 |    2.92:1 |    2.21:1 |    1.71:1 |    1.35:1 | `#26515C` 1.66:1 | `#1E414A` 1.32:1 |
-| `black-eye` |    4.49:1 |    3.43:1 |    2.59:1 |    2.01:1 |    1.59:1 | `#49344E` 1.53:1 | `#3A2A3E` 1.28:1 |
+| `phantom`   |    4.49:1 |    3.43:1 |    2.59:1 |    2.01:1 |    1.59:1 | `#49344E` 1.53:1 | `#3A2A3E` 1.28:1 |
 
 On the dark fields lit stone stays at 3.8:1 or more; on Sunflower's light
 field the shadow tones carry the contrast and the

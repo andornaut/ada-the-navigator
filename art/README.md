@@ -21,8 +21,8 @@ the [holodisk](holodisk.md), the
 Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
 its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze),
 [Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
-Loom's saucer and portrait and the crimson drones, Black Eye's
-[station and Blurb settlements](black-eye.md), character portraits, and the
+Loom's saucer and portrait and the crimson drones, Phantom's
+[station and Blurb settlements](phantom.md), character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
 and the lost item's glint), the job board's row icons and Map marks.
@@ -63,7 +63,7 @@ route order is the game's and needs no manifest change:
 | `whirlpool` | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
 | `andromeda` | [`/art/andromeda/manifest.json`](../public/art/andromeda/manifest.json) |
 | `needle`    | [`/art/needle/manifest.json`](../public/art/needle/manifest.json)       |
-| `black-eye` | [`/art/black-eye/manifest.json`](../public/art/black-eye/manifest.json) |
+| `phantom`   | [`/art/phantom/manifest.json`](../public/art/phantom/manifest.json)     |
 
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,
@@ -79,12 +79,12 @@ drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
 Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
 Channel lights, Elder Loom's saucer and portrait, the crimson drones and the
 `needleGates`, `needleChannels`, `needleEye` and `needleBand` links;
-Black Eye its station, the Blurb settlements and its smoke-bank nebulae.
+Phantom its station, the Blurb settlements and its smoke-bank nebulae.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every
 galaxy and stay in core, as do the
-miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
+miner, the whale, the smaller adult and Pip's mail scooter, which the Phantom
 finale also draws. Core entries keep their files' paths, so a galaxy's art
 stays in its folder wherever its entries are listed. Every galaxy's manifest
 also links its own `backdrop` and its stranded craft's `tow` data (Cartwheel's `tow`
@@ -131,7 +131,7 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. Every
 galaxy's stranded craft but Cartwheel's come from `art/tools/stranded-craft.ts`. The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
-Black Eye come from `art/tools/backdrop.ts`, and the upgrade pickup's chevron mask from
+Phantom come from `art/tools/backdrop.ts`, and the upgrade pickup's chevron mask from
 `art/tools/upgrade-pickup.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
@@ -145,7 +145,7 @@ the pickups ([Stardust](stardust.md#pickup), the
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, `needle-portraits.ts`
-Needle's Avi portraits, `black-eye-portraits.ts` Black Eye's Blurb portraits, and
+Needle's Avi portraits, `phantom-portraits.ts` Phantom's Blurb portraits, and
 `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
 `cartwheel-portraits.ts` each galaxy's cast, from the bust parts in `art/tools/bust.ts`.
 `art/tools/portraits.ts` draws the Astra, General Gadget and Grandma portraits and the compact

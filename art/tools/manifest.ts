@@ -13,7 +13,7 @@ export const GALAXIES = [
   "whirlpool",
   "andromeda",
   "needle",
-  "black-eye",
+  "phantom",
 ] as const;
 
 export type ManifestFile = "core" | (typeof GALAXIES)[number];

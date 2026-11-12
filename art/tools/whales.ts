@@ -630,7 +630,7 @@ writeFileSync(
     kinds,
   }),
 );
-// The whale and the smaller adult are also Black Eye finale allies, so their frames are shared
+// The whale and the smaller adult are also Phantom finale allies, so their frames are shared
 // art in core; the calves are Whirlpool's alone. Whirlpool's entries go first, so no id is ever in
 // both.
 const SHARED = ["whale", "adult"];

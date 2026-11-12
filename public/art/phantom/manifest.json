@@ -2,8 +2,8 @@
   "version": 1,
   "assets": [
     {
-      "id": "black-eye-station-0",
-      "path": "/art/black-eye/station-0.svg",
+      "id": "phantom-station-0",
+      "path": "/art/phantom/station-0.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -18,8 +18,8 @@
       "frameIndex": 0
     },
     {
-      "id": "black-eye-station-1",
-      "path": "/art/black-eye/station-1.svg",
+      "id": "phantom-station-1",
+      "path": "/art/phantom/station-1.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -34,8 +34,8 @@
       "frameIndex": 1
     },
     {
-      "id": "black-eye-station-2",
-      "path": "/art/black-eye/station-2.svg",
+      "id": "phantom-station-2",
+      "path": "/art/phantom/station-2.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -50,8 +50,8 @@
       "frameIndex": 2
     },
     {
-      "id": "black-eye-station-3",
-      "path": "/art/black-eye/station-3.svg",
+      "id": "phantom-station-3",
+      "path": "/art/phantom/station-3.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -66,8 +66,8 @@
       "frameIndex": 3
     },
     {
-      "id": "black-eye-station-4",
-      "path": "/art/black-eye/station-4.svg",
+      "id": "phantom-station-4",
+      "path": "/art/phantom/station-4.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -82,8 +82,8 @@
       "frameIndex": 4
     },
     {
-      "id": "black-eye-station-5",
-      "path": "/art/black-eye/station-5.svg",
+      "id": "phantom-station-5",
+      "path": "/art/phantom/station-5.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -98,8 +98,8 @@
       "frameIndex": 5
     },
     {
-      "id": "black-eye-station-6",
-      "path": "/art/black-eye/station-6.svg",
+      "id": "phantom-station-6",
+      "path": "/art/phantom/station-6.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -114,8 +114,8 @@
       "frameIndex": 6
     },
     {
-      "id": "black-eye-station-7",
-      "path": "/art/black-eye/station-7.svg",
+      "id": "phantom-station-7",
+      "path": "/art/phantom/station-7.svg",
       "width": 288,
       "height": 112,
       "displayWidth": 189,
@@ -131,7 +131,7 @@
     },
     {
       "id": "outpost-homes-cracked-a",
-      "path": "/art/black-eye/homes-cracked-a.svg",
+      "path": "/art/phantom/homes-cracked-a.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 63,
@@ -154,7 +154,7 @@
     },
     {
       "id": "outpost-homes-cracked-b",
-      "path": "/art/black-eye/homes-cracked-b.svg",
+      "path": "/art/phantom/homes-cracked-b.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 63,
@@ -177,7 +177,7 @@
     },
     {
       "id": "outpost-homes-mended-a",
-      "path": "/art/black-eye/homes-mended-a.svg",
+      "path": "/art/phantom/homes-mended-a.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 63,
@@ -200,7 +200,7 @@
     },
     {
       "id": "outpost-homes-mended-b",
-      "path": "/art/black-eye/homes-mended-b.svg",
+      "path": "/art/phantom/homes-mended-b.svg",
       "width": 96,
       "height": 96,
       "displayWidth": 63,
@@ -223,7 +223,7 @@
     },
     {
       "id": "outpost-harbour-cracked-a",
-      "path": "/art/black-eye/harbour-cracked-a.svg",
+      "path": "/art/phantom/harbour-cracked-a.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 73.5,
@@ -246,7 +246,7 @@
     },
     {
       "id": "outpost-harbour-cracked-b",
-      "path": "/art/black-eye/harbour-cracked-b.svg",
+      "path": "/art/phantom/harbour-cracked-b.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 73.5,
@@ -269,7 +269,7 @@
     },
     {
       "id": "outpost-harbour-mended-a",
-      "path": "/art/black-eye/harbour-mended-a.svg",
+      "path": "/art/phantom/harbour-mended-a.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 73.5,
@@ -292,7 +292,7 @@
     },
     {
       "id": "outpost-harbour-mended-b",
-      "path": "/art/black-eye/harbour-mended-b.svg",
+      "path": "/art/phantom/harbour-mended-b.svg",
       "width": 112,
       "height": 80,
       "displayWidth": 73.5,
@@ -315,7 +315,7 @@
     },
     {
       "id": "outpost-signal-cracked-a",
-      "path": "/art/black-eye/signal-cracked-a.svg",
+      "path": "/art/phantom/signal-cracked-a.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 52.5,
@@ -338,7 +338,7 @@
     },
     {
       "id": "outpost-signal-cracked-b",
-      "path": "/art/black-eye/signal-cracked-b.svg",
+      "path": "/art/phantom/signal-cracked-b.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 52.5,
@@ -361,7 +361,7 @@
     },
     {
       "id": "outpost-signal-mended-a",
-      "path": "/art/black-eye/signal-mended-a.svg",
+      "path": "/art/phantom/signal-mended-a.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 52.5,
@@ -384,7 +384,7 @@
     },
     {
       "id": "outpost-signal-mended-b",
-      "path": "/art/black-eye/signal-mended-b.svg",
+      "path": "/art/phantom/signal-mended-b.svg",
       "width": 80,
       "height": 112,
       "displayWidth": 52.5,
@@ -406,8 +406,8 @@
       "state": "mended"
     },
     {
-      "id": "nebula-black-eye-1",
-      "path": "/art/black-eye/nebula-1.png",
+      "id": "nebula-phantom-1",
+      "path": "/art/phantom/nebula-1.png",
       "width": 192,
       "height": 80,
       "displayWidth": 768,
@@ -419,8 +419,8 @@
       }
     },
     {
-      "id": "nebula-black-eye-2",
-      "path": "/art/black-eye/nebula-2.png",
+      "id": "nebula-phantom-2",
+      "path": "/art/phantom/nebula-2.png",
       "width": 192,
       "height": 80,
       "displayWidth": 768,
@@ -433,7 +433,7 @@
     },
     {
       "id": "blurb-settler-portrait",
-      "path": "/art/black-eye/portraits/blurb-settler.png",
+      "path": "/art/phantom/portraits/blurb-settler.png",
       "width": 32,
       "height": 32,
       "facing": "front",
@@ -449,7 +449,7 @@
     },
     {
       "id": "dollop-portrait",
-      "path": "/art/black-eye/portraits/dollop.png",
+      "path": "/art/phantom/portraits/dollop.png",
       "width": 32,
       "height": 32,
       "facing": "front",
@@ -465,7 +465,7 @@
     },
     {
       "id": "blurb-settler-portrait-compact",
-      "path": "/art/black-eye/portraits/blurb-settler-compact.png",
+      "path": "/art/phantom/portraits/blurb-settler-compact.png",
       "width": 22,
       "height": 22,
       "displayWidth": 44,
@@ -483,7 +483,7 @@
     },
     {
       "id": "dollop-portrait-compact",
-      "path": "/art/black-eye/portraits/dollop-compact.png",
+      "path": "/art/phantom/portraits/dollop-compact.png",
       "width": 22,
       "height": 22,
       "displayWidth": 44,
@@ -501,7 +501,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-0-a",
-      "path": "/art/black-eye/stranded-traveler-pod-0-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-0-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -518,7 +518,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-0-b",
-      "path": "/art/black-eye/stranded-traveler-pod-0-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-0-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -535,7 +535,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-1-a",
-      "path": "/art/black-eye/stranded-traveler-pod-1-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-1-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -552,7 +552,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-1-b",
-      "path": "/art/black-eye/stranded-traveler-pod-1-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-1-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -569,7 +569,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-2-a",
-      "path": "/art/black-eye/stranded-traveler-pod-2-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-2-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -586,7 +586,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-2-b",
-      "path": "/art/black-eye/stranded-traveler-pod-2-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-2-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -603,7 +603,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-3-a",
-      "path": "/art/black-eye/stranded-traveler-pod-3-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-3-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -620,7 +620,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-3-b",
-      "path": "/art/black-eye/stranded-traveler-pod-3-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-3-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -637,7 +637,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-4-a",
-      "path": "/art/black-eye/stranded-traveler-pod-4-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-4-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -654,7 +654,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-4-b",
-      "path": "/art/black-eye/stranded-traveler-pod-4-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-4-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -671,7 +671,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-5-a",
-      "path": "/art/black-eye/stranded-traveler-pod-5-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-5-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -688,7 +688,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-5-b",
-      "path": "/art/black-eye/stranded-traveler-pod-5-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-5-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -705,7 +705,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-6-a",
-      "path": "/art/black-eye/stranded-traveler-pod-6-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-6-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -722,7 +722,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-6-b",
-      "path": "/art/black-eye/stranded-traveler-pod-6-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-6-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -739,7 +739,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-7-a",
-      "path": "/art/black-eye/stranded-traveler-pod-7-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-7-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -756,7 +756,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-7-b",
-      "path": "/art/black-eye/stranded-traveler-pod-7-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-7-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -773,7 +773,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-8-a",
-      "path": "/art/black-eye/stranded-traveler-pod-8-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-8-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -790,7 +790,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-8-b",
-      "path": "/art/black-eye/stranded-traveler-pod-8-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-8-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -807,7 +807,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-9-a",
-      "path": "/art/black-eye/stranded-traveler-pod-9-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-9-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -824,7 +824,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-9-b",
-      "path": "/art/black-eye/stranded-traveler-pod-9-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-9-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -841,7 +841,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-10-a",
-      "path": "/art/black-eye/stranded-traveler-pod-10-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-10-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -858,7 +858,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-10-b",
-      "path": "/art/black-eye/stranded-traveler-pod-10-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-10-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -875,7 +875,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-11-a",
-      "path": "/art/black-eye/stranded-traveler-pod-11-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-11-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -892,7 +892,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-11-b",
-      "path": "/art/black-eye/stranded-traveler-pod-11-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-11-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -909,7 +909,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-12-a",
-      "path": "/art/black-eye/stranded-traveler-pod-12-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-12-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -926,7 +926,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-12-b",
-      "path": "/art/black-eye/stranded-traveler-pod-12-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-12-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -943,7 +943,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-13-a",
-      "path": "/art/black-eye/stranded-traveler-pod-13-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-13-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -960,7 +960,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-13-b",
-      "path": "/art/black-eye/stranded-traveler-pod-13-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-13-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -977,7 +977,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-14-a",
-      "path": "/art/black-eye/stranded-traveler-pod-14-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-14-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -994,7 +994,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-14-b",
-      "path": "/art/black-eye/stranded-traveler-pod-14-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-14-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -1011,7 +1011,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-15-a",
-      "path": "/art/black-eye/stranded-traveler-pod-15-a.svg",
+      "path": "/art/phantom/stranded-traveler-pod-15-a.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -1028,7 +1028,7 @@
     },
     {
       "id": "craft-stranded-traveler-pod-15-b",
-      "path": "/art/black-eye/stranded-traveler-pod-15-b.svg",
+      "path": "/art/phantom/stranded-traveler-pod-15-b.svg",
       "width": 80,
       "height": 80,
       "displayWidth": 35,
@@ -1044,6 +1044,6 @@
       "craft": "stranded-traveler-pod"
     }
   ],
-  "backdrop": "/art/black-eye/backdrop.json",
-  "tow": "/art/black-eye/tow.json"
+  "backdrop": "/art/phantom/backdrop.json",
+  "tow": "/art/phantom/tow.json"
 }

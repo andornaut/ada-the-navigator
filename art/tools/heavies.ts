@@ -837,7 +837,7 @@ function mounts(deck: number, pairs: readonly (readonly [number, number])[]) {
   });
 }
 
-// Gadget: General Gadget's own capital in Black Eye. A serrated claw hull with a raised dorsal
+// Gadget: General Gadget's own capital in Phantom. A serrated claw hull with a raised dorsal
 // ridge; the command tower carries two stepped ear fins. The capital's mounts and tiers.
 const GADGET_Z = 12;
 const GADGET_TOWER: Plan = [

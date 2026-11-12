@@ -9712,10 +9712,6 @@
       "backdropLit": "#414572",
       "backdropSide": "#34375B"
     },
-    "black-eye": {
-      "backdropLit": "#49344E",
-      "backdropSide": "#3A2A3E"
-    },
     "cartwheel": {
       "backdropLit": "#643F39",
       "backdropSide": "#50322E"
@@ -9723,6 +9719,10 @@
     "needle": {
       "backdropLit": "#48423D",
       "backdropSide": "#3A3531"
+    },
+    "phantom": {
+      "backdropLit": "#49344E",
+      "backdropSide": "#3A2A3E"
     },
     "sunflower": {
       "backdropLit": "#C9BB86",

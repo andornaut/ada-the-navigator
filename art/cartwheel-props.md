@@ -124,7 +124,7 @@ on the dark fields, so the nugget reads as dark rock with a warm edge.
 | Whirlpool | 6.73:1  | 5.25:1    |
 | Needle    | 7.33:1  | 5.73:1    |
 | Andromeda | 6.85:1  | 5.35:1    |
-| Black Eye | 8.06:1  | 6.30:1    |
+| Phantom   | 8.06:1  | 6.30:1    |
 
 On Sunflower's light field the nugget draws over the ink keyline
 ([Light fields](galaxies.md#light-fields)), 10.90:1. The body is 0.25 from the
@@ -171,7 +171,7 @@ in `lightField.keylined`). The other galaxies' craft are
 | Whirlpool | [Current skimmer and shell pod](whirlpool.md#stranded-craft)       |
 | Needle    | [Stuck glider and spool pod](needle.md#stranded-craft)             |
 | Andromeda | [Lost courier and drifting lamp buoy](andromeda.md#stranded-craft) |
-| Black Eye | [Traveler's pod](black-eye.md#stranded-craft)                      |
+| Phantom   | [Traveler's pod](phantom.md#stranded-craft)                        |
 
 ## Tow line
 

@@ -53,10 +53,6 @@
       "nebulaCore": "#696481",
       "nebulaOuter": "#50506d"
     },
-    "black-eye": {
-      "nebulaCore": "#6c586c",
-      "nebulaOuter": "#544052"
-    },
     "cartwheel": {
       "nebulaCore": "#796269",
       "nebulaOuter": "#644d4e"
@@ -64,6 +60,10 @@
     "needle": {
       "nebulaCore": "#6c6169",
       "nebulaOuter": "#534c4e"
+    },
+    "phantom": {
+      "nebulaCore": "#6a5a6f",
+      "nebulaOuter": "#524356"
     },
     "sunflower": {
       "nebulaCore": "#9d9068",

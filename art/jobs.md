@@ -57,7 +57,7 @@ Tints, one rule (`tintRule`), in sRGB channels rounded half up:
 | `sunflower` | `#baab77`     | `#9d9068`    | 1.38:1         | 1.91:1        | Ink keyline 10.89:1 |
 | `cartwheel` | `#644d4e`     | `#796269`    | 1.90:1         | 2.64:1        | Lavender 7.28:1     |
 | `whirlpool` | `#435760`     | `#5f6a78`    | 1.90:1         | 2.63:1        | Lavender 7.13:1     |
-| `black-eye` | `#544052`     | `#6c586c`    | 1.84:1         | 2.68:1        | Lavender 8.55:1     |
+| `phantom`   | `#524356`     | `#6a5a6f`    | 1.86:1         | 2.68:1        | Lavender 8.38:1     |
 
 The masses stay under 3:1, field paint rather than signal; the stars carry
 the landmark.
@@ -67,7 +67,7 @@ the landmark.
 An old hull with no one aboard, split in two with debris, unlit: top
 `#9d95ad`, side `#6b6482`, the break `#2a2433`, a rust band `#a77a68` and
 dark windows `#3f3a4d`. The top is 5.05:1 on Whirlpool, 5.11:1 on the base
-field, 5.16:1 on Cartwheel and 6.05:1 on Black Eye. The stern half drifts
+field, 5.16:1 on Cartwheel and 5.94:1 on Phantom. The stern half drifts
 apart and tilts, with its fin; three debris flakes float by.
 
 ### Beacon
@@ -125,11 +125,11 @@ glint, growing from 8 to 28 px across over 1200 ms, its 1 px
 glint shows. On a light field it draws over a 3 px ink ring at the same alpha.
 Reduced motion draws no ping.
 
-| Mark              | Whirlpool | Cartwheel | Black Eye | Sunflower           |
-| ----------------- | --------- | --------- | --------- | ------------------- |
-| Glint rays        | 7.13:1    | 7.28:1    | 8.55:1    | Ink keyline 10.89:1 |
-| Glint core        | 14.47:1   | 14.77:1   | 17.34:1   | Ink keyline 10.89:1 |
-| Ping at alpha 0.9 | 6.06:1    | 6.19:1    | 7.17:1    | Ink 3 px ring       |
+| Mark              | Whirlpool | Cartwheel | Phantom | Sunflower           |
+| ----------------- | --------- | --------- | ------- | ------------------- |
+| Glint rays        | 7.13:1    | 7.28:1    | 8.38:1  | Ink keyline 10.89:1 |
+| Glint core        | 14.47:1   | 14.77:1   | 17.00:1 | Ink keyline 10.89:1 |
+| Ping at alpha 0.9 | 6.06:1    | 6.19:1    | 7.04:1  | Ink 3 px ring       |
 
 ## Assets
 

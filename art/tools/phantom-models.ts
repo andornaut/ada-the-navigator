@@ -1,5 +1,5 @@
-// Black Eye's solid models in the station family's projection (solid.ts): the three Blurb
-// settlements, each with its dock cracked by the blockades or mended. Contract: art/black-eye.md.
+// Phantom's solid models in the station family's projection (solid.ts): the three Blurb
+// settlements, each with its dock cracked by the blockades or mended. Contract: art/phantom.md.
 import {
   blue,
   blueDim,

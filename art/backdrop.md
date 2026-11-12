@@ -10,8 +10,8 @@ empty stretch. Tech draws them at runtime from data; Art owns this spec.
   `public/art/{galaxy}/backdrop.json`, linked from that galaxy's manifest as
   `backdrop`. It also writes the nebula textures of each galaxy with a
   nebula far look into that galaxy's manifest: Whirlpool's
-  (`nebula-whirlpool-1`, `-2`) and Black Eye's smoke banks
-  (`nebula-black-eye-1`, `-2`). Reruns are byte-identical.
+  (`nebula-whirlpool-1`, `-2`) and Phantom's smoke banks
+  (`nebula-phantom-1`, `-2`). Reruns are byte-identical.
 - Every galaxy reads its backdrop the same way: the core manifest's
   `galaxies` maps the galaxy's id to its manifest, which links `backdrop`. A
   [placeholder galaxy](#placeholder-galaxies) has a manifest holding only that
@@ -57,7 +57,8 @@ does, so they keep their isometric layout and move at their parallax.
 
 Everything is seeded per galaxy and per cell, so a galaxy's sky is the same on
 every flight and costs no memory beyond what is on screen. `seed` in the
-galaxy's file is `hash(0, "backdrop:{galaxy}")`.
+galaxy's file is fixed per galaxy in the tool (`SEEDS`), so a galaxy keeps its
+sky when its id changes.
 
 - **Hash.** `unit(seed, "i,j", salt)` is asteroid-art's backdrop rock hash:
   FNV-1a over the text `i,j:salt` from the seed, then a final mix, divided by
@@ -105,7 +106,7 @@ galaxy's file is `hash(0, "backdrop:{galaxy}")`.
   the item at 768 by 320 logical px with linear filtering; the textures are
   192 by 80 texels, straight alpha. Its `core` and `veil` take the galaxy's
   nebula hue offset and chroma scale: Whirlpool's core +40 at 1.7 and veil -10
-  at 1.5; Black Eye's core -18 at 1.6 and veil +8 at 1.3, so its smoke stays
+  at 1.5; Phantom's core -18 at 1.6 and veil +8 at 1.3, so its smoke stays
   violet. A `cluster` is a Gaussian glow in `glow`
   (sigma 64 by 42 px, alpha 0.7) with 90 stars in `star` at up to `alpha`,
   normally spread 47.6 by 34 px (Box-Muller on salts `cluster-{k}-r` and
@@ -195,7 +196,7 @@ Measured over the sampled cameras:
 | Whirlpool | `#26515C` 1.66:1           | `#314E63` 1.65:1 | Obstacle 3.23, 3.25; hull 3.71, 3.73; white 8.70, 8.75   |
 | Needle    | Band peak `#4F4945` 1.78:1 | `#4D4842` 1.74:1 | Obstacle 3.29, 3.36; hull 3.78, 3.86; white 8.86, 9.06   |
 | Andromeda | Haze core `#6970A0` 3.12:1 | `#69709F` 3.10:1 | Obstacle 1.75, 1.77; hull 2.01, 2.03; white 4.72, 4.76   |
-| Black Eye | `#49344E` 1.53:1           | `#423458` 1.52:1 | Obstacle 4.14, 4.16; hull 4.75, 4.78; white 11.14, 11.22 |
+| Phantom   | `#49344E` 1.53:1           | `#423458` 1.52:1 | Obstacle 4.14, 4.16; hull 4.75, 4.78; white 11.14, 11.22 |
 
 Over the brightest plate alone the obstacle stays at 4.3:1 or more and the
 darkest hull tone at 5.0:1 or more on every dark field; on Sunflower the ink

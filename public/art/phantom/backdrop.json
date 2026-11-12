@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "galaxy": "black-eye",
+  "galaxy": "phantom",
   "placeholder": false,
   "light": false,
   "seed": 3696708802,
@@ -87,7 +87,7 @@
   "far": [
     {
       "look": "nebula",
-      "assets": ["nebula-black-eye-1", "nebula-black-eye-2"],
+      "assets": ["nebula-phantom-1", "nebula-phantom-2"],
       "colors": {
         "core": "#312542",
         "veil": "#331F32"

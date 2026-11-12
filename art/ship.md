@@ -199,7 +199,7 @@ On a light field the jets take `lightField.jets.shipLevels` in
 
 Every colour that carries a jet holds 3:1 or better on every dark galaxy
 (Whirlpool lowest): orange halo 6.34:1, outer start 4.52:1, core start 8.08:1;
-purple halo 4.25:1, outer start 3.02:1, core start 5.69:1; on Black Eye's
+purple halo 4.25:1, outer start 3.02:1, core start 5.69:1; on Phantom's
 `#241827` purple is 4.99:1, 3.54:1 and 6.69:1. Each tier is 0.08 or more in
 Oklab from the warm signals beside it: the orange halo is 0.098 from coral
 `#d68b72`, 0.104 from amber `#f0bd68`, 0.148 from the low red `#e4574e` and

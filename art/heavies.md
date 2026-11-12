@@ -42,7 +42,7 @@ craft in Ada widths of 42.88 model units.
   `claw-left` and `claw-right` on the claw arms, `stern-left` and
   `stern-right` on the stern deck. Its four escorts are the existing `fighter`
   frames.
-- Gadget: General Gadget's own capital, Black Eye's heavy ([Gadget](#gadget)).
+- Gadget: General Gadget's own capital, Phantom's heavy ([Gadget](#gadget)).
 
 ## Layout and the catalog
 
@@ -342,7 +342,7 @@ Draw a mouth only while that engine is intact.
 
 ## Gadget
 
-General Gadget's own capital, Black Eye's heavy: the capital class's mounts,
+General Gadget's own capital, Phantom's heavy: the capital class's mounts,
 tiers and tops on a more threatening hull, in the coral family palette.
 
 - Archetype `gadget`: files `gadget-*` in `public/art/enemies/`, manifest ids

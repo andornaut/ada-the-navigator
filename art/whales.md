@@ -4,7 +4,7 @@
   [whales.json](../public/art/whales.json) and its own `whale-` entries:
   the calves' in [Whirlpool's manifest](../public/art/whirlpool/manifest.json),
   which names the data file as `whales`, and the whale's and smaller adult's in
-  the [core manifest](../public/art/manifest.json), since the Black Eye finale
+  the [core manifest](../public/art/manifest.json), since the Phantom finale
   draws them too. Every frame file stays in `public/art/whales/`.
 - The model shares the rotation, culling, depth and projection of
   [art/tools/projection.ts](tools/projection.ts) with 16 headings

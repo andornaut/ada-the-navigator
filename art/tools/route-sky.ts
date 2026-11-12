@@ -252,7 +252,7 @@ function phenomena(sky: Buffer) {
   sky.add("#cfc5bd", needle.window, (x, y) => needle.at(x, y) * 0.45);
   const bulge = gauss(...P(200, 148), 4, 2.4, -0.21);
   sky.add("#ead4aa", bulge.window, (x, y) => bulge.at(x, y) * 0.45);
-  // Black Eye's pink nebula with a Whirlpool teal knot, over the arc's left end.
+  // Phantom's pink nebula with a Whirlpool teal knot, over the arc's left end.
   const cloud = valueNoise(8, SKY.width, SKY.height, 22);
   const pink = gauss(...P(48, 46), 42, 26, 0.4);
   sky.add("#e9b4dc", pink.window, (x, y) => pink.at(x, y) * (0.2 + 0.25 * cloud(x, y)));
@@ -273,7 +273,7 @@ function phenomena(sky: Buffer) {
   });
   const head = gauss(hx, hy, 1.4, 1.4);
   sky.add("#dcc3f2", head.window, (x, y) => head.at(x, y) * 0.9);
-  // A star cluster under Black Eye, for taller views.
+  // A star cluster under Phantom, for taller views.
   const random = new Random(4);
   for (let i = 0; i < 26; i++) {
     const s = gauss(...P(128 + 9 * normal(random), 196 + 6 * normal(random)), 0.6, 0.6);

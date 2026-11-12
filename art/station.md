@@ -8,7 +8,7 @@
 - The shared station for every galaxy without its own station art. Cartwheel's
   [hub](cartwheel.md), Andromeda's [settlers' station](andromeda.md),
   Needle's [Weavers' station](needle.md#weavers-station), Whirlpool's
-  [Eddy](whirlpool.md#station) and Black Eye's [station](black-eye.md#station)
+  [Eddy](whirlpool.md#station) and Phantom's [station](phantom.md#station)
   take its place in their galaxies, so Sunflower is the only galaxy on it.
 
 ## Design
@@ -52,7 +52,7 @@ Each galaxy's stations are kept by three keepers of its people (Gameplay
 the galaxy's origin, cycling through the three, and Cartwheel's mining hub is
 always Quartz's, its other stations cycling through Slate and Garnet. The
 station card shows the keeper in its [keeper block](layout.md#station-card).
-Black Eye's stations have no keeper and keep the generic welcome.
+Phantom's stations have no keeper and keep the generic welcome.
 
 Portraits are the [conversation portraits](conversation.md)' compact sheets,
 `public/art/{galaxy}/portraits/{key}-compact.png`, manifest id

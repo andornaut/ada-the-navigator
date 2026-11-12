@@ -22,7 +22,6 @@ import {
   plates,
   type Rect,
   unit,
-  hash,
   type Xy,
 } from "./backdrop-field.ts";
 import { editManifest, GALAXIES, linkData, manifestUrl, replaceEntries } from "./manifest.ts";
@@ -268,6 +267,16 @@ export const PLACEHOLDER: GalaxyConfig = {
   placeholder: true,
 };
 
+// Each galaxy's backdrop seed, fixed here so a galaxy keeps its sky when its id changes.
+const SEEDS: Record<GalaxyId, number> = {
+  sunflower: 2897959560,
+  cartwheel: 1760754722,
+  whirlpool: 2908185251,
+  andromeda: 3962480382,
+  needle: 4216128235,
+  phantom: 3696708802,
+};
+
 const CONFIG: Record<GalaxyId, GalaxyConfig> = {
   // Diamond plots, as farm fields seen from above in the isometric view.
   sunflower: {
@@ -404,7 +413,7 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     placeholder: false,
   },
   // Smoke: noise-warped drifting bands, lighter wisps over shadow, and violet smoke banks.
-  "black-eye": {
+  phantom: {
     lattice: [
       [420, 0],
       [210, 360],
@@ -634,7 +643,7 @@ function build(galaxy: GalaxyId): GalaxyBackdrop {
     galaxy,
     placeholder: cfg.placeholder,
     light,
-    seed: hash(0, `backdrop:${galaxy}`),
+    seed: SEEDS[galaxy],
     background: bg,
     sky: {
       from: bg,
