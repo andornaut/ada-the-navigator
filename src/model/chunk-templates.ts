@@ -4,6 +4,8 @@ import { byPosition } from "../data/galaxies.ts";
 import { RESOURCE_ROCKS, type ResourceClass, resourceClass } from "../data/resource-rocks.ts";
 import type { SectorId } from "../data/types.ts";
 import { type AsteroidShape, resourceShapes } from "./asteroids.ts";
+import { fromScreen, toScreen } from "./convex.ts";
+import { drawnRock, loopReach, rocksOverlap } from "./rock-spacing.ts";
 import type { Vec } from "./types.ts";
 
 /** Asteroid variants and the sector's field weights; without them rocks use `rockRadius`. */
@@ -179,9 +181,11 @@ function validate(options: ChunkPlanOptions): void {
   }
 }
 
-/** Pure plans use normalized authored slots and return world coordinates without retaining visits. */
-export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlan {
-  validate(options);
+/** The chunk's template and seed, by weighted roll over the galaxy's catalog. */
+function chunkTemplate(
+  catalog: ChunkCatalog,
+  options: ChunkPlanOptions,
+): { readonly id: ChunkTemplateId; readonly seed: number } {
   const choices = byPosition(catalog, options.sector);
   if (
     !choices.length ||
@@ -203,40 +207,288 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
     }
     roll -= choice.weight;
   }
+  return { id, seed };
+}
+
+/** The sizes a rock steps down through, largest first, ending at small. */
+const STEP_DOWN: Readonly<Record<AsteroidSize, AsteroidSize | null>> = {
+  huge: "large",
+  large: "medium",
+  medium: "small",
+  small: null,
+};
+
+/** The seeded variant of a size for a slot's step, or undefined without one. */
+function variantOf(
+  asteroids: ChunkAsteroids,
+  size: AsteroidSize,
+  seed: number,
+  salt: number,
+): AsteroidShape | undefined {
+  const variants = asteroids.shapes.filter((shape) => shape.size === size);
+  return variants.length ? variants[mix(seed, salt) % variants.length] : undefined;
+}
+
+/**
+ * The chunk's large feature as first rolled, at a quadrant centre clear of edges and corridors,
+ * or undefined without one.
+ */
+function rolledFeature(
+  options: ChunkPlanOptions,
+  id: ChunkTemplateId,
+  seed: number,
+): { readonly placement: ChunkPlacement; readonly shape: AsteroidShape } | undefined {
+  const { asteroids } = options;
+  if (
+    !asteroids ||
+    options.spawnWeights.rock <= 0 ||
+    unit(seed, 997) >= (asteroids.field.featureChance[id] ?? 0)
+  ) {
+    return undefined;
+  }
+  const chosen = asteroid(asteroids, asteroids.field.featureSizes, seed, 1009);
+  const halfWidth = options.shipRadius + options.clearance;
+  if (!chosen || chosen.shape.radius + halfWidth > options.size / 4) {
+    return undefined;
+  }
+  const quadrant = mix(seed, 991) % 4;
+  return {
+    placement: {
+      asteroid: chosen.shape.id,
+      id: `chunk:${options.x},${options.y}:feature`,
+      kind: "rock",
+      radius: chosen.shape.radius,
+      x: options.x * options.size + (quadrant % 2 ? 0.75 : 0.25) * options.size,
+      y: options.y * options.size + (quadrant < 2 ? 0.25 : 0.75) * options.size,
+    },
+    shape: chosen.shape,
+  };
+}
+
+/** Whether rock a gives way to rock b where they overlap: the smaller drawn rock, then the later id. */
+function yields(a: ChunkPlacement, b: ChunkPlacement): boolean {
+  const reachA = drawnRock(a)?.reach ?? 0;
+  const reachB = drawnRock(b)?.reach ?? 0;
+  return reachA !== reachB ? reachA < reachB : a.id > b.id;
+}
+
+/**
+ * The chunk's feature after spacing: it steps down a size while it overlaps a neighbouring
+ * chunk's feature, as first rolled, that it yields to, and is dropped past small. Neighbours'
+ * features compare as rolled, so every chunk decides from the same facts.
+ */
+function spacedFeature(
+  options: ChunkPlanOptions,
+  rolled: { readonly placement: ChunkPlacement; readonly shape: AsteroidShape } | undefined,
+  neighbours: readonly ChunkPlacement[],
+): ChunkPlacement | undefined {
+  if (!rolled || !options.asteroids) {
+    return rolled?.placement;
+  }
+  const rank = rolled.placement;
+  let placement: ChunkPlacement | undefined = rolled.placement;
+  let size: AsteroidSize | null = rolled.shape.size;
+  let step = 0;
+  while (
+    placement &&
+    neighbours.some((other) => yields(rank, other) && rocksOverlap(placement!, other))
+  ) {
+    size = size ? STEP_DOWN[size] : null;
+    const shape = size
+      ? variantOf(options.asteroids, size, seedFor(options), 1011 + step++)
+      : undefined;
+    placement = shape ? { ...placement, asteroid: shape.id, radius: shape.radius } : undefined;
+  }
+  return placement;
+}
+
+/** The rolled features of the eight chunks around this one. */
+function neighbourFeatures(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlacement[] {
+  const features: ChunkPlacement[] = [];
+  for (const dx of [-1, 0, 1]) {
+    for (const dy of [-1, 0, 1]) {
+      if (dx || dy) {
+        const around = { ...options, x: options.x + dx, y: options.y + dy };
+        const { id, seed } = chunkTemplate(catalog, around);
+        const feature = rolledFeature(around, id, seed);
+        if (feature) {
+          features.push(feature.placement);
+        }
+      }
+    }
+  }
+  return features;
+}
+
+// A screen disc of radius r covers world offsets up to sqrt(5) / 2 r along x or along y.
+const WORLD_SPAN = Math.sqrt(5) / 2;
+// Respacing passes per round, and step-down rounds per chunk.
+const RESPACE_PASSES = 200;
+const STEP_ROUNDS = 8;
+// A pass moves an overlapping pair apart by at most this many screen px each.
+const RESPACE_STEP = 4;
+const BOX_MARGIN = 1e-6;
+
+/** A slot's rock as spacing moves and steps it down. */
+interface Slot {
+  placement: ChunkPlacement;
+  size: AsteroidSize | null;
+  steps: number;
+  readonly drift?: Drift;
+  readonly salt: number;
+}
+
+/**
+ * Where a slot may sit, chunk-local: its quadrant, clear of the corridors by its radius and the
+ * ship's half width, and far enough in from the chunk's edges that its drawn rock never reaches
+ * a neighbouring chunk.
+ */
+function slotBox(
+  options: ChunkPlanOptions,
+  origin: Vec,
+  placement: ChunkPlacement,
+  extra = 0,
+): { readonly x: readonly [number, number]; readonly y: readonly [number, number] } {
+  const half = options.size / 2;
+  const halfWidth = options.shipRadius + options.clearance;
+  const corridor = placement.radius + halfWidth;
+  const edge = Math.max(corridor, WORLD_SPAN * ((drawnRock(placement)?.reach ?? 0) + extra));
+  // A hair inside each limit, so a rock moved onto one keeps its clearance in floating point.
+  const range = (local: number): [number, number] => {
+    const [from, to] =
+      local < half ? [edge, half - corridor] : [half + corridor, options.size - edge];
+    return from + 2 * BOX_MARGIN <= to
+      ? [from + BOX_MARGIN, to - BOX_MARGIN]
+      : [(from + to) / 2, (from + to) / 2];
+  };
+  return { x: range(placement.x - origin.x), y: range(placement.y - origin.y) };
+}
+
+/**
+ * Moves the slots' rocks apart until none overlaps another or a fixed rock on the screen, each
+ * held to its slot box: overlapping pairs part along the screen line between them a step at a
+ * time, and a slot beside the feature keeps its ship-width gap from it.
+ */
+function respace(
+  options: ChunkPlanOptions,
+  origin: Vec,
+  fixed: readonly ChunkPlacement[],
+  feature: ChunkPlacement | undefined,
+  slots: readonly Slot[],
+): void {
+  const halfWidth = options.shipRadius + options.clearance;
+  // Moves a slot within its box, and returns whether it moved.
+  const move = (slot: Slot, by: Vec): boolean => {
+    const box = slotBox(options, origin, slot.placement);
+    const x = origin.x + Math.min(box.x[1], Math.max(box.x[0], slot.placement.x + by.x - origin.x));
+    const y = origin.y + Math.min(box.y[1], Math.max(box.y[0], slot.placement.y + by.y - origin.y));
+    if (Math.abs(x - slot.placement.x) < 1e-9 && Math.abs(y - slot.placement.y) < 1e-9) {
+      return false;
+    }
+    slot.placement = { ...slot.placement, x, y };
+    return true;
+  };
+  // The screen step that parts b from a, b's share.
+  const apart = (a: Vec, b: Vec, reach: number): Vec => {
+    const offset = toScreen({ x: b.x - a.x, y: b.y - a.y });
+    const distance = Math.hypot(offset.x, offset.y);
+    const direction =
+      distance > 0 ? { x: offset.x / distance, y: offset.y / distance } : { x: 1, y: 0 };
+    const step = Math.min(RESPACE_STEP, Math.max(0.5, (reach - distance) / 2));
+    return fromScreen({ x: direction.x * step, y: direction.y * step });
+  };
+  const reach = (placement: ChunkPlacement) => drawnRock(placement)?.reach ?? 0;
+  // Each rock starts inside its box, so its drawn rock stays in the chunk.
+  for (const slot of slots) {
+    move(slot, { x: 0, y: 0 });
+  }
+  for (let pass = 0; pass < RESPACE_PASSES; pass++) {
+    let moved = false;
+    for (let a = 0; a < slots.length; a++) {
+      const first = slots[a]!;
+      for (const rock of fixed) {
+        if (rocksOverlap(rock, first.placement)) {
+          const by = apart(rock, first.placement, reach(rock) + reach(first.placement));
+          moved = move(first, { x: 2 * by.x, y: 2 * by.y }) || moved;
+        }
+      }
+      if (feature) {
+        const world = Math.hypot(first.placement.x - feature.x, first.placement.y - feature.y);
+        const gap = feature.radius + first.placement.radius + 2 * halfWidth;
+        if (world < gap) {
+          const scale = world > 0 ? Math.min(RESPACE_STEP, gap - world) / world : 0;
+          moved =
+            move(first, {
+              x: (first.placement.x - feature.x) * scale || RESPACE_STEP,
+              y: (first.placement.y - feature.y) * scale,
+            }) || moved;
+        }
+      }
+      for (let b = a + 1; b < slots.length; b++) {
+        const second = slots[b]!;
+        if (!rocksOverlap(first.placement, second.placement)) {
+          continue;
+        }
+        const by = apart(
+          first.placement,
+          second.placement,
+          reach(first.placement) + reach(second.placement),
+        );
+        const pushed = move(second, by);
+        moved = move(first, { x: -by.x, y: -by.y }) || pushed || moved;
+      }
+    }
+    if (!moved) {
+      return;
+    }
+  }
+}
+
+/** Whether a slot still overlaps a fixed rock or a slot it gives way to, or sits too near the feature. */
+function blocked(
+  options: ChunkPlanOptions,
+  fixed: readonly ChunkPlacement[],
+  feature: ChunkPlacement | undefined,
+  slots: readonly Slot[],
+  slot: Slot,
+): boolean {
+  const halfWidth = options.shipRadius + options.clearance;
+  return (
+    fixed.some((rock) => rocksOverlap(rock, slot.placement)) ||
+    (feature !== undefined &&
+      Math.hypot(slot.placement.x - feature.x, slot.placement.y - feature.y) <
+        feature.radius + slot.placement.radius + 2 * halfWidth) ||
+    slots.some(
+      (other) =>
+        other !== slot &&
+        yields(slot.placement, other.placement) &&
+        rocksOverlap(slot.placement, other.placement),
+    )
+  );
+}
+
+/** Pure plans use normalized authored slots and return world coordinates without retaining visits. */
+export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): ChunkPlan {
+  validate(options);
+  const { id, seed } = chunkTemplate(catalog, options);
   const origin = { x: options.x * options.size, y: options.y * options.size };
   const center = { x: origin.x + options.size / 2, y: origin.y + options.size / 2 };
   const halfWidth = options.shipRadius + options.clearance;
-  const slots = TEMPLATES[id];
-  const count = Math.min(options.objectsPerChunk, slots.length);
+  const templateSlots = TEMPLATES[id];
+  const count = Math.min(options.objectsPerChunk, templateSlots.length);
   const weights = options.spawnWeights;
   const totalSpawn = weights.resource + weights.rock + weights.enemy + weights.pickup;
-  const placements: ChunkPlacement[] = [];
   const asteroids = options.asteroids;
+  const around = asteroids ? neighbourFeatures(catalog, options) : [];
   // At most one large feature per chunk sits at a quadrant center, clear of edges and corridors.
-  let feature: ChunkPlacement | undefined;
-  if (asteroids && weights.rock > 0 && unit(seed, 997) < (asteroids.field.featureChance[id] ?? 0)) {
-    const chosen = asteroid(asteroids, asteroids.field.featureSizes, seed, 1009);
-    const quadrant = mix(seed, 991) % 4;
-    const local = {
-      x: (quadrant % 2 ? 0.75 : 0.25) * options.size,
-      y: (quadrant < 2 ? 0.25 : 0.75) * options.size,
-    };
-    if (chosen && chosen.shape.radius + halfWidth <= options.size / 4) {
-      feature = {
-        asteroid: chosen.shape.id,
-        id: `chunk:${options.x},${options.y}:feature`,
-        kind: "rock",
-        radius: chosen.shape.radius,
-        x: origin.x + local.x,
-        y: origin.y + local.y,
-      };
-    }
-  }
-  const drifting = new Map<number, { drift: Drift; free: number }>();
+  const rolled = rolledFeature(options, id, seed);
+  const feature = spacedFeature(options, rolled, around);
+  const slots: Slot[] = [];
+  const pickups: ChunkPlacement[] = [];
   // Placed resource rocks follow the large-every pattern from a seeded start.
   let resources = mix(seed, 3001) % RESOURCE_ROCKS.largeEvery;
   for (let slot = 0; slot < count; slot++) {
-    const local = slots[(slot + (seed % slots.length)) % slots.length]!;
+    const local = templateSlots[(slot + (seed % templateSlots.length)) % templateSlots.length]!;
     const x = local[0] * options.size;
     const y = local[1] * options.size;
     const choice = (mix(seed, slot + 1) / 0x100000000) * totalSpawn;
@@ -272,60 +524,138 @@ export function planChunk(catalog: ChunkCatalog, options: ChunkPlanOptions): Chu
       continue;
     }
     const at = { x: origin.x + x, y: origin.y + y };
-    // Slots beside the feature keep a ship-width gap so the feature never seals them in.
+    // Slots beside the feature as rolled keep a ship-width gap so it never seals them in.
     if (
-      feature &&
-      Math.hypot(at.x - feature.x, at.y - feature.y) < feature.radius + radius + 2 * halfWidth
+      rolled &&
+      Math.hypot(at.x - rolled.placement.x, at.y - rolled.placement.y) <
+        rolled.placement.radius + radius + 2 * halfWidth
     ) {
       continue;
-    }
-    if (chosen?.drift) {
-      const edges = Math.min(
-        x,
-        y,
-        options.size - x,
-        options.size - y,
-        Math.abs(x - options.size / 2),
-        Math.abs(y - options.size / 2),
-      );
-      drifting.set(placements.length, { drift: chosen.drift, free: edges - boundary });
     }
     if (resource) {
       resources++;
     }
-    placements.push({
+    const placement: ChunkPlacement = {
       ...(chosen ? { asteroid: chosen.shape.id } : ore ? { asteroid: ore.id } : {}),
       id: `chunk:${options.x},${options.y}:${slot}`,
       kind,
       radius,
       ...(resource ? { resource } : {}),
       ...at,
+    };
+    if (kind === "pickup" || !placement.asteroid) {
+      pickups.push(placement);
+      continue;
+    }
+    slots.push({
+      ...(chosen?.drift ? { drift: chosen.drift } : {}),
+      placement,
+      salt: resource ? 3100 + slot : 2000 + slot * 16,
+      size: chosen?.shape.size ?? ore?.size ?? null,
+      steps: 0,
     });
   }
+  // Rocks part on the screen; a slot that still overlaps steps down a size and parts again, and
+  // one that cannot fit at small is dropped. A resource rock steps down from large to medium
+  // only, its class with it.
+  const fixed = feature ? [feature, ...around] : around;
+  for (let round = 0; round < STEP_ROUNDS; round++) {
+    respace(options, origin, fixed, feature, slots);
+    const stuck = slots.filter((slot) => blocked(options, fixed, feature, slots, slot));
+    if (!stuck.length) {
+      break;
+    }
+    for (const slot of stuck) {
+      const resource = slot.placement.resource;
+      const next =
+        resource === "large" ? "medium" : resource ? null : slot.size ? STEP_DOWN[slot.size] : null;
+      const shape =
+        next && asteroids
+          ? variantOf(asteroids, next, seed, slot.salt + 7 + slot.steps)
+          : undefined;
+      slot.steps++;
+      if (!shape) {
+        slots.splice(slots.indexOf(slot), 1);
+        continue;
+      }
+      slot.size = next;
+      slot.placement = {
+        ...slot.placement,
+        asteroid: shape.id,
+        radius: shape.radius,
+        ...(resource ? { resource: next as ResourceClass } : {}),
+      };
+    }
+  }
+  // Whatever still overlaps after the last round gives way.
+  for (const slot of [...slots]) {
+    if (blocked(options, fixed, feature, slots, slot)) {
+      slots.splice(slots.indexOf(slot), 1);
+    }
+  }
+  const placements: ChunkPlacement[] = [...slots.map((slot) => slot.placement), ...pickups];
+  const slotOf = (placement: ChunkPlacement) =>
+    Number(placement.id.slice(placement.id.lastIndexOf(":") + 1));
+  placements.sort((a, b) => slotOf(a) - slotOf(b));
   if (feature) {
     placements.push(feature);
   }
-  // A drift path never leaves the slot's corridor clearance or reaches a neighbor's gap. Paths
-  // are assigned in order and each one leaves room for those before it, so no two paths overlap.
-  for (const [index, { drift, free }] of drifting) {
+  // A drift path stays clear of the corridors, the chunk's edges and every other rock's drawn
+  // reach and path, and leaves a ship-width gap to its neighbours. Paths are assigned in order and
+  // each one leaves room for those before it, so no two paths overlap.
+  for (const slot of slots) {
+    const shape =
+      slot.drift && asteroids
+        ? asteroids.shapes.find((s) => s.id === slot.placement.asteroid)
+        : undefined;
+    if (!slot.drift || !shape?.drift.eligible) {
+      continue;
+    }
+    const index = placements.findIndex((placement) => placement.id === slot.placement.id);
     const placement = placements[index]!;
-    const room = placements.reduce(
-      (limit, other, at) =>
-        at === index
-          ? limit
-          : Math.min(
-              limit,
-              Math.hypot(other.x - placement.x, other.y - placement.y) -
-                other.radius -
-                (other.orbit?.radius ?? 0) -
-                placement.radius -
-                2 * halfWidth,
-            ),
-      free,
+    const own = drawnRock(placement)?.reach ?? 0;
+    const local = { x: placement.x - origin.x, y: placement.y - origin.y };
+    const corridorFree =
+      Math.min(
+        local.x,
+        local.y,
+        options.size - local.x,
+        options.size - local.y,
+        Math.abs(local.x - options.size / 2),
+        Math.abs(local.y - options.size / 2),
+      ) -
+      placement.radius -
+      halfWidth;
+    const edgeFree =
+      (Math.min(local.x, local.y, options.size - local.x, options.size - local.y) / WORLD_SPAN -
+        own) /
+      Math.SQRT2;
+    const room = [...placements, ...around].reduce(
+      (limit, other) => {
+        if (other.id === placement.id) {
+          return limit;
+        }
+        const offset = toScreen({ x: other.x - placement.x, y: other.y - placement.y });
+        const screen =
+          (Math.hypot(offset.x, offset.y) -
+            own -
+            (drawnRock(other)?.reach ?? other.radius) -
+            loopReach(other.orbit?.radius ?? 0)) /
+          Math.SQRT2;
+        const world =
+          Math.hypot(other.x - placement.x, other.y - placement.y) -
+          other.radius -
+          (other.orbit?.radius ?? 0) -
+          placement.radius -
+          2 * halfWidth;
+        return Math.min(limit, screen, world);
+      },
+      Math.min(corridorFree, edgeFree),
     );
     if (room < ORBIT_RADIUS[0]) {
       continue;
     }
+    const { drift } = slot;
     const radius =
       ORBIT_RADIUS[0] + drift.roll * (Math.min(room, ORBIT_RADIUS[1]) - ORBIT_RADIUS[0]);
     placements[index] = {

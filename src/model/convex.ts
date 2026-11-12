@@ -199,7 +199,7 @@ export function partsReach(parts: Parts): number {
 }
 
 /** Convex hull of points, counter-clockwise in screen axes (y down), by monotone chain. */
-function hull(points: Vec[]): Vec[] {
+export function hull(points: readonly Vec[]): Vec[] {
   const sorted = [...points].sort((p, q) => p.x - q.x || p.y - q.y);
   const cross = (o: Vec, a: Vec, b: Vec) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
   const chain = (list: Vec[]) => {
