@@ -568,7 +568,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   waiting, the start screen offers it in a compact modal titled "Update available", with secondary "Cancel"
   on the left, primary "Update now" on the right, the ordinary close X and no body
   text. Only Update now reloads into the new version. Cancel, the close X, an
-  outside tap, Escape and back defer it for that start-screen visit; the next return checks and offers it again. Settings and
+  outside tap, Escape and back defer it for that start-screen visit; the next return checks and offers it again. Closing a card opened from the start screen (Settings, Achievements, the cheats card) does not start a new visit, so a deferred offer stays hidden until the next real return. Settings and
   install steps covering the start screen suppress the offer.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
   the cheats card, the station card or shop) or defers the update offer; during
