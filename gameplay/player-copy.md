@@ -707,9 +707,9 @@ Andromeda:
 - Quiet stretch: Astra: "I like that you never pretend, Ada." Ada: "Penny can
   always tell when I do." (happy)
 
-Black Eye:
+Phantom:
 
-- First arrival: Astra: "Black Eye. I don't like it here." Ada: "We'll face it
+- First arrival: Astra: "Phantom. I don't like it here." Ada: "We'll face it
   together."
 - Quiet stretch: Astra: "If I'm whole again, will you still fly with me?" Ada:
   "Always." (happy)
@@ -826,7 +826,7 @@ beacon light. Welcome!"
   - Andromeda: "A great bright spiral, close enough to feel like a
     neighbor."
   - Cartwheel: "A busy mining hub where every rock is worth something."
-  - Black Eye: "A shadowed rim where someone is watching."
+  - Phantom: "Faint and ghostly, and something in it is watching."
 - Local map: Map; {percent}% mapped; Travel here; Galaxies; Quests.
 - Quests modal: Quests; Story complete.; Job: {objective}; Station job boards
   have more to do.; Explore to find something to do.

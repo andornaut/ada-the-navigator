@@ -230,7 +230,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
   carry. A mount the position leaves unused is drawn as a capped plate with no
-  hardpoint. Black Eye's capital is General Gadget's own, more threatening design.
+  hardpoint. Phantom's capital is General Gadget's own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states are retained like
   other heavy state until the galaxy regenerates. A salvaged heavy stays where
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
@@ -249,7 +249,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 
 Weights choose each encounter; the group size range replaces the shared range
 for that archetype. Values not listed keep the current catalog values. Each
-galaxy below has its own roster in the same format; Black Eye keeps the current
+galaxy below has its own roster in the same format; Phantom keeps the current
 shared encounter table until its roster is specified. All values are
 provisional playtest tuning.
 

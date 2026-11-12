@@ -196,7 +196,7 @@ like Chibi's power-ups.
 Once a galaxy's chapter is complete (its space story and its home page), every
 station in that galaxy offers its community projects, which Ada funds with
 Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
-counts toward achievements and makes one ally who joins the Black Eye finale.
+counts toward achievements and makes one ally who joins the Phantom finale.
 Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 265 and
 225; the second's two are 450 and 375, the third's 525 and 375, the fourth's 525
 and 450, and the fifth's 600 and 450. At the typical income above, funding all

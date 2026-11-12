@@ -23,7 +23,7 @@ she left.
 The ship's AI is Astra, who presents as female. She is warm and curious, a
 little formal, delighted by new places, and learns human expressions from Ada. She grows as her memory returns:
 tentative at first, warmer and surer with each holodisk, and worried but steady
-before Black Eye.
+before Phantom.
 Her mission is to explore and map the universe. Her holodisks hold the coordinates
 and data needed for quantum jumps, and also parts of her mind: memories and
 abilities. Whole, she navigates on her own. With all but one of her holodisks
@@ -79,12 +79,12 @@ the route, whichever galaxy holds that holodisk:
    her memory and stranded her near Earth.
 5. Fifth (Cartwheel): she remembers what he wants: obedient copies of her
    navigation mind. She fears what being whole might cost.
-6. Sixth (Black Eye): Gadget holds the last holodisk. Astra remembers what he
+6. Sixth (Phantom): Gadget holds the last holodisk. Astra remembers what he
    wants and fears that making her whole puts her at risk. She trusts Ada, takes
    it and no longer needs to run or hide.
 
 Ada makes friends and allies across the galaxies, and they help her defeat General
-Gadget in Black Eye. Ada shows him that there are infinitely many galaxies, so the
+Gadget in Phantom. Ada shows him that there are infinitely many galaxies, so the
 universe cannot be controlled, and the General relents. With all six holodisks
 Astra can navigate on her own again, but she chooses to keep flying with Ada.
 

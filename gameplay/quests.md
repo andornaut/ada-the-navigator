@@ -109,7 +109,7 @@ third to sixth by 2, rounded down to a multiple of 5.
 | Delivery, long  |               4 |         25 |         35 |               50 |          – |
 | Rescue and tow  |               4 |         25 |         35 |               50 |         50 |
 
-A short delivery is under 6000 world units; a long one is 6000 or more. Black Eye
+A short delivery is under 6000 world units; a long one is 6000 or more. Phantom
 boards offer only surveys and rescue and tow: travelers stranded by the blockades.
 
 ### Job pool
@@ -123,7 +123,7 @@ Each galaxy's pool fills job titles with its own items.
 | Needle    | thread spools, glass beads, a message | a stuck glider, a pod                | a weaving shuttle, a silver bell    |
 | Andromeda | beacon parts, mail, a message         | a lost courier, a drifting lamp buoy | a courier's badge, a lantern        |
 | Cartwheel | ore samples, drill bits, a message    | an ore pod, a stuck hauler           | a lucky charm, a helmet             |
-| Black Eye | none                                  | a traveler's pod                     | none                                |
+| Phantom   | none                                  | a traveler's pod                     | none                                |
 
 Job lore lines, said by Astra after a job completes, one unseen line per job:
 
@@ -137,7 +137,7 @@ Job lore lines, said by Astra after a job completes, one unseen line per job:
   telescope." "A beacon only helps if it tells the truth about where it is."
 - Cartwheel: "Every rock here was once part of something bigger." "Miners name
   their drills. I would like a name for my drive."
-- Black Eye: "Not every traveler here chose to stay." "Even a dark rim has
+- Phantom: "Not every traveler here chose to stay." "Even a dark rim has
   stars."
 
 ### Player strings
@@ -201,7 +201,7 @@ flight. The Map and survey titles use these names.
 | Needle    | Silver Thread, Spindle Cloud, Loom Haze, Eye Nebula     | Tangled Glider, Snapped Spool Ship, Old Avi Hull, Quiet Shuttle      | Gate Light, Thread Marker, Stitch Beacon, Pin Lamp     |
 | Andromeda | Bright Veil, Neighbor Nebula, Pearl Cloud, Dawn Haze    | Old Mail Ship, Lost Courier Pod, Rusted Lamp Barge, Sleepy Ferry     | Guide Light, Harbor Beacon, Truth Lamp, Courier Marker |
 | Cartwheel | Ember Cloud, Rust Haze, Spark Nebula, Furnace Glow      | Cracked Drill Ship, Lost Ore Hauler, Bent Crane Barge, Quiet Smelter | Ring Light, Miner's Lamp, Spoke Beacon, Hub Marker     |
-| Black Eye | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker         |
+| Phantom   | Shadow Cloud, Inkwell Nebula, Dim Veil, Smoke Haze      | Broken Drone, Silent Hull, Cold Freighter, Old Patrol Ship           | Red Lamp, Watch Light, Lost Signal, Far Marker         |
 
 ## Repeatable activities
 
@@ -213,7 +213,7 @@ one optional task slot, shared with station jobs, so Ada holds a job or an
 activity in a galaxy, never both. An accepted activity, its galaxy and its progress persist across
 flights like a job; a supply run's carried item uses the job carried-item slot.
 It pays at completion with the job completion notice alone, with no lore line,
-and is offered again on the next Talk. Black Eye has no repeatable activity yet.
+and is offered again on the next Talk. Phantom has no repeatable activity yet.
 Activity rewards follow route position: 35 at the second, 50 at the third, 55 at
 the fourth and 60 at the fifth; the first galaxy's supply run pays the delivery
 rewards.
@@ -326,7 +326,7 @@ count and starts a new list of found points.
 | Steady Hands       | Complete the Needle chapter.                        |
 | Truth Teller       | Complete the Andromeda chapter.                     |
 | Room for Everyone  | Complete the Cartwheel chapter.                     |
-| Blockade Breaker   | Break General Gadget's blockade in Black Eye.       |
+| Blockade Breaker   | Break General Gadget's blockade in Phantom.         |
 | Cartographer       | Chart every landmark in one galaxy.                 |
 | Astra's Atlas      | Chart every landmark in all six galaxies.           |
 | Helping Hand       | Complete a station job.                             |

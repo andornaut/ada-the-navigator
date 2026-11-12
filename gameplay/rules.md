@@ -16,10 +16,10 @@ belongs in [Ideas](ideas.md). The route runs:
 |        3 | Needle    | Patience: practising a hard skill  |
 |        4 | Andromeda | Honesty: owning up to a mistake    |
 |        5 | Cartwheel | Inclusion: standing up to bullying |
-|        6 | Black Eye | The finale; home chapter to design |
+|        6 | Phantom   | The finale; home chapter to design |
 
 Tension rises, dips at Needle, builds again through Andromeda, and peaks with Cartwheel's stand against a bully
-before Black Eye's stand against General Gadget. Content tied to a galaxy, its
+before Phantom's stand against General Gadget. Content tied to a galaxy, its
 story, places, roster and art, is named by galaxy. Difficulty, rewards and prices
 follow route position, so reordering the route moves a galaxy's content and gives
 it its new position's values. Astra's memory lines and General Gadget's
@@ -410,7 +410,7 @@ along the route; the roster is in [Ships](ships.md#cartwheel-roster).
 
 Each galaxy's people are one kid-friendly alien species: animal folk in
 Sunflower, Whirlpool and Needle, androids in Andromeda, living rock in Cartwheel
-and goo in Black Eye. Its role voices, story characters and greeters are all of
+and goo in Phantom. Its role voices, story characters and greeters are all of
 that species, apart from Whirlpool's whales and General Gadget.
 
 | Galaxy    | People  | Form         | Lore                                                                                                                                               |
@@ -420,7 +420,7 @@ that species, apart from Whirlpool's whales and General Gadget.
 | Needle    | Avi     | Herons       | Long-legged pilots who stand still before they move; Elder Loom is an Avi.                                                                         |
 | Andromeda | Munix   | Androids     | Built settlers who steer by beacon light and keep their lamps lit; Pip and the settlers are Munix.                                                 |
 | Cartwheel | Cobbles | Living rock  | Stone folk who mine the ore that feeds them and never mind a bump; the young are pebble-sized. The miner, visitors and blocking pilot are Cobbles. |
-| Black Eye | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; their part is designed with the finale.                                          |
+| Phantom   | Blurbs  | Blobs of goo | Wobbly goo folk of the shadowed rim, living under Gadget's watch; their part is designed with the finale.                                          |
 
 Named characters show their names on name tabs in place of the role labels the
 copy uses:
@@ -466,10 +466,10 @@ in the station card's welcome line, a tap on the line advancing it while Undock,
 Shop and Jobs stay live. Each later docking shows one short line, the galaxy's
 three in turn. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
-saved per place, and Restart clears them. Black Eye's stations keep the generic
+saved per place, and Restart clears them. Phantom's stations keep the generic
 welcome line. Lines are in [the player copy](player-copy.md#greeters).
 
-### Galaxy six, Black Eye: the finale
+### Galaxy six, Phantom: the finale
 
 A concluding home chapter draws on the first five experiences without adding
 another community problem. Ada and the allies she made in earlier galaxies
