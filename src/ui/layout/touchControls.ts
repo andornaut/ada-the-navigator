@@ -11,14 +11,14 @@ import { TYPE } from "./tokens.ts";
 // frames, each ring's drawn edge side in from the game area's left (move) or right (aim)
 // edge and bottom above its bottom, each clamped by the safe insets; the drawn knob
 // moves at most knobReach from the ring's centre. Move input reaches full speed moveReach from
-// the stick's origin, past a moveDeadZone.
+// the touch-down point, past a moveDeadZone.
 export const TOUCH_STICK = {
-  bottom: 30,
+  bottom: 32,
   frame: TOUCH_CHROME_FRAME,
   knobReach: 12,
   moveDeadZone: 2.4,
   moveReach: 40,
-  side: 40,
+  side: 32,
 } as const;
 
 // Art draws each ring 1 inside its frame, so a frame's centre pixel is this far from the drawn
