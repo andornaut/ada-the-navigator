@@ -173,7 +173,7 @@ describe("quantum jump home", () => {
       multiLaser: 2,
       rapidMissile: 3,
     });
-    expect(model.state.notice).toBe(CONTENT.labels.jumpHome);
+    expect(model.storyView?.page.text).toBe(CONTENT.labels.jumpHome);
     expect(CONTENT.labels).not.toHaveProperty("jumpWeaponLost");
     expect(CONTENT.labels).not.toHaveProperty("jumpRecharge");
     expect(ECONOMY).not.toHaveProperty("jumpFee");
@@ -222,6 +222,36 @@ describe("quantum jump home", () => {
     expect(next.seed).not.toBe(seed);
     expect(next.cargo).toBe(0);
     expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);
+  });
+
+  it("says the jump-home line on its page only, never at the next boarding or flight", () => {
+    const model = launched();
+    model.state.flight!.cargo = 2;
+    seenHome(model);
+    deplete(model);
+    const jumpLine = CONTENT.labels.jumpHome ?? "";
+    const oreLine = CONTENT.labels.jumpHomeOreLost ?? "";
+    const line = `${jumpLine}\n${oreLine}`;
+    expect(model.storyView?.page).toMatchObject({ id: "jumpHome", text: line });
+    expect(model.state.notice).toBe("");
+    // Through the night to Ada's room, then the rock, boarding and the galaxy map's Jump.
+    const shown: string[] = [];
+    for (let turn = 0; turn < 40 && model.screen === "story"; turn++) {
+      shown.push(model.storyView!.page.text);
+      if (model.storyView!.page.sleep) {
+        model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
+      } else {
+        model.storyNext();
+      }
+    }
+    expect(model.screen).toBe("selector");
+    expect(shown.filter((text) => text.includes(jumpLine))).toEqual([line]);
+    expect(shown.filter((text) => text.includes(oreLine))).toEqual([line]);
+    model.jump();
+    expect(model.state.mode).toBe("space");
+    expect(model.state.notice).not.toContain(jumpLine);
+    model.step(0.01, idle);
+    expect(model.state.notice).not.toContain(jumpLine);
   });
 
   it("lands aboard in the emergency red, sleeps while Astra recharges, then wakes to morning", () => {

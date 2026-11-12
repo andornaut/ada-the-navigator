@@ -1250,7 +1250,8 @@ export class GameModel {
   /**
    * Shield depletion quantum jumps Ada home and costs only the flight: its layout, open-space
    * enemies, pickups and carried cargo. Weapons, levels, Stardust, purchases, accepted quests
-   * and story progress stay. She lands at night and sleeps while Astra recharges overnight.
+   * and story progress stay. She lands at night and sleeps while Astra recharges overnight. The
+   * jump-home line shows on its page only, never as a notice carried into the next flight.
    */
   private jumpHome(): void {
     if (!this.state.flight) {
@@ -1258,10 +1259,8 @@ export class GameModel {
     }
     const oreLost = this.state.flight.cargo > 0;
     this.home(true);
-    this.notify(this.label("jumpHome"));
-    const page = oreLost
-      ? `${this.state.notice}\n${this.label("jumpHomeOreLost")}`
-      : this.state.notice;
+    const line = this.label("jumpHome");
+    const page = oreLost ? `${line}\n${this.label("jumpHomeOreLost")}` : line;
     this.showScene(jumpHomeScene(page, this.label("morningRecharge")));
   }
   private complete(): void {

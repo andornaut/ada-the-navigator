@@ -91,7 +91,7 @@ describe("grant all weapons", () => {
     expect(model.state.mode).toBe("home");
     expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 30 });
     expect(model.state.economy.levels.weapons.multiLaser).toBe(2);
-    expect(model.state.notice).toBe(CONTENT.labels.jumpHome);
+    expect(model.storyView?.page.text).toBe(CONTENT.labels.jumpHome);
   });
 
   it("makes a granted weapon really owned when it is found or bought", () => {
