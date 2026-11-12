@@ -89,11 +89,11 @@ all secondary, with focus on the first. A choice page offers
 two or three choices; each leads to one or two branch pages and then rejoins the
 main story, so choices never change a chapter's resolution. The first choice is
 the default. Locations include Grandma's house and garden, the community garden
-lot, Ada's room, the school hallway, the schoolyard, the front door at home and
+lot, Ada's room, the school hallway, the schoolyard, the front door and kitchen at home and
 the park where Ada finds the rock. A scene that leads aboard ends on Ada's room,
 with the narration "Ada's rock glows softly on her desk." and the named action.
 Backgrounds by scene: galaxy one opens in Grandma's garden and resolves and closes
-at the community garden lot; galaxy two opens in the school hallway and resolves
+at the community garden lot; galaxy two opens in the school hallway, with dinner in the kitchen at home, and resolves
 and closes in the schoolyard; galaxy three opens at the front door and resolves
 and closes in the park; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook

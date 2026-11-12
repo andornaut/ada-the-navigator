@@ -221,6 +221,9 @@ Branch pages, then the story rejoins:
 - "Think about how to offer support.": "Ada thinks about what she would want:
   someone beside her, and an invitation to join in. No speeches, just company."
 
+At dinner, after the branch page: Narration: "At dinner, Ada tells Dad what she
+saw at school." Dad: "That sounds hard to watch. What do you think you could do?"
+
 Space dialogue, in story order:
 
 Station, on arrival and on deposits between milestones: "Welcome. Shoot resource
@@ -281,6 +284,8 @@ Panel title: The Whale Family.
 Opening: "Penny waits by the door. It's time for a walk, but Ada would rather keep
 playing. 'Nobody has to take me for a walk,' she complains. She loves Penny, but
 hasn't considered how much Penny depends on her."
+
+Mom, after the opening: "Penny's been waiting by the door all morning, Ada."
 
 Choices:
 
