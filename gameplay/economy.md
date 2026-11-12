@@ -220,7 +220,8 @@ same suffixes after `projectAbout`.
 When the shield is depleted, Astra quantum jumps the ship home to Earth so it can
 recharge overnight. The cost is only the inconvenience: the flight ends, the
 galaxy's layout regenerates on the next flight, and open-space enemies, pickups,
-carried cargo and a towed pod are lost. Accepted quests stay open to retry. Ada
+undeposited ore and a towed pod are lost; the jump-home page says when ore was
+lost. Accepted jobs stay open, each with its carried item (see [Rules](rules.md)). Ada
 keeps every weapon, upgrade level, Stardust, purchase, charted landmark and story
 progress.
 

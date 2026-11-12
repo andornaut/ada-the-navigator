@@ -89,9 +89,9 @@ The local map's Travel here is unavailable while towing, as while carrying a job
 item, and refuses with the shared refusal feedback.
 Bringing the craft within 400 world units of any known station or outpost in the
 galaxy completes the rescue,
-and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map), Back to title or a
-shield-depletion jump returns the craft to where it was stranded, still marked. Closing the game resumes the tow
-exactly.
+and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map) or a shield-depletion
+jump returns the craft to where it was stranded, still marked. Closing the game
+or Back to title keeps the tow, and Continue resumes it exactly.
 
 ### Rewards
 
@@ -265,17 +265,18 @@ rewards.
   it. The calf reaching within 400 world units of the family completes the activity.
   While the calf is away, the family shows one calf fewer. The indicator points
   to the calf until it follows, then to the family. Closing the game resumes the
-  guide exactly, as for a tow.
-  Leaving the galaxy, Back to title or a shield-depletion jump returns the calf to its start.
+  guide exactly, as for a tow, and so does Back to title.
+  Leaving the galaxy or a shield-depletion jump returns the calf to its start.
 - **Courier run**: Pip flies a parcel to a seeded settlement 5000 to 8000 world
   units away at 0.7 of Ada's base top speed, and Ada escorts him. Pip waits
   whenever Ada is more than 600 world units away and goes on when she returns.
   Pip takes no damage, and drones ignore him; one drone patrol waits along the
-  way. Pip reaching the settlement completes the activity. Leaving the galaxy,
-  Back to title or a shield-depletion jump returns Pip to his start.
+  way. Pip reaching the settlement completes the activity. Leaving the galaxy or a
+  shield-depletion jump returns Pip to his start; closing the game or Back to
+  title keeps the run for Continue.
 - **Thread the needle**: a gate run (see [Needle](rules.md#galaxy-three-needle-threading-the-needle))
   through a seeded practice channel of 8 gates near Elder Loom. A gate passed too
-  fast sends Ada back to the first gate. Lighting the last gate completes the
+  fast sends Ada back to the last lit gate, or the first if none is lit. Lighting the last gate completes the
   activity.
 
 Activity lines:
