@@ -65,7 +65,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "chase",
       copy: "DockingBay",
-      cost: 350,
+      cost: 400,
       icon: "icon-project-docking-bay",
       id: "dockingBay",
       name: "Second docking bay",
@@ -76,7 +76,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "escort",
       copy: "HubRepairs",
-      cost: 250,
+      cost: 300,
       icon: "icon-project-hub-repairs",
       id: "hubRepairs",
       name: "Hub repairs",

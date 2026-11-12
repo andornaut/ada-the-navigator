@@ -49,18 +49,18 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: "The Garden Begins",
   },
   {
-    condition: "Complete the Cartwheel chapter.",
-    counted: false,
-    goal: { galaxy: 2, kind: "chapter" },
-    id: "roomForEveryone",
-    name: "Room for Everyone",
-  },
-  {
     condition: "Complete the Whirlpool chapter.",
     counted: false,
     goal: { galaxy: 3, kind: "chapter" },
     id: "timeToExplore",
     name: "Time to Explore",
+  },
+  {
+    condition: "Complete the Cartwheel chapter.",
+    counted: false,
+    goal: { galaxy: 2, kind: "chapter" },
+    id: "roomForEveryone",
+    name: "Room for Everyone",
   },
   {
     condition: "Break General Gadget's blockade in Black Eye.",

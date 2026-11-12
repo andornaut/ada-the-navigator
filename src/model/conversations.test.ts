@@ -359,7 +359,7 @@ describe("conversation triggers", () => {
   });
 
   it.each([
-    [2, ["quiet:2:notice:0", "quiet:2:dream:0"]],
+    [2, ["quiet:2:notice:0", "quiet:2:whole:0"]],
     [3, ["quiet:3:maps:0", "quiet:3:rock:0"]],
   ] as const)(
     "greet galaxy %i with Astra's arrival line, then draw quiet lines from its own pool",
@@ -380,7 +380,7 @@ describe("conversation triggers", () => {
   );
 
   it("keep each galaxy's quiet lines to its own pool", () => {
-    const { talk } = director(2, [...lessonsHeard, "arrival:2", "quiet:2:notice", "quiet:2:dream"]);
+    const { talk } = director(2, [...lessonsHeard, "arrival:2", "quiet:2:notice", "quiet:2:whole"]);
     run(talk, 3 * (quietSeconds + cooldownSeconds));
     expect(talk.showing).toBeNull();
   });

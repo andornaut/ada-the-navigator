@@ -41,7 +41,17 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 }
 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
-const IN_FLIGHT = passage("## In-flight conversations", " Black Eye: - First arrival");
+// Needle's and Andromeda's pools wait for their chapters, the heavy-disabled reaction for
+// disabling and salvage, and the fourth and fifth broadcasts for broadcasts by route position.
+const UNBUILT_LINES = [
+  "Its weapons are down. We could salvage parts and let it go.",
+  "No need to wreck it.",
+  "Little navigator, you can't hide from me. My drones will wait at every exit.",
+  "Then we'll take our time.",
+  "Astra. I know you can hear me. Come back, and bring my disks.",
+  "I'm not yours, General. I never was.",
+];
+const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("General's broadcasts", "Outposts handing over");
 
@@ -78,7 +88,9 @@ describe("in-flight conversations", () => {
   });
 
   it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
-    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)].filter(
+      ({ text }) => !UNBUILT_LINES.includes(text),
+    );
     expect(copied.length).toBeGreaterThan(30);
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));

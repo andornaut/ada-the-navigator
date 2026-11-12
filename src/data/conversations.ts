@@ -289,8 +289,11 @@ export const CONVERSATIONS: readonly Conversation[] = [
     trigger: { kind: "quiet", sector: 2 },
   },
   {
-    id: "quiet:2:dream",
-    lines: [line("ada", "Do you dream, Astra?"), line("astra", "Not yet. Maybe I'll learn.")],
+    id: "quiet:2:whole",
+    lines: [
+      line("astra", "Almost whole. I'm a little scared of that."),
+      line("ada", "We'll do it together."),
+    ],
     priority: "lore",
     repeat: "never",
     trigger: { kind: "quiet", sector: 2 },

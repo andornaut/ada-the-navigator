@@ -91,8 +91,8 @@ export const PROTOTYPE: PrototypeContent = {
     },
     2: {
       closing: [
-        "Ada and her friends include the child. When the behavior happens ",
-        "again, they stay supportive instead of leaving them alone.",
+        "Ada and her friends include Sam. When the behavior happens again, ",
+        "they stay supportive instead of leaving them alone.",
       ].join(""),
       dialogue: {
         approach: {
@@ -149,9 +149,9 @@ export const PROTOTYPE: PrototypeContent = {
         "Return to Earth when ready.",
       ],
       opening: [
-        "At school, Ada sees a child being pushed out of a playground game. ",
-        "Other children look away. There is no excuse for treating someone ",
-        "that way. Ada wonders who else noticed.",
+        "At school, Ada sees Sam, a child in her class, being pushed out of a ",
+        "playground game. Other children look away. There is no excuse for ",
+        "treating someone that way. Ada wonders who else noticed.",
       ].join(""),
       openingBranches: [
         [
@@ -173,17 +173,17 @@ export const PROTOTYPE: PrototypeContent = {
         },
       ],
       resolution: [
-        "Back at school, Ada speaks privately with the child: 'I saw what ",
+        "Back at school, Ada speaks privately with Sam: 'I saw what ",
         "happened. Would you like to join us?' They would. Ada talks with her ",
         "friends about making room and refusing to laugh along.",
       ].join(""),
       resolutionBranches: [
         [
-          "Ada's friends shuffle over and make a gap. The child steps in. When someone ",
+          "Ada's friends shuffle over and make a gap. Sam steps in. When someone ",
           "laughs, nobody laughs along.",
         ].join(""),
         [
-          "At lunch, Ada and the child sit together. One by one, Ada's friends join them, ",
+          "At lunch, Ada and Sam sit together. One by one, Ada's friends join them, ",
           "and the table gets louder and happier.",
         ].join(""),
       ],

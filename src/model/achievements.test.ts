@@ -49,7 +49,10 @@ function tables(text: string): string[][][] {
 }
 const quests = readFileSync(new URL("../../gameplay/quests.md", import.meta.url), "utf8");
 // The Achievements section's tables: the list, the counts and the strings.
-const [list, counts, keys] = tables(quests.slice(quests.indexOf("## Achievements")));
+const [table, counts, keys] = tables(quests.slice(quests.indexOf("## Achievements")));
+// Steady Hands and Truth Teller wait for the Needle and Andromeda chapters.
+const UNBUILT = ["Steady Hands", "Truth Teller"];
+const list = table!.filter(([name]) => !UNBUILT.includes(name!));
 const id = (name: string) => ACHIEVEMENTS.find((achievement) => achievement.name === name)!.id;
 const unlocked = (model: GameModel) => model.state.achievements.unlocked;
 const view = (model: GameModel, name: string) =>
@@ -71,9 +74,10 @@ function nextNotice(model: GameModel): string {
 }
 
 describe("Gameplay's achievements", () => {
-  it("lists the 14 achievements with their conditions in table order", () => {
+  it("lists the 14 built achievements with their conditions in table order", () => {
     expect(ACHIEVEMENTS.map(({ condition, name }) => [name, condition])).toEqual(list);
     expect(ACHIEVEMENTS).toHaveLength(14);
+    expect(table).toHaveLength(16);
   });
 
   it("counts exactly the achievements the counts table names", () => {

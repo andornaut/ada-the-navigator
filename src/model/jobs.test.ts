@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { ROUTE } from "../data/galaxies.ts";
 import {
   JOB_REWARDS,
   JOB_TUNING,
@@ -13,6 +14,7 @@ import {
   landmarkNameKey,
 } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { galaxyCard } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import { ensureStation, stationDock, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
@@ -49,6 +51,7 @@ function tableRows(after: string): string[][] {
       .map((cell) => cell.trim()),
   );
 }
+// Landmark names by their legacy galaxy number (LandmarkGalaxy): Black Eye is 4.
 const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Black Eye"];
 const label = (key: string) => PROTOTYPE.labels[key];
 
@@ -189,7 +192,8 @@ describe("landmarks", () => {
 
   it("name all 48 landmarks, Black Eye's included, as quests.md's table does", () => {
     const rows = tableRows("Each galaxy has four landmarks of each kind.");
-    expect(rows.map(([galaxy]) => galaxy)).toEqual(GALAXY_NAMES);
+    // The table lists all six galaxies in route order.
+    expect(rows.map(([galaxy]) => galaxy)).toEqual(ROUTE.map((galaxy) => galaxyCard(galaxy).name));
     const named = LANDMARK_GALAXIES.flatMap((galaxy) =>
       LANDMARK_KINDS.flatMap((kind) =>
         [1, 2, 3, 4].map((nth) => label(landmarkNameKey(galaxy, kind, nth))),
@@ -197,8 +201,10 @@ describe("landmarks", () => {
     );
     expect(named).toHaveLength(48);
     expect(new Set(named).size).toBe(48);
+    // Needle's and Andromeda's rows wait for their chapters, which bring their landmark names.
     for (const galaxy of LANDMARK_GALAXIES) {
-      const cells = rows[galaxy - 1]!.slice(1).map((cell) => cell.split(", "));
+      const row = rows.find(([name]) => name === GALAXY_NAMES[galaxy - 1])!;
+      const cells = row.slice(1).map((cell) => cell.split(", "));
       // Table columns: nebulae, wrecks, beacons.
       expect(cells).toEqual(
         LANDMARK_KINDS.map((kind) =>
