@@ -1,4 +1,6 @@
 body.site {
+  /* No touch flash over the page's links and buttons; the tap highlight is inherited. */
+  -webkit-tap-highlight-color: transparent;
   margin: 0;
   box-sizing: border-box;
   display: flex;

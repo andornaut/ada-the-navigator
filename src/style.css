@@ -27,9 +27,12 @@ body,
   height: 100%;
   margin: 0;
 }
+/* No touch flash over a press target: the tap highlight is inherited, so every interactive
+   element is covered; focus rings stay as they are. */
 html {
   width: 100%;
   margin: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 /* The play area fills the screen under the safe-area insets; the UI keeps clear of them through
    the safe-margin clamp (src/ui/layout/playView.ts). */

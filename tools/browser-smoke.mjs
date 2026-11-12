@@ -428,6 +428,15 @@ try {
     ["start"],
     "The start screen holds only Start before the first flight",
   );
+  await assertNoTapFlash(
+    [
+      '[data-action="achievements"]',
+      '[data-action="achievements"] .ada-disc',
+      '[data-action="settings"]',
+      '.ada-start-actions > [data-action="start"]',
+    ],
+    "The start screen",
+  );
   const [achievementsBox, settingsBox] = await Promise.all(
     ['[data-action="achievements"]', '[data-action="settings"]'].map((selector) =>
       page.locator(selector).boundingBox(),
@@ -775,6 +784,23 @@ try {
   );
   await page.locator('[data-action="pause-resume"]').click();
 
+  // No touch flash: every interactive element's tap highlight is transparent, inherited from the
+  // page root, so a press shows only the element's own pressed state.
+  async function assertNoTapFlash(selectors, where) {
+    const colours = await page.evaluate(
+      (list) =>
+        list.map((selector) => {
+          const node = document.querySelector(selector);
+          return node
+            ? getComputedStyle(node).getPropertyValue("-webkit-tap-highlight-color")
+            : null;
+        }),
+      selectors,
+    );
+    selectors.forEach((selector, index) =>
+      assert.equal(colours[index], "rgba(0, 0, 0, 0)", `${where}: ${selector} draws no tap flash`),
+    );
+  }
   // Every launch opens on the start screen; Continue resumes a mid-flight save in flight.
   async function continueFlight() {
     await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
@@ -1250,6 +1276,14 @@ try {
     PROTOTYPE.labels.returnHome,
     "The Map offers Return to Earth",
   );
+  await assertNoTapFlash(
+    [
+      '[data-action="map-returnHome"]',
+      '[data-action="map-quests"]',
+      ".ada-map-tools [data-action]",
+    ],
+    "The Map",
+  );
   const hudRow = await mapScreen.evaluate((screen) => {
     const unit = Number(
       getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
@@ -1706,6 +1740,20 @@ try {
   const moveBounds = await settledBox('[data-control="move-joystick"]');
   const aimBounds = await settledBox('[data-control="aim-joystick"]');
   assert.ok(moveBounds && aimBounds, "Both real joystick targets must be present");
+  await assertNoTapFlash(
+    [
+      '[data-control="move-joystick"]',
+      '[data-control="aim-joystick"]',
+      ".ada-pause",
+      ".ada-weapon",
+      ".ada-weapon .ada-disc",
+    ],
+    "Flight",
+  );
+  events.checks.push(
+    "The start screen's discs and Start, the sticks, pause and weapon discs, and the Map's " +
+      "controls draw no tap flash",
+  );
   const touchBefore = await position();
   const touch = await context.newCDPSession(page);
   const origins = [moveBounds, aimBounds].map((box, index) => ({
