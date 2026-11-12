@@ -5,8 +5,10 @@ roles rather than final names. Each space dialogue panel shows one speaker label
 and its text; opening, resolution and closing panels show the chapter's panel
 title, which heads the text column. Choices converge. Ask more shows a speaker's
 optional line and never gates completion. A story page's text is at most 220
-characters, a choice label at most 36, and a page offers at most three choices;
-a page with no choices leaves the choice column empty apart from Previous and
+characters and a page offers at most three choices. On a page with three
+choices every label fits one line, at most 23 characters; labels up to 36
+characters, which wrap to two lines, appear only on pages with two choices or
+fewer. If a page ever exceeds this, the choice column scrolls. A page with no choices leaves the choice column empty apart from Previous and
 Next.
 
 ## Prologue
@@ -46,6 +48,7 @@ Ada's room, rock unpolished:
 
 - Narration: "That evening, Ada polishes the rock at her desk. Under the dirt,
   thin lines appear, like a map of somewhere far away."
+- Narration: "Miso and Pepper watch from the bed, tails twitching."
 
 Ada's room, rock glowing:
 
@@ -460,7 +463,7 @@ Black Eye:
 - Shield depletion: Astra jumped you back to Earth to recharge. Your story progress is
   saved.
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
-  morning, the rock is warm again."
+  morning, the rock is warm again, and Miso and Pepper are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.

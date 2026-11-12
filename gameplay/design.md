@@ -6,7 +6,7 @@ outside the current version. These documents describe intended behavior; they do
 not claim that features are implemented.
 
 Ada is a curious, intelligent and kind 12-year-old girl living at home on Earth with
-her mom, dad, two cats and her dog Penny. She enjoys finding, digging up and
+her mom, dad, two cats (Miso and Pepper) and her dog Penny. She enjoys finding, digging up and
 polishing rocks.
 
 ## The rock, the ship and Astra
