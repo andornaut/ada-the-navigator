@@ -12,8 +12,9 @@ portraits of Pip and the settlers.
   `public/art/andromeda/`.
 - [art/tools/andromeda-models.ts](tools/andromeda-models.ts) holds the solid
   models in the [station](station.md) projection, culling and family: the
-  station's dock collar, mouth, lit floor strip, blue corner lights and
-  approach lights, and warm lit windows `#ffe9b8`.
+  station's closed collar, the settlements' and the courier school's dock
+  collars with their mouths, lit floor strips and blue corner lights, and warm
+  lit windows `#ffe9b8`.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
 - The space look adds a [backdrop haze](galaxies.md#backdrop-haze): two soft
@@ -36,28 +37,29 @@ scooter) and its `viewBox` is the frame in frame px. Manifest `width`
 and `height` are the frame, so pivots and docks are frame px; `displayWidth`
 and `displayHeight` equal the SVG's intrinsic size.
 
-| Asset              | Ids                                                                         | Frame px | Display       | Pivot           |
-| ------------------ | --------------------------------------------------------------------------- | -------- | ------------- | --------------- |
-| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 176 | 94.5 by 115.5 | `(0.5, 0.5)`    |
-| Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 52.5 by 52.5  | `(0.5, 0.4375)` |
-| Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 42 by 52.5    | `(0.5, 0.6)`    |
-| Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 31.5 by 42    | `(0.5, 0.75)`   |
-| Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35            | `(0.5, 0.5)`    |
-| Courier school     | `station-settlers-school-a`, `-b`                                           | 64, 96   | 42 by 63      | `(0.5, 0.3125)` |
-| Spare beacon       | `beacon-guide-spare-a`, `-b`                                                | 48, 64   | 31.5 by 42    | `(0.5, 0.625)`  |
+| Asset              | Ids                                                                         | Frame px | Display      | Pivot           |
+| ------------------ | --------------------------------------------------------------------------- | -------- | ------------ | --------------- |
+| Settlers' station  | `station-settlers-a`, `station-settlers-b`                                  | 144, 160 | 94.5 by 105  | `(0.5, 0.5125)` |
+| Hamlet             | `outpost-hamlet-a`, `outpost-hamlet-b`                                      | 80, 80   | 52.5 by 52.5 | `(0.5, 0.4375)` |
+| Lamp house         | `outpost-lamphouse-a`, `outpost-lamphouse-b`                                | 64, 80   | 42 by 52.5   | `(0.5, 0.6)`    |
+| Guide beacon       | `beacon-guide-lit-{a,b}`, `beacon-guide-dented`, `beacon-guide-relit-{a,b}` | 48, 64   | 31.5 by 42   | `(0.5, 0.75)`   |
+| Pip's mail scooter | `craft-pip-{0..15}`                                                         | 80       | 35           | `(0.5, 0.5)`    |
+| Courier school     | `station-settlers-school-a`, `-b`                                           | 64, 96   | 42 by 63     | `(0.5, 0.3125)` |
+| Spare beacon       | `beacon-guide-spare-a`, `-b`                                                | 48, 64   | 31.5 by 42   | `(0.5, 0.625)`  |
 
 ## Settlers' station
 
 Every Andromeda station is a settlers' station: Tech draws
 `station-settlers-a` and `-b` in place of the trading station's `station-a`
-and `-b` for every station in Andromeda, with the trading station's dock,
-shop and blink. Entries carry `station` `settlers`.
+and `-b` for every station in Andromeda, with the trading station's shop and
+blink. Ada enters it by Use, so it has no `dock`. Entries carry `station`
+`settlers`.
 
 A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
 
 - Pearl deck `#e4e2ef` (sides `#a9a6c2`) with a lighter inset top `#d6d3e6`
   and warm rim lamps on the facing rim.
-- Six cottages around the deck, clear of the dock axis: cream walls `#efe4cf`
+- Six cottages around the deck, clear of the arm: cream walls `#efe4cf`
   (sides `#bfae94`) with warm windows and two-step slate-blue roofs `#8d94c4`
   (sides `#5f6594`).
 - A striped lighthouse at the centre: a pearl tower with two marker-dark bands
@@ -65,28 +67,15 @@ A lantern station on a pearl deck 104 units across (2.4 Ada wingspans):
   with a white core, a slate-blue cap and a mast with the blue beacon.
 - A cream post depot with a periwinkle sign band, and two slate tanks
   `#8d9bb0` behind.
-- The family dock arm toward the viewer ending in a cream collar, as on the
-  trading station.
+- The family arm toward the viewer ending in a closed cream collar with two
+  warm windows, as on the trading station.
 
-### Dock and blink
+### Blink
 
-| Field              | Value                                       |
-| ------------------ | ------------------------------------------- |
-| `facing`           | `fixed`                                     |
-| `frameMs`          | 700                                         |
-| `dock.x`, `dock.y` | Dock entrance in frame px: `(72, 151.64)`   |
-| `dock.outward`     | `[0, 1]`: the dock opens toward screen-down |
-| `dock.width`       | Mouth width in frame px: 36.742             |
-
-- The dock is live, in the trading station's schema: the mouth's centre on
-  the world plane, 90 units along the dock axis, 63.64 frame px (41.76
-  display px) below the pivot. Ada enters moving screen-up, opposite
-  `dock.outward`. Scale frame px by the display size like any other manifest
-  value.
-- Frame A lights the dock corner lights, the mast beacon and the rim lamps, and
-  the lantern shows `#b8c1ff` with its white core; frame B lights the
-  approach-light pairs, dims the lantern to `#8f9cf0` and the rim lamps to
-  `#a08f78`. Unlit blue lights use `#3f5878`. Reduced motion shows frame A.
+`facing` `fixed`, `frameMs` 700. Frame A lights the mast beacon, the rim lamps
+and the collar windows, and the lantern shows `#b8c1ff` with its white core;
+frame B shows the beacon unlit `#3f5878`, dims the lantern to `#8f9cf0` and
+the rim lamps and collar windows to `#a08f78`. Reduced motion shows frame A.
 
 ## Settlements
 
@@ -102,15 +91,15 @@ assigns a design to each settlement. Fixed orientation, the station blink
 - Lamp house: a pearl float 44 units across with a tall cream house under a
   rooftop marker lantern, a shed, a slate mailbox post with a periwinkle box
   and a small dock collar.
-- Frame A lights the dock corner lights and the marker lamps; frame B the
-  approach lights, with the lamps at `#4a5080`.
+- Frame A lights the dock corner lights and the marker lamps; frame B dims the
+  corner lights to `#3f5878` and the lamps to `#4a5080`.
 
 | Variant     | Dock `(x, y)`  | Dock width | Below the pivot |
 | ----------- | -------------- | ---------: | --------------: |
 | `hamlet`    | `(40, 59.042)` |     22.045 |          24.042 |
 | `lamphouse` | `(32, 69.213)` |     19.596 |          21.213 |
 
-Dock values are frame px with `outward` `[0, 1]`, in the station's dock
+Dock values are frame px with `outward` `[0, 1]`, in the outposts' dock
 schema.
 
 ## Guide beacons

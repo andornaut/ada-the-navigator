@@ -31,7 +31,6 @@ import {
 import { round } from "./projection.ts";
 import {
   along,
-  approachLights,
   BLINK_MS,
   blue,
   blueDim,
@@ -39,7 +38,7 @@ import {
   DESTINATION_SCALE,
   DISPLAY_SCALE,
   DOCK,
-  dockCollar,
+  closedCollar,
   facing,
   ngon,
   orientedBox,
@@ -51,7 +50,6 @@ import {
 
 // Dock face and mouth, model units from the hub centre on the dock axis.
 const DOCK_FACE = 72;
-const DOCK_MOUTH = 24;
 // Berths: the loom's outer post (left) and the mooring post or, with the hall, the hall's end
 // (right). Berth points sit on the world plane just beyond each.
 const BERTH_WIDTH = 20;
@@ -277,9 +275,8 @@ function station(lit: boolean, hall: boolean): Part[][] {
   groups.push([
     { plan: arm, z0: 1, z1: 10, top: pearl, side: pearlSide },
     ...wallWindows((a, b) => a + b > -0.2 && Math.abs(a - b) > 0.5, 4, 7, 2, 2.6, arm),
-    ...dockCollar(lit, DOCK_FACE, DOCK_MOUTH, 34, pearl, pearlSide, 14),
+    ...closedCollar(lit, DOCK_FACE, 34, pearl, pearlSide, 14),
   ]);
-  groups.push(approachLights(lit, DOCK_FACE));
   return groups;
 }
 
@@ -294,7 +291,6 @@ const frame: Layout = layout(
 mkdirSync(OUT, { recursive: true });
 const entries = Object.entries(variants).flatMap(([variant, hall]) => {
   const name = hall ? "station-hall" : "station";
-  const dock = dockAt(frame, DOCK, DOCK_FACE, DOCK_MOUTH);
   const berths = BERTHS[variant as keyof typeof BERTHS].map(([angle, face]) =>
     dockAt(frame, angle, face, BERTH_WIDTH),
   );
@@ -321,7 +317,6 @@ const entries = Object.entries(variants).flatMap(([variant, hall]) => {
       facing: "fixed",
       pivot: { x: 0.5, y: frame.above / frame.height },
       frameMs: BLINK_MS,
-      dock,
       berths,
       destination: "station",
       variant: hall ? "loom-hall" : "base",

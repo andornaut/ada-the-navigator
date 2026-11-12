@@ -22,7 +22,6 @@ import {
 } from "./projection.ts";
 import {
   along,
-  approachLights,
   at,
   BLINK_MS,
   blue,
@@ -33,6 +32,7 @@ import {
   DISPLAY_SCALE,
   HUB_SCALE,
   DOCK,
+  closedCollar,
   dockCollar,
   type Face,
   facing,
@@ -123,7 +123,6 @@ function lamp(x: number, y: number, z0: number, size: number, color: string): Pa
 // A slate collection tower with an open ore hopper on a round cream deck, two banded silos
 // behind, and three docking piers fanned toward the viewer: the live dock and two free berths.
 const PIER_FACE = 115;
-const PIER_MOUTH = 40;
 const SIDE_FACE = 99;
 const SIDE_MOUTH = 23;
 const SPREAD = 0.95;
@@ -291,9 +290,8 @@ function hubParts(lit: boolean, { repaired }: HubState): Part[][] {
   }
   groups.push([
     { plan: orientedBox(...at(87, 0), DOCK, 50, 25), z0: 1.5, z1: 14, top: cream, side: creamSide },
-    ...dockCollar(lit, PIER_FACE, PIER_MOUTH, 56, slate, slateSide, 21.7),
+    ...closedCollar(lit, PIER_FACE, 56, slate, slateSide, 21.7),
   ]);
-  groups.push(approachLights(lit, PIER_FACE));
   return groups;
 }
 
@@ -944,13 +942,11 @@ for (const item of [hubWorn, hubRepaired, hubBay]) {
 }
 writeFixed(output, buoyFrame, buoy);
 
-const liveDock = dockAt(hubFrame, DOCK, PIER_FACE, PIER_MOUTH);
 // Free berths left then right on screen.
 const berths = [1, -1].map((s) => dockAt(hubFrame, DOCK + s * SPREAD, SIDE_FACE, SIDE_MOUTH));
 const hubEntries = [
   ...(["a", "b"] as const).map((letter) =>
     fixedEntry(hubFrame, hubWorn, letter, {
-      dock: liveDock,
       berths,
       destination: "hub",
       variant: "worn",
@@ -958,7 +954,6 @@ const hubEntries = [
   ),
   ...(["a", "b"] as const).map((letter) =>
     fixedEntry(hubFrame, hubRepaired, letter, {
-      dock: liveDock,
       berths,
       destination: "hub",
       variant: "repaired",

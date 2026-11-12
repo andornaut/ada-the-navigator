@@ -17,8 +17,8 @@ The three sector one cooperating outposts: growers, a workshop and salvagers.
 
 - Solid models in the [station](station.md) projection, culling and family:
   cream structure `#efe4cf` (sides `#bfae94`), warm lit windows `#ffe9b8`, and
-  the station's dock collar, mouth, lit floor strip, blue corner lights and two
-  approach-light pairs. Fixed orientation: no headings and no screen rotation.
+  a decorative dock collar, mouth, lit floor strip, blue corner lights and two
+  approach-light pairs: Ada uses an outpost without docking. Fixed orientation: no headings and no screen rotation.
 - Each outpost is identified by its silhouette and colours alone. No labels,
   signs or text are drawn on or beside it.
 

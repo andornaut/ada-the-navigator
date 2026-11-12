@@ -47,25 +47,27 @@
 ## Hub
 
 A slate collection tower with an open ore hopper on a round cream deck, two
-banded silos behind and three docking piers fanned toward the viewer: the live
-dock facing screen-down and a free berth on each side.
+banded silos behind and three piers fanned toward the viewer: the front pier,
+facing screen-down, ends in a closed slate collar with two warm windows, and a
+free berth for the story craft opens on each side. Ada uses the hub as a
+station, by Use, so it has no `dock`.
 
-- Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700,
-  `dock` and the station's blink (A lights the dock corner lights and the mast
-  beacon, B the approach lights; unlit blue `#3f5878`). Reduced motion shows A.
+- Fixed orientation in the station schema: `facing` `fixed`, `frameMs` 700
+  and the station's blink (A lights the berths' corner lights, the mast beacon
+  and the front collar's windows, B dims them; unlit blue `#3f5878`). Reduced
+  motion shows A.
 - The pivot is the deck centre on the world plane. Entries carry
   `destination` `hub` and `variant` (`worn` or `repaired`), not `outpost`, so
   the sector one outpost reader does not pick them up.
-- `dock` is the live dock: `(120, 216.317)`, width 48.99, outward `[0, 1]`.
 - `berths` lists the free berths left then right on screen, each in the dock
   schema with its own outward screen direction: `(21.374, 175.72)` outward
   `[-0.924, 0.382]` and `(218.626, 175.72)` outward `[0.924, 0.382]`, width
   28.169. A craft docks moving opposite `outward`.
-- A docked craft holds just outside its dock: its pivot sits on the dock or
-  berth point moved along `outward` by the craft's
+- A docked craft holds just outside its berth: its pivot sits on the berth
+  point moved along `outward` by the craft's
   [`nose[k].distance`](#nose) for its docking heading `k`, so the nose meets
-  the dock face and the pier stays visible. The same rule holds at the second
-  bay's berth.
+  the berth's face and the pier stays visible. The same rule holds at the
+  second bay's berth.
 
 ### Worn and repaired
 
@@ -81,7 +83,7 @@ The hub looks worn but working until the Hub repairs project is funded.
 
 ## World changes
 
-Both project changes keep the hub's frame, pivot, live dock and berths.
+Both project changes keep the hub's frame, pivot and berths.
 
 - Hub repairs (`project` `hub-repairs`): a replacement pair. Draw
   `outpost-hub-repaired-a` and `-b` in place of `outpost-hub-a` and `-b`.

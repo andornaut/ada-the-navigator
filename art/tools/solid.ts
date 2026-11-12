@@ -171,24 +171,37 @@ export function dockCollar(
   ];
 }
 
-// Two approach-light pairs in front of the mouth blink opposite the corner lights.
-export function approachLights(lit: boolean, face: number, angle = DOCK, offset = 0): Part[] {
-  const approach = lit ? blueDim : blue;
+// A closed collar where a dock mouth was: the collar block with no mouth, floor or corner lights,
+// and two warm windows on its face, so the hull reads as finished. `angle` is the collar's outward
+// axis and `offset` shifts it sideways, as for dockCollar.
+export function closedCollar(
+  lit: boolean,
+  face: number,
+  collarWidth: number,
+  collarTop: string,
+  collarSide: string,
+  height: number,
+  angle = DOCK,
+  offset = 0,
+): Part[] {
+  const p = (distance: number, across: number) => along(angle, distance, across + offset);
+  const window = lit ? warm : "#a08f78";
   return [
-    [face + 14, 9],
-    [face + 28, 6.5],
-  ].flatMap(([distance, across]) =>
-    [-1, 1].map((side): Part => {
-      const [lx, ly] = along(angle, distance!, side * across! + offset);
-      return {
-        plan: box(lx - 2, ly - 2, lx + 2, ly + 2),
-        z0: 5,
-        z1: 7.5,
-        top: approach,
-        side: approach,
-      };
-    }),
-  );
+    {
+      plan: orientedBox(...p(face - 4, 0), angle, 8, collarWidth),
+      z0: -3,
+      z1: height + 4,
+      top: collarTop,
+      side: collarSide,
+    },
+    ...[-1, 1].map((side): Part => ({
+      plan: orientedBox(...p(face + 0.3, side * collarWidth * 0.22), angle, 0.6, collarWidth * 0.22),
+      z0: height * 0.4,
+      z1: height * 0.75,
+      top: window,
+      side: window,
+    })),
+  ];
 }
 
 // Visible sides in plan order, then the top. Without `view` the points are the model's own.

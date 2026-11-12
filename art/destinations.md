@@ -67,10 +67,9 @@ space stroke):
   0.5 or more over all its blink frames, at its scaled display size. Tech
   derives the top at load from the frames' drawn alpha; the table below lists
   it for checking. The callout never overlaps the destination it marks.
-- **Symbols**: Talk at outposts, settlements and story places, and Deliver,
-  Deposit, Tow or Salvage wherever Gameplay's Use acts so; the station's action
-  is Dock. Dock's symbol joins the Use disc set when its design is approved;
-  until then a station's callout has no symbol entry.
+- **Symbols**: the Use disc's symbol for the action Use performs there: Dock
+  at every station, Talk at outposts, settlements and story places, and
+  Deliver, Deposit, Tow or Salvage wherever Gameplay's Use acts so.
 - **Contrast**: the cream symbol is 9.59:1 on the navy face; the face is
   8.40:1 on Sunflower's sand and the ink edge 10.90:1 there; the cream rim is
   10.17:1 on Andromeda's field and above 10:1 on every dark field. The callout
@@ -82,30 +81,32 @@ space stroke):
 
 ## Collision, silhouette, dock and clearance
 
-Destinations stay pass-through and carry no `collision`. Their silhouette,
-dock point and mouth circle grow with the scale, linearly; nothing else
-changes. Display px from the pivot; world units through the game's projection
+Destinations stay pass-through and carry no `collision`. Their silhouette and
+the outposts' and settlements' decorative dock points and mouths grow with the
+scale, linearly; nothing else changes. Stations have no dock: Ada enters one by
+Use, the Dock action. Display px from the pivot; world units through the game's projection
 `(x - y, (x + y) / 2)`. Silhouette radius is frame A and the top is over every blink frame, at the
 display size, measured at 4 times; the earlier radius is the same divided by
 the scale.
 
-| Asset             | Scale | Display          | Silhouette radius (was) | Top above pivot | Dock world offset | Mouth circle radius (was) |
-| ----------------- | ----: | ---------------- | ----------------------: | --------------: | ----------------- | ------------------------: |
-| Trading station   |   1.5 | 118.125 by 105   |             56.4 (37.6) |            42.3 | (40.835, 40.835)  |             8.809 (5.873) |
-| Growers           |   1.5 | 94.5 by 78.75    |             44.2 (29.5) |            28.5 | (28.771, 28.771)  |             7.388 (4.925) |
-| Workshop          |   1.5 | 111.563 by 78.75 |             71.6 (47.7) |            50.2 | (11.137, 11.137)  |              6.82 (4.547) |
-| Salvagers         |   1.5 | 110.25 by 72.188 |             52.4 (34.9) |            26.2 | (25.058, 25.058)  |             7.388 (4.925) |
-| Cartwheel hub     |  1.25 | 131.25 by 131.25 |             70.5 (56.4) |            70.6 | (44.47, 44.47)    |             9.472 (7.578) |
-| Settlers' station |   1.5 | 94.5 by 115.5    |             52.9 (35.3) |            50.5 | (41.764, 41.764)  |             8.525 (5.683) |
-| Hamlet            |   1.5 | 52.5 by 52.5     |             21.8 (14.5) |            20.2 | (15.778, 15.778)  |              5.115 (3.41) |
-| Lamp house        |   1.5 | 42 by 52.5       |             28.6 (19.1) |            28.5 | (13.921, 13.921)  |             4.547 (3.031) |
-| Dark beacon       |   1.5 | 31.5 by 42       |             27.8 (18.5) |            27.2 | none              |                      none |
-| Weavers' station  |   1.5 | 210 by 94.5      |            105.9 (70.6) |            39.2 | (33.411, 33.411)  |              6.82 (4.547) |
+| Asset             | Scale | Display           | Silhouette radius (was) | Top above pivot | Dock world offset    | Mouth circle radius (was) |
+| ----------------- | ----: | ----------------- | ----------------------: | --------------: | -------------------- | ------------------------: |
+| Trading station   |   1.5 | 118.125 by 98.438 |             56.4 (37.6) |            42.3 | none, entered by Use |                      none |
+| Growers           |   1.5 | 94.5 by 78.75     |             44.2 (29.5) |            28.5 | (28.771, 28.771)     |             7.388 (4.925) |
+| Workshop          |   1.5 | 111.563 by 78.75  |             71.6 (47.7) |            50.2 | (11.137, 11.137)     |              6.82 (4.547) |
+| Salvagers         |   1.5 | 110.25 by 72.188  |             52.4 (34.9) |            26.2 | (25.058, 25.058)     |             7.388 (4.925) |
+| Cartwheel hub     |  1.25 | 131.25 by 131.25  |             70.5 (56.4) |            70.6 | none, entered by Use |                      none |
+| Settlers' station |   1.5 | 94.5 by 105       |             50.4 (33.6) |            50.6 | none, entered by Use |                      none |
+| Hamlet            |   1.5 | 52.5 by 52.5      |             21.8 (14.5) |            20.2 | (15.778, 15.778)     |              5.115 (3.41) |
+| Lamp house        |   1.5 | 42 by 52.5        |             28.6 (19.1) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
+| Dark beacon       |   1.5 | 31.5 by 42        |             27.8 (18.5) |            27.2 | none                 |                      none |
+| Weavers' station  |   1.5 | 210 by 84         |            105.9 (70.6) |            39.2 | none, entered by Use |                      none |
 
 - **Use range**: 160 world units from the centre still reaches past every
   drawn edge; the closest is the Weavers' station, 54 past its silhouette.
-- **Docking**: Gameplay's mouth circle times `dockForgiveness` 3 grows with
-  the mouth, for the trading station from 17.62 to 26.43.
+- **Stations**: no dock point, mouth or mouth circle; the closed collars carry
+  no docking contact. The story craft's mouths stay: the hub's two berths and
+  its second bay, the Weavers' station's berths and the courier school's pier.
 - **Clearance**: every rule stated as an object's silhouette radius plus a
   margin (large rocks keep theirs plus 160 clear of stations, destinations and
   launch points) grows by the radius increase in the table, for example 18.8 for
@@ -115,8 +116,7 @@ the scale.
   fills the 30 px from 3 to 33 px above a destination's top and is pass-through.
 - **Story craft at the hub**: the hub's berths and the second bay's berth, in
   world units from the hub pivot at 1.25: left (-4.699, 49.237), right
-  (49.237, -4.699), bay (30.315, 68.55); the live dock (44.47, 44.47). The
-  mooring buoy stays at 1, so its moorings are unchanged. The Weavers'
+  (49.237, -4.699), bay (30.315, 68.55). The mooring buoy stays at 1, so its moorings are unchanged. The Weavers'
   station's berths at 1.5: (-52.243, 52.243) and (29.738, -29.738), the Loom
   hall's second (45.813, -45.813).
 - Black Eye's Blurb settlements, on their own branch, take the destination

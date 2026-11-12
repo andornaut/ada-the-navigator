@@ -581,18 +581,21 @@ is authored, measured, and moved by a whole-px shift, leaving at most 0.5 px.
 The coordinates below already include the shift, which the ring's 1 px growth
 on press never moves.
 
-| Action  | Layers (cores; frame px)                                                                                                                                                                                                 | Shift  | Bounds after the shift   | Offset       |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------ | ------------ |
-| Talk    | Chibi's three dots: discs of radius 4 at (28.5, 37.5), (37.5, 37.5) and (46.5, 37.5)                                                                                                                                     | 0, 0   | 23.5, 32.5 to 51.5, 42.5 | 0, 0         |
-| Deliver | Strokes 3: the parcel (22, 30), (39, 30), (39, 45), (22, 45), (22, 30); its strap (30.5, 30) to (30.5, 45); the arrow (43, 37.5) to (52, 37.5) and its head (48, 33), (52.5, 37.5), (48, 42)                             | -1, -1 | 19.5, 27.5 to 55, 47.5   | -0.25, 0     |
-| Deposit | Strokes 3: the arrow (37.5, 23) to (37.5, 42) and its head (32.5, 37), (37.5, 42), (42.5, 37); the hopper (25, 41), (25, 53), (50, 53), (50, 41)                                                                         | 0, +2  | 22.5, 20.5 to 52.5, 55.5 | 0, +0.5      |
-| Tow     | The eye: a ring from radius 2.5 to 4 at (42.5, 24). Stroke 3: the shank (42.5, 28.5) to (42.5, 48), the hook's arc about (36.5, 48), radius 6, from 0 to 180 degrees through (36.5, 54), then up to (30.5, 43)           | +5, +7 | 28, 19 to 47.5, 56.5     | +0.25, +0.25 |
-| Salvage | Stroke 4: the magnet (29, 27) to (29, 40), the arc about (37.5, 40), radius 8.5, from 180 to 0 degrees through (37.5, 48.5), then up to (46, 27); the pole gaps: ink rects 25 to 33 and 42 to 50 across, 31.5 to 33 down | 0, +4  | 25, 24 to 50, 51.5       | 0, +0.25     |
-| Use     | A ring from radius 6 to 10 and a disc of radius 3, both at (37.5, 37.5)                                                                                                                                                  | 0, 0   | 26.5, 26.5 to 48.5, 48.5 | 0, 0         |
+| Action  | Layers (cores; frame px)                                                                                                                                                                                                                                                        | Shift  | Bounds after the shift   | Offset       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------ | ------------ |
+| Talk    | Chibi's three dots: discs of radius 4 at (28.5, 37.5), (37.5, 37.5) and (46.5, 37.5)                                                                                                                                                                                            | 0, 0   | 23.5, 32.5 to 51.5, 42.5 | 0, 0         |
+| Deliver | Strokes 3: the parcel (22, 30), (39, 30), (39, 45), (22, 45), (22, 30); its strap (30.5, 30) to (30.5, 45); the arrow (43, 37.5) to (52, 37.5) and its head (48, 33), (52.5, 37.5), (48, 42)                                                                                    | -1, -1 | 19.5, 27.5 to 55, 47.5   | -0.25, 0     |
+| Deposit | Strokes 3: the arrow (37.5, 23) to (37.5, 42) and its head (32.5, 37), (37.5, 42), (42.5, 37); the hopper (25, 41), (25, 53), (50, 53), (50, 41)                                                                                                                                | 0, +2  | 22.5, 20.5 to 52.5, 55.5 | 0, +0.5      |
+| Tow     | The eye: a ring from radius 2.5 to 4 at (42.5, 24). Stroke 3: the shank (42.5, 28.5) to (42.5, 48), the hook's arc about (36.5, 48), radius 6, from 0 to 180 degrees through (36.5, 54), then up to (30.5, 43)                                                                  | +5, +7 | 28, 19 to 47.5, 56.5     | +0.25, +0.25 |
+| Salvage | Stroke 4: the magnet (29, 27) to (29, 40), the arc about (37.5, 40), radius 8.5, from 180 to 0 degrees through (37.5, 48.5), then up to (46, 27); the pole gaps: ink rects 25 to 33 and 42 to 50 across, 31.5 to 33 down                                                        | 0, +4  | 25, 24 to 50, 51.5       | 0, +0.25     |
+| Use     | A ring from radius 6 to 10 and a disc of radius 3, both at (37.5, 37.5)                                                                                                                                                                                                         | 0, 0   | 26.5, 26.5 to 48.5, 48.5 | 0, 0         |
+| Dock    | Stroke 3: the hangar arch (24, 53) up to (24, 36), the arc about (37.5, 36), radius 13.5, from 180 to 360 degrees through (37.5, 22.5), then down to (51, 53). The ship: a filled polygon (37.5, 31), (45, 49), (37.5, 44.5), (30, 49), its ink the polygon's outline stroked 2 | 0, -2  | 21.5, 20 to 53.5, 55.5   | 0, +0.25     |
 
 Arcs are 24 segments, angles clockwise from the +x axis with y down. Every
 symbol fits inside the ring's 31.5 inner edge with room to spare (the farthest
-bounds corner, at Deposit's, is 23.43 from the centre). The ink edges carry each mark on any
+bounds corner, at Dock's, is 24.08 from the centre). Dock, the station's
+action, reads as flying into a hangar: a filled ship under a round arch, apart
+from Deposit's line arrow into a square hopper. The ink edges carry each mark on any
 field, Sunflower's light one included, as Chibi's do: no light-field outline is
 added.
 

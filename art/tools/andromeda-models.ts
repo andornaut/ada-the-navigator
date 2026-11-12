@@ -4,13 +4,13 @@
 import { tiers } from "./cartwheel-craft.ts";
 import {
   along,
-  approachLights,
   blue,
   blueDim,
   box,
   cream,
   creamSide,
   DOCK,
+  closedCollar,
   dockCollar,
   facing,
   ngon,
@@ -119,7 +119,7 @@ export const SCHOOL_LEVELS = [4.6] as const;
 export const SETTLEMENT_LEVELS = [5.6] as const;
 
 // The live dock: mouth width and face distance on the dock axis, as on the trading station.
-export const STATION = { deckR: 52, dockFace: 90, mouth: 30, collar: 42, height: 16 } as const;
+export const STATION = { deckR: 52, dockFace: 90, collar: 42, height: 16 } as const;
 
 // A lantern station: a pearl deck ringed by cottages, a striped lighthouse whose lantern carries
 // the galaxy marker, a post depot, two tanks and the family dock arm toward the viewer.
@@ -246,17 +246,8 @@ export function station(lit: boolean): Part[][] {
   groups.push([
     { plan: arm, z0: 1, z1: 11, top: a.pearl, side: a.pearlSide },
     ...wallWindows((nx, ny) => nx + ny > -0.2 && Math.abs(nx - ny) > 0.5, 5, 8, 2, 2.6, arm),
-    ...dockCollar(
-      lit,
-      STATION.dockFace,
-      STATION.mouth,
-      STATION.collar,
-      cream,
-      creamSide,
-      STATION.height,
-    ),
+    ...closedCollar(lit, STATION.dockFace, STATION.collar, cream, creamSide, STATION.height),
   ]);
-  groups.push(approachLights(lit, STATION.dockFace));
   return groups;
 }
 

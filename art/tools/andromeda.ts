@@ -157,9 +157,8 @@ const station = pair(
 );
 const stationFrame = layout(allFaces(station));
 for (const item of station) writeFixed(stationFrame, item);
-const stationDock = dockAt(stationFrame, m.STATION.dockFace, m.STATION.mouth);
 const stationEntries = station.map((item) =>
-  fixedEntry(stationFrame, item, { dock: stationDock, station: "settlers" }),
+  fixedEntry(stationFrame, item, { station: "settlers" }),
 );
 replaceEntries(
   "andromeda",

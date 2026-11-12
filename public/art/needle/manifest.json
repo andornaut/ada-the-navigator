@@ -5,31 +5,25 @@
       "id": "needle-station-a",
       "path": "/art/needle/station-a.svg",
       "width": 320,
-      "height": 144,
+      "height": 128,
       "displayWidth": 210,
-      "displayHeight": 94.5,
+      "displayHeight": 84,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
       "frameMs": 700,
-      "dock": {
-        "x": 160,
-        "y": 122.912,
-        "outward": [0, 1],
-        "width": 29.394
-      },
       "berths": [
         {
           "x": 0.783,
-          "y": 72,
+          "y": 64,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
           "x": 250.631,
-          "y": 72,
+          "y": 64,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -41,31 +35,25 @@
       "id": "needle-station-b",
       "path": "/art/needle/station-b.svg",
       "width": 320,
-      "height": 144,
+      "height": 128,
       "displayWidth": 210,
-      "displayHeight": 94.5,
+      "displayHeight": 84,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
       "frameMs": 700,
-      "dock": {
-        "x": 160,
-        "y": 122.912,
-        "outward": [0, 1],
-        "width": 29.394
-      },
       "berths": [
         {
           "x": 0.783,
-          "y": 72,
+          "y": 64,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
           "x": 250.631,
-          "y": 72,
+          "y": 64,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -77,31 +65,25 @@
       "id": "needle-station-hall-a",
       "path": "/art/needle/station-hall-a.svg",
       "width": 320,
-      "height": 144,
+      "height": 128,
       "displayWidth": 210,
-      "displayHeight": 94.5,
+      "displayHeight": 84,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
       "frameMs": 700,
-      "dock": {
-        "x": 160,
-        "y": 122.912,
-        "outward": [0, 1],
-        "width": 29.394
-      },
       "berths": [
         {
           "x": 0.783,
-          "y": 72,
+          "y": 64,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
           "x": 299.621,
-          "y": 72,
+          "y": 64,
           "outward": [1, 0],
           "width": 24.495
         }
@@ -114,31 +96,25 @@
       "id": "needle-station-hall-b",
       "path": "/art/needle/station-hall-b.svg",
       "width": 320,
-      "height": 144,
+      "height": 128,
       "displayWidth": 210,
-      "displayHeight": 94.5,
+      "displayHeight": 84,
       "facing": "fixed",
       "pivot": {
         "x": 0.5,
         "y": 0.5
       },
       "frameMs": 700,
-      "dock": {
-        "x": 160,
-        "y": 122.912,
-        "outward": [0, 1],
-        "width": 29.394
-      },
       "berths": [
         {
           "x": 0.783,
-          "y": 72,
+          "y": 64,
           "outward": [-1, 0],
           "width": 24.495
         },
         {
           "x": 299.621,
-          "y": 72,
+          "y": 64,
           "outward": [1, 0],
           "width": 24.495
         }

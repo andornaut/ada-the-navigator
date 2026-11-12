@@ -13,8 +13,6 @@ import {
   DESTINATION_SCALE,
   DISPLAY_SCALE,
   DOCK,
-  mouth,
-  mouthInner,
   ngon,
   orientedBox,
   type Part,
@@ -43,7 +41,6 @@ const blueDimSide = "#33475f";
 const R_IN = 54;
 const R_OUT = 65;
 const DOCK_FACE = 88;
-const DOCK_MOUTH = 31;
 
 // Groups draw far to near by their first part; parts inside a group keep list order.
 function model(lit: boolean): Part[][] {
@@ -117,69 +114,26 @@ function model(lit: boolean): Part[][] {
     },
   ]);
 
-  // Dock: arm toward the viewer, cream collar, dark mouth, lit floor and blue frame lights.
+  // The arm toward the viewer ends in a closed cream collar with two warm windows.
   const [ux, uy] = [Math.cos(DOCK), Math.sin(DOCK)];
   const [vx, vy] = [-uy, ux];
   const at = (distance: number, across: number) =>
     [ux * distance + vx * across, uy * distance + vy * across] as const;
   const armMid = (R_OUT - 2 + 80) / 2;
   const arm = orientedBox(...at(armMid, 0), DOCK, 80 - (R_OUT - 2), 20);
-  const frameLight = lit ? blue : blueDim;
   groups.push([
     { plan: arm, z0: 1, z1: 11, top: hub, side: hubSide },
     ...wallWindows((nx, ny) => nx + ny > -0.2 && Math.abs(nx - ny) > 0.5, 5, 8, 2, 2.6, arm),
     { plan: orientedBox(...at(84, 0), DOCK, 8, 42), z0: -3, z1: 20, top: cream, side: creamSide },
-    {
-      plan: orientedBox(...at(DOCK_FACE + 0.3, 0), DOCK, 0.6, DOCK_MOUTH),
-      z0: 0,
-      z1: 16,
-      top: mouth,
-      side: mouth,
-    },
-    {
-      plan: orientedBox(...at(DOCK_FACE + 0.6, 0), DOCK, 0.6, 22),
-      z0: 3.5,
-      z1: 12.5,
-      top: mouthInner,
-      side: mouthInner,
-    },
-    {
-      plan: orientedBox(...at(DOCK_FACE + 0.9, 0), DOCK, 0.6, 24),
-      z0: 0.6,
-      z1: 2.2,
-      top: warm,
-      side: warm,
-    },
-    ...[-1, 1].flatMap((side) =>
-      [1.5, 14.5].map((z): Part => ({
-        plan: orientedBox(...at(DOCK_FACE + 0.9, side * 18.5), DOCK, 1.4, 3.6),
-        z0: z - 1.8,
-        z1: z + 1.8,
-        top: frameLight,
-        side: frameLight,
-      })),
-    ),
+    ...[-1, 1].map((side): Part => ({
+      plan: orientedBox(...at(DOCK_FACE + 0.3, side * 9.2), DOCK, 0.6, 9.2),
+      z0: 6,
+      z1: 12,
+      top: lit ? warm : "#a08f78",
+      side: lit ? warm : "#a08f78",
+    })),
   ]);
 
-  // Approach-light pairs in front of the mouth blink opposite the frame lights.
-  const approach = lit ? blueDim : blue;
-  groups.push(
-    [
-      [102, 10],
-      [118, 7],
-    ].flatMap(([distance, across]) =>
-      [-1, 1].map((side): Part => {
-        const [lx, ly] = at(distance!, side * across!);
-        return {
-          plan: box(lx - 2, ly - 2, lx + 2, ly + 2),
-          z0: 5,
-          z1: 7.5,
-          top: approach,
-          side: approach,
-        };
-      }),
-    ),
-  );
   return groups;
 }
 
@@ -215,19 +169,6 @@ function svg(frame: "a" | "b"): string {
   ].join("\n");
 }
 
-// Dock entrance: the mouth's centre on the z = 0 plane, opening toward screen-down.
-const [entranceX, entranceY] = projectAt(halfWidth, above, [
-  Math.cos(DOCK) * DOCK_FACE,
-  Math.sin(DOCK) * DOCK_FACE,
-  0,
-]);
-const dock = {
-  x: round(entranceX),
-  y: round(entranceY),
-  outward: [0, 1],
-  width: round((DOCK_MOUTH * Math.sqrt(3)) / Math.SQRT2),
-};
-
 const entries = (["a", "b"] as const).map((frame) => ({
   id: `station-${frame}`,
   path: `/art/station-${frame}.svg`,
@@ -238,7 +179,6 @@ const entries = (["a", "b"] as const).map((frame) => ({
   facing: "fixed",
   pivot: { x: 0.5, y: above / height },
   frameMs: BLINK_MS,
-  dock,
 }));
 
 for (const frame of ["a", "b"] as const) {
