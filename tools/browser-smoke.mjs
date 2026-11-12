@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+import { SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
+
 const output = "/tmp/evidence";
 const storageKey = "ada-the-navigator.prototype.v1";
 const events = { errors: [], failedRequests: [], badResponses: [], checks: [] };
@@ -18,8 +20,6 @@ function logicalSize(canvas) {
   return { width: canvas.offsetWidth / fit, height: canvas.offsetHeight / fit };
 }
 
-// The whole run's limit. The canvas renders at its device-pixel backing in software GL.
-const SMOKE_LIMIT_SECONDS = 180;
 const watchdog = setTimeout(() => {
   save("events.json", events);
   save("result.json", {

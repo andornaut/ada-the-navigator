@@ -200,7 +200,9 @@ source. It prints an `ada-browser-UUID` name; collect that run with:
 node tools/browser-check.mjs collect ada-browser-UUID
 ```
 
-Exit 75 means the browser is still running. Collection saves browser and preview
+Exit 75 means the browser is still running. A run fails after 300 seconds
+(`tools/smoke-limit.mjs`), and its preview server stops 30 seconds later.
+Collection saves browser and preview
 logs, browser evidence and `verification.json` in `.check-results/<browser-name>/`
 before removing the browser and preview containers and their internal network.
 Evidence includes `desktop.png`, `phone.png`, `events.json` and `result.json`.

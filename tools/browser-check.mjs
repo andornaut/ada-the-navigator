@@ -16,6 +16,7 @@ import { relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { guard, snapshot } from "./checks.mjs";
+import { PREVIEW_MARGIN_SECONDS, SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const evidenceRoot = resolve(root, ".check-results");
@@ -317,7 +318,8 @@ function serve() {
     }
   });
   server.listen(4173, "0.0.0.0");
-  setTimeout(() => process.exit(0), 180000);
+  // The preview outlives the smoke's own limit, so the smoke always times out first.
+  setTimeout(() => process.exit(0), (SMOKE_LIMIT_SECONDS + PREVIEW_MARGIN_SECONDS) * 1000);
 }
 
 try {
