@@ -1895,8 +1895,8 @@ try {
     await page
       .locator(".ada-start button")
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.action)),
-    ["continue", "restart"],
-    "The start screen holds only Continue and Restart",
+    ["restart", "continue"],
+    "The start screen holds only Restart and Continue, in that order",
   );
   await page.locator('[data-action="continue"]').click();
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
