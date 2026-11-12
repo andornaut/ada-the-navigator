@@ -2651,8 +2651,12 @@ try {
       const idle = await page
         .waitForFunction(
           () => {
+            // Idle, or complete with its hold and fade over (the kit's complete state ends hidden).
             const bars = document.querySelectorAll(".progress-bar");
-            return bars.length === 1 && bars[0].hidden;
+            return (
+              bars.length === 1 &&
+              (bars[0].hidden || getComputedStyle(bars[0]).visibility === "hidden")
+            );
           },
           null,
           { timeout: 10000 },

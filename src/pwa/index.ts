@@ -244,14 +244,15 @@ export function exitGame(): void {
 // onState hears the forced update's state now, if known, and on each change. Outside the
 // production build, with no service worker, the state is "unavailable" at once.
 export function requireNewerVersion(onState: (state: RequiredUpdateState) => void): void {
+  const known = required;
   onRequired = onState;
+  if (known !== undefined) {
+    onState(known);
+  }
   if (offlinePlay) {
     offlinePlay.flow.requireNewer();
   } else {
     requiredUpdate("unavailable");
-  }
-  if (required !== undefined) {
-    onState(required);
   }
 }
 

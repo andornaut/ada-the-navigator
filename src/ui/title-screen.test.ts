@@ -82,8 +82,8 @@ describe("start screen style", () => {
     expect(root).toContain("z-index:4");
   });
 
-  it("places the ship, wordmark and actions from the game area's left edge, with no note", () => {
-    const { actions, ship, wordmark } = START_SCREEN;
+  it("places the ship, wordmark, actions and note from the game area's left edge", () => {
+    const { actions, note, ship, wordmark } = START_SCREEN;
     expect(rule(`.${START_SCREEN_CLASS} .ada-start-title`)).toContain(
       `left:${fromAreaLeft(wordmark.left)}`,
     );
@@ -98,6 +98,10 @@ describe("start screen style", () => {
     expect(rule(`.${START_SCREEN_CLASS} .ada-start-actions > button`)).toContain(
       `top:${units(actions.top)}`,
     );
-    expect(START_SCREEN_STYLE).not.toContain("ada-start-note");
+    // The note (only the forced update's message) is one body line centred on the game area.
+    const noteRule = rule(`.${START_SCREEN_CLASS} .ada-start-note`);
+    expect(noteRule).toContain(`left:${fromAreaLeft(note.centre)}`);
+    expect(noteRule).toContain(`top:${units(note.top)}`);
+    expect(noteRule).toContain("transform:translateX(-50%)");
   });
 });
