@@ -953,8 +953,8 @@ export class PrototypeScene extends Scene {
         }
         return refused;
       },
-      // Navigation lives in the Paused card; Travel here and Return to Earth refuse while Ada is
-      // in danger, and Back to title never does.
+      // Navigation lives in the Paused card; the local map's Travel here and Galaxies refuse while
+      // Ada is in danger, and Back to title never does.
       pause: {
         buttonLabel: PROTOTYPE.labels.pause ?? "",
         labels: {
@@ -1199,8 +1199,7 @@ export class PrototypeScene extends Scene {
       },
       // In flight, the local map it opened from; at boarding, Ada's room, as Earth.
       onClose: () => apply(() => this.model.closeGalaxyMap()),
-      // In flight Earth ends the flight with the jump home, as Return to Earth did; at boarding it
-      // is the room at once.
+      // In flight Earth ends the flight with the jump home; at boarding it is the room at once.
       onEarth: () => {
         if (this.model.galaxyMapShownInFlight) {
           leaveFlight(() => this.model.leaveCockpit());

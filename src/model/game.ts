@@ -848,8 +848,8 @@ export class GameModel {
   }
   /**
    * Returns the galaxy's held activity to its start: the guided calf goes back to its start spot
-   * and its hunter pack is placed again. Return to Earth, a shield-depletion jump, Drop and Back
-   * to title use it.
+   * and its hunter pack is placed again. Leaving the galaxy (the galaxy map's Earth or Jump), a
+   * shield-depletion jump, Drop and Back to title use it.
    */
   resetActivity(sector: SectorId): void {
     const f = this.state.flight;
@@ -965,8 +965,8 @@ export class GameModel {
   }
   /**
    * Back to title: the start screen, where Continue resumes. From flight it first ends the flight
-   * as Return to Earth does, with story progress saved and no sleep scene, even in danger; it also
-   * leaves Ada's room page.
+   * as the galaxy map's Earth does, with story progress saved and no sleep scene, even in danger;
+   * it also leaves Ada's room page.
    */
   backToTitle(): void {
     if (this.state.mode === "space" && this.state.flight) {
@@ -2305,7 +2305,7 @@ export class GameModel {
   }
   /**
    * Earth: Ada's room. At boarding, back and Escape do the same, without a jump; in flight it
-   * ends the flight as Return to Earth did, story progress saved and no sleep scene.
+   * ends the flight, story progress saved and no sleep scene.
    */
   leaveCockpit(): void {
     if (this.galaxyMapShownInFlight) {

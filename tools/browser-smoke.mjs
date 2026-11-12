@@ -2053,11 +2053,11 @@ try {
   await page.locator('[data-action="continue"]').waitFor({ state: "visible" });
   events.checks.push(
     "Back to title ends a flight in danger with progress saved and no sleep scene, and " +
-      "Continue resumes; the Map's Return to Earth lands on Ada's room page, which pauses to " +
+      "Continue resumes; the galaxy map's Earth lands on Ada's room page, which pauses to " +
       "Settings and Back to title, closing on Escape and its X",
   );
-  // Towing never refuses the Map's Return to Earth; the held rescue stays held, its craft back
-  // where it was stranded.
+  // Towing never refuses the local map's Galaxies; leaving the galaxy from the galaxy map ends the
+  // flight with the held rescue still held, its craft back where it was stranded.
   const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));
   const towInput = relaunch(PROTOTYPE, roomInput.save());
   const towFlight = towInput.state.flight;
@@ -2105,19 +2105,32 @@ try {
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await openPause();
   await page.locator('[data-action="pause-map"]').click();
-  const towEarth = page.locator('[data-dialog="map"] [data-action="map-returnHome"]');
-  assert.equal(await towEarth.getAttribute("aria-disabled"), null, "Towing keeps it available");
-  await towEarth.click();
+  const towGalaxies = page.locator('[data-dialog="map"] [data-action="map-galaxies"]');
+  assert.equal(
+    await towGalaxies.getAttribute("aria-disabled"),
+    null,
+    "Towing keeps Galaxies available",
+  );
+  await towGalaxies.click();
+  const towGalaxyMap = page.locator('.ada-route[data-dialog="galaxies"]');
+  await towGalaxyMap.waitFor({ state: "visible" });
+  await towGalaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
     .locator(".ada-story-panel:not([hidden])")
     .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
     .waitFor({ state: "visible" });
   const towed = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.ok(
-    towed.flight === null && towed.tasks["1"]?.id === rescue.id,
-    "Return to Earth while towing ends the flight and keeps the rescue held",
+    towed.flight === null &&
+      towed.tasks["1"]?.id === rescue.id &&
+      towed.tasks["1"]?.target?.x === towTarget.x &&
+      towed.tasks["1"]?.target?.y === towTarget.y,
+    "Leaving the galaxy while towing ends the flight, the rescue held and its craft where stranded",
   );
-  events.checks.push("The Map's Return to Earth stays available while towing and ends the flight");
+  events.checks.push(
+    "The local map's Galaxies stays available while towing; leaving the galaxy from the galaxy " +
+      "map ends the flight, the rescue still held with its craft where it was stranded",
+  );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await page.setViewportSize({ width: 844, height: 390 });

@@ -282,7 +282,7 @@ describe("repeatable activities", () => {
     expect(model.indicatorTargets).toContainEqual(
       expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),
     );
-    // Lost on Return to Earth, and the issuer is the target until Talk there replaces it.
+    // Lost on leaving the galaxy, and the issuer is the target until Talk there replaces it.
     flight.dangerFor = 0;
     model.returnHome();
     expect(heldActivity(1, model.state)?.carrying).toBe(false);
@@ -445,7 +445,7 @@ describe("Guide a calf", () => {
     expect(model.state.notice).toBe("Job complete: +50 Stardust");
   });
 
-  it("returns the calf to its start and places its pack again on reset, Drop and Return to Earth", () => {
+  it("returns the calf to its start and places its pack again on reset, Drop and leaving", () => {
     const { flight, model } = atFamily();
     model.interact();
     model.choose("take");
@@ -464,7 +464,7 @@ describe("Guide a calf", () => {
     Object.assign(flight.calf!, { following: true, x: start.x + 300, y: start.y });
     const restored = relaunch(PROTOTYPE, model.save());
     expect(restored.state.flight!.calf).toEqual(flight.calf);
-    // Return to Earth: the next flight's calf starts again from the family, wherever it is.
+    // Leaving the galaxy: the next flight's calf starts again from the family, wherever it is.
     flight.dangerFor = 0;
     model.returnHome();
     model.startSector(3);
