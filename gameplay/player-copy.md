@@ -212,7 +212,7 @@ Objectives, in order:
 3. Take the workshop's tool kit to the salvagers.
 4. Bring spare parts from the salvagers to the workshop.
 5. Collect the holodisk from the outposts.
-6. Return to Earth when ready.
+6. Go home to Earth when ready.
 
 ## Chapter two: the whale
 
@@ -284,7 +284,7 @@ Objectives, in order:
 4. Explore to find the whale's family.
 5. Return to the whale and share the coordinates.
 6. Fight your way to the holodisk.
-7. Return to Earth when ready.
+7. Go home to Earth when ready.
 
 ## Chapter three: the needle
 
@@ -358,7 +358,7 @@ Objectives, in order:
 3. Light the practice gates.
 4. Light the Eye's gates.
 5. Collect the holodisk.
-6. Return to Earth when ready.
+6. Go home to Earth when ready.
 
 ## Chapter four: the beacon
 
@@ -438,7 +438,7 @@ Objectives, in order:
 4. Go with Pip to the settlers.
 5. Bring beacon parts to the dark beacon.
 6. Take the holodisk from Pip.
-7. Return to Earth when ready.
+7. Go home to Earth when ready.
 
 ## Chapter five: the mining hub
 
@@ -514,7 +514,7 @@ Objectives, in order:
 4. Speak with regular visitors about approaching together.
 5. Join the miner's approach at the hub.
 6. Buy the holodisk at the hub.
-7. Return to Earth when ready.
+7. Go home to Earth when ready.
 
 ## In-flight conversations
 

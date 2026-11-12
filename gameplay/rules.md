@@ -132,7 +132,11 @@ from outside that Ada sees through from within. It resembles a convertible's int
 for Ada and Penny, with a little room to walk around behind them. Ada pilots
 from the port seat, with Penny on the starboard seat. No page shows the cockpit's interior: pages aboard picture
 the ship from outside, and the text carries where Ada and Penny are. Astra's portrait is geometric and softly glowing, and she speaks through
-it on story pages as in conversations. Every quantum jump uses one
+it on story pages as in conversations. Every page set aboard (the prologue from
+Ada's arrival aboard, each boarding's "Welcome back, Navigator." page and the
+pages after it, the holodisk narration and memory lines) shows the still aboard
+background, with no animation and no separate holodisk-insert picture; the
+jump-home page after the emergency jump shows the aboard-emergency background. Every quantum jump uses one
 jump effect, with Ada's ship shown in it, arriving on the heading she starts the
 flight with: jumps from the galaxy map (Jump, and Earth in flight), Travel and the
 emergency jump. Boarding from her room is the rock's glow, not a jump; Astra's emergency jump when the shield fails tints it red. Jumping
