@@ -281,11 +281,14 @@ backdrop.
 
 ## Status pill
 
-The in-flight status pill holds the shield bar, the Stardust count and, while
-Ada carries them, her ore and her job or story item or towed craft, beside the pause
-button. Geometry, states and timing are `STATUS_PILL` in
-[Layout](layout.md#status-pill). The panel and the bar's track are
-translucent ink; every mark and the count draw fully opaque over them.
+The in-flight status pill holds the Stardust count and, while Ada carries
+them, her ore and her job or story item or towed craft, beside the pause
+button; the shield pill at the bottom centre holds the shield icon and bar.
+Geometry, states and timing are `STATUS_PILL` and `SHIELD_PILL` in
+[Layout](layout.md#status-pill). Both panels and the bar's track are
+translucent ink; every mark and the count draw fully opaque over them. The
+colours, the light-field outline and the contrast below apply to the shield
+pill wherever it sits.
 
 | Token           | Colour    | Use                                                     |
 | --------------- | --------- | ------------------------------------------------------- |
@@ -529,9 +532,10 @@ the refusal cue's red, and stays sharp at fractional scales such as 1.78.
 ## Touch sticks
 
 Placement is `TOUCH_STICK` in [Layout](layout.md#hud-and-overlays): each ring's
-drawn edge sits 40 in from the game area's side and 30 above its bottom,
-clamped by the safe insets and mirrored; the Use button's bottom follows the
-sticks' bottom.
+drawn edge sits 32 in from the game area's side and 32 above its bottom,
+clamped by the safe insets and mirrored. The sticks and the
+[Use disc](#use-disc) show only on a touch screen (a coarse primary pointer)
+and outside modals, as in Chibi; desktop hides them.
 
 Only the move stick draws a speed line, from the stick's origin to the thumb's
 actual position: 2px cream `#ead4aa` with a 1px ink `#181425` fringe on each
@@ -539,6 +543,49 @@ side, at the rings' 85% opacity, under the knob. It is not clamped to the ring
 and may run past it; the drawn knob stays inside the ring. The line is absent
 at rest. The aim stick draws no line. See
 [touch joystick sheets](touch-joystick.md).
+
+## Use disc
+
+The context action is Chibi's touch Use button (`chibis-way-home`
+`src/ui/chrome/touchChrome.ts`, `art/style-guide.md` "Touch controls"): an
+open ring with no face and one symbol per action, drawn procedurally at screen
+resolution, at the sticks' 85% opacity in every state. Placement and press
+shape are `USE_DISC` in [Layout](layout.md#hud-and-overlays). It shows only
+while an interaction is available, on a touch screen, outside modals; desktop
+hides it with no hint, and Space activates the action. Its accessible name is
+the action's Gameplay string.
+
+Geometry is in the 75x75 frame's px, centre (37.5, 37.5), in Chibi's layer
+model: each disc, ring or stroke draws over an ink layer 1 px wider each side
+(a stroke's ink is 2 wider than its core), all ink before the cores where
+shapes touch, and coverage changes only within a texel of each edge.
+
+| Part        | Geometry                                                                            |
+| ----------- | ----------------------------------------------------------------------------------- |
+| Ring        | Ink from radius 36.5 to 31.5, the band from 35.5 to 32.5; no face inside            |
+| Symbol      | The action's layers below, cream `#ead4aa` cores at rest                            |
+| Press frame | The band and symbol white `#ffffff` and the ring's radii 1 larger, for 60 ms        |
+| Held        | The band and symbol white at the rest radii until release, which snaps back to rest |
+
+Every symbol's drawn bounds, ink included, are centred on the ring centre: each
+is authored, measured, and moved by a whole-px shift, leaving at most 0.5 px.
+The coordinates below already include the shift, which the ring's 1 px growth
+on press never moves.
+
+| Action  | Layers (cores; frame px)                                                                                                                                                                                                 | Shift  | Bounds after the shift   | Offset       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------ | ------------ |
+| Talk    | Chibi's three dots: discs of radius 4 at (28.5, 37.5), (37.5, 37.5) and (46.5, 37.5)                                                                                                                                     | 0, 0   | 23.5, 32.5 to 51.5, 42.5 | 0, 0         |
+| Deliver | Strokes 3: the parcel (22, 30), (39, 30), (39, 45), (22, 45), (22, 30); its strap (30.5, 30) to (30.5, 45); the arrow (43, 37.5) to (52, 37.5) and its head (48, 33), (52.5, 37.5), (48, 42)                             | -1, -1 | 19.5, 27.5 to 55, 47.5   | -0.25, 0     |
+| Deposit | Strokes 3: the arrow (37.5, 23) to (37.5, 42) and its head (32.5, 37), (37.5, 42), (42.5, 37); the hopper (25, 41), (25, 53), (50, 53), (50, 41)                                                                         | 0, +2  | 22.5, 20.5 to 52.5, 55.5 | 0, +0.5      |
+| Tow     | The eye: a ring from radius 2.5 to 4 at (42.5, 24). Stroke 3: the shank (42.5, 28.5) to (42.5, 48), the hook's arc about (36.5, 48), radius 6, from 0 to 180 degrees through (36.5, 54), then up to (30.5, 43)           | +5, +7 | 28, 19 to 47.5, 56.5     | +0.25, +0.25 |
+| Salvage | Stroke 4: the magnet (29, 27) to (29, 40), the arc about (37.5, 40), radius 8.5, from 180 to 0 degrees through (37.5, 48.5), then up to (46, 27); the pole gaps: ink rects 25 to 33 and 42 to 50 across, 31.5 to 33 down | 0, +4  | 25, 24 to 50, 51.5       | 0, +0.25     |
+| Use     | A ring from radius 6 to 10 and a disc of radius 3, both at (37.5, 37.5)                                                                                                                                                  | 0, 0   | 26.5, 26.5 to 48.5, 48.5 | 0, 0         |
+
+Arcs are 24 segments, angles clockwise from the +x axis with y down. Every
+symbol fits inside the ring's 31.5 inner edge with room to spare (the farthest
+bounds corner, at Deposit's, is 23.43 from the centre). The ink edges carry each mark on any
+field, Sunflower's light one included, as Chibi's do: no light-field outline is
+added.
 
 ## Landing page
 
