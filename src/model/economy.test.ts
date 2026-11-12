@@ -216,7 +216,7 @@ describe("Stardust drops", () => {
     [3, "capital"],
     [5, "frigate"],
   ] as const)(
-    "drops an upgrade pickup from galaxy %i's %s 5% of the time when salvaged, never when destroyed",
+    "drops an upgrade pickup from galaxy %i's %s 10% of the time when salvaged, never when destroyed",
     (sector, archetype) => {
       let dropped = 0;
       for (let index = 0; index < 20000; index++) {
@@ -229,7 +229,7 @@ describe("Stardust drops", () => {
           upgrade: false,
         });
       }
-      expect(Math.abs(dropped / 20000 - 0.05)).toBeLessThan(0.006);
+      expect(Math.abs(dropped / 20000 - 0.1)).toBeLessThan(0.006);
     },
   );
 
@@ -945,7 +945,7 @@ describe("shop purchases", () => {
       });
       expect(economy.ammo.phaser).toBe(count * 55);
     }
-    expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 6 });
+    expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 9 });
     expect(itemName(ECONOMY, PROTOTYPE.labels, pack)).toBe("Phaser ammo");
     expect(packCount(ECONOMY, PROTOTYPE.labels, "phaser")).toBe("×55");
   });

@@ -120,8 +120,8 @@ export const ECONOMY: EconomyCatalog = {
     grantPacks: 3,
     pack: { heavyMissile: 50, multiLaser: 200, phaser: 55, rapidMissile: 200, scattershot: 130 },
     // The pacing sim's armed scenario: typical use of the stronger weapons costs about a sixth
-    // of Stardust income at 6.
-    packPrice: 6,
+    // of Stardust income at 9.
+    packPrice: 9,
   },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
@@ -219,7 +219,7 @@ export const ECONOMY: EconomyCatalog = {
   // The tractor beam's pull radius and speed by level, alike for every pickup.
   tractorRadius: { base: 60, levels: [90, 120] },
   tractorSpeed: { base: 120, levels: [160, 200] },
-  upgradeDropChance: { heavy: 0.05, small: 0.0025 },
+  upgradeDropChance: { heavy: 0.1, small: 0.0025 },
   upgradeDropWeights: {
     categories: { engine: 1, paint: 1 / 20, shield: 1, tractor: 1, weapons: 1 },
     // Each weapon half as likely as the one before it in weapon order.

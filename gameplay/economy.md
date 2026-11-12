@@ -3,10 +3,23 @@
 Stardust is the game's one currency. It is shimmering dust released by destroyed
 ships and asteroids, and every station trades in it. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
-tuning toward these pacing targets: affording the first weapon (225) takes about
-25 minutes of play, saving 500 for Cartwheel's holodisk takes about 30 minutes of
-Cartwheel play,
-and exploring finds a station every few minutes.
+tuning toward one typical income per route position, Stardust per minute
+without jobs as the pacing simulation measures it:
+
+| Position | Galaxy    |      Typical income |
+| -------: | --------- | ------------------: |
+|        1 | Sunflower |             about 8 |
+|        2 | Whirlpool |           about 8.5 |
+|        3 | Needle    |             about 9 |
+|        4 | Andromeda | measured once built |
+|        5 | Cartwheel |            about 17 |
+|        6 | Black Eye | measured once built |
+
+Every pacing target is a price divided by that income: the first weapon (225)
+takes about 28 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
+about 30 minutes of Cartwheel play, and a galaxy's projects the time their total
+takes at its income after its story ends. Exploring finds a station every few
+minutes.
 
 ## Earning Stardust
 
@@ -52,7 +65,7 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 destroyed capital's, splits into pickups worth more than 1 Stardust.
 
 Upgrades are sold at stations and are also rare drops, at the same rates in every
-galaxy: 0.25% of destroyed small ships and 5% of salvaged frigates, platforms and
+galaxy: 0.25% of destroyed small ships and 10% of salvaged frigates, platforms and
 capitals drop an upgrade pickup. A destroyed heavy drops none. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
 use. The game picks a category, then an item within it. Weapons, Shield, Engine
@@ -119,7 +132,7 @@ not yet designed, so the station card shows no quest board until it is.
 | Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s | 450, 900 |
 | Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds             | 180, 360 |
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                              | 120, 240 |
-| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 50 each  |
+| Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 75 each  |
 
 Enemy speeds are fixed, so engine tuning lets Ada outrun every enemy but the
 interceptor at level 2 and all of them at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
@@ -157,7 +170,7 @@ upgrade drop gives one pack only once every upgrade and paint scheme is owned. T
 are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Prices are light: typical use of the stronger
-weapons costs about a sixth of Stardust income, provisionally 6 Stardust per
+weapons costs about a sixth of Stardust income, provisionally 9 Stardust per
 pack, tuned by the pacing simulation. Ammunition persists across flights and the
 jump home.
 
@@ -185,25 +198,26 @@ Once a galaxy's chapter is complete (its space story and its home page), every
 station in that galaxy offers its community projects, which Ada funds with
 Stardust. A funded project visibly changes the galaxy, plays its thank-you line,
 counts toward achievements and makes one ally who joins the Black Eye finale.
-Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 250 and
-175; the second's two are 300 and 250, the third's 350 and 250, the fourth's 350
-and 300, and the fifth's 400 and 300. Prices target funding all of a galaxy's projects about an hour after its
-story ends, measured in the pacing simulation by Stardust earned without jobs,
-purchases not subtracted.
+Projects give no combat power outside the finale. Prices follow route position: the first galaxy's three projects are 300, 265 and
+225; the second's two are 450 and 375, the third's 525 and 375, the fourth's 525
+and 450, and the fifth's 600 and 450. At the typical income above, funding all
+of a galaxy's projects takes about 100 minutes after its story in Sunflower and
+Whirlpool, about 100 in Needle and about 60 in Cartwheel, purchases not
+subtracted.
 
 | Project            | Galaxy    | Price | Speaker      | Thank-you line                                                             | World change                                                 | Ally in the finale                                  |
 | ------------------ | --------- | ----: | ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
 | Greenhouse ring    | Sunflower |   300 | Grower       | "A whole ring of greenhouses! Now we can grow enough to share."            | A ring of greenhouse domes around the growers' outpost       | A grower ship using `escort`                        |
-| Workshop crane     | Sunflower |   250 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
-| Salvage beacons    | Sunflower |   175 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
-| Nursery beacon     | Whirlpool |   300 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
-| Current-map buoys  | Whirlpool |   250 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
-| Channel lights     | Needle    |   350 | Elder Loom   | "Young pilots can practise even in the dark now. Patience needs light."    | Soft lamps along the practice channel                        | An Avi glider using `escort`                        |
-| Loom hall          | Needle    |   250 | Avi          | "A hall for teaching. Every pilot here started with a wobbly first gate."  | A new hall on the Avi station                                | A loom ship using `chase` against turrets           |
-| Courier school     | Andromeda |   350 | Pip          | "Now every new courier learns to slow down and speak up. Thanks, Ada."     | A small training dock beside the settlers' station           | A courier ship using `escort`                       |
-| Spare beacon       | Andromeda |   300 | Settler      | "If a beacon ever goes dark again, this one will light the way."           | A spare guide beacon beside the relit one                    | A beacon tender using `escort`                      |
-| Second docking bay | Cartwheel |   400 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
-| Hub repairs        | Cartwheel |   300 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
+| Workshop crane     | Sunflower |   265 | Workshop     | "With this crane we can lift whole ships. Thank you for building with us." | A crane arm on the workshop outpost                          | A crane ship using `chase` against turrets          |
+| Salvage beacons    | Sunflower |   225 | Salvager     | "Lost things will shine now. Nothing out here stays lost for long."        | Small blinking beacons beside the salvagers' outpost         | A salvager ship using `escort`                      |
+| Nursery beacon     | Whirlpool |   450 | Whale family | "The young ones can rest by its light. Thank you for looking after them."  | A soft-light beacon by the whale family, with calves resting | Another whale, widening the whales' current by half |
+| Current-map buoys  | Whirlpool |   375 | Whale family | "The buoys hum the currents back to us. No one will drift off course now." | A chain of buoys along the whales' current                   | A buoy tender using `escort`                        |
+| Channel lights     | Needle    |   525 | Elder Loom   | "Young pilots can practise even in the dark now. Patience needs light."    | Soft lamps along the practice channel                        | An Avi glider using `escort`                        |
+| Loom hall          | Needle    |   375 | Avi          | "A hall for teaching. Every pilot here started with a wobbly first gate."  | A new hall on the Avi station                                | A loom ship using `chase` against turrets           |
+| Courier school     | Andromeda |   525 | Pip          | "Now every new courier learns to slow down and speak up. Thanks, Ada."     | A small training dock beside the settlers' station           | A courier ship using `escort`                       |
+| Spare beacon       | Andromeda |   450 | Settler      | "If a beacon ever goes dark again, this one will light the way."           | A spare guide beacon beside the relit one                    | A beacon tender using `escort`                      |
+| Second docking bay | Cartwheel |   600 | Miner        | "A second bay. Nobody has to wait alone anymore."                          | A second docking bay on the mining hub                       | A miner ship using `chase` against turrets          |
+| Hub repairs        | Cartwheel |   450 | Station      | "The hub is good as new. There is room for everyone, and now it shows."    | The mining hub shown repaired, with its lights on            | A hub tug using `escort`                            |
 
 Projects is the third shop tab, after Weapons and Ship, shown once the galaxy's
 projects are offered. It lists only that galaxy's projects, in table order, so a

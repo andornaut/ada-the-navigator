@@ -519,10 +519,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Talk range is 160 world units, centre to centre: from Ada's position to the
   object's, with no hull or drawn-size radius. It is one value for Use at a
-  settlement, outpost, station or the hub (their discovery and Dock included)
-  and for Salvage on a disabled heavy; when several are in range, the nearest
-  wins, and a destination on a blocked route is excluded. Other ranges are their
-  own values: tow attach 120 and station discovery 320.
+  settlement, outpost, station or the hub, Dock included, and for Salvage on a
+  disabled heavy; when several are in range, the nearest wins, and a destination
+  on a blocked route is excluded. Other ranges are their own values: tow attach
+  120, and station discovery uses its own 320.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
@@ -631,9 +631,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   bought at shops (see [Economy](economy.md#ammunition)).
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
-  [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
-  equip their weapon at any time unless the switch wait is running, and retain
-  other owned weapons; during the wait the weapon is added without equipping it.
+  [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
+  power-ups, gives its upgrade on collection (see
+  [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
+  once unless the switch wait is running, when it is added without equipping;
+  other owned weapons are kept.
 - Every weapon and the shield have three levels. Each level multiplies effective
   output (damage times fire rate times how often it hits) by about 1.5, so level 3
   is about 2.25 times level 1. Single-target output meets those steps on its own;

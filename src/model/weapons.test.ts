@@ -263,9 +263,9 @@ describe("ammunition", () => {
     expect(flight.weapon).toBe("laser");
     model.state.docked = "station";
     model.state.economy.stardust = 10;
-    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 6 });
+    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 9 });
     expect(flight.ammo.phaser).toBe(55);
-    expect(model.state.economy.stardust).toBe(4);
+    expect(model.state.economy.stardust).toBe(1);
     model.state.docked = null;
     expect(model.selectWeapon("phaser")).toBe(true);
   });

@@ -31,7 +31,7 @@ import {
   enemyDefinition,
   HEAVIES,
 } from "../src/data/enemy-catalog.ts";
-import { byPosition } from "../src/data/galaxies.ts";
+import { byPosition, ROUTE_POSITION, type RoutePosition } from "../src/data/galaxies.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
 import { JOB_TUNING, JOB_TYPES, type JobType } from "../src/data/jobs.ts";
 import { galaxyProjects } from "../src/data/projects.ts";
@@ -373,6 +373,22 @@ export interface WorldOptions {
   seed: number;
   spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
   encounters: readonly EncounterEntry[];
+}
+
+/**
+ * Gameplay's typical income per route position (gameplay/economy.md): Stardust per minute without
+ * jobs, as this simulation measures it. Every pacing target is a price divided by it.
+ */
+const TYPICAL_INCOME: Readonly<Partial<Record<RoutePosition, number>>> = {
+  1: 8,
+  2: 8.5,
+  3: 9,
+  5: 17,
+};
+
+/** A galaxy's typical income, or null for a position Gameplay has not measured. */
+function typicalIncome(sector: SectorId): number | null {
+  return TYPICAL_INCOME[ROUTE_POSITION[sector]] ?? null;
 }
 
 const tuning = PROTOTYPE.tuning;
@@ -1619,27 +1635,34 @@ function formatDistribution(value: Distribution, digits = 1): string {
   return `${round(value.median, digits)} (p10 ${round(value.p10, digits)}, p90 ${round(value.p90, digits)})`;
 }
 export function formatSummary(summary: Summary): string {
+  const income = typicalIncome(summary.sector);
+  // A price's target minutes at the galaxy's typical income.
+  const target = (price: number) => (income ? `; target ${round(price / income)}` : "");
   const lines = [
     `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
     `Prices: first weapon ${summary.prices.firstWeapon}, ` +
       `projects ${summary.prices.projects.join(", ")} (cumulative), ` +
       `ammunition pack ${summary.packPrice}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
-      `unreached ${summary.firstWeaponUnreached}`,
+      `unreached ${summary.firstWeaponUnreached}${target(summary.prices.firstWeapon)}`,
     // Only Cartwheel sells a hub holodisk.
     ...(summary.sector === 2
       ? [
           `Minutes to save ${summary.prices.holodisk} (Cartwheel's holodisk): ` +
             `${formatDistribution(summary.holodiskMinutes)}; ` +
-            `unreached ${summary.holodiskUnreached}`,
+            `unreached ${summary.holodiskUnreached}${target(summary.prices.holodisk)}`,
         ]
       : []),
-    ...summary.projectsMinutes.map(
-      (minutes, index) =>
-        `Minutes to fund project ${index + 1} (${summary.prices.projects[index]} saved): ` +
-        `${formatDistribution(minutes)}; unreached ${summary.projectsUnreached[index]}`,
-    ),
-    `Stardust/min without guards: ${formatDistribution(summary.stardustPerMinute)}`,
+    ...summary.projectsMinutes.map((minutes, index) => {
+      const saved = summary.prices.projects[index]!;
+      return (
+        `Minutes to fund project ${index + 1} (${saved} saved): ` +
+        `${formatDistribution(minutes)}; unreached ${summary.projectsUnreached[index]}` +
+        target(saved)
+      );
+    }),
+    `Stardust/min without guards: ${formatDistribution(summary.stardustPerMinute)}; ` +
+      `typical ${income ?? "not measured"}`,
     `Balance/min over first 20 min (with guards): ${formatDistribution(summary.stardustPerMinuteFirst20)}`,
     `Per minute by source: ${SOURCES.map((s) => `${s} ${round(summary.sourcePerMinute[s], 2)}`).join(", ")}`,
     `Share by source: ${SOURCES.map((s) => `${s} ${round(summary.sourceShare[s] * 100)}%`).join(", ")}`,
