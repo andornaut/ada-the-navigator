@@ -476,9 +476,12 @@ describe("jobs in play", () => {
     const board = model.state.jobs.boards[1]![held.station]!;
     expect(board).toHaveLength(3);
     expect(board.some(({ id }) => id === held.id)).toBe(false);
-    // The lore line waits under the notice, then shows.
+    // The lore line waits under the notice, then shows after the new place's reaction, which was
+    // asked for first; a world's drone warning and Penny may each come before both.
     model.dismissNotice();
-    expect(listen(model, held.target, 60)).toContain("jobLore:1:0");
+    const heard = listen(model, held.target, 120);
+    expect(heard).toContain("jobLore:1:0");
+    expect(heard.indexOf("reaction:mapped")).toBeLessThan(heard.indexOf("jobLore:1:0"));
   });
 
   it("mark the job's target on the Map and show charted landmarks there by name", () => {
