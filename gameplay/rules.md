@@ -248,6 +248,8 @@ them. All values are provisional tuning:
 - Small enemy craft drift fully. Frigates, capitals, platforms, stations and
   whales do not drift. Inactive retained ships do not drift.
 - Projectiles, missiles and beams ignore currents, so aim stays readable.
+- The whales' current is the current that passes nearest the whale family,
+  chosen by the seed with the rest. The Map shows no currents.
 - Stardust and weapon pickups drift with the flow until they leave the current;
   the tractor beam pulls them as usual.
 - A debris river is traveling debris that follows its current's centre line at

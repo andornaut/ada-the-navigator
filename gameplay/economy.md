@@ -180,7 +180,13 @@ persists across flights. A row is unaffordable only at a balance of 0, and then
 refuses with the shared refusal feedback. Funding the last part closes the card
 and plays the thank-you line as a space conversation. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
-funding changes nothing in the world.
+funding changes nothing in the world. World changes are passable decoration:
+they never block Ada or shots, Ada is drawn in front of them while she overlaps
+one, and the Map shows none of them. The nursery beacon's calves are the
+family's calves in their usual idle, gathered in its light. The current-map
+buoys line both edges of the whales' current (see
+[Whirlpool](rules.md#galaxy-two-whirlpool-whale-family)), one every 128 world
+units along it, 20 world units outside each edge.
 
 | Project            | Id               | Effect line                 | Description                                             |
 | ------------------ | ---------------- | --------------------------- | ------------------------------------------------------- |
