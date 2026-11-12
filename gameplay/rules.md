@@ -669,7 +669,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   weapon grows along its own dimensions:
   - Laser: damage, fire rate and bolt speed.
   - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
-    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step. Its bolt speed rises with level as Laser's does.
+    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step. Its bolts are slower than Laser's at the same level.
   - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
     Laser damage) with a small blast (25); levels grow its fire rate and damage.
   - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
@@ -692,10 +692,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   blast and spread at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
   [Ships](ships.md#enemy-weapons)).
-- Laser and Multi-Laser bolts travel at 500, 600 and 700 world units per second
-  at weapon levels 1, 2 and 3. Ada's other weapons use a fixed base projectile
-  speed of 600, multiplied by their speed ratios. Neither depends on her engine
-  level.
+- Laser bolts travel at 500, 600 and 700 world units per second at weapon
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's other weapons
+  use a fixed base projectile speed of 600, multiplied by their speed ratios.
+  None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
