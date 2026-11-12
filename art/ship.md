@@ -209,8 +209,8 @@ The ship collides, makes contact and is placed by its drawn silhouette,
 ### Shared tracer
 
 `art/tools/silhouette.ts` turns a frame's drawn alpha into convex parts in frame
-px. The asteroids and resource rocks use it too ([asteroid
-collision](asteroids.md#collision)).
+px. The [sector one enemies](enemies.md#collision) and the asteroids and
+resource rocks ([asteroid collision](asteroids.md#collision)) use it too.
 
 1. Rasterize at 4 cells per frame px: vector polygons by cell centre with
    nonzero winding (`rasterize`), PNG sprites by alpha at 128 or more

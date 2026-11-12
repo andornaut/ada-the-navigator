@@ -1,7 +1,7 @@
 // Drawn silhouettes: a frame's drawn alpha as convex collision parts in frame px.
 // Rasterize at SS cells per frame px (cell centres), trace the outer boundary along cell edges,
-// simplify it by Douglas-Peucker (TOLERANCE by default), fill narrow notch tips, ear-clip the outline and
-// merge the triangles into convex parts (Hertel-Mehlhorn). `check` fails the build unless every
+// simplify it by Douglas-Peucker (TOLERANCE by default), fill narrow notch tips, ear-clip the
+// outline and merge the triangles into convex parts (Hertel-Mehlhorn). `check` fails unless every
 // part is strictly convex, the parts' union matches the drawing with intersection over union
 // MIN_IOU or more, and no boundary lies more than MAX_DISTANCE frame px from the drawing.
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";

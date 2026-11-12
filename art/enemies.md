@@ -76,6 +76,9 @@ portrait ([Conversation portraits](conversation.md)).
   depth. Within a part, visible sides precede the top. Outward-normal culling
   toward the `(1, 1, 1)` view direction removes hidden faces.
 - No jets, raster assets, filters, strokes or screen rotation in the frames.
+- Notch tips the [collision](#collision) outline cuts draw first, under the
+  facets, in the colour of the topmost polygon within 0.6 frame px of the
+  tip's apex.
 
 ## Speed jets
 
@@ -88,3 +91,34 @@ portrait ([Conversation portraits](conversation.md)).
   display proportion to each hull frame.
 - `mouths` lists one entry per mouth (see the table), in frame px of that
   archetype's frame. Tips can extend past the frame; do not clip them to it.
+- `headings[k].collision` follows the mouths: see [Collision](#collision).
+
+## Collision
+
+Each hull collides, makes contact and is placed by its drawn silhouette.
+`{archetype}-jets.json` `headings[k].collision` is heading `k`'s silhouette:
+an array of convex parts, each an array of `[x, y]` in frame px of that
+archetype's frame, pivot at the frame centre. It has the schema of the ship's
+`collision[k]` and the asteroids' `frames[k].collision`; offsets from the
+pivot times 0.4375 give display px.
+
+- `art/tools/enemies.ts` traces each frame's fills with the
+  [shared tracer](ship.md#shared-tracer). The frames have no strokes, so the
+  drawing is not grown. Douglas-Peucker runs at 0.4 frame px: at 0.5 swarm
+  heading 10 (0.9798) and interceptor heading 10 (0.9771) fall below the
+  0.98 floor. Their shortfall comes from the cell grid, not the
+  simplification: 0.75 and 0.5 keep the same vertices on those frames.
+- The archetypes have no paints or variants: one set per heading.
+- Notch tips occur between the interceptor's tines and guns (10 tips) and
+  among the retaliator's barrels and plates (21 tips); the frames draw them
+  ([Frames](#frames)).
+- Checked against the fills plus the tips: every part strictly convex, every
+  boundary within 0.25 frame px of the drawing, and intersection over union
+  as below (librsvg renders at 4 px per frame px agree within 0.0004).
+
+| Archetype     | Parts per heading | Intersection over union |
+| ------------- | ----------------: | ----------------------: |
+| `swarm`       |            2 to 4 |          0.987 to 0.991 |
+| `fighter`     |           8 to 12 |          0.988 to 0.992 |
+| `interceptor` |            3 to 9 |          0.985 to 0.993 |
+| `retaliator`  |           9 to 16 |          0.995 to 0.997 |
