@@ -1490,7 +1490,21 @@ try {
   dangerInput.state.flight.dangerFor = 5;
   dangerInput.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
   dangerInput.state.flight.objects = [];
-  dangerInput.state.flight.shots = [];
+  // An enemy shot held still inside the battle square keeps Ada in danger while she flies or
+  // waits paused; it lasts the whole check.
+  dangerInput.state.flight.shots = [
+    {
+      damage: 1,
+      enemy: true,
+      hitIds: [],
+      id: "smoke:held-shot",
+      life: 3600,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x: dangerInput.state.flight.player.x,
+      y: dangerInput.state.flight.player.y + 300,
+    },
+  ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
   // In flight the card shows Resume over Map, Ship, Settings and Back to title, every one
