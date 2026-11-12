@@ -445,13 +445,14 @@ outline and contrast are in [Controls](controls.md#status-pill). Parts, left to
 right, each centred on the pill's row; placement is in
 [HUD and overlays](#hud-and-overlays):
 
-| Part        | Geometry                                                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Panel       | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65                                                     |
-| Shield icon | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour                             |
-| Mark gap    | `SPACING.markGap`                                                                                                        |
-| Shield bar  | `SHIELD_PILL.bar[level]` by 12: 1 rim around the track (ink at 0.65 over the panel), fill area `bar - 4` by 8 at inset 2 |
-| Width       | `bar + 42`                                                                                                               |
+| Part        | Geometry                                                                                                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel       | `PILL`: 28 high, radius 4, `PILL.padding` 8 at each end; ink at 0.65                                                                                                                                                                                                                  |
+| Shield icon | `public/art/ui/icons/shield.svg`, 20 (`HUD_BUTTON.glyph`), a mask in the state's icon colour                                                                                                                                                                                          |
+| Mark gap    | `SPACING.markGap`                                                                                                                                                                                                                                                                     |
+| Shield bar  | `SHIELD_PILL.bar[level]` by 12: 1 rim around the track (ink at 0.65 over the panel), fill area `bar - 4` by 8 at inset 2                                                                                                                                                              |
+| Delay strip | While the recharge delay runs: 2 high on the fill area's bottom 2 rows (bar y 8 to 10), from the fill area's left (x 2) for `(bar - 4) * elapsed / delay`, so it reaches the full 116, 176 or 236 when recharge starts; a 1 px ink edge (bar y 7 to 8) along its top, the same length |
+| Width       | `bar + 42`                                                                                                                                                                                                                                                                            |
 
 The bar's length follows Shield level, so each upgrade visibly lengthens it
 (Gameplay: capacity 10, 15 and 20):
@@ -473,7 +474,7 @@ with fractional widths.
 | ------ | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Normal | 25% of capacity or more, not regenerating | Fill, rim and icon in their normal colours                                                                              | Static                                                                                                                                 |
 | Hit    | The shield drops                          | The lost part (new value to old) in the flash colour                                                                    | One flash, 100 ms, then the part joins the delay part. A flash starts at most once per 334 ms; a hit inside that window does not flash |
-| Delay  | From a hit until regeneration starts      | The delay part in the delay colour                                                                                      | Gameplay's recharge delay, 3 s after the last hit                                                                                      |
+| Delay  | From a hit until regeneration starts      | The delay part in the delay colour, and the delay strip filling left to right                                           | Gameplay's recharge delay (20, 15 or 10 s by Shield level), from the last hit or the last moment in battle                             |
 | Regen  | The delay ends, until the shield is full  | The delay part clears at once; the fill grows (Gameplay: 18 per s) with a 2 px leading edge inside the fill's right end | The edge shows while regenerating and is removed at capacity                                                                           |
 | Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                         | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                  |
 | Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                   | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge  |
@@ -487,6 +488,46 @@ clamp applies (53 above the view's bottom at 1280x720). Use's press circle stays
 9.02 or more clear of it (17.92 at the 720 base and 9.02 with phone insets at
 level 3). Every view and level is in
 [Touch controls by view](#touch-controls-by-view).
+
+Delay strip (`SHIELD_PILL.delayStrip`), Gameplay's recharge timer:
+
+Rects relative to the bar's top-left corner (the rim's outer edge), at full
+length; `p` is `elapsed / delay`:
+
+| Shield level | Bar    | Ink edge, x y w h | Strip, x y w h   |
+| -----------: | ------ | ----------------- | ---------------- |
+|            1 | 120x12 | 2, 7, `116 p`, 1  | 2, 8, `116 p`, 2 |
+|            2 | 180x12 | 2, 7, `176 p`, 1  | 2, 8, `176 p`, 2 |
+|            3 | 240x12 | 2, 7, `236 p`, 1  | 2, 8, `236 p`, 2 |
+
+The strip sits entirely inside the fill area, on its bottom 2 rows, with its
+ink edge on the row above, rather than on the rim or straddling the 1 px track
+gap under the fill. Inside the fill area it has a dark edge on both sides, its ink above and
+the track gap below, so the white reads over the fill, the low fill, the delay
+part and the track alike; it spans exactly the fill area, so 100% of the strip
+means the same length as a full bar; and it stays clear of the rim, which
+changes colour with the low-shield pulse. While it shows, the fill keeps its
+top 5 rows (bar y 2 to 7).
+
+- It shows only while the recharge delay runs: the shield is below capacity and
+  not regenerating. It is hidden while the shield is full or regenerating.
+- It grows linearly with Gameplay's delay timer, `elapsed / delay` of the fill
+  area's width, so `(bar - 4) / delay` px/s at every Shield level, with
+  fractional widths: at Gameplay's 20, 15 and 10 s delays, 5.8, 11.73 and
+  23.6 px/s.
+- At full, recharge starts: the strip hides at once, with no fade, and the
+  regeneration edge takes over.
+- Whatever restarts Gameplay's delay (a hit, or Ada back in battle) empties it
+  at once, the same frame as the hit flash, and it grows again from 0.
+- Layers, bottom to top: track, fill, delay part, hit flash, then the strip and
+  its ink edge, all inside the rim. The low-shield pulse changes only the icon
+  and rim, so it never covers or recolours the strip; the strip's colours are
+  the same in every state.
+- Light field: it sits inside the bar's ink outline, with no edge of its own
+  beyond its ink top.
+- Reduced motion: unchanged, a steady fill with no pulse or easing.
+- It is a meter detail: the bar's accessible value is unchanged, and the strip
+  is decorative.
 
 - The pill shows during flight on touch and desktop alike, and hides while a
   modal card or storybook page shows.

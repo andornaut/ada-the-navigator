@@ -295,20 +295,21 @@ translucent ink; every mark and the count draw fully opaque over them. The
 colours, the light-field outline and the contrast below apply to the shield
 pill wherever it sits.
 
-| Token           | Colour    | Use                                                     |
-| --------------- | --------- | ------------------------------------------------------- |
-| Status panel    | `#181425` | Ink panel at alpha 0.65, as the conversation panel      |
-| Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab              |
-| Shield delay    | `#4f7aa6` | Delay part, from a hit until regeneration starts        |
-| Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red       |
-| Shield low peak | `#ff8a80` | Low pulse peak, icon and rim                            |
-| Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge             |
-| Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                       |
-| Shield track    | `#181425` | Ink at alpha 0.65 inside the rim, over the panel        |
-| Divider         | `#57536e` | 1x16 rule between segments                              |
-| Count           | `#ead4aa` | Cream `TYPE.label`, the Stardust and ore counts         |
-| Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline |
-| Ore tick        | `#eaa676` | `+N` label, ore's light rust, with a 1 px ink outline   |
+| Token           | Colour    | Use                                                                                      |
+| --------------- | --------- | ---------------------------------------------------------------------------------------- |
+| Status panel    | `#181425` | Ink panel at alpha 0.65, as the conversation panel                                       |
+| Shield          | `#70ace8` | Fill and icon: Ada's ship blue, as her tab                                               |
+| Shield delay    | `#4f7aa6` | Delay part, from a hit until regeneration starts                                         |
+| Shield low      | `#e4574e` | Low and empty fill, icon and rim: the refusal red                                        |
+| Shield low peak | `#ff8a80` | Low pulse peak, icon and rim                                                             |
+| Shield flash    | `#ffffff` | Hit flash and the regeneration leading edge                                              |
+| Delay strip     | `#ffffff` | `STATUS_COLOURS.recharge`: the recharge-delay strip, under a 1 px ink `#181425` top edge |
+| Shield rim      | `#9a96ad` | 1 px bar rim in the normal states                                                        |
+| Shield track    | `#181425` | Ink at alpha 0.65 inside the rim, over the panel                                         |
+| Divider         | `#57536e` | 1x16 rule between segments                                                               |
+| Count           | `#ead4aa` | Cream `TYPE.label`, the Stardust and ore counts                                          |
+| Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline                                  |
+| Ore tick        | `#eaa676` | `+N` label, ore's light rust, with a 1 px ink outline                                    |
 
 The panel is ink at 0.65 over the field. The track is its own ink layer at
 0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
@@ -360,6 +361,15 @@ the fill.
   1.24:1, where the ink outline (10.90:1 on the field) carries them; the
   outline (12.99:1 against gold, 8.76:1 against rust) keeps them legible over
   bright objects. The rust tick is 7.04:1 or more on every dark field.
+- The delay strip is white, the shield flash colour, over a 1 px ink edge, so
+  it reads over every part it crosses: white on the track 17.65:1 over
+  Cartwheel and 13.96:1 over Sunflower (Oklab distance 0.79 and 0.71), and its
+  ink edge against the fill 7.51:1, the delay part 4.00:1 and the low fill
+  4.95:1, with the white 18.02:1 against that ink. Bare white would be only
+  2.40:1 on the blue fill (3.64:1 on the low fill, 4.50:1 on the delay part).
+  Cream `#ead4aa` (1.66:1 on the fill) and the HUD glyph lavender `#b8b3c9`
+  (1.18:1) fail there. It resets on a hit, so it never sits under the white hit
+  flash.
 - The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
   is one 100 ms flash per hit, at most three per second. Nothing flickers.
 
