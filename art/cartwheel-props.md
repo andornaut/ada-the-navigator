@@ -14,7 +14,7 @@ no damaging hazards.
   the tow line; the debris, the stranded craft and the `cartwheelDebris` link
   are in [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
   are byte-identical.
-- The craft models are in `art/tools/cartwheel-craft.ts`: the miner A hauler,
+- The craft models are in `art/tools/cartwheel-craft.ts`: the tri-hull miner,
   powered or not, and the ore pod. The debris model is shared with Whirlpool's
   river debris in [art/tools/debris.ts](tools/debris.ts).
 - Every SVG keeps its `viewBox` in frame px and declares its display size
@@ -142,14 +142,14 @@ plane. Neither has jets. Files are `/art/cartwheel/{craft}-{k}[-{a,b}].svg`.
 | Craft              | Manifest ids                       | Frame | Display | Frames per heading       |
 | ------------------ | ---------------------------------- | ----: | ------: | ------------------------ |
 | `stranded-ore-pod` | `craft-stranded-ore-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |
-| `stranded-hauler`  | `craft-stranded-hauler-{k}`        |   144 |      63 | one                      |
+| `stranded-hauler`  | `craft-stranded-hauler-{k}`        |   128 |      56 | one                      |
 
 - Ore pod: a sealed cream cargo capsule with an ore band, a steel tow lug
   forward and a mast light that blinks while it waits (`blink`, `frameMs`).
   Reduced motion shows `a`.
-- Stuck hauler: the story miner's geometry with its power off: dark cab glass,
-  dim running and mast lights, no jets, listing 12 degrees to port and 5
-  degrees nose down.
+- Stuck hauler: the story miner's tri-hull geometry with its power off: dark
+  cab glass, dim running and mast lights, no jets, listing 12 degrees to port
+  and 5 degrees nose down. Its tow point is the drill tip.
 - Each entry has `directionIndex` `k`, `facing` `world-{k}` and `craft`.
 
 ## Tow line

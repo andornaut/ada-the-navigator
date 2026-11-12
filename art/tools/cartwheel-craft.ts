@@ -1,9 +1,9 @@
 // Cartwheel's small craft models in craft-local units (forward is -y, +x to starboard, +z up),
-// for sixteen-heading exports: the miner A hauler, the story miner's geometry with its power on
-// or off, and the ore pod. Models are groups of extruded parts; a renderer sorts the groups far
+// for sixteen-heading exports: the tri-hull miner with its power on or off, and the ore pod. Models are groups of extruded parts; a renderer sorts the groups far
 // to near and draws each group's parts in list order.
 import { box, type Part, type Plan } from "./crafts.ts";
 import { ORE_SOLID } from "./ore.ts";
+import { craftBox, craftPlan, cube, hcyl, part, pill, scaleGroups } from "./hull-shapes.ts";
 
 export type { Part, Plan };
 
@@ -123,113 +123,83 @@ const light = (x: number, y: number, r: number, z0: number, z1: number, color: s
   side: color,
 });
 
-// ---------------------------------------------------------------- miner A: hauler
+// ---------------------------------------------------------------- miner: tri-hull hauler
 
-// The story miner's geometry (art-cartwheel `miner`, sixteen headings at scale 1), so the
-// stranded hauler is the same craft. Plans are written in (u forward, v across) through FWD.
-const FWD = -Math.PI / 2;
-const uv = (u: number, v: number) => along(FWD, u, v);
-const craftPlan = (local: Plan) => orientedPlan(0, 0, FWD, local);
-const craftBox = (u: number, v: number, length: number, width: number) =>
-  orientedBox(...uv(u, v), FWD, length, width);
+// The story miner's geometry (art-cartwheel `miner`), so the stranded hauler is the same craft:
+// a sand keel with a stepped drill head and a forward cab between two outrigger hulls carrying
+// open ore bins, joined by dark cross beams, with an engine on each hull. Written in design units
+// (u forward, v across) and built at HAULER_SCALE.
+export const HAULER_SCALE = 1.3;
 const sandRear = "#8a7656";
-
-// A light cube of side `size` centred at (x, y) from z0.
-const lamp = (x: number, y: number, z0: number, size: number, color: string): Part =>
-  light(x, y, size / 2, z0, z0 + size, color);
+const beamSide = "#3e4250";
+const drillSteel = "#b8bfc9";
+const drillSteelSide = "#8a919c";
+const drillSteelDark = "#9aa1ad";
 
 export type HaulerState = {
   // Power on: warm cab glass, blue running and mast lights. Off: dark glass and dim lights.
   powered: boolean;
 };
 
-// Heights parts rest on (hull top, then cab top): groups based there draw after those below.
-export const HAULER_LEVELS = [16.5, 28.5] as const;
+// Heights parts rest on (keel deck, then deck plating): groups based there draw after those below.
+export const HAULER_LEVELS = [10, 10.8].map((z) => z * HAULER_SCALE);
 
-// Miner A: a sand hauler with a forward cab, dark cradle rails and two open bins of ore.
+// Jet mouths (u, v, z) at the three engine faces, keel first, and their width.
+export const HAULER_MOUTHS = (
+  [
+    [-35.2, 0, 6],
+    [-30.2, -15, 4.8],
+    [-30.2, 15, 4.8],
+  ] as const
+).map(([u, v, z]) => [u * HAULER_SCALE, v * HAULER_SCALE, z * HAULER_SCALE] as const);
+export const HAULER_MOUTH_WIDTH = 4.4 * HAULER_SCALE;
+
 export function hauler({ powered }: HaulerState, facing: Facing): Part[][] {
   const lit = powered ? blue : blueDim;
-  const hull = craftPlan([
-    [-39, -13.5],
-    [21, -13.5],
-    [34.5, -7.5],
-    [34.5, 7.5],
-    [21, 13.5],
-    [-39, 13.5],
+  const cab = craftPlan([
+    [10, -5],
+    [18, -5],
+    [21, -3],
+    [21, 3],
+    [18, 5],
+    [10, 5],
   ]);
-  const cab = craftBox(21, 0, 18, 21);
+  const steel = { side: steelDarkSide, front: "flat", back: "flat" } as const;
   const groups: Part[][] = [
-    [{ plan: craftBox(-43.5, 0, 9, 21), z0: 4.5, z1: 16.5, top: steelDark, side: steelDarkSide }],
+    ...[-1, 1].map((s) => [part(craftBox(-28, s * 15, 4, 6), 2.6, 7, steelDark, steelDarkSide)]),
+    [part(craftBox(-33, 0, 4, 8), 3, 9, steelDark, steelDarkSide)],
+    ...[-12, 4].map((u) => [part(craftBox(u, 0, 3, 30), 4, 6.5, steelDarkSide, beamSide)]),
+    ...[-1, 1].map((s) => [
+      part(pill(-26, 14, s * 15, 4.2, "blunt", "flat"), 1.5, 7, sand, sandSide, sandRear),
+      part(craftBox(-7, s * 15, 26, 7.2), 7, 9.6, steelDark, steelDarkSide),
+      part(craftBox(-7, s * 15, 24, 5.6), 9.6, 9.6, ore, oreSide),
+      part(craftBox(-7, s * 15, 1, 7.2), 9.6, 10.4, steelDark, steelDarkSide),
+      cube(-14, s * 15 - 1, 9.6, 1.6, oreLit),
+      cube(-2, s * 15 + 1, 9.6, 1.4, oreLit),
+      cube(12.6, s * 15, 7, 1.3, lit),
+    ]),
+    [part(pill(-31, 26, 0, 5.2, "blunt", "flat"), 2, 10, sand, sandSide, sandRear)],
+    [part(craftBox(-10, 0, 30, 7), 10, 10.8, sandCap, sandSide)],
+    hcyl(26, 29, 0, 6, 4.4, { top: steelDark, ...steel }),
+    hcyl(29, 32, 0, 6, 3.4, { top: drillSteel, ...steel, side: drillSteelSide }),
+    hcyl(32, 34.5, 0, 6, 2.2, { top: drillSteelDark, ...steel, side: drillSteelSide }),
+    hcyl(34.5, 36.5, 0, 6, 1.1, {
+      top: drillSteel,
+      ...steel,
+      side: drillSteelSide,
+      front: "point",
+    }),
     [
-      { plan: hull, z0: 3, z1: 16.5, top: sand, side: sandSide, rear: sandRear },
-      ...wallWindows(facing, 8, 11, 4, 2.6, hull, steelDark),
-      // Side hatches: a dark door on each flank.
-      ...wallWindows(
-        (nx, ny) => facing(nx, ny) && Math.abs(nx) > 0.9,
-        5,
-        14,
-        1,
-        7,
-        craftPlan(box(-17, -13.5, 3, 13.5)),
-        mouth,
-      ),
+      part(cab, 10, 16, sandCap, sandSide, sandRear),
+      ...wallWindows(facing, 11.6, 14.4, 2, 2.4, cab, powered ? warm : glassOff),
     ],
-    [
-      { plan: cab, z0: 16.5, z1: 28.5, top: sandCap, side: sandSide, rear: sandRear },
-      ...wallWindows(facing, 21, 24.5, 1, 9, cab, powered ? warm : glassOff),
-    ],
+    [part(craftBox(14, 0, 0.9, 0.9), 16, 20, steelDark, steelDark), cube(14, 0, 20, 2.2, lit)],
   ];
-  for (const v of [-11.25, 11.25]) {
-    groups.push([
-      { plan: craftBox(-16.5, v, 42, 3), z0: 16.5, z1: 21, top: steelDark, side: steelDarkSide },
-    ]);
-  }
-  for (const u of [-27, -7.5]) {
-    const [bx, by] = uv(u, 0);
-    groups.push([
-      { plan: craftBox(u, 0, 16.5, 19.5), z0: 16.5, z1: 28.5, top: steelDark, side: steelDarkSide },
-      { plan: craftBox(u, 0, 13.5, 16.5), z0: 27.6, z1: 28.5, top: ore, side: ore },
-      {
-        plan: orientedBox(bx - 1.5, by + 1.5, FWD + 0.5, 5, 3.6),
-        z0: 28.5,
-        z1: 31,
-        top: oreLit,
-        side: ore,
-      },
-      {
-        plan: orientedBox(bx + 3, by - 2, FWD - 0.4, 3.6, 2.8),
-        z0: 28.5,
-        z1: 30.2,
-        top: oreLit,
-        side: ore,
-      },
-      {
-        plan: orientedBox(bx - 3.5, by - 3, FWD + 1.2, 3, 2.4),
-        z0: 28.5,
-        z1: 29.8,
-        top: oreLit,
-        side: ore,
-      },
-    ]);
-  }
-  // Running lights at the tail corners and a mast light over the cab.
-  groups.push([-1, 1].map((s) => lamp(...uv(-38, s * 14.4), 10, 2.8, lit)));
-  const [mx, my] = uv(23, 0);
-  groups.push([
-    {
-      plan: box(mx - 0.8, my - 0.8, mx + 0.8, my + 0.8),
-      z0: 28.5,
-      z1: 34.5,
-      top: steelDark,
-      side: steelDarkSide,
-    },
-    light(mx, my, 2, 34.5, 37.5, lit),
-  ]);
-  return groups;
+  return scaleGroups(HAULER_SCALE, groups);
 }
 
-// The hauler's tow point: the nose tip at mid hull height.
-export const HAULER_TOW = [0, -34.5, 9.75] as const;
+// The hauler's tow point: the drill tip at mid keel height.
+export const HAULER_TOW = [0, -36.5 * HAULER_SCALE, 6 * HAULER_SCALE] as const;
 
 // ---------------------------------------------------------------- ore pod
 

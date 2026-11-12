@@ -22,9 +22,10 @@
 ## Sizes and frames
 
 - Geometry is built at its intended size. Structure is about 1.55 times the
-  outposts' proportions on the hub, 1.5 on the miner and 1.45 on the visitors
-  and the buoy; window panes, lamps, beacons, dock collar depth, corner lights
-  and approach lights keep the outposts' sizes.
+  outposts' proportions on the hub and 1.45 on the buoy; window panes, lamps,
+  beacons, dock collar depth, corner lights and approach lights keep the
+  outposts' sizes. The miner and the visitors are modelled in design units and
+  built whole at 1.3 and 1.45 times, lamps and panes included.
 - Frames are multiples of 16 px. Each SVG's intrinsic `width` and `height` are
   its display size (`frame * 0.4375`, times 1.25 for the hub and its changes,
   the hub scale in [Destinations](destinations.md#scale)) and its `viewBox` is the frame
@@ -140,12 +141,12 @@ through them, so they have no hit circle.
 - Groups draw far to near, and a group resting on the hull or cab top draws
   after every group below that level.
 
-| Craft      | Length, span (model units) | Shape                                                                        |
-| ---------- | -------------------------- | ---------------------------------------------------------------------------- |
-| `miner`    | 82.5, 31.6                 | Sand hauler: forward cab, dark cradle rails, two open bins of ore            |
-| `visitor1` | 40.1, 32                   | Sage shuttle with swept wings, a cab and tail lights                         |
-| `visitor2` | 40.1, 32                   | The same shuttle in periwinkle                                               |
-| `blocker`  | 53, 38.6                   | Chartreuse wedge, oversized graphite engine pods, a wide ram bar, high beams |
+| Craft      | Length, span (model units) | Shape                                                                                                        |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `miner`    | 93, 49.9                   | Tri-hull ore hauler: drill-nosed sand keel with a forward cab between two outrigger hulls with open ore bins |
+| `visitor1` | 43.5, 22.6                 | Sage loaf shuttle: rounded passenger body, warm window band, roof cupola, corner engines, no wings           |
+| `visitor2` | 43.5, 22.6                 | The same shuttle in periwinkle                                                                               |
+| `blocker`  | 53, 38.6                   | Chartreuse wedge, oversized graphite engine pods, a wide ram bar, high beams                                 |
 
 Ada's wingspan is 42.88 model units. The blocking pilot reads as pushy (a loud
 hot rod with a ram bar and white high beams) without General Gadget's coral,
@@ -160,12 +161,12 @@ schema (version 1, outer and core layers, no halo, length
 `(6 + 24 f²) * sqrt(frame / 96)`) in one civil palette for every story craft:
 outer `#c9a978` to `#ffe9b8` and core `#efe4cf` to `#ffffff`.
 
-| Craft      | Mouths | Mouth width | Mouth (u, v, z), u forward |
-| ---------- | -----: | ----------: | -------------------------- |
-| `miner`    |      2 |           6 | `(-48, ±5.5, 10)`          |
-| `visitor1` |      2 |           4 | `(-21, ±3.2, 7.8)`         |
-| `visitor2` |      2 |           4 | `(-21, ±3.2, 7.8)`         |
-| `blocker`  |      2 |           6 | `(-26, ±15, 7)`            |
+| Craft      | Mouths | Mouth width | Mouth (u, v, z), u forward                  |
+| ---------- | -----: | ----------: | ------------------------------------------- |
+| `miner`    |      3 |        5.72 | `(-45.76, 0, 7.8)`, `(-39.26, ±19.5, 6.24)` |
+| `visitor1` |      2 |        4.64 | `(-22.91, ±7.83, 7.54)`                     |
+| `visitor2` |      2 |        4.64 | `(-22.91, ±7.83, 7.54)`                     |
+| `blocker`  |      2 |           6 | `(-26, ±15, 7)`                             |
 
 ### Nose
 
@@ -188,9 +189,9 @@ lamp); the 0.6-deep window panes on the walls do not count.
 
 | Craft      | Reach (u) | Forward-most part         | `distance` at 2, 10 | At 0, 4, 8, 12 | At 6, 14 |
 | ---------- | --------: | ------------------------- | ------------------: | -------------: | -------: |
-| `miner`    |      34.5 | Hull front                |              15.094 |         14.119 |   13.072 |
-| `visitor1` |      18.9 | Hull nose                 |               8.269 |          7.735 |    7.161 |
-| `visitor2` |      18.9 | Hull nose                 |               8.269 |          7.735 |    7.161 |
+| `miner`    |     47.45 | Drill tip                 |              20.759 |         19.419 |   17.978 |
+| `visitor1` |    21.025 | Hull nose                 |               9.198 |          8.604 |    7.966 |
+| `visitor2` |    21.025 | Hull nose                 |               9.198 |          8.604 |    7.966 |
 | `blocker`  |        27 | High beams (tip: v = -13) |              11.813 |          11.05 |    10.23 |
 
 ## Palettes
@@ -217,7 +218,8 @@ lists top colours, which carry each silhouette.
 | All       | Blue lights          | `#70ace8` |   6.16:1 |
 | All       | Warm windows         | `#ffe9b8` |  12.38:1 |
 | Miner     | Sand hull            | `#dcc49a` |   8.73:1 |
-| Miner     | Bins, rails          | `#6e7482` |   3.15:1 |
+| Miner     | Bins, beams, engines | `#6e7482` |   3.15:1 |
+| Miner     | Drill                | `#b8bfc9` |   7.97:1 |
 | Visitor 1 | Sage hull            | `#a7c49a` |   7.74:1 |
 | Visitor 2 | Periwinkle hull      | `#aab0e6` |   7.08:1 |
 | Blocker   | Chartreuse hull      | `#b6dd30` |   9.41:1 |

@@ -10901,10 +10901,10 @@
     {
       "id": "craft-stranded-hauler-0",
       "path": "/art/cartwheel/stranded-hauler-0.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-0",
       "directionIndex": 0,
       "pivot": {
@@ -10916,10 +10916,10 @@
     {
       "id": "craft-stranded-hauler-1",
       "path": "/art/cartwheel/stranded-hauler-1.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-1",
       "directionIndex": 1,
       "pivot": {
@@ -10931,10 +10931,10 @@
     {
       "id": "craft-stranded-hauler-2",
       "path": "/art/cartwheel/stranded-hauler-2.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-2",
       "directionIndex": 2,
       "pivot": {
@@ -10946,10 +10946,10 @@
     {
       "id": "craft-stranded-hauler-3",
       "path": "/art/cartwheel/stranded-hauler-3.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-3",
       "directionIndex": 3,
       "pivot": {
@@ -10961,10 +10961,10 @@
     {
       "id": "craft-stranded-hauler-4",
       "path": "/art/cartwheel/stranded-hauler-4.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-4",
       "directionIndex": 4,
       "pivot": {
@@ -10976,10 +10976,10 @@
     {
       "id": "craft-stranded-hauler-5",
       "path": "/art/cartwheel/stranded-hauler-5.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-5",
       "directionIndex": 5,
       "pivot": {
@@ -10991,10 +10991,10 @@
     {
       "id": "craft-stranded-hauler-6",
       "path": "/art/cartwheel/stranded-hauler-6.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-6",
       "directionIndex": 6,
       "pivot": {
@@ -11006,10 +11006,10 @@
     {
       "id": "craft-stranded-hauler-7",
       "path": "/art/cartwheel/stranded-hauler-7.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-7",
       "directionIndex": 7,
       "pivot": {
@@ -11021,10 +11021,10 @@
     {
       "id": "craft-stranded-hauler-8",
       "path": "/art/cartwheel/stranded-hauler-8.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-8",
       "directionIndex": 8,
       "pivot": {
@@ -11036,10 +11036,10 @@
     {
       "id": "craft-stranded-hauler-9",
       "path": "/art/cartwheel/stranded-hauler-9.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-9",
       "directionIndex": 9,
       "pivot": {
@@ -11051,10 +11051,10 @@
     {
       "id": "craft-stranded-hauler-10",
       "path": "/art/cartwheel/stranded-hauler-10.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-10",
       "directionIndex": 10,
       "pivot": {
@@ -11066,10 +11066,10 @@
     {
       "id": "craft-stranded-hauler-11",
       "path": "/art/cartwheel/stranded-hauler-11.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-11",
       "directionIndex": 11,
       "pivot": {
@@ -11081,10 +11081,10 @@
     {
       "id": "craft-stranded-hauler-12",
       "path": "/art/cartwheel/stranded-hauler-12.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-12",
       "directionIndex": 12,
       "pivot": {
@@ -11096,10 +11096,10 @@
     {
       "id": "craft-stranded-hauler-13",
       "path": "/art/cartwheel/stranded-hauler-13.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-13",
       "directionIndex": 13,
       "pivot": {
@@ -11111,10 +11111,10 @@
     {
       "id": "craft-stranded-hauler-14",
       "path": "/art/cartwheel/stranded-hauler-14.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-14",
       "directionIndex": 14,
       "pivot": {
@@ -11126,10 +11126,10 @@
     {
       "id": "craft-stranded-hauler-15",
       "path": "/art/cartwheel/stranded-hauler-15.svg",
-      "width": 144,
-      "height": 144,
-      "displayWidth": 63,
-      "displayHeight": 63,
+      "width": 128,
+      "height": 128,
+      "displayWidth": 56,
+      "displayHeight": 56,
       "facing": "world-15",
       "directionIndex": 15,
       "pivot": {

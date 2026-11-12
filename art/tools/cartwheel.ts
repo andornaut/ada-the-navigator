@@ -6,7 +6,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { hauler, HAULER_LEVELS, HAULER_MOUTH_WIDTH, HAULER_MOUTHS } from "./cartwheel-craft.ts";
 import { jetsFile } from "./crafts.ts";
+import { cube, hcyl, part, scaleGroups } from "./hull-shapes.ts";
 import { replaceEntries } from "./manifest.ts";
 import { noses } from "./nose.ts";
 import { ORE_SOLID } from "./ore.ts";
@@ -36,7 +38,6 @@ import {
   dockCollar,
   type Face,
   facing,
-  mouth,
   ngon,
   orientedBox,
   orientedPlan,
@@ -576,172 +577,108 @@ type Craft = {
   mouthWidth: number;
 };
 
-// Miner: a sand hauler with a forward cab, dark cradle rails and two open bins of ore.
-const sand = "#dcc49a";
-const sandSide = "#a8916a";
-const sandRear = "#8a7656";
-const sandCap = "#efe0c2";
-
+// Miner: the tri-hull ore hauler, shared with the stranded hauler (cartwheel-craft.ts).
 const miner: Craft = {
   name: "miner",
   title: "Cartwheel miner",
-  levels: [16.5, 28.5],
-  mouthWidth: 6,
-  mouths: [
-    [-48, -5.5, 10],
-    [-48, 5.5, 10],
-  ],
-  build: (visible) => {
-    const hull = craftPlan([
-      [-39, -13.5],
-      [21, -13.5],
-      [34.5, -7.5],
-      [34.5, 7.5],
-      [21, 13.5],
-      [-39, 13.5],
-    ]);
-    const cab = craftBox(21, 0, 18, 21);
-    const groups: Part[][] = [
-      [{ plan: craftBox(-43.5, 0, 9, 21), z0: 4.5, z1: 16.5, top: steelDark, side: steelDarkSide }],
-      [
-        { plan: hull, z0: 3, z1: 16.5, top: sand, side: sandSide, rear: sandRear },
-        ...wallWindows(visible, 8, 11, 4, 2.6, hull, steelDark),
-        // Side hatches: a dark door with a lit sill.
-        ...wallWindows(
-          (nx, ny) => visible(nx, ny) && Math.abs(nx) > 0.9,
-          5,
-          14,
-          1,
-          7,
-          craftPlan(box(-17, -13.5, 3, 13.5)),
-          mouth,
-        ),
-      ],
-      [
-        { plan: cab, z0: 16.5, z1: 28.5, top: sandCap, side: sandSide, rear: sandRear },
-        ...wallWindows(visible, 21, 24.5, 1, 9, cab),
-      ],
-    ];
-    for (const v of [-11.25, 11.25]) {
-      groups.push([
-        { plan: craftBox(-16.5, v, 42, 3), z0: 16.5, z1: 21, top: steelDark, side: steelDarkSide },
-      ]);
-    }
-    for (const u of [-27, -7.5]) {
-      const [bx, by] = uv(u, 0);
-      groups.push([
-        {
-          plan: craftBox(u, 0, 16.5, 19.5),
-          z0: 16.5,
-          z1: 28.5,
-          top: steelDark,
-          side: steelDarkSide,
-        },
-        { plan: craftBox(u, 0, 13.5, 16.5), z0: 27.6, z1: 28.5, top: ore, side: ore },
-        {
-          plan: orientedBox(bx - 1.5, by + 1.5, FWD + 0.5, 5, 3.6),
-          z0: 28.5,
-          z1: 31,
-          top: oreLit,
-          side: ore,
-        },
-        {
-          plan: orientedBox(bx + 3, by - 2, FWD - 0.4, 3.6, 2.8),
-          z0: 28.5,
-          z1: 30.2,
-          top: oreLit,
-          side: ore,
-        },
-        {
-          plan: orientedBox(bx - 3.5, by - 3, FWD + 1.2, 3, 2.4),
-          z0: 28.5,
-          z1: 29.8,
-          top: oreLit,
-          side: ore,
-        },
-      ]);
-    }
-    // Running lights at the tail corners and a mast light over the cab.
-    groups.push([-1, 1].map((s) => lamp(...uv(-38, s * 14.4), 10, 2.8, blue)));
-    groups.push(beacon(...uv(23, 0), 28.5, 6, true));
-    return groups;
-  },
+  levels: HAULER_LEVELS,
+  mouthWidth: HAULER_MOUTH_WIDTH,
+  mouths: HAULER_MOUTHS,
+  build: (visible) => hauler({ powered: true }, visible),
 };
 
-// Visitors: small shuttles in distinct pastel hulls, none coral, amber or Ada's blue.
-function shuttle(name: string, title: string, top: string, side: string, rear: string): Craft {
+// Visitors: a loaf shuttle in distinct pastel hulls, none coral, amber or Ada's blue. A rounded
+// passenger body with a bevelled roof, a wide warm window band, a roof cupola, engines on the rear
+// corners and blue tail lights; no wings. Design units, built at SHUTTLE_SCALE.
+const SHUTTLE_SCALE = 1.45;
+function shuttle(
+  name: string,
+  title: string,
+  top: string,
+  side: string,
+  rear: string,
+  roof: string,
+): Craft {
+  const k = SHUTTLE_SCALE;
   return {
     name,
     title,
-    levels: [13, 17.4],
-    mouthWidth: 4,
-    mouths: [
-      [-21, -3.2, 7.8],
-      [-21, 3.2, 7.8],
-    ],
+    levels: [9.4 * k],
+    mouthWidth: 3.2 * k,
+    mouths: (
+      [
+        [-15.8, -5.4, 5.2],
+        [-15.8, 5.4, 5.2],
+      ] as const
+    ).map(([u, v, z]) => [u * k, v * k, z * k] as const),
     build: (visible) => {
-      const hull = craftPlan([
-        [-17.4, -8.7],
-        [10.2, -8.7],
-        [18.9, -4.4],
-        [18.9, 4.4],
-        [10.2, 8.7],
-        [-17.4, 8.7],
+      const body = craftPlan([
+        [-12, -7.5],
+        [10, -7.5],
+        [13.5, -6],
+        [14.5, 0],
+        [13.5, 6],
+        [10, 7.5],
+        [-12, 7.5],
       ]);
-      const cab = craftBox(4.4, 0, 14.5, 11.6);
-      return [
-        ...[-1, 1].map((s): Part[] => [
-          {
-            plan: craftPlan([
-              [-16, s * 7.25],
-              [-1.5, s * 7.25],
-              [-10.2, s * 16],
-              [-17.4, s * 16],
-            ]),
-            z0: 5.1,
-            z1: 7.3,
-            top: side,
-            side: steelDarkSide,
-          },
-        ]),
+      const upper = craftPlan([
+        [-11, -6.6],
+        [9.4, -6.6],
+        [12.4, -5],
+        [13.2, 0],
+        [12.4, 5],
+        [9.4, 6.6],
+        [-11, 6.6],
+      ]);
+      const engine = { top: steelDark, side: steelDarkSide, front: "flat", back: "flat" } as const;
+      // Wall windows go on the unscaled plan, so the model scales as one.
+      return scaleGroups(k, [
+        ...[-1, 1].map((s) => hcyl(-15.5, -9, s * 5.4, 5.2, 2.4, engine)),
         [
-          { plan: hull, z0: 2.9, z1: 13, top, side, rear },
-          ...wallWindows(
-            (nx, ny) => visible(nx, ny) && Math.abs(nx) > 0.9,
-            6.5,
-            9.5,
-            2,
-            2.6,
-            hull,
-            steelDark,
+          part(body, 1.5, 8.4, top, side, rear),
+          ...wallWindows(visible, 5, 7.4, 3, 2.6, body, warm),
+        ],
+        [part(upper, 8.4, 9.4, top, side, rear)],
+        [
+          part(
+            craftPlan([
+              [-9, -4],
+              [7, -4],
+              [10, -2.5],
+              [10, 2.5],
+              [7, 4],
+              [-9, 4],
+            ]),
+            9.4,
+            10.2,
+            roof,
+            side,
           ),
         ],
-        [
-          {
-            plan: craftBox(-19, 0, 4.4, 13),
-            z0: 4.4,
-            z1: 11.6,
-            top: steelDark,
-            side: steelDarkSide,
-          },
-        ],
-        [
-          { plan: cab, z0: 13, z1: 17.4, top, side, rear },
-          ...wallWindows(visible, 13.8, 16.4, 1, 4.5, cab),
-        ],
-        [-1, 1].map((s) => lamp(...uv(-14.5, s * 9.4), 7.2, 2.4, blue)),
-      ];
+        [part(craftBox(13.3, 0, 1, 7), 5.6, 8, warm, warm)],
+        [part(craftBox(-3, 0, 7, 6), 10.2, 11.6, top, side), cube(-5, 0, 11.6, 1.4, blue)],
+        [cube(-12.6, -6.4, 7.4, 1.2, blue)],
+        [cube(-12.6, 6.4, 7.4, 1.2, blue)],
+      ]);
     },
   };
 }
 
-const visitor1 = shuttle("visitor1", "Cartwheel visitor, sage", "#a7c49a", "#728f66", "#5a7351");
+const visitor1 = shuttle(
+  "visitor1",
+  "Cartwheel visitor, sage",
+  "#a7c49a",
+  "#728f66",
+  "#5a7351",
+  "#bdd4b2",
+);
 const visitor2 = shuttle(
   "visitor2",
   "Cartwheel visitor, periwinkle",
   "#aab0e6",
   "#7379b4",
   "#5b6093",
+  "#c0c5ee",
 );
 // The mock-up's third visitor, kept as an alternate.
 const visitor3 = shuttle(
@@ -750,6 +687,7 @@ const visitor3 = shuttle(
   "#e9e2d6",
   "#b4ab9c",
   "#8f877a",
+  "#f3eee6",
 );
 
 // Blocking pilot, design A: a chartreuse wedge with a wide graphite ram bar, white high beams and

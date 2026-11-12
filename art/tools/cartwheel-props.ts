@@ -189,7 +189,7 @@ const CRAFT: readonly CraftSpec[] = [
     ],
   },
   {
-    // Miner A with its power off: dark glass, dim lights, no jets, listing to port, nose down.
+    // The tri-hull miner with its power off: dark glass, dim lights, no jets, listing to port, nose down.
     id: "stranded-hauler",
     title: "Stuck hauler",
     scale: 1,
