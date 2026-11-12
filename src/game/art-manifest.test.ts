@@ -4,7 +4,7 @@ import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public
 import { galaxyManifestKey, galaxyManifestPaths, readGalaxyManifest } from "./art-manifest.ts";
 
 describe("split art manifest", () => {
-  it("maps each galaxy to its manifest from the core manifest", () => {
+  it("maps each galaxy to its manifest from the core manifest, keyed by stable galaxy id", () => {
     expect(galaxyManifestPaths(CORE_MANIFEST.galaxies)).toEqual({
       1: "/art/sunflower/manifest.json",
       2: "/art/cartwheel/manifest.json",
@@ -19,12 +19,14 @@ describe("split art manifest", () => {
     expect(galaxyManifestPaths("/art/sunflower/manifest.json")).toEqual({});
     expect(
       galaxyManifestPaths({
-        1: { assets: [] },
-        2: "https://example.invalid/manifest.json",
-        3: "/art/whirlpool/manifest.json",
-        4: "/art/extra/manifest.json",
+        1: "/art/sunflower/manifest.json",
+        cartwheel: "https://example.invalid/manifest.json",
+        extra: "/art/extra/manifest.json",
+        needle: "/art/needle/manifest.json",
+        sunflower: { assets: [] },
+        whirlpool: "/art/whirlpool/manifest.json",
       }),
-    ).toEqual({ 3: "/art/whirlpool/manifest.json" });
+    ).toEqual({ 3: "/art/whirlpool/manifest.json", 4: "/art/needle/manifest.json" });
   });
 
   it("reads a version 1 galaxy manifest's assets and string data links", () => {

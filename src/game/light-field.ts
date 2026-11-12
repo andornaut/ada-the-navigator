@@ -1,4 +1,5 @@
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
+import { bySector } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetLayer, readJetLayers } from "./ship-jets.ts";
@@ -92,18 +93,13 @@ export function readLightField(value: unknown): LightField | undefined {
   };
 }
 
-/** The galaxy numbers whose tint is light. */
-export function readLightGalaxies(value: unknown): ReadonlySet<number> {
-  const galaxies = fields(value)?.galaxies;
-  if (!Array.isArray(galaxies)) {
-    return new Set();
-  }
-  return new Set(
-    galaxies
-      .map((entry) => fields(entry))
-      .filter((entry) => fields(entry?.tint)?.light === true && typeof entry?.number === "number")
-      .map((entry) => entry!.number as number),
+/** The galaxies whose tint is light, from galaxies.json's map by stable galaxy id. */
+export function readLightGalaxies(value: unknown): ReadonlySet<SectorId> {
+  const light = bySector(
+    (entry) => fields(fields(entry)?.tint)?.light === true,
+    fields(value)?.galaxies,
   );
+  return new Set([...(light ?? [])].filter(([, isLight]) => isLight).map(([sector]) => sector));
 }
 
 function required(rule: LightField | undefined): LightField {
@@ -120,7 +116,7 @@ export const LIGHT_FIELD: LightField = required(readLightField(GALAXIES_FILE));
  * home and the base field are dark.
  */
 export function lightGalaxy(
-  light: ReadonlySet<number>,
+  light: ReadonlySet<SectorId>,
   sector: SectorId | null | undefined,
 ): boolean {
   return sector !== null && sector !== undefined && light.has(sector);

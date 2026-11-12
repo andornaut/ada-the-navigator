@@ -7,6 +7,46 @@ import type { SectorId } from "./types.ts";
 /** Every galaxy id. */
 export const SECTORS: readonly SectorId[] = [1, 2, 3, 4, 5, 6];
 
+/**
+ * Each galaxy's stable id, which Art keys every per-galaxy file by (art/galaxies.md): the core
+ * manifest's galaxy map, galaxies.json, the backdrop tints and the selector previews.
+ */
+export const GALAXY_ID: Readonly<Record<SectorId, string>> = {
+  1: "sunflower",
+  2: "cartwheel",
+  3: "whirlpool",
+  4: "needle",
+  5: "andromeda",
+  6: "black-eye",
+};
+
+/**
+ * The entries of a map keyed by stable galaxy id, by SectorId, each through `read`: a galaxy
+ * missing from the map drops, as does an id no galaxy has. Undefined if `read` rejects any entry
+ * present, or if the value is not a map.
+ */
+export function bySector<T>(
+  read: (entry: unknown) => T | undefined,
+  value: unknown,
+): ReadonlyMap<SectorId, T> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const map = value as Record<string, unknown>;
+  const entries = new Map<SectorId, T>();
+  for (const sector of SECTORS) {
+    if (!Object.hasOwn(map, GALAXY_ID[sector])) {
+      continue;
+    }
+    const entry = read(map[GALAXY_ID[sector]]);
+    if (entry === undefined) {
+      return undefined;
+    }
+    entries.set(sector, entry);
+  }
+  return entries;
+}
+
 /** The galaxies in galaxy selection, one page per route position. */
 export const GALAXY_COUNT = SECTORS.length;
 

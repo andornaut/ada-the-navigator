@@ -1,4 +1,4 @@
-import { BUILT } from "../data/galaxies.ts";
+import { bySector } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import { type EnemyFrame, enemyPartFrame } from "./enemy-art.ts";
 import { whaleFrameAsset } from "./whale-art.ts";
@@ -10,7 +10,7 @@ import { whaleFrameAsset } from "./whale-art.ts";
 /** The core manifest's assets and links that the game reads. */
 export interface CoreManifest<T> {
   readonly assets: T[];
-  /** Each galaxy's manifest path, by SectorId. */
+  /** Each galaxy's manifest path, by stable galaxy id. */
   readonly galaxies?: unknown;
   /** Each galaxy's field palette and the light field (public/art/galaxies.json). */
   readonly galaxyFields?: unknown;
@@ -58,16 +58,16 @@ export function galaxyManifestKey(sector: SectorId): string {
 }
 
 /**
- * Each built galaxy's manifest path from the core manifest's galaxies map; non-string values
- * drop. A placeholder galaxy loads no galaxy art.
+ * Each galaxy's manifest path from the core manifest's galaxies map, keyed by stable galaxy id;
+ * a value other than a path under /art/ drops. A galaxy without a manifest loads no galaxy art.
  */
 export function galaxyManifestPaths(value: unknown): Partial<Record<SectorId, string>> {
-  const map = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const path = (entry: unknown) =>
+    typeof entry === "string" && entry.startsWith("/art/") ? entry : null;
   const paths: Partial<Record<SectorId, string>> = {};
-  for (const sector of BUILT) {
-    const path = map[String(sector)];
-    if (typeof path === "string" && path.startsWith("/art/")) {
-      paths[sector] = path;
+  for (const [sector, entry] of bySector(path, value) ?? []) {
+    if (entry) {
+      paths[sector] = entry;
     }
   }
   return paths;

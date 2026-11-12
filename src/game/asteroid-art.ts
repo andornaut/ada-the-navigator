@@ -5,8 +5,7 @@ import {
   type BackdropSprite,
   type BackdropTint,
 } from "../data/asteroid-catalog.ts";
-import { BUILT } from "../data/galaxies.ts";
-import { galaxyCard } from "../data/storybook.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import { clearOfOreFields } from "../model/ore-fields.ts";
 import type { Vec } from "../model/types.ts";
@@ -179,12 +178,11 @@ export function driftChips(
 }
 
 /**
- * A built galaxy's backdrop colours by its galaxies.json id; the base field outside a galaxy and
- * in a placeholder.
+ * A galaxy's backdrop colours by its stable galaxy id; the base field outside a galaxy and in a
+ * galaxy Art has no tint for.
  */
 export function backdropTint(catalog: AsteroidArtCatalog, sector: SectorId | null): BackdropTint {
-  const id = sector === null || !BUILT.has(sector) ? undefined : galaxyCard(sector).id;
-  return (id ? catalog.tints[id] : undefined) ?? catalog.tints.base!;
+  return (sector === null ? undefined : catalog.tints[GALAXY_ID[sector]]) ?? catalog.tints.base!;
 }
 
 /** Provisional backdrop field density until Art sets one: world cell size and fill chance. */

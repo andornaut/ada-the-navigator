@@ -70,7 +70,7 @@ describe("light-field rule", () => {
     expect(lightGalaxy(light, null)).toBe(false);
     expect(lightGalaxy(light, undefined)).toBe(false);
     // The base field the previews capture locked galaxies on lists no galaxy, so none is light.
-    expect(lightGalaxy(readLightGalaxies({ galaxies: [] }), 1)).toBe(false);
+    expect(lightGalaxy(readLightGalaxies({ galaxies: {} }), 1)).toBe(false);
   });
 
   it("reads no rule from malformed data", () => {

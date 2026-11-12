@@ -1,3 +1,4 @@
+import { GALAXY_ID } from "./galaxies.ts";
 import type { ArtBackground, Background, SectorId } from "./types.ts";
 
 export type { ArtBackground, Background } from "./types.ts";
@@ -70,7 +71,7 @@ export interface GalaxyCard {
   readonly flavor: string;
   /** The galaxy's numeric id. */
   readonly galaxy: SectorId;
-  /** Art's galaxy id (public/art/galaxies.json), which also names its selector previews. */
+  /** The galaxy's stable id (galaxies.ts GALAXY_ID), which also names its selector previews. */
   readonly id: string;
   readonly name: string;
   /** Whether Art has drawn its selector previews. */
@@ -94,42 +95,42 @@ export const GALAXIES: readonly GalaxyCard[] = [
   {
     flavor: "Scattered outposts grow, build and salvage, each on their own.",
     galaxy: 1,
-    id: "sunflower",
+    id: GALAXY_ID[1],
     name: "Sunflower",
     preview: true,
   },
   {
     flavor: "Swirling debris, and a song somewhere in the dark.",
     galaxy: 3,
-    id: "whirlpool",
+    id: GALAXY_ID[3],
     name: "Whirlpool",
     preview: true,
   },
   {
     flavor: "A thin silver line of stars, where nothing can be rushed.",
     galaxy: 4,
-    id: "needle",
+    id: GALAXY_ID[4],
     name: "Needle",
     preview: false,
   },
   {
     flavor: "A great bright spiral, close enough to feel like a neighbor.",
     galaxy: 5,
-    id: "andromeda",
+    id: GALAXY_ID[5],
     name: "Andromeda",
     preview: false,
   },
   {
     flavor: "A busy mining hub where every rock is worth something.",
     galaxy: 2,
-    id: "cartwheel",
+    id: GALAXY_ID[2],
     name: "Cartwheel",
     preview: true,
   },
   {
     flavor: "A shadowed rim where someone is watching.",
     galaxy: 6,
-    id: "black-eye",
+    id: GALAXY_ID[6],
     name: "Black Eye",
     preview: true,
   },

@@ -467,9 +467,9 @@ export class PrototypeScene extends Phaser.Scene {
   private palette = FALLBACK_SPACE_PALETTE;
   // The palette at home and before a galaxy is set, and each galaxy's retinted field.
   private basePalette = FALLBACK_SPACE_PALETTE;
-  private galaxyPalettes: ReadonlyMap<number, SpacePalette> = new Map();
+  private galaxyPalettes: ReadonlyMap<SectorId, SpacePalette> = new Map();
   // The galaxies whose field is light, from the same galaxies.json as their palettes.
-  private lightGalaxies: ReadonlySet<number> = new Set();
+  private lightGalaxies: ReadonlySet<SectorId> = new Set();
   // The space background in use: the flight's galaxy field, else the base palette's.
   private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
@@ -597,15 +597,10 @@ export class PrototypeScene extends Phaser.Scene {
     this.basePalette =
       readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
     this.palette = this.basePalette;
-    // Art's field colours for the built galaxies, whose ids are Art's galaxy numbers; a
-    // placeholder flies in the base field.
+    // Art's field colours by stable galaxy id; a galaxy Art has none for flies in the base field.
     this.galaxyPalettes = galaxyPalettes(
       this.basePalette,
-      new Map(
-        [...readGalaxyFields(this.cache.json.get("galaxy-fields"))].filter(([galaxy]) =>
-          BUILT.has(galaxy as SectorId),
-        ),
-      ),
+      readGalaxyFields(this.cache.json.get("galaxy-fields")),
     );
     this.lightGalaxies = readLightGalaxies(this.cache.json.get("galaxy-fields"));
     const background = this.palette.background;

@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { BUILT } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { ART_MANIFEST, publicJson } from "../testing/public-art.ts";
@@ -95,8 +94,9 @@ describe("galaxy fields", () => {
   const palettes = galaxyPalettes(palette, fields);
 
   it("retints the background, environment and detail of each galaxy from Art's galaxies.json", () => {
+    // Keyed there by stable galaxy id: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Black Eye.
     expect(
-      [1, 2, 3, 4].map((galaxy) => {
+      ([1, 2, 3, 4, 5, 6] as const).map((galaxy) => {
         const { background, environment, environmentDetail } = palettes.get(galaxy)!;
         return [background, environment, environmentDetail].map(spaceColorCss);
       }),
@@ -104,6 +104,8 @@ describe("galaxy fields", () => {
       ["#d8c994", "#c9ba86", "#baab77"],
       ["#39221e", "#452e2a", "#523a36"],
       ["#132d33", "#1f3940", "#2b464c"],
+      ["#26221f", "#312d2a", "#3e3936"],
+      ["#232641", "#2f324e", "#3a3e5b"],
       ["#271423", "#331f2f", "#3f2b3b"],
     ]);
   });
@@ -124,22 +126,17 @@ describe("galaxy fields", () => {
   });
 
   it("reads no galaxy from invalid data, so the base field stays", () => {
+    expect(readGalaxyFields({ galaxies: {}, version: 1 }).size).toBe(0);
     expect(readGalaxyFields({ galaxies: [], version: 1 }).size).toBe(0);
-    expect(readGalaxyFields({ galaxies: [{ colors: {}, number: 1 }], version: 1 }).size).toBe(0);
+    expect(readGalaxyFields({ galaxies: { sunflower: { colors: {} } }, version: 1 }).size).toBe(0);
     expect(readGalaxyFields({ version: 2 }).size).toBe(0);
     expect(readGalaxyFields(null).size).toBe(0);
   });
 
   it("names each selector galaxy by its galaxies.json id, with both previews committed", () => {
-    const ids = (galaxiesData as { galaxies: { id: string; number: number }[] }).galaxies;
-    // Every galaxies.json entry is a selector galaxy; a built galaxy's number is its own id.
-    for (const { id, number } of ids) {
-      const card = GALAXIES.find((galaxy) => galaxy.id === id);
-      expect(card, id).toBeDefined();
-      if (BUILT.has(card!.galaxy)) {
-        expect(number, id).toBe(card!.galaxy);
-      }
-    }
+    // galaxies.json holds every selector galaxy by its stable id, and nothing else.
+    const ids = Object.keys((galaxiesData as { galaxies: Record<string, unknown> }).galaxies);
+    expect(ids.toSorted()).toEqual(GALAXIES.map(({ id }) => id).toSorted());
     for (const galaxy of GALAXIES) {
       for (const locked of [false, true]) {
         const preview = galaxyPreview(galaxy, locked);

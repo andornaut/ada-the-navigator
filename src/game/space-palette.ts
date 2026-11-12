@@ -1,3 +1,5 @@
+import { bySector } from "../data/galaxies.ts";
+import type { SectorId } from "../data/types.ts";
 import type { SpaceObject } from "../model/types.ts";
 
 const ROLES = [
@@ -77,42 +79,37 @@ export function spaceColorCss(color: number): string {
 const FIELD_ROLES = ["background", "environment", "environmentDetail"] as const;
 export type FieldColors = Pick<SpacePalette, (typeof FIELD_ROLES)[number]>;
 
-/** Each galaxy's field colours from Art's galaxies.json, by galaxy number; empty if invalid. */
-export function readGalaxyFields(value: unknown): ReadonlyMap<number, FieldColors> {
-  const galaxies = (value as { galaxies?: unknown } | null)?.galaxies;
-  if ((value as { version?: unknown } | null)?.version !== 1 || !Array.isArray(galaxies)) {
+/** One galaxies.json entry's field colours; undefined if any role is missing or malformed. */
+function readFieldColors(entry: unknown): FieldColors | undefined {
+  const colors = (entry as { colors?: Record<string, unknown> } | null | undefined)?.colors;
+  const values = FIELD_ROLES.map((role) => colors?.[role]);
+  if (!values.every((color) => typeof color === "string" && /^#[0-9a-f]{6}$/iu.test(color))) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    FIELD_ROLES.map((role, index) => [
+      role,
+      Number.parseInt((values[index] as string).slice(1), 16),
+    ]),
+  ) as FieldColors;
+}
+
+/**
+ * Each galaxy's field colours from Art's galaxies.json, keyed there by stable galaxy id, by
+ * SectorId; empty if invalid.
+ */
+export function readGalaxyFields(value: unknown): ReadonlyMap<SectorId, FieldColors> {
+  const data = value as { galaxies?: unknown; version?: unknown } | null | undefined;
+  if (data?.version !== 1) {
     return new Map();
   }
-  const fields = new Map<number, FieldColors>();
-  for (const entry of galaxies as unknown[]) {
-    const { colors, number } = (entry ?? {}) as {
-      colors?: Record<string, unknown>;
-      number?: unknown;
-    };
-    const values = FIELD_ROLES.map((role) => colors?.[role]);
-    if (
-      typeof number !== "number" ||
-      !values.every((color) => typeof color === "string" && /^#[0-9a-f]{6}$/iu.test(color))
-    ) {
-      return new Map();
-    }
-    fields.set(
-      number,
-      Object.fromEntries(
-        FIELD_ROLES.map((role, index) => [
-          role,
-          Number.parseInt((values[index] as string).slice(1), 16),
-        ]),
-      ) as FieldColors,
-    );
-  }
-  return fields;
+  return bySector(readFieldColors, data.galaxies) ?? new Map();
 }
 
 /** Each galaxy's palette: the base palette with that galaxy's field colours. */
 export function galaxyPalettes(
   palette: SpacePalette,
-  fields: ReadonlyMap<number, FieldColors>,
-): ReadonlyMap<number, SpacePalette> {
+  fields: ReadonlyMap<SectorId, FieldColors>,
+): ReadonlyMap<SectorId, SpacePalette> {
   return new Map([...fields].map(([galaxy, colors]) => [galaxy, { ...palette, ...colors }]));
 }

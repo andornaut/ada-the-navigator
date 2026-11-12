@@ -226,7 +226,7 @@ async function processCapture({ anchor, capture, focus, locked, preview }) {
 // tint and field tint (which carries the light-field rule) on the flight's galaxy (the same files
 // when it flies there); for locked, the base field, which no light-field rule touches.
 function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
-  const flown = ids[sector - 1];
+  const flown = ids[sector];
   const tints = Object.fromEntries(
     Object.entries(asteroids.tints).map(([id, tint]) => [
       id,
@@ -242,12 +242,11 @@ function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
     galaxies: {
       ...galaxies,
       galaxies: base
-        ? []
-        : galaxies.galaxies.map((entry) =>
-            entry.number === sector
-              ? { ...entry, colors: galaxy.colors, tint: galaxy.tint }
-              : entry,
-          ),
+        ? {}
+        : {
+            ...galaxies.galaxies,
+            [flown]: { ...galaxies.galaxies[flown], colors: galaxy.colors, tint: galaxy.tint },
+          },
     },
   };
 }
@@ -303,11 +302,18 @@ async function capture() {
   const read = (url) => JSON.parse(readFileSync(join(dist, url), "utf8"));
   const manifest = read("art/manifest.json");
   const galaxies = read(manifest.galaxyFields);
-  const data = {
-    asteroids: read(manifest.asteroids),
-    galaxies,
-    ids: galaxies.galaxies.map(({ id }) => id),
-  };
+  const [{ GALAXY_ID }, { GALAXIES }] = await Promise.all([
+    import("/source/src/data/galaxies.ts"),
+    import("/source/src/data/storybook.ts"),
+  ]);
+  // galaxies.json keys each galaxy by stable id; the cards give its number and whether Tech
+  // captures its previews (Art draws the placeholders' own).
+  const captured = GALAXIES.filter(({ preview }) => preview).map(({ galaxy, id }) => ({
+    ...galaxies.galaxies[id],
+    id,
+    number: galaxy,
+  }));
+  const data = { asteroids: read(manifest.asteroids), galaxies, ids: GALAXY_ID };
   const server = await serve(dist);
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
@@ -315,7 +321,7 @@ async function capture() {
   const shared = { browser, data, manifest };
   try {
     // One at a time, in selector order: each galaxy unlocked, then locked.
-    await galaxies.galaxies
+    await captured
       .flatMap((galaxy) => [false, true].map((locked) => [galaxy, locked]))
       .reduce(
         (prior, [galaxy, locked]) => prior.then(() => capturePreview(shared, galaxy, locked)),

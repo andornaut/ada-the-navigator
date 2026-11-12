@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import type { SectorId } from "../../data/types.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/space-palette.ts";
 import { hitAround, pressedArea } from "./hitAreas.ts";
 import {
@@ -347,11 +348,12 @@ describe("fog and Ada", () => {
         readFileSync(new URL("../../../public/art/galaxies.json", import.meta.url), "utf8"),
       ),
     );
-    const fog = (galaxy: number) => {
+    const fog = (galaxy: SectorId) => {
       const field = { ...FALLBACK_SPACE_PALETTE, ...fields.get(galaxy) };
       return fogColor(field.environment, field.environmentDetail);
     };
-    expect([1, 2, 3, 4].map(fog)).toEqual(["#c2b37f", "#4c3430", "#254046", "#392535"]);
+    // Sunflower, Cartwheel, Whirlpool and Black Eye.
+    expect(([1, 2, 3, 6] as const).map(fog)).toEqual(["#c2b37f", "#4c3430", "#254046", "#392535"]);
   });
 
   it("reveals an ellipse twice as wide as it is tall with a floored feather", () => {

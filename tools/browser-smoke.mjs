@@ -2898,7 +2898,7 @@ try {
   const { galaxies: galaxyFields } = await galaxiesResponse.json();
   const paletteColors = {
     ...approvedColors,
-    ...galaxyFields.find(({ number }) => number === 1).colors,
+    ...galaxyFields.sunflower.colors,
   };
   const combatSnapshots = {};
   const pixels = {};
