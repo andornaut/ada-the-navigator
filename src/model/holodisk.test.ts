@@ -58,13 +58,24 @@ function arrive(model: GameModel, id: string) {
   f.dangerFor = 0;
 }
 const handover = "We found this drifting near our outposts. Take it, with our thanks.";
-/** Reads the handover and insertion panels and continues past them. */
+/**
+ * Reads the handover panel, then the holodisk moment's story pages aboard, and continues past
+ * them back to the flight; each as [speaker or title, text].
+ */
 function insertion(model: GameModel): [string, string][] {
   const panels: [string, string][] = [];
-  while (model.state.dialogue?.context.startsWith("holodisk")) {
+  if (model.state.dialogue?.context === "holodiskHandover") {
     panels.push([model.state.dialogue.title, model.state.dialogue.text]);
     model.choose("continue");
   }
+  // The moment's pages, bounded so a page that never moves on fails rather than hangs.
+  for (let page = 0; model.screen === "story" && page < 8; page++) {
+    const view = model.storyView!;
+    expect(view.page.background).toBe("aboard");
+    panels.push([view.page.speaker ?? "", view.page.text]);
+    model.storyNext();
+  }
+  expect(model.screen).toBe("space");
   return panels;
 }
 /** Returns home and reads the resolution scene through its branch page and closing. */
@@ -101,7 +112,7 @@ describe("galaxy one's holodisk", () => {
     model.interact();
     expect(insertion(model)).toEqual([
       ["Salvager", handover],
-      ["The Outposts", inserted[0]],
+      ["", inserted[0]],
       ["Astra", inserted[1]],
       ["Astra", memories[0]],
     ]);
@@ -139,10 +150,19 @@ describe("galaxy one's handover", () => {
       title: speaker,
     });
     expect(model.state.progress[1].holodisk).toBe(true);
-    // A reload during the handover resumes it and continues to the insertion.
+    // A reload during the handover resumes it and continues to the insertion's first page aboard.
     const resumed = relaunch(PROTOTYPE, model.save());
+    resumed.continueGame();
     resumed.choose("continue");
-    expect(resumed.state.dialogue?.text).toBe(inserted[0]);
+    expect(resumed.storyView?.page).toMatchObject({ holodisk: true, id: "holodisk:0" });
+    expect(resumed.storyView?.page.text).toBe(inserted[0]);
+    // A reload mid-moment shows it again from its first page, the flight still held.
+    resumed.storyNext();
+    const again = relaunch(PROTOTYPE, resumed.save());
+    again.continueGame();
+    expect(again.storyView?.page.id).toBe("holodisk:0");
+    again.step(1, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
+    expect(again.screen).toBe("story");
   });
 });
 
@@ -293,7 +313,7 @@ describe("galaxy two's holodisk", () => {
     expect(model.state.economy.stardust).toBe(50);
     expect(model.state.docked).toBeNull();
     expect(insertion(model)).toEqual([
-      ["The Mining Hub", inserted[0]],
+      ["", inserted[0]],
       ["Astra", inserted[1]],
       ["Astra", memories[2]],
     ]);
@@ -339,7 +359,7 @@ describe("galaxy three's holodisk", () => {
     f.dangerFor = 0;
     model.step(0.01, idle);
     expect(insertion(model)).toEqual([
-      ["The Whale Family", inserted[0]],
+      ["", inserted[0]],
       ["Astra", inserted[1]],
       ["Astra", memories[1]],
     ]);

@@ -115,8 +115,12 @@ function recoverHolodisk(model: GameModel) {
     expect(model.state.docked).toBe("hub");
     expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "bought", price: HOLODISKS.hubPrice });
   }
-  while (model.state.dialogue?.context.startsWith("holodisk")) {
+  if (model.state.dialogue?.context === "holodiskHandover") {
     model.choose("continue");
+  }
+  // The holodisk moment's pages aboard, bounded so a page that never moves on fails.
+  for (let page = 0; model.screen === "story" && page < 8; page++) {
+    model.storyNext();
   }
   expect(model.state.progress[model.state.flight!.sector].holodisk).toBe(true);
 }

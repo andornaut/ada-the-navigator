@@ -152,6 +152,7 @@ import {
   canGoBack,
   currentPage,
   goBack,
+  holodiskScene,
   jumpHomeScene,
   openingScene,
   prologueScene,
@@ -201,6 +202,10 @@ import {
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
+
+// The dialogue marker that holds the flight under the holodisk moment's story pages.
+const HOLODISK_MOMENT = "holodiskMoment";
+
 /** A first launch: galaxy one unlocked and nothing begun. */
 export function newGameState(): GameState {
   return {
@@ -472,7 +477,8 @@ export class GameModel {
   /** Which half and screen shows now. */
   get screen(): Screen {
     if (this.state.mode === "space") {
-      return "space";
+      // The holodisk moment pauses the flight under its story pages.
+      return this.story?.scene.lead === "flight" ? "story" : "space";
     }
     if (this.startShown) {
       return "start";
@@ -1269,24 +1275,17 @@ export class GameModel {
     if (giver) {
       this.panel("holodiskHandover", this.content.premise.holodisk.handover, giver);
     } else {
-      this.insertion(0);
+      this.holodiskMoment();
     }
   }
-  /** The insertion panels, then Astra's memory line for how many holodisks she now holds. */
-  private insertion(index: number): void {
+  /**
+   * The holodisk moment's story pages over the paused flight. Its dialogue marker holds the
+   * flight and keeps the moment in the save, so a reload shows it again from its first page.
+   */
+  private holodiskMoment(): void {
     const { inserted, memories } = this.content.premise.holodisk;
-    // Astra, who speaks the last insertion line, continues with the memory.
-    const memory = {
-      speaker: inserted.at(-1)?.speaker,
-      text: memories[holodisksHeld(this.state.progress) - 1] ?? "",
-    };
-    const lines = [...inserted, memory];
-    const line = lines[index];
-    if (line) {
-      this.panel(`holodisk:${index}`, line.text, line.speaker);
-    } else {
-      this.state.dialogue = null;
-    }
+    this.state.dialogue = { choices: [], context: HOLODISK_MOMENT, text: "", title: "" };
+    this.showScene(holodiskScene(inserted, memories[holodisksHeld(this.state.progress) - 1] ?? ""));
   }
   step(dt: number, input: FlightInput): void {
     this.flightEvents = [];
@@ -2362,12 +2361,7 @@ export class GameModel {
       return;
     }
     if (dialogue.context === "holodiskHandover") {
-      this.insertion(0);
-      return;
-    }
-    const inserted = /^holodisk:(\d+)$/.exec(dialogue.context);
-    if (inserted) {
-      this.insertion(Number(inserted[1]) + 1);
+      this.holodiskMoment();
       return;
     }
     // A panel that hands on to another speaker's shows it next, one speaker a panel.
@@ -2400,6 +2394,10 @@ export class GameModel {
       Object.assign(this.state, this.heldFlight);
       this.heldFlight = null;
       this.beginConversations();
+      // A holodisk moment saved mid-way shows again from its first page.
+      if (this.state.dialogue?.context === HOLODISK_MOMENT) {
+        this.holodiskMoment();
+      }
       return;
     }
     if (this.waitingScene() || !this.state.prologueSeen) {
@@ -2734,6 +2732,12 @@ export class GameModel {
       this.beginVisit(trail, startsRun);
     } else if (ended.lead === "board") {
       this.showScene(boardingScene(this.content, this.state.announceGalaxy), trail, startsRun);
+    } else if (ended.lead === "flight") {
+      // Back to the flight the moment paused.
+      this.story = null;
+      if (this.state.dialogue?.context === HOLODISK_MOMENT) {
+        this.state.dialogue = null;
+      }
     } else {
       this.openSelection();
     }

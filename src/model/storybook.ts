@@ -34,14 +34,18 @@ export interface StoryPage {
    * seconds, or at a tap once its skip delay has passed.
    */
   readonly sleep?: boolean;
+  /** The holodisk's insertion into Astra's drive, where Art's holodisk sequence plays. */
+  readonly holodisk?: boolean;
 }
 export type SceneEffect =
   | { readonly kind: "opened"; readonly galaxy: SectorId }
   | { readonly kind: "prologue" }
   | { readonly kind: "resolved"; readonly galaxy: SectorId };
-/** What follows a scene: more Earth scenes, boarding aboard, or galaxy selection. */
-/** What follows a scene; `visit` arrives home as any visit does, waiting scenes first. */
-export type SceneLead = "home" | "board" | "select" | "visit";
+/**
+ * What follows a scene: more Earth scenes (`visit` arrives home as any visit does, waiting scenes
+ * first), boarding aboard, galaxy selection, or the flight the scene paused.
+ */
+export type SceneLead = "home" | "board" | "flight" | "select" | "visit";
 export interface Scene {
   readonly id: string;
   /** In reading order; the first page opens the scene. */
@@ -371,6 +375,34 @@ export function prologueScene(content: PrototypeContent, labels: StoryLabels): S
     last: pages.at(-1)?.id ?? "prologue:0",
     lead: "select",
     pages,
+  };
+}
+
+/**
+ * The holodisk moment aboard, paused over the flight (gameplay/rules.md): the insertion lines,
+ * Art's holodisk sequence playing on the first, then Astra's memory line for how many holodisks
+ * she now holds; the flight resumes after it.
+ */
+export function holodiskScene(
+  inserted: readonly { readonly speaker?: string; readonly text: string }[],
+  memory: string,
+): Scene {
+  const lines = [...inserted, { speaker: inserted.at(-1)?.speaker, text: memory }];
+  const ids = lines.map((_, index) =>
+    index < inserted.length ? `holodisk:${index}` : "holodisk:memory",
+  );
+  return {
+    id: "holodisk",
+    last: "holodisk:memory",
+    lead: "flight",
+    pages: lines.map((line, index): StoryPage => ({
+      background: "aboard",
+      ...(index === 0 ? { holodisk: true } : {}),
+      id: ids[index]!,
+      ...(index + 1 < lines.length ? { next: ids[index + 1] } : {}),
+      ...(line.speaker ? { speaker: line.speaker } : {}),
+      text: line.text,
+    })),
   };
 }
 
