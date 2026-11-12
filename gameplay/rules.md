@@ -627,15 +627,15 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     "Install steps" in [the player copy](player-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
-- Updates, as in Archie and Chibi: the game checks for a new version every time
-  the start screen shows, on first startup and on every return to it for any
-  reason, such as Back to title from the pause card or Ada's room page. When a new version is
+- Updates, as in Archie and Chibi: the game checks for a new version on every
+  arrival at the start screen: first launch, every Back to title (from the pause
+  card or Ada's room page) and resuming the app while the start screen shows.
+  Closing a card on the start screen is not an arrival. When a new version is
   waiting, the start screen offers it in a compact modal titled "Update available", with secondary "Cancel"
   on the left, primary "Update now" on the right, the ordinary close X and no body
   text. Only Update now reloads into the new version. Cancel, the close X, an
-  outside tap, Escape and back cancel it for the rest of that game session: the
-  offer stays hidden on every later start-screen arrival until the game is closed
-  and reopened. A required update (a save from a newer version) is unaffected.
+  outside tap, Escape and back cancel it until the next arrival, when a fresh
+  check offers it again. A required update (a save from a newer version) is unaffected.
   Settings and
   install steps covering the start screen suppress the offer.
 - Back, as in Chibi: it closes the innermost open card (install steps, Settings,
