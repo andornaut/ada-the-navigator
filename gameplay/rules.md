@@ -574,8 +574,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   damping. Centered aim does not fire.
 - Laser fire has unlimited ammunition; every other weapon has its own ammunition,
   bought at shops (see [Economy](economy.md#ammunition)).
-- Laser is the starter weapon. The other weapons are Heavy Missile, Rapid Missile,
-  Multi-Laser, Scattershot and Phaser, bought at station shops or found as rare drops; see
+- Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
+  Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
   equip their weapon at any time unless the switch wait is running, and retain
   other owned weapons; during the wait the weapon is added without equipping it.
@@ -585,13 +585,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   range, blast and spread growth add to them. Each weapon grows along its own
   dimensions:
   - Laser: damage and fire rate.
+  - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
+    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step.
+  - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
+    Laser damage) with a small blast (25); levels grow its fire rate and damage.
   - Heavy Missile: one slow straight missile (every 1.2 s, speed x0.6, 8 times
     Laser damage) with a large blast; levels shorten its interval (1.2, 1.0, 0.8 s) and grow its
     blast radius (60, 72, 85).
-  - Rapid Missile: quicker straight missiles (every 0.30 s, speed x1.3, 1.5 times
-    Laser damage) with a small blast (25); levels grow its fire rate and damage.
-  - Multi-Laser: a fan of bolts evenly spaced across a fixed 40 degrees, 3 at
-    level 1 (-20, 0 and 20 degrees), then 4, then 5, with a small damage rise to reach the level step.
   - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
     then 9, then 11, each level reaching a little farther. Up close every dot hits;
     at range the spread covers more area but fewer dots hit. Dots do not apply
@@ -618,7 +618,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   catalog tuning. Speed ratios multiply the existing base projectile speed; damage
   ratios multiply base shot damage. No homing, piercing or reloading is added.
 - Top-right weapon icons select Laser fire or an owned weapon, in the order Laser,
-  Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser; only owned
+  Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser, the order
+  weapons take everywhere they are listed (shop weapon and ammunition rows and
+  the Ship card); only owned
   weapons show an icon. Switching preserves
   ownership of the other weapons. Ada can switch at any time, including in combat;
   after a switch the next switch waits 1 second (provisional).

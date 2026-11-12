@@ -160,8 +160,8 @@ move off it.
 | Laser         |    1.4 s |             ×1.7 | `swarm` 1.8 s and ×1.5; platform two-shot bursts 0.15 s apart |
 | Multi-Laser   |    2.2 s |             ×1.7 | The level's fan                                               |
 | Rapid Missile |    2.0 s |             ×1.3 | Its blast damages Ada                                         |
-| Scattershot   |    2.4 s |             ×1.7 | Ada's dot count, range and fade                               |
 | Heavy Missile |    4.0 s |             ×0.6 | Its blast damages Ada                                         |
+| Scattershot   |    2.4 s |             ×1.7 | Ada's dot count, range and fade                               |
 | Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                          |
 
 Intervals are before the position's fire rate. Projectile speeds multiply the

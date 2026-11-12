@@ -8,7 +8,7 @@ Group actions under **Save-changing** and **Run-only**. The approved action is
 **Grant all weapons**, in Run-only. No save-changing action is specified. Hide a
 group that has no actions.
 
-Grant all weapons idempotently adds Heavy Missile, Rapid Missile, Multi-Laser, Scattershot and Phaser to the
+Grant all weapons idempotently adds Multi-Laser, Rapid Missile, Heavy Missile, Scattershot and Phaser to the
 current flight's loadout only. It does not change saved weapon ownership, levels or
 Stardust, and the granted weapons end with the flight. Each granted weapon gets
 its three included packs for the current flight only; they are never saved. Selection, shield, story,

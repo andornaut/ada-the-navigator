@@ -75,8 +75,8 @@ not yet designed, so the station card shows no quest board until it is.
 
 | Item           | Effect                                                                                          | Prices   |
 | -------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| Rapid Missile  | Owned weapon                                                                                    | 150      |
 | Multi-Laser    | Owned weapon                                                                                    | 250      |
+| Rapid Missile  | Owned weapon                                                                                    | 150      |
 | Heavy Missile  | Owned weapon                                                                                    | 300      |
 | Scattershot    | Owned weapon                                                                                    | 350      |
 | Phaser         | Owned weapon                                                                                    | 400      |
