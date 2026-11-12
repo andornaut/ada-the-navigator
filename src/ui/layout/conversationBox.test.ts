@@ -132,8 +132,8 @@ describe("conversation box", () => {
   });
 
   it("puts Ada's portrait frame 4 inside the left and everyone else's 4 inside the right", () => {
-    const left = conversationSpeakerLayout("left", 480);
-    const right = conversationSpeakerLayout("right", 480);
+    const left = conversationSpeakerLayout(true, "left", 480);
+    const right = conversationSpeakerLayout(true, "right", 480);
     expect(left.frame).toEqual({ height: 52, width: 52, x: 4, y: 4 });
     expect(left.slot).toEqual({ height: 48, width: 48, x: 6, y: 6 });
     expect(right.frame).toEqual({ height: 52, width: 52, x: 424, y: 4 });
@@ -144,17 +144,30 @@ describe("conversation box", () => {
     ["left", 64],
     ["right", 8],
   ] as const)("gives the %s speaker a 408 left-aligned column at %i", (side, x) => {
-    const { text } = conversationSpeakerLayout(side, 480);
+    const { text } = conversationSpeakerLayout(true, side, 480);
     expect(text).toEqual({ align: "left", height: 52, width: 408, x, y: 4 });
   });
 
+  it.each(["left", "right"] as const)(
+    "gives a %s speaker without a portrait no frame and the slot's 464 column, 8 from each end",
+    (side) => {
+      const layout = conversationSpeakerLayout(false, side, 480);
+      expect(layout.frame).toBeNull();
+      expect(layout.slot).toBeNull();
+      expect(layout.text).toEqual({ align: "left", height: 52, width: 464, x: 8, y: 4 });
+      expect(layout.text.x + layout.text.width).toBe(480 - CONVERSATION_BOX.textGap);
+      // The tab keeps its end opposite where the portrait would be.
+      expect(layout.nameTab).toEqual(conversationSpeakerLayout(true, side, 480).nameTab);
+    },
+  );
+
   it("anchors the name tab 10 above the panel, 8 in from the end opposite the portrait", () => {
-    expect(conversationSpeakerLayout("left", 480).nameTab).toEqual({
+    expect(conversationSpeakerLayout(true, "left", 480).nameTab).toEqual({
       end: "right",
       inset: 8,
       y: -10,
     });
-    expect(conversationSpeakerLayout("right", 480).nameTab).toEqual({
+    expect(conversationSpeakerLayout(true, "right", 480).nameTab).toEqual({
       end: "left",
       inset: 8,
       y: -10,
@@ -173,7 +186,7 @@ describe("conversation box", () => {
   it("holds every line in at most two lines of the 408 column", () => {
     // A generous body advance per character bounds each line's width.
     const advance = TYPE.body.size * 0.6;
-    const column = conversationSpeakerLayout("left", 480).text.width;
+    const column = conversationSpeakerLayout(true, "left", 480).text.width;
     for (const conversation of CONVERSATIONS) {
       for (const line of conversation.lines) {
         for (const text of [line.text, line.desktop ?? ""]) {

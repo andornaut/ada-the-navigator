@@ -27,7 +27,7 @@ import {
   statusPillWidth,
   viewScale,
 } from "./playView.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 import { stickRestCentres, stickTargets, TOUCH_STICK, USE_BUTTON } from "./touchControls.ts";
 import { playLayout, uncoveredInsets, viewProperties } from "./viewScale.ts";
 
@@ -208,10 +208,15 @@ describe("HUD anchors", () => {
       ).toBe(true);
     });
 
-    it(`with ${name}, pack four weapon discs 8 apart, the rightmost on the HUD rect's corner`, () => {
+    it(`with ${name}, pack four weapon discs 24 apart, the rightmost on the HUD rect's corner`, () => {
       for (const index of [0, 1, 2, 3]) {
         const target = fromRight(hudButtonTarget(index));
-        expect(target.x).toBeCloseTo(hud.x + hud.width + 7.5 - 48 - 56 * index, 9);
+        expect(target.x).toBeCloseTo(hud.x + hud.width + 7.5 - 48 - 57 * index, 9);
+        // Neighbouring discs are small buttons, SMALL_BUTTON_GAP apart face to face.
+        if (index > 0) {
+          const right = fromRight(hudButtonTarget(index - 1));
+          expect(right.x + 7.5 - (target.x + 7.5 + 33)).toBe(SMALL_BUTTON_GAP);
+        }
         expect(target.y).toBe(hud.y - 7.5);
         const disc = { height: 33, width: 33, x: target.x + 7.5, y: target.y + 7.5 };
         expect(disc.y).toBe(hud.y);
@@ -226,10 +231,12 @@ describe("HUD anchors", () => {
   }
 
   it("draw Chibi's skill button: a 48 target, a 33 disc at 7.5, a 4 annulus and a 20 glyph at 14", () => {
-    expect(HUD_BUTTON).toEqual({ annulus: 4, disc: 33, edge: 1, gap: 8, glyph: 20, target: 48 });
+    expect(HUD_BUTTON).toEqual({ annulus: 4, disc: 33, edge: 1, gap: 9, glyph: 20, target: 48 });
     expect(HUD_BUTTON.target).toBe(HIT_RULE.minTarget);
     expect(HUD_BUTTON_INSET).toEqual({ disc: 7.5, glyph: 14 });
-    expect(hudRowWidth(3)).toBe(3 * 48 + 2 * 8);
+    // The discs sit SMALL_BUTTON_GAP apart: targets 9 apart, a 57 pitch.
+    expect(HUD_BUTTON.gap + 2 * HUD_BUTTON_INSET.disc).toBe(SMALL_BUTTON_GAP);
+    expect(hudRowWidth(3)).toBe(3 * 48 + 2 * 9);
   });
 
   it("put the status pill a gap right of the pause press area, or on the HUD edge without it", () => {
@@ -262,12 +269,13 @@ describe("HUD anchors", () => {
     expect(STATUS_PILL.bar.width - 2 * STATUS_PILL.bar.inset).toBe(STATUS_PILL.bar.fill.width);
   });
 
-  it("keep the pill at a 162.25 count 23.5 from four weapons at 720 with phone insets", () => {
+  it("keep the pill at a 166.75 count a page inset from four weapons at 720 with phone insets", () => {
     const view = { height: 360, width: 720 };
     const hud = hudRect({ bottom: 19, left: 43, right: 43, top: 0 }, view);
-    const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(162.25);
+    const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(166.75);
     const leftmost = hud.x + hud.width + hudButtonTarget(3).x;
-    expect(leftmost - pillRight).toBe(SPACING.pageInset + 7.5);
+    expect(leftmost).toBe(465.5);
+    expect(leftmost - pillRight).toBe(SPACING.pageInset);
   });
 });
 

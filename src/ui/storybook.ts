@@ -243,7 +243,7 @@ ${STORY_PORTRAIT_RULES}
   flex:none;
   display:flex;
   justify-content:space-between;
-  gap:${units(STORY_PANEL.gap)}
+  gap:${units(STORY_PANEL.controlsGap)}
 }
 
 /* Skip, apart from page navigation, in the HUD row left of the settings button (STORY_SKIP), or

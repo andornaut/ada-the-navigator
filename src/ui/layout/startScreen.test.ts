@@ -13,7 +13,7 @@ import {
   safeRect,
 } from "./playView.ts";
 import { START_SCREEN, startScreenRects } from "./startScreen.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_GAP, TYPE } from "./tokens.ts";
 
 // Art's table (art/layout.md "Start screen"), as left to right and top to bottom.
 const span = ({ height, width, x, y }: Rect) =>
@@ -25,13 +25,13 @@ describe("start screen layout", () => {
     expect(START_SCREEN.wordmark).toMatchObject({ height: 102, left: 225, top: 148, width: 270 });
     expect(START_SCREEN.actions).toMatchObject({
       height: TEXT_BUTTON.height,
-      left: { continue: 364, restart: 164, start: 264 },
+      left: { continue: 368, restart: 160, start: 264 },
       top: 264,
       width: 192,
     });
-    // Restart and Continue a gap apart about the centre; the note a gap below the row.
+    // Restart and Continue BUTTON_GAP apart about the centre; the note a gap below the row.
     expect(START_SCREEN.actions.left.continue - (START_SCREEN.actions.left.restart + 192)).toBe(
-      SPACING.gap,
+      BUTTON_GAP,
     );
     expect(START_SCREEN.note).toEqual({ centre: 360, height: TYPE.body.lineHeight, top: 320 });
     expect(START_SCREEN.ship).toEqual({ centre: { x: 378, y: 84 }, frame: 96, size: 280 });
@@ -47,8 +47,8 @@ describe("start screen layout", () => {
     expect(span(rects.ship)).toEqual([238 + x0, 518 + x0, -56, 224]);
     expect(span(rects.wordmark)).toEqual([225 + x0, 495 + x0, 148, 250]);
     expect(span(rects.actions.start)).toEqual([264 + x0, 456 + x0, 264, 312]);
-    expect(span(rects.actions.restart)).toEqual([164 + x0, 356 + x0, 264, 312]);
-    expect(span(rects.actions.continue)).toEqual([364 + x0, 556 + x0, 264, 312]);
+    expect(span(rects.actions.restart)).toEqual([160 + x0, 352 + x0, 264, 312]);
+    expect(span(rects.actions.continue)).toEqual([368 + x0, 560 + x0, 264, 312]);
     expect([rects.note.centre, rects.note.y, rects.note.y + rects.note.height]).toEqual([
       360 + x0,
       320,
@@ -57,20 +57,20 @@ describe("start screen layout", () => {
   });
 
   it.each([
-    ["720x360", { height: 360, width: 720 }, NO_INSETS, [611.5, 659.5], [667.5, 715.5]],
+    ["720x360", { height: 360, width: 720 }, NO_INSETS, [610.5, 658.5], [667.5, 715.5]],
     [
       "720x360 with insets",
       { height: 360, width: 720 },
       PHONE_INSETS,
-      [580.5, 628.5],
+      [579.5, 627.5],
       [636.5, 684.5],
     ],
-    ["844x390", { height: 390, width: 844 }, NO_INSETS, [641.58, 689.58], [697.58, 745.58]],
+    ["844x390", { height: 390, width: 844 }, NO_INSETS, [640.58, 688.58], [697.58, 745.58]],
     [
       "844x390 with insets",
       { height: 390, width: 844 },
       PHONE_INSETS,
-      [639.58, 687.58],
+      [638.58, 686.58],
       [695.58, 743.58],
     ],
   ] as const)(

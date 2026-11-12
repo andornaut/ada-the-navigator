@@ -7,6 +7,7 @@ import {
   AWAITING_ART,
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
+  isUndrawn,
   portraitFrame,
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
@@ -54,6 +55,14 @@ describe("conversation box style", () => {
     expect(frame).toContain(`border:${squash(units(2))}solid#181425`);
     expect(frame).toContain("background:#262b44");
     expect(css.get(".ada-conversation-portrait")).toContain(`width:${squash(units(44))}`);
+  });
+
+  it("shows a speaker without a drawn portrait no frame, its text 8 from both panel ends", () => {
+    expect(css.get(".ada-conversation[data-undrawn] .ada-conversation-frame")).toBe("display:none");
+    // The 4 padding plus 4: the text column keeps textGap from each end.
+    expect(css.get(".ada-conversation[data-undrawn] .ada-conversation-text")).toBe(
+      `margin-left:${squash(units(4))};margin-right:${squash(units(4))}`,
+    );
   });
 
   it("wraps a line to at most two body lines centred on the panel", () => {
@@ -176,9 +185,13 @@ describe("conversation portraits", () => {
     ).toEqual([1, 1, 1]);
   });
 
-  it("hold a thank-you speaker Art has not drawn on an empty frame, never the General's loop", () => {
+  it("never loop the General's frames for a thank-you speaker Art has not drawn", () => {
     for (const speaker of AWAITING_ART) {
+      expect(isUndrawn(speaker)).toBe(true);
       expect(portraitFrame(false, { ...line, elapsed: 0.25, speaker })).toBe(0);
+    }
+    for (const speaker of Object.keys(COMPACT_PORTRAITS)) {
+      expect(isUndrawn(speaker)).toBe(false);
     }
   });
 

@@ -32,8 +32,16 @@ import {
   toScreen,
   zoomView,
 } from "./mapScreen.ts";
-import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
+import {
+  HUD_BUTTON_INSET,
+  hudRect,
+  logicalView,
+  NO_INSETS,
+  safeInsets,
+  safeRect,
+  viewScale,
+} from "./playView.ts";
+import { BUTTON_GAP, SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
 
 const BASE = { height: 360, width: 720 };
 const regionsAt = (css: { height: number; width: number }, cssInsets = NO_INSETS) => {
@@ -65,7 +73,7 @@ describe("map screen tokens", () => {
         stackTop: 9,
       },
       minBox: { height: 6000, width: 12000 },
-      tools: { pitch: 56 },
+      tools: { pitch: 57 },
       wheelStep: 100,
       zoomStep: 1.5,
     });
@@ -118,32 +126,37 @@ describe("map projection and fit", () => {
     expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.04742);
   });
 
-  it("puts Quests then Return to Earth on the HUD row, 16 left of the tools, capping the header", () => {
+  it("puts Quests then Return to Earth on the HUD row, 24 left of the close disc, capping the header", () => {
     // 720 logical with phone insets of 43 at each side.
     const phone = { bottom: 0, left: 43, right: 43, top: 0 };
     expect(MAP_SCREEN.hudRow).toEqual({
       earth: { width: 148.5 },
-      gap: 8,
+      gap: BUTTON_GAP,
       height: 48,
       quests: { width: 86.25 },
+      right: 33 + SMALL_BUTTON_GAP,
     });
     const span = (rect: { width: number; x: number }) => [rect.x, rect.x + rect.width];
-    // Art's table: Quests 405.3 to 491.5 and Return to Earth 499.5 to 648 at the base, 370.3 to
-    // 456.5 and 464.5 to 613 with phone insets.
-    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([408.75, 495]);
-    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([503, 651.5]);
-    expect(span(mapQuestsRect(phone, BASE))).toEqual([377.75, 464]);
-    expect(span(mapEarthRect(phone, BASE))).toEqual([472, 620.5]);
-    expect(mapEarthRect(phone, BASE).x + 148.5).toBe(
-      toolColumnLeft(phone, BASE) - SPACING.pageInset,
-    );
+    // Art's table: Quests 400.25 to 486.5 and Return to Earth 502.5 to 651 at the base, 369.25 to
+    // 455.5 and 471.5 to 620 with phone insets.
+    expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([400.25, 486.5]);
+    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([502.5, 651]);
+    expect(span(mapQuestsRect(phone, BASE))).toEqual([369.25, 455.5]);
+    expect(span(mapEarthRect(phone, BASE))).toEqual([471.5, 620]);
+    // Return to Earth, a standard button, ends SMALL_BUTTON_GAP left of the close tool's small disc,
+    // and Quests ends BUTTON_GAP left of it.
+    const hud = hudRect(phone, BASE);
+    const closeDisc = toolColumnLeft(phone, BASE) + HUD_BUTTON_INSET.disc;
+    expect(closeDisc).toBe(hud.x + hud.width - 33);
+    expect(closeDisc - (mapEarthRect(phone, BASE).x + 148.5)).toBe(SMALL_BUTTON_GAP);
+    expect(mapEarthRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + 86.25)).toBe(BUTTON_GAP);
     expect(mapQuestsRect(phone, BASE).y).toBe(mapEarthRect(phone, BASE).y);
-    // The header reaches Quests less SPACING.gap: 389.3 at the base, 319.3 with phone insets.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(388.75);
-    expect(mapHeaderCap(phone, BASE)).toBe(326.75);
+    // The header reaches Quests less SPACING.gap: 380.25 at the base, 318.25 with phone insets.
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(380.25);
+    expect(mapHeaderCap(phone, BASE)).toBe(318.25);
   });
 
-  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 19 pips", () => {
+  it("stacks the pips over the percent: the widest header is 279.8 and the cap holds 18 pips", () => {
     const { header } = MAP_SCREEN;
     expect([header.stackTop, header.stackGap, header.labelTop]).toEqual([9, 4, 14]);
     // The column tops at stackTop: 6 pips, the gap and the 20 line centre on the 48 row.
@@ -153,8 +166,8 @@ describe("map projection and fit", () => {
     expect(mapHeaderWidth(116, 0, 12)).toBe(32 + 116 + 25 + 94);
     expect(mapHeaderWidth(116, 106.8, 0)).toBeCloseTo(279.8, 9);
     const cap = mapHeaderCap({ bottom: 0, left: 43, right: 43, top: 0 }, BASE);
-    expect(mapHeaderWidth(116, 106.8, 19)).toBeLessThanOrEqual(cap);
-    expect(mapHeaderWidth(116, 106.8, 20)).toBeGreaterThan(cap);
+    expect(mapHeaderWidth(116, 106.8, 18)).toBeLessThanOrEqual(cap);
+    expect(mapHeaderWidth(116, 106.8, 19)).toBeGreaterThan(cap);
   });
 
   it("sets the Quests lines: a 28 chip overhanging the 20 label by 4, text from 50", () => {

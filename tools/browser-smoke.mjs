@@ -416,7 +416,7 @@ try {
       settingsBox &&
       Math.abs(achievementsBox.y - settingsBox.y) < 1 &&
       Math.abs(achievementsBox.width - settingsBox.width) < 1 &&
-      Math.abs((settingsBox.x - achievementsBox.x) / startUnit - 56) < 0.1,
+      Math.abs((settingsBox.x - achievementsBox.x) / startUnit - 57) < 0.1,
     "The start screen's Achievements sits one pitch left of Settings in the same form",
   );
   const achievementsButton = page.locator('[data-action="achievements"]');
@@ -1221,20 +1221,22 @@ try {
     return result;
   });
   const logical = (px) => Math.round((px / hudRow.unit) * 10) / 10;
+  // The close tool's disc is small: its drawn left edge is 7.5 inside its target, and Return to
+  // Earth ends SMALL_BUTTON_GAP (24) left of it.
   assert.ok(
     logical(hudRow.earth.width) === 148.5 &&
       logical(hudRow.earth.height) === 48 &&
-      Math.abs(logical(hudRow.tools.left - hudRow.earth.right) - 16) <= 0.1 &&
+      Math.abs(logical(hudRow.tools.left - hudRow.earth.right) + 7.5 - 24) <= 0.1 &&
       Math.abs(hudRow.earth.top - hudRow.tools.top) <= 0.5,
-    `Return to Earth is 148.5 by 48 on the HUD row, 16 left of the tools: ${JSON.stringify(hudRow)}`,
+    `Return to Earth is 148.5 by 48 on the HUD row, 24 left of the close disc: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
     // Device-pixel snapping puts the 86.25 width within 0.1 either side.
     Math.abs(hudRow.quests.width / hudRow.unit - 86.25) <= 0.1 &&
       logical(hudRow.quests.height) === 48 &&
-      Math.abs(logical(hudRow.earth.left - hudRow.quests.right) - 8) <= 0.1 &&
+      Math.abs(logical(hudRow.earth.left - hudRow.quests.right) - 16) <= 0.1 &&
       Math.abs(hudRow.quests.top - hudRow.earth.top) <= 0.5,
-    `Quests is 86.25 by 48, 8 left of Return to Earth: ${JSON.stringify(hudRow)}`,
+    `Quests is 86.25 by 48, BUTTON_GAP (16) left of Return to Earth: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
     hudRow.fits && hudRow.header.right <= hudRow.quests.left - 8 * hudRow.unit + 0.5,
@@ -2275,7 +2277,7 @@ try {
       );
     }
     // The HUD row's nav discs, Achievements one pitch left of Settings, inside the game area.
-    assert.ok(Math.abs(shot.settings[0] - shot.achievements[0] - 56) < 0.1, `${name}: nav pitch`);
+    assert.ok(Math.abs(shot.settings[0] - shot.achievements[0] - 57) < 0.1, `${name}: nav pitch`);
     assert.ok(
       shot.settings[0] + shot.settings[2] <= 720 + 0.1,
       `${name}: Settings in the game area`,
@@ -2296,12 +2298,12 @@ try {
   assert.equal(startScreens["new-844"].x0, 29, "The 844x390 phone's game area starts at 29");
   // Insets move the nav discs, never the start screen's parts (Art's table).
   // The HUD rect's right is 720 - 43 = 677; Achievements' target is one pitch left of Settings,
-  // whose target reaches HUD_ROW.reach (7.5) past it: 677 + 7.5 - 48 - 56.
+  // whose target reaches HUD_ROW.reach (7.5) past it: 677 + 7.5 - 48 - 57.
   assert.ok(
     Math.abs(
       startScreens["saved-720-insets"].achievements[0] +
         startScreens["saved-720-insets"].x0 -
-        580.5,
+        579.5,
     ) < 0.1,
     "Achievements clears the right inset",
   );

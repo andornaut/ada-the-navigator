@@ -14,7 +14,7 @@ import {
 } from "./layout/controls.ts";
 import { font, fromHudEdge, safeEdge, slice, units } from "./layout/css.ts";
 import { PAUSE_BUTTON, SAFE_MARGIN } from "./layout/playView.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { PAUSE_ART } from "./pause.ts";
 
@@ -343,12 +343,12 @@ ${UI_SCOPE} .ada-button.ada-unavailable:active{
   cursor:default
 }
 
-/* An action stack fills the card's inner width, its faces a gap apart. */
+/* An action stack fills the card's inner width, its faces STACK_BUTTON_GAP apart. */
 ${UI_SCOPE} .ada-actions.ada-stack{
   grid-auto-flow:row;
   align-self:stretch;
   width:auto;
-  gap:${units(CARD_CONTENT.gap)}
+  gap:${units(STACK_BUTTON_GAP)}
 }
 
 ${UI_SCOPE} .ada-card .ada-card-note{
@@ -389,12 +389,12 @@ ${UI_SCOPE} .ada-pause[data-pose=held]::before{
 ${UI_SCOPE} .ada-pause:focus-visible{${FOCUS_STYLE}
 }
 
-/* An action row shares one width, the widest label plus the insets, a gap apart, centred. */
+/* An action row shares one width, the widest label plus the insets, BUTTON_GAP apart, centred. */
 ${UI_SCOPE} .ada-actions{
   display:grid;
   grid-auto-columns:1fr;
   grid-auto-flow:column;
-  gap:${units(SPACING.gap)};
+  gap:${units(BUTTON_GAP)};
   width:max-content;
   max-width:100%;
   margin:0

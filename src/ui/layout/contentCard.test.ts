@@ -14,7 +14,7 @@ import {
 import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
 import { hitAround } from "./hitAreas.ts";
 import { logicalView, SAFE_MARGIN, safeRect } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
+import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // The page safe rect's width at a logical view width, without insets.
 const available = (width: number) =>
@@ -65,8 +65,9 @@ describe("card groups", () => {
     expect(CARD_CONTENT.rowGap).toBe(4);
   });
 
-  it("share one action width of the widest label plus the insets, a gap apart", () => {
-    expect(actionsWidth("row", [60, 90])).toBe(2 * (90 + 2 * TEXT_BUTTON.inset) + SPACING.gap);
+  it("share one action width of the widest label plus the insets, BUTTON_GAP apart", () => {
+    expect(actionsWidth("row", [60, 90])).toBe(2 * (90 + 2 * TEXT_BUTTON.inset) + BUTTON_GAP);
+    expect(actionsWidth("row", [60, 90])).toBe(260);
     expect(actionsWidth("stack", [60, 90])).toBe(90 + 32);
     expect(actionsWidth("row", [])).toBe(0);
   });

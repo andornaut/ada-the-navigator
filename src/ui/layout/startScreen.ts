@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT_BUTTON } from "./controls.ts";
 import { playView, type Size } from "./playView.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 // The start screen (art/layout.md "Start screen"), after Chibi's START_SCREEN: Ada's ship above
 // the two-line wordmark, the action row under it, then the note. Every part is in play-view px,
@@ -21,10 +21,10 @@ const ACTIONS_TOP = WORDMARK_TOP + WORDMARK.height + 14;
 export const START_SCREEN = {
   actions: {
     height: TEXT_BUTTON.height,
-    // Restart left and Continue right of the centre, a gap apart; Start alone on the centre.
+    // Restart left and Continue right of the centre, BUTTON_GAP apart; Start alone on the centre.
     left: {
-      continue: CENTRE + SPACING.gap / 2,
-      restart: CENTRE - BUTTON_WIDTH - SPACING.gap / 2,
+      continue: CENTRE + BUTTON_GAP / 2,
+      restart: CENTRE - BUTTON_WIDTH - BUTTON_GAP / 2,
       start: CENTRE - BUTTON_WIDTH / 2,
     },
     top: ACTIONS_TOP,

@@ -7,7 +7,7 @@ import { TEXT_BUTTON } from "./layout/controls.ts";
 import { fromHudEdge, safeEdge, units } from "./layout/css.ts";
 import { HUD_BUTTON, HUD_ROW, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
-import { SPACING } from "./layout/tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING } from "./layout/tokens.ts";
 import {
   STORY_PORTRAITS,
   STORYBOOK_STYLE,
@@ -37,13 +37,15 @@ describe("storybook page", () => {
     expect(rule(".ada-controls .ada-story-controls")).toContain("justify-content:space-between");
   });
 
-  it("sets Skip apart at the top right, one gap left of the settings button's target", () => {
+  it("sets Skip apart at the top right, SMALL_BUTTON_GAP left of the settings disc", () => {
     expect(STORY_PANEL.pageControls).not.toContain("skip");
     const skip = rule(".ada-controls .ada-story-skip");
     expect(skip).toContain(`top:${fromHudEdge("top", STORY_SKIP.top)};`);
     expect(skip).toContain(`right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}`);
-    // The settings target reaches HUD_ROW.reach past the corner; Skip ends a gap left of it.
-    expect(STORY_SKIP.right.besideSettings).toBe(HUD_BUTTON.target - HUD_ROW.reach + SPACING.gap);
+    // Skip and the settings disc are small buttons: Skip ends SMALL_BUTTON_GAP left of the disc,
+    // whose drawn right edge is on the corner.
+    expect(STORY_SKIP.right.besideSettings).toBe(HUD_BUTTON.disc + SMALL_BUTTON_GAP);
+    expect(STORY_SKIP.right.besideSettings).toBe(57);
   });
 
   it("puts Skip on the HUD rect's top-right corner while the settings button is hidden", () => {

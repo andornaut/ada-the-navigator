@@ -226,15 +226,18 @@ function stateCases(call: ReturnType<typeof recorder>): void {
   for (const lines of [0, 1, 2, 3]) {
     call("conversationBox.ts", "conversationTextTop", conversationBox.conversationTextTop, lines);
   }
-  for (const side of ["left", "right"] as const) {
-    for (const width of [320, 480, 640]) {
-      call(
-        "conversationBox.ts",
-        "conversationSpeakerLayout",
-        conversationBox.conversationSpeakerLayout,
-        side,
-        width,
-      );
+  for (const drawn of [true, false]) {
+    for (const side of ["left", "right"] as const) {
+      for (const width of [320, 480, 640]) {
+        call(
+          "conversationBox.ts",
+          "conversationSpeakerLayout",
+          conversationBox.conversationSpeakerLayout,
+          drawn,
+          side,
+          width,
+        );
+      }
     }
   }
   for (const close of [false, true]) {

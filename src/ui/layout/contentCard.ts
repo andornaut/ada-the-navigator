@@ -3,7 +3,7 @@ import { modalWidth } from "@andornaut/game-kit/modalLayout";
 import { SCREEN } from "../../data/screen.ts";
 import { CARD_CONTENT, cardTitleReserve } from "./cardFrame.ts";
 import { CONTROL_ROW, TEXT_BUTTON } from "./controls.ts";
-import { SPACING } from "./tokens.ts";
+import { BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // The content-fitted card (art/layout.md "Modals" and "Groups"), as Chibi's
 // src/ui/layout/contentCard.ts, in logical px, shared by every Ada modal. The width source is
@@ -56,14 +56,14 @@ export function rowWidth(labelWidth: number, actionWidth: number): number {
   return CONTROL_ROW.icon + CONTROL_ROW.gap + labelWidth + CONTROL_ROW.gap + actionWidth;
 }
 
-// An action row's width: buttons of one shared width, the widest label plus the insets, a gap
-// apart; a stack fills the inner width, so its least width is one button.
+// An action row's width: buttons of one shared width, the widest label plus the insets,
+// BUTTON_GAP apart; a stack fills the inner width, so its least width is one button.
 export function actionsWidth(axis: "row" | "stack", labelWidths: readonly number[]): number {
   if (labelWidths.length === 0) {
     return 0;
   }
   const button = Math.max(...labelWidths) + 2 * TEXT_BUTTON.inset;
   return axis === "row"
-    ? labelWidths.length * button + (labelWidths.length - 1) * SPACING.gap
+    ? labelWidths.length * button + (labelWidths.length - 1) * BUTTON_GAP
     : button;
 }

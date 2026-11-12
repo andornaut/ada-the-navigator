@@ -45,9 +45,10 @@ export const COMPACT_PORTRAITS = {
   },
 } as const;
 
-// The community projects' thank-you speakers, whom Art has not drawn yet.
-// CLEANUP (added 2026-11-11): until Art gives them compact portraits and tab colours, their frame
-// stays empty and their tab takes the unnamed General's neutral fill.
+// The community projects' thank-you speakers, whom Art has not drawn yet: the box shows them no
+// portrait frame, and their text takes the slot's width.
+// CLEANUP (added 2026-11-11): until Art gives them compact portraits and tab colours, they keep
+// no frame and their tab takes the unnamed General's neutral fill.
 export const AWAITING_ART = [
   "grower",
   "miner",
@@ -57,6 +58,11 @@ export const AWAITING_ART = [
   "workshop",
 ] as const;
 const AWAITING_TAB = "#b8b3c9";
+
+/** Whether speaker has no drawn portrait, so the box shows it no frame. */
+export function isUndrawn(speaker: string): boolean {
+  return (AWAITING_ART as readonly string[]).includes(speaker);
+}
 
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
@@ -80,8 +86,8 @@ export function portraitFrame(
     const moods: Readonly<Partial<Record<Mood, number>>> = COMPACT_PORTRAITS[line.speaker].moods;
     return moods[line.mood] ?? moods.neutral!;
   }
-  // A speaker Art has not drawn has no sheet; its frame stays empty.
-  if ((AWAITING_ART as readonly string[]).includes(line.speaker)) {
+  // A speaker Art has not drawn has no sheet, and the box shows no frame.
+  if (isUndrawn(line.speaker)) {
     return 0;
   }
   if (line.speaker === "astra") {
@@ -177,7 +183,8 @@ export const CONVERSATION_STYLE = `
 }
 ${PORTRAIT_RULES}
 
-/* A gap from the frame, and a gap from the far edge: the padding plus the rest of the gap. */
+/* A gap from the frame, and a gap from the far edge: the padding plus the rest of the gap. A
+   speaker without a drawn portrait has no frame: its text keeps that gap from both ends. */
 .ada-conversation-text{
   flex:1;
   min-width:0;
@@ -191,6 +198,15 @@ ${PORTRAIT_RULES}
 .ada-conversation[data-side="right"] .ada-conversation-text{
   margin-right:0;
   margin-left:${units(textGap - padding)}
+}
+
+.ada-conversation[data-undrawn] .ada-conversation-frame{
+  display:none
+}
+
+.ada-conversation[data-undrawn] .ada-conversation-text{
+  margin-left:${units(textGap - padding)};
+  margin-right:${units(textGap - padding)}
 }
 
 .ada-conversation-line{
@@ -277,6 +293,7 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;
           root.toggleAttribute("data-named", line.named);
+          root.toggleAttribute("data-undrawn", isUndrawn(line.speaker));
           face.dataset.speaker = line.speaker;
           name.textContent = line.name;
           words.textContent = desktop && line.desktop !== undefined ? line.desktop : line.text;

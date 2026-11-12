@@ -4,9 +4,9 @@ import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
 // the logical view, which the canvas and the DOM overlay both scale by s (playView.ts).
 
 export const SPACING = {
-  // Between columns of controls (shop item columns).
+  // Between columns that are not buttons.
   columnGap: 8,
-  // Between card groups, buttons in an action row or stack, and row parts.
+  // Between card groups and row parts.
   gap: 8,
   // From an inline icon to its label inside one control or pill.
   markGap: 6,
@@ -14,9 +14,16 @@ export const SPACING = {
   pageInset: 16,
   // Inside cards and the story panel, including the 2 frame.
   panelPadding: MODAL_CONTENT.padding,
-  // Between rows of one list: control rows, item rows, text rows.
+  // Between rows of one list that are not buttons: item rows, text rows.
   rowGap: 4,
 } as const;
+
+// Gaps between neighbouring button faces with nothing between them (art/layout.md "Groups"):
+// standard faces side by side (action rows, grid columns) BUTTON_GAP apart, standard faces stacked
+// (action stacks, control rows, grid rows, line buttons) STACK_BUTTON_GAP apart, and any two faces
+// SMALL_BUTTON_GAP apart in any direction when either is small, under TEXT_BUTTON.height: the HUD
+// and Map discs, compact buttons and the close X. The values are game-kit's.
+export { BUTTON_GAP, SMALL_BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 
 // Type roles: size and line box, and weight.
 export const TYPE = {

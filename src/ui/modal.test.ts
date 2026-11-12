@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { slice, units } from "./layout/css.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
 import { LOADING_LAYER, LOADING_STYLE } from "./loading-bar.ts";
 import {
   actionOrder,
@@ -121,7 +121,8 @@ describe("modal buttons", () => {
       )} - ${slice(6)})`,
     );
     expect(rule(`${UI_SCOPE} .ada-button:disabled`)).toContain(TEXT_TOKENS.disabledLabel);
-    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain(`gap:${units(SPACING.gap)}`);
+    expect(rule(`${UI_SCOPE} .ada-actions`)).toContain(`gap:${units(BUTTON_GAP)}`);
+    expect(rule(`${UI_SCOPE} .ada-actions.ada-stack`)).toContain(`gap:${units(STACK_BUTTON_GAP)}`);
     expect(rule(`${UI_SCOPE} .ada-actions`)).toContain("grid-auto-columns:1fr");
   });
 

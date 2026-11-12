@@ -5,7 +5,7 @@ import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
 import { SCROLL } from "./contentCard.ts";
 import { TEXT_BUTTON } from "./controls.ts";
 import { HUD_BUTTON, HUD_ROW, hudRect, type Insets, safeRect, type Size } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
+import { BUTTON_GAP, SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // The pause menu's full-screen map (art/map.md): the screen's header, tools, fog and fit
 // (MAP_SCREEN), the place panel (MAP_PANEL) and the place symbols (MAP_SYMBOL), in logical px, and
@@ -57,14 +57,16 @@ export const MAP_SCREEN = {
   },
   /**
    * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Return to Earth, each its
-   * label plus TEXT_BUTTON.inset each side (Quests 54.25, Return to Earth 116.5), SPACING.gap
-   * apart.
+   * label plus TEXT_BUTTON.inset each side (Quests 54.25, Return to Earth 116.5), BUTTON_GAP
+   * apart. Return to Earth ends right in from the HUD rect's right: SMALL_BUTTON_GAP left of the
+   * close tool's disc, a small button whose drawn right edge is on that line.
    */
   hudRow: {
     earth: { width: 116.5 + 2 * TEXT_BUTTON.inset },
-    gap: SPACING.gap,
+    gap: BUTTON_GAP,
     height: TEXT_BUTTON.height,
     quests: { width: 54.25 + 2 * TEXT_BUTTON.inset },
+    right: HUD_BUTTON.disc + SMALL_BUTTON_GAP,
   },
   /** The opening box is at least this many projected units across and down. */
   minBox: { height: 6000, width: 12000 },
@@ -82,7 +84,8 @@ export const MAP_SCREEN = {
     textColumn: TEXT_BUTTON.inset + 28 + SPACING.markGap,
   },
   tools: {
-    /** Tool targets top to top: HUD_BUTTON.target + HUD_BUTTON.gap. */
+    /** Tool targets top to top: HUD_BUTTON.target + HUD_BUTTON.gap, so the small discs keep
+     * SMALL_BUTTON_GAP apart. */
     pitch: HUD_BUTTON.target + HUD_BUTTON.gap,
   },
   /** Wheel deltaY px per zoom step. */
@@ -254,8 +257,9 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
  * the header.
  */
 export function mapEarthRect(insets: Insets, view: Size): Rect {
-  const right = toolColumnLeft(insets, view) - SPACING.pageInset;
+  const hud = hudRect(insets, view);
   const { earth, height } = MAP_SCREEN.hudRow;
+  const right = hud.x + hud.width - MAP_SCREEN.hudRow.right;
   return { height, width: earth.width, x: right - earth.width, y: mapRowTop(insets, view) };
 }
 

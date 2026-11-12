@@ -40,7 +40,7 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { HUD_BUTTON, HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
+import { HUD_ROW, SAFE_MARGIN } from "./layout/playView.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS } from "./modal.ts";
@@ -353,14 +353,14 @@ export const MAP_SCREEN_STYLE = `
 }
 
 /* The HUD row, on the tool targets' row box (layout/mapScreen.ts mapRowTop), from the HUD rect's
-   left to SPACING.pageInset short of the tool column (mapEarthRect): the header on its left, then
-   Quests and Return to Earth, secondary text buttons MAP_SCREEN.hudRow sets, on its right,
-   SPACING.gap apart, which caps the header (mapHeaderCap). */
+   left to SMALL_BUTTON_GAP short of the close tool's disc (mapEarthRect): the header on its left,
+   SPACING.gap from Quests, which caps it (mapHeaderCap), then Quests and Return to Earth,
+   secondary text buttons MAP_SCREEN.hudRow sets, hudRow.gap apart, on its right. */
 .ada-controls .ada-map-hud-row{
   position:absolute;
   left:var(${VIEW_PROPERTIES.hud("left")});
   top:${fromHudEdge("top", -HUD_ROW.reach)};
-  right:${fromHudEdge("right", HUD_BUTTON.target - HUD_ROW.reach + SPACING.pageInset)};
+  right:${fromHudEdge("right", MAP_SCREEN.hudRow.right)};
   height:${units(MAP_SCREEN.header.height)};
   display:flex;
   align-items:center;
@@ -382,6 +382,7 @@ export const MAP_SCREEN_STYLE = `
   width:${units(MAP_SCREEN.hudRow.quests.width)}
 }
 .ada-controls .ada-map-hud-row [data-action="map-returnHome"]{
+  margin-left:${units(MAP_SCREEN.hudRow.gap - SPACING.gap)};
   width:${units(MAP_SCREEN.hudRow.earth.width)}
 }
 

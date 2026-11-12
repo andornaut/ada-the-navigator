@@ -93,24 +93,36 @@ export function conversationTextTop(lineCount: number): number {
 /**
  * The portrait frame, its slot, the text column and the name tab's anchor inside a box width
  * wide, for the speaker's side. The tab anchors to the panel end opposite the portrait, inset
- * from it, and overhangs the panel's top; its width follows its label.
+ * from it, and overhangs the panel's top; its width follows its label. A speaker without a drawn
+ * portrait has no frame or slot, and its text column takes the slot's width, textGap from each
+ * end of the panel; its tab keeps its end.
  */
 export function conversationSpeakerLayout(
+  drawn: boolean,
   side: "left" | "right",
   width: number,
 ): {
-  readonly frame: Rect;
+  readonly frame: Rect | null;
   readonly nameTab: { readonly end: "left" | "right"; readonly inset: number; readonly y: number };
-  readonly slot: Rect;
+  readonly slot: Rect | null;
   readonly text: Rect & { readonly align: "left" };
 } {
   const { height, padding, portrait, tab, textGap } = CONVERSATION_BOX;
   const left = side === "left";
   const frameX = left ? padding : width - padding - portrait.frame;
-  const textWidth = width - padding - portrait.frame - 2 * textGap;
+  const nameTab = { end: left ? "right" : "left", inset: tab.inset, y: -tab.overhang } as const;
+  const textBox = { align: "left", height: height - 2 * padding, y: padding } as const;
+  if (!drawn) {
+    return {
+      frame: null,
+      nameTab,
+      slot: null,
+      text: { ...textBox, width: width - 2 * textGap, x: textGap },
+    };
+  }
   return {
     frame: { height: portrait.frame, width: portrait.frame, x: frameX, y: padding },
-    nameTab: { end: left ? "right" : "left", inset: tab.inset, y: -tab.overhang },
+    nameTab,
     slot: {
       height: portrait.slot,
       width: portrait.slot,
@@ -118,11 +130,9 @@ export function conversationSpeakerLayout(
       y: padding + portrait.edge,
     },
     text: {
-      align: "left",
-      height: height - 2 * padding,
-      width: textWidth,
+      ...textBox,
+      width: width - padding - portrait.frame - 2 * textGap,
       x: left ? padding + portrait.frame + textGap : textGap,
-      y: padding,
     },
   };
 }

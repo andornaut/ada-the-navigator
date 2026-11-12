@@ -1,6 +1,6 @@
 import { SCROLL } from "./contentCard.ts";
 import { FOCUS_RING, PILL, TEXT_BUTTON } from "./controls.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./tokens.ts";
 
 // The shop item row and the buy confirm's well and price (art/layout.md "Shop item row"), in
 // logical px. A row is a ui-button-tile at the action height, its content centred on each state's
@@ -15,8 +15,9 @@ const WELL = 36;
 export const SHOP_ROW = {
   // The icon-shop-check mark beside Owned and In use.
   check: { height: 8, width: 12 },
-  // Columns of the item grid and the rows of one column.
-  columnGap: SPACING.columnGap,
+  // The item grid is a control grid of button rows: columns BUTTON_GAP apart, and the rows of
+  // one column (and the job board's rows) STACK_BUTTON_GAP apart.
+  columnGap: BUTTON_GAP,
   glyph: GLYPH,
   height: TEXT_BUTTON.height,
   inset: SPACING.gap,
@@ -28,7 +29,7 @@ export const SHOP_ROW = {
   paintHeading: { gap: SPACING.gap, icon: 20, line: TYPE.label.lineHeight },
   // Price pills: a PILL with the 16 icon-stardust and the price as a label.
   pill: { icon: 16, pill: PILL },
-  rowGap: SPACING.rowGap,
+  rowGap: STACK_BUTTON_GAP,
   // The In use row's selection ring: a band, its offset outside the drawn row.
   selection: { band: FOCUS_RING.selectionBand, outset: FOCUS_RING.selectionOutset },
   // The weapon upgrade composite: the 20 weapon glyph at (0, 4), the 12 badge at (12, 0).

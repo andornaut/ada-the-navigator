@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { SCREEN } from "../../data/screen.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { HIT_RULE, hitAround } from "./hitAreas.ts";
-import { SPACING } from "./tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
 // and "Page bounds"), and the HUD's anchors ("HUD and overlays"). The canvas draws the logical
@@ -121,14 +121,17 @@ export const PAUSE_BUTTON = { art: PAUSE_ART, hit: hitAround(PAUSE_ART) } as con
 
 // The HUD's disc buttons (the weapons, and the start screen's Settings), Chibi's SKILL_BUTTON: a
 // 48 target that is the press area, a 33 disc centred in it with a 1 ink edge (a 4 ink annulus
-// when selected), and a 20 glyph centred on the disc; targets CONTROL_EDGE apart.
+// when selected), and a 20 glyph centred on the disc. The discs are small buttons, so neighbouring
+// discs sit SMALL_BUTTON_GAP apart: targets gap (9) apart, a 57 pitch.
+const DISC = 33;
+const TARGET = HIT_RULE.minTarget;
 export const HUD_BUTTON = {
   annulus: 4,
-  disc: 33,
+  disc: DISC,
   edge: 1,
-  gap: CONTROL_EDGE,
+  gap: SMALL_BUTTON_GAP - (TARGET - DISC),
   glyph: 20,
-  target: HIT_RULE.minTarget,
+  target: TARGET,
 } as const;
 
 // The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
@@ -153,10 +156,11 @@ export const HUD_ROW = {
 } as const;
 
 // Storybook Skip: a compact secondary control apart from page navigation, centred on the HUD
-// row's centre line, one gap left of the settings button's target when it shows, otherwise with
-// its drawn right edge on the HUD rect's top-right corner. Offsets from that corner.
+// row's centre line. Both are small buttons, so while the settings button shows Skip ends
+// SMALL_BUTTON_GAP left of its disc, whose drawn right edge is on the HUD rect's top-right corner;
+// otherwise Skip's drawn right edge is on that corner. Offsets from that corner.
 export const STORY_SKIP = {
-  right: { besideSettings: HUD_BUTTON.target - HUD_ROW.reach + SPACING.gap, corner: 0 },
+  right: { besideSettings: HUD_BUTTON.disc + SMALL_BUTTON_GAP, corner: 0 },
   top: HUD_ROW.centre - TEXT_BUTTON.compactHeight / 2,
 } as const;
 

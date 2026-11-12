@@ -11,7 +11,7 @@ import {
   shopListWidth,
   shopRowWidth,
 } from "./shopCard.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 // art/layout.md "Shop item row", value for value.
 describe("shop item row", () => {
@@ -54,7 +54,8 @@ describe("shop item row", () => {
 describe("shop item list", () => {
   it("counts the scroll reserve toward the list's width", () => {
     expect(shopListWidth(1, 250)).toBe(250 + SCROLL.gap + SCROLL.track);
-    expect(shopListWidth(2, 250)).toBe(2 * 250 + SPACING.columnGap + SCROLL.gap + SCROLL.track);
+    // The item grid's columns are buttons side by side, BUTTON_GAP apart.
+    expect(shopListWidth(2, 250)).toBe(2 * 250 + BUTTON_GAP + SCROLL.gap + SCROLL.track);
   });
 
   it("uses two columns only when they and the panel padding fit the available width", () => {
