@@ -1272,7 +1272,8 @@ try {
     );
   }, storageKey);
   const persisted = await readSave();
-  assert.equal(persisted.version, 5);
+  const { SAVE_VERSION } = await import(new URL("../src/model/save.ts", import.meta.url));
+  assert.equal(persisted.version, SAVE_VERSION);
   await page.reload();
   await continueFlight();
   const resumed = await readSave();
