@@ -566,10 +566,10 @@ deposits. Sound effects remain restrained. Reduced motion skips screen shakes.
 Asteroids come in more sizes, including much larger ones, with irregular shapes
 and variety; about a quarter of small and medium asteroids drift in slow closed
 loops around their starting point. Every asteroid can be destroyed; bigger ones take more shots and release more
-Stardust. Shots, Ada's, enemies' and the phaser's alike, strike an asteroid or
-resource rock where it is drawn, on its current frame's silhouette, so a shot
-that crosses the drawn rock on screen hits it; ship contact and placement use
-Art's footprint. Drifting asteroids follow fixed loops that never overlap other rocks,
+Stardust. Ships, Ada's and enemies' alike, and shots, the phaser's included,
+contact an asteroid or resource rock where it is drawn, on its current frame's
+silhouette, so nothing ever passes behind a rock on screen. Placement and
+spawning use Art's footprint. Drifting asteroids follow fixed loops that never overlap other rocks,
 stations or destinations; ships bounce off them, and they deal no damage. Large
 and huge asteroids stay out of passages and clear of stations, destinations and
 launch points. Background objects stay muted
