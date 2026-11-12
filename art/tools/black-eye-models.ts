@@ -1,8 +1,9 @@
 // Black Eye's solid models in the station family's projection (solid.ts): the three Blurb
 // settlements, each with its dock cracked by the blockades or mended. Contract: art/black-eye.md.
 import {
-  approachLights,
+  blue,
   blueDim,
+  box,
   cream,
   creamSide,
   DOCK,
@@ -15,6 +16,27 @@ import {
   along,
   warm,
 } from "./solid.ts";
+
+// Two approach-light pairs in front of a settlement's decorative mouth blink opposite the corner
+// lights, as at the outposts.
+function approachLights(lit: boolean, face: number, angle = DOCK, offset = 0): Part[] {
+  const approach = lit ? blueDim : blue;
+  return [
+    [face + 14, 9],
+    [face + 28, 6.5],
+  ].flatMap(([distance, across]) =>
+    [-1, 1].map((side): Part => {
+      const [lx, ly] = along(angle, distance!, side * across! + offset);
+      return {
+        plan: box(lx - 2, ly - 2, lx + 2, ly + 2),
+        z0: 5,
+        z1: 7.5,
+        top: approach,
+        side: approach,
+      };
+    }),
+  );
+}
 
 // ---------------------------------------------------------------- palette
 
