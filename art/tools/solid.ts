@@ -195,7 +195,12 @@ export function closedCollar(
       side: collarSide,
     },
     ...[-1, 1].map((side): Part => ({
-      plan: orientedBox(...p(face + 0.3, side * collarWidth * 0.22), angle, 0.6, collarWidth * 0.22),
+      plan: orientedBox(
+        ...p(face + 0.3, side * collarWidth * 0.22),
+        angle,
+        0.6,
+        collarWidth * 0.22,
+      ),
       z0: height * 0.4,
       z1: height * 0.75,
       top: window,
