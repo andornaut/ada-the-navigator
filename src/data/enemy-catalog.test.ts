@@ -107,7 +107,7 @@ describe("enemy fire profiles", () => {
         part.kind === "weapon" ? [`${part.id} ${part.fire.weapon} ${part.fire.level}`] : [],
       );
     // Galaxy (route position): Sunflower 1 (1), Whirlpool 3 (2), Needle 4 (3), Andromeda 5 (4),
-    // Cartwheel 2 (5), Black Eye 6 (6).
+    // Cartwheel 2 (5), Phantom 6 (6).
     expect(loadout(1, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
     expect(loadout(3, "frigate")).toEqual(["port laser 1", "starboard laser 1"]);
     expect(loadout(4, "frigate")).toEqual([
@@ -163,7 +163,7 @@ describe("enemy fire profiles", () => {
       const profile = enemyDefinition(sector, archetype).fire;
       return [profile.weapon, profile.level, profile.interval, profile.projectileSpeedRatio];
     };
-    // Sunflower (position 1, fire +44%), Needle (3, +81%) and Black Eye (6, +100%).
+    // Sunflower (position 1, fire +44%), Needle (3, +81%) and Phantom (6, +100%).
     expect(fire(1, "swarm")).toEqual(["laser", 1, 1.8 / 1.44, 1.5]);
     expect(fire(1, "fighter")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);
     expect(fire(1, "interceptor")).toEqual(["laser", 1, 1.4 / 1.44, 1.7]);

@@ -156,7 +156,7 @@ describe("unlocking along the route", () => {
     readToUnlock(whirlpool);
     expect(whirlpool.state.unlocked).toEqual([1, 3, 4, 5, 2]);
     expect(whirlpool.state.announceGalaxy).toBe(true);
-    // Cartwheel unlocks Black Eye alone, a placeholder, so no announcement.
+    // Cartwheel unlocks Phantom alone, a placeholder, so no announcement.
     const cartwheel = questDone(2, [1, 3, 4, 5, 2]);
     cartwheel.returnHome();
     readToUnlock(cartwheel);

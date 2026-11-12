@@ -41,7 +41,7 @@ export function stationRank(catalog: EconomyCatalog, sector: SectorId, id: strin
   }).length;
 }
 
-/** The keeper of a docked station, or null where its galaxy has none (Black Eye). */
+/** The keeper of a docked station, or null where its galaxy has none (Phantom). */
 export function stationKeeper(
   catalog: EconomyCatalog,
   sector: SectorId,

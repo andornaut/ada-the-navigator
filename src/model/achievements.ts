@@ -13,7 +13,7 @@ import type { GameState } from "./types.ts";
 export interface AchievementState {
   /** Unlocked achievement ids, in the order they unlocked. */
   unlocked: string[];
-  /** Landmarks charted, by galaxy number, Black Eye's included. */
+  /** Landmarks charted, by galaxy number, Phantom's included. */
   charted: Record<string, string[]>;
   jobs: number;
   activities: number;

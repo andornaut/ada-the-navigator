@@ -79,9 +79,9 @@ describe("backdrop layers data", () => {
     const fixed = SECTORS.map((sector) => [GALAXY_ID[sector], galaxy(sector).fixed]);
     expect(Object.fromEntries(fixed)).toEqual({
       andromeda: ["backdropHaze"],
-      "black-eye": [],
       cartwheel: [],
       needle: ["needleBand"],
+      phantom: [],
       sunflower: [],
       whirlpool: [],
     });

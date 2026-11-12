@@ -1016,7 +1016,7 @@ its route once it is disabled or destroyed. The first time each flight that Ada
 comes within Talk range of a destination its guard still blocks, Astra says a
 guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
 and the guard wakes and flies toward Ada until it is on screen, then fights as
-usual. Black Eye's story and conclusion remain to be designed.
+usual. Phantom's story and conclusion remain to be designed.
 
 ## Verification priorities
 

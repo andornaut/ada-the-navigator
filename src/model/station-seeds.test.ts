@@ -32,7 +32,7 @@ function dockedIn(sector: SectorId): GameModel {
   return model;
 }
 
-describe("stations in Needle, Andromeda and Black Eye", () => {
+describe("stations in Needle, Andromeda and Phantom", () => {
   it.each([4, 5] as const)("galaxy %i's stations offer its pool's jobs", (sector) => {
     const model = dockedIn(sector);
     const board = model.jobBoard().filter((row) => row.kind === "job");
@@ -58,7 +58,7 @@ describe("stations in Needle, Andromeda and Black Eye", () => {
     expect(restored?.jobs.boards[sector]).toEqual(model.state.jobs.boards[sector]);
   });
 
-  it("offers only surveys and rescues of a traveler's pod at Black Eye's stations", () => {
+  it("offers only surveys and rescues of a traveler's pod at Phantom's stations", () => {
     const model = dockedIn(6);
     model.jobBoard();
     const offers = model.state.jobs.boards[6]![model.state.docked!]!;

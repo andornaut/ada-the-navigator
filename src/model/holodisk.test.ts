@@ -324,7 +324,7 @@ describe("galaxy two's holodisk", () => {
     expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "refused", reason: "notForSale" });
     model.undock();
     resolveAtHome(model);
-    // Cartwheel, fifth on the route, unlocks Black Eye.
+    // Cartwheel, fifth on the route, unlocks Phantom.
     expect(model.state.unlocked).toEqual([1, 2, 6]);
   });
 });

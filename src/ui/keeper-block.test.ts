@@ -179,7 +179,7 @@ describe("the keeper block", () => {
     expect(element().hasAttribute("data-pips")).toBe(false);
   });
 
-  it("shows Black Eye's generic welcome with no portrait, tab or pips", () => {
+  it("shows Phantom's generic welcome with no portrait, tab or pips", () => {
     const { element } = mounted(null);
     expect(element().tag).toBe("div");
     expect(element().hasAttribute("data-generic")).toBe(true);

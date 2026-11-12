@@ -51,12 +51,12 @@ export const JOB_REWARDS: Readonly<
   3: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
   4: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
   5: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-  // Black Eye's boards offer only surveys and rescues.
+  // Phantom's boards offer only surveys and rescues.
   6: { rescue: 50, survey: 20 },
 };
 
 /**
- * Each galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool"). Black Eye's
+ * Each galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool"). Phantom's
  * travelers only need towing.
  */
 export const JOB_POOL: Readonly<

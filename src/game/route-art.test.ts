@@ -40,7 +40,7 @@ describe("route map art", () => {
       locked: "/previews/galaxy-sunflower-locked.png",
       open: "/previews/galaxy-sunflower.png",
     });
-    expect(previews["black-eye"]?.open).toBe("/previews/galaxy-black-eye.png");
+    expect(previews.phantom?.open).toBe("/previews/galaxy-phantom.png");
   });
 
   it("reads the sky, the ground and its two figures at their canvas points", () => {

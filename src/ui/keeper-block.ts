@@ -11,7 +11,7 @@ import { PANEL_BACKGROUND } from "./notice.ts";
 // the card, with the keeper's compact portrait on the right, the name tab over its top-left and
 // the docking's line. While a first docking has lines to come, the panel and its tab are one
 // button that shows the next line and three static pips mark the lines; on the last line, and on
-// a later docking, the block is a status. Black Eye's stations show the generic welcome centred,
+// a later docking, the block is a status. Phantom's stations show the generic welcome centred,
 // with no portrait or tab.
 
 const { name: label, padding, panel, portrait, tab, text } = CONVERSATION_BOX;
@@ -146,7 +146,7 @@ export const KEEPER_STYLE = `
   color:${panel.ink}
 }
 
-/* Black Eye: the generic welcome alone, centred a gap inside each side. */
+/* Phantom: the generic welcome alone, centred a gap inside each side. */
 .ada-controls .ada-keeper[data-generic] .ada-keeper-frame,
 .ada-controls .ada-keeper[data-generic] .ada-keeper-name{
   display:none

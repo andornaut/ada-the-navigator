@@ -306,7 +306,7 @@ describe("combat save boundary", () => {
   });
 
   it("rejects a saved heavy whose hardpoints are another position's mounts", () => {
-    // Sunflower's capital carries four weapons; Black Eye's carries eight.
+    // Sunflower's capital carries four weapons; Phantom's carries eight.
     const snapshot = combatSnapshot();
     const enemy = snapshot.flight.objects[0]!.enemy!;
     enemy.hardpoints = createEnemy(

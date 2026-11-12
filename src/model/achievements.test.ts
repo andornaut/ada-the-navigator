@@ -200,7 +200,7 @@ describe("collections and helping", () => {
     expect(unlocked(model)).toContain(id("Good Neighbor"));
   });
 
-  it("unlocks Blockade Breaker when Black Eye's blockade breaks", () => {
+  it("unlocks Blockade Breaker when Phantom's blockade breaks", () => {
     const model = new GameModel(PROTOTYPE);
     model.recordAchievement({ kind: "blockadeBroken" });
     expect(unlocked(model)).toEqual([id("Blockade Breaker")]);

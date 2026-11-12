@@ -108,7 +108,7 @@ describe("keeper block", () => {
     const widest = "We Avi stand still a long time before we move. It is how we see clearly.";
     expect(measure(widest, TYPE.body.size, "regular")).toBeGreaterThan(KEEPER_BLOCK.textWithPips);
     expect(lineCount(widest, TYPE.body.size, "regular", () => KEEPER_BLOCK.textWithPips)).toBe(2);
-    // Black Eye's generic welcome, a gap inside each side.
+    // Phantom's generic welcome, a gap inside each side.
     const generic = KEEPER_BLOCK.width - 2 * KEEPER_BLOCK.genericInset;
     expect(fits(PROTOTYPE.labels.stationWelcome ?? "", generic)).toBe(true);
   });

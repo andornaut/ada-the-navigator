@@ -3,7 +3,7 @@ import type { SectorId } from "./types.ts";
 
 // Station keepers (gameplay/rules.md "Species and greeters", gameplay/player-copy.md
 // "Greeters"): each galaxy's three keepers, in the order stations take them by rank, and the
-// greeting lines its keepers share. Black Eye has none; its stations keep the generic welcome.
+// greeting lines its keepers share. Phantom has none; its stations keep the generic welcome.
 
 export interface KeeperGreetings {
   /** The full greeting on a station's first docking, shown a line at a time. */

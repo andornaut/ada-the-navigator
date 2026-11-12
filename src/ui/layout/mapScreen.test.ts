@@ -358,7 +358,7 @@ describe("fog and Ada", () => {
       const field = { ...FALLBACK_SPACE_PALETTE, ...fields.get(galaxy) };
       return fogColor(field.environment, field.environmentDetail);
     };
-    // Sunflower, Cartwheel, Whirlpool and Black Eye.
+    // Sunflower, Cartwheel, Whirlpool and Phantom.
     expect(([1, 2, 3, 6] as const).map(fog)).toEqual(["#c2b37f", "#4c3430", "#254046", "#362939"]);
   });
 

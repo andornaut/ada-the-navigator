@@ -196,7 +196,7 @@ describe("home visits", () => {
     model.returnHome();
     expect(model.storyView?.page.id).toBe("resolution");
     model.storySkip();
-    // The resolution passes by its default path to Ada's room. Cartwheel unlocks Black Eye, a
+    // The resolution passes by its default path to Ada's room. Cartwheel unlocks Phantom, a
     // placeholder with no opening to play.
     expect(model.storyView).toMatchObject({ canSkip: false, page: { id: "room" } });
     expect(model.state.progress[2].resolved).toBe(true);
@@ -425,7 +425,7 @@ describe("galaxy selection", () => {
     const model = questDone(2);
     model.returnHome();
     readStory(model);
-    // Cartwheel unlocks Black Eye, the farthest position: the ship flies there from Cartwheel.
+    // Cartwheel unlocks Phantom, the farthest position: the ship flies there from Cartwheel.
     expect(model.routeFlight).toEqual({ from: 5, opened: [6], to: 6 });
     expect([model.shipPosition, model.selectedGalaxy]).toEqual([5, 2]);
     model.finishRouteFlight();
@@ -451,7 +451,7 @@ describe("galaxy selection", () => {
       ["Needle", "needle"],
       ["Andromeda", "andromeda"],
       ["Cartwheel", "cartwheel"],
-      ["Black Eye", "black-eye"],
+      ["Phantom", "phantom"],
     ]);
   });
 

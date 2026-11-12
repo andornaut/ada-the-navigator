@@ -72,7 +72,7 @@ describe("station keepers", () => {
     expect(names.every((keeper) => keeper?.greetings === KEEPERS[2]!.greetings)).toBe(true);
   });
 
-  it("has no keeper in Black Eye or at a place that is no station", () => {
+  it("has no keeper in Phantom or at a place that is no station", () => {
     expect(KEEPERS[6]).toBeUndefined();
     expect(stationKeeper(ECONOMY, 6, "station:0,1")).toBeNull();
     expect(stationKeeper(ECONOMY, 1, "nowhere")).toBeNull();

@@ -92,7 +92,7 @@ describe("galaxy fields", () => {
   const palettes = galaxyPalettes(palette, fields);
 
   it("retints the background, environment and detail of each galaxy from Art's galaxies.json", () => {
-    // Keyed there by stable galaxy id: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Black Eye.
+    // Keyed there by stable galaxy id: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Phantom.
     expect(
       ([1, 2, 3, 4, 5, 6] as const).map((galaxy) => {
         const { background, environment, environmentDetail } = palettes.get(galaxy)!;

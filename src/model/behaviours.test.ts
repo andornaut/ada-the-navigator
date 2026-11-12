@@ -444,7 +444,7 @@ describe("galaxy difficulty", () => {
       "capital",
       "platform",
     ] as const;
-    // Galaxies in route order: Sunflower, Whirlpool, Needle, Andromeda, Cartwheel, Black Eye.
+    // Galaxies in route order: Sunflower, Whirlpool, Needle, Andromeda, Cartwheel, Phantom.
     const rows = ([1, 3, 4, 5, 2, 6] as const).map((sector) => [
       ...archetypes.map((archetype) => enemyDefinition(sector, archetype).hp),
       enemyDefinition(sector, "capital").hardpoints[0]!.hp,
@@ -462,7 +462,7 @@ describe("galaxy difficulty", () => {
       const behaviour = enemyDefinition(sector, "fighter").behaviour;
       return behaviour.kind === "hitAndRun" ? behaviour.retreatSeconds : null;
     };
-    // Sunflower's and Cartwheel's fighters hit and run; Black Eye reads Cartwheel's roster.
+    // Sunflower's and Cartwheel's fighters hit and run; Phantom reads Cartwheel's roster.
     expect([1, 2, 6].map((sector) => retreat(sector as SectorId))).toEqual([1.6, 1.1, 1]);
     expect(DIFFICULTY_SCALE).toBe(1);
     expect(enemyDefinition(2, "fighter").behaviour.kind).toBe("hitAndRun");

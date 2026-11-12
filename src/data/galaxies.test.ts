@@ -30,7 +30,7 @@ describe("the galaxy route", () => {
       "Needle",
       "Andromeda",
       "Cartwheel",
-      "Black Eye",
+      "Phantom",
     ]);
     for (const galaxy of SECTORS) {
       expect(galaxyAt(ROUTE_POSITION[galaxy])).toBe(galaxy);
@@ -43,20 +43,20 @@ describe("the galaxy route", () => {
       "needle",
       "andromeda",
       "cartwheel",
-      "black-eye",
+      "phantom",
     ]);
   });
 
   it("keeps the existing galaxy ids and adds the placeholders after them", () => {
     expect(named([1, 2, 3])).toEqual(["Sunflower", "Cartwheel", "Whirlpool"]);
-    expect(named([4, 5, 6])).toEqual(["Needle", "Andromeda", "Black Eye"]);
+    expect(named([4, 5, 6])).toEqual(["Needle", "Andromeda", "Phantom"]);
     expect([...BUILT]).toEqual([1, 2, 3]);
   });
 
   it("unlocks the next position, each placeholder after it and the next built galaxy", () => {
     expect(named(unlockedBy(1))).toEqual(["Whirlpool"]);
     expect(named(unlockedBy(3))).toEqual(["Needle", "Andromeda", "Cartwheel"]);
-    expect(named(unlockedBy(2))).toEqual(["Black Eye"]);
+    expect(named(unlockedBy(2))).toEqual(["Phantom"]);
     expect(unlockedBy(6)).toEqual([]);
   });
 });
@@ -71,8 +71,8 @@ describe("tuning by route position", () => {
     expect(byPosition(sectorArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
   });
 
-  it("gives Needle and Andromeda their own rosters and Black Eye Cartwheel's", () => {
-    // Galaxies: Needle 4, Andromeda 5, Black Eye 6, Cartwheel 2 (gameplay/ships.md rosters).
+  it("gives Needle and Andromeda their own rosters and Phantom Cartwheel's", () => {
+    // Galaxies: Needle 4, Andromeda 5, Phantom 6, Cartwheel 2 (gameplay/ships.md rosters).
     const roster = (sector: SectorId) =>
       byPosition(sectorEncounters, sector).map(({ archetype, groupSize, weight }) => [
         archetype,
@@ -113,7 +113,7 @@ describe("tuning by route position", () => {
       CHUNK_CATALOG,
     ];
     for (const table of tables) {
-      // Needle and Andromeda read Whirlpool's, Black Eye Cartwheel's.
+      // Needle and Andromeda read Whirlpool's, Phantom Cartwheel's.
       expect(byPosition(table, 4)).toBe(byPosition(table, 3));
       expect(byPosition(table, 5)).toBe(byPosition(table, 3));
       expect(byPosition(table, 6)).toBe(byPosition(table, 2));
@@ -123,7 +123,7 @@ describe("tuning by route position", () => {
       }
     }
     // Job rewards are Gameplay's per position, every galaxy having stations: positions 3 to 5
-    // pay alike, and Black Eye only surveys and rescues.
+    // pay alike, and Phantom only surveys and rescues.
     expect([3, 4, 5].map((position) => JOB_REWARDS[position as RoutePosition])).toEqual([
       { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
       { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },

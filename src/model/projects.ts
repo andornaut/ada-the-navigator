@@ -113,7 +113,7 @@ export function fundedProjects(
   return projects.filter(({ id }) => funded.has(id));
 }
 
-/** The galaxy's allies for the Black Eye finale: one per funded project. */
+/** The galaxy's allies for the Phantom finale: one per funded project. */
 export function projectAllies(
   projects: readonly CommunityProject[],
   progress: ProjectProgress,

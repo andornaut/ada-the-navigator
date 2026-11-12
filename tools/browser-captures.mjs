@@ -265,7 +265,7 @@ async function captureHeavies() {
   }
   await tier("heavies-tier-2", 4);
   await tier("heavies-tier-3", 2);
-  // Black Eye's capital fires its Phaser, ring burst and mine layer, and its frigate the
+  // Phantom's capital fires its Phaser, ring burst and mine layer, and its frigate the
   // charged lance, each 0.6 s after the flight is released; the frames run from the tells to
   // the beams' end. The upgrade pickup lies below Ada, still under reduced motion.
   const weapons = heavyFixture(

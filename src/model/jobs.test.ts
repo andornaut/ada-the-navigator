@@ -52,9 +52,9 @@ function tableRows(after: string): string[][] {
       .map((cell) => cell.trim()),
   );
 }
-// Landmark names by their legacy galaxy number (LandmarkGalaxy): Black Eye is 4.
-// By sector: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Black Eye.
-const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Needle", "Andromeda", "Black Eye"];
+// Landmark names by their legacy galaxy number (LandmarkGalaxy): Phantom is 4.
+// By sector: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Phantom.
+const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Needle", "Andromeda", "Phantom"];
 const label = (key: string) => PROTOTYPE.labels[key];
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

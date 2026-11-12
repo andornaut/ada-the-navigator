@@ -31,7 +31,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 10;
+export const SAVE_VERSION: GameState["version"] = 11;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is

@@ -1,7 +1,7 @@
 import type { Conversation, Speaker } from "./conversations.ts";
 import type { SectorId } from "./types.ts";
 
-/** How a project's ally joins the Black Eye finale: an enemy behaviour rule, or the whales' current. */
+/** How a project's ally joins the Phantom finale: an enemy behaviour rule, or the whales' current. */
 export type ProjectAlly = "chase" | "current" | "escort";
 
 /** A community project Ada can fund with Stardust once its galaxy's chapter is complete. */

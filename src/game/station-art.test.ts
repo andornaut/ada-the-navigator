@@ -75,7 +75,7 @@ describe("galaxy station art", () => {
     expect(andromeda.projects.size).toBe(0);
   });
 
-  it("loops Whirlpool's Eddy at 350 ms and Black Eye's Bobbin at 150 ms by frameIndex", () => {
+  it("loops Whirlpool's Eddy at 350 ms and Phantom's Bobbin at 150 ms by frameIndex", () => {
     const eddy = galaxy(3)!.base;
     expect(eddy.frames.map(({ id }) => id)).toEqual(
       [0, 1, 2, 3].map((index) => `whirlpool-station-${index}`),
@@ -86,10 +86,10 @@ describe("galaxy station art", () => {
     expect(stationLoopFrame(eddy, false, 1050).id).toBe("whirlpool-station-3");
     const bobbin = galaxy(6)!.base;
     expect(bobbin.frames.map(({ id }) => id)).toEqual(
-      [0, 1, 2, 3, 4, 5, 6, 7].map((index) => `black-eye-station-${index}`),
+      [0, 1, 2, 3, 4, 5, 6, 7].map((index) => `phantom-station-${index}`),
     );
     expect(bobbin.frameMs).toBe(150);
-    expect(stationLoopFrame(bobbin, true, 1050).id).toBe("black-eye-station-0");
+    expect(stationLoopFrame(bobbin, true, 1050).id).toBe("phantom-station-0");
   });
 
   it("draws Cartwheel's seeded stations as the worn mining hub, leaving Sunflower shared", () => {

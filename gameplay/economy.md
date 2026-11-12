@@ -13,7 +13,7 @@ without jobs as the pacing simulation measures it:
 |        3 | Needle    |             about 9 |
 |        4 | Andromeda | measured once built |
 |        5 | Cartwheel |            about 15 |
-|        6 | Black Eye | measured once built |
+|        6 | Phantom   | measured once built |
 
 Every pacing target is a price divided by that income: the first weapon (225)
 takes about 25 minutes of Sunflower play, saving 500 for Cartwheel's holodisk

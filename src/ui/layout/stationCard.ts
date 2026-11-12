@@ -18,7 +18,7 @@ const PIPS_WIDTH = PIP.count * PIP.disc + (PIP.count - 1) * PIP.gap;
 const TEXT = conversationSpeakerLayout(true, "right", CONVERSATION_BOX.maxWidth).text;
 
 export const KEEPER_BLOCK = {
-  // Black Eye's generic welcome: no portrait or tab, centred a gap inside each side.
+  // Phantom's generic welcome: no portrait or tab, centred a gap inside each side.
   genericInset: CONVERSATION_BOX.noticeInset,
   height: CONVERSATION_BOX.height,
   // Static and decorative: shown lines filled cream, coming lines ringed.

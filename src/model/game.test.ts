@@ -203,7 +203,7 @@ describe("prototype story and persistence", () => {
     expect(model.state.progress[2].questComplete).toBe(true);
     recoverHolodisk(model);
     finishHome(model);
-    // Cartwheel, fifth on the route, unlocks Black Eye.
+    // Cartwheel, fifth on the route, unlocks Phantom.
     expect(model.state.unlocked).toEqual([1, 2, 6]);
     expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
   });
@@ -329,7 +329,7 @@ it("finishes all three chapters in route order and resumes each terminal state",
   });
   recoverHolodisk(model);
   finishHome(model);
-  // Cartwheel unlocks Black Eye, last on the route.
+  // Cartwheel unlocks Phantom, last on the route.
   expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2, 6]);
   expect(model.state.progress[2].resolved).toBe(true);
   expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);

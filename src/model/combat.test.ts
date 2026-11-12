@@ -356,7 +356,7 @@ describe("integrated combat", () => {
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
-    // Black Eye (position 6): the capital's claw carries a level 1 Phaser, 4 damage.
+    // Phantom (position 6): the capital's claw carries a level 1 Phaser, 4 damage.
     const fixture = () => {
       const flight = createFlight(PROTOTYPE, 6, 173, progress);
       flight.objects = [];
@@ -411,7 +411,7 @@ describe("integrated combat", () => {
   });
 
   it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {
-    // Black Eye (position 6): the capital's stern carries the ring burst, 1.5 damage a bolt.
+    // Phantom (position 6): the capital's stern carries the ring burst, 1.5 damage a bolt.
     const flight = emptyIn(6);
     const target = only(
       ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital")),

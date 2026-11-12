@@ -17,7 +17,7 @@ export const GALAXY_ID: Readonly<Record<SectorId, string>> = {
   3: "whirlpool",
   4: "needle",
   5: "andromeda",
-  6: "black-eye",
+  6: "phantom",
 };
 
 /**
@@ -60,7 +60,7 @@ export const ROUTE_POSITION: Readonly<Record<SectorId, RoutePosition>> = {
   3: 2, // Whirlpool
   4: 3, // Needle
   5: 4, // Andromeda
-  6: 6, // Black Eye
+  6: 6, // Phantom
 };
 
 /** The galaxies in route order. */

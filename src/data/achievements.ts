@@ -4,7 +4,7 @@ import type { SectorId } from "./types.ts";
  * What an achievement measures (gameplay/quests.md "Achievements"). Story achievements read the
  * game's own progress; the rest count events, some from systems still to be built: landmark
  * charting, station jobs and repeatable activities, optional allies, community projects and
- * Black Eye's blockade. Those register now and unlock once their system records events.
+ * Phantom's blockade. Those register now and unlock once their system records events.
  */
 export type AchievementGoal =
   | { readonly kind: "prologue" }
@@ -63,7 +63,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: "Room for Everyone",
   },
   {
-    condition: "Break General Gadget's blockade in Black Eye.",
+    condition: "Break General Gadget's blockade in Phantom.",
     counted: false,
     goal: { kind: "blockade" },
     id: "blockadeBreaker",

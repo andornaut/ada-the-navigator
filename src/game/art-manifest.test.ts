@@ -54,15 +54,15 @@ describe("split art manifest", () => {
       whirlpoolProjects: "/art/whirlpool/projects.json",
     });
     expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({ backdrop: "/art/sunflower/backdrop.json" });
-    // Black Eye holds its Blurb settlements, smoke banks and portraits, and its backdrop link.
-    const blackEye = GALAXY_MANIFESTS.get(6)!;
-    expect(blackEye.links).toEqual({ backdrop: "/art/black-eye/backdrop.json" });
-    expect(blackEye.assets.map(({ id }) => id)).toEqual(
+    // Phantom holds its Blurb settlements, smoke banks and portraits, and its backdrop link.
+    const phantom = GALAXY_MANIFESTS.get(6)!;
+    expect(phantom.links).toEqual({ backdrop: "/art/phantom/backdrop.json" });
+    expect(phantom.assets.map(({ id }) => id)).toEqual(
       expect.arrayContaining([
         "outpost-homes-mended-a",
         "outpost-harbour-cracked-b",
         "outpost-signal-mended-b",
-        "nebula-black-eye-1",
+        "nebula-phantom-1",
         "dollop-portrait",
       ]),
     );

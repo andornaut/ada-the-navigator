@@ -860,7 +860,7 @@ export class GameModel {
     }
     return result;
   }
-  /** Each galaxy's allies for the Black Eye finale, one per funded project. */
+  /** Each galaxy's allies for the Phantom finale, one per funded project. */
   allies(sector: SectorId): ReturnType<typeof projectAllies> {
     return projectAllies(galaxyProjects(sector), this.state.progress[sector]);
   }

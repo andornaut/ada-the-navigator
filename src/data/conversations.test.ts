@@ -45,10 +45,10 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
   );
 }
 
-// Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
+// Phantom's pool waits for a Phantom flight: no galaxy past Whirlpool can be flown yet.
 // Needle's and Andromeda's pools wait for their chapters.
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
-const BLACK_EYE = passage("Black Eye: - First arrival");
+const PHANTOM = passage("Phantom: - First arrival");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
 type Conversation = (typeof CONVERSATIONS)[number];
@@ -114,10 +114,10 @@ describe("in-flight conversations", () => {
     expect(jobs).toContainEqual({ mood: "happy", name: "Ada", text: "Hold on, we've got you!" });
   });
 
-  it("leave out Black Eye's pool, which has no flight to play in, apart from its job lore", () => {
-    const pool = spokenLines(BLACK_EYE);
+  it("leave out Phantom's pool, which has no flight to play in, apart from its job lore", () => {
+    const pool = spokenLines(PHANTOM);
     expect(pool).toHaveLength(6);
-    // Black Eye's stations give jobs, so Astra's two job lore lines play there.
+    // Phantom's stations give jobs, so Astra's two job lore lines play there.
     const lore = new Set(JOB_LORE[6]);
     expect(lore.size).toBe(2);
     for (const line of pool.filter(({ text }) => !lore.has(text))) {

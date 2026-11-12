@@ -17,7 +17,7 @@ export interface ActivityDefinition {
   readonly reward?: number;
 }
 
-/** Each galaxy's activity; Black Eye has none yet. */
+/** Each galaxy's activity; Phantom has none yet. */
 export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>> = {
   1: {
     goal: "supplyGoal",

@@ -85,7 +85,7 @@ export function galaxyPreview(galaxy: Pick<GalaxyCard, "id" | "preview">, locked
 }
 
 /**
- * The six galaxies in route order (galaxies.ts). Needle, Andromeda and Black Eye are placeholders
+ * The six galaxies in route order (galaxies.ts). Needle, Andromeda and Phantom are placeholders
  * under Art's ids, so their art replaces them in place.
  */
 export const GALAXIES: readonly GalaxyCard[] = [
@@ -128,7 +128,7 @@ export const GALAXIES: readonly GalaxyCard[] = [
     flavor: "A shadowed rim where someone is watching.",
     galaxy: 6,
     id: GALAXY_ID[6],
-    name: "Black Eye",
+    name: "Phantom",
     preview: true,
   },
 ];
