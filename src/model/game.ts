@@ -152,6 +152,7 @@ import {
   shownChoices,
   skipPassesPage,
   stepOf,
+  stepPage,
   type StoryChoice,
   type StoryLabels,
   type StoryPage,
@@ -2370,20 +2371,27 @@ export class GameModel {
    * continues a story run that leads into the visit; a visit from the start screen or galaxy
    * selection starts one.
    */
-  private beginVisit(trail: readonly StoryStep[] = []): void {
+  private beginVisit(trail: readonly StoryStep[] = [], startsRun = trail.length === 0): void {
     this.closeSelection();
     const waiting = this.waitingScene();
-    this.showScene(waiting ?? this.roomScene(true), trail);
+    this.showScene(waiting ?? this.roomScene(true), trail, startsRun);
   }
-  /** A scene's first page; `trail` carries the story run's earlier pages, empty at a run's start. */
-  private showScene(scene: Scene, trail: readonly StoryStep[] = []): void {
+  /**
+   * A scene's first page; `trail` carries the story run's earlier pages. A run starts with an
+   * empty trail, or with the one page whose named action ended the run before it.
+   */
+  private showScene(
+    scene: Scene,
+    trail: readonly StoryStep[] = [],
+    startsRun = trail.length === 0,
+  ): void {
     this.story = storyStart(scene, trail);
-    if (trail.length === 0 && !this.simulating) {
+    if (startsRun && !this.simulating) {
       this.runs += 1;
       this.runScenes = this.chainedScenes(scene);
       this.run = {
         id: `${scene.id}#${this.runs}`,
-        pages: this.runScenes.flatMap(({ pages }) => pages),
+        pages: [...trail.map(stepPage), ...this.runScenes.flatMap(({ pages }) => pages)],
       };
     }
     this.showPage();
@@ -2456,13 +2464,14 @@ export class GameModel {
     }
     const ended = position.scene;
     const trail = runTrail(position);
+    const startsRun = Boolean(ended.endsRun);
     this.applyEffect(ended);
     if (ended.lead === "home") {
-      this.showScene(this.waitingScene() ?? this.roomScene(false), trail);
+      this.showScene(this.waitingScene() ?? this.roomScene(false), trail, startsRun);
     } else if (ended.lead === "visit") {
-      this.beginVisit(trail);
+      this.beginVisit(trail, startsRun);
     } else if (ended.lead === "board") {
-      this.showScene(boardingScene(this.content, this.state.announceGalaxy), trail);
+      this.showScene(boardingScene(this.content, this.state.announceGalaxy), trail, startsRun);
     } else {
       this.openSelection();
     }

@@ -116,9 +116,17 @@ export function storyStart(scene: Scene, trail: readonly StoryStep[] = []): Stor
   return { asked: [], page: first.id, scene, trail };
 }
 
-/** The trail the scene after this position's continues: none past the run's end. */
+/**
+ * The trail the scene after this position's continues. Past a run's end the next run starts on
+ * this page, whose named action began it, so Previous on the next page returns here.
+ */
 export function runTrail(position: StoryPosition): readonly StoryStep[] {
-  return position.scene.endsRun ? [] : [...position.trail, stepOf(position)];
+  return position.scene.endsRun ? [stepOf(position)] : [...position.trail, stepOf(position)];
+}
+
+/** A trail step's page. */
+export function stepPage(step: StoryStep): StoryPage {
+  return lookup(step.scene, step.page);
 }
 
 /** Previous is disabled only on the story run's first page. */

@@ -288,10 +288,34 @@ describe("story runs", () => {
     expect(model.storyView?.page.id).toBe("room");
     model.storyNext();
     expect(model.storyView).toMatchObject({
-      canGoBack: false,
+      canGoBack: true,
       canSkip: true,
       page: { id: "boarding:0" },
     });
+  });
+
+  it("counts Ada's room page as the first page of the run its named action starts", () => {
+    const model = questDone(1);
+    model.returnHome();
+    readTo(model, "room");
+    model.storyNext();
+    const boarding = model.storyView!;
+    expect(boarding.page.id).toBe("boarding:0");
+    expect(boarding.run.pages[0]).toMatchObject({ action: "Pick up the rock.", id: "room" });
+    // Previous from boarding returns to the room page, where it is disabled and Skip hides.
+    model.storyPrevious();
+    expect(model.storyView).toMatchObject({
+      canGoBack: false,
+      canSkip: false,
+      page: { action: "Pick up the rock.", id: "room" },
+    });
+    model.storyPrevious();
+    expect(model.storyView?.page.id).toBe("room");
+    // The named action boards again, and Skip still stops at galaxy selection.
+    model.storyNext();
+    expect(model.storyView).toMatchObject({ canGoBack: true, page: { id: "boarding:0" } });
+    model.storySkip();
+    expect(model.screen).toBe("selector");
   });
 
   it("starts on leaving galaxy selection, on the run's end page itself", () => {
