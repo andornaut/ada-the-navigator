@@ -168,7 +168,7 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
   direction per ship unit) and `half` (projected half mouth width along the
   trailing edge, local (±2.75, 0.83, 0)). Scale them
   with the ship's display size.
-- Per mouth, draw one filled triangle per `layers` entry in order (halo, outer,
+- Per mouth, draw one filled triangle per entry of the level's `layers`, in order (halo, outer,
   core): base `anchor ± half * width`, tip `anchor + axis * jetLength * length`.
 - Colour is `color`, or `colors` interpolated linearly in sRGB by `f`. The halo
   alpha is `max(0, (f - from) / (to - from)) * max`, skipped at zero; other layers
@@ -176,8 +176,6 @@ renderer draws them behind the idle `ship-{index}` frame; there are no jet frame
 - `engineLevels` holds the layers for each engine level, `level` 1 to 3: draw
   Ada's jets in her level's `layers`. Only the colours change; widths, lengths
   and the halo's alpha ramp are the same at every level, on every paint scheme.
-  The top-level `layers` repeats level 1 until the runtime reads
-  `engineLevels`.
 
 | Engine level | `halo.color` | `outer.colors`       | `core.colors`        |
 | -----------: | ------------ | -------------------- | -------------------- |

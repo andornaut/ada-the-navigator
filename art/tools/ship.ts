@@ -588,9 +588,6 @@ function jets(): string {
     version: 1,
     frame: 96,
     length: { base: 6, scale: 24, exponent: 2 },
-    // CLEANUP (added 2026-11-12): the base level's layers for the runtime that predates
-    // engineLevels. Remove once Tech reads engineLevels for Ada's jets.
-    layers: jetLayers(JET_LEVELS[0]),
     engineLevels: JET_LEVELS.map((entry) => ({ level: entry.level, layers: jetLayers(entry) })),
     headings,
   };

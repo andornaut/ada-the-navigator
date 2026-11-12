@@ -68,20 +68,6 @@
     "indicatorStroke": 4,
     "markerOutline": 1,
     "jets": {
-      "ship": [
-        {
-          "name": "outer",
-          "colors": ["#1767b3", "#1767b3"],
-          "width": 1.6,
-          "length": 1
-        },
-        {
-          "name": "core",
-          "colors": ["#2585d0", "#64caff"],
-          "width": 0.8,
-          "length": 0.55
-        }
-      ],
       "shipLevels": [
         {
           "level": 1,
