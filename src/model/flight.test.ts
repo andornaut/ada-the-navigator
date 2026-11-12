@@ -25,7 +25,7 @@ import { noLevels } from "./upgrades.ts";
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -199,7 +199,7 @@ describe("flight boundaries", () => {
     flight.weapon = "laser";
     const events = stepFlight(PROTOTYPE, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
-    expect(events).toContainEqual({ type: "enemyDisabled" });
+    expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
       RESOURCE_ROCKS.classes.medium.pieces,
     );

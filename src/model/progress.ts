@@ -5,7 +5,7 @@ export function newProgress(): SectorProgress {
   return {
     charted: [],
     deposited: 0,
-    disabledEnemies: 0,
+    destroyedEnemies: 0,
     discoveries: 0,
     donated: {},
     explored: [],

@@ -154,7 +154,7 @@ export interface SectorProgress {
   deposited: number;
   questItem: string | null;
   discoveries: number;
-  disabledEnemies: number;
+  destroyedEnemies: number;
   /** Discovered station ids, which are travel destinations. */
   stations: string[];
   /** The galaxy's holodisk is recovered and inserted into Astra's drive. */
@@ -289,7 +289,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 6;
+  version: 7;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];
@@ -321,7 +321,9 @@ export type FlightEvent =
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }
-  | { type: "enemyDisabled" }
+  | { type: "enemyDestroyed" }
+  /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
+  | { id: string; type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
   | {

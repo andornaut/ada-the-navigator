@@ -376,6 +376,8 @@ export const enemyCatalog = {
       ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),
     ],
     hp: 10,
+    // A heavy never flees on hull damage.
+    morale: { individualHpRatio: 0, packLossRatio: 1 },
     mounts: frigateMounts,
     physics: SHIP_PHYSICS.frigate,
     sizeRatio: 4,
@@ -395,7 +397,6 @@ export const enemyCatalog = {
     behaviour: { kind: "siege", speedFraction: 0 },
     engagement: 520,
     hardpoints: mountedHardpoints("platform", platformMounts, platformMounts.tiers[0], 6),
-    // The hull has no HP of its own: hits land only on its turrets.
     hp: 12,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
     mounts: platformMounts,

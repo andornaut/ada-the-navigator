@@ -45,7 +45,6 @@ import {
   createEnemy,
   damageEnemy,
   enemyDefeated,
-  enemyEffects,
   type FireIntent,
   hardpointOffset,
   stepDebris,
@@ -1723,6 +1722,7 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     state.engaged &&
     !state.returning &&
     !state.fleeing &&
+    !state.disabled &&
     distance(object, flight.player) <= enemyDefinition(flight.sector, state.archetype).perception
   );
 }
@@ -1801,7 +1801,7 @@ function enemies(
     object.enemy = intent.state;
     if (intent.effects.defeated) {
       destroyEnemy(object, flight);
-      events.push({ type: "enemyDisabled" });
+      events.push({ type: "enemyDestroyed" });
       continue;
     }
     let velocity = intent.velocity;
@@ -2057,11 +2057,6 @@ function strike(
     }
     shot.hitIds.push(object.id);
     const part = hitPart(content, flight.sector, partReach(content), 3, shot, object);
-    // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
-    if (part === undefined) {
-      shot.hitIds.pop();
-      continue;
-    }
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
       blast(content, shot.damage, shot.blast, shot, object, flight, events);
@@ -2125,10 +2120,9 @@ function enemyTouched(
 }
 
 /**
- * The hardpoint a strike at `point` lands on: null for the hull of a ship without hardpoints
- * and for scenery, undefined when a multipart ship has no live hardpoint in reach. A drawn
- * hardpoint is in reach when the strike's `tolerance` touches its base or top; one without Art's
- * outline when its anchor is within `reach`.
+ * The live hardpoint a strike at `point` lands on, before the hull; null for the hull alone and
+ * for scenery. A drawn hardpoint is in reach when the strike's `tolerance` touches its base or
+ * top; one without Art's outline when its anchor is within `reach`.
  */
 function hitPart(
   content: PrototypeContent,
@@ -2137,7 +2131,7 @@ function hitPart(
   tolerance: number,
   point: Vec,
   object: SpaceObject,
-): string | null | undefined {
+): string | null {
   const enemy = object.enemy;
   if (object.kind !== "enemy" || !enemy) {
     return null;
@@ -2155,7 +2149,7 @@ function hitPart(
       nearest = { gap, id: part.id };
     }
   }
-  return nearest?.id;
+  return nearest?.id ?? null;
 }
 
 /** Damages an enemy (at a hardpoint, or its hull for null) or scenery, then resolves its loss. */
@@ -2172,8 +2166,12 @@ function hit(
   }
   if (object.kind === "enemy" && object.enemy) {
     const definition = enemyDefinition(flight.sector, object.enemy.archetype);
+    const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
-    object.hp = enemyEffects(definition, object.enemy).defeated ? 0 : Math.max(1, object.enemy.hp);
+    object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
+    if (object.hp > 0 && !disabled && object.enemy.disabled) {
+      events.push({ id: object.id, type: "enemyDisabled" });
+    }
   } else {
     object.hp -= amount;
   }
@@ -2182,7 +2180,7 @@ function hit(
   }
   if (object.kind === "enemy") {
     destroyEnemy(object, flight);
-    events.push({ type: "enemyDisabled" });
+    events.push({ type: "enemyDestroyed" });
   }
   if (object.asteroid) {
     events.push({
@@ -2244,7 +2242,7 @@ function blast(
     }
     const position = ROUTE_POSITION[flight.sector];
     const part = hitPart(content, flight.sector, radius + partReach(content), radius, at, object);
-    if (part === undefined || (part === null && !enemyTouched(position, object, at, radius))) {
+    if (part === null && !enemyTouched(position, object, at, radius)) {
       continue;
     }
     hit(content, amount, part, object, flight, events);
@@ -2423,17 +2421,17 @@ function fireBeam(
         ),
       );
     } else if (object.kind === "enemy" && object.enemy) {
-      const hull = enemyHull(object.enemy);
-      if (object.enemy.hardpoints.length) {
-        for (const part of liveParts(content, flight.sector, object)) {
-          const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
-          if (outline) {
-            drawn(object, part.id, outline);
-          } else {
-            consider(object, part.id, part, partReach(content));
-          }
+      // A heavy's live hardpoints take the beam first, then its hull.
+      for (const part of liveParts(content, flight.sector, object)) {
+        const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
+        if (outline) {
+          drawn(object, part.id, outline);
+        } else {
+          consider(object, part.id, part, partReach(content));
         }
-      } else if (hull) {
+      }
+      const hull = enemyHull(object.enemy);
+      if (hull) {
         drawn(object, null, hull);
       } else {
         consider(object, null, object, object.radius);

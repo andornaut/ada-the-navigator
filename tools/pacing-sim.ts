@@ -1538,7 +1538,7 @@ export function realLoop(
     for (const event of events) {
       if (event.type === "stardust") {
         result.drops += event.amount;
-      } else if (event.type === "enemyDisabled") {
+      } else if (event.type === "enemyDestroyed") {
         result.enemiesDestroyed++;
       } else if (event.type === "stationDiscovered" && !stations.has(event.id)) {
         stations.add(event.id);

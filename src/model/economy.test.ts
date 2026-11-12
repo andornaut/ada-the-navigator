@@ -279,7 +279,7 @@ describe("Stardust drops", () => {
     value.objects.push(target);
     value.shots.push(killShot(target));
     const events = stepFlight(PROTOTYPE, 1 / 60, idle, value);
-    expect(events).toContainEqual({ type: "enemyDisabled" });
+    expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(value.objects.some((object) => object.id === "target")).toBe(false);
     const wreck = value.objects.find((object) => object.kind === "wreck");
     expect(wreck?.wreck?.archetype).toBe("fighter");
@@ -342,18 +342,15 @@ describe("Stardust drops", () => {
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
   });
 
-  it("destroys a multipart ship once all its required parts are disabled", () => {
+  it("destroys a heavy whose hull reaches 0 and drops twice its Stardust", () => {
     const value = flight();
     const frigate = enemy("frigate", "frigate", 600, 0);
-    for (const part of frigate.enemy!.hardpoints) {
-      part.hp = 0;
-    }
+    frigate.enemy!.hp = 0;
     value.objects.push(frigate);
     stepFlight(PROTOTYPE, 1 / 60, idle, value);
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
     stepFlight(PROTOTYPE, 0.6, idle, value);
-    // A frigate drop is at least its Stardust; a weapon drop adds a weapon pickup.
-    expect(total(pickups(value))).toBeGreaterThanOrEqual(enemyStardust(1, "frigate") * 2);
+    expect(total(pickups(value))).toBe(enemyStardust(1, "frigate") * 2);
   });
 
   it("releases a huge asteroid's three Stardust where it breaks", () => {

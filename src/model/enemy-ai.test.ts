@@ -190,8 +190,8 @@ describe("enemy rules", () => {
   it("stops engine momentum immediately while the remaining weapon can fire", () => {
     const definition = enemyCatalog.frigate;
     const moving = { ...spawn("frigate"), velocity: { x: 30, y: 10 } };
-    const engineLost = damageEnemy(definition, { amount: 99, hardpointId: "engine" }, moving);
-    const portLost = damageEnemy(definition, { amount: 99, hardpointId: "port" }, engineLost);
+    const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
+    const portLost = damageEnemy(definition, { amount: 3, hardpointId: "port" }, engineLost);
     const result = stepEnemy(definition, observation(portLost), portLost);
     expect(result.velocity).toEqual({ x: 0, y: 0 });
     expect(result.effects.defeated).toBe(false);
@@ -318,20 +318,28 @@ describe("enemy rules", () => {
     expect(stepEnemy(enemyCatalog.capital, context, expired).state.returning).toBe(true);
   });
 
-  it("requires the command part after hull, engines and weapons are disabled", () => {
+  it("disables a heavy once its weapons are destroyed and destroys it only at 0 hull", () => {
     const definition = enemyCatalog.capital;
-    let state = damageEnemy(definition, { amount: 999, hardpointId: null }, spawn("capital"));
+    let state = spawn("capital");
     // Two Lasers and two three-bolt Multi-Lasers.
     expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(8);
-    for (const part of definition.hardpoints.filter((part) => part.kind !== "command")) {
-      state = damageEnemy(definition, { amount: 999, hardpointId: part.id }, state);
+    for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
+      expect(state.disabled).toBe(false);
+      state = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
     }
-    expect(enemyEffects(definition, state).defeated).toBe(false);
-    state = damageEnemy(definition, { amount: 999, hardpointId: "command" }, state);
-    const result = stepEnemy(definition, observation(state), state);
-    expect(result.effects.defeated).toBe(true);
+    // The four 3 HP weapons took 12 of the hull's 18.
+    expect(state).toMatchObject({ disabled: true, hp: 6 });
+    const moving = { ...state, velocity: { x: 30, y: 0 } };
+    const result = stepEnemy(definition, observation(moving), moving);
+    expect(result.effects).toMatchObject({ defeated: false, disabled: true });
     expect(result.fire).toEqual([]);
-    expect(result.velocity).toEqual({ x: 0, y: 0 });
+    // It stops steering and coasts to rest through its own physics.
+    expect(result.velocity.x).toBeLessThan(30);
+    expect(result.velocity.x).toBeGreaterThan(0);
+    expect(result.state.disabled).toBe(true);
+    state = damageEnemy(definition, { amount: 6, hardpointId: null }, result.state);
+    expect(enemyEffects(definition, state).defeated).toBe(true);
+    expect(stepEnemy(definition, observation(state), state).fire).toEqual([]);
   });
 
   it("moves debris at constant velocity without changing the original", () => {
@@ -584,7 +592,7 @@ describe("enemy ship physics and hull rotation", () => {
       heading: { x: 1, y: 0 },
       velocity: { x: 30, y: 0 },
     };
-    const engineLost = damageEnemy(definition, { amount: 99, hardpointId: "engine" }, moving);
+    const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
     const context = { ...observation(engineLost), player: { x: 0, y: 300 } };
     const result = stepEnemy(definition, context, engineLost);
     expect(result.velocity).toEqual({ x: 0, y: 0 });

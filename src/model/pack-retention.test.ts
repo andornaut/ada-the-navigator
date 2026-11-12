@@ -18,7 +18,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -68,7 +68,7 @@ function reposition(object: SpaceObject, x: number, y = 100): void {
 }
 function defeat(model: GameModel, object: SpaceObject): void {
   const flight = model.state.flight!;
-  const before = model.state.progress[1].disabledEnemies;
+  const before = model.state.progress[1].destroyedEnemies;
   flight.shots.push({
     damage: object.enemy!.hp,
     enemy: false,
@@ -81,7 +81,7 @@ function defeat(model: GameModel, object: SpaceObject): void {
     y: object.y,
   });
   model.step(0.001, idle);
-  expect(model.state.progress[1].disabledEnemies).toBe(before + 1);
+  expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
   expect(flight.objects).not.toContain(object);
 }
 function regenerate(content: typeof PROTOTYPE, model: GameModel, packId: string): void {
@@ -108,7 +108,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(model, packId)).toHaveLength(1);
     expect(flight.combat!.initialPackSizes[packId]).toBe(4);
     expect(flight.combat!.unloadedPackMembers).toEqual({ [packId]: 2 });
-    expect(model.state.progress[1].disabledEnemies).toBe(1);
+    expect(model.state.progress[1].destroyedEnemies).toBe(1);
     model.step(0.001, idle);
     expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
     const resumed = relaunch(content, model.save());
@@ -188,7 +188,7 @@ describe("casualty-preserving pack retention", () => {
       expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(2);
       model.step(0.001, idle);
       expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
-      expect(model.state.progress[1].disabledEnemies).toBe(1);
+      expect(model.state.progress[1].destroyedEnemies).toBe(1);
       expect(restoreSave(model.save())).toEqual(model.state);
     },
   );
@@ -232,7 +232,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(resumed, packId)).toHaveLength(3);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
-    expect(resumed.state.progress[1].disabledEnemies).toBe(0);
+    expect(resumed.state.progress[1].destroyedEnemies).toBe(0);
     expect(members(resumed, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
     expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
     expect(restoreSave(resumed.save())).toEqual(resumed.state);
@@ -410,9 +410,9 @@ describe("per-role encounter restore", () => {
       object.enemy = damageEnemy(definition, { amount: 99, hardpointId: part.id }, object.enemy!);
     }
     object.enemy = damageEnemy(definition, { amount: 99, hardpointId: null }, object.enemy!);
-    const before = model.state.progress[1].disabledEnemies;
+    const before = model.state.progress[1].destroyedEnemies;
     model.step(0.001, idle);
-    expect(model.state.progress[1].disabledEnemies).toBe(before + 1);
+    expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
   };
   /** Takes Ada and the kept ships far enough away to unload the battle's cell, then back. */
   function revisit(

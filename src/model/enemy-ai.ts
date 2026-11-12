@@ -108,7 +108,10 @@ export interface FireIntent {
   weapon: FireProfile["weapon"];
 }
 export interface EnemyEffects {
+  /** The hull is at 0 HP: the ship is destroyed. */
   defeated: boolean;
+  /** Every weapon hardpoint is destroyed: the heavy stops attacking and steering. */
+  disabled: boolean;
   disabledHardpoints: string[];
   /** True when every engine is disabled. */
   movementStopped: boolean;
@@ -221,12 +224,9 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
-/**
- * Whether an enemy is defeated from its state alone: every hardpoint destroyed on a ship with
- * hardpoints, all of them required, else its hull at 0.
- */
-export function enemyDefeated(state: Pick<EnemyState, "hardpoints" | "hp">): boolean {
-  return state.hardpoints.length ? state.hardpoints.every((part) => part.hp <= 0) : state.hp <= 0;
+/** Whether an enemy is destroyed: its hull at 0 HP, whatever its hardpoints. */
+export function enemyDefeated(state: Pick<EnemyState, "hp">): boolean {
+  return state.hp <= 0;
 }
 
 /** Hull plus hardpoint hp; a drop between steps means the ship was hit. */
@@ -245,13 +245,14 @@ export function enemyEffects(definition: EnemyDefinition, state: EnemyState): En
   const disabledHardpoints = definition.hardpoints
     .filter((part) => !state.hardpoints.some((value) => value.id === part.id && value.hp > 0))
     .map((part) => part.id);
-  const required = definition.hardpoints.filter((part) => part.required);
   const engines = definition.hardpoints.filter((part) => part.kind === "engine");
   const working = engines.filter((part) => !disabledHardpoints.includes(part.id)).length;
+  const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
   return {
-    defeated: required.length
-      ? required.every((part) => disabledHardpoints.includes(part.id))
-      : enemyDefeated(state),
+    defeated: enemyDefeated(state),
+    disabled:
+      state.disabled ||
+      (weapons.length > 0 && weapons.every((part) => disabledHardpoints.includes(part.id))),
     disabledHardpoints,
     movementStopped: engines.length > 0 && working === 0,
     thrust: engines.length ? working / engines.length : 1,
@@ -299,7 +300,10 @@ export function createEnemy(
   };
 }
 
-/** Null selects the hull. Required hardpoints cannot be bypassed by hull damage. */
+/**
+ * Every hit lowers the hull; a hit at a hardpoint (null selects the hull alone) also damages
+ * that hardpoint. Destroying a heavy's last weapon hardpoint disables it for good.
+ */
 export function damageEnemy(
   definition: EnemyDefinition,
   hit: { amount: number; hardpointId: string | null },
@@ -314,7 +318,7 @@ export function damageEnemy(
   ) {
     return state;
   }
-  return {
+  const next: EnemyState = {
     ...state,
     engaged: true,
     hardpoints: state.hardpoints.map((part) =>
@@ -322,8 +326,9 @@ export function damageEnemy(
         ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
         : { ...part },
     ),
-    hp: hit.hardpointId === null ? Math.max(0, state.hp - hit.amount) : state.hp,
+    hp: Math.max(0, state.hp - hit.amount),
   };
+  return { ...next, disabled: enemyEffects(definition, next).disabled };
 }
 
 /** Push away from nearby live peers, strongest when closest. */
@@ -363,15 +368,11 @@ function arrive(
   return { x: (offset.x / distance) * arrival, y: (offset.y / distance) * arrival };
 }
 
-/** The live capital an escort guards, if it is loaded. */
+/** The live capital an escort guards, if it is loaded and not disabled. */
 function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
   return state.escortOf === null
     ? undefined
-    : context.peers.find(
-        (peer) =>
-          peer.id === state.escortOf &&
-          (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-      );
+    : context.peers.find((peer) => peer.id === state.escortOf && peer.hp > 0 && !peer.disabled);
 }
 
 /** A strafe's approach aims this many pass distances beside Ada, so momentum keeps it clear. */
@@ -578,11 +579,8 @@ export function stepEnemy(
   const aim = unit(delta);
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
   const alive =
-    context.peers.filter(
-      (peer) =>
-        peer.packId === state.packId &&
-        (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-    ).length + (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
+    context.peers.filter((peer) => peer.packId === state.packId && peer.hp > 0).length +
+    (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
   const packFlee = packSize > 1 && 1 - alive / packSize >= definition.morale.packLossRatio;
   const next: EnemyState = {
     ...state,
@@ -637,7 +635,10 @@ export function stepEnemy(
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
-  const request = steering(definition, context, speed, aim, magnitude(delta), next);
+  // A disabled heavy stops steering and coasts to rest.
+  const request = effects.disabled
+    ? { x: 0, y: 0 }
+    : steering(definition, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
     next.velocity = { x: 0, y: 0 };
@@ -674,6 +675,7 @@ export function stepEnemy(
   const fire: FireIntent[] = [];
   const canFire =
     !effects.defeated &&
+    !effects.disabled &&
     !next.returning &&
     !next.fleeing &&
     next.engaged &&

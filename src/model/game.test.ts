@@ -454,9 +454,7 @@ it("discovers a cleared required approach after reversing away from its first lo
   expect(pending).toBeDefined();
   const guard = flight.objects.find((object) => object.routeId === "growers")!;
   expect(guard.enemy).toBeDefined();
-  for (const part of guard.enemy!.hardpoints) {
-    part.hp = 0;
-  }
+  guard.enemy!.hp = 0;
   const originalX = pending!.x;
   expect(originalX - flight.player.x).toBeGreaterThan(content.tuning.chunkSize);
   expect(model.state.progress[1].known).toEqual([]);

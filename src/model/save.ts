@@ -33,7 +33,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 6;
+export const SAVE_VERSION: GameState["version"] = 7;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -592,7 +592,7 @@ export function restoreSave(saved: unknown): GameState | null {
       }
       if (
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
-        !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
+        !["deposited", "destroyedEnemies", "discoveries"].every((k) => nonnegative(p[k])) ||
         !["holodisk", "opened"].every((k) => typeof p[k] === "boolean") ||
         !stationIds(id as SectorId, p.stations) ||
         !donations(id as SectorId, p.donated) ||

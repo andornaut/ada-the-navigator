@@ -24,7 +24,7 @@ import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -140,10 +140,8 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const flight = empty();
     const destination = ensureDestination(PROTOTYPE, "growers", flight);
     const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
-    for (const part of guard.enemy!.hardpoints) {
-      part.hp = 0;
-    }
-    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
+    guard.enemy!.hp = 0;
+    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.world.notables[guard.id]).toBeNull();
     expect(routeBlocked(destination.id, flight)).toBe(false);
     flight.player = { x: 12000, y: 0 };
@@ -162,7 +160,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     flight.objects.push(near, far);
     flight.combat = { initialPackSizes: { pack: 2 }, routeEncounters: [] };
     expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).not.toContainEqual({
-      type: "enemyDisabled",
+      type: "enemyDestroyed",
     });
     expect(near.enemy!.fleeing).toBe(false);
     expect(flight.combat.initialPackSizes.pack).toBe(2);

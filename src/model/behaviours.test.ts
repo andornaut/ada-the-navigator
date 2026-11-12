@@ -228,7 +228,7 @@ describe("escort", () => {
     // The capital's engine is out, so only the escort moves.
     const capital = damageEnemy(
       enemyCatalog.capital,
-      { amount: 99, hardpointId: "engine-left" },
+      { amount: 4, hardpointId: "engine-left" },
       { ...spawn("capital", { x: 0, y: 0 }), id: "capital" },
     );
     const escort = {
@@ -266,6 +266,14 @@ describe("escort", () => {
     const before = range(ships[0]!, { x: 500, y: 0 });
     run(ships, 60, { context: (peers) => context(peers, { x: 500, y: 0 }) });
     expect(range(ships[0]!, { x: 500, y: 0 })).toBeLessThan(before - 50);
+  });
+
+  it("falls back to its own attack behaviour when its capital is disabled", () => {
+    const ships = battle();
+    ships[0] = { ...ships[0]!, disabled: true };
+    const before = range(ships[1]!, { x: 500, y: 0 });
+    run(ships, 60, { context: (peers) => context(peers, { x: 500, y: 0 }) });
+    expect(range(ships[1]!, { x: 500, y: 0 })).toBeLessThan(before - 50);
   });
 });
 
@@ -491,11 +499,12 @@ describe("engine thrust", () => {
     return Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y);
   }
   const capital = () => spawn("capital", { x: 0, y: 0 }, false);
+  /** Destroys each named part with exactly its HP, which the hull loses too. */
   const disable = (ids: string[], state: EnemyState) =>
-    ids.reduce(
-      (next, id) => damageEnemy(enemyCatalog.capital, { amount: 99, hardpointId: id }, next),
-      state,
-    );
+    ids.reduce((next, id) => {
+      const amount = enemyCatalog.capital.hardpoints.find((part) => part.id === id)!.hp;
+      return damageEnemy(enemyCatalog.capital, { amount, hardpointId: id }, next);
+    }, state);
 
   it.each([
     [[], 1],
@@ -525,7 +534,7 @@ describe("engine thrust", () => {
   it("stops a one-engine frigate when its engine goes, while its guns fire", () => {
     const state = damageEnemy(
       enemyCatalog.frigate,
-      { amount: 99, hardpointId: "engine" },
+      { amount: 4, hardpointId: "engine" },
       { ...spawn("frigate", { x: 300, y: 0 }), velocity: { x: -20, y: 0 } },
     );
     const effects = enemyEffects(enemyCatalog.frigate, state);
@@ -535,16 +544,15 @@ describe("engine thrust", () => {
     expect(result.fire.length).toBeGreaterThan(0);
   });
 
-  it("still needs every required part, command included, for defeat", () => {
-    const parts = enemyCatalog.capital.hardpoints.map((part) => part.id);
-    const allButCommand = disable(
-      parts.filter((id) => id !== "command"),
-      capital(),
-    );
-    expect(enemyEffects(enemyCatalog.capital, allButCommand).defeated).toBe(false);
-    expect(enemyEffects(enemyCatalog.capital, disable(["command"], allButCommand)).defeated).toBe(
-      true,
-    );
+  it("destroys a heavy at 0 hull, whatever its parts", () => {
+    const definition = enemyCatalog.capital;
+    // Each engine's 4 HP comes off the hull's 18 too.
+    const engines = disable(["engine-left", "engine-right"], capital());
+    expect(engines.hp).toBe(10);
+    expect(enemyEffects(definition, engines)).toMatchObject({ defeated: false, disabled: false });
+    const broken = damageEnemy(definition, { amount: 10, hardpointId: null }, engines);
+    expect(enemyEffects(definition, broken).defeated).toBe(true);
+    expect(broken.hardpoints.find((part) => part.id === "command")!.hp).toBe(5);
   });
 });
 

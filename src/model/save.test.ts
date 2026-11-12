@@ -621,13 +621,15 @@ describe("current generation save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
-  it("accepts a destroyed hull with required live parts but rejects an unrecorded defeated notable", () => {
+  it("accepts a disabled heavy whose hull holds but rejects an unrecorded destroyed notable", () => {
     const snapshot = notableSnapshot();
-    snapshot.flight.world.notables.guard!.enemy!.hp = 0;
-    expect(restoreSave(snapshot)).toEqual(snapshot);
-    for (const part of snapshot.flight.world.notables.guard!.enemy!.hardpoints) {
+    const guard = snapshot.flight.world.notables.guard!.enemy!;
+    for (const part of guard.hardpoints) {
       part.hp = 0;
     }
+    guard.disabled = true;
+    expect(restoreSave(snapshot)).toEqual(snapshot);
+    guard.hp = 0;
     expect(restoreSave(snapshot)).toBeNull();
     Object.assign(snapshot.flight.world.notables, { guard: null });
     expect(restoreSave(snapshot)).toEqual(snapshot);

@@ -36,7 +36,7 @@ const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: fals
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -140,16 +140,18 @@ describe("integrated combat", () => {
     expect(missile.y).toBeCloseTo(position.y + velocity.y * 0.1);
   });
 
-  it("disables individual weapons and engines, and requires every designated part before defeat", () => {
+  it("lowers the hull on every hit, disables a heavy without weapons and destroys it at 0 hull", () => {
+    // Sunflower's capital: a 40 HP hull and 4 HP hardpoints.
     const flight = empty();
-    const target = ship("capital", { x: 400, y: 0 });
+    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital"));
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
     // A moving hull faces its velocity.
     target.enemy!.facing = { x: 20 / Math.hypot(20, 10), y: 10 / Math.hypot(20, 10) };
     hit(flight, partPosition(target, "engine-left"), 4);
-    hit(flight, partPosition(target, "weapon-left"), 3);
+    hit(flight, partPosition(target, "weapon-left"), 4);
     stepFlight(PROTOTYPE, 0.001, idle, flight);
+    expect(target.enemy!.hp).toBe(32);
     flight.shots = [];
     const before = { x: target.x, y: target.y };
     for (const part of target.enemy!.hardpoints) {
@@ -160,21 +162,35 @@ describe("integrated combat", () => {
     // Laser and both three-bolt Multi-Lasers still fire.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
     expect(flight.shots.map((shot) => shot.projectile)).toEqual(Array(7).fill("bolt"));
-    for (const id of ["engine-right", "weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
-      hit(flight, partPosition(target, id), 5);
+    flight.shots = [];
+    // Destroying the last weapons disables it, once, with 20 hull left.
+    for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
+      hit(flight, partPosition(target, id), 4);
     }
-    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({ type: "enemyDisabled" });
+    const disabling = stepFlight(PROTOTYPE, 0.01, idle, flight);
+    expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
+    expect(disabling).not.toContainEqual({ type: "enemyDestroyed" });
+    expect(target.enemy).toMatchObject({ disabled: true, hp: 20 });
     expect(flight.objects).toContain(target);
-    const stopped = { x: target.x, y: target.y };
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect({ x: target.x, y: target.y }).toEqual(stopped);
-    hit(flight, partPosition(target, "command"), 5);
-    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({ type: "enemyDisabled" });
+    // It holds fire and coasts to rest on its other engine.
+    flight.shots = [];
+    target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
+    const coasting = Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y);
+    expect(coasting).toBeGreaterThan(0);
+    const later = stepFlight(PROTOTYPE, 20, idle, flight);
+    expect(later.some((event) => event.type === "enemyDisabled")).toBe(false);
+    expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
+    expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
+    // Hits on the destroyed command part's place go to the hull until it breaks.
+    hit(flight, partPosition(target, "command"), 20);
+    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects).not.toContain(target);
-    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({ type: "enemyDisabled" });
+    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({
+      type: "enemyDestroyed",
+    });
   });
 
-  it("hits a recessed command part through empty hull and stops nonpiercing shots at the first live part", () => {
+  it("stops a nonpiercing shot at a heavy's hull, lowering only the hull", () => {
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 });
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
@@ -192,7 +208,10 @@ describe("integrated combat", () => {
       y: -150,
     });
     stepFlight(PROTOTYPE, 0.7, idle, flight);
-    expect(target.enemy!.hardpoints.find((part) => part.id === "command")?.hp).toBe(4);
+    expect(target.enemy!.hp).toBe(enemyCatalog.capital.hp - 1);
+    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual(
+      enemyCatalog.capital.hardpoints.map((part) => part.hp),
+    );
     expect(flight.shots.some((shot) => shot.id === "travel")).toBe(false);
   });
 
@@ -774,7 +793,7 @@ describe("combat admission and subframe firing", () => {
       expect(members[2]!.enemy!.fleeing).toBe(false);
       expect(members[3]!.enemy!.fleeing).toBe(false);
       hit(flight, members[2]!, 2);
-      expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDisabled" });
+      expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
       expect(flight.combat!.initialPackSizes.roster).toBe(4);
       expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
       stepFlight(PROTOTYPE, 0.001, idle, flight);

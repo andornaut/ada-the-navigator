@@ -1235,8 +1235,8 @@ export class GameModel {
         this.current.stations.push(event.id);
         newStation = true;
       }
-      if (event.type === "enemyDisabled") {
-        this.current.disabledEnemies++;
+      if (event.type === "enemyDestroyed") {
+        this.current.destroyedEnemies++;
       }
       // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
       // destination.
