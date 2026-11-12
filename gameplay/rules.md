@@ -490,6 +490,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   status pill (Stardust and what Ada carries), the shield bar and a pause
   button. There is no travel or destinations panel and
   no settings gear in space.
+- Destinations Ada visits (stations, the mining hub, outposts, settlements and
+  quest points of interest) are drawn at 1.5 times their earlier size, the mining
+  hub at 1.25 times, with a 2 pixel ink outline on light fields so they stand out
+  from the background. While Ada is within Use range of one, a small callout
+  above it shows its Use action's symbol; it is hidden otherwise. At a station
+  or the mining hub, an action due there (Deliver, Deposit or a story Talk) comes
+  before Dock, and Dock shows once it is done.
 - Space shows no in-world name labels. Each named destination has a distinct
   look by role, the current objective's destination is marked by the direction
   indicator, and the Use disc's action symbol and the conversation name tab identify
@@ -709,21 +716,19 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - One forgiving difficulty, rising along the route (see
   [Ships](ships.md#difficulty)); no overall exploration timer.
 - Objects in flight meet where they are drawn, on each one's current frame's
-  silhouette: every hit, bounce, pickup, dock and tow contact between Ada's
-  ship, enemies and their heavy parts, stations and docks, outposts, asteroids
+  silhouette: every hit, bounce, pickup and tow contact between Ada's
+  ship, enemies and their heavy parts, stations, outposts, asteroids
   and resource rocks, debris, hazards, wrecks, story ships, towed craft, pickups
   and shots. Which objects interact is unchanged. Objects Ada flies through today stay passable:
-  stations and docks, outposts and destinations, story ships and buoys, towed
+  stations, outposts and destinations, story ships and buoys, towed
   craft, whales and the calf, wrecks, the holodisk and landmarks; Ada is drawn in
   front of any of them while she overlaps it, so she is never hidden. Nothing
   else passes behind another object on screen, and placement and spawning keep drawn objects from
   overlapping on screen. A clearance stated as an object's radius plus a margin
   uses its silhouette radius, the greatest distance from its pivot to its drawn
   silhouette over all its frames, so a turning or spinning object stays clear
-  on every frame; margins and centre-to-centre spacings stay as stated. Two
-  contacts are deliberately forgiving: a pickup collects near Ada's drawn ship,
-  and docking uses the dock's mouth circle (see [Economy](economy.md#stations)).
-  Stardust collects within 4 world units of the ship, since the tractor beam
+  on every frame; margins and centre-to-centre spacings stay as stated. Pickups
+  are deliberately forgiving: each collects near Ada's drawn ship. Stardust collects within 4 world units of the ship, since the tractor beam
   gathers it. Every other pickup (discovery cache, ore nugget, weapon, a holodisk
   floating in space or a hunt job's lost item) collects within 20 world units, about half the ship's length,
   and zips into the ship over 0.15 seconds as it collects.

@@ -528,7 +528,8 @@ done: (on touch, each named stick's control icon follows its name, per the rules
 - Astra: "Use the right stick to aim and fire." (desktop: "Use the arrow keys to
   aim and fire.")
 - Astra: "That's Stardust. Fly close and I'll pull it in." Ada: "Like a magnet!" (happy)
-- Astra: "A station! Fly into the dock to trade." Ada: "Shopping in space!" (happy)
+- Astra: "A station! Come close and tap Use to dock." (desktop: "A station! Come
+  close and press Space to dock.") Ada: "Shopping in space!" (happy)
 
 Warnings:
 
@@ -675,7 +676,7 @@ beacon light. Welcome!"
 - Earth with nothing new: Narration: "Penny thumps her tail. Time for another
   adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
-  Deliver, Deposit, Tow, Salvage, and Use for any other interaction.
+  Deliver, Deposit, Tow, Salvage, Dock, and Use for any other interaction.
 - Conversation buttons: Continue, Ask more.
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.

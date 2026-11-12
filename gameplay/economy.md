@@ -61,10 +61,10 @@ least 8000 world units apart and away from story destinations. A discovered
 station becomes a travel destination like other destinations. An undiscovered station
 within 2000 world units of Ada is marked by the direction indicator, so stations
 stay rare but findable. A station is a safe
-area. The dock is the station sprite's visible entrance. Ada docks when her
-drawn ship overlaps the mouth circle: half the drawn mouth width in world units,
-scaled by a forgiving `dockForgiveness` of 3.
-Undocking places Ada at rest just outside the dock, so flying back in docks again. Flying into its dock opens the station card, which pauses action like a
+area. Ada docks with Use (Dock) within Talk range, 160 world units from the
+station's centre, like any other destination; the station has no dock mouth and
+flying over it does nothing. Undocking leaves Ada at rest where she docked, so
+Use offers Dock again at once. Docking opens the station card, which pauses action like a
 conversation. The card shows the Stardust balance, a welcome line (the keeper's greeting; see [Species and greeters](rules.md#species-and-greeters)), Undock, Shop and Jobs; Jobs
 opens the station's job board (see [Quests](quests.md)).
 Like Archie's modals it has a close X; the X, an outside tap, back and Escape all
