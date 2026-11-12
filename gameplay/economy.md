@@ -157,7 +157,7 @@ until she returns to a galaxy that unlocks it.
 | Scattershot    | Owned weapon                                                                                                                  | 800       |
 | Phaser         | Owned weapon                                                                                                                  | 1000      |
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser) | See below |
-| Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s                               | 450, 900  |
+| Shield         | Levels 2 and 3: capacity 15, then 20; empty to full 45, then 30 s                                                             | 450, 900  |
 | Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds                                           | 180, 360  |
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                            | 120, 240  |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                  | 75 each   |

@@ -751,18 +751,17 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Defeated enemy ships are destroyed and drop Stardust, the game's currency.
 - One rechargeable shield of 10 HP, 15 and 20 at shield levels 2 and 3. No hull
   resource.
-- The shield never recharges in battle. Ada is in battle while an enemy that is
-  chasing or attacking her is inside the battle square: centred on Ada, reaching
-  half the game area's width plus 64 world units along each axis (424 on the
-  720-wide view). Idle enemies, retaliators not yet hit, fleeing or returning
-  enemies and disabled heavies do not count. Recharge starts 20 seconds after
-  Ada was last in battle or last hit, and refills from empty to full in 60
-  seconds at base. Shield levels 2 and 3 shorten the delay to 15, then 10
-  seconds and the full refill to 45, then 30 seconds. Pursuit is finite,
-  so Ada can always escape to recharge, but it is slow, and enemies keep their
-  damage.
-- Ada is in danger while she is in battle, as the shield-recharge rule above
-  defines it, or while an enemy shot is in flight inside the battle square.
+- Recharge starts 30 seconds after Ada last took damage, at every shield level,
+  and refills from empty to full in 60 seconds at base. Shield levels 2 and 3
+  shorten the full refill to 45, then 30 seconds. Only damage restarts the
+  delay: enemies nearby, chasing or firing and missing do not hold it back, and
+  enemies keep their damage.
+- Ada is in battle while an enemy that is chasing or attacking her is inside the
+  battle square: centred on Ada, reaching half the game area's width plus 64
+  world units along each axis (424 on the 720-wide view). Idle enemies,
+  retaliators not yet hit, fleeing or returning enemies and disabled heavies do
+  not count. Ada is in danger while she is in battle or while an enemy shot is in
+  flight inside the battle square.
   Danger disables Travel here and Galaxies; Back to title stays available.
 - No post-hit invulnerability or protection window.
 - Shield depletion makes Astra quantum jump Ada home to recharge overnight. Only the
@@ -826,7 +825,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Every bump against scenery (asteroids,
   resource rocks, debris and traveling debris) deals 1 damage, at most once per
-  0.5 seconds, and counts as a hit for the shield's recharge delay. A gate rim in
+  0.5 seconds, and restarts the shield's recharge delay. A gate rim in
   Needle is the one bump without damage. Attacks and marked hazards also damage
   the shield.
 - Friendly destinations, dialogue locations and teleport arrivals are always safe. No
