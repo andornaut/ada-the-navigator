@@ -5,6 +5,7 @@ import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening } from "../testing/launch.ts";
 import {
   capitalInSight,
   ConversationDirector,
@@ -16,7 +17,6 @@ import {
 import { createEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const { cooldownSeconds, lineSeconds, pennyIntervalSeconds, pennyRange, quietSeconds } =

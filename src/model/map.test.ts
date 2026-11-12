@@ -6,6 +6,7 @@ import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -24,7 +25,6 @@ import {
 } from "./map.ts";
 import { restoreSave } from "./save.ts";
 import { stationInCell, stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
 import type { GameState, SectorProgress } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.

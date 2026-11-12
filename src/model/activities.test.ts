@@ -6,13 +6,13 @@ import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { activityOffer, heldActivity } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { ensureDestination, ensureStation, stationDock } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening, relaunch } from "./test-launch.ts";
 import type { GameState, HeldActivity, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

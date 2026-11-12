@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { BUILT } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import type { SpaceObject } from "../model/types.ts";
+import { ART_MANIFEST, publicJson } from "../testing/public-art.ts";
 import {
   galaxyPalettes,
   readGalaxyFields,
@@ -12,7 +13,6 @@ import {
   spaceColorCss,
   spaceObjectColor,
 } from "./space-palette.ts";
-import { ART_MANIFEST, publicJson } from "./test-art-manifest.ts";
 
 const colors = {
   active: "#65C9BF",

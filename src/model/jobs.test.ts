@@ -16,6 +16,7 @@ import {
 import { PROTOTYPE } from "../data/prototype.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
+import { relaunch } from "../testing/launch.ts";
 import { ensureStation, stationDock, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import {
@@ -30,7 +31,6 @@ import {
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { relaunch } from "./test-launch.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
 

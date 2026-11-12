@@ -4,6 +4,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
+import { readStory, relaunch } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import {
   ensureDestination,
@@ -12,7 +13,6 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { readStory, relaunch } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

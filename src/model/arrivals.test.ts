@@ -4,12 +4,12 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening } from "../testing/launch.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, ensureDestination, ensureStation, stepFlight, teleport } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
 import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const calm = PROTOTYPE.tuning.flight.arrivalCalm;

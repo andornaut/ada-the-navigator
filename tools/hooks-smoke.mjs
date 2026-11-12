@@ -32,7 +32,6 @@ const run = (command, args, extra = {}) => execFileSync(command, args, { ...opti
 for (const name of [
   "package.json",
   ".lintstagedrc",
-  "lint-staged.config.mjs",
   "eslint.config.mjs",
   "eslint.config.base.mjs",
   ".prettierrc",

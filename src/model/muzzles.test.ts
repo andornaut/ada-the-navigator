@@ -7,7 +7,7 @@ import frigateFile from "../../public/art/enemies/frigate-hardpoints.json";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
 import { aimIndex } from "../game/enemy-art.ts";
-import { ART_MANIFEST } from "../game/test-art-manifest.ts";
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import {
   createEnemy,
   damageEnemy,

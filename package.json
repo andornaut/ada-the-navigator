@@ -9,10 +9,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "preview": "npm run build && wrangler dev",
     "check": "npm run internal:hooks && npm run internal:types && npm run lint && npm test && npm run build && npm run deploy:wrangler:dry-run",
     "lint": "npm run internal:lint",
     "format": "prettier --write . && eslint --fix .",
     "test": "vitest run",
+    "test:game-kit": "vitest run --configLoader runner src/input/state.test.ts src/loading/loadingBar.test.ts src/pwa/updateOffer.test.ts src/ui/layout/tokens.test.ts",
+    "clean": "rm -rf dist .wrangler",
     "prepare": "husky",
     "deploy:wrangler:dry-run": "npm run internal:wrangler",
     "internal:types": "tsc --noEmit",

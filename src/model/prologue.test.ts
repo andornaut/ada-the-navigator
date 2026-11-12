@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
+import { readStory } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { StoryPage } from "./storybook.ts";
-import { readStory } from "./test-launch.ts";
 
 const summary = ({ action, background, choices, questions, speaker, text }: StoryPage) => [
   background,

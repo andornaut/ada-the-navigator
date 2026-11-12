@@ -131,7 +131,7 @@ async function fixture(number) {
     import("/source/src/model/game.ts"),
     import("/source/src/data/prototype.ts"),
     import("/source/src/model/flight.ts"),
-    import("/source/src/model/test-launch.ts"),
+    import("/source/src/testing/launch.ts"),
   ]);
 
   const model = new GameModel(PROTOTYPE);

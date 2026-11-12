@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import { parentFit } from "./play-camera.ts";
-import { ART_MANIFEST } from "./test-art-manifest.ts";
 import { fileFilter, needsRaster, RASTER_CAP, rasterScale, vectorRaster } from "./textures.ts";
 
 describe("texture filters", () => {

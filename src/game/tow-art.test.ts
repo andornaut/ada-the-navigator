@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { JOB_POOL, JOB_TUNING } from "../data/jobs.ts";
-import { ART_MANIFEST } from "./test-art-manifest.ts";
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import {
   craftFrame,
   craftHeading,

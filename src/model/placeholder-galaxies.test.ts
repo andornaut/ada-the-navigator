@@ -6,6 +6,7 @@ import { byPosition, SECTORS } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
+import { readStory } from "../testing/launch.ts";
 import { currentInCell } from "./currents.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { GameModel, newProgress } from "./game.ts";
@@ -13,7 +14,6 @@ import { landmarkSites } from "./landmarks.ts";
 import { oreFieldInCell } from "./ore-fields.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { readStory } from "./test-launch.ts";
 import type { SpaceObject } from "./types.ts";
 
 const PLACEHOLDERS = [4, 5, 6] as const satisfies readonly SectorId[];

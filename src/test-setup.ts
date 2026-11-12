@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, type MockInstance, vi } from "vitest";
 
-import { pinnedRandomValues, seedLaunches } from "./model/test-launch.ts";
+import { pinnedRandomValues, seedLaunches } from "./testing/launch.ts";
 
 // Every test launches from the same seed sequence, so a flight's world, and the scenery, caches
 // and drones a test meets in it, never varies between runs. ADA_LAUNCH_SEED replays another

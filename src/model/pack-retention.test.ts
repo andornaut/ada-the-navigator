@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemy-ai.ts";
 import {
   createFlight,
@@ -11,7 +12,6 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { relaunch } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

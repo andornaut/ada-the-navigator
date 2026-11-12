@@ -7,6 +7,7 @@ import { PROJECTS } from "../data/projects.ts";
 import { resourceArtId } from "../data/resource-rocks.ts";
 import { STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
   type CartwheelAsset,
   craftArt,
@@ -19,7 +20,6 @@ import {
   readHubArt,
   storyNoses,
 } from "./cartwheel-art.ts";
-import { ART_MANIFEST, GALAXY_MANIFESTS } from "./test-art-manifest.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

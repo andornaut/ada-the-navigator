@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import whales from "../../public/art/whales.json";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
-import { ART_MANIFEST as manifest } from "./test-art-manifest.ts";
+import { ART_MANIFEST as manifest } from "../testing/public-art.ts";
 import {
   familyMembers,
   readWhaleArt,

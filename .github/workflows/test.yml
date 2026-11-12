@@ -1,59 +1,134 @@
-name: Checks
+name: Test
 
+# Every branch, not just main and pull requests: work lands on main directly as
+# often as it arrives through one, so a check that only runs on main is a check
+# that runs after the fact.
 on:
   push:
     branches: ["**"]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
-# Checks read source and publish no repository changes.
 permissions:
   contents: read
 
+# Keyed on the branch rather than the ref, so a re-push to one branch cancels
+# its own earlier run and not another branch's. Keyed by the event as well: a
+# cancelled run leaves its check runs on the head commit, and GitHub counts
+# those against the required checks, so a push and its pull request cancelling
+# each other would block the merge.
+# Qualified by the repository the branch lives in, since a fork names its
+# branches itself: two pull requests from different forks would otherwise share
+# a group whenever they pick the same branch name.
 concurrency:
-  group: checks-${{ github.event_name }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: ${{ matrix.name }}
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    # Capped at 28 minutes before the delivery polling deadline: a job still running
-    # at that limit has hung rather than completed within its check budget.
+    # A job still going at 28 minutes has hung rather than merely running
+    # slowly. The cap ends it before delivery-kit stops watching CI at 30.
     timeout-minutes: 28
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Lint
-            mode: lint
-            targets: lint
-          - name: Test
-            mode: test
-            targets: test build
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
+          # Nothing in this job uses the token, so it is not left
+          # in .git/config for a later step to read.
           persist-credentials: false
-      - name: Set up orchestration Node
+
+      # Runs tools/ci-evidence.mjs; the checks themselves run in the container.
+      - name: Set up Node.js
         uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.2
-      - name: Run Make checks with source and artifact evidence
+          node-version-file: .nvmrc
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v5.7.0
+        with:
+          version: v29.9.3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+        with:
+          version: v0.38.2
+          driver: docker
+
+      # The gate is the whole repo, not the lines a change touched. The evidence
+      # records source fingerprints around the run and the exported build.
+      - name: Test and build
         run: |
           set -o pipefail
-          node tools/ci-evidence.mjs begin ${{ matrix.mode }}
+          node tools/ci-evidence.mjs begin test
           set +e
-          make ${{ matrix.targets }} 2>&1 | tee .check-results/ci-${{ matrix.mode }}/check.log
+          make test build 2>&1 | tee .check-results/ci-test/check.log
           status=$?
           set -e
-          node tools/ci-evidence.mjs finish ${{ matrix.mode }} "$status"
+          node tools/ci-evidence.mjs finish test "$status"
+
       - name: Preserve check evidence
         if: always()
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: checks-${{ matrix.mode }}
+          name: checks-test
+          path: .check-results/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    # Lint normally takes a few minutes. A job still running at 15 minutes
+    # has hung rather than merely running slowly.
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          # Nothing in this job uses the token, so it is not left
+          # in .git/config for a later step to read.
+          persist-credentials: false
+
+      # Runs tools/ci-evidence.mjs; the checks themselves run in the container.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v5.7.0
+        with:
+          version: v29.9.3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+        with:
+          version: v0.38.2
+          driver: docker
+
+      # Includes markdownlint, pinned in package.json, so this gate and a local
+      # `make lint` run one version from the lockfile.
+      - name: Lint
+        run: |
+          set -o pipefail
+          node tools/ci-evidence.mjs begin lint
+          set +e
+          make lint 2>&1 | tee .check-results/ci-lint/check.log
+          status=$?
+          set -e
+          node tools/ci-evidence.mjs finish lint "$status"
+
+      - name: Preserve check evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: checks-lint
           path: .check-results/
           include-hidden-files: true
           if-no-files-found: ignore

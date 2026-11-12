@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import { GameModel } from "../model/game.ts";
-import { playOpening, relaunch } from "../model/test-launch.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { readSave, writeSave } from "./persistence.ts";
 
 afterEach(() => vi.unstubAllGlobals());

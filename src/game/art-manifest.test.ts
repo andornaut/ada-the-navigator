@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import { galaxyManifestKey, galaxyManifestPaths, readGalaxyManifest } from "./art-manifest.ts";
-import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "./test-art-manifest.ts";
 
 describe("split art manifest", () => {
   it("maps each galaxy to its manifest from the core manifest", () => {

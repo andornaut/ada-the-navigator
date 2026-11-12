@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./ship-body.ts";
-import { playOpening, readStory, relaunch } from "./test-launch.ts";
 import type { GameState, SectorProgress } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

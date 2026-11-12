@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
+import { boardAndJump, readStory, relaunch } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import {
@@ -15,7 +16,6 @@ import {
   shownChoices,
   storyStart,
 } from "./storybook.ts";
-import { boardAndJump, readStory, relaunch } from "./test-launch.ts";
 
 // A choice page whose choices branch one or two pages before rejoining.
 const branching: Scene = {

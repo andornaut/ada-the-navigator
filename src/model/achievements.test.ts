@@ -6,6 +6,7 @@ import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { boardAndJump, playOpening, readStory } from "../testing/launch.ts";
 import {
   ACHIEVEMENT_TOTALS,
   achievementProgress,
@@ -19,7 +20,6 @@ import {
 import { GameModel, newGameState } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { restoreSave } from "./save.ts";
-import { boardAndJump, playOpening, readStory } from "./test-launch.ts";
 import type { FlightInput } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

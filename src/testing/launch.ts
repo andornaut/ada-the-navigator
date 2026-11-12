@@ -1,7 +1,7 @@
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { PrototypeContent, SectorId } from "../data/types.ts";
-import { GameModel } from "./game.ts";
-import type { StoryPage } from "./storybook.ts";
+import { GameModel } from "../model/game.ts";
+import type { StoryPage } from "../model/storybook.ts";
 
 /**
  * Test support: a launch from a save, which opens on the start screen, then Continue when the

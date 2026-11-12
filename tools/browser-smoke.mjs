@@ -286,7 +286,7 @@ try {
     import(new URL("../src/model/game.ts", import.meta.url)),
     import(new URL("../src/data/prototype.ts", import.meta.url)),
     import(new URL("../src/model/flight.ts", import.meta.url)),
-    import(new URL("../src/model/test-launch.ts", import.meta.url)),
+    import(new URL("../src/testing/launch.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
     import(new URL("../src/data/achievements.ts", import.meta.url)),
   ]);

@@ -4,6 +4,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { SectorId } from "../data/types.ts";
+import { playOpening } from "../testing/launch.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import {
   createFlight,
@@ -23,7 +24,6 @@ import {
   type StationSite,
   stationsNear,
 } from "./stations.ts";
-import { playOpening } from "./test-launch.ts";
 import type { FlightInput, FlightState, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

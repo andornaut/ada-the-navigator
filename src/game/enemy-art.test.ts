@@ -13,6 +13,7 @@ import swarmJets from "../../public/art/enemies/swarm-jets.json";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
+import { ART_MANIFEST as manifest } from "../testing/public-art.ts";
 import {
   aimIndex,
   CLAIM,
@@ -36,7 +37,6 @@ import {
   turretMuzzles,
 } from "./enemy-art.ts";
 import { jetLength } from "./ship-jets.ts";
-import { ART_MANIFEST as manifest } from "./test-art-manifest.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string): unknown => {

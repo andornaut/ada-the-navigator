@@ -4,6 +4,7 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
 import { BEAM, WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { enemyHull } from "./enemy-body.ts";
@@ -12,7 +13,6 @@ import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./player-projectiles.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

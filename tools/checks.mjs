@@ -58,7 +58,6 @@ export function snapshot() {
     ".markdownlint-cli2.yaml",
     "eslint.config.mjs",
     "eslint.config.base.mjs",
-    "lint-staged.config.mjs",
     ".lintstagedrc",
     "vite.config.ts",
     "tsconfig.json",

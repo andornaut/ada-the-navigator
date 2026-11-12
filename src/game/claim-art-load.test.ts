@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import { galaxyLoadsAtOnce } from "./art-manifest.ts";
 import {
   CLAIM,
@@ -12,7 +13,6 @@ import {
   enemyPartFrame,
   enemyPartsToLoad,
 } from "./enemy-art.ts";
-import { GALAXY_MANIFESTS } from "./test-art-manifest.ts";
 
 // Cartwheel's claim jumpers: their hulls and part frames are in Cartwheel's manifest, which loads
 // with the galaxy's first flight (scene.ts loadGalaxyArt).

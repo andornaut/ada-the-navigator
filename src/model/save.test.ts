@@ -3,11 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
 import { GameModel } from "./game.ts";
 import { readSave, restoreSave, writeSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {

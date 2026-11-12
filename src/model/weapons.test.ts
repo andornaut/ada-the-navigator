@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening, relaunch } from "./test-launch.ts";
 import type { FlightState } from "./types.ts";
 import { noAmmo } from "./weapons.ts";
 

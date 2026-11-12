@@ -1,9 +1,13 @@
-.worktrees/
+.github/
+AGENTS.md
 .wrangler/
 dist/
 node_modules/
 package-lock.json
-AGENTS.md
+.agents/
+.claude/
+.codex/
+.worktrees/
 .check-results/
 .cloudflare/
 tools/layout-dump.json

@@ -10,6 +10,7 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { playOpening, relaunch, seedLaunches } from "../testing/launch.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -31,7 +32,6 @@ import { SHIP_HEADINGS } from "./nose.ts";
 import { restoreSave } from "./save.ts";
 import { shipBody } from "./ship-body.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening, relaunch, seedLaunches } from "./test-launch.ts";
 import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const progress: SectorProgress = {

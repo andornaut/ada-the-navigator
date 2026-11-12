@@ -13,7 +13,7 @@ import {
 } from "../data/story-ships.ts";
 import { storyNoses } from "../game/cartwheel-art.ts";
 import { shipDirection } from "../game/ship-art.ts";
-import { ART_MANIFEST } from "../game/test-art-manifest.ts";
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import { dockedSpot, drawnHeading, hubBay, hubWorn, storyShips } from "./story-ships.ts";
 import type { Vec } from "./types.ts";
 

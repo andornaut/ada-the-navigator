@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import {
   readOutpostArt,
   readStationArt,
@@ -8,7 +9,6 @@ import {
   type StationFrame,
   stationFrame,
 } from "./station-art.ts";
-import { ART_MANIFEST } from "./test-art-manifest.ts";
 
 const manifest = ART_MANIFEST as unknown as {
   assets: (StationFrame & { destination?: string; outpost?: string })[];

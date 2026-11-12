@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { ART_MANIFEST } from "../testing/public-art.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debris-art.ts";
-import { ART_MANIFEST } from "./test-art-manifest.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

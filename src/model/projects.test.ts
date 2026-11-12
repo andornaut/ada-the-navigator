@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONVERSATION_TUNING, SPEAKERS } from "../data/conversations.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { playOpening } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import {
   donate,
@@ -17,7 +18,6 @@ import {
   worldChanges,
 } from "./projects.ts";
 import { restoreSave } from "./save.ts";
-import { playOpening } from "./test-launch.ts";
 
 // Gameplay's economy doc, with its line wrapping undone.
 const ECONOMY_DOC = readFileSync(new URL("../../gameplay/economy.md", import.meta.url), "utf8");

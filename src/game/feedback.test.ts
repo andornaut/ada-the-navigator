@@ -6,7 +6,7 @@ import { createEnemy } from "../model/enemy-ai.ts";
 import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
-import { playOpening } from "../model/test-launch.ts";
+import { playOpening } from "../testing/launch.ts";
 import { ModelFeedback } from "./feedback.ts";
 
 function launched() {

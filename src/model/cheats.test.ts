@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
-import { playOpening, relaunch } from "./test-launch.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
