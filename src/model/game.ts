@@ -1325,6 +1325,11 @@ export class GameModel {
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(this.content, f),
+      guardCues: events.flatMap((event) =>
+        event.type === "guardCue"
+          ? [{ destination: event.id, pick: dropRandom(f.seed, `guard-line:${event.id}`)() }]
+          : [],
+      ),
       heavyDisabled: events.some((event) => event.type === "enemyDisabled"),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.sector, 0, f.player),

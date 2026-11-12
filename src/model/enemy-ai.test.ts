@@ -53,6 +53,47 @@ const observation = (state: EnemyState): EnemyContext => ({
 });
 
 describe("enemy rules", () => {
+  it("flies a summoned guard straight at an unseen Ada past its pursuit limits, holding fire", () => {
+    const definition = enemyCatalog.frigate;
+    // Ada far beyond the guard's perception and home radius, behind scenery.
+    const far = definition.pursuit.homeRadius + definition.perception + 500;
+    const context: EnemyContext = {
+      ...observation(spawn("frigate", definition)),
+      player: { x: far, y: 0 },
+      summoned: true,
+      visibility: "occluded",
+    };
+    const spent: EnemyState = {
+      ...spawn("frigate", definition),
+      pursuitSeconds: definition.pursuit.maxSeconds,
+      returning: true,
+    };
+    // Unsummoned, a ship whose pursuit is spent stays home.
+    const resting = stepEnemy(definition, { ...context, summoned: false }, spent);
+    expect(resting.state.returning).toBe(true);
+    expect(resting.velocity).toEqual({ x: 0, y: 0 });
+    let state = spent;
+    let velocity = { x: 0, y: 0 };
+    for (let step = 0; step < 600; step++) {
+      const intent = stepEnemy(definition, context, state);
+      expect(intent.fire).toEqual([]);
+      velocity = intent.velocity;
+      state = {
+        ...intent.state,
+        position: {
+          x: intent.state.position.x + intent.velocity.x * context.dt,
+          y: intent.state.position.y + intent.velocity.y * context.dt,
+        },
+      };
+      expect(state.returning).toBe(false);
+      expect(state.engaged).toBe(true);
+    }
+    // Ten seconds later it is well on its way, flying at Ada at top speed.
+    expect(state.position.x).toBeGreaterThan(definition.physics.maxSpeed * 5);
+    expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(definition.physics.maxSpeed, 0);
+    expect(Math.abs(velocity.y)).toBeLessThan(definition.physics.maxSpeed / 10);
+  });
+
   it("ends a faster ship's pursuit within its time budget without immediate reacquisition", () => {
     const definition = enemyCatalog.interceptor;
     let state = spawn("interceptor");

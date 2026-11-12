@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BLOCKING_MARKER_KINDS,
   EDGE_MARKER_GLYPHS,
   EDGE_MARKERS,
   edgeMarkerInset,
@@ -38,6 +39,7 @@ function enemy(archetype: EnemyArchetype, at: Vec, id = "drone"): SpaceObject {
 /** A flight the test moves its objects through, with Ada at the origin. */
 interface TestFlight extends EdgeMarkerFlight {
   objects: SpaceObject[];
+  summonedGuards?: string[];
 }
 function flight(objects: SpaceObject[], sector: SectorId = 1): TestFlight {
   return { objects, player: { x: 0, y: 0 }, sector };
@@ -76,9 +78,23 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), hp: 0 })).toBeNull();
   });
 
-  it("draws enemies as a 6 disc, heavies as a 10 disc and stations as a 10 diamond", () => {
+  it("marks a heavy that still blocks its route as guard, and as heavy once it is disabled", () => {
+    expect(BLOCKING_MARKER_KINDS).toEqual({ heavy: "guard" });
+    for (const archetype of ["frigate", "capital", "platform"] as const) {
+      const guard = { ...enemy(archetype, NEAR), routeId: "quest" };
+      expect(edgeMarkerKind(guard)).toBe("guard");
+      guard.enemy!.disabled = true;
+      expect(edgeMarkerKind(guard)).toBe("heavy");
+    }
+    // A small craft guarding a route, such as the holodisk leader, keeps the enemy marker.
+    expect(edgeMarkerKind({ ...enemy("fighter", NEAR), routeId: "holodisk" })).toBe("enemy");
+  });
+
+  it("draws enemies as a 6 disc, heavies and guards as a 10 disc and stations as a 10 diamond", () => {
+    // Art's guard image is pending, so the guard draws the heavy's disc.
     expect(EDGE_MARKER_GLYPHS).toEqual({
       enemy: { disc: 6 },
+      guard: { disc: 10 },
       heavy: { disc: 10 },
       station: { diamond: 10, stroke: 2 },
     });
@@ -105,6 +121,28 @@ describe("edge marker lifecycle", () => {
     // Back in the game area, the object itself shows and the marker goes.
     Object.assign(drone, NEAR);
     expect(tracker.update(state, new Set())).toEqual([]);
+  });
+
+  it("marks a summoned guard off screen before it is seen, until it reaches the game area", () => {
+    const tracker = createEdgeMarkerTracker();
+    const guard = { ...enemy("capital", { x: range + 500, y: 0 }, "guard"), routeId: "quest" };
+    const state = flight([guard]);
+    expect(tracker.update(state, new Set())).toEqual([]);
+    state.summonedGuards = ["guard"];
+    // Past the range and never seen, it is still marked, as a guard.
+    expect(tracker.update(state, new Set())).toEqual([
+      { id: "guard", kind: "guard", x: range + 500, y: 0 },
+    ]);
+    // A direction indicator on it still draws instead.
+    expect(tracker.update(state, new Set(["guard"]))).toEqual([]);
+    Object.assign(guard, NEAR);
+    expect(tracker.update(state, new Set())).toEqual([]);
+    // Released once seen, it follows the usual rule: seen, then left, so marked.
+    delete state.summonedGuards;
+    Object.assign(guard, OFF);
+    expect(tracker.update(state, new Set())).toEqual([{ id: "guard", kind: "guard", ...OFF }]);
+    guard.enemy!.disabled = true;
+    expect(tracker.update(state, new Set())).toEqual([{ id: "guard", kind: "heavy", ...OFF }]);
   });
 
   it("never marks an object that was never in the game area", () => {

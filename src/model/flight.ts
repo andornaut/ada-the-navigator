@@ -42,6 +42,7 @@ import {
 } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
+import { gameAreaPoint, inGameArea } from "./edge-markers.ts";
 import {
   averageVelocity,
   createEnemy,
@@ -54,6 +55,7 @@ import {
 } from "./enemy-ai.ts";
 import {
   activateFlightRegion,
+  activateRouteEncounter,
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
   escortPackId,
@@ -1102,6 +1104,57 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
 
 export { relocateRouteGuards as settleRouteEncounters };
 
+/**
+ * The first time each flight Ada comes within Talk range of a destination its guard still blocks
+ * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
+ * guard loads, and each blocking guard is summoned toward Ada, marked at the edge until it is on
+ * screen (edge-markers.ts). The game has Astra say a guard line on the event.
+ */
+function cueGuards(content: PrototypeContent, flight: FlightState, events: FlightEvent[]): void {
+  const cued = flight.objects.filter(
+    (object) =>
+      object.kind === "destination" &&
+      !flight.guardCues?.includes(object.id) &&
+      distance(object, flight.player) <= content.tuning.talkRange &&
+      routeBlocked(object.id, flight),
+  );
+  for (const destination of cued) {
+    (flight.guardCues ??= []).push(destination.id);
+    activateRouteEncounter(content, destination.id, flight);
+    for (const guard of flight.objects) {
+      if (
+        guard.kind === "enemy" &&
+        guard.routeId === destination.id &&
+        guard.hp > 0 &&
+        !guard.enemy?.disabled &&
+        !flight.summonedGuards?.includes(guard.id)
+      ) {
+        (flight.summonedGuards ??= []).push(guard.id);
+      }
+    }
+    events.push({ id: destination.id, type: "guardCue" });
+  }
+}
+
+/** A summoned guard fights as usual once it is on screen, disabled, destroyed or gone. */
+function releaseSummonedGuards(flight: FlightState): void {
+  if (!flight.summonedGuards) {
+    return;
+  }
+  flight.summonedGuards = flight.summonedGuards.filter((id) => {
+    const guard = flight.objects.find((object) => object.id === id);
+    return (
+      guard !== undefined &&
+      guard.hp > 0 &&
+      !guard.enemy?.disabled &&
+      !inGameArea(gameAreaPoint(flight.player, guard))
+    );
+  });
+  if (!flight.summonedGuards.length) {
+    delete flight.summonedGuards;
+  }
+}
+
 /** A guard blocks its route until it is disabled or destroyed (gameplay/rules.md). */
 export function routeBlocked(id: string, flight: FlightState): boolean {
   // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
@@ -1806,6 +1859,7 @@ function enemies(
         player: flight.player,
         playerVelocity: aimVelocity,
         projectileSpeed: content.tuning.enemyProjectileSpeed,
+        summoned: flight.summonedGuards?.includes(object.id) ?? false,
         targetable,
         visibility: visible ? "visible" : "occluded",
       },
@@ -3117,6 +3171,8 @@ export function stepFlight(
     }
   }
   syncFlightRegion(content, flight);
+  releaseSummonedGuards(flight);
+  cueGuards(content, flight, events);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&

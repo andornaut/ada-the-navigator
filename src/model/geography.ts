@@ -211,6 +211,8 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
     if (
       object.kind === "destination" ||
       object.id.startsWith("whale-debris:") ||
+      // A summoned guard stays loaded while it flies toward Ada (flight.ts cueGuards).
+      flight.summonedGuards?.includes(object.id) ||
       near(coordinates(content, object), center)
     ) {
       active.push(object);

@@ -91,6 +91,11 @@ export interface EnemyContext {
   playerVelocity: Point;
   /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
   projectileSpeed: number;
+  /**
+   * A cued route guard (flight.ts cueGuards): it flies straight at Ada at full speed, past its
+   * pursuit limits and holding its fire, until she sees it.
+   */
+  summoned?: boolean;
   targetable: boolean;
   visibility: "visible" | "occluded" | "unknown";
 }
@@ -574,7 +579,8 @@ export function stepEnemy(
   }
   const effects = enemyEffects(definition, state);
   const observed = context.targetable && context.visibility === "visible";
-  const target = observed ? context.player : (state.lastSeen ?? state.position);
+  const summoned = context.summoned === true;
+  const target = observed || summoned ? context.player : (state.lastSeen ?? state.position);
   const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
   const aim = unit(delta);
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
@@ -587,6 +593,7 @@ export function stepEnemy(
     age: state.age + context.dt,
     engaged:
       state.engaged ||
+      summoned ||
       (context.targetable &&
         context.visibility === "visible" &&
         definition.aggression === "sight" &&
@@ -598,7 +605,7 @@ export function stepEnemy(
         state.hp / definition.hp <= definition.morale.individualHpRatio),
     hardpoints: state.hardpoints.map((part) => ({ ...part })),
   };
-  if (observed) {
+  if (observed || summoned) {
     next.lastSeen = { ...context.player };
     next.lastSeenAge = 0;
   } else {
@@ -609,7 +616,10 @@ export function stepEnemy(
     ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
     : 0;
   const homeDistance = Math.hypot(state.position.x - state.home.x, state.position.y - state.home.y);
-  if (
+  if (summoned) {
+    next.returning = false;
+    next.pursuitSeconds = 0;
+  } else if (
     next.engaged &&
     (next.pursuitSeconds >= definition.pursuit.maxSeconds ||
       homeDistance >= definition.pursuit.homeRadius ||
@@ -643,7 +653,9 @@ export function stepEnemy(
   // A disabled heavy stops steering and coasts to rest.
   const request = effects.disabled
     ? { x: 0, y: 0 }
-    : steering(acting, context, speed, aim, magnitude(delta), next);
+    : summoned
+      ? aim
+      : steering(acting, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
     next.velocity = { x: 0, y: 0 };
@@ -679,6 +691,7 @@ export function stepEnemy(
   }
   const fire: FireIntent[] = [];
   const canFire =
+    !summoned &&
     !effects.defeated &&
     !effects.disabled &&
     !next.returning &&

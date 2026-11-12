@@ -28,6 +28,7 @@ const calm: ConversationFacts = {
   collectedStardust: false,
   docked: false,
   dronesNear: false,
+  guardCues: [],
   heavyDisabled: false,
   holodisks: 0,
   inCurrent: false,
@@ -102,6 +103,32 @@ describe("conversation schedule", () => {
     expect(tapThrough(talk)).toEqual(["reaction:disabled:0", "reaction:disabled:1"]);
     run(talk, cooldownSeconds + 1, { heavyDisabled: true });
     expect(talk.showing).toBeNull();
+  });
+
+  it("warns of a blocking guard with one line of its pool, once per destination each flight", () => {
+    const pool = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "guard");
+    expect(pool.map(({ id }) => id)).toEqual([
+      "warning:guard:1",
+      "warning:guard:2",
+      "warning:guard:3",
+    ]);
+    expect(pool.map(({ lines }) => lines[0]!.text)).toEqual([
+      "Something's guarding this place. Here it comes!",
+      "We can't visit yet. A guard ship is watching.",
+      "A guard is blocking the way in. Stop its weapons first.",
+    ]);
+    pool.forEach(({ id }, index) => {
+      const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+      run(talk, 0.05, { guardCues: [{ destination: "quest", pick: (index + 0.5) / 3 }] });
+      expect(talk.showing?.conversation.id).toBe(id);
+      expect(talk.showing?.instance).toBe("guard:1:quest");
+      tapThrough(talk);
+      // The same destination's cue does not play again this flight; another destination's does.
+      run(talk, 1, { guardCues: [{ destination: "quest", pick: 0 }] });
+      expect(talk.showing).toBeNull();
+      run(talk, 0.05, { guardCues: [{ destination: "growers", pick: 0 }] });
+      expect(talk.showing?.instance).toBe("guard:1:growers");
+    });
   });
 
   it("orders waiting conversations warning, lesson, Penny, lore", () => {

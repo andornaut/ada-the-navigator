@@ -1,10 +1,10 @@
 import type { EnemyArchetype } from "./enemy-catalog.ts";
 
 // Edge markers (gameplay/rules.md "Space encounters and feedback"): where seen off-screen
-// enemies, heavies and stations are, at the game area's edge.
+// enemies, heavies, route guards and stations are, at the game area's edge.
 
-/** The three marker kinds, each with its own look. */
-export type EdgeMarkerKind = "enemy" | "heavy" | "station";
+/** The four marker kinds, each with its own look. */
+export type EdgeMarkerKind = "enemy" | "guard" | "heavy" | "station";
 
 export const EDGE_MARKERS = {
   /** The marker's outermost drawn pixel, its light-field outline included, sits this far in. */
@@ -14,12 +14,14 @@ export const EDGE_MARKERS = {
 } as const;
 
 /**
- * Each kind's glyph in logical px: a filled disc for enemies and heavies, in the space palette's
- * threat, an unfilled diamond with a 2 stroke inside its extent for stations, in pointOfInterest.
- * A light field outlines each in ink (lightField.markerOutline).
+ * Each kind's glyph in logical px: a filled disc for enemies, heavies and guards, in the space
+ * palette's threat, an unfilled diamond with a 2 stroke inside its extent for stations, in
+ * pointOfInterest. A light field outlines each in ink (lightField.markerOutline). Art's guard
+ * image is not delivered yet, so the guard kind draws the heavy disc.
  */
 export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },
+  guard: { disc: 10 },
   heavy: { disc: 10 },
   station: { diamond: 10, stroke: 2 },
 } as const;
@@ -32,6 +34,14 @@ export function edgeMarkerInset(outline: number, kind: EdgeMarkerKind): number {
   const glyph: { readonly diamond?: number; readonly disc?: number } = EDGE_MARKER_GLYPHS[kind];
   return (glyph.disc ?? glyph.diamond ?? 0) / 2 + outline + EDGE_MARKERS.gap;
 }
+
+/**
+ * The kind an enemy's marker takes while it still blocks a route, in place of its archetype's:
+ * a heavy guarding a route is a guard until it is disabled.
+ */
+export const BLOCKING_MARKER_KINDS: Readonly<Partial<Record<EdgeMarkerKind, EdgeMarkerKind>>> = {
+  heavy: "guard",
+};
 
 /** Each enemy archetype's kind: the large ships are heavies, every other enemy an enemy. */
 export const ENEMY_MARKER_KINDS: Readonly<Record<EnemyArchetype, EdgeMarkerKind>> = {

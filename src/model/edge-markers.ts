@@ -1,14 +1,20 @@
 import { deliveryDestination } from "../data/destinations.ts";
-import { EDGE_MARKERS, type EdgeMarkerKind, ENEMY_MARKER_KINDS } from "../data/edge-markers.ts";
+import {
+  BLOCKING_MARKER_KINDS,
+  EDGE_MARKERS,
+  type EdgeMarkerKind,
+  ENEMY_MARKER_KINDS,
+} from "../data/edge-markers.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
-// Edge markers (gameplay/rules.md "Space encounters and feedback"): an enemy, heavy or station
-// gets a marker only once it has been in the game area and left it. The marker stays while the
-// object is within EDGE_MARKERS.range of Ada; past it the object is forgotten until it is in the
-// game area again. Destruction, unloading, a new flight or galaxy and a reload clear the state,
-// which is never saved. A direction indicator on the same object draws instead.
+// Edge markers (gameplay/rules.md "Space encounters and feedback"): an enemy, heavy, guard or
+// station gets a marker only once it has been in the game area and left it. The marker stays
+// while the object is within EDGE_MARKERS.range of Ada; past it the object is forgotten until it
+// is in the game area again. Destruction, unloading, a new flight or galaxy and a reload clear
+// the state, which is never saved. A direction indicator on the same object draws instead. A
+// summoned guard (flight.ts cueGuards) is marked while off screen whether or not it was seen.
 
 export interface EdgeMarker {
   readonly id: string;
@@ -17,13 +23,21 @@ export interface EdgeMarker {
   readonly y: number;
 }
 
-/** An object's marker kind: enemies and heavies by archetype, stations and outposts as station. */
+/**
+ * An object's marker kind: enemies and heavies by archetype, a heavy still blocking its route as
+ * guard, stations and outposts as station.
+ */
 export function edgeMarkerKind(object: SpaceObject): EdgeMarkerKind | null {
   if (object.hp <= 0) {
     return null;
   }
   if (object.kind === "enemy") {
-    return object.enemy ? ENEMY_MARKER_KINDS[object.enemy.archetype] : "enemy";
+    if (!object.enemy) {
+      return "enemy";
+    }
+    const kind = ENEMY_MARKER_KINDS[object.enemy.archetype];
+    const blocking = object.routeId !== undefined && !object.enemy.disabled;
+    return (blocking && BLOCKING_MARKER_KINDS[kind]) || kind;
   }
   if (
     object.kind === "station" ||
@@ -59,11 +73,12 @@ export function edgePoint(inset: number, from: Vec, to: Vec): Vec {
   return Number.isFinite(scale) ? { x: from.x + dx * scale, y: from.y + dy * scale } : from;
 }
 
-/** The flight the tracker follows: its identity, galaxy, player and objects. */
+/** The flight the tracker follows: its identity, galaxy, player, objects and summoned guards. */
 export interface EdgeMarkerFlight {
   readonly objects: readonly SpaceObject[];
   readonly player: Vec;
   readonly sector: SectorId;
+  readonly summonedGuards?: readonly string[];
 }
 
 /**
@@ -90,6 +105,7 @@ export function createEdgeMarkerTracker(): {
       }
       const markers: EdgeMarker[] = [];
       const present = new Set<string>();
+      const summoned = new Set(flight.summonedGuards);
       for (const object of flight.objects) {
         const kind = edgeMarkerKind(object);
         if (kind === null) {
@@ -99,6 +115,10 @@ export function createEdgeMarkerTracker(): {
         const away = Math.hypot(object.x - flight.player.x, object.y - flight.player.y);
         if (inGameArea(gameAreaPoint(flight.player, object))) {
           seen.set(object.id, "inside");
+        } else if (summoned.has(object.id)) {
+          if (!indicated.has(object.id)) {
+            markers.push({ id: object.id, kind, x: object.x, y: object.y });
+          }
         } else if (seen.has(object.id)) {
           if (away > EDGE_MARKERS.range) {
             seen.delete(object.id);

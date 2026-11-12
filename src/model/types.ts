@@ -141,6 +141,10 @@ export interface FlightState {
   ownedWeapons?: Exclude<Weapon, "laser">[];
   /** Run-only weapons from the grant cheat; they never enter saved ownership. */
   grantedWeapons?: Exclude<Weapon, "laser">[];
+  /** Destinations whose blocking guard has been cued this flight (flight.ts cueGuards). */
+  guardCues?: string[];
+  /** Cued guards flying toward Ada until they are on screen. */
+  summonedGuards?: string[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
   /** Shots left per upgrade weapon, mirrored from the economy; granted weapons keep their own. */
@@ -355,4 +359,6 @@ export type FlightEvent =
     }
   | { type: "discovered"; id: string }
   /** A pickup collected at contact, for the view's zip into the ship; it changes no state. */
-  | { type: "collected"; id: string; lostItem?: true; x: number; y: number };
+  | { type: "collected"; id: string; lostItem?: true; x: number; y: number }
+  /** Ada came within Talk range of a destination its guard still blocks, first time this flight. */
+  | { id: string; type: "guardCue" };

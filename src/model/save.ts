@@ -713,6 +713,12 @@ export function restoreSave(saved: unknown): GameState | null {
       ) {
         return null;
       }
+      if (
+        (f.guardCues !== undefined && !strings(f.guardCues)) ||
+        (f.summonedGuards !== undefined && !strings(f.summonedGuards))
+      ) {
+        return null;
+      }
       // Run-only granted weapons are a subset of the flight's roster.
       if (
         f.grantedWeapons !== undefined &&
