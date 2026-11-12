@@ -304,7 +304,7 @@ describe("integrated combat", () => {
   });
 
   it("fires an interceptor's Scattershot dots with Ada's range and fade", () => {
-    // Needle (position 3): a level 2 Scattershot's nine dots reach 0.55 of the screen's width.
+    // Needle (position 3): a level 2 Scattershot's nine dots reach 360 world units.
     const flight = createFlight(PROTOTYPE, 4, 173, progress);
     flight.objects = [];
     const target = ship("interceptor", { x: 200, y: 0 }, enemyDefinition(4, "interceptor"));
@@ -316,13 +316,8 @@ describe("integrated combat", () => {
     for (const dot of dots) {
       expect(dot.projectile).toBe("dot");
       const speed = Math.hypot(dot.velocity.x, dot.velocity.y);
-      const heading = { x: dot.velocity.x / speed, y: dot.velocity.y / speed };
-      const projected = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
-      expect(dot.fade).toMatchObject({
-        fadeStartFraction: 0.65,
-        projectedRange: SCREEN.width * 0.55,
-      });
-      expect(dot.fade!.initialLife).toBeCloseTo((SCREEN.width * 0.55) / projected, 9);
+      expect(dot.fade).toMatchObject({ fadeStartFraction: 0.65, projectedRange: 360 });
+      expect(dot.fade!.initialLife).toBeCloseTo(360 / speed, 9);
       expect(dot.life).toBeLessThanOrEqual(dot.fade!.initialLife);
     }
   });

@@ -135,6 +135,9 @@ export interface FlightState {
   facing: Vec;
   shield: number;
   sinceDamage: number;
+  /** Flight time of the last scenery bump that dealt damage (rules.md "bump damage"). */
+  lastBump?: number;
+  /** Seconds Ada has been in danger without a break (rules.md), 0 outside danger. */
   dangerFor: number;
   cargo: number;
   weapon: Weapon;

@@ -659,6 +659,7 @@ export function restoreSave(saved: unknown): GameState | null {
           "weaponSwitchFor",
         ].every((k) => nonnegative(f[k])) ||
         !ammoCounts(f.ammo) ||
+        (f.lastBump !== undefined && !Number.isFinite(f.lastBump)) ||
         (f.tow !== undefined && !vector(f.tow)) ||
         (f.calf !== undefined &&
           !(

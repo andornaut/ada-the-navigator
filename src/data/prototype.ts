@@ -613,7 +613,6 @@ export const PROTOTYPE: PrototypeContent = {
     // The battle square reaches 424 from Ada on the 720-wide view.
     battleMargin: 64,
     chunkSize: 512,
-    dangerReleaseSeconds: 3,
     encounterFreshDistance: 600,
     enemyProjectileSpeed: 200,
     flight: {
@@ -646,7 +645,7 @@ export const PROTOTYPE: PrototypeContent = {
     hazardDamage: 1,
     introFreshDistance: 10800,
     minSpeedFraction: 0.04,
-    miningMilestones: [12, 24, 36],
+    miningMilestones: [10, 20, 30],
     physics: SHIP_PHYSICS.ada,
     safeRadius: 160,
     shieldFillSeconds: 60,

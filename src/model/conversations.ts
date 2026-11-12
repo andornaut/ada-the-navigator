@@ -10,6 +10,7 @@ import {
   GENERAL_NAMED,
   type JobMoment,
   type Lesson,
+  lineDuration,
   type Speaker,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -326,7 +327,8 @@ export class ConversationDirector {
     }
     if (this.active) {
       this.active.elapsed += dt;
-      if (this.active.elapsed >= CONVERSATION_TUNING.lineSeconds - EPSILON) {
+      const shown = this.active.conversation.lines[this.active.line];
+      if (this.active.elapsed >= lineDuration(shown?.text ?? "") - EPSILON) {
         this.nextLine();
       }
     } else {

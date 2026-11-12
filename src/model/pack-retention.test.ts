@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { CONVERSATIONS } from "../data/conversations.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { relaunch } from "../testing/launch.ts";
@@ -54,6 +55,8 @@ function fixture() {
       model.state.mode = "space";
       // A flight has begun, as startSector records.
       model.state.started = true;
+      // Every conversation is heard: a restored model waits for Continue, so none may start.
+      model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
       return { content, model, packId };
     }
   }

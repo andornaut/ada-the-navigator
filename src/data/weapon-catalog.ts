@@ -8,7 +8,8 @@ export interface WeaponDefinition {
   projectileKind: "bolt" | "missile" | "dot" | "beam";
   /** Visible angular offsets in the projected aim plane, before unprojection. */
   anglesDegrees: readonly number[];
-  rangeScreenWidths: number | null;
+  /** World units a projectile travels before it vanishes; null for the base lifetime. */
+  rangeWorld: number | null;
   fadeStartFraction: number | null;
   /** World radius of a missile's blast, which damages every enemy in it; null without one. */
   blastRadius: number | null;
@@ -31,7 +32,7 @@ const projectile = {
   beamRange: null,
   blastRadius: null,
   fadeStartFraction: null,
-  rangeScreenWidths: null,
+  rangeWorld: null,
   speedRatio: 1,
 } as const;
 const fan = (count: number, spread: number) =>
@@ -191,7 +192,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",
-      rangeScreenWidths: 0.5,
+      rangeWorld: 360,
     },
     {
       ...projectile,
@@ -200,7 +201,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",
-      rangeScreenWidths: 0.55,
+      rangeWorld: 360,
     },
     {
       ...projectile,
@@ -209,7 +210,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",
-      rangeScreenWidths: 0.6,
+      rangeWorld: 360,
     },
   ],
 };

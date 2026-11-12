@@ -55,8 +55,8 @@ describe("pure player projectile volleys", () => {
     multi.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(bolts[index]!, 9));
     expect(scatter.anglesDegrees).toHaveLength(dots.length);
     scatter.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(dots[index]!, 9));
-    // Each level reaches a little farther.
-    expect(scatter.rangeScreenWidths).toBeCloseTo(0.5 + 0.05 * (level - 1), 9);
+    // Every level reaches the same 360 world units; levels add only dots.
+    expect(scatter.rangeWorld).toBe(360);
   });
 
   it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
@@ -95,7 +95,7 @@ describe("pure player projectile volleys", () => {
     }
   });
 
-  it("expires every scatter pellet at half the actual projected view width for different headings and views", () => {
+  it("expires every scatter dot 360 world units along its heading, whatever the view", () => {
     for (const viewportWidth of [720, 1080]) {
       for (const aim of [
         { x: 1, y: 0 },
@@ -111,10 +111,10 @@ describe("pure player projectile volleys", () => {
         for (const shot of volley.projectiles) {
           const dx = shot.velocity.x * shot.life;
           const dy = shot.velocity.y * shot.life;
-          expect(Math.hypot(dx - dy, (dx + dy) / 2)).toBeCloseTo(viewportWidth / 2);
+          expect(Math.hypot(dx, dy)).toBeCloseTo(360);
           expect(shot.damage).toBeCloseTo(context.baseDamage * 0.35);
           expect(shot.projectile).toBe("dot");
-          expect(shot.fade?.projectedRange).toBe(viewportWidth / 2);
+          expect(shot.fade?.projectedRange).toBe(360);
         }
       }
     }

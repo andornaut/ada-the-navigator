@@ -26,7 +26,13 @@ import {
 } from "./asteroids.ts";
 import { type ChunkPlanOptions, planChunk } from "./chunk-templates.ts";
 import { createEnemy } from "./enemy-ai.ts";
-import { createFlight, ensureDestination, ensureStation, stepFlight } from "./flight.ts";
+import {
+  BUMP_DAMAGE,
+  createFlight,
+  ensureDestination,
+  ensureStation,
+  stepFlight,
+} from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { SHIP_HEADINGS } from "./nose.ts";
 import { restoreSave } from "./save.ts";
@@ -316,6 +322,8 @@ describe("rock silhouettes", () => {
 
   it("never draw Ada's ship overlapping a rock after contact, at any frame, heading or approach", () => {
     const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
+    // Bumps deal no damage here, so every approach runs on a full shield.
+    flight.lastBump = Infinity;
     let approaches = 0;
     let touched = 0;
     for (const { art, object } of drawnRocks) {
@@ -608,13 +616,15 @@ describe("asteroids in flight", () => {
     expect(sized?.hp).toBe(ASTEROID_FIELDS[1]!.hp.large);
   });
 
-  it("bounces Ada off a large irregular asteroid head-on and glancing, without damage or sticking", () => {
+  it("bounces Ada off a large irregular asteroid head-on and glancing, without sticking", () => {
     const large = shapes.find((shape) => shape.size === "large")!;
     for (const [move, label] of [
       [{ x: 1, y: 0 }, "head-on"],
       [{ x: 0.95, y: 0.31 }, "glancing"],
     ] as const) {
       const { flight, model } = launched();
+      // Bumps deal no damage here, so the shield shows nothing else touched her.
+      flight.lastBump = Infinity;
       const shield = flight.shield;
       const wall = rock(`wall:${label}`, {
         asteroid: large.id,
@@ -661,6 +671,8 @@ describe("asteroids in flight", () => {
   it("never ends a step with Ada's drawn ship inside a large rock, from any angle or speed", () => {
     const large = shapes.find((shape) => shape.size === "large")!;
     const { flight, model } = launched();
+    // Bumps deal no damage here, so the sweep runs on a full shield.
+    flight.lastBump = Infinity;
     const shield = flight.shield;
     const start = { ...flight.player };
     const overlaps: string[] = [];
@@ -891,7 +903,7 @@ describe("asteroids in flight", () => {
     expect(flight.objects).toContain(clear);
   });
 
-  it("bounces Ada off a drifting asteroid that moves into her, without damage", () => {
+  it("bounces Ada off a drifting asteroid that moves into her, one damage a bump", () => {
     const { flight, model } = launched();
     const shield = flight.shield;
     const rate = -0.3;
@@ -922,7 +934,9 @@ describe("asteroids in flight", () => {
       }
     }
     expect(pushed).toBeGreaterThan(0);
-    expect(flight.shield).toBe(shield);
+    // Only the rock's bumps cost shield, at most one per BUMP_DAMAGE.seconds over the 8 s.
+    expect(flight.shield).toBeLessThan(shield);
+    expect(shield - flight.shield).toBeLessThanOrEqual(8 / BUMP_DAMAGE.seconds + 1);
     expect(flight.objects).toContain(moving);
   });
 

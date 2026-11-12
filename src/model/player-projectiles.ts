@@ -12,6 +12,7 @@ export interface VolleyContext {
 export interface ProjectileFade {
   readonly fadeStartFraction: number;
   readonly initialLife: number;
+  /** The world range the projectile travels (the saved name predates world ranges). */
   readonly projectedRange: number;
 }
 export interface PlayerProjectile extends Vec {
@@ -75,12 +76,12 @@ export function planPlayerVolley(
     (definition.blastRadius !== null && !positive(definition.blastRadius)) ||
     !definition.anglesDegrees.length ||
     !definition.anglesDegrees.every(Number.isFinite) ||
-    (definition.rangeScreenWidths !== null && !positive(definition.rangeScreenWidths)) ||
+    (definition.rangeWorld !== null && !positive(definition.rangeWorld)) ||
     (definition.fadeStartFraction !== null &&
       (!Number.isFinite(definition.fadeStartFraction) ||
         definition.fadeStartFraction < 0 ||
         definition.fadeStartFraction >= 1 ||
-        definition.rangeScreenWidths === null))
+        definition.rangeWorld === null))
   ) {
     throw new RangeError("Invalid player projectile definition or context");
   }
@@ -96,7 +97,7 @@ export function planPlayerVolley(
     return {
       ...(definition.blastRadius === null ? {} : { blast: definition.blastRadius }),
       damage,
-      ...projectileReach(definition, heading, speed, context.viewportWidth, context.baseLifetime),
+      ...projectileReach(definition, speed, context.baseLifetime),
       projectile: definition.projectileKind as PlayerProjectile["projectile"],
       velocity: { x: heading.x * speed, y: heading.y * speed },
       x: context.origin.x,
@@ -107,30 +108,26 @@ export function planPlayerVolley(
 }
 
 /**
- * A projectile's life, and its fade when the weapon fades, along a unit `heading` at `speed`:
- * a ranged weapon flies its range as projected screen distance, whoever fires it; any other
- * flies `baseLifetime`.
+ * A projectile's life, and its fade when the weapon fades, at `speed`: a ranged weapon flies its
+ * world range on every device, whoever fires it; any other flies `baseLifetime`.
  */
 export function projectileReach(
-  definition: Pick<WeaponDefinition, "fadeStartFraction" | "rangeScreenWidths">,
-  heading: Vec,
+  definition: Pick<WeaponDefinition, "fadeStartFraction" | "rangeWorld">,
   speed: number,
-  viewportWidth: number,
   baseLifetime: number,
 ): { fade?: ProjectileFade; life: number } {
-  if (definition.rangeScreenWidths === null) {
+  const range = definition.rangeWorld;
+  if (range === null) {
     return { life: baseLifetime };
   }
-  const projectedSpeed = speed * Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
-  const projectedRange = viewportWidth * definition.rangeScreenWidths;
-  const life = projectedRange / projectedSpeed;
+  const life = range / speed;
   return definition.fadeStartFraction === null
     ? { life }
     : {
         fade: {
           fadeStartFraction: definition.fadeStartFraction,
           initialLife: life,
-          projectedRange,
+          projectedRange: range,
         },
         life,
       };

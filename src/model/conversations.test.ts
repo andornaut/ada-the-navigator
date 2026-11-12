@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
+import { CONVERSATION_TUNING, CONVERSATIONS, lineDuration } from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -19,8 +19,7 @@ import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
-const { cooldownSeconds, lineSeconds, pennyIntervalSeconds, pennyRange, quietSeconds } =
-  CONVERSATION_TUNING;
+const { cooldownSeconds, pennyIntervalSeconds, pennyRange, quietSeconds } = CONVERSATION_TUNING;
 
 const calm: ConversationFacts = {
   aimed: false,
@@ -63,6 +62,10 @@ function run(talk: ConversationDirector, seconds: number, facts: Partial<Convers
     talk.step(Math.min(0.05, left), false, { ...calm, ...facts });
   }
 }
+/** How long the line now showing shows unless tapped: 5 s plus 50 ms a character. */
+const lineTime = (talk: ConversationDirector) => lineDuration(talk.showing!.line.text);
+/** Whole 0.05 s steps that cover seconds. */
+const lineSteps = (seconds: number) => Math.ceil(seconds / 0.05 - 1e-6);
 const showing = (talk: ConversationDirector) =>
   talk.showing && `${talk.showing.instance}:${talk.showing.lineIndex}`;
 /** Taps through whatever shows, returning each line's instance and index. */
@@ -85,7 +88,7 @@ describe("conversation schedule", () => {
     const { talk } = director(1, lessonsHeard);
     run(talk, 0.05);
     expect(showing(talk)).toBe("arrival:1:0");
-    run(talk, lineSeconds - 0.1);
+    run(talk, lineTime(talk) - 0.1);
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 0.1);
     expect(showing(talk)).toBe("arrival:1:1");
@@ -166,7 +169,7 @@ describe("conversation schedule", () => {
     // Penny resumes at once, on the line she was on, ahead of the cooldown.
     run(talk, 0.05, { pennyPoints: ["cache"] });
     expect(showing(talk)).toBe("penny:1:cache:1");
-    run(talk, lineSeconds - 2.1, { pennyPoints: ["cache"] });
+    run(talk, lineTime(talk) - 2.1, { pennyPoints: ["cache"] });
     expect(showing(talk)).toBe("penny:1:cache:1");
     run(talk, 0.1, { pennyPoints: ["cache"] });
     expect(talk.showing).toBeNull();
@@ -198,7 +201,8 @@ describe("conversation schedule", () => {
 
   it("holds a lower line under a notice, then resumes it where it was", () => {
     const { talk } = director(1, lessonsHeard);
-    run(talk, lineSeconds - 0.5, { capitalInSight: true });
+    run(talk, 0.05, { capitalInSight: true });
+    run(talk, lineTime(talk) - 0.55, { capitalInSight: true });
     expect(showing(talk)).toBe("arrival:1:0");
     for (let i = 0; i < 400; i++) {
       talk.step(0.05, true, calm);
@@ -219,11 +223,11 @@ describe("conversation schedule", () => {
     expect(talk.warningShowing).toBe(true);
     // A warning showing over a notice keeps its own time, line by line.
     const step = () => talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0, steps = lineSteps(lineTime(talk)); i < steps; i++) {
       step();
     }
     expect(showing(talk)).toBe("warning:shieldLow:1");
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0, steps = lineSteps(lineTime(talk)); i < steps; i++) {
       step();
     }
     expect(talk.showing).toBeNull();
@@ -689,6 +693,8 @@ describe("conversations in the game", () => {
     return model;
   }
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+  // Steps the travel notice shows for.
+  const noticeSteps = lineSteps(lineDuration(PROTOTYPE.labels.travelUnavailable ?? ""));
 
   it("show the touch and desktop wording with the speaker's name tab and side", () => {
     const model = flying();
@@ -749,7 +755,7 @@ describe("conversations in the game", () => {
     model.state.flight!.dangerFor = 0;
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
-    for (let i = 0; i < 98; i++) {
+    for (let i = 0; i < noticeSteps - 2; i++) {
       model.step(0.05, idle);
     }
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
@@ -805,6 +811,18 @@ describe("conversations in the game", () => {
     // Far from any friendly place with danger running and the shield low, as in a fight.
     flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
     flight.dangerFor = 5;
+    // An enemy shot held in the battle square for 5 s keeps the danger running.
+    flight.shots.push({
+      damage: 1,
+      enemy: true,
+      hitIds: [],
+      id: "held",
+      life: 5,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x: flight.player.x,
+      y: flight.player.y + 300,
+    });
     flight.shield = (model.shieldMax * CONVERSATION_TUNING.shieldLowFraction) / 2;
     model.returnHome();
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
@@ -818,7 +836,7 @@ describe("conversations in the game", () => {
     model.advanceConversation();
     expect(model.warningShowing).toBe(false);
     expect(model.conversation).toBeNull();
-    for (let i = 0; i < 98; i++) {
+    for (let i = 0; i < noticeSteps - 2; i++) {
       model.step(0.05, idle);
     }
     expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
@@ -838,7 +856,7 @@ describe("conversations in the game", () => {
     }
     expect(model.conversation?.key).toBe(key);
     model.state.dialogue = null;
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0, steps = lineSteps(lineDuration(model.conversation!.text)); i < steps; i++) {
       model.step(0.05, idle);
     }
     expect(model.conversation?.key).not.toBe(key);

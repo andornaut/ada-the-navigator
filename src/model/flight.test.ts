@@ -7,6 +7,7 @@ import type { PrototypeContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import {
+  BUMP_DAMAGE,
   createFlight,
   dronesNear,
   ensureDestination,
@@ -100,13 +101,13 @@ describe("flight boundaries", () => {
     expect(degrees(flight.shots[1]!.velocity, flight.facing)).toBeLessThan(1e-9);
   });
 
-  it("blocks scenery without shield damage and accepts consecutive hits without invulnerability", () => {
+  it("blocks scenery with one bump's damage and accepts consecutive hits without invulnerability", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     flight.objects.push({ hp: 100, id: "wall", kind: "rock", radius: 30, x: 145, y: 100 });
     stepFlight(PROTOTYPE, 0.5, { ...idle, move: { x: 1, y: 0 } }, flight);
     expect(flight.player.x).toBeLessThan(106);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - BUMP_DAMAGE.amount);
     flight.shots = [0, 1].map((n) => ({
       ...flight.player,
       damage: 1,
@@ -118,12 +119,11 @@ describe("flight boundaries", () => {
       velocity: { x: 0, y: 0 },
     }));
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage);
+    const hit = PROTOTYPE.tuning.shieldMax - BUMP_DAMAGE.amount - 2 * PROTOTYPE.tuning.hazardDamage;
+    expect(flight.shield).toBe(hit);
     flight.objects = [];
     stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay + 1, idle, flight);
-    expect(flight.shield).toBeGreaterThan(
-      PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage,
-    );
+    expect(flight.shield).toBeGreaterThan(hit);
   });
 
   it("generates ahead, protects arrivals and refuses teleport during danger", () => {
@@ -272,7 +272,7 @@ it("places distinct quest destinations for legacy zero-facing saves without leav
 });
 
 describe("drones near", () => {
-  it("leave a debris hit's danger without drones near, which an engaged drone in perception sets", () => {
+  it("count none near after a debris hit, which is no danger, until an engaged drone in perception", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     flight.objects = [
@@ -288,7 +288,7 @@ describe("drones near", () => {
     ];
     stepFlight(PROTOTYPE, 0.05, idle, flight);
     expect(flight.shield).toBeLessThan(PROTOTYPE.tuning.shieldMax);
-    expect(flight.dangerFor).toBeGreaterThan(0);
+    expect(flight.dangerFor).toBe(0);
     expect(dronesNear(PROTOTYPE, flight)).toBe(false);
     const { perception } = enemyDefinition(1, "fighter");
     const drone = (x: number, engaged: boolean) => {
@@ -527,7 +527,8 @@ describe("directional handling", () => {
       expect(shipCircleContact(flight.facing, flight.player, { x: 140, y: 80 }, 30)).toBeNull();
     }
     expect(flight.player.y).toBeLessThan(100);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    // 0.2 s of contact is one bump.
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - BUMP_DAMAGE.amount);
   });
 
   it("adds no save fields and settles a restored mid-turn flight on the same course", () => {

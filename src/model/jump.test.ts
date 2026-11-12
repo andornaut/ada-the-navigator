@@ -118,9 +118,10 @@ describe("picked-up weapons", () => {
   it("equip in combat through the game step unless the switch wait runs, then join unequipped", () => {
     const model = launched();
     const flight = model.state.flight!;
-    // Incoming fire keeps Ada in danger for the whole check.
+    // Fire in flight inside the battle square keeps Ada in danger for the whole check.
     flight.player = { x: 5000, y: 5000 };
     incoming(flight);
+    flight.shots.at(-1)!.y += 300;
     model.step(0.01, idle);
     expect(flight.dangerFor).toBeGreaterThan(0);
     pickup(flight, "phaser");

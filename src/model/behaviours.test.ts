@@ -534,7 +534,7 @@ describe("engine thrust", () => {
     expect(speed).toBeGreaterThan(full * 0.9);
   });
 
-  it("stops a one-engine frigate when its engine goes, while its guns fire", () => {
+  it("coasts a one-engine frigate to rest when its engine goes, while its guns fire", () => {
     const state = damageEnemy(
       enemyCatalog.frigate,
       { amount: 4, hardpointId: "engine" },
@@ -542,9 +542,18 @@ describe("engine thrust", () => {
     );
     const effects = enemyEffects(enemyCatalog.frigate, state);
     expect(effects).toMatchObject({ defeated: false, movementStopped: true, thrust: 0 });
+    // No thrust: it keeps its momentum, slowing toward rest, and never speeds up.
     const result = stepEnemy(enemyCatalog.frigate, context([state]), state);
-    expect(result.velocity).toEqual({ x: 0, y: 0 });
+    expect(result.velocity.x).toBeLessThan(0);
+    expect(result.velocity.x).toBeGreaterThan(-20);
+    expect(result.velocity.y).toBeCloseTo(0, 6);
     expect(result.fire.length).toBeGreaterThan(0);
+    // At rest it stays at rest.
+    const still = { ...state, velocity: { x: 0, y: 0 } };
+    expect(stepEnemy(enemyCatalog.frigate, context([still]), still).velocity).toEqual({
+      x: 0,
+      y: 0,
+    });
   });
 
   it("destroys a heavy at 0 hull, whatever its parts", () => {

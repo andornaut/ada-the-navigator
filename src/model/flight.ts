@@ -229,13 +229,26 @@ const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
  * Push a circle out of overlapping scenery along each contact normal and report every contact
  * once, with the obstacle's own velocity, so movers bounce and never stay embedded.
  */
-/** Scenery reflects Ada's velocity and smoothed heading together, so recoil carries momentum. */
+/** Seconds between scenery bumps that deal damage, and the damage each deals (rules.md). */
+export const BUMP_DAMAGE = { amount: 1, seconds: 0.5 } as const;
+
+/**
+ * Scenery reflects Ada's velocity and smoothed heading together, so recoil carries momentum. A
+ * bump in flight deals 1 damage, at most once per 0.5 seconds, and counts as a hit for the
+ * shield's recharge delay; settling Ada out of scenery she was placed in deals none.
+ */
 function adaSceneryContact(
   content: PrototypeContent,
   flight: FlightState,
+  bumps = true,
 ): (normal: Vec, surface: Vec) => void {
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   return (normal, surface) => {
+    if (bumps && flight.time - (flight.lastBump ?? -Infinity) >= BUMP_DAMAGE.seconds - 1e-9) {
+      flight.lastBump = flight.time;
+      flight.shield = Math.max(0, flight.shield - BUMP_DAMAGE.amount);
+      flight.sinceDamage = 0;
+    }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
     const heading = movementHeadings.get(flight);
     if (heading) {
@@ -307,7 +320,12 @@ function adaContact(flight: FlightState): SceneryContactOf {
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
 function settleAda(content: PrototypeContent, flight: FlightState): void {
-  resolveScenery(flight, adaContact(flight), adaSceneryContact(content, flight), flight.player);
+  resolveScenery(
+    flight,
+    adaContact(flight),
+    adaSceneryContact(content, flight, false),
+    flight.player,
+  );
 }
 
 /** A body's overlap with a scenery object from `position`, at the object's current frame. */
@@ -1643,6 +1661,26 @@ export function inBattle(
     );
   });
 }
+/**
+ * Whether Ada is in danger (rules.md): in battle, or with an enemy shot in flight inside the
+ * battle square. Danger has no release time and no safe-area exemption.
+ */
+export function inDanger(
+  content: PrototypeContent,
+  viewportWidth: number,
+  flight: Pick<FlightState, "objects" | "player" | "shots">,
+): boolean {
+  const reach = viewportWidth / 2 + content.tuning.battleMargin;
+  return (
+    inBattle(content, viewportWidth, flight) ||
+    flight.shots.some(
+      (shot) =>
+        shot.enemy &&
+        Math.abs(shot.x - flight.player.x) <= reach &&
+        Math.abs(shot.y - flight.player.y) <= reach,
+    )
+  );
+}
 /** Removes `amount` HP from Ada's shield unless she is in a safe area. */
 function damage(content: PrototypeContent, amount: number, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
@@ -1650,7 +1688,6 @@ function damage(content: PrototypeContent, amount: number, flight: FlightState):
   }
   flight.shield = Math.max(0, flight.shield - amount);
   flight.sinceDamage = 0;
-  flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
 /**
  * Fraction of maxSpeed requested by a movement deflection from 0 (just past the dead zone)
@@ -1808,9 +1845,8 @@ function move(
   }
 }
 /**
- * Whether an enemy presses Ada (gameplay/enemies.md: only actual targeting threats extend
- * danger): engaged, neither returning nor fleeing, within its perception, with targetable saying
- * neither it nor Ada is inside a friendly safe zone.
+ * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
+ * with targetable saying neither it nor Ada is inside a friendly safe zone.
  */
 function presses(targetable: boolean, flight: FlightState, object: SpaceObject): boolean {
   const state = object.enemy;
@@ -1839,12 +1875,10 @@ export function dronesNear(content: PrototypeContent, flight: FlightState): bool
 function enemies(
   content: PrototypeContent,
   dt: number,
-  viewportWidth: number,
   flight: FlightState,
   events: FlightEvent[],
   shotDelays: Map<string, number>,
-): boolean {
-  let threatening = false;
+): void {
   const aimVelocity = averageAimVelocity(dt, flight);
   // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
   const objects = flight.objects.filter(
@@ -1958,7 +1992,6 @@ function enemies(
     }
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
-    threatening ||= presses(targetable, flight, object);
     const rings = new Map<number, Vec[]>();
     for (const fire of intent.fire) {
       const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
@@ -1978,9 +2011,7 @@ function enemies(
       shotDelays.set(id, fire.delay);
       // A shared weapon keeps its range, fade and blast whoever fires it.
       const lifetime = content.tuning.flight.enemyProjectileLifetime;
-      const reach = shared
-        ? projectileReach(shared, fire.aim, fire.speed, viewportWidth, lifetime)
-        : { life: lifetime };
+      const reach = shared ? projectileReach(shared, fire.speed, lifetime) : { life: lifetime };
       flight.shots.push({
         ...fire.origin,
         ...(shared?.blastRadius ? { blast: shared.blastRadius } : {}),
@@ -2001,7 +2032,6 @@ function enemies(
       ringEmissions.set(flight, emissions);
     }
   }
-  return threatening;
 }
 
 /** A ring burst's emission at its hull, view-only and never saved. */
@@ -3140,7 +3170,7 @@ export function stepFlight(
     }
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
-    const threat = enemies(content, slice, viewportWidth, flight, events, shotDelays);
+    enemies(content, slice, flight, events, shotDelays);
     stepEnemyBeams(content, slice, viewportWidth, flight);
     stepRingEmissions(slice, flight);
     shots(content, slice, flight, events, shotDelays);
@@ -3184,14 +3214,7 @@ export function stepFlight(
       }
     }
     flight.objects = flight.objects.filter((o) => o.hp > 0);
-    const underFire = flight.shots.some(
-      (s) => s.enemy && distance(s, flight.player) < content.tuning.safeRadius,
-    );
-    flight.dangerFor = safe(content, flight.player, flight)
-      ? 0
-      : threat || underFire
-        ? content.tuning.dangerReleaseSeconds
-        : Math.max(0, flight.dangerFor - slice);
+    flight.dangerFor = inDanger(content, viewportWidth, flight) ? flight.dangerFor + slice : 0;
     // Snap the switch wait to zero within float error of its end.
     const wait = flight.weaponSwitchFor - slice;
     flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;

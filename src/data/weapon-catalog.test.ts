@@ -77,11 +77,7 @@ describe("weapon levels", () => {
       "intervalSeconds",
     ]);
     expect(changed("multiLaser").sort()).toEqual(["anglesDegrees", "damageRatio"]);
-    expect(changed("scattershot").sort()).toEqual([
-      "anglesDegrees",
-      "damageRatio",
-      "rangeScreenWidths",
-    ]);
+    expect(changed("scattershot").sort()).toEqual(["anglesDegrees", "damageRatio"]);
     expect(changed("phaser").sort()).toEqual(["beamRange", "damageRatio"]);
   });
 

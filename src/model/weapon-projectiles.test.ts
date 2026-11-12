@@ -317,7 +317,7 @@ describe("integrated weapon projectiles", () => {
     expect(flight.shots).toHaveLength(0);
   });
 
-  it("stops scatter pellets at their captured range from the nose within a step", () => {
+  it("stops scatter pellets 360 world units from the nose within a step", () => {
     const { flight } = launched("scattershot");
     stepFlight(PROTOTYPE, 0.001, { ...idle, aim: { x: 1, y: 1 }, viewportWidth: 960 }, flight);
     // The pellets left the nose of the facing they fired along.
@@ -330,7 +330,7 @@ describe("integrated weapon projectiles", () => {
     for (const shot of pellets) {
       const dx = shot.x - start.x;
       const dy = shot.y - start.y;
-      expect(Math.hypot(dx - dy, (dx + dy) / 2)).toBeCloseTo(480);
+      expect(Math.hypot(dx, dy)).toBeCloseTo(360);
       expect(shot.life).toBe(0);
       expect(projectileOpacity(shot.fade!, shot.life)).toBe(0);
     }
@@ -347,7 +347,7 @@ describe("integrated weapon projectiles", () => {
     stepFlight(PROTOTYPE, 0.1, { ...idle, viewportWidth: 1200 }, flight);
     stepFlight(PROTOTYPE, 0.1, { ...idle, viewportWidth: 1200 }, restored.state.flight!);
     expect(restored.state).toEqual(model.state);
-    expect(flight.shots.every((shot) => shot.fade?.projectedRange === 420)).toBe(true);
+    expect(flight.shots.every((shot) => shot.fade?.projectedRange === 360)).toBe(true);
     for (const change of [{ initialLife: 0 }, { projectedRange: -1 }, { fadeStartFraction: 1 }]) {
       const invalid = JSON.parse(saved);
       Object.assign(invalid.flight.shots[0].fade, change);

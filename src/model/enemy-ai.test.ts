@@ -228,13 +228,16 @@ describe("enemy rules", () => {
     expect(stepEnemy(definition, unknown, hit).state.lastSeen).toBeNull();
   });
 
-  it("stops engine momentum immediately while the remaining weapon can fire", () => {
+  it("coasts on its momentum without engines while the remaining weapon can fire", () => {
     const definition = enemyCatalog.frigate;
     const moving = { ...spawn("frigate"), velocity: { x: 30, y: 10 } };
     const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
     const portLost = damageEnemy(definition, { amount: 3, hardpointId: "port" }, engineLost);
     const result = stepEnemy(definition, observation(portLost), portLost);
-    expect(result.velocity).toEqual({ x: 0, y: 0 });
+    // No thrust: the hull keeps drifting the way it went and only slows.
+    expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeGreaterThan(0);
+    expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeLessThan(Math.hypot(30, 10));
+    expect(result.velocity.y * 30).toBeCloseTo(result.velocity.x * 10, 6);
     expect(result.effects.defeated).toBe(false);
     expect(result.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
   });
@@ -625,7 +628,7 @@ describe("enemy ship physics and hull rotation", () => {
     expect(state.facing).toEqual({ x: 1, y: 0 });
   });
 
-  it("keeps the hull still when a disabled engine stops movement", () => {
+  it("keeps the hull facing its drift when a disabled engine stops thrust", () => {
     const definition = enemyCatalog.frigate;
     const moving = {
       ...spawn("frigate"),
@@ -636,8 +639,10 @@ describe("enemy ship physics and hull rotation", () => {
     const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
     const context = { ...observation(engineLost), player: { x: 0, y: 300 } };
     const result = stepEnemy(definition, context, engineLost);
-    expect(result.velocity).toEqual({ x: 0, y: 0 });
-    expect(result.state.heading).toBeNull();
+    // Ada lies to the side, but with no thrust the hull cannot steer toward her.
+    expect(result.velocity.x).toBeGreaterThan(0);
+    expect(result.velocity.x).toBeLessThan(30);
+    expect(result.velocity.y).toBeCloseTo(0, 9);
     expect(result.state.facing).toEqual({ x: 1, y: 0 });
   });
 

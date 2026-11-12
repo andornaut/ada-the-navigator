@@ -9,6 +9,7 @@ import {
   type EncounterCue,
   GENERAL_NAMED,
   type JobMoment,
+  lineDuration,
   type Mood,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -1378,7 +1379,7 @@ export class GameModel {
     // A game notice's time runs only while it shows, not under a warning.
     if (this.state.notice && !this.talk.warningShowing) {
       this.noticeShownFor += dt;
-      if (this.noticeShownFor >= CONVERSATION_TUNING.lineSeconds - 1e-9) {
+      if (this.noticeShownFor >= lineDuration(this.state.notice) - 1e-9) {
         this.state.notice = "";
       }
     }

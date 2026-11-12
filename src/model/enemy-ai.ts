@@ -657,15 +657,19 @@ export function stepEnemy(
       ? aim
       : steering(acting, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
-  if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
+  if (effects.defeated || (next.returning && homeDistance <= 5 && !effects.movementStopped)) {
     next.velocity = { x: 0, y: 0 };
     next.heading = null;
   } else {
+    // A heavy that has lost every engine has no thrust: it coasts to rest from its momentum.
+    const thrust = effects.movementStopped
+      ? { direction: { x: 0, y: 0 }, speed: 0 }
+      : { direction: request, speed: speed * Math.min(1, magnitude(request)) };
     const motion = stepShipMotion(
       physics,
       context.dt,
       { maxSpeed: fullSpeed, restHeading: state.facing },
-      { direction: request, speed: speed * Math.min(1, magnitude(request)) },
+      thrust,
       { heading: state.heading, velocity: state.velocity },
     );
     next.velocity = motion.velocity;

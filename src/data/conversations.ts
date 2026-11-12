@@ -120,12 +120,20 @@ export const SPEAKERS: Readonly<
 /** The General's name tab once the third holodisk is inserted, from whichever galaxy. */
 export const GENERAL_NAMED = { holodisks: 3, name: "General Gadget" } as const;
 
+/** How long a line or notice of this text shows unless tapped (rules.md): 5 s plus 50 ms a character. */
+export function lineDuration(text: string): number {
+  return (
+    CONVERSATION_TUNING.lineSeconds + CONVERSATION_TUNING.lineSecondsPerCharacter * text.length
+  );
+}
+
 /** Provisional timing and ranges, to be tuned through playtesting. */
 export const CONVERSATION_TUNING = {
   /** Seconds between ordinary conversations; warnings bypass it. */
   cooldownSeconds: 20,
-  /** Seconds each line shows unless tapped. */
+  /** Seconds each line shows unless tapped, plus lineSecondsPerCharacter per character. */
   lineSeconds: 5,
+  lineSecondsPerCharacter: 0.05,
   /** Seconds after Penny senses something before she can again; points found meanwhile pass. */
   pennyIntervalSeconds: 60,
   /** An undiscovered point of interest within this many world units, even off screen. */
