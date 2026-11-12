@@ -15,7 +15,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 0
+      "frameIndex": 0
     },
     {
       "id": "black-eye-station-1",
@@ -31,7 +31,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 1
+      "frameIndex": 1
     },
     {
       "id": "black-eye-station-2",
@@ -47,7 +47,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 2
+      "frameIndex": 2
     },
     {
       "id": "black-eye-station-3",
@@ -63,7 +63,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 3
+      "frameIndex": 3
     },
     {
       "id": "black-eye-station-4",
@@ -79,7 +79,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 4
+      "frameIndex": 4
     },
     {
       "id": "black-eye-station-5",
@@ -95,7 +95,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 5
+      "frameIndex": 5
     },
     {
       "id": "black-eye-station-6",
@@ -111,7 +111,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 6
+      "frameIndex": 6
     },
     {
       "id": "black-eye-station-7",
@@ -127,7 +127,7 @@
       },
       "frameMs": 150,
       "destination": "station",
-      "rotationIndex": 7
+      "frameIndex": 7
     },
     {
       "id": "outpost-homes-cracked-a",

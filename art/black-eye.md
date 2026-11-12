@@ -55,10 +55,11 @@ Use, the Dock action; it has no dock, mouth or approach lights.
 | Pivot         | `(0.5, 0.8125)`: the world plane under the hull's middle                                   |
 | `facing`      | `fixed`                                                                                    |
 | `frameMs`     | 150                                                                                        |
-| `destination` | `station`; `rotationIndex` `k`                                                             |
+| `destination` | `station`; `frameIndex` `k`                                                                |
 
-- Rotation: show frame `k` for 150 ms, 0 to 7 in order, and loop (1.2 s).
-  Each frame turns the band and the window line one facet of the hull's 16, so
+- Rotation, by the per-galaxy station frame contract shared with Whirlpool's
+  Eddy: `frameIndex` `k` is the frame's place in the loop; show frame `k` for
+  `frameMs` (150 ms), 0 to 7 in order, and loop (1.2 s). Each frame turns the band and the window line one facet of the hull's 16, so
   the loop is seamless. The lamp is lit in frames 0 to 3 and dim in 4 to 7.
 - Reduced motion holds frame 0.
 - Every frame shares one frame size and pivot, so the station turns in place.

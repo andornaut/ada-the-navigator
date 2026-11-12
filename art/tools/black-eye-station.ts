@@ -264,7 +264,7 @@ const entries = frames.map((faces, k) => {
     pivot: { x: 0.5, y: frame.above / frame.height },
     frameMs: FRAME_MS,
     destination: "station",
-    rotationIndex: k,
+    frameIndex: k,
   };
 });
 
