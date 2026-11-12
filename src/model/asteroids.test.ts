@@ -310,6 +310,7 @@ describe("rock silhouettes", () => {
     expect(fire(top - 4)).toBe(false);
   });
 
+  // It sweeps every rock, spin frame and 16 approaches, and runs about 11 s on the CI runner.
   it("never draw Ada overlapping a rock after contact, in any frame or approach", () => {
     const { shipRadius } = PROTOTYPE.tuning.flight;
     const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
@@ -348,7 +349,7 @@ describe("rock silhouettes", () => {
       }
     }
     expect(approaches).toBeGreaterThan(16 * drawnRocks.length);
-  });
+  }, 60_000);
 });
 
 describe("scenery contact and bounce", () => {
