@@ -38,8 +38,9 @@ destruction. A hit on a heavy's hardpoint damages that hardpoint and the hull; a
 hull hit damages the hull. Hull HP at 0 destroys the ship. Destroying every weapon
 hardpoint disables it while its hull survives: it emits no intents, steers no
 more and coasts to rest. A destroyed weapon emits no further shots. Each engine provides an equal share of thrust: a
-ship's top speed scales with the fraction of its engines still working, and it
-stops when all are disabled. Other weapons keep firing independently. No primary hull weapon substitutes for a
+ship's top speed scales with the fraction of its engines still working, and
+with all of them destroyed it has no thrust and coasts to rest from its current
+momentum, like a disabled heavy. Other weapons keep firing independently. No primary hull weapon substitutes for a
 lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
 
 ## Observation and intents
@@ -73,8 +74,8 @@ Fire intents contain world-space origin, normalized aim, projectile speed, weapo
 profile ID, projectile kind (bolt or missile) and delay within the slice.
 Hardpoint ID identifies the emitting weapon; a null ID identifies the hull weapon. Cooldowns persist even outside engagement. Catch-up shots
 have explicit delays; advance each new projectile for only `dt - delay`, or schedule
-it at that offset. Fixed small slices bound work and integration error. No entry or
-spawn warning exists. Pattern spread, projectile speed and intervals provide tuning
+it at that offset. Fixed small slices bound work and integration error. There is
+no spawn warning; Astra's drone-arrival line is the only cue. Pattern spread, projectile speed and intervals provide tuning
 for readable attacks without adding a warning phase. Disabling a weapon prevents
 future fire, but does not delete already emitted projectiles.
 
@@ -151,8 +152,8 @@ actual intents and adapter commands in the following scenarios:
   its return latch and nearby targets cannot immediately restart the chase.
 - A pack losing its configured fraction flees; damage can make one member flee
   before the group. Initial counts persist and unloading is not a casualty.
-- A destroyed frigate weapon stops firing while the other weapon continues. A lost
-  engine returns exactly zero velocity immediately, including prior momentum.
+- A destroyed frigate weapon stops firing while the other weapon continues. A
+  heavy with every engine lost keeps its prior momentum and coasts to rest.
 - Capital hull HP reaching zero destroys it, whatever its hardpoints. Destroying
   every weapon hardpoint first disables it once, and salvaging or destroying a
   disabled heavy produces one outcome event.

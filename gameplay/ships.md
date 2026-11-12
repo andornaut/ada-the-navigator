@@ -197,7 +197,8 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
   until its hull breaks; that drops the usual reward.
 - **Engines and command:** each engine still provides an equal share of thrust.
-  Command parts never fire and do not count toward disabling.
+  A heavy that loses all its engines coasts to rest like a disabled heavy,
+  keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
   carry. A mount the position leaves unused is drawn as a capped plate with no
   hardpoint. Black Eye's capital is General Gadget's own, more threatening design.
