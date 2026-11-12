@@ -655,9 +655,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   a story item, a lost item, a job item, a new weapon or an ammunition pack from
   a weapon drop, or a towed craft), a small notice shows just below the status
   pill, then moves to where the gain shows (its pill segment, or the weapon
-  icons for a weapon or ammunition) and vanishes. Something found loose in space
-  (a lost item, a holodisk recovered on contact) reads "Found {item}"; anything
-  received or attached reads "+ {item}". Item names drop their article and start
+  icons for a weapon or ammunition) and vanishes. Every notice reads "+ {item}",
+  whether the item was found, received or attached. Item names drop their article and start
   with a capital ("Spare parts", "Message"). Gains close together queue, one
   notice at a time. Item notices add to, and never replace, the notices in the
   conversation box's slot, such as "Job complete" and "Out of ammo.". Under
