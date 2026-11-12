@@ -11,8 +11,9 @@ no damaging hazards.
   (JSON through the project's Prettier settings) and replaces its manifest
   entries in place. The nugget entry and the `tow` link are in the core
   manifest, since every galaxy's resource rocks drop cargo and any rescue draws
-  the tow line; the debris, the stranded craft and the `cartwheelDebris` link
-  are in [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
+  the tow line; the debris, the stranded craft, the `cartwheelDebris` link and
+  a `tow` link to the same `tow.json` are in
+  [Cartwheel's manifest](../public/art/cartwheel/manifest.json). Reruns
   are byte-identical.
 - The craft models are in `art/tools/cartwheel-craft.ts`: the tri-hull miner,
   powered or not, and the ore pod. The debris model is shared with Whirlpool's
@@ -151,6 +152,26 @@ plane. Neither has jets. Files are `/art/cartwheel/{craft}-{k}[-{a,b}].svg`.
   cab glass, dim running and mast lights, no jets, listing 12 degrees to port
   and 5 degrees nose down. Its tow point is the drill tip.
 - Each entry has `directionIndex` `k`, `facing` `world-{k}` and `craft`.
+
+Every galaxy's stranded craft share this schema and one export,
+[art/tools/stranded.ts](tools/stranded.ts). Each galaxy manifest links its own
+`tow.json` as `tow`, holding its `craft` in the shape above (`id`, `frame`,
+`display`, `blink` and `frameMs` for a blinking craft, and `headings[k].tow`);
+the core `tow` link keeps the line below and Cartwheel's craft. Pods and buoys
+blink a waiting light, `a` lit and `b` dim at 700 ms; crewed craft show one
+frame with their power off, dark glass, dim lamps and a list. No stranded craft
+has jets or collision parts: it takes no hits and passes through scenery. On a
+light field every stranded craft draws over the ink keyline (`strandedCraft`
+in `lightField.keylined`). The other galaxies' craft are
+`node art/tools/stranded-craft.ts`:
+
+| Galaxy    | Craft                                                              |
+| --------- | ------------------------------------------------------------------ |
+| Sunflower | [Seed pod and scrap barge](outposts.md#stranded-craft)             |
+| Whirlpool | [Current skimmer and shell pod](whirlpool.md#stranded-craft)       |
+| Needle    | [Stuck glider and spool pod](needle.md#stranded-craft)             |
+| Andromeda | [Lost courier and drifting lamp buoy](andromeda.md#stranded-craft) |
+| Black Eye | [Traveler's pod](black-eye.md#stranded-craft)                      |
 
 ## Tow line
 

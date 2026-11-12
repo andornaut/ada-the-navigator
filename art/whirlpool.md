@@ -265,6 +265,31 @@ the whale glow; B dims both to the whale fin shadows.
   buoys, every buoy then on screen.
 - Reduced motion shows frame A on the beacon, the pool and every buoy.
 
+## Stranded craft
+
+Two craft for Whirlpool's rescue tows, in the whale lilac, glow and buoy cream. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
+sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
+4 px padding round a centred pivot, no jets and no collision parts. Files are
+`/art/whirlpool/{craft}-{k}[-{a,b}].svg`;
+[whirlpool/tow.json](../public/art/whirlpool/tow.json), linked from
+[Whirlpool's manifest](../public/art/whirlpool/manifest.json) as `tow`, gives each craft's
+`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
+in frame px.
+
+| Craft                      | Job subject       | Manifest ids                             | Frame | Display | Frames per heading       | Hull top on field |
+| -------------------------- | ----------------- | ---------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
+| `stranded-current-skimmer` | a current skimmer | `craft-stranded-current-skimmer-{k}`     |    80 |      35 | one                      |  `#aaa5e6` 6.36:1 |
+| `stranded-whirlpool-pod`   | a pod             | `craft-stranded-whirlpool-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms |  `#aaa5e6` 6.36:1 |
+
+- Current skimmer: a low lilac lens hull with a whale-glow band `#cbb8ee`, a
+  dark bubble canopy, two cream spindle floats on struts and dead twin nozzles
+  astern; power off, listing 14 degrees to port and 3 nose up.
+- Shell pod (Whirlpool's "a pod"): a round lilac shell pod with a glow band,
+  three cream shell ridges over its crown and a glow lamp that blinks while it
+  waits (dim `#5f5a9c`). Reduced motion shows `a`.
+- Each tow point is the bow lug's face.
+
 ## Data
 
 `currents.json`, version 1: `streaks` holds the values in the streak table

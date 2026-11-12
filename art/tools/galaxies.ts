@@ -97,6 +97,7 @@ const LIGHT_FIELD = {
     "beacon",
     "nebulaStars",
     "huntGlint",
+    "strandedCraft",
   ],
   effects: ["missile", "blastRing", "blastFlash", "hitSpark", "destructionShards"],
   // Places Ada visits take a wider keyline, so they read at a glance on a light field

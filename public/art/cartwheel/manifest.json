@@ -11345,5 +11345,6 @@
   ],
   "cartwheelDebris": "/art/cartwheel/debris.json",
   "oreField": "/art/cartwheel/ore-field.json",
-  "backdrop": "/art/cartwheel/backdrop.json"
+  "backdrop": "/art/cartwheel/backdrop.json",
+  "tow": "/art/cartwheel/tow.json"
 }

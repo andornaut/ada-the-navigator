@@ -86,7 +86,8 @@ galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
 finale also draws. Core entries keep their files' paths, so a galaxy's art
 stays in its folder wherever its entries are listed. Every galaxy's manifest
-also links its own `backdrop`; the shared `backdropLayers` rules are in core.
+also links its own `backdrop` and its stranded craft's `tow` data (Cartwheel's `tow`
+is the same file as core's, which also holds the tow line); the shared `backdropLayers` rules are in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
 Generators write through `art/tools/manifest.ts`, naming the target manifest;
@@ -126,7 +127,8 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
 `art/tools/garnet-drones.ts`. Needle's art comes from `art/tools/needle-station.ts`,
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
-`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. The
+`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. Every
+galaxy's stranded craft but Cartwheel's come from `art/tools/stranded-craft.ts`. The
 [backdrop layers](backdrop.md)' data and the nebula textures of Whirlpool and
 Black Eye come from `art/tools/backdrop.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared

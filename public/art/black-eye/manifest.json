@@ -498,7 +498,552 @@
       "frames": {
         "neutral": 0
       }
+    },
+    {
+      "id": "craft-stranded-traveler-pod-0-a",
+      "path": "/art/black-eye/stranded-traveler-pod-0-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-0-b",
+      "path": "/art/black-eye/stranded-traveler-pod-0-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-1-a",
+      "path": "/art/black-eye/stranded-traveler-pod-1-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-1-b",
+      "path": "/art/black-eye/stranded-traveler-pod-1-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-2-a",
+      "path": "/art/black-eye/stranded-traveler-pod-2-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-2-b",
+      "path": "/art/black-eye/stranded-traveler-pod-2-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-3-a",
+      "path": "/art/black-eye/stranded-traveler-pod-3-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-3-b",
+      "path": "/art/black-eye/stranded-traveler-pod-3-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-4-a",
+      "path": "/art/black-eye/stranded-traveler-pod-4-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-4-b",
+      "path": "/art/black-eye/stranded-traveler-pod-4-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-5-a",
+      "path": "/art/black-eye/stranded-traveler-pod-5-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-5-b",
+      "path": "/art/black-eye/stranded-traveler-pod-5-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-6-a",
+      "path": "/art/black-eye/stranded-traveler-pod-6-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-6-b",
+      "path": "/art/black-eye/stranded-traveler-pod-6-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-7-a",
+      "path": "/art/black-eye/stranded-traveler-pod-7-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-7-b",
+      "path": "/art/black-eye/stranded-traveler-pod-7-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-8-a",
+      "path": "/art/black-eye/stranded-traveler-pod-8-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-8-b",
+      "path": "/art/black-eye/stranded-traveler-pod-8-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-9-a",
+      "path": "/art/black-eye/stranded-traveler-pod-9-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-9-b",
+      "path": "/art/black-eye/stranded-traveler-pod-9-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-10-a",
+      "path": "/art/black-eye/stranded-traveler-pod-10-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-10-b",
+      "path": "/art/black-eye/stranded-traveler-pod-10-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-11-a",
+      "path": "/art/black-eye/stranded-traveler-pod-11-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-11-b",
+      "path": "/art/black-eye/stranded-traveler-pod-11-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-12-a",
+      "path": "/art/black-eye/stranded-traveler-pod-12-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-12-b",
+      "path": "/art/black-eye/stranded-traveler-pod-12-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-13-a",
+      "path": "/art/black-eye/stranded-traveler-pod-13-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-13-b",
+      "path": "/art/black-eye/stranded-traveler-pod-13-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-14-a",
+      "path": "/art/black-eye/stranded-traveler-pod-14-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-14-b",
+      "path": "/art/black-eye/stranded-traveler-pod-14-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-15-a",
+      "path": "/art/black-eye/stranded-traveler-pod-15-a.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
+    },
+    {
+      "id": "craft-stranded-traveler-pod-15-b",
+      "path": "/art/black-eye/stranded-traveler-pod-15-b.svg",
+      "width": 80,
+      "height": 80,
+      "displayWidth": 35,
+      "displayHeight": 35,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-traveler-pod"
     }
   ],
-  "backdrop": "/art/black-eye/backdrop.json"
+  "backdrop": "/art/black-eye/backdrop.json",
+  "tow": "/art/black-eye/tow.json"
 }

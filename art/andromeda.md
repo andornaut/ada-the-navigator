@@ -313,6 +313,34 @@ integer nearest-neighbour scale follow
   and Dial at (5, 2), the greeter, Lumen and Cog at (5, 1), from the antenna
   ball or crown to the chin.
 
+## Stranded craft
+
+Two craft for Andromeda's rescue tows, in the settlers' pearl, slate-blue and marker colours. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
+sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
+4 px padding round a centred pivot, no jets and no collision parts. Files are
+`/art/andromeda/{craft}-{k}[-{a,b}].svg`;
+[andromeda/tow.json](../public/art/andromeda/tow.json), linked from
+[Andromeda's manifest](../public/art/andromeda/manifest.json) as `tow`, gives each craft's
+`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
+in frame px.
+
+| Craft                | Job subject          | Manifest ids                         | Frame | Display | Frames per heading       | Hull top on field |
+| -------------------- | -------------------- | ------------------------------------ | ----: | ------: | ------------------------ | ----------------: |
+| `stranded-courier`   | a lost courier       | `craft-stranded-courier-{k}`         |    80 |      35 | one                      | `#e4e2ef` 11.53:1 |
+| `stranded-lamp-buoy` | a drifting lamp buoy | `craft-stranded-lamp-buoy-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms | `#e4e2ef` 11.53:1 |
+
+- Lost courier: a pearl mail capsule with a slate-blue roof stripe and a rack of
+  cream and periwinkle mail crates on its back, one crate drifted loose; dark
+  bow panes, a dead courier lamp on its mast and two dark engine bells; listing
+  12 degrees to starboard and 5 nose down. It reads apart from
+  [Pip's pod scooter](#pips-mail-scooter) by its single capsule.
+- Drifting lamp buoy: a pearl float with a marker-dark band, a short post and a
+  marker lantern under a slate-blue cap that blinks while it waits (dim
+  `#4a5080`), tilted 10 and 6 degrees as it drifts; a mooring eye forward.
+  Reduced motion shows `a`.
+- Each tow point is the bow lug's or mooring eye's face.
+
 ## Palette
 
 Contrast is WCAG against Andromeda's field background `#232641`; the table

@@ -164,6 +164,27 @@ Lilac goo sits in the field's own hue, lighter, so the Blurbs read as folk of
 the violet rim and take no signal band; the station family's cream collar,
 blue lights and warm windows carry the settlement read.
 
+## Stranded craft
+
+One craft for Black Eye's rescue tows: travelers stranded by the blockades. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
+sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
+4 px padding round a centred pivot, no jets and no collision parts. Files are
+`/art/black-eye/{craft}-{k}[-{a,b}].svg`;
+[black-eye/tow.json](../public/art/black-eye/tow.json), linked from
+[Black Eye's manifest](../public/art/black-eye/manifest.json) as `tow`, gives each craft's
+`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
+in frame px.
+
+| Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field |
+| ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
+| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    80 |      35 | `a` lit, `b` dim, 700 ms | `#ddd0e2` 11.49:1 |
+
+- Traveler's pod: a pale mauve capsule with a mauve band `#a77fb2`, dim warm
+  portholes, two tan luggage bundles strapped on its back and a pale lilac
+  distress lamp `#dcbae3` that blinks while it waits (dim `#6c5d78`); a tow lug
+  forward. Reduced motion shows `a`.
+
 ## Portraits
 
 Rebuild with `node art/tools/black-eye-portraits.ts`. It writes `dollop` and

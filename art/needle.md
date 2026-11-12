@@ -431,3 +431,30 @@ lamp frames and replaces its `needle-lamp-` entries, and writes the
 `loomHall`, a `replace` change at the Weavers' station (`galaxy` `needle`,
 `destination` `station`): `needle-station-hall-a` and `-b` replace
 `needle-station-a` and `-b` ([Loom hall](#loom-hall)).
+
+## Stranded craft
+
+Two craft for Needle's rescue tows, in the Weavers' silver, pearl, lavender and rose. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
+sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
+4 px padding round a centred pivot, no jets and no collision parts. Files are
+`/art/needle/{craft}-{k}[-{a,b}].svg`;
+[needle/tow.json](../public/art/needle/tow.json), linked from
+[Needle's manifest](../public/art/needle/manifest.json) as `tow`, gives each craft's
+`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
+in frame px.
+
+| Craft                 | Job subject    | Manifest ids                          | Frame | Display | Frames per heading       | Hull top on field |
+| --------------------- | -------------- | ------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
+| `stranded-glider`     | a stuck glider | `craft-stranded-glider-{k}`           |   112 |      49 | one                      |  `#cfc5bd` 9.30:1 |
+| `stranded-needle-pod` | a pod          | `craft-stranded-needle-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms | `#e9e3da` 12.37:1 |
+
+- Stuck glider: a silver Weaver hull pointed at both ends like a loom shuttle,
+  carrying an upright rose thread bobbin, snagged in loose lavender thread that
+  trails astern; dark canopy, dim lamps, listing 14 degrees to port and 6 nose
+  down. No wings; it reads apart from [Elder Loom's saucer](#elder-looms-saucer)
+  by its silver shuttle shape.
+- Spool pod (Needle's "a pod"): an upright thread spool, pearl flanges round a
+  lavender core wound with silver bands, and a blue lamp on the top flange that
+  blinks while it waits. Reduced motion shows `a`.
+- Each tow point is the bow lug's face.

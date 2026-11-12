@@ -101,3 +101,33 @@ nearest-neighbour filtering.
 | Beacon      | `#5a5164` | `#ffe9b8` |
 | Beacon core | `#6e6478` | `#ffffff` |
 | Halo (B)    | none      | `#ffe9b8` |
+
+## Stranded craft
+
+Two craft for Sunflower's rescue tows, in the outposts' leaf, bloom, cream and workshop yellow. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
+sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
+4 px padding round a centred pivot, no jets and no collision parts. Files are
+`/art/sunflower/{craft}-{k}[-{a,b}].svg`;
+[sunflower/tow.json](../public/art/sunflower/tow.json), linked from
+[Sunflower's manifest](../public/art/sunflower/manifest.json) as `tow`, gives each craft's
+`frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
+in frame px.
+
+| Craft                  | Job subject   | Manifest ids                        | Frame | Display | Frames per heading       |          Hull top on field |
+| ---------------------- | ------------- | ----------------------------------- | ----: | ------: | ------------------------ | -------------------------: |
+| `stranded-seed-pod`    | a seed pod    | `craft-stranded-seed-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms | `#efe4cf` 1.31:1, keylined |
+| `stranded-scrap-barge` | a scrap barge | `craft-stranded-scrap-barge-{k}`    |    96 |      42 | one                      | `#aaa883` 1.47:1, keylined |
+
+- Seed pod: a striped cream sunflower-seed capsule, rounded at the bow and
+  pointed at the tail, with a leaf collar and sprout at the tail, a bloom lamp
+  `#f6d76b` that blinks while it waits (dim `#8a7a3e`) and a steel tow lug
+  forward. Reduced motion shows `a`.
+- Scrap barge: an olive steel tray with a raised workshop-yellow hazard rim,
+  heaped with scrap (rust and olive plates, a steel tank, a wheel, a bent pipe),
+  a cream cab on the stern quarter with dark glass and a dim lamp, and a dark
+  engine block; power off, listing 10 degrees to starboard and 4 nose down.
+- Each tow point is the bow lug's face.
+- Sunflower is a light field: both craft draw over the 1 px ink keyline
+  (`strandedCraft` in `lightField.keylined`, ink `#181425` at 10.90:1 on the
+  sand), as the outposts do.

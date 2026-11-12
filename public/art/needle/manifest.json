@@ -8964,11 +8964,796 @@
       "frames": {
         "neutral": 0
       }
+    },
+    {
+      "id": "craft-stranded-glider-0",
+      "path": "/art/needle/stranded-glider-0.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-1",
+      "path": "/art/needle/stranded-glider-1.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-2",
+      "path": "/art/needle/stranded-glider-2.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-3",
+      "path": "/art/needle/stranded-glider-3.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-4",
+      "path": "/art/needle/stranded-glider-4.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-5",
+      "path": "/art/needle/stranded-glider-5.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-6",
+      "path": "/art/needle/stranded-glider-6.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-7",
+      "path": "/art/needle/stranded-glider-7.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-8",
+      "path": "/art/needle/stranded-glider-8.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-9",
+      "path": "/art/needle/stranded-glider-9.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-10",
+      "path": "/art/needle/stranded-glider-10.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-11",
+      "path": "/art/needle/stranded-glider-11.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-12",
+      "path": "/art/needle/stranded-glider-12.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-13",
+      "path": "/art/needle/stranded-glider-13.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-14",
+      "path": "/art/needle/stranded-glider-14.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-glider-15",
+      "path": "/art/needle/stranded-glider-15.svg",
+      "width": 112,
+      "height": 112,
+      "displayWidth": 49,
+      "displayHeight": 49,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "craft": "stranded-glider"
+    },
+    {
+      "id": "craft-stranded-needle-pod-0-a",
+      "path": "/art/needle/stranded-needle-pod-0-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-0-b",
+      "path": "/art/needle/stranded-needle-pod-0-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-1-a",
+      "path": "/art/needle/stranded-needle-pod-1-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-1-b",
+      "path": "/art/needle/stranded-needle-pod-1-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-2-a",
+      "path": "/art/needle/stranded-needle-pod-2-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-2-b",
+      "path": "/art/needle/stranded-needle-pod-2-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-3-a",
+      "path": "/art/needle/stranded-needle-pod-3-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-3-b",
+      "path": "/art/needle/stranded-needle-pod-3-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-4-a",
+      "path": "/art/needle/stranded-needle-pod-4-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-4-b",
+      "path": "/art/needle/stranded-needle-pod-4-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-5-a",
+      "path": "/art/needle/stranded-needle-pod-5-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-5-b",
+      "path": "/art/needle/stranded-needle-pod-5-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-6-a",
+      "path": "/art/needle/stranded-needle-pod-6-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-6-b",
+      "path": "/art/needle/stranded-needle-pod-6-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-7-a",
+      "path": "/art/needle/stranded-needle-pod-7-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-7-b",
+      "path": "/art/needle/stranded-needle-pod-7-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-8-a",
+      "path": "/art/needle/stranded-needle-pod-8-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-8-b",
+      "path": "/art/needle/stranded-needle-pod-8-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-9-a",
+      "path": "/art/needle/stranded-needle-pod-9-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-9-b",
+      "path": "/art/needle/stranded-needle-pod-9-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-10-a",
+      "path": "/art/needle/stranded-needle-pod-10-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-10-b",
+      "path": "/art/needle/stranded-needle-pod-10-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-11-a",
+      "path": "/art/needle/stranded-needle-pod-11-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-11-b",
+      "path": "/art/needle/stranded-needle-pod-11-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-12-a",
+      "path": "/art/needle/stranded-needle-pod-12-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-12-b",
+      "path": "/art/needle/stranded-needle-pod-12-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-13-a",
+      "path": "/art/needle/stranded-needle-pod-13-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-13-b",
+      "path": "/art/needle/stranded-needle-pod-13-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-14-a",
+      "path": "/art/needle/stranded-needle-pod-14-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-14-b",
+      "path": "/art/needle/stranded-needle-pod-14-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-15-a",
+      "path": "/art/needle/stranded-needle-pod-15-a.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "a",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
+    },
+    {
+      "id": "craft-stranded-needle-pod-15-b",
+      "path": "/art/needle/stranded-needle-pod-15-b.svg",
+      "width": 64,
+      "height": 64,
+      "displayWidth": 28,
+      "displayHeight": 28,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "blink": "b",
+      "frameMs": 700,
+      "craft": "stranded-needle-pod"
     }
   ],
   "needleGates": "/art/needle/gates.json",
   "needleChannels": "/art/needle/channels.json",
   "needleEye": "/art/needle/eye.json",
   "needleBand": "/art/needle/band.json",
-  "backdrop": "/art/needle/backdrop.json"
+  "backdrop": "/art/needle/backdrop.json",
+  "tow": "/art/needle/tow.json"
 }
