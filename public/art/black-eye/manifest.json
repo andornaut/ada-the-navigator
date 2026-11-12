@@ -1,5 +1,282 @@
 {
   "version": 1,
-  "assets": [],
+  "assets": [
+    {
+      "id": "outpost-homes-cracked-a",
+      "path": "/art/black-eye/homes-cracked-a.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 48,
+        "y": 61.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "homes",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-homes-cracked-b",
+      "path": "/art/black-eye/homes-cracked-b.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 48,
+        "y": 61.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "homes",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-homes-mended-a",
+      "path": "/art/black-eye/homes-mended-a.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 48,
+        "y": 61.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "homes",
+      "state": "mended"
+    },
+    {
+      "id": "outpost-homes-mended-b",
+      "path": "/art/black-eye/homes-mended-b.svg",
+      "width": 96,
+      "height": 96,
+      "displayWidth": 42,
+      "displayHeight": 42,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.375
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 48,
+        "y": 61.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "homes",
+      "state": "mended"
+    },
+    {
+      "id": "outpost-harbour-cracked-a",
+      "path": "/art/black-eye/harbour-cracked-a.svg",
+      "width": 112,
+      "height": 80,
+      "displayWidth": 49,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 56,
+        "y": 57.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "harbour",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-harbour-cracked-b",
+      "path": "/art/black-eye/harbour-cracked-b.svg",
+      "width": 112,
+      "height": 80,
+      "displayWidth": 49,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 56,
+        "y": 57.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "harbour",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-harbour-mended-a",
+      "path": "/art/black-eye/harbour-mended-a.svg",
+      "width": 112,
+      "height": 80,
+      "displayWidth": 49,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 56,
+        "y": 57.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "harbour",
+      "state": "mended"
+    },
+    {
+      "id": "outpost-harbour-mended-b",
+      "path": "/art/black-eye/harbour-mended-b.svg",
+      "width": 112,
+      "height": 80,
+      "displayWidth": 49,
+      "displayHeight": 35,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 56,
+        "y": 57.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "harbour",
+      "state": "mended"
+    },
+    {
+      "id": "outpost-signal-cracked-a",
+      "path": "/art/black-eye/signal-cracked-a.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 81.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "signal",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-signal-cracked-b",
+      "path": "/art/black-eye/signal-cracked-b.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 81.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "signal",
+      "state": "cracked"
+    },
+    {
+      "id": "outpost-signal-mended-a",
+      "path": "/art/black-eye/signal-mended-a.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 81.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "signal",
+      "state": "mended"
+    },
+    {
+      "id": "outpost-signal-mended-b",
+      "path": "/art/black-eye/signal-mended-b.svg",
+      "width": 80,
+      "height": 112,
+      "displayWidth": 35,
+      "displayHeight": 49,
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameMs": 700,
+      "dock": {
+        "x": 40,
+        "y": 81.456,
+        "outward": [0, 1],
+        "width": 22.045
+      },
+      "outpost": "settlement",
+      "variant": "signal",
+      "state": "mended"
+    }
+  ],
   "backdrop": "/art/black-eye/backdrop.json"
 }

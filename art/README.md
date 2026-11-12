@@ -20,7 +20,8 @@ the [holodisk](holodisk.md), the
 Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
 its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze),
 [Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
-Loom's glider and portrait and the crimson drones, character portraits, and the
+Loom's glider and portrait and the crimson drones, Black Eye's
+[Blurb settlements](black-eye.md), character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
 and the lost item's glint), the job board's row icons and Map marks.
@@ -62,9 +63,6 @@ route order is the game's and needs no manifest change:
 | `needle`    | [`/art/needle/manifest.json`](../public/art/needle/manifest.json)       |
 | `black-eye` | [`/art/black-eye/manifest.json`](../public/art/black-eye/manifest.json) |
 
-Black Eye is a placeholder galaxy: its manifest holds no assets and only its
-[placeholder backdrop](backdrop.md#placeholder-galaxies) link until its art is built.
-
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,
 generic art included; one that several galaxies or none use (boot, HUD, UI,
@@ -78,7 +76,8 @@ station, the settlements, the guide beacons, their project frames, the garnet
 drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
 Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
 Channel lights, Elder Loom's glider and portrait, the crimson drones and the
-`needleGates`, `needleChannels`, `needleEye` and `needleBand` links.
+`needleGates`, `needleChannels`, `needleEye` and `needleBand` links;
+Black Eye the Blurb settlements.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;
 General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve every

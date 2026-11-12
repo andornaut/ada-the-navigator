@@ -73,7 +73,7 @@ under the HTML HUD, at alpha 1. Sizes are logical px, scaled by `s`.
 
 `threat` is the one red in space, used only for these markers. It is at least
 5.2:1 on every dark galaxy's background (Whirlpool 5.22:1, the default 5.28:1,
-Cartwheel 5.32:1, Black Eye 6.25:1). It matches `obstacle` in luminance
+Cartwheel 5.32:1, Black Eye 6.13:1). It matches `obstacle` in luminance
 (1.03:1), so the dot shape and the border position, not lightness, tell the
 markers apart from coral art. `pointOfInterest` is 7.1:1 or more there.
 

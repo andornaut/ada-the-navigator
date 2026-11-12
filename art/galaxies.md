@@ -31,7 +31,7 @@ and the in-between colours never change.
 | `needle`    | `#26221F`    | `#312D2A`     | `#3E3936`           | `obstacle` 5.86:1          |
 | `andromeda` | `#232641`    | `#2F324E`     | `#3A3E5B`           | `obstacle` 5.47:1          |
 | `cartwheel` | `#39221E`    | `#452E2A`     | `#523A36`           | `obstacle` 5.48:1          |
-| `black-eye` | `#271423`    | `#331F2F`     | `#3F2B3B`           | `obstacle` 6.44:1          |
+| `black-eye` | `#241827`    | `#302333`     | `#3C2E3F`           | `obstacle` 6.31:1          |
 
 On the dark galaxies every other signal is above 6:1. Needle is a warm
 graphite, so its thin silver line of stars carries the galaxy; Andromeda is a
@@ -50,7 +50,7 @@ light galaxy, `light: true`. A field colour keeps its own Oklab L plus
 `lightness` and takes `chroma` at `hue`: `(L + lightness, chroma cos hue,
 chroma sin hue)`, converted back to sRGB and clamped. The four base roles keep
 their lightness steps, so the field reads the same in every galaxy, only in
-another hue; Needle is also 0.025 darker and Black Eye 0.055.
+another hue; Needle is also 0.025 darker and Black Eye 0.05.
 
 With `light: true` each role's step from the base background mirrors below it:
 `L' = 2 L_background - L + lightness`, with `L_background` the base
@@ -117,6 +117,7 @@ and where each asset sits:
 | Trading station                                                                                                                                       | Every galaxy without its own station art, keylined on Sunflower             |
 | Station art per galaxy: [mining hub](cartwheel.md), [settlers' station](andromeda.md#settlers-station), [Weavers' station](needle.md#weavers-station) | Cartwheel, Andromeda, Needle: every station there                           |
 | Discovery cache                                                                                                                                       | Shared, keylined on Sunflower                                               |
+| Landmarks (nebula, wreck, beacon) and the lost item's glint                                                                                           | Shared, nebula tinted per galaxy; keylined on Sunflower                     |
 | Coral frigate and capital                                                                                                                             | Shared, keylined on Sunflower                                               |
 | Sunflower's outposts (growers, workshop, salvagers)                                                                                                   | Sunflower, keylined                                                         |
 | [Andromeda's settlements](andromeda.md#settlements) (hamlet, lamp house)                                                                              | Andromeda                                                                   |
@@ -135,6 +136,7 @@ and where each asset sits:
 | [Channel lights and Loom hall](needle.md#world-changes)                                                                                               | Needle, once funded                                                         |
 | [Needle crimson drone family, frigate and capital](needle.md#needle-drones)                                                                           | Needle                                                                      |
 | [Edge-on band](needle.md#space-look)                                                                                                                  | Needle                                                                      |
+| [Blurb settlements](black-eye.md) (homes, harbour, signal)                                                                                            | Black Eye                                                                   |
 | Backdrop rocks                                                                                                                                        | Shared, tinted per galaxy (`tints` in `asteroids.json`)                     |
 | [Backdrop haze](#backdrop-haze) (spiral arms and core)                                                                                                | Andromeda                                                                   |
 | [Backdrop layers](backdrop.md) (sky, plates, planets, stars, streaks)                                                                                 | Shared rules, drawn in each galaxy's own tones (`backdrop.json` per galaxy) |
@@ -163,13 +165,16 @@ Each galaxy's route-map [marker](layout.md#galaxy-selector) takes its main hue
 | `needle`    | `#CFC5BD` | 10.62:1   | 0.193                             |
 | `andromeda` | `#B8C1FF` | 10.39:1   | 0.208                             |
 | `cartwheel` | `#F3B6AC` | 10.38:1   | 0.206                             |
-| `black-eye` | `#E9B4DC` | 10.32:1   | 0.209                             |
+| `black-eye` | `#DCBAE3` | 10.45:1   | 0.206                             |
 | Locked      | `#8B8B8B` | 5.29:1    |                                   |
 
 In Gameplay's route order (Sunflower, Whirlpool, Needle, Andromeda, Cartwheel,
-Black Eye), neighbouring markers are 0.121, 0.082, 0.101, 0.133 and 0.070 apart
-in Oklab. The closest pairs two apart are Needle and Sunflower (0.059) and
-Needle and Cartwheel (0.060), which differ by number and name too. Needle's
+Black Eye), neighbouring markers are 0.121, 0.082, 0.101, 0.133 and 0.079 apart
+in Oklab. The closest pairs two apart are Needle and Sunflower (0.059),
+Andromeda and Black Eye (0.060) and Needle and Cartwheel (0.060), which differ
+by number and name too. Black Eye's smoke violet (hue 320, chroma 0.034) is as
+blue as the marker floor allows: a bluer hue would bring its marker within
+0.055 of Andromeda's. Needle's
 silver is warm rather than neutral, because a neutral grey marker would read
 as locked.
 

@@ -222,7 +222,7 @@ sits on open space.
 | Line           | `#ead4aa` | Panel over Sunflower `#D8C994`             | 5.20:1   |
 | Line           | `#ead4aa` | Panel over Cartwheel `#39221E`             | 11.71:1  |
 | Line           | `#ead4aa` | Panel over Whirlpool `#132D33`             | 11.66:1  |
-| Line           | `#ead4aa` | Panel over Black Eye `#271423`             | 12.31:1  |
+| Line           | `#ead4aa` | Panel over Black Eye `#241827`             | 12.24:1  |
 | Line           | `#ead4aa` | Panel over `#ffffff`, the brightest object | 3.88:1   |
 | Ada label      | `#181425` | `#70ace8`                                  | 7.51:1   |
 | Astra label    | `#181425` | `#8fe0f2`                                  | 12.11:1  |
@@ -260,7 +260,7 @@ sits on open space.
 | Marsh          | `#181425` | `#e0c79a`                                  | 10.99:1  |
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
-Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over
+Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1c1526` over
 Black Eye and `#696671` over pure white. Notices use the same panel and line.
 The line meets 4.5:1 over every galaxy field, lowest on Sunflower (5.20:1).
 Over a white object passing under the box it is 3.88:1, accepted: white
@@ -312,24 +312,24 @@ field, so it composites to `#1a1627` over the base field and
 
 | Mark or text     | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
 | ---------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
-| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 |   12.31:1 |    3.88:1 |
-| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |    7.43:1 |    2.34:1 |
-| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |    4.90:1 |    1.54:1 |
-| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |    7.81:1 |    2.46:1 |
-| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |    6.23:1 |    1.96:1 |
-| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |    2.43:1 |    1.30:1 |
-| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |    1.03:1 |    5.62:1 |
+| Count            | `#ead4aa` | 11.64:1 |    5.20:1 |   11.71:1 |   11.66:1 |   12.24:1 |    3.88:1 |
+| Shield icon      | `#70ace8` |  7.03:1 |    3.14:1 |    7.07:1 |    7.04:1 |    7.39:1 |    2.34:1 |
+| Low icon and rim | `#e4574e` |  4.63:1 |    2.07:1 |    4.66:1 |    4.64:1 |    4.87:1 |    1.54:1 |
+| Low pulse peak   | `#ff8a80` |  7.39:1 |    3.30:1 |    7.43:1 |    7.40:1 |    7.77:1 |    2.46:1 |
+| Rim              | `#9a96ad` |  5.89:1 |    2.63:1 |    5.93:1 |    5.90:1 |    6.20:1 |    1.96:1 |
+| Divider          | `#57536e` |  2.30:1 |    1.03:1 |    2.32:1 |    2.31:1 |    2.42:1 |    1.30:1 |
+| Panel itself     | `#181425` |  1.15:1 |    4.56:1 |    1.15:1 |    1.17:1 |    1.05:1 |    5.62:1 |
 
 Marks on the panel, against the field under it.
 
 | Bar part        | Colour    |    Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
 | --------------- | --------- | ------: | --------: | --------: | --------: | --------: | --------: |
-| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |    7.48:1 |    5.28:1 |
-| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |    3.99:1 |    2.81:1 |
-| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.93:1 |    3.48:1 |
-| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 |   17.94:1 |   12.66:1 |
-| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |    6.27:1 |    4.42:1 |
-| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.93:1 |    3.48:1 |
+| Fill            | `#70ace8` |  7.37:1 |    5.84:1 |    7.36:1 |    7.37:1 |    7.50:1 |    5.28:1 |
+| Delay part      | `#4f7aa6` |  3.93:1 |    3.11:1 |    3.92:1 |    3.93:1 |    4.00:1 |    2.81:1 |
+| Low fill        | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.94:1 |    3.48:1 |
+| Flash, edge     | `#ffffff` | 17.68:1 |   14.00:1 |   17.65:1 |   17.67:1 |   17.98:1 |   12.66:1 |
+| Rim, inner edge | `#9a96ad` |  6.18:1 |    4.89:1 |    6.17:1 |    6.18:1 |    6.28:1 |    4.42:1 |
+| Low rim, inner  | `#e4574e` |  4.86:1 |    3.85:1 |    4.85:1 |    4.86:1 |    4.94:1 |    3.48:1 |
 
 Bar parts on the track, against the field under the pill. The fill is 1.88:1
 against the delay part and the low fill 1.24:1; the flash is 2.40:1 against

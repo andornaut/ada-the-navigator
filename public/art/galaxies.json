@@ -110,16 +110,16 @@
     },
     "black-eye": {
       "tint": {
-        "lightness": -0.055,
-        "chroma": 0.04,
-        "hue": 335
+        "lightness": -0.05,
+        "chroma": 0.034,
+        "hue": 320
       },
       "colors": {
-        "background": "#271423",
-        "environment": "#331F2F",
-        "environmentDetail": "#3F2B3B"
+        "background": "#241827",
+        "environment": "#302333",
+        "environmentDetail": "#3C2E3F"
       },
-      "marker": "#E9B4DC"
+      "marker": "#DCBAE3"
     },
     "cartwheel": {
       "tint": {
