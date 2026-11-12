@@ -23,8 +23,10 @@ describe("player text", () => {
     expect(playerText).not.toMatch(/toronto/i);
   });
 
-  it("names Ada's dog Penny; Archie is only the sibling game", () => {
-    expect(playerText).not.toMatch(/archie/i);
+  it("names Ada's dog Penny, and Archie only as her cat beside Kiwi, never the sibling game", () => {
+    // The cats appear together, as "Archie and Kiwi"; any other Archie would name the sibling game.
+    expect(playerText).toContain("Archie and Kiwi");
+    expect(playerText.replaceAll("Archie and Kiwi", "")).not.toMatch(/archie/i);
     expect(PROTOTYPE.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
 

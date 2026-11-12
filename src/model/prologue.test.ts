@@ -118,7 +118,7 @@ describe("prologue", () => {
           "a map of somewhere far away.",
         "Next",
       ],
-      ["adaRoomUnpolished", "", "Miso and Pepper watch from the bed, tails twitching.", "Next"],
+      ["adaRoomUnpolished", "", "Archie and Kiwi watch from the bed, tails twitching.", "Next"],
       [
         "adaRoom",
         "",

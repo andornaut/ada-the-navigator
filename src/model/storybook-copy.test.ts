@@ -81,7 +81,7 @@ describe("storybook text", () => {
     const section = (heading: string, steps: readonly { speaker?: string; text: string }[]) =>
       `${heading} ${steps.map(line).join(" ")}`;
     const park = prologue.slice(0, 3);
-    // Ada polishes the rock, and Miso and Pepper watch from the bed.
+    // Ada polishes the rock, and Archie and Kiwi watch from the bed.
     const polish = prologue.slice(3, 5);
     const glow = prologue[5]!;
     const standing = prologue.filter((step) => !step.background);

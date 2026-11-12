@@ -439,7 +439,7 @@ export const PROTOTYPE: PrototypeContent = {
     mapZoomIn: "Zoom in",
     mapZoomOut: "Zoom out",
     morningRecharge:
-      "Astra recharges overnight. In the morning, the rock is warm again, and Miso and Pepper are " +
+      "Astra recharges overnight. In the morning, the rock is warm again, and Archie and Kiwi are " +
       "curled at her feet.",
     motionNote: "Skips screen shakes",
     moveControls: "Move controls",

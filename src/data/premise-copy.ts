@@ -77,7 +77,7 @@ export const PREMISE: PremiseContent = {
     },
     {
       background: "adaRoomUnpolished",
-      text: "Miso and Pepper watch from the bed, tails twitching.",
+      text: "Archie and Kiwi watch from the bed, tails twitching.",
     },
     {
       background: "adaRoom",

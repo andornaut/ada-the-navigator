@@ -353,7 +353,7 @@ describe("story text fit", () => {
     };
     // Chapters: Grandma's garden framing (4 arrival pages and her farewell) round chapter one's
     // opening, each opening and resolution with its two branches, and each closing. The prologue:
-    // 23 lines with Miso and Pepper, and Astra's 3 answers.
+    // 23 lines with Archie and Kiwi, and Astra's 3 answers.
     expect(counts).toEqual({ boarding: 3, chapters: 26, overnight: 3, prologue: 26, room: 2 });
     // 57 scene pages and the overnight 3, of which the sleep scene has no text.
     expect(PAGES).toHaveLength(57 + 2);

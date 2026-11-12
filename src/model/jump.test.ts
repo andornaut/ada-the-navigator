@@ -249,7 +249,7 @@ describe("quantum jump home", () => {
       background: "adaRoomMorning",
       id: "morning",
       text:
-        "Astra recharges overnight. In the morning, the rock is warm again, and Miso and Pepper " +
+        "Astra recharges overnight. In the morning, the rock is warm again, and Archie and Kiwi " +
         "are curled at her feet.",
     });
     model.storyNext();
