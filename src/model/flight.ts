@@ -78,6 +78,7 @@ import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
+import { pickupOutline } from "./pickup-body.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
 import {
   SHIP_REACH,
@@ -1496,17 +1497,21 @@ export function stationDockClear(): number {
   return stationMouthRadius() + SHIP_REACH;
 }
 /**
- * Whether Ada's drawn ship reaches a pickup-sized object of `radius` at `center`: within the
- * pickup reach's margin past the hull circle it was measured from.
+ * Whether Ada's drawn ship reaches a pickup at `center` within the pickup reach's margin past
+ * the hull circle it was measured from: its drawn `outline`, or its circle of `radius`.
  */
 export function pickupTouched(
   content: PrototypeContent,
   flight: FlightState,
   center: Vec,
   radius: number,
+  outline: Parts | null = null,
 ): boolean {
   const { pickupReach, shipRadius } = content.tuning.flight;
-  return shipTouches(flight.facing, flight.player, center, radius + pickupReach - shipRadius);
+  const margin = pickupReach - shipRadius;
+  return outline
+    ? outlinesContact(outline, center, shipBody(flight.facing), flight.player, margin) !== null
+    : shipTouches(flight.facing, flight.player, center, radius + margin);
 }
 /** The point `distance` from a station's dock along its outward direction. */
 function outsideDock(distance: number, station: Vec): Vec {
@@ -2526,7 +2531,7 @@ export function stepFlight(
       object.x += drift.x * slice;
       object.y += drift.y * slice;
       pullStardust(ship.tractorRadius, ship.tractorSpeed, slice, object, flight);
-      if (!pickupTouched(content, flight, object, object.radius)) {
+      if (!pickupTouched(content, flight, object, object.radius, pickupOutline(object))) {
         continue;
       }
       if (object.role === "cargo") {

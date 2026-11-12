@@ -265,19 +265,20 @@ export function outlineContact(
 
 /**
  * A drawn body, its screen parts from `position`, against a drawn obstacle from `origin`, on the
- * world plane: the contact pushes the body.
+ * world plane, within `margin` world units: the contact pushes the body.
  */
 export function outlinesContact(
   obstacle: Parts,
   origin: Vec,
   body: Parts,
   position: Vec,
+  margin = 0,
 ): Contact | null {
   const shape = worldParts(obstacle);
   const own = worldParts(body);
   const offset = { x: position.x - origin.x, y: position.y - origin.y };
-  if (Math.hypot(offset.x, offset.y) >= partsReach(shape) + partsReach(own)) {
+  if (Math.hypot(offset.x, offset.y) >= partsReach(shape) + partsReach(own) + margin) {
     return null;
   }
-  return unionContact(grown(shape, own), offset, 0);
+  return unionContact(grown(shape, own), offset, margin);
 }

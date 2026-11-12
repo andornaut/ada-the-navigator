@@ -10,10 +10,12 @@ import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
+import { outlinesContact } from "./convex.ts";
 import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, stepFlight } from "./flight.ts";
-import { shipTouches } from "./ship-body.ts";
+import { pickupOutline } from "./pickup-body.ts";
+import { shipBody } from "./ship-body.ts";
 import {
   buy,
   fill,
@@ -520,18 +522,19 @@ describe("tractor beam and pickup reach", () => {
     expect(value.objects.find((object) => object.id === "weapon")).toMatchObject({ x: 50, y: 0 });
   });
 
-  it("collects pickups on contact within the pickup reach of 14", () => {
+  it("collects pickups where they are drawn, within the pickup reach of 14", () => {
     expect(PROTOTYPE.tuning.flight.pickupReach).toBe(14);
-    // The reach was measured from the 10-unit hull circle: 4 past the drawn ship.
-    const margin = 14 - PROTOTYPE.tuning.flight.shipRadius;
-    // How far along `axis` a pickup of `radius` first leaves Ada's reach, to 0.001.
-    const edge = (value: FlightState, axis: Vec, radius: number) => {
+    // How far along `axis` a pickup first leaves Ada's reach, to 0.001: its drawn outline
+    // within 4 of her drawn ship, the reach past the 10-unit hull circle it was measured from.
+    const edge = (value: FlightState, axis: Vec, object: SpaceObject) => {
+      const outline = pickupOutline(object)!;
+      expect(outline).not.toBeNull();
       let low = 0;
       let high = 200;
       while (high - low > 1e-3) {
         const middle = (low + high) / 2;
         const at = { x: value.player.x + axis.x * middle, y: value.player.y + axis.y * middle };
-        if (shipTouches(value.facing, value.player, at, radius + margin)) {
+        if (outlinesContact(outline, at, shipBody(value.facing), value.player, 4)) {
           low = middle;
         } else {
           high = middle;
@@ -540,27 +543,25 @@ describe("tractor beam and pickup reach", () => {
       return high;
     };
     const value = flight();
-    const east = edge(value, { x: 1, y: 0 }, ECONOMY.stardustPickupRadius);
-    const south = edge(value, { x: 0, y: 1 }, ECONOMY.stardustPickupRadius);
+    const east = edge(value, { x: 1, y: 0 }, stardust("probe", 0, 0));
+    const south = edge(value, { x: 0, y: 1 }, stardust("probe", 0, 0));
     value.objects.push(stardust("inside", east - 0.1, 0, 3), stardust("outside", 0, south + 1));
     const events = stepFlight(PROTOTYPE, 0.001, idle, value);
     expect(gained(events)).toBe(3);
     expect(value.objects.map((object) => object.id)).toEqual(["outside"]);
     const weapon = flight();
-    const near = edge(weapon, { x: 1, y: 0 }, 10);
-    const far = edge(weapon, { x: 0, y: 1 }, 10);
-    weapon.objects.push(
-      {
-        hp: 1,
-        id: "edge",
-        kind: "pickup",
-        radius: 10,
-        weapon: "rapidMissile",
-        x: near - 0.1,
-        y: 0,
-      },
-      { hp: 1, id: "beyond", kind: "pickup", radius: 10, weapon: "multiLaser", x: 0, y: far + 0.1 },
-    );
+    const drop = (id: string, x: number, y: number): SpaceObject => ({
+      hp: 1,
+      id,
+      kind: "pickup",
+      radius: 10,
+      weapon: id === "edge" ? "rapidMissile" : "multiLaser",
+      x,
+      y,
+    });
+    const near = edge(weapon, { x: 1, y: 0 }, drop("probe", 0, 0));
+    const far = edge(weapon, { x: 0, y: 1 }, drop("probe", 0, 0));
+    weapon.objects.push(drop("edge", near - 0.1, 0), drop("beyond", 0, far + 0.1));
     stepFlight(PROTOTYPE, 0.001, idle, weapon);
     expect(weapon.ownedWeapons).toEqual(["rapidMissile"]);
   });
