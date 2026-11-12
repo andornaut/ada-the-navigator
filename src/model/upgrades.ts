@@ -64,6 +64,9 @@ export function shipTuning(
   const { effects } = catalog;
   const base = content.tuning.physics;
   const seconds = multiplier(effects.engineSeconds, levels.engine);
+  const shieldLevel = (base: number, value: keyof EconomyCatalog["shieldLevels"]) =>
+    leveledValue({ base, levels: catalog.shieldLevels[value] }, levels.shield);
+  const capacity = shieldLevel(content.tuning.shieldMax, "capacity");
   return {
     physics: {
       ...base,
@@ -74,11 +77,10 @@ export function shipTuning(
         levels.engine,
       ),
     },
-    shieldMax: content.tuning.shieldMax * multiplier(effects.shieldCapacity, levels.shield),
-    shieldRechargeDelay:
-      content.tuning.shieldRechargeDelay * multiplier(effects.shieldRechargeDelay, levels.shield),
-    shieldRechargeRate:
-      content.tuning.shieldRechargeRate * multiplier(effects.shieldRechargeRate, levels.shield),
+    shieldMax: capacity,
+    shieldRechargeDelay: shieldLevel(content.tuning.shieldRechargeDelay, "delay"),
+    // The shield refills from empty in its fill time whatever its capacity.
+    shieldRechargeRate: capacity / shieldLevel(content.tuning.shieldFillSeconds, "fill"),
     tractorRadius: leveledValue(catalog.tractorRadius, levels.tractor),
     tractorSpeed: leveledValue(catalog.tractorSpeed, levels.tractor),
   };

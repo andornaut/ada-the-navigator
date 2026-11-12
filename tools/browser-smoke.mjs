@@ -1272,7 +1272,7 @@ try {
     );
   }, storageKey);
   const persisted = await readSave();
-  assert.equal(persisted.version, 4);
+  assert.equal(persisted.version, 5);
   await page.reload();
   await continueFlight();
   const resumed = await readSave();
@@ -2653,7 +2653,7 @@ try {
       ),
     "Projectile fixture must be outside every active protected destination",
   );
-  damaged.state.flight.shield = PROTOTYPE.tuning.enemyDamage;
+  damaged.state.flight.shield = PROTOTYPE.tuning.hazardDamage;
   damaged.state.flight.shots.push({
     ...damaged.state.flight.player,
     enemy: true,

@@ -82,7 +82,8 @@ export interface SpaceObject extends Vec {
 }
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";
-  damage?: number;
+  /** HP a hit removes. */
+  damage: number;
   /** World radius of a player missile's blast, which damages every enemy in it. */
   blast?: number;
   fade?: ProjectileFade;
@@ -288,7 +289,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 4;
+  version: 5;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];

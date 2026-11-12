@@ -186,6 +186,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       y: 0,
     });
     flight.shots.push({
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "finite",

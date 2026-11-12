@@ -144,6 +144,7 @@ function combatSnapshot() {
       ],
       shots: [
         {
+          damage: 1,
           enemy: true,
           hitIds: ["old-target"],
           id: "missile",

@@ -34,6 +34,7 @@ function incoming(flight: FlightState, count = 1): void {
   for (let index = 0; index < count; index++) {
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: `hit:${flight.nextId++}`,
@@ -100,7 +101,7 @@ describe("owned upgrade weapons", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     const flight = model.state.flight!;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     incoming(flight);
     const events = stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(events).toContainEqual({ type: "depleted" });
@@ -115,7 +116,7 @@ describe("owned upgrade weapons", () => {
     const flight = model.state.flight!;
     const seed = flight.seed;
     model.state.progress[1].deposited = 42;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
@@ -142,11 +143,11 @@ describe("owned upgrade weapons", () => {
       kind: "destination",
       radius: 30,
     });
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     flight.sinceDamage = 0;
     incoming(flight);
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.enemyDamage);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.hazardDamage);
     expect(flight.weapon).toBe("rapidMissile");
     expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
   });
@@ -283,7 +284,7 @@ describe("ammunition", () => {
     flight.ammo.multiLaser = 123;
     flight.ammo.scattershot = 45;
     expect(flight.weapon).toBe("multiLaser");
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");

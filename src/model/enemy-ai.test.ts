@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { ENEMY_AIM, type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import {
+  ENEMY_AIM,
+  type EnemyArchetype,
+  enemyCatalog,
+  fireDamageRatio,
+} from "../data/enemy-catalog.ts";
 import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/ship-physics.ts";
+import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import {
   aimDrift,
   averageVelocity,
@@ -824,5 +830,33 @@ describe("enemy aim", () => {
     const point = leadPoint({ x: 0, y: 0 }, { x: 300, y: 0 }, velocity, 340, 1);
     const time = Math.hypot(point.x, point.y) / 340;
     expect(point.y).toBeCloseTo(velocity.y * time, 9);
+  });
+});
+
+describe("enemy damage", () => {
+  it("hits with the shared weapon's damage at its level, the same whoever fires it", () => {
+    for (const level of [1, 2, 3] as const) {
+      expect(fireDamageRatio({ level, weapon: "laser" })).toBe(
+        WEAPON_CATALOG.laser[level - 1]!.damageRatio,
+      );
+    }
+    // A level 1 Laser shot deals 1 damage.
+    expect(fireDamageRatio({ level: 1, weapon: "laser" })).toBe(1);
+    expect(fireDamageRatio({ level: 1, weapon: "ringBurst" })).toBe(1.5);
+    expect(fireDamageRatio({ level: 1, weapon: "mineLayer" })).toBe(3);
+    expect(fireDamageRatio({ level: 1, weapon: "chargedLance" })).toBe(3);
+  });
+
+  it("fires each volley with its profile's damage", () => {
+    const definition = {
+      ...enemyCatalog.fighter,
+      fire: { ...enemyCatalog.fighter.fire, level: 3 as const },
+    };
+    const state = spawn("fighter");
+    const result = stepEnemy(definition, observation(state), state);
+    expect(result.fire.length).toBeGreaterThan(0);
+    for (const shot of result.fire) {
+      expect(shot.damageRatio).toBe(WEAPON_CATALOG.laser[2].damageRatio);
+    }
   });
 });

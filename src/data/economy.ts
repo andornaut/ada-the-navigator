@@ -62,13 +62,13 @@ export interface EconomyCatalog {
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
   /** Ada's maximum speed at engine levels 2 and 3; level 1 is her ship physics' own. */
   engineMaxSpeed: readonly [number, number];
+  /**
+   * The Shield at levels 2 and 3: capacity, recharge delay and seconds from empty to full;
+   * level 1 is the prototype tuning's own.
+   */
+  shieldLevels: Readonly<Record<"capacity" | "delay" | "fill", readonly [number, number]>>;
   /** Multipliers on the base value at levels 1, 2 and 3. */
-  effects: Readonly<
-    Record<
-      "engineSeconds" | "shieldCapacity" | "shieldRechargeDelay" | "shieldRechargeRate",
-      readonly [number, number, number]
-    >
-  >;
+  effects: Readonly<Record<"engineSeconds", readonly [number, number, number]>>;
   tractorRadius: LeveledValue;
   tractorSpeed: LeveledValue;
   paints: Readonly<Record<string, PaintScheme>>;
@@ -169,13 +169,9 @@ export const ECONOMY: EconomyCatalog = {
     },
   },
   discoveryStardust: 5,
-  // Engine tuning: -10% acceleration and braking seconds per level. The Shield's levels raise
-  // its capacity to 150 and 225 and its recharge about x1.5 each: delay /1.2, rate x1.25.
+  // Engine tuning: -10% acceleration and braking seconds per level.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
-    shieldCapacity: [1, 1.5, 2.25],
-    shieldRechargeDelay: [1, 1 / 1.2, 1 / 1.44],
-    shieldRechargeRate: [1, 1.25, 1.5625],
   },
   // Half each archetype's hit points (hardpoints for multipart ships), rounded down, at least 1.
   enemyStardust: {
@@ -206,6 +202,9 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 8,
     swarm: 8,
   },
+  // Shield levels 2 and 3: capacity 15 then 20 HP, recharge delay 15 then 10 s, empty to
+  // full in 45 then 30 s (gameplay/economy.md).
+  shieldLevels: { capacity: [15, 20], delay: [15, 10], fill: [45, 30] },
   stardustPickupRadius: 5,
   station: {
     cellSize: 12000,

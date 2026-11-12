@@ -4,6 +4,7 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   escortTuning,
+  fireDamageRatio,
   type FireProfile,
   type HardpointDefinition,
   type Point,
@@ -93,6 +94,8 @@ export interface EnemyContext {
 }
 export interface FireIntent {
   aim: Point;
+  /** The weapon's damage at its level as a multiple of base shot damage. */
+  damageRatio: number;
   delay: number;
   hardpointId: string | null;
   origin: Point;
@@ -724,6 +727,7 @@ export function stepEnemy(
             x: muzzleAim.x * Math.cos(angle) - muzzleAim.y * Math.sin(angle),
             y: muzzleAim.x * Math.sin(angle) + muzzleAim.y * Math.cos(angle),
           },
+          damageRatio: fireDamageRatio(profile),
           delay,
           hardpointId,
           origin: { ...from },

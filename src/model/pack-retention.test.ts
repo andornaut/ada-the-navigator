@@ -38,7 +38,8 @@ function fixture() {
   // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
   content.tuning.flight.arrivalCalm = 0;
   content.tuning.flight.objectsPerChunk = 0;
-  content.tuning.enemyDamage = 0;
+  // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+  content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
     const flight = createFlight(content, 1, seed, progress);
     const members = flight.objects.filter((object) => object.enemy?.archetype === "swarm");
@@ -193,7 +194,8 @@ describe("casualty-preserving pack retention", () => {
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
     content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
-    content.tuning.enemyDamage = 0;
+    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+    content.tuning.flight.playerShotDamage = 1e-6;
     let found: { flight: ReturnType<typeof createFlight>; packId: string } | undefined;
     for (let seed = 0; seed < 512 && !found; seed++) {
       const flight = createFlight(content, 1, seed, progress);
@@ -377,7 +379,8 @@ describe("per-role encounter restore", () => {
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
     content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
-    content.tuning.enemyDamage = 0;
+    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+    content.tuning.flight.playerShotDamage = 1e-6;
     for (let seed = 0; seed < 4000; seed++) {
       const flight = createFlight(content, 1, seed, progress);
       const escort = flight.objects.find((object) => object.enemy?.escortOf);

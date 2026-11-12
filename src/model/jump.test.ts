@@ -26,6 +26,7 @@ function launched(): GameModel {
 function incoming(flight: FlightState): void {
   flight.shots.push({
     ...flight.player,
+    damage: 1,
     enemy: true,
     hitIds: [],
     id: `hit:${flight.nextId++}`,
@@ -37,7 +38,7 @@ function incoming(flight: FlightState): void {
 function deplete(model: GameModel): void {
   const flight = model.state.flight!;
   flight.objects = [];
-  flight.shield = PROTOTYPE.tuning.enemyDamage;
+  flight.shield = PROTOTYPE.tuning.hazardDamage;
   incoming(flight);
   model.step(0.01, idle);
 }
@@ -144,7 +145,7 @@ describe("quantum jump home", () => {
   // Depletes the shield with the flight's objects in place.
   function depleteHere(model: GameModel): void {
     const flight = model.state.flight!;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
   }
@@ -449,10 +450,10 @@ describe("shop through the model", () => {
   it("raises the shield capacity and current charge when a shield level is bought", () => {
     const model = docked();
     model.state.economy.stardust = 300;
-    model.state.flight!.shield = 50;
+    model.state.flight!.shield = 5;
     model.buy({ kind: "track", track: "shield" });
-    expect(model.shieldMax).toBeCloseTo(150, 9);
-    expect(model.state.flight!.shield).toBeCloseTo(100, 9);
+    expect(model.shieldMax).toBe(15);
+    expect(model.state.flight!.shield).toBe(10);
     expect(model.state.flight!.levels.shield).toBe(2);
   });
 

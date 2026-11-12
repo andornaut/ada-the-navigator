@@ -1510,11 +1510,39 @@ function fire(
   flight.fireCooldown += volley.interval;
 }
 
-function damage(content: PrototypeContent, flight: FlightState): void {
+/**
+ * Whether Ada is in battle: an enemy chasing or attacking her is inside the battle square,
+ * centred on her and reaching half the game area's width plus the battle margin along each axis.
+ * Idle enemies, retaliators not yet hit, fleeing or returning enemies and disabled heavies do not
+ * count.
+ */
+export function inBattle(
+  content: PrototypeContent,
+  viewportWidth: number,
+  flight: Pick<FlightState, "objects" | "player">,
+): boolean {
+  const reach = viewportWidth / 2 + content.tuning.battleMargin;
+  return flight.objects.some((object) => {
+    const enemy = object.enemy;
+    return (
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      enemy !== undefined &&
+      enemy.engaged &&
+      !enemy.returning &&
+      !enemy.fleeing &&
+      !enemy.disabled &&
+      Math.abs(object.x - flight.player.x) <= reach &&
+      Math.abs(object.y - flight.player.y) <= reach
+    );
+  });
+}
+/** Removes `amount` HP from Ada's shield unless she is in a safe area. */
+function damage(content: PrototypeContent, amount: number, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
     return;
   }
-  flight.shield = Math.max(0, flight.shield - content.tuning.enemyDamage);
+  flight.shield = Math.max(0, flight.shield - amount);
   flight.sinceDamage = 0;
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
@@ -1822,6 +1850,7 @@ function enemies(
       shotDelays.set(id, fire.delay);
       flight.shots.push({
         ...fire.origin,
+        damage: content.tuning.flight.playerShotDamage * fire.damageRatio,
         enemy: true,
         hitIds: [],
         id,
@@ -1876,7 +1905,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       placeRiverRock(flight, object);
       object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
       if (debrisTouchesAda(flight, object, from, object) && !object.cooldown) {
-        damage(content, flight);
+        damage(content, content.tuning.hazardDamage, flight);
         object.cooldown = content.tuning.flight.damageInterval;
       }
       continue;
@@ -1907,7 +1936,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
     }
     if (debrisTouchesAda(flight, object, object, next.position)) {
       if (!object.cooldown) {
-        damage(content, flight);
+        damage(content, content.tuning.hazardDamage, flight);
         object.cooldown = content.tuning.flight.damageInterval;
       }
     }
@@ -1937,7 +1966,7 @@ function shots(
         if (safe(content, shot, flight)) {
           shot.life = 0;
         } else if (shipTouches(flight.facing, flight.player, shot, 3)) {
-          damage(content, flight);
+          damage(content, shot.damage, flight);
           shot.life = 0;
         }
         if (
@@ -2582,7 +2611,7 @@ export function stepFlight(
       ) {
         object.cooldown = Math.max(0, (object.cooldown ?? 0) - slice);
         if (!object.cooldown) {
-          damage(content, flight);
+          damage(content, content.tuning.hazardDamage, flight);
           object.cooldown = content.tuning.flight.damageInterval;
         }
       }
@@ -2624,6 +2653,10 @@ export function stepFlight(
     // Snap the switch wait to zero within float error of its end.
     const wait = flight.weaponSwitchFor - slice;
     flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
+    // Battle holds the recharge delay at its start, as a hit does.
+    if (inBattle(content, input.viewportWidth ?? SCREEN.width, flight)) {
+      flight.sinceDamage = 0;
+    }
     if (flight.sinceDamage >= ship.shieldRechargeDelay) {
       flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
     }

@@ -1,6 +1,7 @@
 import { byPosition, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./ship-physics.ts";
-import type { EnemyWeapon, SectorId, WeaponLevel } from "./types.ts";
+import type { EnemyOnlyWeapon, EnemyWeapon, SectorId, WeaponLevel } from "./types.ts";
+import { weaponAt } from "./weapon-catalog.ts";
 
 export interface Point {
   x: number;
@@ -450,6 +451,27 @@ export const sectorArchetypes: Readonly<
     retaliator: { hp: 9 },
   },
 };
+
+/**
+ * The enemy-only weapons' damage per hit as multiples of base shot damage (gameplay/ships.md
+ * "Enemy weapons"): a ring burst bolt 1.5, a mine 3 and a charged lance 3.
+ */
+export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
+  chargedLance: 3,
+  mineLayer: 3,
+  ringBurst: 1.5,
+};
+
+/**
+ * A profile's damage per hit as a multiple of base shot damage: a shared weapon's at its level,
+ * the same whoever fires it, or an enemy-only weapon's own.
+ */
+export function fireDamageRatio(profile: Pick<FireProfile, "level" | "weapon">): number {
+  const weapon = profile.weapon;
+  return weapon === "chargedLance" || weapon === "mineLayer" || weapon === "ringBurst"
+    ? ENEMY_ONLY_DAMAGE[weapon]
+    : weaponAt(weapon, profile.level).damageRatio;
+}
 
 /** Natural enemy aim for every aimed enemy weapon (gameplay/ships.md "Enemy aim"). */
 export const ENEMY_AIM = {

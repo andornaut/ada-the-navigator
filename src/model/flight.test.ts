@@ -10,6 +10,7 @@ import {
   createFlight,
   dronesNear,
   ensureDestination,
+  inBattle,
   movementSpeedFraction,
   placeDestinationAhead,
   shipSpeedFraction,
@@ -107,6 +108,7 @@ describe("flight boundaries", () => {
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
     flight.shots = [0, 1].map((n) => ({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: `hit${n}`,
@@ -115,11 +117,11 @@ describe("flight boundaries", () => {
       velocity: { x: 0, y: 0 },
     }));
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.enemyDamage);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage);
     flight.objects = [];
     stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay + 1, idle, flight);
     expect(flight.shield).toBeGreaterThan(
-      PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.enemyDamage,
+      PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage,
     );
   });
 
@@ -134,6 +136,7 @@ describe("flight boundaries", () => {
     expect(teleport(PROTOTYPE, target.id, flight)).toBe(true);
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "arrival-hit",
@@ -662,5 +665,67 @@ describe("ship speed fraction", () => {
     expect(shipSpeedFraction(PROTOTYPE, { levels: noLevels(), velocity: { x: 200, y: 0 } })).toBe(
       1,
     );
+  });
+});
+
+describe("shield in battle", () => {
+  type EnemyChange = Partial<NonNullable<FlightState["objects"][number]["enemy"]>>;
+  /** A flight with one swarm craft at `offset` from Ada, in the given state. */
+  function withEnemy(offset: Vec, change: EnemyChange): FlightState {
+    const flight = empty();
+    const point = { x: flight.player.x + offset.x, y: flight.player.y + offset.y };
+    const enemy = {
+      ...createEnemy(
+        enemyCatalog.swarm,
+        { archetype: "swarm", id: "enemy:battle", packId: null, phase: 0 },
+        point,
+      ),
+      engaged: true,
+      ...change,
+    };
+    flight.objects.push({ ...point, enemy, hp: 2, id: "enemy:battle", kind: "enemy", radius: 9 });
+    return flight;
+  }
+
+  it("counts an attacker inside the square, 424 from Ada on the 720-wide view", () => {
+    expect(720 / 2 + PROTOTYPE.tuning.battleMargin).toBe(424);
+    for (const offset of [
+      { x: 424, y: 0 },
+      { x: -424, y: 424 },
+      { x: 0, y: -400 },
+    ]) {
+      expect(inBattle(PROTOTYPE, 720, withEnemy(offset, {}))).toBe(true);
+    }
+    for (const offset of [
+      { x: 425, y: 0 },
+      { x: 0, y: -425 },
+    ]) {
+      expect(inBattle(PROTOTYPE, 720, withEnemy(offset, {}))).toBe(false);
+    }
+  });
+
+  it.each([{ engaged: false }, { fleeing: true }, { returning: true }, { disabled: true }])(
+    "ignores a ship with %j",
+    (change) => {
+      expect(inBattle(PROTOTYPE, 720, withEnemy({ x: 100, y: 0 }, change))).toBe(false);
+    },
+  );
+
+  it("holds the recharge while an attacker stays close, then waits the full delay", () => {
+    const flight = withEnemy({ x: 300, y: 0 }, {});
+    // The attacker's shots barely scratch, so only battle can hold the recharge.
+    const harmless = structuredClone(PROTOTYPE);
+    harmless.tuning.flight.playerShotDamage = 1e-9;
+    flight.shield = 4;
+    flight.sinceDamage = PROTOTYPE.tuning.shieldRechargeDelay;
+    stepFlight(harmless, 3, idle, flight);
+    expect(flight.shield).toBeCloseTo(4, 3);
+    // Out of the fight, the shield waits its delay, then refills 10 HP over 60 seconds.
+    flight.objects = [];
+    flight.shots = [];
+    stepFlight(harmless, PROTOTYPE.tuning.shieldRechargeDelay - 0.1, idle, flight);
+    expect(flight.shield).toBeCloseTo(4, 3);
+    stepFlight(harmless, 0.1 + 6, idle, flight);
+    expect(flight.shield).toBeCloseTo(4 + (10 / 60) * 6, 1);
   });
 });

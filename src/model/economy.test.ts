@@ -714,20 +714,19 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 100, 1, 1, 160, 1],
-    [2, 150, 1 / 1.2, 1.25, 190, 0.9],
-    [3, 225, 1 / 1.44, 1.5625, 220, 0.8],
+    [1, 10, 20, 60, 160, 1],
+    [2, 15, 15, 45, 190, 0.9],
+    [3, 20, 10, 30, 220, 0.8],
   ])(
     "applies shield, recharge and engine level %i",
-    (level, shield, delay, rate, speed, seconds) => {
+    (level, shield, delay, fill, speed, seconds) => {
       const levels = { ...noLevels(), engine: level, shield: level };
       const tuning = shipTuning(ECONOMY, PROTOTYPE, levels);
       const base = PROTOTYPE.tuning;
-      expect(tuning.shieldMax).toBeCloseTo(shield, 9);
-      expect(tuning.shieldRechargeDelay).toBeCloseTo(base.shieldRechargeDelay * delay, 9);
-      expect(tuning.shieldRechargeRate).toBeCloseTo(base.shieldRechargeRate * rate, 9);
-      // Recharge output (rate over delay) grows about 1.5 times per level.
-      expect(rate / delay).toBeCloseTo(1.5 ** (level - 1), 9);
+      expect(tuning.shieldMax).toBe(shield);
+      expect(tuning.shieldRechargeDelay).toBe(delay);
+      // The shield refills from empty in its fill time, whatever its capacity.
+      expect(tuning.shieldMax / tuning.shieldRechargeRate).toBeCloseTo(fill, 9);
       expect(tuning.physics.maxSpeed).toBe(speed);
       expect(tuning.physics.accelerationSeconds).toBeCloseTo(
         base.physics.accelerationSeconds * seconds,
@@ -776,13 +775,15 @@ describe("upgrade effects", () => {
       },
     );
     value.objects = [];
-    expect(value.shield).toBeCloseTo(150, 9);
-    value.shield = 100;
+    expect(value.shield).toBe(15);
+    value.shield = 5;
     value.sinceDamage = 0;
-    stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay / 1.2 - 0.05, idle, value);
-    expect(value.shield).toBe(100);
-    stepFlight(PROTOTYPE, 0.1 + 1, idle, value);
-    expect(value.shield).toBeGreaterThan(100 + 18 * 1.25 * 0.9);
+    // Level 2 waits 15 s, then refills 15 HP in 45 s.
+    stepFlight(PROTOTYPE, 15 - 0.05, idle, value);
+    expect(value.shield).toBe(5);
+    stepFlight(PROTOTYPE, 0.05 + 9, idle, value);
+    // Within one 1/60 s step of the refill rate.
+    expect(Math.abs(value.shield - (5 + (15 / 45) * 9))).toBeLessThan(15 / 45 / 60 + 1e-9);
   });
 
   it("raises Ada's top speed and acceleration with engine tuning", () => {

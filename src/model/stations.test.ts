@@ -174,6 +174,7 @@ describe("station safe area", () => {
     flight.dangerFor = 2;
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "incoming",

@@ -28,11 +28,12 @@ import type {
   SpaceObject,
   UpgradeLevels,
 } from "./types.ts";
+import { shipTuning } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 4;
+export const SAVE_VERSION: GameState["version"] = 5;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -659,7 +660,9 @@ export function restoreSave(saved: unknown): GameState | null {
             vector(f.calf.velocity) &&
             typeof f.calf.following === "boolean"
           )) ||
-        !upgradeLevels(f.levels)
+        !upgradeLevels(f.levels) ||
+        // The shield never holds more than its level's capacity.
+        (f.shield as number) > shipTuning(ECONOMY, PROTOTYPE, f.levels).shieldMax
       ) {
         return null;
       }
@@ -749,7 +752,8 @@ export function restoreSave(saved: unknown): GameState | null {
             typeof s.piercing === "boolean" &&
             (s.projectile === undefined ||
               ["bolt", "missile", "dot"].includes(String(s.projectile))) &&
-            (s.enemy || (finite(s.damage) && s.damage > 0)) &&
+            finite(s.damage) &&
+            s.damage > 0 &&
             (s.blast === undefined ||
               (!s.enemy && s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
             (s.fade === undefined ||

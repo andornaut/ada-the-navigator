@@ -25,7 +25,7 @@ describe("grant all weapons", () => {
       cargo: 12345,
       fireCooldown: 0.37,
       ownedWeapons: ["multiLaser"],
-      shield: 42,
+      shield: 4.2,
       weapon: "multiLaser",
     });
     model.save();
@@ -45,7 +45,7 @@ describe("grant all weapons", () => {
       "scattershot",
       "phaser",
     ]);
-    expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 42 });
+    expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 4.2 });
     expect(flight.weapon).toBe("multiLaser");
     const serialized = model.save();
     expect(model.state.economy).toEqual(economy);
@@ -75,9 +75,10 @@ describe("grant all weapons", () => {
     grantAllWeapons(model.state);
     flight.weapon = "rapidMissile";
     model.state.economy.stardust = 30;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "hit",

@@ -203,6 +203,7 @@ describe("integrated combat", () => {
     expect(target.x).toBeGreaterThanOrEqual(290);
     expect(flight.shots).toHaveLength(0);
     flight.shots.push({
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "incoming",
@@ -708,7 +709,7 @@ describe("combat admission and subframe firing", () => {
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(1);
     stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.enemyDamage);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.hazardDamage);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(0);
   });
 

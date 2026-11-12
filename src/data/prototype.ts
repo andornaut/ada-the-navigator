@@ -565,10 +565,11 @@ export const PROTOTYPE: PrototypeContent = {
   premise: PREMISE,
   // Provisional starting values for playtesting, not fixed balance requirements.
   tuning: {
+    // The battle square reaches 424 from Ada on the 720-wide view.
+    battleMargin: 64,
     chunkSize: 512,
     dangerReleaseSeconds: 3,
     encounterFreshDistance: 600,
-    enemyDamage: 6,
     enemyProjectileSpeed: 200,
     flight: {
       arrivalCalm: 2000,
@@ -597,14 +598,15 @@ export const PROTOTYPE: PrototypeContent = {
       // instead of adding rocks or resources.
       spawnWeights: { enemy: 0.2064, pickup: 0.0136, resource: 0.4, rock: 0.38 },
     },
+    hazardDamage: 1,
     introFreshDistance: 10800,
     minSpeedFraction: 0.04,
     miningMilestones: [12, 24, 36],
     physics: SHIP_PHYSICS.ada,
     safeRadius: 160,
-    shieldMax: 100,
-    shieldRechargeDelay: 3,
-    shieldRechargeRate: 18,
+    shieldFillSeconds: 60,
+    shieldMax: 10,
+    shieldRechargeDelay: 20,
     speedCurveExponent: 2.5,
     // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
     storySpacing: 1200,
