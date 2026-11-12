@@ -752,10 +752,6 @@ describe("jobs in play", () => {
     model.state.flight!.tow = { x: 1, y: 2 };
     const saved = JSON.parse(model.save()) as ReturnType<typeof newGameState>;
     expect(restoreSave(saved)).toEqual(model.state);
-    const legacy = structuredClone(saved) as Partial<typeof saved>;
-    delete legacy.jobs;
-    delete legacy.tasks;
-    expect(restoreSave(legacy)).toMatchObject(emptyBook());
     const badLandmark = structuredClone(saved);
     badLandmark.progress[1].charted = ["landmark:1:99"];
     expect(restoreSave(badLandmark)).toBeNull();

@@ -806,23 +806,8 @@ describe("conversations in the game", () => {
     expect(resumed.conversation?.key).not.toBe("lesson:move:0");
   });
 
-  it("count what an earlier save already played as heard", () => {
-    const model = flying();
-    Object.assign(model.state.progress[1], { introduced: true, known: ["growers"], stage: 1 });
-    const state = JSON.parse(model.save()) as Record<string, unknown>;
-    delete state.seenConversations;
-    expect(restoreSave(state)?.seenConversations).toEqual([
-      "lesson:move",
-      "lesson:aim",
-      "lesson:stardust",
-      "lesson:dock",
-      "reaction:mapped",
-      "arrival:1",
-      "meeting:1:growers",
-    ]);
+  it("rejects a malformed seen-conversations list", () => {
     const fresh = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-    delete fresh.seenConversations;
-    expect(restoreSave(fresh)?.seenConversations).toEqual([]);
     expect(restoreSave({ ...fresh, seenConversations: [1] })).toBeNull();
   });
 });

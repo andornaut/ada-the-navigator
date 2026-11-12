@@ -1,9 +1,7 @@
-import { LEGACY_ASTEROIDS } from "../data/asteroid-catalog.ts";
-import { CONVERSATIONS } from "../data/conversations.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { BUILT, SECTORS, unlockedBy } from "../data/galaxies.ts";
+import { SECTORS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxy-features.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { galaxyProjects } from "../data/projects.ts";
@@ -12,10 +10,9 @@ import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
-import { newAchievements } from "./achievements.ts";
 import { validActivity } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { enemyEffects, restoreEnemyState, type SavedEnemyState } from "./enemy-ai.ts";
+import { enemyEffects } from "./enemy-ai.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
@@ -31,9 +28,8 @@ import type {
   SpaceObject,
   UpgradeLevels,
 } from "./types.ts";
-import { newEconomy } from "./upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "./visited.ts";
-import { grantedAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
+import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
 export const SAVE_VERSION: GameState["version"] = 2;
@@ -129,15 +125,11 @@ function enemyState(value: unknown): boolean {
       nonnegative(value[key]),
     ) ||
     !finite(value.phase) ||
-    !(value.facing === undefined || vector(value.facing)) ||
-    !optionalDirection(value.heading) ||
-    !optionalDirection(value.aim) ||
-    !(
-      value.escortOf === undefined ||
-      value.escortOf === null ||
-      typeof value.escortOf === "string"
-    ) ||
-    !(value.tactic === undefined || tacticState(value.tactic)) ||
+    !vector(value.facing) ||
+    !nullableVector(value.heading) ||
+    !nullableVector(value.aim) ||
+    !(value.escortOf === null || typeof value.escortOf === "string") ||
+    !tacticState(value.tactic) ||
     !Array.isArray(value.hardpoints)
   ) {
     return false;
@@ -156,73 +148,10 @@ function enemyState(value: unknown): boolean {
         nonnegative(part.cooldown) &&
         (part.burst === undefined ||
           (Number.isInteger(part.burst) && (part.burst as number) >= 0)) &&
-        optionalDirection(part.aim),
+        nullableVector(part.aim),
     )
   );
 }
-/** Retired oversized capitals' side weapons become the capital's forward turrets. */
-const LEGACY_CAPITAL_PARTS: Readonly<Record<string, string>> = {
-  port: "weapon-left",
-  starboard: "weapon-right",
-};
-/** Sorted hardpoint ids of the earlier capital and the retired oversized capital. */
-const LEGACY_CAPITAL_LAYOUTS: readonly (readonly string[])[] = [
-  ["command", "engine-left", "engine-right", "weapon-left", "weapon-right"],
-  ["center", "command", "engine-left", "engine-right", "port", "starboard"],
-];
-/**
- * Retired `oversizedCapital` enemies become capitals, and capitals saved with an earlier
- * hardpoint layout adopt the current one: matching parts keep their damage, cooldown and
- * aim, and new parts start whole.
- */
-function migrateLegacyEnemy(value: unknown): void {
-  if (!record(value) || !Array.isArray(value.hardpoints)) {
-    return;
-  }
-  if (value.archetype === "oversizedCapital") {
-    value.archetype = "capital";
-  }
-  if (value.archetype !== "capital") {
-    return;
-  }
-  const parts = enemyCatalog.capital.hardpoints;
-  const saved = (value.hardpoints as unknown[]).filter(record);
-  const ids = saved.map((entry) => String(entry.id)).sort();
-  // Only an exact earlier layout migrates; anything else is left for validation to reject.
-  if (
-    saved.length !== value.hardpoints.length ||
-    !LEGACY_CAPITAL_LAYOUTS.some(
-      (layout) => layout.length === ids.length && layout.every((id, index) => id === ids[index]),
-    )
-  ) {
-    return;
-  }
-  value.hardpoints = parts.map((part) => {
-    const match = saved.find(
-      (entry) => entry.id === part.id || LEGACY_CAPITAL_PARTS[String(entry.id)] === part.id,
-    );
-    return match ? { ...match, id: part.id } : { aim: null, cooldown: 0, hp: part.hp, id: part.id };
-  });
-}
-function migrateLegacyEnemies(value: unknown): unknown {
-  if (record(value) && record(value.flight)) {
-    const { objects, world } = value.flight;
-    for (const object of Array.isArray(objects) ? (objects as unknown[]) : []) {
-      if (record(object)) {
-        migrateLegacyEnemy(object.enemy);
-      }
-    }
-    if (record(world) && record(world.notables)) {
-      for (const object of Object.values(world.notables)) {
-        if (record(object)) {
-          migrateLegacyEnemy(object.enemy);
-        }
-      }
-    }
-  }
-  return value;
-}
-/** Behaviour state is absent from older saves. */
 function tacticState(value: unknown): boolean {
   return (
     record(value) &&
@@ -230,15 +159,9 @@ function tacticState(value: unknown): boolean {
     ["integrity", "seconds", "volleys"].every((key) => nonnegative(value[key]))
   );
 }
-/** Orientation fields are absent from older saves and null when unset. */
-function optionalDirection(value: unknown): boolean {
-  return value === undefined || value === null || vector(value);
-}
-/** Completes enemy orientation and behaviour state for older saves; validation has run. */
-function restoreOrientation(object: SpaceObject | null): void {
-  if (object?.enemy) {
-    object.enemy = restoreEnemyState(object.enemy as SavedEnemyState);
-  }
+/** An unset orientation is null. */
+function nullableVector(value: unknown): boolean {
+  return value === null || vector(value);
 }
 function combatState(
   routes: readonly string[],
@@ -446,95 +369,6 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
   );
 }
 
-/** Completes economy fields absent from older saves; validation has already run. */
-function migrateEconomy(state: GameState): void {
-  const flight = state.flight as
-    (Omit<FlightState, "ammo"> & { ammo?: AmmoCounts | number; weaponLockFor?: number }) | null;
-  if (!state.economy) {
-    state.economy = newEconomy(ECONOMY);
-    if (flight) {
-      state.economy.ownedWeapons = [...(flight.ownedWeapons ?? [])];
-      state.economy.weapon = flight.weapon;
-    }
-    state.economy.ammo = grantedAmmo(state.economy.ownedWeapons);
-  }
-  // Weapons owned before ammunition start with a new weapon's packs.
-  state.economy.ammo ??= grantedAmmo(state.economy.ownedWeapons);
-  state.docked ??= null;
-  for (const progress of Object.values(state.progress)) {
-    progress.stations ??= [];
-    progress.donated ??= {};
-    progress.charted ??= [];
-    progress.revealed ??= [];
-    progress.explored ??= [];
-  }
-  state.jobs ??= { boards: {}, made: 0 };
-  state.tasks ??= {};
-  if (flight) {
-    if (typeof flight.ammo !== "object") {
-      // Granted weapons get the same packs for the flight; they stay out of the economy.
-      flight.ammo = {
-        ...grantedAmmo(flight.grantedWeapons ?? []),
-        ...Object.fromEntries(
-          UPGRADE_WEAPONS.filter((weapon) => !flight.grantedWeapons?.includes(weapon)).map(
-            (weapon) => [weapon, state.economy.ammo[weapon]],
-          ),
-        ),
-      };
-    }
-    flight.levels ??= structuredClone(state.economy.levels);
-    delete flight.weaponLockFor;
-    flight.weaponSwitchFor ??= 0;
-    delete (flight as { dockId?: unknown }).dockId;
-  }
-}
-/** Saves from before the prologue skip it once any story or flight has begun. */
-function pastStart(state: GameState): boolean {
-  return (
-    state.mode === "space" ||
-    state.flight !== null ||
-    state.unlocked.length > 1 ||
-    Object.values(state.progress).some(begun)
-  );
-}
-/** Whether a chapter's space story has begun. */
-function begun(p: GameState["progress"][1]): boolean {
-  return p.stage > 0 || p.introduced || p.questComplete || p.resolved || p.known.length > 0;
-}
-/**
- * Saves from before conversations count what was already played as heard: the first flight's
- * lessons once past the start, each begun galaxy's arrival, each known group's meeting and, with
- * anything mapped, the mapped reaction.
- */
-function playedConversations(state: GameState): string[] {
-  const heard = new Set<string>();
-  if (pastStart(state)) {
-    for (const lesson of ["move", "aim", "stardust", "dock"]) {
-      heard.add(`lesson:${lesson}`);
-    }
-  }
-  for (const id of [1, 2, 3] as const) {
-    const p = state.progress[id];
-    if (p.stage > 0 || p.introduced || p.resolved || p.known.length > 0) {
-      heard.add(`arrival:${id}`);
-    }
-    for (const known of p.known) {
-      heard.add(`meeting:${id}:${known}`);
-    }
-    if (p.known.length > 0 || (p.stations ?? []).length > 0) {
-      heard.add("reaction:mapped");
-    }
-  }
-  return CONVERSATIONS.flatMap((conversation) =>
-    heard.has(conversation.id) ? [conversation.id] : [],
-  );
-}
-/** Saves from before the announcement announce a later galaxy unlocked but not yet begun. */
-function unvisitedUnlock(state: GameState): boolean {
-  const latest = Math.max(...state.unlocked) as SectorId;
-  const p = state.progress[latest];
-  return latest > 1 && p.stage === 0 && !p.introduced && !p.resolved && p.known.length === 0;
-}
 /** Levels run from 1, the base, to one more than the number of priced levels. */
 function boundedLevel(value: unknown, prices: number): boolean {
   return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= prices + 1;
@@ -566,118 +400,6 @@ function upgradeLevels(value: unknown): value is UpgradeLevels {
   );
 }
 
-/*
- * CLEANUP (added 2026-11-11): converts saves from before the five-weapon roster. Remove once
- * every stored save has been loaded and rewritten by a build with this migration.
- */
-const LEGACY_WEAPONS: Readonly<Record<string, string>> = {
-  missiles: "rapidMissile",
-  tripleLaser: "multiLaser",
-};
-const legacyWeapon = (value: unknown) =>
-  typeof value === "string" ? (LEGACY_WEAPONS[value] ?? value) : value;
-const legacyWeapons = (value: unknown) => (Array.isArray(value) ? value.map(legacyWeapon) : value);
-/** Bought levels 0 to 3 become levels 1 to 3: 0 is 1, 1 and 2 are 2, and 3 is 3. */
-const legacyLevel = (value: unknown) =>
-  typeof value === "number" ? Math.min(3, value === 0 ? 1 : value <= 2 ? 2 : 3) : value;
-
-function migrateLegacyLevels(levels: unknown): void {
-  if (!record(levels) || !record(levels.weapons)) {
-    return;
-  }
-  const weapons = levels.weapons;
-  if (!Object.hasOwn(weapons, "missiles") && !Object.hasOwn(weapons, "tripleLaser")) {
-    return;
-  }
-  levels.weapons = {
-    basic: legacyLevel(weapons.basic),
-    heavyMissile: 1,
-    multiLaser: legacyLevel(weapons.tripleLaser),
-    phaser: 1,
-    rapidMissile: legacyLevel(weapons.missiles),
-    scattershot: legacyLevel(weapons.scattershot),
-  };
-  for (const track of ["engine", "shield", "shieldRecharge"]) {
-    levels[track] = legacyLevel(levels[track]);
-  }
-  // The tractor had two bought levels, which become levels 2 and 3.
-  if (typeof levels.tractor === "number") {
-    levels.tractor = levels.tractor + 1;
-  }
-}
-
-function migrateLegacyObjects(objects: unknown): void {
-  for (const object of Array.isArray(objects)
-    ? objects
-    : Object.values(record(objects) ? objects : {})) {
-    if (record(object) && object.weapon !== undefined) {
-      object.weapon = legacyWeapon(object.weapon);
-    }
-    // A placeholder rock becomes the Art rock it was drawn as, at that rock's footprint radius.
-    const rock = record(object) && typeof object.asteroid === "string" ? object : undefined;
-    const art = rock ? LEGACY_ASTEROIDS[rock.asteroid as string] : undefined;
-    if (rock && art) {
-      rock.asteroid = art;
-      rock.radius = ASTEROID_SHAPES.get(art)!.radius;
-    }
-  }
-}
-
-/** Renames Missiles and Triple Laser and maps bought levels onto levels 1 to 3, in place. */
-/**
- * CLEANUP (added 2026-11-11): deliveries once reached story destinations that take none, such
- * as the whale family. Such a held delivery is dropped, freeing its slot as Drop would, and such
- * board offers leave their boards to be made again; the rest of the save loads. Remove once saves
- * holding them have converged.
- */
-function dropStoryDeliveries(value: Record<string, unknown>): void {
-  const storyDelivery = (job: unknown): boolean =>
-    record(job) &&
-    job.type === "delivery" &&
-    record(job.target) &&
-    typeof job.target.id === "string" &&
-    !job.target.id.startsWith("station:") &&
-    !deliveryDestination(job.target.id);
-  if (record(value.tasks)) {
-    for (const [sector, task] of Object.entries(value.tasks)) {
-      if (record(task) && task.kind === "job" && storyDelivery(task)) {
-        delete value.tasks[sector];
-      }
-    }
-  }
-  const boards = record(value.jobs) ? value.jobs.boards : undefined;
-  if (record(boards)) {
-    for (const stations of Object.values(boards)) {
-      if (!record(stations)) {
-        continue;
-      }
-      for (const [station, offers] of Object.entries(stations)) {
-        if (Array.isArray(offers)) {
-          stations[station] = offers.filter((offer) => !storyDelivery(offer));
-        }
-      }
-    }
-  }
-}
-function migrateLegacyWeapons(value: Record<string, unknown>): void {
-  for (const holder of [value.economy, value.flight]) {
-    if (!record(holder)) {
-      continue;
-    }
-    holder.weapon = legacyWeapon(holder.weapon);
-    holder.ownedWeapons = legacyWeapons(holder.ownedWeapons);
-    if (holder.grantedWeapons !== undefined) {
-      holder.grantedWeapons = legacyWeapons(holder.grantedWeapons);
-    }
-    migrateLegacyLevels(holder.levels);
-  }
-  if (record(value.flight)) {
-    migrateLegacyObjects(value.flight.objects);
-    if (record(value.flight.world)) {
-      migrateLegacyObjects(value.flight.world.notables);
-    }
-  }
-}
 function economyState(value: unknown): value is EconomyState {
   return (
     record(value) &&
@@ -686,7 +408,7 @@ function economyState(value: unknown): value is EconomyState {
     Object.hasOwn(WEAPON_CATALOG, String(value.weapon)) &&
     weaponOwnership(value.ownedWeapons, value.weapon) &&
     upgradeLevels(value.levels) &&
-    (value.ammo === undefined || ammoCounts(value.ammo)) &&
+    ammoCounts(value.ammo) &&
     strings(value.paints) &&
     Array.isArray(value.paints) &&
     new Set(value.paints).size === value.paints.length &&
@@ -821,23 +543,13 @@ function optionalTasks(value: unknown): boolean {
 }
 
 /**
- * Accept only complete snapshots; a partial restore can invalidate quest state. Saves
- * from before the economy gain an empty economy (or their flight's weapons), no
- * discovered stations and no switch wait; their unused ammunition count and weapon lock
- * timer are dropped.
- * Saves from before the prologue count it as seen once play has begun, and saves from before
- * holodisks count the holodisks of galaxies before the last unlocked one as recovered. A later
- * galaxy unlocked but not begun is announced at the next boarding.
+ * Restores a complete snapshot of the current save version, or null. A save of any other
+ * version, or one with a missing or malformed field, is rejected whole: a partial restore can
+ * invalidate quest state. The result shares no references with `saved`.
  */
 export function restoreSave(saved: unknown): GameState | null {
   try {
-    const value: unknown = migrateLegacyEnemies(
-      typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved),
-    );
-    if (record(value)) {
-      migrateLegacyWeapons(value);
-      dropStoryDeliveries(value);
-    }
+    const value: unknown = typeof saved === "string" ? JSON.parse(saved) : structuredClone(saved);
     if (
       !record(value) ||
       value.version !== SAVE_VERSION ||
@@ -846,13 +558,6 @@ export function restoreSave(saved: unknown): GameState | null {
       !record(value.progress)
     ) {
       return null;
-    }
-    // A save from before the placeholder galaxies has no progress for them yet; every built
-    // galaxy's progress must be there.
-    for (const id of SECTORS) {
-      if (!BUILT.has(id)) {
-        value.progress[id] ??= newProgress();
-      }
     }
     if (
       !Array.isArray(value.unlocked) ||
@@ -864,11 +569,11 @@ export function restoreSave(saved: unknown): GameState | null {
     }
     if (
       typeof value.notice !== "string" ||
-      (value.prologueSeen !== undefined && typeof value.prologueSeen !== "boolean") ||
-      (value.announceGalaxy !== undefined && typeof value.announceGalaxy !== "boolean") ||
-      (value.started !== undefined && typeof value.started !== "boolean") ||
-      (value.seenConversations !== undefined && !strings(value.seenConversations)) ||
-      (value.achievements !== undefined && !achievementState(value.achievements))
+      !["prologueSeen", "announceGalaxy", "started"].every(
+        (key) => typeof value[key] === "boolean",
+      ) ||
+      !strings(value.seenConversations) ||
+      !achievementState(value.achievements)
     ) {
       return null;
     }
@@ -889,13 +594,12 @@ export function restoreSave(saved: unknown): GameState | null {
       if (
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
-        (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
-        (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
-        (p.charted !== undefined && !chartedIds(id as SectorId, p.charted)) ||
-        (p.revealed !== undefined && !revealedProjects(id as SectorId, p.donated, p.revealed)) ||
-        (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
-        (p.holodisk !== undefined && typeof p.holodisk !== "boolean") ||
-        (p.opened !== undefined && typeof p.opened !== "boolean") ||
+        !["holodisk", "opened"].every((k) => typeof p[k] === "boolean") ||
+        !stationIds(id as SectorId, p.stations) ||
+        !donations(id as SectorId, p.donated) ||
+        !chartedIds(id as SectorId, p.charted) ||
+        !revealedProjects(id as SectorId, p.donated, p.revealed) ||
+        !validExplored(PROTOTYPE.tuning.chunkSize, p.explored) ||
         (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
         (p.replayScene !== undefined &&
           !(
@@ -906,19 +610,11 @@ export function restoreSave(saved: unknown): GameState | null {
         return null;
       }
     }
-    if (value.economy !== undefined && !economyState(value.economy)) {
-      return null;
-    }
     if (
-      (value.jobs !== undefined && !jobsState(value.jobs)) ||
-      (value.tasks !== undefined && !optionalTasks(value.tasks))
-    ) {
-      return null;
-    }
-    if (
-      value.docked !== undefined &&
-      value.docked !== null &&
-      (typeof value.docked !== "string" || value.mode !== "space")
+      !economyState(value.economy) ||
+      !jobsState(value.jobs) ||
+      !optionalTasks(value.tasks) ||
+      !(value.docked === null || (typeof value.docked === "string" && value.mode === "space"))
     ) {
       return null;
     }
@@ -951,11 +647,10 @@ export function restoreSave(saved: unknown): GameState | null {
           "fireCooldown",
           "freshDistance",
           "nextId",
+          "weaponSwitchFor",
         ].every((k) => nonnegative(f[k])) ||
-        // Before per-weapon ammunition, a flight kept one unused ammunition count.
-        (f.ammo !== undefined && !nonnegative(f.ammo) && !ammoCounts(f.ammo)) ||
-        (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
-        (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
+        !ammoCounts(f.ammo) ||
+        !(f.dockId === null || typeof f.dockId === "string") ||
         (f.tow !== undefined && !vector(f.tow)) ||
         (f.calf !== undefined &&
           !(
@@ -964,7 +659,7 @@ export function restoreSave(saved: unknown): GameState | null {
             vector(f.calf.velocity) &&
             typeof f.calf.following === "boolean"
           )) ||
-        (f.levels !== undefined && !upgradeLevels(f.levels))
+        !upgradeLevels(f.levels)
       ) {
         return null;
       }
@@ -1080,65 +775,7 @@ export function restoreSave(saved: unknown): GameState | null {
     if (value.mode === "space" && value.flight === null) {
       return null;
     }
-    const restored = structuredClone(value) as unknown as GameState;
-    migrateEconomy(restored);
-    // Galaxies unlocked before holodisks count each earlier galaxy's holodisk as recovered.
-    for (const id of [1, 2, 3] as const) {
-      const p = restored.progress[id] as Partial<GameState["progress"][1]>;
-      if (typeof p.holodisk !== "boolean") {
-        p.holodisk = restored.unlocked.some((unlocked) => unlocked > id);
-      }
-      // A chapter begun before storybook scenes has seen its opening.
-      if (typeof p.opened !== "boolean") {
-        p.opened = begun(p as GameState["progress"][1]);
-      }
-    }
-    if (typeof value.started !== "boolean") {
-      restored.started = pastStart(restored);
-    }
-    // Home panels from before storybook scenes are rebuilt from story progress.
-    if (restored.mode === "home") {
-      restored.dialogue = null;
-    }
-    if (typeof value.prologueSeen !== "boolean") {
-      restored.prologueSeen = pastStart(restored);
-    }
-    if (typeof value.announceGalaxy !== "boolean") {
-      restored.announceGalaxy = unvisitedUnlock(restored);
-    }
-    if (!Array.isArray(value.seenConversations)) {
-      restored.seenConversations = playedConversations(restored);
-    }
-    // Each completed galaxy keeps what it unlocks along the route, so a save from before the
-    // route also holds the galaxies after it; every stored unlock stays.
-    for (const id of SECTORS) {
-      const p = restored.progress[id];
-      if (p.holodisk && p.questComplete && p.resolved) {
-        for (const next of unlockedBy(id)) {
-          if (!restored.unlocked.includes(next)) {
-            restored.unlocked.push(next);
-          }
-        }
-      }
-    }
-    // CLEANUP (added 2026-11-11): saves from before achievements start with their charted
-    // landmarks and funded projects counted, and the model unlocks what they reached. Remove once
-    // no save from before achievements remains in play.
-    if (value.achievements === undefined) {
-      restored.achievements = newAchievements();
-      for (const sector of [1, 2, 3] as const) {
-        const progress = restored.progress[sector];
-        restored.achievements.charted[sector] = [...progress.charted];
-        restored.achievements.projects.push(
-          ...fundedProjects(galaxyProjects(sector), progress).map(({ id }) => id),
-        );
-      }
-    }
-    if (restored.flight) {
-      restored.flight.objects.forEach(restoreOrientation);
-      Object.values(restored.flight.world.notables).forEach(restoreOrientation);
-    }
-    return restored;
+    return value as unknown as GameState;
   } catch {
     return null;
   }

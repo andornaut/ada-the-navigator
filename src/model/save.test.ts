@@ -40,6 +40,46 @@ describe("save boundary", () => {
     expect(restoreSave("{broken")).toBeNull();
     expect(relaunch(PROTOTYPE, "{broken").state.mode).toBe("home");
   });
+  it.each(
+    [
+      ...[
+        "economy",
+        "jobs",
+        "tasks",
+        "docked",
+        "achievements",
+        "started",
+        "prologueSeen",
+        "announceGalaxy",
+        "seenConversations",
+      ].map((key) => [key]),
+      ...["stations", "holodisk", "opened", "donated", "charted", "revealed", "explored"].map(
+        (key) => ["progress", "1", key],
+      ),
+      ["progress", "4"],
+      ["economy", "ammo"],
+      ...["levels", "ammo", "weaponSwitchFor", "dockId"].map((key) => ["flight", key]),
+    ].map((path) => [path.join("."), path] as const),
+  )("rejects a save without %s", (_, path) => {
+    const model = new GameModel(PROTOTYPE);
+    model.startSector(1);
+    playOpening(model);
+    const saved = JSON.parse(model.save()) as Record<string, unknown>;
+    expect(restoreSave(saved)).not.toBeNull();
+    const parent = path
+      .slice(0, -1)
+      .reduce((node, key) => (node as Record<string, unknown>)[key], saved as unknown);
+    Reflect.deleteProperty(parent as object, path.at(-1)!);
+    expect(restoreSave(saved)).toBeNull();
+  });
+  it("rejects a flight's single ammunition count", () => {
+    const model = new GameModel(PROTOTYPE);
+    model.startSector(1);
+    playOpening(model);
+    const saved = JSON.parse(model.save()) as { flight: Record<string, unknown> };
+    saved.flight.ammo = 7;
+    expect(restoreSave(saved)).toBeNull();
+  });
   it("tolerates blocked storage reads and writes", () => {
     const storage = {
       getItem() {
@@ -343,68 +383,16 @@ function notableSnapshot(): GameState & { flight: FlightState } {
   };
 }
 
-describe("retired capital layouts", () => {
-  const legacy = (archetype: string, hardpoints: [string, number, number][]) => {
+describe("enemy behaviour save boundary", () => {
+  it("roundtrips behaviour, escort, disabled and salvaged state exactly", () => {
     const snapshot = combatSnapshot();
     Object.assign(snapshot.flight.objects[0]!.enemy!, {
-      archetype,
-      hardpoints: hardpoints.map(([id, hp, cooldown]) => ({ aim: null, cooldown, hp, id })),
+      disabled: true,
+      escortOf: "capital",
+      salvaged: true,
+      tactic: { integrity: 3, phase: "retreat", seconds: 0.4, volleys: 0 },
     });
-    return snapshot;
-  };
-  const parts = (snapshot: unknown) =>
-    restoreSave(JSON.stringify(snapshot))!.flight!.objects[0]!.enemy!.hardpoints.map(
-      ({ cooldown, hp, id }) => [id, hp, cooldown],
-    );
-
-  it("moves an earlier capital onto the current layout, keeping its damage", () => {
-    const snapshot = legacy("capital", [
-      ["command", 5, 0],
-      ["engine-left", 0, 0],
-      ["engine-right", 4, 0],
-      ["weapon-left", 2, 0.3],
-      ["weapon-right", 3, 1.7],
-    ]);
-    expect(parts(snapshot)).toEqual([
-      ["command", 5, 0],
-      ["engine-left", 0, 0],
-      ["engine-right", 4, 0],
-      ["weapon-left", 2, 0.3],
-      ["weapon-right", 3, 1.7],
-      ["weapon-rear-left", 3, 0],
-      ["weapon-rear-right", 3, 0],
-    ]);
-  });
-
-  it("turns a retired oversized capital into a capital", () => {
-    const snapshot = legacy("oversizedCapital", [
-      ["command", 4, 0],
-      ["engine-left", 4, 0],
-      ["engine-right", 0, 0],
-      ["port", 1, 0.5],
-      ["center", 0, 0],
-      ["starboard", 3, 0],
-    ]);
-    const restored = restoreSave(JSON.stringify(snapshot))!;
-    expect(restored.flight!.objects[0]!.enemy!.archetype).toBe("capital");
-    expect(parts(snapshot)).toEqual([
-      ["command", 4, 0],
-      ["engine-left", 4, 0],
-      ["engine-right", 0, 0],
-      ["weapon-left", 1, 0.5],
-      ["weapon-right", 3, 0],
-      ["weapon-rear-left", 3, 0],
-      ["weapon-rear-right", 3, 0],
-    ]);
-  });
-
-  it("still rejects an unknown capital layout", () => {
-    const snapshot = legacy("capital", [
-      ["command", 5, 0],
-      ["engine-left", 4, 0],
-      ["mystery", 3, 0],
-    ]);
-    expect(restoreSave(snapshot)).toBeNull();
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 
   it.each([{ tactic: { integrity: 1, phase: "orbit", seconds: 0, volleys: 0 } }, { escortOf: 5 }])(
@@ -427,39 +415,25 @@ describe("enemy orientation save boundary", () => {
     enemy.hardpoints[3]!.aim = { x: 1, y: 0 };
     return snapshot;
   }
-  const strip = (enemy: object) => {
-    for (const key of ["facing", "heading", "aim"]) {
-      Reflect.deleteProperty(enemy, key);
-    }
-    for (const part of (enemy as { hardpoints: object[] }).hardpoints) {
-      Reflect.deleteProperty(part, "aim");
-    }
-  };
 
   it("roundtrips hull facing, movement heading and weapon aims exactly", () => {
     const snapshot = oriented();
     expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 
-  it("starts older saves facing their velocity with unset heading and aims", () => {
-    const snapshot = oriented();
-    strip(snapshot.flight.objects[0]!.enemy!);
-    const enemy = restoreSave(JSON.stringify(snapshot))!.flight!.objects[0]!.enemy!;
-    const speed = Math.hypot(-4, 12);
-    expect(enemy.facing.x).toBeCloseTo(-4 / speed, 12);
-    expect(enemy.facing.y).toBeCloseTo(12 / speed, 12);
-    expect(enemy.heading).toBeNull();
-    expect(enemy.aim).toBeNull();
-    expect(enemy.hardpoints.every((part) => part.aim === null)).toBe(true);
-  });
+  it.each(["facing", "heading", "aim", "escortOf", "tactic"])(
+    "rejects an enemy without %s",
+    (key) => {
+      const snapshot = oriented();
+      Reflect.deleteProperty(snapshot.flight.objects[0]!.enemy!, key);
+      expect(restoreSave(JSON.stringify(snapshot))).toBeNull();
+    },
+  );
 
-  it("starts stopped older saves facing up, including inactive notables", () => {
-    const snapshot = notableSnapshot();
-    const notable = snapshot.flight.world.notables.guard!.enemy!;
-    notable.velocity = { x: 0, y: 0 };
-    strip(notable);
-    const restored = restoreSave(JSON.stringify(snapshot))!;
-    expect(restored.flight!.world.notables.guard!.enemy!.facing).toEqual({ x: 0, y: -1 });
+  it("rejects a hardpoint without an aim", () => {
+    const snapshot = oriented();
+    Reflect.deleteProperty(snapshot.flight.objects[0]!.enemy!.hardpoints[3]!, "aim");
+    expect(restoreSave(JSON.stringify(snapshot))).toBeNull();
   });
 
   it.each([{ facing: { x: NaN, y: 0 } }, { facing: null }, { heading: {} }, { aim: "east" }])(
@@ -479,27 +453,27 @@ describe("enemy orientation save boundary", () => {
 });
 
 describe("asteroid save boundary", () => {
-  it("restores a placeholder rock as the Art rock it was drawn as, at that rock's radius", () => {
+  it("keeps an Art rock and rejects a rock shape outside Art's catalog", () => {
     const model = new GameModel(PROTOTYPE);
     model.startSector(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
-    const legacy: SpaceObject = {
-      asteroid: "placeholder-huge-1",
+    const base = saved.flight!.objects;
+    const rock: SpaceObject = {
+      asteroid: "asteroid-h2",
       hp: 16,
       id: "chunk:9,9:feature",
       kind: "rock",
-      radius: 92.5,
+      radius: 99.5,
       x: 4800,
       y: 4800,
     };
-    saved.flight!.objects = [...saved.flight!.objects, legacy];
-    const restored = restoreSave(JSON.stringify(saved));
-    const rock = restored?.flight?.objects.find((object) => object.id === legacy.id);
-    expect(rock).toEqual({ ...legacy, asteroid: "asteroid-h2", radius: 99.5 });
-    // An id that is neither current nor legacy still rejects the save.
-    saved.flight!.objects = [...saved.flight!.objects.slice(0, -1), { ...legacy, asteroid: "x" }];
-    expect(restoreSave(JSON.stringify(saved))).toBeNull();
+    saved.flight!.objects = [...base, rock];
+    expect(restoreSave(JSON.stringify(saved))!.flight!.objects.at(-1)).toEqual(rock);
+    for (const asteroid of ["placeholder-huge-1", "x"]) {
+      saved.flight!.objects = [...base, { ...rock, asteroid }];
+      expect(restoreSave(JSON.stringify(saved))).toBeNull();
+    }
   });
 
   it("keeps whale debris stone shapes and resource rock classes, rejecting misplaced ones", () => {
@@ -691,9 +665,8 @@ describe("current generation save boundary", () => {
   });
 });
 
-// CLEANUP (added 2026-11-11): remove with the save loader's story-delivery drop.
-describe("deliveries to story places in older saves", () => {
-  it("drops a held delivery or board offer to a story place that takes none, keeping the save", () => {
+describe("delivery save boundary", () => {
+  it("rejects a held delivery or board offer to a story place that takes none", () => {
     const model = new GameModel(PROTOTYPE);
     model.state.unlocked = [1, 2, 3];
     model.startSector(3);
@@ -709,21 +682,19 @@ describe("deliveries to story places in older saves", () => {
       type: "delivery" as const,
     });
     const saved = JSON.parse(model.save()) as GameState;
-    // The older shape: a held delivery to the whale family, and one on offer to the whale.
-    saved.tasks[3] = { ...job("job:7", "family"), carrying: true, kind: "job" };
-    saved.jobs.boards[3] = { [station.id]: [job("job:8", "whale"), job("job:9", "family")] };
-    saved.economy.stardust = 123;
-    const restored = restoreSave(JSON.stringify(saved));
-    expect(restored).not.toBeNull();
-    expect(restored!.tasks[3]).toBeUndefined();
-    expect(restored!.jobs.boards[3]![station.id]).toEqual([]);
-    expect(restored!.economy.stardust).toBe(123);
-    // A delivery to a station still loads as it was.
-    const kept = structuredClone(saved);
     const other = stationsNear(ECONOMY, 3, 40_000, { x: 0, y: 0 })[1]!;
+    // A delivery to a station loads as it was.
+    const kept = structuredClone(saved);
     kept.tasks[3] = { ...job("job:7", other.id), carrying: true, kind: "job" };
-    kept.jobs.boards[3] = {};
-    expect(restoreSave(JSON.stringify(kept))!.tasks[3]).toMatchObject({ target: { id: other.id } });
+    kept.jobs.boards[3] = { [station.id]: [job("job:8", other.id)] };
+    expect(restoreSave(JSON.stringify(kept))).toEqual(kept);
+    // The whale family and the whale take no deliveries.
+    const held = structuredClone(saved);
+    held.tasks[3] = { ...job("job:7", "family"), carrying: true, kind: "job" };
+    expect(restoreSave(JSON.stringify(held))).toBeNull();
+    const offered = structuredClone(saved);
+    offered.jobs.boards[3] = { [station.id]: [job("job:8", "whale")] };
+    expect(restoreSave(JSON.stringify(offered))).toBeNull();
   });
 });
 

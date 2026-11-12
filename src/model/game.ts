@@ -372,7 +372,7 @@ export class GameModel {
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
-    // A save from before achievements unlocks what it already reached, without notices.
+    // Achievements the save already reached unlock without notices.
     unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
     this.talk = new ConversationDirector(
       [...CONVERSATIONS, ...PROJECT_THANKS],

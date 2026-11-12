@@ -299,7 +299,7 @@ export interface GameState {
   docked: string | null;
   economy: EconomyState;
   notice: string;
-  /** The prologue plays once; saves already past the start count it as seen. */
+  /** The prologue plays once. */
   prologueSeen: boolean;
   /** Astra announces a newly unlocked galaxy once, at the next boarding. */
   announceGalaxy: boolean;

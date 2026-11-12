@@ -581,29 +581,6 @@ describe("start flow", () => {
 });
 
 describe("storybook save", () => {
-  it("migrates opened and started from story progress and drops old home panels", () => {
-    const legacy = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-    delete legacy.started;
-    const progress = legacy.progress as Record<string, Record<string, unknown>>;
-    for (const id of ["1", "2", "3"]) {
-      delete progress[id]!.opened;
-    }
-    progress["1"]!.stage = 2;
-    legacy.unlocked = [1, 2];
-    legacy.dialogue = { choices: [], context: "opening", text: "x", title: "y" };
-    const restored = restoreSave(legacy)!;
-    expect([1, 2, 3].map((id) => restored.progress[id as SectorId].opened)).toEqual([
-      true,
-      false,
-      false,
-    ]);
-    expect(restored.started).toBe(true);
-    expect(restored.dialogue).toBeNull();
-    const fresh = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-    delete fresh.started;
-    expect(restoreSave(fresh)?.started).toBe(false);
-  });
-
   it("rejects malformed flags", () => {
     const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     expect(restoreSave({ ...state, started: "yes" })).toBeNull();

@@ -145,19 +145,6 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
-/** Saved enemy state; older saves lack orientation, aim, escort and behaviour state. */
-export type SavedEnemyState = Omit<
-  EnemyState,
-  "aim" | "escortOf" | "facing" | "hardpoints" | "heading" | "tactic"
-> & {
-  aim?: Point | null;
-  escortOf?: string | null;
-  facing?: Point;
-  hardpoints: (Omit<HardpointState, "aim"> & { aim?: Point | null })[];
-  heading?: Point | null;
-  tactic?: TacticState;
-};
-
 /** Hull plus hardpoint hp; a drop between steps means the ship was hit. */
 export function enemyIntegrity(state: Pick<EnemyState, "hardpoints" | "hp">): number {
   return state.hardpoints.reduce((sum, part) => sum + part.hp, state.hp);
@@ -169,34 +156,6 @@ const freshTactic = (integrity: number): TacticState => ({
   seconds: 0,
   volleys: 0,
 });
-
-/** Keeps a saved unit vector bit-for-bit so restored simulation stays deterministic. */
-const savedDirection = (value: Point | null | undefined): Point | null => {
-  if (!value || !magnitude(value)) {
-    return null;
-  }
-  return Math.abs(magnitude(value) - 1) <= 1e-9 ? { ...value } : direction(value);
-};
-
-/**
- * Completes state from a save: a missing facing starts from the velocity direction, or up
- * when stopped; a missing heading or aim starts unset; a missing escort is none; a missing
- * behaviour state starts a fresh attack at the saved hp.
- */
-export function restoreEnemyState(saved: SavedEnemyState): EnemyState {
-  const hardpoints = saved.hardpoints.map((part) => ({ ...part, aim: savedDirection(part.aim) }));
-  return {
-    ...saved,
-    aim: savedDirection(saved.aim),
-    escortOf: saved.escortOf ?? null,
-    facing: savedDirection(saved.facing) ?? savedDirection(saved.velocity) ?? { ...UP },
-    hardpoints,
-    heading: savedDirection(saved.heading),
-    tactic: saved.tactic
-      ? { ...saved.tactic }
-      : freshTactic(enemyIntegrity({ hardpoints, hp: saved.hp })),
-  };
-}
 
 export function enemyEffects(definition: EnemyDefinition, state: EnemyState): EnemyEffects {
   const disabledHardpoints = definition.hardpoints

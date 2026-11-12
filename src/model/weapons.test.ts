@@ -190,9 +190,10 @@ describe("owned upgrade weapons", () => {
       snapshot.flight.ownedWeapons = ownedWeapons;
       expect(restoreSave(snapshot)).toBeNull();
     }
-    const legacy = JSON.parse(model.save()) as { flight: { ownedWeapons?: unknown } };
-    delete legacy.flight.ownedWeapons;
-    expect(restoreSave(legacy)).not.toBeNull();
+    // A flight's own roster is optional.
+    const unowned = JSON.parse(model.save()) as { flight: { ownedWeapons?: unknown } };
+    delete unowned.flight.ownedWeapons;
+    expect(restoreSave(unowned)).not.toBeNull();
   });
 
   it("rejects selection outside live flight and during dialogue", () => {

@@ -13,11 +13,8 @@ import {
   damageEnemy,
   type EnemyContext,
   enemyEffects,
-  enemyIntegrity,
   type EnemyState,
   hardpointOffset,
-  restoreEnemyState,
-  type SavedEnemyState,
   stepEnemy,
 } from "./enemy-ai.ts";
 import { encounterSpacing, hostsEncounterCell } from "./flight.ts";
@@ -372,41 +369,6 @@ describe("galaxy difficulty", () => {
     expect(Math.min(...gaps) * PROTOTYPE.tuning.chunkSize).toBeGreaterThanOrEqual(
       encounterQuiet(1).distance,
     );
-  });
-});
-
-describe("behaviour state saves", () => {
-  it("gives an older saved enemy a fresh attack and no escort", () => {
-    const state = damageEnemy(
-      enemyCatalog.capital,
-      { amount: 2, hardpointId: "weapon-left" },
-      spawn("capital", { x: 10, y: 20 }),
-    );
-    const saved: SavedEnemyState = structuredClone(state);
-    delete saved.tactic;
-    delete saved.escortOf;
-    const restored = restoreEnemyState(saved);
-    expect(restored.escortOf).toBeNull();
-    expect(restored.tactic).toEqual({
-      integrity: enemyIntegrity(state),
-      phase: "attack",
-      seconds: 0,
-      volleys: 0,
-    });
-    // A fresh attack does not count the earlier damage as a new hit.
-    const next = stepEnemy(enemyCatalog.capital, context([restored]), restored);
-    expect(next.state.tactic.phase).toBe("attack");
-  });
-
-  it("keeps saved behaviour, escort, disabled and salvaged state exactly", () => {
-    const state = {
-      ...spawn("fighter", { x: 0, y: 0 }),
-      disabled: true,
-      escortOf: "capital",
-      salvaged: true,
-      tactic: { integrity: 3, phase: "retreat" as const, seconds: 0.4, volleys: 0 },
-    };
-    expect(restoreEnemyState(JSON.parse(JSON.stringify(state)) as SavedEnemyState)).toEqual(state);
   });
 });
 
