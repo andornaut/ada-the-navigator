@@ -12,6 +12,12 @@ export interface Contact {
 
 /** Screen px past an edge that tells a seam from the outline, where the next part continues. */
 const SEAM_STEP = 1.5;
+/**
+ * Screen px just past an edge, below the least screen distance of a scenery push's 0.01 world
+ * margin (0.01 * sqrt(0.5)): a part thinner than SEAM_STEP that abuts the edge holds this point,
+ * so the edge is a seam, and a part thinner than it the push clears.
+ */
+const SEAM_SKIN = 0.005;
 
 /** A world offset on the screen: the play view's projection (x - y, (x + y) / 2). */
 export function toScreen(offset: Vec): Vec {
@@ -113,7 +119,8 @@ export function partContact(part: readonly Vec[], center: Vec, radius: number): 
 /**
  * A circle against the union of convex parts that overlap at their seams. Outside the union the
  * nearest part decides. Inside it, the circle leaves through the nearest outer edge: an edge
- * point whose outward step lands in another part is a seam, not the outline.
+ * point whose outward step, SEAM_STEP or SEAM_SKIN, lands in another part is a seam, not the
+ * outline.
  */
 export function unionContact(parts: Parts, center: Vec, radius: number): Contact | null {
   const container = parts.find((part) => inside(part, center));
@@ -152,8 +159,11 @@ export function unionContact(parts: Parts, center: Vec, radius: number): Contact
     if (normal.x * (at.x - centroid.x) + normal.y * (at.y - centroid.y) < 0) {
       normal = { x: -normal.x, y: -normal.y };
     }
-    const step = { x: at.x + normal.x * SEAM_STEP, y: at.y + normal.y * SEAM_STEP };
-    if (parts.some((other) => other !== part && inside(other, step))) {
+    const steps = [SEAM_STEP, SEAM_SKIN].map((step) => ({
+      x: at.x + normal.x * step,
+      y: at.y + normal.y * step,
+    }));
+    if (parts.some((other) => other !== part && steps.some((step) => inside(other, step)))) {
       continue;
     }
     const exit = gap > 1e-9 ? { x: (at.x - center.x) / gap, y: (at.y - center.y) / gap } : normal;

@@ -616,6 +616,29 @@ describe("asteroids in flight", () => {
     expect(sized?.hp).toBe(ASTEROID_FIELDS[1]!.hp.large);
   });
 
+  it("pushes Ada clear where a thin part of a rock's outline abuts another part's edge", () => {
+    // At this pose the drawn ship's nearest exit from asteroid-l1 is an edge a part thinner than
+    // the seam step abuts.
+    const { flight, model } = launched();
+    const large = shapes.find((shape) => shape.id === "asteroid-l1")!;
+    const wall = rock("wall:head-on", {
+      asteroid: large.id,
+      radius: large.radius,
+      x: 118.28,
+      y: 0,
+    });
+    flight.objects = flight.objects.filter((object) =>
+      ["destination", "station"].includes(object.kind),
+    );
+    flight.objects.push(wall);
+    flight.player = { x: 95.43479126684977, y: 62.90891625571114 };
+    flight.facing = { x: 0.7435111334382136, y: 0.6687235560778632 };
+    flight.velocity = { x: 0, y: 0 };
+    expect(sceneryBodyContact(wall, flight.player, shipBody(flight.facing))).not.toBeNull();
+    model.step(1 / 60, idle);
+    expect(sceneryBodyContact(wall, flight.player, shipBody(flight.facing))).toBeNull();
+  });
+
   it("bounces Ada off a large irregular asteroid head-on and glancing, without sticking", () => {
     const large = shapes.find((shape) => shape.size === "large")!;
     for (const [move, label] of [

@@ -131,27 +131,26 @@ describe("scenery push-out in a notch", () => {
     expect(normals).toHaveLength(1);
   });
 
-  it("returns Ada's ship from a rock's seam, where the escape normals cancel, and bounces her", () => {
-    // Pushing out of either side of the seam lands 0.01 inside the other, pass after pass.
-    expect(notchOverlap(alternating(notchOverlap, intoNotch(), 64))).not.toBeNull();
+  it("pushes Ada's ship out of a rock's seam where a thin part abuts an edge, without returning her", () => {
+    // The edge the thin part abuts is a seam, so single pushes leave through the outline.
+    expect(notchOverlap(alternating(notchOverlap, intoNotch(), 64))).toBeNull();
     const normals: Vec[] = [];
-    const before = { x: 52.31021240409024, y: 0 };
     const position = intoNotch();
+    let returned = false;
     resolveScenery(
       flightWith(NOTCH_ROCK),
       rockContact,
       (normal) => normals.push(normal),
       position,
       () => {
-        position.x = before.x;
-        position.y = before.y;
+        returned = true;
       },
     );
-    expect(position).toEqual(before);
+    expect(returned).toBe(false);
     expect(notchOverlap(position)).toBeNull();
-    // The rock's first contact, then the bounce back west along the way the ship came.
-    expect(normals).toHaveLength(2);
-    expect(normals[1]!.x).toBeLessThan(-0.99);
+    // One contact, back west along the way the ship came.
+    expect(normals).toHaveLength(1);
+    expect(normals[0]!.x).toBeLessThan(0);
   });
 
   it("returns a body stuck where the normals cancel to its move's start and bounces it back", () => {
