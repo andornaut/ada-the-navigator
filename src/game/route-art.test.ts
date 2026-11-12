@@ -21,7 +21,7 @@ describe("route map art", () => {
       "#CFC5BD",
       "#B8C1FF",
       "#F3B6AC",
-      "#E9B4DC",
+      "#DCBAE3",
     ]);
     expect(
       readRouteMarkers({ galaxies: { sunflower: { marker: "gold" } }, marker: {} }),
