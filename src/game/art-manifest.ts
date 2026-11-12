@@ -29,6 +29,7 @@ export interface GalaxyLinks {
   readonly whales?: string;
   readonly whirlpoolCurrents?: string;
   readonly whirlpoolDebris?: string;
+  readonly whirlpoolProjects?: string;
 }
 
 export interface GalaxyManifest<T> {
@@ -42,6 +43,7 @@ const LINKS: readonly (keyof GalaxyLinks)[] = [
   "whales",
   "whirlpoolCurrents",
   "whirlpoolDebris",
+  "whirlpoolProjects",
 ];
 
 /**

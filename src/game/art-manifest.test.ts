@@ -38,6 +38,7 @@ describe("split art manifest", () => {
       whales: "/art/whales.json",
       whirlpoolCurrents: "/art/whirlpool/currents.json",
       whirlpoolDebris: "/art/whirlpool/debris.json",
+      whirlpoolProjects: "/art/whirlpool/projects.json",
     });
     expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({});
     expect(readGalaxyManifest({ assets: [], tow: 3, version: 1, whales: "/art/w.json" })).toEqual({

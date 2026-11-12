@@ -35,7 +35,7 @@ import { type LoadTracker, trackLoader } from "../loading/loadingBar.ts";
 import { loadingProgress } from "../loading/progress.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
-import { currentsNear, flowFraction } from "../model/currents.ts";
+import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
@@ -281,6 +281,16 @@ import {
   whalePhase,
 } from "./whale-art.ts";
 import {
+  buoyFrame,
+  buoyPlaces,
+  frameBounds,
+  nurseryFrame,
+  poolRings,
+  readWhirlpoolProjects,
+  whalesCurrent,
+  type WhirlpoolProjects,
+} from "./whirlpool-projects.ts";
+import {
   BEACON_FRAMES,
   beaconFrame,
   CACHE_FRAMES,
@@ -386,6 +396,11 @@ export class PrototypeScene extends Scene {
   private flightClock = 0;
   private reveals = new Map<string, number>();
   private revealGroups = new Map<string, GameObjects.RenderTexture>();
+  // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
+  // by buoy, and the whales' current with the family position it was found from.
+  private whirlpoolProjects: WhirlpoolProjects<Asset> | undefined;
+  private buoySprites = new Map<string, GameObjects.Image>();
+  private whalesCurrentFor: { current: Current | null; family: Vec } | undefined;
   // The core manifest's assets and every loaded galaxy manifest's, with their data links.
   private manifest: {
     assets: readonly Asset[];
@@ -1280,6 +1295,7 @@ export class PrototypeScene extends Scene {
       ["whales", galaxy.links.whales],
       ["whirlpool-currents", galaxy.links.whirlpoolCurrents],
       ["whirlpool-debris", galaxy.links.whirlpoolDebris],
+      ["whirlpool-projects", galaxy.links.whirlpoolProjects],
     ] as const) {
       if (path && !this.cache.json.exists(key)) {
         this.load.json(key, path);
@@ -1321,6 +1337,10 @@ export class PrototypeScene extends Scene {
     }
     this.debrisArt = debris;
     this.streakSpec = readStreakSpec(this.cache.json.get("whirlpool-currents"));
+    this.whirlpoolProjects = readWhirlpoolProjects(
+      loaded,
+      this.cache.json.get("whirlpool-projects"),
+    );
     const rocks = readResourceRocks(this.cache.json.get("resource-rocks"));
     this.resourceRocks = new Map((rocks?.rocks ?? []).map((rock) => [rock.id, rock]));
     this.resourceFiles = new Set(
@@ -1857,6 +1877,9 @@ export class PrototypeScene extends Scene {
     for (const group of this.revealGroups.values()) {
       group.setVisible(false);
     }
+    for (const sprite of this.buoySprites.values()) {
+      sprite.setVisible(false);
+    }
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
@@ -1892,6 +1915,7 @@ export class PrototypeScene extends Scene {
     }
     this.loadGalaxyArt(flight.sector);
     this.drawCurrents(flight);
+    this.drawWhirlpoolProjects(flight);
     this.drawJobs();
     for (const object of flight.objects) {
       this.drawObject(object);
@@ -2527,6 +2551,148 @@ export class PrototypeScene extends Scene {
           false,
           false,
         );
+      }
+    }
+  }
+
+  /**
+   * Whirlpool's funded world changes (art/whirlpool.md "Project world changes"): the nursery
+   * beacon at the family with its light pool on the field below every play object, and the
+   * current-map buoys along both edges of the whales' current. Both are passable decoration that
+   * Ada draws in front of while she overlaps them. A change not yet revealed stays unseen until
+   * the first frame its site is on screen in live flight, then fades in (reduced motion cuts).
+   */
+  private drawWhirlpoolProjects(flight: FlightState): void {
+    const art = this.whirlpoolProjects;
+    const family = flight.objects.find(
+      (object) => object.kind === "destination" && object.id === "family",
+    );
+    if (!art || !family) {
+      this.pruneBuoys(new Set());
+      return;
+    }
+    const funded = new Map(
+      this.model.worldChanges(flight.sector).map((change) => [change.project, change]),
+    );
+    const now = this.flightClock;
+    const revealMs = this.projectArt?.revealMs ?? 0;
+    // A funded change's opacity this frame, recording its reveal the first frame its site shows;
+    // undefined while it stays unseen.
+    const alphaOf = (project: string, onScreen: boolean): number | undefined => {
+      const change = funded.get(project);
+      if (!change) {
+        return undefined;
+      }
+      if (!change.revealed) {
+        if (!onScreen || !this.flightLive) {
+          return undefined;
+        }
+        this.model.revealWorldChange(flight.sector, project);
+        if (!this.reducedMotion) {
+          this.reveals.set(project, now);
+        }
+      }
+      const start = this.reveals.get(project);
+      if (start === undefined) {
+        return 1;
+      }
+      if (now - start >= revealMs) {
+        this.reveals.delete(project);
+        return 1;
+      }
+      return revealAlpha(revealMs, now - start);
+    };
+    const beacon = art.nurseryBeacon;
+    if (beacon) {
+      const index = nurseryFrame(art, beacon, this.reducedMotion, this.time.now);
+      const frame = beacon.frames[index];
+      const point = this.project({ x: family.x + beacon.offset.x, y: family.y + beacon.offset.y });
+      const rings = poolRings(beacon, family, index);
+      const pool = this.project(rings[0]!.centre);
+      // The outermost ring bounds the pool, which reaches past the lantern.
+      const reach = Math.max(...rings.map(({ radius }) => radius));
+      const onScreen =
+        boundsOnScreen(SCREEN, point, frameBounds(frame)) ||
+        boundsOnScreen(SCREEN, pool, {
+          bottom: reach / Math.SQRT2,
+          left: -reach * Math.SQRT2,
+          right: reach * Math.SQRT2,
+          top: -reach / Math.SQRT2,
+        });
+      const alpha = alphaOf("nurseryBeacon", onScreen);
+      if (alpha !== undefined) {
+        const color = hexNumber(beacon.pool.color);
+        for (const ring of rings) {
+          this.ink.fillStyle(color, ring.alpha * alpha);
+          // A world circle on the projected plane: sqrt 2 r across and r / sqrt 2 down.
+          this.ink.fillEllipse(
+            pool.x,
+            pool.y,
+            2 * Math.SQRT2 * ring.radius,
+            Math.SQRT2 * ring.radius,
+          );
+        }
+        const sprite = this.objectSprite(partKey(family.id, "nurseryBeacon"), frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setDepth(playDepth(point.y))
+          .setAlpha(alpha);
+        this.passes(sprite);
+      }
+    }
+    const buoys = art.currentBuoys;
+    const drawn = new Set<string>();
+    if (buoys) {
+      if (
+        this.whalesCurrentFor?.family.x !== family.x ||
+        this.whalesCurrentFor.family.y !== family.y
+      ) {
+        this.whalesCurrentFor = {
+          current: whalesCurrent(flight.sector, family),
+          family: { x: family.x, y: family.y },
+        };
+      }
+      const current = this.whalesCurrentFor.current;
+      const visible = current
+        ? buoyPlaces(buoys, current)
+            .map((place) => ({
+              ...place,
+              frame:
+                buoys.frames[buoyFrame(art, buoys, place.k, this.reducedMotion, this.time.now)],
+              screen: this.project(place.point),
+            }))
+            .filter(({ frame, screen }) => boundsOnScreen(SCREEN, screen, frameBounds(frame)))
+        : [];
+      const alpha = alphaOf("currentBuoys", visible.length > 0);
+      for (const { frame, k, screen, side } of alpha === undefined ? [] : visible) {
+        const key = `${current!.id}:${side}:${k}`;
+        drawn.add(key);
+        let sprite = this.buoySprites.get(key);
+        if (!sprite) {
+          sprite = this.add.image(0, 0, frame.id);
+          this.buoySprites.set(key, sprite);
+        }
+        sprite
+          .setTexture(frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(screen.x, screen.y)
+          .setDepth(playDepth(screen.y))
+          .setAlpha(alpha!)
+          .setVisible(true);
+        this.passes(sprite);
+      }
+    }
+    this.pruneBuoys(drawn);
+  }
+
+  /** Destroys the buoy sprites not drawn this frame. */
+  private pruneBuoys(drawn: ReadonlySet<string>): void {
+    for (const [key, sprite] of this.buoySprites) {
+      if (!drawn.has(key)) {
+        sprite.destroy();
+        this.buoySprites.delete(key);
       }
     }
   }
