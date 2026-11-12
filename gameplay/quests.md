@@ -215,7 +215,9 @@ rewards.
 - While a job holds the slot, Talk plays the activity line, and Accept refuses
   with "Finish or drop your current job first."
 - The Map's Quests modal shows an active activity as its "Job:" line.
-- On a board, the Active activity row's detail line is its goal: "Carry
+- On a board, the Active activity row shows the shared activity icon, a circular
+  repeat arrow, in place of a job type's icon; its title is the activity's name.
+  Its detail line is its goal: "Carry
   supplies to a station.", "Guide a whale calf home.", "Light the gates of a
   practice channel.", "Fly a parcel with Pip." or "Deposit 30 resources at the
   hub."
