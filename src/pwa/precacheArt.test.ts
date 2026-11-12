@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
+import { GALAXY_ID } from "../data/galaxies.ts";
 import { GALAXIES, galaxyPreview } from "../data/storybook.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
@@ -67,12 +68,14 @@ describe("artUrls", () => {
   it("lists each galaxy manifest the core manifest maps, and every file it names", () => {
     const urls = artUrls(artFiles);
     const manifest = read("/art/manifest.json") as { galaxies: Record<string, string> };
-    const galaxies = Object.values(manifest.galaxies);
-    expect(galaxies).toEqual([
-      "/art/sunflower/manifest.json",
-      "/art/cartwheel/manifest.json",
-      "/art/whirlpool/manifest.json",
-    ]);
+    // However many galaxies Art has drawn: each under its stable galaxy id.
+    const ids = Object.values(GALAXY_ID);
+    expect(Object.keys(manifest.galaxies).filter((id) => !ids.includes(id))).toEqual([]);
+    const galaxies = Object.entries(manifest.galaxies).map(([id, path]) => {
+      expect(path).toBe(`/art/${id}/manifest.json`);
+      return path;
+    });
+    expect(galaxies.length).toBeGreaterThan(0);
     for (const galaxy of galaxies) {
       expect(urls).toContain(galaxy);
       const named = namedArtUrls(read(galaxy));
