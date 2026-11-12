@@ -89,9 +89,15 @@ Prettier on the written JSON.
 | `ui-switch`         | `#3a4466`     | `#403d55`  | Off track edge           |
 | `ui-switch`         | `#c0cbdc`     | `#c9c4d8`  | Knob shade               |
 | `ui-focus`          | `#fee761`     | `#ead4aa`  | Ring band                |
-| `ui-close`          | `#181425`     | `#ead4aa`  | Normal X                 |
-| `ui-close`          | `#3a4466`     | `#403d55`  | Pressed face             |
 | Card icons (seven)  | `#3a4466`     | `#ead4aa`  | Icon ink                 |
+
+`ui-close` is not recoloured: `art/tools/card-close.ts` draws its PNG from the
+map's close glyph (`art/tools/close-glyph.ts`, the grid of `map-close.svg`) at
+(2, 2) in each 24 frame, so every card's close, the galaxy map's and the local
+map's share one X on whole pixels. Normal: the X in cream `#ead4aa`, no face.
+Pressed: the X in white on `#403d55`, a 24 square without its corner pixels.
+Its JSON stays Chibi's; the PNG's SHA-256 is
+`b9f916e64acb30350a480936169c025682f4d371c138108cd08c21b21912def1`.
 
 Chibi's `ui-button` uses `#c0cbdc` for both the enabled top highlight and the
 disabled face, so that colour maps per frame:
@@ -113,7 +119,6 @@ where listed. The card icons are in [Settings row icons](settings-icons.md).
 | ui-button-primary.png | `6e43d89b48641b1f25d1b0da9d29726d630ba1a741f65dc51945bf4a385837a0` | `1f02dc0fcd4740333fb94eed4e0e62106e88f5f642956691e42f2c1f5656b87b` |
 | ui-button-tile.png    | `4a682b1bbd3031940b8edd1ee5456a89c1caacd673235e5661a48bae861cfa79` | `eb09220019c72ec452a2bf7950f1648c25481ed680d1433c59585348700b6ea8` |
 | ui-settings-card.png  | `ef8c2722fab1aae15b042f8dd564b3831a8c1cc68c1a3882ed5dd4ccb70f040a` | `e913c7a895aa3beaa147af8498e2e036d737de1cfcce982c679c832ac8ffaebc` |
-| ui-close.png          | `a975b987ab52cd43f987e4dffa84c94b2efe8b4406694dac70a935202aafb463` | `a618457379439fea7de000b03af82bf149b4e7ae1c2ef4eb210962ff0ede3ea0` |
 | ui-switch.png         | `b12161896816f9c7f62d0526bb224a4850253db7cfd6d4bb1e41cf93a69316c7` | `67e8137f4e1774ce8561797bd1e0c798adc4de782657be69435f109f392e40be` |
 | ui-focus.png          | `890594014cd3c7bd2b5b43a726cc0d816ff1614362a3c6cbfa1f97f9bdf95af9` | `34773bdb51ed6918464b2a19d094e6bf364534a2036b03a4f1ce1261b3e12aae` |
 

@@ -9,7 +9,8 @@ import { writeSprites } from "./sprite-sheet.ts";
 
 type Colours = Readonly<Record<string, string>>;
 
-// Recolours Chibi's control sheets to Ada's dark lavender palette. Only the listed colours change;
+// Recolours Chibi's control sheets to Ada's dark lavender palette (ui-close is drawn by
+// art/tools/card-close.ts). Only the listed colours change;
 // every other pixel, alpha, frame, tag and slice is copied from the source sheet.
 // Usage: node art/tools/controls.ts <chibis-way-home checkout>/public/art/sprites
 const RECOLOURS: Readonly<Record<string, Colours>> = {
@@ -25,7 +26,6 @@ const RECOLOURS: Readonly<Record<string, Colours>> = {
   },
   // Shop item rows: a darker face over the card, with the lip and highlight in the card shade.
   "ui-button-tile": { "5a6988": "2f2d3d", "8b9bb4": "46425e", c0cbdc: "2f2d3d" },
-  "ui-close": { "181425": "ead4aa", "3a4466": "403d55" },
   "ui-focus": { fee761: "ead4aa" },
   "ui-settings-card": { "8b9bb4": "2f2d3d", c0cbdc: "3b3850", ffffff: "6b6685" },
   "ui-switch": {

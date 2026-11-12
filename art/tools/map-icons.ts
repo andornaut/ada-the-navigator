@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { CLOSE_GLYPH } from "./close-glyph.ts";
 import { JOB_GLYPHS } from "./job-glyphs.ts";
 
 // Map glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per map symbol
@@ -227,28 +228,7 @@ const SYMBOLS: Readonly<Record<string, readonly string[]>> = {
 };
 
 const TOOLS: Readonly<Record<string, readonly string[]>> = {
-  close: [
-    E,
-    E,
-    E,
-    E,
-    "....##........##....",
-    "....###......###....",
-    ".....###....###.....",
-    "......###..###......",
-    ".......######.......",
-    "........####........",
-    "........####........",
-    ".......######.......",
-    "......###..###......",
-    ".....###....###.....",
-    "....###......###....",
-    "....##........##....",
-    E,
-    E,
-    E,
-    E,
-  ],
+  close: CLOSE_GLYPH,
   "zoom-in": [
     E,
     E,

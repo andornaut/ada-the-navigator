@@ -1012,7 +1012,7 @@ Chart (`ROUTE_MAP`):
 
 | Part           | Geometry                                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind every marker, label and leg                                                                                                  |
+| Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind every marker, label, leg and the close X                                                                                     |
 | Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`ROUTE_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                   |
 | Marker centres | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
 | Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
@@ -1038,6 +1038,7 @@ Panel and actions (`ROUTE_PANEL`, `ROUTE_ACTIONS`):
 | Flavour     | `TYPE.body`, wrapped to at most 2 lines (every Gameplay line fits 404 in 2); inner height `20 + 4 + 28 + 4 + 40 = 96`. A placeholder galaxy's line fits 404 in 1 (Needle 387.77, Andromeda 402.04), and "Story in development." takes the second |
 | Earth, Jump | `TEXT_BUTTON.height` faces 192 wide (Chibi's map actions), `BUTTON_GAP` (16) apart at play view x 160 and 368, Chibi's positions, centred on the play view; Earth secondary left, Jump primary right                                             |
 | Actions top | Available rect bottom - 48                                                                                                                                                                                                                       |
+| Close X     | `ui-close` 24 face, drawn from `map-close.svg` as every card's, its drawn top and right edges on the HUD rect's top-right corner at every inset, as every HUD top control's; press area `hitAround(face)` = 48 centred on the face               |
 
 The chart anchors to the play view's top; the panel and actions anchor to the
 available rect's bottom, so a taller view opens the gap between them.
@@ -1050,6 +1051,8 @@ available rect's bottom, so a taller view opens the gap between them.
 | Text column    | x 255, top 184, w 404  | x 255, top 181, w 404  |
 | Earth          | (160, 296) 192x48      | (160, 293) 192x48      |
 | Jump           | (368, 296) 192x48      | (368, 293) 192x48      |
+| Close target   | (672, 0) 48x48         | (641, 0) 48x48         |
+| Close face     | (684, 12) 24x24        | (653, 12) 24x24        |
 | End label gap  | 161 to 176: 15         | 161 to 173: 12         |
 
 Markers, labels, rules inside the frame and the ship are the same in both;
@@ -1060,6 +1063,13 @@ selected ring (radius 18) and the focus ring (22). Resting and in flight, the
 hull keeps 23.5 from every label pill, 18.8 from every leg's stroke and 6.1
 from the view's top. At markers 3 and 4 the resting hull starts at 10.3 and
 7.8, over the rules at 16 and 19, which draw under it.
+
+At 844x390 with the phone insets the HUD rect's right is 736.08, so the close
+face is (712.08, 12). Resting and in flight, the ship's hull keeps 56.91 from
+the close target at the 720 base and 1280x720, 35.61 with phone insets and
+56.19 at 844x390 with them; the target keeps 85.54 or more from every label
+pill (93 or more from markers 1 and 6's), 50 or more from every marker's
+press area and 70.26 or more from every leg.
 
 Marker faces:
 
@@ -1100,13 +1110,13 @@ Input and focus:
 - Tapping an open marker moves the ship there. Tapping a locked
   marker shows its panel face while the ship stays on its open galaxy; Jump is
   then unavailable and refuses.
-- Tab focuses every marker in route order, then Earth and Jump.
+- Tab focuses every marker in route order, then Earth, Jump and the close X.
   Focus starts on Jump, the default action. A focused locked
   marker shows its panel as a tap does; a focused open marker moves the ship
   there. Enter, Space and the gamepad's confirm activate the focused control;
   on a marker they act as a tap.
-- Earth, back and Escape leave galaxy selection and return Ada to her room
-  without a jump; there is no close X.
+- Earth, the close X, back and Escape leave galaxy selection and return Ada to
+  her room without a jump.
 
 Moves (`ROUTE_MOVE`):
 

@@ -57,7 +57,7 @@ Phenomena sit in the chart's gaps, under the arc and over its ends (play view px
 | ------------------------------- | ---------- | ---------------------------------------- |
 | Tilted two-armed spiral         | (290, 126) | Andromeda `#B8C1FF`, core `#DCC3F2`      |
 | Ring galaxy with a nucleus      | (452, 120) | Cartwheel `#F3B6AC`, `#EAD4AA`           |
-| Edge-on galaxy with a bulge     | (652, 34)  | Needle `#CFC5BD`, `#EAD4AA`              |
+| Edge-on galaxy with a bulge     | (200, 148) | Needle `#CFC5BD`, `#EAD4AA`              |
 | Nebula with a teal knot         | (48, 46)   | Black Eye `#E9B4DC`, Whirlpool `#94D3E3` |
 | Planetary nebula ring           | (600, 196) | Whirlpool `#94D3E3`, shimmer `#8FE0F2`   |
 | Comet, tail rising to the right | (470, 30)  | Shimmer `#8FE0F2`, head `#DCC3F2`        |
@@ -75,7 +75,8 @@ whole view. Its footprint, in play view px (`GUARD` in the tool):
 - a stadium from centre - 56 to + 56 across and centre + 15 to + 43 down
   under each marker, the widest name's label pill with 6 to spare each side;
 - a band 6 either side of every route leg, along the chart's arc
-  ([layout](layout.md#galaxy-selector)).
+  ([layout](layout.md#galaxy-selector));
+- the close X's corner: play view x 600 to the sky's right edge, y 0 to 56.
 
 Inside the footprint the sky's WCAG relative luminance is scaled down to at
 most 0.028 (its linear RGB times `0.028 / L`), feathered outward by a
@@ -91,6 +92,7 @@ Contrast at the cap (WCAG, a grey sky at 0.028):
 | Label text on its ink pill at 0.85: cream, `#B8B3C9`       | 12.01:1, 8.56:1        |
 | Marker disc on its ink backing at 0.85: locked grey, hues  | 5.11:1, 9.97:1 or more |
 | Open leg (cream), locked leg dashes (`#B8B3C9`) on the sky | 9.29:1, 6.62:1         |
+| Close X (cream) on the sky                                 | 9.29:1                 |
 
 ## Ground
 

@@ -36,12 +36,13 @@ const onArc = (angle: number) =>
 export const CENTRES: readonly (readonly [number, number])[] = Array.from({ length: 6 }, (_, i) =>
   onArc(-SPAN + (i * 2 * SPAN) / 5),
 );
-// Behind each marker, each label pill (the widest name's pill and 6 to spare each side) and every
-// leg.
+// Behind each marker, each label pill (the widest name's pill and 6 to spare each side), every
+// leg, and the close X's corner at every view up to the canvas's right edge.
 export const GUARD = {
   marker: 21,
   label: { halfWidth: 56, top: 15, bottom: 43 },
   leg: 6,
+  corner: { x0: 600, y0: 0, x1: SKY.width - SKY.offset, y1: 56 },
   sigma: 3,
   gain: 1.6,
   // Highest WCAG relative luminance behind a mark: 6.5:1 for the #B8B3C9 dashes and "..."
@@ -246,10 +247,10 @@ function phenomena(sky: Buffer) {
   sky.add("#f3b6ac", outer.window, (x, y) => Math.max(0, outer.at(x, y) - inner.at(x, y)) * 0.65);
   const nucleus = gauss(rx, ry, 2.2, 1.6);
   sky.add("#ead4aa", nucleus.window, (x, y) => nucleus.at(x, y) * 0.7);
-  // Needle's silver: an edge-on galaxy over the arc's right end.
-  const needle = gauss(...P(652, 34), 26, 2.2, -0.21);
+  // Needle's silver: an edge-on galaxy under the arc, left of Andromeda.
+  const needle = gauss(...P(200, 148), 26, 2.2, -0.21);
   sky.add("#cfc5bd", needle.window, (x, y) => needle.at(x, y) * 0.45);
-  const bulge = gauss(...P(652, 34), 4, 2.4, -0.21);
+  const bulge = gauss(...P(200, 148), 4, 2.4, -0.21);
   sky.add("#ead4aa", bulge.window, (x, y) => bulge.at(x, y) * 0.45);
   // Black Eye's pink nebula with a Whirlpool teal knot, over the arc's left end.
   const cloud = valueNoise(8, SKY.width, SKY.height, 22);
@@ -327,7 +328,7 @@ function footprint(width: number, height: number, density: number, pad = 0): Flo
       return dx * dx + (y - cy) ** 2 <= r * r;
     });
   };
-  const { label } = GUARD;
+  const { label, corner } = GUARD;
   for (const [mx, my] of CENTRES.map(([cx, cy]) => P(cx, cy))) {
     disc(mx, my, GUARD.marker + pad);
     stadium(
@@ -337,6 +338,7 @@ function footprint(width: number, height: number, density: number, pad = 0): Flo
       my + label.bottom + pad,
     );
   }
+  fill(P(corner.x0, 0)[0] - pad, corner.y0, SKY.width, corner.y1 + pad, () => true);
   for (const [x, y] of legPoints()) disc(...P(x, y), GUARD.leg + pad);
   return mask;
 }
