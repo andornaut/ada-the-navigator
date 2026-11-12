@@ -292,18 +292,38 @@ Rebuild with `node art/tools/needle-portraits.ts`. It writes `loom.png` and
 `loom-compact.png` with their Aseprite data to `public/art/needle/portraits/`
 and replaces the `loom-portrait` entries in Needle's manifest.
 
-- Adapted from Archie's elder owner portrait `face-owner-kilo`
-  (CC BY-NC-SA 4.0; provenance and SHA-256 in [Portraits](portraits.md)): the
-  hair and long braid in silver and pearl, the clothes in a lavender Weaver
-  tunic with a pearl collar and a rose thread badge, and pilot goggles pushed
-  up on the hair (strap `#4a4360`, glass `#8fd6e0`).
+- An Avi heron, drawn in the chibi bust style of the set: silver feathers
+  `#c9ccd8` (shade `#9097ab`, light `#ffffff`), two white crest plumes swept
+  back, a silver braided plume over the left shoulder with a rose tie, white
+  brow tufts and a long yellow beak `#f2c45a` (shade `#c98d3a`) that opens when
+  happy. A lavender Weaver tunic `#c4afcc` with a pearl collar `#e9e3da` and a
+  rose thread badge `#e8968c`, and pilot goggles pushed up on the crown (strap
+  `#4a4360`, frames `#6f6688`, glass `#8fd6e0`).
 - The [conversation portrait](conversation.md) format, as for Ada and Penny:
   `loom-portrait` is two 32 × 32 frames for the storybook panel, drawn 2x in
   the 68 frame; `loom-portrait-compact` is their exact 22 × 22 crops at
-  (4, 5), drawn 2x in the conversation box (`displayWidth` and `displayHeight`
+  (5, 2), drawn 2x in the conversation box (`displayWidth` and `displayHeight`
   44). Frames `happy` 0 and `neutral` 1, 1000 ms each, no speaking loop: a line
   Gameplay marks `(happy)` shows `happy`, any other `neutral`. Integer scale,
   nearest neighbour.
+
+## Avi portraits
+
+`node art/tools/needle-portraits.ts` also writes Reed's and the station
+keepers' sheets: `{key}.png` and `{key}-compact.png` with ids `{key}-portrait`
+and `{key}-portrait-compact`, frame `neutral` 0, in the
+[conversation portrait](conversation.md) format. Each is a pearl-collared
+heron with a long yellow beak; compact crops at (5, 2).
+
+| Speaker | Key      | Look                                                                                  |
+| ------- | -------- | ------------------------------------------------------------------------------------- |
+| Reed    | `reed`   | Pearl feathers, two slate crest plumes, a grey crown stripe, a rose thread scarf      |
+| Sedge   | `sedge`  | Keeper: blue-grey feathers, three long dark plumes, a dark brow stripe, a sedge tunic |
+| Willow  | `willow` | Keeper: pale feathers, plumes drooping at both sides, willow leaves, a lavender shawl |
+| Marsh   | `marsh`  | Keeper: tan bittern-streaked feathers, a short spiky crest, a reed-brown tunic        |
+
+The keepers wear the keepers' headset (cups `#3a4466` with a lit
+accent and a mic boom).
 
 ## Needle drones
 

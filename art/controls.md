@@ -178,6 +178,11 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Opal tab           | `#f5a8d8` | The rose scarf                               |
 | Jasper tab         | `#f0b080` | The ochre bands                              |
 | Grandma tab        | `#f0b4d0` | The rose cardigan                            |
+| Elder Loom tab     | `#e9e3da` | The pearl collar                             |
+| Reed tab           | `#e3c6e8` | The rose thread scarf                        |
+| Sedge tab          | `#9fcf9f` | The sedge tunic                              |
+| Willow tab         | `#d0a8e8` | The lavender shawl                           |
+| Marsh tab          | `#e0c79a` | The tan feathers                             |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
@@ -221,6 +226,11 @@ sits on open space.
 | Opal           | `#181425` | `#f5a8d8`                                  | 9.84:1   |
 | Jasper         | `#181425` | `#f0b080`                                  | 9.63:1   |
 | Grandma        | `#181425` | `#f0b4d0`                                  | 10.42:1  |
+| Elder Loom     | `#181425` | `#e9e3da`                                  | 14.13:1  |
+| Reed           | `#181425` | `#e3c6e8`                                  | 11.59:1  |
+| Sedge          | `#181425` | `#9fcf9f`                                  | 10.21:1  |
+| Willow         | `#181425` | `#d0a8e8`                                  | 8.96:1   |
+| Marsh          | `#181425` | `#e0c79a`                                  | 10.99:1  |
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over

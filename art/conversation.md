@@ -42,6 +42,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 | `penny-portrait`, `penny-portrait-compact`                                                                 | `happy` 0, `neutral` 1, `upset` 2                                                                        |
 | `pip-portrait`, `pip-portrait-compact`                                                                     | `happy` 0, `neutral` 1, `worried` 2                                                                      |
 | `settler-portrait`, `settler-portrait-compact`                                                             | `happy` 0, `neutral` 1, `worried` 2                                                                      |
+| Needle's cast: `{key}-portrait`, `{key}-portrait-compact` for `reed`, `sedge`, `willow`, `marsh`           | `neutral` 0                                                                                              |
 | Andromeda's cast: `{key}-portrait`, `{key}-portrait-compact` for `settler-greeter`, `lumen`, `dial`, `cog` | `neutral` 0                                                                                              |
 
 - Speaking loops run 120 ms per frame (480 ms per loop) while that speaker's
@@ -56,6 +57,11 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   Pip, Wick on the `settler` sheet, every other settlement greeter on
   `settler-greeter`, and the keepers Lumen, Dial and Cog. They have no speaking
   loop; every speaker but Ada and Penny shows `neutral` (Gameplay's rule).
+- Elder Loom's and Needle's cast sheets are in Needle's manifest, drawn as Avi
+  herons by `node art/tools/needle-portraits.ts`
+  ([Elder Loom's portrait](needle.md#elder-looms-portrait),
+  [Avi portraits](needle.md#avi-portraits)). Every speaker but Ada and Penny
+  shows `neutral` (Gameplay's rule).
 - Ada and Penny have no speaking loop. Each line takes the mood Gameplay marks
   after it in [player-copy.md](../gameplay/player-copy.md): a line
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`

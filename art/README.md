@@ -129,12 +129,11 @@ the pickups ([Stardust](stardust.md#pickup), the
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
-`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits,
-`art/tools/needle-portraits.ts` adapts Elder Loom's from Archie sources in `art/sources/`, and
-`art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and `cartwheel-portraits.ts`
-each galaxy's cast, from the bust parts in `art/tools/bust.ts`. `art/tools/portraits.ts`
-draws the Astra, General Gadget and Grandma portraits and the compact conversation sheets
-([Conversation portraits](conversation.md)). No generated kit source or assets
+`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, `needle-portraits.ts`
+Needle's Avi portraits, and `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
+`cartwheel-portraits.ts` each galaxy's cast, from the bust parts in `art/tools/bust.ts`.
+`art/tools/portraits.ts` draws the Astra, General Gadget and Grandma portraits and the compact
+conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
 from another game's build pipeline are required.
 
 The toolkit's `buildCommand(options, argv)` supports `check.paths`, optional
