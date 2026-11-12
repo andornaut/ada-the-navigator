@@ -40,11 +40,18 @@ export const FILE_RULES = [
   },
 ] as const;
 
+// Cloudflare's Web Analytics, which Cloudflare injects into each page at its edge: the beacon
+// script and the endpoint it reports to. The only origins the policy allows beyond 'self'.
+export const ANALYTICS = {
+  beacon: "https://static.cloudflareinsights.com",
+  report: "https://cloudflareinsights.com",
+} as const;
+
 // Every page's policy before its rule's sources and hashes are added. Phaser loads images, the
 // SVG art among them, through blob: URLs and its default textures as data: URIs.
 export const BASE_DIRECTIVES: Directives = {
   "base-uri": ["'self'"],
-  "connect-src": ["'self'"],
+  "connect-src": ["'self'", ANALYTICS.report],
   "default-src": ["'self'"],
   "font-src": ["'self'"],
   "form-action": ["'self'"],
@@ -53,7 +60,7 @@ export const BASE_DIRECTIVES: Directives = {
   "manifest-src": ["'self'"],
   "media-src": ["'self'", "blob:"],
   "object-src": ["'none'"],
-  "script-src": ["'self'"],
+  "script-src": ["'self'", ANALYTICS.beacon],
   "style-src": ["'self'"],
   "worker-src": ["'self'"],
 };

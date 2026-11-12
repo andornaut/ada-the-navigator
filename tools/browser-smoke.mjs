@@ -258,8 +258,9 @@ try {
   }
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
-  // The preview serves dist/_headers as Cloudflare does: each page's CSP, styles and scripts from
-  // its own origin only, and the wake lock allowed.
+  // The preview serves dist/_headers as Cloudflare does: each page's CSP, styles from its own
+  // origin only, scripts and connections from it and Cloudflare's injected analytics beacon alone,
+  // and the wake lock allowed.
   const pageHeaders = await Promise.all(
     ["/", "/play/"].map(async (pagePath) => [
       pagePath,
@@ -268,8 +269,32 @@ try {
   );
   for (const [pagePath, headers] of pageHeaders) {
     const policy = headers["content-security-policy"] ?? "";
-    assert.match(policy, /(?:^|; )style-src 'self'(?:;|$)/, `${pagePath} styles from its origin`);
-    assert.match(policy, /(?:^|; )script-src 'self'(?:;|$)/, `${pagePath} scripts from its origin`);
+    const directives = Object.fromEntries(
+      policy.split("; ").map((directive) => {
+        const [name, ...sources] = directive.split(" ");
+        return [name, sources];
+      }),
+    );
+    assert.deepEqual(directives["style-src"], ["'self'"], `${pagePath} styles from its origin`);
+    assert.deepEqual(
+      directives["script-src"],
+      ["'self'", "https://static.cloudflareinsights.com"],
+      `${pagePath} scripts from its origin and the analytics beacon`,
+    );
+    assert.deepEqual(
+      directives["connect-src"],
+      ["'self'", "https://cloudflareinsights.com"],
+      `${pagePath} connects to its origin and the analytics endpoint`,
+    );
+    // No other origin anywhere in the policy.
+    assert.deepEqual(
+      Object.values(directives)
+        .flat()
+        .filter((source) => /^https?:/.test(source))
+        .sort(),
+      ["https://cloudflareinsights.com", "https://static.cloudflareinsights.com"],
+      `${pagePath} allows only Cloudflare's analytics beyond its own origin`,
+    );
     assert.doesNotMatch(policy, /unsafe-inline/, `${pagePath} allows no inline code`);
     assert.match(headers["permissions-policy"] ?? "", /screen-wake-lock=\(self\)/);
     assert.equal(headers["x-content-type-options"], "nosniff");
