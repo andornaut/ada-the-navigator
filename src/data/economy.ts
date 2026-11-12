@@ -32,7 +32,6 @@ export interface Destruction extends DestructionTiming {
 
 export interface EconomyCatalog {
   /** Stardust released by each destroyed enemy archetype. */
-  enemyStardust: Readonly<Record<EnemyArchetype, number>>;
   /** Inclusive Stardust range released by a destroyed asteroid of each size. */
   asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
   /**
@@ -172,16 +171,6 @@ export const ECONOMY: EconomyCatalog = {
   // Engine tuning: -10% acceleration and braking seconds per level.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
-  },
-  // Half each archetype's hit points (hardpoints for multipart ships), rounded down, at least 1.
-  enemyStardust: {
-    capital: 12,
-    fighter: 2,
-    frigate: 5,
-    interceptor: 1,
-    platform: 6,
-    retaliator: 4,
-    swarm: 1,
   },
   // Engine levels 2 and 3 raise Ada's 160 to 190, then 220 (gameplay/economy.md).
   engineMaxSpeed: [190, 220],

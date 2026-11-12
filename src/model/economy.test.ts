@@ -4,7 +4,13 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
-import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import {
+  type EnemyArchetype,
+  enemyCatalog,
+  enemyDefinition,
+  enemyStardust,
+  HEAVIES,
+} from "../data/enemy-catalog.ts";
 import { byPosition } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
@@ -96,13 +102,13 @@ const total = (objects: SpaceObject[]) =>
   objects.reduce((sum, object) => sum + (object.amount ?? 0), 0);
 
 describe("Stardust drops", () => {
-  it("releases the documented Stardust per destroyed enemy archetype", () => {
+  it("releases the documented Stardust per destroyed enemy archetype at position 1", () => {
     const expected: Record<EnemyArchetype, number> = {
-      capital: 12,
+      capital: 28,
       fighter: 2,
-      frigate: 5,
+      frigate: 12,
       interceptor: 1,
-      platform: 6,
+      platform: 8,
       retaliator: 4,
       swarm: 1,
     };
@@ -115,16 +121,44 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("pays each enemy half its hit points, rounded down, and at least 1", () => {
-    for (const [archetype, definition] of Object.entries(enemyCatalog)) {
-      // Multipart ships are defeated through their hardpoints, so those carry their hit points.
-      const hp = definition.hardpoints.length
-        ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
-        : definition.hp;
-      expect(ECONOMY.enemyStardust[archetype as EnemyArchetype]).toBe(
-        Math.max(1, Math.floor(hp / 2)),
-      );
+  it("pays each enemy half its position's hit points, rounded down, and at least 1", () => {
+    for (const sector of [1, 2, 3, 4, 5, 6] as const) {
+      for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+        const definition = enemyDefinition(sector, archetype);
+        // A heavy counts its hardpoints' hit points, not its hull.
+        const hp = HEAVIES.includes(archetype)
+          ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
+          : definition.hp;
+        expect(enemyStardust(sector, archetype)).toBe(Math.max(1, Math.floor(hp / 2)));
+      }
     }
+    // Position 1 (gameplay/economy.md): a heavy's salvaged value; destroying it pays double.
+    expect(
+      Object.fromEntries(
+        (Object.keys(enemyCatalog) as EnemyArchetype[]).map((a) => [a, enemyStardust(1, a)]),
+      ),
+    ).toEqual({
+      capital: 14,
+      fighter: 2,
+      frigate: 6,
+      interceptor: 1,
+      platform: 4,
+      retaliator: 4,
+      swarm: 1,
+    });
+  });
+
+  it("drops twice a destroyed heavy's Stardust and never a weapon", () => {
+    for (const archetype of HEAVIES) {
+      for (let index = 0; index < 400; index++) {
+        expect(rollEnemyDrop(ECONOMY, 2, archetype, dropRandom(3, `h:${index}`))).toEqual({
+          stardust: enemyStardust(2, archetype) * 2,
+          weapon: null,
+        });
+      }
+    }
+    expect(rollEnemyDrop(ECONOMY, 1, "frigate", dropRandom(1, "f")).stardust).toBe(12);
+    expect(rollEnemyDrop(ECONOMY, 1, "capital", dropRandom(1, "c")).stardust).toBe(28);
   });
 
   it("releases zero or one Stardust per small asteroid with equal seeded frequency", () => {
@@ -154,13 +188,8 @@ describe("Stardust drops", () => {
     [1, "fighter", 0.0025],
     [1, "interceptor", 0.0025],
     [1, "retaliator", 0.0025],
-    [1, "frigate", 0.02],
-    [1, "capital", 0.05],
     [2, "swarm", 0.005],
-    [2, "frigate", 0.05],
-    [2, "capital", 0.05],
-    [3, "frigate", 0.05],
-    [3, "capital", 0.05],
+    [3, "fighter", 0.005],
   ] as const)(
     "in galaxy %i drops a random upgrade weapon from %s at %f",
     (sector, archetype, chance) => {
@@ -185,17 +214,26 @@ describe("Stardust drops", () => {
 
   it("drops a weapon pickup whether or not Ada owns it, never extra Stardust", () => {
     let dropped = 0;
-    for (let index = 0; index < 8000; index++) {
-      const drop = rollEnemyDrop(ECONOMY, 2, "capital", dropRandom(3, `w:${index}`));
-      expect(drop.stardust).toBe(ECONOMY.enemyStardust.capital);
+    for (let index = 0; index < 40000; index++) {
+      const drop = rollEnemyDrop(ECONOMY, 2, "fighter", dropRandom(3, `w:${index}`));
+      expect(drop.stardust).toBe(enemyStardust(2, "fighter"));
       dropped += drop.weapon ? 1 : 0;
     }
-    expect(Math.abs(dropped / 8000 - 0.05)).toBeLessThan(0.01);
+    expect(Math.abs(dropped / 40000 - 0.005)).toBeLessThan(0.0015);
   });
 
-  it("splits every enemy drop below its cap into pickups of 1 Stardust", () => {
-    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-      const value = ECONOMY.enemyStardust[archetype];
+  it("splits a drop above its cap into pickups worth more than 1", () => {
+    // A destroyed capital's 28 at position 1 over its 24 pickups.
+    const pieces = splitStardust(ECONOMY.pickupCap.capital, enemyStardust(1, "capital") * 2);
+    expect(pieces).toHaveLength(24);
+    expect(pieces.filter((piece) => piece === 2)).toHaveLength(4);
+    expect(pieces.reduce((sum, piece) => sum + piece, 0)).toBe(28);
+  });
+
+  it("splits every small craft's drop below its cap into pickups of 1 Stardust", () => {
+    const small = ["swarm", "fighter", "interceptor", "retaliator"] as const;
+    for (const archetype of small) {
+      const value = enemyStardust(1, archetype);
       expect(value).toBeLessThanOrEqual(ECONOMY.pickupCap[archetype]);
       expect(splitStardust(ECONOMY.pickupCap[archetype], value)).toEqual(
         Array.from({ length: value }, () => 1),
@@ -248,7 +286,7 @@ describe("Stardust drops", () => {
     expect(pickups(value)).toEqual([]);
     // Art's fighter timing: drops leave at 150 ms and the wreck is gone at 450 ms.
     stepFlight(PROTOTYPE, 0.15, idle, value);
-    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
+    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(true);
     for (const pickup of pickups(value)) {
       expect(pickup.release?.from).toEqual({ x: wreck!.x, y: wreck!.y });
@@ -258,7 +296,7 @@ describe("Stardust drops", () => {
     }
     stepFlight(PROTOTYPE, 0.3, idle, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
-    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
+    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
   });
 
   it("times each shard-drawn destruction from Art's destruction data", () => {
@@ -295,7 +333,7 @@ describe("Stardust drops", () => {
     stepFlight(PROTOTYPE, 0.2, reduced, value);
     expect(pickups(value)).toEqual([]);
     stepFlight(PROTOTYPE, 0.05, reduced, value);
-    expect(total(pickups(value))).toBe(ECONOMY.enemyStardust.fighter);
+    expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
     for (const pickup of pickups(value)) {
       const offset = Math.hypot(pickup.x - wreck.x, pickup.y - wreck.y);
       expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
@@ -315,7 +353,7 @@ describe("Stardust drops", () => {
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
     stepFlight(PROTOTYPE, 0.6, idle, value);
     // A frigate drop is at least its Stardust; a weapon drop adds a weapon pickup.
-    expect(total(pickups(value))).toBeGreaterThanOrEqual(ECONOMY.enemyStardust.frigate);
+    expect(total(pickups(value))).toBeGreaterThanOrEqual(enemyStardust(1, "frigate") * 2);
   });
 
   it("releases a huge asteroid's three Stardust where it breaks", () => {

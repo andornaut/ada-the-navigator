@@ -516,6 +516,21 @@ export function unscaledHullHp(sector: SectorId, archetype: EnemyArchetype): num
   }
 }
 
+/** Frigates, capitals and platforms: hull HP and hardpoints, disabled and salvaged. */
+export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
+
+/**
+ * An enemy's Stardust at a galaxy's position (gameplay/economy.md "Earning Stardust"): half its
+ * unscaled hit points, rounded down, and at least 1; a heavy counts all its hardpoints' hit
+ * points, not its hull.
+ */
+export function enemyStardust(sector: SectorId, archetype: EnemyArchetype): number {
+  const hp = HEAVIES.includes(archetype)
+    ? enemyCatalog[archetype].hardpoints.length * difficultyOf(sector).hardpointHp
+    : unscaledHullHp(sector, archetype);
+  return Math.max(1, Math.floor(hp / 2));
+}
+
 /** A galaxy's encounter rate: its position's, times difficultyScale. */
 export function encounterRate(sector: SectorId): number {
   return difficultyOf(sector).rates.encounters * DIFFICULTY_SCALE;

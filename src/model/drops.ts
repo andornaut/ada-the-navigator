@@ -1,6 +1,6 @@
 import type { AsteroidSize } from "../data/asteroid-catalog.ts";
 import type { EconomyCatalog, UpgradeWeapon } from "../data/economy.ts";
-import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemy-catalog.ts";
 import { byPosition } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
@@ -29,8 +29,9 @@ export function dropRandom(seed: number, id: string): () => number {
 }
 
 /**
- * A destroyed enemy's Stardust plus, at its archetype's chance in the galaxy, a random upgrade
- * weapon. Collecting a weapon Ada already owns gives a pack of its ammunition instead.
+ * A destroyed enemy's drop: a small craft's Stardust plus, at its archetype's chance in the
+ * galaxy, a random upgrade weapon; a destroyed heavy's twice its Stardust and no weapon.
+ * Collecting a weapon Ada already owns gives a pack of its ammunition instead.
  */
 export function rollEnemyDrop(
   catalog: EconomyCatalog,
@@ -38,7 +39,10 @@ export function rollEnemyDrop(
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
-  const drop: Drop = { stardust: catalog.enemyStardust[archetype], weapon: null };
+  if (HEAVIES.includes(archetype)) {
+    return { stardust: enemyStardust(sector, archetype) * 2, weapon: null };
+  }
+  const drop: Drop = { stardust: enemyStardust(sector, archetype), weapon: null };
   if (next() < byPosition(catalog.weaponDropChance, sector)[archetype]) {
     drop.weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
   }

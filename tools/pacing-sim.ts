@@ -157,7 +157,6 @@ export interface Prices {
 }
 
 export interface EconomyOverrides {
-  enemyStardust?: Partial<Record<EnemyArchetype, number>>;
   asteroidStardust?: Partial<Record<AsteroidSize, [number, number]>>;
   discoveryStardust?: number;
   ammoPackPrice?: number;
@@ -348,7 +347,6 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     ...ECONOMY,
     asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
-    enemyStardust: { ...ECONOMY.enemyStardust, ...overrides.enemyStardust },
     ammo: { ...ECONOMY.ammo, packPrice: overrides.ammoPackPrice ?? ECONOMY.ammo.packPrice },
     // Overrides name galaxies; the catalog keys drop chances by their route positions.
     weaponDropChance: Object.fromEntries(

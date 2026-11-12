@@ -158,10 +158,8 @@ describe("pacing simulation runs", () => {
   });
 
   it("applies value overrides to drops and caches", () => {
-    const catalog = scenarioEconomy({ discoveryStardust: 3, enemyStardust: { swarm: 7 } });
+    const catalog = scenarioEconomy({ discoveryStardust: 3 });
     expect(catalog.discoveryStardust).toBe(3);
-    expect(catalog.enemyStardust.swarm).toBe(7);
-    expect(catalog.enemyStardust.fighter).toBe(ECONOMY.enemyStardust.fighter);
     const base = runScenario({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "base", prices: {} },
