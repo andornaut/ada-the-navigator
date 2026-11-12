@@ -30,9 +30,9 @@ X, an outside tap, back and Escape return to the station card.
 - A board's offers stay until taken. A slot refills with a new job from the pool
   when its job is completed. When every landmark in a galaxy is charted, its
   boards stop offering surveys.
-- The held job's objective shows in the Map's Quests modal under the story
+- The held job's objective shows in the local map's Quests modal under the story
   objective, as "Job: {objective}". Its target uses the direction indicator for quest
-  events and is marked on the Map.
+  events and is marked on the local map.
 - A job pays at completion wherever Ada is: a notice shows "Job complete: +{amount}
   Stardust", then Astra says one unseen lore line from the galaxy's job pool.
 
@@ -77,11 +77,11 @@ the line is taut, and passes through scenery so it never snags. While towing:
 
 The multipliers apply to Ada's current values, so engine tuning still helps.
 Enemies ignore the towed craft, and it takes no damage. Ada fights normally.
-The Map's Travel here is unavailable while towing and refuses with the shared
+The local map's Travel here is unavailable while towing and refuses with the shared
 refusal feedback.
 Bringing the craft within 400 world units of the safe place completes the rescue,
-and the craft parks there. Return to Earth, Back to title or a shield-depletion jump returns the
-craft to where it was stranded, still marked. Closing the game resumes the tow
+and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map), Back to title or a
+shield-depletion jump returns the craft to where it was stranded, still marked. Closing the game resumes the tow
 exactly.
 
 ### Rewards
@@ -214,7 +214,7 @@ rewards.
   loses its progress.
 - While a job holds the slot, Talk plays the activity line, and Accept refuses
   with "Finish or drop your current job first."
-- The Map's Quests modal shows an active activity as its "Job:" line.
+- The local map's Quests modal shows an active activity as its "Job:" line.
 - On a board, the Active activity row shows the shared activity icon, a circular
   repeat arrow, in place of a job type's icon; its title is the activity's name.
   Its detail line is its goal: "Carry
@@ -255,13 +255,13 @@ rewards.
   While the calf is away, the family shows one calf fewer. The indicator points
   to the calf until it follows, then to the family. Closing the game resumes the
   guide exactly, as for a tow.
-  Return to Earth, Back to title or a shield-depletion jump returns the calf to its start.
+  Leaving the galaxy, Back to title or a shield-depletion jump returns the calf to its start.
 - **Courier run**: Pip flies a parcel to a seeded settlement 5000 to 8000 world
   units away at 0.7 of Ada's base top speed, and Ada escorts him. Pip waits
   whenever Ada is more than 600 world units away and goes on when she returns.
   Pip takes no damage, and drones ignore him; one drone patrol waits along the
-  way. Pip reaching the settlement completes the activity. Return to Earth, Back
-  to title or a shield-depletion jump returns Pip to his start.
+  way. Pip reaching the settlement completes the activity. Leaving the galaxy,
+  Back to title or a shield-depletion jump returns Pip to his start.
 - **Thread the needle**: a gate run (see [Needle](rules.md#galaxy-three-needle-threading-the-needle))
   through a seeded practice channel of 8 gates near Elder Loom. A gate passed too
   fast sends Ada back to the first gate. Lighting the last gate completes the

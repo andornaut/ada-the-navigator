@@ -47,7 +47,7 @@ launches show Continue and Restart.
 
 Every launch opens on the start screen; Continue resumes where the save left off.
 A flight closed mid-flight resumes exactly: galaxy, position, tow and danger (see
-the exact-resume rule below). Otherwise Continue goes to galaxy selection, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
+the exact-resume rule below). Otherwise Continue goes to the galaxy map, open on the farthest unlocked galaxy. A home scene that is waiting, such as a chapter's resolution or the next
 chapter's opening, plays first. When Ada goes home with no new scene, her room
 shows one short repeatable line and "Pick up the rock."; old scenes never replay,
 and new ones unlock with progress.
@@ -87,16 +87,16 @@ colorful but low contrast, with no landmarks or signs naming the city, and its
 text or dialogue in a readable panel at the bottom.
 
 A story run is every Earth and aboard page shown in a row between two points of
-play: it starts when Ada leaves the start screen, a flight or galaxy selection,
-and ends at galaxy selection or on Ada's room page with its named action. Next
+play: it starts when Ada leaves the start screen, a flight or the galaxy map,
+and ends at the galaxy map or on Ada's room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
 boundaries within the run, and is disabled only on the run's first page. A page
 that ends in a named action, such as "Pick up the rock.", shows that action in
 place of Next. Skip passes every remaining page and scene of the run, taking the
 default path through choices and leaving optional questions unasked, and stops
-where play resumes: galaxy selection when the run leads aboard, or Ada's room
+where play resumes: the galaxy map when the run leads aboard, or Ada's room
 page with its named action. Skip shows only where it passes at least one page that Next, or the page's named
-action, would show. It is hidden on the last page before galaxy selection, on
+action, would show. It is hidden on the last page before the galaxy map, on
 the page before Ada's room page, on that room page and on the sleep scene. Skip sits in the top-right corner, apart from
 Previous and Next, so tapping quickly through pages cannot skip a run. A scene's effects (a chapter opened or resolved, the prologue
 seen) apply as the scene ends; Previous back into an ended scene does not undo
@@ -119,10 +119,10 @@ closes in the schoolyard; the prologue moves from the park to Ada's room. Narrat
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
 until Continue, so Ada can ask every question. Continue shows Astra's boarding line,
-then galaxy selection. Story position within a scene is not
+then the galaxy map. Story position within a scene is not
 saved: a scene interrupted midway restarts from its first page.
 
-### Aboard and galaxy selection
+### Aboard and the galaxy map
 
 The cockpit is retro-futurist: 1960s ideas of the future with 1980s and 1990s
 technology details, about the size of a closet, under a blue canopy: an opaque dome
@@ -132,18 +132,20 @@ from the port seat, with Penny on the starboard seat. No page shows the cockpit'
 the ship from outside, and the text carries where Ada and Penny are. Astra's portrait is geometric and softly glowing, and she speaks through
 it on story pages as in conversations. Every quantum jump uses one
 jump effect, with Ada's ship shown in it, arriving on the heading she starts the
-flight with: jumps from the route map, Travel, Return to Earth and the
+flight with: jumps from the galaxy map (Jump, and Earth in flight), Travel and the
 emergency jump. Boarding from her room is the rock's glow, not a jump; Astra's emergency jump when the shield fails tints it red. Jumping
 home, the emergency jump included, arrives in Ada's room. An emergency jump
 lands at night: its jump-home page shows, then a 2 to 3 second sleep scene (Ada
 asleep with Penny curled up, the rock glowing softly) that a tap skips after a
 moment, then morning, when any waiting home scene plays as on any arrival home. A
-voluntary Return to Earth has no sleep scene. The holodisk
+voluntary Earth from the galaxy map has no sleep scene. The holodisk
 drive looks like a CD or cassette player.
 
 Every boarding (picking up the rock or Continue from the start screen),
-including for a replay of a resolved galaxy, shows galaxy selection before the
-flight. The app itself always opens on the start screen. Galaxy selection is a route map, like Chibi's zone map,
+including for a replay of a resolved galaxy, shows the galaxy map before the
+flight. The app itself always opens on the start screen. The design names two
+maps: the local map (the pause card's Map) charts the current galaxy, and the
+galaxy map moves Ada between galaxies; neither name appears in the interface. The galaxy map is a route map, like Chibi's zone map,
 drawn over a night sky full of stars, galaxies and nebulae above an evening
 grass strip about 50 pixels tall along the bottom, where Ada and Penny stand
 seen from behind, looking up. The panel sits above the grass, with Earth and
@@ -174,9 +176,17 @@ Andromeda are placeholders. Saves keep every unlock. The first boarding after an
 unlock shows the ship flying along the route to the farthest newly unlocked
 galaxy. When one unlock opens several galaxies, their markers open together and the
 ship flies once along the route to the farthest, passing the markers between,
-in at most 2.4 seconds in all, then waits for the player's choice. The route map is the only galaxy
-selection; there is no separate selection card. Galaxy selection has no close X. Earth, in the panel, back and Escape return
-Ada to her room without a jump.
+in at most 2.4 seconds in all, then waits for the player's choice. The galaxy map is the only galaxy
+selection; there is no separate selection card. It opens at every boarding and,
+in flight, from the local map's Galaxies button. Opened in flight, the ship
+starts on the galaxy Ada is flying in, and while it sits there the default
+action reads "Stay here" in place of Jump: it closes both maps and resumes the
+flight with no jump and no new layout. Jump to another galaxy ends the current
+flight, with story progress saved, and quantum jumps into the chosen galaxy;
+Earth ends the flight and jumps Ada home to her room. The galaxy map has the
+close X, which with back and Escape returns to where it opened from: to the
+local map in flight, or to Ada's room, without a jump, at boarding, as Earth
+does there.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays
@@ -322,9 +332,9 @@ groups with more frigates than Needle's; its roster is tuned like the others.
 
 Andromeda's stations are settlers' stations, drawn with the settlers' art, as
 Cartwheel's station is the mining hub: each is a full station with dock, shop,
-Jobs and, once the chapter is complete, projects, and the Map calls it Station.
+Jobs and, once the chapter is complete, projects, and the local map calls it Station.
 Going with Pip to the settlers ends at the nearest settlers' station. The
-settlements are Andromeda's outposts: the Map calls them Outpost, Ada uses one
+settlements are Andromeda's outposts: the local map calls them Outpost, Ada uses one
 like Sunflower's outposts rather than docking, and the courier run, deliveries
 and tows can end at one. Their sentence names are "the settlers' station" and
 "the settlement". The guide beacons are story objects, separate from the
@@ -495,8 +505,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the weapon icons' order with its level and, apart from Laser, its ammunition;
   and the ship paint. The pause card shows no objective text, and neither does space;
   in flight the direction indicator is the objective cue.
-  The Map's header shows the galaxy name with its landmark pips and
-  "{percent}% mapped" below them, then a "Quests" button and "Return to Earth".
+  The local map's header shows the galaxy name with its landmark pips and
+  "{percent}% mapped" below them, then a "Quests" button and "Galaxies".
   Quests opens a modal titled "Quests" listing the galaxy's current story
   objective, or "Story complete." once the chapter is resolved, then the held
   job or activity as "Job: {objective}". With no job held, a last line reads
@@ -504,7 +514,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   A line whose target is mapped is a button: it closes the modal and selects
   and centres that chip. With no lines at all, the modal reads "Explore to find
   something to do." The close X, an outside tap, back and Escape close it.
-  Map shows the current galaxy: Ada's position, discovered destinations and
+  The local map shows the current galaxy: Ada's position, discovered destinations and
   stations, charted landmarks, the current objective's destination once mapped,
   a known holodisk waypoint until its holodisk is recovered, and how much of the
   galaxy is mapped. Undiscovered places never appear. Map places keep at least
@@ -515,14 +525,14 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   places; the station stands for them. Only chunks inside the charting circle
   enter the explored record. The
   explored area persists per galaxy across flights and clears on Restart. Choosing
-  a discovered destination or station offers "Travel here", which teleports there. The Map
-  also has "Return to Earth", a labelled secondary button on its top row beside
-  the header, on every galaxy's Map, with no confirm, as for
-  Travel here. Unlike Travel here it stays available while towing; the towed craft
-  returns to where it was stranded. Return to Earth ends the flight and takes Ada to her room, with story progress saved
-  and no quantum jump cost. Back to title ends the flight the same way and opens
+  a discovered destination or station offers "Travel here", which teleports there. The local
+  map also has "Galaxies", a labelled secondary button on its top row beside
+  the header, on every galaxy's local map, which opens the galaxy map with no
+  confirm, as for Travel here. Unlike Travel here it stays available while
+  towing; leaving the galaxy returns the towed craft to where it was stranded.
+  Leaving by Earth or Jump costs nothing. Back to title ends the flight the same way and opens
   the start screen; it stays available in danger. While Ada is in danger, Travel
-  here and Return to Earth stay visible but disabled, refuse with the shared refusal feedback, and the Map
+  here and Galaxies stay visible but disabled, refuse with the shared refusal feedback, and the local map
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   On the start screen, Settings opens from its own button, as in Chibi, and
@@ -541,6 +551,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the aim stick. The icon is decorative; the name stays for screen readers. This
   covers the first-flight lessons and the landing page's mobile line. Keyboard
   text stays words.
+- Every card's close X uses the local map's close icon, the galaxy map's
+  included, so all close controls look the same.
 - Settings uses the same terms and patterns as Archie and Chibi. Rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
@@ -732,7 +744,8 @@ still, teleporting and revisiting chunks do not advance fresh-exploration pacing
 content ahead of arrival, not visibly spawn it on top of the player.
 
 Discovered destinations become teleport options, including the whale. Travel is
-available only outside immediate danger. Ada can return to Earth voluntarily from the Map.
+available only outside immediate danger. Ada can return to Earth or jump to another unlocked galaxy voluntarily through
+the local map's Galaxies.
 Teleporting cargo to the mining hub is allowed outside danger: mining's challenge
 is finding and extracting resources, not a mandatory return flight.
 
@@ -832,7 +845,7 @@ destination, a quest item or quest event, the holodisk waypoint and an
 undiscovered station within range. Optional discovery caches and ordinary
 resource rocks get none; Penny senses those instead. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
-contact, like other pickups. The pause menu's Map is the only map; there is no minimap.
+contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
 Edge markers show where off-screen objects Ada has already seen are. Three kinds
 each have their own look: enemy (swarms, fighters, interceptors and
 retaliators), heavy (frigates, capital ships, platforms and General Gadget) and

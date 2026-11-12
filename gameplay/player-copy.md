@@ -19,7 +19,7 @@ Aboard pages picture the ship from outside, never the cockpit's interior, so the
 Penny stand or sit. They stand from their arrival through the optional questions;
 from "Ada sits in the pilot's chair and buckles Penny in
 beside her." onward they are seated. Boarding in later chapters, Continue and
-galaxy selection always show them seated.
+the galaxy map always show them seated.
 A replayed chapter one opening uses the boarding panels instead.
 
 First launch only, before chapter one's opening, in Grandma's garden:
@@ -671,7 +671,7 @@ beacon light. Welcome!"
 - Start screen: Ada the Navigator; Start on first launch, then Continue and
   Restart.
 - Restart card: Restart? with Restart and Cancel.
-- Galaxy selection Earth button: Earth.
+- Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Time for another
   adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
@@ -689,7 +689,8 @@ beacon light. Welcome!"
 - Start screen top right: Achievements, Settings, Exit (label and accessible
   name Exit).
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
-- Galaxy selection: Galaxy {number}, Earth, Jump; Previous and Next as the
+- Galaxy map: Galaxy {number}, Earth, Jump, Stay here (on the galaxy Ada is
+  flying in); Previous and Next as the
   accessible labels for Left and Right. A locked galaxy's name and text: ... A
   placeholder galaxy: its name and flavor text, then Story in development.
 - Galaxy names and flavor text, in route order:
@@ -701,7 +702,7 @@ beacon light. Welcome!"
     neighbor."
   - Cartwheel: "A busy mining hub where every rock is worth something."
   - Black Eye: "A shadowed rim where someone is watching."
-- Map: Map; {percent}% mapped; Travel here; Return to Earth; Quests.
+- Local map: Map; {percent}% mapped; Travel here; Galaxies; Quests.
 - Quests modal: Quests; Story complete.; Job: {objective}; Station job boards
   have more to do.; Explore to find something to do.
 - Map with nothing discovered yet: No destinations mapped yet.

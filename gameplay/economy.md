@@ -181,7 +181,7 @@ and plays the thank-you line as a space conversation. A world change is Art's
 sprite placed at its site and shows on every later flight; until its art lands,
 funding changes nothing in the world. World changes are passable decoration:
 they never block Ada or shots, Ada is drawn in front of them while she overlaps
-one, and the Map shows none of them. The nursery beacon's calves are the
+one, and the local map shows none of them. The nursery beacon's calves are the
 family's calves in their usual idle, gathered in its light. The current-map
 buoys line both edges of the whales' current (see
 [Whirlpool](rules.md#galaxy-two-whirlpool-whale-family)), one every 128 world
