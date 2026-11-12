@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { jobAction, rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
@@ -66,5 +68,32 @@ describe("shop style", () => {
     for (const tag of ["normal", "pressed", "disabled"] as const) {
       expect(STATION_STYLE).toContain(`var(${buttonProperty("ui-button-tile", tag)})`);
     }
+  });
+
+  it("draws every tile row's second line and Owned in row supporting, and busy rows in row disabled", () => {
+    const rule = (selector: string) => {
+      const from = STATION_STYLE.indexOf(`${selector}{`);
+      expect(from, selector).toBeGreaterThanOrEqual(0);
+      return STATION_STYLE.slice(from, STATION_STYLE.indexOf("}", from));
+    };
+    expect(rule(".ada-controls .ada-shop-level")).toContain("color:#c0bbd0");
+    expect(rule(".ada-controls [data-state=unaffordable] .ada-shop-level")).toContain(
+      "color:#a6a2b8",
+    );
+    expect(rule(".ada-controls .ada-owned")).toContain("color:#c0bbd0");
+    expect(rule(".ada-controls .ada-shop-row[data-state=unaffordable]")).toContain("color:#a6a2b8");
+  });
+
+  it("gives job rows their type's sheet and a compact action that takes no press of its own", () => {
+    for (const type of ["survey", "delivery", "rescue", "hunt"]) {
+      expect(
+        existsSync(new URL(`../../public/art/ui/sprites/icon-job-${type}.png`, import.meta.url)),
+      ).toBe(true);
+    }
+    expect(STATION_STYLE).toContain(".ada-controls .ada-job-action.ada-compact{");
+    expect(STATION_STYLE).toContain("pointer-events:none");
+    expect(STATION_STYLE).toContain("var(--ui-button-primary-disabled)");
+    // The placeholder flat marks per job type are gone; only the activity's waits on Art.
+    expect(STATION_STYLE).not.toMatch(/ada-job-glyph\[data-type=(survey|delivery|rescue|hunt)\]/u);
   });
 });

@@ -1,5 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
+import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { readMapArea } from "../game/job-art.ts";
 import {
   type GalaxyMap,
   type MapPlace,
@@ -292,21 +294,9 @@ export const MAP_SCREEN_STYLE = `
   -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
   mask:var(--glyph) center / 100% 100% no-repeat
 }
-/* A held job's own spot: main's orange diamond, with an ink edge and no glyph, drawn inside the
-   unrotated chip so its selection and focus rings match the round chips'. */
-.ada-controls .ada-map-screen .ada-map-place[data-kind="job"]{
-  background:none;
-  box-shadow:none
-}
-.ada-controls .ada-map-screen .ada-map-place[data-kind="job"]::before{
-  width:${units(MAP_SYMBOL.chip)};
-  height:${units(MAP_SYMBOL.chip)};
-  box-sizing:border-box;
-  background:var(--face);
-  box-shadow:inset 0 0 0 ${units(MAP_SYMBOL.edge)} ${MAP_COLORS.ink};
-  -webkit-mask:none;
-  mask:none;
-  transform:rotate(45deg) scale(0.78)
+/* A held activity's own spot has no job type: its orange chip carries no glyph. */
+.ada-controls .ada-map-screen .ada-map-place[data-kind="job"]:not([data-job-type])::before{
+  content:none
 }
 /* Selected: the cream ring with an ink fringe on each side, outside the face. */
 .ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]::after{
@@ -652,13 +642,24 @@ export function chipFace(place: Pick<MapPlace, "job" | "symbol">): string {
   return place.job ? MAP_JOB_FACE : MAP_FACES[place.symbol];
 }
 
+/** A chip's glyph: a held job's own spot takes its job type's, every other place its symbol's. */
+export function chipGlyph(place: Pick<MapPlace, "jobType" | "symbol">): string | null {
+  return place.jobType ? `map-job-${place.jobType}` : MAP_GLYPHS[place.symbol];
+}
+
 function dressChip(chip: HTMLElement, place: MapPlace): void {
   chip.className = "ada-map-place";
   chip.dataset.place = place.id;
   chip.dataset.kind = place.kind;
   chip.dataset.symbol = place.symbol;
   chip.style.setProperty("--face", chipFace(place));
-  const glyph = MAP_GLYPHS[place.symbol];
+  // A held job's own spot takes its job type's glyph (art/map.md "Symbols").
+  const glyph = chipGlyph(place);
+  if (place.jobType) {
+    chip.dataset.jobType = place.jobType;
+  } else {
+    delete chip.dataset.jobType;
+  }
   if (glyph) {
     chip.style.setProperty("--glyph", `url('${ICONS}${glyph}.svg')`);
   } else {
@@ -666,6 +667,46 @@ function dressChip(chip: HTMLElement, place: MapPlace): void {
   }
   chip.toggleAttribute("data-job", place.job);
   chip.toggleAttribute("data-objective", place.objective);
+}
+
+// The Map's search area tokens (art/map.md "Search area"), from public/art/jobs.json.
+const MAP_AREA = readMapArea(JOBS);
+
+/**
+ * A held hunt's search area: the 900-unit world circle projected to an ellipse, an orange dash over
+ * an ink dash on the same path, over the fog and under every chip, hidden while it is smaller than
+ * the selection ring. Sizes are logical px, `px` canvas px each.
+ */
+function drawSearchArea(
+  context: CanvasRenderingContext2D,
+  inner: Parameters<typeof toScreen>[0],
+  view: MapView,
+  map: Pick<GalaxyMap, "searchArea">,
+  px: number,
+): void {
+  const area = map.searchArea;
+  if (!area || !MAP_AREA) {
+    return;
+  }
+  const rx = area.radius * Math.SQRT2 * view.scale;
+  if (rx < MAP_AREA.minRadius) {
+    return;
+  }
+  const at = toScreen(inner, view, area);
+  context.save();
+  context.setLineDash(MAP_AREA.dash.map((length) => length * px));
+  context.lineCap = "butt";
+  for (const [width, colour] of [
+    [MAP_AREA.ink, MAP_COLORS.ink],
+    [MAP_AREA.width, MAP_AREA.colour],
+  ] as const) {
+    context.lineWidth = width * px;
+    context.strokeStyle = colour;
+    context.beginPath();
+    context.ellipse(at.x * px, at.y * px, rx * px, (rx / 2) * px, 0, 0, Math.PI * 2);
+    context.stroke();
+  }
+  context.restore();
 }
 
 export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
@@ -854,15 +895,29 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return;
     }
     context.clearRect(0, 0, width, height);
-    // No explored record: the plain field and no fog.
-    if (map.explored.length === 0 || !state?.field) {
-      return;
-    }
     const px = unit * devicePixelRatio;
+    // No explored record: the plain field and no fog.
+    if (map.explored.length > 0 && state?.field) {
+      fogOver(context, inner, current, map, px, state.field.fog, width, height);
+    }
+    drawSearchArea(context, inner, current, map, px);
+  };
+
+  // The fog over the field, with every explored centre, place and Ada revealed.
+  const fogOver = (
+    context: CanvasRenderingContext2D,
+    inner: Parameters<typeof toScreen>[0],
+    current: MapView,
+    map: GalaxyMap,
+    px: number,
+    colour: string,
+    width: number,
+    height: number,
+  ) => {
     const { rx, ry, sigma } = fogReveal(current.scale);
     context.globalCompositeOperation = "source-over";
     context.filter = "none";
-    context.fillStyle = state.field.fog;
+    context.fillStyle = colour;
     context.fillRect(0, 0, width, height);
     context.globalCompositeOperation = "destination-out";
     context.filter = fogBlur(sigma * px);

@@ -30,6 +30,10 @@ export const TEXT_TOKENS = {
   buttonLabel: "#181425",
   disabledLabel: "#9a96ad",
   label: "#ead4aa",
+  /** Every text of an unaffordable or busy tile row, on its flat #2f2d3d face (5.42:1). */
+  rowDisabled: "#a6a2b8",
+  /** A tile row's second line and Owned, on its #46425e face (5.11:1). */
+  rowSupporting: "#c0bbd0",
   supporting: "#b8b3c9",
   title: "#ffffff",
 } as const;

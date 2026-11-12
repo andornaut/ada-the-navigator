@@ -188,7 +188,7 @@ describe("repeatable activities", () => {
       kind: "activity",
       reward: 35,
       state: "held",
-      title: "Deposit resources at the hub: 0 of 30.",
+      title: "Mining contract",
     });
     expect(rows.length).toBeGreaterThan(1);
     expect(rows.slice(1).every((row) => row.kind === "job" && row.state === "busy")).toBe(true);

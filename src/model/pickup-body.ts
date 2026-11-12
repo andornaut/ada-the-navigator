@@ -1,5 +1,6 @@
 import ore from "../../public/art/cartwheel/ore-nugget.json" with { type: "json" };
 import cache from "../../public/art/discovery-cache.json" with { type: "json" };
+import huntGlint from "../../public/art/hunt-glint.json" with { type: "json" };
 import stardust from "../../public/art/stardust.json" with { type: "json" };
 import type { Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
@@ -38,6 +39,8 @@ function sheetOutline(sheet: Sheet, names?: readonly string[]): Parts | undefine
 const STARDUST = sheetOutline(stardust as Sheet);
 /** A discovery cache, lit: Ada comes within its approach range before she can reach it. */
 const CACHE = sheetOutline(cache as Sheet, [" 1.aseprite", " 2.aseprite"]);
+/** A hunt's lost item as its glint (art/jobs.md "Lost item glint"): every frame of its loop. */
+export const HUNT_GLINT = sheetOutline(huntGlint as Sheet);
 /** A cargo piece, Art's ore nugget. */
 const ORE = sheetOutline(ore as Sheet);
 const SQUARES = new Map<number, Parts>();

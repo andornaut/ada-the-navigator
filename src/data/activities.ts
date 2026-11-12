@@ -9,6 +9,8 @@ export interface ActivityDefinition {
   /** The board row's detail line: the goal's label key. */
   readonly goal: string;
   readonly id: ActivityId;
+  /** The board row's title: the activity's name in Gameplay's table. */
+  readonly name: string;
   /** Each offering story place's id, to its activity line's label key. */
   readonly places: Readonly<Record<string, string>>;
   /** Its reward; a supply run pays the delivery rewards for its length instead. */
@@ -20,6 +22,7 @@ export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>>
   1: {
     goal: "supplyGoal",
     id: "supplyRun",
+    name: "Supply run",
     places: {
       growers: "activityGrower",
       salvagers: "activitySalvager",
@@ -29,10 +32,17 @@ export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>>
   2: {
     goal: "contractGoal",
     id: "miningContract",
+    name: "Mining contract",
     places: { hub: "activityStation" },
     reward: 35,
   },
-  3: { goal: "calfGoal", id: "guideCalf", places: { family: "activityFamily" }, reward: 50 },
+  3: {
+    goal: "calfGoal",
+    id: "guideCalf",
+    name: "Guide a calf",
+    places: { family: "activityFamily" },
+    reward: 50,
+  },
 };
 
 /** The mining contract's goal: resources deposited at the hub after accepting. */

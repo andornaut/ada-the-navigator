@@ -175,6 +175,8 @@ describe("modal text", () => {
       buttonLabel: "#181425",
       disabledLabel: "#9a96ad",
       label: "#ead4aa",
+      rowDisabled: "#a6a2b8",
+      rowSupporting: "#c0bbd0",
       supporting: "#b8b3c9",
       title: "#ffffff",
     });

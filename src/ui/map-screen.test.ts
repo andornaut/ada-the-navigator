@@ -1,12 +1,13 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
-import { MAP_FACES } from "./layout/mapScreen.ts";
+import { MAP_FACES, MAP_GLYPHS } from "./layout/mapScreen.ts";
 import {
   chipFace,
+  chipGlyph,
   emptyPanelHeight,
   MAP_SCREEN_STYLE,
   mapDistance,
@@ -159,26 +160,23 @@ describe("map screen place panel", () => {
     expect(panelHeight(true, 3)).toBe(128);
   });
 
-  it("keeps main's job marks: an orange face on a target and a diamond for a job's own spot", () => {
+  it("marks every held job on the orange face: a target keeps its glyph, a job's spot its type's", () => {
     // The chip's inline face is its only face: no stylesheet rule competes with it.
     expect(chipFace(place("station", { job: true }))).toBe("#feae34");
     expect(chipFace(place("job", { job: true, kind: "job" }))).toBe("#feae34");
     expect(chipFace(place("station"))).toBe(MAP_FACES.station);
     expect(MAP_SCREEN_STYLE).not.toMatch(/\[data-job\]\{[^}]*--face/u);
-    expect(MAP_SCREEN_STYLE).toContain('.ada-map-place[data-kind="job"]{');
-    expect(MAP_SCREEN_STYLE).toContain("rotate(45deg)");
-  });
-
-  it("rotates only the job diamond's face, so its selection ring is the round chips' ring", () => {
-    const rule = (selector: string) => {
-      const from = MAP_SCREEN_STYLE.indexOf(`${selector}{`);
-      expect(from, selector).toBeGreaterThanOrEqual(0);
-      return MAP_SCREEN_STYLE.slice(from, MAP_SCREEN_STYLE.indexOf("}", from));
-    };
-    const spot = '.ada-controls .ada-map-screen .ada-map-place[data-kind="job"]';
-    expect(rule(spot)).not.toContain("transform");
-    expect(rule(`${spot}::before`)).toContain("transform:rotate(45deg) scale(0.78)");
-    // The one ring rule serves every chip, the diamond's unrotated button included.
+    expect(chipGlyph(place("station", { job: true }))).toBe(MAP_GLYPHS.station);
+    for (const type of ["survey", "delivery", "rescue", "hunt"] as const) {
+      expect(chipGlyph(place("job", { job: true, jobType: type, kind: "job" }))).toBe(
+        `map-job-${type}`,
+      );
+      expect(
+        existsSync(new URL(`../../public/art/ui/icons/map-job-${type}.svg`, import.meta.url)),
+      ).toBe(true);
+    }
+    // The job spot is a round chip like every other: no diamond, one ring rule for every chip.
+    expect(MAP_SCREEN_STYLE).not.toContain("rotate(45deg)");
     expect(MAP_SCREEN_STYLE.match(/\[aria-pressed="true"\]::after\{/gu)).toHaveLength(1);
   });
 

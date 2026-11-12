@@ -93,6 +93,7 @@ const MAP: GalaxyMap = {
   places: [],
   player: { x: 0, y: 0 },
   quests: [],
+  searchArea: null,
 };
 const state = (change: Partial<PauseState> = {}): PauseState => ({
   field: null,

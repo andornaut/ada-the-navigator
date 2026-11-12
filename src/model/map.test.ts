@@ -165,8 +165,10 @@ describe("galaxy map", () => {
     const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
     const onPlace = galaxyMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
+        area: null,
         id: "growers",
         label: "Deliver seeds to Grower",
+        type: "delivery",
         x: growers.x,
         y: growers.y,
       }),
@@ -176,15 +178,21 @@ describe("galaxy map", () => {
     ]);
     const spot = galaxyMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
+        area: 900,
         id: "job:7",
         label: "Find a lost toolbox",
+        type: "hunt",
         x: 5000,
         y: 0,
       }),
     );
+    // A hunt's own spot carries its job type's glyph and the search area around it.
+    expect(spot.searchArea).toEqual({ radius: 900, x: 5000, y: 0 });
+    expect(onPlace.searchArea).toBeNull();
     expect(spot.places.at(-1)).toEqual({
       id: "job:7",
       job: true,
+      jobType: "hunt",
       kind: "job",
       label: "Find a lost toolbox",
       objective: false,
@@ -199,7 +207,14 @@ describe("galaxy map", () => {
   it("lists the Quests lines in order, each story and job line tied to its mapped target", () => {
     const model = flying();
     const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
-    const job = { id: "growers", label: "Deliver seeds to Grower", x: growers.x, y: growers.y };
+    const job = {
+      area: null,
+      id: "growers",
+      label: "Deliver seeds to Grower",
+      type: "delivery",
+      x: growers.x,
+      y: growers.y,
+    } as const;
     const quests = {
       job: "Deliver seeds to Grower",
       story: "Find the growers.",
@@ -220,7 +235,14 @@ describe("galaxy map", () => {
       { kind: "job", target: "growers", text: "Deliver seeds to Grower" },
     ]);
     // A job's own spot is its line's target.
-    const spot = { id: "job:7", label: "Find a lost toolbox", x: 5000, y: 0 };
+    const spot = {
+      area: 900,
+      id: "job:7",
+      label: "Find a lost toolbox",
+      type: "hunt",
+      x: 5000,
+      y: 0,
+    } as const;
     expect(
       galaxyMap(
         context(model, { known: [], stations: [] }, NO_LANDMARKS, null, spot, {

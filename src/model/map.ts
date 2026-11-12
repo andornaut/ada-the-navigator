@@ -1,6 +1,6 @@
 import { DESTINATIONS } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
-import type { LandmarkKind } from "../data/jobs.ts";
+import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
 import { stationById, stationsNear } from "./stations.ts";
@@ -169,6 +169,8 @@ export interface MapPlace {
   readonly id: string;
   /** Whether it is the held job's target. */
   readonly job: boolean;
+  /** A held job's own spot's job type, whose glyph its chip shows; an activity's has none. */
+  readonly jobType?: JobType;
   readonly kind: MapPlaceKind;
   readonly label: string;
   /** Whether it is the current objective's destination. */
@@ -205,6 +207,8 @@ export interface GalaxyMap {
   readonly player: Vec;
   /** The Quests modal's lines; empty with nothing to do. */
   readonly quests: readonly QuestLine[];
+  /** A held hunt's search area: its centre, the hunt's own spot, and its world radius. */
+  readonly searchArea: (Vec & { readonly radius: number }) | null;
 }
 
 export interface MapContext {
@@ -222,7 +226,14 @@ export interface MapContext {
    * The held job's target, with the job's title: it marks the place there, or shows as its own
    * spot when no shown place is there. It never counts toward the percent.
    */
-  readonly job: (Vec & { readonly id: string; readonly label: string }) | null;
+  readonly job:
+    | (Vec & {
+        readonly area: number | null;
+        readonly id: string;
+        readonly label: string;
+        readonly type: JobType | null;
+      })
+    | null;
   /** Each discovered destination's, station's and the holodisk waypoint's label, by id. */
   readonly label: (id: string, kind: "destination" | "holodisk" | "station") => string;
   readonly landmarks: LandmarkChart;
@@ -339,6 +350,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
           {
             id: job.id,
             job: true,
+            ...(job.type ? { jobType: job.type } : {}),
             kind: "job",
             label: job.label,
             objective: false,
@@ -372,5 +384,6 @@ export function galaxyMap(context: MapContext): GalaxyMap {
     places: shown,
     player: { x: flight.player.x, y: flight.player.y },
     quests: [...story, ...jobLine],
+    searchArea: job?.area ? { radius: job.area, x: job.x, y: job.y } : null,
   };
 }

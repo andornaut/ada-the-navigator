@@ -155,7 +155,7 @@ export const STATION_STYLE = `
 /* Unaffordable: the flat disabled frame over the full height, still focusable and pressable. */
 .ada-controls .ada-shop-row[data-state=unaffordable]{
   padding:${FLAT_TOP} ${ROW_SIDE} 0;
-  color:${TEXT_TOKENS.disabledLabel};
+  color:${TEXT_TOKENS.rowDisabled};
   background:#2f2d3d;
   border-color:#2f2d3d;
   border-image-source:var(${buttonProperty("ui-button-tile", "disabled")});
@@ -247,10 +247,10 @@ export const STATION_STYLE = `
   white-space:nowrap
 }
 .ada-controls .ada-shop-level{
-  color:${TEXT_TOKENS.supporting}
+  color:${TEXT_TOKENS.rowSupporting}
 }
 .ada-controls [data-state=unaffordable] .ada-shop-level{
-  color:${TEXT_TOKENS.disabledLabel}
+  color:${TEXT_TOKENS.rowDisabled}
 }
 
 .ada-controls .ada-shop-slot{
@@ -291,7 +291,7 @@ export const STATION_STYLE = `
   align-items:center;
   gap:${units(SHOP_ROW.markGap)};
   font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.supporting};
+  color:${TEXT_TOKENS.rowSupporting};
   white-space:nowrap
 }
 .ada-controls [data-state=inUse] .ada-owned{
@@ -327,27 +327,38 @@ export const STATION_STYLE = `
   gap:${units(SHOP_ROW.markGap)};
   align-items:center
 }
-.ada-controls .ada-job-action{
-  font:${font(TYPE.label)};
-  color:${TEXT_TOKENS.title};
-  white-space:nowrap
+/* The compact row action (art/controls.md "Compact row action"): drawn inside the row, which
+   stays one control, so it takes no press of its own and sinks with the row. Every row's action
+   is one width. In a busy row it is the flat disabled frame, its label at 4 in row disabled. */
+.ada-controls .ada-job-action.ada-compact{
+  min-width:var(--job-action-width,${units(TEXT_BUTTON.compactWidth)});
+  pointer-events:none;
+  cursor:inherit
 }
-.ada-controls [data-state=unaffordable] .ada-job-action{
-  color:inherit
+.ada-controls .ada-shop-row:active .ada-job-action.ada-compact:not(.ada-primary){
+  border-image-source:var(--ui-button-normal)
 }
-/* Placeholder until Art's icon-job-* sheets: a flat mark per job type and for an activity. */
-.ada-controls .ada-job-glyph{
-  width:${units(SHOP_ROW.glyph.icon)};
-  height:${units(SHOP_ROW.glyph.icon)};
+.ada-controls .ada-shop-row:active .ada-job-action.ada-compact.ada-primary{
+  border-image-source:var(--ui-button-primary-normal)
+}
+.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact{
+  align-items:flex-start;
+  padding-top:${units(TEXT_BUTTON.pressedSink)};
+  color:${TEXT_TOKENS.rowDisabled};
+  border-image-source:var(--ui-button-disabled)
+}
+.ada-controls [data-state=unaffordable] .ada-job-action.ada-compact.ada-primary{
+  border-image-source:var(--ui-button-primary-disabled)
+}
+/* CLEANUP (added 2026-11-12): the shared activity icon is a placeholder disc until Art pins its
+   circular repeat arrow sheet; then the activity row takes that sheet as the job rows take theirs. */
+.ada-controls .ada-job-glyph[data-type=activity]{
   border-radius:50%;
-  background:#5a6988
+  background:#b55088
 }
-.ada-controls .ada-job-glyph[data-type=survey]{background:#3e8948}
-.ada-controls .ada-job-glyph[data-type=delivery]{background:#be4a2f}
-.ada-controls .ada-job-glyph[data-type=rescue]{background:#0099db}
-.ada-controls .ada-job-glyph[data-type=hunt]{background:#feae34}
-.ada-controls .ada-job-glyph[data-type=activity]{background:#b55088}
-.ada-controls [data-state=unaffordable] .ada-job-glyph{background:#5a6988}
+.ada-controls [data-state=unaffordable] .ada-job-glyph[data-type=activity]{
+  background:${TEXT_TOKENS.disabledLabel}
+}
 
 /* Measuring: rows at their natural widths, off screen. */
 .ada-controls .ada-shop-measure{
@@ -819,9 +830,16 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     node.dataset.job = job.id;
     // The held job wears the selection ring; a refused offer the disabled face.
     node.dataset.state = { busy: "unaffordable", held: "inUse", offer: "forSale" }[job.state];
+    // The job type's icon-job sheet, normal then disabled; the activity's placeholder mark.
     const glyph = document.createElement("span");
-    glyph.className = "ada-job-glyph";
-    glyph.dataset.type = job.type;
+    glyph.className =
+      job.kind === "activity"
+        ? "ada-glyph ada-job-glyph"
+        : "ada-glyph ada-glyph-sprite ada-job-glyph";
+    glyph.dataset.type = job.kind === "activity" ? "activity" : job.type;
+    if (job.kind !== "activity") {
+      glyph.style.setProperty("--sheet", `url('${SPRITES}icon-job-${job.type}.png')`);
+    }
     glyph.setAttribute("aria-hidden", "true");
     const jobWell = document.createElement("span");
     jobWell.className = "ada-well";
@@ -837,7 +855,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     const slot = document.createElement("span");
     slot.className = "ada-shop-slot";
     const action = document.createElement("span");
-    action.className = "ada-job-action";
+    action.className = `ada-button ada-compact ada-job-action${
+      job.state === "held" ? "" : " ada-primary"
+    }`;
     const mark = document.createElement("span");
     if (job.state === "held") {
       mark.className = "ada-owned";
@@ -880,6 +900,17 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const renderJobs = (): void => {
     jobList.replaceChildren(...options.jobs().map(jobElement));
+    // Every row's compact action is one width: the widest label's (art/layout.md "Job board row").
+    jobList.style.removeProperty("--job-action-width");
+    const widest = Math.max(
+      0,
+      ...[...jobList.querySelectorAll<HTMLElement>(".ada-job-action")].map(
+        (action) => action.getBoundingClientRect().width,
+      ),
+    );
+    if (widest > 0) {
+      jobList.style.setProperty("--job-action-width", units(widest / readViewUnit(jobList)));
+    }
   };
 
   const renderShop = (): void => {

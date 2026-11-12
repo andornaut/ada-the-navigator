@@ -102,7 +102,8 @@ import {
   landmarkSites,
   unchartedNear,
 } from "./landmarks.ts";
-import { type GalaxyMap, galaxyMap, recordExplored } from "./map.ts";
+import { type GalaxyMap, galaxyMap, type MapContext, recordExplored } from "./map.ts";
+import { HUNT_GLINT } from "./pickup-body.ts";
 import { newProgress } from "./progress.ts";
 import {
   donate,
@@ -1610,7 +1611,7 @@ export class GameModel {
             kind: "activity",
             reward: activity.reward,
             state: "held",
-            title: this.jobObjective ?? "",
+            title: ACTIVITIES[f.sector]?.name ?? "",
             type: "activity",
           },
         ]
@@ -1770,7 +1771,11 @@ export class GameModel {
         this.jobMoments.push("searchEntered");
       }
       const { pickupRadius } = this.content.tuning.flight;
-      if (held.spot && pickupTouched(this.content, f, held.spot, pickupRadius)) {
+      // The lost item is touched as its glint is drawn, with the pickups' shared reach.
+      if (
+        held.spot &&
+        pickupTouched(this.content, f, held.spot, pickupRadius, HUNT_GLINT ?? null)
+      ) {
         this.finishJob(f);
       }
     }
@@ -1846,11 +1851,20 @@ export class GameModel {
       : target;
   }
   /** The held job's target on the Map, named by the job's title. */
-  private jobMapTarget(f: FlightState): (JobTarget & { readonly label: string }) | null {
+  private jobMapTarget(f: FlightState): MapContext["job"] {
     const target = this.jobTarget(f);
     const title = this.jobObjective;
+    const held = this.held;
+    // A hunt's target is its search area's centre, which the Map rings.
     return target && title !== null
-      ? { id: target.id, label: title, x: target.x, y: target.y }
+      ? {
+          area: held?.type === "hunt" ? JOB_TUNING.hunt.radius : null,
+          id: target.id,
+          label: title,
+          type: held?.type ?? null,
+          x: target.x,
+          y: target.y,
+        }
       : null;
   }
   /** Where the held job sends Ada now, for the indicator and the Map. */

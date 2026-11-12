@@ -14,6 +14,8 @@ export interface CoreManifest<T> {
   readonly galaxies?: unknown;
   /** Each galaxy's field palette and the light field (public/art/galaxies.json). */
   readonly galaxyFields?: unknown;
+  /** The station jobs' art in flight and on the Map (public/art/jobs.json). */
+  readonly jobs?: string;
   readonly quantumJump?: string;
   readonly resourceRocks?: string;
   readonly spacePalette?: string;

@@ -50,6 +50,7 @@ const NO_MAP: GalaxyMap = {
   places: [],
   player: { x: 0, y: 0 },
   quests: [],
+  searchArea: null,
 };
 
 // An action stack: full-width actions a gap apart, filling the card's inner width.

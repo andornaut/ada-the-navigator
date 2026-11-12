@@ -168,6 +168,16 @@ import {
 } from "./enemy-art.ts";
 import { type FeedbackPulse, FeedbackSound, ModelFeedback } from "./feedback.ts";
 import {
+  beaconLandmarkFrame,
+  dashes,
+  glintFrame,
+  glintPing,
+  type JobArt,
+  type JobFrame,
+  nebulaTint,
+  readJobArt,
+} from "./job-art.ts";
+import {
   blastEdges,
   inkEdges,
   KEYLINE_ALPHA,
@@ -356,6 +366,10 @@ function projectId(key: string): string | null {
   return key.startsWith("project:") ? key.slice("project:".length) : null;
 }
 
+// The landmarks' ground layer (art/jobs.md): above the backdrop rocks (-1), under the field ink
+// (0), which draws the specks, streaks and the search rim over them, and under every play object.
+const LANDMARK_DEPTH = -0.5;
+
 export class PrototypeScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
   private model!: GameModel;
@@ -406,6 +420,12 @@ export class PrototypeScene extends Scene {
   // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
   // by buoy, and the whales' current with the family position it was found from.
   private whirlpoolProjects: WhirlpoolProjects<Asset> | undefined;
+  // The station jobs' art (job-art.ts): the landmarks' layer sprites by landmark and layer, those
+  // drawn this frame, and the hunt's lost-item glint.
+  private jobArt: JobArt<Asset> | undefined;
+  private landmarkSprites = new Map<string, GameObjects.Image>();
+  private landmarksDrawn = new Set<string>();
+  private glintSprite: GameObjects.Image | undefined;
   private buoySprites = new Map<string, GameObjects.Image>();
   private whalesCurrentFor: { current: Current | null; family: Vec } | undefined;
   // The core manifest's assets and every loaded galaxy manifest's, with their data links.
@@ -414,6 +434,7 @@ export class PrototypeScene extends Scene {
   private manifest: {
     assets: readonly Asset[];
     cartwheelDebris?: string;
+    jobs?: string;
     resourceRocks?: string;
     tow?: string;
     whales?: string;
@@ -724,6 +745,7 @@ export class PrototypeScene extends Scene {
       assets: bootAssets,
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
       ...(manifest?.tow ? { tow: manifest.tow } : {}),
+      ...(manifest?.jobs ? { jobs: manifest.jobs } : {}),
     };
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
@@ -1234,6 +1256,7 @@ export class PrototypeScene extends Scene {
     for (const [key, path] of [
       ["resource-rocks", this.manifest.resourceRocks],
       ["tow", this.manifest.tow],
+      ["jobs", this.manifest.jobs],
     ] as const) {
       if (path && !this.cache.json.exists(key)) {
         this.load.json(key, path);
@@ -1430,6 +1453,7 @@ export class PrototypeScene extends Scene {
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
     this.towLine = readTowLine(this.cache.json.get("tow"));
+    this.jobArt = readJobArt(this.shipAssets, this.cache.json.get("jobs"));
     this.strandedCraft = readStrandedCraft(this.cache.json.get("tow"), loaded);
     this.hubArt = readHubArt(loaded);
     this.buoyArt = readBuoyArt(loaded);
@@ -2011,6 +2035,11 @@ export class PrototypeScene extends Scene {
     for (const sprite of this.buoySprites.values()) {
       sprite.setVisible(false);
     }
+    for (const sprite of this.landmarkSprites.values()) {
+      sprite.setVisible(false);
+    }
+    this.landmarksDrawn.clear();
+    this.glintSprite?.setVisible(false);
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
@@ -2049,6 +2078,12 @@ export class PrototypeScene extends Scene {
     this.drawCurrents(flight);
     this.drawWhirlpoolProjects(flight);
     this.drawJobs();
+    for (const [key, sprite] of this.landmarkSprites) {
+      if (!this.landmarksDrawn.has(key)) {
+        sprite.destroy();
+        this.landmarkSprites.delete(key);
+      }
+    }
     for (const object of flight.objects) {
       this.drawObject(object);
     }
@@ -2942,12 +2977,15 @@ export class PrototypeScene extends Scene {
 
   /**
    * Landmarks, a rescue's craft on its tow line, a hunt's search area and its lost item's glint
-   * (gameplay/quests.md), in the galaxy's palette. Placeholders until Art's landmark, craft and
-   * lost-item art.
+   * (gameplay/quests.md, art/jobs.md). Landmarks and the search rim lie on the ground layer under
+   * play objects, and Ada flies through the landmarks; a part whose art is missing keeps its
+   * placeholder.
    */
   private drawJobs(): void {
     const scenery = this.model.jobScenery;
-    const margin = 160;
+    const sector = this.model.state.flight?.sector;
+    const art = this.jobArt;
+    const margin = 200;
     const near = (point: Vec) =>
       point.x >= -margin &&
       point.y >= -margin &&
@@ -2959,7 +2997,27 @@ export class PrototypeScene extends Scene {
       if (!near(point)) {
         continue;
       }
-      if (landmark.kind === "nebula") {
+      const key = `landmark:${landmark.x},${landmark.y}`;
+      if (landmark.kind === "nebula" && art?.nebula && sector) {
+        art.nebula.forEach((layer, index) =>
+          this.drawLandmarkLayer(`${key}#${index}`, layer.frame, point, index, {
+            ...(layer.keyline ? { keyline: layer.keyline } : {}),
+            ...(layer.tint ? { tint: nebulaTint(art, sector, layer.tint) } : {}),
+          }),
+        );
+      } else if (landmark.kind === "wreck" && art?.wreck) {
+        art.wreck.forEach((layer, index) =>
+          this.drawLandmarkLayer(`${key}#${index}`, layer.frame, point, index, {
+            ...(layer.keyline ? { keyline: layer.keyline } : {}),
+          }),
+        );
+      } else if (landmark.kind === "beacon" && art?.beacon) {
+        const frame =
+          art.beacon.frames[beaconLandmarkFrame(art.beacon, this.reducedMotion, this.time.now)];
+        this.drawLandmarkLayer(key, frame, point, 0, {
+          ...(art.beacon.keyline ? { keyline: art.beacon.keyline } : {}),
+        });
+      } else if (landmark.kind === "nebula") {
         this.ink.fillStyle(this.palette.environmentDetail, 0.22);
         this.ink.fillEllipse(point.x, point.y, 220, 110);
         this.ink.fillEllipse(point.x + 46, point.y - 16, 130, 64);
@@ -2984,26 +3042,104 @@ export class PrototypeScene extends Scene {
     }
     if (scenery.area) {
       const { radius, x, y } = scenery.area;
-      const points = Array.from({ length: 48 }, (_, index) => {
-        const angle = (index / 48) * Math.PI * 2;
-        const at = this.project({
-          x: x + Math.cos(angle) * radius,
-          y: y + Math.sin(angle) * radius,
-        });
-        return new PhaserMath.Vector2(at.x, at.y);
+      const points = Array.from({ length: 96 }, (_, index) => {
+        const angle = (index / 96) * Math.PI * 2;
+        return this.project({ x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius });
       });
-      this.ink.lineStyle(1, this.palette.pointOfInterest, 0.45);
-      this.ink.strokePoints(points, true);
+      const rim = art?.searchArea;
+      if (rim) {
+        const runs = dashes(points, rim.dash);
+        const stroke = (width: number, colour: number, alpha: number) => {
+          this.ink.lineStyle(width, colour, alpha);
+          for (const run of runs) {
+            this.ink.strokePoints(
+              run.map(({ x: px, y: py }) => new PhaserMath.Vector2(px, py)),
+              false,
+              false,
+            );
+          }
+        };
+        // On a light field the rim draws over an ink dash on the same path.
+        if (this.light) {
+          stroke(rim.lightInk.width, LIGHT_FIELD.ink, rim.lightInk.alpha);
+        }
+        stroke(rim.width, this.palette.pointOfInterest, rim.alpha);
+      } else {
+        this.ink.lineStyle(1, this.palette.pointOfInterest, 0.45);
+        this.ink.strokePoints(
+          points.map(({ x: px, y: py }) => new PhaserMath.Vector2(px, py)),
+          true,
+        );
+      }
     }
     if (scenery.craft) {
       this.drawTow(scenery.craft, scenery.towing);
     }
     if (scenery.glint) {
       const glint = this.project(scenery.glint);
-      const size = 4 + pulse * 4;
-      this.overlay.lineStyle(2, this.palette.active, 1 - pulse * 0.5);
-      this.overlay.lineBetween(glint.x - size, glint.y, glint.x + size, glint.y);
-      this.overlay.lineBetween(glint.x, glint.y - size, glint.x, glint.y + size);
+      const sprite = art?.glint;
+      if (sprite) {
+        const ping = glintPing(sprite, this.reducedMotion, this.time.now);
+        if (ping) {
+          // The ping is on the world plane, under the glint; a light field draws it over ink.
+          if (this.light) {
+            this.ink.lineStyle(sprite.ping.lightInk, LIGHT_FIELD.ink, ping.alpha);
+            this.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
+          }
+          this.ink.lineStyle(sprite.ping.width, this.palette.pointOfInterest, ping.alpha);
+          this.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
+        }
+        this.glintSprite ??= this.add.image(0, 0, sprite.asset.id);
+        const image = this.glintSprite
+          .setTexture(sprite.asset.id, glintFrame(sprite, this.reducedMotion, this.time.now))
+          .setDisplaySize(sprite.asset.displayWidth!, sprite.asset.displayHeight!)
+          .setOrigin(sprite.asset.pivot.x, sprite.asset.pivot.y)
+          .setPosition(glint.x, glint.y)
+          .setDepth(playDepth(glint.y))
+          .setVisible(true);
+        if (sprite.keyline) {
+          this.keyline(sprite.keyline, "hunt-glint", image);
+        }
+      } else {
+        const size = 4 + pulse * 4;
+        this.overlay.lineStyle(2, this.palette.active, 1 - pulse * 0.5);
+        this.overlay.lineBetween(glint.x - size, glint.y, glint.x + size, glint.y);
+        this.overlay.lineBetween(glint.x, glint.y - size, glint.x, glint.y + size);
+      }
+    }
+  }
+
+  /**
+   * One landmark layer on the ground layer, under every play object: its frame at the landmark's
+   * point, multiplied by its galaxy tint, keylined on a light field when its kind is.
+   */
+  private drawLandmarkLayer(
+    key: string,
+    frame: JobFrame,
+    point: Vec,
+    layer: number,
+    style: { keyline?: string; tint?: number },
+  ): void {
+    let sprite = this.landmarkSprites.get(key);
+    if (!sprite) {
+      sprite = this.add.image(0, 0, frame.id);
+      this.landmarkSprites.set(key, sprite);
+    }
+    sprite
+      .setTexture(frame.id)
+      .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+      .setOrigin(frame.pivot.x, frame.pivot.y)
+      .setPosition(point.x, point.y)
+      .setDepth(LANDMARK_DEPTH + layer * 1e-7)
+      .setVisible(true);
+    if (style.tint === undefined) {
+      sprite.clearTint();
+    } else {
+      sprite.setTint(style.tint);
+    }
+    this.landmarksDrawn.add(key);
+    if (style.keyline) {
+      this.keyline(style.keyline, key, sprite);
     }
   }
 
