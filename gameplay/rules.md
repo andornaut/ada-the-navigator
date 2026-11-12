@@ -656,9 +656,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   [Economy](economy.md#ammunition)).
 - Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
   Phaser) is also the order of power and rarity: each later weapon costs more,
-  drops less often, gets fewer seconds of fire per ammo pack and deals somewhat
-  more single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3
-  per bolt with 3 bolts, Rapid Missile 5, Heavy Missile 5.5, Scattershot 6.0 with
+  drops less often, gets fewer seconds of fire per ammo pack and deals at least
+  as much single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3
+  per bolt with 3 bolts, Rapid Missile 5, Heavy Missile 5, Scattershot 6.0 with
   every dot hitting, Phaser 6.5). Slower weapons deal more damage per hit. The
   later weapons are situational, each with a limit that offsets its damage:
   Heavy Missile fires slowly, Scattershot works only up close and Phaser fires
@@ -684,10 +684,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
     1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
     and missile speed.
   - Heavy Missile: one slow straight missile with a large blast; levels shorten
-    its interval (2.0, 1.67, 1.33 s) and grow its damage (11, 13.75, 16.5 times
+    its interval (2.0, 1.67, 1.33 s) and grow its damage (10, 12.5, 15 times
     Laser damage) and blast radius (60, 72, 85). Rapid Missile is faster at every
-    level, in missile speed and fire rate; Heavy Missile deals more damage at
-    every level, per hit and per second.
+    level, in missile speed and fire rate; Heavy Missile deals more damage per hit
+    at every level, ties Rapid Missile's damage per second at level 1 (5) and
+    exceeds it after (7.5 against 6, 11.25 against 7.5).
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
     is a fixed 100 world units on every device, and levels add only dots. Up
@@ -705,11 +706,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
   missile's blast damages Ada, never enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
-  Laser shot deals 1 damage. Enemies fire the same weapons, with the same damage,
-  blast, spread and reach at the same level, plus three enemy-only weapons; each enemy
+  Laser shot deals 1 damage. Enemies fire the same weapons, always at level 1
+  with Ada's level 1 damage, blast, spread and reach, plus three enemy-only
+  weapons; each enemy
   keeps its own cadence and projectile speed (see
-  [Ships](ships.md#enemy-weapons)). Enemy Heavy Missile, Phaser and Scattershot keep
-  their own lower damage, so a single enemy hit never empties a base shield.
+  [Ships](ships.md#enemy-weapons)). An enemy Heavy Missile hit
+  (10) can empty a full base shield, so it flies slowly and fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
   every level, so flight time follows speed. Rapid Missile flies at 500, 600 and

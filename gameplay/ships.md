@@ -161,29 +161,43 @@ Enemy aim is natural rather than perfect, and every aimed enemy weapon follows i
 
 ### Enemy weapons
 
-Enemies fire the same weapons Ada does, plus three weapons only they carry. A
-weapon's damage, blast and spread are the same whoever fires it, at the same level
-(see [Flight and combat](rules.md#flight-and-combat)). Each enemy's fire cadence
-and projectile speed stay its own, so attacks stay readable and dodgeable. Enemies
-carry no ammunition. Weapon levels rise with position:
+Enemies fire the same weapons Ada does, plus three weapons only they carry. Every
+enemy weapon is level 1, with Ada's level 1 damage, blast, spread and reach (see
+[Flight and combat](rules.md#flight-and-combat)), so no enemy hit grows with the
+route. Each enemy's fire cadence and projectile speed stay its own, so attacks
+stay readable and dodgeable. Enemies carry no ammunition. Enemy pressure rises
+with position through fire rate, aim lead, group sizes, encounter rates and heavy
+weapon mounts, not weapon levels. Enemy damage has no cap; the pacing simulation
+reports the damage Ada takes per minute in boss fights.
 
-| Archetype     | Positions 1–2                  | Positions 3–4                                                                   | Positions 5–6                                                                                      |
-| ------------- | ------------------------------ | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `swarm`       | Laser 1                        | Laser 2                                                                         | Laser 3                                                                                            |
-| `fighter`     | Laser 1                        | Rapid Missile 2                                                                 | Rapid Missile 3                                                                                    |
-| `interceptor` | Laser 1                        | Multi-Laser 2                                                                   | Multi-Laser 3                                                                                      |
-| `retaliator`  | Multi-Laser 1                  | Multi-Laser 2                                                                   | Multi-Laser 3                                                                                      |
-| `frigate`     | 2 × Laser 1                    | 2 × Laser 2, Rapid Missile 2                                                    | 2 × Laser 3, Rapid Missile 3, charged lance                                                        |
-| `capital`     | 2 × Laser 1, 2 × Multi-Laser 1 | 2 × Laser 2, 2 × Multi-Laser 2, Rapid Missile 2, Heavy Missile 1, Scattershot 1 | 2 × Laser 3, 2 × Rapid Missile 3, Heavy Missile 1, Phaser 1, Scattershot 1, ring burst, mine layer |
-| `platform`    | 2 × Laser 1                    | 2 × Laser 2                                                                     | 2 × Laser 3                                                                                        |
+| Archetype     | Positions 1–2 | Positions 3–4 | Positions 5–6 |
+| ------------- | ------------- | ------------- | ------------- |
+| `swarm`       | Laser         | Laser         | Laser         |
+| `fighter`     | Laser         | Rapid Missile | Rapid Missile |
+| `interceptor` | Laser         | Multi-Laser   | Multi-Laser   |
+| `retaliator`  | Multi-Laser   | Multi-Laser   | Multi-Laser   |
+| `platform`    | 2 × Laser     | 2 × Laser     | 2 × Laser     |
 
 Small craft carry only Laser, Multi-Laser and Rapid Missile. Heavy Missile,
-Phaser and Scattershot are reserved for frigates and capitals; a capital's
+Phaser and Scattershot are reserved for frigates and capitals; a heavy's
 Scattershot is point defense against craft that come close, and Ada avoids it
 by keeping her distance.
 
-Enemy Heavy Missile and Phaser stay at level 1: their single hits are large, so a
-capital's Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
+Each frigate and capital carries at most three weapon types, picked from its
+position's pool and seeded by the ship, so a ship keeps its weapons across save
+and resume. The enemy-only weapons count as types. Its weapon mounts (the
+Heavies table's weapon count) are shared out in turn among its types, with at
+most one mount each of Heavy Missile, Phaser, ring burst, mine layer and charged
+lance; extra mounts go to its other types. A pool smaller than three gives every
+type in it.
+
+| Heavy     | Positions 1–2                     | Positions 3–4                                                 | Positions 5–6                                                                    |
+| --------- | --------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `frigate` | Laser, Multi-Laser, Rapid Missile | Laser, Multi-Laser, Rapid Missile, Scattershot                | Laser, Rapid Missile, Scattershot, Heavy Missile, charged lance                  |
+| `capital` | Laser, Multi-Laser, Rapid Missile | Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot | Laser, Rapid Missile, Heavy Missile, Phaser, Scattershot, ring burst, mine layer |
+
+Heavy Missile and Phaser hits are large, so an
+enemy Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
 seconds before the beam fires. The aim line stays where it started, so Ada can
 move off it.
 
@@ -197,10 +211,8 @@ move off it.
 | Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                          |
 
 Intervals are before the position's fire rate. Projectile speeds multiply the
-base enemy projectile speed, a fixed 200 world units per second. Damage at each
-level is the shared per-level damage of Ada's weapon, except that enemy Heavy
-Missile deals 8, enemy Phaser 4 and an enemy Scattershot dot 0.35 at level 1 (levels 2 and 3 share 1.5
-and 2.25 times that level 1 volley across their dots). The three enemy-only weapons:
+base enemy projectile speed, a fixed 200 world units per second. Damage is Ada's level 1
+damage for that weapon. The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
   at ×1.2.
@@ -236,8 +248,8 @@ Frigates, capitals and platforms have hull HP and hardpoints.
   A heavy that loses all its engines coasts to rest like a disabled heavy,
   keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
-  carry. A mount the position leaves unused is drawn as a capped plate with no
-  hardpoint. Phantom's capital is General Gadget's own, more threatening design.
+  carry, and a turret for each weapon a mount can hold. A mount the position
+  leaves unused is drawn as a capped plate with no hardpoint. Phantom's capital is General Gadget's own, more threatening design.
 - **State:** hull HP, hardpoints, disabled and salvaged states are retained like
   other heavy state until the galaxy regenerates. A salvaged heavy stays where
   Ada left it: like a destroyed one, it no longer holds the spacing kept between
