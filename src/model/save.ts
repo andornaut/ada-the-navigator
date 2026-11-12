@@ -8,7 +8,7 @@ import { JOB_TYPES } from "../data/jobs.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { validActivity } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -393,7 +393,7 @@ function upgradeLevels(value: unknown): value is UpgradeLevels {
     Object.keys(WEAPON_CATALOG).every((weapon) =>
       boundedLevel(
         (value.weapons as Record<string, unknown>)[weapon],
-        ECONOMY.weaponUpgradePrices.length,
+        ECONOMY.weaponUpgradePrices[weapon as Weapon].length,
       ),
     ) &&
     (Object.keys(ECONOMY.trackPrices) as UpgradeTrack[]).every((track) =>

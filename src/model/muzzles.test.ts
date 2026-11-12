@@ -89,14 +89,14 @@ describe("drawn muzzles", () => {
     expect(offset.y).toBeCloseTo(expected.y, 9);
   });
 
-  it("cycles a twin turret's barrels by volley", () => {
-    const tips = capitalFile.tops.turret[3]!.muzzles;
-    expect(tips).toHaveLength(2);
-    const layout = MUZZLE_LAYOUTS.capital;
+  it("cycles a triple top's barrels by volley", () => {
+    const tips = capitalFile.tops.triple[3]!.muzzles;
+    expect(tips).toHaveLength(3);
+    const layout = muzzleLayout(armed({ "weapon-left": "multiLaser" }), MUZZLE_ART.capital)!;
     const first = muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 0)!;
     const second = muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 1)!;
     expect(second).not.toEqual(first);
-    expect(muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 2)).toEqual(first);
+    expect(muzzleOffset(layout, "weapon-left", at(0), at(3 * 22.5), 3)).toEqual(first);
   });
 
   it("defines no muzzle for a turretless part, an unknown turret or a ship without that art", () => {
@@ -117,7 +117,7 @@ describe("drawn muzzles", () => {
     const tips = (top: string, aim: number) =>
       capitalFile.tops[top as keyof typeof capitalFile.tops][aim]!.muzzles.length;
     expect(layout.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("dish", 4));
-    expect(layout.turrets.get("weapon-rear-left")!.tips[4]).toHaveLength(tips("turret", 4));
+    expect(layout.turrets.get("weapon-rear-left")!.tips[4]).toHaveLength(tips("triple", 4));
     expect(layout.turrets.get("stern-right")!.aft).toBe(true);
     // Whatever the aim, the hopper's chute is the aim frame opposite the hull heading.
     const heading = 3;

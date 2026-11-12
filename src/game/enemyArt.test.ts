@@ -420,10 +420,31 @@ describe("enemy art fallback", () => {
 });
 
 const world = (degrees: number) => at(degrees);
-const pose = (destroyed: readonly string[] = [], aim = world(0), position = 1): PartPose => ({
+/** A loadout for every frigate and capital mount; a heavy's tops follow its weapons. */
+const LOADOUT: Readonly<Record<string, string>> = {
+  bow: "chargedLance",
+  "claw-left": "phaser",
+  "claw-right": "heavyMissile",
+  port: "laser",
+  spine: "rapidMissile",
+  starboard: "laser",
+  "stern-left": "ringBurst",
+  "stern-right": "mineLayer",
+  "weapon-left": "laser",
+  "weapon-rear-left": "rapidMissile",
+  "weapon-rear-right": "rapidMissile",
+  "weapon-right": "laser",
+};
+const pose = (
+  destroyed: readonly string[] = [],
+  aim = world(0),
+  position = 1,
+  weapons: Readonly<Record<string, string>> = LOADOUT,
+): PartPose => ({
   aim: () => aim,
   intact: (hardpoint) => !destroyed.includes(hardpoint),
   position,
+  weapon: (hardpoint) => weapons[hardpoint],
 });
 
 describe("composed heavies", () => {
@@ -482,7 +503,12 @@ describe("composed heavies", () => {
       const tops = composeEnemy(capital, pose([], world(22.5 * 9)), capital.frames[heading]!)
         .filter((part) => part.layer === "top")
         .map((part) => part.frame.id);
-      expect(tops).toEqual(Array(4).fill("enemy-capital-turret-top-9"));
+      expect(tops).toEqual([
+        "enemy-capital-gun-top-9",
+        "enemy-capital-pod-top-9",
+        "enemy-capital-pod-top-9",
+        "enemy-capital-gun-top-9",
+      ]);
     }
   });
 
@@ -496,10 +522,10 @@ describe("composed heavies", () => {
         "claw-right": "enemy-capital-rail-top-9",
         "stern-left": "enemy-capital-dome-top-9",
         "stern-right": `enemy-capital-hopper-top-${(heading + 8) % 16}`,
-        "weapon-left": "enemy-capital-turret-top-9",
+        "weapon-left": "enemy-capital-gun-top-9",
         "weapon-rear-left": "enemy-capital-pod-top-9",
         "weapon-rear-right": "enemy-capital-pod-top-9",
-        "weapon-right": "enemy-capital-turret-top-9",
+        "weapon-right": "enemy-capital-gun-top-9",
       });
     }
     // A capped plate never draws a top, whatever its hardpoint state.
@@ -523,9 +549,10 @@ describe("composed heavies", () => {
     const pivot = capitalHardpoints.headings[2]!.hardpoints.find(
       (part) => part.id === "weapon-right",
     )!.pivot!;
-    const muzzles = capitalHardpoints.tops.turret[3]!.muzzles;
-    const tips = turretMuzzles(capital, pose([], world(22.5 * 3)), hull, "weapon-right");
-    expect(tips).toHaveLength(2);
+    const muzzles = capitalHardpoints.tops.triple[3]!.muzzles;
+    const triple = pose([], world(22.5 * 3), 1, { "weapon-right": "multiLaser" });
+    const tips = turretMuzzles(capital, triple, hull, "weapon-right");
+    expect(tips).toHaveLength(3);
     expect(tips[1]!.x).toBeCloseTo((pivot[0]! + muzzles[1]![0]! - 240) * scale, 9);
     expect(tips[1]!.y).toBeCloseTo((pivot[1]! + muzzles[1]![1]! - 240) * scale, 9);
     expect(turretMuzzles(capital, pose(["weapon-right"]), hull, "weapon-right")).toEqual([]);
@@ -568,6 +595,7 @@ describe("composed heavies", () => {
           })),
           tiers: [],
           tops: new Map([["gun", Array.from({ length: 16 }, () => [{ x: 0, y: 10 }])]]),
+          weaponTops: new Map(),
         },
         tops: new Map([["gun", tops]]),
       },

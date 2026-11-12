@@ -53,11 +53,12 @@ export function chooseUpgrade(
 ): UpgradeGift | null {
   const { categories, weapons } = catalog.upgradeDropWeights;
   const owned = (weapon: Weapon) => weapon === "laser" || economy.ownedWeapons.includes(weapon);
-  const maxLevel = catalog.weaponUpgradePrices.length + 1;
   // Only Laser and the weapons the galaxy unlocks drop, at their weights among themselves.
   const unlocked = unlockedWeapons(position);
   const steps = (["laser", ...unlocked] as const).filter(
-    (weapon) => !owned(weapon) || economy.levels.weapons[weapon] < maxLevel,
+    (weapon) =>
+      !owned(weapon) ||
+      economy.levels.weapons[weapon] < catalog.weaponUpgradePrices[weapon].length + 1,
   );
   const tracks = SHIP_TRACKS.filter(
     (track) => economy.levels[track] < catalog.trackPrices[track].length + 1,

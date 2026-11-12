@@ -430,12 +430,12 @@ describe("shop through the model", () => {
     model.state.economy.stardust = 400;
     expect(model.requestPurchase({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "confirm",
-      left: 175,
-      price: 225,
+      left: 0,
+      price: 400,
     });
     expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "bought",
-      price: 225,
+      price: 400,
     });
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "multiLaser"]);
     model.undock();
@@ -443,7 +443,7 @@ describe("shop through the model", () => {
     model.startGalaxy(1);
     playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "multiLaser"]);
-    expect(model.state.economy.stardust).toBe(175);
+    expect(model.state.economy.stardust).toBe(0);
   });
 
   it("raises the shield capacity and current charge when a shield level is bought", () => {

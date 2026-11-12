@@ -16,10 +16,9 @@ const ALL_WEAPONS: readonly Weapon[] = ["laser", ...UPGRADE_WEAPONS];
 /** Phantom's route position, where every weapon is unlocked. */
 const PHANTOM = 6;
 /** The gift a draw gives, as `kind:item`. */
-const label = (gift: UpgradeGift | null): string => {
-  switch (gift?.kind) {
-    case undefined:
-      return "none";
+const label = (drawn: UpgradeGift | null): string => {
+  const gift = drawn!;
+  switch (gift.kind) {
     case "track":
       return `track:${gift.track}`;
     case "paint":

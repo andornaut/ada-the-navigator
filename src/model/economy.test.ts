@@ -4,7 +4,13 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
-import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
+import {
+  ECONOMY,
+  LASER_UPGRADE_PRICES,
+  UPGRADE_PRICE_STEP,
+  type UpgradeWeapon,
+  weaponUpgradePrices,
+} from "../data/economy.ts";
 import {
   type EnemyArchetype,
   enemyCatalog,
@@ -913,35 +919,35 @@ describe("shop purchases", () => {
         item: { kind: "weapon", weapon: "multiLaser" },
         level: null,
         owned: false,
-        price: 225,
+        price: 400,
       },
       {
         inUse: false,
         item: { kind: "weapon", weapon: "rapidMissile" },
         level: null,
         owned: false,
-        price: 375,
+        price: 500,
       },
       {
         inUse: false,
         item: { kind: "weapon", weapon: "heavyMissile" },
         level: null,
         owned: false,
-        price: 450,
+        price: 600,
       },
       {
         inUse: false,
         item: { kind: "weapon", weapon: "scattershot" },
         level: null,
         owned: false,
-        price: 525,
+        price: 800,
       },
       {
         inUse: false,
         item: { kind: "weapon", weapon: "phaser" },
         level: null,
         owned: false,
-        price: 600,
+        price: 1000,
       },
       {
         inUse: false,
@@ -953,7 +959,7 @@ describe("shop purchases", () => {
     ]);
     expect(buy(ECONOMY, { kind: "weapon", weapon: "multiLaser" }, economy)).toEqual({
       kind: "bought",
-      price: 225,
+      price: 400,
     });
     const rows = shopRows(ECONOMY, economy, PHANTOM, "weapons");
     // The owned weapon's ammunition row leads the tab, before the weapon rows.
@@ -966,7 +972,7 @@ describe("shop purchases", () => {
       owned: false,
       price: ECONOMY.ammo.packPrice,
     });
-    expect(economy.stardust).toBe(4775);
+    expect(economy.stardust).toBe(4600);
     expect(economy.ownedWeapons).toEqual(["multiLaser"]);
     // A bought weapon includes three packs.
     expect(economy.ammo.multiLaser).toBe(3 * 300);
@@ -1035,17 +1041,17 @@ describe("shop purchases", () => {
   });
 
   it("confirms with the balance left after, and refuses what Ada cannot afford", () => {
-    const economy = rich(275);
+    const economy = rich(450);
     expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "confirm",
       left: 50,
-      price: 225,
+      price: 400,
     });
     expect(requestPurchase(ECONOMY, economy, { kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "refused",
       reason: "cantAfford",
     });
-    const exact = rich(225);
+    const exact = rich(400);
     expect(requestPurchase(ECONOMY, exact, { kind: "weapon", weapon: "multiLaser" })).toMatchObject(
       {
         left: 0,
@@ -1054,13 +1060,13 @@ describe("shop purchases", () => {
   });
 
   it("refuses a confirmed purchase when the balance changed before Buy", () => {
-    const economy = rich(225);
+    const economy = rich(400);
     const item = { kind: "weapon", weapon: "multiLaser" } as const;
     expect(requestPurchase(ECONOMY, economy, item).kind).toBe("confirm");
-    economy.stardust = 224;
+    economy.stardust = 399;
     expect(buy(ECONOMY, item, economy)).toEqual({ kind: "refused", reason: "cantAfford" });
     expect(economy.ownedWeapons).toEqual([]);
-    expect(economy.stardust).toBe(224);
+    expect(economy.stardust).toBe(399);
   });
 
   it("refuses an upgrade for a weapon Ada does not own", () => {
@@ -1095,7 +1101,7 @@ describe("shop purchases", () => {
   });
 
   it("sets each row's tap behaviour from ownership, use and the balance", () => {
-    const economy = rich(225);
+    const economy = rich(400);
     economy.paints.push("iris");
     const states = (tab: "weapons" | "ship") =>
       shopRows(ECONOMY, economy, PHANTOM, tab).map((row) => shopRowState(economy.stardust, row));
@@ -1156,9 +1162,24 @@ describe("shop purchases", () => {
     expect(itemName(ECONOMY, labels, { kind: "weaponUpgrade", weapon: "multiLaser" })).toBe(
       "Multi-Laser upgrade",
     );
+    // Each weapon costs its level 2 upgrade price.
     expect(UPGRADE_WEAPONS.map((weapon) => ECONOMY.weaponPrices[weapon])).toEqual([
-      225, 375, 450, 525, 600,
+      400, 500, 600, 800, 1000,
     ]);
+  });
+
+  it("derives upgrade prices from Laser's, 25% more per later weapon, rounded up to 100", () => {
+    expect(weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_STEP)).toEqual({
+      heavyMissile: [600, 1200],
+      laser: [300, 600],
+      multiLaser: [400, 800],
+      phaser: [1000, 1900],
+      rapidMissile: [500, 1000],
+      scattershot: [800, 1500],
+    });
+    expect(ECONOMY.weaponUpgradePrices).toEqual(
+      weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_STEP),
+    );
   });
 
   it("names items and fills confirm strings from the player strings", () => {

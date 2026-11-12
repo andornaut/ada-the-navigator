@@ -67,12 +67,13 @@ export interface EconomyCatalog {
     pack: Readonly<Record<UpgradeWeapon, number>>;
     packPrice: number;
   };
+  /** Each upgrade weapon's purchase price: its level 2 upgrade price. */
   weaponPrices: Readonly<Record<UpgradeWeapon, number>>;
   /**
-   * Prices of levels 2 and up; level 1 is the base, so the level count is each list's
-   * length plus 1.
+   * Each weapon's prices of levels 2 and up; level 1 is the base, so the level count is each
+   * list's length plus 1.
    */
-  weaponUpgradePrices: readonly number[];
+  weaponUpgradePrices: Readonly<Record<Weapon, readonly number[]>>;
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
   /** Ada's maximum speed at engine levels 2 and 3; level 1 is her ship physics' own. */
   engineMaxSpeed: readonly [number, number];
@@ -140,6 +141,30 @@ export function unlockedWeapons(position: RoutePosition): UpgradeWeapon[] {
     .filter((at) => at <= position)
     .flatMap((at) => WEAPON_UNLOCKS[at] ?? []);
 }
+
+/** Laser's level 2 and 3 upgrade prices, from which every weapon's derive. */
+export const LASER_UPGRADE_PRICES = [300, 600] as const;
+/** Each later weapon in weapon order costs this much more to upgrade, compounded. */
+export const UPGRADE_PRICE_STEP = 1.25;
+
+/**
+ * Weapon upgrade prices (gameplay/economy.md "Prices"): Laser's, then `step` times more for each
+ * later weapon in weapon order, compounded, each rounded up to the next 100.
+ */
+export function weaponUpgradePrices(
+  laser: readonly number[],
+  step: number,
+): Record<Weapon, number[]> {
+  const order: Weapon[] = ["laser", ...unlockedWeapons(6)];
+  return Object.fromEntries(
+    order.map((weapon, index) => [
+      weapon,
+      laser.map((price) => Math.ceil((price * step ** index) / 100) * 100),
+    ]),
+  ) as Record<Weapon, number[]>;
+}
+
+const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_STEP);
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
@@ -263,13 +288,14 @@ export const ECONOMY: EconomyCatalog = {
       scattershot: 4,
     },
   },
+  // A weapon costs what its level 2 upgrade does.
   weaponPrices: {
-    heavyMissile: 450,
-    multiLaser: 225,
-    phaser: 600,
-    rapidMissile: 375,
-    scattershot: 525,
+    heavyMissile: UPGRADE_PRICES.heavyMissile[0]!,
+    multiLaser: UPGRADE_PRICES.multiLaser[0]!,
+    phaser: UPGRADE_PRICES.phaser[0]!,
+    rapidMissile: UPGRADE_PRICES.rapidMissile[0]!,
+    scattershot: UPGRADE_PRICES.scattershot[0]!,
   },
   weaponSwitchSeconds: 1,
-  weaponUpgradePrices: [300, 600],
+  weaponUpgradePrices: UPGRADE_PRICES,
 };

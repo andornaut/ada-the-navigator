@@ -43,7 +43,7 @@ export type PurchaseResult =
 function prices(catalog: EconomyCatalog, item: ShopItem): readonly number[] | null {
   switch (item.kind) {
     case "weaponUpgrade":
-      return catalog.weaponUpgradePrices;
+      return catalog.weaponUpgradePrices[item.weapon];
     case "track":
       return catalog.trackPrices[item.track];
     default:
