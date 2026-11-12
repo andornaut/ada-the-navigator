@@ -78,10 +78,10 @@ export interface EconomyCatalog {
   /** Ada's maximum speed at engine levels 2 and 3; level 1 is her ship physics' own. */
   engineMaxSpeed: readonly [number, number];
   /**
-   * The Shield at levels 2 and 3: capacity, recharge delay and seconds from empty to full;
-   * level 1 is the content tuning's own.
+   * The Shield at levels 2 and 3: capacity and seconds from empty to full; level 1 is the content
+   * tuning's own. The recharge delay is the same at every level.
    */
-  shieldLevels: Readonly<Record<"capacity" | "delay" | "fill", readonly [number, number]>>;
+  shieldLevels: Readonly<Record<"capacity" | "fill", readonly [number, number]>>;
   /** Multipliers on the base value at levels 1, 2 and 3. */
   effects: Readonly<Record<"engineSeconds", readonly [number, number, number]>>;
   tractorRadius: LeveledValue;
@@ -254,7 +254,7 @@ export const ECONOMY: EconomyCatalog = {
   },
   // Shield levels 2 and 3: capacity 15 then 20 HP, recharge delay 15 then 10 s, empty to
   // full in 45 then 30 s (gameplay/economy.md).
-  shieldLevels: { capacity: [15, 20], delay: [15, 10], fill: [45, 30] },
+  shieldLevels: { capacity: [15, 20], fill: [45, 30] },
   stardustPickupRadius: 5,
   station: {
     cellSize: 12000,

@@ -78,7 +78,7 @@ export function shipTuning(
       ),
     },
     shieldMax: capacity,
-    shieldRechargeDelay: shieldLevel(content.tuning.shieldRechargeDelay, "delay"),
+    shieldRechargeDelay: content.tuning.shieldRechargeDelay,
     // The shield refills from empty in its fill time whatever its capacity.
     shieldRechargeRate: capacity / shieldLevel(content.tuning.shieldFillSeconds, "fill"),
     tractorRadius: leveledValue(catalog.tractorRadius, levels.tractor),

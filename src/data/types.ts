@@ -129,7 +129,7 @@ export interface GameContent {
     physics: ShipPhysics;
     /** The shield's capacity at its base level, in HP; 1 damage removes 1 HP. */
     shieldMax: number;
-    /** Seconds after Ada was last hit or in battle before the base shield recharges. */
+    /** Seconds after Ada was last hit before the shield recharges, at every shield level. */
     shieldRechargeDelay: number;
     /** Seconds the base shield takes to refill from empty, whatever its capacity. */
     shieldFillSeconds: number;

@@ -649,7 +649,7 @@ export const CONTENT: GameContent = {
     safeRadius: 160,
     shieldFillSeconds: 60,
     shieldMax: 10,
-    shieldRechargeDelay: 20,
+    shieldRechargeDelay: 30,
     speedCurveExponent: 2.5,
     // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
     storySpacing: 1200,

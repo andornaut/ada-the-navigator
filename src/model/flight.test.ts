@@ -703,21 +703,25 @@ describe("shield in battle", () => {
     },
   );
 
-  it("holds the recharge while an attacker stays close, then waits the full delay", () => {
+  it("keeps recharging beside an attacker until damage restarts the delay", () => {
     const flight = withEnemy({ x: 300, y: 0 }, {});
-    // The attacker's shots barely scratch, so only battle can hold the recharge.
-    const harmless = structuredClone(CONTENT);
-    harmless.tuning.flight.playerShotDamage = 1e-9;
     flight.shield = 4;
     flight.sinceDamage = CONTENT.tuning.shieldRechargeDelay;
-    stepFlight(harmless, 3, idle, flight);
-    expect(flight.shield).toBeCloseTo(4, 3);
-    // Out of the fight, the shield waits its delay, then refills 10 HP over 60 seconds.
+    // Battle alone never holds the recharge: with its shots cleared before they land, the
+    // shield refills 10 HP over 60 seconds beside the attacker.
+    for (let step = 0; step < 30; step++) {
+      flight.shots = [];
+      stepFlight(CONTENT, 0.1, idle, flight);
+    }
+    expect(flight.shield).toBeCloseTo(4 + (10 / 60) * 3, 1);
+    // A hit restarts the full delay.
     flight.objects = [];
     flight.shots = [];
-    stepFlight(harmless, CONTENT.tuning.shieldRechargeDelay - 0.1, idle, flight);
-    expect(flight.shield).toBeCloseTo(4, 3);
-    stepFlight(harmless, 0.1 + 6, idle, flight);
-    expect(flight.shield).toBeCloseTo(4 + (10 / 60) * 6, 1);
+    flight.sinceDamage = 0;
+    const held = flight.shield;
+    stepFlight(CONTENT, CONTENT.tuning.shieldRechargeDelay - 0.1, idle, flight);
+    expect(flight.shield).toBeCloseTo(held, 3);
+    stepFlight(CONTENT, 0.1 + 6, idle, flight);
+    expect(flight.shield).toBeCloseTo(held + (10 / 60) * 6, 1);
   });
 });

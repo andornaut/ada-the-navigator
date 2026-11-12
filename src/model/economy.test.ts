@@ -773,9 +773,9 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 10, 20, 60, 160, 1],
-    [2, 15, 15, 45, 190, 0.9],
-    [3, 20, 10, 30, 220, 0.8],
+    [1, 10, 30, 60, 160, 1],
+    [2, 15, 30, 45, 190, 0.9],
+    [3, 20, 30, 30, 220, 0.8],
   ])(
     "applies shield, recharge and engine level %i",
     (level, shield, delay, fill, speed, seconds) => {
@@ -867,8 +867,8 @@ describe("upgrade effects", () => {
     expect(value.shield).toBe(15);
     value.shield = 5;
     value.sinceDamage = 0;
-    // Level 2 waits 15 s, then refills 15 HP in 45 s.
-    stepFlight(CONTENT, 15 - 0.05, idle, value);
+    // Level 2 waits 30 s, as every level does, then refills 15 HP in 45 s.
+    stepFlight(CONTENT, 30 - 0.05, idle, value);
     expect(value.shield).toBe(5);
     stepFlight(CONTENT, 0.05 + 9, idle, value);
     // Within one 1/60 s step of the refill rate.

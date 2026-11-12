@@ -3242,10 +3242,6 @@ export function stepFlight(
     // Snap the switch wait to zero within float error of its end.
     const wait = flight.weaponSwitchFor - slice;
     flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
-    // Battle holds the recharge delay at its start, as a hit does.
-    if (inBattle(content, input.viewportWidth ?? SCREEN.width, flight)) {
-      flight.sinceDamage = 0;
-    }
     if (flight.sinceDamage >= ship.shieldRechargeDelay) {
       flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
     }
