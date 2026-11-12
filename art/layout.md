@@ -359,10 +359,10 @@ A thin status line for loading, shared by every game through game-kit (the
 progress state and its DOM progress bar). Constants: `LOADING_BAR`,
 `src/ui/loading-bar.ts`.
 
-It shows only for loads the player waits for: the boot preload and any load
-that holds a screen or a transition until it ends (a galaxy's art before its
-flight). Work the player does not wait for, such as the offline precache, the
-service worker's install and art fetched ahead, shows no bar.
+It shows for startup (the boot preload), entering a galaxy (its art before the
+flight) and the first-visit offline download (the precache and the service
+worker's install, as unknown progress with the travelling segment). Small
+downloads during play, such as on-demand art fetched ahead, show no bar.
 
 | Token    | Value                                                                              | Rule                                                                                                 |
 | -------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
