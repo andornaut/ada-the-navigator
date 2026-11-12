@@ -90,7 +90,18 @@ export function adaDepth(
 }
 
 /**
- * A galaxy's backdrop haze (art/galaxies.md "Backdrop haze"): over the field's background fill,
- * under the backdrop rocks (-1), the dust specks and every play object.
+ * The backdrop layers (art/backdrop.md), back to front over the field's background fill: the sky
+ * (L0), the fixed layers (Andromeda's haze, Needle's band), far items and planets (L2), the
+ * plates (L1, multiply then screen), the stars (L3) and the dust streaks (L4); then the backdrop
+ * rocks (-1), the landmarks, the dust specks on the field ink (0) and every play object.
  */
-export const HAZE_DEPTH = -2;
+export const BACKDROP_DEPTH = {
+  far: -2.7,
+  fixed: -2.8,
+  multiply: -2.5,
+  planets: -2.6,
+  screen: -2.4,
+  sky: -2.9,
+  stars: -2.3,
+  streaks: -2.2,
+} as const;

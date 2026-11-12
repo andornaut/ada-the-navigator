@@ -37,16 +37,23 @@ describe("split art manifest", () => {
 
   it("reads a version 1 galaxy manifest's assets and string data links", () => {
     expect(GALAXY_MANIFESTS.get(2)!.links).toEqual({
+      backdrop: "/art/cartwheel/backdrop.json",
       cartwheelDebris: "/art/cartwheel/debris.json",
       oreField: "/art/cartwheel/ore-field.json",
     });
     expect(GALAXY_MANIFESTS.get(3)!.links).toEqual({
+      backdrop: "/art/whirlpool/backdrop.json",
       whales: "/art/whales.json",
       whirlpoolCurrents: "/art/whirlpool/currents.json",
       whirlpoolDebris: "/art/whirlpool/debris.json",
       whirlpoolProjects: "/art/whirlpool/projects.json",
     });
-    expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({});
+    expect(GALAXY_MANIFESTS.get(1)!.links).toEqual({ backdrop: "/art/sunflower/backdrop.json" });
+    // A placeholder galaxy's manifest holds only its backdrop link.
+    expect(GALAXY_MANIFESTS.get(6)).toEqual({
+      assets: [],
+      links: { backdrop: "/art/black-eye/backdrop.json" },
+    });
     expect(readGalaxyManifest({ assets: [], tow: 3, version: 1, whales: "/art/w.json" })).toEqual({
       assets: [],
       links: { whales: "/art/w.json" },

@@ -3256,19 +3256,24 @@ try {
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
   const toScreen = (world) => ({ x: 360 + world.x - world.y, y: 180 + (world.x + world.y) / 2 });
   // The first flight seed whose backdrop field shows a rock in the asteroid fixture's open
-  // top-centre area, clear of its play rocks (shown), or none in view at all.
-  function backdropSeed(shown, sector, player) {
+  // top-centre area, clear of its play rocks (shown), or none in view at all. Backdrop rocks lie
+  // in their layer, about the camera's world position times the rocks' parallax (art/backdrop.md).
+  const rockParallax = (
+    await (await page.request.get("http://ada-preview:4173/art/backdrop.json")).json()
+  ).debris.rocks.parallax;
+  function backdropSeed(shown, player) {
     const { cell } = asteroidArt.BACKDROP_FIELD;
-    const cx = Math.floor(player.x / cell);
-    const cy = Math.floor(player.y / cell);
+    const camera = { x: player.x * rockParallax, y: player.y * rockParallax };
+    const cx = Math.floor(camera.x / cell);
+    const cy = Math.floor(camera.y / cell);
     for (let seed = 1; seed < 2000; seed++) {
       let near = false;
       let visible = false;
       for (let x = cx - 4; x <= cx + 4; x++) {
         for (let y = cy - 4; y <= cy + 4; y++) {
-          const rock = asteroidArt.backdropRock(rockArt, sector, seed, x, y);
+          const rock = asteroidArt.backdropRock(rockArt, seed, x, y);
           if (rock) {
-            const at = toScreen({ x: rock.x - player.x, y: rock.y - player.y });
+            const at = toScreen({ x: rock.x - camera.x, y: rock.y - camera.y });
             near ||= at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140;
             visible ||= at.x > -120 && at.x < 840 && at.y > -80 && at.y < 440;
           }
@@ -3293,7 +3298,7 @@ try {
     flight.objects = [];
     flight.shots = [];
     // No backdrop rock in view, so the sampled regions see only the combat and empty space.
-    flight.seed = backdropSeed(false, flight.sector, flight.player);
+    flight.seed = backdropSeed(false, flight.player);
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
@@ -3346,6 +3351,22 @@ try {
     ...approvedColors,
     ...galaxyFields.sunflower.colors,
   };
+  // Empty space shows galaxy one's backdrop layers (art/backdrop.md): each channel within its sky
+  // ends and plate steps, give or take a darker plate over the darker sky.
+  const backdropResponse = await page.request.get(
+    "http://ada-preview:4173/art/sunflower/backdrop.json",
+  );
+  assert.equal(backdropResponse.status(), 200, "Galaxy one's backdrop must be served");
+  const sunflowerBackdrop = await backdropResponse.json();
+  const backdropTones = [
+    sunflowerBackdrop.sky.from,
+    sunflowerBackdrop.sky.to,
+    ...sunflowerBackdrop.plates.steps.map((step) => step.color),
+  ].map((hex) => [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16)));
+  const backdropBox = [0, 1, 2].map((channel) => [
+    Math.min(...backdropTones.map((tone) => tone[channel])) - 12,
+    Math.max(...backdropTones.map((tone) => tone[channel])) + 12,
+  ]);
   const combatSnapshots = {};
   const pixels = {};
   const heavyColors = {
@@ -3411,7 +3432,7 @@ try {
       path: `${output}/combat-canvas-${view.archetype}.png`,
     });
     return page.evaluate(
-      async ({ disabled, encoded, heavyColors, intrinsic, names, paletteColors }) => {
+      async ({ backdropBox, disabled, encoded, heavyColors, intrinsic, names, paletteColors }) => {
         const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
         const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
         const sample = document.createElement("canvas");
@@ -3467,6 +3488,7 @@ try {
                 }),
               );
               const counts = Object.fromEntries(Object.keys(colors).map((role) => [role, 0]));
+              counts.backdrop = 0;
               const outline = {
                 minX: Infinity,
                 maxX: -Infinity,
@@ -3474,6 +3496,14 @@ try {
                 maxY: -Infinity,
               };
               for (let offset = 0; offset < image.data.length; offset += 4) {
+                if (
+                  backdropBox.every(
+                    ([low, high], index) =>
+                      image.data[offset + index] >= low && image.data[offset + index] <= high,
+                  )
+                ) {
+                  counts.backdrop++;
+                }
                 for (const [role, rgb] of Object.entries(colors)) {
                   // Small channel tolerance permits raster rounding without accepting another palette class.
                   if (
@@ -3511,6 +3541,7 @@ try {
         );
       },
       {
+        backdropBox,
         disabled: {
           x: 180 + (disabledAnchor[0] - capitalLayout.frame / 2) * capitalScale,
           y: 180 + (disabledAnchor[1] - capitalLayout.frame / 2) * capitalScale,
@@ -3547,8 +3578,8 @@ try {
     "Seeded missile must contain coral projectile geometry",
   );
   assert.ok(
-    pixels.background.counts.background > pixels.background.area * 0.9,
-    "Empty space must render galaxy one's hue rather than the monochrome fallback",
+    pixels.background.counts.backdrop > pixels.background.area * 0.9,
+    "Empty space must render galaxy one's backdrop tones rather than the monochrome fallback",
   );
   await page.screenshot({ path: `${output}/combat.png` });
   save("combat-proof.json", {
@@ -3585,7 +3616,7 @@ try {
     model.state.dialogue = null;
     flight.objects = [];
     flight.shots = [];
-    flight.seed = backdropSeed(true, flight.sector, flight.player);
+    flight.seed = backdropSeed(true, flight.player);
     const origin = { ...flight.player };
     for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
       const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);

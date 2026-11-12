@@ -40,7 +40,9 @@ describe("Cartwheel art", () => {
       const set = galaxyAsset(GALAXY_MANIFESTS, asset);
       sets.set(set, [...(sets.get(set) ?? []), asset.id]);
     }
-    expect([...sets.keys()].sort()).toEqual([...GALAXY_MANIFESTS.keys(), null].sort());
+    // Every galaxy manifest with entries; a placeholder galaxy's holds none.
+    const drawn = [...GALAXY_MANIFESTS].filter(([, galaxy]) => galaxy.assets.length > 0);
+    expect([...sets.keys()].sort()).toEqual([...drawn.map(([sector]) => sector), null].sort());
     const cartwheel = sets.get(2)!;
     expect(cartwheel).toEqual(
       expect.arrayContaining([
@@ -83,7 +85,9 @@ describe("Cartwheel art", () => {
         expect(cartwheel.filter(member), name).toHaveLength(count);
       }
     }
-    expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id) || portrait(id))).toBe(true);
+    expect(
+      sets.get(3)!.every((id) => /^(whale|whirlpool|nebula-whirlpool)-/.test(id) || portrait(id)),
+    ).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     // Sunflower's outposts load with the boot set from Sunflower's own manifest.
     expect(sets.get(1)!.every((id) => id.startsWith("outpost-") || portrait(id))).toBe(true);

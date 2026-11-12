@@ -10,6 +10,8 @@ import { whaleFrameAsset } from "./whale-art.ts";
 /** The core manifest's assets and links that the game reads. */
 export interface CoreManifest<T> {
   readonly assets: T[];
+  /** The backdrop layers' shared rules (public/art/backdrop.json). */
+  readonly backdropLayers?: string;
   /** Each galaxy's manifest path, by stable galaxy id. */
   readonly galaxies?: unknown;
   /** Each galaxy's field palette and the light field (public/art/galaxies.json). */
@@ -26,10 +28,12 @@ export interface CoreManifest<T> {
 
 /** A galaxy manifest's data links, by the names the scene loads them under. */
 export interface GalaxyLinks {
+  /** The galaxy's backdrop layers: its tones and recipes (backdrop.json). */
+  readonly backdrop?: string;
   /** The galaxy's backdrop haze placement (haze.json). */
   readonly backdropHaze?: string;
   readonly cartwheelDebris?: string;
-  /** Needle's edge-on band (band.json), drawn on the backdrop layer like a haze. */
+  /** Needle's edge-on band (band.json), a fixed backdrop layer like a haze. */
   readonly needleBand?: string;
   readonly oreField?: string;
   readonly whales?: string;
@@ -44,6 +48,7 @@ export interface GalaxyManifest<T> {
 }
 
 const LINKS: readonly (keyof GalaxyLinks)[] = [
+  "backdrop",
   "backdropHaze",
   "cartwheelDebris",
   "needleBand",

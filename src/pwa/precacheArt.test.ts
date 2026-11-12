@@ -78,8 +78,9 @@ describe("artUrls", () => {
     expect(galaxies.length).toBeGreaterThan(0);
     for (const galaxy of galaxies) {
       expect(urls).toContain(galaxy);
+      // A placeholder galaxy's manifest names only its backdrop.
       const named = namedArtUrls(read(galaxy));
-      expect(named.length).toBeGreaterThan(1);
+      expect(named.length).toBeGreaterThan(0);
       expect(named.filter((url) => !urls.includes(url))).toEqual([]);
     }
   });

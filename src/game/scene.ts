@@ -2,6 +2,7 @@ import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/load/phaser/w
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import { densityTexels, MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
 import {
+  BlendModes,
   GameObjects,
   Loader,
   Math as PhaserMath,
@@ -114,6 +115,26 @@ import {
 import { BAND_AREA, paintBand, readBackdropBand } from "./backdrop-band.ts";
 import { type BackdropHaze, readBackdropHaze } from "./backdrop-haze.ts";
 import {
+  type BackdropRules,
+  clusterReach,
+  type GalaxyBackdrop,
+  paintCluster,
+  paintDisc,
+  paintPlanet,
+  paintSky,
+  planetReach,
+  type Raster,
+  readBackdropRules,
+  readGalaxyBackdrop,
+  SKY_AREA,
+  streakPieces,
+  viewFar,
+  viewPlanets,
+  viewPlates,
+  viewStars,
+  viewStreaks,
+} from "./backdrop-layers.ts";
+import {
   craftArt,
   craftFrameSets,
   type HubArt,
@@ -143,10 +164,10 @@ import {
 import {
   ADA_LAYERS,
   adaDepth,
+  BACKDROP_DEPTH,
   boxWith,
   drawnBox,
   EDGE_MARKER_DEPTH,
-  HAZE_DEPTH,
   type PassableDraw,
   type Placed,
 } from "./draw-order.ts";
@@ -374,6 +395,8 @@ function projectId(key: string): string | null {
 // The landmarks' ground layer (art/jobs.md): above the backdrop rocks (-1), under the field ink
 // (0), which draws the specks, streaks and the search rim over them, and under every play object.
 const LANDMARK_DEPTH = -0.5;
+// A dust streak draws in this many pieces, each at its share of the half-sine fade.
+const STREAK_PIECES = 8;
 
 export class PrototypeScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
@@ -440,6 +463,7 @@ export class PrototypeScene extends Scene {
   private coreAssetIds: readonly string[] = [];
   private manifest: {
     assets: readonly Asset[];
+    backdropLayers?: string;
     cartwheelDebris?: string;
     jobs?: string;
     resourceRocks?: string;
@@ -488,10 +512,20 @@ export class PrototypeScene extends Scene {
   // Art's rocks and backdrop; their frames load on demand.
   private readonly asteroidArt = ASTEROID_ART;
   private backdropSprites = new Map<string, GameObjects.Image>();
-  // Each galaxy's backdrop layer once loaded (its haze texture or its painted band) and the one
-  // image that draws it.
+  // Each galaxy's fixed backdrop layer once loaded (its haze texture or its painted band) and the
+  // one image that draws it.
   private backdrops = new Map<SectorId, Pick<BackdropHaze, "asset" | "height" | "width">>();
   private backdropImage: GameObjects.Image | null = null;
+  // The backdrop layers (art/backdrop.md): Art's shared rules, each galaxy's backdrop once read,
+  // and the objects that draw the sky, the far items and planets by key, the plates, the stars
+  // and the dust streaks.
+  private backdropRules: BackdropRules | undefined;
+  private galaxyBackdrops = new Map<SectorId, GalaxyBackdrop>();
+  private skyImage: GameObjects.Image | null = null;
+  private backdropItems = new Map<string, GameObjects.Image>();
+  private plateInk: Record<"multiply" | "screen", GameObjects.Graphics> | null = null;
+  private starImages: GameObjects.Image[] = [];
+  private streakInk: GameObjects.Graphics | null = null;
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
   private rockQueued = false;
@@ -771,6 +805,7 @@ export class PrototypeScene extends Scene {
       ...(manifest?.resourceRocks ? { resourceRocks: manifest.resourceRocks } : {}),
       ...(manifest?.tow ? { tow: manifest.tow } : {}),
       ...(manifest?.jobs ? { jobs: manifest.jobs } : {}),
+      ...(manifest?.backdropLayers ? { backdropLayers: manifest.backdropLayers } : {}),
     };
     this.beaconArt = readLoopArt(this.shipAssets, "holodisk-beacon", BEACON_FRAMES);
     this.destruction = readDestruction(this.cache.json.get("destruction"));
@@ -1292,6 +1327,7 @@ export class PrototypeScene extends Scene {
       ["resource-rocks", this.manifest.resourceRocks],
       ["tow", this.manifest.tow],
       ["jobs", this.manifest.jobs],
+      ["backdrop-layers", this.manifest.backdropLayers],
     ] as const) {
       if (path && !this.cache.json.exists(key)) {
         this.load.json(key, path);
@@ -1381,8 +1417,7 @@ export class PrototypeScene extends Scene {
         }
       }
     }
-    this.queueHaze(sector, galaxy);
-    this.queueBand(sector, galaxy);
+    this.queueBackdrop(sector, galaxy);
     // The galaxy's own data files, named by its manifest's links.
     for (const [key, path] of [
       ["cartwheel-debris", galaxy.links.cartwheelDebris],
@@ -1395,6 +1430,40 @@ export class PrototypeScene extends Scene {
         this.load.json(key, path);
       }
     }
+  }
+
+  /**
+   * A galaxy's backdrop layers: its backdrop.json, then the fixed layers it names and its nebula
+   * textures, which draw with linear filtering since at parallax 0.05 nearest texels would crawl.
+   */
+  private queueBackdrop(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
+    const path = galaxy.links.backdrop;
+    const key = `backdrop-${sector}`;
+    if (!path || this.galaxyBackdrops.has(sector) || this.cache.json.exists(key)) {
+      return;
+    }
+    this.load.once(`filecomplete-json-${key}`, () => {
+      const backdrop = readGalaxyBackdrop(this.cache.json.get(key));
+      if (!backdrop) {
+        return;
+      }
+      this.galaxyBackdrops.set(sector, backdrop);
+      if (backdrop.fixed.includes("backdropHaze")) {
+        this.queueHaze(sector, galaxy);
+      }
+      if (backdrop.fixed.includes("needleBand")) {
+        this.queueBand(sector, galaxy);
+      }
+      for (const id of backdrop.far.flatMap((far) => (far.look === "nebula" ? far.assets : []))) {
+        const asset = galaxy.assets.find((entry) => entry.id === id);
+        if (!asset || this.textures.exists(id)) {
+          continue;
+        }
+        this.load.once(`filecomplete-image-${id}`, () => this.filterTexture(id, "linear"));
+        this.load.image(id, asset.path);
+      }
+    });
+    this.load.json(key, path);
   }
 
   /**
@@ -1457,14 +1526,14 @@ export class PrototypeScene extends Scene {
     this.load.json(key, path);
   }
 
-  /** The flight's galaxy's backdrop layer, fixed on the play view's centre, or none. */
+  /** The flight's galaxy's fixed backdrop layer, on the play view's centre, or none. */
   private drawBackdropLayer(sector: SectorId | null): void {
     const layer = sector === null ? undefined : this.backdrops.get(sector);
     if (!layer) {
       this.backdropImage?.setVisible(false);
       return;
     }
-    this.backdropImage ??= this.add.image(0, 0, layer.asset).setDepth(HAZE_DEPTH);
+    this.backdropImage ??= this.add.image(0, 0, layer.asset).setDepth(BACKDROP_DEPTH.fixed);
     this.backdropImage
       .setTexture(layer.asset)
       .setOrigin(0.5, 0.5)
@@ -1475,6 +1544,7 @@ export class PrototypeScene extends Scene {
 
   /** Reads the galaxy art whose textures and data have loaded. */
   private readGalaxyArt(): void {
+    this.backdropRules ??= readBackdropRules(this.cache.json.get("backdrop-layers"));
     this.readEnemyArt();
     for (const { family, wired } of GALAXY_FAMILIES) {
       const read = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
@@ -2140,9 +2210,17 @@ export class PrototypeScene extends Scene {
   }
 
   private project(point: Vec): Vec {
-    const center = this.model.state.flight?.player ?? { x: 0, y: 0 };
-    const x = point.x - center.x;
-    const y = point.y - center.y;
+    return this.projectLayer(point, 1);
+  }
+
+  /**
+   * A point of a backdrop layer that keeps the world's layout (art/backdrop.md, Coordinates):
+   * projected about the camera's world position times the layer's parallax.
+   */
+  private projectLayer(point: Vec, parallax: number): Vec {
+    const camera = this.model.state.flight?.player ?? { x: 0, y: 0 };
+    const x = point.x - camera.x * parallax;
+    const y = point.y - camera.y * parallax;
     return { x: SCREEN.width / 2 + x - y, y: SCREEN.height / 2 + (x + y) / 2 };
   }
 
@@ -2182,6 +2260,7 @@ export class PrototypeScene extends Scene {
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
     this.drawBackdropLayer(flight && this.model.state.mode === "space" ? flight.sector : null);
+    this.drawBackdropLayers(flight && this.model.state.mode === "space" ? flight : null);
     if (!flight || this.model.state.mode !== "space") {
       // Leaving the flight forgets every seen object.
       this.edgeMarkers.update(null, new Set());
@@ -2190,20 +2269,20 @@ export class PrototypeScene extends Scene {
     }
     this.light = lightGalaxy(this.lightGalaxies, flight.sector);
     this.drawBackdrop(flight);
-    // Stationary world markers provide motion cues without a navigation map.
+    // Dust specks, the debris layer's motion cue at its parallax, in the galaxy's backdropSide.
     const cell = 160;
+    const parallax = this.backdropRules?.specks.parallax ?? 1;
     const span = Math.ceil(Math.max(SCREEN.width, SCREEN.height) / cell) + 2;
-    const gx = Math.floor(flight.player.x / cell);
-    const gy = Math.floor(flight.player.y / cell);
+    const gx = Math.floor((flight.player.x * parallax) / cell);
+    const gy = Math.floor((flight.player.y * parallax) / cell);
     this.specks = [];
-    // Dust specks take the galaxy's backdropSide.
     const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.sector).backdropSide);
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
-        const point = this.project({
-          x: x * cell + ((y * 37) % 83),
-          y: y * cell + ((x * 53) % 79),
-        });
+        const point = this.projectLayer(
+          { x: x * cell + ((y * 37) % 83), y: y * cell + ((x * 53) % 79) },
+          parallax,
+        );
         if (point.x >= 0 && point.y >= 0 && point.x <= SCREEN.width && point.y <= SCREEN.height) {
           this.specks.push(point);
         }
@@ -4172,8 +4251,211 @@ export class PrototypeScene extends Scene {
   }
 
   /**
-   * Backdrop rocks under every play object: one greyscale sprite per filled field cell,
-   * multiplied by the galaxy's backdropLit, at 0.6 to 1 times its display size.
+   * The flight galaxy's backdrop layers under every play object (art/backdrop.md), or none: the
+   * sky, the far items and planets, the plates, the stars and the dust streaks, for the camera at
+   * Ada's world position. The fixed layers draw with drawBackdropLayer.
+   */
+  private drawBackdropLayers(flight: FlightState | null): void {
+    const rules = this.backdropRules;
+    const galaxy = flight ? this.galaxyBackdrops.get(flight.sector) : undefined;
+    this.skyImage?.setVisible(false);
+    this.plateInk?.multiply.clear();
+    this.plateInk?.screen.clear();
+    this.streakInk?.clear();
+    for (const image of this.starImages) {
+      image.setVisible(false);
+    }
+    const used = new Set<string>();
+    if (flight && rules && galaxy) {
+      const camera = [flight.player.x, flight.player.y] as const;
+      this.drawSky(flight.sector, galaxy);
+      this.drawFarItems(rules, flight.sector, galaxy, camera, used);
+      this.drawPlates(rules, galaxy, camera);
+      this.drawStars(rules, galaxy, camera);
+      this.drawStreaks(rules, galaxy, camera);
+    }
+    for (const [key, image] of this.backdropItems) {
+      if (!used.has(key)) {
+        image.destroy();
+        this.backdropItems.delete(key);
+        // Baked planets and clusters are released with their image; nebulae keep their texture.
+        if (this.textures.exists(key)) {
+          this.textures.remove(key);
+        }
+      }
+    }
+  }
+
+  /** A raster as a linear-filtered canvas texture under `key`, once. */
+  private bakeTexture(key: string, paint: () => Raster): void {
+    if (this.textures.exists(key)) {
+      return;
+    }
+    const raster = paint();
+    const texture = this.textures.createCanvas(key, raster.width, raster.height);
+    if (!texture) {
+      return;
+    }
+    texture
+      .getContext()
+      .putImageData(new ImageData(raster.data, raster.width, raster.height), 0, 0);
+    texture.refresh();
+    this.filterTexture(key, "linear");
+  }
+
+  /** Texels per logical px for a baked layer: the view's, at most MAX_RENDER_SCALE. */
+  private bakeScale(): number {
+    return Math.min(sceneFit(this).zoom, MAX_RENDER_SCALE);
+  }
+
+  /** L0: the galaxy's sky, one quad over the view, baked once at a quarter texel per px. */
+  private drawSky(sector: SectorId, galaxy: GalaxyBackdrop): void {
+    const key = `backdrop-sky-${sector}`;
+    this.bakeTexture(key, () => paintSky(galaxy.sky, 1 / 4));
+    this.skyImage ??= this.add
+      .image(0, 0, key)
+      .setDepth(BACKDROP_DEPTH.sky)
+      .setOrigin(0, 0)
+      .setVertexRoundMode("off");
+    this.skyImage
+      .setTexture(key)
+      .setPosition(SKY_AREA.x, SKY_AREA.y)
+      .setDisplaySize(SKY_AREA.width, SKY_AREA.height)
+      .setVisible(true);
+  }
+
+  /** The image drawing backdrop item `key` this frame, made on first use. */
+  private backdropItem(key: string, texture: string, depth: number, used: Set<string>) {
+    used.add(key);
+    let image = this.backdropItems.get(key);
+    if (!image) {
+      image = this.add.image(0, 0, texture).setDepth(depth).setVertexRoundMode("off");
+      this.backdropItems.set(key, image);
+    }
+    return image.setVisible(true);
+  }
+
+  /**
+   * L2: the far items (nebula textures and baked star clusters) and the baked planets in view,
+   * each released once it leaves.
+   */
+  private drawFarItems(
+    rules: BackdropRules,
+    sector: SectorId,
+    galaxy: GalaxyBackdrop,
+    camera: readonly [number, number],
+    used: Set<string>,
+  ): void {
+    const scale = this.bakeScale();
+    for (const item of viewFar(rules, galaxy, camera)) {
+      const { recipe } = item;
+      if (recipe.look === "nebula") {
+        const asset = recipe.assets[item.variant]!;
+        if (this.textures.exists(asset)) {
+          this.backdropItem(`backdrop-nebula-${sector}-${item.id}`, asset, BACKDROP_DEPTH.far, used)
+            .setPosition(item.x, item.y)
+            .setDisplaySize(rules.nebula.display[0], rules.nebula.display[1]);
+        }
+        continue;
+      }
+      const key = `backdrop-cluster-${sector}-${item.id}`;
+      this.bakeTexture(key, () => paintCluster(rules, galaxy.seed, item, recipe, scale));
+      const [width, height] = clusterReach(rules);
+      this.backdropItem(key, key, BACKDROP_DEPTH.far, used)
+        .setPosition(item.x, item.y)
+        .setDisplaySize(2 * width, 2 * height);
+    }
+    for (const planet of viewPlanets(rules, galaxy, camera)) {
+      const key = `backdrop-planet-${sector}-${planet.id}`;
+      this.bakeTexture(key, () => paintPlanet(rules, planet, scale));
+      const size = 2 * planetReach(planet.r);
+      this.backdropItem(key, key, BACKDROP_DEPTH.planets, used)
+        .setPosition(planet.x, planet.y)
+        .setDisplaySize(size, size);
+    }
+  }
+
+  /** L1: the plates in view, darker steps multiplied by their grey, lighter ones screened. */
+  private drawPlates(
+    rules: BackdropRules,
+    galaxy: GalaxyBackdrop,
+    camera: readonly [number, number],
+  ): void {
+    this.plateInk ??= {
+      multiply: this.add
+        .graphics()
+        .setDepth(BACKDROP_DEPTH.multiply)
+        .setBlendMode(BlendModes.MULTIPLY)
+        .setVertexRoundMode("off"),
+      screen: this.add
+        .graphics()
+        .setDepth(BACKDROP_DEPTH.screen)
+        .setBlendMode(BlendModes.SCREEN)
+        .setVertexRoundMode("off"),
+    };
+    for (const plate of viewPlates(rules, galaxy, camera)) {
+      const points = plate.points.map(([x, y]) => new PhaserMath.Vector2(x, y));
+      if (plate.multiply !== undefined) {
+        const grey = Math.round(plate.multiply * 255);
+        this.plateInk.multiply.fillStyle((grey << 16) | (grey << 8) | grey, 1);
+        this.plateInk.multiply.fillPoints(points, true);
+      } else if (plate.screen) {
+        this.plateInk.screen.fillStyle(hexNumber(plate.screen), 1);
+        this.plateInk.screen.fillPoints(points, true);
+      }
+    }
+  }
+
+  /** L3: both star depths as tinted antialiased discs, unsnapped, with their twinkle. */
+  private drawStars(
+    rules: BackdropRules,
+    galaxy: GalaxyBackdrop,
+    camera: readonly [number, number],
+  ): void {
+    const tint = hexNumber(galaxy.stars.color);
+    const stars = viewStars(rules, galaxy, camera, this.time.now / 1000, this.reducedMotion);
+    for (const [index, star] of stars.entries()) {
+      const key = `backdrop-star-${star.r}`;
+      this.bakeTexture(key, () => paintDisc(star.r, MAX_RENDER_SCALE));
+      let image = this.starImages[index];
+      if (!image) {
+        image = this.add.image(0, 0, key).setDepth(BACKDROP_DEPTH.stars).setVertexRoundMode("off");
+        this.starImages.push(image);
+      }
+      const size = this.textures.get(key).source[0]!.width / MAX_RENDER_SCALE;
+      image
+        .setTexture(key)
+        .setPosition(star.x, star.y)
+        .setDisplaySize(size, size)
+        .setTint(tint)
+        .setAlpha(star.alpha)
+        .setVisible(true);
+    }
+  }
+
+  /** L4: the dust streaks, 1 px lines fading to clear at both ends along a half sine. */
+  private drawStreaks(
+    rules: BackdropRules,
+    galaxy: GalaxyBackdrop,
+    camera: readonly [number, number],
+  ): void {
+    this.streakInk ??= this.add
+      .graphics()
+      .setDepth(BACKDROP_DEPTH.streaks)
+      .setVertexRoundMode("off");
+    const color = hexNumber(galaxy.streaks.color);
+    for (const streak of viewStreaks(rules, galaxy, camera)) {
+      for (const piece of streakPieces(streak, STREAK_PIECES)) {
+        this.streakInk.lineStyle(rules.streaks.width, color, galaxy.streaks.alpha * piece.fade);
+        this.streakInk.lineBetween(piece.from[0], piece.from[1], piece.to[0], piece.to[1]);
+      }
+    }
+  }
+
+  /**
+   * Backdrop rocks under every play object, at the debris layer's rock parallax: one greyscale
+   * sprite per filled field cell, multiplied by the galaxy's backdropLit, at 0.6 to 1 times its
+   * display size.
    */
   private drawBackdrop(flight: NonNullable<typeof this.model.state.flight>): void {
     const catalog = this.asteroidArt;
@@ -4182,17 +4464,18 @@ export class PrototypeScene extends Scene {
     }
     const tint = hexNumber(backdropTint(catalog, flight.sector).backdropLit);
     const { cell } = BACKDROP_FIELD;
+    const parallax = this.backdropRules?.rocks.parallax ?? 1;
     const span = Math.ceil((Math.max(SCREEN.width, SCREEN.height) * 1.5) / cell) + 1;
-    const gx = Math.floor(flight.player.x / cell);
-    const gy = Math.floor(flight.player.y / cell);
+    const gx = Math.floor((flight.player.x * parallax) / cell);
+    const gy = Math.floor((flight.player.y * parallax) / cell);
     const used = new Set<string>();
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
-        const rock = backdropRock(catalog, flight.sector, flight.seed, x, y);
+        const rock = backdropRock(catalog, flight.seed, x, y);
         if (!rock || !this.rockTexture(rock.sprite.file)) {
           continue;
         }
-        const point = this.project(rock);
+        const point = this.projectLayer(rock, parallax);
         const width = rock.sprite.display.width * rock.scale;
         const height = rock.sprite.display.height * rock.scale;
         if (

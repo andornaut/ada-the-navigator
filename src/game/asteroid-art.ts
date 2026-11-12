@@ -7,7 +7,6 @@ import {
 } from "../data/asteroid-catalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
-import { clearOfOreFields } from "../model/ore-fields.ts";
 import type { Vec } from "../model/types.ts";
 
 /**
@@ -111,8 +110,11 @@ function hash(seed: number, text: string): number {
   value = Math.imul(value, 0x2c1b3c6d) >>> 0;
   return (value ^ (value >>> 12)) >>> 0;
 }
-/** A stable value in [0, 1) for a seed, an id and a salt. */
-function unit(seed: number, id: string, salt: string): number {
+/**
+ * A stable value in [0, 1) for a seed, an id and a salt: FNV-1a over `id:salt` from the seed,
+ * then a final mix. The layered backdrop seeds with it too (art/backdrop.md, Generation).
+ */
+export function unit(seed: number, id: string, salt: string): number {
   return hash(seed, `${id}:${salt}`) / 0x100000000;
 }
 
@@ -193,13 +195,11 @@ export interface BackdropRock extends Vec {
   readonly sprite: BackdropSprite;
 }
 /**
- * The backdrop rock seeded in world cell (x, y), or null for an empty cell. Like chunk
- * asteroids, none stands within ORE_FIELD_CLEAR_RADIUS of an ore field's centre, so a field
- * reads as its crystals alone.
+ * The backdrop rock seeded in cell (x, y) of its layer, or null for an empty cell. At parallax
+ * 0.8 a rock slides past an ore field under its crystals, so it keeps no ore-field clearance.
  */
 export function backdropRock(
   catalog: AsteroidArtCatalog,
-  sector: SectorId | null,
   seed: number,
   x: number,
   y: number,
@@ -216,9 +216,6 @@ export function backdropRock(
     x: (x + unit(seed, id, "backdrop-x")) * cell,
     y: (y + unit(seed, id, "backdrop-y")) * cell,
   };
-  if (sector !== null && !clearOfOreFields(sector, 0, at)) {
-    return null;
-  }
   return { scale: low + unit(seed, id, "backdrop-scale") * (high - low), sprite, ...at };
 }
 
