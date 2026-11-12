@@ -650,7 +650,18 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   button: a shield icon and bar, a divider and the Stardust count. While Ada
   carries ore, a divider and an ore icon with its count follow; while she carries
   a job item or tows a craft, a divider and its icon follow last. Each segment
-  leaves when empty. The bar is blue,
+  leaves when empty. Ore gains show "+N" ticks like Stardust's.
+- Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
+  a story item, a lost item, a job item, a new weapon or an ammunition pack from
+  a weapon drop, or a towed craft), a small notice shows just below the status
+  pill, then moves to where the gain shows (its pill segment, or the weapon
+  icons for a weapon or ammunition) and vanishes. Something found loose in space
+  (a lost item, a holodisk recovered on contact) reads "Found {item}"; anything
+  received or attached reads "+ {item}". Item names drop their article and start
+  with a capital ("Spare parts", "Message"). Gains close together queue, one
+  notice at a time. Item notices add to, and never replace, the notices in the
+  conversation box's slot, such as "Job complete" and "Out of ammo.". Under
+  reduced motion a notice fades in place. The bar is blue,
   turning red when the shield is low (below 25%) or empty, and shows hits, the
   recharge delay and regeneration. Low shield never relies on color alone: the bar
   also pulses, held steady under reduced motion, and Astra says "Shield low!".
