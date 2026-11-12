@@ -313,6 +313,12 @@
       "once": []
     },
     {
+      "key": "icon-use-control",
+      "png": "sprites/icon-use-control.png",
+      "json": "sprites/icon-use-control.json",
+      "once": []
+    },
+    {
       "key": "rock-closeup",
       "png": "sprites/rock-closeup.png",
       "json": "sprites/rock-closeup.json",

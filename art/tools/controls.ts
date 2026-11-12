@@ -16,7 +16,6 @@ const RECOLOURS: Readonly<Record<string, Colours>> = {
   "icon-browser-menu": { "3a4466": "ead4aa" },
   "icon-install": { "3a4466": "ead4aa" },
   "icon-ios-share": { "3a4466": "ead4aa" },
-  "icon-move-controls": { "3a4466": "ead4aa" },
   "ui-button": { "5a6988": "5f5980", "8b9bb4": "9690b4" },
   "ui-button-primary": {
     "262b44": "8a7148",

@@ -544,6 +544,11 @@ and may run past it; the drawn knob stays inside the ring. The line is absent
 at rest. The aim stick draws no line. See
 [touch joystick sheets](touch-joystick.md).
 
+At icon size and inline in text the sticks draw as `icon-move-controls` and
+`icon-aim-controls`, whole-pixel 16x16 versions of the ring, knob and move
+chevrons; see [inline controls](settings-icons.md#inline-controls). The live
+sticks are unchanged.
+
 ## Use disc
 
 The context action is Chibi's touch Use button (`chibis-way-home`
@@ -586,6 +591,10 @@ symbol fits inside the ring's 31.5 inner edge with room to spare (the farthest
 bounds corner, at Deposit's, is 23.43 from the centre). The ink edges carry each mark on any
 field, Sunflower's light one included, as Chibi's do: no light-field outline is
 added.
+
+Inline in text, Use draws as `icon-use-control`: the ring and the generic Use
+symbol on whole pixels at 16x16; see
+[inline controls](settings-icons.md#inline-controls).
 
 ## Landing page
 
