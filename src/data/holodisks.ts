@@ -1,4 +1,4 @@
-import type { EnemyArchetype } from "./enemy-catalog.ts";
+import type { EnemyArchetype } from "./enemyCatalog.ts";
 
 /** Provisional holodisk values, to be tuned through playtesting. */
 export const HOLODISKS: {

@@ -236,7 +236,7 @@ function collect(name) {
   process.exitCode = stable && !missingEvidence ? state.ExitCode : 1;
 }
 
-// dist/_headers' rules (src/headers/security-policy.ts) as Cloudflare reads them: a path pattern
+// dist/_headers' rules (src/headers/securityPolicy.ts) as Cloudflare reads them: a path pattern
 // at the line start, where * matches any run of characters, then its indented "Name: value"
 // lines. Comments start with #.
 function headerRules(text) {

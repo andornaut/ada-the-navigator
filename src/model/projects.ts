@@ -1,12 +1,12 @@
 import type { CommunityProject, ProjectAlly } from "../data/projects.ts";
-import type { SectorProgress } from "./types.ts";
+import type { GalaxyProgress } from "./types.ts";
 
 // Community projects (gameplay/economy.md "Donations"): once a galaxy's chapter is complete, its
 // stations offer its projects, which Ada funds with Stardust in parts, with progress kept across
 // flights. A funded project plays its thank-you line, changes the world at its site, counts
 // toward achievements and makes one ally for the finale. No project changes combat outside it.
 
-export type ProjectProgress = Pick<SectorProgress, "donated" | "resolved" | "revealed">;
+export type ProjectProgress = Pick<GalaxyProgress, "donated" | "resolved" | "revealed">;
 
 /** A funded project's world change at its site, and whether its reveal has played. */
 export interface WorldChange {

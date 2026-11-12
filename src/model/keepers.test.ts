@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { KEEPERS, SETTLER_GREETING } from "../data/keepers.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -16,21 +16,21 @@ import { HUB_STATION, namesStation, stationsNear } from "./stations.ts";
 const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8");
 
 /** A galaxy's stations within reach of its origin, nearest first. */
-function nearest(sector: SectorId, count: number) {
-  return stationsNear(ECONOMY, sector, 40_000, { x: 0, y: 0 })
+function nearest(galaxy: GalaxyNumber, count: number) {
+  return stationsNear(ECONOMY, galaxy, 40_000, { x: 0, y: 0 })
     .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))
     .slice(0, count);
 }
 
 /** A Sunflower flight beside its nearest station, discovered, nothing else in reach. */
 function beside() {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.prologueSeen = true;
-  model.startSector(1);
+  model.startGalaxy(1);
   const flight = model.state.flight!;
   const [station] = nearest(1, 1);
   flight.objects = [];
-  ensureStation(PROTOTYPE, station!.id, flight);
+  ensureStation(CONTENT, station!.id, flight);
   model.state.progress[1].stations.push(station!.id);
   flight.player = { x: station!.x, y: station!.y };
   flight.dangerFor = 0;
@@ -52,12 +52,12 @@ function dockAndRead(model: GameModel): string[] {
 
 describe("station keepers", () => {
   it("gives the nearest three stations of a galaxy its three keepers, by rank", () => {
-    for (const sector of [1, 3] as const) {
-      const sites = nearest(sector, 4);
-      expect(sites.map(({ id }) => stationRank(ECONOMY, sector, id))).toEqual([0, 1, 2, 3]);
-      expect(sites.map(({ id }) => stationKeeper(ECONOMY, sector, id)?.key)).toEqual([
-        ...KEEPERS[sector]!.keepers,
-        KEEPERS[sector]!.keepers[0],
+    for (const galaxy of [1, 3] as const) {
+      const sites = nearest(galaxy, 4);
+      expect(sites.map(({ id }) => stationRank(ECONOMY, galaxy, id))).toEqual([0, 1, 2, 3]);
+      expect(sites.map(({ id }) => stationKeeper(ECONOMY, galaxy, id)?.key)).toEqual([
+        ...KEEPERS[galaxy]!.keepers,
+        KEEPERS[galaxy]!.keepers[0],
       ]);
     }
   });
@@ -150,7 +150,7 @@ describe("a keeper's greeting at the station card", () => {
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     dockAndRead(model);
     model.undock();
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.progress[1].greetings).toEqual({ [station.id]: 1 });
     reloaded.state.flight!.player = { x: station.x, y: station.y };
     reloaded.state.dialogue = null;

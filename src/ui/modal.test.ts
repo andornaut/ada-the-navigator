@@ -6,7 +6,7 @@ import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { slice, units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
-import { LOADING_LAYER, LOADING_STYLE } from "./loading-bar.ts";
+import { LOADING_LAYER, LOADING_STYLE } from "./loadingBar.ts";
 import {
   actionOrder,
   BUTTON_SLICE,
@@ -18,7 +18,7 @@ import {
   TEXT_TOKENS,
   UI_SCOPE,
 } from "./modal.ts";
-import { buttonFrames, buttonProperty } from "./ui-skin.ts";
+import { buttonFrames, buttonProperty } from "./uiSkin.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/ui/${path}`, import.meta.url), "utf8"));

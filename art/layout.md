@@ -617,7 +617,7 @@ ammunition count string; Laser shows none.
 
 ### Edge markers
 
-Constants: `EDGE_MARKERS`, `EDGE_MARKER_GLYPHS`, `src/data/edge-markers.ts`;
+Constants: `EDGE_MARKERS`, `EDGE_MARKER_GLYPHS`, `src/data/edgeMarkers.ts`;
 glyphs and colours in [Space palette](space-palette.md#edge-markers). Each
 marker's centre is where the ray from the view's centre toward its object meets
 the marker rect: the game area intersected with
@@ -670,7 +670,7 @@ Clearance along the edges, from the band the 10-across markers can occupy
 
 A thin status line for loading, shared by every game through game-kit (the
 progress state and its DOM progress bar). Constants: `LOADING_BAR`,
-`src/ui/loading-bar.ts`.
+`src/ui/loadingBar.ts`.
 
 It shows for startup (the boot preload), entering a galaxy (its art before the
 flight) and the first-visit offline download (the precache and the service
@@ -1259,19 +1259,19 @@ Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
 A route map over the [route sky](route-sky.md), after Chibi's zone map: six
 galaxy markers left to right along one arc over the night sky, a panel for the
 chosen galaxy, and Earth and Jump below it.
-Constants: `ROUTE_MAP`, `ROUTE_PANEL`, `ROUTE_ACTIONS` and `ROUTE_MOVE`,
+Constants: `GALAXY_MAP`, `GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS` and `GALAXY_MAP_MOVE`,
 `routeMap.ts`, to implement. Positions are logical px from the play view's
 top-left (add `playView.x`, 29 at 779 wide); "insets" means the phone insets 43
 left and right and 19 bottom at 720x360. Route order, numbers, names and
 flavour lines are Gameplay's; marker colours and previews are in
 [Galaxies](galaxies.md#markers).
 
-Chart (`ROUTE_MAP`):
+Chart (`GALAXY_MAP`):
 
 | Part           | Geometry                                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Backdrop       | `route-sky`, top-centre on the play view's top-centre, and `route-ground` with Ada and Penny, bottom on the view's bottom, at 1x under the insets ([route sky](route-sky.md)); no ink layer: the sky's guard holds it at relative luminance 0.028 or less behind every marker, label, leg and the close X                                                                                     |
-| Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`ROUTE_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                   |
+| Rules          | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`GALAXY_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                  |
 | Marker centres | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
 | Marker         | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
 | Selected ring  | 2 px cream `#EAD4AA` ring at radius 17 (band 16 to 18) on the ship's galaxy (`marker.ring`)                                                                                                                                                                                                                                                                                                   |
@@ -1286,7 +1286,7 @@ Chart (`ROUTE_MAP`):
 Route order runs left to right on screen, so Left and Right follow screen
 order.
 
-Panel and actions (`ROUTE_PANEL`, `ROUTE_ACTIONS`):
+Panel and actions (`GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS`):
 
 | Part        | Geometry                                                                                                                                                                                                                                         |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -1376,7 +1376,7 @@ Input and focus:
 - Earth, the close X, back and Escape leave galaxy selection and return Ada to
   her room without a jump.
 
-Moves (`ROUTE_MOVE`):
+Moves (`GALAXY_MAP_MOVE`):
 
 | Move           | Rule                                                                                                                                                                                                                                                                                              |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1423,7 +1423,7 @@ leaves and lands standing above the markers.
 | Story panel: content-fitted per page, a `TYPE.story` text column beside a column of 36 `STORY_BUTTON` choices and page controls, over a background anchored per story run by its subject band                                  | A bottom panel up to 640 wide over a centred background, `TYPE.body` prose, 48 stacked choices                                |
 | Story page HUD row on the 12 edge rect (the HUD symmetry rule)                                                                                                                                                                 | Skip and Settings on the `CONTROL_EDGE` 8 HUD rect                                                                            |
 | Shop row: name to trailing slot is `SPACING.gap`; the paint heading sits on a 20 line                                                                                                                                          | 16; a 24 line                                                                                                                 |
-| Galaxy selection is a route map (`ROUTE_MAP`): six markers on two rows, a panel, Earth and Jump                                                                                                                                | A modal card per galaxy with Previous, Home, Jump and Next (`GALAXY_CARD`)                                                    |
+| Galaxy selection is a route map (`GALAXY_MAP`): six markers on two rows, a panel, Earth and Jump                                                                                                                               | A modal card per galaxy with Previous, Home, Jump and Next (`GALAXY_CARD`)                                                    |
 | Pause offers Map: a full-screen map (`MAP_SCREEN`, [Map](map.md)) with symbol chips, fog and a place panel                                                                                                                     | A 288x160 chart in a Map card (`MAP_CARD`)                                                                                    |
 
 ## Exceptions
@@ -1453,7 +1453,7 @@ Tests:
   a geometry property (`width`, `height`, `x`, `y`, `left`, `top`, `right`,
   `bottom`, `gap`, `padding`, `margin`, `inset`). The allowlist is explicit
   and short: `0`, sprite frame offsets read from manifests, and
-  `src/ui/touch-chrome.ts` (procedural chrome). Each entry names its reason.
+  `src/ui/touchChrome.ts` (procedural chrome). Each entry names its reason.
 - `viewScale` and `logicalView` at 844x390, 1280x720 and 1920x1080 match the
   table above; a 48 button is 52 CSS px at 844x390.
 - `cardTitleReserve(true)` equals 50, derived from `hitAround` of the close

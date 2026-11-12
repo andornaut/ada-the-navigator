@@ -1,6 +1,6 @@
 import type { EconomyCatalog, LeveledValue } from "../data/economy.ts";
-import type { ShipPhysics } from "../data/ship-physics.ts";
-import type { PrototypeContent } from "../data/types.ts";
+import type { ShipPhysics } from "../data/shipPhysics.ts";
+import type { GameContent } from "../data/types.ts";
 import type { EconomyState, UpgradeLevels } from "./types.ts";
 import { noAmmo } from "./weapons.ts";
 
@@ -58,7 +58,7 @@ const multiplier = (table: readonly [number, number, number], level: number) =>
 
 export function shipTuning(
   catalog: EconomyCatalog,
-  content: PrototypeContent,
+  content: GameContent,
   levels: UpgradeLevels,
 ): ShipTuning {
   const { effects } = catalog;

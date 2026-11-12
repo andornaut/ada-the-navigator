@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import {
   encounterQuiet,
   encounterTable,
@@ -9,15 +10,14 @@ import {
   enemyDefinition,
   enemyStardust,
   escortTuning,
-  sectorEncounters,
-} from "../data/enemy-catalog.ts";
+  galaxyEncounters,
+} from "../data/enemyCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
 import { carriesStardust } from "./drops.ts";
-import { createEnemy } from "./enemy-ai.ts";
-import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
+import { createEnemy } from "./enemyAi.ts";
+import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import {
   activeEnemyBeams,
   activeRingEmissions,
@@ -34,11 +34,11 @@ import {
   stepFlight,
   teleport,
 } from "./flight.ts";
-import { shipBody, shipCircleContact } from "./ship-body.ts";
-import type { FlightInput, FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
+import { shipBody, shipCircleContact } from "./shipBody.ts";
+import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const progress: SectorProgress = {
+const progress: GalaxyProgress = {
   charted: [],
   deposited: 0,
   destroyedEnemies: 0,
@@ -58,7 +58,7 @@ const progress: SectorProgress = {
   stations: [],
 };
 function empty(): FlightState {
-  const flight = createFlight(PROTOTYPE, 1, 173, progress);
+  const flight = createFlight(CONTENT, 1, 173, progress);
   flight.objects = [];
   return flight;
 }
@@ -73,7 +73,7 @@ function ship(
     hp: definition.hp,
     id: "target",
     kind: "enemy",
-    radius: definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+    radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
   };
 }
 /** Holds every hardpoint's fire but `id`'s, which fires at once. */
@@ -83,9 +83,9 @@ function only(object: SpaceObject, id: string): SpaceObject {
   }
   return object;
 }
-/** An empty flight in `sector` with Ada at the origin. */
-function emptyIn(sector: 2 | 6): FlightState {
-  const flight = createFlight(PROTOTYPE, sector, 173, progress);
+/** An empty flight in `galaxy` with Ada at the origin. */
+function emptyIn(galaxy: 2 | 6): FlightState {
+  const flight = createFlight(CONTENT, galaxy, 173, progress);
   flight.objects = [];
   flight.player = { x: 0, y: 0 };
   return flight;
@@ -94,7 +94,7 @@ function hit(flight: FlightState, point: Vec, count = 1): void {
   for (let i = 0; i < count; i++) {
     flight.shots.push({
       ...point,
-      damage: PROTOTYPE.tuning.flight.playerShotDamage,
+      damage: CONTENT.tuning.flight.playerShotDamage,
       enemy: false,
       hitIds: [],
       id: `test:${flight.nextId++}`,
@@ -139,11 +139,11 @@ function partPosition(object: SpaceObject, id: string): Vec {
 describe("integrated combat", () => {
   it("fires bolts and missiles from independent capital hardpoints and preserves saved futures", () => {
     // Needle (position 3): two Lasers, two four-bolt Multi-Lasers, a Rapid and a Heavy Missile.
-    const flight = createFlight(PROTOTYPE, 4, 173, progress);
+    const flight = createFlight(CONTENT, 4, 173, progress);
     flight.objects = [];
     const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(4, "capital"));
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     const kinds = flight.shots.map((shot) => shot.projectile);
     expect(kinds.filter((kind) => kind === "bolt")).toHaveLength(10);
     expect(kinds.filter((kind) => kind === "missile")).toHaveLength(2);
@@ -152,8 +152,8 @@ describe("integrated combat", () => {
     const position = { x: missile.x, y: missile.y };
     flight.player.y = 200;
     const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
-    stepFlight(PROTOTYPE, 0.1, idle, resumed);
+    stepFlight(CONTENT, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, idle, resumed);
     expect(resumed).toEqual(flight);
     expect(missile.velocity).toEqual(velocity);
     expect(missile.x).toBeCloseTo(position.x + velocity.x * 0.1);
@@ -170,14 +170,14 @@ describe("integrated combat", () => {
     target.enemy!.facing = { x: 20 / Math.hypot(20, 10), y: 10 / Math.hypot(20, 10) };
     hit(flight, partPosition(target, "engine-left"), 4);
     hit(flight, partPosition(target, "weapon-left"), 4);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(target.enemy!.hp).toBe(32);
     flight.shots = [];
     const before = { x: target.x, y: target.y };
     for (const part of target.enemy!.hardpoints) {
       part.cooldown = 0;
     }
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     // One working engine of two still drives the hull at half its top speed, and the other
     // Laser and both three-bolt Multi-Lasers still fire.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
@@ -187,7 +187,7 @@ describe("integrated combat", () => {
     for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
       hit(flight, partPosition(target, id), 4);
     }
-    const disabling = stepFlight(PROTOTYPE, 0.01, idle, flight);
+    const disabling = stepFlight(CONTENT, 0.01, idle, flight);
     expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
     expect(disabling).not.toContainEqual({ type: "enemyDestroyed" });
     expect(target.enemy).toMatchObject({ disabled: true, hp: 20 });
@@ -197,15 +197,15 @@ describe("integrated combat", () => {
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
     const coasting = Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y);
     expect(coasting).toBeGreaterThan(0);
-    const later = stepFlight(PROTOTYPE, 20, idle, flight);
+    const later = stepFlight(CONTENT, 20, idle, flight);
     expect(later.some((event) => event.type === "enemyDisabled")).toBe(false);
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
     expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
     // Hits on the destroyed command part's place go to the hull until it breaks.
     hit(flight, partPosition(target, "command"), 20);
-    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+    expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects).not.toContain(target);
-    expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({
+    expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
       type: "enemyDestroyed",
     });
   });
@@ -215,27 +215,27 @@ describe("integrated combat", () => {
     const flight = empty();
     const target = ship("frigate", { x: 120, y: 0 }, enemyDefinition(1, "frigate"));
     flight.objects.push(target);
-    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
+    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
     target.enemy!.disabled = true;
-    expect(salvageTarget(PROTOTYPE, flight)).toBe(target);
-    flight.player = { x: 120 - PROTOTYPE.tuning.safeRadius - 1, y: 0 };
-    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
-    expect(salvage(PROTOTYPE, flight)).toBe(false);
+    expect(salvageTarget(CONTENT, flight)).toBe(target);
+    flight.player = { x: 120 - CONTENT.tuning.safeRadius - 1, y: 0 };
+    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
+    expect(salvage(CONTENT, flight)).toBe(false);
     flight.player = { x: 0, y: 0 };
-    expect(salvage(PROTOTYPE, flight)).toBe(true);
+    expect(salvage(CONTENT, flight)).toBe(true);
     expect(target.enemy!.salvaged).toBe(true);
     const stardust = flight.objects
       .filter(carriesStardust)
       .reduce((sum, object) => sum + object.amount!, 0);
     expect(stardust).toBe(enemyStardust(1, "frigate"));
-    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
-    expect(salvage(PROTOTYPE, flight)).toBe(false);
+    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
+    expect(salvage(CONTENT, flight)).toBe(false);
     // Shots and Ada pass through the spared ship, which neither moves nor fires.
     flight.objects = flight.objects.filter((object) => object === target);
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
     hit(flight, { x: target.x, y: target.y }, 3);
     flight.player = { x: target.x, y: target.y };
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, idle, flight);
     expect(target.enemy!.hp).toBe(20);
     expect(flight.player).toEqual({ x: target.x, y: target.y });
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
@@ -244,8 +244,8 @@ describe("integrated combat", () => {
 
   it("unblocks a route once its guard is disabled, salvaged or not", () => {
     const flight = empty();
-    ensureDestination(PROTOTYPE, "quest", flight);
-    const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
+    ensureDestination(CONTENT, "quest", flight);
+    const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
     expect(routeBlocked("quest", flight)).toBe(true);
     guard.enemy!.disabled = true;
     expect(routeBlocked("quest", flight)).toBe(false);
@@ -259,7 +259,7 @@ describe("integrated combat", () => {
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
     flight.objects.push(target);
     flight.shots.push({
-      damage: PROTOTYPE.tuning.flight.playerShotDamage,
+      damage: CONTENT.tuning.flight.playerShotDamage,
       enemy: false,
       hitIds: [],
       id: "travel",
@@ -270,7 +270,7 @@ describe("integrated combat", () => {
       x: 400,
       y: -150,
     });
-    stepFlight(PROTOTYPE, 0.7, idle, flight);
+    stepFlight(CONTENT, 0.7, idle, flight);
     expect(target.enemy!.hp).toBe(enemyCatalog.capital.hp - 1);
     expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual(
       enemyCatalog.capital.hardpoints.map((part) => part.hp),
@@ -284,7 +284,7 @@ describe("integrated combat", () => {
     target.enemy!.engaged = true;
     target.enemy!.velocity = { x: -100, y: 0 };
     flight.objects.push(target, { hp: 99, id: "wall", kind: "rock", radius: 40, x: 240, y: 0 });
-    stepFlight(PROTOTYPE, 1, idle, flight);
+    stepFlight(CONTENT, 1, idle, flight);
     expect(target.x).toBeGreaterThanOrEqual(290);
     expect(flight.shots).toHaveLength(0);
     flight.shots.push({
@@ -298,19 +298,19 @@ describe("integrated combat", () => {
       x: 300,
       y: 0,
     });
-    stepFlight(PROTOTYPE, 0.8, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    stepFlight(CONTENT, 0.8, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     expect(flight.shots.some((shot) => shot.id === "incoming")).toBe(false);
   });
 
   it("fires an interceptor's Scattershot dots with Ada's range and fade", () => {
     // Needle (position 3): a level 2 Scattershot's nine dots reach 360 world units.
-    const flight = createFlight(PROTOTYPE, 4, 173, progress);
+    const flight = createFlight(CONTENT, 4, 173, progress);
     flight.objects = [];
     const target = ship("interceptor", { x: 200, y: 0 }, enemyDefinition(4, "interceptor"));
     target.enemy!.engaged = true;
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     const dots = flight.shots.filter((shot) => shot.enemy);
     expect(dots).toHaveLength(9);
     for (const dot of dots) {
@@ -340,25 +340,25 @@ describe("integrated combat", () => {
       y,
     });
     flight.shots.push(missile("heavy", 60, 0));
-    stepFlight(PROTOTYPE, 1.5, idle, flight);
+    stepFlight(CONTENT, 1.5, idle, flight);
     expect(flight.shots).toEqual([]);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 3);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 3);
     // A small blast at the same rock falls short of Ada.
     flight.shots.push(missile("rapid", 4, 0));
-    stepFlight(PROTOTYPE, 1.5, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 3);
+    stepFlight(CONTENT, 1.5, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 3);
     // Past the rock, a missile striking Ada deals its damage once, blast included.
     flight.shots.push(missile("direct", 60, -40));
     flight.player = { x: 0, y: -40 };
-    stepFlight(PROTOTYPE, 1.5, idle, flight);
+    stepFlight(CONTENT, 1.5, idle, flight);
     expect(flight.shots).toEqual([]);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 6);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - 6);
   });
 
   it("fires an enemy Phaser along its fixed aim line 0.4 s after it appears", () => {
     // Phantom (position 6): the capital's claw carries a level 1 Phaser, 4 damage.
     const fixture = () => {
-      const flight = createFlight(PROTOTYPE, 6, 173, progress);
+      const flight = createFlight(CONTENT, 6, 173, progress);
       flight.objects = [];
       flight.player = { x: 0, y: 0 };
       const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
@@ -366,7 +366,7 @@ describe("integrated combat", () => {
         part.cooldown = part.id === "claw-left" ? 0 : 999;
       }
       flight.objects.push(target);
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
       return flight;
     };
     const flight = fixture();
@@ -374,25 +374,25 @@ describe("integrated combat", () => {
     expect(beam).toMatchObject({ fired: false, stopped: false });
     expect(flight.shots).toEqual([]);
     const shield = flight.shield;
-    stepFlight(PROTOTYPE, 0.3, idle, flight);
+    stepFlight(CONTENT, 0.3, idle, flight);
     expect(beam!.fired).toBe(false);
     expect(flight.shield).toBe(shield);
-    stepFlight(PROTOTYPE, 0.15, idle, flight);
+    stepFlight(CONTENT, 0.15, idle, flight);
     expect(beam).toMatchObject({ fired: true, stopped: true });
     expect(flight.shield).toBeCloseTo(shield - 4, 9);
     // The beam shows for its flash and spark, then goes.
-    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    stepFlight(CONTENT, 0.2, idle, flight);
     expect(activeEnemyBeams(flight)).not.toContain(beam);
     // Ada moving off the line before it fires takes no damage.
     const dodged = fixture();
     dodged.player = { x: 0, y: 120 };
-    stepFlight(PROTOTYPE, 0.45, idle, dodged);
+    stepFlight(CONTENT, 0.45, idle, dodged);
     expect(activeEnemyBeams(dodged)[0]).toMatchObject({ fired: true, stopped: false });
-    expect(dodged.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(dodged.shield).toBe(CONTENT.tuning.shieldMax);
   });
 
   it("stops an enemy Phaser's aim line and beam at the first obstacle", () => {
-    const flight = createFlight(PROTOTYPE, 6, 173, progress);
+    const flight = createFlight(CONTENT, 6, 173, progress);
     flight.objects = [];
     flight.player = { x: 0, y: 0 };
     const target = ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital"));
@@ -400,14 +400,14 @@ describe("integrated combat", () => {
       part.cooldown = part.id === "claw-left" ? 0 : 999;
     }
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     // A rock rolls between them after the line appears: the line and beam stop at it.
     flight.objects.push({ hp: 99, id: "wall", kind: "rock", radius: 25, x: 80, y: 0 });
-    stepFlight(PROTOTYPE, 0.45, idle, flight);
+    stepFlight(CONTENT, 0.45, idle, flight);
     const [beam] = activeEnemyBeams(flight);
     expect(beam).toMatchObject({ fired: true, stopped: true });
     expect(beam!.end.x).toBeGreaterThan(80);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
   });
 
   it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {
@@ -418,13 +418,13 @@ describe("integrated combat", () => {
       "stern-left",
     );
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     const bolts = flight.shots.filter((shot) => shot.enemyWeapon === "ringBurst");
     expect(bolts).toHaveLength(8);
     for (const [index, bolt] of bolts.entries()) {
       expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
       const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
-      expect(speed).toBeCloseTo(PROTOTYPE.tuning.enemyProjectileSpeed * 1.2, 9);
+      expect(speed).toBeCloseTo(CONTENT.tuning.enemyProjectileSpeed * 1.2, 9);
       const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
       expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
     }
@@ -439,7 +439,7 @@ describe("integrated combat", () => {
     }
     // The emission shows for 180 ms, then goes.
     flight.objects = [];
-    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    stepFlight(CONTENT, 0.2, idle, flight);
     expect(activeRingEmissions(flight)).toEqual([]);
   });
 
@@ -452,7 +452,7 @@ describe("integrated combat", () => {
     flight.objects.push(target);
     for (let volley = 0; volley < 6; volley++) {
       target.enemy!.hardpoints.find((part) => part.id === "stern-right")!.cooldown = 0;
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
     }
     expect(flight.mines).toHaveLength(4);
     expect(new Set(flight.mines.map((mine) => mine.ownerId))).toEqual(new Set([target.id]));
@@ -463,13 +463,13 @@ describe("integrated combat", () => {
       { age: 19.99, damage: 3, id: "old", ownerId: "layer", x: 300, y: 300 },
     ];
     const shield = flight.shield;
-    stepFlight(PROTOTYPE, 0.05, idle, flight);
+    stepFlight(CONTENT, 0.05, idle, flight);
     expect(flight.shield).toBe(shield - 3);
     expect(flight.mines.map((mine) => [mine.id, mine.end?.kind])).toEqual([
       ["on-ada", "pop"],
       ["old", "fizzle"],
     ]);
-    stepFlight(PROTOTYPE, 0.25, idle, flight);
+    stepFlight(CONTENT, 0.25, idle, flight);
     expect(flight.mines).toEqual([]);
     expect(flight.shield).toBe(shield - 3);
   });
@@ -478,7 +478,7 @@ describe("integrated combat", () => {
     const flight = empty();
     flight.mines = [{ age: 1, damage: 3, id: "ahead", ownerId: "layer", x: 100, y: 0 }];
     hit(flight, { x: 100, y: 0 });
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(flight.mines[0]!.end?.kind).toBe("pop");
     expect(flight.shots).toEqual([]);
   });
@@ -489,7 +489,7 @@ describe("integrated combat", () => {
       const flight = emptyIn(2);
       const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
       flight.objects.push(target);
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
       return { flight, target };
     };
     const { flight } = fixture();
@@ -497,27 +497,27 @@ describe("integrated combat", () => {
     expect(tell).toMatchObject({ fired: false, kind: "lance" });
     // It aims at Ada each step while it tracks, then holds its line.
     flight.player = { x: 0, y: 60 };
-    stepFlight(PROTOTYPE, 0.3, idle, flight);
+    stepFlight(CONTENT, 0.3, idle, flight);
     const toward = { x: flight.player.x - tell!.muzzle.x, y: flight.player.y - tell!.muzzle.y };
     const span = Math.hypot(toward.x, toward.y);
     expect(tell!.direction.x).toBeCloseTo(toward.x / span, 6);
     expect(tell!.direction.y).toBeCloseTo(toward.y / span, 6);
-    stepFlight(PROTOTYPE, 0.45, idle, flight);
+    stepFlight(CONTENT, 0.45, idle, flight);
     const locked = { ...tell!.direction };
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, idle, flight);
     expect(tell!.direction).toEqual(locked);
     const shield = flight.shield;
-    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    stepFlight(CONTENT, 0.2, idle, flight);
     expect(tell).toMatchObject({ fired: true, stopped: true });
     expect(flight.shield).toBeCloseTo(shield - 3, 9);
     // Ada leaving the locked line takes nothing; the beam runs the game area's width on screen.
     const dodged = fixture().flight;
     const [missed] = activeEnemyBeams(dodged);
-    stepFlight(PROTOTYPE, 0.8, idle, dodged);
+    stepFlight(CONTENT, 0.8, idle, dodged);
     dodged.player = { x: 0, y: -150 };
-    stepFlight(PROTOTYPE, 0.25, idle, dodged);
+    stepFlight(CONTENT, 0.25, idle, dodged);
     expect(missed).toMatchObject({ fired: true, stopped: false });
-    expect(dodged.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(dodged.shield).toBe(CONTENT.tuning.shieldMax);
     const along = { x: missed!.end.x - missed!.muzzle.x, y: missed!.end.y - missed!.muzzle.y };
     expect(Math.hypot(along.x - along.y, (along.x + along.y) / 2)).toBeCloseTo(SCREEN.width, 6);
   });
@@ -526,10 +526,10 @@ describe("integrated combat", () => {
     const flight = emptyIn(2);
     const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toHaveLength(1);
     target.enemy!.disabled = true;
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toEqual([]);
   });
 
@@ -545,28 +545,28 @@ describe("integrated combat", () => {
       y: 0,
     };
     flight.objects.push(debris);
-    stepFlight(PROTOTYPE, 0.5, idle, flight);
+    stepFlight(CONTENT, 0.5, idle, flight);
     expect(debris.x).toBeCloseTo(10);
     expect(debris.velocity).toEqual({ x: -100, y: 0 });
-    expect(flight.shield).toBeLessThan(PROTOTYPE.tuning.shieldMax);
-    const destination = ensureDestination(PROTOTYPE, "friendly", flight);
+    expect(flight.shield).toBeLessThan(CONTENT.tuning.shieldMax);
+    const destination = ensureDestination(CONTENT, "friendly", flight);
     destination.x = -200;
     destination.y = 0;
     flight.dangerFor = 0;
-    expect(teleport(PROTOTYPE, destination.id, flight)).toBe(true);
+    expect(teleport(CONTENT, destination.id, flight)).toBe(true);
     const shield = flight.shield;
-    stepFlight(PROTOTYPE, 1, idle, flight);
+    stepFlight(CONTENT, 1, idle, flight);
     expect(flight.objects.some((object) => object.id === "moving")).toBe(false);
     expect(flight.shield).toBeGreaterThanOrEqual(shield);
   });
 
   it.each([1, 2, 3] as const)(
-    "opens a sector %i route once its guard is disabled, though its hull still stands",
-    (sector) => {
+    "opens a galaxy %i route once its guard is disabled, though its hull still stands",
+    (galaxy) => {
       const flight = empty();
-      flight.sector = sector;
-      const destination = ensureDestination(PROTOTYPE, "quest", flight);
-      const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
+      flight.galaxy = galaxy;
+      const destination = ensureDestination(CONTENT, "quest", flight);
+      const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
       // Its weapons go: every weapon hardpoint destroyed disables it.
       const weapons = enemyCatalog[guard.enemy!.archetype].hardpoints.filter(
         ({ kind }) => kind === "weapon",
@@ -581,7 +581,7 @@ describe("integrated combat", () => {
       expect(guard.hp).toBeGreaterThan(0);
       expect(routeBlocked("quest", flight)).toBe(false);
       flight.player = { x: destination.x, y: destination.y };
-      expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({
+      expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({
         id: "quest",
         type: "discovered",
       });
@@ -589,32 +589,32 @@ describe("integrated combat", () => {
   );
 
   it.each([1, 2, 3] as const)(
-    "guards a sector %i route outside the safezone without respawn after defeat",
-    (sector) => {
+    "guards a galaxy %i route outside the safezone without respawn after defeat",
+    (galaxy) => {
       const flight = empty();
-      flight.sector = sector;
+      flight.galaxy = galaxy;
       expect(routeBlocked("quest", flight)).toBe(false);
-      const destination = ensureDestination(PROTOTYPE, "quest", flight);
-      const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
-      const archetype = sector === 1 ? "frigate" : "capital";
+      const destination = ensureDestination(CONTENT, "quest", flight);
+      const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
+      const archetype = galaxy === 1 ? "frigate" : "capital";
       expect(guard.enemy?.archetype).toBe(archetype);
       expect(
         Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
-      ).toBeGreaterThan(PROTOTYPE.tuning.safeRadius);
-      expect(ensureRouteEncounter(PROTOTYPE, "quest", flight)).toBe(guard);
+      ).toBeGreaterThan(CONTENT.tuning.safeRadius);
+      expect(ensureRouteEncounter(CONTENT, "quest", flight)).toBe(guard);
       flight.player = { x: destination.x, y: destination.y };
-      expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({
+      expect(stepFlight(CONTENT, 0.01, idle, flight)).not.toContainEqual({
         id: "quest",
         type: "discovered",
       });
       flight.objects = flight.objects.filter((object) => object !== guard);
       expect(routeBlocked("quest", flight)).toBe(false);
-      expect(ensureRouteEncounter(PROTOTYPE, "quest", flight)).toBeNull();
-      expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).toContainEqual({
+      expect(ensureRouteEncounter(CONTENT, "quest", flight)).toBeNull();
+      expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({
         id: "quest",
         type: "discovered",
       });
-      expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+      expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     },
   );
 
@@ -630,7 +630,7 @@ describe("integrated combat", () => {
       x: 300,
       y: 0,
     });
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.objects[0]?.enemy?.hp).toBe(2);
     expect(flight.objects[0]?.enemy?.id).toBe("legacy");
     expect(routeBlocked("old-destination", flight)).toBe(false);
@@ -642,7 +642,7 @@ describe("integrated combat", () => {
     // Generate distinct distant near-fields without advancing combat or encounter time.
     for (let i = 1; i <= 12; i++) {
       flight.player = { x: i * 4096, y: 0 };
-      ensureDestination(PROTOTYPE, `scan:${i}`, flight);
+      ensureDestination(CONTENT, `scan:${i}`, flight);
     }
     const packs = flight.combat?.initialPackSizes ?? {};
     expect(Object.keys(packs).length).toBeGreaterThan(2);
@@ -665,14 +665,14 @@ describe("integrated combat", () => {
         const first = origins[i]!;
         const second = origins[j]!;
         expect(
-          Math.hypot(first[0]! - second[0]!, first[1]! - second[1]!) * PROTOTYPE.tuning.chunkSize,
+          Math.hypot(first[0]! - second[0]!, first[1]! - second[1]!) * CONTENT.tuning.chunkSize,
         ).toBeGreaterThanOrEqual(encounterQuiet(1).distance);
       }
     }
     const replay = empty();
     for (let i = 1; i <= 12; i++) {
       replay.player = { x: i * 4096, y: 0 };
-      ensureDestination(PROTOTYPE, `scan:${i}`, replay);
+      ensureDestination(CONTENT, `scan:${i}`, replay);
     }
     expect(replay).toEqual(flight);
   });
@@ -692,10 +692,10 @@ describe("rotating hulls", () => {
     expect(Math.hypot(east.x - south.x, east.y - south.y)).toBeGreaterThan(20);
     // Facing south, the part is no longer drawn where it was facing east.
     hit(flight, east);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(hp("weapon-rear-right")).toBe(3);
     hit(flight, south);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(hp("weapon-rear-right")).toBe(2);
   });
 });
@@ -706,7 +706,7 @@ describe("galaxy one encounters", () => {
     let leader: SpaceObject | undefined;
     for (let index = 1; index <= 400 && !leader; index++) {
       flight.player = { x: index * 4096, y: (index % 7) * 4096 };
-      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      stepFlight(CONTENT, 0.001, idle, flight);
       leader = flight.objects.find(
         (object) =>
           object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
@@ -739,12 +739,12 @@ describe("galaxy one encounters", () => {
     [2, 980, false],
     [3, 840, true],
     [3, 850, false],
-  ] as const)("in galaxy %i, notices Ada %i units away: %s", (sector, away, engaged) => {
+  ] as const)("in galaxy %i, notices Ada %i units away: %s", (galaxy, away, engaged) => {
     const flight = empty();
-    flight.sector = sector;
+    flight.galaxy = galaxy;
     const fighter = ship("fighter", { x: flight.player.x + away, y: flight.player.y });
     flight.objects.push(fighter);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(fighter.enemy!.engaged).toBe(engaged);
   });
 
@@ -753,14 +753,12 @@ describe("galaxy one encounters", () => {
     const capital = ship("capital", { x: flight.player.x + 900, y: flight.player.y });
     capital.radius = 100;
     flight.objects.push(capital);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-    expect(capital.radius).toBe(
-      enemyCatalog.capital.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
-    );
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+    expect(capital.radius).toBe(enemyCatalog.capital.sizeRatio * CONTENT.tuning.flight.shipRadius);
   });
 });
 
-describe("sector encounter tables", () => {
+describe("galaxy encounter tables", () => {
   function rolls(seed: number): () => number {
     let n = seed;
     return () => {
@@ -776,7 +774,7 @@ describe("sector encounter tables", () => {
     const escorts = new Set<string>();
     for (let i = 0; i < total; i++) {
       const count = next();
-      const roll = rollEncounter(sectorEncounters[1]!, count, next());
+      const roll = rollEncounter(galaxyEncounters[1]!, count, next());
       seen.set(roll.archetype, [...(seen.get(roll.archetype) ?? []), roll.count]);
       if (roll.escorts) {
         escorts.add(`${roll.archetype}:${roll.escorts.archetype}:${roll.escorts.count}`);
@@ -844,8 +842,8 @@ describe("sector encounter tables", () => {
         swarm: [5, 8, 0.25],
       },
     ],
-  ] as const)("rolls galaxy %i's roster groups and weights", (sector, roster) => {
-    const encounters = byPosition(sectorEncounters, sector);
+  ] as const)("rolls galaxy %i's roster groups and weights", (galaxy, roster) => {
+    const encounters = byPosition(galaxyEncounters, galaxy);
     const table = Object.fromEntries(
       encounters.map((entry) => [entry.archetype, [...entry.groupSize, entry.weight]]),
     );
@@ -855,7 +853,7 @@ describe("sector encounter tables", () => {
       count: 4,
     });
     // Every roll lands in the chosen archetype's group range.
-    const next = rolls(sector * 7919);
+    const next = rolls(galaxy * 7919);
     for (let i = 0; i < 2000; i++) {
       const { archetype, count } = rollEncounter(encounters, next(), next());
       const [low, high] = roster[archetype as keyof typeof roster];
@@ -864,12 +862,12 @@ describe("sector encounter tables", () => {
     }
   });
 
-  it("generates only sector one's roster and group sizes in sector one", () => {
+  it("generates only galaxy one's roster and group sizes in galaxy one", () => {
     const flight = empty();
     const packs = new Map<string, Set<EnemyArchetype>>();
     for (let i = 1; i <= 30; i++) {
       flight.player = { x: i * 4096, y: (i % 3) * 4096 };
-      ensureDestination(PROTOTYPE, `scan:${i}`, flight);
+      ensureDestination(CONTENT, `scan:${i}`, flight);
       for (const object of flight.objects) {
         if (object.enemy?.packId?.startsWith("pack:")) {
           const members = packs.get(object.enemy.packId) ?? new Set();
@@ -908,7 +906,7 @@ function pack(flight: FlightState, points: Vec[]): SpaceObject[] {
 describe("combat admission and subframe firing", () => {
   it("records only admitted pack members when a safezone excludes part of a seeded group", () => {
     // The fixture uses an encounter at the flight start, which launches otherwise keep clear.
-    const content = structuredClone(PROTOTYPE);
+    const content = structuredClone(CONTENT);
     content.tuning.flight.arrivalCalm = 0;
     let template: FlightState | undefined;
     let members: SpaceObject[] = [];
@@ -956,7 +954,7 @@ describe("combat admission and subframe firing", () => {
             ];
       const members = pack(flight, points);
       if (clearance === "destination") {
-        ensureDestination(PROTOTYPE, "clearance", flight);
+        ensureDestination(CONTENT, "clearance", flight);
       } else {
         flight.objects.push({
           hp: 1,
@@ -966,20 +964,20 @@ describe("combat admission and subframe firing", () => {
           x: 1000,
           y: 0,
         });
-        ensureRouteEncounter(PROTOTYPE, "clearance", flight);
+        ensureRouteEncounter(CONTENT, "clearance", flight);
       }
       expect(flight.combat!.initialPackSizes.roster).toBe(4);
       expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
       expect(flight.objects).not.toContain(members[0]);
       expect(flight.objects).not.toContain(members[1]);
-      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      stepFlight(CONTENT, 0.001, idle, flight);
       expect(members[2]!.enemy!.fleeing).toBe(false);
       expect(members[3]!.enemy!.fleeing).toBe(false);
       hit(flight, members[2]!, 2);
-      expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+      expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
       expect(flight.combat!.initialPackSizes.roster).toBe(4);
       expect(flight.combat!.unloadedPackMembers?.roster).toBe(2);
-      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      stepFlight(CONTENT, 0.001, idle, flight);
       expect(members[3]!.enemy!.fleeing).toBe(false);
     },
   );
@@ -992,9 +990,9 @@ describe("combat admission and subframe firing", () => {
     ]);
     members[0]!.hp = 0;
     members[0]!.enemy!.hp = 0;
-    ensureDestination(PROTOTYPE, "clearance", flight);
+    ensureDestination(CONTENT, "clearance", flight);
     expect(flight.combat!.initialPackSizes.roster).toBe(2);
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(members[1]!.enemy!.fleeing).toBe(true);
   });
 
@@ -1004,15 +1002,15 @@ describe("combat admission and subframe firing", () => {
     target.enemy!.primaryCooldown = 0.012;
     flight.objects.push(target);
     const dt = 1 / 60;
-    stepFlight(PROTOTYPE, dt, idle, flight);
+    stepFlight(CONTENT, dt, idle, flight);
     const shot = flight.shots.find((shot) => shot.enemy)!;
     const elapsed = dt - 0.012;
     expect(shot).toBeDefined();
     expect(shot.x).toBeCloseTo(300 + shot.velocity.x * elapsed, 10);
     expect(shot.y).toBeCloseTo(shot.velocity.y * elapsed, 10);
-    expect(shot.life).toBeCloseTo(PROTOTYPE.tuning.flight.enemyProjectileLifetime - elapsed, 10);
+    expect(shot.life).toBeCloseTo(CONTENT.tuning.flight.enemyProjectileLifetime - elapsed, 10);
     const before = { life: shot.life, x: shot.x, y: shot.y };
-    stepFlight(PROTOTYPE, dt, idle, flight);
+    stepFlight(CONTENT, dt, idle, flight);
     expect(shot.x).toBeCloseTo(before.x + shot.velocity.x * dt, 10);
     expect(shot.y).toBeCloseTo(before.y + shot.velocity.y * dt, 10);
     expect(shot.life).toBeCloseTo(before.life - dt, 10);
@@ -1024,11 +1022,11 @@ describe("combat admission and subframe firing", () => {
     target.cooldown = 999;
     target.enemy!.primaryCooldown = 0.012;
     flight.objects.push(target);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(1);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.hazardDamage);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax - CONTENT.tuning.hazardDamage);
     expect(flight.shots.filter((shot) => shot.enemy)).toHaveLength(0);
   });
 
@@ -1036,16 +1034,16 @@ describe("combat admission and subframe firing", () => {
     "preserves both required fights through nearby %s clearance",
     (clearance) => {
       const flight = empty();
-      flight.sector = 3;
-      const first = ensureDestination(PROTOTYPE, "first", flight);
-      const firstGuard = ensureRouteEncounter(PROTOTYPE, "first", flight)!;
+      flight.galaxy = 3;
+      const first = ensureDestination(CONTENT, "first", flight);
+      const firstGuard = ensureRouteEncounter(CONTENT, "first", flight)!;
       const original = { x: firstGuard.x, y: firstGuard.y };
       let second: SpaceObject;
       if (clearance === "destination") {
         // Story spacing keeps a destination off another's guard; without it, the second
         // destination lands on the first's guard, which its clearance must keep.
-        flight.player = { x: original.x, y: original.y + PROTOTYPE.tuning.chunkSize * 2 };
-        const unspaced = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, storySpacing: 0 } };
+        flight.player = { x: original.x, y: original.y + CONTENT.tuning.chunkSize * 2 };
+        const unspaced = { ...CONTENT, tuning: { ...CONTENT.tuning, storySpacing: 0 } };
         second = ensureDestination(unspaced, "second", flight);
         // A current's clearance can shift both destinations, leaving rounding differences.
         expect(second.x).toBeCloseTo(original.x, 9);
@@ -1064,7 +1062,7 @@ describe("combat admission and subframe firing", () => {
         flight.player = { x: second.x, y: 0 };
       }
       expect(flight.objects).toContain(firstGuard);
-      const secondGuard = ensureRouteEncounter(PROTOTYPE, "second", flight)!;
+      const secondGuard = ensureRouteEncounter(CONTENT, "second", flight)!;
       expect(flight.objects).toContain(firstGuard);
       expect(flight.objects).toContain(secondGuard);
       expect(routeBlocked("first", flight)).toBe(true);
@@ -1073,7 +1071,7 @@ describe("combat admission and subframe firing", () => {
         for (const destination of [first, second]) {
           expect(
             Math.hypot(guard.x - destination.x, guard.y - destination.y) - guard.radius,
-          ).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+          ).toBeGreaterThanOrEqual(CONTENT.tuning.safeRadius);
         }
         expect(guard.enemy!.home).toEqual({ x: guard.x, y: guard.y });
         expect(guard.enemy!.position).toEqual({ x: guard.x, y: guard.y });
@@ -1081,8 +1079,8 @@ describe("combat admission and subframe firing", () => {
       expect(
         Math.hypot(firstGuard.x - secondGuard.x, firstGuard.y - secondGuard.y),
       ).toBeGreaterThanOrEqual(firstGuard.radius + secondGuard.radius);
-      expect(ensureRouteEncounter(PROTOTYPE, "first", flight)).toBe(firstGuard);
-      expect(ensureRouteEncounter(PROTOTYPE, "second", flight)).toBe(secondGuard);
+      expect(ensureRouteEncounter(CONTENT, "first", flight)).toBe(firstGuard);
+      expect(ensureRouteEncounter(CONTENT, "second", flight)).toBe(secondGuard);
     },
   );
 });
@@ -1090,7 +1088,7 @@ describe("combat admission and subframe firing", () => {
 it("settles a translated route guard after destination relocation without resetting its combat state", () => {
   const flight = empty();
   // Cartwheel's capital guard, where no current nudges the relocated destination.
-  flight.sector = 2;
+  flight.galaxy = 2;
   const destination: SpaceObject = {
     hp: 1,
     id: "moving-route",
@@ -1100,7 +1098,7 @@ it("settles a translated route guard after destination relocation without resett
     y: 10000,
   };
   flight.objects.push(destination);
-  const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
+  const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
   guard.enemy!.hardpoints[0]!.hp = 2;
   guard.enemy!.hardpoints[1]!.cooldown = 0.7;
   guard.enemy!.engaged = true;
@@ -1112,11 +1110,11 @@ it("settles a translated route guard after destination relocation without resett
     id: "friendly",
     kind: "destination",
     radius: 30,
-    x: PROTOTYPE.tuning.storySpacing + guard.x - old.x,
+    x: CONTENT.tuning.storySpacing + guard.x - old.x,
     y: -1024 + guard.y - old.y,
   };
   flight.objects.push(friendly);
-  const relocated = placeDestinationAhead(PROTOTYPE, destination.id, flight);
+  const relocated = placeDestinationAhead(CONTENT, destination.id, flight);
   const dx = relocated.x - old.x;
   const dy = relocated.y - old.y;
   guard.x += dx;
@@ -1126,13 +1124,13 @@ it("settles a translated route guard after destination relocation without resett
   guard.enemy!.home.x += dx;
   guard.enemy!.home.y += dy;
   expect(Math.hypot(guard.x - friendly.x, guard.y - friendly.y)).toBeLessThan(1e-6);
-  expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBe(guard);
+  expect(ensureRouteEncounter(CONTENT, destination.id, flight)).toBe(guard);
   expect(Math.hypot(guard.x - friendly.x, guard.y - friendly.y)).toBeLessThan(1e-6);
-  settleRouteEncounters(PROTOTYPE, flight);
+  settleRouteEncounters(CONTENT, flight);
   for (const target of [relocated, friendly]) {
     expect(
       Math.hypot(guard.x - target.x, guard.y - target.y) - guard.radius,
-    ).toBeGreaterThanOrEqual(PROTOTYPE.tuning.safeRadius);
+    ).toBeGreaterThanOrEqual(CONTENT.tuning.safeRadius);
   }
   expect(guard.enemy!.hardpoints).toEqual(saved.hardpoints);
   expect({
@@ -1172,12 +1170,12 @@ describe("capital local-area separation", () => {
     "keeps required %s and %s guards separated without displacing a valid first guard",
     (firstKind, secondKind) => {
       const flight = empty();
-      flight.sector = firstKind === "capital" ? 2 : 3;
-      const firstDestination = ensureDestination(PROTOTYPE, "first-capital", flight);
-      const first = ensureRouteEncounter(PROTOTYPE, firstDestination.id, flight)!;
+      flight.galaxy = firstKind === "capital" ? 2 : 3;
+      const firstDestination = ensureDestination(CONTENT, "first-capital", flight);
+      const first = ensureRouteEncounter(CONTENT, firstDestination.id, flight)!;
       expect(first.x).toBeCloseTo(firstDestination.x);
       expect(first.y).toBeCloseTo(
-        firstDestination.y + PROTOTYPE.tuning.safeRadius + first.radius + 120,
+        firstDestination.y + CONTENT.tuning.safeRadius + first.radius + 120,
       );
       first.enemy!.hardpoints[0]!.hp = 2;
       const saved = structuredClone(first);
@@ -1191,8 +1189,8 @@ describe("capital local-area separation", () => {
       };
       flight.objects.push(secondDestination);
       flight.player = { x: secondDestination.x, y: 0 };
-      flight.sector = secondKind === "capital" ? 2 : 3;
-      const second = ensureRouteEncounter(PROTOTYPE, secondDestination.id, flight)!;
+      flight.galaxy = secondKind === "capital" ? 2 : 3;
+      const second = ensureRouteEncounter(CONTENT, secondDestination.id, flight)!;
       expect(first).toEqual(saved);
       expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
         first.radius + second.radius + capitalHullGap,
@@ -1203,7 +1201,7 @@ describe("capital local-area separation", () => {
         2,
       );
       const repeated = structuredClone(flight);
-      settleRouteEncounters(PROTOTYPE, repeated);
+      settleRouteEncounters(CONTENT, repeated);
       expect(repeated).toEqual(flight);
     },
   );
@@ -1214,7 +1212,7 @@ describe("capital local-area separation", () => {
       const flight = empty();
       const radius =
         (enemyCatalog[firstKind].sizeRatio + enemyCatalog[secondKind].sizeRatio) *
-        PROTOTYPE.tuning.flight.shipRadius;
+        CONTENT.tuning.flight.shipRadius;
       const startDistance = radius + capitalHullGap + 30;
       const first = ship(firstKind, { x: -startDistance / 2, y: 0 });
       const second = ship(secondKind, { x: startDistance / 2, y: 0 });
@@ -1225,7 +1223,7 @@ describe("capital local-area separation", () => {
       silence(first);
       silence(second);
       flight.objects.push(first, second);
-      stepFlight(PROTOTYPE, 2, idle, flight);
+      stepFlight(CONTENT, 2, idle, flight);
       expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
         radius + capitalHullGap,
       );
@@ -1233,7 +1231,7 @@ describe("capital local-area separation", () => {
       expect(second.x).toBeLessThan(startDistance / 2);
       stopEngines(first);
       const stopped = { x: first.x, y: first.y };
-      stepFlight(PROTOTYPE, 3, idle, flight);
+      stepFlight(CONTENT, 3, idle, flight);
       expect({ x: first.x, y: first.y }).toEqual(stopped);
       expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
         radius + capitalHullGap,
@@ -1256,7 +1254,7 @@ describe("capital local-area separation", () => {
     // The hulk comes first, so as a live capital it would be the one kept.
     flight.objects.push(hulk, live);
     for (let step = 0; step < 3; step++) {
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
     }
     expect([hulk, live].map(({ x, y }) => ({ x, y }))).toEqual([
       { x: 500, y: 0 },
@@ -1275,7 +1273,7 @@ describe("capital local-area separation", () => {
     hulk.enemy!.disabled = true;
     hulk.enemy!.salvaged = true;
     flight.objects.push(hulk, guard);
-    settleRouteEncounters(PROTOTYPE, flight);
+    settleRouteEncounters(CONTENT, flight);
     expect({ x: hulk.x, y: hulk.y }).toEqual({ x: 3000, y: 0 });
     expect({ x: guard.x, y: guard.y }).not.toEqual({ x: 3010, y: 0 });
     // At any heading the guard turns to, its hull clears the hulk's on screen.
@@ -1305,8 +1303,8 @@ describe("capital local-area separation", () => {
     flight.combat = { initialPackSizes: {}, routeEncounters: [first.routeId, second.routeId] };
     const hardpoints = structuredClone([first.enemy!.hardpoints, second.enemy!.hardpoints]);
     const restored = JSON.parse(JSON.stringify(flight)) as FlightState;
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
-    stepFlight(PROTOTYPE, 1 / 60, idle, restored);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, restored);
     expect(restored).toEqual(flight);
     expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
       first.radius + second.radius + capitalHullGap,
@@ -1325,7 +1323,7 @@ describe("capital local-area separation", () => {
       x: object.x,
       y: object.y,
     }));
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(
       [first, second].map((object) => ({ home: object.enemy!.home, x: object.x, y: object.y })),
     ).toEqual(positions);
@@ -1346,7 +1344,7 @@ describe("capital local-area separation", () => {
     second.enemy!.home.x = second.x;
     second.enemy!.hardpoints[0]!.hp = 2;
     const parts = structuredClone(second.enemy!.hardpoints);
-    settleRouteEncounters(PROTOTYPE, flight);
+    settleRouteEncounters(CONTENT, flight);
     expect(first).toEqual(saved);
     expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
       first.radius + second.radius + capitalHullGap,
@@ -1372,7 +1370,7 @@ describe("capital local-area separation", () => {
       silence(object);
     }
     const positions = flight.objects.map((object) => ({ x: object.x, y: object.y }));
-    stepFlight(PROTOTYPE, 2, idle, flight);
+    stepFlight(CONTENT, 2, idle, flight);
     expect(flight.objects.map((object) => ({ x: object.x, y: object.y }))).toEqual(positions);
     expect(second.x - first.x).toBeLessThan(capitalHullGap);
     expect(third.x - second.x).toBeLessThan(capitalHullGap);
@@ -1389,7 +1387,7 @@ describe("capital local-area separation", () => {
     }
     flight.objects.push(...capitals, ...frigates);
     const frigatePositions = frigates.map((object) => ({ x: object.x, y: object.y }));
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(frigates.map((object) => ({ x: object.x, y: object.y }))).toEqual(frigatePositions);
     expect(
       Math.hypot(capitals[0]!.x - capitals[1]!.x, capitals[0]!.y - capitals[1]!.y),
@@ -1403,9 +1401,9 @@ describe("capital local-area separation", () => {
       object.id = object.enemy!.id = `placed-${index}`;
     }
     placed.objects.push(first, second, third);
-    settleRouteEncounters(PROTOTYPE, placed);
+    settleRouteEncounters(CONTENT, placed);
     // The earlier blocked frigate advances along +x by one stride; nearby frigates keep their places.
-    const stride = 2 * (first.radius + PROTOTYPE.tuning.safeRadius + 120);
+    const stride = 2 * (first.radius + CONTENT.tuning.safeRadius + 120);
     expect({ x: first.x, y: first.y }).toEqual({ x: stride, y: 600 });
     expect({ x: second.x, y: second.y }).toEqual({ x: 40, y: 600 });
     expect({ x: third.x, y: third.y }).toEqual({ x: 240, y: 600 });
@@ -1435,7 +1433,7 @@ describe("capital local-area separation", () => {
     expect(Math.hypot(engaged.x - paged.x, engaged.y - paged.y)).toBeLessThan(
       engaged.radius + paged.radius + capitalHullGap,
     );
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect({ x: engaged.x, y: engaged.y }).toEqual({ x: 300, y: 0 });
     expect(engaged.enemy!.home).toEqual({ x: 300, y: 0 });
     expect({ x: paged.x, y: paged.y }).not.toEqual({ x: 900, y: 0 });
@@ -1447,7 +1445,7 @@ describe("capital local-area separation", () => {
   it("uses reproducible placement without changing the layout seed or introducing saved RNG state", () => {
     const prepare = (): FlightState => {
       const flight = empty();
-      flight.sector = 2;
+      flight.galaxy = 2;
       for (const [index, x] of [0, 800, 1600].entries()) {
         const destination: SpaceObject = {
           hp: 1,
@@ -1459,7 +1457,7 @@ describe("capital local-area separation", () => {
         };
         flight.objects.push(destination);
         flight.player = { x, y: 0 };
-        ensureRouteEncounter(PROTOTYPE, destination.id, flight);
+        ensureRouteEncounter(CONTENT, destination.id, flight);
       }
       return flight;
     };
@@ -1484,7 +1482,7 @@ function grownBy(parts: Parts, margin: number): Parts {
 }
 
 describe("ship contact", () => {
-  const { sceneryRecoil, sceneryRestitution } = PROTOTYPE.tuning.flight;
+  const { sceneryRecoil, sceneryRestitution } = CONTENT.tuning.flight;
   const dot = (a: Vec, b: Vec) => a.x * b.x + a.y * b.y;
   // The enemy's drawn hull against Ada's drawn ship, pushing Ada.
   const overlapOf = (flight: FlightState, object: SpaceObject, margin = 0) => {
@@ -1532,7 +1530,7 @@ describe("ship contact", () => {
     const closing = -separating(flight, normal, object);
     expect(closing).toBeGreaterThan(0);
     const before = { ada: { ...flight.velocity }, enemy: { ...object.enemy!.velocity } };
-    bounceShips(PROTOTYPE, flight, object);
+    bounceShips(CONTENT, flight, object);
     // Equal masses share the change evenly; they separate at restitution 0.4 along the normal.
     expect(flight.velocity.x - before.ada.x).toBeCloseTo(
       -(object.enemy!.velocity.x - before.enemy.x),
@@ -1554,7 +1552,7 @@ describe("ship contact", () => {
     const { flight, normal, object } = contact("capital", 60, 0);
     const closing = -separating(flight, normal, object);
     const before = { ada: { ...flight.player }, capital: { x: object.x, y: object.y } };
-    bounceShips(PROTOTYPE, flight, object);
+    bounceShips(CONTENT, flight, object);
     const mass = enemyCatalog.capital.sizeRatio ** 2;
     const adaChange = flight.velocity.x - 60;
     const capitalChange = object.enemy!.velocity.x;
@@ -1571,7 +1569,7 @@ describe("ship contact", () => {
 
   it("separates slow contacts at least at the scenery recoil", () => {
     const { flight, normal, object } = contact("swarm", 5, 0);
-    bounceShips(PROTOTYPE, flight, object);
+    bounceShips(CONTENT, flight, object);
     expect(separating(flight, normal, object)).toBeCloseTo(sceneryRecoil, 9);
   });
 
@@ -1591,7 +1589,7 @@ describe("ship contact", () => {
         const toward = { x: chaser.x - flight.player.x, y: chaser.y - flight.player.y };
         const reach = Math.hypot(toward.x, toward.y) || 1;
         stepFlight(
-          PROTOTYPE,
+          CONTENT,
           1 / 60,
           { ...idle, move: { x: toward.x / reach, y: toward.y / reach } },
           flight,
@@ -1601,7 +1599,7 @@ describe("ship contact", () => {
       }
       expect(touches).toBeGreaterThan(0);
       expect(overlap).toBeLessThan(0.5);
-      expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+      expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     },
   );
 });

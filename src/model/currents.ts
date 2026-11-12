@@ -1,6 +1,6 @@
 import { ECONOMY } from "../data/economy.ts";
-import { CURRENTS } from "../data/galaxy-features.ts";
-import type { SectorId } from "../data/types.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { stationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
 
@@ -19,7 +19,7 @@ export interface Current {
 }
 
 /** Fixed seeds for the galaxies with currents, so currents are the same on every flight. */
-const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
+const GALAXY_SEEDS: Readonly<Partial<Record<GalaxyNumber, number>>> = {
   1: 0xc0_4401,
   2: 0xc0_4402,
   3: 0xc0_4403,
@@ -60,22 +60,22 @@ const cache = new Map<string, Current | null>();
  * so currents in different cells never overlap or join. A current that would come within the
  * clearance of the flight start or a station is left out.
  */
-export function currentInCell(sector: SectorId, cell: Vec): Current | null {
-  const key = `${sector}:${cell.x},${cell.y}`;
+export function currentInCell(galaxy: GalaxyNumber, cell: Vec): Current | null {
+  const key = `${galaxy}:${cell.x},${cell.y}`;
   if (cache.has(key)) {
     return cache.get(key)!;
   }
-  const current = buildCurrent(sector, cell);
+  const current = buildCurrent(galaxy, cell);
   cache.set(key, current);
   return current;
 }
 
-function buildCurrent(sector: SectorId, cell: Vec): Current | null {
+function buildCurrent(galaxy: GalaxyNumber, cell: Vec): Current | null {
   const { cellSize, chance, clearance, length, margin, width: widths } = CURRENTS;
-  if (!CURRENTS.sectors.includes(sector)) {
+  if (!CURRENTS.galaxies.includes(galaxy)) {
     return null;
   }
-  const seed = SECTOR_SEEDS[sector]!;
+  const seed = GALAXY_SEEDS[galaxy]!;
   const roll = (salt: number) => unit(mix(seed ^ salt, cell.x, cell.y));
   if (roll(0) >= chance) {
     return null;
@@ -114,7 +114,7 @@ function buildCurrent(sector: SectorId, cell: Vec): Current | null {
   const keep = clearance + width / 2;
   if (
     points.some((point) => Math.hypot(point.x, point.y) < keep) ||
-    stationsNear(ECONOMY, sector, cellSize, centre).some((station) =>
+    stationsNear(ECONOMY, galaxy, cellSize, centre).some((station) =>
       points.some((point) => Math.hypot(point.x - station.x, point.y - station.y) < keep),
     )
   ) {
@@ -132,13 +132,13 @@ function buildCurrent(sector: SectorId, cell: Vec): Current | null {
 }
 
 /** The current whose cell holds a point, if any; currents never leave their own cell. */
-export function currentAt(sector: SectorId, point: Vec): Current | null {
+export function currentAt(galaxy: GalaxyNumber, point: Vec): Current | null {
   const size = CURRENTS.cellSize;
-  return currentInCell(sector, { x: Math.floor(point.x / size), y: Math.floor(point.y / size) });
+  return currentInCell(galaxy, { x: Math.floor(point.x / size), y: Math.floor(point.y / size) });
 }
 
 /** Currents whose cells overlap a square of half-side `radius` around a point. */
-export function currentsNear(sector: SectorId, radius: number, point: Vec): Current[] {
+export function currentsNear(galaxy: GalaxyNumber, radius: number, point: Vec): Current[] {
   const size = CURRENTS.cellSize;
   const found: Current[] = [];
   for (
@@ -151,7 +151,7 @@ export function currentsNear(sector: SectorId, radius: number, point: Vec): Curr
       y <= Math.floor((point.y + radius) / size);
       y++
     ) {
-      const current = currentInCell(sector, { x, y });
+      const current = currentInCell(galaxy, { x, y });
       if (current) {
         found.push(current);
       }
@@ -195,8 +195,8 @@ export function nearestOnCurrent(
  * The flow at a point: strongest at the centre line, zero at the edges, fading over the last
  * `fade` units at each end, along the path's direction.
  */
-export function flowAt(sector: SectorId, point: Vec): Vec {
-  const current = currentAt(sector, point);
+export function flowAt(galaxy: GalaxyNumber, point: Vec): Vec {
+  const current = currentAt(galaxy, point);
   if (!current) {
     return { x: 0, y: 0 };
   }
@@ -223,8 +223,8 @@ export function flowFraction(
 }
 
 /** Whether a disc of `radius` at a point touches any current's band. */
-export function inCurrent(sector: SectorId, radius: number, point: Vec): boolean {
-  return currentsNear(sector, radius, point).some(
+export function inCurrent(galaxy: GalaxyNumber, radius: number, point: Vec): boolean {
+  return currentsNear(galaxy, radius, point).some(
     (current) => nearestOnCurrent(current, point).distance < current.width / 2 + radius,
   );
 }

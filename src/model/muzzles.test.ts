@@ -8,17 +8,17 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   type HardpointDefinition,
-} from "../data/enemy-catalog.ts";
-import { ENEMY_DISPLAY_SCALE, MUZZLE_ART, muzzleLayout } from "../data/enemy-muzzles.ts";
-import { aimIndex } from "../game/enemy-art.ts";
-import { ART_MANIFEST } from "../testing/public-art.ts";
+} from "../data/enemyCatalog.ts";
+import { ENEMY_DISPLAY_SCALE, MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
+import { aimIndex } from "../game/enemyArt.ts";
+import { ART_MANIFEST } from "../testing/publicArt.ts";
 import {
   createEnemy,
   damageEnemy,
   type EnemyContext,
   type EnemyState,
   stepEnemy,
-} from "./enemy-ai.ts";
+} from "./enemyAi.ts";
 import { drawnIndex, muzzleOffset } from "./muzzles.ts";
 
 const at = (degrees: number) => ({

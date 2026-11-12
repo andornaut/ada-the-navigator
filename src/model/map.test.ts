@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { DESTINATIONS } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { SectorId } from "../data/types.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -15,8 +15,8 @@ import {
   CHARTING_RADIUS,
   chartingChunks,
   chunkId,
-  galaxyMap,
   type LandmarkChart,
+  localMap,
   type MapContext,
   NO_LANDMARKS,
   placeType,
@@ -29,8 +29,8 @@ import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
 function flying() {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   return model;
 }
@@ -52,7 +52,7 @@ function context(
 ): MapContext {
   return {
     catalog: ECONOMY,
-    chunkSize: PROTOTYPE.tuning.chunkSize,
+    chunkSize: CONTENT.tuning.chunkSize,
     destinations: galaxyRoute(1),
     explored: [],
     flight: model.state.flight!,
@@ -76,8 +76,8 @@ describe("galaxy map", () => {
   it("shows only Ada with nothing discovered, never an undiscovered place", () => {
     const model = flying();
     const flight = model.state.flight!;
-    ensureDestination(PROTOTYPE, "growers", flight);
-    const map = galaxyMap(context(model, { known: [], stations: [] }));
+    ensureDestination(CONTENT, "growers", flight);
+    const map = localMap(context(model, { known: [], stations: [] }));
     expect(map.places).toEqual([]);
     expect(map.mapped).toBe(0);
     expect(map.player).toEqual(flight.player);
@@ -85,9 +85,9 @@ describe("galaxy map", () => {
 
   it("shows each discovered destination at its place, marking the objective once mapped", () => {
     const model = flying();
-    const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
-    ensureDestination(PROTOTYPE, "workshop", model.state.flight!);
-    const map = galaxyMap(
+    const growers = ensureDestination(CONTENT, "growers", model.state.flight!);
+    ensureDestination(CONTENT, "workshop", model.state.flight!);
+    const map = localMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "growers"),
     );
     expect(map.places).toEqual([
@@ -104,7 +104,7 @@ describe("galaxy map", () => {
       },
     ]);
     // An objective not yet mapped never shows.
-    const unmapped = galaxyMap(
+    const unmapped = localMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "workshop"),
     );
     expect(unmapped.places.map(({ id, objective }) => [id, objective])).toEqual([
@@ -115,7 +115,7 @@ describe("galaxy map", () => {
   it("shows discovered stations, counting only those in the charted area", () => {
     const model = flying();
     const near = inside[0]!;
-    const map = galaxyMap(context(model, { known: [], stations: [near.id, beyond.id] }));
+    const map = localMap(context(model, { known: [], stations: [near.id, beyond.id] }));
     expect(map.places.map(({ id, kind, x, y }) => [id, kind, x, y])).toEqual([
       [near.id, "station", near.x, near.y],
       [beyond.id, "station", beyond.x, beyond.y],
@@ -127,13 +127,13 @@ describe("galaxy map", () => {
   it("counts discovered destinations and charted-area stations as the percent mapped", () => {
     const model = flying();
     for (const id of galaxyRoute(1)) {
-      ensureDestination(PROTOTYPE, id, model.state.flight!);
+      ensureDestination(CONTENT, id, model.state.flight!);
     }
-    const all = galaxyMap(
+    const all = localMap(
       context(model, { known: [...galaxyRoute(1)], stations: inside.map(({ id }) => id) }),
     );
     expect(all.mapped).toBe(100);
-    const half = galaxyMap(context(model, { known: ["growers"], stations: [inside[0]!.id] }));
+    const half = localMap(context(model, { known: ["growers"], stations: [inside[0]!.id] }));
     expect(half.mapped).toBe(Math.floor((100 * 2) / (galaxyRoute(1).length + inside.length)));
   });
 
@@ -143,7 +143,7 @@ describe("galaxy map", () => {
       charted: [{ id: "comet", kind: "nebula", label: "Comet", x: 1000, y: 2000 }],
       total: 2,
     };
-    const map = galaxyMap(context(model, { known: [], stations: [] }, landmarks));
+    const map = localMap(context(model, { known: [], stations: [] }, landmarks));
     expect(map.places).toEqual([
       {
         id: "comet",
@@ -162,8 +162,8 @@ describe("galaxy map", () => {
 
   it("marks the held job's target: a shown place, or its own spot that counts for nothing", () => {
     const model = flying();
-    const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
-    const onPlace = galaxyMap(
+    const growers = ensureDestination(CONTENT, "growers", model.state.flight!);
+    const onPlace = localMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
         area: null,
         id: "growers",
@@ -176,7 +176,7 @@ describe("galaxy map", () => {
     expect(onPlace.places.map(({ id, job, kind }) => [id, job, kind])).toEqual([
       ["growers", true, "destination"],
     ]);
-    const spot = galaxyMap(
+    const spot = localMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, null, {
         area: 900,
         id: "job:7",
@@ -206,7 +206,7 @@ describe("galaxy map", () => {
 
   it("lists the Quests lines in order, each story and job line tied to its mapped target", () => {
     const model = flying();
-    const growers = ensureDestination(PROTOTYPE, "growers", model.state.flight!);
+    const growers = ensureDestination(CONTENT, "growers", model.state.flight!);
     const job = {
       area: null,
       id: "growers",
@@ -220,14 +220,14 @@ describe("galaxy map", () => {
       story: "Find the growers.",
       storyComplete: false,
     };
-    const unmapped = galaxyMap(
+    const unmapped = localMap(
       context(model, { known: [], stations: [] }, NO_LANDMARKS, "growers", null, quests),
     );
     expect(unmapped.quests).toEqual([
       { kind: "story", target: null, text: "Find the growers." },
       { kind: "job", target: null, text: "Deliver seeds to Grower" },
     ]);
-    const mapped = galaxyMap(
+    const mapped = localMap(
       context(model, { known: ["growers"], stations: [] }, NO_LANDMARKS, "growers", job, quests),
     );
     expect(mapped.quests).toEqual([
@@ -244,7 +244,7 @@ describe("galaxy map", () => {
       y: 0,
     } as const;
     expect(
-      galaxyMap(
+      localMap(
         context(model, { known: [], stations: [] }, NO_LANDMARKS, null, spot, {
           job: "Find a lost toolbox",
           story: "",
@@ -259,12 +259,12 @@ describe("galaxy map", () => {
     const station = [inside[0]!.id];
     const done = { job: null, story: "Go home to Earth when ready.", storyComplete: true };
     expect(
-      galaxyMap(context(model, { known: [], stations: station }, NO_LANDMARKS, null, null, done))
+      localMap(context(model, { known: [], stations: station }, NO_LANDMARKS, null, null, done))
         .quests,
     ).toEqual([{ kind: "storyComplete" }, { kind: "jobBoards" }]);
     // The mining hub's board counts once it is a discovered station, though it draws as its
     // destination, not a second station place.
-    const hub = galaxyMap(
+    const hub = localMap(
       context(model, { known: [], stations: ["hub"] }, NO_LANDMARKS, null, null, done),
     );
     expect(hub.quests).toEqual([{ kind: "storyComplete" }, { kind: "jobBoards" }]);
@@ -272,7 +272,7 @@ describe("galaxy map", () => {
     // No job board hint without a discovered station; nothing to do lists no lines.
     const none = { job: null, story: "", storyComplete: false };
     expect(
-      galaxyMap(context(model, { known: [], stations: [] }, NO_LANDMARKS, null, null, none)).quests,
+      localMap(context(model, { known: [], stations: [] }, NO_LANDMARKS, null, null, none)).quests,
     ).toEqual([]);
     expect(model.map?.quests).toEqual([{ kind: "story", target: null, text: model.objective }]);
   });
@@ -280,9 +280,9 @@ describe("galaxy map", () => {
   it("gives each place its symbol and keeps Ada's facing, the landmark pips and explored chunks", () => {
     const model = flying();
     const flight = model.state.flight!;
-    ensureDestination(PROTOTYPE, "workshop", flight);
-    ensureDestination(PROTOTYPE, "growers", flight);
-    const map = galaxyMap(
+    ensureDestination(CONTENT, "workshop", flight);
+    ensureDestination(CONTENT, "growers", flight);
+    const map = localMap(
       context(
         model,
         { known: ["workshop", "growers"], stations: [inside[0]!.id] },
@@ -301,7 +301,7 @@ describe("galaxy map", () => {
     expect(map.landmarks).toEqual({ charted: 1, total: 12 });
     expect(map.facing).toEqual(flight.facing);
     // The flight starts in chunk 0,0, which the galaxy's explored record holds.
-    const size = PROTOTYPE.tuning.chunkSize;
+    const size = CONTENT.tuning.chunkSize;
     expect(model.state.progress[1].explored).toEqual(["0,0"]);
     expect(model.map?.explored).toEqual([{ x: size / 2, y: size / 2 }]);
   });
@@ -311,7 +311,7 @@ describe("galaxy map", () => {
     expect(model.map?.places).toEqual([]);
     expect(model.map?.mapped).toBe(0);
     model.state.progress[1].stations = [inside[0]!.id];
-    expect(model.map?.places.map(({ label }) => label)).toEqual([PROTOTYPE.labels.station]);
+    expect(model.map?.places.map(({ label }) => label)).toEqual([CONTENT.labels.station]);
     model.returnHome();
     expect(model.map).toBeNull();
   });
@@ -327,7 +327,7 @@ describe("galaxy map", () => {
     model.step(0.05, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
     expect(model.state.progress[1].charted).toContain(landmark.id);
     // The landmark's own name, from its player-string key.
-    const label = PROTOTYPE.labels[landmark.name];
+    const label = CONTENT.labels[landmark.name];
     expect(label).toBeTruthy();
     expect(model.map?.places).toEqual([
       {
@@ -351,9 +351,9 @@ describe("galaxy map", () => {
 
   it("places every landmark inside the charted area, so the whole galaxy can be mapped", () => {
     expect(LANDMARK_TUNING.radius).toBeLessThanOrEqual(CHARTING_RADIUS);
-    for (const sector of [1, 2, 3] as const) {
-      const sites = landmarkSites(sector);
-      expect(sites, `galaxy ${sector}`).toHaveLength(LANDMARK_TUNING.count);
+    for (const galaxy of [1, 2, 3] as const) {
+      const sites = landmarkSites(galaxy);
+      expect(sites, `galaxy ${galaxy}`).toHaveLength(LANDMARK_TUNING.count);
       for (const site of sites) {
         expect(Math.hypot(site.x, site.y), site.id).toBeLessThanOrEqual(CHARTING_RADIUS);
       }
@@ -361,9 +361,9 @@ describe("galaxy map", () => {
   });
 
   it("shows the known holodisk waypoint as a Holodisk chip without Travel until it is recovered", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 2, 3];
-    model.startSector(3);
+    model.startGalaxy(3);
     Object.assign(model.state.progress[3], { introduced: true, questComplete: true, stage: 5 });
     model.state.dialogue = null;
     const flight = model.state.flight!;
@@ -413,7 +413,7 @@ describe("galaxy map", () => {
   });
 
   it("keeps the explored chunks across flights and clears them on Restart", () => {
-    const size = PROTOTYPE.tuning.chunkSize;
+    const size = CONTENT.tuning.chunkSize;
     const far = { x: 5000, y: 3000 };
     const centre = { x: 9.5 * size, y: 5.5 * size };
     const model = flying();
@@ -428,24 +428,24 @@ describe("galaxy map", () => {
     flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
     flight.dangerFor = 0;
     model.returnHome();
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     // A new flight starts at the origin, and the record still reveals the far chunk.
     expect(model.state.flight!.player).toEqual({ x: 0, y: 0 });
     expect(model.map?.explored).toContainEqual(centre);
     model.returnHome();
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = new GameModel(CONTENT, model.save());
     expect(reloaded.state.progress[1].explored).toContain(chunkId(size, far));
     reloaded.restart();
     expect(reloaded.screen).toBe("start");
     expect(reloaded.state.progress[1].explored).toEqual([]);
-    reloaded.startSector(1);
+    reloaded.startGalaxy(1);
     playOpening(reloaded);
     expect(reloaded.map?.explored).not.toContainEqual(centre);
   });
 
   it("records only charting-disc chunks, once each, bounded by the disc's 7500 chunks", () => {
-    const size = PROTOTYPE.tuning.chunkSize;
+    const size = CONTENT.tuning.chunkSize;
     expect(chartingChunks(size)).toBe(7500);
     const explored: string[] = [];
     recordExplored(size, explored, { x: 10, y: 10 });
@@ -462,7 +462,7 @@ describe("galaxy map", () => {
   });
 
   it("keeps a saved explored record and refuses an invalid one", () => {
-    const saved = JSON.parse(new GameModel(PROTOTYPE).save()) as GameState;
+    const saved = JSON.parse(new GameModel(CONTENT).save()) as GameState;
     saved.progress[2].explored = ["0,0", "1,-1"];
     expect(restoreSave(saved)?.progress[2].explored).toEqual(["0,0", "1,-1"]);
     for (const bad of [["0,0", "0,0"], ["200,0"], ["x"], {}]) {
@@ -475,7 +475,7 @@ describe("galaxy map", () => {
     const model = flying();
     model.state.progress[1].known = ["growers"];
     model.returnHome();
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     const growers = model.state.flight!.objects.find((o) => o.id === "growers")!;
     expect(model.map?.places.find(({ id }) => id === "growers")).toMatchObject({
@@ -485,40 +485,40 @@ describe("galaxy map", () => {
   });
 
   it("keeps every seeded station and landmark, and each story place from them, 1020 apart", () => {
-    for (const sector of [1, 2, 3] as const) {
-      const fixed = seeded(sector);
-      expect(fixed.length, `galaxy ${sector}`).toBeGreaterThan(LANDMARK_TUNING.count);
-      expect(tooClose(fixed), `galaxy ${sector}`).toEqual([]);
-      const placed = launched(sector).filter(({ id }) => !waiting(sector, id));
+    for (const galaxy of [1, 2, 3] as const) {
+      const fixed = seeded(galaxy);
+      expect(fixed.length, `galaxy ${galaxy}`).toBeGreaterThan(LANDMARK_TUNING.count);
+      expect(tooClose(fixed), `galaxy ${galaxy}`).toEqual([]);
+      const placed = launched(galaxy).filter(({ id }) => !waiting(galaxy, id));
       const across = placed.flatMap((place) =>
         tooClose([place, ...fixed]).filter((pair) => pair.startsWith(`${place.id} `)),
       );
-      expect(across, `galaxy ${sector}`).toEqual([]);
+      expect(across, `galaxy ${galaxy}`).toEqual([]);
     }
   });
 
   it("spaces a launch's mapped places 1020 apart and its story destinations 1200 apart", () => {
-    for (const sector of [1, 2, 3] as const) {
-      const story = launched(sector).filter(({ id }) => !waiting(sector, id));
+    for (const galaxy of [1, 2, 3] as const) {
+      const story = launched(galaxy).filter(({ id }) => !waiting(galaxy, id));
       // Sunflower's three outposts, Cartwheel's hub, and the whale, family and waypoint.
-      expect(story.length, `galaxy ${sector}`).toBe(sector === 2 ? 1 : 3);
-      expect(tooClose([...story, ...seeded(sector)]), `galaxy ${sector}`).toEqual([]);
-      expect(tooClose(story, PROTOTYPE.tuning.storySpacing), `galaxy ${sector}`).toEqual([]);
+      expect(story.length, `galaxy ${galaxy}`).toBe(galaxy === 2 ? 1 : 3);
+      expect(tooClose([...story, ...seeded(galaxy)]), `galaxy ${galaxy}`).toEqual([]);
+      expect(tooClose(story, CONTENT.tuning.storySpacing), `galaxy ${galaxy}`).toEqual([]);
     }
   });
 
   it("leaves Cartwheel's waiting miner and visitors off the Map, with the hub standing for them", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 2];
-    model.startSector(2);
+    model.startGalaxy(2);
     model.state.dialogue = null;
     const flight = model.state.flight!;
     for (const id of ["miner", "visitors"]) {
-      ensureDestination(PROTOTYPE, id, flight);
+      ensureDestination(CONTENT, id, flight);
     }
     const context = {
       catalog: ECONOMY,
-      chunkSize: PROTOTYPE.tuning.chunkSize,
+      chunkSize: CONTENT.tuning.chunkSize,
       destinations: galaxyRoute(2),
       explored: [],
       flight,
@@ -530,18 +530,18 @@ describe("galaxy map", () => {
       progress: { known: ["hub", "miner", "visitors"], stations: [] },
       quests: { job: null, story: "", storyComplete: false },
     } satisfies MapContext;
-    const map = galaxyMap(context);
+    const map = localMap(context);
     expect(map.places.map(({ id, objective }) => [id, objective])).toEqual([["hub", true]]);
     // The percent counts the hub alone of the three.
-    const none = galaxyMap({ ...context, progress: { known: [], stations: [] } });
-    const hub = galaxyMap({ ...context, progress: { known: ["hub"], stations: [] } });
+    const none = localMap({ ...context, progress: { known: [], stations: [] } });
+    const hub = localMap({ ...context, progress: { known: ["hub"], stations: [] } });
     expect(map.mapped).toBe(hub.mapped);
     expect(hub.mapped).toBeGreaterThanOrEqual(none.mapped);
   });
 
   it("reads each story destination's Map kind from its data: the hub a Station", () => {
     // Every destination of galaxies one to three, the holodisk waypoint included, declares one.
-    const ids = [...([1, 2, 3] as const).flatMap((sector) => galaxyRoute(sector)), "holodisk"];
+    const ids = [...([1, 2, 3] as const).flatMap((galaxy) => galaxyRoute(galaxy)), "holodisk"];
     expect(Object.keys(DESTINATIONS).sort()).toEqual([...new Set(ids)].sort());
     expect(DESTINATIONS.hub?.mapKind).toBe("station");
     expect(placeType({ symbol: DESTINATIONS.hub!.mapKind })).toBe("station");
@@ -549,12 +549,12 @@ describe("galaxy map", () => {
       expect(placeType({ symbol: DESTINATIONS[story]!.mapKind }), story).toBe("story");
     }
     // The Map's hub place reads its kind from that field.
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 2];
-    model.startSector(2);
+    model.startGalaxy(2);
     model.state.dialogue = null;
     model.state.progress[2].known = ["hub"];
-    ensureDestination(PROTOTYPE, "hub", model.state.flight!);
+    ensureDestination(CONTENT, "hub", model.state.flight!);
     expect(model.map?.places.find(({ id }) => id === "hub")).toMatchObject({
       kind: "destination",
       symbol: DESTINATIONS.hub?.mapKind,
@@ -563,12 +563,12 @@ describe("galaxy map", () => {
   });
 
   it("has stations outside the charting disc in every galaxy: the catalog fills every cell", () => {
-    for (const sector of [1, 2, 3] as const) {
-      const far = stationInCell(ECONOMY, sector, {
+    for (const galaxy of [1, 2, 3] as const) {
+      const far = stationInCell(ECONOMY, galaxy, {
         x: Math.ceil(CHARTING_RADIUS / ECONOMY.station.cellSize) + 3,
         y: 0,
       });
-      expect(far && Math.hypot(far.x, far.y), `galaxy ${sector}`).toBeGreaterThan(CHARTING_RADIUS);
+      expect(far && Math.hypot(far.x, far.y), `galaxy ${galaxy}`).toBeGreaterThan(CHARTING_RADIUS);
     }
   });
 });
@@ -589,23 +589,23 @@ function tooClose(
   );
 }
 // Cartwheel's miner and visitors wait beside the hub and are not map places.
-const waiting = (sector: SectorId, id: string) =>
-  sector === CARTWHEEL_STORY_SHIPS.sector && Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id);
+const waiting = (galaxy: GalaxyNumber, id: string) =>
+  galaxy === CARTWHEEL_STORY_SHIPS.galaxy && Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id);
 // A galaxy's seeded places: its stations in the charting disc and its landmarks.
-function seeded(sector: SectorId) {
+function seeded(galaxy: GalaxyNumber) {
   return [
-    ...stationsNear(ECONOMY, sector, CHARTING_RADIUS, { x: 0, y: 0 }),
-    ...landmarkSites(sector),
+    ...stationsNear(ECONOMY, galaxy, CHARTING_RADIUS, { x: 0, y: 0 }),
+    ...landmarkSites(galaxy),
   ];
 }
 // A launch that knows the whole route, and galaxy three's waypoint, places them from the start.
-function launched(sector: SectorId) {
-  const model = new GameModel(PROTOTYPE);
+function launched(galaxy: GalaxyNumber) {
+  const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
-  model.startSector(sector);
+  model.startGalaxy(galaxy);
   const flight = model.state.flight!;
-  return [...galaxyRoute(sector), ...(sector === 3 ? ["holodisk"] : [])].map((id) => {
-    const { x, y } = ensureDestination(PROTOTYPE, id, flight);
+  return [...galaxyRoute(galaxy), ...(galaxy === 3 ? ["holodisk"] : [])].map((id) => {
+    const { x, y } = ensureDestination(CONTENT, id, flight);
     return { id, x, y };
   });
 }

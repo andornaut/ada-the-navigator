@@ -1,5 +1,5 @@
 import type { CastKey } from "./cast.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 // Station keepers (gameplay/rules.md "Species and greeters", gameplay/player-copy.md
 // "Greeters"): each galaxy's three keepers, in the order stations take them by rank, and the
@@ -21,7 +21,7 @@ export interface GalaxyKeepers {
   readonly keepers: readonly [CastKey, CastKey, CastKey];
 }
 
-export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
+export const KEEPERS: Readonly<Partial<Record<GalaxyNumber, GalaxyKeepers>>> = {
   1: {
     greetings: {
       first: [

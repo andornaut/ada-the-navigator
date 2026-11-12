@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, SPEAKERS } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import { playOpening } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
@@ -35,14 +35,14 @@ const progress = (resolved = true, donated: Record<string, number> = {}): Projec
 describe("community projects", () => {
   it("are Gameplay's per-project table: name, galaxy, price, speaker and thank-you line", () => {
     const galaxies = { 1: "Sunflower", 2: "Cartwheel", 3: "Whirlpool" } as const;
-    for (const [sector, projects] of Object.entries(PROJECTS)) {
+    for (const [galaxy, projects] of Object.entries(PROJECTS)) {
       for (const { cost, name, speaker, thanks } of projects) {
         const row = ECONOMY_DOC.split("\n").find((line) => line.startsWith(`| ${name} `));
         expect(row, name).toBeDefined();
         const cells = row!.split("|").map((cell) => cell.trim());
         expect(cells.slice(1, 6), name).toEqual([
           name,
-          galaxies[Number(sector) as 1 | 2 | 3],
+          galaxies[Number(galaxy) as 1 | 2 | 3],
           String(cost),
           SPEAKERS[speaker].name,
           `"${thanks}"`,
@@ -135,8 +135,8 @@ describe("community projects", () => {
       expect(row, name).toBeDefined();
       const cells = row!.split("|").map((cell) => cell.trim());
       expect([cells[3], cells[4]], name).toEqual([
-        PROTOTYPE.labels[`projectEffect${copy}`],
-        PROTOTYPE.labels[`projectAbout${copy}`],
+        CONTENT.labels[`projectEffect${copy}`],
+        CONTENT.labels[`projectAbout${copy}`],
       ]);
     }
   });
@@ -183,8 +183,8 @@ describe("community projects", () => {
 
 // A docked first flight in Sunflower with its chapter complete and Stardust to give.
 function docked(stardust: number) {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   Object.assign(model.state.progress[1], { holodisk: true, questComplete: true, resolved: true });
   model.state.dialogue = null;
@@ -239,7 +239,7 @@ describe("donating at a station", () => {
     const model = docked(1000);
     model.donate("greenhouseRing");
     expect(model.revealWorldChange(1, "greenhouseRing")).toBe(true);
-    const restored = new GameModel(PROTOTYPE, model.save()).state.progress[1];
+    const restored = new GameModel(CONTENT, model.save()).state.progress[1];
     expect(restored.donated).toEqual({ greenhouseRing: cost("greenhouseRing") });
     expect(restored.revealed).toEqual(["greenhouseRing"]);
   });

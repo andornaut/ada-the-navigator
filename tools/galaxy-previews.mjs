@@ -119,39 +119,39 @@ function serve(dist) {
 // as art; they still draw the placeholder ellipse.
 // A save in flight in galaxy `number` with the ship beside the first destination of its route, or,
 // for a galaxy with no flight yet, the base field with no objects at the same framing.
-// CLEANUP (added 2026-11-11): galaxy four has no flight (SectorId is 1 to 3), so it captures the
-// empty field; re-run this tool once galaxy four has a sector, and drop the empty-field case.
+// CLEANUP (added 2026-11-11): galaxy four has no flight (GalaxyNumber is 1 to 3), so it captures the
+// empty field; re-run this tool once galaxy four has a galaxy, and drop the empty-field case.
 async function fixture(number) {
   const [
     { GameModel, galaxyRoute },
-    { PROTOTYPE },
+    { CONTENT },
     { createFlight, ensureDestination },
     { playOpening },
   ] = await Promise.all([
     import("/source/src/model/game.ts"),
-    import("/source/src/data/prototype.ts"),
+    import("/source/src/data/content.ts"),
     import("/source/src/model/flight.ts"),
     import("/source/src/testing/launch.ts"),
   ]);
 
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   const { state } = model;
   const flyable = number <= 3;
-  const flight = createFlight(PROTOTYPE, flyable ? number : 1, SEED, { known: [] });
+  const flight = createFlight(CONTENT, flyable ? number : 1, SEED, { known: [] });
   state.flight = flight;
   state.dialogue = null;
   state.mode = "space";
   state.unlocked = [1, 2, 3];
-  state.selectedSector = flight.sector;
+  state.selectedGalaxy = flight.galaxy;
   for (const id of [1, 2, 3]) {
     Object.assign(state.progress[id], { introduced: true, opened: true });
   }
   // The galaxy's first destination in its route, from the model's data, placed with its
   // surroundings generated around it; unknown, so it draws no label.
   const focus = flyable
-    ? ensureDestination(PROTOTYPE, galaxyRoute(number)[0], flight)
+    ? ensureDestination(CONTENT, galaxyRoute(number)[0], flight)
     : { x: flight.player.x - SHIP_OFFSET.x, y: flight.player.y - SHIP_OFFSET.y };
   flight.objects = flyable ? flight.objects.filter(({ kind }) => !MOVING.includes(kind)) : [];
   // Drift stops, so every run captures the same frame.
@@ -168,7 +168,7 @@ async function fixture(number) {
   return {
     focus: { x: VIEW.width / 2 + dx - dy, y: VIEW.height / 2 + (dx + dy) / 2 },
     save: model.save(),
-    sector: flight.sector,
+    galaxy: flight.galaxy,
   };
 }
 
@@ -225,15 +225,15 @@ async function processCapture({ anchor, capture, focus, locked, preview }) {
 // The field data one capture draws with: for unlocked, the galaxy's own field colours, backdrop
 // tint and field tint (which carries the light-field rule) on the flight's galaxy (the same files
 // when it flies there); for locked, the base field, which no light-field rule touches.
-function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
-  const flown = ids[sector];
+function fieldData({ asteroids, galaxies, ids }, card, galaxy, base) {
+  const flown = ids[galaxy];
   const tints = Object.fromEntries(
     Object.entries(asteroids.tints).map(([id, tint]) => [
       id,
       base && id !== "base"
         ? asteroids.tints.base
         : id === flown
-          ? (asteroids.tints[galaxy.id] ?? tint)
+          ? (asteroids.tints[card.id] ?? tint)
           : tint,
     ]),
   );
@@ -245,16 +245,16 @@ function fieldData({ asteroids, galaxies, ids }, galaxy, sector, base) {
         ? {}
         : {
             ...galaxies.galaxies,
-            [flown]: { ...galaxies.galaxies[flown], colors: galaxy.colors, tint: galaxy.tint },
+            [flown]: { ...galaxies.galaxies[flown], colors: card.colors, tint: card.tint },
           },
     },
   };
 }
 
 // One preview: a fresh page on the galaxy's fixture with the field data for its state.
-async function capturePreview(shared, galaxy, locked) {
+async function capturePreview(shared, card, locked) {
   const { browser, data, manifest } = shared;
-  const { focus, save, sector } = await fixture(galaxy.number);
+  const { focus, galaxy, save } = await fixture(card.number);
   const context = await browser.newContext({
     deviceScaleFactor: 1,
     reducedMotion: "reduce",
@@ -262,7 +262,7 @@ async function capturePreview(shared, galaxy, locked) {
   });
   try {
     const page = await context.newPage();
-    const field = fieldData(data, galaxy, sector, locked);
+    const field = fieldData(data, card, galaxy, locked);
     await page.route(`**${manifest.galaxyFields}`, (route) =>
       route.fulfill({ json: field.galaxies }),
     );
@@ -270,7 +270,7 @@ async function capturePreview(shared, galaxy, locked) {
       route.fulfill({ json: field.asteroids }),
     );
     await page.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
-      key: "ada-the-navigator.prototype.v1",
+      key: "ada-the-navigator.save",
       value: save,
     });
     await page.goto("http://127.0.0.1:4173/play/");
@@ -289,7 +289,7 @@ async function capturePreview(shared, galaxy, locked) {
       locked: { ...data.galaxies.preview.locked, apply: locked },
       preview: data.galaxies.preview,
     });
-    const name = `galaxy-${galaxy.id}${locked ? "-locked" : ""}.png`;
+    const name = `card-${card.id}${locked ? "-locked" : ""}.png`;
     writeFileSync(`/out/${name}`, Buffer.from(png, "base64"));
     console.log(`${name}: framed on ${focus.x},${focus.y}`);
   } finally {

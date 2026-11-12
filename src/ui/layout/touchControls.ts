@@ -1,7 +1,7 @@
 import type { Point, Rect } from "@andornaut/game-kit/rect";
 
 import type { StickSide } from "../../input/state.ts";
-import { TOUCH_CHROME_FRAME } from "../touch-chrome.ts";
+import { TOUCH_CHROME_FRAME } from "../touchChrome.ts";
 import {
   CONTROLS_BOTTOM,
   controlsBottom,

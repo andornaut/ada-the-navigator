@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import {
   type EnemyArchetype,
@@ -10,13 +11,12 @@ import {
   enemyDefinition,
   enemyStardust,
   HEAVIES,
-} from "../data/enemy-catalog.ts";
+} from "../data/enemyCatalog.ts";
 import { byPosition } from "../data/galaxies.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
-import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
+import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { planChunk } from "./chunk-templates.ts";
+import { planChunk } from "./chunkTemplates.ts";
 import { type Parts, worldParts } from "./convex.ts";
 import {
   dropRandom,
@@ -25,10 +25,10 @@ import {
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
-import { HUNT_GLINT, pickupOutline } from "./pickup-body.ts";
-import { shipBody } from "./ship-body.ts";
+import { HUNT_GLINT, pickupOutline } from "./pickupBody.ts";
+import { shipBody } from "./shipBody.ts";
 import {
   buy,
   fill,
@@ -57,7 +57,7 @@ const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: fals
 const length = (v: { x: number; y: number }) => Math.hypot(v.x, v.y);
 
 function flight(seed = 77): FlightState {
-  const value = createFlight(PROTOTYPE, 1, seed, { known: [] });
+  const value = createFlight(CONTENT, 1, seed, { known: [] });
   value.objects = [];
   value.shots = [];
   value.combat = { initialPackSizes: {}, routeEncounters: [] };
@@ -70,7 +70,7 @@ function enemy(archetype: EnemyArchetype, id: string, x: number, y: number): Spa
     hp: definition.hp,
     id,
     kind: "enemy",
-    radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+    radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
     x,
     y,
   };
@@ -128,14 +128,14 @@ describe("Stardust drops", () => {
   });
 
   it("pays each enemy half its position's hit points, rounded down, and at least 1", () => {
-    for (const sector of [1, 2, 3, 4, 5, 6] as const) {
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
       for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-        const definition = enemyDefinition(sector, archetype);
+        const definition = enemyDefinition(galaxy, archetype);
         // A heavy counts its hardpoints' hit points, not its hull.
         const hp = HEAVIES.includes(archetype)
           ? definition.hardpoints.reduce((sum, part) => sum + part.hp, 0)
           : definition.hp;
-        expect(enemyStardust(sector, archetype)).toBe(Math.max(1, Math.floor(hp / 2)));
+        expect(enemyStardust(galaxy, archetype)).toBe(Math.max(1, Math.floor(hp / 2)));
       }
     }
     // Position 1 (gameplay/economy.md): a heavy's salvaged value; destroying it pays double.
@@ -197,12 +197,12 @@ describe("Stardust drops", () => {
     [5, "fighter"],
   ] as const)(
     "in galaxy %i drops an upgrade pickup from a destroyed %s 0.25% of the time, never extra Stardust",
-    (sector, archetype) => {
+    (galaxy, archetype) => {
       const draws = 200000;
       let dropped = 0;
       for (let index = 0; index < draws; index++) {
-        const drop = rollEnemyDrop(ECONOMY, sector, archetype, dropRandom(11, `wreck:${index}`));
-        expect(drop.stardust).toBe(enemyStardust(sector, archetype));
+        const drop = rollEnemyDrop(ECONOMY, galaxy, archetype, dropRandom(11, `wreck:${index}`));
+        expect(drop.stardust).toBe(enemyStardust(galaxy, archetype));
         dropped += drop.upgrade ? 1 : 0;
       }
       expect(Math.abs(dropped / draws - 0.0025)).toBeLessThan(0.0025 * 0.15);
@@ -217,15 +217,15 @@ describe("Stardust drops", () => {
     [5, "frigate"],
   ] as const)(
     "drops an upgrade pickup from galaxy %i's %s 10% of the time when salvaged, never when destroyed",
-    (sector, archetype) => {
+    (galaxy, archetype) => {
       let dropped = 0;
       for (let index = 0; index < 20000; index++) {
-        const salvaged = rollSalvageDrop(ECONOMY, sector, archetype, dropRandom(5, `s:${index}`));
-        expect(salvaged.stardust).toBe(enemyStardust(sector, archetype));
+        const salvaged = rollSalvageDrop(ECONOMY, galaxy, archetype, dropRandom(5, `s:${index}`));
+        expect(salvaged.stardust).toBe(enemyStardust(galaxy, archetype));
         dropped += salvaged.upgrade ? 1 : 0;
-        const destroyed = rollEnemyDrop(ECONOMY, sector, archetype, dropRandom(5, `d:${index}`));
+        const destroyed = rollEnemyDrop(ECONOMY, galaxy, archetype, dropRandom(5, `d:${index}`));
         expect(destroyed).toEqual({
-          stardust: enemyStardust(sector, archetype) * 2,
+          stardust: enemyStardust(galaxy, archetype) * 2,
           upgrade: false,
         });
       }
@@ -272,11 +272,11 @@ describe("Stardust drops", () => {
     target.hp = 1;
     value.objects.push(target);
     value.shots.push(killShot(target));
-    stepFlight(PROTOTYPE, 1 / 60, idle, value);
-    stepFlight(PROTOTYPE, 0.6, idle, value);
+    stepFlight(CONTENT, 1 / 60, idle, value);
+    stepFlight(CONTENT, 0.6, idle, value);
     const drop = rollEnemyDrop(
       ECONOMY,
-      value.sector,
+      value.galaxy,
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),
     );
@@ -289,14 +289,14 @@ describe("Stardust drops", () => {
     const target = enemy("fighter", "target", 300, 0);
     value.objects.push(target);
     value.shots.push(killShot(target));
-    const events = stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    const events = stepFlight(CONTENT, 1 / 60, idle, value);
     expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(value.objects.some((object) => object.id === "target")).toBe(false);
     const wreck = value.objects.find((object) => object.kind === "wreck");
     expect(wreck?.wreck?.archetype).toBe("fighter");
     expect(pickups(value)).toEqual([]);
     // Art's fighter timing: drops leave at 150 ms and the wreck is gone at 450 ms.
-    stepFlight(PROTOTYPE, 0.15, idle, value);
+    stepFlight(CONTENT, 0.15, idle, value);
     expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(true);
     for (const pickup of pickups(value)) {
@@ -305,7 +305,7 @@ describe("Stardust drops", () => {
       expect(offset).toBeGreaterThan(0);
       expect(offset).toBeLessThanOrEqual(19.2 * 1.6);
     }
-    stepFlight(PROTOTYPE, 0.3, idle, value);
+    stepFlight(CONTENT, 0.3, idle, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
     expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
   });
@@ -338,18 +338,18 @@ describe("Stardust drops", () => {
     value.objects.push(target);
     value.shots.push(killShot(target));
     const reduced = { ...idle, reducedMotion: true };
-    stepFlight(PROTOTYPE, 1 / 60, reduced, value);
+    stepFlight(CONTENT, 1 / 60, reduced, value);
     const wreck = value.objects.find((object) => object.kind === "wreck")!;
     // Art's reduced fighter: drops appear at 240 ms, within 7.68 units, and the hull is gone at 360 ms.
-    stepFlight(PROTOTYPE, 0.2, reduced, value);
+    stepFlight(CONTENT, 0.2, reduced, value);
     expect(pickups(value)).toEqual([]);
-    stepFlight(PROTOTYPE, 0.05, reduced, value);
+    stepFlight(CONTENT, 0.05, reduced, value);
     expect(total(pickups(value))).toBe(enemyStardust(1, "fighter"));
     for (const pickup of pickups(value)) {
       const offset = Math.hypot(pickup.x - wreck.x, pickup.y - wreck.y);
       expect(offset).toBeLessThanOrEqual(7.68 * 1.6);
     }
-    stepFlight(PROTOTYPE, 0.12, reduced, value);
+    stepFlight(CONTENT, 0.12, reduced, value);
     expect(value.objects.some((object) => object.kind === "wreck")).toBe(false);
   });
 
@@ -358,9 +358,9 @@ describe("Stardust drops", () => {
     const frigate = enemy("frigate", "frigate", 600, 0);
     frigate.enemy!.hp = 0;
     value.objects.push(frigate);
-    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    stepFlight(CONTENT, 1 / 60, idle, value);
     expect(value.objects.some((object) => object.id === "frigate")).toBe(false);
-    stepFlight(PROTOTYPE, 0.6, idle, value);
+    stepFlight(CONTENT, 0.6, idle, value);
     expect(total(pickups(value))).toBe(enemyStardust(1, "frigate") * 2);
   });
 
@@ -378,7 +378,7 @@ describe("Stardust drops", () => {
     };
     value.objects.push(rock);
     value.shots.push(killShot(rock));
-    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    stepFlight(CONTENT, 1 / 60, idle, value);
     expect(total(pickups(value))).toBe(3);
   });
 
@@ -397,7 +397,7 @@ describe("Stardust drops", () => {
     value.objects.push(rock);
     value.shots.push(killShot(rock));
     const destroyedAt = value.time;
-    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    stepFlight(CONTENT, 1 / 60, idle, value);
     const released = pickups(value);
     expect(released).toHaveLength(3);
     for (const pickup of released) {
@@ -424,7 +424,7 @@ describe("Stardust drops", () => {
     };
     value.objects.push(rock, deposit);
     value.shots.push(killShot(rock), killShot(deposit));
-    stepFlight(PROTOTYPE, 1 / 60, idle, value);
+    stepFlight(CONTENT, 1 / 60, idle, value);
     const released = pickups(value);
     expect(total(released)).toBe(
       rollAsteroidStardust(ECONOMY, "small", dropRandom(value.seed, "rock")),
@@ -452,10 +452,10 @@ describe("Stardust drops", () => {
       };
       value.objects.push(deposit);
       value.shots.push({ ...killShot(deposit), damage: hp - 1, id: "chip" });
-      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      stepFlight(CONTENT, 1 / 60, idle, value);
       expect(value.objects.some((object) => object.id === "deposit")).toBe(true);
       value.shots.push(killShot(deposit));
-      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      stepFlight(CONTENT, 1 / 60, idle, value);
       const cargo = value.objects.filter((object) => object.role === "cargo");
       expect(cargo).toHaveLength(pieces);
       expect(cargo.reduce((sum, piece) => sum + piece.x, 0) / pieces).toBeCloseTo(-400, 9);
@@ -473,14 +473,14 @@ describe("Stardust drops", () => {
       for (let y = -20; y < 20; y++) {
         const plan = planChunk(CHUNK_CATALOG, {
           asteroids: { field: byPosition(ASTEROID_FIELDS, 2), shapes },
-          clearance: PROTOTYPE.tuning.flight.shipRadius,
-          objectsPerChunk: PROTOTYPE.tuning.flight.objectsPerChunk,
-          rockRadius: PROTOTYPE.tuning.flight.rockRadius,
-          sector: 2,
+          clearance: CONTENT.tuning.flight.shipRadius,
+          galaxy: 2,
+          objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
+          rockRadius: CONTENT.tuning.flight.rockRadius,
           seed: 11,
-          shipRadius: PROTOTYPE.tuning.flight.shipRadius,
-          size: PROTOTYPE.tuning.chunkSize,
-          spawnWeights: PROTOTYPE.tuning.flight.spawnWeights,
+          shipRadius: CONTENT.tuning.flight.shipRadius,
+          size: CONTENT.tuning.chunkSize,
+          spawnWeights: CONTENT.tuning.flight.spawnWeights,
           x,
           y,
         });
@@ -503,11 +503,11 @@ describe("Stardust drops", () => {
 
 describe("discovery caches", () => {
   it("generates Stardust caches worth 5 instead of upgrade pickups", () => {
-    const value = createFlight(PROTOTYPE, 1, 4242, { known: [] });
+    const value = createFlight(CONTENT, 1, 4242, { known: [] });
     const discoveries = new Map<string, SpaceObject>();
     for (let step = 0; step < 40; step++) {
-      value.player = { x: step * PROTOTYPE.tuning.chunkSize * 2, y: 0 };
-      stepFlight(PROTOTYPE, 1 / 60, idle, value);
+      value.player = { x: step * CONTENT.tuning.chunkSize * 2, y: 0 };
+      stepFlight(CONTENT, 1 / 60, idle, value);
       // Rare caches are gathered along the way, since distant chunks unload.
       for (const object of value.objects) {
         if (object.kind === "pickup" && object.role === "discovery") {
@@ -529,15 +529,15 @@ describe("discovery caches", () => {
       hp: 1,
       id: "cache",
       kind: "pickup",
-      radius: PROTOTYPE.tuning.flight.pickupRadius,
+      radius: CONTENT.tuning.flight.pickupRadius,
       role: "discovery",
       x: 60,
       y: 0,
     });
-    stepFlight(PROTOTYPE, 0.1, idle, value);
+    stepFlight(CONTENT, 0.1, idle, value);
     // The base pull: 120 a second from within 60.
     expect(value.objects[0]!.x).toBeCloseTo(60 - 12, 6);
-    expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(5);
+    expect(gained(stepFlight(CONTENT, 1, idle, value))).toBe(5);
     expect(value.weapon).toBe("laser");
     expect(value.ownedWeapons).toEqual([]);
   });
@@ -566,7 +566,7 @@ describe("tractor beam and pickup reach", () => {
         { hp: 1, id: "inside", kind: "pickup", x: radius - 1, y: 0, ...extra },
         { hp: 1, id: "outside", kind: "pickup", x: 0, y: radius + 1, ...extra },
       );
-      stepFlight(PROTOTYPE, 0.05, idle, value);
+      stepFlight(CONTENT, 0.05, idle, value);
       const inside = value.objects.find((object) => object.id === "inside")!;
       expect(inside.x).toBeCloseTo(radius - 1 - speed * 0.05, 6);
       expect(inside.y).toBeCloseTo(0, 9);
@@ -580,13 +580,13 @@ describe("tractor beam and pickup reach", () => {
   it("zips Stardust into the ship as it collects, as every pickup does", () => {
     const value = flight();
     value.objects.push(stardust("dust", 5, 0));
-    const events = stepFlight(PROTOTYPE, 0.001, idle, value);
+    const events = stepFlight(CONTENT, 0.001, idle, value);
     // The collected event is the one the view zips the gem's sprite into the ship from.
     expect(events).toContainEqual(
       expect.objectContaining({ id: "dust", type: "collected", x: expect.any(Number) }),
     );
     expect(events).toContainEqual({ amount: 1, type: "stardust" });
-    expect(PROTOTYPE.tuning.flight.pickupZip).toBe(0.15);
+    expect(CONTENT.tuning.flight.pickupZip).toBe(0.15);
   });
 
   /** Least world distance between two drawn outlines placed apart, 0 if they cross. */
@@ -667,7 +667,7 @@ describe("tractor beam and pickup reach", () => {
         pickup("outside", value.player.x, value.player.y + south + 1),
       );
       const before = value.cargo;
-      const events = stepFlight(PROTOTYPE, 0.001, idle, value);
+      const events = stepFlight(CONTENT, 0.001, idle, value);
       expect(value.objects.map((object) => object.id)).toEqual(["outside"]);
       // Collected at contact, with the event the view zips it into the ship from.
       expect(events.filter(({ type }) => type === "collected")).toEqual([
@@ -683,7 +683,7 @@ describe("tractor beam and pickup reach", () => {
 
   it("collects a hunt's lost item within 20 world units of Ada's drawn ship, as its glint", () => {
     // One pickup rule: every kind reaches 20 past the drawn ship.
-    expect(PROTOTYPE.tuning.flight.pickupMargin).toBe(20);
+    expect(CONTENT.tuning.flight.pickupMargin).toBe(20);
     const value = flight();
     const body = shipBody(value.facing);
     let low = 0;
@@ -698,21 +698,21 @@ describe("tractor beam and pickup reach", () => {
       }
     }
     const at = (x: number) => ({ x: value.player.x + x, y: value.player.y });
-    const { pickupRadius } = PROTOTYPE.tuning.flight;
-    expect(pickupTouched(PROTOTYPE, value, at(high - 0.3), pickupRadius, HUNT_GLINT)).toBe(true);
-    expect(pickupTouched(PROTOTYPE, value, at(high + 1), pickupRadius, HUNT_GLINT)).toBe(false);
+    const { pickupRadius } = CONTENT.tuning.flight;
+    expect(pickupTouched(CONTENT, value, at(high - 0.3), pickupRadius, HUNT_GLINT)).toBe(true);
+    expect(pickupTouched(CONTENT, value, at(high + 1), pickupRadius, HUNT_GLINT)).toBe(false);
   });
 
   it.each(TRACTOR)("tractor level %i has pull radius %i and speed %i", (level, radius, speed) => {
     const levels = { ...noLevels(), tractor: level };
-    expect(shipTuning(ECONOMY, PROTOTYPE, levels)).toMatchObject({
+    expect(shipTuning(ECONOMY, CONTENT, levels)).toMatchObject({
       tractorRadius: radius,
       tractorSpeed: speed,
     });
     const value = flight();
     value.levels = levels;
     value.objects.push(stardust("inside", radius - 1, 0), stardust("outside", 0, radius + 1));
-    stepFlight(PROTOTYPE, 0.05, idle, value);
+    stepFlight(CONTENT, 0.05, idle, value);
     expect(value.objects.find((object) => object.id === "inside")!.x).toBeCloseTo(
       radius - 1 - speed * 0.05,
       6,
@@ -733,7 +733,7 @@ describe("tractor beam and pickup reach", () => {
       x: 70,
       y: 0,
     });
-    const events = stepFlight(PROTOTYPE, 0.001, idle, value);
+    const events = stepFlight(CONTENT, 0.001, idle, value);
     expect(events.some((event) => event.type === "upgradeCollected")).toBe(false);
     expect(value.objects.find((object) => object.id === "upgrade")!.x).toBeCloseTo(70 - 0.2, 6);
   });
@@ -757,8 +757,8 @@ describe("upgrade effects", () => {
     "applies shield, recharge and engine level %i",
     (level, shield, delay, fill, speed, seconds) => {
       const levels = { ...noLevels(), engine: level, shield: level };
-      const tuning = shipTuning(ECONOMY, PROTOTYPE, levels);
-      const base = PROTOTYPE.tuning;
+      const tuning = shipTuning(ECONOMY, CONTENT, levels);
+      const base = CONTENT.tuning;
       expect(tuning.shieldMax).toBe(shield);
       expect(tuning.shieldRechargeDelay).toBe(delay);
       // The shield refills from empty in its fill time, whatever its capacity.
@@ -776,7 +776,7 @@ describe("upgrade effects", () => {
   it.each([1, 2, 3])("fires Ada's Laser at 600 at engine level %i", (level) => {
     const value = flight();
     value.levels.engine = level;
-    stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
     const { velocity } = value.shots[0]!;
     expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(
       600 * WEAPON_CATALOG.laser[0].speedRatio,
@@ -787,19 +787,19 @@ describe("upgrade effects", () => {
   it("fires the equipped weapon at its own level", () => {
     const value = flight();
     value.levels.weapons.laser = 3;
-    stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
-    expect(value.shots[0]!.damage).toBeCloseTo(PROTOTYPE.tuning.flight.playerShotDamage * 1.5, 9);
+    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+    expect(value.shots[0]!.damage).toBeCloseTo(CONTENT.tuning.flight.playerShotDamage * 1.5, 9);
     expect(value.fireCooldown).toBeCloseTo(WEAPON_CATALOG.laser[2].intervalSeconds, 9);
     const other = flight();
     other.levels.weapons.rapidMissile = 3;
-    stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, other);
-    expect(other.shots[0]!.damage).toBe(PROTOTYPE.tuning.flight.playerShotDamage);
+    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, other);
+    expect(other.shots[0]!.damage).toBe(CONTENT.tuning.flight.playerShotDamage);
   });
 
   it("starts a flight at the upgraded shield capacity and recharges toward it", () => {
     const levels = { ...noLevels(), shield: 2 };
     const value = createFlight(
-      PROTOTYPE,
+      CONTENT,
       1,
       77,
       { known: [] },
@@ -815,9 +815,9 @@ describe("upgrade effects", () => {
     value.shield = 5;
     value.sinceDamage = 0;
     // Level 2 waits 15 s, then refills 15 HP in 45 s.
-    stepFlight(PROTOTYPE, 15 - 0.05, idle, value);
+    stepFlight(CONTENT, 15 - 0.05, idle, value);
     expect(value.shield).toBe(5);
-    stepFlight(PROTOTYPE, 0.05 + 9, idle, value);
+    stepFlight(CONTENT, 0.05 + 9, idle, value);
     // Within one 1/60 s step of the refill rate.
     expect(Math.abs(value.shield - (5 + (15 / 45) * 9))).toBeLessThan(15 / 45 / 60 + 1e-9);
   });
@@ -827,8 +827,8 @@ describe("upgrade effects", () => {
     for (const level of [1, 3]) {
       const value = flight();
       value.levels.engine = level;
-      stepFlight(PROTOTYPE, 0.2, right, value);
-      const physics = shipTuning(ECONOMY, PROTOTYPE, value.levels).physics;
+      stepFlight(CONTENT, 0.2, right, value);
+      const physics = shipTuning(ECONOMY, CONTENT, value.levels).physics;
       const top = physics.maxSpeed;
       expect(length(value.velocity)).toBeCloseTo(
         top * (1 - Math.exp(-0.2 / physics.accelerationSeconds)),
@@ -843,7 +843,7 @@ describe("upgrade effects", () => {
       value.levels.engine = level;
       value.objects.push(enemy("interceptor", "chaser", 260, 0));
       for (let step = 0; step < 60; step++) {
-        stepFlight(PROTOTYPE, 1 / 30, idle, value);
+        stepFlight(CONTENT, 1 / 30, idle, value);
       }
       return value.objects.find((object) => object.id === "chaser")!;
     });
@@ -946,8 +946,8 @@ describe("shop purchases", () => {
       expect(economy.ammo.phaser).toBe(count * 55);
     }
     expect(shopRow(ECONOMY, economy, pack)).toMatchObject({ owned: false, price: 9 });
-    expect(itemName(ECONOMY, PROTOTYPE.labels, pack)).toBe("Phaser ammo");
-    expect(packCount(ECONOMY, PROTOTYPE.labels, "phaser")).toBe("×55");
+    expect(itemName(ECONOMY, CONTENT.labels, pack)).toBe("Phaser ammo");
+    expect(packCount(ECONOMY, CONTENT.labels, "phaser")).toBe("×55");
   });
 
   it.each([
@@ -1082,7 +1082,7 @@ describe("shop purchases", () => {
   });
 
   it("shows a weapon's one-line description or a pack's size in the buy confirm", () => {
-    const labels = PROTOTYPE.labels;
+    const labels = CONTENT.labels;
     const about = (weapon: UpgradeWeapon) => itemAbout(ECONOMY, labels, { kind: "weapon", weapon });
     expect(about("heavyMissile")).toBe("One slow missile with a big blast.");
     expect(about("rapidMissile")).toBe("Quick missiles with a small blast.");
@@ -1096,7 +1096,7 @@ describe("shop purchases", () => {
   });
 
   it("names the five shop weapons and their upgrades", () => {
-    const labels = PROTOTYPE.labels;
+    const labels = CONTENT.labels;
     expect(UPGRADE_WEAPONS.map((weapon) => weaponName(labels, weapon))).toEqual([
       "Multi-Laser",
       "Rapid Missile",
@@ -1113,7 +1113,7 @@ describe("shop purchases", () => {
   });
 
   it("names items and fills confirm strings from the player strings", () => {
-    const labels = PROTOTYPE.labels;
+    const labels = CONTENT.labels;
     const name = (item: Parameters<typeof itemName>[2]) => itemName(ECONOMY, labels, item);
     expect(name({ kind: "weaponUpgrade", weapon: "laser" })).toBe("Laser upgrade");
     expect(name({ kind: "track", track: "shield" })).toBe("Shield");
@@ -1136,13 +1136,13 @@ describe("shop purchases", () => {
 });
 
 describe("discovery cache rarity", () => {
-  const tuning = PROTOTYPE.tuning;
+  const tuning = CONTENT.tuning;
   const plan = (spawnWeights: typeof tuning.flight.spawnWeights, x: number, y: number) =>
     planChunk(CHUNK_CATALOG, {
       clearance: tuning.flight.shipRadius,
+      galaxy: 1,
       objectsPerChunk: tuning.flight.objectsPerChunk,
       rockRadius: tuning.flight.rockRadius,
-      sector: 1,
       seed: 99,
       shipRadius: tuning.flight.shipRadius,
       size: tuning.chunkSize,

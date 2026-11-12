@@ -1,6 +1,6 @@
 import type { Weapon } from "../data/types.ts";
-import { UPGRADE_TIER_COLOURS } from "../data/upgrade-tiers.ts";
-import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { HUD_AMMO_COUNT, HUD_BUTTON, HUD_ROW, HUD_WEAPON_LEVEL } from "./layout/playView.ts";

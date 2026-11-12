@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
-import type { SectorId } from "../../data/types.ts";
-import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/space-palette.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
 import { TEXT_BUTTON } from "./controls.ts";
 import {
   adaAngle,
@@ -19,7 +19,7 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
-  mapEarthRect,
+  mapGalaxiesRect,
   mapHeaderCap,
   mapHeaderWidth,
   mapProjection,
@@ -135,7 +135,7 @@ describe("map projection and fit", () => {
     const width = 66 + 2 * TEXT_BUTTON.inset;
     expect(width).toBe(98);
     expect(MAP_SCREEN.hudRow).toEqual({
-      earth: { width },
+      galaxies: { width },
       gap: BUTTON_GAP,
       height: 48,
       quests: { width },
@@ -145,18 +145,20 @@ describe("map projection and fit", () => {
     // Art's table: Quests 439 to 537 and Galaxies 553 to 651 at the base, 408 to 506 and 522 to
     // 620 with phone insets; the tool column's left at 667.5 and 636.5.
     expect(span(mapQuestsRect(NO_INSETS, BASE))).toEqual([439, 537]);
-    expect(span(mapEarthRect(NO_INSETS, BASE))).toEqual([553, 651]);
+    expect(span(mapGalaxiesRect(NO_INSETS, BASE))).toEqual([553, 651]);
     expect(span(mapQuestsRect(phone, BASE))).toEqual([408, 506]);
-    expect(span(mapEarthRect(phone, BASE))).toEqual([522, 620]);
+    expect(span(mapGalaxiesRect(phone, BASE))).toEqual([522, 620]);
     expect([toolColumnLeft(NO_INSETS, BASE), toolColumnLeft(phone, BASE)]).toEqual([667.5, 636.5]);
     // Galaxies, a standard button, ends SMALL_BUTTON_GAP left of the close tool's small disc, and
     // Quests ends BUTTON_GAP left of it.
     const hud = hudRect(phone, BASE);
     const closeDisc = toolColumnLeft(phone, BASE) + HUD_BUTTON_INSET.disc;
     expect(closeDisc).toBe(hud.x + hud.width - 33);
-    expect(closeDisc - (mapEarthRect(phone, BASE).x + width)).toBe(SMALL_BUTTON_GAP);
-    expect(mapEarthRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + width)).toBe(BUTTON_GAP);
-    expect(mapQuestsRect(phone, BASE).y).toBe(mapEarthRect(phone, BASE).y);
+    expect(closeDisc - (mapGalaxiesRect(phone, BASE).x + width)).toBe(SMALL_BUTTON_GAP);
+    expect(mapGalaxiesRect(phone, BASE).x - (mapQuestsRect(phone, BASE).x + width)).toBe(
+      BUTTON_GAP,
+    );
+    expect(mapQuestsRect(phone, BASE).y).toBe(mapGalaxiesRect(phone, BASE).y);
     // The header reaches Quests less SPACING.gap: 12 to 431 (419) at the base, 43 to 400 (357)
     // with phone insets, the smallest view.
     expect(mapHeaderCap(NO_INSETS, BASE)).toBe(419);
@@ -354,7 +356,7 @@ describe("fog and Ada", () => {
         readFileSync(new URL("../../../public/art/galaxies.json", import.meta.url), "utf8"),
       ),
     );
-    const fog = (galaxy: SectorId) => {
+    const fog = (galaxy: GalaxyNumber) => {
       const field = { ...FALLBACK_SPACE_PALETTE, ...fields.get(galaxy) };
       return fogColor(field.environment, field.environmentDetail);
     };

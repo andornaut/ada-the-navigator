@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { CURRENTS } from "../data/galaxy-features.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
 import {
   type Current,
   currentInCell,
@@ -14,17 +14,17 @@ import {
   pointOnCurrent,
   streakFrame,
 } from "./currents.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const grid = (sector: 1 | 2 | 3, span: number): Current[] => {
+const grid = (galaxy: 1 | 2 | 3, span: number): Current[] => {
   const found: Current[] = [];
   for (let x = -span; x <= span; x++) {
     for (let y = -span; y <= span; y++) {
-      const current = currentInCell(sector, { x, y });
+      const current = currentInCell(galaxy, { x, y });
       if (current) {
         found.push(current);
       }
@@ -37,9 +37,9 @@ const speed = (vector: Vec) => Math.hypot(vector.x, vector.y);
 const middle = (current: Current) => pointOnCurrent(current, current.length / 2);
 /** A Whirlpool flight with nothing in it but Ada, placed at `at`. */
 const emptyFlight = (at: Vec): FlightState => {
-  const flight = createFlight(PROTOTYPE, 3, 11, { known: [] });
+  const flight = createFlight(CONTENT, 3, 11, { known: [] });
   flight.player = { ...at };
-  stepFlight(PROTOTYPE, 0.001, idle, flight);
+  stepFlight(CONTENT, 0.001, idle, flight);
   flight.objects = [];
   flight.shots = [];
   flight.velocity = { x: 0, y: 0 };
@@ -129,12 +129,12 @@ describe("space currents", () => {
       { radius: 10, weapon: "rapidMissile" },
     ] as const;
     for (const [index, extra] of kinds.entries()) {
-      const flight = createFlight(PROTOTYPE, 3, 5, { known: [] });
+      const flight = createFlight(CONTENT, 3, 5, { known: [] });
       flight.objects = [{ hp: 1, id: `pickup:${index}`, kind: "pickup", ...point, ...extra }];
       flight.player = { x: point.x + 200, y: point.y + 200 };
       flight.velocity = { x: 0, y: 0 };
       stepFlight(
-        PROTOTYPE,
+        CONTENT,
         1 / 60,
         { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false },
         flight,
@@ -184,12 +184,12 @@ describe("space currents", () => {
     // A current without a river, so no river rock on the centre line meets the ship.
     const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point, tangent } = middle(current);
-    const top = PROTOTYPE.tuning.physics.maxSpeed;
+    const top = CONTENT.tuning.physics.maxSpeed;
     for (const sense of [0, 1, -1]) {
       const flight = emptyFlight(point);
       flight.velocity = { x: tangent.x * top * sense, y: tangent.y * top * sense };
       const before = { ...flight.player };
-      stepFlight(PROTOTYPE, 1 / 600, idle, flight);
+      stepFlight(CONTENT, 1 / 600, idle, flight);
       // Riding the centre line makes 160 + 70 = 230, pushing against it 160 - 70 = 90.
       const along =
         ((flight.player.x - before.x) * tangent.x + (flight.player.y - before.y) * tangent.y) * 600;
@@ -234,7 +234,7 @@ describe("space currents", () => {
       radius: 5,
     };
     flight.objects.push(swarm, frigate, pickup);
-    stepFlight(PROTOTYPE, 0.5, idle, flight);
+    stepFlight(CONTENT, 0.5, idle, flight);
     const flow = speed(flowAt(3, point));
     expect(Math.hypot(swarm.x - swarmStart.x, swarm.y - swarmStart.y)).toBeGreaterThan(flow * 0.3);
     expect(Math.hypot(pickup.x - pickupStart.x, pickup.y - pickupStart.y)).toBeCloseTo(
@@ -247,9 +247,9 @@ describe("space currents", () => {
   it("keep asteroids and resource rocks out of their bands", () => {
     const current = currents.find((entry) => entry.length > 3500)!;
     const { point } = middle(current);
-    const flight = createFlight(PROTOTYPE, 3, 5, { known: [] });
+    const flight = createFlight(CONTENT, 3, 5, { known: [] });
     flight.player = { x: point.x + 600, y: point.y + 600 };
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     const rocks = flight.objects.filter(
       (object) =>
         (object.kind === "rock" || object.kind === "resource") && !object.id.startsWith("river:"),
@@ -263,14 +263,14 @@ describe("space currents", () => {
   it("carry debris rivers along their centre line at the peak flow, re-entering at the start", () => {
     const current = currents.find((entry) => entry.debris)!;
     const flight = emptyFlight({ x: current.points[0]!.x + 900, y: current.points[0]!.y + 900 });
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     const rock = flight.objects.find((object) => object.river?.current === current.id)!;
     expect(rock.kind).toBe("debris");
     const start = nearestOnCurrent(current, rock).arc;
     expect(nearestOnCurrent(current, rock).distance).toBeLessThan(1e-6);
     expect(Math.hypot(rock.velocity!.x, rock.velocity!.y)).toBeCloseTo(CURRENTS.peakFlow, 9);
     for (let step = 0; step < 60; step++) {
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
     }
     const travelled = nearestOnCurrent(current, rock).arc - start;
     const wrapped = travelled < 0 ? travelled + current.length : travelled;
@@ -282,7 +282,7 @@ describe("space currents", () => {
     const { point } = middle(current);
     const flight = emptyFlight({ x: point.x - 1024, y: point.y });
     flight.velocity = { x: 1, y: 0 };
-    const destination = ensureDestination(PROTOTYPE, "whale", flight);
+    const destination = ensureDestination(CONTENT, "whale", flight);
     expect(inCurrent(3, CURRENTS.clearance, destination)).toBe(false);
     expect(currentsNear(3, 0, destination).length).toBeGreaterThanOrEqual(0);
   });

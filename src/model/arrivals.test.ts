@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, ensureStation, stepFlight, teleport } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
-import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
+import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
-const calm = PROTOTYPE.tuning.flight.arrivalCalm;
+const calm = CONTENT.tuning.flight.arrivalCalm;
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const progress: Pick<SectorProgress, "known"> = { known: [] };
+const progress: Pick<GalaxyProgress, "known"> = { known: [] };
 const encounterShips = (flight: FlightState) =>
   flight.objects.filter(
     (object) =>
@@ -32,18 +32,18 @@ const closest = (flight: FlightState, point: Vec) =>
 describe("calm launches", () => {
   it.each([1, 2, 3] as const)(
     "places no encounter ship within 2000 of a galaxy %i flight start",
-    (sector: SectorId) => {
+    (galaxy: GalaxyNumber) => {
       let near = 0;
       let elsewhere = 0;
       for (let seed = 1; seed <= 60; seed++) {
-        const flight = createFlight(PROTOTYPE, sector, seed, progress);
+        const flight = createFlight(CONTENT, galaxy, seed, progress);
         near = Math.max(near, closest(flight, { x: 0, y: 0 }) < calm ? 1 : 0);
         // Encounters still appear beyond the calm radius, and none inside it on the way back.
         flight.player = { x: 4500, y: 0 };
-        stepFlight(PROTOTYPE, 0.001, idle, flight);
+        stepFlight(CONTENT, 0.001, idle, flight);
         elsewhere += encounterShips(flight).length;
         flight.player = { x: 0, y: 0 };
-        stepFlight(PROTOTYPE, 0.001, idle, flight);
+        stepFlight(CONTENT, 0.001, idle, flight);
         expect(closest(flight, { x: 0, y: 0 })).toBeGreaterThanOrEqual(calm);
       }
       expect(near).toBe(0);
@@ -52,8 +52,8 @@ describe("calm launches", () => {
   );
 
   it("starts every galaxy jump calm, since a jump begins a new flight at its start", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
     expect(flight.player).toEqual({ x: 0, y: 0 });
@@ -63,7 +63,7 @@ describe("calm launches", () => {
 
 describe("calm Travel arrivals", () => {
   function farFlight(): FlightState {
-    const flight = createFlight(PROTOTYPE, 1, 4242, progress);
+    const flight = createFlight(CONTENT, 1, 4242, progress);
     return flight;
   }
   function raider(point: Vec, id: string): SpaceObject {
@@ -78,12 +78,12 @@ describe("calm Travel arrivals", () => {
   it("clears encounter ships near a destination arrival without casualties and keeps it calm", () => {
     const flight = farFlight();
     flight.player = { x: 30000, y: 0 };
-    const destination = ensureDestination(PROTOTYPE, "growers", flight);
+    const destination = ensureDestination(CONTENT, "growers", flight);
     const guard = flight.objects.find((object) => object.routeId !== undefined);
     flight.player = { x: 0, y: 0 };
     flight.objects.push(raider({ x: destination.x + 700, y: destination.y }, "raiders:0"));
     flight.combat = { initialPackSizes: { raiders: 1 }, routeEncounters: [] };
-    expect(teleport(PROTOTYPE, "growers", flight)).toBe(true);
+    expect(teleport(CONTENT, "growers", flight)).toBe(true);
     expect(flight.arrivals).toEqual([{ x: destination.x, y: destination.y }]);
     // The raider left without a casualty or tombstone.
     expect(flight.objects.map((object) => object.id)).not.toContain("raiders:0");
@@ -92,7 +92,7 @@ describe("calm Travel arrivals", () => {
       expect(flight.objects).toContain(guard);
     }
     for (let step = 0; step < 4; step++) {
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
     }
     expect(closest(flight, destination)).toBeGreaterThanOrEqual(calm - 50);
   });
@@ -101,23 +101,23 @@ describe("calm Travel arrivals", () => {
     const flight = farFlight();
     const [site] = stationsNear(ECONOMY, 1, 60000, { x: 20000, y: 0 });
     expect(site).toBeDefined();
-    const station = ensureStation(PROTOTYPE, site!.id, flight)!;
+    const station = ensureStation(CONTENT, site!.id, flight)!;
     flight.player = { x: 0, y: 0 };
-    expect(teleport(PROTOTYPE, station.id, flight)).toBe(true);
+    expect(teleport(CONTENT, station.id, flight)).toBe(true);
     const arrival = flight.arrivals!.at(-1)!;
     expect(Math.hypot(arrival.x - station.x, arrival.y - station.y)).toBeLessThan(200);
-    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(closest(flight, arrival)).toBeGreaterThanOrEqual(calm);
   });
 
   it("gives the same world for the same seed and travel", () => {
     const travel = () => {
-      const flight = createFlight(PROTOTYPE, 1, 99, progress);
+      const flight = createFlight(CONTENT, 1, 99, progress);
       flight.player = { x: 30000, y: 0 };
-      ensureDestination(PROTOTYPE, "growers", flight);
+      ensureDestination(CONTENT, "growers", flight);
       flight.player = { x: 0, y: 0 };
-      teleport(PROTOTYPE, "growers", flight);
-      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      teleport(CONTENT, "growers", flight);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
       return flight;
     };
     const first = travel();
@@ -126,8 +126,8 @@ describe("calm Travel arrivals", () => {
   });
 
   it("saves Travel arrivals and rejects malformed ones", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
     flight.arrivals = [{ x: 4000, y: -1200 }];

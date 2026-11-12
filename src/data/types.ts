@@ -1,8 +1,8 @@
 import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
 
-import type { ShipPhysics } from "./ship-physics.ts";
+import type { ShipPhysics } from "./shipPhysics.ts";
 
-export type SectorId = 1 | 2 | 3 | 4 | 5 | 6;
+export type GalaxyNumber = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
   "laser" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
 /** Weapons only enemies carry (gameplay/ships.md "Enemy weapons"). */
@@ -110,9 +110,9 @@ export interface PremiseContent {
   roomRock: string;
 }
 
-export interface PrototypeContent {
+export interface GameContent {
   /** The built galaxies' chapters; a placeholder galaxy has none. */
-  chapters: Readonly<Partial<Record<SectorId, ChapterContent>>>;
+  chapters: Readonly<Partial<Record<GalaxyNumber, ChapterContent>>>;
   premise: PremiseContent;
   labels: Readonly<Record<string, string>>;
   /** Each browser kind's own install steps, shown where the browser holds no install prompt. */

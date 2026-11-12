@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { GameModel } from "../model/game.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { readSave, stopSaving, writeSave } from "./persistence.ts";
@@ -20,20 +20,20 @@ describe("browser save boundary", () => {
         values.set(key, value);
       },
     });
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(writeSave(model.save())).toBe(true);
     blocked = true;
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(writeSave(model.save())).toBe(false);
-    expect(relaunch(PROTOTYPE, readSave()).state.mode).toBe("home");
+    expect(relaunch(CONTENT, readSave()).state.mode).toBe("home");
     const before = { ...model.state.flight!.player };
     model.step(0.05, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
     expect(model.state.flight!.player).not.toEqual(before);
     expect(writeSave(model.save())).toBe(false);
     blocked = false;
     expect(writeSave(model.save())).toBe(true);
-    expect(relaunch(PROTOTYPE, readSave()).state).toEqual(model.state);
+    expect(relaunch(CONTENT, readSave()).state).toEqual(model.state);
   });
 
   it("reports denied access to the storage object without throwing", () => {
@@ -55,11 +55,11 @@ describe("browser save boundary", () => {
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => values.set(key, value),
     });
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(writeSave(model.save())).toBe(true);
     const saved = [...values.values()];
     stopSaving();
-    model.startSector(1);
+    model.startGalaxy(1);
     expect(writeSave(model.save())).toBe(true);
     expect([...values.values()]).toEqual(saved);
   });

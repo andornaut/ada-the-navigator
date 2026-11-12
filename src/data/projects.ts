@@ -1,5 +1,5 @@
 import type { Conversation, Speaker } from "./conversations.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 /** How a project's ally joins the Phantom finale: an enemy behaviour rule, or the whales' current. */
 export type ProjectAlly = "chase" | "current" | "escort";
@@ -25,7 +25,7 @@ export interface CommunityProject {
 // Each galaxy's community projects (gameplay/economy.md "Donations"), with provisional costs.
 // Funding one plays its thank-you line, changes the world at its site, counts toward achievements
 // and makes one ally for the finale; none gives combat power outside it.
-export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProject[]>>> = {
+export const PROJECTS: Readonly<Partial<Record<GalaxyNumber, readonly CommunityProject[]>>> = {
   1: [
     {
       ally: "escort",
@@ -112,8 +112,8 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
 };
 
 /** A galaxy's community projects; a placeholder galaxy has none. */
-export function galaxyProjects(sector: SectorId): readonly CommunityProject[] {
-  return PROJECTS[sector] ?? [];
+export function galaxyProjects(galaxy: GalaxyNumber): readonly CommunityProject[] {
+  return PROJECTS[galaxy] ?? [];
 }
 
 /** Each project's thank-you, a one-line space conversation that plays once, when it is funded. */

@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import { shipTouches } from "./ship-body.ts";
-import type { SectorProgress } from "./types.ts";
+import { shipTouches } from "./shipBody.ts";
+import type { GalaxyProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -29,17 +29,17 @@ const memories = [
  * `recovered` galaxies' holodisks already held.
  */
 function questDone(
-  galaxy: SectorId,
+  galaxy: GalaxyNumber,
   known: string[],
-  recovered: readonly SectorId[] = [],
+  recovered: readonly GalaxyNumber[] = [],
 ): GameModel {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.prologueSeen = true;
-  model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as SectorId[];
+  model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as GalaxyNumber[];
   for (const held of recovered) {
     model.state.progress[held].holodisk = true;
   }
-  model.startSector(galaxy);
+  model.startGalaxy(galaxy);
   playOpening(model);
   Object.assign(model.state.progress[galaxy], {
     discoveries: known.length,
@@ -47,13 +47,13 @@ function questDone(
     known,
     questComplete: true,
     stage: galaxy === 1 ? 4 : 5,
-  } satisfies Partial<SectorProgress>);
+  } satisfies Partial<GalaxyProgress>);
   model.state.dialogue = null;
   return model;
 }
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
-  const target = ensureDestination(PROTOTYPE, id, f);
+  const target = ensureDestination(CONTENT, id, f);
   f.player = { x: target.x, y: target.y };
   f.dangerFor = 0;
 }
@@ -96,7 +96,7 @@ describe("holodisk objectives", () => {
       [2, "Buy the holodisk at the hub."],
       [3, "Fight your way to the holodisk."],
     ] as const) {
-      expect(PROTOTYPE.chapters[id]!.objectives.slice(-2)).toEqual([
+      expect(CONTENT.chapters[id]!.objectives.slice(-2)).toEqual([
         objective,
         "Go home to Earth when ready.",
       ]);
@@ -119,7 +119,7 @@ describe("galaxy one's holodisk", () => {
     expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[1].holodisk).toBe(true);
     expect(model.objective).toBe("Go home to Earth when ready.");
-    expect(model.state.notice).toBe(PROTOTYPE.labels.chapterComplete);
+    expect(model.state.notice).toBe(CONTENT.labels.chapterComplete);
     // The exchange is still running, so the outposts do not give it again.
     model.interact();
     expect(model.state.dialogue?.context).toBe("salvager");
@@ -151,14 +151,14 @@ describe("galaxy one's handover", () => {
     });
     expect(model.state.progress[1].holodisk).toBe(true);
     // A reload during the handover resumes it and continues to the insertion's first page aboard.
-    const resumed = relaunch(PROTOTYPE, model.save());
+    const resumed = relaunch(CONTENT, model.save());
     resumed.continueGame();
     resumed.choose("continue");
     expect(resumed.storyView?.page).toMatchObject({ holodisk: true, id: "holodisk:0" });
     expect(resumed.storyView?.page.text).toBe(inserted[0]);
     // A reload mid-moment shows it again from its first page, the flight still held.
     resumed.storyNext();
-    const again = relaunch(PROTOTYPE, resumed.save());
+    const again = relaunch(CONTENT, resumed.save());
     again.continueGame();
     expect(again.storyView?.page.id).toBe("holodisk:0");
     again.step(1, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
@@ -187,7 +187,7 @@ describe("new galaxy announcement", () => {
     // Sunflower unlocks Whirlpool, next on the route.
     expect(model.state.unlocked).toEqual([1, 3]);
     expect(model.state.announceGalaxy).toBe(true);
-    const saved = relaunch(PROTOTYPE, model.save());
+    const saved = relaunch(CONTENT, model.save());
     expect(saved.state.announceGalaxy).toBe(true);
     saved.continueGame();
     expect(saved.storyView?.page.id).toBe("opening");
@@ -200,7 +200,7 @@ describe("new galaxy announcement", () => {
     const model = questDone(1, ["growers", "workshop", "salvagers"]);
     resolveAtHome(model);
     expect(model.state.announceGalaxy).toBe(false);
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     arrive(model, "growers");
     model.interact();
@@ -213,7 +213,7 @@ describe("new galaxy announcement", () => {
   it("is skipped when the galaxies Whirlpool unlocks are all placeholders", () => {
     const model = questDone(3, ["whale", "family"]);
     resolveAtHome(model);
-    model.startSector(3);
+    model.startGalaxy(3);
     playOpening(model);
     model.step(0.01, idle);
     const f = model.state.flight!;
@@ -236,7 +236,7 @@ describe("unlocking the next galaxy", () => {
     expect(model.state.progress[1].resolved).toBe(true);
     expect(model.state.unlocked).toEqual([1]);
     // A resolved galaxy relaunches straight into flight, where the holodisk unlocks the next.
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.state.mode).toBe("space");
     expect(model.objective).toBe("Collect the holodisk from the outposts.");
@@ -347,7 +347,7 @@ describe("galaxy three's holodisk", () => {
     expect(pack.every((o) => o.persistent)).toBe(true);
     expect(f.combat?.initialPackSizes["route:holodisk:pack"]).toBe(HOLODISKS.guard.packSize);
     expect(routeBlocked("holodisk", f)).toBe(true);
-    expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+    expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
     // A guarded holodisk is never a travel destination and cannot be reached early.
     expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
     f.player = { x: disk.x, y: disk.y };
@@ -379,7 +379,7 @@ describe("galaxy three's holodisk", () => {
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
-    const { pickupMargin, pickupRadius } = PROTOTYPE.tuning.flight;
+    const { pickupMargin, pickupRadius } = CONTENT.tuning.flight;
     expect(pickupMargin).toBe(20);
     // How far east of the disk Ada's drawn ship last reaches it, to 0.001.
     let low = 0;
@@ -395,7 +395,7 @@ describe("galaxy three's holodisk", () => {
     }
     const contact = high;
     // Past the tractor beam's pull radius, the disk stays where it is and is not recovered.
-    const pull = shipTuning(ECONOMY, PROTOTYPE, f.levels).tractorRadius;
+    const pull = shipTuning(ECONOMY, CONTENT, f.levels).tractorRadius;
     f.player = { x: disk.x + pull + 1, y: disk.y };
     f.velocity = { x: 0, y: 0 };
     model.step(0.01, idle);
@@ -446,10 +446,10 @@ describe("galaxy three's holodisk", () => {
 
 describe("holodisk save", () => {
   it("round-trips the recovered flags", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.progress[2].holodisk = true;
     const restored = restoreSave(model.save())!;
-    expect([1, 2, 3].map((id) => restored.progress[id as SectorId].holodisk)).toEqual([
+    expect([1, 2, 3].map((id) => restored.progress[id as GalaxyNumber].holodisk)).toEqual([
       false,
       true,
       false,
@@ -457,13 +457,13 @@ describe("holodisk save", () => {
   });
 
   it("rejects a malformed flag", () => {
-    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
     (state.progress as Record<string, Record<string, unknown>>)[1]!.holodisk = "yes";
     expect(restoreSave(state)).toBeNull();
   });
 
   it("rejects a malformed announcement flag", () => {
-    const malformed = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    const malformed = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
     malformed.announceGalaxy = 1;
     expect(restoreSave(malformed)).toBeNull();
   });

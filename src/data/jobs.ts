@@ -1,5 +1,5 @@
 import type { RoutePosition } from "./galaxies.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 // Station jobs and the landmarks surveys chart (gameplay/quests.md). Every number is Gameplay's
 // provisional tuning.
@@ -62,7 +62,7 @@ export const JOB_REWARDS: Readonly<
 export const JOB_POOL: Readonly<
   Partial<
     Record<
-      SectorId,
+      GalaxyNumber,
       {
         readonly craft: readonly string[];
         readonly delivery: readonly string[];
@@ -104,7 +104,7 @@ export const JOB_POOL: Readonly<
 };
 
 /** Astra's lore lines after a job completes, one unseen line per job, for each built galaxy. */
-export const JOB_LORE: Readonly<Partial<Record<SectorId, readonly string[]>>> = {
+export const JOB_LORE: Readonly<Partial<Record<GalaxyNumber, readonly string[]>>> = {
   1: [
     "Nebulae are clouds where new stars are born.",
     "The growers trade seeds the way some people trade stories.",
@@ -132,7 +132,7 @@ export const JOB_LORE: Readonly<Partial<Record<SectorId, readonly string[]>>> = 
 export type LandmarkKind = "nebula" | "wreck" | "beacon";
 export const LANDMARK_KINDS: readonly LandmarkKind[] = ["nebula", "wreck", "beacon"];
 
-/** Every galaxy, by sector: each names four landmarks of each kind. */
+/** Every galaxy, by galaxy: each names four landmarks of each kind. */
 export type LandmarkGalaxy = 1 | 2 | 3 | 4 | 5 | 6;
 export const LANDMARK_GALAXIES: readonly LandmarkGalaxy[] = [1, 2, 3, 4, 5, 6];
 

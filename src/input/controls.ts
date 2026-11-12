@@ -7,10 +7,10 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import type { GameObjects, Scene } from "phaser";
 
-import { BUILD_LABEL } from "../build-label.ts";
+import { BUILD_LABEL } from "../buildLabel.ts";
 import type { Weapon } from "../data/types.ts";
-import { canvasSize, fitCanvasCamera, sceneFit } from "../game/play-camera.ts";
-import { RASTER_SCALE_EVENT } from "../game/svg-rasters.ts";
+import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
+import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
 import {
   createSpeedLine,
   createTouchChrome,
@@ -19,8 +19,8 @@ import {
   showSpeedLine,
   showTouchChrome,
   useDiscFrame,
-} from "../game/touch-chrome.ts";
-import type { ItemGain } from "../model/item-gains.ts";
+} from "../game/touchChrome.ts";
+import type { ItemGain } from "../model/itemGains.ts";
 import type { UseAction } from "../model/types.ts";
 import { PHONE_EVENTS } from "../pwa/events.ts";
 import type { StartCover, UpdateOffer } from "../pwa/updateOffer.ts";
@@ -28,11 +28,11 @@ import {
   type AchievementEntry,
   type AchievementsLabels,
   createAchievementsCard,
-} from "../ui/achievements-card.ts";
-import { type BackLayer, createBackStack, pressBack } from "../ui/back-stack.ts";
-import type { CheatAction } from "../ui/cheat-actions.ts";
+} from "../ui/achievementsCard.ts";
+import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
+import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
-import { createItemNotices, type NoticePlaces } from "../ui/item-notice.ts";
+import { createItemNotices, type NoticePlaces } from "../ui/itemNotice.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
 import {
   HUD_BUTTON,
@@ -46,8 +46,8 @@ import {
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge, type PlayLayout } from "../ui/layout/viewScale.ts";
 import { escapeTarget, pauseButtonShown } from "../ui/pause.ts";
-import { createPauseButton } from "../ui/pause-button.ts";
-import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pause-card.ts";
+import { createPauseButton } from "../ui/pauseButton.ts";
+import { createPauseCards, type PauseLabels, type PauseState } from "../ui/pauseCard.ts";
 import {
   createSettings,
   EXIT_SHOWN_ATTRIBUTE,
@@ -55,18 +55,18 @@ import {
   type SettingsLabels,
   type SettingsOptions,
 } from "../ui/settings.ts";
-import { createStatusPill, type StatusView } from "../ui/status-pill.ts";
+import { createStatusPill, type StatusView } from "../ui/statusPill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
-import { USE_PRESS_MS } from "../ui/touch-chrome.ts";
-import { createUpdateDialog, type UpdateLabels } from "../ui/update-dialog.ts";
+import { USE_PRESS_MS } from "../ui/touchChrome.ts";
+import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import {
   ammoCount,
   createWeaponSelector,
   type WeaponChoice,
   type WeaponLabels,
 } from "../ui/weapons.ts";
-import { FRAME_TURN } from "../view/frame-turn.ts";
-import { coarsePointer, touchControlsActive, useDiscShown } from "./coarse-pointer.ts";
+import { FRAME_TURN } from "../view/frameTurn.ts";
+import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -106,7 +106,7 @@ export interface ControlsOptions {
   };
   // Returns whether the switch was refused.
   readonly onWeaponSelect: (weapon: Weapon) => boolean;
-  // Player copy for the item notices (src/ui/item-notice.ts).
+  // Player copy for the item notices (src/ui/itemNotice.ts).
   readonly noticeLabels: Readonly<Record<string, string>>;
   readonly shieldLabel: string;
   readonly weaponLabels: WeaponLabels;

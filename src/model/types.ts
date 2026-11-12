@@ -1,13 +1,13 @@
 import type { ActivityId } from "../data/activities.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
-import type { EnemyArchetype } from "../data/enemy-catalog.ts";
+import type { EnemyArchetype } from "../data/enemyCatalog.ts";
 import type { JobType } from "../data/jobs.ts";
-import type { ResourceClass } from "../data/resource-rocks.ts";
-import type { StorySceneId } from "../data/story-ships.ts";
-import type { SectorId, Weapon } from "../data/types.ts";
+import type { ResourceClass } from "../data/resourceRocks.ts";
+import type { StorySceneId } from "../data/storyShips.ts";
+import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
-import type { EnemyState } from "./enemy-ai.ts";
-import type { ProjectileFade } from "./player-projectiles.ts";
+import type { EnemyState } from "./enemyAi.ts";
+import type { ProjectileFade } from "./playerProjectiles.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
 export type UseAction = "deliver" | "deposit" | "dock" | "salvage" | "talk" | "tow" | "use";
@@ -125,7 +125,7 @@ export interface FlightState {
     huntingPacks?: string[];
     unloadedPackMembers?: Record<string, number>;
   };
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seed: number;
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
@@ -168,7 +168,7 @@ export interface FlightState {
   freshDistance: number;
   nextId: number;
 }
-export interface SectorProgress {
+export interface GalaxyProgress {
   stage: number;
   introduced: boolean;
   questComplete: boolean;
@@ -280,7 +280,7 @@ export interface GuidedCalf extends Vec {
 export type OptionalTask = HeldActivity | HeldJob;
 export interface JobsState {
   /** Each station's offers in slot order, by galaxy and station id. */
-  boards: Partial<Record<SectorId, Record<string, JobOffer[]>>>;
+  boards: Partial<Record<GalaxyNumber, Record<string, JobOffer[]>>>;
   /** Jobs made so far, which seeds the next. */
   made: number;
 }
@@ -317,11 +317,11 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 11;
+  version: 12;
   mode: "home" | "space";
-  selectedSector: SectorId;
-  unlocked: SectorId[];
-  progress: Record<SectorId, SectorProgress>;
+  selectedGalaxy: GalaxyNumber;
+  unlocked: GalaxyNumber[];
+  progress: Record<GalaxyNumber, GalaxyProgress>;
   flight: FlightState | null;
   dialogue: DialogueState | null;
   /** The station whose card is open; action pauses as in a conversation. */
@@ -339,7 +339,7 @@ export interface GameState {
   /** Station job boards; Restart clears them. */
   jobs: JobsState;
   /** Each galaxy's one optional task, such as a held station job; Restart clears them. */
-  tasks: Partial<Record<SectorId, OptionalTask>>;
+  tasks: Partial<Record<GalaxyNumber, OptionalTask>>;
   /** Unlocked achievements and their counts, which Restart keeps. */
   achievements: AchievementState;
 }

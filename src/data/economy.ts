@@ -1,5 +1,5 @@
-import type { AsteroidSize } from "./asteroid-catalog.ts";
-import type { EnemyArchetype } from "./enemy-catalog.ts";
+import type { AsteroidSize } from "./asteroidCatalog.ts";
+import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "laser">;
@@ -72,7 +72,7 @@ export interface EconomyCatalog {
   engineMaxSpeed: readonly [number, number];
   /**
    * The Shield at levels 2 and 3: capacity, recharge delay and seconds from empty to full;
-   * level 1 is the prototype tuning's own.
+   * level 1 is the content tuning's own.
    */
   shieldLevels: Readonly<Record<"capacity" | "delay" | "fill", readonly [number, number]>>;
   /** Multipliers on the base value at levels 1, 2 and 3. */

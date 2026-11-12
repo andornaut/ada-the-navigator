@@ -1,5 +1,5 @@
 import { GALAXY_ID } from "./galaxies.ts";
-import type { ArtBackground, Background, SectorId } from "./types.ts";
+import type { ArtBackground, Background, GalaxyNumber } from "./types.ts";
 
 export type { ArtBackground, Background } from "./types.ts";
 
@@ -7,7 +7,7 @@ export type { ArtBackground, Background } from "./types.ts";
 export const CHAPTER_BACKGROUNDS: Readonly<
   Partial<
     Record<
-      SectorId,
+      GalaxyNumber,
       {
         readonly closing: Background;
         readonly opening: Background;
@@ -67,7 +67,7 @@ export interface GalaxyCard {
   /** Gameplay's flavor line (player-copy.md). */
   readonly flavor: string;
   /** The galaxy's numeric id. */
-  readonly galaxy: SectorId;
+  readonly galaxy: GalaxyNumber;
   /** The galaxy's stable id (galaxies.ts GALAXY_ID), which also names its selector previews. */
   readonly id: string;
   readonly name: string;
@@ -134,6 +134,6 @@ export const GALAXIES: readonly GalaxyCard[] = [
 ];
 
 /** A galaxy's selector card. */
-export function galaxyCard(galaxy: SectorId): GalaxyCard {
+export function galaxyCard(galaxy: GalaxyNumber): GalaxyCard {
   return GALAXIES.find((card) => card.galaxy === galaxy)!;
 }

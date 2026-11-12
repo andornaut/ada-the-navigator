@@ -64,12 +64,12 @@ export const MAP_SCREEN = {
   },
   /**
    * The HUD row's two secondary TEXT_BUTTONs, left to right: Quests and Galaxies, one action
-   * row of one width (HUD_ACTION_WIDTH), BUTTON_GAP apart. Galaxies (`earth`) ends right in from
+   * row of one width (HUD_ACTION_WIDTH), BUTTON_GAP apart. Galaxies ends right in from
    * the HUD rect's right: SMALL_BUTTON_GAP left of the close tool's disc, a small button whose
    * drawn right edge is on that line.
    */
   hudRow: {
-    earth: { width: HUD_ACTION_WIDTH },
+    galaxies: { width: HUD_ACTION_WIDTH },
     gap: BUTTON_GAP,
     height: TEXT_BUTTON.height,
     quests: { width: HUD_ACTION_WIDTH },
@@ -262,18 +262,18 @@ export function panelMaxWidth(insets: Insets, view: Size): number {
  * Galaxies on the local map's HUD row (art/map.md): its top on the HUD row (mapRowTop) and its
  * right edge SPACING.pageInset left of the tool column; it never moves with the header.
  */
-export function mapEarthRect(insets: Insets, view: Size): Rect {
+export function mapGalaxiesRect(insets: Insets, view: Size): Rect {
   const hud = hudRect(insets, view);
-  const { earth, height } = MAP_SCREEN.hudRow;
+  const { galaxies, height } = MAP_SCREEN.hudRow;
   const right = hud.x + hud.width - MAP_SCREEN.hudRow.right;
-  return { height, width: earth.width, x: right - earth.width, y: mapRowTop(insets, view) };
+  return { height, width: galaxies.width, x: right - galaxies.width, y: mapRowTop(insets, view) };
 }
 
 /** Quests on the HUD row: ending hudRow.gap left of Galaxies, at the same top. */
 export function mapQuestsRect(insets: Insets, view: Size): Rect {
-  const earth = mapEarthRect(insets, view);
+  const galaxies = mapGalaxiesRect(insets, view);
   const { gap, height, quests } = MAP_SCREEN.hudRow;
-  return { height, width: quests.width, x: earth.x - gap - quests.width, y: earth.y };
+  return { height, width: quests.width, x: galaxies.x - gap - quests.width, y: galaxies.y };
 }
 
 /** The header's cap: the HUD row from its left to SPACING.gap short of Quests. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
@@ -12,8 +12,8 @@ import { collectWeapon, noAmmo } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(): GameModel {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];
   return model;
@@ -22,7 +22,7 @@ function launched(): GameModel {
 function pickup(model: GameModel, weapon: Exclude<Weapon, "laser">): void {
   const flight = model.state.flight!;
   collectWeapon(weapon, flight);
-  stepFlight(PROTOTYPE, 0.01, idle, flight);
+  stepFlight(CONTENT, 0.01, idle, flight);
 }
 function incoming(flight: FlightState, count = 1): void {
   for (let index = 0; index < count; index++) {
@@ -85,7 +85,7 @@ describe("owned upgrade weapons", () => {
       const model = launched();
       pickup(model, weapon);
       const flight = model.state.flight!;
-      stepFlight(PROTOTYPE, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
+      stepFlight(CONTENT, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
       expect(flight.weapon).toBe(weapon);
       expect(flight.ownedWeapons).toEqual([weapon]);
       expect(flight.shots.length).toBeGreaterThan(1);
@@ -107,9 +107,9 @@ describe("owned upgrade weapons", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     const flight = model.state.flight!;
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
-    const events = stepFlight(PROTOTYPE, 0.01, idle, flight);
+    const events = stepFlight(CONTENT, 0.01, idle, flight);
     expect(events).toContainEqual({ type: "depleted" });
     expect(flight.shield).toBe(0);
   });
@@ -122,13 +122,13 @@ describe("owned upgrade weapons", () => {
     const flight = model.state.flight!;
     const seed = flight.seed;
     model.state.progress[1].deposited = 42;
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
     expect(model.state.flight).toBeNull();
     expect(model.state.progress[1].deposited).toBe(42);
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
@@ -149,11 +149,11 @@ describe("owned upgrade weapons", () => {
       kind: "destination",
       radius: 30,
     });
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     flight.sinceDamage = 0;
     incoming(flight);
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.hazardDamage);
+    stepFlight(CONTENT, 0.01, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.hazardDamage);
     expect(flight.weapon).toBe("rapidMissile");
     expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
   });
@@ -163,7 +163,7 @@ describe("owned upgrade weapons", () => {
     source.state.flight!.weapon = "scattershot";
     source.state.flight!.ammo.scattershot = 42;
     const saved = source.save();
-    const model = relaunch(PROTOTYPE, saved);
+    const model = relaunch(CONTENT, saved);
     expect(model.save()).toBe(saved);
     expect(model.weapons()).toContainEqual({
       ammo: 42,
@@ -175,7 +175,7 @@ describe("owned upgrade weapons", () => {
     expect(model.selectWeapon("laser")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
     // The switch wait is saved, so the resumed flight waits it out before switching back.
-    const resumed = relaunch(PROTOTYPE, model.save());
+    const resumed = relaunch(CONTENT, model.save());
     expect(resumed.selectWeapon("scattershot")).toBe(false);
     resumed.state.flight!.weaponSwitchFor = 0;
     expect(resumed.selectWeapon("scattershot")).toBe(true);
@@ -234,14 +234,14 @@ it("collects every nearby cargo piece above the former limit and preserves large
       role: "cargo",
     });
   }
-  stepFlight(PROTOTYPE, 0.01, idle, flight);
+  stepFlight(CONTENT, 0.01, idle, flight);
   expect(flight.cargo).toBe(1025);
   expect(flight.objects.filter((object) => object.role === "cargo")).toHaveLength(0);
   expect(restoreSave(model.save())?.flight?.cargo).toBe(1025);
-  model.state.selectedSector = 2;
+  model.state.selectedGalaxy = 2;
   model.state.unlocked.push(2);
-  flight.sector = 2;
-  const destination = ensureDestination(PROTOTYPE, "hub", flight);
+  flight.galaxy = 2;
+  const destination = ensureDestination(CONTENT, "hub", flight);
   model.state.progress[2].known.push("hub");
   flight.player = { x: destination.x, y: destination.y };
   model.interact();
@@ -295,13 +295,13 @@ describe("ammunition", () => {
     flight.ammo.multiLaser = 123;
     flight.ammo.scattershot = 45;
     expect(flight.weapon).toBe("multiLaser");
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
     expect(model.state.mode).toBe("home");
     expect(model.state.economy.ownedWeapons).toEqual(["multiLaser", "scattershot"]);
     expect(model.state.economy.ammo).toMatchObject({ multiLaser: 123, scattershot: 45 });
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.state.flight!.ammo).toMatchObject({ multiLaser: 123, scattershot: 45 });
     // Finding it again gives one pack, as for any weapon Ada owns.

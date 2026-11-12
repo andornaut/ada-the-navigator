@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 
 const LANDING = readFileSync(new URL("../../pages/index.html", import.meta.url), "utf8");
 
@@ -12,7 +12,7 @@ const FIREFOX_ANDROID = "Mozilla/5.0 (Android 15; Mobile; rv:149.0) Gecko/149.0 
 const FIREFOX_DESKTOP = "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0";
 const SAFARI_MAC =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
-const KINDS = Object.keys(PROTOTYPE.installSteps);
+const KINDS = Object.keys(CONTENT.installSteps);
 
 // The landing page is static HTML, so its install copy is checked against the data here.
 describe("the landing page's install markup", () => {
@@ -25,19 +25,19 @@ describe("the landing page's install markup", () => {
         ),
       ].map(([, kind, title, steps]) => [kind, { steps: words(steps!), title: words(title!) }]),
     );
-    expect(shown).toEqual(PROTOTYPE.installSteps);
+    expect(shown).toEqual(CONTENT.installSteps);
   });
 
   it("starts with Install hidden, labelled as the data has it", () => {
     expect(LANDING).toMatch(
-      new RegExp(`<button[^>]*\\bid="install"[^>]*\\bhidden>${PROTOTYPE.labels.installButton}<`),
+      new RegExp(`<button[^>]*\\bid="install"[^>]*\\bhidden>${CONTENT.labels.installButton}<`),
     );
   });
 
   it("gives the steps dialog Close as its only button", () => {
     const dialog = /<dialog[^>]*id="install-steps"[^>]*>([\s\S]*?)<\/dialog>/u.exec(LANDING)?.[1];
     expect(dialog?.match(/<button\b[^>]*>([^<]*)</gu)).toEqual([
-      `<button class="site-steps-close" type="button">${PROTOTYPE.labels.close}<`,
+      `<button class="site-steps-close" type="button">${CONTENT.labels.close}<`,
     ]);
   });
 

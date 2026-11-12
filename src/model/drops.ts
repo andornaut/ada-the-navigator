@@ -1,7 +1,7 @@
-import type { AsteroidSize } from "../data/asteroid-catalog.ts";
+import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
-import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemy-catalog.ts";
-import type { SectorId } from "../data/types.ts";
+import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
 /** Stardust pickups, from drops or discovery caches, carry an amount. */
@@ -11,7 +11,7 @@ export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind">): b
 
 export interface Drop {
   stardust: number;
-  /** An upgrade pickup, whose gift is chosen when Ada collects it (upgrade-drops.ts). */
+  /** An upgrade pickup, whose gift is chosen when Ada collects it (upgradeDrops.ts). */
   upgrade: boolean;
 }
 
@@ -33,15 +33,15 @@ export function dropRandom(seed: number, id: string): () => number {
  */
 export function rollEnemyDrop(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
   if (HEAVIES.includes(archetype)) {
-    return { stardust: enemyStardust(sector, archetype) * 2, upgrade: false };
+    return { stardust: enemyStardust(galaxy, archetype) * 2, upgrade: false };
   }
   return {
-    stardust: enemyStardust(sector, archetype),
+    stardust: enemyStardust(galaxy, archetype),
     upgrade: next() < catalog.upgradeDropChance.small,
   };
 }
@@ -52,12 +52,12 @@ export function rollEnemyDrop(
  */
 export function rollSalvageDrop(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
   return {
-    stardust: enemyStardust(sector, archetype),
+    stardust: enemyStardust(galaxy, archetype),
     upgrade: next() < catalog.upgradeDropChance.heavy,
   };
 }

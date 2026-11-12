@@ -32,7 +32,7 @@ import {
   type StoryOverlay,
   type TransitionStep,
   transitionSteps,
-} from "./story-art.ts";
+} from "./storyArt.ts";
 
 export interface StoryLabels {
   readonly next: string;

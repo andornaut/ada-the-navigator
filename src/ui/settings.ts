@@ -6,8 +6,8 @@ import {
   prefersReducedMotion,
   readDeviceSettings,
   writeSetting,
-} from "./device-settings.ts";
-import { type InstallPort, startInstall, watchInstallRow } from "./install-row.ts";
+} from "./deviceSettings.ts";
+import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
 import { hudButtonTarget, type StartNavButton, startNavOrder } from "./layout/playView.ts";
@@ -25,11 +25,11 @@ import {
   setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
-import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
-import { applyButtonSkin } from "./ui-skin.ts";
+import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
+import { applyButtonSkin } from "./uiSkin.ts";
 import { hudDiscStyle } from "./weapons.ts";
 
-export type { ControlVisibility } from "./device-settings.ts";
+export type { ControlVisibility } from "./deviceSettings.ts";
 
 export const FONT_ROLES = { body: "font-body", heading: "font-title" } as const;
 
@@ -59,7 +59,7 @@ export type InstallSteps = Readonly<
 >;
 
 export interface SettingsOptions {
-  // The build's version and commit (src/build-label.ts), the card's last line.
+  // The build's version and commit (src/buildLabel.ts), the card's last line.
   readonly build: string;
   // The Install row's install functions and each menu browser's steps; without them no row.
   readonly install?: { readonly port: InstallPort; readonly steps: InstallSteps } | undefined;

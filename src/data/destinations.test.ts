@@ -6,7 +6,7 @@ import {
   DESTINATIONS,
   STATION_SENTENCE,
 } from "./destinations.ts";
-import { CARTWHEEL_STORY_SHIPS } from "./story-ships.ts";
+import { CARTWHEEL_STORY_SHIPS } from "./storyShips.ts";
 
 describe("story destination data", () => {
   it("draws every destination but Cartwheel's buoy-held miner and visitors", () => {

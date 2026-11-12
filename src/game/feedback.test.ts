@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { createEnemy } from "../model/enemy-ai.ts";
+import { CONTENT } from "../data/content.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { createEnemy } from "../model/enemyAi.ts";
 import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
@@ -10,8 +10,8 @@ import { playOpening } from "../testing/launch.ts";
 import { ModelFeedback } from "./feedback.ts";
 
 function launched() {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   const feedback = new ModelFeedback();
   feedback.observe(100, model.state);
@@ -118,7 +118,7 @@ describe("model feedback", () => {
     };
     flight.objects = [archived, defeated];
     feedback.observe(100, state);
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     flight.objects = [];
     state.progress[1].destroyedEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
@@ -130,10 +130,10 @@ describe("model feedback", () => {
     const { feedback, flight, state } = launched();
     flight.objects = [{ hp: 4, id: "archived-hit", kind: "enemy", radius: 10, x: 9000, y: 9000 }];
     feedback.observe(100, state);
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     flight.shots = [
       {
-        damage: PROTOTYPE.tuning.flight.playerShotDamage,
+        damage: CONTENT.tuning.flight.playerShotDamage,
         enemy: false,
         hitIds: ["archived-hit"],
         id: "surviving-projectile",

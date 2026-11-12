@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { CALF } from "../data/activities.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { placedCalf, stepCalf } from "./calf.ts";
 import type { GuidedCalf } from "./types.ts";
 
 const ship = {
-  accelerationSeconds: PROTOTYPE.tuning.physics.accelerationSeconds,
-  maxSpeed: PROTOTYPE.tuning.physics.maxSpeed,
+  accelerationSeconds: CONTENT.tuning.physics.accelerationSeconds,
+  maxSpeed: CONTENT.tuning.physics.maxSpeed,
 };
 // Sunflower has no currents, so these steps have no drift.
 const step = (calf: GuidedCalf, player: { x: number; y: number }, seconds = 1 / 60) =>
@@ -36,7 +36,7 @@ describe("the guided calf", () => {
       fastest = Math.max(fastest, Math.hypot(calf.velocity.x, calf.velocity.y));
     }
     expect(fastest).toBeLessThanOrEqual(
-      CALF.speedFraction * PROTOTYPE.tuning.physics.maxSpeed + 1e-9,
+      CALF.speedFraction * CONTENT.tuning.physics.maxSpeed + 1e-9,
     );
     expect(player.x - calf.x).toBeGreaterThanOrEqual(CALF.stop - 1);
     expect(player.x - calf.x).toBeLessThanOrEqual(CALF.stop + 1);

@@ -1,4 +1,4 @@
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
@@ -14,16 +14,16 @@ import {
   LANCE_TELL,
   MINE_LAYER,
   PHASER_AIM_SECONDS,
-} from "../data/enemy-catalog.ts";
+} from "../data/enemyCatalog.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
-import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
+import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
-import { RESOURCE_ROCKS, resourceRock } from "../data/resource-rocks.ts";
+import { RESOURCE_ROCKS, resourceRock } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { PrototypeContent, SectorId } from "../data/types.ts";
-import { BEAM, weaponAt, type WeaponDefinition } from "../data/weapon-catalog.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
 import {
   ASTEROID_SHAPES,
   asteroidSize,
@@ -40,9 +40,9 @@ import {
   scenerySilhouette,
   type Silhouette,
 } from "./asteroids.ts";
-import { planChunk } from "./chunk-templates.ts";
+import { planChunk } from "./chunkTemplates.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
-import { gameAreaPoint, inGameArea } from "./edge-markers.ts";
+import { gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import {
   averageVelocity,
   createEnemy,
@@ -52,7 +52,7 @@ import {
   hardpointOffset,
   stepDebris,
   stepEnemy,
-} from "./enemy-ai.ts";
+} from "./enemyAi.ts";
 import {
   activateFlightRegion,
   activateRouteEncounter,
@@ -78,7 +78,7 @@ import {
   partsReach,
   worldParts,
 } from "./convex.ts";
-import { debrisFrameOf, debrisSilhouette } from "./debris-body.ts";
+import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
 import {
   carriesStardust,
   dropRandom,
@@ -87,24 +87,24 @@ import {
   rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
-import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
+import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_REACH, mineSpin, mineTouches } from "./mine-shape.ts";
+import { MINE_REACH, mineSpin, mineTouches } from "./mineShape.ts";
 import { nosePoint } from "./nose.ts";
-import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
-import { pickupOutline } from "./pickup-body.ts";
-import { planPlayerVolley, projectileReach } from "./player-projectiles.ts";
-import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./ship-body.ts";
-import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
+import { clearOfOreFields, oreFieldsNear } from "./oreFields.ts";
+import { pickupOutline } from "./pickupBody.ts";
+import { planPlayerVolley, projectileReach } from "./playerProjectiles.ts";
+import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./shipBody.ts";
+import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 import type {
   EconomyState,
   FlightEvent,
   FlightInput,
   FlightState,
+  GalaxyProgress,
   Mine,
   PickupRelease,
-  SectorProgress,
   Shot,
   SpaceObject,
   Vec,
@@ -138,15 +138,15 @@ const reducedMotions = new WeakMap<FlightState, boolean>();
  * galaxy, else a rock's; null for a circle obstacle.
  */
 function drawnOf(flight: FlightState, object: SpaceObject): Silhouette | null {
-  return debrisSilhouette(flight.sector, object) ?? scenerySilhouette(object);
+  return debrisSilhouette(flight.galaxy, object) ?? scenerySilhouette(object);
 }
 /**
  * The frame a scenery object shows and collides with now: traveling debris's tumble frame, a
  * rock's spin frame, or 0 when it is still.
  */
 function frameOf(flight: FlightState, object: SpaceObject): number {
-  if (debrisSilhouette(flight.sector, object)) {
-    return debrisFrameOf(flight.sector, object, reducedMotions.get(flight) ?? false, flight.time);
+  if (debrisSilhouette(flight.galaxy, object)) {
+    return debrisFrameOf(flight.galaxy, object, reducedMotions.get(flight) ?? false, flight.time);
   }
   const shape = sceneryShape(object);
   return shape
@@ -172,18 +172,18 @@ function random(seed: number): () => number {
     return n / 4294967296;
   };
 }
-function chunk(content: PrototypeContent, point: Vec): string {
+function chunk(content: GameContent, point: Vec): string {
   return `${Math.floor(point.x / content.tuning.chunkSize)},${Math.floor(point.y / content.tuning.chunkSize)}`;
 }
 /** Destinations and stations are safe areas; other objects protect nothing. */
-function protectedRadius(content: PrototypeContent, object: SpaceObject): number | null {
+function protectedRadius(content: GameContent, object: SpaceObject): number | null {
   return object.kind === "destination"
     ? content.tuning.safeRadius
     : object.kind === "station"
       ? ECONOMY.station.safeRadius
       : null;
 }
-function safe(content: PrototypeContent, point: Vec, flight: FlightState): boolean {
+function safe(content: GameContent, point: Vec, flight: FlightState): boolean {
   return flight.objects.some((o) => {
     const radius = protectedRadius(content, o);
     return radius !== null && distance(point, o) <= radius;
@@ -208,7 +208,7 @@ function clearOf(clearance: number, point: Vec, object: SpaceObject): boolean {
  * Whether an object's whole footprint stays outside every safe area and the safe radius of
  * every launch point, so no rock or drift path reaches one.
  */
-function clearOfSafeAreas(content: PrototypeContent, object: SpaceObject, flight: FlightState) {
+function clearOfSafeAreas(content: GameContent, object: SpaceObject, flight: FlightState) {
   return (
     flight.objects.every((o) => {
       const radius = protectedRadius(content, o);
@@ -221,7 +221,7 @@ function clearOfSafeAreas(content: PrototypeContent, object: SpaceObject, flight
  * generation leaves the space around landmarks open (gameplay/quests.md "Landmarks").
  */
 function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
-  return landmarkSites(flight.sector).every((site) => clearOf(LANDMARK_TUNING.chart, site, object));
+  return landmarkSites(flight.galaxy).every((site) => clearOf(LANDMARK_TUNING.chart, site, object));
 }
 const SCENERY = ["rock", "resource", "debris"];
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
@@ -238,7 +238,7 @@ export const BUMP_DAMAGE = { amount: 1, seconds: 0.5 } as const;
  * shield's recharge delay; settling Ada out of scenery she was placed in deals none.
  */
 function adaSceneryContact(
-  content: PrototypeContent,
+  content: GameContent,
   flight: FlightState,
   bumps = true,
 ): (normal: Vec, surface: Vec) => void {
@@ -263,11 +263,7 @@ function adaSceneryContact(
  * her reflected change and of the push-out, with mass as size ratio squared, and the enemy
  * the rest. Their relative motion then matches a scenery bounce, so they always separate.
  */
-export function bounceShips(
-  content: PrototypeContent,
-  flight: FlightState,
-  object: SpaceObject,
-): void {
+export function bounceShips(content: GameContent, flight: FlightState, object: SpaceObject): void {
   const enemy = object.enemy;
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   // The enemy's drawn hull, or its hull circle without Art's outline, against Ada's drawn ship.
@@ -319,7 +315,7 @@ function adaContact(flight: FlightState): SceneryContactOf {
 }
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
-function settleAda(content: PrototypeContent, flight: FlightState): void {
+function settleAda(content: GameContent, flight: FlightState): void {
   resolveScenery(
     flight,
     adaContact(flight),
@@ -436,13 +432,13 @@ function combined(directions: readonly Vec[]): Vec | null {
  * A debris river's rocks for each current within the active region that carries one: evenly
  * spaced along the current, each at a seeded offset across it.
  */
-function ensureDebrisRivers(content: PrototypeContent, point: Vec, flight: FlightState): void {
-  if (!CURRENTS.sectors.includes(flight.sector)) {
+function ensureDebrisRivers(content: GameContent, point: Vec, flight: FlightState): void {
+  if (!CURRENTS.galaxies.includes(flight.galaxy)) {
     return;
   }
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
   const ids = new Set(flight.objects.map((object) => object.id));
-  for (const current of currentsNear(flight.sector, reach, point)) {
+  for (const current of currentsNear(flight.galaxy, reach, point)) {
     if (!current.debris) {
       continue;
     }
@@ -481,7 +477,7 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
   const river = object.river!;
   const match = /^current:(-?\d+),(-?\d+)$/.exec(river.current);
   const current = match
-    ? currentInCell(flight.sector, { x: Number(match[1]), y: Number(match[2]) })
+    ? currentInCell(flight.galaxy, { x: Number(match[1]), y: Number(match[2]) })
     : null;
   if (!current) {
     object.hp = 0;
@@ -501,9 +497,9 @@ function placeRiverRock(flight: FlightState, object: SpaceObject): void {
 }
 
 /** Station sites within the active region become persistent station objects. */
-function ensureStations(content: PrototypeContent, point: Vec, flight: FlightState): void {
+function ensureStations(content: GameContent, point: Vec, flight: FlightState): void {
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
-  for (const site of stationsNear(ECONOMY, flight.sector, reach, point)) {
+  for (const site of stationsNear(ECONOMY, flight.galaxy, reach, point)) {
     if (
       !flight.objects.some((object) => object.id === site.id) &&
       !Object.hasOwn(flight.world.notables, site.id)
@@ -534,7 +530,7 @@ function placeStation(site: Vec & { id: string }, flight: FlightState): SpaceObj
 }
 /** Ensures a discovered station is present, for travel. */
 export function ensureStation(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject | null {
@@ -542,7 +538,7 @@ export function ensureStation(
   if (existing) {
     return existing;
   }
-  const site = stationById(ECONOMY, flight.sector, id);
+  const site = stationById(ECONOMY, flight.galaxy, id);
   if (!site) {
     return null;
   }
@@ -564,7 +560,7 @@ function generatedChunks(flight: FlightState): Set<string> {
   return index.keys;
 }
 
-function generate(content: PrototypeContent, point: Vec, flight: FlightState): void {
+function generate(content: GameContent, point: Vec, flight: FlightState): void {
   activateFlightRegion(content, point, flight);
   ensureStations(content, point, flight);
   ensureDebrisRivers(content, point, flight);
@@ -583,13 +579,13 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
       flight.chunks.push(key);
       generated.add(key);
       chunkIndexes.get(flight)!.length = flight.chunks.length;
-      const field = byPosition(ASTEROID_FIELDS, flight.sector);
+      const field = byPosition(ASTEROID_FIELDS, flight.galaxy);
       const plan = planChunk(CHUNK_CATALOG, {
         asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
         clearance: content.tuning.flight.shipRadius,
+        galaxy: flight.galaxy,
         objectsPerChunk: tuning.objectsPerChunk,
         rockRadius: tuning.rockRadius,
-        sector: flight.sector,
         seed: flight.seed,
         shipRadius: tuning.shipRadius,
         size,
@@ -644,8 +640,8 @@ function generate(content: PrototypeContent, point: Vec, flight: FlightState): v
           clearOfSafeAreas(content, object, flight) &&
           clearOfLandmarks(object, flight) &&
           (object.kind === "pickup" ||
-            (!inCurrent(flight.sector, footprint, object) &&
-              clearOfOreFields(flight.sector, footprint, at)))
+            (!inCurrent(flight.galaxy, footprint, object) &&
+              clearOfOreFields(flight.galaxy, footprint, at)))
         ) {
           flight.objects.push(object);
           existing.add(object.id);
@@ -668,7 +664,7 @@ export const PLATFORM_FACING: Readonly<Vec> = { x: 1, y: 0 };
  * ore-field clearance of a station, the hub or a quantum jump arrival is left out.
  */
 function placeOreFields(
-  content: PrototypeContent,
+  content: GameContent,
   x: number,
   y: number,
   existing: Set<string>,
@@ -676,7 +672,7 @@ function placeOreFields(
 ): void {
   const size = content.tuning.chunkSize;
   const centre = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-  for (const field of oreFieldsNear(flight.sector, size, centre)) {
+  for (const field of oreFieldsNear(flight.galaxy, size, centre)) {
     if (Math.floor(field.x / size) !== x || Math.floor(field.y / size) !== y) {
       continue;
     }
@@ -685,7 +681,7 @@ function placeOreFields(
       (object) => object.kind === "destination" && object.id === "hub",
     );
     if (
-      stationsNear(ECONOMY, flight.sector, reach, field).length ||
+      stationsNear(ECONOMY, flight.galaxy, reach, field).length ||
       (hub && distance(hub, field) < reach) ||
       (flight.arrivals ?? []).some((arrival) => distance(arrival, field) < reach)
     ) {
@@ -716,7 +712,7 @@ function placeOreFields(
     });
     const id = `platform:${field.id}`;
     if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
-      const platform = spawnEnemy(content, flight.sector, "platform", id, field.guard);
+      const platform = spawnEnemy(content, flight.galaxy, "platform", id, field.guard);
       platform.enemy!.facing = { ...PLATFORM_FACING };
       flight.objects.push(platform);
       existing.add(id);
@@ -730,8 +726,8 @@ function combat(flight: FlightState) {
 
 /** A new enemy with its galaxy's archetype changes, hit points and hardpoints. */
 function spawnEnemy(
-  content: PrototypeContent,
-  sector: SectorId,
+  content: GameContent,
+  galaxy: GalaxyNumber,
   archetype: EnemyArchetype,
   id: string,
   point: Vec,
@@ -739,7 +735,7 @@ function spawnEnemy(
   phase = 0,
   escortOf: string | null = null,
 ): SpaceObject {
-  const definition = enemyDefinition(sector, archetype);
+  const definition = enemyDefinition(galaxy, archetype);
   return {
     ...point,
     enemy: createEnemy(definition, { archetype, escortOf, id, packId, phase }, point),
@@ -791,12 +787,12 @@ export function hostsEncounterCell(spacing: number, index: number): boolean {
  * Chunk spacing of encounter cells. Areal density follows the galaxy's encounter rate, so
  * the spacing shrinks with its square root; adjacent cells stay a quiet distance apart.
  */
-export function encounterSpacing(content: PrototypeContent, sector: SectorId): number {
+export function encounterSpacing(content: GameContent, galaxy: GalaxyNumber): number {
   const base = Math.max(
     3,
     Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
   );
-  return base / Math.sqrt(encounterRate(sector));
+  return base / Math.sqrt(encounterRate(galaxy));
 }
 
 /** Ships too heavy to drift with a current, and the fixed platform. */
@@ -810,7 +806,7 @@ const FLIGHT_START: Vec = { x: 0, y: 0 };
 
 /** Farthest an encounter's ships are placed from its cell centre, hulls included. */
 export function encounterReach(
-  content: PrototypeContent,
+  content: GameContent,
   archetype: EnemyArchetype,
   count: number,
   escorts: EncounterEntry["escorts"],
@@ -826,7 +822,7 @@ export function encounterReach(
 
 /** Whether ships placed within `reach` of `point` could come within the calm radius. */
 function nearArrival(
-  content: PrototypeContent,
+  content: GameContent,
   flight: FlightState,
   reach: number,
   point: Vec,
@@ -836,15 +832,10 @@ function nearArrival(
   );
 }
 
-function generateRegion(
-  content: PrototypeContent,
-  x: number,
-  y: number,
-  flight: FlightState,
-): void {
+function generateRegion(content: GameContent, x: number, y: number, flight: FlightState): void {
   const size = content.tuning.chunkSize;
   // One encounter cell per quiet-distance grid; adjacent chunk traversal cannot duplicate it.
-  const spacing = encounterSpacing(content, flight.sector);
+  const spacing = encounterSpacing(content, flight.galaxy);
   if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
     return;
   }
@@ -886,14 +877,14 @@ function generateRegion(
   const packId = `pack:${x},${y}`;
   const countRoll = next();
   const { archetype, count, escorts } = rollEncounter(
-    encounterTable(flight.sector),
+    encounterTable(flight.galaxy),
     countRoll,
     next(),
   );
   // Half of Cartwheel's claim jumpers gather at the nearest ore field within this cell's reach.
-  if (ORE_FIELDS.sectors.includes(flight.sector) && archetype === "fighter") {
+  if (ORE_FIELDS.galaxies.includes(flight.galaxy) && archetype === "fighter") {
     const reach = (spacing * size) / 2;
-    const field = oreFieldsNear(flight.sector, reach, center).sort(
+    const field = oreFieldsNear(flight.galaxy, reach, center).sort(
       (a, b) => distance(a, center) - distance(b, center),
     )[0];
     const angle = next() * Math.PI * 2;
@@ -931,7 +922,7 @@ function generateRegion(
  * budget, preserving its casualty count; escorts start on their stations.
  */
 function admitGroup(
-  content: PrototypeContent,
+  content: GameContent,
   flight: FlightState,
   next: () => number,
   group: { archetype: EnemyArchetype; count: number; escortOf: string | null; packId: string },
@@ -951,7 +942,7 @@ function admitGroup(
     const phase = next() * Math.PI * 2;
     const object = spawnEnemy(
       content,
-      flight.sector,
+      flight.galaxy,
       archetype,
       `${packId}:${i}`,
       place(i, phase),
@@ -1066,7 +1057,7 @@ function routePlacementRandom(seed: number, id: string): () => number {
 }
 
 /** Move only capitals inside the gap of an earlier kept capital; paged-in capitals come last. */
-function settleResumedCapitals(content: PrototypeContent, flight: FlightState): void {
+function settleResumedCapitals(content: GameContent, flight: FlightState): void {
   const kept: SpaceObject[] = [];
   const displaced: SpaceObject[] = [];
   for (const object of flight.objects.filter(capital)) {
@@ -1079,7 +1070,7 @@ function settleResumedCapitals(content: PrototypeContent, flight: FlightState): 
   }
 }
 
-function relocateRouteGuards(content: PrototypeContent, flight: FlightState): void {
+function relocateRouteGuards(content: GameContent, flight: FlightState): void {
   placeGuards(
     content,
     flight.objects.filter(
@@ -1094,7 +1085,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
 }
 
 /** Plan all guard positions before applying layout changes to their persistent state. */
-function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: FlightState): void {
+function placeGuards(content: GameContent, guards: SpaceObject[], flight: FlightState): void {
   const destinations = flight.objects.filter((object) => protectedRadius(content, object) !== null);
   const positions = new Map<SpaceObject, Vec>();
   const maxRadius = flight.objects.reduce(
@@ -1162,9 +1153,9 @@ export { relocateRouteGuards as settleRouteEncounters };
  * The first time each flight Ada comes within Talk range of a destination its guard still blocks
  * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
  * guard loads, and each blocking guard is summoned toward Ada, marked at the edge until it is on
- * screen (edge-markers.ts). The game has Astra say a guard line on the event.
+ * screen (edgeMarkers.ts). The game has Astra say a guard line on the event.
  */
-function cueGuards(content: PrototypeContent, flight: FlightState, events: FlightEvent[]): void {
+function cueGuards(content: GameContent, flight: FlightState, events: FlightEvent[]): void {
   const cued = flight.objects.filter(
     (object) =>
       object.kind === "destination" &&
@@ -1224,14 +1215,14 @@ export function routeBlocked(id: string, flight: FlightState): boolean {
  * The holodisk leader's pack. Its members persist so the fight cannot reroll, but only the
  * leader blocks the route, so a fleeing member never strands the holodisk.
  */
-function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState): void {
+function guardPack(content: GameContent, leader: Vec, flight: FlightState): void {
   const { pack, packSize } = HOLODISKS.guard;
   const packId = "route:holodisk:pack";
   for (let i = 0; i < packSize; i++) {
     const angle = (i * Math.PI * 2) / packSize;
     const member = spawnEnemy(
       content,
-      flight.sector,
+      flight.galaxy,
       pack,
       `${packId}:${i}`,
       { x: leader.x + Math.cos(angle) * 90, y: leader.y + Math.sin(angle) * 90 },
@@ -1254,7 +1245,7 @@ function guardPack(content: PrototypeContent, leader: Vec, flight: FlightState):
  * placed again under its id replaces its members.
  */
 export function placeHuntingPack(
-  content: PrototypeContent,
+  content: GameContent,
   packId: string,
   centre: Vec,
   count: number,
@@ -1268,7 +1259,7 @@ export function placeHuntingPack(
     const phase = (i * Math.PI * 2) / count;
     const member = spawnEnemy(
       content,
-      flight.sector,
+      flight.galaxy,
       HUNTING_PACKS.archetype,
       `${packId}:${i}`,
       {
@@ -1284,8 +1275,8 @@ export function placeHuntingPack(
   combat(flight).initialPackSizes[packId] = count;
 }
 
-export function ensureHuntingPacks(content: PrototypeContent, flight: FlightState): void {
-  if (!HUNTING_PACKS.sectors.includes(flight.sector)) {
+export function ensureHuntingPacks(content: GameContent, flight: FlightState): void {
+  if (!HUNTING_PACKS.galaxies.includes(flight.galaxy)) {
     return;
   }
   const placed = (combat(flight).huntingPacks ??= []);
@@ -1318,7 +1309,7 @@ export function ensureHuntingPacks(content: PrototypeContent, flight: FlightStat
 }
 
 export function ensureRouteEncounter(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject | null {
@@ -1344,7 +1335,7 @@ export function ensureRouteEncounter(
   const holodisk = id === "holodisk";
   const archetype: EnemyArchetype = holodisk
     ? HOLODISKS.guard.leader
-    : flight.sector === 1
+    : flight.galaxy === 1
       ? "frigate"
       : "capital";
   activateFlightRegion(content, destination, flight);
@@ -1356,7 +1347,7 @@ export function ensureRouteEncounter(
   const approach = length(heading) ? heading : { x: 0, y: 1 };
   const offset = content.tuning.safeRadius + radius + 120;
   const point = { x: destination.x + approach.x * offset, y: destination.y + approach.y * offset };
-  const object = spawnEnemy(content, flight.sector, archetype, `route:${id}`, point);
+  const object = spawnEnemy(content, flight.galaxy, archetype, `route:${id}`, point);
   object.routeId = id;
   // Clear the guard footprint and leave the protected destination untouched.
   clearLayoutObjects(
@@ -1373,7 +1364,7 @@ export function ensureRouteEncounter(
 }
 
 export function ensureDestination(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject {
@@ -1400,12 +1391,12 @@ export function ensureDestination(
     x: flight.player.x + heading.x * span - heading.y * offset,
     y: flight.player.y + heading.y * span + heading.x * offset,
   };
-  // Story destinations keep storySpacing from each other and clear of the sector's fixed
+  // Story destinations keep storySpacing from each other and clear of the galaxy's fixed
   // stations and landmarks.
   const crowded = (point: Vec) =>
     flight.objects.some((o) => o.kind === "destination" && distance(o, point) < spacing) ||
-    stationsNear(ECONOMY, flight.sector, ECONOMY.station.destinationClearance, point).length > 0 ||
-    landmarkSites(flight.sector).some(
+    stationsNear(ECONOMY, flight.galaxy, ECONOMY.station.destinationClearance, point).length > 0 ||
+    landmarkSites(flight.galaxy).some(
       (site) => distance(site, point) < LANDMARK_TUNING.placeClearance,
     );
   while (crowded(target)) {
@@ -1414,7 +1405,7 @@ export function ensureDestination(
   }
   // They also keep a current's clearance: the nearest clear point within a short reach, so
   // the destination stays near where it would have been and its chunks stay in one region.
-  if (inCurrent(flight.sector, CURRENTS.clearance, target)) {
+  if (inCurrent(flight.galaxy, CURRENTS.clearance, target)) {
     const step = CURRENTS.width[1] / 2;
     search: for (let ring = 1; ring <= 8; ring++) {
       for (let spoke = 0; spoke < 16; spoke++) {
@@ -1423,7 +1414,7 @@ export function ensureDestination(
           x: target.x + Math.cos(angle) * ring * step,
           y: target.y + Math.sin(angle) * ring * step,
         };
-        if (!inCurrent(flight.sector, CURRENTS.clearance, point) && !crowded(point)) {
+        if (!inCurrent(flight.galaxy, CURRENTS.clearance, point) && !crowded(point)) {
           target.x = point.x;
           target.y = point.y;
           break search;
@@ -1451,12 +1442,12 @@ export function ensureDestination(
  * (gameplay/rules.md), placing the hub first; null for any other destination.
  */
 function heldDestination(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject | null {
   const offset =
-    flight.sector === CARTWHEEL_STORY_SHIPS.sector &&
+    flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
     Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
       ? CARTWHEEL_STORY_SHIPS.destinations[id as keyof typeof CARTWHEEL_STORY_SHIPS.destinations]
       : undefined;
@@ -1481,14 +1472,14 @@ function heldDestination(
 /** Whether a destination is held beside the hub, so it neither moves ahead nor has a guard. */
 function isHeld(id: string, flight: FlightState): boolean {
   return (
-    flight.sector === CARTWHEEL_STORY_SHIPS.sector &&
+    flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
     Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
   );
 }
 
 /** Reposition an undiscovered encounter only while its old location is outside the generated near field. */
 export function placeDestinationAhead(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): SpaceObject {
@@ -1506,10 +1497,10 @@ export function placeDestinationAhead(
 export type Loadout = Pick<EconomyState, "ammo" | "levels" | "ownedWeapons" | "weapon">;
 
 export function createFlight(
-  content: PrototypeContent,
-  sector: SectorId,
+  content: GameContent,
+  galaxy: GalaxyNumber,
   seed: number,
-  progress: Pick<SectorProgress, "known">,
+  progress: Pick<GalaxyProgress, "known">,
   loadout: Loadout = {
     ammo: grantedAmmo([]),
     levels: noLevels(),
@@ -1527,13 +1518,13 @@ export function createFlight(
     fireCooldown: 0,
     freshChunk: "0,0",
     freshDistance: 0,
+    galaxy,
     levels,
     mines: [],
     nextId: 0,
     objects: [],
     ownedWeapons: [...loadout.ownedWeapons],
     player: { x: 0, y: 0 },
-    sector,
     seed,
     shield: shipTuning(ECONOMY, content, levels).shieldMax,
     shots: [],
@@ -1555,7 +1546,7 @@ export function createFlight(
   return flight;
 }
 
-export function teleport(content: PrototypeContent, id: string, flight: FlightState): boolean {
+export function teleport(content: GameContent, id: string, flight: FlightState): boolean {
   if (flight.dangerFor > 0) {
     return false;
   }
@@ -1592,7 +1583,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
 }
 
 function fire(
-  content: PrototypeContent,
+  content: GameContent,
   viewportWidth: number,
   aim: Vec,
   flight: FlightState,
@@ -1641,7 +1632,7 @@ function fire(
  * count.
  */
 export function inBattle(
-  content: PrototypeContent,
+  content: GameContent,
   viewportWidth: number,
   flight: Pick<FlightState, "objects" | "player">,
 ): boolean {
@@ -1666,7 +1657,7 @@ export function inBattle(
  * battle square. Danger has no release time and no safe-area exemption.
  */
 export function inDanger(
-  content: PrototypeContent,
+  content: GameContent,
   viewportWidth: number,
   flight: Pick<FlightState, "objects" | "player" | "shots">,
 ): boolean {
@@ -1682,7 +1673,7 @@ export function inDanger(
   );
 }
 /** Removes `amount` HP from Ada's shield unless she is in a safe area. */
-function damage(content: PrototypeContent, amount: number, flight: FlightState): void {
+function damage(content: GameContent, amount: number, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
     return;
   }
@@ -1694,7 +1685,7 @@ function damage(content: PrototypeContent, amount: number, flight: FlightState):
  * to 1 (full reach). No input requests no speed; any input requests at least minSpeedFraction.
  */
 export function movementSpeedFraction(
-  tuning: Pick<PrototypeContent["tuning"], "minSpeedFraction" | "speedCurveExponent">,
+  tuning: Pick<GameContent["tuning"], "minSpeedFraction" | "speedCurveExponent">,
   deflection: number,
 ): number {
   const m = Math.min(1, Math.max(0, deflection));
@@ -1708,7 +1699,7 @@ export function movementSpeedFraction(
  * [0, 1], for jets. Flights without levels use the base engine.
  */
 export function shipSpeedFraction(
-  content: PrototypeContent,
+  content: GameContent,
   flight: Pick<FlightState, "velocity"> & Partial<Pick<FlightState, "levels">>,
 ): number {
   const physics = shipTuning(ECONOMY, content, flight.levels ?? noLevels()).physics;
@@ -1720,7 +1711,7 @@ export function shipSpeedFraction(
  * pickup's drawn `outline`, or its circle of `radius`.
  */
 export function pickupTouched(
-  content: PrototypeContent,
+  content: GameContent,
   flight: FlightState,
   center: Vec,
   radius: number,
@@ -1735,7 +1726,7 @@ export function pickupTouched(
  * Docks at a station within Talk range (gameplay/economy.md): Ada stops where she is. Returns
  * false unless that station is in this flight and in range.
  */
-export function dockFlight(content: PrototypeContent, id: string, flight: FlightState): boolean {
+export function dockFlight(content: GameContent, id: string, flight: FlightState): boolean {
   const station = flight.objects.find(
     (object) =>
       object.id === id &&
@@ -1777,12 +1768,7 @@ export function towing<
     turnSeconds: physics.turnSeconds * turnScale,
   };
 }
-function move(
-  content: PrototypeContent,
-  dt: number,
-  input: FlightInput,
-  flight: FlightState,
-): void {
+function move(content: GameContent, dt: number, input: FlightInput, flight: FlightState): void {
   const magnitude = Math.min(1, length(input.move));
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
   const top = physics.maxSpeed;
@@ -1808,7 +1794,7 @@ function move(
   // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
   resolveScenery(flight, contactOf, onContact, flight.player);
   // A current's flow adds drift outside Ada's physics and speed cap.
-  const drift = flowAt(flight.sector, flight.player);
+  const drift = flowAt(flight.galaxy, flight.player);
   const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
   const steps = Math.max(1, Math.ceil((length(travel) * dt) / 4));
   for (let i = 0; i < steps; i++) {
@@ -1857,12 +1843,12 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     !state.returning &&
     !state.fleeing &&
     !state.disabled &&
-    distance(object, flight.player) <= enemyDefinition(flight.sector, state.archetype).perception
+    distance(object, flight.player) <= enemyDefinition(flight.galaxy, state.archetype).perception
   );
 }
 
 /** Whether drones are near: a live enemy presses Ada, as the danger it sets measures. */
-export function dronesNear(content: PrototypeContent, flight: FlightState): boolean {
+export function dronesNear(content: GameContent, flight: FlightState): boolean {
   const adaSafe = safe(content, flight.player, flight);
   return flight.objects.some(
     (object) =>
@@ -1873,7 +1859,7 @@ export function dronesNear(content: PrototypeContent, flight: FlightState): bool
 }
 
 function enemies(
-  content: PrototypeContent,
+  content: GameContent,
   dt: number,
   flight: FlightState,
   events: FlightEvent[],
@@ -1901,7 +1887,7 @@ function enemies(
   const peers = objects.flatMap((object) => (object.enemy ? [object.enemy] : []));
   for (const object of objects) {
     const state = object.enemy!;
-    const definition = enemyDefinition(flight.sector, state.archetype);
+    const definition = enemyDefinition(flight.galaxy, state.archetype);
     const targetable = !safe(content, flight.player, flight) && !safe(content, object, flight);
     const visible = !flight.objects.some(
       (obstacle) =>
@@ -1924,7 +1910,7 @@ function enemies(
         dormantPackMembers: retainedPackMembers(content, flight),
         dt,
         initialPackSizes: combat(flight).initialPackSizes,
-        lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.sector]],
+        lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.galaxy]],
         peers,
         player: flight.player,
         playerVelocity: aimVelocity,
@@ -1951,7 +1937,7 @@ function enemies(
     // Small craft drift with a current; frigates, capitals and platforms are too heavy.
     const drift = DRIFT_PROOF.includes(state.archetype)
       ? { x: 0, y: 0 }
-      : flowAt(flight.sector, object);
+      : flowAt(flight.galaxy, object);
     const steps = Math.max(
       1,
       Math.ceil((Math.hypot(velocity.x + drift.x, velocity.y + drift.y) * dt) / 4),
@@ -2097,7 +2083,7 @@ function armed(mine: Mine): boolean {
  * Ages each mine: one touching Ada's drawn ship pops and damages her; one past its life fizzles,
  * harmless. Each goes once its fizzle or pop has played.
  */
-function stepMines(content: PrototypeContent, dt: number, flight: FlightState): void {
+function stepMines(content: GameContent, dt: number, flight: FlightState): void {
   const body = shipBody(flight.facing);
   for (const mine of flight.mines) {
     mine.age += dt;
@@ -2167,7 +2153,7 @@ function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, t
 }
 
 /** Ballistic debris keeps constant velocity and damages; drifting asteroids follow their path. */
-function moveDebris(content: PrototypeContent, dt: number, flight: FlightState): void {
+function moveDebris(content: GameContent, dt: number, flight: FlightState): void {
   for (const object of flight.objects) {
     if (object.river) {
       // River debris follows its current and harms Ada on contact like other traveling debris.
@@ -2216,7 +2202,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
 }
 
 function shots(
-  content: PrototypeContent,
+  content: GameContent,
   dt: number,
   flight: FlightState,
   events: FlightEvent[],
@@ -2287,7 +2273,7 @@ function shots(
  * until it is spent; a large hull only takes it at a live hardpoint.
  */
 function strike(
-  content: PrototypeContent,
+  content: GameContent,
   shot: Shot,
   flight: FlightState,
   events: FlightEvent[],
@@ -2302,13 +2288,13 @@ function strike(
       object.enemy?.salvaged ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? !enemyTouched(ROUTE_POSITION[flight.sector], object, shot, 3)
+        ? !enemyTouched(ROUTE_POSITION[flight.galaxy], object, shot, 3)
         : !sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)))
     ) {
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, flight.sector, partReach(content), 3, shot, object);
+    const part = hitPart(content, flight.galaxy, partReach(content), 3, shot, object);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
       blast(content, shot.damage, shot.blast, shot, object, flight, events);
@@ -2323,21 +2309,21 @@ function strike(
 }
 
 /** How near a point must be to a live hardpoint to strike it. */
-function partReach(content: PrototypeContent): number {
+function partReach(content: GameContent): number {
   return content.tuning.flight.shipRadius + 6;
 }
 
 /** A multipart enemy's live hardpoints, in world coordinates. */
 function liveParts(
-  content: PrototypeContent,
-  sector: SectorId,
+  content: GameContent,
+  galaxy: GalaxyNumber,
   object: SpaceObject,
 ): { id: string; x: number; y: number }[] {
   const enemy = object.enemy;
   if (!enemy) {
     return [];
   }
-  const definition = enemyDefinition(sector, enemy.archetype);
+  const definition = enemyDefinition(galaxy, enemy.archetype);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
     .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
@@ -2377,8 +2363,8 @@ function enemyTouched(
  * top; one without Art's outline when its anchor is within `reach`.
  */
 function hitPart(
-  content: PrototypeContent,
-  sector: SectorId,
+  content: GameContent,
+  galaxy: GalaxyNumber,
   reach: number,
   tolerance: number,
   point: Vec,
@@ -2392,8 +2378,8 @@ function hitPart(
     return null;
   }
   let nearest: { id: string; gap: number } | undefined;
-  for (const part of liveParts(content, sector, object)) {
-    const outline = enemyPartOutline(ROUTE_POSITION[sector], enemy, part.id);
+  for (const part of liveParts(content, galaxy, object)) {
+    const outline = enemyPartOutline(ROUTE_POSITION[galaxy], enemy, part.id);
     const contact = outline && outlineContact(outline, object, point, tolerance);
     // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
     const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
@@ -2406,7 +2392,7 @@ function hitPart(
 
 /** Damages an enemy (at a hardpoint, or its hull for null) or scenery, then resolves its loss. */
 function hit(
-  content: PrototypeContent,
+  content: GameContent,
   amount: number,
   part: string | null,
   object: SpaceObject,
@@ -2417,7 +2403,7 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyDefinition(flight.sector, object.enemy.archetype);
+    const definition = enemyDefinition(flight.galaxy, object.enemy.archetype);
     const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
     object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
@@ -2477,7 +2463,7 @@ function hit(
  * struck one included.
  */
 function blast(
-  content: PrototypeContent,
+  content: GameContent,
   amount: number,
   radius: number,
   at: Vec,
@@ -2497,8 +2483,8 @@ function blast(
     if (object === struck || object.kind !== "enemy" || object.hp <= 0 || object.enemy?.salvaged) {
       continue;
     }
-    const position = ROUTE_POSITION[flight.sector];
-    const part = hitPart(content, flight.sector, radius + partReach(content), radius, at, object);
+    const position = ROUTE_POSITION[flight.galaxy];
+    const part = hitPart(content, flight.galaxy, radius + partReach(content), radius, at, object);
     if (part === null && !enemyTouched(position, object, at, radius)) {
       continue;
     }
@@ -2623,7 +2609,7 @@ function sceneryEntry(
 }
 
 function fireBeam(
-  content: PrototypeContent,
+  content: GameContent,
   definition: WeaponDefinition,
   aim: Vec,
   origin: Vec,
@@ -2679,8 +2665,8 @@ function fireBeam(
       );
     } else if (object.kind === "enemy" && object.enemy && !object.enemy.salvaged) {
       // A heavy's live hardpoints take the beam first, then its hull.
-      for (const part of liveParts(content, flight.sector, object)) {
-        const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
+      for (const part of liveParts(content, flight.galaxy, object)) {
+        const outline = enemyPartOutline(ROUTE_POSITION[flight.galaxy], object.enemy, part.id);
         if (outline) {
           drawn(object, part.id, outline);
         } else {
@@ -2859,7 +2845,7 @@ function lanceHolds(beam: EnemyBeam, flight: FlightState): SpaceObject | undefin
  * beam half-width. Each shows for its beam and spark, then goes.
  */
 function stepEnemyBeams(
-  content: PrototypeContent,
+  content: GameContent,
   dt: number,
   viewportWidth: number,
   flight: FlightState,
@@ -3002,10 +2988,7 @@ function releaseStardust(
 }
 
 /** The disabled heavy nearest Ada within Talk range that she can salvage. */
-export function salvageTarget(
-  content: PrototypeContent,
-  flight: FlightState,
-): SpaceObject | undefined {
+export function salvageTarget(content: GameContent, flight: FlightState): SpaceObject | undefined {
   return flight.objects
     .filter(
       (object) =>
@@ -3022,7 +3005,7 @@ export function salvageTarget(
  * Salvages the disabled heavy nearest Ada within Talk range: it drops its Stardust and twice the
  * heavy weapon chance around its hull, then powers down, spared. Returns whether one was.
  */
-export function salvage(content: PrototypeContent, flight: FlightState): boolean {
+export function salvage(content: GameContent, flight: FlightState): boolean {
   const object = salvageTarget(content, flight);
   const enemy = object?.enemy;
   if (!object || !enemy) {
@@ -3032,7 +3015,7 @@ export function salvage(content: PrototypeContent, flight: FlightState): boolean
   enemy.engaged = false;
   enemy.velocity = { x: 0, y: 0 };
   const next = dropRandom(flight.seed, `salvage:${object.id}`);
-  const drop = rollSalvageDrop(ECONOMY, flight.sector, enemy.archetype, next);
+  const drop = rollSalvageDrop(ECONOMY, flight.galaxy, enemy.archetype, next);
   releaseStardust(
     object,
     ECONOMY.destruction[enemy.archetype].spread,
@@ -3059,7 +3042,7 @@ export function salvage(content: PrototypeContent, flight: FlightState): boolean
 
 /** Reduced motion uses Art's reduced timing: a shorter fade, a later release, a tighter spread. */
 function stepWrecks(
-  content: PrototypeContent,
+  content: GameContent,
   dt: number,
   reducedMotion: boolean,
   flight: FlightState,
@@ -3079,7 +3062,7 @@ function stepWrecks(
     }
     object.wreck.released = true;
     const next = dropRandom(flight.seed, object.id);
-    const drop = rollEnemyDrop(ECONOMY, flight.sector, object.wreck.archetype, next);
+    const drop = rollEnemyDrop(ECONOMY, flight.galaxy, object.wreck.archetype, next);
     releaseStardust(
       object,
       timing.spread,
@@ -3115,7 +3098,7 @@ export function carryPickup(
   flight: FlightState,
   pickup: Vec,
 ): void {
-  const drift = flowAt(flight.sector, pickup);
+  const drift = flowAt(flight.galaxy, pickup);
   pickup.x += drift.x * dt;
   pickup.y += drift.y * dt;
   const gap = distance(pickup, flight.player);
@@ -3128,7 +3111,7 @@ export function carryPickup(
 }
 
 export function stepFlight(
-  content: PrototypeContent,
+  content: GameContent,
   dt: number,
   input: FlightInput,
   flight: FlightState,

@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "./chunk-catalog.ts";
-import { sectorArchetypes, sectorEncounters } from "./enemy-catalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "./chunkCatalog.ts";
+import { galaxyArchetypes, galaxyEncounters } from "./enemyCatalog.ts";
 import {
   BUILT,
   byPosition,
   GALAXY_COUNT,
+  GALAXY_NUMBERS,
   galaxyAt,
   ROUTE,
   ROUTE_POSITION,
   type RoutePosition,
-  SECTORS,
   tuningPosition,
   unlockedBy,
 } from "./galaxies.ts";
 import { JOB_REWARDS } from "./jobs.ts";
 import { GALAXIES, galaxyCard } from "./storybook.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 const named = (ids: readonly number[]) => ids.map((id) => galaxyCard(id as 1).name);
 
@@ -32,7 +32,7 @@ describe("the galaxy route", () => {
       "Cartwheel",
       "Phantom",
     ]);
-    for (const galaxy of SECTORS) {
+    for (const galaxy of GALAXY_NUMBERS) {
       expect(galaxyAt(ROUTE_POSITION[galaxy])).toBe(galaxy);
     }
     // Galaxy selection lists the cards in the same order, under Art's ids.
@@ -67,14 +67,14 @@ describe("tuning by route position", () => {
     expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(35);
     expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(50);
     // Whirlpool's hunters chase; Cartwheel's interceptors hit and run.
-    expect(byPosition(sectorArchetypes, 3).fighter).toEqual({ behaviour: { kind: "chase" } });
-    expect(byPosition(sectorArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
+    expect(byPosition(galaxyArchetypes, 3).fighter).toEqual({ behaviour: { kind: "chase" } });
+    expect(byPosition(galaxyArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
   });
 
   it("gives Needle and Andromeda their own rosters and Phantom Cartwheel's", () => {
     // Galaxies: Needle 4, Andromeda 5, Phantom 6, Cartwheel 2 (gameplay/ships.md rosters).
-    const roster = (sector: SectorId) =>
-      byPosition(sectorEncounters, sector).map(({ archetype, groupSize, weight }) => [
+    const roster = (galaxy: GalaxyNumber) =>
+      byPosition(galaxyEncounters, galaxy).map(({ archetype, groupSize, weight }) => [
         archetype,
         groupSize,
         weight,
@@ -95,13 +95,13 @@ describe("tuning by route position", () => {
       ["frigate", [1, 2], 0.18],
       ["capital", [1, 1], 0.07],
     ]);
-    expect(byPosition(sectorEncounters, 4).at(-1)!.escorts).toEqual({
+    expect(byPosition(galaxyEncounters, 4).at(-1)!.escorts).toEqual({
       archetype: "fighter",
       count: 5,
     });
-    expect(byPosition(sectorArchetypes, 4)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
-    expect(byPosition(sectorArchetypes, 5)).toEqual({});
-    expect(byPosition(sectorEncounters, 6)).toBe(byPosition(sectorEncounters, 2));
+    expect(byPosition(galaxyArchetypes, 4)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
+    expect(byPosition(galaxyArchetypes, 5)).toEqual({});
+    expect(byPosition(galaxyEncounters, 6)).toBe(byPosition(galaxyEncounters, 2));
   });
 
   it("gives each placeholder the tuning of the built galaxy before it on the route", () => {

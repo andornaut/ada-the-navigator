@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { CONTENT } from "../data/content.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { createEnemy } from "./enemyAi.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -19,9 +19,9 @@ import {
   archivedObjectIds,
   persistentObject,
 } from "./geography.ts";
-import type { FlightState, SectorProgress, SpaceObject } from "./types.ts";
+import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
 
-const progress: SectorProgress = {
+const progress: GalaxyProgress = {
   charted: [],
   deposited: 0,
   destroyedEnemies: 0,
@@ -42,7 +42,7 @@ const progress: SectorProgress = {
 };
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function empty(): FlightState {
-  const flight = createFlight(PROTOTYPE, 1, 173, progress);
+  const flight = createFlight(CONTENT, 1, 173, progress);
   flight.objects = [];
   return flight;
 }
@@ -60,7 +60,7 @@ function enemy(
     hp: definition.hp,
     id,
     kind: "enemy",
-    radius: definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+    radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
   };
 }
 function retained(flight: FlightState): SpaceObject[] {
@@ -78,7 +78,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const sizes: number[] = [];
     for (let index = 1; index <= 150; index++) {
       flight.player = { x: index * 4096, y: 0 };
-      stepFlight(PROTOTYPE, 0.001, idle, flight);
+      stepFlight(CONTENT, 0.001, idle, flight);
       expect(flight.chunks.length).toBeLessThanOrEqual((ACTIVE_CHUNK_RADIUS * 2 + 1) ** 2);
       expect(flight.objects.length).toBeLessThan(250);
       expect(Object.keys(flight.combat?.initialPackSizes ?? {}).length).toBeLessThan(12);
@@ -92,7 +92,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   });
 
   it("recreates ordinary template scenery and pickups after leaving retention range", () => {
-    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const flight = createFlight(CONTENT, 1, 173, progress);
     const original = flight.objects.filter(
       (object) => object.id.startsWith("chunk:0,0:") && !persistentObject(object),
     );
@@ -101,14 +101,14 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const expected = structuredClone(original);
     flight.objects = flight.objects.filter((object) => !ids.has(object.id));
     const interrupted = JSON.parse(JSON.stringify(flight)) as FlightState;
-    stepFlight(PROTOTYPE, 0.001, idle, interrupted);
+    stepFlight(CONTENT, 0.001, idle, interrupted);
     expect(interrupted.objects.some((object) => ids.has(object.id))).toBe(false);
     flight.player = { x: 12000, y: 0 };
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(flight.chunks).not.toContain("0,0");
     expect(flight.world.notables).toEqual({});
     flight.player = { x: 0, y: 0 };
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     expect(flight.objects.filter((object) => ids.has(object.id))).toEqual(expected);
   });
 
@@ -124,14 +124,14 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     flight.objects.push(notable, trash);
     const expected = structuredClone(notable);
     flight.player = { x: 12000, y: 0 };
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     expect(flight.world.notables[notable.id]).toEqual(expected);
     expect(flight.world.notables).not.toHaveProperty(trash.id);
     expect(archivedObjectIds(flight).has(trash.id)).toBe(true);
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, idle, flight);
     expect(flight.world.notables[notable.id]).toEqual(expected);
     flight.player = { x: 0, y: 0 };
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     expect(flight.objects.find((object) => object.id === notable.id)).toEqual(expected);
     expect(flight.world.notables).not.toHaveProperty(notable.id);
     expect(flight.objects.some((object) => object.id === trash.id)).toBe(false);
@@ -139,17 +139,17 @@ describe("regenerating ordinary chunks and persistent notables", () => {
 
   it("records defeated notable tombstones before filtering and never respawns their guards", () => {
     const flight = empty();
-    const destination = ensureDestination(PROTOTYPE, "growers", flight);
-    const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
+    const destination = ensureDestination(CONTENT, "growers", flight);
+    const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
     guard.enemy!.hp = 0;
-    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
+    expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.world.notables[guard.id]).toBeNull();
     expect(routeBlocked(destination.id, flight)).toBe(false);
     flight.player = { x: 12000, y: 0 };
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
+    stepFlight(CONTENT, 0.001, idle, flight);
     flight.player = { x: destination.x, y: destination.y };
-    stepFlight(PROTOTYPE, 0.001, idle, flight);
-    expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBeNull();
+    stepFlight(CONTENT, 0.001, idle, flight);
+    expect(ensureRouteEncounter(CONTENT, destination.id, flight)).toBeNull();
     expect(retained(flight).some((object) => object.id === guard.id)).toBe(false);
     expect(flight.world.notables[guard.id]).toBeNull();
   });
@@ -160,7 +160,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     const far = enemy("far", 5000, "swarm", "pack");
     flight.objects.push(near, far);
     flight.combat = { initialPackSizes: { pack: 2 }, routeEncounters: [] };
-    expect(stepFlight(PROTOTYPE, 0.001, idle, flight)).not.toContainEqual({
+    expect(stepFlight(CONTENT, 0.001, idle, flight)).not.toContainEqual({
       type: "enemyDestroyed",
     });
     expect(near.enemy!.fleeing).toBe(false);
@@ -168,13 +168,13 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     expect(flight.combat.unloadedPackMembers?.pack).toBe(1);
     expect(flight.world.notables).not.toHaveProperty(far.id);
     flight.player = { x: 12000, y: 0 };
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     expect(flight.combat.initialPackSizes).not.toHaveProperty("pack");
   });
 
   it("keeps projectiles single-owned and finite while ordinary moving debris is discarded", () => {
     const flight = empty();
-    const boundary = (ACTIVE_CHUNK_RADIUS + 1) * PROTOTYPE.tuning.chunkSize;
+    const boundary = (ACTIVE_CHUNK_RADIUS + 1) * CONTENT.tuning.chunkSize;
     flight.objects.push({
       hp: 4,
       id: "debris",
@@ -195,18 +195,18 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       x: 9000,
       y: 0,
     });
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(retained(flight).some((object) => object.id === "debris")).toBe(false);
     expect(flight.shots).toHaveLength(1);
-    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    stepFlight(CONTENT, 0.1, idle, flight);
     expect(flight.shots).toHaveLength(0);
     expect(flight.world.notables).toEqual({});
   });
 
   it("retains quest objects and explicit persistence markers beyond the ordinary window", () => {
     const flight = empty();
-    const destination = ensureDestination(PROTOTYPE, "growers", flight);
-    const guard = ensureRouteEncounter(PROTOTYPE, destination.id, flight)!;
+    const destination = ensureDestination(CONTENT, "growers", flight);
+    const guard = ensureRouteEncounter(CONTENT, destination.id, flight)!;
     guard.enemy!.hardpoints[0]!.hp = 1;
     const npc: SpaceObject = {
       hp: 1,
@@ -228,21 +228,21 @@ describe("regenerating ordinary chunks and persistent notables", () => {
     flight.objects.push(npc, whale);
     const expected = structuredClone(guard);
     flight.player = { x: 12000, y: 0 };
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     expect(flight.objects).toContain(destination);
     expect(flight.objects).toContain(whale);
     expect(flight.world.notables[npc.id]).toEqual(npc);
     expect(routeBlocked(destination.id, flight)).toBe(true);
-    expect(ensureRouteEncounter(PROTOTYPE, destination.id, flight)).toBeNull();
-    activateRouteEncounter(PROTOTYPE, destination.id, flight);
+    expect(ensureRouteEncounter(CONTENT, destination.id, flight)).toBeNull();
+    activateRouteEncounter(CONTENT, destination.id, flight);
     expect(flight.objects.find((object) => object.id === guard.id)).toEqual(expected);
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     flight.dangerFor = 0;
-    expect(teleport(PROTOTYPE, destination.id, flight)).toBe(true);
+    expect(teleport(CONTENT, destination.id, flight)).toBe(true);
     expect(routeBlocked(destination.id, flight)).toBe(true);
     expect(flight.objects.filter((object) => object.id === guard.id)).toHaveLength(1);
     const shield = flight.shield;
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.shield).toBeGreaterThanOrEqual(shield);
     expect(flight.dangerFor).toBe(0);
   });
@@ -250,14 +250,14 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   it("preserves exact active and notable state through interrupted saves, without a second canonical copy", () => {
     const flight = empty();
     flight.objects.push(enemy("notable", 9000, "capital"), enemy("active", 400));
-    syncFlightRegion(PROTOTYPE, flight);
+    syncFlightRegion(CONTENT, flight);
     flight.cargo = 300;
     flight.ownedWeapons = ["rapidMissile"];
     flight.weapon = "rapidMissile";
     const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
     const input = { ...idle, aim: { x: 1, y: 0 }, move: { x: 0, y: 1 } };
-    expect(stepFlight(PROTOTYPE, 0.2, input, resumed)).toEqual(
-      stepFlight(PROTOTYPE, 0.2, input, flight),
+    expect(stepFlight(CONTENT, 0.2, input, resumed)).toEqual(
+      stepFlight(CONTENT, 0.2, input, flight),
     );
     expect(resumed).toEqual(flight);
     for (const id of Object.keys(flight.world.notables)) {
@@ -276,15 +276,15 @@ it("wakes every same-route notable before translation without duplicating owners
     return object;
   });
   flight.objects.push(...guards);
-  syncFlightRegion(PROTOTYPE, flight);
+  syncFlightRegion(CONTENT, flight);
   const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
-  activateFlightRegion(PROTOTYPE, guards[0]!, resumed);
+  activateFlightRegion(CONTENT, guards[0]!, resumed);
   expect(resumed.objects.filter((object) => object.routeId === "growers")).toHaveLength(2);
   resumed.objects = resumed.objects.filter((object) => object.routeId !== "growers");
   expect(routeBlocked("growers", resumed)).toBe(true);
   // Restore the complete snapshot for explicit all-guard relocation.
   const relocating = JSON.parse(JSON.stringify(flight)) as FlightState;
-  activateRouteEncounter(PROTOTYPE, "growers", relocating);
+  activateRouteEncounter(CONTENT, "growers", relocating);
   expect(relocating.objects.filter((object) => object.routeId === "growers")).toHaveLength(3);
   expect(relocating.world.notables).toEqual({});
   for (const expected of guards) {
@@ -294,7 +294,7 @@ it("wakes every same-route notable before translation without duplicating owners
 
 it("keeps mutable returned guards canonical until outer compaction and preserves their latest edits", () => {
   const flight = empty();
-  flight.sector = 3;
+  flight.galaxy = 3;
   flight.objects.push({
     hp: 1,
     id: "growers",
@@ -303,7 +303,7 @@ it("keeps mutable returned guards canonical until outer compaction and preserves
     x: 10000,
     y: 10000,
   });
-  const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
+  const guard = ensureRouteEncounter(CONTENT, "growers", flight)!;
   expect(flight.objects).toContain(guard);
   guard.enemy!.hardpoints[0]!.hp = 2;
   guard.enemy!.hardpoints[1]!.cooldown = 0.7;
@@ -311,10 +311,10 @@ it("keeps mutable returned guards canonical until outer compaction and preserves
   guard.enemy!.home.x += 400;
   guard.enemy!.position.x += 400;
   const expected = structuredClone(guard);
-  expect(ensureRouteEncounter(PROTOTYPE, "growers", flight)).toBe(guard);
-  syncFlightRegion(PROTOTYPE, flight);
+  expect(ensureRouteEncounter(CONTENT, "growers", flight)).toBe(guard);
+  syncFlightRegion(CONTENT, flight);
   expect(flight.world.notables[guard.id]).toEqual(expected);
-  activateRouteEncounter(PROTOTYPE, "growers", flight);
+  activateRouteEncounter(CONTENT, "growers", flight);
   expect(flight.objects.find((object) => object.id === guard.id)).toEqual(expected);
 });
 
@@ -325,13 +325,13 @@ it("retains every encountered notable instead of claiming constant total save si
     enemy(`notable-${index}`, (index + 20) * 4096, "capital"),
   );
   flight.objects.push(...encounters);
-  syncFlightRegion(PROTOTYPE, flight);
+  syncFlightRegion(CONTENT, flight);
   expect(Object.keys(flight.world.notables)).toHaveLength(8);
   for (const object of encounters) {
     expect(flight.world.notables[object.id]).toEqual(object);
   }
   expect(JSON.stringify(flight).length).toBeGreaterThan(before);
-  activateFlightRegion(PROTOTYPE, encounters[0]!, flight);
+  activateFlightRegion(CONTENT, encounters[0]!, flight);
   expect(flight.objects.filter((object) => object.id.startsWith("notable-"))).toHaveLength(1);
   expect(Object.keys(flight.world.notables)).toHaveLength(7);
 });

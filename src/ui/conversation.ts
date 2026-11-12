@@ -1,7 +1,7 @@
 import { CAST, CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
-import { CONTROL_WORDS } from "../data/control-words.ts";
+import { CONTROL_WORDS } from "../data/controlWords.ts";
 import type { Mood, Speaker } from "../data/conversations.ts";
-import { controlHelpText, createControlHelp } from "./control-help.ts";
+import { controlHelpText, createControlHelp } from "./controlHelp.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { FOCUS_STYLE } from "./modal.ts";

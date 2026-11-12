@@ -15,8 +15,8 @@ import {
   SPEAKERS,
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
-import type { SectorId } from "../data/types.ts";
-import type { FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower
@@ -115,13 +115,13 @@ const dronesPress: Holds = (facts) => facts.inDanger && facts.dronesNear;
 const EPSILON = 1e-9;
 
 /** Penny's instance for one point of interest. */
-export function pennyInstance(sector: SectorId, point: string): string {
-  return `penny:${sector}:${point}`;
+export function pennyInstance(galaxy: GalaxyNumber, point: string): string {
+  return `penny:${galaxy}:${point}`;
 }
 
 /** Holodisks recovered across every galaxy, the count memory lines and broadcasts follow. */
 export function holodisksHeld(
-  progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
+  progress: Readonly<Partial<Record<GalaxyNumber, Pick<GalaxyProgress, "holodisk">>>>,
 ): number {
   return Object.values(progress).filter((p) => p?.holodisk).length;
 }
@@ -131,7 +131,7 @@ export function holodisksHeld(
  * General's unknown until the third holodisk is in.
  */
 export function speakerName(
-  progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
+  progress: Readonly<Partial<Record<GalaxyNumber, Pick<GalaxyProgress, "holodisk">>>>,
   speaker: Speaker,
 ): string {
   const cast = SPEAKER_CAST[speaker];
@@ -194,7 +194,7 @@ export function heavyInSight(
  * discovery caches and the uncharted landmarks given.
  */
 export function pennyPoints(
-  progress: Pick<SectorProgress, "known" | "stations">,
+  progress: Pick<GalaxyProgress, "known" | "stations">,
   holodiskWaypoint: boolean,
   landmarks: readonly (Vec & { readonly id: string })[],
   flight: Pick<FlightState, "objects" | "player">,
@@ -238,7 +238,7 @@ export class ConversationDirector {
   private queue: Request[] = [];
   private quietFor = 0;
   private random: Random;
-  private sector: SectorId | null = null;
+  private galaxy: GalaxyNumber | null = null;
   private readonly seen: string[];
   private shieldWarned = false;
 
@@ -271,26 +271,26 @@ export class ConversationDirector {
   }
 
   /**
-   * A flight starts or resumes in sector. done names lessons Ada has already acted on, such as
+   * A flight starts or resumes in galaxy. done names lessons Ada has already acted on, such as
    * collecting Stardust before; random, when given, shuffles the pools from now on.
    */
   beginFlight(
-    sector: SectorId,
+    galaxy: GalaxyNumber,
     done: Partial<Record<Lesson, boolean>> = {},
     random: Random = this.random,
   ): void {
     this.reset();
     this.random = random;
-    this.sector = sector;
+    this.galaxy = galaxy;
     this.done = { aim: false, dock: false, move: false, stardust: false, ...done };
     this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "move");
-    this.request((trigger) => trigger.kind === "arrival" && trigger.sector === sector);
+    this.request((trigger) => trigger.kind === "arrival" && trigger.galaxy === galaxy);
   }
 
   /** The flight ended: nothing shows or waits. */
   endFlight(): void {
     this.reset();
-    this.sector = null;
+    this.galaxy = null;
   }
 
   /** A funded project's thank-you line, which waits its turn in the queue. */
@@ -311,12 +311,12 @@ export class ConversationDirector {
    * line waits where it was and resumes once the notice clears.
    */
   step(dt: number, notice: boolean, facts: ConversationFacts): void {
-    const sector = this.sector;
-    if (sector === null || !Number.isFinite(dt) || dt <= 0) {
+    const galaxy = this.galaxy;
+    if (galaxy === null || !Number.isFinite(dt) || dt <= 0) {
       return;
     }
     this.pennyWait = Math.max(0, this.pennyWait - dt);
-    this.observe(sector, facts);
+    this.observe(galaxy, facts);
     if (notice && !this.warningShowing) {
       this.queue = this.queue.filter((request) => this.valid(facts, request));
       const warning = this.queue.find((request) => request.conversation.priority === "warning");
@@ -340,7 +340,7 @@ export class ConversationDirector {
       const pool = this.conversations.find(
         (conversation) =>
           conversation.trigger.kind === "quiet" &&
-          conversation.trigger.sector === sector &&
+          conversation.trigger.galaxy === galaxy &&
           !this.seen.includes(conversation.id),
       );
       if (pool) {
@@ -350,7 +350,7 @@ export class ConversationDirector {
     this.schedule(facts);
   }
 
-  private observe(sector: SectorId, facts: ConversationFacts): void {
+  private observe(galaxy: GalaxyNumber, facts: ConversationFacts): void {
     this.done.move ||= facts.moved;
     this.done.aim ||= facts.aimed;
     this.done.stardust ||= facts.collectedStardust;
@@ -371,13 +371,13 @@ export class ConversationDirector {
     for (const cue of facts.encounters) {
       this.request(
         (trigger) =>
-          trigger.kind === "encounter" && trigger.sector === sector && trigger.cue === cue,
+          trigger.kind === "encounter" && trigger.galaxy === galaxy && trigger.cue === cue,
       );
     }
     for (const id of facts.newlyMapped) {
       this.request(
         (trigger) =>
-          trigger.kind === "meeting" && trigger.sector === sector && trigger.destination === id,
+          trigger.kind === "meeting" && trigger.galaxy === galaxy && trigger.destination === id,
       );
     }
     if (facts.newlyMapped.length > 0) {
@@ -392,13 +392,13 @@ export class ConversationDirector {
       const conversation =
         guardLines[Math.min(guardLines.length - 1, Math.floor(pick * guardLines.length))];
       if (conversation) {
-        this.enqueue({ conversation, holds: always, instance: `guard:${sector}:${destination}` });
+        this.enqueue({ conversation, holds: always, instance: `guard:${galaxy}:${destination}` });
       }
     }
     if (facts.newStation) {
       this.request((trigger) => trigger.kind === "stationMapped");
     }
-    this.observeReturns(sector, facts);
+    this.observeReturns(galaxy, facts);
     if (facts.frigateInSight) {
       this.request(
         (trigger) => trigger.kind === "frigate",
@@ -429,9 +429,9 @@ export class ConversationDirector {
       this.dronesCalled = true;
       // A built galaxy's one broadcast, the line after the holodisks Ada holds (none while she
       // holds none), speaks for its first engagement's drones; a placeholder plays none.
-      const instance = `general:${sector}`;
+      const instance = `general:${galaxy}`;
       const general =
-        BUILT.has(sector) && !this.seen.includes(instance)
+        BUILT.has(galaxy) && !this.seen.includes(instance)
           ? this.conversations.find(
               ({ trigger }) => trigger.kind === "general" && trigger.held === facts.holodisks,
             )
@@ -453,14 +453,14 @@ export class ConversationDirector {
         (now) => now.inDanger,
       );
     }
-    this.observeJob(sector, facts);
+    this.observeJob(galaxy, facts);
     const unsensed = facts.pennyPoints.filter(
-      (id) => !this.seen.includes(pennyInstance(sector, id)),
+      (id) => !this.seen.includes(pennyInstance(galaxy, id)),
     );
     if (this.pennyWait > 0) {
       // Points that come into range while Penny rests pass unsensed.
       for (const id of unsensed) {
-        this.seen.push(pennyInstance(sector, id));
+        this.seen.push(pennyInstance(galaxy, id));
       }
       return;
     }
@@ -470,7 +470,7 @@ export class ConversationDirector {
       this.enqueue({
         conversation: penny,
         holds: (now) => now.pennyPoints.includes(point),
-        instance: pennyInstance(sector, point),
+        instance: pennyInstance(galaxy, point),
         point,
       });
     }
@@ -480,7 +480,7 @@ export class ConversationDirector {
    * Ada back in range of a station mapped before she entered it, once per station each flight; one
    * mapped as she arrives, or in range as the flight starts, is no return.
    */
-  private observeReturns(sector: SectorId, facts: ConversationFacts): void {
+  private observeReturns(galaxy: GalaxyNumber, facts: ConversationFacts): void {
     const before = this.nearStations;
     this.nearStations = new Set(facts.stationsNear);
     const back = this.conversations.find(({ trigger }) => trigger.kind === "stationReturn");
@@ -492,14 +492,14 @@ export class ConversationDirector {
         this.enqueue({
           conversation: back,
           holds: (now) => now.stationsNear.includes(id),
-          instance: `return:${sector}:${id}`,
+          instance: `return:${galaxy}:${id}`,
         });
       }
     }
   }
 
   /** A held job's lines, a completed job's lore line and Penny's lost-item sense. */
-  private observeJob(sector: SectorId, facts: ConversationFacts): void {
+  private observeJob(galaxy: GalaxyNumber, facts: ConversationFacts): void {
     for (const moment of facts.jobMoments) {
       if (moment !== "jobComplete") {
         this.request((trigger) => trigger.kind === "job" && trigger.moment === moment);
@@ -509,7 +509,7 @@ export class ConversationDirector {
       const lore = this.conversations.find(
         ({ id, trigger }) =>
           trigger.kind === "jobLore" &&
-          trigger.sector === sector &&
+          trigger.galaxy === galaxy &&
           !this.seen.includes(id) &&
           this.active?.instance !== id &&
           !this.queue.some((entry) => entry.instance === id),
@@ -524,7 +524,7 @@ export class ConversationDirector {
       this.enqueue({
         conversation: penny,
         holds: (now) => now.lostItemNear === item,
-        instance: pennyInstance(sector, item),
+        instance: pennyInstance(galaxy, item),
       });
     }
   }
@@ -651,7 +651,7 @@ export class ConversationDirector {
     };
   }
 
-  /** The points Penny sensed since the last call, as `penny:{sector}:{point}` instances. */
+  /** The points Penny sensed since the last call, as `penny:{galaxy}:{point}` instances. */
   takeSensed(): string[] {
     const sensed = this.sensedPoints;
     this.sensedPoints = [];

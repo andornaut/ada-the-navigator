@@ -1,18 +1,18 @@
+import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
-import { SECTORS } from "../data/galaxies.ts";
-import { HUNTING_PACKS } from "../data/galaxy-features.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { galaxyProjects } from "../data/projects.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { RESOURCE_ROCKS } from "../data/resource-rocks.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { SectorId } from "../data/types.ts";
-import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { RESOURCE_ROCKS } from "../data/resourceRocks.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { validActivity } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { enemyDefeated } from "./enemy-ai.ts";
+import { enemyDefeated } from "./enemyAi.ts";
 import { ACTIVE_CHUNK_RADIUS, encounterOf, persistentObject } from "./geography.ts";
 import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
@@ -31,7 +31,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 11;
+export const SAVE_VERSION: GameState["version"] = 12;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -108,7 +108,7 @@ function achievementState(value: unknown): boolean {
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
 }
-function enemyState(sector: SectorId, value: unknown): boolean {
+function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
   if (
     !record(value) ||
     typeof value.archetype !== "string" ||
@@ -133,7 +133,7 @@ function enemyState(sector: SectorId, value: unknown): boolean {
   ) {
     return false;
   }
-  const definition = enemyDefinition(sector, value.archetype as keyof typeof enemyCatalog);
+  const definition = enemyDefinition(galaxy, value.archetype as keyof typeof enemyCatalog);
   const hardpoints: unknown[] = value.hardpoints;
   return (
     hardpoints.length === definition.hardpoints.length &&
@@ -215,7 +215,7 @@ const OBJECT_KINDS = [
   "wreck",
 ];
 function spaceObject(
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   routes: readonly string[],
   value: unknown,
 ): value is SpaceObject {
@@ -226,7 +226,7 @@ function spaceObject(
     value.id.length > 0 &&
     !["__proto__", "prototype", "constructor"].includes(value.id) &&
     OBJECT_KINDS.includes(String(value.kind)) &&
-    (value.kind !== "station" || stationById(ECONOMY, sector, value.id) !== null) &&
+    (value.kind !== "station" || stationById(ECONOMY, galaxy, value.id) !== null) &&
     (value.kind === "wreck" ? wreckState(value.wreck) : value.wreck === undefined) &&
     (value.release === undefined ||
       (value.kind === "pickup" &&
@@ -267,7 +267,7 @@ function spaceObject(
         finite(value.river.arc))) &&
     (value.enemy === undefined ||
       (value.kind === "enemy" &&
-        enemyState(sector, value.enemy) &&
+        enemyState(galaxy, value.enemy) &&
         record(value.enemy) &&
         value.enemy.id === value.id)) &&
     nonnegative(value.radius) &&
@@ -281,7 +281,7 @@ function spaceObject(
   );
 }
 function persistentWorld(
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   routes: readonly string[],
   active: readonly SpaceObject[],
   value: unknown,
@@ -307,7 +307,7 @@ function persistentWorld(
       continue;
     }
     if (
-      !spaceObject(sector, routes, object) ||
+      !spaceObject(galaxy, routes, object) ||
       object.id !== id ||
       !persistentObject(object) ||
       object.hp <= 0 ||
@@ -416,20 +416,20 @@ function economyState(value: unknown): value is EconomyState {
 }
 /** Each paid amount is a whole number of Stardust toward one of the galaxy's projects, at most its cost. */
 /** Each greeted place is one of the galaxy's stations, greeted a whole number of times. */
-function greetingCounts(sector: SectorId, value: unknown): boolean {
+function greetingCounts(galaxy: GalaxyNumber, value: unknown): boolean {
   return (
     record(value) &&
     Object.entries(value).every(
       ([id, docked]) =>
-        namesStation(ECONOMY, sector, id) && Number.isSafeInteger(docked) && Number(docked) > 0,
+        namesStation(ECONOMY, galaxy, id) && Number.isSafeInteger(docked) && Number(docked) > 0,
     )
   );
 }
-function donations(sector: SectorId, value: unknown): boolean {
+function donations(galaxy: GalaxyNumber, value: unknown): boolean {
   return (
     record(value) &&
     Object.entries(value).every(([id, paid]) => {
-      const project = galaxyProjects(sector).find((entry) => entry.id === id);
+      const project = galaxyProjects(galaxy).find((entry) => entry.id === id);
       return (
         project !== undefined &&
         Number.isInteger(paid) &&
@@ -440,47 +440,47 @@ function donations(sector: SectorId, value: unknown): boolean {
   );
 }
 /** Each revealed project appears once and is one of the galaxy's projects, fully paid. */
-function revealedProjects(sector: SectorId, donated: unknown, value: unknown): boolean {
+function revealedProjects(galaxy: GalaxyNumber, donated: unknown, value: unknown): boolean {
   const paid = record(donated) ? donated : {};
   return (
     strings(value) &&
     Array.isArray(value) &&
     new Set(value).size === value.length &&
     value.every((id) => {
-      const project = galaxyProjects(sector).find((entry) => entry.id === id);
+      const project = galaxyProjects(galaxy).find((entry) => entry.id === id);
       return project !== undefined && paid[id] === project.cost;
     })
   );
 }
-function stationIds(sector: SectorId, value: unknown): boolean {
+function stationIds(galaxy: GalaxyNumber, value: unknown): boolean {
   return (
     strings(value) &&
     Array.isArray(value) &&
     new Set(value).size === value.length &&
-    value.every((id) => namesStation(ECONOMY, sector, String(id)))
+    value.every((id) => namesStation(ECONOMY, galaxy, String(id)))
   );
 }
 
 /** Charted landmark ids: distinct landmarks of the galaxy. */
-function chartedIds(sector: SectorId, value: unknown): boolean {
+function chartedIds(galaxy: GalaxyNumber, value: unknown): boolean {
   return (
     Array.isArray(value) &&
     strings(value) &&
     new Set(value).size === value.length &&
-    value.every((id) => isLandmark(sector, String(id)))
+    value.every((id) => isLandmark(galaxy, String(id)))
   );
 }
 /**
  * A saved job offer: a station of the galaxy issues it, and its target is a landmark for a
  * survey, a station or outpost for a delivery, or a spot for a rescue or hunt.
  */
-function jobOffer(sector: SectorId, value: unknown): boolean {
+function jobOffer(galaxy: GalaxyNumber, value: unknown): boolean {
   if (
     !record(value) ||
     typeof value.id !== "string" ||
     !JOB_TYPES.includes(value.type as (typeof JOB_TYPES)[number]) ||
     typeof value.station !== "string" ||
-    !namesStation(ECONOMY, sector, value.station) ||
+    !namesStation(ECONOMY, galaxy, value.station) ||
     !nonnegative(value.reward) ||
     typeof value.item !== "string" ||
     !record(value.target) ||
@@ -492,19 +492,19 @@ function jobOffer(sector: SectorId, value: unknown): boolean {
   }
   const target = value.target.id;
   if (value.type === "survey") {
-    return isLandmark(sector, target);
+    return isLandmark(galaxy, target);
   }
   if (value.type === "delivery") {
     return (
       target !== value.station &&
-      (stationById(ECONOMY, sector, target) !== null ||
-        ((destinationIds[sector] ?? []).includes(target) && deliveryDestination(target)))
+      (stationById(ECONOMY, galaxy, target) !== null ||
+        ((destinationIds[galaxy] ?? []).includes(target) && deliveryDestination(target)))
     );
   }
   return target === "" && (value.type === "rescue" || vector(value.spot));
 }
 // Every galaxy has stations, so job boards and held tasks.
-const SECTOR_KEYS = SECTORS.map(String);
+const GALAXY_KEYS = GALAXY_NUMBERS.map(String);
 /** Saved job boards. */
 function jobsState(value: unknown): boolean {
   if (
@@ -515,18 +515,18 @@ function jobsState(value: unknown): boolean {
   ) {
     return false;
   }
-  const sectors = SECTOR_KEYS;
+  const galaxies = GALAXY_KEYS;
   return Object.entries(value.boards).every(
-    ([sector, stations]) =>
-      sectors.includes(sector) &&
+    ([galaxy, stations]) =>
+      galaxies.includes(galaxy) &&
       record(stations) &&
       Object.entries(stations).every(
         ([station, offers]) =>
-          namesStation(ECONOMY, Number(sector) as SectorId, station) &&
+          namesStation(ECONOMY, Number(galaxy) as GalaxyNumber, station) &&
           Array.isArray(offers) &&
           offers.every(
             (offer) =>
-              jobOffer(Number(sector) as SectorId, offer) &&
+              jobOffer(Number(galaxy) as GalaxyNumber, offer) &&
               record(offer) &&
               offer.station === station,
           ),
@@ -538,14 +538,14 @@ function optionalTasks(value: unknown): boolean {
   return (
     record(value) &&
     Object.entries(value).every(
-      ([sector, task]) =>
-        SECTOR_KEYS.includes(sector) &&
+      ([galaxy, task]) =>
+        GALAXY_KEYS.includes(galaxy) &&
         record(task) &&
         ((task.kind === "job" &&
-          jobOffer(Number(sector) as SectorId, task) &&
+          jobOffer(Number(galaxy) as GalaxyNumber, task) &&
           (task.carrying === undefined || typeof task.carrying === "boolean") &&
           (task.entered === undefined || typeof task.entered === "boolean")) ||
-          (task.kind === "activity" && validActivity(Number(sector) as SectorId, task))),
+          (task.kind === "activity" && validActivity(Number(galaxy) as GalaxyNumber, task))),
     )
   );
 }
@@ -562,7 +562,7 @@ export function restoreSave(saved: unknown): GameState | null {
       !record(value) ||
       value.version !== SAVE_VERSION ||
       !["home", "space"].includes(String(value.mode)) ||
-      !SECTORS.includes(value.selectedSector as SectorId) ||
+      !GALAXY_NUMBERS.includes(value.selectedGalaxy as GalaxyNumber) ||
       !record(value.progress)
     ) {
       return null;
@@ -570,8 +570,8 @@ export function restoreSave(saved: unknown): GameState | null {
     if (
       !Array.isArray(value.unlocked) ||
       !value.unlocked.includes(1) ||
-      value.unlocked.some((v) => !SECTORS.includes(v as SectorId)) ||
-      !value.unlocked.includes(value.selectedSector)
+      value.unlocked.some((v) => !GALAXY_NUMBERS.includes(v as GalaxyNumber)) ||
+      !value.unlocked.includes(value.selectedGalaxy)
     ) {
       return null;
     }
@@ -585,7 +585,7 @@ export function restoreSave(saved: unknown): GameState | null {
     ) {
       return null;
     }
-    for (const id of SECTORS) {
+    for (const id of GALAXY_NUMBERS) {
       const p = value.progress[id];
       if (
         !record(p) ||
@@ -603,12 +603,12 @@ export function restoreSave(saved: unknown): GameState | null {
         !["introduced", "questComplete", "resolved"].every((k) => typeof p[k] === "boolean") ||
         !["deposited", "destroyedEnemies", "discoveries"].every((k) => nonnegative(p[k])) ||
         !["holodisk", "opened"].every((k) => typeof p[k] === "boolean") ||
-        !stationIds(id as SectorId, p.stations) ||
-        !donations(id as SectorId, p.donated) ||
-        !greetingCounts(id as SectorId, p.greetings) ||
-        !chartedIds(id as SectorId, p.charted) ||
-        !revealedProjects(id as SectorId, p.donated, p.revealed) ||
-        !validExplored(PROTOTYPE.tuning.chunkSize, p.explored) ||
+        !stationIds(id as GalaxyNumber, p.stations) ||
+        !donations(id as GalaxyNumber, p.donated) ||
+        !greetingCounts(id as GalaxyNumber, p.greetings) ||
+        !chartedIds(id as GalaxyNumber, p.charted) ||
+        !revealedProjects(id as GalaxyNumber, p.donated, p.revealed) ||
+        !validExplored(CONTENT.tuning.chunkSize, p.explored) ||
         (p.guides !== undefined && !(Number.isSafeInteger(p.guides) && nonnegative(p.guides))) ||
         (p.replayScene !== undefined &&
           !(
@@ -644,7 +644,7 @@ export function restoreSave(saved: unknown): GameState | null {
       const f = value.flight;
       if (
         !record(f) ||
-        f.sector !== value.selectedSector ||
+        f.galaxy !== value.selectedGalaxy ||
         !["player", "velocity", "facing"].every((k) => vector(f[k])) ||
         ![
           "seed",
@@ -670,11 +670,11 @@ export function restoreSave(saved: unknown): GameState | null {
           )) ||
         !upgradeLevels(f.levels) ||
         // The shield never holds more than its level's capacity.
-        (f.shield as number) > shipTuning(ECONOMY, PROTOTYPE, f.levels).shieldMax
+        (f.shield as number) > shipTuning(ECONOMY, CONTENT, f.levels).shieldMax
       ) {
         return null;
       }
-      const routes = destinationIds[value.selectedSector as number] ?? [];
+      const routes = destinationIds[value.selectedGalaxy as number] ?? [];
       if (f.combat !== undefined && !combatState(routes, f.combat)) {
         return null;
       }
@@ -743,12 +743,12 @@ export function restoreSave(saved: unknown): GameState | null {
       if (
         !Array.isArray(f.objects) ||
         !Array.from(f.objects).every((object) =>
-          spaceObject(value.selectedSector as SectorId, routes, object),
+          spaceObject(value.selectedGalaxy as GalaxyNumber, routes, object),
         )
       ) {
         return null;
       }
-      if (!persistentWorld(value.selectedSector as SectorId, routes, f.objects, f.world)) {
+      if (!persistentWorld(value.selectedGalaxy as GalaxyNumber, routes, f.objects, f.world)) {
         return null;
       }
       if (f.combat !== undefined && !unloadedPackState(f.objects, f.world, f.combat)) {

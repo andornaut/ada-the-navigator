@@ -1,13 +1,13 @@
 import { ECONOMY } from "../data/economy.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { stationIndicatorTarget } from "./stations.ts";
-import type { FlightState, SectorProgress } from "./types.ts";
+import type { FlightState, GalaxyProgress } from "./types.ts";
 
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk
 // waypoint, the held station job's target (gameplay/quests.md) and an undiscovered station within
 // range, at any distance while off screen. Optional discoveries get none; Penny senses those
-// instead. Seen enemies, heavies and stations get edge markers (edge-markers.ts) instead, which
+// instead. Seen enemies, heavies and stations get edge markers (edgeMarkers.ts) instead, which
 // give way to an indicator on the same object. Each kind is one source below, so a kind gains its
 // rule without touching the others.
 
@@ -30,10 +30,10 @@ export interface IndicatorContext {
   readonly job: IndicatorTarget | null;
   /** The current objective's destination, if it has one. */
   readonly objective: string | null;
-  readonly progress: Pick<SectorProgress, "known" | "stations">;
+  readonly progress: Pick<GalaxyProgress, "known" | "stations">;
   /** Where the carried quest item goes, if Ada carries one. */
   readonly questItem: string | null;
-  readonly sector: SectorId;
+  readonly galaxy: GalaxyNumber;
 }
 
 export type IndicatorSource = (context: IndicatorContext) => readonly IndicatorTarget[];
@@ -61,8 +61,8 @@ export const INDICATOR_SOURCES: Readonly<Record<IndicatorKind, IndicatorSource>>
   objective: (context) => mappedDestination(context, context.objective, "objective"),
   questItem: (context) => mappedDestination(context, context.questItem, "questItem"),
   // The nearest undiscovered station within the economy's indicator range (stations.ts).
-  station: ({ flight, progress, sector }) => {
-    const site = stationIndicatorTarget(ECONOMY, sector, progress.stations, flight.player);
+  station: ({ flight, galaxy, progress }) => {
+    const site = stationIndicatorTarget(ECONOMY, galaxy, progress.stations, flight.player);
     return site ? [{ id: site.id, kind: "station", x: site.x, y: site.y }] : [];
   },
 };
@@ -89,7 +89,7 @@ const QUEST_ITEM_DESTINATIONS: Readonly<Record<string, string>> = {
 };
 
 /** Where the carried quest item goes. */
-export function questItemDestination(progress: Pick<SectorProgress, "questItem">): string | null {
+export function questItemDestination(progress: Pick<GalaxyProgress, "questItem">): string | null {
   return progress.questItem === null ? null : (QUEST_ITEM_DESTINATIONS[progress.questItem] ?? null);
 }
 
@@ -99,9 +99,9 @@ export function questItemDestination(progress: Pick<SectorProgress, "questItem">
  * home remains. minerReady says the hub's deposits have called the miner.
  */
 export function objectiveDestination(
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   progress: Pick<
-    SectorProgress,
+    GalaxyProgress,
     "holodisk" | "introduced" | "questComplete" | "questItem" | "stage"
   >,
   minerReady: boolean,
@@ -110,16 +110,17 @@ export function objectiveDestination(
     // Any outpost hands over galaxy one's holodisk; the hub sells galaxy two's.
     return progress.holodisk
       ? null
-      : (({ 1: "workshop", 2: "hub" } as Partial<Record<SectorId, string>>)[sector] ?? null);
+      : (({ 1: "workshop", 2: "hub" } as Partial<Record<GalaxyNumber, string>>)[galaxy] ?? null);
   }
   // A placeholder galaxy has no story destinations.
   if (!progress.introduced) {
     return (
-      ({ 1: "growers", 2: "hub", 3: "whale" } as Partial<Record<SectorId, string>>)[sector] ?? null
+      ({ 1: "growers", 2: "hub", 3: "whale" } as Partial<Record<GalaxyNumber, string>>)[galaxy] ??
+      null
     );
   }
   const { questItem, stage } = progress;
-  const stages: Partial<Record<SectorId, readonly (string | null)[]>> = {
+  const stages: Partial<Record<GalaxyNumber, readonly (string | null)[]>> = {
     1: [
       "growers",
       questItem === "food" ? "workshop" : "growers",
@@ -129,5 +130,5 @@ export function objectiveDestination(
     2: ["hub", "hub", minerReady ? "miner" : "hub", "visitors", "hub"],
     3: ["whale", "whale", "whale", "family", "whale"],
   };
-  return stages[sector]?.[stage] ?? null;
+  return stages[galaxy]?.[stage] ?? null;
 }

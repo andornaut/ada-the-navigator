@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { PROJECTS } from "../data/projects.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { boardAndJump, playOpening, readStory } from "../testing/launch.ts";
 import {
   ACHIEVEMENT_TOTALS,
@@ -59,7 +59,7 @@ const view = (model: GameModel, name: string) =>
   model.achievements.find((entry) => entry.name === name)!;
 /** A model in galaxy one's first flight, the prologue read. */
 function launched(): GameModel {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.start();
   boardAndJump(model, 1);
   expect(model.state.mode).toBe("space");
@@ -88,7 +88,7 @@ describe("Gameplay's achievements", () => {
 
   it("uses Gameplay's strings for the card, notice and count", () => {
     for (const [key, text] of keys!) {
-      expect(PROTOTYPE.labels[key!.replaceAll("`", "")]).toBe(text);
+      expect(CONTENT.labels[key!.replaceAll("`", "")]).toBe(text);
     }
   });
 });
@@ -101,8 +101,8 @@ describe("story achievements", () => {
   });
 
   it("unlocks The Garden Begins when the Sunflower chapter completes", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     Object.assign(model.state.progress[1], {
       discoveries: 3,
@@ -161,7 +161,7 @@ describe("Penny finds", () => {
       hp: 1,
       id: "sensed-cache",
       kind: "pickup",
-      radius: PROTOTYPE.tuning.flight.pickupRadius,
+      radius: CONTENT.tuning.flight.pickupRadius,
       role: "discovery",
       x: flight.player.x + 5,
       y: flight.player.y,
@@ -176,7 +176,7 @@ describe("Penny finds", () => {
 
 describe("collections and helping", () => {
   it("counts paints owned with Classic and unlocks Full Palette once every paint is owned", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(view(model, "Full Palette").progress).toEqual({
       have: 1,
       need: Object.keys(ECONOMY.paints).length,
@@ -188,7 +188,7 @@ describe("collections and helping", () => {
   });
 
   it("unlocks Helping Hand at the first job and Good Neighbor at 25 jobs or activities", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(view(model, "Good Neighbor").progress).toEqual({ have: 0, need: 25 });
     model.recordAchievement({ kind: "jobCompleted" });
     expect(unlocked(model)).toEqual([id("Helping Hand")]);
@@ -201,7 +201,7 @@ describe("collections and helping", () => {
   });
 
   it("unlocks Blockade Breaker when Phantom's blockade breaks", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.recordAchievement({ kind: "blockadeBroken" });
     expect(unlocked(model)).toEqual([id("Blockade Breaker")]);
   });
@@ -214,7 +214,7 @@ describe("collections and helping", () => {
       paints: Object.keys(ECONOMY.paints).length,
       projects: Object.values(PROJECTS).flat().length,
     });
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     for (const site of landmarkSites(2).slice(0, 3)) {
       model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
     }
@@ -232,11 +232,11 @@ describe("collections and helping", () => {
   });
 
   it("counts Astra's Atlas over all six galaxies, and keeps allies uncounted until they exist", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.recordAchievement({ id: "growers", kind: "allyMade" });
-    for (const sector of [1, 2, 3] as const) {
-      for (const site of landmarkSites(sector)) {
-        model.recordAchievement({ galaxy: sector, id: site.id, kind: "landmarkCharted" });
+    for (const galaxy of [1, 2, 3] as const) {
+      for (const site of landmarkSites(galaxy)) {
+        model.recordAchievement({ galaxy, id: site.id, kind: "landmarkCharted" });
       }
     }
     // Three galaxies' landmarks charted of the six galaxies' 72.
@@ -296,7 +296,7 @@ describe("notices and persistence", () => {
   });
 
   it("keeps achievements, counts and paints ever owned on Restart, starting a new world's finds", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.started = true;
     model.recordAchievement({ kind: "jobCompleted" });
     model.recordAchievement({ galaxy: 1, id: "nebula", kind: "landmarkCharted" });
@@ -327,7 +327,7 @@ describe("notices and persistence", () => {
   });
 
   it("saves and restores achievements, rejecting a malformed record", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.recordAchievement({ kind: "jobCompleted" });
     const saved = JSON.parse(model.save());
     expect(restoreSave(saved)?.achievements).toEqual(model.state.achievements);

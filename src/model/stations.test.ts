@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -22,11 +22,11 @@ const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: fals
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 const { safeRadius } = ECONOMY.station;
 
-function sites(sector: SectorId, span = 15): StationSite[] {
+function sites(galaxy: GalaxyNumber, span = 15): StationSite[] {
   const found: StationSite[] = [];
   for (let x = -span; x <= span; x++) {
     for (let y = -span; y <= span; y++) {
-      const site = stationInCell(ECONOMY, sector, { x, y });
+      const site = stationInCell(ECONOMY, galaxy, { x, y });
       if (site) {
         found.push(site);
       }
@@ -40,16 +40,16 @@ const approach = { x: site.x + 200 * Math.SQRT1_2, y: site.y + 200 * Math.SQRT1_
 
 /** A flight parked inside a station's safe area with nothing else nearby. */
 function atStation(seed = 5): FlightState {
-  const flight = createFlight(PROTOTYPE, 1, seed, { known: [] });
+  const flight = createFlight(CONTENT, 1, seed, { known: [] });
   flight.player = { ...approach };
-  stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+  stepFlight(CONTENT, 1 / 60, idle, flight);
   flight.objects = flight.objects.filter((object) => object.kind === "station");
   flight.shots = [];
   return flight;
 }
 function launched(): GameModel {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
   flight.player = { ...approach };
@@ -60,7 +60,7 @@ function launched(): GameModel {
 }
 
 describe("station placement", () => {
-  it("places the same stations on every flight from the sector's seed", () => {
+  it("places the same stations on every flight from the galaxy's seed", () => {
     expect(sites(1)).toEqual(sites(1));
     expect(sites(1)).not.toEqual(sites(2));
     const first = atStation(1);
@@ -74,9 +74,9 @@ describe("station placement", () => {
   });
 
   it.each([1, 2, 3] as const)(
-    "keeps sector %i stations one per 12000 cell, 8000 apart and off the start",
-    (sector) => {
-      const found = sites(sector);
+    "keeps galaxy %i stations one per 12000 cell, 8000 apart and off the start",
+    (galaxy) => {
+      const found = sites(galaxy);
       // Every one of the 961 cells holds a station clear of the start.
       expect(found).toHaveLength(961);
       for (const [index, first] of found.entries()) {
@@ -103,16 +103,16 @@ describe("station placement", () => {
 
   it("keeps every station from the half-occupied grid in place, so saves keep their stations", () => {
     const half = { ...ECONOMY, station: { ...ECONOMY.station, chance: 0.5 } };
-    for (const sector of [1, 2, 3] as const) {
+    for (const galaxy of [1, 2, 3] as const) {
       let kept = 0;
       let added = 0;
       for (let x = -15; x <= 15; x++) {
         for (let y = -15; y <= 15; y++) {
-          const before = stationInCell(half, sector, { x, y });
-          const now = stationInCell(ECONOMY, sector, { x, y });
+          const before = stationInCell(half, galaxy, { x, y });
+          const now = stationInCell(ECONOMY, galaxy, { x, y });
           if (before) {
             expect(now).toEqual(before);
-            expect(stationById(ECONOMY, sector, before.id)).toEqual(before);
+            expect(stationById(ECONOMY, galaxy, before.id)).toEqual(before);
             kept++;
           } else if (now) {
             added++;
@@ -125,16 +125,16 @@ describe("station placement", () => {
   });
 
   it("places the same stations in flights of every seed", () => {
-    for (const sector of [1, 2, 3] as const) {
+    for (const galaxy of [1, 2, 3] as const) {
       for (const seed of [1, 7, 99, 4242]) {
-        const flight = createFlight(PROTOTYPE, sector, seed, { known: [] });
-        const expected = stationInCell(ECONOMY, sector, { x: 2, y: 1 })!;
+        const flight = createFlight(CONTENT, galaxy, seed, { known: [] });
+        const expected = stationInCell(ECONOMY, galaxy, { x: 2, y: 1 })!;
         flight.player = { x: expected.x + 600, y: expected.y };
-        stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+        stepFlight(CONTENT, 1 / 60, idle, flight);
         const placed = flight.objects.filter((object) => object.kind === "station");
         expect(placed.map((station) => station.id)).toContain(expected.id);
         for (const station of placed) {
-          expect(stationById(ECONOMY, sector, station.id)).toMatchObject({
+          expect(stationById(ECONOMY, galaxy, station.id)).toMatchObject({
             x: station.x,
             y: station.y,
           });
@@ -156,10 +156,10 @@ describe("station placement", () => {
   });
 
   it("keeps story destinations away from stations", () => {
-    const flight = createFlight(PROTOTYPE, 1, 9, { known: [] });
+    const flight = createFlight(CONTENT, 1, 9, { known: [] });
     // The first destination would land on the station, straight ahead of Ada.
-    flight.player = { x: site.x, y: site.y + PROTOTYPE.tuning.chunkSize * 2 };
-    const destination = ensureDestination(PROTOTYPE, "growers", flight);
+    flight.player = { x: site.x, y: site.y + CONTENT.tuning.chunkSize * 2 };
+    const destination = ensureDestination(CONTENT, "growers", flight);
     for (const station of stationsNear(ECONOMY, 1, 20000, destination)) {
       expect(distance(station, destination)).toBeGreaterThanOrEqual(
         ECONOMY.station.destinationClearance,
@@ -182,8 +182,8 @@ describe("station safe area", () => {
       piercing: false,
       velocity: { x: 0, y: 0 },
     });
-    stepFlight(PROTOTYPE, 0.05, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    stepFlight(CONTENT, 0.05, idle, flight);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     expect(flight.dangerFor).toBe(0);
     expect(flight.shots).toEqual([]);
   });
@@ -198,17 +198,17 @@ describe("station safe area", () => {
       hp: definition.hp,
       id: "f",
       kind: "enemy",
-      radius: PROTOTYPE.tuning.flight.shipRadius,
+      radius: CONTENT.tuning.flight.shipRadius,
     });
     flight.player = { x: site.x + 100, y: site.y };
     for (let step = 0; step < 120; step++) {
-      stepFlight(PROTOTYPE, 1 / 30, idle, flight);
+      stepFlight(CONTENT, 1 / 30, idle, flight);
       const enemy = flight.objects.find((object) => object.id === "f")!;
       expect(distance(enemy, site)).toBeGreaterThanOrEqual(
-        safeRadius + PROTOTYPE.tuning.flight.shipRadius - 1e-6,
+        safeRadius + CONTENT.tuning.flight.shipRadius - 1e-6,
       );
     }
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
   });
 });
@@ -277,7 +277,7 @@ describe("station discovery and docking", () => {
       model.interact();
       return model.state.docked;
     };
-    expect(PROTOTYPE.tuning.talkRange).toBe(160);
+    expect(CONTENT.tuning.talkRange).toBe(160);
     expect(at(159.9)).toBe(site.id);
     expect(at(160.1)).toBeNull();
   });

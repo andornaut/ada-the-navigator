@@ -401,14 +401,14 @@ try {
 
   const [
     { GameModel },
-    { PROTOTYPE },
+    { CONTENT },
     { ensureDestination },
     { playOpening, relaunch },
     { SAVE_VERSION, restoreSave: restoreCalm },
     { ACHIEVEMENTS },
   ] = await Promise.all([
     import(new URL("../src/model/game.ts", import.meta.url)),
-    import(new URL("../src/data/prototype.ts", import.meta.url)),
+    import(new URL("../src/data/content.ts", import.meta.url)),
     import(new URL("../src/model/flight.ts", import.meta.url)),
     import(new URL("../src/testing/launch.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
@@ -589,7 +589,7 @@ try {
         ),
       ),
     ],
-    [PROTOTYPE.labels.achievements, "true", "url(/art/ui/icons/achievements.svg)"],
+    [CONTENT.labels.achievements, "true", "url(/art/ui/icons/achievements.svg)"],
     "Achievements is labelled from Gameplay's string with Art's trophy, the glyph hidden",
   );
   assert.equal(
@@ -688,15 +688,15 @@ try {
   await page.waitForFunction(() => window.adaWakeLock.held === 1);
   await page.screenshot({ path: `${output}/story-opening.png` });
   const launchPages = await readStory();
-  const { gardenArrival, gardenFarewell, prologue: prologueSteps } = PROTOTYPE.premise;
+  const { gardenArrival, gardenFarewell, prologue: prologueSteps } = CONTENT.premise;
   // Grandma's garden frames chapter one's opening on the first launch.
   const openingAt = gardenArrival.length;
   assert.deepEqual(
     launchPages.slice(0, openingAt + 3).map(({ background, text }) => [background, text]),
     [
       ...gardenArrival.map(({ text }) => text),
-      PROTOTYPE.chapters[1].opening,
-      PROTOTYPE.chapters[1].openingBranches[0],
+      CONTENT.chapters[1].opening,
+      CONTENT.chapters[1].openingBranches[0],
       gardenFarewell.text,
     ].map((text) => ["grandmaGarden", text]),
     "Start opens in Grandma's garden, then chapter one's opening, its branch and her farewell",
@@ -789,7 +789,7 @@ try {
   }
   assert.deepEqual(
     launchPages.filter(({ spread }) => spread.heading).map(({ text }) => text),
-    [PROTOTYPE.chapters[1].opening],
+    [CONTENT.chapters[1].opening],
     "Only the first launch's chapter opening carries the panel title",
   );
   for (const background of new Set(launchPages.map(({ background }) => background))) {
@@ -813,8 +813,7 @@ try {
     "Storybook pages show Art's backgrounds and the glowing room plays the rock glow aboard",
   );
   // Each optional question's answer returns to the list until Continue.
-  for (const { answer } of PROTOTYPE.premise.prologue.find(({ questions }) => questions)
-    .questions) {
+  for (const { answer } of CONTENT.premise.prologue.find(({ questions }) => questions).questions) {
     assert.ok(
       launchPages.some(({ text }) => text === answer),
       `The prologue answers "${answer}"`,
@@ -842,7 +841,7 @@ try {
   assert.equal(previewResponse.status(), 200, "Galaxy previews must be served");
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
-    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+    CONTENT.labels.galaxyNumber.replace("{number}", "1"),
   );
   await page.screenshot({ path: `${output}/galaxy-select.png` });
   await page.locator('[data-action="galaxy-jump"]').click();
@@ -1153,7 +1152,7 @@ try {
     calm.flight.combat.initialPackSizes = {};
     delete calm.flight.combat.unloadedPackMembers;
   }
-  calm.flight.shield = PROTOTYPE.tuning.shieldMax;
+  calm.flight.shield = CONTENT.tuning.shieldMax;
   calm.flight.dangerFor = 0;
   assert.ok(restoreCalm(calm), "The calm launched world must remain a canonical save");
   // A launch from a mid-flight save opens on the start screen with Continue focused, the flight
@@ -1247,8 +1246,8 @@ try {
   assert.deepEqual(returned.progress, onLanding.progress);
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
-  const safeInput = new GameModel(PROTOTYPE);
-  safeInput.startSector(1);
+  const safeInput = new GameModel(CONTENT);
+  safeInput.startGalaxy(1);
   playOpening(safeInput);
   Object.assign(safeInput.state.progress[1], {
     introduced: true,
@@ -1258,12 +1257,12 @@ try {
     discoveries: 1,
   });
   assert.ok(safeInput.state.flight, "Safe input fixture requires a real flight");
-  const friendly = ensureDestination(PROTOTYPE, "growers", safeInput.state.flight);
+  const friendly = ensureDestination(CONTENT, "growers", safeInput.state.flight);
   safeInput.teleport("growers");
   assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
   assert.equal(safeInput.state.flight.freshChunk, null);
   const safeSerialized = safeInput.save();
-  assert.deepEqual(relaunch(PROTOTYPE, safeSerialized).state, safeInput.state);
+  assert.deepEqual(relaunch(CONTENT, safeSerialized).state, safeInput.state);
   save("input-fixture.json", {
     scope:
       "Friendly-destination safe-zone precondition for control checks only; no quest completion proof",
@@ -1275,7 +1274,7 @@ try {
   events.checks.push(
     "Model-generated friendly-destination fixture supplies the input-check precondition",
   );
-  const { CHEAT_COPY } = await import(new URL("../src/data/cheat-copy.ts", import.meta.url));
+  const { CHEAT_COPY } = await import(new URL("../src/data/cheatCopy.ts", import.meta.url));
   await page.keyboard.down("d");
   try {
     await openSettings();
@@ -1336,7 +1335,7 @@ try {
     await chip.waitFor({ state: "visible" });
     assert.equal(await chip.getAttribute("aria-hidden"), "true");
     const weaponNames = ["RapidMissile", "MultiLaser", "HeavyMissile", "Scattershot", "Phaser"].map(
-      (id) => `+ ${PROTOTYPE.labels[`weapon${id}`]}`,
+      (id) => `+ ${CONTENT.labels[`weapon${id}`]}`,
     );
     const announced = page.locator(".ada-item-notice-live");
     assert.equal(await announced.getAttribute("aria-live"), "polite");
@@ -1391,7 +1390,7 @@ try {
   await page.locator(".ada-use").waitFor({ state: "visible" });
   await contextControlProof(1, "friendly flight");
   // The disc shows the action's symbol, no text; its accessible name is the action's.
-  assert.equal(await page.locator(".ada-use").getAttribute("aria-label"), PROTOTYPE.labels.talk);
+  assert.equal(await page.locator(".ada-use").getAttribute("aria-label"), CONTENT.labels.talk);
   assert.equal(await page.locator(".ada-use").getAttribute("data-use"), "talk");
   assert.equal((await page.locator(".ada-use").textContent()).trim(), "", "Use shows no text");
   const beforeStorageFailure = await page.evaluate((key) => {
@@ -1404,9 +1403,7 @@ try {
   }, storageKey);
   try {
     await openSettings();
-    const warning = page
-      .getByRole("status")
-      .filter({ hasText: PROTOTYPE.labels.savingUnavailable });
+    const warning = page.getByRole("status").filter({ hasText: CONTENT.labels.savingUnavailable });
     await warning.waitFor({ state: "visible" });
     assert.equal(await warning.count(), 1, "Save failure must have one accessible status");
     assert.equal(await warning.getAttribute("id"), "save-status");
@@ -1422,13 +1419,13 @@ try {
       await page.keyboard.up("d");
     }
     await waitForRest(await position());
-    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
-    await tapUse(PROTOTYPE.labels.talk);
+    assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
+    await tapUse(CONTENT.labels.talk);
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "dialogue during save failure");
     assert.equal(
       await warning.textContent(),
-      PROTOTYPE.labels.savingUnavailable,
+      CONTENT.labels.savingUnavailable,
       "Dialogue rendering must not clear a failed-save warning",
     );
     await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
@@ -1439,7 +1436,7 @@ try {
     await page.locator('[data-action="dialogue-choice"]').first().waitFor({ state: "visible" });
     await contextControlProof(0, "keyboard interaction dialogue");
     await page.locator('[data-action="dialogue-choice"][data-choice="continue"]').click();
-    assert.equal(await warning.textContent(), PROTOTYPE.labels.savingUnavailable);
+    assert.equal(await warning.textContent(), CONTENT.labels.savingUnavailable);
     assert.equal(
       await page.evaluate((key) => localStorage.getItem(key), storageKey),
       beforeStorageFailure,
@@ -1472,9 +1469,9 @@ try {
     "One dedicated context control supports pointer and keyboard use, absent in home and dialogue",
   );
 
-  const dangerInput = relaunch(PROTOTYPE, safeSerialized);
+  const dangerInput = relaunch(CONTENT, safeSerialized);
   dangerInput.state.flight.dangerFor = 5;
-  dangerInput.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
+  dangerInput.state.flight.player.x += CONTENT.tuning.safeRadius * 3;
   dangerInput.state.flight.objects = [];
   // An enemy shot held still inside the battle square keeps Ada in danger while she flies or
   // waits paused; it lasts the whole check.
@@ -1505,11 +1502,11 @@ try {
       ]),
     ),
     [
-      ["pause-resume", PROTOTYPE.labels.resume, null],
-      ["pause-map", PROTOTYPE.labels.map, null],
-      ["pause-ship", PROTOTYPE.labels.ship, null],
-      ["pause-settings", PROTOTYPE.labels.settings, null],
-      ["pause-backToTitle", PROTOTYPE.labels.backToTitle, null],
+      ["pause-resume", CONTENT.labels.resume, null],
+      ["pause-map", CONTENT.labels.map, null],
+      ["pause-ship", CONTENT.labels.ship, null],
+      ["pause-settings", CONTENT.labels.settings, null],
+      ["pause-backToTitle", CONTENT.labels.backToTitle, null],
     ],
     "The in-flight Paused card shows Resume, Map, Ship, Settings and Back to title, all " +
       "available in danger",
@@ -1530,14 +1527,14 @@ try {
     );
     assert.equal(
       await shipCard.locator("h2").textContent(),
-      PROTOTYPE.labels.ship,
+      CONTENT.labels.ship,
       "The Ship card is titled Ship",
     );
     assert.deepEqual(
       await shipCard
         .locator(".ada-ship-section h3")
         .evaluateAll((headings) => headings.map((heading) => heading.textContent)),
-      [PROTOTYPE.labels.cargo, PROTOTYPE.labels.equipment],
+      [CONTENT.labels.cargo, CONTENT.labels.equipment],
       "The Ship card shows Cargo, then Equipment",
     );
     assert.equal(await focusedAction(), "close-ship", "Focus starts on the Ship card's X");
@@ -1598,7 +1595,7 @@ try {
     await mapScreen
       .locator(".ada-map-tool")
       .evaluateAll((tools) => tools.map((tool) => tool.getAttribute("aria-label"))),
-    ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => PROTOTYPE.labels[key]),
+    ["close", "mapZoomIn", "mapZoomOut", "mapCenterOnAda"].map((key) => CONTENT.labels[key]),
     "The map's tools carry Gameplay's accessible labels",
   );
   // Galaxies on the HUD row: Quests and Galaxies one 98 width, Galaxies' right edge 16 left of
@@ -1607,7 +1604,7 @@ try {
   const mapEarth = mapScreen.locator('[data-action="map-galaxies"]');
   assert.equal(
     await mapEarth.textContent(),
-    PROTOTYPE.labels.galaxies,
+    CONTENT.labels.galaxies,
     "The local map offers Galaxies",
   );
   await assertNoTapFlash(
@@ -1625,7 +1622,7 @@ try {
       pips.append(pips.firstElementChild.cloneNode(true));
     }
     const result = {
-      earth: box('[data-action="map-galaxies"]'),
+      galaxies: box('[data-action="map-galaxies"]'),
       quests: box('[data-action="map-quests"]'),
       fits: header.scrollWidth <= header.clientWidth,
       header: box(".ada-map-header"),
@@ -1641,18 +1638,18 @@ try {
   // The close tool's disc is small: its drawn left edge is 7.5 inside its target, and Galaxies
   // ends SMALL_BUTTON_GAP (24) left of it.
   assert.ok(
-    logical(hudRow.earth.width) === 98 &&
-      logical(hudRow.earth.height) === 48 &&
-      Math.abs(logical(hudRow.tools.left - hudRow.earth.right) + 7.5 - 24) <= 0.1 &&
-      Math.abs(hudRow.earth.top - hudRow.tools.top) <= 0.5,
+    logical(hudRow.galaxies.width) === 98 &&
+      logical(hudRow.galaxies.height) === 48 &&
+      Math.abs(logical(hudRow.tools.left - hudRow.galaxies.right) + 7.5 - 24) <= 0.1 &&
+      Math.abs(hudRow.galaxies.top - hudRow.tools.top) <= 0.5,
     `Galaxies is 98 by 48 on the HUD row, 24 left of the close disc: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
     // Device-pixel snapping puts the 98 width within 0.1 either side.
     Math.abs(hudRow.quests.width / hudRow.unit - 98) <= 0.1 &&
       logical(hudRow.quests.height) === 48 &&
-      Math.abs(logical(hudRow.earth.left - hudRow.quests.right) - 16) <= 0.1 &&
-      Math.abs(hudRow.quests.top - hudRow.earth.top) <= 0.5,
+      Math.abs(logical(hudRow.galaxies.left - hudRow.quests.right) - 16) <= 0.1 &&
+      Math.abs(hudRow.quests.top - hudRow.galaxies.top) <= 0.5,
     `Quests is 98 by 48, BUTTON_GAP (16) left of Galaxies: ${JSON.stringify(hudRow)}`,
   );
   assert.ok(
@@ -1683,7 +1680,7 @@ try {
     {
       height: emptyMap ? 80 : 52,
       hidden: false,
-      reason: [PROTOTYPE.labels.travelUnavailable],
+      reason: [CONTENT.labels.travelUnavailable],
       row: true,
       width: 360,
     },
@@ -1753,7 +1750,7 @@ try {
       (await page.locator('#game-status[data-mode="space"]').count()) === 1,
     "A refused Galaxies keeps the local map and the flight",
   );
-  const known = dangerInput.state.progress[dangerInput.state.flight.sector];
+  const known = dangerInput.state.progress[dangerInput.state.flight.galaxy];
   const chips = mapScreen.locator(".ada-map-places .ada-map-place");
   assert.ok(
     (await chips.count()) <= known.known.length + known.stations.length,
@@ -1767,11 +1764,11 @@ try {
       await mapScreen
         .locator(".ada-map-reason [data-shown]")
         .evaluateAll((lines) => lines.map((line) => line.textContent)),
-      [PROTOTYPE.labels.travelUnavailable],
+      [CONTENT.labels.travelUnavailable],
       "In danger the danger line shows with a selection",
     );
     await page.screenshot({ path: `${output}/map-earth-danger-selected.png` });
-    const kinds = Object.entries(PROTOTYPE.labels)
+    const kinds = Object.entries(CONTENT.labels)
       .filter(([key]) => key.startsWith("mapKind"))
       .map(([, value]) => value);
     const typeLine = (await mapScreen.locator(".ada-map-detail").first().textContent()) ?? "";
@@ -1805,7 +1802,7 @@ try {
   // column, and selecting its target pans the chip clear of the panel's rendered height.
   const { ECONOMY } = await import(new URL("../src/data/economy.ts", import.meta.url));
   const { stationsNear } = await import(new URL("../src/model/stations.ts", import.meta.url));
-  const jobInput = relaunch(PROTOTYPE, safeSerialized);
+  const jobInput = relaunch(CONTENT, safeSerialized);
   const issuer = stationsNear(ECONOMY, 1, 25000, { x: 0, y: 0 })[0];
   const growersAt = jobInput.state.flight.objects.find(
     (o) => o.kind === "destination" && o.id === "growers",
@@ -1914,7 +1911,7 @@ try {
   // Earth lands on Ada's room page, where the Paused card holds only Settings and Back to title,
   // and closes on Escape and its X. With the opening and prologue seen, Earth lands on the room
   // page itself.
-  const roomInput = relaunch(PROTOTYPE, safeSerialized);
+  const roomInput = relaunch(CONTENT, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
   // Whirlpool open too, its opening played, so the galaxy map has another galaxy to jump to and
@@ -1935,12 +1932,12 @@ try {
   await galaxyMap.waitFor({ state: "visible" });
   assert.equal(
     (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
-    PROTOTYPE.labels.stayHere,
+    CONTENT.labels.stayHere,
     "The galaxy map opened in flight offers Stay here on the galaxy Ada is flying in",
   );
   assert.equal(
     (await galaxyMap.locator("h2").textContent())?.trim(),
-    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+    CONTENT.labels.galaxyNumber.replace("{number}", "1"),
     "The galaxy map opens on Sunflower, where Ada is flying",
   );
   const galaxyClose = galaxyMap.locator('[data-action="close-galaxies"]');
@@ -1986,7 +1983,7 @@ try {
     flightBefore &&
       flightAfter &&
       flightAfter.seed === flightBefore.seed &&
-      flightAfter.sector === flightBefore.sector &&
+      flightAfter.galaxy === flightBefore.galaxy &&
       (await page.locator('[data-dialog="pause"]').isVisible()) === false,
     `Stay here resumes the same flight: ${JSON.stringify([flightBefore?.seed, flightAfter?.seed])}`,
   );
@@ -2016,11 +2013,11 @@ try {
     (label) =>
       document.querySelector('.ada-route[data-dialog="galaxies"] h2')?.textContent?.trim() ===
       label,
-    PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
+    CONTENT.labels.galaxyNumber.replace("{number}", "2"),
   );
   assert.equal(
     (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
-    PROTOTYPE.labels.jump,
+    CONTENT.labels.jump,
     "Jump reads Jump on another galaxy",
   );
   await galaxyMap.locator('[data-action="galaxy-jump"]').click();
@@ -2029,7 +2026,7 @@ try {
     .waitForFunction(
       (key) => {
         const saved = JSON.parse(localStorage.getItem(key));
-        return saved?.mode === "space" && saved.flight?.sector === 3;
+        return saved?.mode === "space" && saved.flight?.galaxy === 3;
       },
       storageKey,
       { timeout: 15000 },
@@ -2047,7 +2044,7 @@ try {
   await galaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
     .locator(".ada-story-panel:not([hidden])")
-    .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
+    .getByText(CONTENT.labels.pickUpRock, { exact: true })
     .waitFor({ state: "visible" });
   const roomSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.ok(
@@ -2091,9 +2088,9 @@ try {
   );
   // The mining hub is a station: Use deposits the ore Ada carries, then docks, and once
   // Cartwheel's space quest is complete the shop's Ship tab heads with the holodisk.
-  const hubInput = new GameModel(PROTOTYPE);
+  const hubInput = new GameModel(CONTENT);
   hubInput.state.unlocked = [1, 2];
-  hubInput.startSector(2);
+  hubInput.startGalaxy(2);
   playOpening(hubInput);
   hubInput.state.dialogue = null;
   Object.assign(hubInput.state.progress[2], {
@@ -2108,7 +2105,7 @@ try {
   delete hubFlight.storyScene;
   hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
   hubFlight.shots = [];
-  const hubAt = ensureDestination(PROTOTYPE, "hub", hubFlight);
+  const hubAt = ensureDestination(CONTENT, "hub", hubFlight);
   hubFlight.player = { x: hubAt.x + 100, y: hubAt.y };
   hubFlight.velocity = { x: 0, y: 0 };
   hubFlight.dangerFor = 0;
@@ -2117,14 +2114,12 @@ try {
   assert.equal(hubInput.contextAction, "deposit", "The hub fixture starts with ore to deposit");
   await seedOnce(hubInput.save(), "ada-browser.hub-station.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-  await tapUse(PROTOTYPE.labels.deposit);
-  await tapUse(PROTOTYPE.labels.dock);
+  await tapUse(CONTENT.labels.deposit);
+  await tapUse(CONTENT.labels.dock);
   await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
   await page.locator('[data-action="open-shop"]').click();
   await page.locator('[data-tab="ship"]').click();
-  await page
-    .getByText(PROTOTYPE.labels.holodiskAbout, { exact: true })
-    .waitFor({ state: "visible" });
+  await page.getByText(CONTENT.labels.holodiskAbout, { exact: true }).waitFor({ state: "visible" });
   const hubSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.equal(hubSaved.docked, "hub", "Dock at the hub opens its station card");
   assert.equal(hubSaved.progress[2].deposited, hubInput.state.progress[2].deposited + 4);
@@ -2136,14 +2131,14 @@ try {
   // Towing never refuses the local map's Galaxies; leaving the galaxy from the galaxy map ends the
   // flight with the held rescue still held, its craft back where it was stranded.
   const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));
-  const towInput = relaunch(PROTOTYPE, roomInput.save());
+  const towInput = relaunch(CONTENT, roomInput.save());
   const towFlight = towInput.state.flight;
   // The nearest station whose board offers a rescue.
   let rescue;
   for (const site of stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
     (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
   )) {
-    ensureStation(PROTOTYPE, site.id, towFlight);
+    ensureStation(CONTENT, site.id, towFlight);
     towFlight.player = { x: site.x, y: site.y };
     towInput.state.docked = site.id;
     rescue = towInput.jobBoard().find((row) => row.type === "rescue");
@@ -2194,7 +2189,7 @@ try {
   await towGalaxyMap.locator('[data-action="galaxy-home"]').click();
   await page
     .locator(".ada-story-panel:not([hidden])")
-    .getByText(PROTOTYPE.labels.pickUpRock, { exact: true })
+    .getByText(CONTENT.labels.pickUpRock, { exact: true })
     .waitFor({ state: "visible" });
   const towed = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.ok(
@@ -2218,12 +2213,12 @@ try {
   const { KEEPER_BLOCK, keeperPips, stationCardRect } = await import(
     new URL("../src/ui/layout/stationCard.ts", import.meta.url)
   );
-  const keeperInput = relaunch(PROTOTYPE, roomInput.save());
+  const keeperInput = relaunch(CONTENT, roomInput.save());
   const keeperFlight = keeperInput.state.flight;
   const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
     (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
   );
-  ensureStation(PROTOTYPE, keeperSite.id, keeperFlight);
+  ensureStation(CONTENT, keeperSite.id, keeperFlight);
   keeperInput.state.progress[1].stations = [
     ...new Set([...keeperInput.state.progress[1].stations, keeperSite.id]),
   ];
@@ -2320,8 +2315,8 @@ try {
   );
   assert.ok(
     first.tag === "BUTTON" &&
-      first.label === PROTOTYPE.labels.nextLine &&
-      first.buttons[0] === PROTOTYPE.labels.nextLine &&
+      first.label === CONTENT.labels.nextLine &&
+      first.buttons[0] === CONTENT.labels.nextLine &&
       first.keeper === keeper.key &&
       first.name === CAST[keeper.key].name &&
       first.tab === rgb(CAST[keeper.key].tab) &&
@@ -2509,13 +2504,13 @@ try {
   );
   events.checks.push("Native touch release clears movement and firing without resurrection");
 
-  const equipment = relaunch(PROTOTYPE, safeSerialized);
+  const equipment = relaunch(CONTENT, safeSerialized);
   equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
   // Each with a new weapon's three packs.
   Object.assign(equipment.state.flight.ammo, { multiLaser: 600, rapidMissile: 600 });
   equipment.state.flight.weapon = "laser";
   const equipmentSave = equipment.save();
-  assert.deepEqual(relaunch(PROTOTYPE, equipmentSave).state, equipment.state);
+  assert.deepEqual(relaunch(CONTENT, equipmentSave).state, equipment.state);
   save("equipment-fixture.json", {
     scope:
       "Canonical owned-upgrade fixture for UI selection and persistence, not pickup progression",
@@ -2553,9 +2548,7 @@ try {
     "The removed top-left information HUD must not be recreated",
   );
   // Each weapon masks its own 20px glyph.
-  const { weaponGlyphPath } = await import(
-    new URL("../src/data/weapon-glyphs.ts", import.meta.url)
-  );
+  const { weaponGlyphPath } = await import(new URL("../src/data/weaponGlyphs.ts", import.meta.url));
   const weaponImages = await page.locator(".ada-weapon-selector .ada-disc").evaluateAll((glyphs) =>
     glyphs.map((glyph) => ({
       decorative: glyph.getAttribute("aria-hidden") === "true",
@@ -2628,8 +2621,8 @@ try {
     "multiLaser",
     "Firing must not consume an upgrade",
   );
-  const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
-  assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
+  const meter = page.getByRole("meter", { name: CONTENT.labels.shield, exact: true });
+  assert.equal(Number(await meter.getAttribute("aria-valuenow")), CONTENT.tuning.shieldMax);
   const pill = await settledBox(".ada-status");
   const pauseBox = await settledBox('[data-action="pause"]');
   const bar = await meter.boundingBox();
@@ -2664,7 +2657,7 @@ try {
     );
   }
   const pauseButton = page.locator('[data-action="pause"]');
-  assert.equal(await pauseButton.getAttribute("aria-label"), PROTOTYPE.labels.pause);
+  assert.equal(await pauseButton.getAttribute("aria-label"), CONTENT.labels.pause);
   const pauseImage = await pauseButton.evaluate(
     (node) => getComputedStyle(node, "::before").backgroundImage,
   );
@@ -2704,7 +2697,7 @@ try {
       [...text].reduce((sum, c) => sum + countAdvance(c), 0),
     );
   const pillAt = async (stardust, marker) => {
-    const model = relaunch(PROTOTYPE, safeSerialized);
+    const model = relaunch(CONTENT, safeSerialized);
     model.state.economy.stardust = stardust;
     await seedOnce(model.save(), marker);
     await settledBox(".ada-status");
@@ -2749,10 +2742,10 @@ try {
   save("status-pill-proof.json", { largePill, smallPill });
   events.checks.push("The status pill grows with its counts, its left edge fixed");
 
-  const damaged = relaunch(PROTOTYPE, equipmentSave);
+  const damaged = relaunch(CONTENT, equipmentSave);
   assert.ok(damaged.selectWeapon("rapidMissile"));
   // Damage is meaningful only outside the friendly destination's protected region.
-  damaged.state.flight.player.x += PROTOTYPE.tuning.safeRadius * 2;
+  damaged.state.flight.player.x += CONTENT.tuning.safeRadius * 2;
   assert.ok(
     damaged.state.flight.objects
       .filter((object) => object.kind === "destination")
@@ -2761,14 +2754,14 @@ try {
           Math.hypot(
             destination.x - damaged.state.flight.player.x,
             destination.y - damaged.state.flight.player.y,
-          ) > PROTOTYPE.tuning.safeRadius,
+          ) > CONTENT.tuning.safeRadius,
       ),
     "Projectile fixture must be outside every active protected destination",
   );
-  damaged.state.flight.shield = PROTOTYPE.tuning.hazardDamage;
+  damaged.state.flight.shield = CONTENT.tuning.hazardDamage;
   damaged.state.flight.shots.push({
     ...damaged.state.flight.player,
-    damage: PROTOTYPE.tuning.hazardDamage,
+    damage: CONTENT.tuning.hazardDamage,
     enemy: true,
     hitIds: [],
     id: "browser-shield-break",
@@ -2786,7 +2779,7 @@ try {
   assert.equal(damaged.state.economy.weapon, "rapidMissile", "The equipped weapon must stay");
   assert.equal(damaged.state.economy.stardust, 30, "The jump home must cost no Stardust");
   const damageSave = damaged.save();
-  assert.deepEqual(relaunch(PROTOTYPE, damageSave).state, damaged.state);
+  assert.deepEqual(relaunch(CONTENT, damageSave).state, damaged.state);
   save("shield-break-fixture.json", {
     scope: "Real-model projectile damage before restore, not a natural browser combat playthrough",
     state: JSON.parse(damageSave),
@@ -2795,7 +2788,7 @@ try {
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const jumpNotice = await page.locator("#game-status").textContent();
   assert.ok(
-    jumpNotice.includes(PROTOTYPE.labels.jumpHome) &&
+    jumpNotice.includes(CONTENT.labels.jumpHome) &&
       !jumpNotice.includes("lost") &&
       !jumpNotice.includes("cost"),
     `The jump home notice must name no loss or fee: ${jumpNotice}`,
@@ -2935,7 +2928,7 @@ try {
   // page returns across Grandma's garden into chapter one's opening, Skip from a mid-prologue page aboard
   // passes the rest of the run to galaxy selection, and Home's run is Ada's room page alone, with
   // Skip hidden.
-  await seedOnce(new GameModel(PROTOTYPE).save(), "ada-browser.story-run.v1");
+  await seedOnce(new GameModel(CONTENT).save(), "ada-browser.story-run.v1");
   await page.locator('[data-action="start"]').click();
   const storyPanel = page.locator(".ada-story-panel:not([hidden])");
   const storyButton = (action) => storyPanel.locator(`[data-action="story-${action}"]`);
@@ -2947,7 +2940,7 @@ try {
   });
   const showsText = (text) =>
     storyPanel.locator(".ada-story-paragraph", { hasText: text }).waitFor();
-  await showsText(PROTOTYPE.premise.gardenArrival[0].text);
+  await showsText(CONTENT.premise.gardenArrival[0].text);
   const opening = await storyPage();
   // Next through each page in turn, each shown before the next press.
   async function nextThrough(texts) {
@@ -2968,24 +2961,24 @@ try {
     await page.waitForTimeout(50);
     await nextTo(text, remaining - 1);
   }
-  await nextThrough(PROTOTYPE.premise.gardenArrival.slice(1).map(({ text }) => text));
+  await nextThrough(CONTENT.premise.gardenArrival.slice(1).map(({ text }) => text));
   await storyButton("next").click();
   await storyButton("choice").first().click();
-  await showsText(PROTOTYPE.chapters[1].openingBranches[0]);
+  await showsText(CONTENT.chapters[1].openingBranches[0]);
   await storyButton("next").click();
-  await showsText(PROTOTYPE.premise.gardenFarewell.text);
+  await showsText(CONTENT.premise.gardenFarewell.text);
   await storyButton("next").click();
-  await showsText(PROTOTYPE.premise.prologue[0].text);
+  await showsText(CONTENT.premise.prologue[0].text);
   const prologue = await storyPage();
   // Previous across Grandma's garden into chapter one's opening.
   await storyButton("previous").click();
-  await showsText(PROTOTYPE.premise.gardenFarewell.text);
+  await showsText(CONTENT.premise.gardenFarewell.text);
   const garden = await storyPage();
   await storyButton("previous").click();
-  await showsText(PROTOTYPE.chapters[1].openingBranches[0]);
+  await showsText(CONTENT.chapters[1].openingBranches[0]);
   const back = await storyPage();
   // On to a page aboard, Astra asking Ada's name, then Skip.
-  const named = PROTOTYPE.premise.prologue.find(
+  const named = CONTENT.premise.prologue.find(
     ({ text }) => text === "What is your name, explorer?",
   );
   assert.ok(named, "Astra asks Ada's name aboard in the prologue");
@@ -3004,11 +2997,11 @@ try {
   assert.ok(opening.skipShown, "Skip shows inside the run");
   assert.ok(!prologue.previousDisabled, "Previous crosses back from the prologue");
   assert.equal(garden.background, "grandmaGarden", "Previous returns to Grandma's farewell");
-  assert.equal(back.text, PROTOTYPE.chapters[1].openingBranches[0]);
+  assert.equal(back.text, CONTENT.chapters[1].openingBranches[0]);
   assert.ok(!back.previousDisabled, "Previous goes on within chapter one's opening");
   assert.equal(aboard.background, "aboard", "Skip is pressed on a page aboard");
   assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
-  assert.equal(roomAction, PROTOTYPE.labels.pickUpRock);
+  assert.equal(roomAction, CONTENT.labels.pickUpRock);
   assert.ok(!room.skipShown, "Skip is hidden on the run's end, Ada's room page");
   assert.ok(room.previousDisabled, "Ada's room page from galaxy selection starts its run");
   events.checks.push(
@@ -3078,8 +3071,8 @@ try {
     ["844", { height: 390, width: 844 }, {}],
     ["844-insets", { height: 390, width: 844 }, { bottom: 19, left: 43, right: 43, top: 0 }],
   ];
-  const fresh = new GameModel(PROTOTYPE);
-  const saved = new GameModel(PROTOTYPE);
+  const fresh = new GameModel(CONTENT);
+  const saved = new GameModel(CONTENT);
   saved.state.started = true;
   const startScreens = {};
   // One at a time, in order: each seeds or resizes the one page.
@@ -3133,7 +3126,7 @@ try {
       `${name}: the ship frame is 280 square on its centre`,
     );
     assert.equal(shot.note, 0, `${name}: the start screen has no note`);
-    assert.equal(shot.title, PROTOTYPE.labels.home, `${name}: the wordmark is named by home`);
+    assert.equal(shot.title, CONTENT.labels.home, `${name}: the wordmark is named by home`);
     assert.equal(shot.shipSrc, "/art/ship-26.svg", `${name}: Classic's ship-26 before a paint`);
     for (const [action, box, role] of shot.actions) {
       assert.deepEqual(
@@ -3218,7 +3211,7 @@ try {
   );
 
   const { SCREEN } = await import(new URL("../src/data/screen.ts", import.meta.url));
-  const weaponModel = relaunch(PROTOTYPE, safeSerialized);
+  const weaponModel = relaunch(CONTENT, safeSerialized);
   weaponModel.state.flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
   Object.assign(weaponModel.state.flight.ammo, {
     multiLaser: 600,
@@ -3229,7 +3222,7 @@ try {
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];
   const weaponSave = weaponModel.save();
-  assert.deepEqual(relaunch(PROTOTYPE, weaponSave).state, weaponModel.state);
+  assert.deepEqual(relaunch(CONTENT, weaponSave).state, weaponModel.state);
   save("weapon-volley-fixture.json", {
     scope:
       "Canonical cleared-flight fixture for actual UI firing, not natural pickup or combat progression",
@@ -3255,7 +3248,7 @@ try {
       );
       const snapshot = await readSave();
       assert.deepEqual(
-        relaunch(PROTOTYPE, JSON.stringify(snapshot)).state,
+        relaunch(CONTENT, JSON.stringify(snapshot)).state,
         snapshot,
         "Actual fired projectiles and fade metadata must survive canonical save validation",
       );
@@ -3293,7 +3286,7 @@ try {
     );
   }
   for (const shot of missileShots) {
-    assert.ok(shot.damage > PROTOTYPE.tuning.flight.playerShotDamage);
+    assert.ok(shot.damage > CONTENT.tuning.flight.playerShotDamage);
   }
   const triple = await heldVolley("multiLaser", "bolt", 3);
   const bolts = triple.flight.shots.filter((shot) => !shot.enemy && shot.projectile === "bolt");
@@ -3346,7 +3339,7 @@ try {
       Math.hypot(dx, dy) <= scatterRange + noseReach + 0.001,
       "Actual scatter particles must remain inside the 360 world-unit range from the nose",
     );
-    assert.ok(shot.damage > 0 && shot.damage < PROTOTYPE.tuning.flight.playerShotDamage);
+    assert.ok(shot.damage > 0 && shot.damage < CONTENT.tuning.flight.playerShotDamage);
   }
   await page.waitForFunction(
     (key) =>
@@ -3368,16 +3361,16 @@ try {
       "and fading 360 world-unit scatter particles",
   );
 
-  const cargoModel = new GameModel(PROTOTYPE);
+  const cargoModel = new GameModel(CONTENT);
   cargoModel.state.unlocked = [1, 2];
-  cargoModel.startSector(2);
+  cargoModel.startGalaxy(2);
   playOpening(cargoModel);
   Object.assign(cargoModel.state.progress[2], { introduced: true, stage: 1, known: ["hub"] });
-  ensureDestination(PROTOTYPE, "hub", cargoModel.state.flight);
+  ensureDestination(CONTENT, "hub", cargoModel.state.flight);
   cargoModel.teleport("hub");
   cargoModel.state.flight.cargo = 12345;
   const cargoSave = cargoModel.save();
-  assert.deepEqual(relaunch(PROTOTYPE, cargoSave).state, cargoModel.state);
+  assert.deepEqual(relaunch(CONTENT, cargoSave).state, cargoModel.state);
   save("cargo-fixture.json", {
     scope: "Canonical wide-cargo deposit UI fixture, not natural mining progression",
     state: JSON.parse(cargoSave),
@@ -3400,7 +3393,7 @@ try {
       const state = JSON.parse(localStorage.getItem(key));
       return (
         state.mode === "space" &&
-        state.flight?.sector === 2 &&
+        state.flight?.galaxy === 2 &&
         state.flight.cargo === 12345 &&
         state.flight.time > from
       );
@@ -3414,7 +3407,7 @@ try {
     "Wide cargo must not restore the removed information HUD",
   );
   assert.equal(await page.locator(".ada-use").getAttribute("data-use"), "deposit");
-  await tapUse(PROTOTYPE.labels.deposit);
+  await tapUse(CONTENT.labels.deposit);
   await page.waitForFunction((key) => {
     const state = JSON.parse(localStorage.getItem(key));
     return state.flight.cargo === 0 && state.progress[2].deposited === 12345;
@@ -3430,8 +3423,8 @@ try {
   );
 
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
-  const fixture = new GameModel(PROTOTYPE);
-  fixture.startSector(1);
+  const fixture = new GameModel(CONTENT);
+  fixture.startGalaxy(1);
   playOpening(fixture);
   assert.ok(fixture.state.flight, "The real model must create a valid flight");
   Object.assign(fixture.state.progress[1], {
@@ -3458,37 +3451,37 @@ try {
   await page.locator('[data-action="continue"]').click();
   await contextControlProof(0, "home resolution");
   const choices = page.locator('[data-action="story-choice"]');
-  await page.getByText(PROTOTYPE.chapters[1].resolution, { exact: true }).waitFor();
+  await page.getByText(CONTENT.chapters[1].resolution, { exact: true }).waitFor();
   assert.equal(await choices.count(), 2, "home resolution must offer both real choices");
   await page.screenshot({ path: `${output}/resolution.png` });
   await choices.nth(1).click();
-  await page.getByText(PROTOTYPE.chapters[1].resolutionBranches[1], { exact: true }).waitFor();
+  await page.getByText(CONTENT.chapters[1].resolutionBranches[1], { exact: true }).waitFor();
   await page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]').click();
-  await page.getByText(PROTOTYPE.chapters[1].closing, { exact: true }).waitFor();
+  await page.getByText(CONTENT.chapters[1].closing, { exact: true }).waitFor();
   assert.equal(await choices.count(), 0, "The closing is an ordinary page");
   const homePages = await readStory();
-  assert.equal(homePages[0]?.text, PROTOTYPE.chapters[1].closing);
+  assert.equal(homePages[0]?.text, CONTENT.chapters[1].closing);
   assert.equal(
     homePages[1]?.text,
-    PROTOTYPE.chapters[3].opening,
+    CONTENT.chapters[3].opening,
     "Whirlpool's opening follows, second on the route",
   );
   await selector().waitFor({ state: "visible" });
   // The first boarding after the unlock flies the ship from Sunflower to Whirlpool.
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
-    PROTOTYPE.labels.galaxyNumber.replace("{number}", "1"),
+    CONTENT.labels.galaxyNumber.replace("{number}", "1"),
     "The unlock flight starts on Sunflower",
   );
   await page.locator('.ada-route[data-dialog="galaxies"]:not([data-flight])').waitFor();
   assert.equal(
     (await selector().locator("h2").textContent())?.trim(),
-    PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
+    CONTENT.labels.galaxyNumber.replace("{number}", "2"),
     "Galaxy selection opens on the farthest unlocked galaxy, Whirlpool at route position 2",
   );
   assert.equal(
     (await page.locator('[data-action="galaxy-home"]').textContent())?.trim(),
-    PROTOTYPE.labels.homeButton,
+    CONTENT.labels.homeButton,
     "Galaxy selection's Earth button reads Earth",
   );
   await page.screenshot({ path: `${output}/selector-earth.png` });
@@ -3530,7 +3523,7 @@ try {
     "The close X follows Jump, last in Tab order",
   );
   await page.screenshot({ path: `${output}/route-map.png` });
-  const panelNumber = (number) => PROTOTYPE.labels.galaxyNumber.replace("{number}", number);
+  const panelNumber = (number) => CONTENT.labels.galaxyNumber.replace("{number}", number);
   const selectedMarker = () =>
     routeMarkers.evaluateAll((markers) =>
       markers.findIndex((marker) => marker.hasAttribute("data-selected")),
@@ -3601,16 +3594,16 @@ try {
   );
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
-    import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
-    import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
+    import(new URL("../src/data/enemyCatalog.ts", import.meta.url)),
+    import(new URL("../src/model/enemyAi.ts", import.meta.url)),
     import(new URL("../src/model/save.ts", import.meta.url)),
   ]);
   // A claim platform beside Ada in Cartwheel: its hull is in Cartwheel's manifest and its turret
   // and port frames load when it first draws, after that manifest has loaded.
-  const claimModel = new GameModel(PROTOTYPE);
+  const claimModel = new GameModel(CONTENT);
   claimModel.state.unlocked = [1, 2];
   claimModel.state.prologueSeen = true;
-  claimModel.startSector(2);
+  claimModel.startGalaxy(2);
   playOpening(claimModel);
   if (claimModel.state.mode !== "space") {
     claimModel.jump();
@@ -3632,7 +3625,7 @@ try {
       hp: definition.hp,
       id: enemy.id,
       kind: "enemy",
-      radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
     });
   }
   await seedOnce(claimModel.save(), "ada-browser.claim-platform.v1");
@@ -3657,8 +3650,8 @@ try {
       "its part frames",
   );
   const [{ readAsteroidCatalog }, asteroidArt] = await Promise.all([
-    import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
-    import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
+    import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
+    import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
   ]);
   const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
   assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
@@ -3672,8 +3665,8 @@ try {
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
-    const combat = new GameModel(PROTOTYPE);
-    combat.startSector(1);
+    const combat = new GameModel(CONTENT);
+    combat.startGalaxy(1);
     playOpening(combat);
     assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
     const flight = combat.state.flight;
@@ -3703,15 +3696,15 @@ try {
       hp: definition.hp,
       id: enemy.id,
       kind: "enemy",
-      radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
     });
     if (missile) {
       flight.shots.push({
-        damage: PROTOTYPE.tuning.flight.playerShotDamage,
+        damage: CONTENT.tuning.flight.playerShotDamage,
         enemy: true,
         hitIds: [],
         id: "browser-combat:missile",
-        life: PROTOTYPE.tuning.flight.enemyProjectileLifetime,
+        life: CONTENT.tuning.flight.enemyProjectileLifetime,
         piercing: false,
         projectile: "missile",
         velocity: { x: 12, y: 12 },
@@ -3721,7 +3714,7 @@ try {
     }
     const serialized = combat.save();
     assert.deepEqual(restoreSave(serialized), combat.state, "Canonical restore accepts combat");
-    assert.deepEqual(relaunch(PROTOTYPE, serialized).state, combat.state);
+    assert.deepEqual(relaunch(CONTENT, serialized).state, combat.state);
     return serialized;
   }
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -4018,8 +4011,8 @@ try {
     );
   }
   const asteroidCaptures = {};
-  async function captureRocks(sector, name) {
-    const tint = asteroidArt.backdropTint(rockArt, sector);
+  async function captureRocks(galaxy, name) {
+    const tint = asteroidArt.backdropTint(rockArt, galaxy);
     // The ramps sample the canvas alone; the conversation box and notices draw over it.
     const showOverCanvas = await hideOverCanvas(page);
     const image = await page
@@ -4028,16 +4021,16 @@ try {
     await showOverCanvas();
     const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
     const pixels = await stonePixels(image, ramps);
-    asteroidCaptures[sector].push({ name, pixels });
+    asteroidCaptures[galaxy].push({ name, pixels });
     return pixels;
   }
-  async function captureGalaxy(sector) {
-    const serialized = asteroidFixture(rockArt, rockParallax, sector);
-    save(`asteroid-fixture-${sector}.json`, {
+  async function captureGalaxy(galaxy) {
+    const serialized = asteroidFixture(rockArt, rockParallax, galaxy);
+    save(`asteroid-fixture-${galaxy}.json`, {
       scope: "Canonical rock layout for Art review of sprites, drift chips and the backdrop field",
       state: JSON.parse(serialized),
     });
-    await seedOnce(serialized, `ada-browser.asteroid-fixture-${sector}.v1`);
+    await seedOnce(serialized, `ada-browser.asteroid-fixture-${galaxy}.v1`);
     await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
     // Rock frames load after the scene starts; placeholders draw until they all arrive.
     await page
@@ -4051,10 +4044,10 @@ try {
       storageKey,
     );
     await page.locator("#game-canvas > canvas").waitFor({ state: "visible" });
-    asteroidCaptures[sector] = [];
-    const first = await captureRocks(sector, `asteroids-galaxy-${sector}.png`);
-    assert.ok(first.stone > 2000, `Galaxy ${sector} must draw Art's stone rocks`);
-    assert.ok(first.backdrop > 20, `Galaxy ${sector} must draw its tinted backdrop rocks`);
+    asteroidCaptures[galaxy] = [];
+    const first = await captureRocks(galaxy, `asteroids-galaxy-${galaxy}.png`);
+    assert.ok(first.stone > 2000, `Galaxy ${galaxy} must draw Art's stone rocks`);
+    assert.ok(first.backdrop > 20, `Galaxy ${galaxy} must draw its tinted backdrop rocks`);
   }
   await captureGalaxy(1);
   await captureGalaxy(2);
@@ -4080,13 +4073,13 @@ try {
   for (const setting of ["move", "aim"]) {
     assert.deepEqual(
       notes.find(([key]) => key === setting),
-      [setting, PROTOTYPE.labels.controlsNote],
+      [setting, CONTENT.labels.controlsNote],
       `${setting} controls row notes that touch still works when hidden`,
     );
   }
   assert.deepEqual(
     notes.find(([key]) => key === "sound"),
-    ["sound", PROTOTYPE.labels.soundNote],
+    ["sound", CONTENT.labels.soundNote],
     "Sound keeps its note in the same element",
   );
   // The Move and Aim controls rows show Art's control icons, nearest-neighbour.
@@ -4138,7 +4131,7 @@ try {
   await openSettings();
   const toggles = [];
   async function toggleSetting(key) {
-    const label = PROTOTYPE.labels[key];
+    const label = CONTENT.labels[key];
     assert.equal(typeof label, "string", `Canonical ${key} settings label must exist`);
     const checkbox = page.getByRole("switch", { name: label, exact: true });
     await checkbox.waitFor({ state: "visible" });
@@ -4155,7 +4148,7 @@ try {
   await closeSettings();
   await openSettings();
   async function restoreSetting({ initial, key, toggled }) {
-    const checkbox = page.getByRole("switch", { name: PROTOTYPE.labels[key], exact: true });
+    const checkbox = page.getByRole("switch", { name: CONTENT.labels[key], exact: true });
     assert.equal(await checkbox.isChecked(), toggled, `${key} survives dialog reopening`);
     await checkbox.setChecked(initial);
   }
@@ -4233,7 +4226,7 @@ try {
   const portraitFrame = await frameProof(true);
   await page
     .locator("#game-canvas")
-    .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
+    .getByRole("button", { name: CONTENT.labels.talk, exact: true })
     .waitFor({ state: "visible" });
   const portraitWeapon = page.locator('button[data-weapon="laser"]');
   await portraitWeapon.waitFor({ state: "visible" });
@@ -4269,7 +4262,7 @@ try {
     turnedControls.insideCanvas,
     "Turned weapon button must remain inside the visible canvas",
   );
-  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponLaser);
+  assert.equal(turnedControls.accessibleName, CONTENT.labels.weaponLaser);
   save("portrait-weapon-alignment.json", turnedControls);
   const portraitBefore = await position();
   const portraitBounds = await Promise.all(
@@ -4332,10 +4325,10 @@ try {
   );
   await openSettings();
   await page
-    .getByRole("switch", { name: PROTOTYPE.labels.sound, exact: true })
+    .getByRole("switch", { name: CONTENT.labels.sound, exact: true })
     .waitFor({ state: "visible" });
   await page
-    .getByRole("switch", { name: PROTOTYPE.labels.reducedMotion, exact: true })
+    .getByRole("switch", { name: CONTENT.labels.reducedMotion, exact: true })
     .waitFor({ state: "visible" });
   await page.screenshot({ path: `${output}/portrait-settings.png` });
   await closeSettings();
@@ -4388,7 +4381,7 @@ try {
     (label) =>
       document.querySelector(".ada-start-note")?.textContent === label ||
       document.querySelector(".progress-bar:not([hidden])") !== null,
-    PROTOTYPE.labels.updateRequired,
+    CONTENT.labels.updateRequired,
     { timeout: 15000 },
   );
   const newerStart = await page.evaluate(() => ({
@@ -4397,7 +4390,7 @@ try {
   }));
   assert.equal(newerStart.actions, 0, "A newer save keeps Start closed");
   assert.ok(
-    newerStart.note === null || newerStart.note === PROTOTYPE.labels.updateRequired,
+    newerStart.note === null || newerStart.note === CONTENT.labels.updateRequired,
     "A newer save shows only Gameplay's update-required message",
   );
   await page.evaluate(() => {
@@ -4474,7 +4467,7 @@ try {
   const navUnit = await page
     .locator("#app")
     .evaluate((app) => Number(getComputedStyle(app).getPropertyValue("--ada-unit")));
-  assert.equal(navDiscs[2].label, PROTOTYPE.labels.exit, "Exit is named from Gameplay's string");
+  assert.equal(navDiscs[2].label, CONTENT.labels.exit, "Exit is named from Gameplay's string");
   assert.equal(
     glyphUrl(
       await page
@@ -4510,7 +4503,7 @@ try {
     });
   });
   await page.locator(".crash").waitFor({ state: "visible" });
-  const { CRASH_COPY } = await import(new URL("../src/data/crash-copy.ts", import.meta.url));
+  const { CRASH_COPY } = await import(new URL("../src/data/crashCopy.ts", import.meta.url));
   const crashScreen = await page.locator(".crash").evaluate((screen) => ({
     body: screen.querySelector(".crash-body")?.textContent,
     details: screen.querySelector(".crash-stack")?.textContent ?? "",

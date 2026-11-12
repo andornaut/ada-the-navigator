@@ -13,7 +13,7 @@ export interface FeedbackPulse extends Vec {
 }
 interface Snapshot {
   seed: number;
-  sector: number;
+  galaxy: number;
   player: Vec;
   shield: number;
   cargo: number;
@@ -51,8 +51,9 @@ export class ModelFeedback {
     }
     const next: Snapshot = {
       cargo: flight.cargo,
-      deposited: state.progress[flight.sector].deposited,
-      destroyedEnemies: state.progress[flight.sector].destroyedEnemies,
+      deposited: state.progress[flight.galaxy].deposited,
+      destroyedEnemies: state.progress[flight.galaxy].destroyedEnemies,
+      galaxy: flight.galaxy,
       impacts: new Set(flight.shots.flatMap((shot) => shot.hitIds.map((id) => `${shot.id}:${id}`))),
       objects: new Map(
         flight.objects.map((object) => [
@@ -66,14 +67,13 @@ export class ModelFeedback {
         ]),
       ),
       player: { ...flight.player },
-      sector: flight.sector,
       seed: flight.seed,
       shield: flight.shield,
       stardust: state.economy.stardust,
       weapon: flight.weapon,
     };
     this.previous = next;
-    if (!previous || previous.seed !== next.seed || previous.sector !== next.sector) {
+    if (!previous || previous.seed !== next.seed || previous.galaxy !== next.galaxy) {
       this.pulses.length = 0;
       return [];
     }

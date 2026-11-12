@@ -1,5 +1,5 @@
 import { type Background, CHAPTER_BACKGROUNDS } from "../data/storybook.ts";
-import type { ChapterContent, PrologueStep, PrototypeContent, SectorId } from "../data/types.ts";
+import type { ChapterContent, GalaxyNumber, GameContent, PrologueStep } from "../data/types.ts";
 
 /** A choice and the page it leads to; without one, the choice ends the scene. */
 export interface StoryChoice {
@@ -38,9 +38,9 @@ export interface StoryPage {
   readonly holodisk?: boolean;
 }
 export type SceneEffect =
-  | { readonly kind: "opened"; readonly galaxy: SectorId }
+  | { readonly kind: "opened"; readonly galaxy: GalaxyNumber }
   | { readonly kind: "prologue" }
-  | { readonly kind: "resolved"; readonly galaxy: SectorId };
+  | { readonly kind: "resolved"; readonly galaxy: GalaxyNumber };
 /**
  * What follows a scene: more Earth scenes (`visit` arrives home as any visit does, waiting scenes
  * first), boarding aboard, galaxy selection, or the flight the scene paused.
@@ -224,9 +224,9 @@ function linePage(
 
 /** A built galaxy's chapter and Earth scenes; a placeholder galaxy has none to play. */
 function builtChapter(
-  content: PrototypeContent,
-  galaxy: SectorId,
-): [ChapterContent, NonNullable<(typeof CHAPTER_BACKGROUNDS)[SectorId]>] {
+  content: GameContent,
+  galaxy: GalaxyNumber,
+): [ChapterContent, NonNullable<(typeof CHAPTER_BACKGROUNDS)[GalaxyNumber]>] {
   const chapter = content.chapters[galaxy];
   const backgrounds = CHAPTER_BACKGROUNDS[galaxy];
   if (!chapter || !backgrounds) {
@@ -241,8 +241,8 @@ function builtChapter(
  * garden: the arrival pages before it and her farewell after the branch.
  */
 export function openingScene(
-  content: PrototypeContent,
-  galaxy: SectorId,
+  content: GameContent,
+  galaxy: GalaxyNumber,
   firstLaunch = false,
 ): Scene {
   const [chapter, { opening: background }] = builtChapter(content, galaxy);
@@ -296,7 +296,7 @@ export function openingScene(
 
 /** A chapter's home resolution: its narration and choices, each with a branch page before the
  * closing. */
-export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Scene {
+export function resolutionScene(content: GameContent, galaxy: GalaxyNumber): Scene {
   const [chapter, backgrounds] = builtChapter(content, galaxy);
   return {
     effect: { galaxy, kind: "resolved" },
@@ -334,7 +334,7 @@ export function resolutionScene(content: PrototypeContent, galaxy: SectorId): Sc
  * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
  * then aboard, where Astra's optional questions return to their list until Continue.
  */
-export function prologueScene(content: PrototypeContent, labels: StoryLabels): Scene {
+export function prologueScene(content: GameContent, labels: StoryLabels): Scene {
   const { prologue } = content.premise;
   const pages: StoryPage[] = [];
   prologue.forEach((step, index) => {
@@ -425,7 +425,7 @@ export function jumpHomeScene(jumpHome: string, morning: string): Scene {
 }
 
 /** Ada's room with the glowing rock, after a scene that leads aboard; empty visits show Penny. */
-export function roomScene(content: PrototypeContent, labels: StoryLabels, empty: boolean): Scene {
+export function roomScene(content: GameContent, labels: StoryLabels, empty: boolean): Scene {
   return {
     endsRun: true,
     id: empty ? "room:empty" : "room",
@@ -447,11 +447,7 @@ export function roomScene(content: PrototypeContent, labels: StoryLabels, empty:
  * after a galaxy unlocks, Astra announces it instead. Continue from the start screen lands aboard
  * and plays only Astra's line.
  */
-export function boardingScene(
-  content: PrototypeContent,
-  announce: boolean,
-  fromRoom = true,
-): Scene {
+export function boardingScene(content: GameContent, announce: boolean, fromRoom = true): Scene {
   const { boarding, boardingNewGalaxy } = content.premise;
   const lines = boarding.map((line, index) =>
     index === boarding.length - 1 && announce ? { ...boardingNewGalaxy, announces: true } : line,

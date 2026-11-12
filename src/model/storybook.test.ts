@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { GALAXIES } from "../data/storybook.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { boardAndJump, readStory, relaunch } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -115,14 +115,14 @@ describe("storybook pages", () => {
 });
 
 /** A save whose galaxy is past its space quest and holodisk, in flight. */
-function questDone(galaxy: SectorId): GameModel {
-  const model = new GameModel(PROTOTYPE);
+function questDone(galaxy: GalaxyNumber): GameModel {
+  const model = new GameModel(CONTENT);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.state.unlocked = ([1, 2, 3] as const).filter((id) => id <= galaxy);
   for (const id of model.state.unlocked) {
     model.state.progress[id].opened = true;
   }
-  model.startSector(galaxy);
+  model.startGalaxy(galaxy);
   Object.assign(model.state.progress[galaxy], {
     holodisk: true,
     introduced: true,
@@ -149,13 +149,10 @@ describe("home visits", () => {
       "boarding:0@adaRoom",
       "boarding:1@aboard",
     ]);
-    expect(pages[1]?.text).toBe(PROTOTYPE.chapters[1]!.resolutionBranches[1]);
-    expect(pages[4]?.text).toBe(PROTOTYPE.chapters[3]!.openingBranches[1]);
+    expect(pages[1]?.text).toBe(CONTENT.chapters[1]!.resolutionBranches[1]);
+    expect(pages[4]?.text).toBe(CONTENT.chapters[3]!.openingBranches[1]);
     expect(pages.slice(5, 6).map(({ speaker, text }) => [speaker ?? "", text])).toEqual(
-      (PROTOTYPE.chapters[3]!.openingRejoin ?? []).map(({ speaker, text }) => [
-        speaker ?? "",
-        text,
-      ]),
+      (CONTENT.chapters[3]!.openingRejoin ?? []).map(({ speaker, text }) => [speaker ?? "", text]),
     );
     expect(pages[6]).toMatchObject({
       action: "Pick up the rock.",
@@ -174,7 +171,7 @@ describe("home visits", () => {
     expect(model.state.progress[3].opened).toBe(true);
     expect(model.screen).toBe("selector");
     model.finishRouteFlight();
-    expect(model.selectedGalaxy).toBe(3);
+    expect(model.galaxyMapSelection).toBe(3);
   });
 
   it("never replays old scenes: an empty visit shows Penny's line, then the rock", () => {
@@ -208,7 +205,7 @@ describe("home visits", () => {
 describe("story runs", () => {
   /** A new game's Start: galaxy one's opening chained to the prologue. */
   function started(): GameModel {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.start();
     return model;
   }
@@ -409,7 +406,7 @@ describe("story runs", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
     // Its one page leads straight to galaxy selection, so Skip would pass nothing.
     expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: false });
@@ -427,18 +424,18 @@ describe("galaxy selection", () => {
     readStory(model);
     // Cartwheel unlocks Phantom, the farthest position: the ship flies there from Cartwheel.
     expect(model.routeFlight).toEqual({ from: 5, opened: [6], to: 6 });
-    expect([model.shipPosition, model.selectedGalaxy]).toEqual([5, 2]);
+    expect([model.shipPosition, model.galaxyMapSelection]).toEqual([5, 2]);
     model.finishRouteFlight();
     expect(model.routeFlight).toBeNull();
-    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
+    expect([model.selectedPosition, model.galaxyMapSelection]).toEqual([6, 6]);
     model.stepGalaxy(1);
-    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([6, 6]);
+    expect([model.selectedPosition, model.galaxyMapSelection]).toEqual([6, 6]);
     model.stepGalaxy(-1);
-    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([5, 2]);
+    expect([model.selectedPosition, model.galaxyMapSelection]).toEqual([5, 2]);
     for (let step = 0; step < 9; step++) {
       model.stepGalaxy(-1);
     }
-    expect([model.selectedPosition, model.selectedGalaxy]).toEqual([1, 1]);
+    expect([model.selectedPosition, model.galaxyMapSelection]).toEqual([1, 1]);
     // The flight plays once: the next boarding opens with the ship at rest on the farthest.
     model.leaveCockpit();
     readStory(model);
@@ -465,16 +462,16 @@ describe("galaxy selection", () => {
     expect(model.shipPosition).toBe(2);
     // A tap on Needle, still locked, shows its panel while the ship stays on Whirlpool.
     model.viewGalaxy(3);
-    expect([model.selectedGalaxy, model.shipPosition]).toEqual([4, 2]);
+    expect([model.galaxyMapSelection, model.shipPosition]).toEqual([4, 2]);
     expect(model.isUnlocked(4)).toBe(false);
     expect(model.jump()).toBe(false);
     expect(model.screen).toBe("selector");
     // Left returns the panel to the ship's galaxy and walks on to Sunflower.
     model.stepGalaxy(-1);
-    expect([model.selectedGalaxy, model.shipPosition]).toEqual([1, 1]);
+    expect([model.galaxyMapSelection, model.shipPosition]).toEqual([1, 1]);
     expect(model.jump()).toBe(true);
     expect(model.state.mode).toBe("space");
-    expect(model.state.flight?.sector).toBe(1);
+    expect(model.state.flight?.galaxy).toBe(1);
   });
 
   it("goes Home to Ada's room without a jump", () => {
@@ -484,20 +481,20 @@ describe("galaxy selection", () => {
     model.leaveCockpit();
     expect(model.state.mode).toBe("home");
     expect(model.screen).toBe("story");
-    expect(model.storyView?.page.text).toBe(PROTOTYPE.premise.emptyHome);
+    expect(model.storyView?.page.text).toBe(CONTENT.premise.emptyHome);
   });
 });
 
 describe("start flow", () => {
   it("offers only Start until the first flight begins", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(model.screen).toBe("start");
     model.continueGame();
     expect(model.screen).toBe("start");
     model.start();
     readStory(model);
     model.leaveCockpit();
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.started).toBe(false);
     reloaded.start();
     // Start replays galaxy one's opening; the prologue is seen, so Ada boards from her room.
@@ -510,14 +507,14 @@ describe("start flow", () => {
       "boarding:1",
     ]);
     reloaded.jump();
-    expect(relaunch(PROTOTYPE, reloaded.save()).state.started).toBe(true);
+    expect(relaunch(CONTENT, reloaded.save()).state.started).toBe(true);
   });
 
   it("continues aboard with Astra's line, then the farthest unlocked galaxy", () => {
     const model = questDone(2);
     model.state.progress[2].questComplete = false;
     model.returnHome();
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.screen).toBe("start");
     reloaded.start();
     expect(reloaded.screen).toBe("start");
@@ -527,7 +524,7 @@ describe("start flow", () => {
       readStory(reloaded).map(({ background, speaker, text }) => [background, speaker, text]),
     ).toEqual([["aboard", "Astra", "Welcome back, Navigator."]]);
     expect(reloaded.screen).toBe("selector");
-    expect(reloaded.selectedGalaxy).toBe(2);
+    expect(reloaded.galaxyMapSelection).toBe(2);
   });
 
   it("plays a pending new galaxy announcement on Continue, once", () => {
@@ -535,7 +532,7 @@ describe("start flow", () => {
     model.state.progress[2].questComplete = false;
     model.state.announceGalaxy = true;
     model.returnHome();
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
     expect(readStory(reloaded).map(({ text }) => text)).toEqual([
       "Welcome back, Navigator. A new galaxy is ready.",
@@ -545,14 +542,14 @@ describe("start flow", () => {
 
   it("plays a waiting home scene before galaxy selection", () => {
     const model = questDone(1);
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     reloaded.returnHome();
-    const home = relaunch(PROTOTYPE, reloaded.save());
+    const home = relaunch(CONTENT, reloaded.save());
     home.continueGame();
     expect(home.storyView?.page.id).toBe("resolution");
     readStory(home);
     home.finishRouteFlight();
-    expect(home.selectedGalaxy).toBe(3);
+    expect(home.galaxyMapSelection).toBe(3);
   });
 
   it("restarts from Start, clearing story, galaxies, holodisks, Stardust and purchases", () => {
@@ -563,13 +560,13 @@ describe("start flow", () => {
     // Restart acts only from the start screen.
     model.restart();
     expect(model.state.unlocked).toEqual([1, 2]);
-    const reloaded = relaunch(PROTOTYPE, model.save());
+    const reloaded = relaunch(CONTENT, model.save());
     const achievements = structuredClone(reloaded.state.achievements);
     reloaded.restart();
     expect(reloaded.screen).toBe("start");
     // Achievements and their counts are all Restart keeps.
     expect(reloaded.state).toEqual({
-      ...new GameModel(PROTOTYPE).state,
+      ...new GameModel(CONTENT).state,
       achievements: { ...achievements, found: [], sensed: [] },
     });
     expect(achievements.unlocked).toContain("newNavigator");
@@ -582,7 +579,7 @@ describe("start flow", () => {
 
 describe("storybook save", () => {
   it("rejects malformed flags", () => {
-    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
     expect(restoreSave({ ...state, started: "yes" })).toBeNull();
     (state.progress as Record<string, Record<string, unknown>>)["1"]!.opened = 1;
     expect(restoreSave(state)).toBeNull();

@@ -33,7 +33,7 @@ const watchdog = setTimeout(() => {
 
 const [
   { GameModel },
-  { PROTOTYPE },
+  { CONTENT },
   { playOpening },
   { restoreSave },
   { enemyDefinition },
@@ -43,14 +43,14 @@ const [
   { DEVICE_STORAGE_KEYS },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
-  import(new URL("../src/data/prototype.ts", import.meta.url)),
+  import(new URL("../src/data/content.ts", import.meta.url)),
   import(new URL("../src/testing/launch.ts", import.meta.url)),
   import(new URL("../src/model/save.ts", import.meta.url)),
-  import(new URL("../src/data/enemy-catalog.ts", import.meta.url)),
-  import(new URL("../src/model/enemy-ai.ts", import.meta.url)),
-  import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
-  import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
-  import(new URL("../src/ui/device-settings.ts", import.meta.url)),
+  import(new URL("../src/data/enemyCatalog.ts", import.meta.url)),
+  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+  import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
+  import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
+  import(new URL("../src/ui/deviceSettings.ts", import.meta.url)),
 ]);
 
 /**
@@ -158,26 +158,26 @@ function fixtureFile(name, scope, serialized) {
 }
 
 /**
- * A flight in `sector` with each heavy at its screen offset from Ada, holding its fire unless
+ * A flight in `galaxy` with each heavy at its screen offset from Ada, holding its fire unless
  * its hardpoints are listed, and an upgrade pickup at each of `pickups`' screen offsets.
  */
-function heavyFixture(sector, heavies, pickups = []) {
-  const model = new GameModel(PROTOTYPE);
+function heavyFixture(galaxy, heavies, pickups = []) {
+  const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3, 4, 5, 6];
   // The highest shield outlasts every capture's hits on Ada.
   model.state.economy.levels.shield = 3;
-  model.startSector(sector);
+  model.startGalaxy(galaxy);
   playOpening(model);
-  assert.ok(model.state.flight, `Heavy fixture requires galaxy ${sector}'s flight`);
+  assert.ok(model.state.flight, `Heavy fixture requires galaxy ${galaxy}'s flight`);
   const flight = model.state.flight;
-  model.state.progress[sector].introduced = true;
+  model.state.progress[galaxy].introduced = true;
   model.state.dialogue = null;
   flight.objects = [];
   flight.shots = [];
   flight.mines = [];
   const origin = { ...flight.player };
   for (const { archetype, fire = [], screen, setup } of heavies) {
-    const definition = enemyDefinition(sector, archetype);
+    const definition = enemyDefinition(galaxy, archetype);
     const offset = toWorld(screen);
     const at = { x: origin.x + offset.x, y: origin.y + offset.y };
     const enemy = createEnemy(
@@ -197,7 +197,7 @@ function heavyFixture(sector, heavies, pickups = []) {
       id: enemy.id,
       kind: "enemy",
       persistent: false,
-      radius: PROTOTYPE.tuning.flight.shipRadius * definition.sizeRatio,
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
     });
   }
   for (const screen of pickups) {
@@ -206,7 +206,7 @@ function heavyFixture(sector, heavies, pickups = []) {
       hp: 1,
       id: `browser-art:upgrade:${screen.x}`,
       kind: "pickup",
-      radius: PROTOTYPE.tuning.flight.pickupRadius,
+      radius: CONTENT.tuning.flight.pickupRadius,
       role: "drop",
       upgrade: true,
       x: origin.x + offset.x,
@@ -257,8 +257,8 @@ async function captureHeavies() {
   await openFixture(sunflower);
   await frames("sunflower", { every: 95, shots: 12 });
   // Needle (tier 2) and Cartwheel (tier 3) heavies, every mount drawn, held still.
-  async function tier(name, sector) {
-    const fixture = heavyFixture(sector, pair());
+  async function tier(name, galaxy) {
+    const fixture = heavyFixture(galaxy, pair());
     fixtureFile(name, heavyScope, fixture);
     await openFixture(fixture);
     await frames(name);

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { ACTIVITIES, CALF, MINING_CONTRACT_DEPOSITS } from "../data/activities.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { HUNTING_PACKS } from "../data/galaxy-features.ts";
+import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { activityOffer, heldActivity } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
@@ -26,26 +26,26 @@ function takeContract(model: GameModel): void {
   model.undock();
 }
 
-function atPlace(sector: SectorId, place: string, resolved = true) {
-  const model = new GameModel(PROTOTYPE);
+function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
+  const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
-  model.startSector(sector);
+  model.startGalaxy(galaxy);
   playOpening(model);
-  const progress = model.state.progress[sector];
+  const progress = model.state.progress[galaxy];
   Object.assign(progress, {
     holodisk: true,
     introduced: true,
     questComplete: true,
     resolved,
-    stage: sector === 1 ? 4 : 5,
+    stage: galaxy === 1 ? 4 : 5,
   });
   progress.known = [...new Set([...progress.known, place])];
   model.state.dialogue = null;
   const flight = model.state.flight!;
   flight.objects = [];
-  const at = ensureDestination(PROTOTYPE, place, flight);
+  const at = ensureDestination(CONTENT, place, flight);
   // Sunflower's supply runs go to a known station at least 3000 from the issuer.
-  if (sector === 1) {
+  if (galaxy === 1) {
     progress.stations = [supplyStation(at).id];
   }
   flight.player = { x: at.x, y: at.y };
@@ -64,10 +64,10 @@ function supplyStation(from: Vec) {
 /** Ada at a known place in the flight, at rest. */
 function flyTo(model: GameModel, place: string) {
   const flight = model.state.flight!;
-  if (!model.state.progress[flight.sector].known.includes(place)) {
-    model.state.progress[flight.sector].known.push(place);
+  if (!model.state.progress[flight.galaxy].known.includes(place)) {
+    model.state.progress[flight.galaxy].known.push(place);
   }
-  const at = ensureDestination(PROTOTYPE, place, flight);
+  const at = ensureDestination(CONTENT, place, flight);
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
   model.state.dialogue = null;
@@ -110,8 +110,8 @@ function atFamily() {
 describe("repeatable activities", () => {
   it.each(OFFERS)(
     "galaxy %i's %s offers its activity through Talk with Accept and Not now",
-    (sector, place, line, speaker) => {
-      const model = sector === 3 ? atFamily().model : atPlace(sector, place);
+    (galaxy, place, line, speaker) => {
+      const model = galaxy === 3 ? atFamily().model : atPlace(galaxy, place);
       model.interact();
       expect(model.state.dialogue).toMatchObject({
         choices: [
@@ -123,8 +123,8 @@ describe("repeatable activities", () => {
       });
       model.choose("take");
       expect(model.state.dialogue).toBeNull();
-      expect(model.state.tasks[sector]).toMatchObject({
-        id: ACTIVITIES[sector]!.id,
+      expect(model.state.tasks[galaxy]).toMatchObject({
+        id: ACTIVITIES[galaxy]!.id,
         kind: "activity",
         place,
       });
@@ -280,12 +280,12 @@ describe("repeatable activities", () => {
     flight.dangerFor = 0;
     model.returnHome();
     expect(heldActivity(1, model.state)?.carrying).toBe(true);
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     model.state.dialogue = null;
     // At the station Use delivers, before Dock.
     const before = model.state.economy.stardust;
-    ensureStation(PROTOTYPE, site.id, model.state.flight!);
+    ensureStation(CONTENT, site.id, model.state.flight!);
     const next = model.state.flight!;
     next.player = { x: site.x + 100, y: site.y };
     next.velocity = { x: 0, y: 0 };
@@ -453,12 +453,12 @@ describe("Guide a calf", () => {
     expect(flight.objects.some((o) => o.enemy?.packId === "hunt:calf")).toBe(true);
     // Closing the game resumes the guide exactly.
     Object.assign(flight.calf!, { following: true, x: start.x + 300, y: start.y });
-    const restored = relaunch(PROTOTYPE, model.save());
+    const restored = relaunch(CONTENT, model.save());
     expect(restored.state.flight!.calf).toEqual(flight.calf);
     // Leaving the galaxy: the next flight's calf starts again from the family, wherever it is.
     flight.dangerFor = 0;
     model.returnHome();
-    model.startSector(3);
+    model.startGalaxy(3);
     playOpening(model);
     model.state.dialogue = null;
     model.step(0.05, idle);

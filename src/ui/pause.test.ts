@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
-import { createBackStack, pressBack } from "./back-stack.ts";
+import { CONTENT } from "../data/content.ts";
+import { createBackStack, pressBack } from "./backStack.ts";
 import {
   escapeTarget,
   galaxiesAvailable,
@@ -42,27 +42,27 @@ describe("Paused card", () => {
   });
 
   it("has Gameplay's strings, and no player-visible city name remains", () => {
-    expect(PROTOTYPE.labels.pause).toBe("Pause");
-    expect(PROTOTYPE.labels.pauseTitle).toBe("Paused");
-    expect(PROTOTYPE.labels.galaxies).toBe("Galaxies");
-    expect(PROTOTYPE.labels.stayHere).toBe("Stay here");
-    expect(PROTOTYPE.labels.backToTitle).toBe("Back to title");
-    expect(PROTOTYPE.labels.homeButton).toBe("Earth");
-    expect(PROTOTYPE.labels.jumpHome).toBe(
+    expect(CONTENT.labels.pause).toBe("Pause");
+    expect(CONTENT.labels.pauseTitle).toBe("Paused");
+    expect(CONTENT.labels.galaxies).toBe("Galaxies");
+    expect(CONTENT.labels.stayHere).toBe("Stay here");
+    expect(CONTENT.labels.backToTitle).toBe("Back to title");
+    expect(CONTENT.labels.homeButton).toBe("Earth");
+    expect(CONTENT.labels.jumpHome).toBe(
       "Astra jumped you back to Earth to recharge. Your story progress is saved.",
     );
-    for (const chapter of Object.values(PROTOTYPE.chapters)) {
+    for (const chapter of Object.values(CONTENT.chapters)) {
       expect(chapter.objectives.at(-1)).toBe("Go home to Earth when ready.");
     }
-    expect(PROTOTYPE.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
-    expect(PROTOTYPE.labels.toronto).toBeUndefined();
-    expect(PROTOTYPE.labels.travelEmpty).toBe("No destinations mapped yet.");
-    expect(PROTOTYPE.labels.map).toBe("Map");
-    expect(PROTOTYPE.labels.mapPercent).toBe("{percent}% mapped");
-    expect(PROTOTYPE.labels.travelHere).toBe("Travel here");
-    expect(PROTOTYPE.labels.travel).toBeUndefined();
-    expect(PROTOTYPE.labels.destinations).toBeUndefined();
-    expect(JSON.stringify(PROTOTYPE)).not.toContain("Toronto");
+    expect(CONTENT.labels.travelUnavailable).toBe("Unavailable while you are in danger.");
+    expect(CONTENT.labels.toronto).toBeUndefined();
+    expect(CONTENT.labels.travelEmpty).toBe("No destinations mapped yet.");
+    expect(CONTENT.labels.map).toBe("Map");
+    expect(CONTENT.labels.mapPercent).toBe("{percent}% mapped");
+    expect(CONTENT.labels.travelHere).toBe("Travel here");
+    expect(CONTENT.labels.travel).toBeUndefined();
+    expect(CONTENT.labels.destinations).toBeUndefined();
+    expect(JSON.stringify(CONTENT)).not.toContain("Toronto");
   });
 });
 

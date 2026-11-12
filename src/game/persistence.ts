@@ -1,6 +1,6 @@
 import { readSave as readStoredSave, writeSave as writeStoredSave } from "../model/save.ts";
 
-const KEY = "ada-the-navigator.prototype.v1";
+const KEY = "ada-the-navigator.save";
 
 // Cleared by a crash (src/main.ts): the game's state may be corrupt, so the last save stands.
 let saving = true;

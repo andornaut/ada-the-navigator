@@ -1,8 +1,8 @@
 import { DESTINATIONS } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { JobType, LandmarkKind } from "../data/jobs.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { SectorId } from "../data/types.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type { FlightState, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
@@ -54,7 +54,7 @@ export function chartingChunks(chunkSize: number): number {
 }
 
 /**
- * Adds the chunk holding point to a galaxy's explored record (SectorProgress.explored) when the
+ * Adds the chunk holding point to a galaxy's explored record (GalaxyProgress.explored) when the
  * chunk lies in the charting disc and is new to it.
  */
 export function recordExplored(chunkSize: number, explored: string[], point: Vec): void {
@@ -191,7 +191,7 @@ export type QuestLine =
   | { readonly kind: "job" | "story"; readonly target: string | null; readonly text: string }
   | { readonly kind: "jobBoards" | "storyComplete" };
 
-export interface GalaxyMap {
+export interface LocalMap {
   /**
    * Where Ada has explored, for the fog: the centre of each chunk in the galaxy's explored record.
    * An empty record draws no fog.
@@ -217,9 +217,9 @@ export interface MapContext {
   readonly chunkSize: number;
   /** The galaxy's story destinations, every one of which counts toward the percent. */
   readonly destinations: readonly string[];
-  /** The galaxy's explored record across flights: chunk ids (SectorProgress.explored). */
+  /** The galaxy's explored record across flights: chunk ids (GalaxyProgress.explored). */
   readonly explored: readonly string[];
-  readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "sector">;
+  readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "galaxy">;
   /** The known holodisk waypoint until its holodisk is recovered, or null. */
   readonly holodisk: Vec | null;
   /**
@@ -255,8 +255,8 @@ export interface MapContext {
  * Story characters waiting at a station, such as Cartwheel's miner and visitors, are not map
  * places: the station stands for them, including as the objective's place.
  */
-function waitingAt(sector: SectorId, id: string): string | null {
-  return sector === CARTWHEEL_STORY_SHIPS.sector &&
+function waitingAt(galaxy: GalaxyNumber, id: string): string | null {
+  return galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
     Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
     ? CARTWHEEL_STORY_SHIPS.station
     : null;
@@ -266,11 +266,11 @@ const within = (point: Vec) =>
   Math.hypot(point.x - ORIGIN.x, point.y - ORIGIN.y) <= CHARTING_RADIUS;
 
 /** The galaxy's map from what Ada has discovered and charted, and nothing else. */
-export function galaxyMap(context: MapContext): GalaxyMap {
+export function localMap(context: MapContext): LocalMap {
   const { catalog, flight, landmarks, objective, progress } = context;
-  const sector = flight.sector as SectorId;
-  const mapped = (id: string) => waitingAt(sector, id) === null;
-  const objectivePlace = objective === null ? null : (waitingAt(sector, objective) ?? objective);
+  const galaxy = flight.galaxy as GalaxyNumber;
+  const mapped = (id: string) => waitingAt(galaxy, id) === null;
+  const objectivePlace = objective === null ? null : (waitingAt(galaxy, objective) ?? objective);
   const destinations = progress.known.filter(mapped).flatMap((id): MapPlace[] => {
     const object = flight.objects.find((entry) => entry.kind === "destination" && entry.id === id);
     return object
@@ -290,7 +290,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
       : [];
   });
   const stations = progress.stations.flatMap((id): MapPlace[] => {
-    const site = stationById(catalog, sector, id);
+    const site = stationById(catalog, galaxy, id);
     return site
       ? [
           {
@@ -324,7 +324,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
     charted.filter(within).length;
   const total =
     context.destinations.filter(mapped).length +
-    stationsNear(catalog, sector, CHARTING_RADIUS, ORIGIN).length +
+    stationsNear(catalog, galaxy, CHARTING_RADIUS, ORIGIN).length +
     landmarks.total;
   const waypoint: MapPlace[] = context.holodisk
     ? [

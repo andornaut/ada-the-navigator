@@ -1,7 +1,7 @@
 import type { Weapon } from "../data/types.ts";
-import { weaponShopSheet } from "../data/weapon-glyphs.ts";
+import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
-import { createKeeperBlock } from "./keeper-block.ts";
+import { createKeeperBlock } from "./keeperBlock.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -24,7 +24,7 @@ import {
   TEXT_TOKENS,
 } from "./modal.ts";
 import { refuse } from "./refusal.ts";
-import { buttonProperty } from "./ui-skin.ts";
+import { buttonProperty } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
 // gameplay/quests.md "Job board") on the shared card builder; every size comes from src/ui/layout

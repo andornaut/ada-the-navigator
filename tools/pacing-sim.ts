@@ -2,7 +2,7 @@
  * Headless Stardust pacing simulation for Gameplay review.
  *
  * World content comes from the game's own generators and drop rolls: chunk plans
- * (asteroids and discovery caches), encounter cells and their sector tables, station
+ * (asteroids and discovery caches), encounter cells and their galaxy tables, station
  * sites, enemy and asteroid drops and pickup splitting. A scripted player explores,
  * fights encounters met in passing, shoots some asteroids and collects pickups inside
  * tractor range. An upgrade weapon spends one shot per volley; the player tops up each owned
@@ -12,7 +12,7 @@
  * With --jobs the player also takes and completes station jobs (gameplay/quests.md) back to
  * back, through the game's own job boards, landmarks and rewards.
  *
- * Usage: node tools/pacing-sim.ts [--sector 1|2|3] [--seeds 50] [--minutes 90]
+ * Usage: node tools/pacing-sim.ts [--galaxy 1|2|3] [--seeds 50] [--minutes 90]
  *   [--scenario name] [--set key=value ...] [--json] [--real] [--weapons] [--jobs]
  * --weapons prints each weapon's single-target output and kill times per level.
  * Values given to --set are JSON; dotted keys reach nested parameters or overrides,
@@ -20,8 +20,9 @@
  */
 import { pathToFileURL } from "node:url";
 
-import { ASTEROID_SIZES, type AsteroidSize } from "../src/data/asteroid-catalog.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunk-catalog.ts";
+import { ASTEROID_SIZES, type AsteroidSize } from "../src/data/asteroidCatalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../src/data/chunkCatalog.ts";
+import { CONTENT } from "../src/data/content.ts";
 import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/economy.ts";
 import {
   type EncounterEntry,
@@ -30,17 +31,16 @@ import {
   enemyCatalog,
   enemyDefinition,
   HEAVIES,
-} from "../src/data/enemy-catalog.ts";
+} from "../src/data/enemyCatalog.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../src/data/galaxies.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
 import { JOB_TUNING, JOB_TYPES, type JobType } from "../src/data/jobs.ts";
 import { galaxyProjects } from "../src/data/projects.ts";
-import { PROTOTYPE } from "../src/data/prototype.ts";
 import { SCREEN } from "../src/data/screen.ts";
-import type { SectorId, Weapon } from "../src/data/types.ts";
-import { weaponAt } from "../src/data/weapon-catalog.ts";
+import type { GalaxyNumber, Weapon } from "../src/data/types.ts";
+import { weaponAt } from "../src/data/weaponCatalog.ts";
 import { ASTEROID_SHAPES, orbitMotion, placementRadius } from "../src/model/asteroids.ts";
-import { planChunk } from "../src/model/chunk-templates.ts";
+import { planChunk } from "../src/model/chunkTemplates.ts";
 import {
   dropRandom,
   rollAsteroidStardust,
@@ -68,10 +68,10 @@ import {
   stationBoard,
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
-import { clearOfOreFields } from "../src/model/ore-fields.ts";
+import { clearOfOreFields } from "../src/model/oreFields.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
-import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "../src/model/upgrade-drops.ts";
+import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "../src/model/upgradeDrops.ts";
 import { newEconomy } from "../src/model/upgrades.ts";
 import { addPacks, noAmmo } from "../src/model/weapons.ts";
 
@@ -122,7 +122,7 @@ export interface Behaviour {
   /** Chance a fought encounter ends in a quantum jump home (shield depleted). */
   depletionChance: number;
   /**
-   * Minutes into play at which each of the sector's story route guard fights happens, in
+   * Minutes into play at which each of the galaxy's story route guard fights happens, in
    * ROUTE_GUARDS order; empty disables them.
    */
   guardMinutes: number[];
@@ -158,7 +158,7 @@ export interface Prices {
   /** Cartwheel's hub holodisk price; only Cartwheel's summary reports the time to save it. */
   holodisk: number;
   /**
-   * The sector's community projects funded in table order, as the Stardust saved by each: a
+   * The galaxy's community projects funded in table order, as the Stardust saved by each: a
    * donation pays what the balance covers and part payments persist, so the nth project is funded
    * once the earnings since the chapter ended reach the first n costs.
    */
@@ -179,10 +179,10 @@ export interface Scenario {
   name: string;
   description: string;
   economy: EconomyOverrides;
-  /** Chunk spawn weight for discovery caches; the base is PROTOTYPE's. */
+  /** Chunk spawn weight for discovery caches; the base is CONTENT's. */
   cacheSpawnWeight?: number;
-  /** Replacement encounter tables per sector; the base is the catalog's sectorEncounters. */
-  encounters?: Partial<Record<SectorId, readonly EncounterEntry[]>>;
+  /** Replacement encounter tables per galaxy; the base is the catalog's galaxyEncounters. */
+  encounters?: Partial<Record<GalaxyNumber, readonly EncounterEntry[]>>;
   /** Weapons owned at the start, as carried over from earlier galaxies. */
   startWeapons?: UpgradeWeapon[];
   prices: Partial<Prices>;
@@ -230,11 +230,13 @@ export const SCENARIOS: Readonly<Record<string, Omit<Scenario, "behaviour" | "na
 };
 
 /**
- * Each sector's required story route guard fights, mirroring flight.ts's route encounters:
+ * Each galaxy's required story route guard fights, mirroring flight.ts's route encounters:
  * one guard per distinct required destination, and galaxy three's holodisk leader and pack.
  * Cartwheel's miner and visitors wait beside the hub without guards, so only the hub has one.
  */
-const ROUTE_GUARDS: Readonly<Partial<Record<SectorId, readonly (readonly EnemyArchetype[])[]>>> = {
+const ROUTE_GUARDS: Readonly<
+  Partial<Record<GalaxyNumber, readonly (readonly EnemyArchetype[])[]>>
+> = {
   1: [["frigate"], ["frigate"], ["frigate"]],
   2: [["capital"]],
   3: [
@@ -288,7 +290,7 @@ interface Target {
 }
 
 export interface RunResult {
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seed: number;
   minutes: number;
   /** Seconds at which the balance first reached each price, or null. */
@@ -369,9 +371,9 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
 
 export interface WorldOptions {
   catalog: EconomyCatalog;
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seed: number;
-  spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
+  spawnWeights: typeof CONTENT.tuning.flight.spawnWeights;
   encounters: readonly EncounterEntry[];
 }
 
@@ -387,11 +389,11 @@ const TYPICAL_INCOME: Readonly<Partial<Record<RoutePosition, number>>> = {
 };
 
 /** A galaxy's typical income, or null for a position Gameplay has not measured. */
-function typicalIncome(sector: SectorId): number | null {
-  return TYPICAL_INCOME[ROUTE_POSITION[sector]] ?? null;
+function typicalIncome(galaxy: GalaxyNumber): number | null {
+  return TYPICAL_INCOME[ROUTE_POSITION[galaxy]] ?? null;
 }
 
-const tuning = PROTOTYPE.tuning;
+const tuning = CONTENT.tuning;
 const size = tuning.chunkSize;
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -417,12 +419,12 @@ export function generateChunk(
   x: number,
   y: number,
 ): Chunk {
-  const { catalog, sector, seed } = options;
+  const { catalog, galaxy, seed } = options;
   const flight = tuning.flight;
   const stationSafe = (point: { x: number; y: number }) =>
-    stationsNear(catalog, sector, catalog.station.safeRadius, point).length > 0;
+    stationsNear(catalog, galaxy, catalog.station.safeRadius, point).length > 0;
   const chunk: Chunk = { caches: [], dust: [], pack: null, rocks: [] };
-  const spacing = encounterSpacing(PROTOTYPE, sector);
+  const spacing = encounterSpacing(CONTENT, galaxy);
   if (hostsEncounterCell(spacing, x) && hostsEncounterCell(spacing, y)) {
     const next = lcg(cellHash(seed ^ 9173, x, y));
     const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
@@ -433,7 +435,7 @@ export function generateChunk(
         const { archetype, count } = roll;
         const escorts = roll.escorts ?? null;
         // A flight's start begins calm: the whole encounter stays clear of it.
-        const reach = encounterReach(PROTOTYPE, archetype, count, roll.escorts);
+        const reach = encounterReach(CONTENT, archetype, count, roll.escorts);
         if (distance(center, FLIGHT_START) >= tuning.flight.arrivalCalm + reach) {
           chunk.pack = {
             archetype,
@@ -449,13 +451,13 @@ export function generateChunk(
   }
   const plan = planChunk(CHUNK_CATALOG, {
     asteroids: {
-      field: byPosition(ASTEROID_FIELDS, sector),
+      field: byPosition(ASTEROID_FIELDS, galaxy),
       shapes: [...ASTEROID_SHAPES.values()],
     },
     clearance: flight.shipRadius,
     objectsPerChunk: flight.objectsPerChunk,
     rockRadius: flight.rockRadius,
-    sector,
+    galaxy,
     seed,
     shipRadius: flight.shipRadius,
     size,
@@ -473,8 +475,8 @@ export function generateChunk(
     const clear =
       distance(placement, player) - reach > tuning.safeRadius &&
       distance(placement, FLIGHT_START) - reach > tuning.safeRadius &&
-      stationsNear(catalog, sector, catalog.station.safeRadius + reach, placement).length === 0 &&
-      (placement.kind === "pickup" || clearOfOreFields(sector, reach, placement));
+      stationsNear(catalog, galaxy, catalog.station.safeRadius + reach, placement).length === 0 &&
+      (placement.kind === "pickup" || clearOfOreFields(galaxy, reach, placement));
     if (!clear) {
       continue;
     }
@@ -536,7 +538,7 @@ export interface WeaponStanding {
  * Every weapon at every level against one target in a galaxy (Sunflower by default): the check
  * that no level 3 dominates.
  */
-export function weaponStandings(behaviour: Behaviour, sector: SectorId = 1): WeaponStanding[] {
+export function weaponStandings(behaviour: Behaviour, galaxy: GalaxyNumber = 1): WeaponStanding[] {
   const archetypes = [...SMALL, "frigate", "capital"] as const;
   return (Object.keys(ON_TARGET) as Weapon[]).flatMap((weapon) =>
     [1, 2, 3].map((level) => {
@@ -545,7 +547,7 @@ export function weaponStandings(behaviour: Behaviour, sector: SectorId = 1): Wea
         killSeconds: Object.fromEntries(
           archetypes.map((archetype) => [
             archetype,
-            killSeconds(behaviour, sector, weapon, archetype, level),
+            killSeconds(behaviour, galaxy, weapon, archetype, level),
           ]),
         ),
         level,
@@ -562,12 +564,12 @@ export function weaponStandings(behaviour: Behaviour, sector: SectorId = 1): Wea
  */
 function killSeconds(
   behaviour: Behaviour,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   weapon: Weapon,
   archetype: EnemyArchetype,
   level = 1,
 ): number {
-  return volleySeconds(behaviour, weapon, enemyDefinition(sector, archetype).hp, level);
+  return volleySeconds(behaviour, weapon, enemyDefinition(galaxy, archetype).hp, level);
 }
 /**
  * Seconds of firing to disable one heavy in a galaxy: each weapon hardpoint shot down in turn,
@@ -575,11 +577,11 @@ function killSeconds(
  */
 function salvageSeconds(
   behaviour: Behaviour,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   weapon: Weapon,
   archetype: EnemyArchetype,
 ): number {
-  return enemyDefinition(sector, archetype)
+  return enemyDefinition(galaxy, archetype)
     .hardpoints.filter((part) => part.kind === "weapon")
     .reduce((sum, part) => sum + volleySeconds(behaviour, weapon, part.hp), 0);
 }
@@ -589,15 +591,15 @@ function salvageSeconds(
  */
 export function asteroidKillSeconds(
   behaviour: Behaviour,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   weapon: Weapon,
   size: AsteroidSize,
 ): number {
-  return volleySeconds(behaviour, weapon, byPosition(ASTEROID_FIELDS, sector).hp[size]);
+  return volleySeconds(behaviour, weapon, byPosition(ASTEROID_FIELDS, galaxy).hp[size]);
 }
 /** Hull damage after which a ship in a galaxy flees on its own, or null when it never does. */
-function fleeAfter(sector: SectorId, archetype: EnemyArchetype): number | null {
-  const { hp, morale } = enemyDefinition(sector, archetype);
+function fleeAfter(galaxy: GalaxyNumber, archetype: EnemyArchetype): number | null {
+  const { hp, morale } = enemyDefinition(galaxy, archetype);
   for (let taken = 1; taken < hp; taken++) {
     if (morale.individualHpRatio > 0 && (hp - taken) / hp <= morale.individualHpRatio) {
       return taken;
@@ -611,9 +613,9 @@ export interface SimulationInput {
   catalog: EconomyCatalog;
   minutes: number;
   prices: Prices;
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seed: number;
-  spawnWeights: typeof PROTOTYPE.tuning.flight.spawnWeights;
+  spawnWeights: typeof CONTENT.tuning.flight.spawnWeights;
   encounters: readonly EncounterEntry[];
   /** Weapons owned at the start, from earlier galaxies. */
   startWeapons: readonly UpgradeWeapon[];
@@ -623,8 +625,8 @@ const noSizes = () =>
   Object.fromEntries(ASTEROID_SIZES.map((size) => [size, 0])) as Record<AsteroidSize, number>;
 
 export function simulate(input: SimulationInput): RunResult {
-  const { behaviour, catalog, prices, sector } = input;
-  const rng = mulberry(cellHash(0x51ed, input.seed, sector));
+  const { behaviour, catalog, galaxy, prices } = input;
+  const rng = mulberry(cellHash(0x51ed, input.seed, galaxy));
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng())) * Math.cos(2 * Math.PI * rng());
   const result: RunResult = {
     asteroidSeconds: 0,
@@ -645,7 +647,7 @@ export function simulate(input: SimulationInput): RunResult {
     minutes: input.minutes,
     packsBought: 0,
     projectsSeconds: prices.projects.map(() => null),
-    sector,
+    galaxy,
     jobs: {},
     seed: input.seed,
     stardust: { asteroids: 0, caches: 0, enemies: 0, guards: 0, jobs: 0 },
@@ -728,7 +730,7 @@ export function simulate(input: SimulationInput): RunResult {
   const progress = { charted: [] as string[], stations: [] as string[] };
   const known = new Map<string, StationSite>();
   const emptyBoards = new Set<string>();
-  const outpostCount = sector === 3 ? 2 : 3;
+  const outpostCount = galaxy === 3 ? 2 : 3;
   let outposts: JobTarget[] = [];
   let tow: { x: number; y: number } | null = null;
   let search: { x: number; y: number } | null = null;
@@ -751,11 +753,11 @@ export function simulate(input: SimulationInput): RunResult {
     });
   };
   const newFlight = () => {
-    flightSeed = cellHash(0x0f17, input.seed, result.jumps + sector * 1000) || 1;
+    flightSeed = cellHash(0x0f17, input.seed, result.jumps + galaxy * 1000) || 1;
     world = {
       catalog,
       encounters: input.encounters,
-      sector,
+      galaxy,
       seed: flightSeed,
       spawnWeights: input.spawnWeights,
     };
@@ -770,7 +772,7 @@ export function simulate(input: SimulationInput): RunResult {
       y: -tuning.chunkSize * 2,
     }));
     // A flight's end loses a delivery's item and returns a towed craft to its spot.
-    const held = heldJob(sector, book);
+    const held = heldJob(galaxy, book);
     if (held?.type === "delivery") {
       held.carrying = false;
     }
@@ -795,7 +797,7 @@ export function simulate(input: SimulationInput): RunResult {
    */
   const loot = (archetype: EnemyArchetype, id: string, source: Source, salvaged = false) => {
     const next = dropRandom(flightSeed, wreckId(id));
-    const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, sector, archetype, next);
+    const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, galaxy, archetype, next);
     const pieces = splitStardust(catalog.pickupCap[archetype], drop.stardust);
     const collected = pieces.reduce(
       (sum, piece) => sum + (rng() < behaviour.dropCollection ? piece : 0),
@@ -829,8 +831,8 @@ export function simulate(input: SimulationInput): RunResult {
   };
   /** Fights one pack, destroying members as morale allows and advancing time as it goes. */
   const fightGroup = (archetype: EnemyArchetype, count: number, id: string) => {
-    const definition = enemyDefinition(sector, archetype);
-    const flee = fleeAfter(sector, archetype);
+    const definition = enemyDefinition(galaxy, archetype);
+    const flee = fleeAfter(galaxy, archetype);
     let lost = 0;
     for (let member = 0; member < count; member++) {
       const packFlees = count > 1 && lost / count >= definition.morale.packLossRatio;
@@ -843,8 +845,8 @@ export function simulate(input: SimulationInput): RunResult {
       const salvaged = HEAVIES.includes(archetype) && rng() < behaviour.salvageShare;
       shoot(
         salvaged
-          ? salvageSeconds(behaviour, sector, weapon, archetype)
-          : killSeconds(behaviour, sector, weapon, archetype),
+          ? salvageSeconds(behaviour, galaxy, weapon, archetype)
+          : killSeconds(behaviour, galaxy, weapon, archetype),
       );
       advance(fleeing ? behaviour.fleeChaseSeconds : 0);
       lost++;
@@ -884,10 +886,10 @@ export function simulate(input: SimulationInput): RunResult {
     }
     return [...chunks.values()];
   };
-  const boardContext = (): BoardContext => ({ hostiles: [], outposts, progress, sector });
+  const boardContext = (): BoardContext => ({ hostiles: [], outposts, progress, galaxy });
   const finishJob = () => {
-    const held = heldJob(sector, book)!;
-    const reward = completeJob(boardContext(), stationById(catalog, sector, held.station), book);
+    const held = heldJob(galaxy, book)!;
+    const reward = completeJob(boardContext(), stationById(catalog, galaxy, held.station), book);
     result.jobs[held.type] = (result.jobs[held.type] ?? 0) + 1;
     earn("jobs", reward);
     tow = null;
@@ -896,7 +898,7 @@ export function simulate(input: SimulationInput): RunResult {
   };
   /** Docks at a station: reloads or hands over a delivery, or takes a job from its board. */
   const dock = (site: StationSite) => {
-    const held = heldJob(sector, book);
+    const held = heldJob(galaxy, book);
     if (held?.type === "delivery") {
       if (held.station === site.id && !held.carrying) {
         advance(behaviour.dockSeconds);
@@ -921,7 +923,7 @@ export function simulate(input: SimulationInput): RunResult {
       emptyBoards.add(site.id);
       return;
     }
-    acceptJob(sector, site.id, offer.id, book);
+    acceptJob(galaxy, site.id, offer.id, book);
   };
   const outpost = (id: string) => outposts.find((place) => place.id === id);
   /**
@@ -930,7 +932,7 @@ export function simulate(input: SimulationInput): RunResult {
    */
   const jobGoal = ():
     ({ x: number; y: number } & { reach: number; station?: StationSite }) | null => {
-    const held = heldJob(sector, book);
+    const held = heldJob(galaxy, book);
     if (!held) {
       if (!behaviour.jobs || !seeking) {
         return null;
@@ -940,12 +942,12 @@ export function simulate(input: SimulationInput): RunResult {
       return nearest ? { ...nearest, reach: catalog.station.safeRadius, station: nearest } : null;
     }
     if (held.type === "survey") {
-      const site = landmarkById(sector, held.target.id)!;
+      const site = landmarkById(galaxy, held.target.id)!;
       return { reach: 0, x: site.x, y: site.y };
     }
     if (held.type === "delivery") {
       const id = held.carrying ? held.target.id : held.station;
-      const site = stationById(catalog, sector, id);
+      const site = stationById(catalog, galaxy, id);
       if (site) {
         return { ...site, reach: catalog.station.safeRadius, station: site };
       }
@@ -956,7 +958,7 @@ export function simulate(input: SimulationInput): RunResult {
       if (!tow) {
         return { reach: JOB_TUNING.tow.attach, x: held.target.x, y: held.target.y };
       }
-      const place = nearestSafePlace(outposts, stationById(catalog, sector, held.station), tow)!;
+      const place = nearestSafePlace(outposts, stationById(catalog, galaxy, held.station), tow)!;
       return { reach: 0, x: place.x, y: place.y };
     }
     const { hunt } = JOB_TUNING;
@@ -979,8 +981,8 @@ export function simulate(input: SimulationInput): RunResult {
   };
   /** The held job's progress after a move: charting, docking, Use, the tow line and the hunt. */
   const stepJob = (goal: ReturnType<typeof jobGoal>) => {
-    chartLandmarks(sector, progress, position);
-    const held = heldJob(sector, book);
+    chartLandmarks(galaxy, progress, position);
+    const held = heldJob(galaxy, book);
     if (!held) {
       if (goal?.station && distance(goal, position) <= goal.reach) {
         dock(goal.station);
@@ -991,7 +993,7 @@ export function simulate(input: SimulationInput): RunResult {
       finishJob();
     } else if (held.type === "delivery") {
       const place = outpost(held.target.id);
-      const site = stationById(catalog, sector, held.target.id);
+      const site = stationById(catalog, galaxy, held.target.id);
       // Travel here from the Map, once per carried item, to a place the player knows.
       if (held.carrying && !travelDecided) {
         travelDecided = true;
@@ -1009,7 +1011,7 @@ export function simulate(input: SimulationInput): RunResult {
     } else if (held.type === "rescue") {
       if (tow) {
         pullTow(position, tow);
-        const place = nearestSafePlace(outposts, stationById(catalog, sector, held.station), tow);
+        const place = nearestSafePlace(outposts, stationById(catalog, galaxy, held.station), tow);
         if (place && distance(place, tow) <= JOB_TUNING.tow.complete) {
           finishJob();
         }
@@ -1030,7 +1032,7 @@ export function simulate(input: SimulationInput): RunResult {
   const running = () => time < end;
   while (running()) {
     const near = region();
-    const guards = ROUTE_GUARDS[sector]?.[guard];
+    const guards = ROUTE_GUARDS[galaxy]?.[guard];
     if (
       guards &&
       guard < behaviour.guardMinutes.length &&
@@ -1038,7 +1040,7 @@ export function simulate(input: SimulationInput): RunResult {
     ) {
       advance(behaviour.guardSeconds);
       guards.forEach((archetype, index) => {
-        shoot(killSeconds(behaviour, sector, weapon, archetype));
+        shoot(killSeconds(behaviour, galaxy, weapon, archetype));
         add(result.destroyed, archetype);
         loot(archetype, `route:guard-${guard}:${index}`, "guards");
       });
@@ -1051,7 +1053,7 @@ export function simulate(input: SimulationInput): RunResult {
     }
     const indicatorRange = catalog.station.indicatorRange;
     const stationReach = Math.max(4 * size, indicatorRange);
-    for (const site of stationsNear(catalog, sector, stationReach, position)) {
+    for (const site of stationsNear(catalog, galaxy, stationReach, position)) {
       if (stations.has(site.id)) {
         continue;
       }
@@ -1089,7 +1091,7 @@ export function simulate(input: SimulationInput): RunResult {
       const definition = enemyCatalog[pack.archetype];
       const reach =
         definition.aggression === "sight"
-          ? distance(pack, position) <= enemyDefinition(sector, pack.archetype).perception
+          ? distance(pack, position) <= enemyDefinition(galaxy, pack.archetype).perception
           : onScreen(pack.x - position.x, pack.y - position.y);
       if (!reach) {
         continue;
@@ -1132,7 +1134,7 @@ export function simulate(input: SimulationInput): RunResult {
         result.asteroidsShot++;
         result.asteroidSizes.shot[best.rock.size]++;
         best.chunk.rocks.splice(best.chunk.rocks.indexOf(best.rock), 1);
-        const seconds = asteroidKillSeconds(behaviour, sector, weapon, best.rock.size);
+        const seconds = asteroidKillSeconds(behaviour, galaxy, weapon, best.rock.size);
         result.asteroidSeconds += seconds;
         shoot(seconds);
         const amount = rollAsteroidStardust(
@@ -1256,7 +1258,7 @@ export interface Summary {
   scenario: string;
   /** Station jobs completed per hour, by type. */
   jobsPerHour: Record<JobType, number>;
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   runs: number;
   minutes: number;
   prices: Prices;
@@ -1410,7 +1412,7 @@ export function summarise(
     },
     weaponFoundMinutes: distribution(times((run) => run.weaponFoundSeconds)),
     scenario,
-    sector: runs[0]?.sector ?? 1,
+    galaxy: runs[0]?.galaxy ?? 1,
     sourcePerMinute: Object.fromEntries(
       SOURCES.map((source) => [source, perMinute(totals[source])]),
     ) as Record<Source, number>,
@@ -1433,7 +1435,7 @@ export interface RunOptions {
   behaviour: Behaviour;
   minutes: number;
   scenario: Scenario;
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seeds: number;
 }
 export function runScenario(options: RunOptions): { runs: RunResult[]; summary: Summary } {
@@ -1442,7 +1444,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
   const prices: Prices = {
     firstWeapon: Math.min(...Object.values(ECONOMY.weaponPrices)),
     holodisk: HOLODISKS.hubPrice,
-    projects: galaxyProjects(options.sector).map((_, index, projects) =>
+    projects: galaxyProjects(options.galaxy).map((_, index, projects) =>
       projects.slice(0, index + 1).reduce((sum, { cost }) => sum + cost, 0),
     ),
     ...scenario.prices,
@@ -1467,9 +1469,9 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
       catalog,
       minutes: options.minutes,
       prices,
-      encounters: scenario.encounters?.[options.sector] ?? encounterTable(options.sector),
+      encounters: scenario.encounters?.[options.galaxy] ?? encounterTable(options.galaxy),
       startWeapons: scenario.startWeapons ?? [],
-      sector: options.sector,
+      galaxy: options.galaxy,
       seed: index + 1,
       spawnWeights,
     }),
@@ -1478,7 +1480,7 @@ export function runScenario(options: RunOptions): { runs: RunResult[]; summary: 
 }
 
 export interface RealLoopResult {
-  sector: SectorId;
+  galaxy: GalaxyNumber;
   seed: number;
   minutes: number;
   /** Stardust collected from discovery caches and from released drops (enemies and asteroids). */
@@ -1501,10 +1503,10 @@ export interface RealLoopResult {
 export function realLoop(
   behaviour: Behaviour,
   minutes: number,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   seed: number,
 ): RealLoopResult {
-  const rng = mulberry(cellHash(0x7ea1, seed, sector));
+  const rng = mulberry(cellHash(0x7ea1, seed, galaxy));
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng())) * Math.cos(2 * Math.PI * rng());
   const result: RealLoopResult = {
     cachesCollected: 0,
@@ -1514,7 +1516,7 @@ export function realLoop(
     enemiesDestroyed: 0,
     engaged: {},
     minutes,
-    sector,
+    galaxy,
     seed,
     stations: 0,
   };
@@ -1522,7 +1524,7 @@ export function realLoop(
     ((behaviour.speedFraction - tuning.minSpeedFraction) / (1 - tuning.minSpeedFraction)) **
     (1 / tuning.speedCurveExponent);
   const newFlight = (): FlightState =>
-    createFlight(PROTOTYPE, sector, cellHash(0x0f17, seed, result.depleted + sector * 1000) || 1, {
+    createFlight(CONTENT, galaxy, cellHash(0x0f17, seed, result.depleted + galaxy * 1000) || 1, {
       known: [],
     });
   let flight = newFlight();
@@ -1585,7 +1587,7 @@ export function realLoop(
         .map((object) => [object.id, object.amount ?? 0]),
     );
     const move = { x: Math.cos(heading) * deflection, y: Math.sin(heading) * deflection };
-    const events = stepFlight(PROTOTYPE, dt, { aim, move, use: false }, flight);
+    const events = stepFlight(CONTENT, dt, { aim, move, use: false }, flight);
     const remaining = new Set(flight.objects.map((object) => object.id));
     let fromCaches = 0;
     for (const [id, amount] of caches) {
@@ -1635,18 +1637,18 @@ function formatDistribution(value: Distribution, digits = 1): string {
   return `${round(value.median, digits)} (p10 ${round(value.p10, digits)}, p90 ${round(value.p90, digits)})`;
 }
 export function formatSummary(summary: Summary): string {
-  const income = typicalIncome(summary.sector);
+  const income = typicalIncome(summary.galaxy);
   // A price's target minutes at the galaxy's typical income.
   const target = (price: number) => (income ? `; target ${round(price / income)}` : "");
   const lines = [
-    `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
+    `## ${summary.scenario}, galaxy ${summary.galaxy}: ${summary.runs} seeds x ${summary.minutes} min`,
     `Prices: first weapon ${summary.prices.firstWeapon}, ` +
       `projects ${summary.prices.projects.join(", ")} (cumulative), ` +
       `ammunition pack ${summary.packPrice}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}${target(summary.prices.firstWeapon)}`,
     // Only Cartwheel sells a hub holodisk.
-    ...(summary.sector === 2
+    ...(summary.galaxy === 2
       ? [
           `Minutes to save ${summary.prices.holodisk} (Cartwheel's holodisk): ` +
             `${formatDistribution(summary.holodiskMinutes)}; ` +
@@ -1714,7 +1716,7 @@ function main(argv: readonly string[]): void {
     real: false,
     weapons: false,
     scenario: "current",
-    sector: 1 as SectorId,
+    galaxy: 1 as GalaxyNumber,
     seeds: 50,
   };
   const scenario: Record<string, unknown> = {};
@@ -1730,8 +1732,8 @@ function main(argv: readonly string[]): void {
       options.real = true;
     } else if (flag === "--jobs") {
       behaviour.jobs = true;
-    } else if (flag === "--sector" && value) {
-      options.sector = Number(value) as SectorId;
+    } else if (flag === "--galaxy" && value) {
+      options.galaxy = Number(value) as GalaxyNumber;
       index++;
     } else if (flag === "--seeds" && value) {
       options.seeds = Number(value);
@@ -1754,7 +1756,7 @@ function main(argv: readonly string[]): void {
       index++;
     } else {
       console.error(
-        "Usage: node tools/pacing-sim.ts [--sector 1|2] [--seeds N] [--minutes N] " +
+        "Usage: node tools/pacing-sim.ts [--galaxy 1|2] [--seeds N] [--minutes N] " +
           "[--scenario name] [--set key=json ...] [--json] [--real] [--weapons] [--jobs]",
       );
       process.exit(2);
@@ -1766,7 +1768,7 @@ function main(argv: readonly string[]): void {
   }
   if (options.real) {
     const results = Array.from({ length: options.seeds }, (_, index) =>
-      realLoop(behaviour as unknown as Behaviour, options.minutes, options.sector, index + 1),
+      realLoop(behaviour as unknown as Behaviour, options.minutes, options.galaxy, index + 1),
     );
     const total = (pick: (run: RealLoopResult) => number) =>
       results.reduce((sum, run) => sum + pick(run), 0) / (results.length * options.minutes);
@@ -1821,7 +1823,7 @@ function main(argv: readonly string[]): void {
     behaviour: behaviour as unknown as Behaviour,
     minutes: options.minutes,
     scenario: merged,
-    sector: options.sector,
+    galaxy: options.galaxy,
     seeds: options.seeds,
   });
   if (options.json) {

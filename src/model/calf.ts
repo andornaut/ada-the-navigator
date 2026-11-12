@@ -1,6 +1,6 @@
 import { CALF } from "../data/activities.ts";
-import { CURRENTS } from "../data/galaxy-features.ts";
-import type { SectorId } from "../data/types.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { flowAt, inCurrent } from "./currents.ts";
 import { dropRandom } from "./drops.ts";
 import type { GuidedCalf, Vec } from "./types.ts";
@@ -13,13 +13,13 @@ import type { GuidedCalf, Vec } from "./types.ts";
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** Whether the straight line between two points crosses a current's band. */
-export function crossesCurrent(sector: SectorId, from: Vec, to: Vec): boolean {
+export function crossesCurrent(galaxy: GalaxyNumber, from: Vec, to: Vec): boolean {
   const step = CURRENTS.width[0] / 2;
   const count = Math.ceil(distance(from, to) / step);
   for (let index = 0; index <= count; index++) {
     const t = index / count;
     if (
-      inCurrent(sector, 0, { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t })
+      inCurrent(galaxy, 0, { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t })
     ) {
       return true;
     }
@@ -32,14 +32,14 @@ export function crossesCurrent(sector: SectorId, from: Vec, to: Vec): boolean {
  * of guides, 5000 to 8000 away with the line home crossing a current. Null when no tried spot
  * qualifies for the family where it is this flight.
  */
-export function calfStart(sector: SectorId, family: Vec, guides: number): Vec | null {
-  const next = dropRandom(guides, `calf:${sector}`);
+export function calfStart(galaxy: GalaxyNumber, family: Vec, guides: number): Vec | null {
+  const next = dropRandom(guides, `calf:${galaxy}`);
   const [near, far] = CALF.distance;
   for (let attempt = 0; attempt < CALF.tries; attempt++) {
     const reach = near + next() * (far - near);
     const angle = next() * Math.PI * 2;
     const offset = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
-    if (crossesCurrent(sector, { x: family.x + offset.x, y: family.y + offset.y }, family)) {
+    if (crossesCurrent(galaxy, { x: family.x + offset.x, y: family.y + offset.y }, family)) {
       return offset;
     }
   }
@@ -68,7 +68,7 @@ export function calfRouteMidpoint(family: Vec, start: Vec): Vec {
  * time; waiting, it slows to rest. It drifts with the currents as Ada does.
  */
 export function stepCalf(
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   ship: { readonly accelerationSeconds: number; readonly maxSpeed: number },
   dt: number,
   player: Vec,
@@ -92,7 +92,7 @@ export function stepCalf(
   const size = Math.hypot(change.x, change.y);
   const scale = size > most ? most / size : 1;
   calf.velocity = { x: calf.velocity.x + change.x * scale, y: calf.velocity.y + change.y * scale };
-  const drift = flowAt(sector, calf);
+  const drift = flowAt(galaxy, calf);
   calf.x += (calf.velocity.x + drift.x) * dt;
   calf.y += (calf.velocity.y + drift.y) * dt;
 }

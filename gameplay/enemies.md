@@ -104,8 +104,8 @@ is supplied by the runtime; last-seen state never reads hidden target coordinate
 
 ## Runtime integration interface
 
-The settled Tech-owned source paths are `src/model/enemy-ai.ts`,
-`src/model/enemy-ai.test.ts` and `src/data/enemy-catalog.ts`.
+The settled Tech-owned source paths are `src/model/enemyAi.ts`,
+`src/model/enemyAi.test.ts` and `src/data/enemyCatalog.ts`.
 
 `SpaceObject` carries optional `enemy`, `velocity` and `routeId` fields. Enemy state
 lives on `SpaceObject.enemy`; ballistic debris uses `SpaceObject.velocity`.
@@ -136,7 +136,7 @@ other parts remain active. No parallel flight loop is provided here.
 
 ## Integrated verification required
 
-The canonical regression path is `src/model/enemy-ai.test.ts`. Runtime source and
+The canonical regression path is `src/model/enemyAi.test.ts`. Runtime source and
 tests remain under `src/`. The integrated isolated gate typechecks, lints, tests
 and builds the source, including
 actual intents and adapter commands in the following scenarios:

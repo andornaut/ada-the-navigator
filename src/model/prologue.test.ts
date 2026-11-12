@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { readStory } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -16,10 +16,10 @@ const summary = ({ action, background, choices, questions, speaker, text }: Stor
 
 /** A first launch: Start, Grandma's garden and galaxy one's opening read with choice `choice`. */
 function started(choice = 0): GameModel {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   expect(model.screen).toBe("start");
   model.start();
-  const garden = PROTOTYPE.premise.gardenArrival.map(({ text }) => text);
+  const garden = CONTENT.premise.gardenArrival.map(({ text }) => text);
   const arrival: string[] = [];
   while (model.storyView?.page.id !== "opening") {
     arrival.push(model.storyView!.page.text);
@@ -28,12 +28,12 @@ function started(choice = 0): GameModel {
   expect(arrival).toEqual(garden);
   model.storyChoose(choice);
   // The choice's branch page, Grandma's farewell, then the story rejoins at the prologue.
-  expect(model.storyView?.page.text).toBe(PROTOTYPE.chapters[1]!.openingBranches[choice]);
+  expect(model.storyView?.page.text).toBe(CONTENT.chapters[1]!.openingBranches[choice]);
   model.storyNext();
   expect(model.storyView?.page).toMatchObject({
     background: "grandmaGarden",
     speaker: "Grandma",
-    text: PROTOTYPE.premise.gardenFarewell.text,
+    text: CONTENT.premise.gardenFarewell.text,
   });
   model.storyNext();
   return model;
@@ -43,7 +43,7 @@ const questions = ["What's a holodisk?", "Can Penny come?", "How do I get home?"
 
 describe("prologue", () => {
   it("frames chapter one's first-launch opening with Grandma's garden", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.start();
     const pages: StoryPage[] = [];
     while (model.storyView?.page.background === "grandmaGarden") {
@@ -79,10 +79,10 @@ describe("prologue", () => {
       [
         "grandmaGarden",
         "",
-        PROTOTYPE.chapters[1]!.opening,
-        PROTOTYPE.chapters[1]!.openingChoices.map((label) => label),
+        CONTENT.chapters[1]!.opening,
+        CONTENT.chapters[1]!.openingChoices.map((label) => label),
       ],
-      ["grandmaGarden", "", PROTOTYPE.chapters[1]!.openingBranches[0], "Next"],
+      ["grandmaGarden", "", CONTENT.chapters[1]!.openingBranches[0], "Next"],
       [
         "grandmaGarden",
         "Grandma",
@@ -202,7 +202,7 @@ describe("prologue", () => {
     // Seventeen pages aboard, standing and seated alike.
     expect(pages.filter(({ background }) => background === "aboard")).toHaveLength(17);
     expect(model.screen).toBe("selector");
-    expect(model.selectedGalaxy).toBe(1);
+    expect(model.galaxyMapSelection).toBe(1);
     expect(model.state.prologueSeen).toBe(true);
     expect(model.state.progress[1].opened).toBe(true);
     // The prologue is home; the first flight begins only with Jump.
@@ -286,7 +286,7 @@ describe("prologue", () => {
 
   it("plays the garden and the prologue once, and Skip from any page but the last goes to galaxy selection", () => {
     for (let at = 0; at < 30; at++) {
-      const model = new GameModel(PROTOTYPE);
+      const model = new GameModel(CONTENT);
       model.start();
       for (let turn = 0; turn < at && model.screen === "story"; turn++) {
         if (model.storyView?.page.choices && !model.storyView.page.questions) {
@@ -330,13 +330,13 @@ describe("prologue", () => {
 
 describe("prologue save flag", () => {
   it("round-trips", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.prologueSeen = true;
     expect(restoreSave(model.save())?.prologueSeen).toBe(true);
   });
 
   it("rejects a malformed flag", () => {
-    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
     state.prologueSeen = "yes";
     expect(restoreSave(state)).toBeNull();
   });

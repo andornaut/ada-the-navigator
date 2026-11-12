@@ -1,5 +1,5 @@
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import type { PrototypeContent, SectorId } from "../data/types.ts";
+import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { GameModel } from "../model/game.ts";
 import type { StoryPage } from "../model/storybook.ts";
 
@@ -7,7 +7,7 @@ import type { StoryPage } from "../model/storybook.ts";
  * Test support: a launch from a save, which opens on the start screen, then Continue when the
  * save was made mid-flight, so the flight resumes as it was saved.
  */
-export function relaunch(content: PrototypeContent, saved: unknown): GameModel {
+export function relaunch(content: GameContent, saved: unknown): GameModel {
   const model = new GameModel(content, saved);
   let value = saved;
   if (typeof saved === "string") {
@@ -52,7 +52,7 @@ export function readStory(model: GameModel, choice = 0): StoryPage[] {
 }
 
 /** Test support: a home visit read to galaxy selection, then Jump to `galaxy`. */
-export function boardAndJump(model: GameModel, galaxy: SectorId, choice = 0): StoryPage[] {
+export function boardAndJump(model: GameModel, galaxy: GalaxyNumber, choice = 0): StoryPage[] {
   const pages = readStory(model, choice);
   const position = ROUTE_POSITION[galaxy];
   model.viewGalaxy(position);
@@ -61,7 +61,7 @@ export function boardAndJump(model: GameModel, galaxy: SectorId, choice = 0): St
 }
 
 // Test support: GameModel draws each launch's world seed from crypto.getRandomValues. The test
-// setup (src/test-setup.ts) routes it through pinnedRandomValues, so every flight's world is the
+// setup (src/testSetup.ts) routes it through pinnedRandomValues, so every flight's world is the
 // same on every run; seedLaunches restarts the sequence at a given seed.
 let launchSeed = 1;
 

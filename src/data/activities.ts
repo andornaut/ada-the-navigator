@@ -1,4 +1,4 @@
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
 // complete, its story places offer one through Talk. Rewards are provisional tuning.
@@ -18,7 +18,7 @@ export interface ActivityDefinition {
 }
 
 /** Each galaxy's activity; Phantom has none yet. */
-export const ACTIVITIES: Readonly<Partial<Record<SectorId, ActivityDefinition>>> = {
+export const ACTIVITIES: Readonly<Partial<Record<GalaxyNumber, ActivityDefinition>>> = {
   1: {
     goal: "supplyGoal",
     id: "supplyRun",

@@ -9,7 +9,7 @@ below; states and colours of shared controls are in [Controls](controls.md).
 
 Constants: `MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`, `MAP_FACES` and
 `MAP_GLYPHS` in `src/ui/layout/mapScreen.ts`; the panel's height is
-`panelHeight` in `src/ui/map-screen.ts`.
+`panelHeight` in `src/ui/mapScreen.ts`.
 
 ## Screen
 

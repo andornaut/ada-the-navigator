@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { controlHelpText } from "../ui/control-help.ts";
+import { controlHelpText } from "../ui/controlHelp.ts";
 import { SHIELD_PILL } from "../ui/layout/playView.ts";
-import { CONTROL_WORDS } from "./control-words.ts";
+import { CONTROL_WORDS } from "./controlWords.ts";
 import {
   BOX_PRIORITIES,
   CONVERSATION_PRIORITIES,
@@ -125,20 +125,20 @@ describe("in-flight conversations", () => {
     }
     // Only job lore plays past the built galaxies, where every galaxy's stations give jobs.
     expect(
-      CONVERSATIONS.filter(({ trigger }) => "sector" in trigger && trigger.sector > 3).every(
+      CONVERSATIONS.filter(({ trigger }) => "galaxy" in trigger && trigger.galaxy > 3).every(
         ({ trigger }) => trigger.kind === "jobLore",
       ),
     ).toBe(true);
   });
 
   it("grow Astra with an arrival and two quiet stretches in each of Cartwheel and Whirlpool", () => {
-    for (const sector of [2, 3]) {
+    for (const galaxy of [2, 3]) {
       expect(
         CONVERSATIONS.filter(
           ({ priority, trigger }) =>
             priority === "lore" &&
             (trigger.kind === "arrival" || trigger.kind === "quiet") &&
-            trigger.sector === sector,
+            trigger.galaxy === galaxy,
         ).map(({ id }) => id.split(":")[0]),
       ).toEqual(["arrival", "quiet", "quiet"]);
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
@@ -11,8 +11,8 @@ import { collectWeapon } from "./weapons.ts";
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function launched(): GameModel {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];
   return model;
@@ -51,7 +51,7 @@ describe("grant all weapons", () => {
     const serialized = model.save();
     expect(model.state.economy).toEqual(economy);
     // A resumed flight keeps its granted weapons until the flight ends.
-    expect(relaunch(PROTOTYPE, serialized).state).toEqual(model.state);
+    expect(relaunch(CONTENT, serialized).state).toEqual(model.state);
     expect(grantAllWeapons(model.state)).toBe(true);
     expect(model.save()).toBe(serialized);
   });
@@ -63,7 +63,7 @@ describe("grant all weapons", () => {
     model.save();
     expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "laser" });
     model.returnHome();
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser"]);
   });
@@ -76,7 +76,7 @@ describe("grant all weapons", () => {
     grantAllWeapons(model.state);
     flight.weapon = "rapidMissile";
     model.state.economy.stardust = 30;
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     flight.shots.push({
       ...flight.player,
       damage: 1,
@@ -91,7 +91,7 @@ describe("grant all weapons", () => {
     expect(model.state.mode).toBe("home");
     expect(model.state.economy).toMatchObject({ ownedWeapons: ["multiLaser"], stardust: 30 });
     expect(model.state.economy.levels.weapons.multiLaser).toBe(2);
-    expect(model.state.notice).toBe(PROTOTYPE.labels.jumpHome);
+    expect(model.state.notice).toBe(CONTENT.labels.jumpHome);
   });
 
   it("makes a granted weapon really owned when it is found or bought", () => {
@@ -122,11 +122,11 @@ describe("grant all weapons", () => {
   });
 
   it("does not change a home or dialogue save", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     const home = model.save();
     expect(grantAllWeapons(model.state)).toBe(false);
     expect(model.save()).toBe(home);
-    model.startSector(1);
+    model.startGalaxy(1);
     model.state.dialogue = { choices: [], context: "grower", text: "", title: "" };
     const dialogue = model.save();
     expect(grantAllWeapons(model.state)).toBe(false);

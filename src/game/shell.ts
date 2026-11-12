@@ -1,12 +1,12 @@
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import type { Screen } from "../model/game.ts";
 import type { GameState } from "../model/types.ts";
 import { refuse } from "../ui/refusal.ts";
-import { createStartScreen } from "../ui/start-screen.ts";
-import type { TitleScreenArt } from "../ui/title-screen.ts";
+import { createStartScreen } from "../ui/startScreen.ts";
+import type { TitleScreenArt } from "../ui/titleScreen.ts";
 
 export interface ShellActions {
   choose: (id: string) => void;
@@ -113,13 +113,13 @@ export class StoryShell {
           ? ([
               {
                 action: "continue",
-                label: PROTOTYPE.labels.continue ?? "",
+                label: CONTENT.labels.continue ?? "",
                 role: "primary",
                 run: this.actions.continueGame,
               },
               {
                 action: "restart",
-                label: PROTOTYPE.labels.restart ?? "",
+                label: CONTENT.labels.restart ?? "",
                 role: "secondary",
                 run: this.actions.restart,
               },
@@ -127,7 +127,7 @@ export class StoryShell {
           : ([
               {
                 action: "start",
-                label: PROTOTYPE.labels.start ?? "",
+                label: CONTENT.labels.start ?? "",
                 role: "primary",
                 run: this.actions.start,
               },
@@ -137,10 +137,9 @@ export class StoryShell {
         actions,
         // Offline, the forced update says so where Start would be; downloading, the loading bar
         // travels instead.
-        note:
-          this.requiredUpdate === "unavailable" ? (PROTOTYPE.labels.updateRequired ?? "") : null,
+        note: this.requiredUpdate === "unavailable" ? (CONTENT.labels.updateRequired ?? "") : null,
         paint: paint === ECONOMY.defaultPaint ? null : paint,
-        title: PROTOTYPE.labels.home ?? "",
+        title: CONTENT.labels.home ?? "",
       });
     }
     const shown = this.startScreen?.root ?? this.panel;
@@ -199,7 +198,7 @@ export class StoryShell {
   }
 
   setSavingAvailable(available: boolean): void {
-    const text = available ? "" : (PROTOTYPE.labels.savingUnavailable ?? "");
+    const text = available ? "" : (CONTENT.labels.savingUnavailable ?? "");
     if (this.savingStatus.textContent !== text) {
       this.savingStatus.textContent = text;
     }

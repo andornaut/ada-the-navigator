@@ -8,7 +8,7 @@ pickup's only image is its chevron mask. The HUD and shop glyphs are in [weapon 
 ## Gameplay values
 
 Gameplay owns these values; they appear here because the effects are sized and
-timed against them. `src/data/weapon-catalog.ts` holds the current tuning.
+timed against them. `src/data/weaponCatalog.ts` holds the current tuning.
 
 | Weapon        | Interval | Speed | Damage       | Effect                        |
 | ------------- | -------- | ----- | ------------ | ----------------------------- |

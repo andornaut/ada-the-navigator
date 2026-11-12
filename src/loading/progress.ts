@@ -16,10 +16,10 @@ import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateRead
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
-import { LOADING_BAR } from "../ui/loading-bar.ts";
+import { LOADING_BAR } from "../ui/loadingBar.ts";
 
 // The loads the player waits for over the background work, shown as one loading bar along the
-// top edge of the play area (src/ui/loading-bar.ts): known progress fills, holds and fades, work
+// top edge of the play area (src/ui/loadingBar.ts): known progress fills, holds and fades, work
 // of unknown total travels, and nothing shows while idle.
 
 /**

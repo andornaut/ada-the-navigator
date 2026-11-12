@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { ROUTE } from "../data/galaxies.ts";
-import { carriedItemName } from "../data/item-names.ts";
+import { carriedItemName } from "../data/itemNames.ts";
 import {
   JOB_REWARDS,
   JOB_TUNING,
@@ -14,9 +15,8 @@ import {
   LANDMARK_TUNING,
   landmarkNameKey,
 } from "../data/jobs.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { galaxyCard } from "../data/storybook.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { ensureStation, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
@@ -53,23 +53,23 @@ function tableRows(after: string): string[][] {
   );
 }
 // Landmark names by their legacy galaxy number (LandmarkGalaxy): Phantom is 4.
-// By sector: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Phantom.
+// By galaxy: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Phantom.
 const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Needle", "Andromeda", "Phantom"];
-const label = (key: string) => PROTOTYPE.labels[key];
+const label = (key: string) => CONTENT.labels[key];
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const use = { ...idle, use: true };
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 const emptyBook = (made = 0): JobBook => ({ jobs: { boards: {}, made }, tasks: {} });
-const context = (sector: SectorId = 1, charted: string[] = []): BoardContext => ({
+const context = (galaxy: GalaxyNumber = 1, charted: string[] = []): BoardContext => ({
+  galaxy,
   hostiles: [],
   outposts: [],
   progress: { charted, stations: [] },
-  sector,
 });
 /** Galaxy one's station nearest the world origin. */
-function firstStation(sector: SectorId = 1) {
-  const [site] = stationsNear(ECONOMY, sector, 20_000, { x: 0, y: 0 }).sort(
+function firstStation(galaxy: GalaxyNumber = 1) {
+  const [site] = stationsNear(ECONOMY, galaxy, 20_000, { x: 0, y: 0 }).sort(
     (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
   );
   return site!;
@@ -80,17 +80,17 @@ function docked(): {
   flight: FlightState;
   station: ReturnType<typeof firstStation>;
 } {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   // Every lesson and lore line but the jobs' is already heard, so only job lines and Penny talk.
   model.state.seenConversations.push(
     ...CONVERSATIONS.filter(
       ({ trigger }) => trigger.kind !== "job" && trigger.kind !== "jobLore",
     ).map(({ id }) => id),
   );
-  model.startSector(1);
+  model.startGalaxy(1);
   const flight = model.state.flight!;
   const station = firstStation();
-  ensureStation(PROTOTYPE, station.id, flight);
+  ensureStation(CONTENT, station.id, flight);
   flight.player = { x: station.x, y: station.y };
   model.state.docked = station.id;
   return { flight, model, station };
@@ -129,7 +129,7 @@ function calm(flight: FlightState): void {
 function listen(model: GameModel, point: Vec, seconds: number): string[] {
   const flight = model.state.flight!;
   flight.player = { ...point };
-  stepFlight(PROTOTYPE, 0.05, idle, flight);
+  stepFlight(CONTENT, 0.05, idle, flight);
   const heard: string[] = [];
   for (let step = 0; step < seconds / 0.05; step++) {
     calm(flight);
@@ -148,15 +148,15 @@ function listen(model: GameModel, point: Vec, seconds: number): string[] {
 
 describe("landmarks", () => {
   it("place twelve per galaxy within 25000 of the origin, 3000 apart and 1500 from stations", () => {
-    for (const sector of [1, 2, 3] as const) {
-      const sites = landmarkSites(sector);
+    for (const galaxy of [1, 2, 3] as const) {
+      const sites = landmarkSites(galaxy);
       expect(sites).toHaveLength(LANDMARK_TUNING.count);
       expect(new Set(sites.map(({ kind }) => kind))).toEqual(
         new Set(["nebula", "wreck", "beacon"]),
       );
       for (const site of sites) {
         expect(Math.hypot(site.x, site.y)).toBeLessThanOrEqual(25_000);
-        expect(stationsNear(ECONOMY, sector, 1500, site)).toEqual([]);
+        expect(stationsNear(ECONOMY, galaxy, 1500, site)).toEqual([]);
         for (const other of sites.filter((entry) => entry !== site)) {
           expect(distance(site, other)).toBeGreaterThanOrEqual(3000);
         }
@@ -165,12 +165,12 @@ describe("landmarks", () => {
   });
 
   it("have four of each kind per galaxy, the seed's kinds and names on every flight", () => {
-    for (const sector of [1, 2, 3] as const) {
-      const sites = landmarkSites(sector);
+    for (const galaxy of [1, 2, 3] as const) {
+      const sites = landmarkSites(galaxy);
       for (const kind of LANDMARK_KINDS) {
         // Names follow the table's order within a kind, in id order.
         expect(sites.filter((site) => site.kind === kind).map(({ name }) => name)).toEqual(
-          [1, 2, 3, 4].map((nth) => landmarkNameKey(sector, kind, nth)),
+          [1, 2, 3, 4].map((nth) => landmarkNameKey(galaxy, kind, nth)),
         );
       }
       // The seed assigns the kinds: not the plain nebula, wreck, beacon cycle.
@@ -180,8 +180,8 @@ describe("landmarks", () => {
     }
     // Two flights with different seeds chart the same landmark under the same name.
     const names = [11, 22].map((seed) => {
-      const model = new GameModel(PROTOTYPE);
-      model.startSector(1);
+      const model = new GameModel(CONTENT);
+      model.startGalaxy(1);
       const flight = model.state.flight!;
       flight.seed = seed;
       const site = landmarkSites(1)[5]!;
@@ -221,7 +221,7 @@ describe("landmarks", () => {
     for (const [key, text] of rows) {
       expect(label(key!.replaceAll("`", "")), key).toBe(text);
     }
-    expect(PROTOTYPE.labels.surveyTitle).toBe("Chart the {landmark}");
+    expect(CONTENT.labels.surveyTitle).toBe("Chart the {landmark}");
   });
 
   it("chart within 300 of Ada at once and only once", () => {
@@ -397,7 +397,7 @@ describe("tow handling", () => {
   });
 
   it("scales Ada's current handling: top speed 0.65, speed changes 2, turns 1.5", () => {
-    const physics = shipTuning(ECONOMY, PROTOTYPE, newGameState().economy.levels).physics;
+    const physics = shipTuning(ECONOMY, CONTENT, newGameState().economy.levels).physics;
     expect(towing({}, physics)).toBe(physics);
     expect(towing({ tow: { x: 0, y: 0 } }, physics)).toEqual({
       ...physics,
@@ -423,7 +423,7 @@ describe("tow handling", () => {
         flight.tow = { x: 0, y: 0 };
       }
       for (let step = 0; step < 120; step++) {
-        stepFlight(PROTOTYPE, 1 / 60, { ...idle, move: { x: 1, y: 0 } }, flight);
+        stepFlight(CONTENT, 1 / 60, { ...idle, move: { x: 1, y: 0 } }, flight);
         flight.dangerFor = 0;
       }
       return Math.hypot(flight.velocity.x, flight.velocity.y);
@@ -439,7 +439,7 @@ describe("jobs in play", () => {
     const other = stationsNear(ECONOMY, 1, 30_000, { x: 0, y: 0 }).find(
       ({ id }) => id !== held.station,
     )!;
-    ensureStation(PROTOTYPE, other.id, model.state.flight!);
+    ensureStation(CONTENT, other.id, model.state.flight!);
     model.state.docked = other.id;
     const rows = model.jobBoard();
     expect(rows[0]).toMatchObject({ id: held.id, state: "held" });
@@ -547,12 +547,12 @@ describe("jobs in play", () => {
     expect(model.state.notice).toBe("Unavailable while towing.");
     expect(distance(flight.player, held.target)).toBeLessThan(200);
     // Closing the game resumes the tow exactly.
-    expect(relaunch(PROTOTYPE, model.save()).state.flight!.tow).toEqual(flight.tow);
+    expect(relaunch(CONTENT, model.save()).state.flight!.tow).toEqual(flight.tow);
     flight.dangerFor = 0;
     model.returnHome();
     expect(model.state.flight).toBeNull();
     expect(model.state.tasks[1]).toEqual(held);
-    model.startSector(1);
+    model.startGalaxy(1);
     expect(model.jobScenery).toMatchObject({
       craft: { x: held.target.x, y: held.target.y },
       towing: false,
@@ -570,7 +570,7 @@ describe("jobs in play", () => {
     expect(model.inDanger).toBe(true);
     model.state.notice = "Unavailable while towing.";
     const saved = model.save();
-    const launched = new GameModel(PROTOTYPE, saved);
+    const launched = new GameModel(CONTENT, saved);
     expect(launched.screen).toBe("start");
     // The flight's notice waits with it.
     expect(launched.state.notice).toBe("");
@@ -581,14 +581,14 @@ describe("jobs in play", () => {
     launched.continueGame();
     expect(launched.screen).toBe("space");
     expect(launched.state).toEqual(JSON.parse(saved));
-    expect(launched.state.selectedSector).toBe(1);
+    expect(launched.state.selectedGalaxy).toBe(1);
     expect(launched.state.flight!.player).toEqual(flight.player);
     expect(launched.state.flight!.tow).toEqual(flight.tow);
     expect(launched.towing).toBe(true);
     expect(launched.inDanger).toBe(true);
     expect(launched.state.notice).toBe("Unavailable while towing.");
     // Restart from that start screen clears the held flight with the rest of the story.
-    const restarted = new GameModel(PROTOTYPE, saved);
+    const restarted = new GameModel(CONTENT, saved);
     restarted.restart();
     expect(restarted.screen).toBe("start");
     expect(JSON.parse(restarted.save())).toMatchObject({
@@ -691,7 +691,7 @@ describe("jobs in play", () => {
     // The item stays aboard with the job (rules.md "What each event keeps"), so the indicator
     // marks the destination.
     expect(model.state.tasks[1]?.carrying).toBe(true);
-    model.startSector(1);
+    model.startGalaxy(1);
     expect(model.indicatorTargets).toContainEqual({
       id: target.id,
       kind: "job",
@@ -700,7 +700,7 @@ describe("jobs in play", () => {
     });
     (model.state.tasks[1] as HeldJob).carrying = false;
     const reach = (site: Vec & { id: string }) => {
-      ensureStation(PROTOTYPE, site.id, model.state.flight!);
+      ensureStation(CONTENT, site.id, model.state.flight!);
       flyTo(model, { x: site.x + 100, y: site.y });
     };
     // Docking at the issuing station replaces the lost item.

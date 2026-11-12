@@ -1,4 +1,4 @@
-import { type CheatAction, cheatGroups, createCheatSession } from "./cheat-actions.ts";
+import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { createActions, createButton, createCard } from "./modal.ts";
 
 export interface CheatLabels {

@@ -1,0 +1,212 @@
+import { STORY_SHIP_CRAFT, type StoryShipId } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import type { StoryNoses } from "../model/storyShips.ts";
+import type { Vec } from "../model/types.ts";
+import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame } from "./enemyArt.ts";
+import { readShipJets } from "./shipJets.ts";
+import type { StationArt, StationFrame } from "./stationArt.ts";
+
+// Art's Cartwheel hub, mooring buoy, story craft and props (art/cartwheel.md,
+// art/cartwheel-props.md), and which galaxy's flights load each asset.
+
+export interface CartwheelAsset
+  extends Omit<StationFrame, "displayHeight" | "displayWidth" | "id" | "pivot">, EnemyFrame {
+  readonly craft?: string;
+  readonly debris?: string;
+  readonly destination?: string;
+  readonly kind?: unknown;
+  readonly moorings?: unknown;
+  readonly overlay?: boolean;
+  readonly path: string;
+  readonly project?: string;
+  readonly variant?: string;
+}
+
+/** A story craft heading frame: `craft-{craft}-{k}`, heading `k` of 16. */
+export const STORY_CRAFT_FRAME = /^craft-([a-z][a-z0-9]*)-(\d+)$/;
+
+/**
+ * The galaxy whose manifest lists an asset, or null for the core manifest's boot set. Cartwheel's
+ * and Whirlpool's entries load on that galaxy's first flight; Sunflower's load with the boot set.
+ */
+export function galaxyAsset(
+  galaxies: ReadonlyMap<GalaxyNumber, { readonly assets: readonly { readonly id: string }[] }>,
+  asset: { readonly id: string },
+): GalaxyNumber | null {
+  for (const [galaxy, manifest] of galaxies) {
+    if (manifest.assets.some(({ id }) => id === asset.id)) {
+      return galaxy;
+    }
+  }
+  return null;
+}
+
+/** Both blink frames of a fixed-facing prop, or undefined to keep its placeholder. */
+function readBlink<T extends StationFrame>(
+  a: T | undefined,
+  b: T | undefined,
+): StationArt<T> | undefined {
+  if (!a || !b || !(a.frameMs! > 0) || !(a.width > 0) || !(a.displayWidth! > 0)) {
+    return undefined;
+  }
+  return { frameMs: a.frameMs!, frames: [a, b] };
+}
+
+/**
+ * Cartwheel's project ids, as saved progress stores them, to the `project` keys on Art's hub
+ * entries (art/cartwheel.md "Placement anchors").
+ */
+export const HUB_PROJECT_ART = {
+  dockingBay: "second-docking-bay",
+  hubRepairs: "hub-repairs",
+} as const satisfies Readonly<Record<string, string>>;
+
+export interface HubArt<T extends StationFrame = StationFrame> {
+  readonly bay?: StationArt<T>;
+  readonly repaired?: StationArt<T>;
+  readonly worn: StationArt<T>;
+}
+
+/**
+ * The hub's frames, read by destination: the worn pair, the Hub repairs pair that replaces it
+ * and the second docking bay overlay. Without the worn pair the hub keeps its placeholder.
+ */
+export function readHubArt<T extends CartwheelAsset>(assets: readonly T[]): HubArt<T> | undefined {
+  const hub = assets.filter((asset) => asset.destination === "hub");
+  const pair = (match: (asset: T) => boolean) => {
+    const frames = hub.filter(match).sort((a, b) => a.id.localeCompare(b.id));
+    return frames.length === 2 ? readBlink(frames[0], frames[1]) : undefined;
+  };
+  const worn = pair((asset) => asset.variant === "worn");
+  if (!worn) {
+    return undefined;
+  }
+  const repaired = pair(
+    (asset) => asset.variant === "repaired" && asset.project === HUB_PROJECT_ART.hubRepairs,
+  );
+  const bay = pair(
+    (asset) => asset.overlay === true && asset.project === HUB_PROJECT_ART.dockingBay,
+  );
+  return { worn, ...(repaired ? { repaired } : {}), ...(bay ? { bay } : {}) };
+}
+
+/** The hub's layers to draw, base then overlay, for its funded projects. */
+export function hubLayers<T extends StationFrame>(
+  art: HubArt<T>,
+  worn: boolean,
+  bay: boolean,
+): StationArt<T>[] {
+  const base = worn || !art.repaired ? art.worn : art.repaired;
+  return bay && art.bay ? [base, art.bay] : [base];
+}
+
+/** The mooring buoy's blink pair, or undefined to draw none. */
+export function readBuoyArt<T extends CartwheelAsset>(
+  assets: readonly T[],
+): StationArt<T> | undefined {
+  const find = (id: string) => assets.find((asset) => asset.id === id);
+  return readBlink(find("mooring-buoy-a"), find("mooring-buoy-b"));
+}
+
+/** Each story craft's 16 heading frames in heading order; a craft missing one is left out. */
+export function craftFrameSets<T extends CartwheelAsset>(assets: readonly T[]): Map<string, T[]> {
+  const sets = new Map<string, T[]>();
+  for (const asset of assets) {
+    const match = STORY_CRAFT_FRAME.exec(asset.id);
+    if (!match || asset.directionIndex !== Number(match[2])) {
+      continue;
+    }
+    const frames = sets.get(match[1]!) ?? [];
+    frames[Number(match[2])] = asset;
+    sets.set(match[1]!, frames);
+  }
+  for (const [craft, frames] of sets) {
+    const holes = Array.from({ length: ENEMY_HEADINGS }, (_, k) => frames[k]).some(
+      (frame) => !frame,
+    );
+    if (holes || frames.length !== ENEMY_HEADINGS) {
+      sets.delete(craft);
+    }
+  }
+  return sets;
+}
+
+/**
+ * Each story craft's 16 heading frames for a galaxy: its own manifest's, then core's, where art
+ * that several galaxies draw is listed (art/README.md), so a craft moving to core needs no code.
+ */
+export function storyCraftSets<T extends CartwheelAsset>(
+  galaxy: readonly T[],
+  core: readonly T[],
+): Map<string, T[]> {
+  const sets = craftFrameSets(core);
+  for (const [craft, frames] of craftFrameSets(galaxy)) {
+    sets.set(craft, frames);
+  }
+  return sets;
+}
+
+/** A story craft's nose at one heading (art/cartwheel.md "Nose"). */
+export interface CraftNose {
+  /** World units from the pivot to the point under the nose on the centre line. */
+  readonly distance: number;
+  /** The drawn tip in frame px. */
+  readonly tip: Vec;
+}
+
+/**
+ * The `nose` array of a craft's jets file: 16 entries, heading `k` at index `k`, each with a
+ * non-negative world `distance` and a frame px `tip`; undefined when any entry is malformed.
+ */
+export function readCraftNose(jets: unknown): CraftNose[] | undefined {
+  const nose =
+    jets && typeof jets === "object" ? (jets as { readonly nose?: unknown }).nose : undefined;
+  if (!Array.isArray(nose) || nose.length !== ENEMY_HEADINGS) {
+    return undefined;
+  }
+  const entries: CraftNose[] = [];
+  for (const entry of nose as unknown[]) {
+    const { distance, tip } = (entry ?? {}) as { distance?: unknown; tip?: unknown };
+    const finite = (value: unknown): value is number =>
+      typeof value === "number" && Number.isFinite(value);
+    if (!finite(distance) || distance < 0 || !Array.isArray(tip) || tip.length !== 2) {
+      return undefined;
+    }
+    if (!finite(tip[0]) || !finite(tip[1])) {
+      return undefined;
+    }
+    entries.push({ distance, tip: { x: tip[0], y: tip[1] } });
+  }
+  return entries;
+}
+
+/**
+ * Each story ship's nose distance by heading, from its craft's jets file (STORY_SHIP_CRAFT);
+ * a ship whose file has no readable `nose` is left out.
+ */
+export function storyNoses(jets: (craft: string) => unknown): StoryNoses {
+  const noses: Partial<Record<StoryShipId, readonly number[]>> = {};
+  for (const [id, craft] of Object.entries(STORY_SHIP_CRAFT) as [StoryShipId, string][]) {
+    const nose = readCraftNose(jets(craft));
+    if (nose) {
+      noses[id] = nose.map(({ distance }) => distance);
+    }
+  }
+  return noses;
+}
+
+/** A craft's frames and speed jets, in the enemy heading convention and jets schema. */
+export function craftArt<T extends CartwheelAsset>(
+  jets: (craft: string) => unknown,
+  sets: ReadonlyMap<string, readonly T[]>,
+): Map<string, EnemyArt<T>> {
+  const art = new Map<string, EnemyArt<T>>();
+  for (const [craft, frames] of sets) {
+    const parsed = readShipJets(jets(craft));
+    art.set(craft, {
+      frames,
+      jets: parsed?.headings.length === ENEMY_HEADINGS ? parsed : undefined,
+    });
+  }
+  return art;
+}

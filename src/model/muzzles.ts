@@ -1,5 +1,5 @@
-import type { Point } from "../data/enemy-catalog.ts";
-import { ENEMY_DISPLAY_SCALE, type MuzzleLayout } from "../data/enemy-muzzles.ts";
+import type { Point } from "../data/enemyCatalog.ts";
+import { ENEMY_DISPLAY_SCALE, type MuzzleLayout } from "../data/enemyMuzzles.ts";
 
 /** Art's sixteen hull headings and turret aim frames. */
 export const DRAWN_DIRECTIONS = 16;

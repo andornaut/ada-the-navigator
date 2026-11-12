@@ -1,6 +1,6 @@
-import { SECTORS } from "./galaxies.ts";
+import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 // In-flight conversations (gameplay/rules.md "Astra and Penny in flight"; words from
 // gameplay/player-copy.md "In-flight conversations" and the General's broadcasts, and job lines
@@ -33,10 +33,10 @@ export type Lesson = "aim" | "dock" | "move" | "stardust";
 
 export type ConversationTrigger =
   | { readonly kind: "lesson"; readonly lesson: Lesson }
-  | { readonly kind: "arrival"; readonly sector: SectorId }
-  | { readonly kind: "meeting"; readonly sector: SectorId; readonly destination: string }
+  | { readonly kind: "arrival"; readonly galaxy: GalaxyNumber }
+  | { readonly kind: "meeting"; readonly galaxy: GalaxyNumber; readonly destination: string }
   /** A first meeting with a galaxy's people, on its cue. */
-  | { readonly kind: "encounter"; readonly sector: SectorId; readonly cue: EncounterCue }
+  | { readonly kind: "encounter"; readonly galaxy: GalaxyNumber; readonly cue: EncounterCue }
   /** A newly mapped destination or landmark. */
   | { readonly kind: "mapped" }
   | { readonly kind: "stationMapped" }
@@ -53,13 +53,13 @@ export type ConversationTrigger =
   | { readonly kind: "drones" }
   /** The General's broadcast while Ada holds `held` holodisks. */
   | { readonly kind: "general"; readonly held: number }
-  | { readonly kind: "quiet"; readonly sector: SectorId }
+  | { readonly kind: "quiet"; readonly galaxy: GalaxyNumber }
   | { readonly kind: "funded"; readonly project: string }
   | { readonly kind: "penny" }
   /** A held job's moment: the tow line attaching or Ada entering a search area. */
   | { readonly kind: "job"; readonly moment: JobMoment }
   /** Astra's lore line after a job completes, one unseen line per job. */
-  | { readonly kind: "jobLore"; readonly sector: SectorId };
+  | { readonly kind: "jobLore"; readonly galaxy: GalaxyNumber };
 
 /**
  * What first shows a galaxy's people: the whale family on screen, the mining hub within station
@@ -368,7 +368,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "arrival", sector: 1 },
+    trigger: { galaxy: 1, kind: "arrival" },
   },
   {
     id: "meeting:1:growers",
@@ -378,7 +378,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { destination: "growers", kind: "meeting", sector: 1 },
+    trigger: { destination: "growers", galaxy: 1, kind: "meeting" },
   },
   {
     id: "meeting:1:workshop",
@@ -388,7 +388,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { destination: "workshop", kind: "meeting", sector: 1 },
+    trigger: { destination: "workshop", galaxy: 1, kind: "meeting" },
   },
   {
     id: "meeting:1:salvagers",
@@ -398,7 +398,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { destination: "salvagers", kind: "meeting", sector: 1 },
+    trigger: { destination: "salvagers", galaxy: 1, kind: "meeting" },
   },
   {
     id: "quiet:1:lonely",
@@ -408,7 +408,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 1 },
+    trigger: { galaxy: 1, kind: "quiet" },
   },
   {
     id: "quiet:1:tail",
@@ -418,7 +418,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 1 },
+    trigger: { galaxy: 1, kind: "quiet" },
   },
   {
     id: "quiet:1:name",
@@ -428,7 +428,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 1 },
+    trigger: { galaxy: 1, kind: "quiet" },
   },
   // Cartwheel: Astra warmer and surer as her memory returns.
   {
@@ -439,7 +439,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "arrival", sector: 2 },
+    trigger: { galaxy: 2, kind: "arrival" },
   },
   {
     id: "meeting:2:cobbles",
@@ -450,7 +450,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { cue: "hubNear", kind: "encounter", sector: 2 },
+    trigger: { cue: "hubNear", galaxy: 2, kind: "encounter" },
   },
   {
     id: "quiet:2:notice",
@@ -460,7 +460,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 2 },
+    trigger: { galaxy: 2, kind: "quiet" },
   },
   {
     id: "quiet:2:whole",
@@ -470,7 +470,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 2 },
+    trigger: { galaxy: 2, kind: "quiet" },
   },
   // Whirlpool: Astra warmer and surer as her memory returns.
   {
@@ -481,7 +481,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "arrival", sector: 3 },
+    trigger: { galaxy: 3, kind: "arrival" },
   },
   {
     id: "meeting:3:family",
@@ -492,7 +492,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { cue: "familyInSight", kind: "encounter", sector: 3 },
+    trigger: { cue: "familyInSight", galaxy: 3, kind: "encounter" },
   },
   {
     id: "meeting:3:voron",
@@ -502,14 +502,14 @@ export const CONVERSATIONS: readonly Conversation[] = [
     ],
     priority: "lore",
     repeat: "never",
-    trigger: { cue: "stationNear", kind: "encounter", sector: 3 },
+    trigger: { cue: "stationNear", galaxy: 3, kind: "encounter" },
   },
   {
     id: "quiet:3:maps",
     lines: [line("astra", "My maps feel fuller every day."), happy("ada", "Our maps.")],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 3 },
+    trigger: { galaxy: 3, kind: "quiet" },
   },
   {
     id: "current:first",
@@ -526,7 +526,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     lines: [line("astra", "I'm glad it was you who found the rock."), happy("ada", "Me too.")],
     priority: "lore",
     repeat: "never",
-    trigger: { kind: "quiet", sector: 3 },
+    trigger: { galaxy: 3, kind: "quiet" },
   },
   // The General's broadcasts, one after the number of holodisks Ada holds. Each built galaxy
   // plays its one, seen as general:<galaxy> (the director's instance), so none replays there.
@@ -590,13 +590,13 @@ export const CONVERSATIONS: readonly Conversation[] = [
     repeat: "never",
     trigger: { kind: "job", moment: "searchEntered" },
   },
-  ...SECTORS.flatMap((sector) =>
-    (JOB_LORE[sector] ?? []).map((text, index): Conversation => ({
-      id: `jobLore:${sector}:${index}`,
+  ...GALAXY_NUMBERS.flatMap((galaxy) =>
+    (JOB_LORE[galaxy] ?? []).map((text, index): Conversation => ({
+      id: `jobLore:${galaxy}:${index}`,
       lines: [line("astra", text)],
       priority: "lore",
       repeat: "never",
-      trigger: { kind: "jobLore", sector },
+      trigger: { galaxy, kind: "jobLore" },
     })),
   ),
 ];

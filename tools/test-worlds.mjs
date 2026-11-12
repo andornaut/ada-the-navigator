@@ -1,4 +1,4 @@
-// Reruns the unit tests under further launch-seed sequences (ADA_LAUNCH_SEED, src/test-setup.ts),
+// Reruns the unit tests under further launch-seed sequences (ADA_LAUNCH_SEED, src/testSetup.ts),
 // so a test that depends on the world its flight generates fails here instead of passing only
 // in the default world. Arguments pass through to vitest.
 import { spawnSync } from "node:child_process";

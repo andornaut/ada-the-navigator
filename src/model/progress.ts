@@ -1,7 +1,7 @@
-import type { SectorProgress } from "./types.ts";
+import type { GalaxyProgress } from "./types.ts";
 
 /** A galaxy's progress before Ada first flies there. */
-export function newProgress(): SectorProgress {
+export function newProgress(): GalaxyProgress {
   return {
     charted: [],
     deposited: 0,

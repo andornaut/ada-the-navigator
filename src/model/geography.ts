@@ -1,5 +1,5 @@
-import type { PrototypeContent } from "../data/types.ts";
-import { enemyDefeated } from "./enemy-ai.ts";
+import type { GameContent } from "../data/types.ts";
+import { enemyDefeated } from "./enemyAi.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 
@@ -19,13 +19,13 @@ export function archivedObjectIds(flight: FlightState): ReadonlySet<string> {
 export function beginFlightStep(flight: FlightState): void {
   archived.set(flight, new Set());
 }
-function coordinates(content: PrototypeContent, point: Vec): Vec {
+function coordinates(content: GameContent, point: Vec): Vec {
   return {
     x: Math.floor(point.x / content.tuning.chunkSize),
     y: Math.floor(point.y / content.tuning.chunkSize),
   };
 }
-function key(content: PrototypeContent, point: Vec): string {
+function key(content: GameContent, point: Vec): string {
   const at = coordinates(content, point);
   return `${at.x},${at.y}`;
 }
@@ -61,12 +61,7 @@ export function persistentObject(object: SpaceObject): boolean {
       ["frigate", "capital", "platform"].includes(object.enemy.archetype))
   );
 }
-function account(
-  content: PrototypeContent,
-  index: WorldIndex,
-  object: SpaceObject,
-  add: boolean,
-): void {
+function account(content: GameContent, index: WorldIndex, object: SpaceObject, add: boolean): void {
   const at = key(content, object);
   const chunk = index.chunks.get(at) ?? new Set<string>();
   if (add) {
@@ -103,7 +98,7 @@ function account(
     }
   }
 }
-function indexWorld(content: PrototypeContent, flight: FlightState): WorldIndex {
+function indexWorld(content: GameContent, flight: FlightState): WorldIndex {
   let index = indexes.get(flight.world);
   if (!index) {
     index = { chunks: new Map(), packs: {}, routes: new Map() };
@@ -117,7 +112,7 @@ function indexWorld(content: PrototypeContent, flight: FlightState): WorldIndex 
   return index;
 }
 export function retainedPackMembers(
-  content: PrototypeContent,
+  content: GameContent,
   flight: FlightState,
 ): Readonly<Record<string, number>> {
   const retained = indexWorld(content, flight).packs;
@@ -139,7 +134,7 @@ export function retainedRouteBlocked(id: string, flight: FlightState): boolean {
         (object) => object !== null && object.routeId === id && blockingGuard(object),
       );
 }
-function activate(content: PrototypeContent, id: string, flight: FlightState): void {
+function activate(content: GameContent, id: string, flight: FlightState): void {
   const object = flight.world.notables[id];
   if (!object) {
     return;
@@ -148,11 +143,7 @@ function activate(content: PrototypeContent, id: string, flight: FlightState): v
   delete flight.world.notables[id];
   flight.objects.push(object);
 }
-export function activateFlightRegion(
-  content: PrototypeContent,
-  point: Vec,
-  flight: FlightState,
-): void {
+export function activateFlightRegion(content: GameContent, point: Vec, flight: FlightState): void {
   const center = coordinates(content, point);
   const index = indexWorld(content, flight);
   for (let x = center.x - ACTIVE_CHUNK_RADIUS; x <= center.x + ACTIVE_CHUNK_RADIUS; x++) {
@@ -165,7 +156,7 @@ export function activateFlightRegion(
 }
 /** Null records suppress defeated notable identities before any later template admission. */
 export function recordObjectRemoval(
-  content: PrototypeContent,
+  content: GameContent,
   object: SpaceObject,
   flight: FlightState,
 ): void {
@@ -197,7 +188,7 @@ export function recordUnloadedPackMember(object: SpaceObject, flight: FlightStat
   unloaded[packId] = (unloaded[packId] ?? 0) + 1;
 }
 
-export function syncFlightRegion(content: PrototypeContent, flight: FlightState): void {
+export function syncFlightRegion(content: GameContent, flight: FlightState): void {
   activateFlightRegion(content, flight.player, flight);
   const center = coordinates(content, flight.player);
   const index = indexWorld(content, flight);
@@ -286,7 +277,7 @@ export function prunePackState(flight: FlightState): void {
 }
 
 export function activateRouteEncounter(
-  content: PrototypeContent,
+  content: GameContent,
   id: string,
   flight: FlightState,
 ): void {

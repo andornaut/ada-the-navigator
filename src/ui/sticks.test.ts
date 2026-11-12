@@ -17,7 +17,7 @@ import {
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   touchChromePixel,
-} from "./touch-chrome.ts";
+} from "./touchChrome.ts";
 
 const layout = {
   height: 360,

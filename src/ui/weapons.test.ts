@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import type { Weapon } from "../data/types.ts";
-import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { conversationBoxRect } from "./layout/conversationBox.ts";
 import { units } from "./layout/css.ts";
 import {
@@ -82,7 +82,7 @@ describe("HUD weapon buttons", () => {
 
   it("labels a weapon button with its exact count, en-US grouped, and Laser with its name", () => {
     const labels = {
-      ammo: PROTOTYPE.labels.weaponAmmoLabel!,
+      ammo: CONTENT.labels.weaponAmmoLabel!,
       group: "",
       names: {
         heavyMissile: "Heavy Missile",
@@ -93,7 +93,7 @@ describe("HUD weapon buttons", () => {
         scattershot: "Scattershot",
       },
     };
-    expect(PROTOTYPE.labels.weaponAmmoLabel).toBe("{weapon}, {count} left");
+    expect(CONTENT.labels.weaponAmmoLabel).toBe("{weapon}, {count} left");
     const label = (id: Weapon, ammo: number | null) =>
       weaponButtonLabel(labels, { ammo, id, level: 1, selected: false });
     expect(label("laser", null)).toBe("Laser");

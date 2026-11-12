@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
-import { createEnemy, stepDebris, stepEnemy } from "./enemy-ai.ts";
+import { createEnemy, stepDebris, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { newerSave, readSave, restoreSave, SAVE_VERSION, writeSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
@@ -12,17 +12,17 @@ import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types
 
 describe("save boundary", () => {
   it("roundtrips real initial and launched states without sharing mutable references", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     expect(restoreSave(model.save())).toEqual(model.state);
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     const restored = restoreSave(model.save());
     expect(restored).toEqual(model.state);
     expect(restored?.flight).not.toBe(model.state.flight);
   });
   it("rejects truncated, corrupt and unsupported data without throwing", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     for (const change of [
       // An earlier or later save format resets rather than migrating.
@@ -32,13 +32,13 @@ describe("save boundary", () => {
       { progress: {} },
       { unlocked: [4] },
       { unlocked: [1, 7] },
-      { selectedSector: "1" },
-      { selectedSector: 7 },
+      { selectedGalaxy: "1" },
+      { selectedGalaxy: 7 },
     ]) {
       expect(restoreSave({ ...model.state, ...change })).toBeNull();
     }
     expect(restoreSave("{broken")).toBeNull();
-    expect(relaunch(PROTOTYPE, "{broken").state.mode).toBe("home");
+    expect(relaunch(CONTENT, "{broken").state.mode).toBe("home");
   });
   it.each(
     [
@@ -61,8 +61,8 @@ describe("save boundary", () => {
       ...["levels", "ammo", "weaponSwitchFor"].map((key) => ["flight", key]),
     ].map((path) => [path.join("."), path] as const),
   )("rejects a save without %s", (_, path) => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as Record<string, unknown>;
     expect(restoreSave(saved)).not.toBeNull();
@@ -73,8 +73,8 @@ describe("save boundary", () => {
     expect(restoreSave(saved)).toBeNull();
   });
   it("rejects a flight's single ammunition count", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as { flight: Record<string, unknown> };
     saved.flight.ammo = 7;
@@ -95,8 +95,8 @@ describe("save boundary", () => {
 });
 
 function combatSnapshot() {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   if (!model.state.flight) {
     throw new Error("Expected launched flight");
@@ -326,7 +326,7 @@ describe("combat save boundary", () => {
     { initialPackSizes: {}, routeEncounters: [1] },
     { initialPackSizes: {} },
     null,
-  ])("rejects malformed or cross-sector combat metadata %j", (combat) => {
+  ])("rejects malformed or cross-galaxy combat metadata %j", (combat) => {
     const snapshot = combatSnapshot();
     Object.assign(snapshot.flight, { combat });
     expect(restoreSave(snapshot)).toBeNull();
@@ -502,8 +502,8 @@ describe("enemy orientation save boundary", () => {
 
 describe("asteroid save boundary", () => {
   it("keeps an Art rock and rejects a rock shape outside Art's catalog", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
     const base = saved.flight!.objects;
@@ -525,8 +525,8 @@ describe("asteroid save boundary", () => {
   });
 
   it("keeps whale debris stone shapes and resource rock classes, rejecting misplaced ones", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
     const base = saved.flight!.objects;
@@ -562,8 +562,8 @@ describe("asteroid save boundary", () => {
   });
 
   it("keeps a story scene and a replay scene, rejecting unknown ones", () => {
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
     saved.flight!.storyScene = { at: 3, id: "blocked", lineDue: false };
@@ -600,7 +600,7 @@ describe("current generation save boundary", () => {
 
   it("serializes only the current schema without decoding discarded ordinary history", () => {
     const snapshot = notableSnapshot();
-    const model = relaunch(PROTOTYPE, JSON.stringify(snapshot));
+    const model = relaunch(CONTENT, JSON.stringify(snapshot));
     expect(model.state).toEqual(snapshot);
     const parse = vi.spyOn(JSON, "parse");
     try {
@@ -709,17 +709,17 @@ describe("current generation save boundary", () => {
     old.flight.dormant = { packMembers: {}, pages: {}, routes: [], version: 1 };
     old.flight.exploredChunks = ["0,0"];
     expect(restoreSave(old)).toBeNull();
-    expect(relaunch(PROTOTYPE, old).state.mode).toBe("home");
-    expect(relaunch(PROTOTYPE, old).state.flight).toBeNull();
+    expect(relaunch(CONTENT, old).state.mode).toBe("home");
+    expect(relaunch(CONTENT, old).state.flight).toBeNull();
     expect(old.flight).not.toHaveProperty("world");
   });
 });
 
 describe("delivery save boundary", () => {
   it("rejects a held delivery or board offer to a story place that takes none", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 2, 3];
-    model.startSector(3);
+    model.startGalaxy(3);
     playOpening(model);
     model.state.dialogue = null;
     const station = stationsNear(ECONOMY, 3, 40_000, { x: 0, y: 0 })[0]!;

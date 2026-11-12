@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, CONVERSATIONS, lineDuration } from "../data/conversations.ts";
-import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import {
   ConversationDirector,
@@ -14,7 +14,7 @@ import {
   pennyPoints,
   speakerName,
 } from "./conversations.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
@@ -49,11 +49,11 @@ const calm: ConversationFacts = {
 // A shuffle that keeps each pool in the copy's order, so the first draw is the first variant.
 const inOrder = () => 1 - 1e-9;
 
-/** A director in sector whose saved list already holds seen. */
-function director(sector: SectorId, seen: string[] = [], done = {}) {
+/** A director in galaxy whose saved list already holds seen. */
+function director(galaxy: GalaxyNumber, seen: string[] = [], done = {}) {
   const heard = [...seen];
   const talk = new ConversationDirector(CONVERSATIONS, heard, inOrder);
-  talk.beginFlight(sector, done);
+  talk.beginFlight(galaxy, done);
   return { heard, talk };
 }
 /** Steps in slices of at most 0.05 s, as the scene does. */
@@ -368,15 +368,15 @@ describe("conversation triggers", () => {
     const sunflower = director(1, [...lessonsHeard, "arrival:1"]);
     run(sunflower.talk, 0.05, drones);
     expect(showing(sunflower.talk)).toBe("warning:drones:0");
-    for (const [sector, holodisks, line] of [
+    for (const [galaxy, holodisks, line] of [
       [3, 1, "general:held:1"],
       [2, 2, "general:held:2"],
     ] as const) {
-      const { heard, talk } = director(sector, lessonsHeard);
+      const { heard, talk } = director(galaxy, lessonsHeard);
       run(talk, 0.05, { ...drones, holodisks });
       expect(talk.showing?.conversation.id).toBe(line);
-      expect(tapThrough(talk)).toEqual([`general:${sector}:0`, `general:${sector}:1`]);
-      expect(heard).toContain(`general:${sector}`);
+      expect(tapThrough(talk)).toEqual([`general:${galaxy}:0`, `general:${galaxy}:1`]);
+      expect(heard).toContain(`general:${galaxy}`);
       // Once per galaxy: later engagements there call out the drones.
       run(talk, 0.05);
       run(talk, 0.05, { ...drones, holodisks: holodisks + 1 });
@@ -427,10 +427,10 @@ describe("conversation triggers", () => {
     [3, ["quiet:3:maps:0", "quiet:3:rock:0"]],
   ] as const)(
     "greet galaxy %i with Astra's arrival line, then draw quiet lines from its own pool",
-    (sector, quiet) => {
-      const { talk } = director(sector, [...lessonsHeard, `general:${sector}`]);
+    (galaxy, quiet) => {
+      const { talk } = director(galaxy, [...lessonsHeard, `general:${galaxy}`]);
       run(talk, 0.05);
-      expect(tapThrough(talk)).toEqual([`arrival:${sector}:0`, `arrival:${sector}:1`]);
+      expect(tapThrough(talk)).toEqual([`arrival:${galaxy}:0`, `arrival:${galaxy}:1`]);
       const drawn: string[] = [];
       for (let line = 0; line < quiet.length; line++) {
         for (let step = 0; step < 4000 && !talk.showing; step++) {
@@ -547,7 +547,7 @@ describe("capital sightings", () => {
     hp: enemyCatalog[archetype].hp,
     id,
     kind: "enemy",
-    radius: enemyCatalog[archetype].sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+    radius: enemyCatalog[archetype].sizeRatio * CONTENT.tuning.flight.shipRadius,
     x,
     y: 0,
   });
@@ -575,20 +575,20 @@ describe("capital sightings", () => {
 
 describe("drone engagements in flight", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-  /** A flight in sector far from any friendly place, with a pack of drones near Ada. */
+  /** A flight in galaxy far from any friendly place, with a pack of drones near Ada. */
   function engaged(
-    sector: SectorId,
+    galaxy: GalaxyNumber,
     archetype: EnemyArchetype,
     count: number,
-    recovered: readonly SectorId[] = [],
+    recovered: readonly GalaxyNumber[] = [],
   ): GameModel {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2, 3];
-    for (const galaxy of recovered) {
-      model.state.progress[galaxy].holodisk = true;
+    for (const held of recovered) {
+      model.state.progress[held].holodisk = true;
     }
-    model.startSector(sector);
+    model.startGalaxy(galaxy);
     const flight = model.state.flight!;
     flight.player = { x: flight.player.x + 6000, y: flight.player.y };
     flight.objects = Array.from({ length: count }, (_, index) => {
@@ -604,7 +604,7 @@ describe("drone engagements in flight", () => {
         hp: definition.hp,
         id,
         kind: "enemy" as const,
-        radius: definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
+        radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
       };
     });
     flight.shots = [];
@@ -668,12 +668,12 @@ describe("conversations in the game", () => {
    */
   // A first flight, with the heard conversations already heard.
   function flying(heard: readonly string[] = []): GameModel {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     // As after a real first launch: the prologue and its achievement are behind Ada.
     model.state.prologueSeen = true;
     model.state.achievements.unlocked.push("newNavigator");
     model.state.seenConversations.push(...heard);
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.state.mode).toBe("space");
     const flight = model.state.flight!;
@@ -694,7 +694,7 @@ describe("conversations in the game", () => {
   }
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   // Steps the travel notice shows for.
-  const noticeSteps = lineSteps(lineDuration(PROTOTYPE.labels.travelUnavailable ?? ""));
+  const noticeSteps = lineSteps(lineDuration(CONTENT.labels.travelUnavailable ?? ""));
 
   it("show the touch and desktop wording with the speaker's name tab and side", () => {
     const model = flying();
@@ -753,12 +753,12 @@ describe("conversations in the game", () => {
     model.returnHome();
     // Danger ends at once, so no warning comes over the notice.
     model.state.flight!.dangerFor = 0;
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     for (let i = 0; i < noticeSteps - 2; i++) {
       model.step(0.05, idle);
     }
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     model.step(0.05, idle);
     model.step(0.05, idle);
@@ -781,7 +781,7 @@ describe("conversations in the game", () => {
     model.returnHome();
     model.state.flight!.dangerFor = 0;
     model.step(0.05, idle);
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     model.dismissNotice();
     expect(model.conversation?.key).toBe(key);
@@ -796,7 +796,7 @@ describe("conversations in the game", () => {
     model.returnHome();
     model.state.flight!.dangerFor = 0;
     model.step(0.05, idle);
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     model.dismissNotice();
     expect(model.state.notice).toBe("");
@@ -809,7 +809,7 @@ describe("conversations in the game", () => {
     expect(model.conversation?.key).toBe("lesson:move:0");
     const flight = model.state.flight!;
     // Far from any friendly place with danger running and the shield low, as in a fight.
-    flight.player.x += PROTOTYPE.tuning.safeRadius * 3;
+    flight.player.x += CONTENT.tuning.safeRadius * 3;
     flight.dangerFor = 5;
     // An enemy shot held in the battle square for 5 s keeps the danger running.
     flight.shots.push({
@@ -825,7 +825,7 @@ describe("conversations in the game", () => {
     });
     flight.shield = (model.shieldMax * CONVERSATION_TUNING.shieldLowFraction) / 2;
     model.returnHome();
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     model.step(0.05, idle);
     expect(model.conversation?.key).toBe("warning:shieldLow:0");
     expect(model.warningShowing).toBe(true);
@@ -839,7 +839,7 @@ describe("conversations in the game", () => {
     for (let i = 0; i < noticeSteps - 2; i++) {
       model.step(0.05, idle);
     }
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     model.step(0.05, idle);
     model.step(0.05, idle);
     expect(model.state.notice).toBe("");
@@ -868,13 +868,13 @@ describe("conversations in the game", () => {
     model.advanceConversation();
     const saved = model.save();
     expect(restoreSave(saved)?.seenConversations).toContain("lesson:move");
-    const resumed = new GameModel(PROTOTYPE, saved);
+    const resumed = new GameModel(CONTENT, saved);
     resumed.step(0.05, idle);
     expect(resumed.conversation?.key).not.toBe("lesson:move:0");
   });
 
   it("rejects a malformed seen-conversations list", () => {
-    const fresh = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
+    const fresh = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
     expect(restoreSave({ ...fresh, seenConversations: [1] })).toBeNull();
   });
 });

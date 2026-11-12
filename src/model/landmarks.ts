@@ -6,10 +6,10 @@ import {
   type LandmarkKind,
   landmarkNameKey,
 } from "../data/jobs.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { stationsNear } from "./stations.ts";
-import type { SectorProgress, Vec } from "./types.ts";
+import type { GalaxyProgress, Vec } from "./types.ts";
 
 // Each galaxy's landmarks (gameplay/quests.md "Landmarks"): nebulae, wrecks and beacons placed by
 // the galaxy's seed, so they stay in the same places on every flight like stations. Flying close
@@ -27,7 +27,7 @@ export interface LandmarkSite extends Vec {
  * Fixed per-galaxy seeds, so every flight places the same landmarks. A placeholder galaxy has
  * none, so no landmarks.
  */
-const LANDMARK_SEEDS: Readonly<Partial<Record<LandmarkGalaxy & SectorId, number>>> = {
+const LANDMARK_SEEDS: Readonly<Partial<Record<LandmarkGalaxy & GalaxyNumber, number>>> = {
   1: 0x1a4d_0101,
   2: 0x1a4d_0202,
   3: 0x1a4d_0303,
@@ -36,14 +36,14 @@ const LANDMARK_SEEDS: Readonly<Partial<Record<LandmarkGalaxy & SectorId, number>
   6: 0x1a4d_0606,
 };
 
-const sites = new Map<SectorId, readonly LandmarkSite[]>();
+const sites = new Map<GalaxyNumber, readonly LandmarkSite[]>();
 
 /**
  * The galaxy's seeded kinds, a third of each in an order its seed shuffles. Their own stream keeps
  * the placement's positions unchanged.
  */
-function seededKinds(sector: LandmarkGalaxy & SectorId, seed: number): LandmarkKind[] {
-  const next = dropRandom(seed, `landmark-kinds:${sector}`);
+function seededKinds(galaxy: LandmarkGalaxy & GalaxyNumber, seed: number): LandmarkKind[] {
+  const next = dropRandom(seed, `landmark-kinds:${galaxy}`);
   const per = LANDMARK_TUNING.count / LANDMARK_KINDS.length;
   const kinds = LANDMARK_KINDS.flatMap((kind) => Array.from({ length: per }, () => kind));
   for (let index = kinds.length - 1; index > 0; index--) {
@@ -58,20 +58,20 @@ function seededKinds(sector: LandmarkGalaxy & SectorId, seed: number): LandmarkK
  * apart and placeClearance from its stations. The seed assigns the kinds, and each kind's names
  * follow quests.md's table order in id order, so a landmark keeps its name on every flight.
  */
-export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
-  const cached = sites.get(sector);
+export function landmarkSites(galaxy: GalaxyNumber): readonly LandmarkSite[] {
+  const cached = sites.get(galaxy);
   if (cached) {
     return cached;
   }
-  const seed = LANDMARK_SEEDS[sector as LandmarkGalaxy & SectorId];
+  const seed = LANDMARK_SEEDS[galaxy as LandmarkGalaxy & GalaxyNumber];
   if (seed === undefined) {
-    sites.set(sector, []);
+    sites.set(galaxy, []);
     return [];
   }
-  const galaxy = sector as LandmarkGalaxy & SectorId;
+  const landmarkGalaxy = galaxy as LandmarkGalaxy & GalaxyNumber;
   const { count, placeClearance, radius, spacing } = LANDMARK_TUNING;
-  const next = dropRandom(seed, `landmarks:${sector}`);
-  const kinds = seededKinds(galaxy, seed);
+  const next = dropRandom(seed, `landmarks:${galaxy}`);
+  const kinds = seededKinds(landmarkGalaxy, seed);
   const named = { beacon: 0, nebula: 0, wreck: 0 };
   const placed: LandmarkSite[] = [];
   for (let attempt = 0; placed.length < count && attempt < 10000; attempt++) {
@@ -81,7 +81,7 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
     const at = { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
     if (
       placed.some((site) => Math.hypot(site.x - at.x, site.y - at.y) < spacing) ||
-      stationsNear(ECONOMY, sector, placeClearance, at).length > 0
+      stationsNear(ECONOMY, galaxy, placeClearance, at).length > 0
     ) {
       continue;
     }
@@ -89,26 +89,26 @@ export function landmarkSites(sector: SectorId): readonly LandmarkSite[] {
     const kind = kinds[index]!;
     placed.push({
       ...at,
-      id: `landmark:${sector}:${index}`,
+      id: `landmark:${galaxy}:${index}`,
       kind,
-      name: landmarkNameKey(galaxy, kind, ++named[kind]),
+      name: landmarkNameKey(landmarkGalaxy, kind, ++named[kind]),
     });
   }
-  sites.set(sector, placed);
+  sites.set(galaxy, placed);
   return placed;
 }
 
 /** A landmark by id in its galaxy, or undefined. */
-export function landmarkById(sector: SectorId, id: string): LandmarkSite | undefined {
-  return landmarkSites(sector).find((site) => site.id === id);
+export function landmarkById(galaxy: GalaxyNumber, id: string): LandmarkSite | undefined {
+  return landmarkSites(galaxy).find((site) => site.id === id);
 }
 
 /** The galaxy's landmarks with whether each is charted: the pause map's landmark slot. */
 export function galaxyLandmarks(
-  sector: SectorId,
-  progress: Pick<SectorProgress, "charted">,
+  galaxy: GalaxyNumber,
+  progress: Pick<GalaxyProgress, "charted">,
 ): readonly (LandmarkSite & { readonly charted: boolean })[] {
-  return landmarkSites(sector).map((site) => ({
+  return landmarkSites(galaxy).map((site) => ({
     ...site,
     charted: progress.charted.includes(site.id),
   }));
@@ -116,12 +116,12 @@ export function galaxyLandmarks(
 
 /** Uncharted landmarks within range of a point. */
 export function unchartedNear(
-  sector: SectorId,
-  progress: Pick<SectorProgress, "charted">,
+  galaxy: GalaxyNumber,
+  progress: Pick<GalaxyProgress, "charted">,
   range: number,
   point: Vec,
 ): LandmarkSite[] {
-  return landmarkSites(sector).filter(
+  return landmarkSites(galaxy).filter(
     (site) =>
       !progress.charted.includes(site.id) &&
       Math.hypot(site.x - point.x, site.y - point.y) <= range,
@@ -130,11 +130,11 @@ export function unchartedNear(
 
 /** Charts every uncharted landmark within charting range of Ada; returns the newly charted. */
 export function chartLandmarks(
-  sector: SectorId,
-  progress: Pick<SectorProgress, "charted">,
+  galaxy: GalaxyNumber,
+  progress: Pick<GalaxyProgress, "charted">,
   player: Vec,
 ): string[] {
-  const charted = unchartedNear(sector, progress, LANDMARK_TUNING.chart, player).map(
+  const charted = unchartedNear(galaxy, progress, LANDMARK_TUNING.chart, player).map(
     (site) => site.id,
   );
   progress.charted.push(...charted);
@@ -142,6 +142,6 @@ export function chartLandmarks(
 }
 
 /** Whether a saved id names one of the galaxy's landmarks. */
-export function isLandmark(sector: SectorId, id: string): boolean {
-  return landmarkSites(sector).some((site) => site.id === id);
+export function isLandmark(galaxy: GalaxyNumber, id: string): boolean {
+  return landmarkSites(galaxy).some((site) => site.id === id);
 }

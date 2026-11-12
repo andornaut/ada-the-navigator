@@ -5,11 +5,11 @@ import {
   ASTEROID_SIZES,
   type AsteroidArt,
   RESOURCE_ART,
-} from "../data/asteroid-catalog.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
+} from "../data/asteroidCatalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog } from "../data/enemy-catalog.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { playOpening, relaunch, seedLaunches } from "../testing/launch.ts";
 import {
   ASTEROID_SHAPES,
@@ -24,8 +24,8 @@ import {
   scenerySilhouette,
   silhouette,
 } from "./asteroids.ts";
-import { type ChunkPlanOptions, planChunk } from "./chunk-templates.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { type ChunkPlanOptions, planChunk } from "./chunkTemplates.ts";
+import { createEnemy } from "./enemyAi.ts";
 import {
   BUMP_DAMAGE,
   createFlight,
@@ -36,11 +36,11 @@ import {
 import { GameModel } from "./game.ts";
 import { SHIP_HEADINGS } from "./nose.ts";
 import { restoreSave } from "./save.ts";
-import { shipBody } from "./ship-body.ts";
+import { shipBody } from "./shipBody.ts";
 import { stationsNear } from "./stations.ts";
-import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
+import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
-const progress: SectorProgress = {
+const progress: GalaxyProgress = {
   charted: [],
   deposited: 0,
   destroyedEnemies: 0,
@@ -61,16 +61,16 @@ const progress: SectorProgress = {
 };
 
 const shapes = [...ASTEROID_SHAPES.values()];
-const tuning = PROTOTYPE.tuning.flight;
+const tuning = CONTENT.tuning.flight;
 const options: ChunkPlanOptions = {
   asteroids: { field: ASTEROID_FIELDS[1]!, shapes },
   clearance: tuning.shipRadius,
+  galaxy: 1,
   objectsPerChunk: tuning.objectsPerChunk,
   rockRadius: tuning.rockRadius,
-  sector: 1,
   seed: 173,
   shipRadius: tuning.shipRadius,
-  size: PROTOTYPE.tuning.chunkSize,
+  size: CONTENT.tuning.chunkSize,
   spawnWeights: tuning.spawnWeights,
   x: 2,
   y: -3,
@@ -282,7 +282,7 @@ describe("rock silhouettes", () => {
   });
 
   it("strike a real shot through the drawn top of a rock, not one just above it", () => {
-    const speed = PROTOTYPE.tuning.flight.projectileSpeed;
+    const speed = CONTENT.tuning.flight.projectileSpeed;
     const art = ASTEROID_ART.asteroids.find((entry) => entry.id === "asteroid-l1")!;
     const object = drawnRocks.find((entry) => entry.art === art)!.object;
     const top = Math.min(
@@ -292,7 +292,7 @@ describe("rock silhouettes", () => {
     );
     // The top lies on a vertex: 2 px into the rock below it hits, 4 px above it misses.
     const fire = (screenY: number) => {
-      const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
+      const flight = createFlight(CONTENT, 1, 7, { known: [] });
       flight.objects = [{ ...object, hp: 999, persistent: true }];
       flight.player = world({ x: 0, y: 260 });
       const direction = world({ x: 1, y: 0 });
@@ -311,7 +311,7 @@ describe("rock silhouettes", () => {
         },
       ];
       for (let step = 0; step < 60 && flight.shots.length; step++) {
-        stepFlight(PROTOTYPE, 1 / 60, { ...idleInput, reducedMotion: true }, flight);
+        stepFlight(CONTENT, 1 / 60, { ...idleInput, reducedMotion: true }, flight);
         flight.objects = flight.objects.filter((entry) => entry.id === object.id);
       }
       return flight.objects[0]!.hp < 999;
@@ -321,7 +321,7 @@ describe("rock silhouettes", () => {
   });
 
   it("never draw Ada's ship overlapping a rock after contact, at any frame, heading or approach", () => {
-    const flight = createFlight(PROTOTYPE, 1, 7, { known: [] });
+    const flight = createFlight(CONTENT, 1, 7, { known: [] });
     // Bumps deal no damage here, so every approach runs on a full shield.
     flight.lastBump = Infinity;
     let approaches = 0;
@@ -361,14 +361,14 @@ describe("rock silhouettes", () => {
           flight.player = { ...start };
           flight.facing = facing;
           flight.velocity = {
-            x: move.x * PROTOTYPE.tuning.physics.maxSpeed,
-            y: move.y * PROTOTYPE.tuning.physics.maxSpeed,
+            x: move.x * CONTENT.tuning.physics.maxSpeed,
+            y: move.y * CONTENT.tuning.physics.maxSpeed,
           };
           let reached = false;
           for (let step = 0; step < 16; step++) {
             // Aiming holds the heading while she flies in.
             stepFlight(
-              PROTOTYPE,
+              CONTENT,
               1 / 60,
               { ...idleInput, aim: facing, move, reducedMotion: true },
               flight,
@@ -581,8 +581,8 @@ describe("asteroids in flight", () => {
   const LAUNCH_SEED = 173;
   function launched() {
     seedLaunches(LAUNCH_SEED);
-    const model = new GameModel(PROTOTYPE);
-    model.startSector(1);
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
     expect(flight.seed).toBe(LAUNCH_SEED);
@@ -772,14 +772,14 @@ describe("asteroids in flight", () => {
     expect(Math.hypot(drifter.x - start.x, drifter.y - start.y)).toBeGreaterThan(0);
     expect(drifter.velocity!.x).toBeCloseTo(moved.velocity.x);
     // Paging out keeps no ledger entry: the path is regenerated from the chunk seed.
-    flight.player.x += 20 * PROTOTYPE.tuning.chunkSize;
+    flight.player.x += 20 * CONTENT.tuning.chunkSize;
     model.step(1 / 60, idle);
     expect(flight.objects.some((object) => object.id === drifter.id)).toBe(false);
     expect(Object.hasOwn(flight.world.notables, drifter.id)).toBe(false);
     for (let step = 0; step < 300; step++) {
       model.step(1 / 60, idle);
     }
-    const resumed = relaunch(PROTOTYPE, model.save());
+    const resumed = relaunch(CONTENT, model.save());
     const again = resumed.state.flight!;
     expect(again.time).toBe(flight.time);
     again.player.x = orbit.x + 700;
@@ -829,7 +829,7 @@ describe("asteroids in flight", () => {
         sizes.add(ASTEROID_SHAPES.get(object.asteroid)!.size);
         for (const area of areas) {
           const safe =
-            area.kind === "station" ? ECONOMY.station.safeRadius : PROTOTYPE.tuning.safeRadius;
+            area.kind === "station" ? ECONOMY.station.safeRadius : CONTENT.tuning.safeRadius;
           expect(gap(area, object), `${object.id} near ${area.id}`).toBeGreaterThan(safe);
         }
       }
@@ -851,7 +851,7 @@ describe("asteroids in flight", () => {
     expect(sizes).toContain("huge");
     // Beside the launch point after its chunks paged out, regenerated layout keeps the launch
     // point's safe radius although Ada is elsewhere. Some planned layout would reach it.
-    const safe = PROTOTYPE.tuning.safeRadius;
+    const safe = CONTENT.tuning.safeRadius;
     const beside = { x: 3 * safe, y: 0 };
     const planned = [];
     for (let x = -2; x <= 2; x++) {
@@ -881,21 +881,21 @@ describe("asteroids in flight", () => {
   });
 
   it("clears a drift path that would reach a newly placed destination's safe area", () => {
-    const flight = createFlight(PROTOTYPE, 1, 173, progress);
-    const target = ensureDestination(PROTOTYPE, "probe", structuredClone(flight));
-    const safe = PROTOTYPE.tuning.safeRadius;
+    const flight = createFlight(CONTENT, 1, 173, progress);
+    const target = ensureDestination(CONTENT, "probe", structuredClone(flight));
+    const safe = CONTENT.tuning.safeRadius;
     const reaching = drifter("reaching", target, safe + 20 + 10);
     const clear = drifter("clear", target, safe + 20 + 40 + 10);
     // Only the reaching rock's path, not its current position, enters the safe area.
     expect(Math.hypot(reaching.x - target.x, reaching.y - target.y)).toBeGreaterThan(safe);
     flight.objects.push(reaching, clear);
-    ensureDestination(PROTOTYPE, "probe", flight);
+    ensureDestination(CONTENT, "probe", flight);
     expect(flight.objects).not.toContain(reaching);
     expect(flight.objects).toContain(clear);
   });
 
   it("clears a huge rock whose drawn silhouette, not its footprint, reaches a new station's safe area", () => {
-    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const flight = createFlight(CONTENT, 1, 173, progress);
     const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
     const safe = ECONOMY.station.safeRadius;
     const shape = ASTEROID_SHAPES.get("asteroid-h2")!;
@@ -907,13 +907,13 @@ describe("asteroids in flight", () => {
     const reaching = at("reaching", safe + shape.radius + 10);
     const clear = at("clear", safe + silhouette + 10);
     flight.objects.push(reaching, clear);
-    expect(ensureStation(PROTOTYPE, site.id, flight)).not.toBeNull();
+    expect(ensureStation(CONTENT, site.id, flight)).not.toBeNull();
     expect(flight.objects).not.toContain(reaching);
     expect(flight.objects).toContain(clear);
   });
 
   it("clears a drift path that would reach a newly placed station's safe area", () => {
-    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const flight = createFlight(CONTENT, 1, 173, progress);
     const site = stationsNear(ECONOMY, 1, ECONOMY.station.cellSize, { x: 60000, y: 0 })[0]!;
     expect(flight.objects.some((o) => o.id === site.id)).toBe(false);
     const safe = ECONOMY.station.safeRadius;
@@ -921,7 +921,7 @@ describe("asteroids in flight", () => {
     const clear = drifter("clear", site, safe + 20 + 40 + 10);
     expect(Math.hypot(reaching.x - site.x, reaching.y - site.y)).toBeGreaterThan(safe);
     flight.objects.push(reaching, clear);
-    expect(ensureStation(PROTOTYPE, site.id, flight)).not.toBeNull();
+    expect(ensureStation(CONTENT, site.id, flight)).not.toBeNull();
     expect(flight.objects).not.toContain(reaching);
     expect(flight.objects).toContain(clear);
   });
@@ -964,7 +964,7 @@ describe("asteroids in flight", () => {
   });
 
   it("bounces enemies off scenery by the same rule", () => {
-    const flight = createFlight(PROTOTYPE, 1, 173, progress);
+    const flight = createFlight(CONTENT, 1, 173, progress);
     flight.objects = [];
     const definition = enemyCatalog.fighter;
     const at = { x: flight.player.x + 600, y: flight.player.y };
@@ -984,7 +984,7 @@ describe("asteroids in flight", () => {
     enemy.enemy!.velocity = { x: -120, y: 0 };
     const wall = rock("wall", { x: at.x - 40 - enemy.radius - 1, y: at.y });
     flight.objects.push(enemy, wall);
-    stepFlight(PROTOTYPE, 1 / 30, idle, flight);
+    stepFlight(CONTENT, 1 / 30, idle, flight);
     expect(enemy.enemy!.velocity.x).toBeGreaterThan(0);
     expect(sceneryContact(wall, enemy, enemy.radius)).toBeNull();
     expect(flight.objects).toContain(wall);

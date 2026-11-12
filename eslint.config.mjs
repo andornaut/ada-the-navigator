@@ -12,12 +12,12 @@ import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
 const SOURCE_FILES = ["src/**/*.ts"];
 // The modules that draw with Phaser, under src/. src/input/controls.ts builds the touch chrome as
 // Phaser objects beside its input handling.
-const PHASER_MODULES = ["game/play-camera", "game/scene", "game/touch-chrome", "input/controls"];
+const PHASER_MODULES = ["game/playCamera", "game/scene", "game/touchChrome", "input/controls"];
 const PHASER_FILES = [
   "src/main.ts",
   ...PHASER_MODULES.flatMap((module) => [`src/${module}.ts`, `src/${module}.test.ts`]),
 ];
-const TEST_FILES = ["src/**/*.test.ts", "src/test-setup.ts"];
+const TEST_FILES = ["src/**/*.test.ts", "src/testSetup.ts"];
 
 // The import boundaries, one row each: the files outside `except` may not import what `forbid`
 // names. The model, data, layout, DOM interface and the rest of src/game/ stay free of Phaser and

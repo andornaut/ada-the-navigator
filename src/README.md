@@ -12,7 +12,7 @@
 Vite builds the HTML inputs in [`pages/`](../pages/) and serves the landing page at
 `/` and the game at `/play/`. [`vite.config.ts`](../vite.config.ts) uses game-kit's
 `gameViteConfig` (`@andornaut/game-kit/web/build/vite/gameConfig`) with the plugin
-inputs in [`src/tools/vite-config-modules.ts`](tools/vite-config-modules.ts): the
+inputs in [`src/tools/viteConfigModules.ts`](tools/viteConfigModules.ts): the
 dev server's `/play` redirect (`sitePages`), hashed icons and the service worker's
 precache. Build and deployment commands are in the [root README](../README.md).
 
@@ -44,12 +44,12 @@ describes their implementation.
   [`src/view/`](view/) the frame turn, and [`src/landing/`](landing/) the landing
   page's Install button.
 - **Phaser boundary:** only `src/main.ts` and the Phaser modules
-  (`game/play-camera`, `game/scene`, `game/touch-chrome`, `input/controls`) import
+  (`game/playCamera`, `game/scene`, `game/touchChrome`, `input/controls`) import
   Phaser, the kit's `phaser/` modules or one another, enforced by ESLint's
   `no-restricted-imports`. The model, data, layout, interface and the rest of
   `src/game/` are Phaser-free, so they unit-test without a renderer.
 - **Test helpers:** [`src/testing/`](testing/) is importable only from tests and
-  `src/test-setup.ts`: `launch.ts` pins launch seeds and drives a model through the
+  `src/testSetup.ts`: `launch.ts` pins launch seeds and drives a model through the
   opening and story pages, and `public-art.ts` reads Art's manifests from
   `public/art/`. [`src/tests/`](tests/) holds the repository-level tests (hooks,
   check startup, kit consumption, page lifecycle).
@@ -63,7 +63,7 @@ describes their implementation.
   under a content-hashed name in `/assets/` and points the built pages and manifest
   there.
 - **Build label:** `gameViteConfig` defines `__APP_VERSION__` and `__COMMIT__`;
-  [`src/build-label.ts`](build-label.ts) formats them for the Settings card's last
+  [`src/buildLabel.ts`](buildLabel.ts) formats them for the Settings card's last
   line. The checks pass the checked revision as the build's commit.
 
 ## Save data
@@ -90,7 +90,7 @@ The flight snapshot is stored in `localStorage` under one key
 ([`src/game/persistence.ts`](game/persistence.ts)), validated and migrated by
 [`src/model/save.ts`](model/save.ts). Device settings (move stick, aim stick,
 sound and reduced motion) are stored under their own keys
-([`src/ui/device-settings.ts`](ui/device-settings.ts)), outside the save.
+([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.
 
 ## Phone
 

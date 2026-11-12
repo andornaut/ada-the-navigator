@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { jobAction, rowAction, STATION_STYLE, stationBack, weaponItemGlyph } from "./station.ts";
-import { buttonProperty } from "./ui-skin.ts";
+import { buttonProperty } from "./uiSkin.ts";
 
 describe("station card back steps", () => {
   it("returns from the shop and the job board to the station card and undocks only from it", () => {

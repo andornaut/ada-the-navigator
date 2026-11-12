@@ -1,5 +1,5 @@
 import type { EconomyCatalog } from "../data/economy.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 
 export interface StationSite extends Vec {
@@ -7,7 +7,7 @@ export interface StationSite extends Vec {
 }
 
 /** Fixed per-galaxy seeds, so station sites are the same on every flight. */
-const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
+const GALAXY_SEEDS: Readonly<Partial<Record<GalaxyNumber, number>>> = {
   1: 0x5eed_0101,
   2: 0x5eed_0202,
   3: 0x5eed_0303,
@@ -35,11 +35,11 @@ export function stationId(cell: Vec): string {
  */
 export function stationInCell(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   cell: Vec,
 ): StationSite | null {
   const { cellSize, chance, jitter, originClearance } = catalog.station;
-  const seed = SECTOR_SEEDS[sector];
+  const seed = GALAXY_SEEDS[galaxy];
   if (seed === undefined || unit(mix(seed, cell.x, cell.y)) >= chance) {
     return null;
   }
@@ -56,13 +56,13 @@ export function stationInCell(
 export const HUB_STATION = "hub";
 
 /** Whether an id names one of a galaxy's stations: a seeded site, or Cartwheel's hub. */
-export function namesStation(catalog: EconomyCatalog, sector: SectorId, id: string): boolean {
-  return (sector === 2 && id === HUB_STATION) || stationById(catalog, sector, id) !== null;
+export function namesStation(catalog: EconomyCatalog, galaxy: GalaxyNumber, id: string): boolean {
+  return (galaxy === 2 && id === HUB_STATION) || stationById(catalog, galaxy, id) !== null;
 }
 
 export function stationById(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   id: string,
 ): StationSite | null {
   const match = /^station:(-?(?:0|[1-9]\d*)),(-?(?:0|[1-9]\d*))$/.exec(id);
@@ -73,13 +73,13 @@ export function stationById(
   if (!Number.isSafeInteger(cell.x) || !Number.isSafeInteger(cell.y)) {
     return null;
   }
-  return stationInCell(catalog, sector, cell);
+  return stationInCell(catalog, galaxy, cell);
 }
 
 /** Stations whose centres are within `radius` of a point. */
 export function stationsNear(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   radius: number,
   point: Vec,
 ): StationSite[] {
@@ -95,7 +95,7 @@ export function stationsNear(
       y <= Math.floor((point.y + radius) / size);
       y++
     ) {
-      const site = stationInCell(catalog, sector, { x, y });
+      const site = stationInCell(catalog, galaxy, { x, y });
       if (site && Math.hypot(site.x - point.x, site.y - point.y) <= radius) {
         sites.push(site);
       }
@@ -110,12 +110,12 @@ export function stationsNear(
  */
 export function stationIndicatorTarget(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   discovered: readonly string[],
   point: Vec,
 ): StationSite | null {
   let nearest: StationSite | null = null;
-  for (const site of stationsNear(catalog, sector, catalog.station.indicatorRange, point)) {
+  for (const site of stationsNear(catalog, galaxy, catalog.station.indicatorRange, point)) {
     if (
       !discovered.includes(site.id) &&
       (!nearest ||

@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 
 // Shared by the browser smoke and the Art review captures, which run in the same container.
 export const output = "/tmp/evidence";
-export const storageKey = "ada-the-navigator.prototype.v1";
+export const storageKey = "ada-the-navigator.save";
 export const previewOrigin = "http://ada-preview:4173";
 mkdirSync(output, { recursive: true });
 
@@ -45,7 +45,7 @@ export function reportViolations() {
   });
 }
 
-// No outside requests are needed to render the built prototype.
+// No outside requests are needed to render the built game.
 export function previewOnly(route) {
   if (new URL(route.request().url()).origin === previewOrigin) {
     return route.continue();
@@ -76,7 +76,7 @@ export function observe(events, observed) {
 
 const [
   { GameModel },
-  { PROTOTYPE },
+  { CONTENT },
   { playOpening },
   { restoreSave },
   { ASTEROID_ART },
@@ -84,11 +84,11 @@ const [
   { orbitMotion },
 ] = await Promise.all([
   import(new URL("../src/model/game.ts", import.meta.url)),
-  import(new URL("../src/data/prototype.ts", import.meta.url)),
+  import(new URL("../src/data/content.ts", import.meta.url)),
   import(new URL("../src/testing/launch.ts", import.meta.url)),
   import(new URL("../src/model/save.ts", import.meta.url)),
-  import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
-  import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
+  import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
+  import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
   import(new URL("../src/model/asteroids.ts", import.meta.url)),
 ]);
 
@@ -137,14 +137,14 @@ const ROCK_SCREEN = {
   large: { x: -40, y: 165 },
   huge: { x: 235, y: 150 },
 };
-export function asteroidFixture(rockArt, parallax, sector, drifting = true) {
-  const model = new GameModel(PROTOTYPE);
+export function asteroidFixture(rockArt, parallax, galaxy, drifting = true) {
+  const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 2, 3];
-  model.startSector(sector);
+  model.startGalaxy(galaxy);
   playOpening(model);
-  assert.ok(model.state.flight, `Asteroid fixture requires galaxy ${sector}'s flight`);
+  assert.ok(model.state.flight, `Asteroid fixture requires galaxy ${galaxy}'s flight`);
   const flight = model.state.flight;
-  model.state.progress[sector].introduced = true;
+  model.state.progress[galaxy].introduced = true;
   model.state.dialogue = null;
   flight.objects = [];
   flight.shots = [];

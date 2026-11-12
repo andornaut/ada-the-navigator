@@ -4,7 +4,7 @@ import {
   type StickSide,
   stickVector,
 } from "../input/state.ts";
-import type { ControlVisibility } from "./device-settings.ts";
+import type { ControlVisibility } from "./deviceSettings.ts";
 import type { Insets } from "./layout/playView.ts";
 import { stickRestCentres, TOUCH_STICK } from "./layout/touchControls.ts";
 import {
@@ -13,7 +13,7 @@ import {
   TOUCH_CHROME_FRAME,
   TOUCH_KNOB_FRAME,
   type TouchChromePose,
-} from "./touch-chrome.ts";
+} from "./touchChrome.ts";
 
 interface Size {
   readonly height: number;

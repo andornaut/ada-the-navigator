@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
+import { CONTENT } from "../data/content.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
-import type { SectorId } from "../data/types.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createEnemy } from "./enemy-ai.ts";
+import { createEnemy } from "./enemyAi.ts";
 import {
   ensureDestination,
   ensureRouteEncounter,
@@ -18,17 +18,17 @@ import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-function launch(model: GameModel, sector: SectorId = 1) {
-  model.startSector(sector);
+function launch(model: GameModel, galaxy: GalaxyNumber = 1) {
+  model.startGalaxy(galaxy);
 }
 
 it("talks and salvages within the 160 Talk range, whatever the safe radius", () => {
-  expect(PROTOTYPE.tuning.talkRange).toBe(160);
+  expect(CONTENT.tuning.talkRange).toBe(160);
   // A smaller safe radius leaves the interaction range alone.
-  const content = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, safeRadius: 40 } };
+  const content = { ...CONTENT, tuning: { ...CONTENT.tuning, safeRadius: 40 } };
   const model = new GameModel(content);
   Object.assign(model.state, { prologueSeen: true, started: true });
-  model.startSector(1);
+  model.startGalaxy(1);
   readStory(model);
   model.state.dialogue = null;
   const flight = model.state.flight!;
@@ -52,8 +52,8 @@ it("talks and salvages within the 160 Talk range, whatever the safe radius", () 
 });
 
 it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
   flight.objects = [];
@@ -73,11 +73,11 @@ it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
-  ensureDestination(PROTOTYPE, id, f);
+  ensureDestination(CONTENT, id, f);
   const target = f.objects.find((o) => o.id === id)!;
   f.player = { x: target.x, y: target.y };
-  if (!model.state.progress[f.sector].known.includes(id)) {
-    model.state.progress[f.sector].known.push(id);
+  if (!model.state.progress[f.galaxy].known.includes(id)) {
+    model.state.progress[f.galaxy].known.push(id);
   }
   model.state.dialogue = null;
   f.dangerFor = 0;
@@ -95,7 +95,7 @@ function finishHome(model: GameModel, choice = 1) {
 }
 /** Recovers the current galaxy one or two holodisk and continues past its insertion. */
 function recoverHolodisk(model: GameModel) {
-  if (model.state.flight!.sector === 1) {
+  if (model.state.flight!.galaxy === 1) {
     arrive(model, "workshop");
     model.interact();
   } else {
@@ -122,7 +122,7 @@ function recoverHolodisk(model: GameModel) {
   for (let page = 0; model.screen === "story" && page < 8; page++) {
     model.storyNext();
   }
-  expect(model.state.progress[model.state.flight!.sector].holodisk).toBe(true);
+  expect(model.state.progress[model.state.flight!.galaxy].holodisk).toBe(true);
 }
 function introduce(model: GameModel, id: string) {
   arrive(model, id);
@@ -130,9 +130,9 @@ function introduce(model: GameModel, id: string) {
   model.choose("continue");
 }
 
-describe("prototype story and persistence", () => {
+describe("story and persistence", () => {
   it("preserves exact interrupted flight but regenerates after leaving, without repeating introductions", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     launch(model);
     introduce(model, "growers");
     model.state.flight!.cargo = 3;
@@ -142,7 +142,7 @@ describe("prototype story and persistence", () => {
     model.step(0.05, { ...idle, aim: { x: 1, y: 0 } });
     expect(model.state.flight!.shots.length).toBeGreaterThan(0);
     const saved = model.save();
-    const resumed = relaunch(PROTOTYPE, saved);
+    const resumed = relaunch(CONTENT, saved);
     expect(resumed.state).toEqual(model.state);
     resumed.step(0.05, idle);
     model.step(0.05, idle);
@@ -161,7 +161,7 @@ describe("prototype story and persistence", () => {
     expect(resumed.state.flight!.cargo).toBe(0);
     // The equipped weapon is a purchase kept with story progress across flights.
     expect(resumed.state.flight!.weapon).toBe("rapidMissile");
-    expect(resumed.state.flight!.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    expect(resumed.state.flight!.shield).toBe(CONTENT.tuning.shieldMax);
     expect(resumed.state.progress[1].introduced).toBe(true);
     // The carried story item stays with the story across flights (rules.md "What each event keeps").
     expect(resumed.state.progress[1].questItem).toBe("food");
@@ -169,8 +169,8 @@ describe("prototype story and persistence", () => {
   });
   it("completes the delivery chain at the workshop and converges both responses at home", () => {
     for (const choice of [0, 1]) {
-      const model = new GameModel(PROTOTYPE);
-      model.startSector(1);
+      const model = new GameModel(CONTENT);
+      model.startGalaxy(1);
       introduce(model, "growers");
       talk(model, "workshop");
       expect(model.state.progress[1].questItem).toBe("toolkit");
@@ -182,11 +182,11 @@ describe("prototype story and persistence", () => {
       recoverHolodisk(model);
       finishHome(model, choice);
       expect(model.state.unlocked).toEqual([1, 3]);
-      expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+      expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
     }
   });
   it("counts partial deposits and requires miner, visitors and a joint approach", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked.push(2);
     launch(model, 2);
     introduce(model, "hub");
@@ -205,10 +205,10 @@ describe("prototype story and persistence", () => {
     finishHome(model);
     // Cartwheel, fifth on the route, unlocks Phantom.
     expect(model.state.unlocked).toEqual([1, 2, 6]);
-    expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+    expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   });
   it("offers Use as Dock at the hub and Deposit with ore", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.state.unlocked.push(2);
     launch(model, 2);
     introduce(model, "hub");
@@ -221,7 +221,7 @@ describe("prototype story and persistence", () => {
     expect(model.contextLabel).toBeUndefined();
   });
   it("reports a carried story item by its display name, and nothing outside flight", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     launch(model);
     expect(model.aboard).toBeNull();
     for (const [id, name] of [
@@ -236,7 +236,7 @@ describe("prototype story and persistence", () => {
     expect(model.aboard).toBeNull();
   });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     launch(model);
     const distance = model.state.flight!.freshDistance;
     for (let i = 0; i < 100; i++) {
@@ -251,19 +251,19 @@ describe("prototype story and persistence", () => {
     expect(model.save()).toBe(snapshot);
   });
   it("blocks voluntary home travel in danger, retaining the exact flight", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     launch(model);
     model.state.flight!.dangerFor = 3;
     const flight = model.state.flight;
     model.returnHome();
     expect(model.state.mode).toBe("space");
     expect(model.state.flight).toBe(flight);
-    expect(model.state.notice).toBe(PROTOTYPE.labels.travelUnavailable);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
   });
 });
 
 it("finishes all three chapters in route order and resumes each terminal state", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   launch(model);
   introduce(model, "growers");
   talk(model, "workshop");
@@ -273,14 +273,14 @@ it("finishes all three chapters in route order and resumes each terminal state",
   finishHome(model);
   // Sunflower unlocks Whirlpool, next on the route.
   expect(model.state.unlocked).toEqual([1, 3]);
-  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   launch(model, 3);
   introduce(model, "whale");
   const f = model.state.flight!;
   const stones = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
-  expect(stones).toHaveLength(PROTOTYPE.tuning.whaleDebris.count);
+  expect(stones).toHaveLength(CONTENT.tuning.whaleDebris.count);
   expect(stones.map((o) => [o.asteroid, o.radius])).toEqual(
-    PROTOTYPE.tuning.whaleDebris.asteroids.map((id) => [id, ASTEROID_SHAPES.get(id)!.radius]),
+    CONTENT.tuning.whaleDebris.asteroids.map((id) => [id, ASTEROID_SHAPES.get(id)!.radius]),
   );
   // Exercise the actual projectile/event path at each obstruction, without ambient enemies.
   f.objects = f.objects.filter((o) => o.kind === "destination" || o.id.startsWith("whale-debris:"));
@@ -304,23 +304,23 @@ it("finishes all three chapters in route order and resumes each terminal state",
   talk(model, "whale");
   expect(model.state.progress[3].questComplete).toBe(true);
   expect(model.state.mode).toBe("space");
-  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   // Whirlpool's guarded holodisk, recovered as holodisk.test.ts plays it.
   model.state.progress[3].holodisk = true;
   finishHome(model);
   // Whirlpool unlocks Needle and Andromeda, placeholders, with Cartwheel after them.
   expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2]);
   expect(model.state.progress[3].resolved).toBe(true);
-  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   launch(model, 2);
   introduce(model, "hub");
-  model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[1];
+  model.state.flight!.cargo = CONTENT.tuning.miningMilestones[1];
   talk(model, "hub");
   expect(model.state.flight!.storyScene?.id).toBe("blocked");
   talk(model, "miner");
   talk(model, "visitors");
   model.state.flight!.cargo =
-    PROTOTYPE.tuning.miningMilestones[2] - model.state.progress[2].deposited;
+    CONTENT.tuning.miningMilestones[2] - model.state.progress[2].deposited;
   talk(model, "hub");
   expect(model.state.flight!.storyScene).toEqual({
     at: model.state.flight!.time,
@@ -332,22 +332,22 @@ it("finishes all three chapters in route order and resumes each terminal state",
   // Cartwheel unlocks Phantom, last on the route.
   expect(model.state.unlocked).toEqual([1, 3, 4, 5, 2, 6]);
   expect(model.state.progress[2].resolved).toBe(true);
-  expect(relaunch(PROTOTYPE, model.save()).state).toEqual(model.state);
+  expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
 });
 
 it("plays each Cartwheel story scene first, then its line, at the held story destinations", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.unlocked.push(2);
   launch(model, 2);
   introduce(model, "hub");
   const f = model.state.flight!;
-  f.cargo = PROTOTYPE.tuning.miningMilestones[0];
+  f.cargo = CONTENT.tuning.miningMilestones[0];
   arrive(model, "hub");
   model.interact();
   expect(model.state.progress[2].stage).toBe(2);
   expect(model.state.dialogue).toBeNull();
   expect(f.storyScene).toEqual({ at: f.time, id: "blocked", lineDue: true });
-  expect(relaunch(PROTOTYPE, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
+  expect(relaunch(CONTENT, model.save()).state.flight!.storyScene).toEqual(f.storyScene);
   f.objects = f.objects.filter((o) => o.kind === "destination");
   for (let i = 0; i < 400 && f.storyScene!.lineDue; i++) {
     if (model.state.dialogue) {
@@ -359,35 +359,35 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
   expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
     CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
   );
-  expect(model.state.dialogue?.text).toBe(PROTOTYPE.chapters[2]!.dialogue.firstDeposit?.text);
+  expect(model.state.dialogue?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
   expect(f.storyScene!.lineDue).toBe(false);
   // The miner and the visitors stand at their holding points beside the hub, unguarded.
   const hub = f.objects.find((o) => o.id === "hub")!;
   for (const id of ["miner", "visitors"] as const) {
-    const destination = ensureDestination(PROTOTYPE, id, f);
+    const destination = ensureDestination(CONTENT, id, f);
     const offset = CARTWHEEL_STORY_SHIPS.destinations[id];
     expect(destination).toMatchObject({ x: hub.x + offset.x, y: hub.y + offset.y });
-    expect(ensureRouteEncounter(PROTOTYPE, id, f)).toBeNull();
-    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThan(PROTOTYPE.tuning.safeRadius);
+    expect(ensureRouteEncounter(CONTENT, id, f)).toBeNull();
+    expect(Math.hypot(offset.x, offset.y)).toBeGreaterThan(CONTENT.tuning.safeRadius);
   }
   const { miner, visitors } = CARTWHEEL_STORY_SHIPS.destinations;
   expect(Math.hypot(miner.x - visitors.x, miner.y - visitors.y)).toBeGreaterThanOrEqual(
-    PROTOTYPE.tuning.safeRadius * 2,
+    CONTENT.tuning.safeRadius * 2,
   );
 });
 
 it("replays a story scene cut short by the flight's end at the hub after a reload", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.unlocked.push(2);
   launch(model, 2);
   introduce(model, "hub");
-  model.state.flight!.cargo = PROTOTYPE.tuning.miningMilestones[0];
+  model.state.flight!.cargo = CONTENT.tuning.miningMilestones[0];
   arrive(model, "hub");
   model.interact();
   expect(model.state.flight!.storyScene).toMatchObject({ id: "blocked", lineDue: true });
   model.returnHome();
   expect(model.state.progress[2].replayScene).toBe("blocked");
-  const reloaded = relaunch(PROTOTYPE, model.save());
+  const reloaded = relaunch(CONTENT, model.save());
   expect(reloaded.state.progress[2].replayScene).toBe("blocked");
   launch(reloaded, 2);
   const f = reloaded.state.flight!;
@@ -404,7 +404,7 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
       reloaded.step(0.05, idle);
     }
   }
-  expect(reloaded.state.dialogue?.text).toBe(PROTOTYPE.chapters[2]!.dialogue.firstDeposit?.text);
+  expect(reloaded.state.dialogue?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
   // Spoken once: a later flight does not replay it.
   reloaded.state.dialogue = null;
   reloaded.returnHome();
@@ -412,20 +412,20 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
 });
 
 it("places whale debris offscreen and preserves pre-introduction clearing", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.unlocked.push(2, 3);
   launch(model, 3);
   const f = model.state.flight!;
-  f.freshDistance = PROTOTYPE.tuning.introFreshDistance;
+  f.freshDistance = CONTENT.tuning.introFreshDistance;
   model.step(0.01, idle);
   const whale = f.objects.find((o) => o.id === "whale")!;
   expect(Math.hypot(whale.x - f.player.x, whale.y - f.player.y)).toBeGreaterThan(
-    PROTOTYPE.tuning.chunkSize,
+    CONTENT.tuning.chunkSize,
   );
   expect(model.state.dialogue).toBeNull();
   expect(model.state.progress[3].introduced).toBe(false);
   const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
-  expect(debris).toHaveLength(PROTOTYPE.tuning.whaleDebris.count);
+  expect(debris).toHaveLength(CONTENT.tuning.whaleDebris.count);
   f.objects = f.objects.filter((o) => o.kind === "destination" || o.id.startsWith("whale-debris:"));
   for (const obstruction of debris) {
     f.player = { x: obstruction.x - 300, y: obstruction.y };
@@ -437,11 +437,11 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   }
   expect(model.state.progress[3].introduced).toBe(false);
   expect(model.state.progress[3].stage).toBe(2);
-  const restored = relaunch(PROTOTYPE, model.save());
+  const restored = relaunch(CONTENT, model.save());
   expect(restored.state).toEqual(model.state);
   arrive(restored, "whale");
   restored.step(0.01, idle);
-  expect(restored.state.dialogue?.text).toBe(PROTOTYPE.chapters[3]!.dialogue.freed?.text);
+  expect(restored.state.dialogue?.text).toBe(CONTENT.chapters[3]!.dialogue.freed?.text);
   expect(restored.state.progress[3].stage).toBe(3);
   expect(restored.state.flight!.objects.some((o) => o.id.startsWith("whale-debris:"))).toBe(false);
   restored.choose("continue");
@@ -451,18 +451,18 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
 });
 
 it("keeps remaining whale debris aligned when an unknown encounter is placed ahead again", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   model.state.unlocked.push(2, 3);
   launch(model, 3);
   const f = model.state.flight!;
-  f.freshDistance = PROTOTYPE.tuning.introFreshDistance;
+  f.freshDistance = CONTENT.tuning.introFreshDistance;
   model.step(0.01, idle);
   const whale = f.objects.find((o) => o.id === "whale")!;
   const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
   const offsets = debris.map((o) => ({ x: o.x - whale.x, y: o.y - whale.y }));
-  f.player = { x: whale.x + PROTOTYPE.tuning.chunkSize * 4, y: whale.y };
-  f.velocity = { x: PROTOTYPE.tuning.physics.maxSpeed, y: 0 };
-  const chunkSize = PROTOTYPE.tuning.chunkSize;
+  f.player = { x: whale.x + CONTENT.tuning.chunkSize * 4, y: whale.y };
+  f.velocity = { x: CONTENT.tuning.physics.maxSpeed, y: 0 };
+  const chunkSize = CONTENT.tuning.chunkSize;
   f.freshChunk = `${Math.floor(f.player.x / chunkSize)},${Math.floor(f.player.y / chunkSize)}`;
   model.step(0.01, { ...idle, move: { x: 1, y: 0 } });
   const relocated = f.objects.find((o) => o.id === "whale")!;
@@ -475,7 +475,7 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
 });
 
 it("discovers a cleared required approach after reversing away from its first location", () => {
-  const content = structuredClone(PROTOTYPE);
+  const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 8;
   content.tuning.flight.objectsPerChunk = 0;
   const model = new GameModel(content);
@@ -506,7 +506,7 @@ it("discovers a cleared required approach after reversing away from its first lo
 });
 
 it("wakes an inactive guard before relocating its pending destination", () => {
-  const content = structuredClone(PROTOTYPE);
+  const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 0;
   content.tuning.flight.objectsPerChunk = 0;
   const model = new GameModel(content);
@@ -552,7 +552,7 @@ it("wakes an inactive guard before relocating its pending destination", () => {
 });
 
 it("marks an interacted destination persistent before ordinary eviction", () => {
-  const model = new GameModel(PROTOTYPE);
+  const model = new GameModel(CONTENT);
   launch(model);
   arrive(model, "growers");
   model.interact();
@@ -560,7 +560,7 @@ it("marks an interacted destination persistent before ordinary eviction", () => 
   const npc = flight.objects.find((object) => object.id === "growers")!;
   expect(npc.persistent).toBe(true);
   flight.player = { x: 12000, y: 12000 };
-  syncFlightRegion(PROTOTYPE, flight);
+  syncFlightRegion(CONTENT, flight);
   expect(flight.objects).toContain(npc);
   expect(model.state.progress[1].known).toContain("growers");
 });
@@ -570,14 +570,14 @@ describe("Use at an outpost", () => {
 
   // Sunflower's first flight with Ada 100 world units from the growers, inside Talk range.
   function besideGrowers() {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     Object.assign(model.state, { prologueSeen: true, started: true });
-    model.startSector(1);
+    model.startGalaxy(1);
     readStory(model);
     model.state.dialogue = null;
     const flight = model.state.flight!;
     flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
-    const growers = ensureDestination(PROTOTYPE, "growers", flight);
+    const growers = ensureDestination(CONTENT, "growers", flight);
     flight.player = { x: growers.x + 100, y: growers.y };
     flight.velocity = { x: 0, y: 0 };
     return { flight, model };
@@ -585,7 +585,7 @@ describe("Use at an outpost", () => {
 
   it("waits on the growers' guard while it fights", () => {
     const { flight, model } = besideGrowers();
-    const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
+    const guard = ensureRouteEncounter(CONTENT, "growers", flight)!;
     expect(guard.enemy?.archetype).toBe("frigate");
     model.step(0.05, idle);
     expect(routeBlocked("growers", flight)).toBe(true);
@@ -594,7 +594,7 @@ describe("Use at an outpost", () => {
 
   it("offers Talk once the guard is disabled, its hull still standing nearby", () => {
     const { flight, model } = besideGrowers();
-    const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
+    const guard = ensureRouteEncounter(CONTENT, "growers", flight)!;
     // Its weapons go: every weapon hardpoint destroyed disables it.
     const weapons = new Set(
       enemyCatalog.frigate.hardpoints.filter((part) => part.kind === "weapon").map(({ id }) => id),
@@ -610,6 +610,6 @@ describe("Use at an outpost", () => {
     model.state.dialogue = null;
     expect(model.state.progress[1].known).toContain("growers");
     expect(model.contextAction).toBe("talk");
-    expect(model.contextLabel).toBe(PROTOTYPE.labels.talk);
+    expect(model.contextLabel).toBe(CONTENT.labels.talk);
   });
 });

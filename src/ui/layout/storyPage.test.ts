@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../../data/prototype.ts";
+import { CONTENT } from "../../data/content.ts";
 import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
 import { GameModel } from "../../model/game.ts";
 import {
@@ -14,8 +14,8 @@ import {
   roomScene,
   type StoryPage,
 } from "../../model/storybook.ts";
-import { lineCount, measure } from "../../testing/text-metrics.ts";
-import { type ArtAsset, backgroundOverlays, storyBases } from "../story-art.ts";
+import { lineCount, measure } from "../../testing/textMetrics.ts";
+import { type ArtAsset, backgroundOverlays, storyBases } from "../storyArt.ts";
 import { STORY_BUTTON } from "./controls.ts";
 import {
   hudRect,
@@ -107,8 +107,8 @@ function panelFor(page: StoryPage, screen: Screen) {
 }
 
 const labels = {
-  continue: PROTOTYPE.labels.continue ?? "",
-  pickUpRock: PROTOTYPE.labels.pickUpRock ?? "",
+  continue: CONTENT.labels.continue ?? "",
+  pickUpRock: CONTENT.labels.pickUpRock ?? "",
 };
 const galaxies = [1, 2, 3] as const;
 // Every page of Gameplay's copy, once: each chapter's opening and resolution, the first
@@ -117,16 +117,16 @@ const PAGES: readonly StoryPage[] = [
   ...new Map(
     [
       ...galaxies.flatMap((galaxy) => [
-        openingScene(PROTOTYPE, galaxy, galaxy === 1),
-        ...(galaxy === 1 ? [openingScene(PROTOTYPE, galaxy)] : []),
-        resolutionScene(PROTOTYPE, galaxy),
+        openingScene(CONTENT, galaxy, galaxy === 1),
+        ...(galaxy === 1 ? [openingScene(CONTENT, galaxy)] : []),
+        resolutionScene(CONTENT, galaxy),
       ]),
-      prologueScene(PROTOTYPE, labels),
-      roomScene(PROTOTYPE, labels, false),
-      roomScene(PROTOTYPE, labels, true),
-      boardingScene(PROTOTYPE, false),
-      boardingScene(PROTOTYPE, true),
-      jumpHomeScene(PROTOTYPE.labels.jumpHome ?? "", PROTOTYPE.labels.morningRecharge ?? ""),
+      prologueScene(CONTENT, labels),
+      roomScene(CONTENT, labels, false),
+      roomScene(CONTENT, labels, true),
+      boardingScene(CONTENT, false),
+      boardingScene(CONTENT, true),
+      jumpHomeScene(CONTENT.labels.jumpHome ?? "", CONTENT.labels.morningRecharge ?? ""),
     ]
       .flatMap(({ pages }) => pages)
       .filter(({ sleep, text }) => !sleep && text !== "")
@@ -174,16 +174,16 @@ describe("story text fit", () => {
           .map((page) => `${page.background}|${page.speaker ?? ""}|${page.text}`),
       ).size;
     const chapters = galaxies.flatMap((galaxy) => [
-      openingScene(PROTOTYPE, galaxy, galaxy === 1),
-      ...(galaxy === 1 ? [openingScene(PROTOTYPE, galaxy)] : []),
-      resolutionScene(PROTOTYPE, galaxy),
+      openingScene(CONTENT, galaxy, galaxy === 1),
+      ...(galaxy === 1 ? [openingScene(CONTENT, galaxy)] : []),
+      resolutionScene(CONTENT, galaxy),
     ]);
     const counts = {
-      boarding: distinct([boardingScene(PROTOTYPE, false), boardingScene(PROTOTYPE, true)]),
+      boarding: distinct([boardingScene(CONTENT, false), boardingScene(CONTENT, true)]),
       chapters: distinct(chapters),
       overnight: jumpHomeScene("night", "morning").pages.length,
-      prologue: distinct([prologueScene(PROTOTYPE, labels)]),
-      room: distinct([roomScene(PROTOTYPE, labels, false), roomScene(PROTOTYPE, labels, true)]),
+      prologue: distinct([prologueScene(CONTENT, labels)]),
+      room: distinct([roomScene(CONTENT, labels, false), roomScene(CONTENT, labels, true)]),
     };
     // Chapters: Grandma's garden framing (4 arrival pages and her farewell) round chapter one's
     // opening, each opening and resolution with its two branches, Cartwheel's dinner with Dad (2)
@@ -205,7 +205,7 @@ describe("story text fit", () => {
 
   it("sizes the pages of Art's card table", () => {
     const opening = PAGES.find(
-      ({ id, text }) => id === "opening" && text === PROTOTYPE.chapters[1]!.opening,
+      ({ id, text }) => id === "opening" && text === CONTENT.chapters[1]!.opening,
     )!;
     // Every page keeps within Gameplay's 220 characters; the garden opening is Art's two-choice row.
     const longest = PAGES.reduce((a, b) => (b.text.length > a.text.length ? b : a));
@@ -291,9 +291,9 @@ describe("story figures", () => {
   // page's panel top and the figures' view rows. Needle's pages are not on main, so Dad looking
   // in follows a chapter page at Gameplay's limit (218 characters, the heading and two choices)
   // in the recorder room, as Art's row assumes.
-  const chapter = (galaxy: 1 | 2 | 3) => openingScene(PROTOTYPE, galaxy).pages;
-  const prologue = prologueScene(PROTOTYPE, labels).pages;
-  const morning = jumpHomeScene("night", PROTOTYPE.labels.morningRecharge ?? "").pages;
+  const chapter = (galaxy: 1 | 2 | 3) => openingScene(CONTENT, galaxy).pages;
+  const prologue = prologueScene(CONTENT, labels).pages;
+  const morning = jumpHomeScene("night", CONTENT.labels.morningRecharge ?? "").pages;
   const find = (pages: readonly StoryPage[], background: Background, text?: string) =>
     pages.find((page) => page.background === background && (!text || page.text === text))!;
   const limit = (() => {
@@ -307,7 +307,7 @@ describe("story figures", () => {
   const needle: StoryPage[] = [
     {
       background: "adaRoomRecorder",
-      choices: PROTOTYPE.chapters[1]!.openingChoices.map((label) => ({ label, next: "x" })),
+      choices: CONTENT.chapters[1]!.openingChoices.map((label) => ({ label, next: "x" })),
       heading: "Threading the Needle",
       id: "opening",
       text: limit,
@@ -438,7 +438,7 @@ describe("story background placement", () => {
   });
 
   it("anchors the first launch's run on its tallest page on each background", () => {
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     model.start();
     const run = model.storyView!.run.pages;
     const tops = (screen: Screen) => {

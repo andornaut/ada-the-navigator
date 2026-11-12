@@ -5,8 +5,8 @@ import {
   type AsteroidSize,
   RESOURCE_ART,
   type ResourceRockCatalog,
-} from "../data/asteroid-catalog.ts";
-import { resourceArtId, type ResourceClass } from "../data/resource-rocks.ts";
+} from "../data/asteroidCatalog.ts";
+import { resourceArtId, type ResourceClass } from "../data/resourceRocks.ts";
 import {
   closestOnSegment,
   type Contact,

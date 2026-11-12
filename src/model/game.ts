@@ -18,22 +18,22 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   BUILT,
   GALAXY_COUNT,
+  GALAXY_NUMBERS,
   galaxyAt,
   ROUTE,
   ROUTE_POSITION,
   type RoutePosition,
-  SECTORS,
   unlockedBy,
 } from "../data/galaxies.ts";
-import { HUNTING_PACKS } from "../data/galaxy-features.ts";
+import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
-import { carriedItemName, STORY_ITEM_NAMES } from "../data/item-names.ts";
+import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import type { ChapterContent, PrototypeContent, SectorId, Weapon } from "../data/types.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/types.ts";
 import {
   ACHIEVEMENT_TOTALS,
   type AchievementEvent,
@@ -115,8 +115,8 @@ import {
   landmarkSites,
   unchartedNear,
 } from "./landmarks.ts";
-import { type GalaxyMap, galaxyMap, type MapContext, recordExplored } from "./map.ts";
-import { HUNT_GLINT } from "./pickup-body.ts";
+import { type LocalMap, localMap, type MapContext, recordExplored } from "./map.ts";
+import { HUNT_GLINT } from "./pickupBody.ts";
 import { newProgress } from "./progress.ts";
 import {
   donate,
@@ -177,19 +177,19 @@ import type {
   FlightEvent,
   FlightInput,
   FlightState,
+  GalaxyProgress,
   GameState,
   GuidedCalf,
   HeldActivity,
   HeldJob,
   JobOffer,
   JobTarget,
-  SectorProgress,
   ShipState,
   SpaceObject,
   UseAction,
   Vec,
 } from "./types.ts";
-import { applyUpgrade, chooseUpgrade } from "./upgrade-drops.ts";
+import { applyUpgrade, chooseUpgrade } from "./upgradeDrops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
   collectWeapon,
@@ -218,13 +218,13 @@ export function newGameState(): GameState {
     jobs: { boards: {}, made: 0 },
     mode: "home",
     notice: "",
-    progress: Object.fromEntries(SECTORS.map((id) => [id, progress()])) as Record<
-      SectorId,
-      SectorProgress
+    progress: Object.fromEntries(GALAXY_NUMBERS.map((id) => [id, progress()])) as Record<
+      GalaxyNumber,
+      GalaxyProgress
     >,
     prologueSeen: false,
     seenConversations: [],
-    selectedSector: 1,
+    selectedGalaxy: 1,
     started: false,
     tasks: {},
     unlocked: [1],
@@ -265,26 +265,26 @@ export interface StoryView {
   readonly choices: readonly StoryChoice[];
 }
 // The built galaxies' story destinations; a placeholder galaxy has none.
-const required: Partial<Record<SectorId, readonly string[]>> = {
+const required: Partial<Record<GalaxyNumber, readonly string[]>> = {
   1: ["growers", "workshop", "salvagers", "workshop"],
   2: ["hub", "hub", "miner", "visitors", "hub"],
   3: ["whale", "whale", "whale", "family", "whale"],
 };
 
 /** A galaxy's story destinations in the order its route first visits them; the first opens it. */
-export function galaxyRoute(sector: SectorId): readonly string[] {
-  return [...new Set(required[sector] ?? [])];
+export function galaxyRoute(galaxy: GalaxyNumber): readonly string[] {
+  return [...new Set(required[galaxy] ?? [])];
 }
 /** The destination that opens a built galaxy's story; none in a placeholder. */
-const first = (sector: SectorId): string | undefined => galaxyRoute(sector)[0];
+const first = (galaxy: GalaxyNumber): string | undefined => galaxyRoute(galaxy)[0];
 
 /** A placeholder galaxy's chapter: its name, with no story, objectives or dialogue. */
-function placeholderChapter(sector: SectorId): ChapterContent {
+function placeholderChapter(galaxy: GalaxyNumber): ChapterContent {
   const none = ["", ""] as const;
   return {
     closing: "",
     dialogue: {},
-    name: galaxyCard(sector).name,
+    name: galaxyCard(galaxy).name,
     objectives: [],
     opening: "",
     openingBranches: none,
@@ -358,7 +358,7 @@ export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
-  private readonly content: PrototypeContent;
+  private readonly content: GameContent;
   private readonly talk: ConversationDirector;
   private noticeShownFor = 0;
   /** Held-job moments since the last flight step, for the conversation director. */
@@ -392,7 +392,7 @@ export class GameModel {
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
   // the farthest it opened, the opened positions still showing locked until then.
   private unlockFlight: RouteFlight | null = null;
-  constructor(content: PrototypeContent, saved?: unknown) {
+  constructor(content: GameContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
     // Achievements the save already reached unlock without notices.
@@ -469,7 +469,7 @@ export class GameModel {
   private beginConversations(): void {
     // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
     this.talk.beginFlight(
-      this.state.selectedSector,
+      this.state.selectedGalaxy,
       { stardust: this.state.economy.stardust > 0 },
       randomStream(this.state.flight?.seed ?? 1, "line-pools"),
     );
@@ -514,10 +514,10 @@ export class GameModel {
    * Ada is flying in.
    */
   get galaxyMapStays(): boolean {
-    return this.galaxyMapShownInFlight && this.selectedGalaxy === this.state.selectedSector;
+    return this.galaxyMapShownInFlight && this.galaxyMapSelection === this.state.selectedGalaxy;
   }
   /** The galaxy on show in the galaxy map's panel: the ship's, or a locked one viewed. */
-  get selectedGalaxy(): SectorId | null {
+  get galaxyMapSelection(): GalaxyNumber | null {
     const position = this.selectedPosition;
     return position === null ? null : galaxyAt(position);
   }
@@ -536,12 +536,12 @@ export class GameModel {
   isUnlocked(galaxy: number): boolean {
     return this.state.unlocked.some((id) => id === galaxy);
   }
-  private get current(): SectorProgress {
-    return this.state.progress[this.state.selectedSector];
+  private get current(): GalaxyProgress {
+    return this.state.progress[this.state.selectedGalaxy];
   }
   private get chapter(): ChapterContent {
-    const sector = this.state.selectedSector;
-    return this.content.chapters[sector] ?? placeholderChapter(sector);
+    const galaxy = this.state.selectedGalaxy;
+    return this.content.chapters[galaxy] ?? placeholderChapter(galaxy);
   }
   private label(id: string): string {
     return this.content.labels[id] ?? "";
@@ -551,7 +551,7 @@ export class GameModel {
   }
   get objective(): string {
     const p = this.current;
-    const stages: Partial<Record<SectorId, readonly number[]>> = {
+    const stages: Partial<Record<GalaxyNumber, readonly number[]>> = {
       1: [0, 1, 2, 3, 4],
       2: [0, 1, 2, 3, 4, 5],
       3: [0, 1, 2, 3, 4, 5],
@@ -560,7 +560,7 @@ export class GameModel {
     const last = this.chapter.objectives.length - 1;
     const index = p.questComplete
       ? last - (p.holodisk ? 0 : 1)
-      : (stages[this.state.selectedSector]?.[p.stage] ?? 0);
+      : (stages[this.state.selectedGalaxy]?.[p.stage] ?? 0);
     return this.chapter.objectives[index] ?? "";
   }
   /**
@@ -756,11 +756,11 @@ export class GameModel {
    * Owned once bought (gameplay/economy.md). Null at any other station or before then.
    */
   private holodiskRow(): ShopRow | null {
-    const sector = this.state.flight?.sector;
-    if (this.state.docked !== HUB_STATION || sector !== 2) {
+    const galaxy = this.state.flight?.galaxy;
+    if (this.state.docked !== HUB_STATION || galaxy !== 2) {
       return null;
     }
-    const progress = this.state.progress[sector];
+    const progress = this.state.progress[galaxy];
     if (!progress.questComplete) {
       return null;
     }
@@ -815,21 +815,21 @@ export class GameModel {
    * outside a station, or before the galaxy's chapter is complete (projects.ts).
    */
   get projects(): ProjectView[] | null {
-    const sector = this.state.flight?.sector;
-    if (!this.state.docked || !sector || !projectsOffered(this.state.progress[sector])) {
+    const galaxy = this.state.flight?.galaxy;
+    if (!this.state.docked || !galaxy || !projectsOffered(this.state.progress[galaxy])) {
       return null;
     }
-    return projectViews(galaxyProjects(sector), this.state.progress[sector]);
+    return projectViews(galaxyProjects(galaxy), this.state.progress[galaxy]);
   }
   /** The donation confirm for a docked galaxy's project (projects.ts). */
   donationRequest(id: string): DonationRequest {
-    const sector = this.state.flight?.sector;
-    if (!this.state.docked || !sector) {
+    const galaxy = this.state.flight?.galaxy;
+    if (!this.state.docked || !galaxy) {
       return { kind: "refused" };
     }
     return donationRequest(
-      galaxyProjects(sector),
-      this.state.progress[sector],
+      galaxyProjects(galaxy),
+      this.state.progress[galaxy],
       this.state.economy.stardust,
       id,
     );
@@ -839,14 +839,14 @@ export class GameModel {
    * station card and queues the speaker's thank-you line in the conversation box.
    */
   donate(id: string): DonationResult {
-    const sector = this.state.flight?.sector;
-    if (!this.state.docked || !sector) {
+    const galaxy = this.state.flight?.galaxy;
+    if (!this.state.docked || !galaxy) {
       return { kind: "refused" };
     }
     const economy = this.state.economy;
     const result = donate(
-      galaxyProjects(sector),
-      this.state.progress[sector],
+      galaxyProjects(galaxy),
+      this.state.progress[galaxy],
       economy.stardust,
       id,
     );
@@ -861,16 +861,16 @@ export class GameModel {
     return result;
   }
   /** Each galaxy's allies for the Phantom finale, one per funded project. */
-  allies(sector: SectorId): ReturnType<typeof projectAllies> {
-    return projectAllies(galaxyProjects(sector), this.state.progress[sector]);
+  allies(galaxy: GalaxyNumber): ReturnType<typeof projectAllies> {
+    return projectAllies(galaxyProjects(galaxy), this.state.progress[galaxy]);
   }
   /** Each galaxy's world changes at their sites, one per funded project (projects.ts). */
-  worldChanges(sector: SectorId): WorldChange[] {
-    return worldChanges(galaxyProjects(sector), this.state.progress[sector]);
+  worldChanges(galaxy: GalaxyNumber): WorldChange[] {
+    return worldChanges(galaxyProjects(galaxy), this.state.progress[galaxy]);
   }
   /** Records that a funded project's world change has played its one reveal (projects.ts). */
-  revealWorldChange(sector: SectorId, id: string): boolean {
-    return revealWorldChange(galaxyProjects(sector), this.state.progress[sector], id);
+  revealWorldChange(galaxy: GalaxyNumber, id: string): boolean {
+    return revealWorldChange(galaxyProjects(galaxy), this.state.progress[galaxy], id);
   }
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
@@ -887,13 +887,13 @@ export class GameModel {
    * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
    * first time, then one later line in turn. The docking counts as greeted at once.
    */
-  private greet(sector: SectorId, id: string): void {
-    const keeper = stationKeeper(ECONOMY, sector, id);
+  private greet(galaxy: GalaxyNumber, id: string): void {
+    const keeper = stationKeeper(ECONOMY, galaxy, id);
     if (!keeper) {
       this.greeting = null;
       return;
     }
-    const greetings = this.state.progress[sector].greetings;
+    const greetings = this.state.progress[galaxy].greetings;
     const docked = greetings[id] ?? 0;
     greetings[id] = docked + 1;
     this.greeting = {
@@ -931,7 +931,7 @@ export class GameModel {
     }
     this.state.docked = id;
     this.dockedThisFlight = true;
-    this.greet(f.sector, id);
+    this.greet(f.galaxy, id);
     const held = this.held;
     if (held?.type === "delivery" && held.station === id) {
       held.carrying = true;
@@ -947,7 +947,7 @@ export class GameModel {
   /** Whether a carried supply run is bound for this station, so Use delivers it there. */
   private supplyDue(id: string): boolean {
     const f = this.state.flight;
-    const activity = f && heldActivity(f.sector, this.state);
+    const activity = f && heldActivity(f.galaxy, this.state);
     return activity?.id === "supplyRun" && activity.carrying === true && activity.target?.id === id;
   }
   private panel(context: string, text: string, title = this.chapter.name): void {
@@ -967,13 +967,13 @@ export class GameModel {
    */
   private talkAt(place: string, key: string): void {
     const f = this.state.flight;
-    const activity = f && placeActivity(f.sector, this.current, place);
+    const activity = f && placeActivity(f.galaxy, this.current, place);
     if (!f || !activity) {
       this.exchange(key);
       return;
     }
     const speaker = this.chapter.dialogue[key]?.speaker ?? this.chapter.name;
-    const held = heldActivity(f.sector, this.state);
+    const held = heldActivity(f.galaxy, this.state);
     if (held?.place === place) {
       if (held.id === "supplyRun") {
         held.carrying = true;
@@ -995,7 +995,7 @@ export class GameModel {
       this.exchange(key);
       return;
     }
-    const busy = this.state.tasks[f.sector];
+    const busy = this.state.tasks[f.galaxy];
     this.state.dialogue = {
       choices: [
         { id: "take", label: this.label("activityTake"), ...(busy ? { refused: true } : {}) },
@@ -1012,19 +1012,19 @@ export class GameModel {
    * and pay from the known stations, or the activity's own reward.
    */
   private activityTerms(f: FlightState, place: string): ActivityTerms | null {
-    const activity = placeActivity(f.sector, this.current, place);
+    const activity = placeActivity(f.galaxy, this.current, place);
     const at = f.objects.find((o) => o.kind === "destination" && o.id === place);
     if (!activity || !at) {
       return null;
     }
     if (activity.id === "supplyRun") {
       const stations = this.current.stations.flatMap(
-        (id) => stationById(ECONOMY, f.sector, id) ?? [],
+        (id) => stationById(ECONOMY, f.galaxy, id) ?? [],
       );
-      return supplyTerms(f.sector, stations, at);
+      return supplyTerms(f.galaxy, stations, at);
     }
     if (activity.id === "guideCalf") {
-      const start = calfStart(f.sector, at, this.current.guides ?? 0);
+      const start = calfStart(f.galaxy, at, this.current.guides ?? 0);
       return start ? { reward: activity.reward!, start } : null;
     }
     return { reward: activity.reward! };
@@ -1035,13 +1035,13 @@ export class GameModel {
     if (!f) {
       return;
     }
-    const busy = this.state.tasks[f.sector];
+    const busy = this.state.tasks[f.galaxy];
     if (busy) {
       this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
       return;
     }
     const terms = this.activityTerms(f, place);
-    if (!terms || !acceptActivity(f.sector, this.current, this.state, place, terms)) {
+    if (!terms || !acceptActivity(f.galaxy, this.current, this.state, place, terms)) {
       return;
     }
     if (terms.start) {
@@ -1054,20 +1054,20 @@ export class GameModel {
    * and its hunter pack is placed again. Leaving the galaxy (the galaxy map's Earth or Jump), a
    * shield-depletion jump, Drop and Back to title use it.
    */
-  resetActivity(sector: SectorId): void {
+  resetActivity(galaxy: GalaxyNumber): void {
     const f = this.state.flight;
-    if (f?.sector === sector && heldActivity(sector, this.state)?.id === "guideCalf") {
+    if (f?.galaxy === galaxy && heldActivity(galaxy, this.state)?.id === "guideCalf") {
       delete f.calf;
     }
   }
   /** Drops the held activity, losing its progress. */
-  private dropHeldActivity(sector: SectorId): boolean {
-    this.resetActivity(sector);
-    return dropActivity(sector, this.state);
+  private dropHeldActivity(galaxy: GalaxyNumber): boolean {
+    this.resetActivity(galaxy);
+    return dropActivity(galaxy, this.state);
   }
   /** Pays the held activity with the job completion notice and frees the galaxy's slot. */
-  private finishActivity(sector: SectorId): void {
-    const reward = completeActivity(sector, this.state);
+  private finishActivity(galaxy: GalaxyNumber): void {
+    const reward = completeActivity(galaxy, this.state);
     if (!reward) {
       return;
     }
@@ -1091,7 +1091,7 @@ export class GameModel {
     this.previousSeed = seed;
     this.state.flight = createFlight(
       this.content,
-      this.state.selectedSector,
+      this.state.selectedGalaxy,
       seed,
       this.current,
       this.state.economy,
@@ -1099,7 +1099,7 @@ export class GameModel {
     this.state.mode = "space";
     this.state.dialogue = null;
     this.state.docked = null;
-    rerollBoards(this.state.selectedSector, this.state);
+    rerollBoards(this.state.selectedGalaxy, this.state);
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
@@ -1112,11 +1112,11 @@ export class GameModel {
     recordExplored(this.content.tuning.chunkSize, this.current.explored, f.player);
   }
   /** Jumps to an unlocked galaxy's flight. */
-  startSector(id: SectorId): void {
+  startGalaxy(id: GalaxyNumber): void {
     if (!this.state.unlocked.includes(id) || this.state.mode === "space") {
       return;
     }
-    this.state.selectedSector = id;
+    this.state.selectedGalaxy = id;
     this.state.started = true;
     this.startShown = false;
     this.story = null;
@@ -1140,7 +1140,7 @@ export class GameModel {
    */
   private endFlight(): void {
     this.closeGalaxyMapInFlight();
-    this.resetActivity(this.state.selectedSector);
+    this.resetActivity(this.state.selectedGalaxy);
     // A story scene still due its line replays at the hub on the next flight.
     const scene = this.state.flight?.storyScene;
     if (scene?.lineDue) {
@@ -1236,7 +1236,7 @@ export class GameModel {
    * Once a galaxy's holodisk, space quest and home resolution are done, unlocks the next position
    * on the route, every placeholder after it and the next built galaxy (unlockedBy).
    */
-  private unlockNext(galaxy: SectorId = this.state.selectedSector): void {
+  private unlockNext(galaxy: GalaxyNumber = this.state.selectedGalaxy): void {
     const p = this.state.progress[galaxy];
     if (!p.holodisk || !p.questComplete || !p.resolved) {
       return;
@@ -1302,7 +1302,7 @@ export class GameModel {
     }
     this.ensureRequiredApproaches();
     // Before the step, so a sensed cache collected this step still counts as reached.
-    reachSensed(PENNY_FIND_RANGE, f.sector, f.objects, f.player, this.state.achievements);
+    reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
     const events = stepFlight(this.content, dt, input, f);
     this.carryStoryPickups(dt, f);
@@ -1347,7 +1347,7 @@ export class GameModel {
       }
       if (
         event.type === "debrisCleared" &&
-        f.sector === 3 &&
+        f.galaxy === 3 &&
         this.current.stage <= 1 &&
         !f.objects.some((o) => o.id.startsWith("whale-debris:") && o.hp > 0)
       ) {
@@ -1356,17 +1356,17 @@ export class GameModel {
     }
     // However the hub became known, it is one of Cartwheel's discovered stations.
     if (
-      f.sector === 2 &&
+      f.galaxy === 2 &&
       this.current.known.includes(HUB_STATION) &&
       !this.current.stations.includes(HUB_STATION)
     ) {
       this.current.stations.push(HUB_STATION);
       stationsDiscovered.push(HUB_STATION);
     }
-    const charted = chartLandmarks(f.sector, this.current, f.player);
+    const charted = chartLandmarks(f.galaxy, this.current, f.player);
     mapped.push(...charted);
     for (const id of charted) {
-      this.recordAchievement({ galaxy: f.sector, id, kind: "landmarkCharted" });
+      this.recordAchievement({ galaxy: f.galaxy, id, kind: "landmarkCharted" });
     }
     this.stepJob(f);
     this.stepCalf(dt, f);
@@ -1397,7 +1397,7 @@ export class GameModel {
       ),
       heavyDisabled: events.some((event) => event.type === "enemyDisabled"),
       holodisks: holodisksHeld(this.state.progress),
-      inCurrent: inCurrent(f.sector, 0, f.player),
+      inCurrent: inCurrent(f.galaxy, 0, f.player),
       inDanger: this.inDanger,
       jobMoments,
       lostItemNear: this.lostItemNear(f),
@@ -1408,7 +1408,7 @@ export class GameModel {
       pennyPoints: pennyPoints(
         this.current,
         this.holodiskWaypoint,
-        unchartedNear(f.sector, this.current, CONVERSATION_TUNING.pennyRange, f.player),
+        unchartedNear(f.galaxy, this.current, CONVERSATION_TUNING.pennyRange, f.player),
         f,
       ),
       shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
@@ -1427,7 +1427,7 @@ export class GameModel {
     if (unlocked !== undefined) {
       this.notify(fill(this.label("achievement"), { name: unlocked }));
     }
-    const opener = first(f.sector);
+    const opener = first(f.galaxy);
     if (
       opener !== undefined &&
       !this.current.introduced &&
@@ -1445,7 +1445,7 @@ export class GameModel {
         this.content.tuning.introFreshDistance +
           this.current.stage * this.content.tuning.encounterFreshDistance
     ) {
-      const id = required[f.sector]?.[this.current.stage];
+      const id = required[f.galaxy]?.[this.current.stage];
       if (id) {
         ensureDestination(this.content, id, f);
         if (f.freshDistance > previousFreshDistance && !this.current.known.includes(id)) {
@@ -1482,7 +1482,7 @@ export class GameModel {
       this.exchange(CARTWHEEL_STORY_SHIPS.scenes[scene.id].line);
       return;
     }
-    const intro = first(f.sector);
+    const intro = first(f.galaxy);
     if (
       intro !== undefined &&
       !this.current.introduced &&
@@ -1491,15 +1491,15 @@ export class GameModel {
     ) {
       this.current.introduced = true;
       this.current.stage = Math.max(1, this.current.stage);
-      if (f.sector === 1) {
+      if (f.galaxy === 1) {
         this.current.questItem = "food";
       }
       this.ensureWhaleDebris();
-      if (f.sector === 3 && this.current.stage === 2) {
+      if (f.galaxy === 3 && this.current.stage === 2) {
         this.current.stage = 3;
         this.exchange("freed");
       } else {
-        this.exchange(f.sector === 1 ? "grower" : intro);
+        this.exchange(f.galaxy === 1 ? "grower" : intro);
       }
     } else if (input.use) {
       this.interact();
@@ -1514,28 +1514,28 @@ export class GameModel {
     const p = this.current;
     return indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
+      galaxy: f.galaxy,
       holodiskWaypoint: this.holodiskWaypoint,
       job: this.jobIndicator(f),
-      objective: this.objectiveId(f.sector),
+      objective: this.objectiveId(f.galaxy),
       progress: p,
       questItem: questItemDestination(p),
-      sector: f.sector,
     });
   }
   /**
    * The pause menu's Map of the current galaxy (map.ts), or null outside a flight: with its
    * charted landmarks (landmarks.ts) and the held job's target.
    */
-  get map(): GalaxyMap | null {
+  get map(): LocalMap | null {
     const f = this.state.flight;
     if (!f || this.state.mode !== "space") {
       return null;
     }
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
-    return galaxyMap({
+    return localMap({
       catalog: ECONOMY,
       chunkSize: this.content.tuning.chunkSize,
-      destinations: galaxyRoute(f.sector),
+      destinations: galaxyRoute(f.galaxy),
       explored: this.current.explored,
       flight: f,
       holodisk: this.holodiskWaypoint
@@ -1545,12 +1545,12 @@ export class GameModel {
       label: (id, kind) =>
         kind === "holodisk" ? this.label("mapHolodiskWaypoint") : (labels.get(id) ?? id),
       landmarks: {
-        charted: galaxyLandmarks(f.sector, this.current)
+        charted: galaxyLandmarks(f.galaxy, this.current)
           .filter(({ charted }) => charted)
           .map(({ id, kind, name, x, y }) => ({ id, kind, label: this.label(name), x, y })),
-        total: landmarkSites(f.sector).length,
+        total: landmarkSites(f.galaxy).length,
       },
-      objective: this.objectiveId(f.sector),
+      objective: this.objectiveId(f.galaxy),
       progress: this.current,
       quests: {
         job: this.jobObjective,
@@ -1560,16 +1560,16 @@ export class GameModel {
     });
   }
   /** The current objective's destination in a galaxy, if it has one (indicators.ts). */
-  private objectiveId(sector: SectorId): string | null {
+  private objectiveId(galaxy: GalaxyNumber): string | null {
     const p = this.current;
-    return objectiveDestination(sector, p, p.deposited >= this.content.tuning.miningMilestones[1]);
+    return objectiveDestination(galaxy, p, p.deposited >= this.content.tuning.miningMilestones[1]);
   }
   /** Stations, the hub among them, within station discovery range of Ada. */
   private stationsInRange(f: FlightState): SpaceObject[] {
     return f.objects.filter(
       (object) =>
         (object.kind === "station" ||
-          (object.kind === "destination" && f.sector === 2 && object.id === HUB_STATION)) &&
+          (object.kind === "destination" && f.galaxy === 2 && object.id === HUB_STATION)) &&
         Math.hypot(object.x - f.player.x, object.y - f.player.y) <= ECONOMY.station.safeRadius,
     );
   }
@@ -1581,10 +1581,10 @@ export class GameModel {
   private encounterCues(f: FlightState): EncounterCue[] {
     const near = this.stationsInRange(f);
     const cues: EncounterCue[] = [];
-    if (f.sector === 2 && near.some(({ id }) => id === HUB_STATION)) {
+    if (f.galaxy === 2 && near.some(({ id }) => id === HUB_STATION)) {
       cues.push("hubNear");
     }
-    if (f.sector === 3) {
+    if (f.galaxy === 3) {
       const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
       if (family && onScreen(SCREEN, f.player, family)) {
         cues.push("familyInSight");
@@ -1597,7 +1597,7 @@ export class GameModel {
   }
   /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {
-    return this.state.flight?.sector === 3 && this.current.questComplete && !this.current.holodisk;
+    return this.state.flight?.galaxy === 3 && this.current.questComplete && !this.current.holodisk;
   }
   /** The floating holodisk while it is a pickup, the waypoint the family gives. */
   private floatingHolodisk(f: FlightState): SpaceObject | undefined {
@@ -1679,7 +1679,7 @@ export class GameModel {
   }
   private ensureWhaleDebris(): void {
     const f = this.state.flight;
-    if (!f || f.sector !== 3 || this.current.stage >= 2) {
+    if (!f || f.galaxy !== 3 || this.current.stage >= 2) {
       return;
     }
     const whale = f.objects.find((o) => o.id === "whale");
@@ -1716,7 +1716,7 @@ export class GameModel {
     }
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
-        this.finishActivity(f.sector);
+        this.finishActivity(f.galaxy);
       } else {
         this.dock(id, f);
       }
@@ -1729,7 +1729,7 @@ export class GameModel {
       destination.persistent = true;
     }
     const p = this.current;
-    if (f.sector === 1) {
+    if (f.galaxy === 1) {
       // Once their exchange is running, any outpost gives Ada the holodisk.
       if (p.questComplete && !p.holodisk) {
         this.recoverHolodisk(this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker);
@@ -1758,7 +1758,7 @@ export class GameModel {
       } else {
         this.talkAt(id, dialogueKeys[id] ?? id);
       }
-    } else if (f.sector === 2) {
+    } else if (f.galaxy === 2) {
       if (id === HUB_STATION && f.cargo === 0) {
         if (!this.hubSceneDue) {
           this.dock(id, f);
@@ -1767,8 +1767,8 @@ export class GameModel {
         const load = f.cargo;
         p.deposited += load;
         f.cargo = 0;
-        if (contractDeposit(f.sector, this.state, load)) {
-          this.finishActivity(f.sector);
+        if (contractDeposit(f.galaxy, this.state, load)) {
+          this.finishActivity(f.galaxy);
         }
         const [a, b, c] = this.content.tuning.miningMilestones;
         if (p.stage === 1 && p.deposited >= a) {
@@ -1813,7 +1813,7 @@ export class GameModel {
   }
   /** The current galaxy's held station job. */
   private get held(): HeldJob | undefined {
-    return heldJob(this.state.selectedSector, this.state);
+    return heldJob(this.state.selectedGalaxy, this.state);
   }
   /** Known outposts in the flight: delivery destinations and tow safe places. */
   private outposts(flight: FlightState): JobTarget[] {
@@ -1841,17 +1841,17 @@ export class GameModel {
   }
   private jobContext(flight: FlightState): BoardContext {
     return {
+      galaxy: flight.galaxy,
       hostiles: jobHostiles(flight),
       outposts: this.outposts(flight),
       progress: this.current,
-      sector: flight.sector,
     };
   }
   private jobStation(job: HeldJob): StationSite | null {
     const f = this.state.flight;
-    return f && f.sector === this.state.selectedSector
+    return f && f.galaxy === this.state.selectedGalaxy
       ? this.stationSite(f, job.station)
-      : stationById(ECONOMY, this.state.selectedSector, job.station);
+      : stationById(ECONOMY, this.state.selectedGalaxy, job.station);
   }
   /**
    * A place's name inside a sentence, as job titles and objectives use it, with its article: a
@@ -1878,7 +1878,7 @@ export class GameModel {
       hunt: fill(this.label("huntTitle"), { item: job.item }),
       rescue: fill(this.label("rescueTitle"), { craft: job.item }),
       survey: fill(this.label("surveyTitle"), {
-        landmark: this.label(landmarkById(this.state.selectedSector, job.target.id)?.name ?? ""),
+        landmark: this.label(landmarkById(this.state.selectedGalaxy, job.target.id)?.name ?? ""),
       }),
     };
     return { detail: this.label(`${job.type}About`), title: titles[job.type] };
@@ -1895,7 +1895,7 @@ export class GameModel {
     }
     const board = stationBoard(this.jobContext(f), this.state, site);
     const held = this.held;
-    const busy = Boolean(this.state.tasks[f.sector]);
+    const busy = Boolean(this.state.tasks[f.galaxy]);
     const row = (job: JobOffer, state: JobRow["state"]): JobRow => ({
       ...this.jobText(job),
       id: job.id,
@@ -1913,12 +1913,12 @@ export class GameModel {
       activity || offered
         ? [
             {
-              detail: this.label(ACTIVITIES[f.sector]?.goal ?? ""),
+              detail: this.label(ACTIVITIES[f.galaxy]?.goal ?? ""),
               id: activity?.id ?? offered!.id,
               kind: "activity",
               reward: activity?.reward ?? offered!.reward,
               state: activity ? "held" : busy ? "busy" : "offer",
-              title: ACTIVITIES[f.sector]?.name ?? "",
+              title: ACTIVITIES[f.galaxy]?.name ?? "",
               type: "activity",
             },
           ]
@@ -1944,20 +1944,20 @@ export class GameModel {
     }
     const offered = this.boardActivity(f, station);
     if (offered?.id === id) {
-      if (this.state.tasks[f.sector]) {
+      if (this.state.tasks[f.galaxy]) {
         return "busy";
       }
       this.takeActivity(station);
-      return heldActivity(f.sector, this.state) ? "accepted" : "missing";
+      return heldActivity(f.galaxy, this.state) ? "accepted" : "missing";
     }
-    return acceptJob(f.sector, station, id, this.state);
+    return acceptJob(f.galaxy, station, id, this.state);
   }
   /**
    * The galaxy's activity a docked station offers on its board, with its reward: the hub's
    * mining contract once the chapter is resolved. Null at any other station.
    */
   private boardActivity(f: FlightState, station: string): { id: string; reward: number } | null {
-    const activity = placeActivity(f.sector, this.current, station);
+    const activity = placeActivity(f.galaxy, this.current, station);
     const terms = activity && this.activityTerms(f, station);
     return activity && terms ? { id: activity.id, reward: terms.reward } : null;
   }
@@ -1966,8 +1966,8 @@ export class GameModel {
    * hub is Cartwheel's station (gameplay/rules.md).
    */
   private stationSite(f: FlightState, id: string): StationSite | null {
-    const seeded = stationById(ECONOMY, f.sector, id);
-    if (seeded || id !== HUB_STATION || f.sector !== 2) {
+    const seeded = stationById(ECONOMY, f.galaxy, id);
+    if (seeded || id !== HUB_STATION || f.galaxy !== 2) {
       return seeded;
     }
     const hub = f.objects.find((object) => object.kind === "destination" && object.id === id);
@@ -1978,10 +1978,10 @@ export class GameModel {
    * towed craft goes back to where it was stranded.
    */
   dropJob(): boolean {
-    if (this.dropHeldActivity(this.state.selectedSector)) {
+    if (this.dropHeldActivity(this.state.selectedGalaxy)) {
       return true;
     }
-    const dropped = dropJob(this.state.selectedSector, this.state);
+    const dropped = dropJob(this.state.selectedGalaxy, this.state);
     if (dropped && this.state.flight) {
       delete this.state.flight.tow;
     }
@@ -2010,7 +2010,7 @@ export class GameModel {
   }
   /** The current galaxy's accepted activity. */
   private get activity(): HeldActivity | undefined {
-    return heldActivity(this.state.selectedSector, this.state);
+    return heldActivity(this.state.selectedGalaxy, this.state);
   }
   /** Whether Whirlpool's guided calf is away from its family: while Guide a calf is held. */
   get calfAway(): boolean {
@@ -2183,7 +2183,7 @@ export class GameModel {
    * midpoint home, placed again after a reset, then follows Ada and completes at the family.
    */
   private stepCalf(dt: number, f: FlightState): void {
-    const activity = heldActivity(f.sector, this.state);
+    const activity = heldActivity(f.galaxy, this.state);
     const family = f.objects.find((o) => o.kind === "destination" && o.id === "family");
     if (activity?.id !== "guideCalf" || !activity.start || !family) {
       return;
@@ -2200,10 +2200,10 @@ export class GameModel {
         f,
       );
     }
-    stepCalf(f.sector, this.content.tuning.physics, dt, f.player, f.calf);
+    stepCalf(f.galaxy, this.content.tuning.physics, dt, f.player, f.calf);
     if (calfHome(family, f.calf)) {
       delete f.calf;
-      this.finishActivity(f.sector);
+      this.finishActivity(f.galaxy);
     }
   }
   /** A held hunt's lost item within Penny's hunt range, as its point id. */
@@ -2258,13 +2258,13 @@ export class GameModel {
       y,
     });
     if (held.type === "survey") {
-      const site = landmarkById(f.sector, held.target.id);
+      const site = landmarkById(f.galaxy, held.target.id);
       return site ? mark(site) : null;
     }
     if (held.type === "delivery") {
       const station = held.carrying ? held.target.id : held.station;
       const place =
-        stationById(ECONOMY, f.sector, station) ??
+        stationById(ECONOMY, f.galaxy, station) ??
         f.objects.find((object) => object.kind === "destination" && object.id === station) ??
         held.target;
       return mark({ id: station, x: place.x, y: place.y });
@@ -2280,7 +2280,7 @@ export class GameModel {
    * replace a lost item; the hub for a mining contract; the calf until it follows, then the family.
    */
   private activityTarget(f: FlightState): IndicatorTarget | null {
-    const activity = heldActivity(f.sector, this.state);
+    const activity = heldActivity(f.galaxy, this.state);
     if (!activity) {
       return null;
     }
@@ -2298,7 +2298,7 @@ export class GameModel {
     }
     // A supply run's item goes to its station; a lost one is replaced at the issuing outpost.
     if (activity.id === "supplyRun" && activity.carrying && activity.target) {
-      const site = stationById(ECONOMY, f.sector, activity.target.id) ?? activity.target;
+      const site = stationById(ECONOMY, f.galaxy, activity.target.id) ?? activity.target;
       return mark(site, activity.target.id);
     }
     const at = place(activity.place);
@@ -2322,7 +2322,7 @@ export class GameModel {
         hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
           ? { ...hunt.spot }
           : null,
-      landmarks: galaxyLandmarks(f.sector, this.current),
+      landmarks: galaxyLandmarks(f.galaxy, this.current),
       towing: Boolean(f.tow),
     };
   }
@@ -2356,7 +2356,7 @@ export class GameModel {
       return;
     }
     if (dialogue.context === "activityDrop" && id === "confirmDrop") {
-      this.dropHeldActivity(this.state.selectedSector);
+      this.dropHeldActivity(this.state.selectedGalaxy);
       this.state.dialogue = null;
       return;
     }
@@ -2525,7 +2525,7 @@ export class GameModel {
       this.notify(this.label("travelUnavailable"));
       return false;
     }
-    this.selection = ROUTE_POSITION[this.state.selectedSector];
+    this.selection = ROUTE_POSITION[this.state.selectedGalaxy];
     this.viewing = null;
     this.galaxyMapInFlight = true;
     return true;
@@ -2575,7 +2575,7 @@ export class GameModel {
    * ends the flight, story progress saved, and starts its own.
    */
   jump(): boolean {
-    const galaxy = this.selectedGalaxy;
+    const galaxy = this.galaxyMapSelection;
     if (galaxy === null || !this.isUnlocked(galaxy)) {
       return false;
     }
@@ -2586,7 +2586,7 @@ export class GameModel {
     if (this.galaxyMapShownInFlight) {
       this.endFlight();
     }
-    this.startSector(galaxy);
+    this.startGalaxy(galaxy);
     return true;
   }
   /**

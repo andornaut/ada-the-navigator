@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { createFlight, ensureDestination, stepFlight, teleport } from "./flight.ts";
-import type { SectorProgress } from "./types.ts";
+import type { GalaxyProgress } from "./types.ts";
 import { markVisited, validVisitedPages, visitedChunk } from "./visited.ts";
 
-const progress: SectorProgress = {
+const progress: GalaxyProgress = {
   charted: [],
   deposited: 0,
   destroyedEnemies: 0,
@@ -56,7 +56,7 @@ describe("exact compact visited chunks", () => {
   });
 
   it("keeps visited metadata compact during travel and never credits standing, teleports or old chunks", () => {
-    const content = structuredClone(PROTOTYPE);
+    const content = structuredClone(CONTENT);
     content.tuning.physics = { ...content.tuning.physics, maxSpeed: 1024 };
     content.tuning.safeRadius = 1e9;
     const flight = createFlight(content, 1, 1234, progress);

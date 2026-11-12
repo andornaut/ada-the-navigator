@@ -2,9 +2,9 @@ import { readFile } from "node:fs/promises";
 
 import type { Plugin } from "vite";
 
-import { CONTROL_WORDS } from "../data/control-words.ts";
-import { HOME_COPY } from "../data/home-copy.ts";
-import { controlHelpMarkup, escaped } from "../ui/control-help.ts";
+import { CONTROL_WORDS } from "../data/controlWords.ts";
+import { HOME_COPY } from "../data/homeCopy.ts";
+import { controlHelpMarkup, escaped } from "../ui/controlHelp.ts";
 
 interface HomeCopy {
   readonly description: string;

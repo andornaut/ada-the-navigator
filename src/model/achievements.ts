@@ -1,8 +1,8 @@
 import type { Achievement, AchievementGoal } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { SECTORS } from "../data/galaxies.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PROJECTS } from "../data/projects.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { landmarkSites } from "./landmarks.ts";
 import type { GameState } from "./types.ts";
 
@@ -22,7 +22,7 @@ export interface AchievementState {
   blockade: boolean;
   /** Ship paints ever owned, Classic included. */
   paints: string[];
-  /** Points Penny sensed that Ada has not reached yet, as `penny:{sector}:{point}` instances. */
+  /** Points Penny sensed that Ada has not reached yet, as `penny:{galaxy}:{point}` instances. */
   sensed: string[];
   /** The points found in this world, each counted once; Restart starts the list anew. */
   found: string[];
@@ -50,7 +50,9 @@ export interface AchievementTotals {
  */
 export const ACHIEVEMENT_TOTALS: AchievementTotals = {
   allies: 0,
-  landmarks: Object.fromEntries(SECTORS.map((sector) => [sector, landmarkSites(sector).length])),
+  landmarks: Object.fromEntries(
+    GALAXY_NUMBERS.map((galaxy) => [galaxy, landmarkSites(galaxy).length]),
+  ),
   paints: Object.keys(ECONOMY.paints).length,
   projects: Object.values(PROJECTS).flat().length,
 };
@@ -126,12 +128,12 @@ export function recordSensed(achievements: AchievementState, instances: readonly
  */
 export function reachSensed(
   range: number,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   points: readonly { readonly id: string; readonly x: number; readonly y: number }[],
   player: { readonly x: number; readonly y: number },
   achievements: AchievementState,
 ): void {
-  const prefix = `penny:${sector}:`;
+  const prefix = `penny:${galaxy}:`;
   achievements.sensed = achievements.sensed.filter((instance) => {
     if (!instance.startsWith(prefix)) {
       return true;
@@ -177,7 +179,7 @@ export function achievementProgress(
       return { have: charted(achievements, best), need: totals.landmarks[best] ?? 0 };
     }
     case "chartAll": {
-      const galaxies = SECTORS;
+      const galaxies = GALAXY_NUMBERS;
       const need = galaxies.every((galaxy) => (totals.landmarks[galaxy] ?? 0) > 0)
         ? galaxies.reduce((sum, galaxy) => sum + (totals.landmarks[galaxy] ?? 0), 0)
         : 0;

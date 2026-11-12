@@ -1,7 +1,7 @@
 import { createUpdateFlow } from "@andornaut/game-kit/web/pwa/dom/updateReady";
 import { describe, expect, it, vi } from "vitest";
 
-import { PROTOTYPE } from "../data/prototype.ts";
+import { CONTENT } from "../data/content.ts";
 import { GameModel } from "../model/game.ts";
 import { playOpening } from "../testing/launch.ts";
 import { createUpdateOffer, trackStartScreen } from "./updateOffer.ts";
@@ -70,7 +70,7 @@ describe("start-screen update offer", () => {
   it("keeps a cancelled offer hidden for the page's lifetime, checking at every arrival", () => {
     const { offer, registration, reload, shown, start } = updating(true);
     // The model's screen drives the start screen as the scene does, each arrival a transition.
-    const model = new GameModel(PROTOTYPE);
+    const model = new GameModel(CONTENT);
     const follow = () => start.shown(model.screen === "start");
     follow();
     expect(shown).toHaveBeenLastCalledWith(true);
@@ -91,7 +91,7 @@ describe("start-screen update offer", () => {
       arrivals.push(how);
     };
     // Back to title from flight.
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     follow();
     model.backToTitle();
@@ -99,7 +99,7 @@ describe("start-screen update offer", () => {
     // Back to title from Ada's room page.
     model.state.progress[1].opened = true;
     model.state.prologueSeen = true;
-    model.startSector(1);
+    model.startGalaxy(1);
     model.state.flight!.objects = [];
     model.returnHome();
     follow();

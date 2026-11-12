@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CAST, castSheet } from "../../data/cast.ts";
+import { CONTENT } from "../../data/content.ts";
 import { GALAXY_ID } from "../../data/galaxies.ts";
 import { KEEPERS } from "../../data/keepers.ts";
-import { PROTOTYPE } from "../../data/prototype.ts";
-import type { SectorId } from "../../data/types.ts";
-import { lineCount, measure } from "../../testing/text-metrics.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { lineCount, measure } from "../../testing/textMetrics.ts";
 import { CONVERSATION_BOX } from "./conversationBox.ts";
 import { type Insets, NO_INSETS, SAFE_MARGIN, safeRect, type Size } from "./playView.ts";
 import { KEEPER_BLOCK, keeperPips, stationCardHeight, stationCardRect } from "./stationCard.ts";
@@ -110,7 +110,7 @@ describe("keeper block", () => {
     expect(lineCount(widest, TYPE.body.size, "regular", () => KEEPER_BLOCK.textWithPips)).toBe(2);
     // Phantom's generic welcome, a gap inside each side.
     const generic = KEEPER_BLOCK.width - 2 * KEEPER_BLOCK.genericInset;
-    expect(fits(PROTOTYPE.labels.stationWelcome ?? "", generic)).toBe(true);
+    expect(fits(CONTENT.labels.stationWelcome ?? "", generic)).toBe(true);
   });
 
   it("shows each keeper's compact portrait and tab colour as Art keys them", () => {
@@ -118,8 +118,8 @@ describe("keeper block", () => {
       ...STATION.matchAll(/^\| (\w+) +\| (\w+) +\| `([a-z]+)` +\| `(#[0-9a-f]{6})` +\|/gmu),
     ];
     expect(rows).toHaveLength(15);
-    for (const [sector, { keepers }] of Object.entries(KEEPERS)) {
-      const galaxy = GALAXY_ID[Number(sector) as SectorId];
+    for (const [number, { keepers }] of Object.entries(KEEPERS)) {
+      const galaxy = GALAXY_ID[Number(number) as GalaxyNumber];
       const own = rows.filter(([, name]) => name!.toLowerCase() === galaxy);
       expect(own.map(([, , , key]) => key)).toEqual(keepers);
       for (const [, , name, key, tab] of own) {

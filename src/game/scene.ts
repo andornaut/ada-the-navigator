@@ -15,30 +15,30 @@ import {
 } from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
-import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroid-catalog.ts";
-import { CHEAT_COPY } from "../data/cheat-copy.ts";
+import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroidCatalog.ts";
+import { CHEAT_COPY } from "../data/cheatCopy.ts";
+import { CONTENT } from "../data/content.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
-import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemy-catalog.ts";
+import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edgeMarkers.ts";
+import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_ID, ROUTE, ROUTE_POSITION } from "../data/galaxies.ts";
-import { CURRENTS } from "../data/galaxy-features.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
-import { resourceArtId } from "../data/resource-rocks.ts";
+import { resourceArtId } from "../data/resourceRocks.ts";
 import { SCREEN } from "../data/screen.ts";
-import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import type { SectorId } from "../data/types.ts";
-import { coarsePointer } from "../input/coarse-pointer.ts";
+import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
 import { rockFrame, scenerySilhouette } from "../model/asteroids.ts";
 import { grantAllWeapons } from "../model/cheats.ts";
 import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
-import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
-import { enemySpeedFraction } from "../model/enemy-ai.ts";
+import { createEdgeMarkerTracker, edgePoint } from "../model/edgeMarkers.ts";
+import { enemySpeedFraction } from "../model/enemyAi.ts";
 import {
   activeBeamFlashes,
   activeBlastFlashes,
@@ -48,19 +48,13 @@ import {
   shipSpeedFraction,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
-import { type GainSnapshot, gainSnapshot, itemGains } from "../model/item-gains.ts";
+import { type GainSnapshot, gainSnapshot, itemGains } from "../model/itemGains.ts";
 import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
-import { projectileOpacity } from "../model/player-projectiles.ts";
+import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { newerSave } from "../model/save.ts";
-import { hullOffset } from "../model/ship-physics.ts";
+import { hullOffset } from "../model/shipPhysics.ts";
 import { fill, itemAbout, itemName, type ShopItem } from "../model/shop.ts";
-import {
-  drawnHeading,
-  hubBay,
-  hubWorn,
-  type StoryNoses,
-  storyShips,
-} from "../model/story-ships.ts";
+import { drawnHeading, hubBay, hubWorn, type StoryNoses, storyShips } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "../model/types.ts";
 import {
   coverStartScreen,
@@ -77,30 +71,30 @@ import {
   stepsKind,
   updateOffer,
 } from "../pwa/index.ts";
-import { backReleased } from "../ui/back-stack.ts";
+import { backReleased } from "../ui/backStack.ts";
 import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
-import { screenShakes } from "../ui/device-settings.ts";
-import { createBannerLayer, type PlacedBanner } from "../ui/disabled-banner.ts";
+import { screenShakes } from "../ui/deviceSettings.ts";
+import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
+import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
 import {
   createJumpOverlay,
   type JumpScene,
   type SheetArt,
   type WarpPaint,
-} from "../ui/jump-overlay.ts";
+} from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
-import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
+import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
-import { createRestartCard } from "../ui/restart-card.ts";
-import { createRouteMap, type RouteMapView } from "../ui/route-map.ts";
-import { aboardLabel, type ShipView } from "../ui/ship-card.ts";
+import { createRestartCard } from "../ui/restartCard.ts";
+import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
-import { stardustCount } from "../ui/status-pill.ts";
+import { stardustCount } from "../ui/statusPill.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
-import { readTitleScreen } from "../ui/title-screen.ts";
-import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touch-chrome.ts";
+import { readTitleScreen } from "../ui/titleScreen.ts";
+import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
 import {
   type CoreManifest,
   galaxyLoadsAtOnce,
@@ -109,7 +103,7 @@ import {
   galaxyManifestPaths,
   galaxyTowKey,
   readGalaxyManifest,
-} from "./art-manifest.ts";
+} from "./artManifest.ts";
 import {
   type AsteroidOutline,
   BACKDROP_FIELD,
@@ -120,9 +114,9 @@ import {
   hexNumber,
   playDepth,
   rockArt,
-} from "./asteroid-art.ts";
-import { BAND_AREA, paintBand, readBackdropBand } from "./backdrop-band.ts";
-import { type BackdropHaze, readBackdropHaze } from "./backdrop-haze.ts";
+} from "./asteroidArt.ts";
+import { BAND_AREA, paintBand, readBackdropBand } from "./backdropBand.ts";
+import { type BackdropHaze, readBackdropHaze } from "./backdropHaze.ts";
 import {
   type BackdropRules,
   clusterReach,
@@ -142,7 +136,7 @@ import {
   viewPlates,
   viewStars,
   viewStreaks,
-} from "./backdrop-layers.ts";
+} from "./backdropLayers.ts";
 import {
   craftArt,
   craftFrameSets,
@@ -152,15 +146,15 @@ import {
   readHubArt,
   storyCraftSets,
   storyNoses,
-} from "./cartwheel-art.ts";
-import { readStreakSpec, streakMarks, type StreakSpec } from "./current-streaks.ts";
+} from "./cartwheelArt.ts";
+import { readStreakSpec, streakMarks, type StreakSpec } from "./currentStreaks.ts";
 import {
   type DebrisArt,
   debrisFrame,
   debrisMarks,
   debrisPiece,
   readDebrisArt,
-} from "./debris-art.ts";
+} from "./debrisArt.ts";
 import {
   type DestructionData,
   readDestruction,
@@ -169,7 +163,7 @@ import {
   type ShardData,
   shardPolygons,
   wreckFlashAt,
-} from "./destruction-art.ts";
+} from "./destructionArt.ts";
 import {
   ADA_LAYERS,
   adaDepth,
@@ -180,7 +174,7 @@ import {
   type PassableDraw,
   type Placed,
   USE_CALLOUT_DEPTH,
-} from "./draw-order.ts";
+} from "./drawOrder.ts";
 import {
   bannerOffset,
   composedArchetypes,
@@ -202,7 +196,7 @@ import {
   type PartPose,
   type PartSprite,
   selectEnemyFrame,
-} from "./enemy-art.ts";
+} from "./enemyArt.ts";
 import {
   type EnemyEffect,
   enemyInkEdges,
@@ -214,9 +208,9 @@ import {
   readEnemyWeaponsArt,
   ringDart,
   ringEmission,
-} from "./enemy-weapons-art.ts";
+} from "./enemyWeaponsArt.ts";
 import { type FeedbackPulse, FeedbackSound, ModelFeedback, TELEPORT_DISTANCE } from "./feedback.ts";
-import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavy-states.ts";
+import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavyStates.ts";
 import {
   beaconLandmarkFrame,
   dashes,
@@ -226,7 +220,7 @@ import {
   type JobFrame,
   nebulaTint,
   readJobArt,
-} from "./job-art.ts";
+} from "./jobArt.ts";
 import {
   alphaTopRow,
   blastEdges,
@@ -238,10 +232,10 @@ import {
   lightGalaxy,
   readLightGalaxies,
   thresholdSilhouette,
-} from "./light-field.ts";
+} from "./lightField.ts";
 import { readSave, stopSaving, writeSave } from "./persistence.ts";
-import { zipAt } from "./pickup-zip.ts";
-import { fitPlayCamera, parentFit, sceneFit, shakeIntensity, viewShift } from "./play-camera.ts";
+import { zipAt } from "./pickupZip.ts";
+import { fitPlayCamera, parentFit, sceneFit, shakeIntensity, viewShift } from "./playCamera.ts";
 import {
   boundsOnScreen,
   type OutpostPart,
@@ -250,15 +244,15 @@ import {
   type ProjectArtSet,
   readProjectArt,
   revealAlpha,
-} from "./project-art.ts";
-import { readQuantumJump } from "./quantum-jump.ts";
+} from "./projectArt.ts";
+import { readQuantumJump } from "./quantumJump.ts";
 import {
   markerHue,
   readRouteArt,
   readRouteMarkers,
   routePreviews,
   routeShipFrames,
-} from "./route-art.ts";
+} from "./routeArt.ts";
 import { sceneryDetail } from "./scenery.ts";
 import { StoryShell } from "./shell.ts";
 import {
@@ -269,15 +263,15 @@ import {
   type ShipAsset,
   shipDirection,
   thrustFrames,
-} from "./ship-art.ts";
+} from "./shipArt.ts";
 import {
   type EngineJets,
   engineJets,
   jetTriangles,
   levelLayers,
   readEngineJets,
-} from "./ship-jets.ts";
-import { stationRow } from "./shop-view.ts";
+} from "./shipJets.ts";
+import { stationRow } from "./shopView.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import {
   FALLBACK_SPACE_PALETTE,
@@ -286,7 +280,7 @@ import {
   readSpacePalette,
   spaceObjectColor,
   type SpacePalette,
-} from "./space-palette.ts";
+} from "./spacePalette.ts";
 import {
   BEACON_SUFFIX,
   FLASH_SUFFIX,
@@ -296,7 +290,7 @@ import {
   partKey,
   spriteOwner,
   staleSpriteKeys,
-} from "./sprite-keys.ts";
+} from "./spriteKeys.ts";
 import {
   readStardustArt,
   type StardustArt,
@@ -304,7 +298,7 @@ import {
   stardustFrame,
   stardustPhase,
   stardustShown,
-} from "./stardust-art.ts";
+} from "./stardustArt.ts";
 import {
   type GalaxyStationArt,
   readGalaxyStationArt,
@@ -315,10 +309,10 @@ import {
   stationFrame,
   stationFrameIndex,
   stationLoopFrame,
-} from "./station-art.ts";
-import { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg-rasters.ts";
+} from "./stationArt.ts";
+import { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svgRasters.ts";
 import { fileFilter, type TextureFilter, vectorRaster } from "./textures.ts";
-import { createUseCallout, preloadTouchChrome } from "./touch-chrome.ts";
+import { createUseCallout, preloadTouchChrome } from "./touchChrome.ts";
 import {
   craftFrame,
   craftHeading,
@@ -330,13 +324,13 @@ import {
   towCurve,
   type TowLine,
   towOffset,
-} from "./tow-art.ts";
+} from "./towArt.ts";
 import {
   litChevron,
   readUpgradePickup,
   UPGRADE_CHEVRON,
   type UpgradePickupArt,
-} from "./upgrade-pickup.ts";
+} from "./upgradePickup.ts";
 import {
   AMBER_BEAM_GLOW,
   blast as blastEffect,
@@ -348,7 +342,7 @@ import {
   rapidMissile,
   spark as sparkEffect,
   type TaperShape,
-} from "./weapon-effects.ts";
+} from "./weaponEffects.ts";
 import {
   familyMembers,
   readWhaleArt,
@@ -357,7 +351,7 @@ import {
   type WhaleKind,
   whaleLoopFrame,
   whalePhase,
-} from "./whale-art.ts";
+} from "./whaleArt.ts";
 import {
   buoyFrame,
   buoyPlaces,
@@ -367,7 +361,7 @@ import {
   readWhirlpoolProjects,
   whalesCurrent,
   type WhirlpoolProjects,
-} from "./whirlpool-projects.ts";
+} from "./whirlpoolProjects.ts";
 import {
   BEACON_FRAMES,
   beaconFrame,
@@ -381,7 +375,7 @@ import {
   type LoopArt,
   loopPhase,
   readLoopArt,
-} from "./world-art.ts";
+} from "./worldArt.ts";
 
 // Story craft darts while their frames load.
 const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;
@@ -435,7 +429,7 @@ const LANDMARK_DEPTH = -0.5;
 // A dust streak draws in this many pieces, each at its share of the half-sine fade.
 const STREAK_PIECES = 8;
 
-export class PrototypeScene extends Scene {
+export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
   private model!: GameModel;
   private shell!: StoryShell;
@@ -477,7 +471,7 @@ export class PrototypeScene extends Scene {
   // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
   // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
   private light = false;
-  // Which seen enemies, heavies and stations are off screen and marked (model/edge-markers.ts).
+  // Which seen enemies, heavies and stations are off screen and marked (model/edgeMarkers.ts).
   private readonly edgeMarkers = createEdgeMarkerTracker();
   private keyed: {
     depth: number | undefined;
@@ -487,17 +481,17 @@ export class PrototypeScene extends Scene {
   }[] = [];
   private keylines = new Map<string, GameObjects.Image[]>();
   // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
-  // (draw-order.ts), and the tow craft's pivot depth while its line is drawn.
+  // (drawOrder.ts), and the tow craft's pivot depth while its line is drawn.
   private passable: PassableDraw[] = [];
   private towDepth: number | undefined;
   private silhouettes = new Silhouettes();
-  // Every SVG's raster scale (svg-rasters.ts), from the canvas's fit when preload starts.
+  // Every SVG's raster scale (svgRasters.ts), from the canvas's fit when preload starts.
   private rasters!: SvgRasters;
   private jetKeyline!: GameObjects.Graphics;
   private indicatorInk!: GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
   /** Each galaxy's own station art; a galaxy without it draws the shared station. */
-  private galaxyStations = new Map<SectorId, GalaxyStationArt<Asset>>();
+  private galaxyStations = new Map<GalaxyNumber, GalaxyStationArt<Asset>>();
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   // Funded projects' world changes at the outposts (art/projects.md "World changes"): each reveal
   // in play by project, from its start on the flight clock, and its after state's group texture.
@@ -517,10 +511,10 @@ export class PrototypeScene extends Scene {
   private mineInk = new Map<string, Phaser.GameObjects.Graphics>();
   /** Each salvaged heavy composed into one texture, dimmed as a group, by enemy id. */
   private salvagedGroups = new Map<string, GameObjects.RenderTexture>();
-  // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
+  // Whirlpool's nursery beacon and current-map buoys (whirlpoolProjects.ts), the buoys' sprites
   // by buoy, and the whales' current with the family position it was found from.
   private whirlpoolProjects: WhirlpoolProjects<Asset> | undefined;
-  // The station jobs' art (job-art.ts): the landmarks' layer sprites by landmark and layer, those
+  // The station jobs' art (jobArt.ts): the landmarks' layer sprites by landmark and layer, those
   // drawn this frame, and the hunt's lost-item glint.
   private jobArt: JobArt<Asset> | undefined;
   private landmarkSprites = new Map<string, GameObjects.Image>();
@@ -544,9 +538,9 @@ export class PrototypeScene extends Scene {
   } = { assets: [] };
   // Each galaxy's manifest path from the core manifest, and the galaxy manifests loaded so far:
   // Sunflower's at boot, every other galaxy's with its art on its first flight.
-  private galaxyManifestPaths: Partial<Record<SectorId, string>> = {};
-  private galaxyManifests = new Map<SectorId, GalaxyManifest<Asset>>();
-  private galaxyLoads = new Set<SectorId>();
+  private galaxyManifestPaths: Partial<Record<GalaxyNumber, string>> = {};
+  private galaxyManifests = new Map<GalaxyNumber, GalaxyManifest<Asset>>();
+  private galaxyLoads = new Set<GalaxyNumber>();
   private hubArt: HubArt<Asset> | undefined;
   private buoyArt: StationArt<Asset> | undefined;
   private craftArt: ReadonlyMap<string, EnemyArt<Asset>> = new Map();
@@ -555,7 +549,7 @@ export class PrototypeScene extends Scene {
   // Every galaxy's tow line, and each galaxy's stranded craft by id; a rescue keeps its
   // placeholder craft or line until its art loads.
   private towLine: TowLine | undefined;
-  private strandedCraft = new Map<SectorId, ReadonlyMap<string, StrandedCraftArt<Asset>>>();
+  private strandedCraft = new Map<GalaxyNumber, ReadonlyMap<string, StrandedCraftArt<Asset>>>();
   private towInk!: GameObjects.Graphics;
   private towSprite!: GameObjects.Image;
   // The guided calf's heading, kept while it rests.
@@ -565,7 +559,7 @@ export class PrototypeScene extends Scene {
   private familyArts = new Map<string, Map<string, EnemyArt<Asset>>>();
   private familyShards = new Map<string, Map<string, NonNullable<ReturnType<typeof readShards>>>>();
   private familyParts = new Map<string, readonly Asset[]>();
-  private debrisArt: ReadonlyMap<SectorId, DebrisArt> = new Map();
+  private debrisArt: ReadonlyMap<GalaxyNumber, DebrisArt> = new Map();
   private streakSpec: StreakSpec | undefined;
   private resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
   // Resource rock SVGs declare their display size, so they load without the displayScale.
@@ -584,13 +578,13 @@ export class PrototypeScene extends Scene {
   private backdropSprites = new Map<string, GameObjects.Image>();
   // Each galaxy's fixed backdrop layer once loaded (its haze texture or its painted band) and the
   // one image that draws it.
-  private backdrops = new Map<SectorId, Pick<BackdropHaze, "asset" | "height" | "width">>();
+  private backdrops = new Map<GalaxyNumber, Pick<BackdropHaze, "asset" | "height" | "width">>();
   private backdropImage: GameObjects.Image | null = null;
   // The backdrop layers (art/backdrop.md): Art's shared rules, each galaxy's backdrop once read,
   // and the objects that draw the sky, the far items and planets by key, the plates, the stars
   // and the dust streaks.
   private backdropRules: BackdropRules | undefined;
-  private galaxyBackdrops = new Map<SectorId, GalaxyBackdrop>();
+  private galaxyBackdrops = new Map<GalaxyNumber, GalaxyBackdrop>();
   private skyImage: GameObjects.Image | null = null;
   private backdropItems = new Map<string, GameObjects.Image>();
   private plateInk: Record<"multiply" | "screen", GameObjects.Graphics> | null = null;
@@ -650,16 +644,16 @@ export class PrototypeScene extends Scene {
   private palette = FALLBACK_SPACE_PALETTE;
   // The palette at home and before a galaxy is set, and each galaxy's retinted field.
   private basePalette = FALLBACK_SPACE_PALETTE;
-  private galaxyPalettes: ReadonlyMap<SectorId, SpacePalette> = new Map();
+  private galaxyPalettes: ReadonlyMap<GalaxyNumber, SpacePalette> = new Map();
   // The galaxies whose field is light, from the same galaxies.json as their palettes.
-  private lightGalaxies: ReadonlySet<SectorId> = new Set();
+  private lightGalaxies: ReadonlySet<GalaxyNumber> = new Set();
   // The space background in use: the flight's galaxy field, else the base palette's.
   private spaceBackground = FALLBACK_SPACE_PALETTE.background;
   private station!: ReturnType<typeof createStationView>;
   private storybook!: ReturnType<typeof createStorybook>;
-  private galaxies!: ReturnType<typeof createRouteMap>;
+  private galaxies!: ReturnType<typeof createGalaxyMap>;
   // Each galaxy's route map marker hue and previews, from Art's galaxies.json and manifest.
-  private routeGalaxies: () => RouteMapView["galaxies"] = () => [];
+  private routeGalaxies: () => GalaxyMapView["galaxies"] = () => [];
   private restartCard!: ReturnType<typeof createRestartCard>;
   private conversationBox!: ConversationBox;
   // The loader runs the player waits for show the loading bar; on-demand art loads silently. The
@@ -667,7 +661,7 @@ export class PrototypeScene extends Scene {
   private loads: LoaderWatch<WaitedLoad> | undefined;
 
   constructor() {
-    super("prototype");
+    super("game");
   }
 
   preload(): void {
@@ -786,7 +780,7 @@ export class PrototypeScene extends Scene {
     if (newer) {
       stopSaving();
     }
-    this.model = new GameModel(PROTOTYPE, newer ? null : saved);
+    this.model = new GameModel(CONTENT, newer ? null : saved);
     this.basePalette =
       readSpacePalette(this.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
     this.palette = this.basePalette;
@@ -806,7 +800,7 @@ export class PrototypeScene extends Scene {
     this.spaceBackground = background;
     fitPlayCamera(this);
     // SVGs, and the touch chrome on RASTER_SCALE_EVENT, rasterise again once a resize moves the
-    // camera's zoom far enough (svg-rasters.ts).
+    // camera's zoom far enough (svgRasters.ts).
     const followZoom = (): void => {
       const before = this.rasters.scale;
       this.rasterAgain(this.rasters.resize(sceneFit(this).zoom));
@@ -819,7 +813,7 @@ export class PrototypeScene extends Scene {
     this.events.once(Scenes.Events.SHUTDOWN, () => this.scale.off(Scale.Events.RESIZE, followZoom));
     const host = document.getElementById(VIEW_HOST_ID);
     if (host) {
-      const layer = createBannerLayer(document, host, PROTOTYPE.labels.disabledBanner ?? "");
+      const layer = createBannerLayer(document, host, CONTENT.labels.disabledBanner ?? "");
       this.bannerLayer = layer;
       this.events.once(Scenes.Events.SHUTDOWN, () => layer.destroy());
     }
@@ -965,12 +959,12 @@ export class PrototypeScene extends Scene {
     );
     this.controls = createControls(this, {
       achievements: {
-        close: PROTOTYPE.labels.close ?? "",
-        next: PROTOTYPE.labels.next ?? "",
-        page: PROTOTYPE.labels.achievementsPage ?? "",
-        previous: PROTOTYPE.labels.previous ?? "",
-        progress: PROTOTYPE.labels.achievementProgress ?? "",
-        title: PROTOTYPE.labels.achievements ?? "",
+        close: CONTENT.labels.close ?? "",
+        next: CONTENT.labels.next ?? "",
+        page: CONTENT.labels.achievementsPage ?? "",
+        previous: CONTENT.labels.previous ?? "",
+        progress: CONTENT.labels.achievementProgress ?? "",
+        title: CONTENT.labels.achievements ?? "",
       },
       cheats: {
         actions: [
@@ -991,7 +985,7 @@ export class PrototypeScene extends Scene {
         onSave: () => apply(() => {}),
         run: () => (this.model.state.mode === "space" ? this.model.state.flight : null),
       },
-      exit: exitShown() ? { label: PROTOTYPE.labels.exit ?? "", onExit: exitGame } : undefined,
+      exit: exitShown() ? { label: CONTENT.labels.exit ?? "", onExit: exitGame } : undefined,
       install: {
         port: {
           install: installApp,
@@ -1000,23 +994,23 @@ export class PrototypeScene extends Scene {
           state: installState,
           stepsKind,
         },
-        steps: PROTOTYPE.installSteps,
+        steps: CONTENT.installSteps,
       },
       labels: {
-        aimControls: PROTOTYPE.labels.aimControls ?? "",
-        close: PROTOTYPE.labels.close ?? "",
-        controlsNote: PROTOTYPE.labels.controlsNote ?? "",
-        install: PROTOTYPE.labels.install ?? "",
-        installButton: PROTOTYPE.labels.installButton ?? "",
-        installNote: PROTOTYPE.labels.installNote ?? "",
-        motionNote: PROTOTYPE.labels.motionNote ?? "",
-        moveControls: PROTOTYPE.labels.moveControls ?? "",
-        reducedMotion: PROTOTYPE.labels.reducedMotion ?? "",
-        settings: PROTOTYPE.labels.settings ?? "",
-        sound: PROTOTYPE.labels.sound ?? "",
-        soundNote: PROTOTYPE.labels.soundNote ?? "",
+        aimControls: CONTENT.labels.aimControls ?? "",
+        close: CONTENT.labels.close ?? "",
+        controlsNote: CONTENT.labels.controlsNote ?? "",
+        install: CONTENT.labels.install ?? "",
+        installButton: CONTENT.labels.installButton ?? "",
+        installNote: CONTENT.labels.installNote ?? "",
+        motionNote: CONTENT.labels.motionNote ?? "",
+        moveControls: CONTENT.labels.moveControls ?? "",
+        reducedMotion: CONTENT.labels.reducedMotion ?? "",
+        settings: CONTENT.labels.settings ?? "",
+        sound: CONTENT.labels.sound ?? "",
+        soundNote: CONTENT.labels.soundNote ?? "",
       },
-      noticeLabels: PROTOTYPE.labels,
+      noticeLabels: CONTENT.labels,
       onFeedbackChange: (settings) => {
         this.feedbackSound.enabled = settings.sound;
         this.screenShake = screenShakes(settings);
@@ -1044,21 +1038,21 @@ export class PrototypeScene extends Scene {
       // Navigation lives in the Paused card; the local map's Travel here and Galaxies refuse while
       // Ada is in danger, and Back to title never does.
       pause: {
-        buttonLabel: PROTOTYPE.labels.pause ?? "",
+        buttonLabel: CONTENT.labels.pause ?? "",
         labels: {
-          backToTitle: PROTOTYPE.labels.backToTitle ?? "",
-          close: PROTOTYPE.labels.close ?? "",
-          map: PROTOTYPE.labels.map ?? "",
-          mapScreen: mapScreenLabels(PROTOTYPE.labels),
-          resume: PROTOTYPE.labels.resume ?? "",
-          settings: PROTOTYPE.labels.settings ?? "",
-          ship: PROTOTYPE.labels.ship ?? "",
+          backToTitle: CONTENT.labels.backToTitle ?? "",
+          close: CONTENT.labels.close ?? "",
+          map: CONTENT.labels.map ?? "",
+          mapScreen: mapScreenLabels(CONTENT.labels),
+          resume: CONTENT.labels.resume ?? "",
+          settings: CONTENT.labels.settings ?? "",
+          ship: CONTENT.labels.ship ?? "",
           shipHeadings: {
-            cargo: PROTOTYPE.labels.cargo ?? "",
-            equipment: PROTOTYPE.labels.equipment ?? "",
+            cargo: CONTENT.labels.cargo ?? "",
+            equipment: CONTENT.labels.equipment ?? "",
           },
-          shipRows: PROTOTYPE.labels,
-          title: PROTOTYPE.labels.pauseTitle ?? "",
+          shipRows: CONTENT.labels,
+          title: CONTENT.labels.pauseTitle ?? "",
         },
         // The start screen needs no quantum jump; it covers the flight at once.
         onBackToTitle: () => {
@@ -1074,31 +1068,31 @@ export class PrototypeScene extends Scene {
         },
       },
       rasterScale: this.rasters.scale,
-      shieldLabel: PROTOTYPE.labels.shield ?? "",
+      shieldLabel: CONTENT.labels.shield ?? "",
       update: {
         labels: {
-          accept: PROTOTYPE.update.accept,
-          cancel: PROTOTYPE.update.cancel,
-          close: PROTOTYPE.labels.close ?? "",
-          title: PROTOTYPE.update.title,
+          accept: CONTENT.update.accept,
+          cancel: CONTENT.update.cancel,
+          close: CONTENT.labels.close ?? "",
+          title: CONTENT.update.title,
         },
         offer: updateOffer,
         restoreFocus: () => this.shell.focusDefault(),
       },
       weaponLabels: {
-        ammo: PROTOTYPE.labels.weaponAmmoLabel ?? "",
-        group: PROTOTYPE.labels.weapon ?? "",
+        ammo: CONTENT.labels.weaponAmmoLabel ?? "",
+        group: CONTENT.labels.weapon ?? "",
         names: {
-          heavyMissile: PROTOTYPE.labels.weaponHeavyMissile ?? "",
-          laser: PROTOTYPE.labels.weaponLaser ?? "",
-          multiLaser: PROTOTYPE.labels.weaponMultiLaser ?? "",
-          phaser: PROTOTYPE.labels.weaponPhaser ?? "",
-          rapidMissile: PROTOTYPE.labels.weaponRapidMissile ?? "",
-          scattershot: PROTOTYPE.labels.weaponScattershot ?? "",
+          heavyMissile: CONTENT.labels.weaponHeavyMissile ?? "",
+          laser: CONTENT.labels.weaponLaser ?? "",
+          multiLaser: CONTENT.labels.weaponMultiLaser ?? "",
+          phaser: CONTENT.labels.weaponPhaser ?? "",
+          rapidMissile: CONTENT.labels.weaponRapidMissile ?? "",
+          scattershot: CONTENT.labels.weaponScattershot ?? "",
         },
       },
     });
-    const labels = PROTOTYPE.labels;
+    const labels = CONTENT.labels;
     const label = (key: string): string => labels[key] ?? "";
     const amount = (value: number): string => fill(label("stardustAmount"), { amount: value });
     const item = (key: string): ShopItem => JSON.parse(key) as ShopItem;
@@ -1279,7 +1273,7 @@ export class PrototypeScene extends Scene {
       onSkip: () => apply(() => this.model.storySkip()),
       reducedMotion: () => this.controls.reducedMotion(),
     });
-    this.galaxies = createRouteMap(this.controls.overlay, {
+    this.galaxies = createGalaxyMap(this.controls.overlay, {
       labels: {
         close: label("close"),
         development: label("galaxyInDevelopment"),
@@ -1304,7 +1298,7 @@ export class PrototypeScene extends Scene {
       },
       onFlightEnd: () => apply(() => this.model.finishRouteFlight()),
       onJump: () => {
-        const selected = this.model.selectedGalaxy;
+        const selected = this.model.galaxyMapSelection;
         if (this.model.galaxyMapStays) {
           // Stay here: both maps close and the same flight resumes, with no jump.
           apply(() => this.model.jump());
@@ -1440,11 +1434,11 @@ export class PrototypeScene extends Scene {
    * Loads a galaxy's own art the first time one of its flights draws: SVGs (loadSvg), the nugget
    * sheet and the data files, then reads them. Until then its objects keep their placeholders.
    */
-  private loadGalaxyArt(sector: SectorId): void {
-    if (this.galaxyLoads.has(sector)) {
+  private loadGalaxyArt(galaxy: GalaxyNumber): void {
+    if (this.galaxyLoads.has(galaxy)) {
       return;
     }
-    this.galaxyLoads.add(sector);
+    this.galaxyLoads.add(galaxy);
     // Resource rocks are in every galaxy's chunks, and any galaxy's rescue draws the tow line:
     // both load with the first flight.
     for (const [key, path] of [
@@ -1457,14 +1451,14 @@ export class PrototypeScene extends Scene {
         this.load.json(key, path);
       }
     }
-    const path = this.galaxyManifestPaths[sector];
-    if (this.galaxyManifests.has(sector) || !path) {
-      this.queueGalaxyArt(sector);
+    const path = this.galaxyManifestPaths[galaxy];
+    if (this.galaxyManifests.has(galaxy) || !path) {
+      this.queueGalaxyArt(galaxy);
     } else {
-      this.load.once(`filecomplete-json-${galaxyManifestKey(sector)}`, () =>
-        this.queueGalaxyArt(sector),
+      this.load.once(`filecomplete-json-${galaxyManifestKey(galaxy)}`, () =>
+        this.queueGalaxyArt(galaxy),
       );
-      this.load.json(galaxyManifestKey(sector), path);
+      this.load.json(galaxyManifestKey(galaxy), path);
     }
     this.load.once(Loader.Events.COMPLETE, () => this.readGalaxyArt());
     // The galaxy's first flight waits on its own art.
@@ -1491,28 +1485,28 @@ export class PrototypeScene extends Scene {
    * Adds a galaxy's loaded manifest to the known assets and data links, then queues its art:
    * its SVGs and sheets, its craft and claim jumper data and its own data files.
    */
-  private queueGalaxyArt(sector: SectorId): void {
-    const galaxy =
-      this.galaxyManifests.get(sector) ??
-      readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(sector)));
-    if (!galaxy) {
+  private queueGalaxyArt(galaxy: GalaxyNumber): void {
+    const manifest =
+      this.galaxyManifests.get(galaxy) ??
+      readGalaxyManifest<Asset>(this.cache.json.get(galaxyManifestKey(galaxy)));
+    if (!manifest) {
       return;
     }
-    if (!this.galaxyManifests.has(sector)) {
-      this.galaxyManifests.set(sector, galaxy);
+    if (!this.galaxyManifests.has(galaxy)) {
+      this.galaxyManifests.set(galaxy, manifest);
       this.manifest = {
         ...this.manifest,
-        ...galaxy.links,
-        assets: [...this.manifest.assets, ...galaxy.assets],
+        ...manifest.links,
+        assets: [...this.manifest.assets, ...manifest.assets],
       };
       for (const { family } of GALAXY_FAMILIES) {
         this.familyParts.set(family, [
           ...(this.familyParts.get(family) ?? []),
-          ...galaxy.assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
+          ...manifest.assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
         ]);
       }
     }
-    const assets = galaxy.assets;
+    const assets = manifest.assets;
     for (const asset of assets) {
       this.loadGalaxyAsset(asset);
     }
@@ -1541,15 +1535,15 @@ export class PrototypeScene extends Scene {
         }
       }
     }
-    this.queueBackdrop(sector, galaxy);
+    this.queueBackdrop(galaxy, manifest);
     // The galaxy's own data files, named by its manifest's links, and its stranded craft data.
     for (const [key, path] of [
-      [galaxyTowKey(sector), galaxy.tow],
-      ["cartwheel-debris", galaxy.links.cartwheelDebris],
-      ["whales", galaxy.links.whales],
-      ["whirlpool-currents", galaxy.links.whirlpoolCurrents],
-      ["whirlpool-debris", galaxy.links.whirlpoolDebris],
-      ["whirlpool-projects", galaxy.links.whirlpoolProjects],
+      [galaxyTowKey(galaxy), manifest.tow],
+      ["cartwheel-debris", manifest.links.cartwheelDebris],
+      ["whales", manifest.links.whales],
+      ["whirlpool-currents", manifest.links.whirlpoolCurrents],
+      ["whirlpool-debris", manifest.links.whirlpoolDebris],
+      ["whirlpool-projects", manifest.links.whirlpoolProjects],
     ] as const) {
       if (path && !this.cache.json.exists(key)) {
         this.load.json(key, path);
@@ -1561,10 +1555,10 @@ export class PrototypeScene extends Scene {
    * A galaxy's backdrop layers: its backdrop.json, then the fixed layers it names and its nebula
    * textures, which draw with linear filtering since at parallax 0.05 nearest texels would crawl.
    */
-  private queueBackdrop(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
-    const path = galaxy.links.backdrop;
-    const key = `backdrop-${sector}`;
-    if (!path || this.galaxyBackdrops.has(sector) || this.cache.json.exists(key)) {
+  private queueBackdrop(galaxy: GalaxyNumber, manifest: GalaxyManifest<Asset>): void {
+    const path = manifest.links.backdrop;
+    const key = `backdrop-${galaxy}`;
+    if (!path || this.galaxyBackdrops.has(galaxy) || this.cache.json.exists(key)) {
       return;
     }
     this.load.once(`filecomplete-json-${key}`, () => {
@@ -1572,15 +1566,15 @@ export class PrototypeScene extends Scene {
       if (!backdrop) {
         return;
       }
-      this.galaxyBackdrops.set(sector, backdrop);
+      this.galaxyBackdrops.set(galaxy, backdrop);
       if (backdrop.fixed.includes("backdropHaze")) {
-        this.queueHaze(sector, galaxy);
+        this.queueHaze(galaxy, manifest);
       }
       if (backdrop.fixed.includes("needleBand")) {
-        this.queueBand(sector, galaxy);
+        this.queueBand(galaxy, manifest);
       }
       for (const id of backdrop.far.flatMap((far) => (far.look === "nebula" ? far.assets : []))) {
-        const asset = galaxy.assets.find((entry) => entry.id === id);
+        const asset = manifest.assets.find((entry) => entry.id === id);
         if (!asset || this.textures.exists(id)) {
           continue;
         }
@@ -1595,20 +1589,20 @@ export class PrototypeScene extends Scene {
    * A galaxy's backdrop haze: its haze.json, then the texture it names, which draws with linear
    * filtering since its half-resolution texels must never show.
    */
-  private queueHaze(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
-    const path = galaxy.links.backdropHaze;
-    const key = `backdrop-haze-${sector}`;
-    if (!path || this.backdrops.has(sector) || this.cache.json.exists(key)) {
+  private queueHaze(galaxy: GalaxyNumber, manifest: GalaxyManifest<Asset>): void {
+    const path = manifest.links.backdropHaze;
+    const key = `backdrop-haze-${galaxy}`;
+    if (!path || this.backdrops.has(galaxy) || this.cache.json.exists(key)) {
       return;
     }
     this.load.once(`filecomplete-json-${key}`, () => {
-      const haze = readBackdropHaze(galaxy.assets, this.cache.json.get(key));
+      const haze = readBackdropHaze(manifest.assets, this.cache.json.get(key));
       if (!haze) {
         return;
       }
       const ready = () => {
         this.filterTexture(haze.asset, "linear");
-        this.backdrops.set(sector, haze);
+        this.backdrops.set(galaxy, haze);
       };
       if (this.textures.exists(haze.asset)) {
         ready();
@@ -1624,10 +1618,10 @@ export class PrototypeScene extends Scene {
    * Needle's edge-on band: its band.json, painted once into a canvas texture over the haze's area
    * at the maximum render scale, so its 1.2 px core and point stars stay sharp.
    */
-  private queueBand(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
-    const path = galaxy.links.needleBand;
-    const key = `backdrop-band-${sector}`;
-    if (!path || this.backdrops.has(sector) || this.cache.json.exists(key)) {
+  private queueBand(galaxy: GalaxyNumber, manifest: GalaxyManifest<Asset>): void {
+    const path = manifest.links.needleBand;
+    const key = `backdrop-band-${galaxy}`;
+    if (!path || this.backdrops.has(galaxy) || this.cache.json.exists(key)) {
       return;
     }
     this.load.once(`filecomplete-json-${key}`, () => {
@@ -1646,14 +1640,14 @@ export class PrototypeScene extends Scene {
       paintBand(band, texture.getContext(), MAX_RENDER_SCALE);
       texture.refresh();
       this.filterTexture(key, "linear");
-      this.backdrops.set(sector, { asset: key, height: BAND_AREA.height, width: BAND_AREA.width });
+      this.backdrops.set(galaxy, { asset: key, height: BAND_AREA.height, width: BAND_AREA.width });
     });
     this.load.json(key, path);
   }
 
   /** The flight's galaxy's fixed backdrop layer, on the play view's centre, or none. */
-  private drawBackdropLayer(sector: SectorId | null): void {
-    const layer = sector === null ? undefined : this.backdrops.get(sector);
+  private drawBackdropLayer(galaxy: GalaxyNumber | null): void {
+    const layer = galaxy === null ? undefined : this.backdrops.get(galaxy);
     if (!layer) {
       this.backdropImage?.setVisible(false);
       return;
@@ -1682,15 +1676,15 @@ export class PrototypeScene extends Scene {
       this.familyShards.set(family, read);
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
-    for (const [sector, galaxy] of this.galaxyManifests) {
-      const own = galaxy.assets.filter((asset) => this.textures.exists(asset.id));
+    for (const [galaxy, manifest] of this.galaxyManifests) {
+      const own = manifest.assets.filter((asset) => this.textures.exists(asset.id));
       const stations = readGalaxyStationArt(own);
       if (stations) {
-        this.galaxyStations.set(sector, stations);
+        this.galaxyStations.set(galaxy, stations);
       }
       this.strandedCraft.set(
-        sector,
-        readStrandedCraft(this.cache.json.get(galaxyTowKey(sector)), own),
+        galaxy,
+        readStrandedCraft(this.cache.json.get(galaxyTowKey(galaxy)), own),
       );
     }
     this.towLine = readTowLine(this.cache.json.get("tow"));
@@ -1707,8 +1701,8 @@ export class PrototypeScene extends Scene {
       ),
     );
     this.storyNoses = storyNoses((craft) => this.cache.json.get(`craft-jets-${craft}`));
-    const debris = new Map<SectorId, DebrisArt>();
-    for (const [sector, key] of [
+    const debris = new Map<GalaxyNumber, DebrisArt>();
+    for (const [galaxy, key] of [
       [2, "cartwheel-debris"],
       [3, "whirlpool-debris"],
     ] as const) {
@@ -1717,7 +1711,7 @@ export class PrototypeScene extends Scene {
         piece.frames.every((_, k) => this.textures.exists(`${piece.id}-${k}`)),
       );
       if (art && ready) {
-        debris.set(sector, art);
+        debris.set(galaxy, art);
       }
     }
     this.debrisArt = debris;
@@ -1834,7 +1828,7 @@ export class PrototypeScene extends Scene {
     this.renderConversation();
     const durable = JSON.stringify([
       state.mode,
-      state.selectedSector,
+      state.selectedGalaxy,
       state.progress,
       state.unlocked,
       state.dialogue,
@@ -1856,7 +1850,7 @@ export class PrototypeScene extends Scene {
    */
   private drawTravelingDebris(object: SpaceObject, point: Vec): boolean {
     const flight = this.model.state.flight!;
-    const art = this.debrisArt.get(flight.sector);
+    const art = this.debrisArt.get(flight.galaxy);
     if (!art || !object.velocity || object.orbit) {
       return false;
     }
@@ -1918,14 +1912,14 @@ export class PrototypeScene extends Scene {
     }
   }
 
-  /** Moves each zipping pickup toward Ada for PROTOTYPE's pickupZip, then removes it. */
+  /** Moves each zipping pickup toward Ada for CONTENT's pickupZip, then removes it. */
   private drawZips(): void {
     const flight = this.model.state.flight;
     this.zips = this.zips.filter((zip) => {
       const state =
         flight &&
         zipAt(
-          PROTOTYPE.tuning.flight.pickupZip,
+          CONTENT.tuning.flight.pickupZip,
           (this.time.now - zip.startedMs) / 1000,
           zip.from,
           flight.player,
@@ -2010,7 +2004,7 @@ export class PrototypeScene extends Scene {
   private shipView(): ShipView {
     const ship = this.model.ship;
     const paint = ECONOMY.paints[ship.paint]?.label;
-    return { ...ship, paint: (paint && PROTOTYPE.labels[paint]) ?? "" };
+    return { ...ship, paint: (paint && CONTENT.labels[paint]) ?? "" };
   }
 
   // Queues item notices for what Ada gained since last frame; a new flight starts from what she
@@ -2055,19 +2049,19 @@ export class PrototypeScene extends Scene {
     this.noticeGains();
     const aboard = this.model.aboard;
     this.controls.setStatus({
-      aboard: aboard && { kind: aboard.kind, label: aboardLabel(PROTOTYPE.labels, aboard) },
+      aboard: aboard && { kind: aboard.kind, label: aboardLabel(CONTENT.labels, aboard) },
       capacity: this.model.shieldMax,
       level: state.flight?.levels.shield ?? state.economy.levels.shield,
       lightField: lightGalaxy(
         this.lightGalaxies,
-        state.mode === "space" ? state.flight?.sector : undefined,
+        state.mode === "space" ? state.flight?.galaxy : undefined,
       ),
       ore: this.model.ship.ore,
-      oreLabel: PROTOTYPE.labels.ore ?? "",
+      oreLabel: CONTENT.labels.ore ?? "",
       recharging: this.model.shieldRecharging,
       shield: state.flight?.shield ?? 0,
       stardust: state.economy.stardust,
-      stardustLabel: fill(PROTOTYPE.labels.stardustAmount ?? "", {
+      stardustLabel: fill(CONTENT.labels.stardustAmount ?? "", {
         amount: stardustCount(state.economy.stardust),
       }),
     });
@@ -2101,7 +2095,7 @@ export class PrototypeScene extends Scene {
     });
     this.controls.setAchievements(this.model.achievements);
     this.shell.render(state, screen);
-    const flightGalaxy = state.mode === "space" ? state.flight?.sector : undefined;
+    const flightGalaxy = state.mode === "space" ? state.flight?.galaxy : undefined;
     this.palette = (flightGalaxy && this.galaxyPalettes.get(flightGalaxy)) || this.basePalette;
     const background = this.palette.background;
     if (background !== this.spaceBackground) {
@@ -2109,7 +2103,7 @@ export class PrototypeScene extends Scene {
       this.cameras.main.setBackgroundColor(background);
     }
     const story = this.model.storyView;
-    const selected = this.model.selectedGalaxy;
+    const selected = this.model.galaxyMapSelection;
     this.storybook.show(
       story && {
         ...storyPageView(story.page, story.choices, story.canGoBack, story.canSkip),
@@ -2165,8 +2159,8 @@ export class PrototypeScene extends Scene {
    * Andromeda's garnet drones), else Gadget's coral.
    */
   private familyOf(archetype: string): EnemyFamily | undefined {
-    const sector = this.model.state.flight?.sector;
-    return galaxyFamily(sector === undefined ? undefined : GALAXY_ID[sector], archetype);
+    const galaxy = this.model.state.flight?.galaxy;
+    return galaxyFamily(galaxy === undefined ? undefined : GALAXY_ID[galaxy], archetype);
   }
 
   /** A craft's art in its galaxy's family, while that family's frames are loaded. */
@@ -2184,11 +2178,11 @@ export class PrototypeScene extends Scene {
    */
   private loadEnemyParts(archetype: string): void {
     const family = this.familyOf(archetype);
-    const sector = this.model.state.flight?.sector;
+    const galaxy = this.model.state.flight?.galaxy;
     // Coral parts are in the core manifest; a galaxy family's in its galaxy's, which may not
     // have loaded when the craft first draws.
     const parts = enemyPartsToLoad(
-      !family || (sector !== undefined && this.galaxyManifests.has(sector)),
+      !family || (galaxy !== undefined && this.galaxyManifests.has(galaxy)),
       (id) => this.textures.exists(id),
       family ? (this.familyParts.get(family.family) ?? []) : this.partAssets,
       archetype,
@@ -2215,19 +2209,19 @@ export class PrototypeScene extends Scene {
 
   /** The flight's galaxy for the map: its name, its field's background and its fog. */
   private mapField(): MapField | null {
-    const sector = this.model.state.mode === "space" ? this.model.state.flight?.sector : undefined;
-    if (!sector) {
+    const galaxy = this.model.state.mode === "space" ? this.model.state.flight?.galaxy : undefined;
+    if (!galaxy) {
       return null;
     }
-    const palette = this.galaxyPalettes.get(sector) ?? this.basePalette;
+    const palette = this.galaxyPalettes.get(galaxy) ?? this.basePalette;
     return {
       background: `#${palette.background.toString(16).padStart(6, "0")}`,
       fog: fogColor(palette.environment, palette.environmentDetail),
-      name: galaxyCard(sector).name,
+      name: galaxyCard(galaxy).name,
     };
   }
 
-  /** Queues an SVG at the current raster scale (svg-rasters.ts). */
+  /** Queues an SVG at the current raster scale (svgRasters.ts). */
   private queueSvg(request: SvgRequest): void {
     this.load.svg(request.key, request.path, this.rasters.request(request));
   }
@@ -2398,7 +2392,7 @@ export class PrototypeScene extends Scene {
       rock.sprite?.setVisible(false);
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space" && !this.warpCover);
-    this.drawBackdropLayer(flight && this.model.state.mode === "space" ? flight.sector : null);
+    this.drawBackdropLayer(flight && this.model.state.mode === "space" ? flight.galaxy : null);
     this.drawBackdropLayers(flight && this.model.state.mode === "space" ? flight : null);
     if (!flight || this.model.state.mode !== "space") {
       // Leaving the flight forgets every seen object.
@@ -2408,7 +2402,7 @@ export class PrototypeScene extends Scene {
       this.bannerLayer?.place([]);
       return;
     }
-    this.light = lightGalaxy(this.lightGalaxies, flight.sector);
+    this.light = lightGalaxy(this.lightGalaxies, flight.galaxy);
     this.drawBackdrop(flight);
     // Dust specks, the debris layer's motion cue at its parallax, in the galaxy's backdropSide.
     const cell = 160;
@@ -2417,7 +2411,7 @@ export class PrototypeScene extends Scene {
     const gx = Math.floor((flight.player.x * parallax) / cell);
     const gy = Math.floor((flight.player.y * parallax) / cell);
     this.specks = [];
-    const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.sector).backdropSide);
+    const speckColor = hexNumber(backdropTint(this.asteroidArt, flight.galaxy).backdropSide);
     for (let x = gx - span; x <= gx + span; x++) {
       for (let y = gy - span; y <= gy + span; y++) {
         const point = this.projectLayer(
@@ -2431,7 +2425,7 @@ export class PrototypeScene extends Scene {
         this.ink.fillCircle(point.x, point.y, 1);
       }
     }
-    this.loadGalaxyArt(flight.sector);
+    this.loadGalaxyArt(flight.galaxy);
     this.drawCurrents(flight);
     this.drawWhirlpoolProjects(flight);
     this.drawJobs();
@@ -2558,7 +2552,7 @@ export class PrototypeScene extends Scene {
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     // Jets and thrust frames share the 1 unit/s thrust threshold.
     const thrusting = Math.hypot(flight.velocity.x, flight.velocity.y) > 1;
-    const speed = thrusting ? shipSpeedFraction(PROTOTYPE, flight) : 0;
+    const speed = thrusting ? shipSpeedFraction(CONTENT, flight) : 0;
     const ship = selectPaintedShipAsset(
       this.shipAssets,
       this.paintInUse(),
@@ -2898,14 +2892,14 @@ export class PrototypeScene extends Scene {
       );
       return;
     }
-    const definition = enemyDefinition(this.model.state.flight!.sector, enemy.archetype);
+    const definition = enemyDefinition(this.model.state.flight!.galaxy, enemy.archetype);
     const art = this.familyArt(enemy.archetype);
     if (art) {
       this.drawEnemySprite(art, point, object.id, enemy);
       return;
     }
     this.enemyPlaceholders++;
-    const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
+    const width = definition.sizeRatio * CONTENT.tuning.flight.shipRadius * 2;
     // Hull and hardpoints share the hull's rotating local frame.
     const local = (x: number, y: number): Vec => {
       const offset = hullOffset(enemy.facing, { x: x * width, y: y * width });
@@ -3041,11 +3035,11 @@ export class PrototypeScene extends Scene {
     const state = (hardpoint: string) => enemy.hardpoints.find((part) => part.id === hardpoint);
     // A turret mount without hardpoint state, such as the retaliator's, aims with the hull
     // weapon and stands while the hull does. The galaxy's route position picks the mount tier.
-    const sector = this.model.state.flight?.sector;
+    const galaxy = this.model.state.flight?.galaxy;
     const pose: PartPose = {
       aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
       intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
-      position: sector === undefined ? 1 : ROUTE_POSITION[sector],
+      position: galaxy === undefined ? 1 : ROUTE_POSITION[galaxy],
     };
     const sprites = composeEnemy(art, pose, frame);
     if (enemy.salvaged) {
@@ -3162,7 +3156,7 @@ export class PrototypeScene extends Scene {
    */
   private drawStoryShips(flight: FlightState): void {
     const hub =
-      flight.sector === CARTWHEEL_STORY_SHIPS.sector
+      flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy
         ? flight.objects.find((object) => object.kind === "destination" && object.id === "hub")
         : undefined;
     if (!hub) {
@@ -3182,7 +3176,7 @@ export class PrototypeScene extends Scene {
         );
       }
     }
-    const progress = this.model.state.progress[flight.sector];
+    const progress = this.model.state.progress[flight.galaxy];
     for (const ship of storyShips(
       hub,
       progress,
@@ -3231,7 +3225,7 @@ export class PrototypeScene extends Scene {
   }
 
   /**
-   * Whirlpool's current streaks from Art's spec (current-streaks.ts): chevrons on the world
+   * Whirlpool's current streaks from Art's spec (currentStreaks.ts): chevrons on the world
    * plane in each lane, moving with the lane's flow and fading with it, on the field above the
    * specks and backdrop rocks and below every play object.
    */
@@ -3252,7 +3246,7 @@ export class PrototypeScene extends Scene {
         at.y < SCREEN.height + margin
       );
     };
-    for (const current of currentsNear(flight.sector, reach, flight.player)) {
+    for (const current of currentsNear(flight.galaxy, reach, flight.player)) {
       const marks = streakMarks(
         spec,
         current,
@@ -3293,7 +3287,7 @@ export class PrototypeScene extends Scene {
       return;
     }
     const funded = new Map(
-      this.model.worldChanges(flight.sector).map((change) => [change.project, change]),
+      this.model.worldChanges(flight.galaxy).map((change) => [change.project, change]),
     );
     const now = this.flightClock;
     const revealMs = this.projectArt?.revealMs ?? 0;
@@ -3308,7 +3302,7 @@ export class PrototypeScene extends Scene {
         if (!onScreen || !this.flightLive) {
           return undefined;
         }
-        this.model.revealWorldChange(flight.sector, project);
+        this.model.revealWorldChange(flight.galaxy, project);
         if (!this.reducedMotion) {
           this.reveals.set(project, now);
         }
@@ -3370,7 +3364,7 @@ export class PrototypeScene extends Scene {
         this.whalesCurrentFor.family.y !== family.y
       ) {
         this.whalesCurrentFor = {
-          current: whalesCurrent(flight.sector, family),
+          current: whalesCurrent(flight.galaxy, family),
           family: { x: family.x, y: family.y },
         };
       }
@@ -3420,7 +3414,7 @@ export class PrototypeScene extends Scene {
 
   /**
    * A marker at the game area's edge toward each seen enemy, heavy and station off screen and
-   * within range (model/edge-markers.ts); a direction indicator on the same object wins. Discs in
+   * within range (model/edgeMarkers.ts); a direction indicator on the same object wins. Discs in
    * the palette's threat, the station diamond in pointOfInterest; a light field adds an ink outline
    * (lightField.markerOutline) under each, as the indicators' ink does.
    */
@@ -3548,7 +3542,7 @@ export class PrototypeScene extends Scene {
    */
   private drawJobs(): void {
     const scenery = this.model.jobScenery;
-    const sector = this.model.state.flight?.sector;
+    const galaxy = this.model.state.flight?.galaxy;
     const art = this.jobArt;
     const margin = 200;
     const near = (point: Vec) =>
@@ -3563,11 +3557,11 @@ export class PrototypeScene extends Scene {
         continue;
       }
       const key = `landmark:${landmark.x},${landmark.y}`;
-      if (landmark.kind === "nebula" && art?.nebula && sector) {
+      if (landmark.kind === "nebula" && art?.nebula && galaxy) {
         art.nebula.forEach((layer, index) =>
           this.drawLandmarkLayer(`${key}#${index}`, layer.frame, point, index, {
             ...(layer.keyline ? { keyline: layer.keyline } : {}),
-            ...(layer.tint ? { tint: nebulaTint(art, sector, layer.tint) } : {}),
+            ...(layer.tint ? { tint: nebulaTint(art, galaxy, layer.tint) } : {}),
           }),
         );
       } else if (landmark.kind === "wreck" && art?.wreck) {
@@ -3715,8 +3709,8 @@ export class PrototypeScene extends Scene {
   private drawTow(craft: Vec & { readonly item: string }, towing: boolean): void {
     const flight = this.model.state.flight!;
     const point = this.project(craft);
-    const id = strandedCraftId(flight.sector, craft.item);
-    const art = id === undefined ? undefined : this.strandedCraft.get(flight.sector)?.get(id);
+    const id = strandedCraftId(flight.galaxy, craft.item);
+    const art = id === undefined ? undefined : this.strandedCraft.get(flight.galaxy)?.get(id);
     const heading = craftHeading(craft, flight.player);
     const frame = art && craftFrame(art, heading, this.reducedMotion, this.time.now);
     const offset = art && frame ? towOffset(art, frame, heading) : { x: 0, y: 0 };
@@ -3959,12 +3953,12 @@ export class PrototypeScene extends Scene {
    * no name label.
    */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
-    const sector = this.model.state.flight?.sector;
-    const galaxy = sector === undefined ? undefined : this.galaxyStations.get(sector);
-    if (galaxy && sector !== undefined) {
-      const funded = new Set(this.model.worldChanges(sector).map(({ project }) => project));
-      const replaced = [...galaxy.projects].find(([project]) => funded.has(project))?.[1];
-      const frame = stationLoopFrame(replaced ?? galaxy.base, this.reducedMotion, this.time.now);
+    const galaxy = this.model.state.flight?.galaxy;
+    const ownArt = galaxy === undefined ? undefined : this.galaxyStations.get(galaxy);
+    if (ownArt && galaxy !== undefined) {
+      const funded = new Set(this.model.worldChanges(galaxy).map(({ project }) => project));
+      const replaced = [...ownArt.projects].find(([project]) => funded.has(project))?.[1];
+      const frame = stationLoopFrame(replaced ?? ownArt.base, this.reducedMotion, this.time.now);
       this.placeStationFrame(frame, "station", object, point);
       return;
     }
@@ -4022,12 +4016,12 @@ export class PrototypeScene extends Scene {
    */
   private drawOutpost(art: StationArt<Asset>, object: SpaceObject, point: Vec): void {
     const index = stationFrameIndex(art, this.reducedMotion, this.time.now);
-    const sector = this.model.state.flight?.sector;
+    const galaxy = this.model.state.flight?.galaxy;
     const projects = this.projectArt?.projects;
     const changes =
-      sector && projects
+      galaxy && projects
         ? this.model
-            .worldChanges(sector)
+            .worldChanges(galaxy)
             .filter(({ project, site }) => site === object.id && projects.has(project))
         : [];
     const changeArt = (ids: readonly string[]) => ids.map((id) => projects!.get(id)!);
@@ -4040,7 +4034,7 @@ export class PrototypeScene extends Scene {
       boundsOnScreen(SCREEN, point, partsBounds(outpostParts(art, changeArt(all), index)))
     ) {
       for (const project of unseen) {
-        this.model.revealWorldChange(sector!, project);
+        this.model.revealWorldChange(galaxy!, project);
         if (!this.reducedMotion) {
           this.reveals.set(project, now);
         }
@@ -4158,7 +4152,7 @@ export class PrototypeScene extends Scene {
       return;
     }
     if (object.id === "hub" && this.hubArt) {
-      const progress = this.model.state.progress[this.model.state.flight!.sector];
+      const progress = this.model.state.progress[this.model.state.flight!.galaxy];
       hubLayers(this.hubArt, hubWorn(progress), hubBay(progress)).forEach((layer, index) => {
         this.drawBlink(
           layer,
@@ -4291,7 +4285,7 @@ export class PrototypeScene extends Scene {
     if (
       beacon &&
       flight &&
-      holodiskWaypoint(this.model.state.progress[flight.sector].holodisk, [object])
+      holodiskWaypoint(this.model.state.progress[flight.galaxy].holodisk, [object])
     ) {
       // A light field holds the beacon on its base frame, with no pulse.
       const held = this.light ? beacon.frames[LIGHT_FIELD.holodiskBeacon] : undefined;
@@ -4328,7 +4322,7 @@ export class PrototypeScene extends Scene {
       this.litFlight = flight.seed;
       this.litCaches.clear();
     }
-    if (cacheApproached(PROTOTYPE.tuning.safeRadius, flight.player, object)) {
+    if (cacheApproached(CONTENT.tuning.safeRadius, flight.player, object)) {
       this.litCaches.add(object.id);
     }
     const frame = cacheFrame(art, this.litCaches.has(object.id), this.reducedMotion, this.time.now);
@@ -4492,7 +4486,7 @@ export class PrototypeScene extends Scene {
     const point = this.project(object);
     const definition = object.enemy ? enemyCatalog[object.enemy.archetype] : undefined;
     const radius = definition
-      ? Math.max(object.radius, definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2)
+      ? Math.max(object.radius, definition.sizeRatio * CONTENT.tuning.flight.shipRadius * 2)
       : object.radius;
     const rock = object.asteroid ? rockArt(object.asteroid) : undefined;
     // Art's rocks reach past their footprint; cull by the drawn silhouette's reach.
@@ -4661,7 +4655,7 @@ export class PrototypeScene extends Scene {
    */
   private drawBackdropLayers(flight: FlightState | null): void {
     const rules = this.backdropRules;
-    const galaxy = flight ? this.galaxyBackdrops.get(flight.sector) : undefined;
+    const backdrop = flight ? this.galaxyBackdrops.get(flight.galaxy) : undefined;
     this.skyImage?.setVisible(false);
     this.plateInk?.multiply.clear();
     this.plateInk?.screen.clear();
@@ -4670,13 +4664,13 @@ export class PrototypeScene extends Scene {
       image.setVisible(false);
     }
     const used = new Set<string>();
-    if (flight && rules && galaxy) {
+    if (flight && rules && backdrop) {
       const camera = [flight.player.x, flight.player.y] as const;
-      this.drawSky(flight.sector, galaxy);
-      this.drawFarItems(rules, flight.sector, galaxy, camera, used);
-      this.drawPlates(rules, galaxy, camera);
-      this.drawStars(rules, galaxy, camera);
-      this.drawStreaks(rules, galaxy, camera);
+      this.drawSky(flight.galaxy, backdrop);
+      this.drawFarItems(rules, flight.galaxy, backdrop, camera, used);
+      this.drawPlates(rules, backdrop, camera);
+      this.drawStars(rules, backdrop, camera);
+      this.drawStreaks(rules, backdrop, camera);
     }
     for (const [key, image] of this.backdropItems) {
       if (!used.has(key)) {
@@ -4713,9 +4707,9 @@ export class PrototypeScene extends Scene {
   }
 
   /** L0: the galaxy's sky, one quad over the view, baked once at a quarter texel per px. */
-  private drawSky(sector: SectorId, galaxy: GalaxyBackdrop): void {
-    const key = `backdrop-sky-${sector}`;
-    this.bakeTexture(key, () => paintSky(galaxy.sky, 1 / 4));
+  private drawSky(galaxy: GalaxyNumber, backdrop: GalaxyBackdrop): void {
+    const key = `backdrop-sky-${galaxy}`;
+    this.bakeTexture(key, () => paintSky(backdrop.sky, 1 / 4));
     this.skyImage ??= this.add
       .image(0, 0, key)
       .setDepth(BACKDROP_DEPTH.sky)
@@ -4745,32 +4739,32 @@ export class PrototypeScene extends Scene {
    */
   private drawFarItems(
     rules: BackdropRules,
-    sector: SectorId,
-    galaxy: GalaxyBackdrop,
+    galaxy: GalaxyNumber,
+    backdrop: GalaxyBackdrop,
     camera: readonly [number, number],
     used: Set<string>,
   ): void {
     const scale = this.bakeScale();
-    for (const item of viewFar(rules, galaxy, camera)) {
+    for (const item of viewFar(rules, backdrop, camera)) {
       const { recipe } = item;
       if (recipe.look === "nebula") {
         const asset = recipe.assets[item.variant]!;
         if (this.textures.exists(asset)) {
-          this.backdropItem(`backdrop-nebula-${sector}-${item.id}`, asset, BACKDROP_DEPTH.far, used)
+          this.backdropItem(`backdrop-nebula-${galaxy}-${item.id}`, asset, BACKDROP_DEPTH.far, used)
             .setPosition(item.x, item.y)
             .setDisplaySize(rules.nebula.display[0], rules.nebula.display[1]);
         }
         continue;
       }
-      const key = `backdrop-cluster-${sector}-${item.id}`;
-      this.bakeTexture(key, () => paintCluster(rules, galaxy.seed, item, recipe, scale));
+      const key = `backdrop-cluster-${galaxy}-${item.id}`;
+      this.bakeTexture(key, () => paintCluster(rules, backdrop.seed, item, recipe, scale));
       const [width, height] = clusterReach(rules);
       this.backdropItem(key, key, BACKDROP_DEPTH.far, used)
         .setPosition(item.x, item.y)
         .setDisplaySize(2 * width, 2 * height);
     }
-    for (const planet of viewPlanets(rules, galaxy, camera)) {
-      const key = `backdrop-planet-${sector}-${planet.id}`;
+    for (const planet of viewPlanets(rules, backdrop, camera)) {
+      const key = `backdrop-planet-${galaxy}-${planet.id}`;
       this.bakeTexture(key, () => paintPlanet(rules, planet, scale));
       const size = 2 * planetReach(planet.r);
       this.backdropItem(key, key, BACKDROP_DEPTH.planets, used)
@@ -4782,7 +4776,7 @@ export class PrototypeScene extends Scene {
   /** L1: the plates in view, darker steps multiplied by their grey, lighter ones screened. */
   private drawPlates(
     rules: BackdropRules,
-    galaxy: GalaxyBackdrop,
+    backdrop: GalaxyBackdrop,
     camera: readonly [number, number],
   ): void {
     this.plateInk ??= {
@@ -4797,7 +4791,7 @@ export class PrototypeScene extends Scene {
         .setBlendMode(BlendModes.SCREEN)
         .setVertexRoundMode("off"),
     };
-    for (const plate of viewPlates(rules, galaxy, camera)) {
+    for (const plate of viewPlates(rules, backdrop, camera)) {
       const points = plate.points.map(([x, y]) => new PhaserMath.Vector2(x, y));
       if (plate.multiply !== undefined) {
         const grey = Math.round(plate.multiply * 255);
@@ -4813,11 +4807,11 @@ export class PrototypeScene extends Scene {
   /** L3: both star depths as tinted antialiased discs, unsnapped, with their twinkle. */
   private drawStars(
     rules: BackdropRules,
-    galaxy: GalaxyBackdrop,
+    backdrop: GalaxyBackdrop,
     camera: readonly [number, number],
   ): void {
-    const tint = hexNumber(galaxy.stars.color);
-    const stars = viewStars(rules, galaxy, camera, this.time.now / 1000, this.reducedMotion);
+    const tint = hexNumber(backdrop.stars.color);
+    const stars = viewStars(rules, backdrop, camera, this.time.now / 1000, this.reducedMotion);
     for (const [index, star] of stars.entries()) {
       const key = `backdrop-star-${star.r}`;
       this.bakeTexture(key, () => paintDisc(star.r, MAX_RENDER_SCALE));
@@ -4840,17 +4834,17 @@ export class PrototypeScene extends Scene {
   /** L4: the dust streaks, 1 px lines fading to clear at both ends along a half sine. */
   private drawStreaks(
     rules: BackdropRules,
-    galaxy: GalaxyBackdrop,
+    backdrop: GalaxyBackdrop,
     camera: readonly [number, number],
   ): void {
     this.streakInk ??= this.add
       .graphics()
       .setDepth(BACKDROP_DEPTH.streaks)
       .setVertexRoundMode("off");
-    const color = hexNumber(galaxy.streaks.color);
-    for (const streak of viewStreaks(rules, galaxy, camera)) {
+    const color = hexNumber(backdrop.streaks.color);
+    for (const streak of viewStreaks(rules, backdrop, camera)) {
       for (const piece of streakPieces(streak, STREAK_PIECES)) {
-        this.streakInk.lineStyle(rules.streaks.width, color, galaxy.streaks.alpha * piece.fade);
+        this.streakInk.lineStyle(rules.streaks.width, color, backdrop.streaks.alpha * piece.fade);
         this.streakInk.lineBetween(piece.from[0], piece.from[1], piece.to[0], piece.to[1]);
       }
     }
@@ -4866,7 +4860,7 @@ export class PrototypeScene extends Scene {
     if (!catalog) {
       return;
     }
-    const tint = hexNumber(backdropTint(catalog, flight.sector).backdropLit);
+    const tint = hexNumber(backdropTint(catalog, flight.galaxy).backdropLit);
     const { cell } = BACKDROP_FIELD;
     const parallax = this.backdropRules?.rocks.parallax ?? 1;
     const span = Math.ceil((Math.max(SCREEN.width, SCREEN.height) * 1.5) / cell) + 1;

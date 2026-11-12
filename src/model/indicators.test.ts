@@ -47,12 +47,12 @@ function context(overrides: Partial<IndicatorContext> = {}): IndicatorContext {
       ],
       player: ORIGIN,
     },
+    galaxy: 1,
     holodiskWaypoint: false,
     job: null,
     objective: "workshop",
     progress: { known: ["growers", "workshop"], stations: NEAR_STATIONS },
     questItem: null,
-    sector: 1,
     ...overrides,
   };
 }
@@ -92,13 +92,13 @@ describe("direction indicators", () => {
   it("mark the hub while a mining objective sends Ada to deposit there", () => {
     const mining = context({
       flight: { objects: [object("hub", "destination", FAR)], player: ORIGIN },
+      galaxy: 2,
       objective: objectiveDestination(
         2,
         { holodisk: false, introduced: true, questComplete: false, questItem: null, stage: 1 },
         false,
       ),
       progress: { known: ["hub"], stations: NEAR_STATIONS },
-      sector: 2,
     });
     expect(marked(mining)).toEqual(["objective:hub"]);
   });

@@ -2,7 +2,7 @@
 import "./crash/install.ts";
 import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
 import "./style.css";
-// The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/ui-style-plugin.ts).
+// The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/tools/uiStylePlugin.ts).
 import "virtual:ada-ui.css";
 
 import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
@@ -11,14 +11,14 @@ import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrame
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
-import { CRASH_SCREEN } from "./crash/crash-screen.ts";
+import { CRASH_SCREEN } from "./crash/crashScreen.ts";
 import { SCREEN } from "./data/screen.ts";
 import { stopSaving } from "./game/persistence.ts";
-import { PrototypeScene } from "./game/scene.ts";
+import { GameScene } from "./game/scene.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 import { mountLoading } from "./loading/progress.ts";
 import { gameShown, setupPhoneApp } from "./pwa/index.ts";
-import { FRAME_TURN } from "./view/frame-turn.ts";
+import { FRAME_TURN } from "./view/frameTurn.ts";
 
 const parent = document.getElementById("game-canvas");
 if (!parent) {
@@ -36,7 +36,7 @@ setupPhoneApp();
 
 // The canvas fills the play area with its backing in device pixels, up to MAX_RENDER_SCALE per CSS
 // pixel (followFrameTurn's deviceResolution, Scale.NONE); above that the browser upscales it
-// pixelated. Cameras zoom the logical view to fit (src/game/play-camera.ts). Every texture
+// pixelated. Cameras zoom the logical view to fit (src/game/playCamera.ts). Every texture
 // samples nearest unless src/game/textures.ts makes it linear, and nothing is smoothed implicitly.
 const game = new Game({
   backgroundColor: "#101010",
@@ -49,7 +49,7 @@ const game = new Game({
       const stop = followPageVisibility(window, document, bootedGame.loop);
       bootedGame.events.once(Core.Events.DESTROY, stop);
       // A first visit registers the service worker once the game has drawn with its art loaded.
-      bootedGame.scene.getScene("prototype")?.events.once(Scenes.Events.CREATE, gameShown);
+      bootedGame.scene.getScene("game")?.events.once(Scenes.Events.CREATE, gameShown);
     },
   },
   height: SCREEN.height,
@@ -67,8 +67,8 @@ const game = new Game({
     roundPixels: true,
   },
   scale: { autoCenter: Scale.CENTER_HORIZONTALLY, mode: Scale.NONE },
-  scene: [PrototypeScene],
-  // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaser-build.ts).
+  scene: [GameScene],
+  // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
   type: WEBGL,
   width: SCREEN.width,
 });

@@ -2,12 +2,12 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { CAST, CAST_FRAMES, type CastKey, castSheet, SPEAKER_CAST, STORY_CAST } from "./cast.ts";
 import { SPEAKERS } from "./conversations.ts";
 import { GALAXY_ID } from "./galaxies.ts";
 import { PROJECTS } from "./projects.ts";
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 const CONTROLS = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
 const CONVERSATION = readFileSync(new URL("../../art/conversation.md", import.meta.url), "utf8");
@@ -19,8 +19,8 @@ function homeManifest(key: CastKey): { assets: readonly { id: string; path: stri
   if (home === "core") {
     return CORE_MANIFEST as unknown as { assets: { id: string; path: string }[] };
   }
-  const sector = Number(Object.entries(GALAXY_ID).find(([, id]) => id === home)![0]);
-  return GALAXY_MANIFESTS.get(sector as SectorId)!;
+  const galaxy = Number(Object.entries(GALAXY_ID).find(([, id]) => id === home)![0]);
+  return GALAXY_MANIFESTS.get(galaxy as GalaxyNumber)!;
 }
 
 type Sheet = {

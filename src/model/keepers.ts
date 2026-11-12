@@ -1,7 +1,7 @@
 import type { CastKey } from "../data/cast.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type KeeperGreetings, KEEPERS } from "../data/keepers.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 
 // Which keeper greets at a station (gameplay/rules.md "Species and greeters"): a station's rank by
@@ -29,13 +29,17 @@ export interface StationKeeper {
  * A generated station's rank in its galaxy: how many of the galaxy's stations sit nearer the
  * origin, ties broken by id. Null for an id no station of the galaxy has.
  */
-export function stationRank(catalog: EconomyCatalog, sector: SectorId, id: string): number | null {
-  const site = stationById(catalog, sector, id);
+export function stationRank(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): number | null {
+  const site = stationById(catalog, galaxy, id);
   if (!site) {
     return null;
   }
   const reach = Math.hypot(site.x, site.y);
-  return stationsNear(catalog, sector, reach, { x: 0, y: 0 }).filter((other) => {
+  return stationsNear(catalog, galaxy, reach, { x: 0, y: 0 }).filter((other) => {
     const near = Math.hypot(other.x, other.y);
     return near < reach || (near === reach && other.id < site.id);
   }).length;
@@ -44,23 +48,23 @@ export function stationRank(catalog: EconomyCatalog, sector: SectorId, id: strin
 /** The keeper of a docked station, or null where its galaxy has none (Phantom). */
 export function stationKeeper(
   catalog: EconomyCatalog,
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   id: string,
 ): StationKeeper | null {
-  const keepers = KEEPERS[sector];
+  const keepers = KEEPERS[galaxy];
   if (!keepers) {
     return null;
   }
   const { greetings, keepers: keys } = keepers;
-  if (sector === 2 && id === HUB_STATION) {
+  if (galaxy === 2 && id === HUB_STATION) {
     return { greetings: keepers.hub ?? greetings, key: keys[0] };
   }
-  const rank = stationRank(catalog, sector, id);
+  const rank = stationRank(catalog, galaxy, id);
   if (rank === null) {
     return null;
   }
   // Cartwheel's other stations take its second and third keepers in turn.
-  const key = sector === 2 ? keys[1 + (rank % 2)]! : keys[rank % keys.length]!;
+  const key = galaxy === 2 ? keys[1 + (rank % 2)]! : keys[rank % keys.length]!;
   return { greetings, key };
 }
 

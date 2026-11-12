@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
-import { PROTOTYPE } from "../data/prototype.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
@@ -17,8 +17,8 @@ const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: fals
 const anyStation = () => stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!;
 
 function launched(): GameModel {
-  const model = new GameModel(PROTOTYPE);
-  model.startSector(1);
+  const model = new GameModel(CONTENT);
+  model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];
   return model;
@@ -38,7 +38,7 @@ function incoming(flight: FlightState): void {
 function deplete(model: GameModel): void {
   const flight = model.state.flight!;
   flight.objects = [];
-  flight.shield = PROTOTYPE.tuning.hazardDamage;
+  flight.shield = CONTENT.tuning.hazardDamage;
   incoming(flight);
   model.step(0.01, idle);
 }
@@ -71,7 +71,7 @@ describe("weapon switching", () => {
     expect(flight.weapon).toBe("rapidMissile");
     expect(model.state.notice).toBeFalsy();
     // Choosing the equipped weapon is never refused and does not restart the wait.
-    stepFlight(PROTOTYPE, 0.4, idle, flight);
+    stepFlight(CONTENT, 0.4, idle, flight);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weaponSwitchFor).toBeCloseTo(ECONOMY.weaponSwitchSeconds - 0.4);
   });
@@ -85,9 +85,9 @@ describe("weapon switching", () => {
       expect(model.selectWeapon("rapidMissile")).toBe(true);
       flight.objects = [];
       flight.dangerFor = dangerFor;
-      stepFlight(PROTOTYPE, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
+      stepFlight(CONTENT, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
       expect(model.selectWeapon("laser")).toBe(false);
-      stepFlight(PROTOTYPE, 0.06, idle, flight);
+      stepFlight(CONTENT, 0.06, idle, flight);
       expect(flight.weaponSwitchFor).toBe(0);
       expect(model.selectWeapon("laser")).toBe(true);
       expect(flight.weapon).toBe("laser");
@@ -99,17 +99,17 @@ describe("weapon switching", () => {
     const flight = model.state.flight!;
     flight.dangerFor = 1;
     pickup(flight, "rapidMissile");
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.ownedWeapons).toEqual(["rapidMissile"]);
     expect(flight.weapon).toBe("rapidMissile");
     // Equipping is a switch, so a second find during the wait joins the roster unequipped.
     pickup(flight, "multiLaser");
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     expect(flight.weapon).toBe("rapidMissile");
     flight.weaponSwitchFor = 0;
     pickup(flight, "scattershot");
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(flight.weapon).toBe("scattershot");
   });
 });
@@ -140,7 +140,7 @@ describe("quantum jump home", () => {
   // Depletes the shield with the flight's objects in place.
   function depleteHere(model: GameModel): void {
     const flight = model.state.flight!;
-    flight.shield = PROTOTYPE.tuning.hazardDamage;
+    flight.shield = CONTENT.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
   }
@@ -173,12 +173,12 @@ describe("quantum jump home", () => {
       multiLaser: 2,
       rapidMissile: 3,
     });
-    expect(model.state.notice).toBe(PROTOTYPE.labels.jumpHome);
-    expect(PROTOTYPE.labels).not.toHaveProperty("jumpWeaponLost");
-    expect(PROTOTYPE.labels).not.toHaveProperty("jumpRecharge");
+    expect(model.state.notice).toBe(CONTENT.labels.jumpHome);
+    expect(CONTENT.labels).not.toHaveProperty("jumpWeaponLost");
+    expect(CONTENT.labels).not.toHaveProperty("jumpRecharge");
     expect(ECONOMY).not.toHaveProperty("jumpFee");
     // The next flight still has the weapon at its level.
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.state.flight).toMatchObject({ weapon: "rapidMissile" });
     expect(model.state.flight!.levels.weapons.rapidMissile).toBe(3);
@@ -216,7 +216,7 @@ describe("quantum jump home", () => {
       stage: 2,
     });
     expect(model.state.flight).toBeNull();
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     const next = model.state.flight!;
     expect(next.seed).not.toBe(seed);
@@ -230,7 +230,7 @@ describe("quantum jump home", () => {
     deplete(model);
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      page: { background: "aboardEmergency", id: "jumpHome", text: PROTOTYPE.labels.jumpHome },
+      page: { background: "aboardEmergency", id: "jumpHome", text: CONTENT.labels.jumpHome },
     });
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({
@@ -250,9 +250,9 @@ describe("quantum jump home", () => {
     });
     model.storyNext();
     expect(model.storyView?.page).toMatchObject({
-      action: PROTOTYPE.labels.pickUpRock,
+      action: CONTENT.labels.pickUpRock,
       background: "adaRoom",
-      text: PROTOTYPE.premise.emptyHome,
+      text: CONTENT.premise.emptyHome,
     });
   });
 
@@ -353,12 +353,12 @@ describe("quantum jump home", () => {
     seenHome(model);
     model.returnHome();
     expect(model.storyView?.page).toMatchObject({
-      action: PROTOTYPE.labels.pickUpRock,
+      action: CONTENT.labels.pickUpRock,
       background: "adaRoom",
-      text: PROTOTYPE.premise.emptyHome,
+      text: CONTENT.premise.emptyHome,
     });
     expect(model.roomPage).toBe(true);
-    expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
+    expect(model.state.notice).not.toBe(CONTENT.labels.jumpHome);
   });
 
   it("goes Back to title from flight even in danger, keeping the flight with no sleep scene", () => {
@@ -374,11 +374,11 @@ describe("quantum jump home", () => {
     model.backToTitle();
     expect(model.screen).toBe("start");
     expect(model.storyView).toBeNull();
-    expect(model.state.notice).not.toBe(PROTOTYPE.labels.jumpHome);
+    expect(model.state.notice).not.toBe(CONTENT.labels.jumpHome);
     // The save keeps the flight, as closing the app does.
     const saved = JSON.parse(model.save()) as { flight: { seed: number }; mode: string };
     expect(saved).toMatchObject({ flight: { seed: flight.seed }, mode: "space" });
-    const reloaded = new GameModel(PROTOTYPE, model.save());
+    const reloaded = new GameModel(CONTENT, model.save());
     expect(reloaded.screen).toBe("start");
     expect(reloaded.state.economy.stardust).toBe(123);
     expect(reloaded.state.progress[1].known).toEqual(["growers"]);
@@ -440,7 +440,7 @@ describe("shop through the model", () => {
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     model.undock();
     model.returnHome();
-    model.startSector(1);
+    model.startGalaxy(1);
     playOpening(model);
     expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     expect(model.state.economy.stardust).toBe(175);
@@ -484,7 +484,7 @@ describe("economy save", () => {
     flight.weaponSwitchFor = 0.5;
     const site = anyStation();
     model.state.progress[1].stations = [site.id];
-    const restored = relaunch(PROTOTYPE, model.save());
+    const restored = relaunch(CONTENT, model.save());
     // The restored game also counts the paint set above toward Full Palette.
     expect(restored.state).toEqual({
       ...model.state,

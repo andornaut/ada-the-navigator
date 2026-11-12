@@ -15,10 +15,10 @@ import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";
 import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
+import * as galaxyMap from "../src/ui/layout/galaxyMap.ts";
 import * as itemNotice from "../src/ui/layout/itemNotice.ts";
 import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
-import * as routeMap from "../src/ui/layout/routeMap.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as startScreen from "../src/ui/layout/startScreen.ts";
 import * as stationCard from "../src/ui/layout/stationCard.ts";
@@ -37,7 +37,7 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "itemNotice.ts": itemNotice,
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
-  "routeMap.ts": routeMap,
+  "galaxyMap.ts": galaxyMap,
   "shopCard.ts": shopCard,
   "startScreen.ts": startScreen,
   "stationCard.ts": stationCard,
@@ -180,8 +180,8 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       );
       call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
       call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
-      call("routeMap.ts", "routeMapRects", routeMap.routeMapRects, logical, view);
-      call("routeMap.ts", "markerCentre", routeMap.markerCentre, view, 1);
+      call("galaxyMap.ts", "galaxyMapRects", galaxyMap.galaxyMapRects, logical, view);
+      call("galaxyMap.ts", "markerCentre", galaxyMap.markerCentre, view, 1);
       call("storyPage.ts", "storyPanelLayout", storyPage.storyPanelLayout, logical, view);
       call("storyPage.ts", "storyBackgroundScale", storyPage.storyBackgroundScale, view);
       // Grandma's garden band under its tallest first-launch panel, and the centred backdrop.
@@ -401,7 +401,7 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
     call("mapScreen.ts", "mapRowTop", mapScreen.mapRowTop, insets, view);
     call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
-    call("mapScreen.ts", "mapEarthRect", mapScreen.mapEarthRect, insets, view);
+    call("mapScreen.ts", "mapGalaxiesRect", mapScreen.mapGalaxiesRect, insets, view);
     call("mapScreen.ts", "mapQuestsRect", mapScreen.mapQuestsRect, insets, view);
     call("mapScreen.ts", "mapHeaderCap", mapScreen.mapHeaderCap, insets, view);
     for (const places of [
@@ -496,41 +496,41 @@ function noticeCases(call: ReturnType<typeof recorder>): void {
 }
 
 function routeCases(call: ReturnType<typeof recorder>): void {
-  for (const angle of [routeMap.ROUTE_ARC.first, 0, routeMap.ROUTE_ARC.step]) {
-    call("routeMap.ts", "arcPoint", routeMap.arcPoint, angle);
+  for (const angle of [galaxyMap.GALAXY_MAP_ARC.first, 0, galaxyMap.GALAXY_MAP_ARC.step]) {
+    call("galaxyMap.ts", "arcPoint", galaxyMap.arcPoint, angle);
   }
-  const leg = routeMap.ROUTE_LEGS[2]!;
+  const leg = galaxyMap.GALAXY_MAP_LEGS[2]!;
   call(
-    "routeMap.ts",
+    "galaxyMap.ts",
     "pathStamps",
-    routeMap.pathStamps,
+    galaxyMap.pathStamps,
     0.5,
-    routeMap.ROUTE_MAP.path.locked,
+    galaxyMap.GALAXY_MAP.path.locked,
     15,
     leg,
   );
   for (const position of [1, 2, 3, 4, 5, 6] as const) {
-    call("routeMap.ts", "routeDistance", routeMap.routeDistance, position);
-    call("routeMap.ts", "restingTangent", routeMap.restingTangent, position);
+    call("galaxyMap.ts", "routeDistance", galaxyMap.routeDistance, position);
+    call("galaxyMap.ts", "restingTangent", galaxyMap.restingTangent, position);
   }
   for (const distance of [0, 100, 300, 600, 2000]) {
-    call("routeMap.ts", "routePoint", routeMap.routePoint, distance);
+    call("galaxyMap.ts", "routePoint", galaxyMap.routePoint, distance);
   }
   for (const t of [0, 0.25, 0.5, 1]) {
-    call("routeMap.ts", "easeInOutSine", routeMap.easeInOutSine, t);
+    call("galaxyMap.ts", "easeInOutSine", galaxyMap.easeInOutSine, t);
   }
   for (const length of [50, 229, 530]) {
-    call("routeMap.ts", "selectionSeconds", routeMap.selectionSeconds, length);
-    call("routeMap.ts", "unlockFlightSeconds", routeMap.unlockFlightSeconds, length);
+    call("galaxyMap.ts", "selectionSeconds", galaxyMap.selectionSeconds, length);
+    call("galaxyMap.ts", "unlockFlightSeconds", galaxyMap.unlockFlightSeconds, length);
   }
-  call("routeMap.ts", "unlockSeconds", routeMap.unlockSeconds, 1, 2);
-  call("routeMap.ts", "unlockSeconds", routeMap.unlockSeconds, 2, 5);
+  call("galaxyMap.ts", "unlockSeconds", galaxyMap.unlockSeconds, 1, 2);
+  call("galaxyMap.ts", "unlockSeconds", galaxyMap.unlockSeconds, 2, 5);
   for (const direction of [
     { x: 1, y: 0 },
     { x: 0, y: 1 },
     { x: -1, y: 0 },
   ]) {
-    call("routeMap.ts", "routeHeading", routeMap.routeHeading, direction);
+    call("galaxyMap.ts", "routeHeading", galaxyMap.routeHeading, direction);
   }
 }
 

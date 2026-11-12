@@ -1,4 +1,4 @@
-import type { SectorId } from "./types.ts";
+import type { GalaxyNumber } from "./types.ts";
 
 /**
  * What an achievement measures (gameplay/quests.md "Achievements"). Story achievements read the
@@ -8,7 +8,7 @@ import type { SectorId } from "./types.ts";
  */
 export type AchievementGoal =
   | { readonly kind: "prologue" }
-  | { readonly kind: "chapter"; readonly galaxy: SectorId }
+  | { readonly kind: "chapter"; readonly galaxy: GalaxyNumber }
   | { readonly kind: "blockade" }
   /** Landmarks charted in the galaxy with the most charted, of that galaxy's landmarks. */
   | { readonly kind: "chartOne" }

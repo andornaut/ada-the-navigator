@@ -27,7 +27,7 @@ formatting and fixes are unchanged. The container's `lint` category is
 the Wrangler packaging dry run. The recipes hold the direct commands the delivery
 runner, the container and the npm scripts use.
 
-Tests launch flights from one pinned seed sequence (`src/test-setup.ts`), so a
+Tests launch flights from one pinned seed sequence (`src/testSetup.ts`), so a
 flight's world is the same on every run. The container's test category also
 runs `tools/test-worlds.mjs`, which repeats the suite under
 three further sequences through `ADA_LAUNCH_SEED`, so a test that passes only in

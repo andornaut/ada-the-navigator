@@ -9,17 +9,17 @@ import {
   type JobRewardKind,
   type JobType,
 } from "../data/jobs.ts";
-import type { SectorId } from "../data/types.ts";
+import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { stationById, type StationSite } from "./stations.ts";
 import type {
   FlightState,
+  GalaxyProgress,
   GameState,
   HeldJob,
   JobOffer,
   JobTarget,
-  SectorProgress,
   Vec,
 } from "./types.ts";
 
@@ -34,9 +34,9 @@ export type JobBook = Pick<GameState, "jobs" | "tasks">;
 
 /** What a board draws on when it makes offers. */
 export interface BoardContext {
-  readonly sector: SectorId;
+  readonly galaxy: GalaxyNumber;
   /** Charted landmarks, and discovered stations: delivery destinations. */
-  readonly progress: Pick<SectorProgress, "charted" | "stations">;
+  readonly progress: Pick<GalaxyProgress, "charted" | "stations">;
   /** Known outposts in the flight: delivery destinations and tow safe places. */
   readonly outposts: readonly JobTarget[];
   /** Live frigates and capitals, which job targets keep clear of. */
@@ -46,8 +46,8 @@ export interface BoardContext {
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** The held job in a galaxy's optional task slot, if the slot holds a job. */
-export function heldJob(sector: SectorId, book: Pick<GameState, "tasks">): HeldJob | undefined {
-  const task = book.tasks[sector];
+export function heldJob(galaxy: GalaxyNumber, book: Pick<GameState, "tasks">): HeldJob | undefined {
+  const task = book.tasks[galaxy];
   return task?.kind === "job" ? task : undefined;
 }
 
@@ -75,9 +75,9 @@ const pick = <T>(next: () => number, items: readonly T[]): T | undefined =>
   items[Math.floor(next() * items.length)];
 
 /** Survey landmarks already named by a board offer or the held job in the galaxy. */
-function surveyed(sector: SectorId, book: JobBook): Set<string> {
-  const offers = Object.values(book.jobs.boards[sector] ?? {}).flat();
-  const held = heldJob(sector, book);
+function surveyed(galaxy: GalaxyNumber, book: JobBook): Set<string> {
+  const offers = Object.values(book.jobs.boards[galaxy] ?? {}).flat();
+  const held = heldJob(galaxy, book);
   return new Set(
     [...offers, ...(held ? [held] : [])]
       .filter((offer) => offer.type === "survey")
@@ -116,11 +116,11 @@ function jobTarget(
   station: StationSite,
   type: JobType,
 ): Pick<JobOffer, "item" | "spot" | "target"> | null {
-  const pool = JOB_POOL[context.sector]!;
+  const pool = JOB_POOL[context.galaxy]!;
   if (type === "survey") {
-    const taken = surveyed(context.sector, book);
+    const taken = surveyed(context.galaxy, book);
     // One of the three nearest uncharted landmarks no other survey names.
-    const open = landmarkSites(context.sector)
+    const open = landmarkSites(context.galaxy)
       .filter((site) => !context.progress.charted.includes(site.id) && !taken.has(site.id))
       .sort((a, b) => distance(a, station) - distance(b, station))
       .slice(0, 3);
@@ -131,7 +131,7 @@ function jobTarget(
     // The nearest other known station or outpost at least the minimum away, with no upper limit;
     // other story places never take deliveries.
     const place = [
-      ...context.progress.stations.flatMap((id) => stationById(ECONOMY, context.sector, id) ?? []),
+      ...context.progress.stations.flatMap((id) => stationById(ECONOMY, context.galaxy, id) ?? []),
       ...context.outposts.filter(({ id }) => deliveryDestination(id)),
     ]
       .filter(
@@ -173,7 +173,7 @@ function makeOffer(
   station: StationSite,
 ): JobOffer | null {
   const made = book.jobs.made;
-  const next = dropRandom(made, `job:${context.sector}:${station.id}`);
+  const next = dropRandom(made, `job:${context.galaxy}:${station.id}`);
   // A seeded Fisher-Yates shuffle of the types.
   const order = [...JOB_TYPES];
   for (let index = order.length - 1; index > 0; index--) {
@@ -185,7 +185,7 @@ function makeOffer(
     const target = jobTarget(context, book, next, station, type);
     const reward =
       target &&
-      byPosition(JOB_REWARDS, context.sector)[rewardKind(type, distance(target.target, station))];
+      byPosition(JOB_REWARDS, context.galaxy)[rewardKind(type, distance(target.target, station))];
     if (target && reward !== undefined && reward !== null) {
       book.jobs.made = made + 1;
       return {
@@ -209,9 +209,9 @@ export function stationBoard(
   book: JobBook,
   station: StationSite,
 ): readonly JobOffer[] {
-  const boards = (book.jobs.boards[context.sector] ??= {});
+  const boards = (book.jobs.boards[context.galaxy] ??= {});
   const board = (boards[station.id] ??= []);
-  const held = heldJob(context.sector, book);
+  const held = heldJob(context.galaxy, book);
   for (let slot = 0; slot < board.length; slot++) {
     const offer = board[slot]!;
     if (offer.id !== held?.id && !offerValid(context, book, station.id, slot, offer)) {
@@ -253,11 +253,11 @@ function offerValid(
   }
   const same = (other: JobOffer) =>
     other.type === offer.type && other.target.id === offer.target.id;
-  const held = heldJob(context.sector, book);
+  const held = heldJob(context.galaxy, book);
   if (held && held.id !== offer.id && same(held)) {
     return false;
   }
-  for (const [id, board] of Object.entries(book.jobs.boards[context.sector] ?? {})) {
+  for (const [id, board] of Object.entries(book.jobs.boards[context.galaxy] ?? {})) {
     const earlier = id === station ? board.slice(0, slot) : id < station ? board : [];
     if (earlier.some((other) => other.id !== held?.id && same(other))) {
       return false;
@@ -270,12 +270,12 @@ function offerValid(
  * A new flight re-rolls the galaxy's untaken offers (quests.md "Job boards"): every board keeps
  * only the held job, and refills when it next shows.
  */
-export function rerollBoards(sector: SectorId, book: JobBook): void {
-  const boards = book.jobs.boards[sector];
+export function rerollBoards(galaxy: GalaxyNumber, book: JobBook): void {
+  const boards = book.jobs.boards[galaxy];
   if (!boards) {
     return;
   }
-  const held = heldJob(sector, book);
+  const held = heldJob(galaxy, book);
   for (const [station, board] of Object.entries(boards)) {
     boards[station] = board.filter((offer) => offer.id === held?.id);
   }
@@ -283,20 +283,20 @@ export function rerollBoards(sector: SectorId, book: JobBook): void {
 
 /** Takes an offer from a station's board into the galaxy's empty optional task slot. */
 export function acceptJob(
-  sector: SectorId,
+  galaxy: GalaxyNumber,
   station: string,
   id: string,
   book: JobBook,
 ): "accepted" | "busy" | "missing" {
-  const offer = book.jobs.boards[sector]?.[station]?.find((entry) => entry.id === id);
+  const offer = book.jobs.boards[galaxy]?.[station]?.find((entry) => entry.id === id);
   if (!offer) {
     return "missing";
   }
-  if (book.tasks[sector]) {
+  if (book.tasks[galaxy]) {
     return "busy";
   }
   // A delivery's item loads at once into the job's own carried-item slot.
-  book.tasks[sector] = {
+  book.tasks[galaxy] = {
     ...structuredClone(offer),
     kind: "job",
     ...(offer.type === "delivery" ? { carrying: true } : {}),
@@ -305,11 +305,11 @@ export function acceptJob(
 }
 
 /** Drops the held job: its progress is lost and its offer shows on its board again. */
-export function dropJob(sector: SectorId, book: JobBook): boolean {
-  if (!heldJob(sector, book)) {
+export function dropJob(galaxy: GalaxyNumber, book: JobBook): boolean {
+  if (!heldJob(galaxy, book)) {
     return false;
   }
-  delete book.tasks[sector];
+  delete book.tasks[galaxy];
   return true;
 }
 
@@ -322,12 +322,12 @@ export function completeJob(
   station: StationSite | null,
   book: JobBook,
 ): number {
-  const held = heldJob(context.sector, book);
+  const held = heldJob(context.galaxy, book);
   if (!held) {
     return 0;
   }
-  delete book.tasks[context.sector];
-  const board = book.jobs.boards[context.sector]?.[held.station];
+  delete book.tasks[context.galaxy];
+  const board = book.jobs.boards[context.galaxy]?.[held.station];
   const slot = board?.findIndex((offer) => offer.id === held.id) ?? -1;
   if (board && slot >= 0) {
     const replacement = station && makeOffer(context, book, without(board, slot), station);
