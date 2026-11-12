@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { homePageHtml, webManifestJson } from "./html.ts";
 
-const copy = { description: 'Ada & Penny "fly" <far>' } as const;
+const copy = { description: 'Ada & Penny "fly" <far>', mobile: "Tap {use} & go." } as const;
 
 describe("the landing page's and manifest's copy", () => {
   it("fills every description token in the page, escaped", () => {
@@ -13,6 +13,14 @@ describe("the landing page's and manifest's copy", () => {
         "<p>Ada &amp; Penny &quot;fly&quot; &lt;far&gt;</p>",
     );
     expect(homePageHtml(copy, "<p>No tokens</p>")).toBe("<p>No tokens</p>");
+  });
+
+  it("follows each control named in the Mobile line with its icon", () => {
+    expect(homePageHtml(copy, "<p>%HOME_MOBILE%</p>")).toBe(
+      '<p>Tap <span class="ada-control-help">Use<img class="ada-control-icon" data-control="use" ' +
+        'src="/art/ui/sprites/icon-use-control.png" alt="" aria-hidden="true" width="16" ' +
+        'height="16"></span> &amp; go.</p>',
+    );
   });
 
   it("refuses a token it has no string for", () => {

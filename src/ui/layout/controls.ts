@@ -39,6 +39,15 @@ export const CONTROL_ROW = {
   textInset: SPACING.rowGap,
 } as const;
 
+// A control's icon inline after its name in player text (art/settings-icons.md "Inline
+// controls"): 16 square, its left edge 4 after the name's last glyph, centred on the 20 line box
+// that TYPE.body and TYPE.label share.
+export const INLINE_CONTROL = {
+  gap: 4,
+  icon: 16,
+  inset: (TYPE.body.lineHeight - 16) / 2,
+} as const;
+
 // The button sheets' nine-slice margins (left, top, right, bottom), as the UI manifest gives them.
 export const BUTTON_SLICE = { bottom: 6, left: 2, right: 2, top: 4 } as const;
 

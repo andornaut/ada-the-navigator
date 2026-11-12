@@ -346,3 +346,18 @@ body.site {
     margin-bottom: 32px;
   }
 }
+
+/* A control named in the controls lines, its icon 4px after the name and centred on the 22.4px
+   line box, the name and icon wrapping as one (art/settings-icons.md "Inline controls"). */
+.site .ada-control-help {
+  white-space: nowrap;
+}
+
+.site .ada-control-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: 3.2px 0 3.2px 4px;
+  vertical-align: top;
+  image-rendering: pixelated;
+}

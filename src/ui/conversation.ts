@@ -1,5 +1,7 @@
 import { CAST, CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
+import { CONTROL_WORDS } from "../data/control-words.ts";
 import type { Mood, Speaker } from "../data/conversations.ts";
+import { controlHelpText, createControlHelp } from "./control-help.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
 import { FOCUS_STYLE } from "./modal.ts";
@@ -276,7 +278,12 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
           root.toggleAttribute("data-named", line.named);
           face.dataset.speaker = line.speaker;
           name.textContent = line.name;
-          words.textContent = desktop && line.desktop !== undefined ? line.desktop : line.text;
+          // Keyboard wording is words alone; touch wording follows each named control with its icon.
+          if (desktop) {
+            words.textContent = line.desktop ?? controlHelpText(CONTROL_WORDS, line.text);
+          } else {
+            words.replaceChildren(...createControlHelp(document, CONTROL_WORDS, line.text));
+          }
         }
         shownFrame = -1;
       }

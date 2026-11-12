@@ -2,29 +2,29 @@ import { readFile } from "node:fs/promises";
 
 import type { Plugin } from "vite";
 
+import { CONTROL_WORDS } from "../data/control-words.ts";
 import { HOME_COPY } from "../data/home-copy.ts";
+import { controlHelpMarkup, escaped } from "../ui/control-help.ts";
 
 interface HomeCopy {
   readonly description: string;
+  readonly mobile: string;
 }
 
-const escaped = (value: string): string =>
-  value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-
 // pages/index.html with each %HOME_<KEY>% token replaced by its escaped string, so the visible
-// subline and its meta description come from one string.
+// subline and its meta description come from one string. The Mobile controls line follows each
+// named control with its icon, as the game's lessons do.
 export function homePageHtml(copy: HomeCopy, html: string): string {
-  const values: Readonly<Record<string, string>> = { DESCRIPTION: copy.description };
+  const values: Readonly<Record<string, string>> = {
+    DESCRIPTION: escaped(copy.description),
+    MOBILE: controlHelpMarkup(CONTROL_WORDS, copy.mobile),
+  };
   return html.replace(/%HOME_([A-Z_]+)%/gu, (_, key: string) => {
     const value = values[key];
     if (value === undefined) {
       throw new Error(`Unknown home page copy token ${key}`);
     }
-    return escaped(value);
+    return value;
   });
 }
 

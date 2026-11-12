@@ -126,16 +126,14 @@ const happy = (speaker: "ada" | "penny", text: string): ConversationLine => ({
 export const CONVERSATIONS: readonly Conversation[] = [
   {
     id: "lesson:move",
-    lines: [line("astra", "Use the left stick to fly.", "Use WASD to fly.")],
+    lines: [line("astra", "Use the {move} to fly.", "Use WASD to fly.")],
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "move" },
   },
   {
     id: "lesson:aim",
-    lines: [
-      line("astra", "Use the right stick to aim and fire.", "Use the arrow keys to aim and fire."),
-    ],
+    lines: [line("astra", "Use the {aim} to aim and fire.", "Use the arrow keys to aim and fire.")],
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "aim" },

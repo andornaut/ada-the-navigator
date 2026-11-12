@@ -83,6 +83,64 @@ function fakeWakeLock() {
 
 let browser;
 let page;
+// An inline control icon's placement in its line, in CSS px: the image loaded, its size, its
+// gap after the name's last glyph and its inset in its line box, with its decorative markers.
+async function measureInlineIcons(root) {
+  const icons = [...root.querySelectorAll(".ada-control-icon")];
+  await Promise.all(icons.map((icon) => icon.decode()));
+  const lineHeight = parseFloat(getComputedStyle(root).lineHeight);
+  const top = root.getBoundingClientRect().top;
+  return icons.map((icon) => {
+    const box = icon.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(icon.previousSibling);
+    const name = range.getBoundingClientRect();
+    const style = getComputedStyle(icon);
+    return {
+      alt: icon.getAttribute("alt"),
+      ariaHidden: icon.getAttribute("aria-hidden"),
+      control: icon.dataset.control,
+      gap: box.left - name.right,
+      height: box.height,
+      inset: (box.top - top) % lineHeight,
+      lineHeight,
+      natural: [icon.naturalWidth, icon.naturalHeight],
+      opacity: style.opacity,
+      rendering: style.imageRendering,
+      sameLine: Math.abs(box.top + box.height / 2 - (name.top + name.height / 2)) < 1,
+      width: box.width,
+      wrap: getComputedStyle(icon.parentElement).whiteSpace,
+    };
+  });
+}
+
+// Each icon as Art places it at scale (CSS px per logical px), on a line of lineHeight logical px.
+function assertInlineIcons(icons, controls, scale, lineHeight, where) {
+  assert.deepEqual(
+    icons.map(({ control }) => control),
+    controls,
+    `${where}: each named control has its icon`,
+  );
+  for (const icon of icons) {
+    const detail = `${where}: ${JSON.stringify(icon)}`;
+    assert.equal(icon.alt, "", `The icon has an empty alt: ${detail}`);
+    assert.equal(icon.ariaHidden, "true", `The icon is hidden from screen readers: ${detail}`);
+    assert.deepEqual(icon.natural, [16, 16], `The icon loads its 16 by 16 frame: ${detail}`);
+    assert.equal(icon.opacity, "1", `The icon is at full opacity: ${detail}`);
+    assert.equal(icon.rendering, "pixelated", `The icon scales nearest-neighbour: ${detail}`);
+    assert.equal(icon.wrap, "nowrap", `The name and icon wrap as one: ${detail}`);
+    assert.ok(icon.sameLine, `The icon is on its name's line: ${detail}`);
+    assert.ok(Math.abs(icon.lineHeight - lineHeight * scale) < 0.1, `Line box: ${detail}`);
+    assert.ok(Math.abs(icon.width - 16 * scale) < 0.1, `The icon is 16 wide: ${detail}`);
+    assert.ok(Math.abs(icon.height - 16 * scale) < 0.1, `The icon is 16 high: ${detail}`);
+    assert.ok(Math.abs(icon.gap - 4 * scale) < 0.6, `The icon starts 4 after its name: ${detail}`);
+    assert.ok(
+      Math.abs(icon.inset - ((lineHeight - 16) / 2) * scale) < 0.1,
+      `The icon centres on its line box: ${detail}`,
+    );
+  }
+}
+
 try {
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
@@ -854,6 +912,22 @@ try {
     tab: getComputedStyle(box.querySelector(".ada-conversation-name")).backgroundColor,
   }));
   await page.screenshot({ path: `${output}/conversation-astra.png` });
+  // On touch the move lesson names the left stick, then shows its icon inline, hidden from screen
+  // readers, which read the words alone.
+  const lessonLine = astraBox.locator(".ada-conversation-line");
+  assert.equal(await lessonLine.textContent(), "Use the left stick to fly.", "Lesson words");
+  const lessonScale = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.getElementById("app")).getPropertyValue("--ada-unit")),
+  );
+  assertInlineIcons(
+    await lessonLine.evaluate(measureInlineIcons),
+    ["move"],
+    lessonScale,
+    20,
+    "The move lesson",
+  );
+  await astraBox.screenshot({ path: `${output}/lesson-move-icon.png` });
+  events.checks.push("The touch move lesson shows the left stick's icon 4 after its name");
   assert.match(astraLine.image, /\/art\/portraits\/astra-compact\.png/u, "Astra's compact sheet");
   assert.equal(astraLine.side, "right", "Astra's portrait sits at the box's right");
   assert.equal(astraLine.tab, "rgb(143, 224, 242)", "Astra's tab is teal #8fe0f2");
@@ -3570,6 +3644,31 @@ try {
     ["sound", PROTOTYPE.labels.soundNote],
     "Sound keeps its note in the same element",
   );
+  // The Move and Aim controls rows show Art's control icons, nearest-neighbour.
+  const stickIcons = await page.locator(".ada-row[data-setting]").evaluateAll((rows) =>
+    rows
+      .filter((row) => ["move", "aim"].includes(row.dataset.setting))
+      .map((row) => {
+        const icon = row.querySelector(".ada-icon");
+        const style = getComputedStyle(icon);
+        return [
+          row.dataset.setting,
+          icon.dataset.icon,
+          /\/art\/ui\/sprites\/icon-(?:move|aim)-controls\.png/u.test(style.backgroundImage),
+          style.imageRendering,
+        ];
+      }),
+  );
+  assert.deepEqual(stickIcons, [
+    ["move", "icon-move-controls", true, "pixelated"],
+    ["aim", "icon-aim-controls", true, "pixelated"],
+  ]);
+  await page
+    .locator('.ada-row[data-setting="move"]')
+    .screenshot({ path: `${output}/settings-move-row.png` });
+  await page
+    .locator('.ada-row[data-setting="aim"]')
+    .screenshot({ path: `${output}/settings-aim-row.png` });
   const settingsFit = await page.locator('[data-action="close-settings"]').evaluate((close) => {
     const card = close.closest(".ada-card-frame") ?? close.parentElement;
     const box = card.getBoundingClientRect();
@@ -3659,6 +3758,21 @@ try {
     "The mobile website must remain upright before entering the landscape game",
   );
   await page.screenshot({ path: `${output}/site-mobile.png` });
+  // The landing page's Mobile line names each control and follows it with the game's icon.
+  const mobileLine = page.locator(".site-controls li p").first();
+  assert.equal(
+    await mobileLine.textContent(),
+    "Move with the left stick. Aim and fire with the right stick. Tap Use to interact.",
+  );
+  assertInlineIcons(
+    await mobileLine.evaluate(measureInlineIcons),
+    ["move", "aim", "use"],
+    1,
+    22.4,
+    "The landing page's Mobile line",
+  );
+  await page.locator(".site-controls").screenshot({ path: `${output}/site-controls.png` });
+  events.checks.push("The landing page's Mobile line shows each named control's icon");
   await Promise.all([
     page.waitForURL("**/play/"),
     page.locator('a[href="/play/"]').first().click(),

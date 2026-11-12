@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { controlHelpText } from "../ui/control-help.ts";
 import { SHIELD_PILL } from "../ui/layout/playView.ts";
+import { CONTROL_WORDS } from "./control-words.ts";
 import {
   BOX_PRIORITIES,
   CONVERSATION_PRIORITIES,
@@ -62,11 +64,15 @@ const nameOf = ({ trigger }: Conversation, speaker: keyof typeof SPEAKERS) =>
     ? GENERAL_NAMED.name
     : SPEAKERS[speaker].name;
 
+// A line as the documents write it: each control token as the control's name.
+const written = (text: string) => controlHelpText(CONTROL_WORDS, text);
+
 // Conversations' lines as the documents name their speakers, with any mood.
 const spoken = (conversations: readonly Conversation[]) =>
   conversations.flatMap((conversation) =>
-    conversation.lines.map(({ mood, speaker, text }) => {
+    conversation.lines.map(({ mood, speaker, text: line }) => {
       const name = nameOf(conversation, speaker);
+      const text = written(line);
       return mood ? { mood, name, text } : { name, text };
     }),
   );
@@ -78,7 +84,8 @@ describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
     for (const conversation of CONVERSATIONS) {
       const { lines, trigger } = conversation;
-      for (const { desktop, speaker, text } of lines) {
+      for (const { desktop, speaker, text: line } of lines) {
+        const text = written(line);
         if (trigger.kind === "jobLore") {
           // The quests document lists Astra's job lore lines by galaxy.
           expect(speaker).toBe("astra");

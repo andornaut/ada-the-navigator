@@ -195,7 +195,7 @@ describe("conversation triggers", () => {
     expect(talk.showing?.line).toEqual({
       desktop: "Use WASD to fly.",
       speaker: "astra",
-      text: "Use the left stick to fly.",
+      text: "Use the {move} to fly.",
     });
     tapThrough(talk);
     run(talk, cooldownSeconds + 0.05);
@@ -651,7 +651,7 @@ describe("conversations in the game", () => {
       named: false,
       side: "right",
       speaker: "astra",
-      text: "Use the left stick to fly.",
+      text: "Use the {move} to fly.",
     });
   });
 

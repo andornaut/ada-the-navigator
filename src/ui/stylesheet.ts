@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS_STYLE } from "./achievements-card.ts";
+import { CONTROL_HELP_STYLE } from "./control-help.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
 import { ITEM_NOTICE_STYLE } from "./item-notice.ts";
 import { LOADING_STYLE } from "./loading-bar.ts";
@@ -23,6 +24,7 @@ import { WEAPON_STYLE } from "./weapons.ts";
 export const UI_STYLESHEET = [
   LOADING_STYLE,
   CONVERSATION_STYLE,
+  CONTROL_HELP_STYLE,
   SETTINGS_STYLE,
   NOTICE_STYLE,
   START_SCREEN_STYLE,

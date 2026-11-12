@@ -5,4 +5,6 @@ export const HOME_COPY = {
   // The landing page's subline, its meta description and the manifest's description.
   description:
     "Join Ada on space adventures and help her community back home with what she learns.",
+  // The Mobile controls line; each token is a control name and its icon (src/ui/control-help.ts).
+  mobile: "Move with the {move}. Aim and fire with the {aim}. Tap {use} to interact.",
 } as const;
