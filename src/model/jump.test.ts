@@ -265,7 +265,10 @@ describe("quantum jump home", () => {
     seenHome(model);
     deplete(model);
     expect(model.storyView?.canGoBack).toBe(false);
+    // The night page passes the sleep and morning, so it shows Skip; the sleep scene never does.
+    expect(model.storyView?.canSkip).toBe(true);
     model.storyNext();
+    expect(model.storyView).toMatchObject({ canSkip: false, page: { sleep: true } });
     model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
     model.storyNext();
     // The visit's room page follows morning in the same run, so Previous returns to morning.
@@ -276,6 +279,8 @@ describe("quantum jump home", () => {
     });
     model.storyPrevious();
     expect(model.storyView?.page.id).toBe("morning");
+    // Morning leads straight to the room page, so Skip would pass nothing there.
+    expect(model.storyView?.canSkip).toBe(false);
     // Skip from the night passes the sleep and morning and stops on the room page.
     const skipped = launched();
     seenHome(skipped);

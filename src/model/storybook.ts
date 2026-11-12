@@ -137,6 +137,23 @@ export function atRunEnd(position: StoryPosition): boolean {
   return Boolean(position.scene.endsRun) && position.page === position.scene.last;
 }
 
+/**
+ * Whether Skip would pass a page: the page Next or the named action shows next, by the default
+ * path, is not the run's end, which is where Skip lands. `scenes` are the run's scenes in the
+ * order it chains them, so the last page of one leads to the first of the next.
+ */
+export function skipPassesPage(scenes: readonly Scene[], position: StoryPosition): boolean {
+  if (atRunEnd(position)) {
+    return false;
+  }
+  const next = advance(position);
+  if (next) {
+    return !atRunEnd(next);
+  }
+  const following = scenes[scenes.findIndex((scene) => scene.id === position.scene.id) + 1];
+  return following !== undefined && !atRunEnd(storyStart(following));
+}
+
 function moveTo(position: StoryPosition, next: string | undefined): StoryPosition | null {
   return next === undefined
     ? null

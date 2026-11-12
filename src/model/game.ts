@@ -149,6 +149,7 @@ import {
   type Scene,
   sceneEnd,
   shownChoices,
+  skipPassesPage,
   stepOf,
   type StoryChoice,
   type StoryLabels,
@@ -234,7 +235,10 @@ export interface StoryView {
   /** The story run the page belongs to. */
   readonly run: StoryRun;
   readonly canGoBack: boolean;
-  /** Skip shows on every page but the story run's end and the sleep scene. */
+  /**
+   * Skip shows only where it passes a page Next or the named action would show: not on the
+   * story run's end, the page before it or the sleep scene.
+   */
   readonly canSkip: boolean;
   /** The choices shown: a choice page's, or the optional questions not yet asked. */
   readonly choices: readonly StoryChoice[];
@@ -444,7 +448,7 @@ export class GameModel {
     return this.story && this.screen === "story"
       ? {
           canGoBack: canGoBack(this.story),
-          canSkip: !atRunEnd(this.story) && !currentPage(this.story).sleep,
+          canSkip: !currentPage(this.story).sleep && skipPassesPage(this.runScenes, this.story),
           choices: shownChoices(this.story),
           page: currentPage(this.story),
           run: this.run,
@@ -2127,12 +2131,17 @@ export class GameModel {
   /**
    * Skip passes every remaining page and scene of the story run by the default path, each scene
    * applying its effect as it ends, and stops where play resumes: galaxy selection, or Ada's room
-   * page with its named action, whose Previous returns to the page Skip left. The sleep scene and
-   * the run's end show no Skip.
+   * page with its named action, whose Previous returns to the page Skip left. Where it would pass
+   * no page (the run's end and the page before it) and on the sleep scene it does nothing.
    */
   storySkip(): void {
     const from = this.story;
-    if (!from || this.screen !== "story" || this.sleeping || atRunEnd(from)) {
+    if (
+      !from ||
+      this.screen !== "story" ||
+      this.sleeping ||
+      !skipPassesPage(this.runScenes, from)
+    ) {
       return;
     }
     // Each pass ends one scene; a run holds only a few, so the bound only guards a cycle.
@@ -2257,20 +2266,26 @@ export class GameModel {
     this.story = storyStart(scene, trail);
     if (trail.length === 0 && !this.simulating) {
       this.runs += 1;
-      this.run = { id: `${scene.id}#${this.runs}`, pages: this.runPages(scene) };
+      this.runScenes = this.chainedScenes(scene);
+      this.run = {
+        id: `${scene.id}#${this.runs}`,
+        pages: this.runScenes.flatMap(({ pages }) => pages),
+      };
     }
     this.showPage();
   }
   /** The story run on show, and how many have started. */
   private run: StoryRun = { id: "", pages: [] };
+  /** The story run's scenes in the order it chains them. */
+  private runScenes: readonly Scene[] = [];
   private runs = 0;
   /** A copy that follows a run's scenes without starting runs of its own. */
   private simulating = false;
   /**
-   * The pages of every scene the run starting at scene chains by the default path, as moveStory
-   * follows it: each scene's end applies its effect to a copy of the state, which picks the next.
+   * Every scene the run starting at scene chains by the default path, as moveStory follows it:
+   * each scene's end applies its effect to a copy of the state, which picks the next.
    */
-  private runPages(scene: Scene): readonly StoryPage[] {
+  private chainedScenes(scene: Scene): readonly Scene[] {
     const copy = new GameModel(this.content, JSON.stringify(this.state));
     copy.simulating = true;
     copy.startShown = false;
@@ -2288,7 +2303,7 @@ export class GameModel {
         scenes.push(copy.story.scene);
       }
     }
-    return scenes.flatMap(({ pages }) => pages);
+    return scenes;
   }
   private showPage(): void {
     this.slept = 0;

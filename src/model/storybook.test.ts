@@ -322,6 +322,55 @@ describe("story runs", () => {
     expect(boarding.screen).toBe("selector");
   });
 
+  /** Each page's id and whether Skip shows, by Next or the first choice, to the run's end. */
+  function skipShown(model: GameModel): { id: string; skip: boolean }[] {
+    const pages: { id: string; skip: boolean }[] = [];
+    for (let turn = 0; turn < 80 && model.storyView; turn++) {
+      const view = model.storyView;
+      pages.push({ id: view.page.id, skip: view.canSkip });
+      if (view.page.action === "Pick up the rock.") {
+        break;
+      }
+      if (view.page.choices && !view.page.questions) {
+        model.storyChoose(0);
+      } else {
+        model.storyNext();
+      }
+    }
+    return pages;
+  }
+
+  it("shows Skip on every page of a run to galaxy selection but its last", () => {
+    const model = started();
+    const pages = skipShown(model);
+    expect(model.screen).toBe("selector");
+    expect(pages.length).toBeGreaterThan(2);
+    expect(pages.slice(0, -1).every(({ skip }) => skip)).toBe(true);
+    // The last page before galaxy selection: Skip would pass nothing.
+    expect(pages.at(-1)!.skip).toBe(false);
+  });
+
+  it("hides Skip on Ada's room page and the page before it, and shows it earlier", () => {
+    const model = questDone(1);
+    model.returnHome();
+    const pages = skipShown(model);
+    expect(pages.at(-1)!.id).toBe("room");
+    expect(pages.slice(-2).map(({ skip }) => skip)).toEqual([false, false]);
+    expect(pages.slice(0, -2).every(({ skip }) => skip)).toBe(true);
+    expect(pages.length).toBeGreaterThan(2);
+  });
+
+  it("does nothing on the page before Ada's room page, where Skip would pass no page", () => {
+    const model = questDone(1);
+    model.returnHome();
+    const before = skipShown(model).at(-2)!.id;
+    const again = questDone(1);
+    again.returnHome();
+    readTo(again, before);
+    again.storySkip();
+    expect(again.storyView?.page.id).toBe(before);
+  });
+
   it("Skip stops on Ada's room page, whose Previous returns to the page Skip left", () => {
     const model = questDone(1);
     model.returnHome();
@@ -338,8 +387,11 @@ describe("story runs", () => {
     model.returnHome();
     const reloaded = relaunch(PROTOTYPE, model.save());
     reloaded.continueGame();
-    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: true });
+    // Its one page leads straight to galaxy selection, so Skip would pass nothing.
+    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: false });
     reloaded.storySkip();
+    expect(reloaded.screen).toBe("story");
+    reloaded.storyNext();
     expect(reloaded.screen).toBe("selector");
   });
 });

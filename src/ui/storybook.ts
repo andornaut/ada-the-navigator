@@ -51,7 +51,10 @@ export interface StoryPageView {
   readonly next: boolean;
   readonly action?: string;
   readonly canGoBack: boolean;
-  /** Whether Skip shows: every page but the story run's end and the sleep scene. */
+  /**
+   * Whether Skip shows: only where it passes a page Next or the named action would show, so
+   * not on the story run's end, the page before it or the sleep scene.
+   */
   readonly canSkip: boolean;
   /** Ada's room page, where the pause button shows, so the panel's top cap sits lower. */
   readonly room?: boolean;
