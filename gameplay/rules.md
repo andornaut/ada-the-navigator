@@ -775,6 +775,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
   never relies on color alone: the bar also pulses, held steady under reduced
   motion, and Astra says "Shield low!".
+- While the recharge delay runs, a thin strip, about 2 logical pixels, along the
+  inside of the bar's bottom edge fills left to right across the bar's full
+  length, reaching full when recharge starts. Damage empties it and starts it
+  again. It is hidden while the shield is full or regenerating, is a steady
+  fill that reduced motion keeps, and sits inside the light-field outline.
 - The status pill at the top left, beside the pause button, shows the Stardust
   count. While Ada carries ore, a divider and an ore icon with its count follow;
   while she carries a job or story item or tows a craft, a divider and its icon
