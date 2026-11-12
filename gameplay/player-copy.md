@@ -105,7 +105,7 @@ rock's glow." Astra: "Welcome back, Navigator."
 Holodisk inserted: Narration: "Ada slides the holodisk into Astra's drive."
 Astra: "Memory restored. I've found new coordinates."
 
-Then Astra's memory line for that galaxy:
+Then Astra's memory line for how many holodisks she now holds:
 
 - First holodisk: "I remember a fleet... and someone giving orders."
 - Second: "I carried that fleet from galaxy to galaxy. But whose fleet?"
@@ -117,10 +117,12 @@ Then Astra's memory line for that galaxy:
   I'm whole again, he'll want me even more."
 - Sixth: written with the finale.
 
-Memory lines and broadcasts follow route position. The General's broadcasts play
-in the conversation box when his drones first engage Ada in each galaxy from the
-second position on. His name tab reads "Unknown voice" until the third holodisk
-is inserted, then "General Gadget". While the tab reads "Unknown voice", his
+Memory lines and broadcasts follow the order holodisks are recovered. The
+General's broadcast in a built galaxy plays once, in the conversation box, the
+first time his drones engage Ada there: the line after the number of holodisks
+she holds then, so none plays while she holds none. Placeholder galaxies play no
+broadcast. His name tab reads "Unknown voice" until the third holodisk is
+inserted, then "General Gadget". While the tab reads "Unknown voice", his
 portrait is a dark silhouette with no face; once named, it shows him:
 
 - Second: Unknown voice: "All drones: find the holodisks. Bring them to me."

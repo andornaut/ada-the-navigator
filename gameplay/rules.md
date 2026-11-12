@@ -20,10 +20,11 @@ belongs in [Ideas](ideas.md). The route runs:
 
 Tension rises, dips at Needle, builds again through Andromeda, and peaks with Cartwheel's stand against a bully
 before Black Eye's stand against General Gadget. Content tied to a galaxy, its
-story, places, roster and art, is named by galaxy. Difficulty, rewards, prices,
-Astra's memory lines and General Gadget's broadcasts follow route position, so
-reordering the route moves a galaxy's content and gives it its new position's
-values. Station jobs are in [Quests](quests.md).
+story, places, roster and art, is named by galaxy. Difficulty, rewards and prices
+follow route position, so reordering the route moves a galaxy's content and gives
+it its new position's values. Astra's memory lines and General Gadget's
+broadcasts follow the order holodisks are recovered, which is route position once
+every galaxy is built. Station jobs are in [Quests](quests.md).
 
 Space uses authored sprites for ships, stations, outposts, pickups and asteroids,
 with simple placeholders only where art has not landed yet.
