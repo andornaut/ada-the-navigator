@@ -350,15 +350,6 @@ export const STATION_STYLE = `
 .ada-controls [data-state=unaffordable] .ada-job-action.ada-compact.ada-primary{
   border-image-source:var(--ui-button-primary-disabled)
 }
-/* CLEANUP (added 2026-11-12): the shared activity icon is a placeholder disc until Art pins its
-   circular repeat arrow sheet; then the activity row takes that sheet as the job rows take theirs. */
-.ada-controls .ada-job-glyph[data-type=activity]{
-  border-radius:50%;
-  background:#b55088
-}
-.ada-controls [data-state=unaffordable] .ada-job-glyph[data-type=activity]{
-  background:${TEXT_TOKENS.disabledLabel}
-}
 
 /* Measuring: rows at their natural widths, off screen. */
 .ada-controls .ada-shop-measure{
@@ -830,16 +821,11 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     node.dataset.job = job.id;
     // The held job wears the selection ring; a refused offer the disabled face.
     node.dataset.state = { busy: "unaffordable", held: "inUse", offer: "forSale" }[job.state];
-    // The job type's icon-job sheet, normal then disabled; the activity's placeholder mark.
+    // The job type's icon-job sheet, normal then disabled; every activity shares one.
     const glyph = document.createElement("span");
-    glyph.className =
-      job.kind === "activity"
-        ? "ada-glyph ada-job-glyph"
-        : "ada-glyph ada-glyph-sprite ada-job-glyph";
+    glyph.className = "ada-glyph ada-glyph-sprite ada-job-glyph";
     glyph.dataset.type = job.kind === "activity" ? "activity" : job.type;
-    if (job.kind !== "activity") {
-      glyph.style.setProperty("--sheet", `url('${SPRITES}icon-job-${job.type}.png')`);
-    }
+    glyph.style.setProperty("--sheet", `url('${SPRITES}icon-job-${glyph.dataset.type}.png')`);
     glyph.setAttribute("aria-hidden", "true");
     const jobWell = document.createElement("span");
     jobWell.className = "ada-well";

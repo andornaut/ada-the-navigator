@@ -85,7 +85,7 @@ describe("shop style", () => {
   });
 
   it("gives job rows their type's sheet and a compact action that takes no press of its own", () => {
-    for (const type of ["survey", "delivery", "rescue", "hunt"]) {
+    for (const type of ["survey", "delivery", "rescue", "hunt", "activity"]) {
       expect(
         existsSync(new URL(`../../public/art/ui/sprites/icon-job-${type}.png`, import.meta.url)),
       ).toBe(true);
@@ -93,7 +93,7 @@ describe("shop style", () => {
     expect(STATION_STYLE).toContain(".ada-controls .ada-job-action.ada-compact{");
     expect(STATION_STYLE).toContain("pointer-events:none");
     expect(STATION_STYLE).toContain("var(--ui-button-primary-disabled)");
-    // The placeholder flat marks per job type are gone; only the activity's waits on Art.
-    expect(STATION_STYLE).not.toMatch(/ada-job-glyph\[data-type=(survey|delivery|rescue|hunt)\]/u);
+    // No row keeps a placeholder flat mark: the activity row takes its sheet too.
+    expect(STATION_STYLE).not.toMatch(/ada-job-glyph\[data-type=/u);
   });
 });
