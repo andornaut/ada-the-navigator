@@ -103,15 +103,8 @@ export interface EconomyCatalog {
     destinationClearance: number;
     /** World distance within which the direction indicator marks an undiscovered station. */
     indicatorRange: number;
+    /** The station's silhouette radius at its display size (art/destinations.md). */
     radius: number;
-    /** World offset of the dock from the station's centre, from the station art's dock point. */
-    dockOffset: { x: number; y: number };
-    /** World unit direction out of the dock, from the station art; undocking and travel arrive along it. */
-    dockOutward: { x: number; y: number };
-    /** Scale on the mouth circle's radius for the docking overlap; 1 docks at the drawn mouth. */
-    dockForgiveness: number;
-    /** World radius of the dock's mouth circle, from the station art's mouth width. */
-    dockMouthRadius: number;
     safeRadius: number;
   };
 }
@@ -220,17 +213,10 @@ export const ECONOMY: EconomyCatalog = {
     // Every cell holds a station; occupancy only gates a cell, so seeded positions never move.
     chance: 1,
     destinationClearance: 1200,
-    // Gameplay's forgiving dock: the mouth circle's radius scaled up for docking.
-    dockForgiveness: 3,
-    // Half station-a's drawn 16.61 display px mouth, as a world-plane circle's radius.
-    dockMouthRadius: 5.873,
-    // station-a's dock entrance, 27.2 display px below the pivot, in world units.
-    dockOffset: { x: 27.223, y: 27.223 },
-    dockOutward: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
     indicatorRange: 2000,
     jitter: 4000,
     originClearance: 3000,
-    radius: 40,
+    radius: 60,
     safeRadius: 320,
   },
   trackPrices: {

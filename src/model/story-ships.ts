@@ -77,9 +77,10 @@ export interface StoryDocking {
 }
 
 /**
- * A regular's hub-relative docked spot (art/cartwheel.md "Hub"): its dock or berth point moved
+ * A regular's hub-relative docked spot (art/cartwheel.md "Hub"): its berth point moved
  * outward, opposite its docking heading, by its craft's nose distance at that drawn heading,
- * so the nose meets the dock face. Without the nose data the pivot stays on the point.
+ * so the nose meets the berth's face. Without the nose data, or moored, the pivot stays on the
+ * point.
  */
 export function dockedSpot(
   docking: StoryDocking,
@@ -87,7 +88,7 @@ export function dockedSpot(
 ): { at: Vec; heading: Vec } {
   const dock = CARTWHEEL_STORY_SHIPS.docked[docking.bay ? "bay" : "hub"][id];
   const noses = docking.noses[id];
-  const distance = noses?.[headingIndex(noses.length, dock.heading)] ?? 0;
+  const distance = dock.moored ? 0 : (noses?.[headingIndex(noses.length, dock.heading)] ?? 0);
   return {
     at: { x: dock.at.x - dock.heading.x * distance, y: dock.at.y - dock.heading.y * distance },
     heading: dock.heading,

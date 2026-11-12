@@ -63,6 +63,7 @@ import { carriesStardust, dropRandom } from "./drops.ts";
 import {
   activateRouteEncounter,
   createFlight,
+  dockFlight,
   dronesNear,
   ensureDestination,
   ensureHuntingPacks,
@@ -342,6 +343,8 @@ export class GameModel {
   private noticeShownFor = 0;
   /** Held-job moments since the last flight step, for the conversation director. */
   private jobMoments: (JobMoment | "jobComplete")[] = [];
+  /** Whether Ada has docked this flight, which marks the dock lesson done. */
+  private dockedThisFlight = false;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
@@ -523,6 +526,10 @@ export class GameModel {
       : (stages[this.state.selectedSector]?.[p.stage] ?? 0);
     return this.chapter.objectives[index] ?? "";
   }
+  /**
+   * The nearest known destination or discovered station within Talk range, its route open
+   * (gameplay/rules.md "Talk range").
+   */
   private nearest(): string | undefined {
     const f = this.state.flight;
     if (!f || this.state.mode !== "space" || this.state.dialogue) {
@@ -531,9 +538,10 @@ export class GameModel {
     return f.objects
       .filter(
         (o) =>
-          o.kind === "destination" &&
-          this.current.known.includes(o.id) &&
-          !routeBlocked(o.id, f) &&
+          ((o.kind === "destination" &&
+            this.current.known.includes(o.id) &&
+            !routeBlocked(o.id, f)) ||
+            (o.kind === "station" && this.current.stations.includes(o.id))) &&
           Math.hypot(o.x - f.player.x, o.y - f.player.y) <= this.content.tuning.talkRange,
       )
       .sort(
@@ -552,6 +560,10 @@ export class GameModel {
     if (!id) {
       return undefined;
     }
+    // At a station an action due there comes before Dock (gameplay/rules.md).
+    if (this.current.stations.includes(id)) {
+      return this.supplyDue(id) ? "deliver" : "dock";
+    }
     if (id === "hub" && (this.state.flight?.cargo ?? 0) > 0) {
       return "deposit";
     }
@@ -559,6 +571,18 @@ export class GameModel {
       return "deliver";
     }
     return "talk";
+  }
+  /**
+   * The destination or station Use acts on and its action, for the Use callout above it;
+   * undefined when Use acts on no place, as on a tow line's craft.
+   */
+  get useTarget(): { action: UseAction; id: string } | undefined {
+    const action = this.contextAction;
+    if (action === undefined || action === "tow") {
+      return undefined;
+    }
+    const id = this.nearest();
+    return id === undefined ? undefined : { action, id };
   }
   /** The Use action's name, the disc's accessible name. */
   get contextLabel(): string | undefined {
@@ -740,12 +764,33 @@ export class GameModel {
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
   }
+  /** Undocking leaves Ada at rest where she docked (gameplay/economy.md). */
   undock(): void {
-    const id = this.state.docked;
-    if (id && this.state.flight) {
-      undockFlight(id, this.state.flight);
+    if (this.state.docked && this.state.flight) {
+      undockFlight(this.state.flight);
     }
     this.state.docked = null;
+  }
+  /**
+   * Docks at a station in Talk range: the station card opens, and a delivery job's lost item is
+   * replaced at its issuing station.
+   */
+  private dock(id: string, f: FlightState): void {
+    if (!dockFlight(this.content, id, f)) {
+      return;
+    }
+    this.state.docked = id;
+    this.dockedThisFlight = true;
+    const held = this.held;
+    if (held?.type === "delivery" && held.station === id) {
+      held.carrying = true;
+    }
+  }
+  /** Whether a carried supply run is bound for this station, so Use delivers it there. */
+  private supplyDue(id: string): boolean {
+    const f = this.state.flight;
+    const activity = f && heldActivity(f.sector, this.state);
+    return activity?.id === "supplyRun" && activity.carrying === true && activity.target?.id === id;
   }
   private panel(context: string, text: string, title = this.chapter.name): void {
     this.state.dialogue = {
@@ -1162,9 +1207,6 @@ export class GameModel {
         this.current.stations.push(event.id);
         newStation = true;
       }
-      if (event.type === "docked") {
-        this.state.docked = event.id;
-      }
       if (event.type === "enemyDisabled") {
         this.current.disabledEnemies++;
       }
@@ -1195,8 +1237,7 @@ export class GameModel {
     for (const id of charted) {
       this.recordAchievement({ galaxy: f.sector, id, kind: "landmarkCharted" });
     }
-    this.stepJob(events, f);
-    this.stepSupply(events, f);
+    this.stepJob(f);
     this.stepCalf(dt, f);
     const jobMoments = this.jobMoments;
     this.jobMoments = [];
@@ -1214,7 +1255,7 @@ export class GameModel {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
       capitalInSight: capitalInSight(SCREEN, f),
       collectedStardust: events.some((event) => event.type === "stardust"),
-      docked: events.some((event) => event.type === "docked"),
+      docked: this.dockedThisFlight,
       dronesNear: dronesNear(this.content, f),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.sector, 0, f.player),
@@ -1471,6 +1512,14 @@ export class GameModel {
     const id = this.nearest();
     const f = this.state.flight;
     if (!id || !f) {
+      return;
+    }
+    if (this.current.stations.includes(id)) {
+      if (this.supplyDue(id)) {
+        this.finishActivity(f.sector);
+      } else {
+        this.dock(id, f);
+      }
       return;
     }
     const destination = f.objects.find(
@@ -1788,13 +1837,13 @@ export class GameModel {
     ) {
       return "tow";
     }
-    // A station destination takes its delivery on docking; an outpost on Use.
+    // A delivery bound for a station or an outpost hands over with Use, before Dock.
     if (held.type === "delivery" && held.carrying && this.nearest() === held.target.id) {
       return "deliver";
     }
     return null;
   }
-  /** Use for the held job: attaches the tow line or delivers to an outpost. */
+  /** Use for the held job: attaches the tow line or delivers to a station or an outpost. */
   private useJob(): boolean {
     const use = this.jobUse();
     const f = this.state.flight;
@@ -1823,27 +1872,14 @@ export class GameModel {
     this.jobMoments.push("jobComplete");
     this.recordAchievement({ kind: "jobCompleted" });
   }
-  /** One flight step of the held job: surveys, delivery docking, the tow line and the hunt. */
-  private stepJob(events: readonly FlightEvent[], f: FlightState): void {
+  /** One flight step of the held job: surveys, the tow line and the hunt. */
+  private stepJob(f: FlightState): void {
     const held = this.held;
     if (!held) {
       return;
     }
     if (held.type === "survey" && this.current.charted.includes(held.target.id)) {
       this.finishJob(f);
-    } else if (held.type === "delivery") {
-      for (const event of events) {
-        if (event.type !== "docked") {
-          continue;
-        }
-        // A lost item is replaced at the issuing station.
-        if (event.id === held.station) {
-          held.carrying = true;
-        } else if (event.id === held.target.id && held.carrying) {
-          this.finishJob(f);
-          return;
-        }
-      }
     } else if (held.type === "rescue" && f.tow) {
       pullTow(f.player, f.tow);
       const place = nearestSafePlace(this.outposts(f), this.jobStation(held), f.tow);
@@ -1869,17 +1905,6 @@ export class GameModel {
         });
         this.finishJob(f);
       }
-    }
-  }
-  /** A supply run completes on docking at its destination station while its item is aboard. */
-  private stepSupply(events: readonly FlightEvent[], f: FlightState): void {
-    const activity = heldActivity(f.sector, this.state);
-    if (
-      activity?.id === "supplyRun" &&
-      activity.carrying &&
-      events.some((event) => event.type === "docked" && event.id === activity.target?.id)
-    ) {
-      this.finishActivity(f.sector);
     }
   }
   /**

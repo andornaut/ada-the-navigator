@@ -40,12 +40,7 @@ import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
-import {
-  activeBeamFlashes,
-  activeBlastFlashes,
-  shipSpeedFraction,
-  stationDock,
-} from "../model/flight.ts";
+import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
@@ -92,6 +87,7 @@ import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/status-pill.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen } from "../ui/title-screen.ts";
+import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touch-chrome.ts";
 import {
   type CoreManifest,
   galaxyLoadsAtOnce,
@@ -169,6 +165,7 @@ import {
   EDGE_MARKER_DEPTH,
   type PassableDraw,
   type Placed,
+  USE_CALLOUT_DEPTH,
 } from "./draw-order.ts";
 import {
   composedArchetypes,
@@ -202,10 +199,12 @@ import {
   readJobArt,
 } from "./job-art.ts";
 import {
+  alphaTopRow,
   blastEdges,
   inkEdges,
   KEYLINE_ALPHA,
   keylineOffsets,
+  keylineWidth,
   LIGHT_FIELD,
   lightGalaxy,
   readLightGalaxies,
@@ -288,7 +287,7 @@ import {
 } from "./station-art.ts";
 import { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg-rasters.ts";
 import { fileFilter, type TextureFilter, vectorRaster } from "./textures.ts";
-import { preloadTouchChrome } from "./touch-chrome.ts";
+import { createUseCallout, preloadTouchChrome } from "./touch-chrome.ts";
 import {
   craftFrame,
   craftHeading,
@@ -415,6 +414,18 @@ export class PrototypeScene extends Scene {
   private enemyJets!: GameObjects.Graphics;
   private enemyArt = new Map<string, EnemyArt<Asset>>();
   private enemySprites = new Map<string, GameObjects.Image>();
+  private useCallout: GameObjects.Sprite | undefined;
+  /** The Use callout's destination, whether it is showing, when its last fade began and where. */
+  private calloutState: { at: Vec; edge: number; id: string; showing: boolean } = {
+    at: { x: 0, y: 0 },
+    edge: -Infinity,
+    id: "",
+    showing: false,
+  };
+  /** Each destination's drawn top above its pivot over the frames it has shown, by id. */
+  private drawnTops = new Map<string, number>();
+  /** Each texture frame's topmost row at alpha 0.5 or more, as a fraction of its height. */
+  private frameTops = new Map<string, number>();
   private hitFlashes = new HitFlashes();
   // A heavy's part frames load on demand, once per archetype.
   private partAssets: Asset[] = [];
@@ -424,7 +435,12 @@ export class PrototypeScene extends Scene {
   private light = false;
   // Which seen enemies, heavies and stations are off screen and marked (model/edge-markers.ts).
   private readonly edgeMarkers = createEdgeMarkerTracker();
-  private keyed: { depth: number | undefined; key: string; sprite: GameObjects.Image }[] = [];
+  private keyed: {
+    depth: number | undefined;
+    key: string;
+    sprite: GameObjects.Image;
+    width: number;
+  }[] = [];
   private keylines = new Map<string, GameObjects.Image[]>();
   // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
   // (draw-order.ts), and the tow craft's pivot depth while its line is drawn.
@@ -2286,6 +2302,7 @@ export class PrototypeScene extends Scene {
       // Leaving the flight forgets every seen object.
       this.edgeMarkers.update(null, new Set());
       this.drawKeylines();
+      this.drawUseCallout(undefined);
       return;
     }
     this.light = lightGalaxy(this.lightGalaxies, flight.sector);
@@ -2507,6 +2524,104 @@ export class PrototypeScene extends Scene {
       this.enemySprites.delete(id);
     }
     this.drawKeylines();
+    this.drawUseCallout(flight);
+  }
+
+  /**
+   * The Use callout above the destination Use acts on (art/destinations.md "Use callout"): its
+   * action's symbol, O on the pivot's vertical with the tail tip 3 px above the drawn top, fading
+   * in and out over 150 ms with cubicOut, at once under reduced motion. It holds its place while
+   * it fades out.
+   */
+  private drawUseCallout(flight: FlightState | null | undefined): void {
+    this.useCallout ??= createUseCallout(this, this.rasters.scale).setDepth(USE_CALLOUT_DEPTH);
+    const target = flight ? this.model.useTarget : undefined;
+    const object =
+      target && flight?.objects.find((entry) => entry.id === target.id && entry.kind !== "enemy");
+    const now = this.time.now;
+    const state = this.calloutState;
+    if (object && target) {
+      if (!state.showing || state.id !== target.id) {
+        state.edge = state.showing ? now : now - this.calloutRemaining(now);
+        state.showing = true;
+        state.id = target.id;
+      }
+      const point = this.project(object);
+      const top = this.drawnTop(target.id, point);
+      state.at = { x: point.x, y: point.y - useCalloutLift(top) };
+      this.useCallout.setFrame(target.action);
+    } else if (state.showing) {
+      state.edge = now - this.calloutRemaining(now);
+      state.showing = false;
+    }
+    const alpha = useCalloutAlpha(now - state.edge, this.reducedMotion, state.showing);
+    this.useCallout
+      .setPosition(state.at.x, state.at.y)
+      .setAlpha(alpha)
+      .setVisible(alpha > 0);
+  }
+
+  /**
+   * How far into the opposite fade the callout's current alpha already is, so a reversed fade
+   * continues from where it stands: fading in, 1 - (1 - t)^3 = a; fading out, (1 - t)^3 = a.
+   */
+  private calloutRemaining(now: number): number {
+    const state = this.calloutState;
+    const alpha = useCalloutAlpha(now - state.edge, this.reducedMotion, state.showing);
+    const t = state.showing ? 1 - Math.cbrt(alpha) : 1 - Math.cbrt(1 - alpha);
+    return t * USE_CALLOUT_FADE_MS;
+  }
+
+  /**
+   * A drawn object's top in display px above its pivot at `point`: the topmost pixel at alpha 0.5
+   * or more over its sprites and every frame they have shown this flight.
+   */
+  private drawnTop(id: string, point: Vec): number {
+    let top = this.drawnTops.get(id) ?? 0;
+    for (const [key, sprite] of this.enemySprites) {
+      if ((key === id || key.startsWith(`${id}#`)) && sprite.visible) {
+        const fraction = this.frameTop(sprite.frame);
+        const drawn =
+          sprite.y - sprite.originY * sprite.displayHeight + fraction * sprite.displayHeight;
+        top = Math.max(top, point.y - drawn);
+      }
+    }
+    this.drawnTops.set(id, top);
+    return top;
+  }
+
+  /** The topmost row of a frame with alpha 0.5 or more, as a fraction of its height. */
+  private frameTop(frame: Textures.Frame): number {
+    const key = `${frame.texture.key}#${String(frame.name)}@${frame.cutWidth}`;
+    const known = this.frameTops.get(key);
+    if (known !== undefined) {
+      return known;
+    }
+    const width = Math.max(1, frame.cutWidth);
+    const height = Math.max(1, frame.cutHeight);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    let row = height;
+    if (context) {
+      context.drawImage(
+        frame.source.image as CanvasImageSource,
+        frame.cutX,
+        frame.cutY,
+        width,
+        height,
+        0,
+        0,
+        width,
+        height,
+      );
+      const data = context.getImageData(0, 0, width, height).data;
+      row = alphaTopRow(data, width, height, KEYLINE_ALPHA);
+    }
+    const fraction = row / height;
+    this.frameTops.set(key, fraction);
+    return fraction;
   }
 
   /** Records a drawn fly-through object, which Ada draws above while she overlaps it. */
@@ -2537,20 +2652,24 @@ export class PrototypeScene extends Scene {
    * frame's ink keyline.
    */
   private keyline(kind: string, key: string, sprite: GameObjects.Image, depth?: number): void {
-    if (this.light && LIGHT_FIELD.keylined.includes(kind)) {
-      this.keyed.push({ depth, key, sprite });
+    if (
+      this.light &&
+      (LIGHT_FIELD.keylined.includes(kind) || LIGHT_FIELD.destinationKeyline.kinds.includes(kind))
+    ) {
+      this.keyed.push({ depth, key, sprite, width: keylineWidth(LIGHT_FIELD, kind) });
     }
   }
 
   /**
    * Each keylined sprite's ink keyline: eight copies of its frame's ink silhouette offset by
-   * `keyline` px in every direction (a square kernel), just beneath it in its depth slot (or at
-   * its group's keyline depth), at its alpha. Keylines not drawn this frame are destroyed.
+   * its kind's keyline width in every direction (a square kernel), just beneath it in its depth
+   * slot (or at its group's keyline depth), at its alpha. Keylines not drawn this frame are
+   * destroyed.
    */
   private drawKeylines(): void {
     const used = new Set<string>();
-    const offsets = keylineOffsets(LIGHT_FIELD.keyline);
-    for (const { depth, key, sprite } of this.keyed) {
+    for (const { depth, key, sprite, width } of this.keyed) {
+      const offsets = keylineOffsets(width);
       if (!sprite.visible) {
         continue;
       }
@@ -3593,7 +3712,7 @@ export class PrototypeScene extends Scene {
   /** Art's station blinks between frames A and B; reduced motion holds A. Stations draw no name label. */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
     if (!this.stationArt) {
-      this.drawStationPlaceholder(object, point, radius);
+      this.drawStationPlaceholder(point, radius);
       return;
     }
     this.drawBlink(this.stationArt, "station", object, point);
@@ -3945,19 +4064,15 @@ export class PrototypeScene extends Scene {
     this.keyline("discoveryCache", object.id, sprite);
   }
 
-  /** Fallback without the station art: a ring hull, its dock and its safe-area outline. */
-  private drawStationPlaceholder(object: SpaceObject, point: Vec, radius: number): void {
+  /** Fallback without the station art: a ring hull and its safe-area outline. */
+  private drawStationPlaceholder(point: Vec, radius: number): void {
     const safe = ECONOMY.station.safeRadius;
-    const mouth = ECONOMY.station.dockMouthRadius * Math.SQRT2;
     this.ink.lineStyle(1, this.palette.pointOfInterest, 0.35);
     this.ink.strokeEllipse(point.x, point.y, safe * 2, safe);
     this.ink.fillStyle(this.palette.environment);
     this.ink.lineStyle(2, this.palette.pointOfInterest);
     this.ink.fillEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
     this.ink.strokeEllipse(point.x, point.y, radius * 2.4, radius * 1.2);
-    const dockAt = this.project(stationDock(object));
-    this.ink.lineStyle(1.5, this.palette.active, 0.8);
-    this.ink.strokeEllipse(dockAt.x, dockAt.y, mouth * 2, mouth);
   }
 
   /**

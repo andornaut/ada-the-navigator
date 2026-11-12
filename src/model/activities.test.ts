@@ -9,7 +9,7 @@ import type { SectorId } from "../data/types.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
 import { activityOffer, heldActivity } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
-import { ensureDestination, ensureStation, stationDock } from "./flight.ts";
+import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
@@ -296,16 +296,20 @@ describe("repeatable activities", () => {
     model.interact();
     expect(model.state.dialogue).toMatchObject({ context: "activityActive:growers" });
     expect(heldActivity(1, model.state)?.carrying).toBe(true);
-    // Docking at the station delivers.
+    // At the station Use delivers, before Dock.
     const before = model.state.economy.stardust;
     ensureStation(PROTOTYPE, site.id, model.state.flight!);
     const next = model.state.flight!;
-    next.player = { ...stationDock(site) };
+    next.player = { x: site.x + 100, y: site.y };
     next.velocity = { x: 0, y: 0 };
     next.dangerFor = 0;
     model.state.dialogue = null;
     model.step(0.05, idle);
-    expect(model.state.docked).toBe(site.id);
+    expect(model.state.docked).toBeNull();
+    expect(model.contextAction).toBe("deliver");
+    model.interact();
+    expect(model.state.docked).toBeNull();
+    expect(model.contextAction).toBe("dock");
     expect(model.state.tasks[1]).toBeUndefined();
     expect(model.state.economy.stardust).toBe(before + reward);
     expect(model.state.notice).toBe(`Job complete: +${reward} Stardust`);

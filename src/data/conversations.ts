@@ -151,7 +151,11 @@ export const CONVERSATIONS: readonly Conversation[] = [
   {
     id: "lesson:dock",
     lines: [
-      line("astra", "A station! Fly into the dock to trade."),
+      line(
+        "astra",
+        "A station! Come close and tap {use} to dock.",
+        "A station! Come close and press Space to dock.",
+      ),
       happy("ada", "Shopping in space!"),
     ],
     priority: "lesson",

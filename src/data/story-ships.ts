@@ -88,11 +88,18 @@ const VISITOR_1 = moored(BUOYS.visitors, "left", 14);
 const VISITOR_2 = moored(BUOYS.visitors, "back", 14);
 
 /**
- * The hub's live dock and its two free berths (art/cartwheel.md "Hub") as world offsets from
- * its pivot: frame px from the 240 px frame's pivot (0.5, 0.5625), at the 0.4375 display scale.
+ * The hub's frame px to display px: the 0.4375 display scale times the hub scale 1.25
+ * (art/destinations.md "Scale").
  */
-const at = (x: number, y: number) => screenToWorld((x - 120) * 0.4375, (y - 135) * 0.4375);
-const HUB_DOCKS = { left: at(21.374, 175.72), live: at(120, 216.317), right: at(218.626, 175.72) };
+export const HUB_DISPLAY_SCALE = 0.4375 * 1.25;
+
+/**
+ * The hub's two berths (art/cartwheel.md "Hub") as world offsets from its pivot: frame px from
+ * the 240 px frame's pivot (0.5, 0.5625), at the hub's display scale.
+ */
+const at = (x: number, y: number) =>
+  screenToWorld((x - 120) * HUB_DISPLAY_SCALE, (y - 135) * HUB_DISPLAY_SCALE);
+const HUB_BERTHS = { left: at(21.374, 175.72), right: at(218.626, 175.72) };
 
 /** A dock at its frame px, facing into it: opposite its outward screen direction, in world. */
 function dock(x: number, y: number, outward: readonly [number, number]): StoryDock {
@@ -101,31 +108,45 @@ function dock(x: number, y: number, outward: readonly [number, number]): StoryDo
   return { at: at(x, y), heading: { x: -out.x / size, y: -out.y / size } };
 }
 
-/** Where a docked story ship stands and the unit world heading it faces. */
+/**
+ * Where a docked story ship stands and the unit world heading it faces. A moored one waits at
+ * its buoy facing the hub, with no berth to meet.
+ */
 export interface StoryDock {
   readonly at: Vec;
   readonly heading: Vec;
+  readonly moored?: true;
 }
 
 /**
- * The hub's live dock, its two free berths and the second docking bay's berth
- * (art/cartwheel.md "Hub" and "World changes"), each with its outward screen direction.
+ * The hub's two berths and the second docking bay's berth (art/cartwheel.md "Hub" and "World
+ * changes"), each with its outward screen direction.
  */
 const DOCKS = {
   bay: dock(50.084, 225.391, [-0.612, 0.791]),
   left: dock(21.374, 175.72, [-0.924, 0.382]),
-  live: dock(120, 216.317, [0, 1]),
   right: dock(218.626, 175.72, [0.924, 0.382]),
 } as const;
+
+/** Without the second bay the second visitor has no berth and waits at its buoy. */
+const VISITOR_2_MOORED: StoryDock = {
+  at: VISITOR_2,
+  heading: (() => {
+    const size = Math.hypot(VISITOR_2.x, VISITOR_2.y);
+    return { x: -VISITOR_2.x / size, y: -VISITOR_2.y / size };
+  })(),
+  moored: true,
+};
 
 /**
  * Cartwheel's story ships (gameplay/rules.md): the miner, two regular visitors and the
  * blocking pilot. Between scenes the miner and the visitors wait moored at two buoys inside
  * the docked view, facing the hub; each buoy is its group's story destination, outside the
  * hub's safe area and two safe areas from the other. Each scene moves its ships along scripted
- * paths, then its line plays. Ships that dock stay docked: the miner at the live dock, the
- * visitors at the free berths, and once the second docking bay is funded the first visitor at
- * its berth. Values are provisional tuning in world units and seconds.
+ * paths, then its line plays. Ships that dock stay docked: the miner at the left berth and the
+ * first visitor at the right; the second visitor waits at its buoy until the second docking bay
+ * is funded, then docks at the bay's berth.
+ * Values are provisional tuning in world units and seconds.
  */
 export const CARTWHEEL_STORY_SHIPS: {
   readonly buoys: Readonly<Record<"miner" | "visitors", Vec>>;
@@ -143,8 +164,8 @@ export const CARTWHEEL_STORY_SHIPS: {
   buoys: BUOYS,
   destinations: BUOYS,
   docked: {
-    bay: { miner: DOCKS.live, "visitor-1": DOCKS.bay, "visitor-2": DOCKS.right },
-    hub: { miner: DOCKS.live, "visitor-1": DOCKS.left, "visitor-2": DOCKS.right },
+    bay: { miner: DOCKS.left, "visitor-1": DOCKS.right, "visitor-2": DOCKS.bay },
+    hub: { miner: DOCKS.left, "visitor-1": DOCKS.right, "visitor-2": VISITOR_2_MOORED },
   },
   hold: { miner: MINER, "visitor-1": VISITOR_1, "visitor-2": VISITOR_2 },
   scenes: {
@@ -180,17 +201,17 @@ export const CARTWHEEL_STORY_SHIPS: {
         miner: [
           { at: 0, ...MINER },
           { at: 3.5, x: 80, y: 130 },
-          { at: 8.5, ...HUB_DOCKS.live },
+          { at: 8.5, ...HUB_BERTHS.left },
         ],
         "visitor-1": [
           { at: 0, ...VISITOR_1 },
           { at: 3.5, x: 70, y: 160 },
-          { at: 8.5, ...HUB_DOCKS.left },
+          { at: 8.5, ...HUB_BERTHS.right },
         ],
         "visitor-2": [
           { at: 0, ...VISITOR_2 },
           { at: 3.5, x: 120, y: 100 },
-          { at: 8.5, ...HUB_DOCKS.right },
+          { at: 8.5, ...HUB_BERTHS.right },
         ],
       },
     },

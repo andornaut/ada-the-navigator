@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { ECONOMY } from "../data/economy.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
   readOutpostArt,
@@ -30,20 +29,14 @@ describe("station art", () => {
     expect(stationFrame(art, true, 700).id).toBe("station-a");
   });
 
-  it("places the model's dock at Art's dock entrance", () => {
-    const dock = stationDockWorld(art.frames[0])!;
-    // 62.225 frame px below the pivot, 27.2 display px, is straight down the screen.
-    expect(dock.offset.x).toBeCloseTo(ECONOMY.station.dockOffset.x, 2);
-    expect(dock.offset.y).toBeCloseTo(ECONOMY.station.dockOffset.y, 2);
-    expect(dock.outward.x).toBeCloseTo(ECONOMY.station.dockOutward.x, 9);
-    expect(dock.outward.y).toBeCloseTo(ECONOMY.station.dockOutward.y, 9);
+  it("has no dock: Ada enters a station by Use", () => {
+    expect(art.frames.map((frame) => stationDockWorld(frame))).toEqual([undefined, undefined]);
   });
 
-  it("derives the dock's mouth circle from Art's drawn mouth width", () => {
-    const dock = stationDockWorld(art.frames[0])!;
-    // 37.967 frame px is 16.61 display px across; a world circle draws 2 sqrt 2 radii wide.
-    expect(dock.mouthRadius).toBeCloseTo((37.967 * 0.4375) / (2 * Math.SQRT2), 9);
-    expect(dock.mouthRadius).toBeCloseTo(ECONOMY.station.dockMouthRadius, 3);
+  it("draws at the destination scale, 1.5 times its earlier size", () => {
+    // 180 by 150 frame px at 0.4375 times 1.5 (art/destinations.md).
+    expect(art.frames[0]!.displayWidth).toBeCloseTo(118.125, 3);
+    expect(art.frames[0]!.displayHeight).toBeCloseTo(98.438, 3);
   });
 
   it("keeps the placeholder when the station frames are missing", () => {
@@ -83,10 +76,11 @@ describe("outpost art", () => {
     expect(stationFrame(growers, true, 700).id).toBe("outpost-growers-a");
   });
 
-  it("draws each outpost at frame * 0.4375 from its world-plane pivot", () => {
+  it("draws each outpost at frame * 0.4375 * 1.5 from its world-plane pivot", () => {
     const workshop = outposts.get("workshop")!.frames[0];
-    expect(workshop.displayWidth).toBeCloseTo(workshop.width * 0.4375, 9);
-    expect(workshop.displayHeight).toBeCloseTo(workshop.height * 0.4375, 9);
+    // The destination scale (art/destinations.md), rounded by Art to three decimals.
+    expect(workshop.displayWidth).toBeCloseTo(workshop.width * 0.4375 * 1.5, 2);
+    expect(workshop.displayHeight).toBeCloseTo(workshop.height * 0.4375 * 1.5, 2);
     expect(workshop.pivot).toEqual({ x: 0.5, y: 0.675 });
   });
 

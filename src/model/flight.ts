@@ -83,13 +83,7 @@ import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { pickupOutline } from "./pickup-body.ts";
 import { planPlayerVolley } from "./player-projectiles.ts";
-import {
-  SHIP_REACH,
-  shipBody,
-  shipCircleContact,
-  shipNearSegment,
-  shipTouches,
-} from "./ship-body.ts";
+import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./ship-body.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type {
@@ -1393,7 +1387,6 @@ export function createFlight(
     cargo: 0,
     chunks: [],
     dangerFor: 0,
-    dockId: null,
     facing: { x: 0, y: -1 },
     fireCooldown: 0,
     freshChunk: "0,0",
@@ -1436,11 +1429,7 @@ export function teleport(content: PrototypeContent, id: string, flight: FlightSt
     return false;
   }
   beginFlightStep(flight);
-  // Station arrivals stop inside the safe area, outside the dock, so travel never docks.
-  const arrival =
-    object.kind === "station"
-      ? outsideDock(stationDockClear() + 40, object)
-      : { x: object.x, y: object.y };
+  const arrival = { x: object.x, y: object.y };
   // A jump arrival begins calm: no new encounter is placed near it, and ordinary encounter
   // ships already near it leave without counting as casualties. Guards keep their posts.
   if (!arrivalPoints(flight).some((point) => point.x === arrival.x && point.y === arrival.y)) {
@@ -1548,25 +1537,6 @@ export function shipSpeedFraction(
     flight.velocity,
   );
 }
-/** The point of a station's dock, where flying in docks. */
-export function stationDock(station: Vec): Vec {
-  return {
-    x: station.x + ECONOMY.station.dockOffset.x,
-    y: station.y + ECONOMY.station.dockOffset.y,
-  };
-}
-/**
- * The dock's mouth circle scaled by the dock forgiveness: Ada docks when her drawn ship overlaps
- * it (gameplay/economy.md).
- */
-export function stationMouthRadius(): number {
-  const { dockForgiveness, dockMouthRadius } = ECONOMY.station;
-  return dockMouthRadius * dockForgiveness;
-}
-/** How far from the dock Ada's position must be for no heading of her ship to reach its mouth. */
-export function stationDockClear(): number {
-  return stationMouthRadius() + SHIP_REACH;
-}
 /** A flight pickup's kind, which sets its reach: cache, Stardust, ore nugget or weapon. */
 export function pickupKind(object: SpaceObject): PickupKind {
   if (object.role === "cargo") {
@@ -1595,26 +1565,23 @@ export function pickupTouched(
     ? outlinesContact(outline, center, shipBody(flight.facing), flight.player, margin) !== null
     : shipTouches(flight.facing, flight.player, center, radius + margin);
 }
-/** The point `distance` from a station's dock along its outward direction. */
-function outsideDock(distance: number, station: Vec): Vec {
-  const dock = stationDock(station);
-  const outward = ECONOMY.station.dockOutward;
-  return { x: dock.x + outward.x * distance, y: dock.y + outward.y * distance };
-}
 /**
- * Undocking places Ada at rest just outside the dock, so flying back in docks again.
- * Returns false without a flight at that station.
+ * Docks at a station within Talk range (gameplay/economy.md): Ada stops where she is. Returns
+ * false unless that station is in this flight and in range.
  */
-export function undockFlight(id: string, flight: FlightState): boolean {
+export function dockFlight(content: PrototypeContent, id: string, flight: FlightState): boolean {
   const station = flight.objects.find((object) => object.kind === "station" && object.id === id);
-  if (!station) {
+  if (!station || distance(station, flight.player) > content.tuning.talkRange) {
     return false;
   }
-  flight.player = outsideDock(stationDockClear() + 1, station);
   flight.velocity = { x: 0, y: 0 };
-  flight.dockId = null;
   movementHeadings.delete(flight);
   return true;
+}
+/** Undocking leaves Ada at rest where she docked, so Use offers Dock again at once. */
+export function undockFlight(flight: FlightState): void {
+  flight.velocity = { x: 0, y: 0 };
+  movementHeadings.delete(flight);
 }
 /**
  * While a tow line is attached, Ada's current handling scaled by the tow multipliers
@@ -2678,19 +2645,6 @@ export function stepFlight(
     ) {
       events.push({ id: object.id, type: "stationDiscovered" });
     }
-  }
-  // Flying into a dock docks once; Ada must leave the dock before it docks her again.
-  const dock = flight.objects.find(
-    (object) =>
-      object.kind === "station" &&
-      shipTouches(flight.facing, flight.player, stationDock(object), stationMouthRadius()),
-  );
-  if (!dock) {
-    flight.dockId = null;
-  } else if (flight.dockId !== dock.id && flight.shield > 0) {
-    flight.dockId = dock.id;
-    flight.velocity = { x: 0, y: 0 };
-    events.push({ id: dock.id, type: "docked" });
   }
   return events;
 }

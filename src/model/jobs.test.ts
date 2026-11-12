@@ -18,7 +18,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
-import { ensureStation, stationDock, stepFlight, towing } from "./flight.ts";
+import { ensureStation, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import {
   acceptJob,
@@ -644,7 +644,7 @@ describe("jobs in play", () => {
     expect(model.state.economy.stardust).toBe(stardust + held.reward);
   });
 
-  it("deliver to a station by docking there, replacing a lost item at the issuing station", () => {
+  it("deliver to a station with Use before Dock, and replace a lost item on docking at the issuing station", () => {
     const { model, station } = docked();
     const target = stationsNear(ECONOMY, 1, 20_000, station).find(({ id }) => id !== station.id)!;
     model.state.tasks[1] = {
@@ -669,18 +669,26 @@ describe("jobs in play", () => {
       x: station.x,
       y: station.y,
     });
-    const dockAt = (site: Vec & { id: string }) => {
+    const reach = (site: Vec & { id: string }) => {
       ensureStation(PROTOTYPE, site.id, model.state.flight!);
-      flyTo(model, stationDock(site));
-      expect(model.state.docked).toBe(site.id);
+      flyTo(model, { x: site.x + 100, y: site.y });
     };
-    dockAt(station);
+    // Docking at the issuing station replaces the lost item.
+    reach(station);
+    expect(model.contextAction).toBe("dock");
+    model.interact();
+    expect(model.state.docked).toBe(station.id);
     expect(model.state.tasks[1]?.carrying).toBe(true);
     model.undock();
+    // At the target, Use delivers before Dock.
     const stardust = model.state.economy.stardust;
-    dockAt(target);
+    reach(target);
+    expect(model.contextAction).toBe("deliver");
+    model.interact();
+    expect(model.state.docked).toBeNull();
     expect(model.state.tasks[1]).toBeUndefined();
     expect(model.state.economy.stardust).toBe(stardust + 15);
+    expect(model.contextAction).toBe("dock");
   });
 
   it("report the towed craft, then a carried item, as what Ada has aboard", () => {

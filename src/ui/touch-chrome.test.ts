@@ -13,9 +13,15 @@ import {
   TOUCH_CHROME_SHEETS,
   touchChromeLayers,
   touchChromePixel,
+  USE_CALLOUT_CENTRE,
+  USE_CALLOUT_FADE_MS,
+  USE_CALLOUT_FRAME,
   USE_DISC_POSES,
   USE_PRESS_MS,
   USE_SYMBOLS,
+  useCalloutAlpha,
+  useCalloutLayers,
+  useCalloutLift,
   useDiscLayers,
 } from "./touch-chrome.ts";
 
@@ -127,6 +133,7 @@ describe("Use disc chrome", () => {
     ["tow", { bottom: 56.5, left: 28, right: 47.5, top: 19 }],
     ["salvage", { bottom: 51.5, left: 25, right: 50, top: 24 }],
     ["use", { bottom: 48.5, left: 26.5, right: 48.5, top: 26.5 }],
+    ["dock", { bottom: 55.5, left: 21.5, right: 53.5, top: 20 }],
   ] as const)(
     "centres %s's drawn bounds, ink included, within 0.5 of the ring's",
     (action, bounds) => {
@@ -182,6 +189,69 @@ describe("Use disc chrome", () => {
   it("names each action with Gameplay's string, the disc's accessible name", () => {
     expect(
       (Object.keys(USE_SYMBOLS) as UseAction[]).map((action) => PROTOTYPE.labels[action]),
-    ).toEqual(["Deliver", "Deposit", "Salvage", "Talk", "Tow", "Use"]);
+    ).toEqual(["Deliver", "Deposit", "Dock", "Salvage", "Talk", "Tow", "Use"]);
+  });
+
+  it("draws Dock as a filled ship under a hangar arch, the ship's ink its outline stroked 2", () => {
+    const dock = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "rest");
+    // The ship's body is cream; just outside its edge is its ink; the arch top is cream.
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 40 })).toEqual(CREAM);
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 30.5 })).toEqual(INK);
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 22.5 })).toEqual(CREAM);
+    // Inside the arch, between its legs and the ship, nothing is drawn.
+    expect(touchChromePixel(4, dock, { x: 28, y: 33 })).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe("Use callout", () => {
+  const CREAM = [234, 212, 170, 255];
+  const INK = [24, 20, 37, 255];
+  const callout = (action: UseAction) => useCalloutLayers(TOUCH_CHROME_COLOURS, action);
+
+  it("frames an ink disc and tail, a cream rim and tail and a navy face about O", () => {
+    expect(USE_CALLOUT_FRAME).toEqual({ height: 30, width: 26 });
+    const o = USE_CALLOUT_CENTRE;
+    const layers = callout("dock");
+    expect(layerBounds(layers)).toEqual({ bottom: o.y + 17, left: 0, right: 26, top: 0 });
+    const NAVY = [0x26, 0x2b, 0x44, 255];
+    // The face is navy, the rim cream at 11.25 from O, the ink edge at 12.5.
+    expect(touchChromePixel(8, layers, { x: o.x + 9.5, y: o.y })).toEqual(NAVY);
+    expect(touchChromePixel(8, layers, { x: o.x + 11.25, y: o.y })).toEqual(CREAM);
+    expect(touchChromePixel(8, layers, { x: o.x + 12.5, y: o.y })).toEqual(INK);
+    // The tail: cream rim down to 15.2, its ink tip at 17.
+    expect(touchChromePixel(8, layers, { x: o.x, y: o.y + 14 })).toEqual(CREAM);
+    expect(touchChromePixel(8, layers, { x: o.x, y: o.y + 16.4 })).toEqual(INK);
+    expect(touchChromePixel(8, layers, { x: o.x, y: o.y + 17.5 })).toEqual([0, 0, 0, 0]);
+  });
+
+  it("shows each action's Use disc symbol cores at 0.39 about O, with no ink", () => {
+    for (const action of Object.keys(USE_SYMBOLS) as UseAction[]) {
+      const symbol = callout(action).slice(5);
+      expect(symbol).toHaveLength(USE_SYMBOLS[action].length);
+      expect(symbol.every((layer) => layer.colour === 0xead4aa)).toBe(true);
+    }
+    // Talk's middle dot sits on O, radius 4 * 0.39.
+    expect(callout("talk")[6]).toEqual({
+      centre: USE_CALLOUT_CENTRE,
+      colour: 0xead4aa,
+      kind: "disc",
+      radius: 4 * 0.39,
+    });
+    // Dock's arch stroke 3 draws 1.17.
+    expect(callout("dock")[5]).toMatchObject({ kind: "stroke", width: 3 * 0.39 });
+  });
+
+  it("puts its tail tip 3 px above the drawn top and fades over 150 ms with cubicOut", () => {
+    // The Whorl's top 54.8 places O 74.8 above its pivot.
+    expect(useCalloutLift(54.8)).toBeCloseTo(74.8, 9);
+    expect(USE_CALLOUT_FADE_MS).toBe(150);
+    expect(useCalloutAlpha(0, false, true)).toBe(0);
+    expect(useCalloutAlpha(75, false, true)).toBeCloseTo(1 - 0.5 ** 3, 9);
+    expect(useCalloutAlpha(150, false, true)).toBe(1);
+    expect(useCalloutAlpha(75, false, false)).toBeCloseTo(0.5 ** 3, 9);
+    expect(useCalloutAlpha(300, false, false)).toBe(0);
+    // Reduced motion shows and hides at once.
+    expect(useCalloutAlpha(0, true, true)).toBe(1);
+    expect(useCalloutAlpha(0, true, false)).toBe(0);
   });
 });

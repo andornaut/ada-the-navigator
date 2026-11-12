@@ -79,10 +79,12 @@ describe("project world-change art", () => {
       ["outpost-salvagers-beacon-b", 1],
       ["outpost-salvagers-beacon-a", 2],
     ]);
-    // Frame px scale by the outpost's display size, 0.4375.
-    expect(parts[0]!.offset.x).toBeCloseTo(-36.232 * 0.4375, 9);
-    expect(parts[0]!.offset.y).toBeCloseTo(-44.86 * 0.4375, 9);
-    expect(parts[3]!.offset).toEqual({ x: 55.426 * 0.4375, y: 32 * 0.4375 });
+    // Frame px scale by the outpost's display size, 0.4375 at the destination scale 1.5.
+    const scale = 0.4375 * 1.5;
+    expect(parts[0]!.offset.x).toBeCloseTo(-36.232 * scale, 9);
+    expect(parts[0]!.offset.y).toBeCloseTo(-44.86 * scale, 9);
+    expect(parts[3]!.offset.x).toBeCloseTo(55.426 * scale, 9);
+    expect(parts[3]!.offset.y).toBeCloseTo(32 * scale, 9);
     expect(ids(outpostParts(salvagers, [change("salvageBeacons")], 1)).map(([id]) => id)).toEqual([
       "outpost-salvagers-beacon-b",
       "outpost-salvagers-b",
@@ -132,12 +134,12 @@ describe("project world-change art", () => {
     const bounds = partsBounds(
       outpostParts(outposts.get("growers")!, [change("greenhouseRing")], 0),
     );
-    // The ring is 78.75 by 61.25 display px with its pivot at (0.5, 0.45).
-    expect(bounds.left).toBeCloseTo(-39.375, 9);
-    expect(bounds.top).toBeCloseTo(-27.5625, 9);
-    expect(boundsOnScreen(screen, { x: -39, y: 100 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: -39.375, y: 100 }, bounds)).toBe(false);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 27.5 }, bounds)).toBe(true);
-    expect(boundsOnScreen(screen, { x: 400, y: 390 + 27.6 }, bounds)).toBe(false);
+    // The ring is 118.125 by 91.875 display px with its pivot at (0.5, 0.45).
+    expect(bounds.left).toBeCloseTo(-59.0625, 9);
+    expect(bounds.top).toBeCloseTo(-41.34375, 9);
+    expect(boundsOnScreen(screen, { x: -59, y: 100 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: -59.0625, y: 100 }, bounds)).toBe(false);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 41.3 }, bounds)).toBe(true);
+    expect(boundsOnScreen(screen, { x: 400, y: 390 + 41.4 }, bounds)).toBe(false);
   });
 });

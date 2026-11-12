@@ -10,7 +10,7 @@ import type { EnemyState } from "./enemy-ai.ts";
 import type { ProjectileFade } from "./player-projectiles.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
-export type UseAction = "deliver" | "deposit" | "salvage" | "talk" | "tow" | "use";
+export type UseAction = "deliver" | "deposit" | "dock" | "salvage" | "talk" | "tow" | "use";
 
 export interface Vec {
   x: number;
@@ -132,8 +132,6 @@ export interface FlightState {
   ammo: AmmoCounts;
   /** Seconds until Ada can switch weapons again; 0 when she can. */
   weaponSwitchFor: number;
-  /** The station whose dock Ada is inside; docking again needs her to leave it first. */
-  dockId: string | null;
   /** The towed craft's position while a rescue job's tow line is attached. */
   tow?: Vec;
   /** Guide a calf's calf in this flight, once placed at its start (model/calf.ts). */
@@ -321,7 +319,6 @@ export type FlightEvent =
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }
-  | { type: "docked"; id: string }
   | { type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */

@@ -3,10 +3,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  alphaTopRow,
   blastEdges,
   inkEdges,
   KEYLINE_ALPHA,
   keylineOffsets,
+  keylineWidth,
   LIGHT_FIELD,
   lightGalaxy,
   readLightField,
@@ -59,6 +61,30 @@ describe("light-field rule", () => {
     });
   });
 
+  it("keylines destinations 2 px wide and every other keylined kind 1 px", () => {
+    expect(LIGHT_FIELD.destinationKeyline).toEqual({
+      kinds: ["station", "outpost", "storyPlace"],
+      width: 2,
+    });
+    expect(
+      ["station", "outpost", "storyPlace"].map((kind) => keylineWidth(LIGHT_FIELD, kind)),
+    ).toEqual([2, 2, 2]);
+    expect(keylineWidth(LIGHT_FIELD, "ship")).toBe(1);
+    expect(keylineWidth(LIGHT_FIELD, "discoveryCache")).toBe(1);
+    expect(keylineOffsets(2).every(({ x, y }) => Math.max(Math.abs(x), Math.abs(y)) === 2)).toBe(
+      true,
+    );
+  });
+
+  it("finds a frame's topmost row at alpha 0.5 or more", () => {
+    const data = new Uint8ClampedArray(4 * 3 * 4);
+    // Row 1 holds alpha 127, under 0.5; row 2 holds 128.
+    data[4 * (1 * 3 + 2) + 3] = 127;
+    data[4 * (2 * 3 + 0) + 3] = 128;
+    expect(alphaTopRow(data, 3, 4, KEYLINE_ALPHA)).toBe(2);
+    expect(alphaTopRow(new Uint8ClampedArray(4 * 3 * 4), 3, 4, KEYLINE_ALPHA)).toBe(4);
+  });
+
   it("applies only to Sunflower, galaxy 1, and never at home", () => {
     const light = readLightGalaxies(galaxies);
     expect([...light]).toEqual([1]);
@@ -79,6 +105,9 @@ describe("light-field rule", () => {
     expect(readLightField({ lightField: { ...rule, jets: { ship: [] } } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, keyline: 0 } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, markerOutline: 0 } })).toBeUndefined();
+    expect(
+      readLightField({ lightField: { ...rule, destinationKeyline: { kinds: [], width: 0 } } }),
+    ).toBeUndefined();
     expect(readLightField(null)).toBeUndefined();
     expect(readLightGalaxies(null).size).toBe(0);
   });

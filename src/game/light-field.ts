@@ -10,6 +10,8 @@ import type { BeamGlow, EffectShape, EllipseShape } from "./weapon-effects.ts";
 // ink. A dark galaxy draws none of it. Widths are logical px.
 
 export interface LightField {
+  /** The wider keyline destinations take, and the keylined kinds that are destinations. */
+  readonly destinationKeyline: { readonly kinds: readonly string[]; readonly width: number };
   readonly effects: readonly string[];
   readonly holodiskBeacon: string;
   readonly hudOutline: number;
@@ -46,6 +48,7 @@ export function readLightField(value: unknown): LightField | undefined {
   const bloom = fields(phaser?.bloom);
   const jets = fields(rule?.jets);
   const outline = fields(rule?.hudOutline);
+  const destination = fields(rule?.destinationKeyline);
   const ink = colour(rule?.ink);
   const ship = readJetLayers(jets?.ship);
   const enemy = readJetLayers(jets?.enemy);
@@ -60,6 +63,8 @@ export function readLightField(value: unknown): LightField | undefined {
     !positive(rule.indicatorStroke) ||
     !positive(rule.markerOutline) ||
     !positive(outline?.width) ||
+    !positive(destination?.width) ||
+    !names(destination?.kinds) ||
     !names(rule.keylined) ||
     !names(rule.effects) ||
     typeof rule.holodiskBeacon !== "string" ||
@@ -73,6 +78,7 @@ export function readLightField(value: unknown): LightField | undefined {
     return undefined;
   }
   return {
+    destinationKeyline: { kinds: destination.kinds, width: destination.width },
     effects: rule.effects,
     holodiskBeacon: rule.holodiskBeacon,
     hudOutline: outline.width,
@@ -91,6 +97,34 @@ export function readLightField(value: unknown): LightField | undefined {
     },
     shotEdge: rule.shotEdge,
   };
+}
+
+/**
+ * The topmost row of straight RGBA `data` (`width` by `height`) whose alpha is at least
+ * `threshold` (0 to 1), or `height` when none is.
+ */
+export function alphaTopRow(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  threshold: number,
+): number {
+  const least = threshold * 255;
+  for (let row = 0; row < height; row++) {
+    for (let column = 0; column < width; column++) {
+      if (data[4 * (row * width + column) + 3]! >= least) {
+        return row;
+      }
+    }
+  }
+  return height;
+}
+
+/** The keyline width a keylined kind takes on a light field: wider for destinations. */
+export function keylineWidth(rule: LightField, kind: string): number {
+  return rule.destinationKeyline.kinds.includes(kind)
+    ? rule.destinationKeyline.width
+    : rule.keyline;
 }
 
 /** The galaxies whose tint is light, from galaxies.json's map by stable galaxy id. */

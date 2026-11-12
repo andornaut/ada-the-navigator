@@ -25,7 +25,7 @@ export interface StationArt<T extends StationFrame = StationFrame> {
   readonly frameMs: number;
 }
 
-/** Both blink frames with a dock entrance, or undefined to keep the placeholder. */
+/** Both blink frames, or undefined to keep the placeholder. */
 function readBlinkArt<T extends StationFrame>(
   assets: readonly T[],
   idA: string,
@@ -33,7 +33,7 @@ function readBlinkArt<T extends StationFrame>(
 ): StationArt<T> | undefined {
   const a = assets.find((asset) => asset.id === idA);
   const b = assets.find((asset) => asset.id === idB);
-  if (!a?.dock || !b || !(a.frameMs! > 0) || !(a.width > 0) || !(a.displayWidth! > 0)) {
+  if (!a || !b || !(a.frameMs! > 0) || !(a.width > 0) || !(a.displayWidth! > 0)) {
     return undefined;
   }
   return { frameMs: a.frameMs!, frames: [a, b] };

@@ -26,8 +26,11 @@ import {
   touchChromeLayers,
   touchChromePixel,
   type TouchChromePose,
+  USE_CALLOUT_CENTRE,
+  USE_CALLOUT_FRAME,
   USE_DISC_POSES,
   USE_SYMBOLS,
+  useCalloutLayers,
   useDiscLayers,
   type UseDiscPose,
 } from "../ui/touch-chrome.ts";
@@ -221,6 +224,36 @@ export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
     .setAlpha(TOUCH_CHROME_ALPHA);
 }
 
+const USE_CALLOUT_KEY = "touch-chrome-callout";
+
+// The Use callout above a destination: every action's callout painted procedurally like the Use
+// disc at scale texels per logical px, as one hidden sprite with its origin on O that shows the
+// frame named by the action.
+export function createUseCallout(scene: Scene, scale: number): GameObjects.Sprite {
+  if (!scene.textures.exists(USE_CALLOUT_KEY)) {
+    createChromeTexture(
+      scene,
+      scale,
+      USE_CALLOUT_KEY,
+      USE_CALLOUT_FRAME,
+      new Map(
+        (Object.keys(USE_SYMBOLS) as UseAction[]).map((action) => [
+          action,
+          useCalloutLayers(TOUCH_CHROME_COLOURS, action),
+        ]),
+      ),
+    );
+  }
+  return scene.add
+    .sprite(0, 0, USE_CALLOUT_KEY, "use")
+    .setOrigin(
+      USE_CALLOUT_CENTRE.x / USE_CALLOUT_FRAME.width,
+      USE_CALLOUT_CENTRE.y / USE_CALLOUT_FRAME.height,
+    )
+    .setDisplaySize(USE_CALLOUT_FRAME.width, USE_CALLOUT_FRAME.height)
+    .setVisible(false);
+}
+
 const SPEED_LINE_KEY = "touch-chrome-line";
 
 // The speed line's texels per logical px: its capsule's painted width over its logical width.
@@ -260,7 +293,7 @@ export function createSpeedLine(scene: Scene, scale: number): GameObjects.NineSl
 export function rasterTouchChrome(scene: Scene, scale: number): void {
   const textures = Object.keys(TOUCH_CHROME_SHEETS)
     .map((kind) => `touch-chrome-${kind}`)
-    .concat(USE_DISC_KEY, SPEED_LINE_KEY)
+    .concat(USE_DISC_KEY, USE_CALLOUT_KEY, SPEED_LINE_KEY)
     .filter((key) => scene.textures.exists(key))
     .map((key) => scene.textures.get(key) as Textures.CanvasTexture);
   for (const texture of textures) {

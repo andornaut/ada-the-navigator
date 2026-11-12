@@ -513,7 +513,7 @@ describe("economy save", () => {
     }
     delete legacy.flight.levels;
     delete legacy.flight.weaponSwitchFor;
-    delete legacy.flight.dockId;
+    legacy.flight.dockId = null;
     legacy.flight.ammo = 7;
     legacy.flight.weaponLockFor = 2.5;
     const restored = restoreSave(legacy)!;
@@ -529,7 +529,9 @@ describe("economy save", () => {
     });
     expect(restored.docked).toBeNull();
     expect(restored.progress[1].stations).toEqual([]);
-    expect(restored.flight).toMatchObject({ dockId: null, levels: noLevels(), weaponSwitchFor: 0 });
+    expect(restored.flight).toMatchObject({ levels: noLevels(), weaponSwitchFor: 0 });
+    // Stations have no dock to be inside, so the flight keeps no dock id.
+    expect("dockId" in restored.flight!).toBe(false);
     // The single legacy ammunition count gives way to the economy's per-weapon counts.
     expect(restored.flight!.ammo).toEqual(restored.economy.ammo);
     expect("weaponLockFor" in restored.flight!).toBe(false);

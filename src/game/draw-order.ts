@@ -43,6 +43,12 @@ const LIFT = 5e-6;
  */
 export const EDGE_MARKER_DEPTH = 5;
 
+/**
+ * The Use callout's layer (art/destinations.md "Use callout"): in front of every play object, the
+ * shots, indicators and destruction flash, behind the edge markers and the HUD.
+ */
+export const USE_CALLOUT_DEPTH = 4.5;
+
 /** A sprite's drawn rectangle from its pivot, display size and origin. */
 export function drawnBox(sprite: Placed): DrawnBox {
   const left = sprite.x - sprite.originX * sprite.displayWidth;

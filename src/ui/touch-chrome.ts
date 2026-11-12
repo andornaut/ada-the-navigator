@@ -72,6 +72,13 @@ export type TouchChromeLayer =
     }
   | {
       readonly colour: number;
+      /** How far the fill grows past the polygon's edges, in frame px. */
+      readonly grow: number;
+      readonly kind: "polygon";
+      readonly points: readonly Point[];
+    }
+  | {
+      readonly colour: number;
       readonly kind: "rect";
       readonly rect: {
         readonly height: number;
@@ -155,6 +162,7 @@ type SymbolPart =
       readonly kind: "ring";
       readonly outer: number;
     }
+  | { readonly kind: "polygon"; readonly points: readonly Point[] }
   | { readonly kind: "stroke"; readonly path: readonly Point[]; readonly width: number };
 
 // The symbols' cores with each one's whole-px shift already applied (art/controls.md "Use disc"),
@@ -227,6 +235,23 @@ export const USE_SYMBOLS: Readonly<Record<UseAction, readonly SymbolPart[]>> = {
       width: 3,
     },
   ],
+  // The hangar arch over a filled ship: flying into a hangar.
+  dock: [
+    {
+      kind: "stroke",
+      path: [{ x: 24, y: 53 }, ...arc({ x: 37.5, y: 36 }, 13.5, 180, 360), { x: 51, y: 53 }],
+      width: 3,
+    },
+    {
+      kind: "polygon",
+      points: [
+        { x: 37.5, y: 31 },
+        { x: 45, y: 49 },
+        { x: 37.5, y: 44.5 },
+        { x: 30, y: 49 },
+      ],
+    },
+  ],
   salvage: [
     {
       kind: "stroke",
@@ -282,7 +307,9 @@ export function useDiscLayers(
             kind: "ring",
             outer: part.outer + grow,
           }
-        : { colour, kind: "stroke", path: part.path, width: part.width + 2 * grow };
+        : part.kind === "polygon"
+          ? { colour, grow, kind: "polygon", points: part.points }
+          : { colour, kind: "stroke", path: part.path, width: part.width + 2 * grow };
   layers.push(...parts.map((part) => paint(part, colours.ink, 1)));
   layers.push(...parts.map((part) => paint(part, core, 0)));
   if (action === "salvage") {
@@ -291,6 +318,104 @@ export function useDiscLayers(
     );
   }
   return layers;
+}
+
+/** The Use callout's navy face (art/destinations.md "Use callout"). */
+export const USE_CALLOUT_FACE = 0x262b44;
+
+/**
+ * The Use callout's frame in logical px: the ink disc of radius 13 about O and its tail to 17
+ * below O. O sits USE_CALLOUT_CENTRE from the frame's top left.
+ */
+export const USE_CALLOUT_FRAME = { height: 30, width: 26 } as const;
+export const USE_CALLOUT_CENTRE: Point = { x: 13, y: 13 };
+/** From O down to the tail's tip, which sits USE_CALLOUT_GAP above the destination's top. */
+export const USE_CALLOUT_TAIL = 17;
+export const USE_CALLOUT_GAP = 3;
+/** The callout's fade in and out, with cubicOut; reduced motion shows and hides at once. */
+export const USE_CALLOUT_FADE_MS = 150;
+const CALLOUT_SYMBOL_SCALE = 0.39;
+
+/**
+ * The Use callout for an action (art/destinations.md "Use callout"): an ink disc and tail, a
+ * cream rim and tail over it, a navy face, and the action's Use disc symbol cores in cream,
+ * scaled by 0.39 about the ring centre placed on O, with no ink.
+ */
+export function useCalloutLayers(
+  colours: TouchChromeColours,
+  action: UseAction,
+): readonly TouchChromeLayer[] {
+  const o = USE_CALLOUT_CENTRE;
+  const local = (x: number, y: number): Point => ({ x: o.x + x, y: o.y + y });
+  const symbol = (point: Point): Point => ({
+    x: o.x + (point.x - CENTRE.x) * CALLOUT_SYMBOL_SCALE,
+    y: o.y + (point.y - CENTRE.y) * CALLOUT_SYMBOL_SCALE,
+  });
+  const layers: TouchChromeLayer[] = [
+    { centre: o, colour: colours.ink, kind: "disc", radius: 13 },
+    {
+      colour: colours.ink,
+      grow: 0,
+      kind: "polygon",
+      points: [local(-4, 10), local(4, 10), local(0, 17)],
+    },
+    { centre: o, colour: colours.cream, kind: "disc", radius: 12 },
+    {
+      colour: colours.cream,
+      grow: 0,
+      kind: "polygon",
+      points: [local(-2.6, 9.8), local(2.6, 9.8), local(0, 15.2)],
+    },
+    { centre: o, colour: USE_CALLOUT_FACE, kind: "disc", radius: 10.5 },
+  ];
+  for (const part of USE_SYMBOLS[action]) {
+    if (part.kind === "disc") {
+      layers.push({
+        centre: symbol(part.centre),
+        colour: colours.cream,
+        kind: "disc",
+        radius: part.radius * CALLOUT_SYMBOL_SCALE,
+      });
+    } else if (part.kind === "ring") {
+      layers.push({
+        centre: symbol(part.centre),
+        colour: colours.cream,
+        inner: part.inner * CALLOUT_SYMBOL_SCALE,
+        kind: "ring",
+        outer: part.outer * CALLOUT_SYMBOL_SCALE,
+      });
+    } else if (part.kind === "polygon") {
+      layers.push({
+        colour: colours.cream,
+        grow: 0,
+        kind: "polygon",
+        points: part.points.map(symbol),
+      });
+    } else {
+      layers.push({
+        colour: colours.cream,
+        kind: "stroke",
+        path: part.path.map(symbol),
+        width: part.width * CALLOUT_SYMBOL_SCALE,
+      });
+    }
+  }
+  return layers;
+}
+
+/**
+ * The callout's centre O in display px above a destination's pivot: its tail tip USE_CALLOUT_GAP
+ * above the destination's drawn top, `top` display px above the pivot.
+ */
+export function useCalloutLift(top: number): number {
+  return top + USE_CALLOUT_GAP + USE_CALLOUT_TAIL;
+}
+
+/** The callout's alpha `ms` into a fade in (or out) with cubicOut; reduced motion is instant. */
+export function useCalloutAlpha(ms: number, reducedMotion: boolean, showing: boolean): number {
+  const t = reducedMotion ? 1 : Math.min(1, Math.max(0, ms / USE_CALLOUT_FADE_MS));
+  const eased = 1 - (1 - t) ** 3;
+  return showing ? eased : 1 - eased;
 }
 
 /** A layer list's drawn bounds in frame px, ink included. */
@@ -318,6 +443,15 @@ export function layerBounds(layers: readonly TouchChromeLayer[]): {
       const half = layer.width / 2;
       for (const point of layer.path) {
         take(point.x - half, point.y - half, point.x + half, point.y + half);
+      }
+    } else if (layer.kind === "polygon") {
+      for (const point of layer.points) {
+        take(
+          point.x - layer.grow,
+          point.y - layer.grow,
+          point.x + layer.grow,
+          point.y + layer.grow,
+        );
       }
     } else {
       const radius = layer.kind === "disc" ? layer.radius : layer.outer;
@@ -381,6 +515,24 @@ function coverage(texels: number, distance: number): number {
   return clamp01(0.5 - distance * texels);
 }
 
+// The signed distance from a point to a closed polygon's edge: negative inside.
+function polygonDistance(point: Point, points: readonly Point[]): number {
+  let distance = Infinity;
+  let inside = false;
+  for (let index = 0, last = points.length - 1; index < points.length; last = index++) {
+    const a = points[last]!;
+    const b = points[index]!;
+    distance = Math.min(distance, segmentDistance(point, a, b));
+    if (
+      a.y > point.y !== b.y > point.y &&
+      point.x < a.x + ((point.y - a.y) * (b.x - a.x)) / (b.y - a.y)
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside ? -distance : distance;
+}
+
 // The straight RGBA of the layers at a point in frame pixels, painted at texels per frame pixel.
 export function touchChromePixel(
   texels: number,
@@ -407,6 +559,8 @@ export function touchChromePixel(
         );
       }
       amount = coverage(texels, distance - layer.width / 2);
+    } else if (layer.kind === "polygon") {
+      amount = coverage(texels, polygonDistance(point, layer.points) - layer.grow);
     } else {
       const distance = Math.hypot(point.x - layer.centre.x, point.y - layer.centre.y);
       amount =

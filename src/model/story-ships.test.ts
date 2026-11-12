@@ -97,13 +97,21 @@ describe("Cartwheel story ships", () => {
     });
   });
 
-  it("plays the docking scene: the regulars dock together, the blocker flies off", () => {
+  it("plays the docking scene: two regulars dock, the third holds, the blocker flies off", () => {
     const scene = { at: 5, id: "docking" as const, lineDue: true };
     const { duration } = CARTWHEEL_STORY_SHIPS.scenes.docking;
     const end = storyShips(hub, { stage: 5 }, UNDOCKED, scene, scene.at + duration - 0.01);
-    for (const id of ["miner", "visitor-1", "visitor-2"]) {
+    for (const id of ["miner", "visitor-1"]) {
       expect(gap(ship(end, id)!, hub)).toBeLessThan(80);
     }
+    // Without the second bay the second visitor holds at its holding point, moored at its buoy.
+    const { hold } = CARTWHEEL_STORY_SHIPS;
+    expect(
+      gap(ship(end, "visitor-2")!, {
+        x: hub.x + hold["visitor-2"].x,
+        y: hub.y + hold["visitor-2"].y,
+      }),
+    ).toBeLessThan(1);
     expect(gap(ship(end, "blocker")!, hub)).toBeGreaterThan(1200);
     // Once the scene ends the regulars stay where it docked them, and the blocker is gone.
     const docked = storyShips(hub, { stage: 5 }, UNDOCKED, scene, scene.at + duration);
@@ -114,7 +122,7 @@ describe("Cartwheel story ships", () => {
     expect(storyShips(hub, { stage: 5 }, UNDOCKED, undefined, 0)).toEqual(docked);
   });
 
-  it("dock the regulars with their noses at the dock faces, facing into their docks", () => {
+  it("dock the regulars with their noses at the berth faces, facing into their berths", () => {
     const { docked } = CARTWHEEL_STORY_SHIPS;
     expect(Object.keys(NOSES).sort()).toEqual(["blocker", "miner", "visitor-1", "visitor-2"]);
     for (const [bay, docks] of [
@@ -128,6 +136,14 @@ describe("Cartwheel story ships", () => {
         const id = entry.id as keyof typeof docks;
         const dock = docks[id];
         expect(entry).toMatchObject({ heading: dock.heading, thrust: false });
+        if (dock.moored) {
+          // A moored craft stays on its holding point, facing the hub.
+          expect(bay).toBe(false);
+          expect(id).toBe("visitor-2");
+          expect(entry.x).toBeCloseTo(hub.x + dock.at.x, 9);
+          expect(entry.y).toBeCloseTo(hub.y + dock.at.y, 9);
+          continue;
+        }
         expect(Math.hypot(entry.heading.x, entry.heading.y)).toBeCloseTo(1, 9);
         // The nose distance at the heading the scene draws, from the craft's jets file.
         const distance = NOSES[id]![shipDirection(16, dock.heading)]!;
@@ -148,20 +164,25 @@ describe("Cartwheel story ships", () => {
         expect(gap(ship(ending, entry.id)!, entry), `${entry.id} bay ${bay}`).toBeLessThan(1e-6);
       }
     }
-    // The live dock draws heading 10; without nose data a pivot stays on its dock point.
-    expect(shipDirection(16, docked.hub.miner.heading)).toBe(10);
+    // Without nose data a pivot stays on its berth point.
     const bare = storyShips(hub, { stage: 5 }, UNDOCKED, undefined, 100);
     expect(ship(bare, "miner")).toMatchObject({
       x: hub.x + docked.hub.miner.at.x,
       y: hub.y + docked.hub.miner.at.y,
     });
-    // The miner at the live dock faces screen-up into it: world (-1, -1) / sqrt 2.
-    expect(docked.hub.miner.heading.x).toBeCloseTo(-Math.SQRT1_2, 9);
-    expect(docked.hub.miner.heading.y).toBeCloseTo(-Math.SQRT1_2, 9);
-    // The bay moves the first visitor to its berth; the miner and the second visitor stay.
-    expect(docked.bay["visitor-1"]).not.toEqual(docked.hub["visitor-1"]);
+    // Art's berths at the hub scale 1.25, world units from the hub pivot (art/destinations.md).
+    const close = (point: Vec, x: number, y: number) => {
+      expect(point.x).toBeCloseTo(x, 3);
+      expect(point.y).toBeCloseTo(y, 3);
+    };
+    close(docked.hub.miner.at, -4.699, 49.237);
+    close(docked.hub["visitor-1"].at, 49.237, -4.699);
+    close(docked.bay["visitor-2"].at, 30.315, 68.55);
+    // The bay docks only the waiting second visitor; the miner and the first visitor stay.
     expect(docked.bay.miner).toEqual(docked.hub.miner);
-    expect(docked.bay["visitor-2"]).toEqual(docked.hub["visitor-2"]);
+    expect(docked.bay["visitor-1"]).toEqual(docked.hub["visitor-1"]);
+    expect(docked.hub["visitor-2"]).toMatchObject({ at: CARTWHEEL_STORY_SHIPS.hold["visitor-2"] });
+    expect(docked.bay["visitor-2"].moored).toBeUndefined();
   });
 
   it("moor inside the view centred on the docked hub, clear of the hub and each other", () => {

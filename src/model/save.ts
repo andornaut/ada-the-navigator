@@ -483,7 +483,7 @@ function migrateEconomy(state: GameState): void {
     flight.levels ??= structuredClone(state.economy.levels);
     delete flight.weaponLockFor;
     flight.weaponSwitchFor ??= 0;
-    flight.dockId ??= null;
+    delete (flight as { dockId?: unknown }).dockId;
   }
 }
 /** Saves from before the prologue skip it once any story or flight has begun. */
@@ -954,7 +954,6 @@ export function restoreSave(saved: unknown): GameState | null {
         (f.ammo !== undefined && !nonnegative(f.ammo) && !ammoCounts(f.ammo)) ||
         (f.weaponLockFor !== undefined && !nonnegative(f.weaponLockFor)) ||
         (f.weaponSwitchFor !== undefined && !nonnegative(f.weaponSwitchFor)) ||
-        (f.dockId !== undefined && f.dockId !== null && typeof f.dockId !== "string") ||
         (f.tow !== undefined && !vector(f.tow)) ||
         (f.calf !== undefined &&
           !(
