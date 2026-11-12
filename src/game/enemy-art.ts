@@ -698,6 +698,16 @@ export function turretMuzzles(
 }
 
 /**
+ * The Disabled banner's centre for the drawn hull heading, display px from the hull sprite
+ * position, or undefined for a craft whose layout has no banner.
+ */
+export function bannerOffset(art: EnemyArt, hull: EnemyFrame): Vec | undefined {
+  const parts = art.parts;
+  const banner = parts?.layout.headings[hullHeading(art, hull) ?? -1]?.banner;
+  return parts && banner ? hullOffset(hull, parts.layout.frame, banner) : undefined;
+}
+
+/**
  * Jet triangles relative to the sprite position; empty at rest or without a jets file. A mouth
  * tagged with an engine draws only while that engine is intact.
  */

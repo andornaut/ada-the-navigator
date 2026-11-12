@@ -74,6 +74,7 @@ import {
 import { backReleased } from "../ui/back-stack.ts";
 import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import { createBannerLayer, type PlacedBanner } from "../ui/disabled-banner.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
@@ -168,6 +169,7 @@ import {
   USE_CALLOUT_DEPTH,
 } from "./draw-order.ts";
 import {
+  bannerOffset,
   composedArchetypes,
   composeEnemy,
   type EnemyArt,
@@ -185,9 +187,11 @@ import {
   galaxyFamily,
   HitFlashes,
   type PartPose,
+  type PartSprite,
   selectEnemyFrame,
 } from "./enemy-art.ts";
 import { type FeedbackPulse, FeedbackSound, ModelFeedback, TELEPORT_DISTANCE } from "./feedback.ts";
+import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavy-states.ts";
 import {
   beaconLandmarkFrame,
   dashes,
@@ -469,6 +473,11 @@ export class PrototypeScene extends Scene {
   private flightClock = 0;
   private reveals = new Map<string, number>();
   private revealGroups = new Map<string, GameObjects.RenderTexture>();
+  /** The Disabled banners' HTML layer over the canvas, and this frame's banners. */
+  private bannerLayer: ReturnType<typeof createBannerLayer> | undefined;
+  private banners: PlacedBanner[] = [];
+  /** Each salvaged heavy composed into one texture, dimmed as a group, by enemy id. */
+  private salvagedGroups = new Map<string, GameObjects.RenderTexture>();
   // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
   // by buoy, and the whales' current with the family position it was found from.
   private whirlpoolProjects: WhirlpoolProjects<Asset> | undefined;
@@ -773,6 +782,12 @@ export class PrototypeScene extends Scene {
     followZoom();
     this.scale.on(Scale.Events.RESIZE, followZoom);
     this.events.once(Scenes.Events.SHUTDOWN, () => this.scale.off(Scale.Events.RESIZE, followZoom));
+    const host = document.getElementById(VIEW_HOST_ID);
+    if (host) {
+      const layer = createBannerLayer(document, host, PROTOTYPE.labels.disabledBanner ?? "");
+      this.bannerLayer = layer;
+      this.events.once(Scenes.Events.SHUTDOWN, () => layer.destroy());
+    }
     this.ink = this.add.graphics();
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
@@ -2299,6 +2314,7 @@ export class PrototypeScene extends Scene {
     this.towInk.clear();
     this.towSprite.setVisible(false);
     this.keyed = [];
+    this.banners = [];
     this.passable = [];
     this.towDepth = undefined;
     for (const sprite of this.enemySprites.values()) {
@@ -2318,6 +2334,10 @@ export class PrototypeScene extends Scene {
     }
     this.landmarksDrawn.clear();
     this.glintSprite?.setVisible(false);
+    for (const group of this.salvagedGroups.values()) {
+      group.setVisible(false);
+    }
+
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
@@ -2329,6 +2349,7 @@ export class PrototypeScene extends Scene {
       this.edgeMarkers.update(null, new Set());
       this.drawKeylines();
       this.drawUseCallout(undefined);
+      this.bannerLayer?.place([]);
       return;
     }
     this.light = lightGalaxy(this.lightGalaxies, flight.sector);
@@ -2549,8 +2570,16 @@ export class PrototypeScene extends Scene {
       this.enemySprites.get(id)!.destroy();
       this.enemySprites.delete(id);
     }
+    for (const [id, group] of this.salvagedGroups) {
+      if (!activeIds.has(id)) {
+        group.destroy();
+        this.salvagedGroups.delete(id);
+      }
+    }
+
     this.drawKeylines();
     this.drawUseCallout(flight);
+    this.bannerLayer?.place(this.banners);
   }
 
   /**
@@ -2927,7 +2956,9 @@ export class PrototypeScene extends Scene {
   /**
    * Authored frames already include perspective; jets are not clipped to the frame. A composed
    * craft draws its hull and hardpoint bases in the heading's layer order with intact turret
-   * tops at their aim, a hit hardpoint flashing white, and jets only from intact engines.
+   * tops at their aim, a hit hardpoint flashing white, and jets only from intact engines. A
+   * disabled heavy shows the Disabled banner above every layer; a salvaged one draws dimmed as
+   * one group with no jets.
    */
   private drawEnemySprite(
     art: EnemyArt<Asset>,
@@ -2945,7 +2976,16 @@ export class PrototypeScene extends Scene {
       intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
       position: sector === undefined ? 1 : ROUTE_POSITION[sector],
     };
-    composeEnemy(art, pose, frame).forEach((part, index) => {
+    const sprites = composeEnemy(art, pose, frame);
+    if (enemy.salvaged) {
+      this.drawSalvaged(id, enemy.archetype, sprites, point);
+      return;
+    }
+    const banner = showsBanner(enemy) ? bannerOffset(art, frame) : undefined;
+    if (banner) {
+      this.banners.push({ at: { x: point.x + banner.x, y: point.y + banner.y }, id });
+    }
+    sprites.forEach((part, index) => {
       const key = part.hardpoint === null ? id : `${id}#${part.layer}:${part.hardpoint}`;
       const sprite = this.objectSprite(key, part.frame.id)
         .setDisplaySize(part.frame.displayWidth!, part.frame.displayHeight!)
@@ -2979,6 +3019,69 @@ export class PrototypeScene extends Scene {
         point.y + points[2].y,
       );
     }
+  }
+
+  /**
+   * A salvaged heavy (art/heavies.md "Salvaged dimming"): its composed frame, with its keyline on
+   * a light field, drawn into one texture at the raster scale, mixed toward its grey and shown at
+   * the group alpha, so overlapping layers never show through each other.
+   */
+  private drawSalvaged(
+    id: string,
+    archetype: string,
+    sprites: readonly PartSprite<Asset>[],
+    point: Vec,
+  ): void {
+    const grow = this.light && LIGHT_FIELD.keylined.includes(archetype) ? LIGHT_FIELD.keyline : 0;
+    const bounds = spritesBounds(sprites);
+    const left = Math.floor(point.x + bounds.left - grow - 1);
+    const top = Math.floor(point.y + bounds.top - grow - 1);
+    const width = Math.ceil(point.x + bounds.right + grow + 1) - left;
+    const height = Math.ceil(point.y + bounds.bottom + grow + 1) - top;
+    const r = this.rasters.scale;
+    const texels = { height: densityTexels(r, height), width: densityTexels(r, width) };
+    let group = this.salvagedGroups.get(id);
+    if (!group || group.width !== texels.width || group.height !== texels.height) {
+      group?.destroy();
+      group = this.add.renderTexture(0, 0, texels.width, texels.height).setOrigin(0, 0);
+      this.filterTexture(group.texture.key, "linear");
+      group.enableFilters().filters?.internal.addColorMatrix().colorMatrix.set(salvagedMatrix());
+      this.salvagedGroups.set(id, group);
+    }
+    group.clear();
+    const stamps = sprites.map((part) => {
+      const frame = this.textures.getFrame(part.frame.id);
+      return {
+        config: {
+          originX: part.frame.pivot.x,
+          originY: part.frame.pivot.y,
+          scaleX: (r * part.frame.displayWidth!) / frame.width,
+          scaleY: (r * part.frame.displayHeight!) / frame.height,
+        },
+        frame,
+        x: point.x + part.offset.x - left,
+        y: point.y + part.offset.y - top,
+      };
+    });
+    if (grow > 0) {
+      for (const { config, frame, x, y } of stamps) {
+        const silhouette = this.keylineSilhouette({ frame });
+        for (const offset of silhouette ? keylineOffsets(grow) : []) {
+          group.stamp(silhouette!, undefined, r * (x + offset.x), r * (y + offset.y), config);
+        }
+      }
+    }
+    for (const { config, frame, x, y } of stamps) {
+      group.stamp(frame.texture.key, undefined, r * x, r * y, config);
+    }
+    group.render();
+    group
+      .setDisplaySize(width, height)
+      .setPosition(left, top)
+      .setDepth(playDepth(point.y))
+      .setAlpha(SALVAGED.alpha)
+      .setVisible(true);
+    this.passes(group);
   }
 
   /**

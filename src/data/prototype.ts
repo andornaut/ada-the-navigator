@@ -358,6 +358,7 @@ export const PROTOTYPE: PrototypeContent = {
     deliveryAbout: "They're waiting for it.",
     deliveryTitle: "Deliver {item} to {place}",
     deposit: "Deposit",
+    disabledBanner: "Disabled",
     dock: "Dock",
     donate: "Donate",
     donateStillNeeded: "{amount} still needed after",
