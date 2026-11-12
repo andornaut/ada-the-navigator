@@ -10,7 +10,7 @@ import { resourceArtId, type ResourceClass } from "../data/resource-rocks.ts";
 import {
   closestOnSegment,
   type Contact,
-  grownParts,
+  grown,
   type Parts,
   partsReach,
   segmentNearParts,
@@ -209,22 +209,6 @@ export function sceneryContact(
   }
   const contact = unionContact(drawn.frames[frame] ?? drawn.frames[0]!, screen, radius);
   return contact && worldContact(contact);
-}
-
-const GROWN = new WeakMap<Parts, WeakMap<Parts, Parts>>();
-/** A rock frame's silhouette grown by a body's outline, built once per pair. */
-function grown(rock: Parts, body: Parts): Parts {
-  let byBody = GROWN.get(rock);
-  if (!byBody) {
-    byBody = new WeakMap();
-    GROWN.set(rock, byBody);
-  }
-  let parts = byBody.get(body);
-  if (!parts) {
-    parts = grownParts(rock, body);
-    byBody.set(body, parts);
-  }
-  return parts;
 }
 
 /**

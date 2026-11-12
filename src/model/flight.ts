@@ -56,7 +56,14 @@ import {
 } from "./geography.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import type { Contact } from "./convex.ts";
+import {
+  type Contact,
+  outlineContact,
+  outlinesContact,
+  type Parts,
+  partsReach,
+  worldParts,
+} from "./convex.ts";
 import {
   carriesStardust,
   dropRandom,
@@ -64,6 +71,7 @@ import {
   rollEnemyDrop,
   splitStardust,
 } from "./drops.ts";
+import { enemyHull } from "./enemy-body.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
@@ -208,8 +216,13 @@ export function bounceShips(
 ): void {
   const enemy = object.enemy;
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
-  // The enemy's hull circle against Ada's drawn ship.
-  const contact = enemy && shipCircleContact(flight.facing, flight.player, object, object.radius);
+  // The enemy's drawn hull, or its hull circle without Art's outline, against Ada's drawn ship.
+  const outline = enemy && enemyHull(enemy);
+  const contact =
+    enemy &&
+    (outline
+      ? outlinesContact(outline, object, shipBody(flight.facing), flight.player)
+      : shipCircleContact(flight.facing, flight.player, object, object.radius));
   if (!enemy || !contact) {
     return;
   }
@@ -1698,9 +1711,13 @@ function enemies(
         }
       }
       const point = { x: object.x, y: object.y };
+      const hull = enemyHull(object.enemy);
       resolveScenery(
         flight,
-        (obstacle, position, frame) => sceneryContact(obstacle, position, object.radius, frame),
+        (obstacle, position, frame) =>
+          hull
+            ? sceneryBodyContact(obstacle, position, hull, frame)
+            : sceneryContact(obstacle, position, object.radius, frame),
         onContact,
         point,
       );
@@ -1862,7 +1879,7 @@ function strike(
       object.hp <= 0 ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? distance(shot, object) > object.radius + 3
+        ? !enemyTouched(object, shot, 3)
         : !sceneryContact(object, shot, 3, frameOf(flight, object)))
     ) {
       continue;
@@ -1909,6 +1926,17 @@ function liveParts(
       const offset = hardpointOffset(definition, adaWidth, enemy.facing, part);
       return { id: part.id, x: object.x + offset.x, y: object.y + offset.y };
     });
+}
+
+/**
+ * Whether a strike of `reach` at `point` touches an enemy where it is drawn, its hull; its hull
+ * circle without Art's outline.
+ */
+function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
+  const hull = object.enemy && enemyHull(object.enemy);
+  return hull
+    ? outlineContact(hull, object, point, reach) !== null
+    : distance(point, object) <= object.radius + reach;
 }
 
 /**
@@ -2022,7 +2050,7 @@ function blast(
       continue;
     }
     const part = hitPart(content, radius + partReach(content), at, object);
-    if (part === undefined || (part === null && distance(at, object) > radius + object.radius)) {
+    if (part === undefined || (part === null && !enemyTouched(object, at, radius))) {
       continue;
     }
     hit(content, amount, part, object, flight, events);
@@ -2135,7 +2163,7 @@ function sceneryEntry(
     return entry;
   }
   const exit = Math.min(range, entry + 2 * bound);
-  for (let at = entry; at <= exit; at += 2) {
+  for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
     const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
     if (sceneryContact(object, point, BEAM.halfWidth, frame)) {
       return at;
@@ -2166,6 +2194,22 @@ function fireBeam(
   };
   const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) =>
     nearer(object, part, rayCircle(origin, direction, range, center, radius + BEAM.halfWidth));
+  // Where the beam first meets a drawn outline, within its half-width, refined in 2-unit steps.
+  const drawn = (object: SpaceObject, part: string | null, outline: Parts) => {
+    const bound = partsReach(worldParts(outline)) + BEAM.halfWidth;
+    const entry = rayCircle(origin, direction, range, object, bound);
+    if (entry === null) {
+      return;
+    }
+    const exit = Math.min(range, entry + 2 * bound);
+    for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
+      const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
+      if (outlineContact(outline, object, point, BEAM.halfWidth)) {
+        nearer(object, part, at);
+        return;
+      }
+    }
+  };
   for (const object of flight.objects) {
     if (object.hp <= 0) {
       continue;
@@ -2173,10 +2217,13 @@ function fireBeam(
     if (SCENERY.includes(object.kind)) {
       nearer(object, null, sceneryEntry(origin, direction, range, frameOf(flight, object), object));
     } else if (object.kind === "enemy" && object.enemy) {
+      const hull = enemyHull(object.enemy);
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
         for (const part of liveParts(content, object)) {
           consider(object, part.id, part, partReach(content));
         }
+      } else if (hull) {
+        drawn(object, null, hull);
       } else {
         consider(object, null, object, object.radius);
       }

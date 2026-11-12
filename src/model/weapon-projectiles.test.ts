@@ -4,7 +4,9 @@ import { enemyCatalog } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
 import { BEAM, WEAPON_CATALOG } from "../data/weapon-catalog.ts";
+import { outlineContact, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemy-ai.ts";
+import { enemyHull } from "./enemy-body.ts";
 import { activeBeamFlashes, activeBlastFlashes, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
@@ -62,6 +64,29 @@ function beam(objects: SpaceObject[], level = 1): FlightState {
   return flight;
 }
 const reach = (enemy: number) => enemy + BEAM.halfWidth;
+/** A retaliator's drawn hull on the world plane, from its position. */
+const retaliatorHull = () => worldParts(enemyHull(retaliator("probe", 0, 0).enemy!)!);
+/**
+ * The greatest value of `t` in [0, `most`] for which `touches(t)` holds, to 0.001, where it
+ * holds below some value and not above it.
+ */
+function edgeOf(touches: (t: number) => boolean, most = 400): number {
+  let low = 0;
+  let high = most;
+  while (high - low > 1e-3) {
+    const middle = (low + high) / 2;
+    if (touches(middle)) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
+}
+/** Whether a beam point at `point` is within the half-width of a retaliator drawn at `at`. */
+const beamTouches = (at: { x: number; y: number }, point: { x: number; y: number }) =>
+  outlineContact(enemyHull(retaliator("probe", at.x, at.y).enemy!)!, at, point, BEAM.halfWidth) !==
+  null;
 // The beam and every shot leave the nose; firing right, along y = nose.y.
 const nose = noseOffset({ x: 1, y: 0 });
 const ahead = (distance: number) => nose.x + distance;
@@ -85,10 +110,17 @@ describe("Phaser hitscan beam", () => {
     expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - reach(20), 9);
   });
 
-  it("grazes an enemy within the beam half-width and misses one just beyond it", () => {
-    const grazed = beam([retaliator("enemy", 150, nose.y + reach(20) - 0.5)]);
+  it("grazes an enemy's drawn hull within the beam half-width and misses one just beyond it", () => {
+    // The hull's highest world point sits the half-width below the beam line at the edge.
+    const top = Math.min(
+      ...retaliatorHull()
+        .flat()
+        .map((at) => at.y),
+    );
+    const edge = nose.y - top + BEAM.halfWidth;
+    const grazed = beam([retaliator("enemy", 150, edge - 0.5)]);
     expect(hp(grazed, "enemy")).toBe(4);
-    const missed = beam([retaliator("enemy", 150, nose.y + reach(20) + 0.5)]);
+    const missed = beam([retaliator("enemy", 150, edge + 0.5)]);
     expect(hp(missed, "enemy")).toBe(8);
   });
 
@@ -97,7 +129,10 @@ describe("Phaser hitscan beam", () => {
     [2, 384, 6],
     [3, 460.8, 9],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
-    const edge = ahead(range + reach(20) - 0.5);
+    // The farthest hull the beam's end still reaches within its half-width.
+    const end = { x: ahead(range), y: nose.y };
+    const farthest = edgeOf((t) => beamTouches({ x: end.x + t, y: nose.y }, end));
+    const edge = end.x + farthest - 0.5;
     const struck = beam([retaliator("enemy", edge, nose.y)], level);
     // A retaliator has 8 hit points, so level 3 destroys it in one shot.
     if (damage < 8) {
@@ -112,7 +147,13 @@ describe("Phaser hitscan beam", () => {
     const hitFlight = beam([retaliator("enemy", 100, nose.y)]);
     const flash = activeBeamFlashes(hitFlight)[0]!;
     expect(flash.from).toEqual(nose);
-    expect(flash.to.x).toBeCloseTo(100 - reach(20), 9);
+    // It ends where the beam first meets the drawn hull, refined in 2-unit steps.
+    const before = edgeOf(
+      (t) => !beamTouches({ x: 100, y: nose.y }, { x: nose.x + t, y: nose.y }),
+      100 - nose.x,
+    );
+    expect(flash.to.x).toBeGreaterThanOrEqual(nose.x + before - 1e-6);
+    expect(flash.to.x).toBeLessThanOrEqual(nose.x + before + 2);
     expect(flash.to.y).toBeCloseTo(nose.y, 9);
     expect(flash.hit).toBe(true);
     const miss = beam([]);

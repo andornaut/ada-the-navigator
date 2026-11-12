@@ -228,3 +228,56 @@ export function grownParts(obstacle: Parts, body: Parts): Parts {
     ),
   );
 }
+
+const GROWN = new WeakMap<Parts, WeakMap<Parts, Parts>>();
+/** `grownParts` built once per obstacle and body outline. */
+export function grown(obstacle: Parts, body: Parts): Parts {
+  let byBody = GROWN.get(obstacle);
+  if (!byBody) {
+    byBody = new WeakMap();
+    GROWN.set(obstacle, byBody);
+  }
+  let parts = byBody.get(body);
+  if (!parts) {
+    parts = grownParts(obstacle, body);
+    byBody.set(body, parts);
+  }
+  return parts;
+}
+
+/**
+ * A world circle against a drawn outline, its screen parts from `origin`, on the world plane:
+ * the normal points from the outline toward the circle's centre.
+ */
+export function outlineContact(
+  outline: Parts,
+  origin: Vec,
+  center: Vec,
+  radius: number,
+): Contact | null {
+  const world = worldParts(outline);
+  const offset = { x: center.x - origin.x, y: center.y - origin.y };
+  if (Math.hypot(offset.x, offset.y) >= partsReach(world) + radius) {
+    return null;
+  }
+  return unionContact(world, offset, radius);
+}
+
+/**
+ * A drawn body, its screen parts from `position`, against a drawn obstacle from `origin`, on the
+ * world plane: the contact pushes the body.
+ */
+export function outlinesContact(
+  obstacle: Parts,
+  origin: Vec,
+  body: Parts,
+  position: Vec,
+): Contact | null {
+  const shape = worldParts(obstacle);
+  const own = worldParts(body);
+  const offset = { x: position.x - origin.x, y: position.y - origin.y };
+  if (Math.hypot(offset.x, offset.y) >= partsReach(shape) + partsReach(own)) {
+    return null;
+  }
+  return unionContact(grown(shape, own), offset, 0);
+}

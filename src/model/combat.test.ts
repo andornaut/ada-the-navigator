@@ -9,7 +9,9 @@ import {
 } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
+import { outlinesContact, type Parts } from "./convex.ts";
 import { createEnemy, hardpointOffset } from "./enemy-ai.ts";
+import { enemyHull } from "./enemy-body.ts";
 import {
   bounceShips,
   createFlight,
@@ -22,7 +24,7 @@ import {
   stepFlight,
   teleport,
 } from "./flight.ts";
-import { shipCircleContact } from "./ship-body.ts";
+import { shipBody, shipCircleContact } from "./ship-body.ts";
 import type { FlightInput, FlightState, SectorProgress, SpaceObject, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -1053,11 +1055,28 @@ describe("capital local-area separation", () => {
   });
 });
 
+/** A screen outline pushed `margin` px out from its origin, for a near-contact test. */
+function grownBy(parts: Parts, margin: number): Parts {
+  return margin
+    ? parts.map((part) =>
+        part.map((at) => {
+          const gap = Math.hypot(at.x, at.y) || 1;
+          return { x: at.x * (1 + margin / gap), y: at.y * (1 + margin / gap) };
+        }),
+      )
+    : parts;
+}
+
 describe("ship contact", () => {
   const { sceneryRecoil, sceneryRestitution } = PROTOTYPE.tuning.flight;
   const dot = (a: Vec, b: Vec) => a.x * b.x + a.y * b.y;
-  const overlapOf = (flight: FlightState, object: SpaceObject) =>
-    shipCircleContact(flight.facing, flight.player, object, object.radius);
+  // The enemy's drawn hull against Ada's drawn ship, pushing Ada.
+  const overlapOf = (flight: FlightState, object: SpaceObject, margin = 0) => {
+    const hull = enemyHull(object.enemy!);
+    return hull
+      ? outlinesContact(hull, object, grownBy(shipBody(flight.facing), margin), flight.player)
+      : shipCircleContact(flight.facing, flight.player, object, object.radius + margin);
+  };
   /** An enemy overlapping Ada's drawn ship by 4 from +x, both moving along x. */
   function contact(archetype: EnemyArchetype, ada: number, enemy: number) {
     const flight = empty();
@@ -1111,7 +1130,8 @@ describe("ship contact", () => {
       Math.max(closing * sceneryRestitution, sceneryRecoil),
       9,
     );
-    expect(overlapOf(flight, object)).toBeNull();
+    // Separated to the push-out's 0.01 margin.
+    expect(overlapOf(flight, object)?.depth ?? 0).toBeLessThan(0.02);
   });
 
   it("splits the bounce by size ratio squared, so a capital barely moves", () => {
@@ -1153,9 +1173,7 @@ describe("ship contact", () => {
         silence(chaser);
         stepFlight(PROTOTYPE, 1 / 60, idle, flight);
         overlap = Math.max(overlap, overlapOf(flight, chaser)?.depth ?? 0);
-        touches += shipCircleContact(flight.facing, flight.player, chaser, chaser.radius + 0.5)
-          ? 1
-          : 0;
+        touches += overlapOf(flight, chaser, 0.5) ? 1 : 0;
       }
       expect(touches).toBeGreaterThan(0);
       expect(overlap).toBeLessThan(0.5);
