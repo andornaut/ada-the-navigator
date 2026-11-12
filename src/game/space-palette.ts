@@ -8,6 +8,7 @@ const ROLES = [
   "obstacle",
   "pointOfInterest",
   "shipHardpoint",
+  "threat",
   "weapon",
 ] as const;
 export type SpacePalette = Readonly<Record<(typeof ROLES)[number], number>>;
@@ -21,6 +22,7 @@ export const FALLBACK_SPACE_PALETTE: SpacePalette = {
   obstacle: 0xffffff,
   pointOfInterest: 0xd4d4d4,
   shipHardpoint: 0xffffff,
+  threat: 0xffffff,
   weapon: 0xffffff,
 };
 

@@ -14,24 +14,15 @@ export const EDGE_MARKERS = {
 } as const;
 
 /**
- * Each kind's glyph in logical px: a filled disc for enemies and heavies, an unfilled diamond
- * with a 2 stroke inside its extent for stations.
+ * Each kind's glyph in logical px: a filled disc for enemies and heavies, in the space palette's
+ * threat, an unfilled diamond with a 2 stroke inside its extent for stations, in pointOfInterest.
+ * A light field outlines each in ink (lightField.markerOutline).
  */
 export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },
   heavy: { disc: 10 },
   station: { diamond: 10, stroke: 2 },
 } as const;
-
-/** The enemy and heavy discs' red. Placeholder until the space palette's threat role. */
-export const EDGE_MARKER_THREAT_PLACEHOLDER = 0xff6b6b;
-
-/**
- * A light field's ink outline around each glyph, in logical px: a disc over an ink disc this much
- * larger in radius, the diamond over an ink stroke this much wider on each side. Placeholder until
- * the light field's markerOutline.
- */
-export const EDGE_MARKER_OUTLINE_PLACEHOLDER = 1;
 
 /** Each enemy archetype's kind: the large ships are heavies, every other enemy an enemy. */
 export const ENEMY_MARKER_KINDS: Readonly<Record<EnemyArchetype, EdgeMarkerKind>> = {

@@ -7,11 +7,7 @@ import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/aster
 import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import {
-  EDGE_MARKER_GLYPHS,
-  EDGE_MARKER_OUTLINE_PLACEHOLDER,
-  EDGE_MARKER_THREAT_PLACEHOLDER,
-} from "../data/edge-markers.ts";
+import { EDGE_MARKER_GLYPHS } from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -2500,14 +2496,14 @@ export class PrototypeScene extends Phaser.Scene {
 
   /**
    * A marker at the game area's edge toward each seen enemy, heavy and station off screen and
-   * within range (model/edge-markers.ts), under the direction indicators, which win on the same
-   * object. Discs in the threat red, the station diamond in pointOfInterest; a light field adds an
-   * ink outline under each, as the indicators' ink does.
+   * within range (model/edge-markers.ts); a direction indicator on the same object wins. Discs in
+   * the palette's threat, the station diamond in pointOfInterest; a light field adds an ink outline
+   * (lightField.markerOutline) under each, as the indicators' ink does.
    */
   private drawEdgeMarkers(flight: FlightState): void {
     const indicated = new Set(this.model.indicatorTargets.map(({ id }) => id));
     const centre = this.project(flight.player);
-    const outline = EDGE_MARKER_OUTLINE_PLACEHOLDER;
+    const outline = LIGHT_FIELD.markerOutline;
     for (const marker of this.edgeMarkers.update(flight, indicated)) {
       const at = edgePoint(centre, this.project(marker));
       if (marker.kind === "station") {
@@ -2533,7 +2529,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, 1);
         this.edgeMarkerInk.fillCircle(at.x, at.y, radius + outline);
       }
-      this.edgeMarkerInk.fillStyle(EDGE_MARKER_THREAT_PLACEHOLDER, 1);
+      this.edgeMarkerInk.fillStyle(this.palette.threat, 1);
       this.edgeMarkerInk.fillCircle(at.x, at.y, radius);
     }
   }

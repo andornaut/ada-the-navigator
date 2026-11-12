@@ -21,6 +21,7 @@ const colors = {
   obstacle: "#D68B72",
   pointOfInterest: "#C4AFCC",
   shipHardpoint: "#70ACE8",
+  threat: "#FF6B6B",
   weapon: "#F0BD68",
 };
 const palette = readSpacePalette({ colors, version: 1 })!;
@@ -39,7 +40,7 @@ describe("space palette boundary", () => {
     expect(palette.obstacle).toBe(0xd68b72);
     expect(palette.weapon).toBe(0xf0bd68);
     expect(spaceColorCss(0x001122)).toBe("#001122");
-    expect(Object.keys(palette)).toHaveLength(8);
+    expect(Object.keys(palette)).toHaveLength(9);
   });
 
   it("rejects missing roles, unsupported versions and malformed colors instead of mixing partial palettes", () => {
@@ -50,6 +51,7 @@ describe("space palette boundary", () => {
       { colors: { ...colors, active: "#fff" }, version: 1 },
       { colors: { ...colors, weapon: "#abcdef00" }, version: 1 },
       { colors: { ...colors, environment: "#zzzzzz" }, version: 1 },
+      { colors: { ...colors, threat: undefined }, version: 1 },
     ]) {
       expect(readSpacePalette(value)).toBeUndefined();
     }
@@ -74,6 +76,13 @@ describe("space palette boundary", () => {
       palette.weapon,
     );
     expect(spaceObjectColor(palette, object("destination"))).not.toBe(palette.obstacle);
+  });
+
+  it("reads Art's space palette, with the edge markers' threat red", () => {
+    const art = readSpacePalette(publicJson("/art/space-palette.json"));
+    expect(art).toBeDefined();
+    expect(art!.threat).toBe(0xff6b6b);
+    expect(art!.pointOfInterest).toBe(0xc4afcc);
   });
 });
 
@@ -105,6 +114,7 @@ describe("galaxy fields", () => {
         "obstacle",
         "pointOfInterest",
         "shipHardpoint",
+        "threat",
         "weapon",
       ] as const) {
         expect(galaxyPalette[role]).toBe(palette[role]);

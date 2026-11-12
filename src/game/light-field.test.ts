@@ -38,6 +38,7 @@ describe("light-field rule", () => {
       indicatorStroke: 4,
       ink: INK,
       keyline: 1,
+      markerOutline: 1,
       shotEdge: 1,
     });
     expect(LIGHT_FIELD.keylined).toEqual(
@@ -77,6 +78,7 @@ describe("light-field rule", () => {
     expect(readLightField({ lightField: { ...rule, ink: "ink" } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, jets: { ship: [] } } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, keyline: 0 } })).toBeUndefined();
+    expect(readLightField({ lightField: { ...rule, markerOutline: 0 } })).toBeUndefined();
     expect(readLightField(null)).toBeUndefined();
     expect(readLightGalaxies(null).size).toBe(0);
   });

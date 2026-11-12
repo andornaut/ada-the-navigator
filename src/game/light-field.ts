@@ -17,6 +17,8 @@ export interface LightField {
   readonly jets: { readonly enemy: readonly JetLayer[]; readonly ship: readonly JetLayer[] };
   readonly keyline: number;
   readonly keylined: readonly string[];
+  /** The ink outline around each edge marker on a light field. */
+  readonly markerOutline: number;
   readonly phaser: BeamGlow;
   readonly shotEdge: number;
 }
@@ -55,6 +57,7 @@ export function readLightField(value: unknown): LightField | undefined {
     !positive(rule.keyline) ||
     !positive(rule.shotEdge) ||
     !positive(rule.indicatorStroke) ||
+    !positive(rule.markerOutline) ||
     !positive(outline?.width) ||
     !names(rule.keylined) ||
     !names(rule.effects) ||
@@ -77,6 +80,7 @@ export function readLightField(value: unknown): LightField | undefined {
     jets: { enemy, ship },
     keyline: rule.keyline,
     keylined: rule.keylined,
+    markerOutline: rule.markerOutline,
     phaser: {
       bloom: { alpha: bloom.alpha, radius: bloom.radius },
       colour: ink,
