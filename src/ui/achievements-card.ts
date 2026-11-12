@@ -3,9 +3,10 @@ import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createButton, createCard, isTap, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
 
-// The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape: every entry in
-// Gameplay's order, two columns of a badge beside the name, a locked counted entry's count at the
-// name's right end and the condition below; Previous, the page count and Next page the list.
+// The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
+// entry in Gameplay's order, two columns of a badge beside the name, a locked counted entry's
+// count at the name's right end and the condition below; Previous, the page count and Next page
+// the list.
 // CLEANUP (added 2026-11-11): Art has not designed this card. It uses the shared card tokens and
 // placeholder badges; replace the entry styles and badges once Art's design lands.
 
@@ -27,11 +28,27 @@ export interface AchievementsLabels {
   readonly title: string;
 }
 
+/**
+ * The entry list's geometry, as Chibi's Achievements card spaces it: two columns 312 wide,
+ * icon included, a panel padding apart; each entry a 16 badge a gap from its text, centred on
+ * its name's line, the name and a counted entry's count a gap apart, and the condition below
+ * in at most two body lines, so every entry is three body lines tall; entries a gap apart.
+ */
+export const ACHIEVEMENTS_CARD = {
+  badge: 16,
+  badgeGap: SPACING.gap,
+  columnGap: SPACING.panelPadding,
+  columnWidth: 312,
+  columns: 2,
+  conditionLines: 2,
+  rowGap: SPACING.gap,
+  rows: 3,
+} as const;
+
 /** Entries on one page: two columns of three rows. */
-export const ACHIEVEMENTS_PER_PAGE = 6;
-const COLUMNS = 2;
-const COLUMN_WIDTH = 240;
-const BADGE = 16;
+export const ACHIEVEMENTS_PER_PAGE = ACHIEVEMENTS_CARD.columns * ACHIEVEMENTS_CARD.rows;
+const { badge, badgeGap, columnGap, columnWidth, columns, conditionLines, rowGap, rows } =
+  ACHIEVEMENTS_CARD;
 
 export function achievementPages(count: number): number {
   return Math.max(1, Math.ceil(count / ACHIEVEMENTS_PER_PAGE));
@@ -54,22 +71,24 @@ export function fillPage(template: string, page: number, pages: number): string 
 export const ACHIEVEMENTS_STYLE = `
 ${UI_SCOPE} .ada-achievement-list{
   display:grid;
-  grid-template-columns:repeat(${COLUMNS},${units(COLUMN_WIDTH)});
-  grid-template-rows:repeat(${ACHIEVEMENTS_PER_PAGE / COLUMNS},auto);
+  grid-template-columns:repeat(${columns},${units(columnWidth)});
+  grid-template-rows:repeat(${rows},${units((1 + conditionLines) * TYPE.body.lineHeight)});
   grid-auto-flow:column;
-  column-gap:${units(SPACING.columnGap)};
-  row-gap:${units(SPACING.gap)}
+  column-gap:${units(columnGap)};
+  row-gap:${units(rowGap)}
 }
 ${UI_SCOPE} .ada-achievement{
   display:grid;
-  grid-template-columns:${units(BADGE)} 1fr auto;
-  column-gap:${units(SPACING.markGap)};
+  grid-template-columns:${units(badge)} 1fr auto;
+  grid-template-rows:${units(TYPE.label.lineHeight)} auto;
+  column-gap:${units(badgeGap)};
   align-items:center;
+  align-content:start;
   color:${TEXT_TOKENS.disabledLabel}
 }
 ${UI_SCOPE} .ada-achievement-badge{
-  width:${units(BADGE)};
-  height:${units(BADGE)};
+  width:${units(badge)};
+  height:${units(badge)};
   background:${TEXT_TOKENS.disabledLabel}
 }
 ${UI_SCOPE} .ada-achievement[data-unlocked="true"] .ada-achievement-badge{
@@ -85,9 +104,9 @@ ${UI_SCOPE} .ada-achievement[data-unlocked="true"] .ada-achievement-name{
 }
 ${UI_SCOPE} .ada-achievement-condition{
   grid-column:2 / 4;
+  align-self:start;
   font-size:${units(TYPE.body.size)};
-  line-height:${units(TYPE.body.lineHeight)};
-  min-height:${units(2 * TYPE.body.lineHeight)}
+  line-height:${units(TYPE.body.lineHeight)}
 }
 ${UI_SCOPE} .ada-achievement[data-unlocked="true"] .ada-achievement-condition{
   color:${TEXT_TOKENS.supporting}
