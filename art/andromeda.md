@@ -18,7 +18,13 @@ portraits of Pip and the settlers.
   asset.
 - The space look adds a [backdrop haze](galaxies.md#backdrop-haze): two soft
   spiral arms round a pale core, fixed to the screen, built by
-  `node art/tools/haze.ts` and linked as `backdropHaze`.
+  `node art/tools/haze.ts` and linked as `backdropHaze`. In the
+  [backdrop layers](backdrop.md) the haze is the fixed part of L2, over the
+  sky and under everything else. Andromeda's plates are shadow plates only
+  (`lighter` false in [its backdrop.json](../public/art/andromeda/backdrop.json)):
+  they multiply the haze darker as they pass and never brighten its core, so
+  the core stays Andromeda's brightest backdrop tone. A lavender crescent and
+  blue-white star clusters complete the sky.
 
 ## Sizes and frames
 

@@ -112,33 +112,34 @@ All art is one shared bank; Gameplay places content per galaxy
 ([Presentation](../gameplay/ships.md#presentation)). Art's record of the bank
 and where each asset sits:
 
-| Asset                                                                                                                                                 | Placement                                                       |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Trading station                                                                                                                                       | Every galaxy without its own station art, keylined on Sunflower |
-| Station art per galaxy: [mining hub](cartwheel.md), [settlers' station](andromeda.md#settlers-station), [Weavers' station](needle.md#weavers-station) | Cartwheel, Andromeda, Needle: every station there               |
-| Discovery cache                                                                                                                                       | Shared, keylined on Sunflower                                   |
-| Landmarks (nebula, wreck, beacon) and the lost item's glint                                                                                           | Shared, nebula tinted per galaxy; keylined on Sunflower         |
-| Coral frigate and capital                                                                                                                             | Shared, keylined on Sunflower                                   |
-| Sunflower's outposts (growers, workshop, salvagers)                                                                                                   | Sunflower, keylined                                             |
-| [Andromeda's settlements](andromeda.md#settlements) (hamlet, lamp house)                                                                              | Andromeda                                                       |
-| [Guide beacons](andromeda.md#guide-beacons) (lit, dented, relit)                                                                                      | Andromeda                                                       |
-| [Pip's mail scooter](andromeda.md#pips-mail-scooter)                                                                                                  | Andromeda                                                       |
-| [Courier school and spare beacon](andromeda.md#world-changes)                                                                                         | Andromeda, once funded                                          |
-| [Pip's and the settler's portraits](andromeda.md#portraits)                                                                                           | Andromeda                                                       |
-| Coral drone family (swarm, fighter, interceptor, retaliator)                                                                                          | Shared, keylined on Sunflower                                   |
-| [Claim-jumper family and turret platform](heavies.md)                                                                                                 | Cartwheel                                                       |
-| [Garnet drone family, frigate and capital](andromeda.md#garnet-drones)                                                                                | Andromeda                                                       |
-| Play asteroids                                                                                                                                        | Shared                                                          |
-| Stardust                                                                                                                                              | Shared                                                          |
-| [Current streaks and river debris](whirlpool.md)                                                                                                      | Whirlpool                                                       |
-| [Ring gates, channel stitch and debris, the Eye](needle.md#ring-gates)                                                                                | Needle                                                          |
-| [Elder Loom's glider and portrait](needle.md#elder-looms-glider)                                                                                      | Needle                                                          |
-| [Channel lights and Loom hall](needle.md#world-changes)                                                                                               | Needle, once funded                                             |
-| [Needle crimson drone family, frigate and capital](needle.md#needle-drones)                                                                           | Needle                                                          |
-| [Edge-on band](needle.md#space-look)                                                                                                                  | Needle                                                          |
-| Backdrop rocks                                                                                                                                        | Shared, tinted per galaxy (`tints` in `asteroids.json`)         |
-| [Backdrop haze](#backdrop-haze) (spiral arms and core)                                                                                                | Andromeda                                                       |
-| Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`)                                                                                         | `bank`, no galaxy: a field for a later dark galaxy              |
+| Asset                                                                                                                                                 | Placement                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Trading station                                                                                                                                       | Every galaxy without its own station art, keylined on Sunflower             |
+| Station art per galaxy: [mining hub](cartwheel.md), [settlers' station](andromeda.md#settlers-station), [Weavers' station](needle.md#weavers-station) | Cartwheel, Andromeda, Needle: every station there                           |
+| Discovery cache                                                                                                                                       | Shared, keylined on Sunflower                                               |
+| Coral frigate and capital                                                                                                                             | Shared, keylined on Sunflower                                               |
+| Sunflower's outposts (growers, workshop, salvagers)                                                                                                   | Sunflower, keylined                                                         |
+| [Andromeda's settlements](andromeda.md#settlements) (hamlet, lamp house)                                                                              | Andromeda                                                                   |
+| [Guide beacons](andromeda.md#guide-beacons) (lit, dented, relit)                                                                                      | Andromeda                                                                   |
+| [Pip's mail scooter](andromeda.md#pips-mail-scooter)                                                                                                  | Andromeda                                                                   |
+| [Courier school and spare beacon](andromeda.md#world-changes)                                                                                         | Andromeda, once funded                                                      |
+| [Pip's and the settler's portraits](andromeda.md#portraits)                                                                                           | Andromeda                                                                   |
+| Coral drone family (swarm, fighter, interceptor, retaliator)                                                                                          | Shared, keylined on Sunflower                                               |
+| [Claim-jumper family and turret platform](heavies.md)                                                                                                 | Cartwheel                                                                   |
+| [Garnet drone family, frigate and capital](andromeda.md#garnet-drones)                                                                                | Andromeda                                                                   |
+| Play asteroids                                                                                                                                        | Shared                                                                      |
+| Stardust                                                                                                                                              | Shared                                                                      |
+| [Current streaks and river debris](whirlpool.md)                                                                                                      | Whirlpool                                                                   |
+| [Ring gates, channel stitch and debris, the Eye](needle.md#ring-gates)                                                                                | Needle                                                                      |
+| [Elder Loom's glider and portrait](needle.md#elder-looms-glider)                                                                                      | Needle                                                                      |
+| [Channel lights and Loom hall](needle.md#world-changes)                                                                                               | Needle, once funded                                                         |
+| [Needle crimson drone family, frigate and capital](needle.md#needle-drones)                                                                           | Needle                                                                      |
+| [Edge-on band](needle.md#space-look)                                                                                                                  | Needle                                                                      |
+| Backdrop rocks                                                                                                                                        | Shared, tinted per galaxy (`tints` in `asteroids.json`)                     |
+| [Backdrop haze](#backdrop-haze) (spiral arms and core)                                                                                                | Andromeda                                                                   |
+| [Backdrop layers](backdrop.md) (sky, plates, planets, stars, streaks)                                                                                 | Shared rules, drawn in each galaxy's own tones (`backdrop.json` per galaxy) |
+| [Nebula banks](backdrop.md#generation)                                                                                                                | Whirlpool                                                                   |
+| Dark gold field `#332712`, `#3F331E`, `#4C3F29` (`dark-gold`)                                                                                         | `bank`, no galaxy: a field for a later dark galaxy                          |
 
 ## Markers
 
@@ -207,9 +208,9 @@ pale core ([Andromeda](andromeda.md)).
 | Key        | Value           | Rule                                                                                                                                                                                    |
 | ---------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `asset`    | `{galaxy}-haze` | The texture's manifest entry: a PNG at half resolution (`width`, `height` in texels) with `displayWidth` and `displayHeight` in logical px, 960 by 480 for Andromeda                    |
-| `layer`    | `backdrop`      | Drawn over the field background fill, under the dust specks, backdrop rocks, current streaks and every play object                                                                      |
+| `layer`    | `backdrop`      | The fixed part of [L2](backdrop.md#layers): over the sky gradient, under the far items, planets and plates, the stars, the debris, current streaks and every play object                |
 | `anchor`   | `view`          | The texture's centre on the play view's centre at its display size, fixed to the screen: it never scrolls, turns or scales with the camera. The 720 by 360 view sits inside its margins |
-| `parallax` | 0               | No movement with the camera; the specks and backdrop rocks carry motion                                                                                                                 |
+| `parallax` | 0               | No movement with the camera; the [backdrop layers](backdrop.md) in front of it carry motion                                                                                             |
 | `filter`   | `linear`        | Draw the texture with linear filtering at its display size; every edge is blurred, so the half-resolution texels never show                                                             |
 
 - Straight alpha over the field: each texel's colour is the field colours the
@@ -222,11 +223,31 @@ pale core ([Andromeda](andromeda.md)).
   view: `#6E76AE` 92 by 52 px at alpha 0.55 and `#A3ABE6` 40 by 22 px at alpha
   0.45.
 - Over the field the arms stay at or below 1.22:1 and the core peaks at 3.07:1
-  (`#686FA0`); 4% of the view is above 1.8:1. The core is the one backdrop
-  tone allowed above the [backdrop rule](asteroids.md#backdrop)'s 1.8:1: it is
-  a single soft glow, below every signal's 5:1.
+  (`#686FA0`); 4% of the view is above 1.8:1. The core is Andromeda's
+  brightest backdrop tone, the one above the rocks' 1.8:1: a single soft glow,
+  below every signal's 5:1. The [backdrop caps](backdrop.md#contrast-caps)
+  hold every other layer at or under it, and Andromeda's plates only darken,
+  so nothing brightens it.
 - The same in every state: no blink, so reduced motion changes nothing. The
   [selector preview](#selector-preview) capture includes it.
+
+## Backdrop layers
+
+Every galaxy draws the shared [backdrop layers](backdrop.md) (sky, phenomena,
+plates, stars and debris) in its own field tones, from its `backdrop.json`.
+Each gets its own character within the system:
+
+| Galaxy            | Plates (L1)                                                                                            | Phenomena (L2)                                                                | Stars and streaks                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------- |
+| Sunflower         | Diamond plots along the isometric axes, like farm fields from above, stepping darker, with cream plots | A pale day moon and a small ringed planet; no far items                       | Faint cream points; streaks in `backdropSide`  |
+| Cartwheel         | Triangles in five-spoke pinwheels round far hubs, rust and peach                                       | Crescent and ringed planets; a star cluster                                   | Marker-pink stars; streaks rising to the right |
+| Whirlpool         | Triangles toned in flowing wave bands                                                                  | A ringed planet and a crescent; blue-violet nebula banks                      | Marker-teal stars                              |
+| Andromeda         | Shadow plates only, so the haze stays the light                                                        | The [spiral haze](#backdrop-haze), fixed; a lavender crescent; a star cluster | Marker-blue stars                              |
+| Needle, Black Eye | [Placeholders](backdrop.md#placeholder-galaxies): noise-toned triangles in the base field, monochrome  | One grey gibbous planet                                                       | Base-hue stars; streaks in the base rock tone  |
+
+On Sunflower the backdrop takes no keyline: the [light-field rule](#light-fields)
+keylines play objects only, and the plates step darker within the caps, so the
+ink keyline keeps 8.8:1 or more over every plate.
 
 ## Placeholder previews
 

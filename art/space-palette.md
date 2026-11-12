@@ -31,6 +31,28 @@ signals. Warm coral and amber balance cool lavender, mint and blue. Use signal
 colors in compact accents with existing shapes and labels; color supplements
 their existing meaning and introduces no mechanics.
 
+## Backdrop caps
+
+The field behind play is the layered [backdrop](backdrop.md), drawn only in
+field tones. One rule caps it: no backdrop area tone is brighter than the
+galaxy's brightest backdrop tone today (`backdropLit`, or Andromeda's haze core
+where brighter), or on a light field
+darker than its darkest (`backdropSide`). So no signal, the ship or the ink
+keyline ever loses contrast against the backdrop. Within it, each layer has
+its own cap against the galaxy background (light field in brackets):
+
+| Layer               | Cap                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| Sky gradient        | 1.08:1, darker only (1.05:1)                                                                         |
+| Plates              | Lighter 1.24:1, darker 1.16:1 (cream 1.10:1, darker 1.24:1)                                          |
+| Planets and nebulae | Bodies 1.30:1; lit sides, rings and nebula cores at or under `backdropLit` under the brightest plate |
+| Stars               | Far 1.8:1, near 3.0:1 at peak, points under 2 px (1.06 and 1.10:1)                                   |
+| Dust streaks        | 1.35:1, 1 px                                                                                         |
+| Backdrop rocks      | 1.8:1 ([backdrop rule](asteroids.md#backdrop))                                                       |
+
+The art build fails when any cap is passed. Placeholder galaxies fly the base
+field above, with a monochrome backdrop under the same caps.
+
 Preserve the selected ship's white body and opaque blue canopy. Hardpoint color
 is an accent, not a replacement hull palette. This palette is for space visuals;
 the borrowed UI palette remains separate.

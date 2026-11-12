@@ -25,7 +25,8 @@ Loom's glider and portrait and the crimson drones, character portraits, and the
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
 and the lost item's glint), the job board's row icons and Map marks.
 [Community projects](projects.md) add the Projects shop tab and the world
-changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy. Other space objects
+changes that funding them shows. [Galaxies](galaxies.md) retint the space field per galaxy,
+and the [backdrop layers](backdrop.md) give every galaxy a parallax sky in its own field tones. Other space objects
 use simple runtime shapes with the [space palette](space-palette.md): muted
 surroundings and stronger active signals.
 
@@ -59,6 +60,10 @@ route order is the game's and needs no manifest change:
 | `whirlpool` | [`/art/whirlpool/manifest.json`](../public/art/whirlpool/manifest.json) |
 | `andromeda` | [`/art/andromeda/manifest.json`](../public/art/andromeda/manifest.json) |
 | `needle`    | [`/art/needle/manifest.json`](../public/art/needle/manifest.json)       |
+| `black-eye` | [`/art/black-eye/manifest.json`](../public/art/black-eye/manifest.json) |
+
+Black Eye is a placeholder galaxy: its manifest holds no assets and only its
+[placeholder backdrop](backdrop.md#placeholder-galaxies) link until its art is built.
 
 Every manifest has `version`, `assets` and data links in the same schema. An
 entry or data link that exactly one galaxy uses is in that galaxy's manifest,
@@ -67,7 +72,7 @@ Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
 jumpers, story craft other than the miner, stranded craft, traveling debris
 and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves,
-river debris, project frames and the `whales`, `whirlpoolCurrents`,
+river debris, project frames, the nebula banks and the `whales`, `whirlpoolCurrents`,
 `whirlpoolDebris` and `whirlpoolProjects` links; Andromeda the settlers'
 station, the settlements, the guide beacons, their project frames, the garnet
 drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
@@ -80,7 +85,8 @@ family, ore nugget, `tow`, the landmarks, the lost item's glint and `jobs` serve
 galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
 finale also draws. Core entries keep their files' paths, so a galaxy's art
-stays in its folder wherever its entries are listed.
+stays in its folder wherever its entries are listed. Every galaxy's manifest
+also links its own `backdrop`; the shared `backdropLayers` rules are in core.
 Tech loads core at boot and a galaxy's manifest with its set.
 
 Generators write through `art/tools/manifest.ts`, naming the target manifest;
@@ -120,7 +126,9 @@ heavies' layered sprites from `art/tools/heavies.ts`, Cartwheel's claim jumpers 
 `art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
 `art/tools/garnet-drones.ts`. Needle's art comes from `art/tools/needle-station.ts`,
 `needle-gates.ts`, `needle-channels.ts`, `needle-sky.ts`, `needle-craft.ts`,
-`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`; edit the generators and
+`needle-portraits.ts`, `needle-drones.ts` and `needle-projects.ts`. The
+[backdrop layers](backdrop.md)' data, Whirlpool's nebula textures and the placeholder
+galaxy's manifest come from `art/tools/backdrop.ts`; edit the generators and
 regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
 [tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
 collision parts, for [the ship](ship.md#collision), the

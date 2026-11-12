@@ -102,6 +102,19 @@ the current galaxy's `backdropLit` (Phaser `setTint`), so the tops take
 0.6 to 1 times their display size, and colour the field's dust specks with
 `backdropSide`.
 
+Rocks and specks are the debris layer of the [backdrop layers](backdrop.md),
+at their own depth behind the play plane:
+
+- Backdrop rocks move at parallax 0.8 (`debris.rocks` in
+  [backdrop.json](../public/art/backdrop.json)) and the dust specks at 0.7
+  (`debris.specks`). Each keeps its world rule (cells, density, scale, seed),
+  placed at the parallax times the camera's world position and projected as
+  the scene projects, so its layout stays isometric. The specks' positions
+  are in layer coordinates, not world coordinates.
+- Backdrop rocks keep no ore-field clearance: at parallax 0.8 they slide past
+  an ore field, under its crystals, so a world-space clearance would not hold.
+- A placeholder galaxy's rocks and specks take the base field's tints.
+
 Density: one backdrop rock in 35% of the 320 by 320 world-unit cells.
 
 `tints` holds the computed colours for the base field and each galaxy id, from
