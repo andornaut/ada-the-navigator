@@ -211,7 +211,7 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Willow tab         | `#d0a8e8` | The lavender shawl                           |
 | Marsh tab          | `#e0c79a` | The tan feathers                             |
 | Dollop tab         | `#f2a6e6` | The orchid goo                               |
-| Settler tab        | `#b0c4ff` | The Blurb greeter's violet-blue goo          |
+| Blurb settler tab  | `#b0c4ff` | The Blurb greeter's violet-blue goo          |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
@@ -261,7 +261,7 @@ sits on open space.
 | Willow         | `#181425` | `#d0a8e8`                                  | 8.96:1   |
 | Marsh          | `#181425` | `#e0c79a`                                  | 10.99:1  |
 | Dollop         | `#181425` | `#f2a6e6`                                  | 9.76:1   |
-| Settler        | `#181425` | `#b0c4ff`                                  | 10.45:1  |
+| Blurb settler  | `#181425` | `#b0c4ff`                                  | 10.45:1  |
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1c1526` over
