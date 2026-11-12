@@ -31986,5 +31986,6 @@
   "tow": "/art/cartwheel/tow.json",
   "titleScreen": "/art/title-screen.json",
   "jobs": "/art/jobs.json",
-  "backdropLayers": "/art/backdrop.json"
+  "backdropLayers": "/art/backdrop.json",
+  "enemyWeapons": "/art/enemy-weapons.json"
 }

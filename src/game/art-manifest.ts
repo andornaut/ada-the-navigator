@@ -18,6 +18,8 @@ export interface CoreManifest<T> {
   readonly galaxyFields?: unknown;
   /** The station jobs' art in flight and on the Map (public/art/jobs.json). */
   readonly jobs?: string;
+  /** The enemy-only weapon effects (public/art/enemy-weapons.json). */
+  readonly enemyWeapons?: string;
   readonly quantumJump?: string;
   readonly resourceRocks?: string;
   readonly spacePalette?: string;

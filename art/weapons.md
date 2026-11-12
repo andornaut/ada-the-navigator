@@ -1,8 +1,8 @@
 # Weapons
 
-Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam and weapon
-pickups. Tech draws every effect in code (Phaser Graphics); none uses a sprite or
-sheet. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
+Projectiles, missile blasts, the Multi-Laser fan, the Phaser beam, the enemy
+Phaser, the [enemy-only weapons](#enemy-only-weapons) and weapon pickups. Tech
+draws every effect in code (Phaser Graphics); none uses a sprite or sheet. The HUD and shop glyphs are in [weapon icons](weapon-icons.md) and [shop icons](shop-icons.md).
 
 ## Gameplay values
 
@@ -193,6 +193,201 @@ without taper, width change or bloom, alpha 1 to 90 ms then linear to 0 at
 150 ms. A miss keeps the 28 px end fade. The spark becomes an unrotated cream
 ring, radius 3, 1.5 px stroke, alpha `1 - p` over 160 ms.
 
+## Enemy Phaser
+
+A capital's Phaser shows a fixed aim line for 0.4 s, then fires the hitscan beam
+along it. The values are in `phaser` in
+[enemy-weapons.json](../public/art/enemy-weapons.json); the
+[enemy-only conventions](#enemy-only-conventions) apply.
+
+Aim line, from the turret's muzzle to the beam's reach (`|P(d x range)|` px, as
+for Ada's beam) or to the first obstacle on it. It stays where it started.
+
+| Time       | Line                                              |
+| ---------- | ------------------------------------------------- |
+| 0-300 ms   | 1 px coral (`obstacle`), dashes 6 on 4 off, still |
+| 300-400 ms | 1 px solid pale coral (`plate`)                   |
+
+- End tick: a 5 px line across the end of the aim, 1 px, in the line's colour.
+- Charge: a coral disc at the muzzle, radius 1 to 2.5 over the 400 ms, with a
+  white core of radius 0.5 to 1.1.
+
+Beam: Ada's [Phaser beam](#phaser-beam) geometry, width and alpha keys (150 ms),
+miss fade over the last 28 px and hit spark, in coral:
+
+| Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
+| ----- | ---------- | ------------------------------------ | -------- |
+| Glow  | `obstacle` | 8 to 5                               | `0.38 a` |
+| Body  | `obstacle` | 4 to 2.4                             | `a`      |
+| Core  | white      | 1.8 to 1                             | `a`      |
+
+Muzzle bloom: discs of radius `5 w` coral `0.3 a`, `2.9 w` coral `0.9 a` and
+`1.6 w` white `a`. The [enemy spark](#enemy-only-conventions) marks a hit.
+
+Light field: the glow is ink, width 6.5 to 4 times `w`, alpha `0.9 a`; the
+bloom's outer disc is ink at `0.6 a`. The aim line follows the
+[edged line](#enemy-only-conventions) rule.
+
+Reduced motion: the aim line is unchanged. The beam is a steady 2 px coral line
+over a 4 px coral edge at `0.35 a` (ink at `0.9 a` on a light field), alpha 1 to
+90 ms then linear to 0 at 150 ms. The spark is an unrotated coral ring, radius 3,
+1.5 px, alpha `1 - p` over 160 ms.
+
+## Enemy-only weapons
+
+The ring burst, mine and charged lance that only enemies carry. Gameplay owns
+their damage, intervals, speeds, counts and lifetimes
+([Ships](../gameplay/ships.md)).
+
+- Rebuild with `node art/tools/enemy-weapons.ts`. It writes
+  [enemy-weapons.json](../public/art/enemy-weapons.json), formatted with the
+  project's Prettier settings, and links it from the core manifest as
+  `enemyWeapons`. Reruns are byte-identical. The build fails if a carrying
+  colour falls below 5:1 on a dark galaxy's background or the ink below 5:1 on
+  a light one, or if the mine's collision parts trace its drawing with an IoU
+  below 0.98 or stray more than 1 px from its edge.
+
+### Enemy-only conventions
+
+- Colours by key in `colours`: `obstacle` coral `#D68B72` and `weapon` amber
+  `#F0BD68` (space palette), `coralSide` `#A8654F` and `plate` pale coral
+  `#E6A890` (the [coral family](enemies.md#family-style)), white and ink
+  `#181425`. Coral marks every enemy shot, so the enemy beams are coral where
+  Ada's are amber and cream.
+- Every shape that has to be seen draws at alpha 1 in `obstacle`, `plate`,
+  `weapon` or white: at least 5.37:1 on every dark galaxy (`plate` 7.15:1, white
+  14.47:1, amber 8.40:1). Glows, fades and tints carry nothing.
+- Widths and radii are logical px scaled by `s`; the `u`, `v` heading frame and
+  `f` are those of [Conventions](#conventions).
+- Tells, lines and beams draw in the effect layer with the Phaser beam. They
+  start at the firing turret's muzzle and stop at the first obstacle, like the
+  beams.
+- Enemy spark: Art's [hit spark](#hit-spark) with rays white while `p < 0.25`
+  then coral, a white core and coral flecks. `scale` multiplies its radii.
+- Light field: a stroke draws over an ink stroke 2 px wider on the same path. A
+  solid line's ink runs 1 px past each end. A dashed line's ink dashes are 8 on
+  2 off, offset 1 px earlier, so each coral dash has 1 px of ink at both ends. A
+  filled shape draws over its silhouette grown by 1 px. Tints are never edged.
+  Every edge takes its shape's alpha.
+
+### Ring burst
+
+`ringBurst`. At firing, for 180 ms, the bolts' spawn circle (Gameplay's spawn
+radius around the hull centre) draws as a ground-plane ellipse, half-width
+`r x 1.414` and half-height `r x 0.707`, stroked coral 1.5 px at alpha
+`1 - t / 180`. For 120 ms a coral disc at each bolt's origin shrinks from radius
+3.6 to 0.6, with a white core from 2.0 toward 0.4 drawn to 60 ms.
+
+Each bolt is a ring dart of fixed size, rotated to its projected heading. Draw in
+order:
+
+1. Tail: coral taper from `u = -(3 + 9 f)` (width 0.5, alpha 0) to `u = -3`
+   (width 2, alpha 0.9).
+2. Body: coral `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)`.
+3. Core: white `(0.8, 0) (-0.6, -0.9) (-2, 0) (-0.6, 0.9)`.
+
+Light field: the body draws over its silhouette grown by 1 px in ink; the tail
+stays as it is, like the missile streak. The emission ring and muzzle discs take
+ink edges. Reduced motion: no muzzle discs; the emission ring is unchanged.
+
+### Mine
+
+`mine`. A spiked coral mine with an amber light, drawn at its projected centre and
+sorted with the play objects by that centre's screen y. Angles are screen angles,
+0 at screen right and clockwise on screen. At spin angle `th`:
+
+1. Spikes: 8 coral triangles, spike `i` along `th + 45 i` degrees, tip at radius
+   7.5 and base corners 1.5 either side of the point at radius 3.6.
+2. Body: a `coralSide` disc of radius 5, then an `obstacle` disc of radius 4.3
+   centred at `(-0.6, -0.7)`, which leaves a darker rim on the lower right.
+3. Core: an ink disc of radius 2.5 and an amber disc of radius 1.5; on a blink, a
+   white disc of radius 1.8 instead of the amber.
+
+`th` is `60 x age` degrees for the mine's age in seconds since the drop.
+
+| Remaining life | Blink period | White for |
+| -------------- | ------------ | --------- |
+| Over 4 s       | 1000 ms      | 120 ms    |
+| 1.5 to 4 s     | 500 ms       | 100 ms    |
+| Under 1.5 s    | 250 ms       | 80 ms     |
+
+The blink phase counts from the drop.
+
+Vanish hint: over the last 4 s a 1.2 px coral arc of radius 11 runs clockwise
+from 12 o'clock through `360 x remaining / 4 s` degrees, so it shortens to
+nothing as the mine vanishes.
+
+Vanish: a 200 ms fizzle that deals no damage. With `p = t / 200` the mine
+scales by `1 - p^2` about its centre with its core white, and four coral flecks of
+radius 1 at 45, 135, 225 and 315 degrees sit at distance `5 + 6 p`, their y
+times 0.75, at alpha `1 - p`.
+
+Pop, when Ada's shot destroys the mine or it touches Ada, for 220 ms. With
+`g = min(1, t / 110)` and `R = 5 + 11 (1 - (1 - g)^3)`:
+
+- An ellipse of half-width `R` and half-height `R / 2`, filled coral at alpha
+  `0.14 (1 - t / 220)^2` and stroked coral at alpha 1 to 110 ms then linear to 0
+  at 220 ms, width 2 to 1 over the 220 ms.
+- To 180 ms, four coral flecks of radius 1.1 at 20, 110, 200 and 290 degrees, at
+  distance `4 + 9 (1 - (1 - t / 180)^2)`, their y times 0.6, alpha `1 - t / 180`.
+- Flash, drawn last: discs of radius `6 x scale` times 1.25 coral 0.3, 1 coral
+  0.85, 0.66 `plate` 1 and 0.36 white 1, each alpha times `q`. 0-40 ms: scale 1,
+  `q` 0.95. 40-80 ms: scale 0.55, `q` 0.6. Then none.
+
+Collision: contact is the drawn silhouette against Ada's drawn ship. `collision`
+holds it as convex `[x, y]` parts in logical px around the mine's centre at
+`th = 0`: a 32-sided polygon inscribed in the body disc (within 0.03 px of it)
+and the 8 spike triangles. The parts overlap; their union is the silhouette.
+Rotate them by `th` with the drawing. The light field's ink keyline is not part of
+it, and a fizzling mine has none. Against the drawing the parts have an IoU of
+0.9977 and lie within 0.023 px of its edge.
+
+Light field: the spikes and body draw over their silhouette grown by 1 px in
+ink; the hint arc, fizzle flecks, pop ring stroke, pop flecks and the flash's
+outer disc take ink edges, never the pop's tint.
+
+Reduced motion: `th` stays 0 and the core stays amber with no blink; the hint arc
+is unchanged. The fizzle is the still mine fading to alpha 0 over 200 ms. The pop
+is the ellipse at `R` 16, filled coral at `0.15 a` and stroked coral 2 px at
+`0.9 a`, with `a = 1 - t / 200`.
+
+### Charged lance
+
+`lance`. A frigate's lance tracks Ada, locks, then fires a beam across the game
+area along the locked line. The line runs from the turret's muzzle to the edge of
+the game area or the first obstacle on it.
+
+| Time        | Line                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| 0-700 ms    | Tracking: 1 px coral dashes, 6 on 4 off, marching outward at 60 px/s, aimed at Ada each frame |
+| 700-1000 ms | Locked: still, 1.5 px solid `plate`; white for 0-60 ms and 200-260 ms of the lock             |
+
+- Charge: a coral disc at the muzzle, radius 1 to 3.5 over the 1000 ms, with a
+  white core of radius 0.5 to 1.5. During each white pulse a `plate` disc of
+  radius 4.5 at alpha 0.5 sits under it.
+- Beam, 300 ms from the end of the lock. Keys for `w` and `a`, linear between
+  keys: 0 ms `w` 0.5 `a` 0.9; 30 ms `w` 1.2 `a` 1; 120 ms `w` 1 `a` 1; 300 ms
+  `w` 0.35 `a` 0. Layers as for the Phaser beam:
+
+| Layer | Colour     | Width at nose to end (px, times `w`) | Alpha    |
+| ----- | ---------- | ------------------------------------ | -------- |
+| Glow  | `obstacle` | 12 to 9                              | `0.45 a` |
+| Body  | `obstacle` | 6 to 4.5                             | `a`      |
+| Core  | white      | 2.4 to 1.6                           | `a`      |
+
+- Muzzle bloom: discs of radius `7 w` coral `0.3 a`, `4.5 w` coral `0.9 a` and
+  `2.5 w` white `a`. A beam that leaves the game area needs no end fade; one
+  stopped by an obstacle ends hard there with the enemy spark at scale 1.35.
+
+Light field: the glow is ink, width 10 to 7.5 times `w`, alpha `0.9 a`; the
+bloom's outer disc is ink at `0.6 a`. The lines and the charge disc follow the
+edge rule.
+
+Reduced motion: the dashes do not march and the lock has no white pulses. The
+beam is a steady 3 px coral line over a 6 px coral edge at `0.35 a` (ink at
+`0.9 a` on a light field), alpha 1 to 180 ms then linear to 0 at 300 ms. The spark
+is an unrotated coral ring, radius 4, 1.5 px, alpha `1 - p` over 160 ms.
+
 ## Pickups
 
 A weapon pickup in space is the existing square: a 1.5 px amber `#f0bd68`
@@ -216,3 +411,6 @@ screen. Tech draws the pickup at runtime, so it has no frame data.
 | Blasts   | Flash, growing ring, debris, tint | Static ring and tint at `R`, fading |
 | Beam     | Width keys, taper, bloom          | Steady 2 px line, fading            |
 | Spark    | Rays, core, flecks                | Static ring, fading                 |
+| Tells    | Lance dashes march, lock pulses   | Still dashes, no pulses             |
+| Ring     | Emission ring and muzzle discs    | Emission ring only                  |
+| Mine     | Spin, blink, fizzle, pop flash    | Still, amber, fade, static ring     |

@@ -190,6 +190,19 @@ import {
   type PartSprite,
   selectEnemyFrame,
 } from "./enemy-art.ts";
+import {
+  type EnemyEffect,
+  enemyInkEdges,
+  enemyPhaser,
+  type EnemyWeaponsArt,
+  type EnemyWeaponsView,
+  lance,
+  mine,
+  NO_ENEMY_WEAPONS,
+  readEnemyWeaponsArt,
+  ringDart,
+  ringEmission,
+} from "./enemy-weapons-art.ts";
 import { type FeedbackPulse, FeedbackSound, ModelFeedback, TELEPORT_DISTANCE } from "./feedback.ts";
 import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavy-states.ts";
 import {
@@ -476,6 +489,10 @@ export class PrototypeScene extends Scene {
   /** The Disabled banners' HTML layer over the canvas, and this frame's banners. */
   private bannerLayer: ReturnType<typeof createBannerLayer> | undefined;
   private banners: PlacedBanner[] = [];
+  /** Art's enemy-only weapon effects, once enemy-weapons.json loads and validates. */
+  private enemyWeaponsArt: EnemyWeaponsArt | undefined;
+  /** Each mine's graphics, sorted with the play objects by its centre's screen y, by mine id. */
+  private mineInk = new Map<string, Phaser.GameObjects.Graphics>();
   /** Each salvaged heavy composed into one texture, dimmed as a group, by enemy id. */
   private salvagedGroups = new Map<string, GameObjects.RenderTexture>();
   // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
@@ -675,6 +692,9 @@ export class PrototypeScene extends Scene {
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
       }
+      if (manifest.enemyWeapons) {
+        this.load.json("enemy-weapons", manifest.enemyWeapons);
+      }
       if (manifest.titleScreen) {
         this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
       }
@@ -829,6 +849,7 @@ export class PrototypeScene extends Scene {
       );
     }
     this.readEnemyArt();
+    this.enemyWeaponsArt = readEnemyWeaponsArt(this.cache.json.get("enemy-weapons"));
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
     this.outpostArt = readOutpostArt(this.shipAssets);
@@ -2424,6 +2445,7 @@ export class PrototypeScene extends Scene {
         this.drawEffect(spark, this.edges(["hitSpark"], spark));
       }
     }
+    this.drawEnemyWeapons(this.enemyWeaponsView(flight));
     for (const shot of flight.shots) {
       const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
       const point = this.project(shot);
@@ -4807,8 +4829,11 @@ export class PrototypeScene extends Scene {
    * Fills and strokes Art's weapon effect shapes on the overlay, in order, over their ink
    * edges, if any.
    */
-  private drawEffect(shapes: readonly EffectShape[], edges: readonly EffectShape[] = []): void {
-    const graphics = this.overlay;
+  private drawEffect(
+    shapes: readonly EffectShape[],
+    edges: readonly EffectShape[] = [],
+    graphics: Phaser.GameObjects.Graphics = this.overlay,
+  ): void {
     for (const shape of [...edges, ...shapes]) {
       switch (shape.kind) {
         case "polygon":
@@ -4846,8 +4871,74 @@ export class PrototypeScene extends Scene {
           }
           break;
         case "taper":
-          this.drawTaper(shape);
+          this.drawTaper(shape, graphics);
           break;
+      }
+    }
+  }
+
+  /**
+   * The model's enemy-only weapon state for this frame.
+   * CLEANUP (added 2026-11-12): draws nothing until the model carries ring bursts, mines, lances
+   * and enemy Phaser tells; then this reads them from the flight state.
+   */
+  private enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
+    void flight;
+    return NO_ENEMY_WEAPONS;
+  }
+
+  /**
+   * Art's enemy-only weapon effects and the enemy Phaser in the effect layer, each over its ink
+   * edges on a light field; each mine sorts with the play objects by its centre's screen y.
+   */
+  private drawEnemyWeapons(view: EnemyWeaponsView): void {
+    const art = this.enemyWeaponsArt;
+    const used = new Set<string>();
+    if (art) {
+      const light = this.light;
+      const motion = this.reducedMotion;
+      const draw = (effect: EnemyEffect, graphics?: Phaser.GameObjects.Graphics) =>
+        this.drawEffect(
+          effect.shapes,
+          light ? enemyInkEdges(art.colours.ink, art.lightField.edge, effect.edged) : [],
+          graphics,
+        );
+      for (const ring of view.rings) {
+        const origins = ring.origins.map((origin) => this.project(origin));
+        draw(
+          ringEmission(art, this.project(ring.at), ring.spawnRadius, origins, motion, ring.ageMs),
+        );
+      }
+      for (const bolt of view.ringBolts) {
+        draw(ringDart(art, this.project(bolt.at), bolt.velocity));
+      }
+      const screen = (tell: EnemyWeaponsView["lances"][number]) => ({
+        ...tell,
+        end: this.project(tell.end),
+        muzzle: this.project(tell.muzzle),
+      });
+      for (const tell of view.lances) {
+        draw(lance(art, screen(tell), light, motion));
+      }
+      for (const tell of view.phasers) {
+        draw(enemyPhaser(art, screen(tell), light, motion));
+      }
+      for (const dropped of view.mines) {
+        const centre = this.project(dropped.at);
+        let graphics = this.mineInk.get(dropped.id);
+        if (!graphics) {
+          graphics = this.add.graphics();
+          this.mineInk.set(dropped.id, graphics);
+        }
+        graphics.clear().setDepth(playDepth(centre.y)).setVisible(true);
+        draw(mine(art, centre, dropped, motion), graphics);
+        used.add(dropped.id);
+      }
+    }
+    for (const [id, graphics] of this.mineInk) {
+      if (!used.has(id)) {
+        graphics.destroy();
+        this.mineInk.delete(id);
       }
     }
   }
@@ -4883,7 +4974,7 @@ export class PrototypeScene extends Scene {
   }
 
   /** A taper as two triangles whose vertex alphas run linearly from tail to head. */
-  private drawTaper(shape: TaperShape): void {
+  private drawTaper(shape: TaperShape, graphics: Phaser.GameObjects.Graphics = this.overlay): void {
     const { colour, head, tail } = shape;
     const dx = head.at.x - tail.at.x;
     const dy = head.at.y - tail.at.y;
@@ -4901,7 +4992,6 @@ export class PrototypeScene extends Scene {
     const tailRight = side(tail, -1);
     const headLeft = side(head, 1);
     const headRight = side(head, -1);
-    const graphics = this.overlay;
     // Each triangle takes its three corners' alphas from the first three gradient slots.
     graphics.fillGradientStyle(colour, colour, colour, colour, tail.alpha, head.alpha, tail.alpha);
     graphics.fillTriangle(tailLeft.x, tailLeft.y, headLeft.x, headLeft.y, tailRight.x, tailRight.y);
