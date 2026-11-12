@@ -278,12 +278,15 @@ import {
   stardustShown,
 } from "./stardust-art.ts";
 import {
+  type GalaxyStationArt,
+  readGalaxyStationArt,
   readOutpostArt,
   readStationArt,
   type StationArt,
   type StationFrame,
   stationFrame,
   stationFrameIndex,
+  stationLoopFrame,
 } from "./station-art.ts";
 import { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg-rasters.ts";
 import { fileFilter, type TextureFilter, vectorRaster } from "./textures.ts";
@@ -369,8 +372,10 @@ interface Asset extends ShipAsset, EnemyFrame {
   craft?: string;
   debris?: string;
   destination?: string;
+  frameIndex?: number;
   overlay?: boolean;
   project?: string;
+  station?: string;
   variant?: string;
 }
 
@@ -452,6 +457,8 @@ export class PrototypeScene extends Scene {
   private jetKeyline!: GameObjects.Graphics;
   private indicatorInk!: GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
+  /** Each galaxy's own station art; a galaxy without it draws the shared station. */
+  private galaxyStations = new Map<SectorId, GalaxyStationArt<Asset>>();
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   // Funded projects' world changes at the outposts (art/projects.md "World changes"): each reveal
   // in play by project, from its start on the flight clock, and its after state's group texture.
@@ -1596,6 +1603,14 @@ export class PrototypeScene extends Scene {
       this.familyShards.set(family, read);
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
+    for (const [sector, galaxy] of this.galaxyManifests) {
+      const stations = readGalaxyStationArt(
+        galaxy.assets.filter((asset) => this.textures.exists(asset.id)),
+      );
+      if (stations) {
+        this.galaxyStations.set(sector, stations);
+      }
+    }
     this.towLine = readTowLine(this.cache.json.get("tow"));
     this.jobArt = readJobArt(this.shipAssets, this.cache.json.get("jobs"));
     this.strandedCraft = readStrandedCraft(this.cache.json.get("tow"), loaded);
@@ -3709,8 +3724,21 @@ export class PrototypeScene extends Scene {
       .setVisible(true);
   }
 
-  /** Art's station blinks between frames A and B; reduced motion holds A. Stations draw no name label. */
+  /**
+   * A station in its galaxy's own art where it has some, its funded replacement swapped in (the
+   * Loom hall), else the shared station's A/B blink; reduced motion holds frame 0. Stations draw
+   * no name label.
+   */
   private drawStation(object: SpaceObject, point: Vec, radius: number): void {
+    const sector = this.model.state.flight?.sector;
+    const galaxy = sector === undefined ? undefined : this.galaxyStations.get(sector);
+    if (galaxy && sector !== undefined) {
+      const funded = new Set(this.model.worldChanges(sector).map(({ project }) => project));
+      const replaced = [...galaxy.projects].find(([project]) => funded.has(project))?.[1];
+      const frame = stationLoopFrame(replaced ?? galaxy.base, this.reducedMotion, this.time.now);
+      this.placeStationFrame(frame, "station", object, point);
+      return;
+    }
     if (!this.stationArt) {
       this.drawStationPlaceholder(point, radius);
       return;
@@ -3730,7 +3758,25 @@ export class PrototypeScene extends Scene {
     key = object.id,
     layer = 0,
   ): void {
-    const frame = stationFrame(art, this.reducedMotion, this.time.now);
+    this.placeStationFrame(
+      stationFrame(art, this.reducedMotion, this.time.now),
+      kind,
+      object,
+      point,
+      key,
+      layer,
+    );
+  }
+
+  /** One fixed-facing station or outpost frame at its pivot, sorted by its pivot. */
+  private placeStationFrame(
+    frame: Asset,
+    kind: "outpost" | "station",
+    object: SpaceObject,
+    point: Vec,
+    key = object.id,
+    layer = 0,
+  ): void {
     const sprite = this.objectSprite(key, frame.id)
       .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
       .setOrigin(frame.pivot.x, frame.pivot.y)

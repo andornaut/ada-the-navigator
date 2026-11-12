@@ -25,6 +25,89 @@ export interface StationArt<T extends StationFrame = StationFrame> {
   readonly frameMs: number;
 }
 
+/** A galaxy station frame: A/B blink frames by id, or animated frames by `frameIndex`. */
+export interface GalaxyStationFrame extends StationFrame {
+  readonly destination?: string;
+  readonly frameIndex?: number;
+  readonly overlay?: boolean;
+  readonly project?: string;
+  readonly station?: string;
+}
+
+/** A station's frames in order, shown in turn for frameMs each (art/destinations.md). */
+export interface StationLoop<T extends StationFrame = StationFrame> {
+  readonly frames: readonly [T, ...T[]];
+  readonly frameMs: number;
+}
+
+/**
+ * A galaxy's own station art: its base loop, and a replacement loop per project that swaps it
+ * in once funded (Needle's Loom hall).
+ */
+export interface GalaxyStationArt<T extends StationFrame = StationFrame> {
+  readonly base: StationLoop<T>;
+  readonly projects: ReadonlyMap<string, StationLoop<T>>;
+}
+
+/**
+ * A galaxy manifest's station art, or undefined to draw the shared station: its entries with
+ * `destination` "station" or a `station` name, overlays left out, grouped by `project` (none is
+ * the base). A group with `frameIndex` loops its frames in that order (the Eddy, the Bobbin); one
+ * without is an A/B blink ordered by id.
+ */
+export function readGalaxyStationArt<T extends GalaxyStationFrame>(
+  assets: readonly T[],
+): GalaxyStationArt<T> | undefined {
+  const groups = new Map<string, T[]>();
+  for (const asset of assets) {
+    if ((asset.destination === "station" || asset.station !== undefined) && !asset.overlay) {
+      const key = asset.project ?? "";
+      groups.set(key, [...(groups.get(key) ?? []), asset]);
+    }
+  }
+  const loop = (frames: readonly T[] | undefined): StationLoop<T> | undefined => {
+    if (!frames || frames.length < 2) {
+      return undefined;
+    }
+    const indexed = frames.every((frame) => Number.isInteger(frame.frameIndex));
+    const ordered = [...frames].sort((a, b) =>
+      indexed ? a.frameIndex! - b.frameIndex! : a.id.localeCompare(b.id),
+    );
+    const [first, ...rest] = ordered;
+    if (
+      !first ||
+      !(first.frameMs! > 0) ||
+      !ordered.every((frame) => frame.width > 0 && frame.displayWidth! > 0) ||
+      (indexed && !ordered.every((frame, index) => frame.frameIndex === index))
+    ) {
+      return undefined;
+    }
+    return { frameMs: first.frameMs!, frames: [first, ...rest] };
+  };
+  const base = loop(groups.get(""));
+  if (!base) {
+    return undefined;
+  }
+  const projects = new Map<string, StationLoop<T>>();
+  for (const [project, frames] of groups) {
+    const art = project && loop(frames);
+    if (art) {
+      projects.set(project, art);
+    }
+  }
+  return { base, projects };
+}
+
+/** A station loop's frame: frame k for frameMs each, looping; reduced motion holds frame 0. */
+export function stationLoopFrame<T extends StationFrame>(
+  art: StationLoop<T>,
+  reducedMotion: boolean,
+  timeMs: number,
+): T {
+  const index = reducedMotion ? 0 : Math.floor(timeMs / art.frameMs) % art.frames.length;
+  return art.frames[index] ?? art.frames[0];
+}
+
 /** Both blink frames, or undefined to keep the placeholder. */
 function readBlinkArt<T extends StationFrame>(
   assets: readonly T[],
