@@ -272,9 +272,11 @@ progress.
 
 ## Player strings
 
-The status pill shows the Stardust and ore counts in at most four characters, as
-weapon counts do: the exact number up to 9,999 without a separator ("9999"), then
-whole thousands as "10k" to "999k", then whole millions as "1m" to "999m". Their
+The status pill shows the Stardust and ore counts in at most five characters:
+the exact number below 10,000 without a separator ("9999"); from 10,000 to
+99,999, thousands with one decimal, rounded to the nearest tenth ("44.4k"), and
+a value that rounds to 100.0k shows "100k"; from 100,000, whole thousands,
+rounded ("100k" to "9999k"); from 10,000,000, whole millions ("10m"). Their
 accessible labels give the exact count, en-US grouped; Stardust's is
 `stardustAmount`. The Ship card shows exact counts, en-US grouped ("12,500"). Pickup ticks read "+N".
 
