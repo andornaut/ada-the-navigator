@@ -693,7 +693,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   keeps its own cadence and projectile speed (see
   [Ships](ships.md#enemy-weapons)).
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Ada's other weapons
+  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 1200 world units at
+  every level, so flight time follows speed. Ada's other weapons
   use a fixed base projectile speed of 600, multiplied by their speed ratios.
   None depends on her engine level.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
