@@ -1,4 +1,3 @@
-import { BUILD_LABEL } from "../build-label.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   type ControlVisibility,
@@ -26,13 +25,9 @@ import {
   setScrollGroup,
   TEXT_TOKENS,
 } from "./modal.ts";
-import { NOTICE_STYLE } from "./notice.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settings-icons.ts";
-import { START_SCREEN_STYLE } from "./start-screen.ts";
-import { STATION_STYLE } from "./station.ts";
-import { STATUS_PILL_STYLE } from "./status-pill.ts";
 import { applyButtonSkin } from "./ui-skin.ts";
-import { hudDiscStyle, WEAPON_STYLE } from "./weapons.ts";
+import { hudDiscStyle } from "./weapons.ts";
 
 export type { ControlVisibility } from "./device-settings.ts";
 
@@ -62,6 +57,8 @@ export type InstallSteps = Readonly<
 >;
 
 export interface SettingsOptions {
+  // The build's version and commit (src/build-label.ts), the card's last line.
+  readonly build: string;
   // The Install row's install functions and each menu browser's steps; without them no row.
   readonly install?: { readonly port: InstallPort; readonly steps: InstallSteps } | undefined;
   readonly labels: SettingsLabels;
@@ -87,7 +84,7 @@ const navRight = (index: number): string => {
   return fromHudEdge("right", -(target.x + target.width));
 };
 
-const STYLE = `
+export const SETTINGS_STYLE = `
 @font-face{
   font-family:AdaUI;
   src:url('/art/ui/fonts/liberation/LiberationSans-Regular.ttf') format('truetype');
@@ -227,9 +224,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const root = document.createElement("div");
   root.className = "ada-controls";
   root.dataset.fontRole = FONT_ROLES.body;
-  const style = document.createElement("style");
-  style.textContent =
-    STYLE + NOTICE_STYLE + START_SCREEN_STYLE + STATION_STYLE + WEAPON_STYLE + STATUS_PILL_STYLE;
   const openButton = document.createElement("button");
   openButton.className = "ada-settings-open";
   openButton.dataset.action = "settings";
@@ -306,7 +300,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   // The build line, after the rows as in Chibi: plain text screen readers read with the card.
   const build = document.createElement("p");
   build.className = "ada-build";
-  build.textContent = BUILD_LABEL;
+  build.textContent = options.build;
   card.append(rows, build);
   setScrollGroup(settingsCard, rows);
   // The Install row, as in Archie: its label and note, and a button that asks for the browser's
@@ -359,7 +353,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
   modal.append(cardFrame, stepsFrame);
-  root.append(style, ...joystickTargets, openButton, useButton, modal);
+  root.append(...joystickTargets, openButton, useButton, modal);
   parent.append(root);
   void applyButtonSkin(root).catch(() => undefined);
   let disposed = false;

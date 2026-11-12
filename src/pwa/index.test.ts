@@ -20,6 +20,17 @@ vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
   browserOfflinePage: () => ({}),
   startOfflinePlay: offline.start,
 }));
+const wakeLock = vi.hoisted(() => {
+  const lock = { isHeld: vi.fn(), start: vi.fn(), stop: vi.fn() };
+  const create = vi.fn((...args: readonly unknown[]) => {
+    void args;
+    return lock;
+  });
+  return { create, lock };
+});
+vi.mock("@andornaut/game-kit/web/pwa/dom/wakeLock", () => ({
+  createScreenWakeLock: wakeLock.create,
+}));
 vi.mock("@andornaut/game-kit/web/pwa/storagePersistence", () => ({
   requestPersistentStorage: vi.fn(() => Promise.resolve("unsupported")),
 }));
@@ -52,6 +63,7 @@ function stubDevice({ app = false, maxTouchPoints = 0, userAgent = CHROME }: Dev
   });
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
+  vi.stubGlobal("document", { visibilityState: "visible" });
   stubHistory();
   return page;
 }
@@ -143,6 +155,31 @@ function stubHistory() {
   vi.stubGlobal("history", history);
   return history;
 }
+
+describe("screen wake lock", () => {
+  it("keeps the screen on only while the game asks, with the page's own wake lock", async () => {
+    const page = stubDevice({});
+    const lockApi = { request: vi.fn() };
+    Object.assign(navigator, { wakeLock: lockApi });
+    const pwa = await import("./index.ts");
+    pwa.keepScreenOn(true);
+    expect(wakeLock.lock.start).not.toHaveBeenCalled();
+    pwa.setupPhoneApp();
+    expect(wakeLock.create).toHaveBeenCalledWith(page, document, lockApi);
+    expect(wakeLock.lock.start).not.toHaveBeenCalled();
+    pwa.keepScreenOn(true);
+    expect(wakeLock.lock.start).toHaveBeenCalledOnce();
+    pwa.keepScreenOn(false);
+    expect(wakeLock.lock.stop).toHaveBeenCalledOnce();
+  });
+
+  it("passes no wake lock where the browser has none", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    expect(wakeLock.create.mock.calls[0]![2]).toBeUndefined();
+  });
+});
 
 describe("back gesture", () => {
   it("leaves back to the browser until the player's first input", async () => {

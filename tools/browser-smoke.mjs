@@ -29,6 +29,58 @@ const watchdog = setTimeout(() => {
   process.exit(124);
 }, SMOKE_LIMIT_SECONDS * 1000);
 
+// Hides the HTML that draws over the canvas while its pixels are sampled, and returns the call
+// that shows it again. Each element's own style is set through CSSOM, which the page's CSP allows
+// where an injected <style> is blocked.
+async function hideOverCanvas(target) {
+  const selector = ".ada-conversation,#game-status,#save-status";
+  await target.evaluate((list) => {
+    for (const node of document.querySelectorAll(list)) {
+      node.style.setProperty("visibility", "hidden", "important");
+    }
+  }, selector);
+  return () =>
+    target.evaluate((list) => {
+      for (const node of document.querySelectorAll(list)) {
+        node.style.removeProperty("visibility");
+      }
+    }, selector);
+}
+
+// A CSP violation in any page logs a console error, which the run's error check fails on.
+function reportViolations() {
+  document.addEventListener("securitypolicyviolation", (event) => {
+    console.error(
+      `CSP violation: ${event.effectiveDirective} blocked ${event.blockedURI || "inline"}`,
+    );
+  });
+}
+
+// The screen wake lock as the game asks for it: held counts the sentinels not yet released.
+function fakeWakeLock() {
+  const lock = { held: 0, requests: 0 };
+  window.adaWakeLock = lock;
+  Object.defineProperty(navigator, "wakeLock", {
+    configurable: true,
+    value: {
+      request: async () => {
+        lock.requests += 1;
+        lock.held += 1;
+        const sentinel = new EventTarget();
+        let released = false;
+        sentinel.release = async () => {
+          if (!released) {
+            released = true;
+            lock.held -= 1;
+            sentinel.dispatchEvent(new Event("release"));
+          }
+        };
+        return sentinel;
+      },
+    },
+  });
+}
+
 let browser;
 let page;
 try {
@@ -39,6 +91,8 @@ try {
     viewport: { width: 1280, height: 720 },
     hasTouch: true,
   });
+  await context.addInitScript(reportViolations);
+  await context.addInitScript(fakeWakeLock);
   page = await context.newPage();
   page.setDefaultTimeout(10000);
   page.setDefaultNavigationTimeout(15000);
@@ -146,12 +200,35 @@ try {
   }
   const response = await page.goto("http://ada-preview:4173/");
   assert.equal(response.status(), 200);
+  // The preview serves dist/_headers as Cloudflare does: each page's CSP, styles and scripts from
+  // its own origin only, and the wake lock allowed.
+  const pageHeaders = await Promise.all(
+    ["/", "/play/"].map(async (pagePath) => [
+      pagePath,
+      (await page.request.get(`http://ada-preview:4173${pagePath}`)).headers(),
+    ]),
+  );
+  for (const [pagePath, headers] of pageHeaders) {
+    const policy = headers["content-security-policy"] ?? "";
+    assert.match(policy, /(?:^|; )style-src 'self'(?:;|$)/, `${pagePath} styles from its origin`);
+    assert.match(policy, /(?:^|; )script-src 'self'(?:;|$)/, `${pagePath} scripts from its origin`);
+    assert.doesNotMatch(policy, /unsafe-inline/, `${pagePath} allows no inline code`);
+    assert.match(headers["permissions-policy"] ?? "", /screen-wake-lock=\(self\)/);
+    assert.equal(headers["x-content-type-options"], "nosniff");
+  }
+  events.checks.push("Both pages carry the build's CSP and permissions policy");
   assert.equal(await page.locator("#game-canvas").count(), 0, "Landing must not bootstrap Phaser");
   const landingIcons = await iconLinks();
   const manifestResponse = await page.request.get("http://ada-preview:4173/manifest.webmanifest");
   assert.equal(manifestResponse.status(), 200);
   assert.ok(manifestResponse.headers()["content-type"].startsWith("application/manifest+json"));
   const manifest = await manifestResponse.json();
+  assert.equal(
+    manifest.description,
+    await page.locator('meta[name="description"]').getAttribute("content"),
+    "The manifest describes the game as the landing page does",
+  );
+  assert.doesNotMatch(JSON.stringify(manifest), /%HOME_/);
   assert.equal(manifest.id, "/play/");
   assert.equal(manifest.start_url, "/play/");
   assert.equal(manifest.scope, "/");
@@ -455,22 +532,28 @@ try {
     "The start screen's Achievements sits one pitch left of Settings in the same form",
   );
   const achievementsButton = page.locator('[data-action="achievements"]');
+  // A url() as written in the stylesheet, its optional quotes dropped: the built CSS writes none.
+  const glyphUrl = (value) => value.replace(/^url\((["']?)(.*)\1\)$/u, "url($2)");
   assert.deepEqual(
     [
       await achievementsButton.getAttribute("aria-label"),
       await achievementsButton.locator(".ada-disc").getAttribute("aria-hidden"),
-      await achievementsButton.evaluate((button) =>
-        getComputedStyle(button).getPropertyValue("--glyph").trim(),
+      glyphUrl(
+        await achievementsButton.evaluate((button) =>
+          getComputedStyle(button).getPropertyValue("--glyph").trim(),
+        ),
       ),
     ],
-    [PROTOTYPE.labels.achievements, "true", "url('/art/ui/icons/achievements.svg')"],
+    [PROTOTYPE.labels.achievements, "true", "url(/art/ui/icons/achievements.svg)"],
     "Achievements is labelled from Gameplay's string with Art's trophy, the glyph hidden",
   );
   assert.equal(
-    await page
-      .locator('[data-action="settings"]')
-      .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
-    "url('/art/ui/icons/settings.svg')",
+    glyphUrl(
+      await page
+        .locator('[data-action="settings"]')
+        .evaluate((button) => getComputedStyle(button).getPropertyValue("--glyph").trim()),
+    ),
+    "url(/art/ui/icons/settings.svg)",
     "Settings draws Art's vector gear, the same mask mechanism as Achievements",
   );
   await page.locator('[data-action="achievements"]').click();
@@ -550,8 +633,14 @@ try {
   await page.locator('[data-action="start"]').waitFor({ state: "visible" });
   // A first launch: Start, galaxy one's opening, the prologue in Ada's room and the cockpit, then
   // galaxy selection on galaxy one.
+  assert.equal(
+    await page.evaluate(() => window.adaWakeLock.held),
+    0,
+    "The start screen lets the screen sleep",
+  );
   await page.locator('[data-action="start"]').click();
   await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
+  await page.waitForFunction(() => window.adaWakeLock.held === 1);
   await page.screenshot({ path: `${output}/story-opening.png` });
   const launchPages = await readStory();
   const { gardenArrival, gardenFarewell, prologue: prologueSteps } = PROTOTYPE.premise;
@@ -809,7 +898,10 @@ try {
     0,
     "The Paused card has no Achievements",
   );
+  await page.waitForFunction(() => window.adaWakeLock.held === 0);
   await page.locator('[data-action="pause-resume"]').click();
+  await page.waitForFunction(() => window.adaWakeLock.held === 1);
+  events.checks.push("Play holds the screen wake lock; the start screen and Paused card let it go");
 
   // No touch flash: every interactive element's tap highlight is transparent, inherited from the
   // page root, so a press shows only the element's own pressed state.
@@ -878,6 +970,7 @@ try {
   }
   async function openFixture({ stored, url, viewport }, value, marker) {
     const opened = await browser.newContext({ viewport, hasTouch: true });
+    await opened.addInitScript(reportViolations);
     await opened.route("**/*", previewOnly);
     // One-shot per tab, so a later reload in the fixture resumes the game's own save.
     await opened.addInitScript(
@@ -2951,9 +3044,7 @@ try {
     const canvas = page.locator("#game-canvas > canvas");
     await canvas.waitFor({ state: "visible" });
     // The pixel regions sample the canvas alone; the conversation box and notices draw over it.
-    const overlays = await page.addStyleTag({
-      content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
-    });
+    const showOverCanvas = await hideOverCanvas(page);
     const intrinsic = await canvas.evaluate(logicalSize);
     // A heavy's part frames load once it is in flight, so sample until its turret tops show.
     async function sampleUntilComposed(remaining) {
@@ -2965,7 +3056,7 @@ try {
       }
     }
     await sampleUntilComposed(20);
-    await overlays.evaluate((node) => node.remove());
+    await showOverCanvas();
   }
   async function sampleCombatView(view, canvas, intrinsic) {
     const combatImage = await canvas.screenshot({
@@ -3227,13 +3318,11 @@ try {
   async function captureRocks(sector, name) {
     const tint = asteroidArt.backdropTint(rockArt, sector);
     // The ramps sample the canvas alone; the conversation box and notices draw over it.
-    const overlays = await page.addStyleTag({
-      content: ".ada-conversation,#game-status,#save-status{visibility:hidden !important}",
-    });
+    const showOverCanvas = await hideOverCanvas(page);
     const image = await page
       .locator("#game-canvas > canvas")
       .screenshot({ path: `${output}/${name}` });
-    await overlays.evaluate((node) => node.remove());
+    await showOverCanvas();
     const ramps = { backdrop: [tint.backdropLit, tint.backdropSide], stone: rockArt.stone };
     const pixels = await stonePixels(image, ramps);
     asteroidCaptures[sector].push({ name, pixels });
@@ -3400,6 +3489,7 @@ try {
       ? route.continue()
       : route.abort("blockedbyclient"),
   );
+  await portraitContext.addInitScript(reportViolations);
   await portraitContext.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
     key: storageKey,
     value: safeSerialized,
@@ -3553,6 +3643,64 @@ try {
   events.checks.push(
     "Portrait settings and contextual action remain accessible in the turned frame",
   );
+  // A crash: the kit's crash screen over the game, in the game's words, with the build label in
+  // the dev details, and the last save kept through the page hiding. The thrown error is the point
+  // here, so only this page's CSP violations count as errors.
+  await portraitContext.close();
+  const crashContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await crashContext.addInitScript(reportViolations);
+  await crashContext.route("**/*", previewOnly);
+  page = await crashContext.newPage();
+  page.on("console", (message) => {
+    if (message.text().startsWith("CSP violation")) {
+      events.errors.push(message.text());
+    }
+  });
+  await page.goto("http://ada-preview:4173/play/?dev=1");
+  await page.locator('[data-action="start"]').waitFor({ state: "visible" });
+  const savedBeforeCrash = await page.evaluate((key) => localStorage.getItem(key), storageKey);
+  assert.ok(savedBeforeCrash, "The game has saved before the crash");
+  await page.evaluate(() => {
+    setTimeout(() => {
+      throw new Error("Smoke crash");
+    });
+  });
+  await page.locator(".crash").waitFor({ state: "visible" });
+  const { CRASH_COPY } = await import(new URL("../src/data/crash-copy.ts", import.meta.url));
+  const crashScreen = await page.locator(".crash").evaluate((screen) => ({
+    body: screen.querySelector(".crash-body")?.textContent,
+    details: screen.querySelector(".crash-stack")?.textContent ?? "",
+    focused: document.activeElement?.textContent,
+    role: screen.getAttribute("role"),
+    title: screen.querySelector(".crash-title")?.textContent,
+  }));
+  const { version: crashVersion } = JSON.parse(readFileSync("/source/package.json", "utf8"));
+  const crashCommit = process.env.CHECK_REVISION?.slice(0, 8) ?? "dev";
+  assert.deepEqual(
+    {
+      ...crashScreen,
+      details: crashScreen.details.split("\n").slice(0, 2),
+    },
+    {
+      body: CRASH_COPY.body,
+      details: [`v${crashVersion} · ${crashCommit}`, "Error: Smoke crash"],
+      focused: CRASH_COPY.reload,
+      role: "alertdialog",
+      title: CRASH_COPY.title,
+    },
+    "A crash shows the crash screen with the build label and the error",
+  );
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  assert.equal(
+    await page.evaluate((key) => localStorage.getItem(key), storageKey),
+    savedBeforeCrash,
+    "A crash keeps the last save as the page hides",
+  );
+  await page.screenshot({ path: `${output}/crash-screen.png` });
+  events.checks.push("A crash shows the kit's crash screen and keeps the last save");
   assert.deepEqual(events.errors, [], "No browser runtime or console errors");
   assert.deepEqual(events.failedRequests, [], "No failed asset requests");
   assert.deepEqual(events.badResponses, [], "No failed HTTP responses");

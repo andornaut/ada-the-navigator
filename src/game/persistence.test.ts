@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { GameModel } from "../model/game.ts";
 import { playOpening, relaunch } from "../testing/launch.ts";
-import { readSave, writeSave } from "./persistence.ts";
+import { readSave, stopSaving, writeSave } from "./persistence.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -46,5 +46,21 @@ describe("browser save boundary", () => {
     });
     expect(writeSave("{}")).toBe(false);
     expect(readSave()).toBeUndefined();
+  });
+
+  // Last: stopping lasts for the rest of the page's life.
+  it("keeps the last save once a crash stops saving", () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    });
+    const model = new GameModel(PROTOTYPE);
+    expect(writeSave(model.save())).toBe(true);
+    const saved = [...values.values()];
+    stopSaving();
+    model.startSector(1);
+    expect(writeSave(model.save())).toBe(true);
+    expect([...values.values()]).toEqual(saved);
   });
 });

@@ -423,8 +423,6 @@ ${STORY_PORTRAIT_RULES}
  */
 export function createStorybook(root: HTMLElement, options: StoryOptions) {
   const { labels } = options;
-  const style = document.createElement("style");
-  style.textContent = STORYBOOK_STYLE;
   const layer = document.createElement("div");
   layer.className = "ada-story";
   layer.hidden = true;
@@ -482,9 +480,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   panel.append(copy, column);
   layer.append(background, panel, skip);
   // The page goes first in the controls layer, so the HUD's settings button draws and presses
-  // above it; its style goes last, after the shared card styles it refines.
+  // above it. Its style follows the shared card styles it refines (src/ui/stylesheet.ts).
   root.prepend(layer);
-  root.append(style);
   skip.addEventListener("click", () => options.onSkip());
   previous.addEventListener("click", () => options.onPrevious());
   next.addEventListener("click", () => options.onNext());
@@ -922,7 +919,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       stopNight();
       stopPortrait();
       window.removeEventListener(VIEW_SCALE_EVENT, relayout);
-      style.remove();
       layer.remove();
     },
     show,

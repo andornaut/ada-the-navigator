@@ -8,6 +8,9 @@ export interface RestartLabels {
   readonly title: string;
 }
 
+// The confirm covers the start screen's panel, which sits above the controls layer.
+export const RESTART_STYLE = ".ada-controls.ada-restart-open{z-index:30}";
+
 /**
  * Restart's confirm, as Chibi's: "Restart?" with Cancel (secondary, left) and Restart (primary,
  * right). The close X, an outside tap, back and Escape (through the back stack) cancel.
@@ -17,9 +20,6 @@ export function createRestartCard(
   options: { readonly labels: RestartLabels; readonly onRestart: () => void },
 ) {
   const { labels } = options;
-  const style = document.createElement("style");
-  // The confirm covers the start screen's panel, which sits above the controls layer.
-  style.textContent = ".ada-controls.ada-restart-open{z-index:30}";
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -40,7 +40,7 @@ export function createRestartCard(
     ]),
   );
   modal.append(card.frame);
-  root.append(style, modal);
+  root.append(modal);
   const setOpen = (open: boolean) => {
     modal.hidden = !open;
     root.classList.toggle("ada-restart-open", open);
@@ -74,7 +74,6 @@ export function createRestartCard(
     dispose(): void {
       card.dispose();
       root.classList.remove("ada-restart-open");
-      style.remove();
       modal.remove();
     },
     isOpen: () => !modal.hidden,

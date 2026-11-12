@@ -8,13 +8,24 @@ import { CACHE_POLICY } from "./cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_DIRECTORY, artUrls, PREVIEW_DIRECTORY, previewUrls } from "./precacheArt.ts";
 
+interface PrecachePluginOptions {
+  // The game page's file name in the build output, which is its path under Vite's root, e.g.
+  // "play/index.html".
+  pageHtmlFile: string;
+  // The service worker's entry module (serviceWorker.ts), as an absolute path.
+  serviceWorkerSource: string;
+}
+
 // The kit's precache plugin with the game's cache policy, building /sw.js from
 // serviceWorkerSource (serviceWorker.ts) to precache the game page at pageHtmlFile and what it
 // loads. The game loads its art at runtime rather than linking it, and the kit precaches only
 // build output beyond the page's links, so a first plugin emits every file artUrls lists from
 // public/art/, and every preview in public/previews/, into the build output at its own path, for
 // the kit's to name.
-export function precachePlugin(pageHtmlFile: string, serviceWorkerSource: string): Plugin[] {
+export function precachePlugin({
+  pageHtmlFile,
+  serviceWorkerSource,
+}: PrecachePluginOptions): Plugin[] {
   let urls: string[] = [];
   const emitArt: Plugin = {
     apply: "build",

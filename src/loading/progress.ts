@@ -11,7 +11,7 @@ import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePla
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
-import { LOADING_BAR, LOADING_STYLE } from "../ui/loading-bar.ts";
+import { LOADING_BAR } from "../ui/loading-bar.ts";
 import { followLoading } from "./loadingBar.ts";
 
 // The game's loads and the offline precache, shown as one loading bar along the top edge of the
@@ -70,9 +70,6 @@ export function mountLoading(parent: HTMLElement): () => void {
   if (!window) {
     return () => undefined;
   }
-  const sheet = document.createElement("style");
-  sheet.textContent = LOADING_STYLE;
-  document.head.append(sheet);
   const host = document.createElement("div");
   host.className = "ada-loading";
   host.style.width = `${FRAME.width}px`;
@@ -122,6 +119,5 @@ export function mountLoading(parent: HTMLElement): () => void {
     window.removeEventListener("resize", fit);
     window.removeEventListener(VIEW_SCALE_EVENT, fit);
     host.remove();
-    sheet.remove();
   };
 }

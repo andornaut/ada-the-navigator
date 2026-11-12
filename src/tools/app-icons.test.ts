@@ -4,7 +4,18 @@ import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
+import { HOME_COPY } from "../data/home-copy.ts";
+import { homePageHtml, webManifestJson } from "../home-page/html.ts";
+
 const root = fileURLToPath(new URL("../..", import.meta.url));
+
+// The manifest and the pages as the build writes them, with the landing page's copy filled in.
+const manifestJson = () =>
+  JSON.parse(
+    webManifestJson(HOME_COPY, readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8")),
+  );
+const pageHtml = (page: string) =>
+  homePageHtml(HOME_COPY, readFileSync(resolve(root, page), "utf8"));
 
 // A PNG's width x height from its IHDR chunk.
 function pngSize(file: Buffer): string {
@@ -21,7 +32,7 @@ interface ManifestIcon {
 }
 
 it("uses one play-route app identity", () => {
-  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
+  const manifest = manifestJson();
   expect(manifest.id).toBe("/play/");
   expect(manifest.start_url).toBe("/play/");
   expect(manifest.scope).toBe("/");
@@ -31,10 +42,10 @@ it("uses one play-route app identity", () => {
 });
 
 it("gives both pages the manifest's theme colour, so the installed app's colour never changes", () => {
-  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
+  const manifest = manifestJson();
   expect(manifest.background_color).toBe(manifest.theme_color);
   for (const page of ["pages/index.html", "pages/play/index.html"]) {
-    const html = readFileSync(resolve(root, page), "utf8");
+    const html = pageHtml(page);
     const colours = [...html.matchAll(/<meta\s+name="theme-color"\s+content="([^"]+)"/gu)];
     expect(
       colours.map((match) => match[1]),
@@ -44,17 +55,39 @@ it("gives both pages the manifest's theme colour, so the installed app's colour 
 });
 
 it("names the installed app in full and describes it as the landing page does", () => {
-  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
-  const landing = readFileSync(resolve(root, "pages/index.html"), "utf8");
+  const manifest = manifestJson();
+  const landing = pageHtml("pages/index.html");
   const description = /<meta\s+name="description"\s+content="([^"]+)"/u.exec(landing)?.[1];
   expect(manifest.name).toBe("Ada the Navigator");
   expect(manifest.short_name).toBe(manifest.name);
   expect(description).toBeDefined();
   expect(manifest.description).toBe(description);
+  expect(description).toBe(HOME_COPY.description);
+  expect(landing).toContain(`<p class="site-subline">${HOME_COPY.description}</p>`);
 });
 
+it.each(["pages/index.html", "pages/play/index.html"])(
+  "lets %s run as a full-screen home-screen app under the game's name",
+  (page) => {
+    const html = pageHtml(page);
+    const meta = Object.fromEntries(
+      Array.from(
+        html.matchAll(/<meta\s+name="([^"]+)"\s+content="([^"]*)"/gu),
+        ([, name, content]) => [name, content],
+      ),
+    );
+    expect(meta).toMatchObject({
+      "apple-mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-status-bar-style": "black-translucent",
+      "apple-mobile-web-app-title": "Ada the Navigator",
+      "mobile-web-app-capable": "yes",
+      "theme-color": "#292734",
+    });
+  },
+);
+
 it("declares correctly sized local any and maskable PNGs", () => {
-  const manifest = JSON.parse(readFileSync(resolve(root, "public/manifest.webmanifest"), "utf8"));
+  const manifest = manifestJson();
   const icons = manifest.icons as ManifestIcon[];
   expect(icons.map(({ purpose, sizes }) => `${purpose}:${sizes}`).sort()).toEqual([
     "any:192x192",

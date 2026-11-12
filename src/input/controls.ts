@@ -7,6 +7,7 @@ import {
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
 import type { GameObjects, Scene } from "phaser";
 
+import { BUILD_LABEL } from "../build-label.ts";
 import type { Weapon } from "../data/types.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/play-camera.ts";
 import { RASTER_SCALE_EVENT } from "../game/svg-rasters.ts";
@@ -147,6 +148,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   let visibility = { aim: true, move: true };
   let reducedMotion = false;
   const settings = createSettings(parent, {
+    build: BUILD_LABEL,
     install: options.install,
     labels: options.labels,
     onFeedbackChange(value) {

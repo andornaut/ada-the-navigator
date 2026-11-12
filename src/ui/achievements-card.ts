@@ -51,7 +51,7 @@ export function fillPage(template: string, page: number, pages: number): string 
   return template.replace("{page}", String(page)).replace("{pages}", String(pages));
 }
 
-const STYLE = `
+export const ACHIEVEMENTS_STYLE = `
 ${UI_SCOPE} .ada-achievement-list{
   display:grid;
   grid-template-columns:repeat(${COLUMNS},${units(COLUMN_WIDTH)});
@@ -138,8 +138,6 @@ export function createAchievementsCard(
   },
 ) {
   const { labels } = options;
-  const style = document.createElement("style");
-  style.textContent = STYLE;
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -166,7 +164,7 @@ export function createAchievementsCard(
   pager.append(previous, pageCount, next);
   card.body.append(list, pager);
   modal.append(card.frame);
-  root.append(style, modal);
+  root.append(modal);
   let entries: readonly AchievementEntry[] = [];
   let page = 0;
   const render = () => {
@@ -232,7 +230,6 @@ export function createAchievementsCard(
     close: () => setOpen(false),
     dispose(): void {
       card.dispose();
-      style.remove();
       modal.remove();
     },
     isOpen: () => !modal.hidden,

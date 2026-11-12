@@ -2,7 +2,7 @@
   "id": "/play/",
   "name": "Ada the Navigator",
   "short_name": "Ada the Navigator",
-  "description": "Join Ada on space adventures and help her community back home with what she learns.",
+  "description": "%HOME_DESCRIPTION%",
   "start_url": "/play/",
   "scope": "/",
   "display": "fullscreen",

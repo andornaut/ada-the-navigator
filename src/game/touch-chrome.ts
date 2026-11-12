@@ -6,7 +6,7 @@ import {
 } from "@andornaut/game-kit/art/aseprite";
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
-import Phaser from "phaser";
+import { GameObjects, Scene, Textures } from "phaser";
 
 import {
   isTouchChromePose,
@@ -44,7 +44,7 @@ interface UiManifest {
 const SHEET_KEYS = [...new Set(Object.values(TOUCH_CHROME_SHEETS))];
 
 // Queues the UI manifest and, once it loads, the joystick sheets it lists.
-export function preloadTouchChrome(scene: Phaser.Scene): void {
+export function preloadTouchChrome(scene: Scene): void {
   scene.load.once(`filecomplete-json-${UI_MANIFEST_KEY}`, () => {
     const manifest = scene.cache.json.get(UI_MANIFEST_KEY) as UiManifest | undefined;
     for (const sprite of manifest?.sprites ?? []) {
@@ -65,16 +65,12 @@ interface ChromePaint {
   scale: number;
 }
 
-const paintOf = (texture: Phaser.Textures.Texture): ChromePaint =>
+const paintOf = (texture: Textures.Texture): ChromePaint =>
   (texture.customData as { chrome: ChromePaint }).chrome;
 
 // Paints texture's frames from paint at scale texels per logical px, one texel of clear edge
 // around each, resizing the canvas and the frames in place.
-function paintChrome(
-  texture: Phaser.Textures.CanvasTexture,
-  paint: ChromePaint,
-  scale: number,
-): void {
+function paintChrome(texture: Textures.CanvasTexture, paint: ChromePaint, scale: number): void {
   const width = densityTexels(scale, paint.logical.width);
   const height = densityTexels(scale, paint.logical.height);
   const texels = width / paint.logical.width;
@@ -109,7 +105,7 @@ function paintChrome(
 }
 
 function createChromeTexture(
-  scene: Phaser.Scene,
+  scene: Scene,
   scale: number,
   key: string,
   logical: Size,
@@ -129,10 +125,10 @@ function createChromeTexture(
 // or undefined while the UI manifest lists no such sheet. Textures and animations live for the
 // game; the sprite belongs to scene.
 export function createTouchChrome(
-  scene: Phaser.Scene,
+  scene: Scene,
   scale: number,
   kind: TouchChromeKind,
-): Phaser.GameObjects.Sprite | undefined {
+): GameObjects.Sprite | undefined {
   const source = TOUCH_CHROME_SHEETS[kind];
   const sheet = scene.cache.json.get(source) as AsepriteSheet | undefined;
   if (!sheet) {
@@ -183,7 +179,7 @@ export function createTouchChrome(
 }
 
 // Plays the part's tag unless it already shows it.
-export function showTouchChrome(sprite: Phaser.GameObjects.Sprite, tag: TouchChromePose): void {
+export function showTouchChrome(sprite: GameObjects.Sprite, tag: TouchChromePose): void {
   const key = animationKey(sprite.texture.key, tag);
   if (sprite.anims.currentAnim?.key !== key && sprite.scene.anims.exists(key)) {
     sprite.play(key);
@@ -193,12 +189,12 @@ export function showTouchChrome(sprite: Phaser.GameObjects.Sprite, tag: TouchChr
 const SPEED_LINE_KEY = "touch-chrome-line";
 
 // The speed line's texels per logical px: its capsule's painted width over its logical width.
-function lineTexels(slice: Phaser.GameObjects.NineSlice): number {
+function lineTexels(slice: GameObjects.NineSlice): number {
   return slice.frame.width / SPEED_LINE_CAPSULE.width;
 }
 
 // Fits slice's end caps and scale to its texture's current paint.
-function fitSpeedLine(slice: Phaser.GameObjects.NineSlice): void {
+function fitSpeedLine(slice: GameObjects.NineSlice): void {
   const texels = lineTexels(slice);
   const cap = SPEED_LINE_CAP * texels;
   slice.setSlices(slice.frame.width, slice.frame.height, cap, cap, 0, 0, true);
@@ -207,7 +203,7 @@ function fitSpeedLine(slice: Phaser.GameObjects.NineSlice): void {
 
 // A joystick's speed line: the capsule frame, painted at scale texels per logical px, as a
 // three-slice whose middle stretches to the line's length, hidden until showSpeedLine places it.
-export function createSpeedLine(scene: Phaser.Scene, scale: number): Phaser.GameObjects.NineSlice {
+export function createSpeedLine(scene: Scene, scale: number): GameObjects.NineSlice {
   if (!scene.textures.exists(SPEED_LINE_KEY)) {
     createChromeTexture(
       scene,
@@ -226,12 +222,12 @@ export function createSpeedLine(scene: Phaser.Scene, scale: number): Phaser.Game
 
 // Paints every touch chrome texture again at scale texels per logical px, keeping each part's
 // display size: the sticks' sprites at their frames' logical size, the speed lines refitted.
-export function rasterTouchChrome(scene: Phaser.Scene, scale: number): void {
+export function rasterTouchChrome(scene: Scene, scale: number): void {
   const textures = Object.keys(TOUCH_CHROME_SHEETS)
     .map((kind) => `touch-chrome-${kind}`)
     .concat(SPEED_LINE_KEY)
     .filter((key) => scene.textures.exists(key))
-    .map((key) => scene.textures.get(key) as Phaser.Textures.CanvasTexture);
+    .map((key) => scene.textures.get(key) as Textures.CanvasTexture);
   for (const texture of textures) {
     const paint = paintOf(texture);
     if (paint.scale === scale) {
@@ -239,9 +235,9 @@ export function rasterTouchChrome(scene: Phaser.Scene, scale: number): void {
     }
     paintChrome(texture, paint, scale);
     for (const child of scene.children.list) {
-      if (child instanceof Phaser.GameObjects.Sprite && child.texture === texture) {
+      if (child instanceof GameObjects.Sprite && child.texture === texture) {
         child.setSizeToFrame(child.frame).setDisplaySize(paint.logical.width, paint.logical.height);
-      } else if (child instanceof Phaser.GameObjects.NineSlice && child.texture === texture) {
+      } else if (child instanceof GameObjects.NineSlice && child.texture === texture) {
         // showSpeedLine sizes it to its line again on the next draw.
         fitSpeedLine(child);
       }
@@ -251,7 +247,7 @@ export function rasterTouchChrome(scene: Phaser.Scene, scale: number): void {
 
 // Draws the line from the stick's origin to the thumb, however far it reaches, or hides it.
 export function showSpeedLine(
-  slice: Phaser.GameObjects.NineSlice,
+  slice: GameObjects.NineSlice,
   line: { readonly from: Point; readonly to: Point } | undefined,
 ): void {
   slice.setVisible(line !== undefined);

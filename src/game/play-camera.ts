@@ -5,7 +5,7 @@ import {
   renderFit,
   renderScale,
 } from "@andornaut/game-kit/view/renderScale";
-import type Phaser from "phaser";
+import type { Cameras, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
 import type { Size } from "../ui/layout/playView.ts";
@@ -18,7 +18,7 @@ import type { Size } from "../ui/layout/playView.ts";
 
 // The canvas's fit, from the scale manager: its game size is the backing and its zoom is 1 / r,
 // so the canvas's CSS size is the game size times that zoom.
-export function sceneFit(scene: Pick<Phaser.Scene, "scale">): RenderFit {
+export function sceneFit(scene: Pick<Scene, "scale">): RenderFit {
   const { gameSize, zoom } = scene.scale;
   return renderFit(SCREEN, 1 / zoom, {
     height: gameSize.height * zoom,
@@ -69,8 +69,8 @@ export function shakeIntensity(zoom: number, intensity: number): number {
   return intensity / zoom ** 2;
 }
 
-type FitScene = Pick<Phaser.Scene, "events" | "scale">;
-type FitCamera = Pick<Phaser.Cameras.Scene2D.Camera, "setViewport">;
+type FitScene = Pick<Scene, "events" | "scale">;
+type FitCamera = Pick<Cameras.Scene2D.Camera, "setViewport">;
 
 // Keeps camera's viewport at rectOf the canvas's fit, at the fit's zoom with its origin at the
 // top-left, now and on every resize, until scene shuts down. It reads the scale manager rather
@@ -89,7 +89,7 @@ function keepViewport(scene: FitScene, camera: FitCamera, rectOf: (fit: RenderFi
 
 // Keeps camera (scene's main camera by default) on the game area (playViewport).
 export function fitPlayCamera(
-  scene: FitScene & Pick<Phaser.Scene, "cameras">,
+  scene: FitScene & Pick<Scene, "cameras">,
   camera: FitCamera = scene.cameras.main,
 ): void {
   keepViewport(scene, camera, playViewport);

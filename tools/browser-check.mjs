@@ -228,7 +228,50 @@ function collect(name) {
   process.exitCode = stable && !missingEvidence ? state.ExitCode : 1;
 }
 
+// dist/_headers' rules (src/headers/security-policy.ts) as Cloudflare reads them: a path pattern
+// at the line start, where * matches any run of characters, then its indented "Name: value"
+// lines. Comments start with #.
+function headerRules(text) {
+  const rules = [];
+  for (const line of text.split("\n")) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) {
+      continue;
+    }
+    if (!/^\s/.test(line)) {
+      const pattern = line
+        .trim()
+        .split("*")
+        .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+        .join(".*");
+      rules.push({ headers: [], test: new RegExp(`^${pattern}$`) });
+      continue;
+    }
+    const colon = line.indexOf(":");
+    if (colon < 0 || rules.length === 0) {
+      throw new Error(`Unreadable _headers line: ${line}`);
+    }
+    rules.at(-1).headers.push([line.slice(0, colon).trim(), line.slice(colon + 1).trim()]);
+  }
+  return rules;
+}
+
+// The headers for a path: every matching rule's, in file order, a repeated name joined with ", "
+// as Cloudflare joins them. Cache-Control is left out: the preview serves no-store, so each run
+// fetches the files under test.
+function headersFor(rules, pathname) {
+  const headers = {};
+  for (const rule of rules.filter(({ test }) => test.test(pathname))) {
+    for (const [name, value] of rule.headers) {
+      if (name.toLowerCase() !== "cache-control") {
+        headers[name] = headers[name] === undefined ? value : `${headers[name]}, ${value}`;
+      }
+    }
+  }
+  return headers;
+}
+
 function serve() {
+  const rules = headerRules(readFileSync("/dist/_headers", "utf8"));
   const types = {
     ".html": "text/html",
     ".js": "text/javascript",
@@ -261,6 +304,7 @@ function serve() {
       }
       const type = Object.entries(types).find(([extension]) => path.endsWith(extension))?.[1];
       response.writeHead(200, {
+        ...headersFor(rules, url.pathname),
         "Content-Type": type ?? "application/octet-stream",
         "Cache-Control": "no-store",
       });

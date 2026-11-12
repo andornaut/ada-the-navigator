@@ -374,8 +374,6 @@ interface Move {
 
 export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   const { labels } = options;
-  const style = document.createElement("style");
-  style.textContent = ROUTE_MAP_STYLE;
   const screen = document.createElement("div");
   screen.className = "ada-route";
   screen.dataset.dialog = "galaxies";
@@ -469,7 +467,7 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   close.dataset.action = "close-galaxies";
   close.setAttribute("aria-label", labels.close);
   screen.append(sky, rules, ground, chart, panel, earth, jump, close);
-  root.append(style, screen);
+  root.append(screen);
 
   let view: RouteMapView | null = null;
   let art: RouteMapArt | null = null;
@@ -788,7 +786,6 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
   return {
     dispose(): void {
       stop();
-      style.remove();
       screen.remove();
     },
     isOpen: () => view !== null,

@@ -29,6 +29,10 @@ import {
   type OfflinePlay,
   startOfflinePlay,
 } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import {
+  createScreenWakeLock,
+  type ScreenWakeLock,
+} from "@andornaut/game-kit/web/pwa/dom/wakeLock";
 import type { InstallState, InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
 import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
@@ -59,6 +63,7 @@ const BOOT_WAIT_MS = 4000;
 let flow: InstallFlow | undefined;
 let offlinePlay: OfflinePlay | undefined;
 let startScreen: StartScreen | undefined;
+let screenWakeLock: ScreenWakeLock | undefined;
 // Resolves once the game may show its first screen and use its save (UpdateFlow.bootable).
 let ready: Promise<void> = Promise.resolve();
 
@@ -194,6 +199,21 @@ export function setupPhoneApp(): void {
     pageRunsAsApp(window),
     "storage" in navigator ? navigator.storage : undefined,
   );
+  screenWakeLock = createScreenWakeLock(
+    window,
+    document,
+    "wakeLock" in navigator ? navigator.wakeLock : undefined,
+  );
+}
+
+// The screen stays on during play while the page is visible (the kit's wakeLock re-requests the
+// lock each time it shows), and may sleep on the start screen and the Paused card.
+export function keepScreenOn(on: boolean): void {
+  if (on) {
+    screenWakeLock?.start();
+  } else {
+    screenWakeLock?.stop();
+  }
 }
 
 // Resolves once the game may show its first screen and read or write its save: at once, or after

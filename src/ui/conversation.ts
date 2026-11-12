@@ -276,16 +276,12 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
   name.className = "ada-conversation-name";
   root.append(frame, column, name);
   root.addEventListener("click", onAdvance);
-  const style = document.createElement("style");
-  style.textContent = CONVERSATION_STYLE;
-  document.head.append(style);
   document.getElementById(VIEW_HOST_ID)?.append(root);
   let shown = "";
   let shownFrame = -1;
   return {
     dispose: () => {
       root.remove();
-      style.remove();
     },
     render(line, desktop, reducedMotion) {
       const key = line ? `${line.key}:${desktop}:${line.name}` : "";

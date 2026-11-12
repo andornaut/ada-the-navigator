@@ -1,11 +1,6 @@
 import type { GalaxyMap } from "../model/map.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import {
-  createMapScreen,
-  MAP_SCREEN_STYLE,
-  type MapField,
-  type MapScreenLabels,
-} from "./map-screen.ts";
+import { createMapScreen, type MapField, type MapScreenLabels } from "./map-screen.ts";
 import { createButton, createCard, isTap } from "./modal.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { refuse } from "./refusal.ts";
@@ -82,8 +77,6 @@ function setAvailable(button: HTMLButtonElement, available: boolean): void {
 // tool, back and Escape return to the card.
 export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const { labels } = options;
-  const style = document.createElement("style");
-  style.textContent = MAP_SCREEN_STYLE;
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
@@ -110,7 +103,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   }
   paused.body.append(actions);
   modal.append(paused.frame);
-  root.append(modal, style);
+  root.append(modal);
   const mapScreen = createMapScreen(root, {
     labels: labels.mapScreen,
     onClose: () => closeMap(),
@@ -258,7 +251,6 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       paused.dispose();
       mapScreen.dispose();
       modal.remove();
-      style.remove();
     },
     isOpen: () => open,
     mapOpen,

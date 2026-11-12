@@ -1,6 +1,16 @@
 import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
 import { densityTexels } from "@andornaut/game-kit/view/renderScale";
-import Phaser from "phaser";
+import {
+  GameObjects,
+  Loader,
+  Math as PhaserMath,
+  Scale,
+  ScaleModes,
+  Scene,
+  Scenes,
+  Textures,
+  TintModes,
+} from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { ASTEROID_ART, type AsteroidArt, readResourceRocks } from "../data/asteroid-catalog.ts";
@@ -53,6 +63,7 @@ import {
   coverStartScreen,
   installApp,
   installState,
+  keepScreenOn,
   launchReady,
   offersInstall,
   onInstallStateChange,
@@ -328,22 +339,22 @@ function projectId(key: string): string | null {
   return key.startsWith("project:") ? key.slice("project:".length) : null;
 }
 
-export class PrototypeScene extends Phaser.Scene {
+export class PrototypeScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
   private model!: GameModel;
   private shell!: StoryShell;
   private controls!: ReturnType<typeof createControls>;
-  private ink!: Phaser.GameObjects.Graphics;
-  private ship!: Phaser.GameObjects.Image;
+  private ink!: GameObjects.Graphics;
+  private ship!: GameObjects.Image;
   private shipAssets: readonly Asset[] = [];
-  private jets!: Phaser.GameObjects.Graphics;
+  private jets!: GameObjects.Graphics;
   private shipJets: ShipJets | undefined;
   /** Shots and feedback draw above enemy sprites. */
-  private overlay!: Phaser.GameObjects.Graphics;
-  private edgeMarkerInk!: Phaser.GameObjects.Graphics;
-  private enemyJets!: Phaser.GameObjects.Graphics;
+  private overlay!: GameObjects.Graphics;
+  private edgeMarkerInk!: GameObjects.Graphics;
+  private enemyJets!: GameObjects.Graphics;
   private enemyArt = new Map<string, EnemyArt<Asset>>();
-  private enemySprites = new Map<string, Phaser.GameObjects.Image>();
+  private enemySprites = new Map<string, GameObjects.Image>();
   private hitFlashes = new HitFlashes();
   // A heavy's part frames load on demand, once per archetype.
   private partAssets: Asset[] = [];
@@ -353,9 +364,8 @@ export class PrototypeScene extends Phaser.Scene {
   private light = false;
   // Which seen enemies, heavies and stations are off screen and marked (model/edge-markers.ts).
   private readonly edgeMarkers = createEdgeMarkerTracker();
-  private keyed: { depth: number | undefined; key: string; sprite: Phaser.GameObjects.Image }[] =
-    [];
-  private keylines = new Map<string, Phaser.GameObjects.Image[]>();
+  private keyed: { depth: number | undefined; key: string; sprite: GameObjects.Image }[] = [];
+  private keylines = new Map<string, GameObjects.Image[]>();
   // This frame's fly-through objects as drawn, which Ada draws above while she overlaps them
   // (draw-order.ts), and the tow craft's pivot depth while its line is drawn.
   private passable: PassableDraw[] = [];
@@ -363,8 +373,8 @@ export class PrototypeScene extends Phaser.Scene {
   private silhouettes = new Silhouettes();
   // Every SVG's raster scale (svg-rasters.ts), from the canvas's fit when preload starts.
   private rasters!: SvgRasters;
-  private jetKeyline!: Phaser.GameObjects.Graphics;
-  private indicatorInk!: Phaser.GameObjects.Graphics;
+  private jetKeyline!: GameObjects.Graphics;
+  private indicatorInk!: GameObjects.Graphics;
   private stationArt: StationArt<Asset> | undefined;
   private outpostArt: ReadonlyMap<string, StationArt<Asset>> = new Map();
   // Funded projects' world changes at the outposts (art/projects.md "World changes"): each reveal
@@ -375,7 +385,7 @@ export class PrototypeScene extends Phaser.Scene {
   private flightLive = false;
   private flightClock = 0;
   private reveals = new Map<string, number>();
-  private revealGroups = new Map<string, Phaser.GameObjects.RenderTexture>();
+  private revealGroups = new Map<string, GameObjects.RenderTexture>();
   // The core manifest's assets and every loaded galaxy manifest's, with their data links.
   private manifest: {
     assets: readonly Asset[];
@@ -400,8 +410,8 @@ export class PrototypeScene extends Phaser.Scene {
   // craft or line until its art loads.
   private towLine: TowLine | undefined;
   private strandedCraft: ReadonlyMap<string, StrandedCraftArt<Asset>> = new Map();
-  private towInk!: Phaser.GameObjects.Graphics;
-  private towSprite!: Phaser.GameObjects.Image;
+  private towInk!: GameObjects.Graphics;
+  private towSprite!: GameObjects.Image;
   // The guided calf's heading, kept while it rests.
   private calfHeading = 0;
   // Cartwheel's claim jumpers; a claim archetype without loaded art draws the coral family's.
@@ -424,7 +434,7 @@ export class PrototypeScene extends Phaser.Scene {
   private shards = new Map<string, ShardData>();
   // Art's rocks and backdrop; their frames load on demand.
   private readonly asteroidArt = ASTEROID_ART;
-  private backdropSprites = new Map<string, Phaser.GameObjects.Image>();
+  private backdropSprites = new Map<string, GameObjects.Image>();
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
   private rockQueued = false;
@@ -436,7 +446,7 @@ export class PrototypeScene extends Phaser.Scene {
     at: Vec;
     frame: number;
     id: string;
-    sprite?: Phaser.GameObjects.Image;
+    sprite?: GameObjects.Image;
     startedMs: number;
   }[] = [];
   private reducedMotion = false;
@@ -455,6 +465,7 @@ export class PrototypeScene extends Phaser.Scene {
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
   private settingsOpen = false;
+  private screenOn = false;
   // Return to Earth, one command wherever it is offered (the Map): refused in danger, never while
   // towing (pause.ts returnToEarthAvailable). Set once the quantum jump is ready.
   private returnToEarth: () => void = () => {};
@@ -496,7 +507,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.rasters = new SvgRasters(parent ? parentFit(window.devicePixelRatio, parent).zoom : 1);
     // Each texture file samples by its kind (textures.ts) once it loads; an SVG asked for at a
     // raster scale since replaced rasterises again.
-    this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string, type: string) => {
+    this.load.on(Loader.Events.FILE_COMPLETE, (key: string, type: string) => {
       const filter = fileFilter(type);
       if (filter && this.textures.exists(key)) {
         this.filterTexture(key, filter);
@@ -625,10 +636,8 @@ export class PrototypeScene extends Phaser.Scene {
       }
     };
     followZoom();
-    this.scale.on(Phaser.Scale.Events.RESIZE, followZoom);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
-      this.scale.off(Phaser.Scale.Events.RESIZE, followZoom),
-    );
+    this.scale.on(Scale.Events.RESIZE, followZoom);
+    this.events.once(Scenes.Events.SHUTDOWN, () => this.scale.off(Scale.Events.RESIZE, followZoom));
     this.ink = this.add.graphics();
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
@@ -1123,7 +1132,7 @@ export class PrototypeScene extends Phaser.Scene {
     window.addEventListener("keydown", this.feedbackSound.unlock);
     document.addEventListener("visibilitychange", hide);
     window.addEventListener("pagehide", hide);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    this.events.once(Scenes.Events.SHUTDOWN, () => {
       this.flush();
       document.removeEventListener("visibilitychange", hide);
       window.removeEventListener("pagehide", hide);
@@ -1168,7 +1177,7 @@ export class PrototypeScene extends Phaser.Scene {
       ready();
       return;
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, ready);
+    this.load.once(Loader.Events.COMPLETE, ready);
   }
 
   /**
@@ -1199,7 +1208,7 @@ export class PrototypeScene extends Phaser.Scene {
       );
       this.load.json(galaxyManifestKey(sector), path);
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => this.readGalaxyArt());
+    this.load.once(Loader.Events.COMPLETE, () => this.readGalaxyArt());
     // The galaxy's first flight waits on its own art.
     this.loads?.waitFor("galaxy");
     this.load.start();
@@ -1567,6 +1576,12 @@ export class PrototypeScene extends Phaser.Scene {
       }
       startScreenShown(start);
     }
+    // Play keeps the screen on; the start screen and the Paused card let it sleep.
+    const playing = !start && !this.settingsOpen;
+    if (playing !== this.screenOn) {
+      this.screenOn = playing;
+      keepScreenOn(playing);
+    }
     this.armBack();
     this.controls.setSettingsButton(state.mode !== "space");
     this.controls.setAchievementsButton(start);
@@ -1672,7 +1687,7 @@ export class PrototypeScene extends Phaser.Scene {
     for (const part of parts) {
       this.loadSvg(part);
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+    this.load.once(Loader.Events.COMPLETE, () => {
       this.shipAssets = [
         ...this.shipAssets,
         ...parts.filter((part) => this.textures.exists(part.id)),
@@ -1731,8 +1746,8 @@ export class PrototypeScene extends Phaser.Scene {
   private replaceImage(key: string, from: string): void {
     const texture = this.textures.get(key);
     const users = this.children.list.filter(
-      (child): child is Phaser.GameObjects.Image =>
-        child instanceof Phaser.GameObjects.Image && child.texture === texture,
+      (child): child is GameObjects.Image =>
+        child instanceof GameObjects.Image && child.texture === texture,
     );
     const sizes = users.map((user) => [user.displayWidth, user.displayHeight] as const);
     const source = texture.source[0]!;
@@ -1792,7 +1807,7 @@ export class PrototypeScene extends Phaser.Scene {
     for (const frame of frames) {
       this.loadSvg(frame);
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+    this.load.once(Loader.Events.COMPLETE, () => {
       this.shipAssets = [
         ...this.shipAssets,
         ...frames.filter((frame) => this.textures.exists(frame.id)),
@@ -2092,12 +2107,7 @@ export class PrototypeScene extends Phaser.Scene {
    * On a light field, records a sprite of a keylined kind (`lightField.keylined`) for this
    * frame's ink keyline.
    */
-  private keyline(
-    kind: string,
-    key: string,
-    sprite: Phaser.GameObjects.Image,
-    depth?: number,
-  ): void {
+  private keyline(kind: string, key: string, sprite: GameObjects.Image, depth?: number): void {
     if (this.light && LIGHT_FIELD.keylined.includes(kind)) {
       this.keyed.push({ depth, key, sprite });
     }
@@ -2148,7 +2158,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.silhouettes.sweep(
       (key) =>
         this.children.list.some(
-          (child) => child instanceof Phaser.GameObjects.Image && child.texture.key === key,
+          (child) => child instanceof GameObjects.Image && child.texture.key === key,
         ),
       (key) => this.textures.remove(key),
     );
@@ -2158,7 +2168,7 @@ export class PrototypeScene extends Phaser.Scene {
    * A sprite frame's keyline source, made once per frame: opaque ink where the frame's alpha is
    * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
    */
-  private keylineSilhouette(sprite: { frame: Phaser.Textures.Frame }): string | undefined {
+  private keylineSilhouette(sprite: { frame: Textures.Frame }): string | undefined {
     const frame = sprite.frame;
     // Keyed by the frame's raster size too, so a frame rasterised again gets a new silhouette and
     // the old one is swept once nothing draws it (silhouettes.ts).
@@ -2191,10 +2201,7 @@ export class PrototypeScene extends Phaser.Scene {
     context.putImageData(pixels, 0, 0);
     canvas.refresh();
     // The silhouette samples as its source does.
-    this.filterTexture(
-      key,
-      frame.source.scaleMode === Phaser.ScaleModes.NEAREST ? "nearest" : "linear",
-    );
+    this.filterTexture(key, frame.source.scaleMode === ScaleModes.NEAREST ? "nearest" : "linear");
     return key;
   }
 
@@ -2270,7 +2277,7 @@ export class PrototypeScene extends Phaser.Scene {
             ];
     const polygon = hull.map(([x, y]) => {
       const point = local(x, y);
-      return new Phaser.Math.Vector2(point.x, point.y);
+      return new PhaserMath.Vector2(point.x, point.y);
     });
     this.ink.fillStyle(this.palette.environment);
     this.ink.fillPoints(polygon, true);
@@ -2376,7 +2383,7 @@ export class PrototypeScene extends Phaser.Scene {
         hp !== undefined &&
         this.hitFlashes.observe(`${id}#${part.layer}:${part.hardpoint}`, hp, this.time.now)
       ) {
-        sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
       }
     });
     const speed = enemySpeedFraction(
@@ -2515,7 +2522,7 @@ export class PrototypeScene extends Phaser.Scene {
         this.ink.strokePoints(
           mark.points.map((point) => {
             const at = this.project(point);
-            return new Phaser.Math.Vector2(at.x, at.y);
+            return new PhaserMath.Vector2(at.x, at.y);
           }),
           false,
           false,
@@ -2541,10 +2548,10 @@ export class PrototypeScene extends Phaser.Scene {
         // The stroke sits inside the diamond's extent.
         const half = (diamond - stroke) / 2;
         const points = [
-          new Phaser.Math.Vector2(at.x, at.y - half),
-          new Phaser.Math.Vector2(at.x + half, at.y),
-          new Phaser.Math.Vector2(at.x, at.y + half),
-          new Phaser.Math.Vector2(at.x - half, at.y),
+          new PhaserMath.Vector2(at.x, at.y - half),
+          new PhaserMath.Vector2(at.x + half, at.y),
+          new PhaserMath.Vector2(at.x, at.y + half),
+          new PhaserMath.Vector2(at.x - half, at.y),
         ];
         if (this.light) {
           this.edgeMarkerInk.lineStyle(stroke + 2 * outline, LIGHT_FIELD.ink, 1);
@@ -2663,7 +2670,7 @@ export class PrototypeScene extends Phaser.Scene {
           [4, 2],
           [30, 12],
           [-6, 16],
-        ].map(([x, y]) => new Phaser.Math.Vector2(point.x + x!, point.y + y!));
+        ].map(([x, y]) => new PhaserMath.Vector2(point.x + x!, point.y + y!));
         this.ink.strokePoints(hull, true);
       } else {
         this.ink.fillStyle(this.palette.pointOfInterest, 0.9);
@@ -2680,7 +2687,7 @@ export class PrototypeScene extends Phaser.Scene {
           x: x + Math.cos(angle) * radius,
           y: y + Math.sin(angle) * radius,
         });
-        return new Phaser.Math.Vector2(at.x, at.y);
+        return new PhaserMath.Vector2(at.x, at.y);
       });
       this.ink.lineStyle(1, this.palette.pointOfInterest, 0.45);
       this.ink.strokePoints(points, true);
@@ -2758,7 +2765,7 @@ export class PrototypeScene extends Phaser.Scene {
       const color = hexNumber(layer.color);
       this.towInk.lineStyle(layer.width, color, 1);
       this.towInk.strokePoints(
-        points.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
+        points.map((point) => new PhaserMath.Vector2(point.x, point.y)),
         false,
       );
       this.towInk.fillStyle(color, 1);
@@ -2859,10 +2866,10 @@ export class PrototypeScene extends Phaser.Scene {
     } else if (pulse.kind === "pickup" || pulse.kind === "deposit") {
       this.overlay.strokePoints(
         [
-          new Phaser.Math.Vector2(at.x, at.y - radius),
-          new Phaser.Math.Vector2(at.x + radius, at.y),
-          new Phaser.Math.Vector2(at.x, at.y + radius),
-          new Phaser.Math.Vector2(at.x - radius, at.y),
+          new PhaserMath.Vector2(at.x, at.y - radius),
+          new PhaserMath.Vector2(at.x + radius, at.y),
+          new PhaserMath.Vector2(at.x, at.y + radius),
+          new PhaserMath.Vector2(at.x - radius, at.y),
         ],
         true,
       );
@@ -2892,7 +2899,7 @@ export class PrototypeScene extends Phaser.Scene {
   }
 
   /** A reusable sprite for an object, reset to opaque and untinted each frame. */
-  private objectSprite(id: string, texture: string, frame?: number): Phaser.GameObjects.Image {
+  private objectSprite(id: string, texture: string, frame?: number): GameObjects.Image {
     let sprite = this.enemySprites.get(id);
     if (!sprite) {
       sprite = this.add.image(0, 0, texture, frame).setDepth(2);
@@ -3496,7 +3503,7 @@ export class PrototypeScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setPosition(point.x, point.y)
             .setTint(color)
-            .setTintMode(Phaser.TintModes.FILL);
+            .setTintMode(TintModes.FILL);
           this.keyline("weaponPickup", object.id, glyph);
         }
         break;
@@ -3526,7 +3533,7 @@ export class PrototypeScene extends Phaser.Scene {
           this.ink.lineStyle(1, this.palette.environmentDetail);
           this.ink.strokePoints(
             detail.outline.map(
-              (at) => new Phaser.Math.Vector2(point.x + at.x * radius, point.y + at.y * radius),
+              (at) => new PhaserMath.Vector2(point.x + at.x * radius, point.y + at.y * radius),
             ),
             true,
           );
@@ -3653,7 +3660,7 @@ export class PrototypeScene extends Phaser.Scene {
         case "polygon":
           graphics.fillStyle(shape.colour, shape.alpha);
           graphics.fillPoints(
-            shape.points.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
+            shape.points.map((point) => new PhaserMath.Vector2(point.x, point.y)),
             true,
           );
           break;
@@ -3762,7 +3769,7 @@ export class PrototypeScene extends Phaser.Scene {
     this.ink.fillStyle(hexNumber(stone.at(-1)!));
     for (const part of outline.parts) {
       this.ink.fillPoints(
-        part.map((at) => new Phaser.Math.Vector2(point.x + at.x, point.y + at.y)),
+        part.map((at) => new PhaserMath.Vector2(point.x + at.x, point.y + at.y)),
         true,
       );
     }
