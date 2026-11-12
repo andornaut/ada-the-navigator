@@ -20,8 +20,8 @@ base pull speed is 120 world units per second; levels 2 and 3 raise them to 90
 and 160, then 120 and 200. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A heavy is destroyed when its hull HP reaches 0. Destroying or salvaging a heavy
-is a trade-off: destroying it drops twice its Stardust and no weapon, and
-salvaging it drops its Stardust and twice its weapon chance (see
+is a trade-off: destroying it drops twice its Stardust and no upgrade, and
+salvaging it drops its Stardust and has the heavy upgrade chance (see
 [Ships](ships.md#heavy-hull-and-disabling)).
 
 | Source           | Stardust |
@@ -51,11 +51,36 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 24 for capital ships, and one per Stardust for asteroids. A drop above its cap, such as a
 destroyed capital's, splits into pickups worth more than 1 Stardust.
 
-Weapons are sold at stations and are also rare drops: 0.5% of destroyed small
-ships and 10% of salvaged frigates, platforms and capitals drop a random upgrade
-weapon; at route position 1, small ships drop one 0.25% of the time and salvaged
-frigates 4%. A destroyed heavy drops no weapon. A dropped weapon
-Ada already owns gives one pack of its ammunition instead. Story mining deposits keep their
+Upgrades are sold at stations and are also rare drops, at the same rates in every
+galaxy: 0.25% of destroyed small ships and 5% of salvaged frigates, platforms and
+capitals drop an upgrade pickup. A destroyed heavy drops none. An upgrade drop
+gives one level, as buying the next level does, and only something Ada can still
+use. The game picks evenly among the usable categories, then evenly within the
+chosen one:
+
+- New weapon: a weapon Ada does not own, with three packs of its ammunition.
+- Weapon level: the next level of an owned weapon, Laser included.
+- Shield: its next level.
+- Engine tuning: its next level.
+- Tractor beam: its next level.
+
+When every category is maxed, the drop gives a paint scheme Ada does not own,
+owned but not put in use; once every scheme is owned, one pack of ammunition for
+a random owned weapon other than Laser. The pickup is one shared upgrade pickup,
+and its contents are chosen when Ada collects it, so they fit her upgrades at that
+moment. Its notice names what it gave:
+
+| Gift          | Notice                   |
+| ------------- | ------------------------ |
+| New weapon    | + {weapon}               |
+| Weapon level  | + {weapon} level {n}     |
+| Shield        | + Shield level {n}       |
+| Engine tuning | + Engine level {n}       |
+| Tractor beam  | + Tractor beam level {n} |
+| Paint scheme  | + {paint} paint          |
+| Ammunition    | + {weapon} ammo          |
+
+Story mining deposits keep their
 existing cargo role and do not drop Stardust.
 
 Station jobs also pay Stardust; see [Quests](quests.md#rewards).
@@ -124,8 +149,8 @@ one, so a Multi-Laser fan or a Scattershot spread costs one.
 
 Ammunition comes from the shop, sold per weapon in packs of about a minute of
 steady fire at level 1: Rapid Missile 200, Heavy Missile 50, Multi-Laser 200,
-Scattershot 130 and Phaser 55. Buying or finding a weapon includes three packs. A
-dropped weapon Ada already owns gives one pack of that weapon's ammunition. There
+Scattershot 130 and Phaser 55. Buying or finding a weapon includes three packs. An
+upgrade drop gives one pack only once every upgrade and paint scheme is owned. There
 are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Prices are light: typical use of the stronger

@@ -216,15 +216,15 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 - **Damage:** every hit on a heavy reduces its hull HP, including hits on a
   hardpoint, which also damage that hardpoint.
 - **Destroyed:** at 0 hull HP the ship breaks apart and drops twice its Stardust
-  and no weapon (see [Economy](economy.md#earning-stardust)).
+  and no upgrade (see [Economy](economy.md#earning-stardust)).
 - **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,
   whatever its hull HP. It stops attacking and steering, coasts to rest, no longer
   counts for battle, and shows a red "Disabled" banner above its hull.
 - **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. Salvaging drops the
-  ship's Stardust, half what destroying it gives, and twice the heavy weapon chance, and
+  ship's Stardust, half what destroying it gives, and has the heavy upgrade chance, and
   spares the ship: it powers down, its banner goes, it is drawn dimmed,
   and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
-  until its hull breaks, for more Stardust and no weapon.
+  until its hull breaks, for more Stardust and no upgrade.
 - **Engines and command:** each engine still provides an equal share of thrust.
   Command parts never fire and do not count toward disabling.
 - **Mounts:** Art draws each heavy class once, with every weapon mount it can
@@ -342,7 +342,7 @@ turrets fire while it advances, with no speed to advance.
 - **State:** retained like a frigate, so destroyed turrets and a disabled,
   salvaged or destroyed platform persist until the galaxy regenerates. Ada
   bounces off it on contact until it is salvaged. It drops Stardust by the heavy
-  rule and has the frigate's weapon drop chance.
+  rule and has the heavy upgrade chance.
 
 ## Presentation
 

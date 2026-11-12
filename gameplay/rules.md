@@ -789,7 +789,7 @@ Completed deliveries remain completed.
 
 Leaving a galaxy and re-entering generates a new layout seed. Story progress,
 known destinations, deposited resources and achievements persist. Carried cargo
-and weapon pickups reset. Known destinations remain usable despite regeneration.
+and upgrade pickups reset. Known destinations remain usable despite regeneration.
 
 Closing the game is not leaving the galaxy: resume the same flight with exact
 important state and current nearby space, cargo, owned and selected weapons and
