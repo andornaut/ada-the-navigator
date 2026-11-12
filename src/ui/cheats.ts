@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { type CheatAction, cheatGroups, createCheatSession } from "./cheatActions.ts";
 import { createActions, createButton, createCard } from "./modal.ts";
 
@@ -112,9 +114,9 @@ export function createCheats(
     launcher.setAttribute("aria-expanded", String(value));
     options.onOpenChange(value);
     if (value) {
-      close.focus();
+      focusTarget(close);
     } else if (previousFocus?.isConnected && previousFocus.getClientRects().length > 0) {
-      previousFocus.focus();
+      focusTarget(previousFocus);
     } else {
       options.restoreFocus();
     }
@@ -145,12 +147,12 @@ export function createCheats(
     event.stopPropagation();
     if (event.target === modal) {
       event.preventDefault();
-      close.focus();
+      focusTarget(close);
     }
   });
   const retainFocus = (event: FocusEvent): void => {
     if (open && event.target instanceof Node && !card.contains(event.target)) {
-      close.focus();
+      focusTarget(close);
     }
   };
   document.addEventListener("focusin", retainFocus);
@@ -168,10 +170,14 @@ export function createCheats(
       const last = targets.at(-1);
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        last?.focus();
+        if (last) {
+          focusTarget(last);
+        }
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first?.focus();
+        if (first) {
+          focusTarget(first);
+        }
       }
     }
   });

@@ -7,6 +7,7 @@ import "virtual:ada-ui.css";
 
 import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
+import { trackInputModality } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
@@ -25,6 +26,8 @@ if (!parent) {
   throw new Error("Missing game canvas mount");
 }
 
+// Script focus as screens open shows the focus ring only after keyboard input (focusTarget).
+trackInputModality(document);
 lockGameOrientation("landscape", screen);
 // Before the game boots, so the boot preload's progress shows.
 const app = parent.closest<HTMLElement>("#app");

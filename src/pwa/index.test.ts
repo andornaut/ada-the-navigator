@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const offline = vi.hoisted(() => {
   const flow = {
     accept: vi.fn(),
+    arriveHome: vi.fn(),
     dismissOffer: vi.fn(),
     requireNewer: vi.fn(),
     setOfferVisible: vi.fn(),
@@ -143,6 +144,28 @@ describe("offline play", () => {
     options.onUpdateShown(true);
     pwa.updateOffer.accept();
     expect(flow.accept).toHaveBeenCalledOnce();
+  });
+
+  it("arrives home each time the start screen shows, never as a card over it closes", async () => {
+    stubDevice({});
+    const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
+    const { flow } = offline.play;
+    // The first launch.
+    pwa.startScreenShown(true);
+    expect(flow.arriveHome).toHaveBeenCalledOnce();
+    for (const card of ["settings", "cheats", "achievements"] as const) {
+      pwa.coverStartScreen(card, true);
+      pwa.coverStartScreen(card, false);
+    }
+    pwa.startScreenShown(true);
+    expect(flow.arriveHome).toHaveBeenCalledOnce();
+    // Start, then Back to title.
+    pwa.startScreenShown(false);
+    expect(flow.arriveHome).toHaveBeenCalledOnce();
+    pwa.startScreenShown(true);
+    expect(flow.arriveHome).toHaveBeenCalledTimes(2);
+    expect(flow.setOfferVisible).toHaveBeenLastCalledWith(true);
   });
 
   it("requires the newer version for a newer save and reports its state as it changes", async () => {

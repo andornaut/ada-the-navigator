@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import type { LocalMap } from "../model/map.ts";
 import { units } from "./layout/css.ts";
 import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
@@ -184,16 +186,16 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     mapScreen.close();
     if (view === "ship") {
       renderShip();
-      ship.close.focus();
+      focusTarget(ship.close);
       return;
     }
     paused.fit();
     // Focus starts on the primary Resume, else the first action shown.
-    (
+    focusTarget(
       actions.querySelector<HTMLButtonElement>(".ada-primary:not([hidden])") ??
-      actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
-      paused.close
-    ).focus();
+        actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
+        paused.close,
+    );
   };
   // What the Ship card last showed, so its rows rebuild only on a change.
   let shipShown: string | undefined;
@@ -286,7 +288,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   function closeShip(): void {
     if (shipOpen()) {
       show("paused");
-      buttons.get("ship")?.focus();
+      const shipButton = buttons.get("ship");
+      if (shipButton) {
+        focusTarget(shipButton);
+      }
     }
   }
   // Back and Escape close the Quests modal first, then the map.
@@ -297,7 +302,10 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
     if (mapOpen()) {
       show("paused");
-      buttons.get("map")?.focus();
+      const mapButton = buttons.get("map");
+      if (mapButton) {
+        focusTarget(mapButton);
+      }
     }
   }
   // A full outside tap resumes from the Paused card and returns to it from Map and Ship.
@@ -329,10 +337,14 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       const last = targets.at(-1);
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        last?.focus();
+        if (last) {
+          focusTarget(last);
+        }
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first?.focus();
+        if (first) {
+          focusTarget(first);
+        }
       }
     }
   });

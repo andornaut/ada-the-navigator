@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weaponGlyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
@@ -898,7 +900,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       }
       jobsBusy.hidden = true;
       render();
-      jobList.querySelector<HTMLElement>("[data-state=inUse]")?.focus();
+      const inUse = jobList.querySelector<HTMLElement>("[data-state=inUse]");
+      if (inUse) {
+        focusTarget(inUse);
+      }
     });
     return node;
   };
@@ -971,7 +976,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.body.replaceChildren(...parts);
     confirmModal.hidden = false;
     confirmCard.fit();
-    buy.focus();
+    focusTarget(buy);
   };
   // Drop asks first, naming the held job or the active activity.
   const openDrop = (job: StationJob): void => {
@@ -982,7 +987,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     confirmCard.body.replaceChildren(prose("ada-confirm-about", job.title), dropActions);
     confirmModal.hidden = false;
     confirmCard.fit();
-    dropCancel.focus();
+    focusTarget(dropCancel);
   };
   const closeConfirm = (): void => {
     confirm = null;
@@ -1003,7 +1008,10 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     view = step;
     jobsBusy.hidden = true;
     render();
-    (view === "card" ? (left === "jobs" ? openJobs : openShop) : tabButtons.get(tab))?.focus();
+    const target = view === "card" ? (left === "jobs" ? openJobs : openShop) : tabButtons.get(tab);
+    if (target) {
+      focusTarget(target);
+    }
   };
 
   // The row width and columns follow the view; the card builder refits the card itself.
@@ -1020,7 +1028,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     view = "jobs";
     jobsBusy.hidden = true;
     render();
-    (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close).focus();
+    focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
   });
   jobsCard.close.addEventListener("click", back);
   dropCancel.addEventListener("click", back);
@@ -1028,14 +1036,17 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     closeConfirm();
     options.dropJob();
     render();
-    (jobList.querySelector<HTMLElement>("button") ?? jobsCard.close).focus();
+    focusTarget(jobList.querySelector<HTMLElement>("button") ?? jobsCard.close);
   });
 
   undock.addEventListener("click", options.undock);
   openShop.addEventListener("click", () => {
     view = "shop";
     render();
-    tabButtons.get(tab)?.focus();
+    const tabButton = tabButtons.get(tab);
+    if (tabButton) {
+      focusTarget(tabButton);
+    }
   });
   for (const [id, button] of tabButtons) {
     button.addEventListener("click", () => {
@@ -1142,7 +1153,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       closeConfirm();
       if (open) {
         render();
-        openShop.focus();
+        focusTarget(openShop);
       }
     },
   };

@@ -1,4 +1,5 @@
 import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -154,13 +155,15 @@ export class StoryShell {
       return;
     }
     if (restore) {
-      restore.focus();
+      focusTarget(restore);
     } else if (screen === "start" || state.dialogue) {
       // Focus starts on the primary action, else the first.
-      (
+      const first =
         shown.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
-        shown.querySelector<HTMLButtonElement>("button")
-      )?.focus();
+        shown.querySelector<HTMLButtonElement>("button");
+      if (first) {
+        focusTarget(first);
+      }
     }
   }
 
@@ -175,7 +178,10 @@ export class StoryShell {
 
   /** Focuses the start screen's default button, its first, as a card over it closes. */
   focusDefault(): void {
-    this.startScreen?.root.querySelector<HTMLButtonElement>("button")?.focus();
+    const first = this.startScreen?.root.querySelector<HTMLButtonElement>("button");
+    if (first) {
+      focusTarget(first);
+    }
   }
 
   /** Art's start screen art; the start screen redraws with it. */

@@ -1,5 +1,8 @@
-// The update offer, as in Chibi: the kit's update flow owns waiting workers and visit dismissal;
-// this bridge guards the visible controls, so Update now and each defer act once per showing.
+import type { UpdateFlow } from "@andornaut/game-kit/web/pwa/dom/updateReady";
+
+// The update offer, as in Chibi: the kit's update flow owns waiting workers and the dismissal,
+// which lasts until the next arrival at the start screen; this bridge guards the visible
+// controls, so Update now and each defer act once per showing.
 export interface UpdateOffer {
   accept(): void;
   defer(): void;
@@ -51,8 +54,14 @@ export interface StartScreen {
   shown(shown: boolean): void;
 }
 
-// Offers belong only to the visible, uncovered start screen: onOfferVisible hears each change.
-export function trackStartScreen(onOfferVisible: (visible: boolean) => void): StartScreen {
+// Offers belong only to the visible, uncovered start screen: flow.setOfferVisible hears each
+// change of that eligibility. Each arrival at the start screen (first launch, Back to title) is
+// flow.arriveHome, which clears a dismissal and checks for a new version; a card over the start
+// screen closing is no arrival. Resuming the page on the start screen is the flow's own arrival,
+// through its page visibility.
+export function trackStartScreen(
+  flow: Pick<UpdateFlow, "arriveHome" | "setOfferVisible">,
+): StartScreen {
   let startShown = false;
   const covers = new Set<StartCover>();
   let last = false;
@@ -60,7 +69,7 @@ export function trackStartScreen(onOfferVisible: (visible: boolean) => void): St
     const now = startShown && covers.size === 0;
     if (now !== last) {
       last = now;
-      onOfferVisible(now);
+      flow.setOfferVisible(now);
     }
   };
   return {
@@ -73,8 +82,12 @@ export function trackStartScreen(onOfferVisible: (visible: boolean) => void): St
       update();
     },
     shown(shown) {
+      const arrived = shown && !startShown;
       startShown = shown;
       update();
+      if (arrived) {
+        flow.arriveHome();
+      }
     },
   };
 }

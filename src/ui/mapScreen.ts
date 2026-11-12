@@ -1,5 +1,6 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 import { HIT_RULE, hitAround, type PressArea, pressedArea } from "@andornaut/game-kit/ui/hitAreas";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../game/jobArt.ts";
@@ -1150,7 +1151,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const closeQuests = () => {
     if (questsOpen()) {
       questsModal.hidden = true;
-      questsButton.focus();
+      focusTarget(questsButton);
     }
   };
   const goTo = (place: MapPlace) => {
@@ -1159,7 +1160,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       view = recentreView(layout().inner, limit(), place, view);
     }
     select(place.id);
-    chips.get(place.id)?.focus();
+    const chip = chips.get(place.id);
+    if (chip) {
+      focusTarget(chip);
+    }
   };
   const openQuests = () => {
     const lines = state?.map.quests ?? [];
@@ -1197,7 +1201,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     questsModal.hidden = false;
     questsCard.fit();
-    (questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close).focus();
+    focusTarget(questLines.querySelector<HTMLButtonElement>("button") ?? questsCard.close);
   };
   questsButton.addEventListener("click", openQuests);
   questsCard.close.addEventListener("click", closeQuests);
@@ -1357,7 +1361,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const at = targets.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;
     const next = at < 0 ? (event.shiftKey ? targets.length - 1 : 0) : at + step;
-    targets[(next + targets.length) % targets.length]!.focus();
+    focusTarget(targets[(next + targets.length) % targets.length]!);
   });
   const refit = () => {
     if (!screen.hidden && view) {
@@ -1387,7 +1391,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     element: screen,
     /** Focuses Galaxies, as the galaxy map it opened closes back to the local map. */
     focusGalaxies(): void {
-      galaxies.focus();
+      focusTarget(galaxies);
     },
     isOpen: () => !screen.hidden,
     /** Opens at the opening fit with nothing selected, focus on close. */
@@ -1396,7 +1400,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       selected = null;
       view = null;
       render();
-      toolButtons.get("close")!.focus();
+      focusTarget(toolButtons.get("close")!);
     },
     questsOpen,
     setState(next: MapScreenState): void {

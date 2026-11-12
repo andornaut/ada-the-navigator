@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { CAST, CAST_FRAMES, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
@@ -956,7 +958,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     playPortrait(page);
     // Focus starts on the first choice, the default; otherwise on Next or the named action.
     if (focusFirst || buttons.length > 0) {
-      (buttons[0] ?? next).focus();
+      focusTarget(buttons[0] ?? next);
     }
   };
   // A new view size or font re-measures the run and re-lays the page, keeping focus.
@@ -975,7 +977,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     place(base, rendered.background, true);
     if (focused?.closest(".ada-story-panel")) {
       const choice = focused instanceof HTMLElement ? focused.dataset.choice : undefined;
-      (choice === undefined ? next : (buttons[Number(choice)] ?? next)).focus();
+      focusTarget(choice === undefined ? next : (buttons[Number(choice)] ?? next));
     }
   };
   window.addEventListener(VIEW_SCALE_EVENT, relayout);

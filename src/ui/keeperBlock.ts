@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { CAST, CAST_FRAMES, castSheet } from "../data/cast.ts";
 import { KEEPERS } from "../data/keepers.ts";
 import type { StationGreeting } from "../model/keepers.ts";
@@ -229,7 +231,7 @@ export function createKeeperBlock(options: {
         current.replaceWith(next);
         current = next;
         if (focused && !advancing) {
-          options.focusAfter().focus();
+          focusTarget(options.focusAfter());
         }
       }
       line.textContent = greeting?.line ?? options.labels.welcome;

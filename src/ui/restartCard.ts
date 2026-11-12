@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
 
@@ -46,7 +48,7 @@ export function createRestartCard(
     root.classList.toggle("ada-restart-open", open);
     if (open) {
       card.fit();
-      cancel.focus();
+      focusTarget(cancel);
     }
   };
   cancel.addEventListener("click", () => setOpen(false));

@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import type { InstallStepsKind } from "../pwa/index.ts";
 import {
   type ControlVisibility,
@@ -381,7 +383,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       stepsFrame.hidden = true;
       cardFrame.hidden = false;
       settingsCard.fit();
-      installButton.focus();
+      focusTarget(installButton);
     }
   };
   const openSteps = (kind: InstallStepsKind) => {
@@ -401,7 +403,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     cardFrame.hidden = true;
     stepsFrame.hidden = false;
     stepsParts.fit();
-    stepsClose.focus();
+    focusTarget(stepsClose);
   };
   const stopInstallRow = options.install
     ? watchInstallRow(options.install.port, (shown) => {
@@ -437,9 +439,9 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (open) {
       previousFocus =
         document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-      closeButton.focus();
-    } else {
-      previousFocus?.focus();
+      focusTarget(closeButton);
+    } else if (previousFocus) {
+      focusTarget(previousFocus);
     }
     options.onOpenChange(open);
   };
@@ -480,10 +482,14 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
       const last = targets.at(-1);
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        last?.focus();
+        if (last) {
+          focusTarget(last);
+        }
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first?.focus();
+        if (first) {
+          focusTarget(first);
+        }
       }
     }
   });

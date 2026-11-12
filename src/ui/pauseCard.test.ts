@@ -6,9 +6,14 @@ import { mapScreenLabels } from "./mapScreen.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 import type { ShipView } from "./shipCard.ts";
 
-// Every focus() call, latest last.
+// Every focus() call, latest last, with the options of the latest.
 const focusLog: FakeElement[] = [];
 const focused = () => focusLog.at(-1);
+let lastFocusOptions: unknown;
+
+// The cards' document, where the kit's focusTarget tracks the last input. With no window it
+// tracks touchstart for presses.
+const PAGE = Object.assign(new EventTarget(), { defaultView: null });
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
@@ -25,6 +30,7 @@ class FakeElement {
   readonly dataset: Record<string, string> = {};
   hidden = false;
   readonly listeners = new Map<string, (() => void)[]>();
+  readonly ownerDocument = PAGE;
   readonly style: Record<string, unknown> = { removeProperty: vi.fn(), setProperty: vi.fn() };
   textContent = "";
   type = "";
@@ -42,8 +48,9 @@ class FakeElement {
   closest(): null {
     return null;
   }
-  focus(): void {
+  focus(options?: unknown): void {
     focusLog.push(this);
+    lastFocusOptions = options;
   }
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
@@ -262,6 +269,21 @@ describe("Ship card", () => {
     expect(pause.shipOpen()).toBe(false);
     expect(pause.isOpen()).toBe(true);
     expect(focused()).toBe(shipButton);
+  });
+
+  it("moves focus with no focus ring after a touch and the ring after a key", () => {
+    const { body, pause, ship } = cards();
+    pause.setState(state());
+    pause.open();
+    const shipButton = button(body.children[0]!, "pause-ship");
+    PAGE.dispatchEvent(new Event("touchstart"));
+    shipButton.click();
+    expect(focused()).toBe(ship.children[1]);
+    expect(lastFocusOptions).toEqual({ focusVisible: false, preventScroll: true });
+    PAGE.dispatchEvent(new Event("keydown"));
+    pause.closeShip();
+    expect(focused()).toBe(shipButton);
+    expect(lastFocusOptions).toBeUndefined();
   });
 
   it("rebuilds its rows when the ship changes while it shows", () => {

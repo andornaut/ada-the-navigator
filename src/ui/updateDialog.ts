@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createButton, createCard, isTap } from "./modal.ts";
@@ -59,7 +61,7 @@ export function createUpdateDialog(
       parts.fit();
     }
     if (visible) {
-      accept.focus();
+      focusTarget(accept);
     } else if (focused) {
       restoreFocus();
     }
@@ -90,7 +92,7 @@ export function createUpdateDialog(
       const order = [close, cancel, accept];
       const index = order.indexOf(document.activeElement as HTMLButtonElement);
       const step = event.shiftKey ? order.length - 1 : 1;
-      order[(Math.max(0, index) + step) % order.length]?.focus();
+      focusTarget(order[(Math.max(0, index) + step) % order.length]!);
     }
   });
   return {

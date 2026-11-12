@@ -19,6 +19,9 @@ class FakeElement {
   constructor(tag: string) {
     this.tag = tag;
   }
+  get ownerDocument() {
+    return fakeDocument;
+  }
   get textContent(): string {
     return this.text + this.children.map((child) => child.textContent).join("");
   }
@@ -85,10 +88,12 @@ class FakeElement {
     }
   }
 }
-const fakeDocument = {
+// An event target, where the kit's focusTarget tracks the last input.
+const fakeDocument = Object.assign(new EventTarget(), {
   activeElement: null as FakeElement | null,
   createElement: (tag: string) => new FakeElement(tag),
-};
+  defaultView: null,
+});
 
 const WELCOME = "Welcome aboard. Trade your Stardust, or take a job.";
 const LINES = KEEPERS[1]!.greetings.first;

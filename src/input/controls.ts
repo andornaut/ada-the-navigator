@@ -5,6 +5,7 @@ import {
   onPageControl,
   type PagePointerEvent,
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
@@ -228,7 +229,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       }
       syncModal();
     },
-    restoreFocus: () => settings.openButton.focus(),
+    restoreFocus: () => focusTarget(settings.openButton),
   });
   const pause = createPauseCards(settings.root, {
     labels: options.pause.labels,

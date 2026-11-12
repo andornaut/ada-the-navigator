@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { SCREEN } from "../data/screen.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
@@ -274,7 +276,7 @@ export function createAchievementsCard(
     if (open) {
       page = 0;
       render();
-      card.close.focus();
+      focusTarget(card.close);
     }
     options.onOpenChange(open);
   };

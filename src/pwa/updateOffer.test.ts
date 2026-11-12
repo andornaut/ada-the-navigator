@@ -1,4 +1,4 @@
-import { createUpdateFlow } from "@andornaut/game-kit/web/pwa/dom/updateReady";
+import { startOfflinePlay } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
@@ -6,10 +6,24 @@ import { GameModel } from "../model/game.ts";
 import { playOpening } from "../testing/launch.ts";
 import { createUpdateOffer, trackStartScreen } from "./updateOffer.ts";
 
-// The kit's update flow on a page an older version controls, with a newer one waiting or not,
-// wired the way index.ts wires it.
-function updating(waiting: boolean) {
-  const container = Object.assign(new EventTarget(), { controller: {} });
+// Lets the registration, its check and the reads after it settle.
+const settle = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+
+// Ada's room page, reached by returning home from a flight: Back to title's second route.
+function enterRoomPage(model: GameModel): void {
+  model.state.progress[1].opened = true;
+  model.state.prologueSeen = true;
+  model.startGalaxy(1);
+  model.state.flight!.objects = [];
+  model.returnHome();
+}
+
+// The kit's offline play on a page an older version controls, with a newer one waiting or not,
+// wired the way index.ts wires it. hide and show move the page out of view and back.
+async function updating(waiting: boolean) {
   const worker = Object.assign(new EventTarget(), {
     postMessage: vi.fn(() => container.dispatchEvent(new Event("controllerchange"))),
     state: "installed",
@@ -20,6 +34,17 @@ function updating(waiting: boolean) {
     update: vi.fn(() => Promise.resolve()),
     waiting: waiting ? worker : null,
   });
+  const container = Object.assign(new EventTarget(), {
+    controller: {},
+    register: vi.fn(() => Promise.resolve(registration)),
+  });
+  const visibilitySource = Object.assign(new EventTarget(), {
+    visibilityState: "visible" as DocumentVisibilityState,
+  });
+  const turn = (state: DocumentVisibilityState) => {
+    visibilitySource.visibilityState = state;
+    visibilitySource.dispatchEvent(new Event("visibilitychange"));
+  };
   const reload = vi.fn();
   const shown = vi.fn();
   let accept = () => undefined as void;
@@ -29,25 +54,41 @@ function updating(waiting: boolean) {
     () => dismiss(),
   );
   offer.subscribe(shown);
-  const flow = createUpdateFlow(
-    { container, now: () => 0, online: () => true, reload, session: undefined },
-    () => Promise.resolve(),
-    { onRequireNewer: vi.fn(), onUpdateShown: offer.setVisible },
+  const { flow } = startOfflinePlay(
+    { onRequireNewer: vi.fn(), onUpdateShown: offer.setVisible, serviceWorkerUrl: "/sw.js" },
+    {
+      container,
+      eventTarget: new EventTarget(),
+      now: () => 0,
+      online: () => true,
+      reload,
+      session: undefined,
+      visibilitySource,
+    },
   );
   accept = () => flow.accept();
   dismiss = () => flow.dismissOffer();
-  const start = trackStartScreen(flow.setOfferVisible);
-  flow.noteInteraction();
-  flow.watch(registration);
-  return { flow, offer, registration, reload, shown, start, worker };
+  const start = trackStartScreen(flow);
+  await settle();
+  return {
+    checks: () => registration.update.mock.calls.length,
+    flow,
+    hide: () => turn("hidden"),
+    offer,
+    reload,
+    show: () => turn("visible"),
+    shown,
+    start,
+    worker,
+  };
 }
 
 describe("start-screen update offer", () => {
-  it("shows only on the start screen while a newer version waits", () => {
-    const idle = updating(false);
+  it("shows only on the start screen while a newer version waits", async () => {
+    const idle = await updating(false);
     idle.start.shown(true);
     expect(idle.shown).toHaveBeenLastCalledWith(false);
-    const waiting = updating(true);
+    const waiting = await updating(true);
     expect(waiting.shown).toHaveBeenLastCalledWith(false);
     waiting.start.shown(true);
     expect(waiting.shown).toHaveBeenLastCalledWith(true);
@@ -55,8 +96,15 @@ describe("start-screen update offer", () => {
     expect(waiting.shown).toHaveBeenLastCalledWith(false);
   });
 
-  it("is suppressed while Settings or the cheats card cover the start screen", () => {
-    const { shown, start } = updating(true);
+  it("checks for a newer version on the first launch's arrival", async () => {
+    const { checks, start } = await updating(false);
+    const before = checks();
+    start.shown(true);
+    expect(checks()).toBe(before + 1);
+  });
+
+  it("is suppressed while Settings or the cheats card cover the start screen", async () => {
+    const { shown, start } = await updating(true);
     start.shown(true);
     start.cover("settings", true);
     expect(shown).toHaveBeenLastCalledWith(false);
@@ -67,51 +115,79 @@ describe("start-screen update offer", () => {
     expect(shown).toHaveBeenLastCalledWith(true);
   });
 
-  it("keeps a cancelled offer hidden for the page's lifetime, checking at every arrival", () => {
-    const { offer, registration, reload, shown, start } = updating(true);
+  it("keeps a cancelled offer hidden, with no check, as a card over it closes", async () => {
+    const { checks, offer, shown, start } = await updating(true);
+    start.shown(true);
+    offer.defer();
+    // The arrival's check settles first, since one under way would skip another.
+    await settle();
+    const before = checks();
+    for (const card of ["settings", "cheats", "achievements"] as const) {
+      start.cover(card, true);
+      start.cover(card, false);
+      expect(shown, `${card} closing`).toHaveBeenLastCalledWith(false);
+    }
+    expect(checks()).toBe(before);
+  });
+
+  it("offers a cancelled update again on every Back to title, checking each time", async () => {
+    const { checks, offer, reload, shown, start } = await updating(true);
     // The model's screen drives the start screen as the scene does, each arrival a transition.
     const model = new GameModel(CONTENT);
     const follow = () => start.shown(model.screen === "start");
-    follow();
-    expect(shown).toHaveBeenLastCalledWith(true);
-    offer.defer();
-    expect(shown).toHaveBeenLastCalledWith(false);
-    // Settings covering the start screen and closing again keep it hidden.
-    start.cover("settings", true);
-    start.cover("settings", false);
-    expect(shown).toHaveBeenLastCalledWith(false);
-    const checks = () => registration.update.mock.calls.length;
     const arrivals: string[] = [];
-    const arrive = (how: string) => {
+    const arrive = async (how: string) => {
+      // The previous check settles first, since one under way skips the next.
+      await settle();
       const before = checks();
       follow();
       expect(model.screen, how).toBe("start");
       expect(checks(), `${how} checks for a version`).toBe(before + 1);
-      expect(shown, `${how} keeps the offer hidden`).toHaveBeenLastCalledWith(false);
+      expect(shown, `${how} offers the update`).toHaveBeenLastCalledWith(true);
+      offer.defer();
+      expect(shown, `${how} then cancels it`).toHaveBeenLastCalledWith(false);
       arrivals.push(how);
     };
+    await arrive("the first launch");
     // Back to title from flight.
     model.startGalaxy(1);
     playOpening(model);
     follow();
     model.backToTitle();
-    arrive("Back to title");
+    await arrive("Back to title");
     // Back to title from Ada's room page.
-    model.state.progress[1].opened = true;
-    model.state.prologueSeen = true;
-    model.startGalaxy(1);
-    model.state.flight!.objects = [];
-    model.returnHome();
+    enterRoomPage(model);
     follow();
     expect(model.roomPage).toBe(true);
     model.backToTitle();
-    arrive("the return from Ada's room");
-    expect(arrivals).toHaveLength(2);
+    await arrive("the return from Ada's room");
+    expect(arrivals).toHaveLength(3);
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it("still forces the update for a newer save after the offer was cancelled", () => {
-    const { flow, offer, reload, start, worker } = updating(true);
+  it("offers a cancelled update again as the page resumes on the start screen", async () => {
+    const { hide, offer, show, shown, start } = await updating(true);
+    start.shown(true);
+    offer.defer();
+    hide();
+    expect(shown).toHaveBeenLastCalledWith(false);
+    show();
+    expect(shown).toHaveBeenLastCalledWith(true);
+  });
+
+  it("keeps a cancelled offer hidden after a resume behind a card", async () => {
+    const { hide, offer, show, shown, start } = await updating(true);
+    start.shown(true);
+    offer.defer();
+    start.cover("settings", true);
+    hide();
+    show();
+    start.cover("settings", false);
+    expect(shown).toHaveBeenLastCalledWith(false);
+  });
+
+  it("still forces the update for a newer save after the offer was cancelled", async () => {
+    const { flow, offer, reload, start, worker } = await updating(true);
     start.shown(true);
     offer.defer();
     flow.requireNewer();
@@ -119,8 +195,8 @@ describe("start-screen update offer", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("reloads into the waiting version only on Update now", () => {
-    const { offer, reload, start, worker } = updating(true);
+  it("reloads into the waiting version only on Update now", async () => {
+    const { offer, reload, start, worker } = await updating(true);
     start.shown(true);
     offer.accept();
     expect(worker.postMessage).toHaveBeenCalledWith("skip-waiting");

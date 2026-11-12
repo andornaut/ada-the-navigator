@@ -68,7 +68,7 @@ let required: RequiredUpdateState | undefined;
 let onRequired: ((state: RequiredUpdateState) => void) | undefined;
 
 // The start screen's update offer: Update now switches to the waiting version and reloads; a
-// defer keeps the current one until the next start-screen visit.
+// defer keeps the current one until the next arrival at the start screen.
 export const updateOffer = createUpdateOffer(
   () => offlinePlay?.flow.accept(),
   () => offlinePlay?.flow.dismissOffer(),
@@ -109,7 +109,7 @@ function setupOfflinePlay(): void {
     page,
   );
   offlinePlay = play;
-  startScreen = trackStartScreen(play.flow.setOfferVisible);
+  startScreen = trackStartScreen(play.flow);
 }
 
 // Whether back stays on the game. The start screen with nothing open releases it; flight or an
@@ -284,7 +284,8 @@ export function stepsKind(): InstallStepsKind {
   return installFlow().stepsKind;
 }
 
-// Whether the start screen shows; the update offer appears only there.
+// Whether the start screen shows; the update offer appears only there, and each time it starts
+// showing is an arrival that offers a waiting version again.
 export function startScreenShown(shown: boolean): void {
   startScreen?.shown(shown);
 }

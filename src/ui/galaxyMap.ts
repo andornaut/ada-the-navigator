@@ -1,3 +1,5 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { RouteFlight } from "../model/game.ts";
@@ -711,7 +713,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     drawChart();
     options.onFlightEnd();
     panel.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: GALAXY_MAP_MOVE.arrival.panel });
-    jump.focus();
+    focusTarget(jump);
   }
 
   // During the unlock, a tap, key or button press jumps to the arrived state and does nothing
@@ -779,7 +781,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const at = order.indexOf(document.activeElement as HTMLButtonElement);
     const step = event.shiftKey ? -1 : 1;
     const next = at < 0 ? (event.shiftKey ? order.length - 1 : 0) : at + step;
-    order[(next + order.length) % order.length]!.focus();
+    focusTarget(order[(next + order.length) % order.length]!);
   });
   return {
     /** The warp ship now draws over Ada's, which hides until the map closes. */
@@ -852,7 +854,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
           restShip(view.ship);
           drawChart();
         }
-        jump.focus();
+        focusTarget(jump);
         return;
       }
       if (unlock) {
