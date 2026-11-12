@@ -255,17 +255,19 @@ Overlap rules:
   cluster is the weapons only. The pill's drawn rect and the pause press area
   keep at least `SPACING.pageInset` from the weapon press areas at the smallest
   view (720 logical, with phone insets 43/43/19): the leftmost of four weapon
-  targets starts at `677 + 7.5 - 48 - 171` = 465.5 and the pill at 93.75, so
-  the pill may reach 355.75 wide, a count up to 166.75 wide ("999,999,999" is
-  89), and "1,234,567" leaves 111.57. With the pause button hidden the pill
-  starts at 43 and may reach 406.5.
+  targets starts at `677 + 7.5 - 48 - 171` = 465.5 and the pill at 93.75. The
+  `+N` label rides the pill's row 6 beyond it, so the pill keeps room for a
+  `+9,999` label (51.38 with its outline): the pill may reach
+  `465.5 - 16 - 51.38 - 6 - 93.75` = 298.37 wide, a count up to 109.37 wide
+  ("999,999,999" is 88.98, "1,234,567" 71.18). With the pause button hidden
+  the pill starts at 43 and may reach 349.12, a count up to 160.12.
 - The weapon count pills end at HUD rect top + 46.5 (58.5), 5 above the
   conversation box top; they stay inside their targets' columns (the widest,
   "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
   clearance.
-- The Stardust `+N` label's 20 line ends at HUD rect top + 54.5 (66.5), 3
-  below the box top (HUD rect top + 51.5) and 13 below the name tab top (+
-  41.5); see [Tab clearance](#tab-clearance).
+- The Stardust `+N` label sits on the pill's row: its 20 line spans HUD rect
+  top + 6.5 to + 26.5 (+ 2.5 at the top of its rise), 15 above the name tab
+  top (+ 41.5); see [Tab clearance](#tab-clearance).
 - Press areas may reach past the HUD rect into a side inset (the pause press
   area 9.75, the outermost weapon target 7.5); drawn art never does.
 - Sticks sit below the HUD row at every view; the view is at least 360 high.
@@ -305,19 +307,20 @@ hit since the delay part was last clear), and the flash, over one hit's lost
 part. The bar draws in CSS at logical units, like the HUD buttons,
 with fractional widths.
 
-| State  | Trigger                                   | Draw                                                                                                                        | Timing                                                                                                                                                                                                                                     | Reduced motion                                                |
-| ------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| Normal | 25% of capacity or more, not regenerating | Fill, rim and icon in their normal colours                                                                                  | Static                                                                                                                                                                                                                                     | Same                                                          |
-| Hit    | The shield drops                          | The lost part (new value to old) in the flash colour                                                                        | One flash, 100 ms, then the part joins the delay part. A flash starts at most once per 334 ms; a hit inside that window does not flash                                                                                                     | No flash; the part joins at once                              |
-| Delay  | From a hit until regeneration starts      | The delay part in the delay colour                                                                                          | Gameplay's recharge delay, 3 s after the last hit                                                                                                                                                                                          | Same                                                          |
-| Regen  | The delay ends, until the shield is full  | The delay part clears at once; the fill grows (Gameplay: 18 per s) with a 2 px leading edge inside the fill's right end     | The edge shows while regenerating and is removed at capacity                                                                                                                                                                               | Same                                                          |
-| Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                             | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                                                                                                                      | Icon and rim hold the low colour                              |
-| Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                       | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge                                                                                                      | Same                                                          |
-| Pickup | The Stardust count increases              | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline shows under the count | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms. A pickup while it shows adds to N and restarts the hold | No bump or rise; the label holds 450 ms and fades over 150 ms |
+| State  | Trigger                                   | Draw                                                                                                                                                               | Timing                                                                                                                                                                                                                                     | Reduced motion                                                |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Normal | 25% of capacity or more, not regenerating | Fill, rim and icon in their normal colours                                                                                                                         | Static                                                                                                                                                                                                                                     | Same                                                          |
+| Hit    | The shield drops                          | The lost part (new value to old) in the flash colour                                                                                                               | One flash, 100 ms, then the part joins the delay part. A flash starts at most once per 334 ms; a hit inside that window does not flash                                                                                                     | No flash; the part joins at once                              |
+| Delay  | From a hit until regeneration starts      | The delay part in the delay colour                                                                                                                                 | Gameplay's recharge delay, 3 s after the last hit                                                                                                                                                                                          | Same                                                          |
+| Regen  | The delay ends, until the shield is full  | The delay part clears at once; the fill grows (Gameplay: 18 per s) with a 2 px leading edge inside the fill's right end                                            | The edge shows while regenerating and is removed at capacity                                                                                                                                                                               | Same                                                          |
+| Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                                                                    | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                                                                                                                      | Icon and rim hold the low colour                              |
+| Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                                                              | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge                                                                                                      | Same                                                          |
+| Pickup | The Stardust count increases              | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline shows on the pill's row, `SPACING.markGap` right of the pill | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms. A pickup while it shows adds to N and restarts the hold | No bump or rise; the label holds 450 ms and fades over 150 ms |
 
-- The `+N` label centres on the count; its line box top is `SPACING.rowGap`
-  below the pill (HUD rect top + 34.5, so 46.5). The bump is a transform: it never
-  reflows the pill.
+- The `+N` label's left edge, its outline included, is `SPACING.markGap` (6)
+  right of the pill's right edge, and its 20 line box centres on the pill's
+  row (HUD rect top + 6.5 to + 26.5, so 18.5 to 38.5); it follows the pill as
+  the count grows. The bump is a transform: it never reflows the pill.
 - The pill shows during flight. It hides with the pause button while a modal
   card or storybook page shows. On desktop, where the pause button is hidden,
   the pill is the leftmost art and moves to the HUD rect's left edge, so the
@@ -664,22 +667,22 @@ values with its own sprites and fonts, and the same vertical rule: the box top
 sits 5 below the lowest drawn art of the top-right HUD row (Ada's count pills)
 and the name tab overhangs it by 10.
 
-| Token          | Value                                                                                          | Rule                                                                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)       |
-| Top            | The count pills' bottom plus `HUD_AMMO_COUNT.clearance` (5) (`CONVERSATION_BOX.top`)           | HUD rect top `- 7.5 + 40 + 14 + 5` = + 51.5, so 63.5 without a top inset; the same rule in both games |
-| Tab top        | Box top minus `CONVERSATION_BOX.tab.overhang` (10)                                             | HUD rect top + 41.5, so 53.5 without a top inset                                                      |
-| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                            |
-| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                              |
-| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                   |
-| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                   |
-| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                         |
-| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                            |
-| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480; 464 (box width - 16) for a speaker without a portrait                                     |
-| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                              |
-| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                            |
-| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                |
-| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it; `tab.inset` 8 from the panel's end     | At the end opposite the portrait: Ada's tab at the right end, every other speaker's at the left end   |
+| Token          | Value                                                                                          | Rule                                                                                                                                                                                                                           |
+| -------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Width          | `min(availableWidth, CONVERSATION_BOX.maxWidth)`, max 480                                      | Centred on the available rect; 480 at every supported view (the page rect is at least 634 wide)                                                                                                                                |
+| Top            | The count pills' bottom plus `HUD_AMMO_COUNT.clearance` (5) (`CONVERSATION_BOX.top`)           | HUD rect top `- 7.5 + 40 + 14 + 5` = + 51.5, so 63.5 without a top inset; the same rule in both games                                                                                                                          |
+| Tab top        | Box top minus `CONVERSATION_BOX.tab.overhang` (10)                                             | HUD rect top + 41.5, so 53.5 without a top inset                                                                                                                                                                               |
+| Height         | `CONVERSATION_BOX.height` = frame 52 + `2 * CONVERSATION_BOX.padding` = 60                     | Fixed; the box never grows                                                                                                                                                                                                     |
+| Padding        | `CONVERSATION_BOX.padding` = 4, from the panel edge to the portrait frame                      | The text column keeps `SPACING.gap` from the frame and from the far edge                                                                                                                                                       |
+| Panel          | Ink `#181425` at alpha 0.65, square corners                                                    | No border, nine-slice or dim; the tab, lines and portrait draw fully opaque over it                                                                                                                                            |
+| Portrait slot  | `CONVERSATION_BOX.portrait.slot` 48x48, navy `#262b44` face                                    | The shared slot: Chibi's 48 portraits fill it at 1x                                                                                                                                                                            |
+| Portrait frame | `CONVERSATION_BOX.portrait.frame` 52: a 2 ink edge around the slot, `padding` from the panel   | Ada at the inner left, every other speaker at the inner right; never mirrored                                                                                                                                                  |
+| Portrait       | A 22x22 compact frame at 2x (44), nearest neighbour, centred in the slot (2 inset)             | Integer scale at every `s`                                                                                                                                                                                                     |
+| Text column    | `SPACING.gap` from the frame and `SPACING.gap` from the far edge: box width - 72               | 408 at 480; 464 (box width - 16) for a speaker without a portrait                                                                                                                                                              |
+| Lines          | `TYPE.body`, cream, left-aligned, wrapped at word breaks to at most `CONVERSATION_BOX.lines` 2 | Never shrinks; every Gameplay line fits one 408 line (the widest is 339)                                                                                                                                                       |
+| Text block     | The lines centred on the panel                                                                 | Line box top 20 below the box top for one line, 10 for two                                                                                                                                                                     |
+| Name tab       | `CONVERSATION_BOX.tab`: 20 high, label width + `2 * SPACING.markGap`; 1 ink edge, radius 2     | `TYPE.label` in ink, `SPACING.markGap` (6) from the tab's left, centred on its 20 line                                                                                                                                         |
+| Tab position   | `tab.overhang` 10 above the panel top and 10 inside it                                         | Every speaker's tab at the panel's left end: `tab.inset` 8 from it when the portrait is on the right or absent, and just past the portrait frame, `padding + frame + SPACING.gap` = 64, when the portrait is on the left (Ada) |
 
 - The tab draws over the panel's top edge. Its 10 inside the panel sit above
   the text block's top line box, so it never covers text.
@@ -698,8 +701,9 @@ and the name tab overhangs it by 10.
   lines centred in the box width minus `2 * SPACING.gap` (464). The whole box
   is its press area: a tap dismisses the notice, otherwise it clears on its own
   (Gameplay's rule).
-- Both sides use the same left-aligned text column; the frame and the tab
-  change ends with the speaker.
+- Both sides use the same left-aligned text column; the frame changes ends
+  with the speaker, and the tab always sits at the left end, over the text
+  column's top-left and above its first line box.
 - A speaker without a portrait (Gameplay's Grower, Miner, Salvager, Station,
   Whale family and Workshop) gets no portrait frame or slot: the text column
   takes the slot's width, `SPACING.gap` from each end of the panel (464 at
@@ -715,47 +719,28 @@ and the name tab overhangs it by 10.
 #### Tab clearance
 
 The tab spans HUD rect top + 41.5 to + 61.5 (53.5 to 73.5). Vertically it
-clears the status pill (bottom + 30.5) by 11, the weapon discs (bottom + 33)
-by 8.5 and the weapon targets (bottom + 40.5) by 1. It shares rows with the
-count pills (+ 32.5 to + 46.5, 5 of overlap), the pause press area (to +
-42.75, 1.25) and the `+N` line (+ 34.5 to + 54.5, 13). Across, with the box
-centred and 480 wide, the tab is `tab.inset` 8 inside its end: Ada's (the
-right end, "Ada" 42.23 wide) and the widest left-end tab ("General Gadget"
-131.15). Count pills are 14.67 to 38.69 wide, centred on their discs at target
-left + 24; Basic is the leftmost button and shows none. The `+N` line centres
-on the count, which starts at the pill's left + 181.
+clears the status pill (bottom + 30.5) by 11, the `+N` line (bottom + 26.5) by
+15, the weapon discs (bottom + 33) by 8.5 and the weapon targets (bottom +
+40.5) by 1; it shares rows only with the count pills (+ 32.5 to + 46.5) and
+the pause press area (to + 42.75). Across, the box is centred and 480 wide;
+Ada's tab ("Ada", 42.23) starts 64 in and every other tab 8 in, the widest
+"General Gadget" (131.15). With six weapons the leftmost target is Basic's
+(target 5, no count pill) and the leftmost count pill is target 4's.
 
-| View                  | Box              | Ada's tab        | Weapon targets 2 and 1 (count pill centres) | Left tab, widest | Pause press right | `+N` at count "0" (touch; desktop) |
-| --------------------- | ---------------- | ---------------- | ------------------------------------------- | ---------------- | ----------------- | ---------------------------------- |
-| 720x360, 1280x720     | 120 to 600       | 549.77 to 592    | 553.5 to 601.5 (577.5); 610.5 (634.5)       | 128 to 259.15    | 54.75             | 238.1 to 258.3; 187.3 to 207.6     |
-| 720x360, phone insets | 120 to 600       | 549.77 to 592    | 522.5 to 570.5 (546.5); 579.5 (603.5)       | 128 to 259.15    | 85.75             | 269.1 to 289.3; 218.3 to 238.6     |
-| 844x390               | 149.54 to 629.54 | 579.31 to 621.54 | 583.58 to 631.58 (607.58); 640.58 (664.58)  | 157.54 to 288.69 | 83.75             | 267.1 to 287.3; 216.3 to 236.6     |
-| 844x390, insets 43    | 149.54 to 629.54 | 579.31 to 621.54 | 581.58 to 629.58 (605.58); 638.58 (662.58)  | 157.54 to 288.69 | 85.75             | 269.1 to 289.3; 218.3 to 238.6     |
+| View                  | Box              | Ada's tab        | Widest other tab | Pause press right | Target 5 left | Target 4 (pill centre) | Nearest across                     |
+| --------------------- | ---------------- | ---------------- | ---------------- | ----------------- | ------------- | ---------------------- | ---------------------------------- |
+| 720x360, 1280x720     | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 54.75             | 382.5         | 439.5 (463.5)          | 73.25 to pause, 123.35 to target 5 |
+| 720x360, phone insets | 120 to 600       | 184 to 226.23    | 128 to 259.15    | 85.75             | 351.5         | 408.5 (432.5)          | 42.25 to pause, 92.35 to target 5  |
+| 844x390               | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 83.75             | 412.58        | 469.58 (493.58)        | 73.79 to pause, 123.89 to target 5 |
+| 844x390, insets 43    | 149.54 to 629.54 | 213.54 to 255.77 | 157.54 to 288.69 | 85.75             | 410.58        | 467.58 (491.58)        | 71.79 to pause, 121.89 to target 5 |
 
-- Weapon disc columns and Ada's tab: the tab clears the discs and targets
-  vertically, but crosses weapon target 2's column at every view (at the 720
-  base 549.77 to 592 against 553.5 to 601.5), so with four or more weapons
-  that column's count pill (at least 570.17 to 584.83) overlaps the tab by 5
-  vertically. With phone insets at 720x360 target 1's pill (centre 603.5) also
-  reaches the tab once it is wider than 23 (a three-digit count). Target 3's
-  column clears the tab by 5.27 (720), 4.73 (844x390) and 6.73 (844x390 with
-  insets).
-- Pause press area: at least 42.25 left of every tab (128 against 85.75).
-- `+N` line and left-end tabs: at the 720 base on touch, "General Gadget"
-  (to 259.15) and "Unknown voice" (to 257.35) overlap a `+N` at a short count;
-  on desktop, where the pill starts at the HUD rect's left, every left-end tab
-  but "Astra" and "Miner" overlaps. At 844x390 on touch "Whale family" (to
-  267.34) overlaps too, by 0.26; with phone insets at 720x360 the touch `+N`
-  starts at 269.08 and clears every tab. The `+N` line also overlaps the box
-  panel's top by 3.
-- Open, a placement decision: the smallest fix is to keep the tab and the box
-  out of the pill and `+N` rows across rather than move the box. Ada's tab
-  takes the left end, inset past her portrait frame (`4 + 52 + 8` = 64 from
-  the panel's left: 184 to 226.23 at the 720 base), clear of every weapon
-  column; and the `+N` label moves onto the status pill's row,
-  `SPACING.markGap` right of the pill (line box HUD rect top + 6.5 to + 26.5),
-  which clears every tab and the box, at the cost of 6 plus the label's width
-  from the pill's widest count.
+- No overlaps: every tab ends at least 92.35 left of any weapon column and
+  starts at least 42.25 right of the pause press area, the two it shares rows
+  with; the status pill and the `+N` line end above the tab.
+- Ada's tab starts 8 right of her portrait frame (`4 + 52`); the 10 of every
+  tab inside the panel stay above the text block's first line box.
+- The `+N` label clears the box (top + 51.5) by 25 and the weapon press areas
+  by at least `SPACING.pageInset` through the pill's maximum width above.
 
 ### Galaxy selector
 
@@ -858,7 +843,8 @@ Tests:
 - `STATUS_PILL`'s left edge equals the pause press area's right plus
   `SPACING.gap` while the pause button shows and the HUD rect's left while it
   is hidden; its centre is the HUD row's centre line; with four weapons at
-  720x360 and phone insets, the pill at a 166.75-wide count keeps
+  720x360 and phone insets, the pill at a 109.37-wide count, with a `+9,999`
+  label 6 beyond it, keeps
   `SPACING.pageInset` from the leftmost weapon target.
 - The conversation box top equals `HUD_AMMO_COUNT`'s bottom plus
   `HUD_AMMO_COUNT.clearance` (5) at every HUD rect top, and the name tab top
