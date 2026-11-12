@@ -1,3 +1,4 @@
+import { debrisFrameIndex, debrisPieceIndex } from "../model/debris-body.ts";
 import type { Vec } from "../model/types.ts";
 
 // Art's traveling debris (art/cartwheel-props.md, art/whirlpool.md "River debris"): one
@@ -116,18 +117,9 @@ export function readDebrisArt(value: unknown): DebrisArt | undefined {
   };
 }
 
-function unit(id: string, salt: number): number {
-  let n = salt;
-  for (let i = 0; i < id.length; i++) {
-    n = Math.imul(n ^ id.charCodeAt(i), 2654435761);
-  }
-  n = Math.imul(n ^ (n >>> 15), 2246822519);
-  return ((n ^ (n >>> 13)) >>> 0) / 4294967296;
-}
-
 /** A debris object's piece, chosen from its id so it keeps it through paging and saves. */
 export function debrisPiece(art: DebrisArt, id: string): DebrisPiece {
-  return art.pieces[Math.floor(unit(id, 0x2d6e) * art.pieces.length)]!;
+  return art.pieces[debrisPieceIndex(art.pieces.length, id)]!;
 }
 
 /**
@@ -142,14 +134,7 @@ export function debrisFrame(
   reducedMotion: boolean,
   seconds: number,
 ): number {
-  if (reducedMotion) {
-    return 0;
-  }
-  const [slow, fast] = art.tumble.degPerSecond;
-  const rate = slow + unit(id, 0x7a3b) * (fast - slow);
-  const angle = unit(id, 0x19c4) * 360 + rate * seconds;
-  const step = 360 / piece.frames.length;
-  return Math.floor((((angle % 360) + 360) % 360) / step) % piece.frames.length;
+  return debrisFrameIndex(art.tumble.degPerSecond, piece.frames.length, id, reducedMotion, seconds);
 }
 
 /**

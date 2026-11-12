@@ -30,6 +30,8 @@ import {
   sceneryBound,
   sceneryContact,
   sceneryShape,
+  scenerySilhouette,
+  type Silhouette,
 } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
@@ -64,6 +66,7 @@ import {
   partsReach,
   worldParts,
 } from "./convex.ts";
+import { debrisFrameOf, debrisSilhouette } from "./debris-body.ts";
 import {
   carriesStardust,
   dropRandom,
@@ -109,8 +112,21 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 const movementHeadings = new WeakMap<FlightState, Vec>();
 // Whether the current step runs under reduced motion, which holds every rock on frame 0.
 const reducedMotions = new WeakMap<FlightState, boolean>();
-/** The frame a rock shows and collides with now: its spin frame, or 0 when it is still. */
+/**
+ * The silhouette a scenery object is drawn with in this flight: traveling debris's piece in its
+ * galaxy, else a rock's; null for a circle obstacle.
+ */
+function drawnOf(flight: FlightState, object: SpaceObject): Silhouette | null {
+  return debrisSilhouette(flight.sector, object) ?? scenerySilhouette(object);
+}
+/**
+ * The frame a scenery object shows and collides with now: traveling debris's tumble frame, a
+ * rock's spin frame, or 0 when it is still.
+ */
 function frameOf(flight: FlightState, object: SpaceObject): number {
+  if (debrisSilhouette(flight.sector, object)) {
+    return debrisFrameOf(flight.sector, object, reducedMotions.get(flight) ?? false, flight.time);
+  }
   const shape = sceneryShape(object);
   return shape
     ? rockFrame(
@@ -260,8 +276,8 @@ export function bounceShips(
 
 /** Ada's drawn ship against scenery at her current facing. */
 function adaContact(flight: FlightState): SceneryContactOf {
-  return (object, position, frame) =>
-    sceneryBodyContact(object, position, shipBody(flight.facing), frame);
+  return (object, position, frame, drawn) =>
+    sceneryBodyContact(object, position, shipBody(flight.facing), frame, 0, drawn);
 }
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
@@ -270,7 +286,12 @@ function settleAda(content: PrototypeContent, flight: FlightState): void {
 }
 
 /** A body's overlap with a scenery object from `position`, at the object's current frame. */
-type SceneryContactOf = (object: SpaceObject, position: Vec, frame: number) => Contact | null;
+type SceneryContactOf = (
+  object: SpaceObject,
+  position: Vec,
+  frame: number,
+  drawn: Silhouette | null,
+) => Contact | null;
 
 function resolveScenery(
   flight: FlightState,
@@ -286,7 +307,7 @@ function resolveScenery(
       if (!SCENERY.includes(object.kind) || object.hp <= 0) {
         continue;
       }
-      const contact = contactOf(object, position, frameOf(flight, object));
+      const contact = contactOf(object, position, frameOf(flight, object), drawnOf(flight, object));
       if (contact && (!deepest || contact.depth > deepest.contact.depth)) {
         deepest = { contact, object };
       }
@@ -1652,7 +1673,14 @@ function enemies(
       (obstacle) =>
         SCENERY.includes(obstacle.kind) &&
         obstacle.hp > 0 &&
-        sceneryBlocksSegment(obstacle, object, flight.player, 0, frameOf(flight, obstacle)),
+        sceneryBlocksSegment(
+          obstacle,
+          object,
+          flight.player,
+          0,
+          frameOf(flight, obstacle),
+          drawnOf(flight, obstacle),
+        ),
     );
     const intent = stepEnemy(
       definition,
@@ -1714,10 +1742,10 @@ function enemies(
       const hull = enemyHull(object.enemy);
       resolveScenery(
         flight,
-        (obstacle, position, frame) =>
+        (obstacle, position, frame, drawn) =>
           hull
-            ? sceneryBodyContact(obstacle, position, hull, frame)
-            : sceneryContact(obstacle, position, object.radius, frame),
+            ? sceneryBodyContact(obstacle, position, hull, frame, 0, drawn)
+            : sceneryContact(obstacle, position, object.radius, frame, drawn),
         onContact,
         point,
       );
@@ -1755,6 +1783,28 @@ function segmentDistance(point: Vec, start: Vec, end: Vec): number {
   return distance(point, { x: start.x + dx * t, y: start.y + dy * t });
 }
 
+/**
+ * Whether traveling debris moving from `from` to `to` meets Ada's drawn ship: its drawn piece
+ * outline against hers, sampled every 2 units along the move; its circle without debris art.
+ */
+function debrisTouchesAda(flight: FlightState, object: SpaceObject, from: Vec, to: Vec): boolean {
+  const drawn = drawnOf(flight, object);
+  if (!drawn) {
+    return shipNearSegment(flight.facing, flight.player, from, to, object.radius);
+  }
+  const frame = frameOf(flight, object);
+  const body = shipBody(flight.facing);
+  const steps = Math.max(1, Math.ceil(distance(from, to) / 2));
+  for (let step = 0; step <= steps; step++) {
+    const t = step / steps;
+    const at = { ...object, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+    if (sceneryBodyContact(at, flight.player, body, frame, 0, drawn)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Ballistic debris keeps constant velocity and damages; drifting asteroids follow their path. */
 function moveDebris(content: PrototypeContent, dt: number, flight: FlightState): void {
   for (const object of flight.objects) {
@@ -1763,10 +1813,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       const from = { x: object.x, y: object.y };
       placeRiverRock(flight, object);
       object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
-      if (
-        shipNearSegment(flight.facing, flight.player, from, object, object.radius) &&
-        !object.cooldown
-      ) {
+      if (debrisTouchesAda(flight, object, from, object) && !object.cooldown) {
         damage(content, flight);
         object.cooldown = content.tuning.flight.damageInterval;
       }
@@ -1796,7 +1843,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       object.hp = 0;
       continue;
     }
-    if (shipNearSegment(flight.facing, flight.player, object, next.position, object.radius)) {
+    if (debrisTouchesAda(flight, object, object, next.position)) {
       if (!object.cooldown) {
         damage(content, flight);
         object.cooldown = content.tuning.flight.damageInterval;
@@ -1836,7 +1883,7 @@ function shots(
             (object) =>
               SCENERY.includes(object.kind) &&
               object.hp > 0 &&
-              sceneryContact(object, shot, 3, frameOf(flight, object)),
+              sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)),
           )
         ) {
           shot.life = 0;
@@ -1880,7 +1927,7 @@ function strike(
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
         ? !enemyTouched(object, shot, 3)
-        : !sceneryContact(object, shot, 3, frameOf(flight, object)))
+        : !sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)))
     ) {
       continue;
     }
@@ -2170,17 +2217,18 @@ function sceneryEntry(
   direction: Vec,
   range: number,
   frame: number,
+  drawn: Silhouette | null,
   object: SpaceObject,
 ): number | null {
-  const bound = sceneryBound(object, BEAM.halfWidth);
+  const bound = sceneryBound(object, BEAM.halfWidth, drawn);
   const entry = rayCircle(origin, direction, range, object, bound);
-  if (entry === null || !sceneryShape(object)) {
+  if (entry === null || !drawn) {
     return entry;
   }
   const exit = Math.min(range, entry + 2 * bound);
   for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
     const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-    if (sceneryContact(object, point, BEAM.halfWidth, frame)) {
+    if (sceneryContact(object, point, BEAM.halfWidth, frame, drawn)) {
       return at;
     }
   }
@@ -2230,7 +2278,18 @@ function fireBeam(
       continue;
     }
     if (SCENERY.includes(object.kind)) {
-      nearer(object, null, sceneryEntry(origin, direction, range, frameOf(flight, object), object));
+      nearer(
+        object,
+        null,
+        sceneryEntry(
+          origin,
+          direction,
+          range,
+          frameOf(flight, object),
+          drawnOf(flight, object),
+          object,
+        ),
+      );
     } else if (object.kind === "enemy" && object.enemy) {
       const hull = enemyHull(object.enemy);
       if (enemyCatalog[object.enemy.archetype].hardpoints.length) {

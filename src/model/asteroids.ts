@@ -183,17 +183,18 @@ export function scenerySilhouette(object: SpaceObject): Silhouette | null {
  * Deepest overlap of a body with a scenery object, or null when they do not touch. A rock is met
  * where it is drawn: the body's offset is projected to the screen and tested against the frame's
  * silhouette grown by `radius` screen px, and the contact comes back in world units. A circle
- * obstacle meets a world circle of `radius`.
+ * obstacle meets a world circle of `radius`. `drawn` defaults to the object's rock silhouette;
+ * a caller passes another drawn object's, such as traveling debris.
  */
 export function sceneryContact(
   object: SpaceObject,
   center: Vec,
   radius: number,
   frame = 0,
+  drawn = scenerySilhouette(object),
 ): Contact | null {
   const dx = center.x - object.x;
   const dy = center.y - object.y;
-  const drawn = scenerySilhouette(object);
   if (!drawn) {
     const gap = Math.hypot(dx, dy);
     if (gap >= object.radius + radius) {
@@ -224,8 +225,8 @@ export function sceneryBodyContact(
   body: Parts,
   frame = 0,
   margin = 0,
+  drawn = scenerySilhouette(object),
 ): Contact | null {
-  const drawn = scenerySilhouette(object);
   if (!drawn) {
     const contact = unionContact(
       worldParts(body),
@@ -252,8 +253,11 @@ export function sceneryBodyContact(
  * World units from a scenery object's position beyond which a body of `radius` cannot touch it:
  * a screen offset of length r comes from a world offset of at most r * sqrt(2).
  */
-export function sceneryBound(object: SpaceObject, radius: number): number {
-  const drawn = scenerySilhouette(object);
+export function sceneryBound(
+  object: SpaceObject,
+  radius: number,
+  drawn = scenerySilhouette(object),
+): number {
   return drawn ? (drawn.reach + radius) * Math.SQRT2 : object.radius + radius;
 }
 
@@ -267,12 +271,14 @@ export function sceneryBlocksSegment(
   end: Vec,
   inflate: number,
   frame = 0,
+  drawn = scenerySilhouette(object),
 ): boolean {
   const nearest = closestOnSegment(object, start, end);
-  if (Math.hypot(nearest.x - object.x, nearest.y - object.y) >= sceneryBound(object, inflate)) {
+  if (
+    Math.hypot(nearest.x - object.x, nearest.y - object.y) >= sceneryBound(object, inflate, drawn)
+  ) {
     return false;
   }
-  const drawn = scenerySilhouette(object);
   if (!drawn) {
     return true;
   }
