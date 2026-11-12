@@ -477,7 +477,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   the game area. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks' drawn rings sit 40 logical pixels from the screen's
+  drag. Both joysticks' drawn rings sit 60 logical pixels from the screen's
   outer side edges and 40 above its bottom, inside the safe insets, mirrored as
   in Chibi. Each stick is then clamped so it is drawn fully inside the game
   area, keeping a small border (8 logical pixels by default; Art sets the exact
