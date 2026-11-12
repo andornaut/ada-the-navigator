@@ -11,6 +11,8 @@ import {
   enemyEncounterTuning,
   enemyOnly,
   escortTuning,
+  LANCE_TELL,
+  MINE_LAYER,
   PHASER_AIM_SECONDS,
 } from "../data/enemy-catalog.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
@@ -85,6 +87,7 @@ import {
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import { landmarkSites } from "./landmarks.ts";
+import { MINE_REACH, mineSpin, mineTouches } from "./mine-shape.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { pickupOutline } from "./pickup-body.ts";
@@ -103,6 +106,7 @@ import type {
   FlightEvent,
   FlightInput,
   FlightState,
+  Mine,
   PickupRelease,
   SectorProgress,
   Shot,
@@ -1415,6 +1419,7 @@ export function createFlight(
     freshChunk: "0,0",
     freshDistance: 0,
     levels,
+    mines: [],
     nextId: 0,
     objects: [],
     ownedWeapons: [...loadout.ownedWeapons],
@@ -1786,6 +1791,7 @@ function enemies(
           drawnOf(flight, obstacle),
         ),
     );
+    const before = { x: object.x, y: object.y };
     const intent = stepEnemy(
       definition,
       {
@@ -1861,12 +1867,20 @@ function enemies(
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
     threatening ||= presses(targetable, flight, object);
+    const rings = new Map<number, Vec[]>();
     for (const fire of intent.fire) {
       const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
       const shared = enemyOnly(fire.weapon) ? null : weaponAt(fire.weapon, fire.level);
       if (fire.projectile === "beam") {
-        chargeEnemyBeam(amount, shared?.beamRange ?? 0, fire, flight);
+        chargeEnemyBeam(amount, shared?.beamRange ?? 0, before, fire, object.id, flight);
         continue;
+      }
+      if (fire.projectile === "mine") {
+        layMine(amount, fire, object.id, flight);
+        continue;
+      }
+      if (fire.weapon === "ringBurst") {
+        rings.set(fire.delay, [...(rings.get(fire.delay) ?? []), fire.origin]);
       }
       const id = `shot:${flight.nextId++}`;
       shotDelays.set(id, fire.delay);
@@ -1880,6 +1894,7 @@ function enemies(
         ...(shared?.blastRadius ? { blast: shared.blastRadius } : {}),
         damage: amount,
         enemy: true,
+        ...(fire.weapon === "ringBurst" ? { enemyWeapon: "ringBurst" as const } : {}),
         ...reach,
         hitIds: [],
         id,
@@ -1888,8 +1903,113 @@ function enemies(
         velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
       });
     }
+    for (const [delay, origins] of rings) {
+      const emissions = ringEmissions.get(flight) ?? [];
+      emissions.push({ age: -delay, at: { ...before }, origins, spawnRadius: object.radius });
+      ringEmissions.set(flight, emissions);
+    }
   }
   return threatening;
+}
+
+/** A ring burst's emission at its hull, view-only and never saved. */
+export interface RingEmission {
+  age: number;
+  at: Vec;
+  origins: readonly Vec[];
+  spawnRadius: number;
+}
+const ringEmissions = new WeakMap<FlightState, RingEmission[]>();
+/** How long a ring burst's emission shows (art/weapons.md "Ring burst"). */
+const RING_EMISSION_SECONDS = 0.18;
+
+/** The flight's ring burst emissions still showing. */
+export function activeRingEmissions(flight: FlightState): readonly RingEmission[] {
+  return ringEmissions.get(flight) ?? [];
+}
+
+/** Lays a mine where the mine layer fires, unless its ship already has its most out. */
+function layMine(
+  damage: number,
+  fire: Pick<FireIntent, "delay" | "origin">,
+  ownerId: string,
+  flight: FlightState,
+): void {
+  const out = flight.mines.filter((mine) => mine.ownerId === ownerId && !mine.end).length;
+  if (out >= MINE_LAYER.count) {
+    return;
+  }
+  flight.mines.push({
+    age: -fire.delay,
+    damage,
+    id: `mine:${flight.nextId++}`,
+    ownerId,
+    x: fire.origin.x,
+    y: fire.origin.y,
+  });
+}
+
+/** How long a mine's fizzle and pop play (art/weapons.md "Mine"). */
+const MINE_END_SECONDS = { fizzle: 0.2, pop: 0.22 } as const;
+/** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
+const SHOT_PARTS: Parts = [
+  [
+    { x: -3, y: -3 },
+    { x: 3, y: -3 },
+    { x: 3, y: 3 },
+    { x: -3, y: 3 },
+  ],
+];
+
+/** The mine's spin for collision, as drawn: still under reduced motion. */
+function spinOf(flight: FlightState, mine: Mine): number {
+  return mineSpin(reducedMotions.get(flight) ?? false, Math.max(0, mine.age));
+}
+
+/** Whether a mine still collides: laid, and neither fizzling nor popped. */
+function armed(mine: Mine): boolean {
+  return mine.end === undefined && mine.age >= 0;
+}
+
+/**
+ * Ages each mine: one touching Ada's drawn ship pops and damages her; one past its life fizzles,
+ * harmless. Each goes once its fizzle or pop has played.
+ */
+function stepMines(content: PrototypeContent, dt: number, flight: FlightState): void {
+  const body = shipBody(flight.facing);
+  for (const mine of flight.mines) {
+    mine.age += dt;
+    if (mine.end) {
+      mine.end.age += dt;
+    } else if (mine.age >= MINE_LAYER.lifeSeconds) {
+      mine.end = { age: mine.age - MINE_LAYER.lifeSeconds, kind: "fizzle" };
+    } else if (armed(mine) && mineTouches(spinOf(flight, mine), mine, body, flight.player)) {
+      damage(content, mine.damage, flight);
+      mine.end = { age: 0, kind: "pop" };
+    }
+  }
+  flight.mines = flight.mines.filter(
+    (mine) => !mine.end || mine.end.age < MINE_END_SECONDS[mine.end.kind],
+  );
+}
+
+/** Ada's shot pops each armed mine it touches that it has not; true once the shot is spent. */
+function strikeMines(shot: Shot, flight: FlightState): boolean {
+  for (const mine of flight.mines) {
+    if (
+      armed(mine) &&
+      !shot.hitIds.includes(mine.id) &&
+      mineTouches(spinOf(flight, mine), mine, SHOT_PARTS, shot)
+    ) {
+      shot.hitIds.push(mine.id);
+      mine.end = { age: 0, kind: "pop" };
+      if (!shot.piercing) {
+        shot.life = 0;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function segmentDistance(point: Vec, start: Vec, end: Vec): number {
@@ -2022,6 +2142,9 @@ function shots(
       }
       if (shot.damage === undefined) {
         shot.life = 0;
+        continue;
+      }
+      if (strikeMines(shot, flight)) {
         continue;
       }
       strike(content, shot, flight, events);
@@ -2243,6 +2366,11 @@ function blast(
   const blasts = blastFlashes.get(flight) ?? [];
   blasts.push({ age: 0, radius, x: at.x, y: at.y });
   blastFlashes.set(flight, blasts);
+  for (const mine of flight.mines) {
+    if (armed(mine) && distance(mine, at) <= radius) {
+      mine.end = { age: 0, kind: "pop" };
+    }
+  }
   for (const object of [...flight.objects]) {
     if (object === struck || object.kind !== "enemy" || object.hp <= 0 || object.enemy?.salvaged) {
       continue;
@@ -2446,6 +2574,28 @@ function fireBeam(
     }
   }
   const struck = first as { object: SpaceObject; part: string | null; at: number } | null;
+  // A mine nearer than whatever else the beam meets pops and stops it.
+  let popped: { at: number; mine: Mine } | null = null;
+  for (const mine of flight.mines) {
+    const at = armed(mine)
+      ? rayCircle(origin, direction, struck?.at ?? range, mine, MINE_REACH + BEAM.halfWidth)
+      : null;
+    if (at !== null && (!popped || at < popped.at)) {
+      popped = { at, mine };
+    }
+  }
+  if (popped) {
+    popped.mine.end = { age: 0, kind: "pop" };
+    const flashes = beamFlashes.get(flight) ?? [];
+    flashes.push({
+      age: 0,
+      from: origin,
+      hit: true,
+      to: { x: origin.x + direction.x * popped.at, y: origin.y + direction.y * popped.at },
+    });
+    beamFlashes.set(flight, flashes);
+    return;
+  }
   const reach = struck ? struck.at : range;
   const flashes = beamFlashes.get(flight) ?? [];
   flashes.push({
@@ -2468,21 +2618,41 @@ function fireBeam(
 }
 
 /**
- * An enemy Phaser shot: its aim line from the muzzle, fixed where it started, then the beam
- * along it. `end` stops at the first obstacle, and at Ada once the beam hits her. View-only
- * timing, never saved: a restored flight drops a shot still aiming.
+ * An enemy Phaser or charged lance shot and its tell: a Phaser's aim line is fixed where it
+ * started; a lance's line follows its ship and tracks Ada, then holds still. The beam fires
+ * along the line. `end` stops at the first obstacle, and at Ada once the beam hits her.
+ * View-only timing, never saved: a restored flight drops a shot still in its tell.
  */
 export interface EnemyBeam {
-  /** Seconds since the aim line appeared; the beam fires at PHASER_AIM_SECONDS. */
+  /** Seconds since the tell appeared. */
   age: number;
   damage: number;
   direction: Vec;
   end: Vec;
   fired: boolean;
+  hardpointId: string | null;
+  kind: "lance" | "phaser";
   muzzle: Vec;
+  /** The muzzle's offset from its ship, which a lance's line follows while it tracks. */
+  offset: Vec;
+  ownerId: string;
   range: number;
   /** Whether an obstacle, or Ada on firing, stopped the line short of its range. */
   stopped: boolean;
+}
+/** When each beam fires after its tell begins, and how long its beam then shows. */
+const BEAM_TIMING = {
+  // art/weapons.md "Charged lance": the beam shows for 300 ms.
+  lance: {
+    fires: LANCE_TELL.trackSeconds + LANCE_TELL.lockSeconds,
+    shows: Math.max(0.3, BEAM.sparkSeconds),
+  },
+  phaser: { fires: PHASER_AIM_SECONDS, shows: Math.max(BEAM.flashSeconds, BEAM.sparkSeconds) },
+} as const;
+
+/** A unit world heading's length on screen. */
+function projectedLength(heading: Vec): number {
+  return Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
 }
 const enemyBeams = new WeakMap<FlightState, EnemyBeam[]>();
 
@@ -2510,50 +2680,97 @@ function obstacleStop(origin: Vec, direction: Vec, range: number, flight: Flight
   return stop;
 }
 
-/** Starts an enemy Phaser's aim line along its fixed aim; its delay counts toward the aim. */
+/**
+ * Starts an enemy Phaser's or lance's tell along its aim from the muzzle; its delay counts
+ * toward the tell. `ship` is where the ship was when it fired.
+ */
 function chargeEnemyBeam(
   damage: number,
   range: number,
-  fire: Pick<FireIntent, "aim" | "delay" | "origin">,
+  ship: Vec,
+  fire: Pick<FireIntent, "aim" | "delay" | "hardpointId" | "origin" | "weapon">,
+  ownerId: string,
   flight: FlightState,
 ): void {
   const span = length(fire.aim);
-  if (!span || range <= 0) {
+  const kind = fire.weapon === "chargedLance" ? "lance" : "phaser";
+  if (!span || (kind === "phaser" && range <= 0)) {
     return;
   }
-  const direction = { x: fire.aim.x / span, y: fire.aim.y / span };
   const beams = enemyBeams.get(flight) ?? [];
   beams.push({
     age: -fire.delay,
     damage,
-    direction,
+    direction: { x: fire.aim.x / span, y: fire.aim.y / span },
     end: { ...fire.origin },
     fired: false,
+    hardpointId: fire.hardpointId,
+    kind,
     muzzle: { ...fire.origin },
+    offset: { x: fire.origin.x - ship.x, y: fire.origin.y - ship.y },
+    ownerId,
     range,
     stopped: false,
   });
   enemyBeams.set(flight, beams);
 }
 
+/** Whether a lance's ship and mount can still fire it: alive, armed and powered. */
+function lanceHolds(beam: EnemyBeam, flight: FlightState): SpaceObject | undefined {
+  const owner = flight.objects.find((object) => object.id === beam.ownerId);
+  const enemy = owner?.enemy;
+  return owner &&
+    owner.hp > 0 &&
+    enemy &&
+    !enemy.disabled &&
+    !enemy.salvaged &&
+    enemy.hardpoints.some((part) => part.id === beam.hardpointId && part.hp > 0)
+    ? owner
+    : undefined;
+}
+
 /**
- * Ages each enemy Phaser shot: its aim line stops at the first obstacle; at
- * PHASER_AIM_SECONDS the beam fires along it and damages Ada where it first meets her drawn
- * ship within the beam half-width. Each shows for its flash and spark, then goes.
+ * Ages each enemy Phaser and lance shot. A lance's line follows its ship and aims at Ada while
+ * it tracks, then holds still, and runs as far as the game area is wide on screen; it goes out
+ * if its ship or mount can no longer fire. Each line stops at the first obstacle. When its tell
+ * ends the beam fires along it and damages Ada where it first meets her drawn ship within the
+ * beam half-width. Each shows for its beam and spark, then goes.
  */
-function stepEnemyBeams(content: PrototypeContent, dt: number, flight: FlightState): void {
+function stepEnemyBeams(
+  content: PrototypeContent,
+  dt: number,
+  viewportWidth: number,
+  flight: FlightState,
+): void {
   const beams = enemyBeams.get(flight);
   if (!beams) {
     return;
   }
+  const out = new Set<EnemyBeam>();
   for (const beam of beams) {
     beam.age += dt;
     if (beam.fired) {
       continue;
     }
+    if (beam.kind === "lance") {
+      const owner = lanceHolds(beam, flight);
+      if (!owner) {
+        out.add(beam);
+        continue;
+      }
+      if (beam.age < LANCE_TELL.trackSeconds) {
+        beam.muzzle = { x: owner.x + beam.offset.x, y: owner.y + beam.offset.y };
+        const toward = { x: flight.player.x - beam.muzzle.x, y: flight.player.y - beam.muzzle.y };
+        const span = length(toward);
+        if (span) {
+          beam.direction = { x: toward.x / span, y: toward.y / span };
+        }
+      }
+      beam.range = viewportWidth / projectedLength(beam.direction);
+    }
     const stop = obstacleStop(beam.muzzle, beam.direction, beam.range, flight);
     let reach = stop;
-    if (beam.age >= PHASER_AIM_SECONDS) {
+    if (beam.age >= BEAM_TIMING[beam.kind].fires) {
       beam.fired = true;
       for (let at = 0; at <= stop; at = at < stop && at + 2 > stop ? stop : at + 2) {
         const point = {
@@ -2573,11 +2790,21 @@ function stepEnemyBeams(content: PrototypeContent, dt: number, flight: FlightSta
       y: beam.muzzle.y + beam.direction.y * reach,
     };
   }
-  const showing = PHASER_AIM_SECONDS + Math.max(BEAM.flashSeconds, BEAM.sparkSeconds);
   enemyBeams.set(
     flight,
-    beams.filter((beam) => beam.age < showing),
+    beams.filter(
+      (beam) =>
+        !out.has(beam) && beam.age < BEAM_TIMING[beam.kind].fires + BEAM_TIMING[beam.kind].shows,
+    ),
   );
+  const emissions = ringEmissions.get(flight);
+  if (emissions) {
+    emissions.forEach((emission) => (emission.age += dt));
+    ringEmissions.set(
+      flight,
+      emissions.filter((emission) => emission.age < RING_EMISSION_SECONDS),
+    );
+  }
 }
 
 /** The id of the wreck that replaces a destroyed enemy. */
@@ -2818,8 +3045,9 @@ export function stepFlight(
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
     const threat = enemies(content, slice, viewportWidth, flight, events, shotDelays);
-    stepEnemyBeams(content, slice, flight);
+    stepEnemyBeams(content, slice, viewportWidth, flight);
     shots(content, slice, flight, events, shotDelays);
+    stepMines(content, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);
     for (const object of flight.objects) {
       if (

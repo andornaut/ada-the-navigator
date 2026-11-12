@@ -82,6 +82,8 @@ export interface SpaceObject extends Vec {
 }
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";
+  /** An enemy-only weapon's bolt, which draws as its own. */
+  enemyWeapon?: "ringBurst";
   /** HP a hit removes. */
   damage: number;
   /** World radius of a player missile's blast, which damages every enemy in it. */
@@ -93,6 +95,17 @@ export interface Shot extends Vec {
   life: number;
   piercing: boolean;
   hitIds: string[];
+}
+/** A laid enemy mine (gameplay/ships.md "Enemy weapons"), still until it bursts or fades. */
+export interface Mine extends Vec {
+  /** Seconds since it was laid. */
+  age: number;
+  damage: number;
+  /** Its fizzle at the end of its life, or its pop, still playing; it no longer collides. */
+  end?: { age: number; kind: "fizzle" | "pop" };
+  id: string;
+  /** The ship that laid it. */
+  ownerId: string;
 }
 /** Only inactive notable records and permanent defeat tombstones survive chunk eviction. */
 export interface PersistentWorldState {
@@ -138,6 +151,8 @@ export interface FlightState {
   /** Guide a calf's calf in this flight, once placed at its start (model/calf.ts). */
   calf?: GuidedCalf;
   fireCooldown: number;
+  /** Enemy mines laid this flight. */
+  mines: Mine[];
   objects: SpaceObject[];
   shots: Shot[];
   chunks: string[];
@@ -289,7 +304,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 7;
+  version: 8;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];

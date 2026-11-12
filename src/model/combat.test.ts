@@ -20,6 +20,7 @@ import { createEnemy } from "./enemy-ai.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import {
   activeEnemyBeams,
+  activeRingEmissions,
   bounceShips,
   createFlight,
   ensureDestination,
@@ -73,6 +74,20 @@ function ship(
     kind: "enemy",
     radius: definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius,
   };
+}
+/** Holds every hardpoint's fire but `id`'s, which fires at once. */
+function only(object: SpaceObject, id: string): SpaceObject {
+  for (const part of object.enemy!.hardpoints) {
+    part.cooldown = part.id === id ? 0 : 999;
+  }
+  return object;
+}
+/** An empty flight in `sector` with Ada at the origin. */
+function emptyIn(sector: 2 | 6): FlightState {
+  const flight = createFlight(PROTOTYPE, sector, 173, progress);
+  flight.objects = [];
+  flight.player = { x: 0, y: 0 };
+  return flight;
 }
 function hit(flight: FlightState, point: Vec, count = 1): void {
   for (let i = 0; i < count; i++) {
@@ -396,6 +411,125 @@ describe("integrated combat", () => {
     expect(beam).toMatchObject({ fired: true, stopped: true });
     expect(beam!.end.x).toBeGreaterThan(80);
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
+  });
+
+  it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {
+    // Black Eye (position 6): the capital's stern carries the ring burst, 1.5 damage a bolt.
+    const flight = emptyIn(6);
+    const target = only(
+      ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital")),
+      "stern-left",
+    );
+    flight.objects.push(target);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    const bolts = flight.shots.filter((shot) => shot.enemyWeapon === "ringBurst");
+    expect(bolts).toHaveLength(8);
+    for (const [index, bolt] of bolts.entries()) {
+      expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
+      const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
+      expect(speed).toBeCloseTo(PROTOTYPE.tuning.enemyProjectileSpeed * 1.2, 9);
+      const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
+      expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
+    }
+    const [ring] = activeRingEmissions(flight);
+    expect(ring!.origins).toHaveLength(8);
+    expect(ring!.spawnRadius).toBe(target.radius);
+    for (const origin of ring!.origins) {
+      expect(Math.hypot(origin.x - ring!.at.x, origin.y - ring!.at.y)).toBeCloseTo(
+        target.radius,
+        9,
+      );
+    }
+  });
+
+  it("lays at most four mines, each bursting on Ada for 3 or fading after 20 seconds", () => {
+    const flight = emptyIn(6);
+    const target = only(
+      ship("capital", { x: 220, y: 0 }, enemyDefinition(6, "capital")),
+      "stern-right",
+    );
+    flight.objects.push(target);
+    for (let volley = 0; volley < 6; volley++) {
+      target.enemy!.hardpoints.find((part) => part.id === "stern-right")!.cooldown = 0;
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    }
+    expect(flight.mines).toHaveLength(4);
+    expect(new Set(flight.mines.map((mine) => mine.ownerId))).toEqual(new Set([target.id]));
+    // One on Ada pops for its damage; one at the end of its life fizzles harmlessly.
+    flight.objects = [];
+    flight.mines = [
+      { age: 1, damage: 3, id: "on-ada", ownerId: "layer", x: 0, y: 0 },
+      { age: 19.99, damage: 3, id: "old", ownerId: "layer", x: 300, y: 300 },
+    ];
+    const shield = flight.shield;
+    stepFlight(PROTOTYPE, 0.05, idle, flight);
+    expect(flight.shield).toBe(shield - 3);
+    expect(flight.mines.map((mine) => [mine.id, mine.end?.kind])).toEqual([
+      ["on-ada", "pop"],
+      ["old", "fizzle"],
+    ]);
+    stepFlight(PROTOTYPE, 0.25, idle, flight);
+    expect(flight.mines).toEqual([]);
+    expect(flight.shield).toBe(shield - 3);
+  });
+
+  it("pops a mine that Ada's shot touches and spends the shot", () => {
+    const flight = empty();
+    flight.mines = [{ age: 1, damage: 3, id: "ahead", ownerId: "layer", x: 100, y: 0 }];
+    hit(flight, { x: 100, y: 0 });
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(flight.mines[0]!.end?.kind).toBe("pop");
+    expect(flight.shots).toEqual([]);
+  });
+
+  it("tracks Ada with a frigate's charged lance, holds still, then fires across the game area", () => {
+    // Cartwheel (position 5): the frigate's bow carries the lance, 3 damage.
+    const fixture = () => {
+      const flight = emptyIn(2);
+      const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
+      flight.objects.push(target);
+      stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+      return { flight, target };
+    };
+    const { flight } = fixture();
+    const [tell] = activeEnemyBeams(flight);
+    expect(tell).toMatchObject({ fired: false, kind: "lance" });
+    // It aims at Ada each step while it tracks, then holds its line.
+    flight.player = { x: 0, y: 60 };
+    stepFlight(PROTOTYPE, 0.3, idle, flight);
+    const toward = { x: flight.player.x - tell!.muzzle.x, y: flight.player.y - tell!.muzzle.y };
+    const span = Math.hypot(toward.x, toward.y);
+    expect(tell!.direction.x).toBeCloseTo(toward.x / span, 6);
+    expect(tell!.direction.y).toBeCloseTo(toward.y / span, 6);
+    stepFlight(PROTOTYPE, 0.45, idle, flight);
+    const locked = { ...tell!.direction };
+    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    expect(tell!.direction).toEqual(locked);
+    const shield = flight.shield;
+    stepFlight(PROTOTYPE, 0.2, idle, flight);
+    expect(tell).toMatchObject({ fired: true, stopped: true });
+    expect(flight.shield).toBeCloseTo(shield - 3, 9);
+    // Ada leaving the locked line takes nothing; the beam runs the game area's width on screen.
+    const dodged = fixture().flight;
+    const [missed] = activeEnemyBeams(dodged);
+    stepFlight(PROTOTYPE, 0.8, idle, dodged);
+    dodged.player = { x: 0, y: -150 };
+    stepFlight(PROTOTYPE, 0.25, idle, dodged);
+    expect(missed).toMatchObject({ fired: true, stopped: false });
+    expect(dodged.shield).toBe(PROTOTYPE.tuning.shieldMax);
+    const along = { x: missed!.end.x - missed!.muzzle.x, y: missed!.end.y - missed!.muzzle.y };
+    expect(Math.hypot(along.x - along.y, (along.x + along.y) / 2)).toBeCloseTo(SCREEN.width, 6);
+  });
+
+  it("puts out a charged lance whose frigate is disabled before it fires", () => {
+    const flight = emptyIn(2);
+    const target = only(ship("frigate", { x: 200, y: 0 }, enemyDefinition(2, "frigate")), "bow");
+    flight.objects.push(target);
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(activeEnemyBeams(flight)).toHaveLength(1);
+    target.enemy!.disabled = true;
+    stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+    expect(activeEnemyBeams(flight)).toEqual([]);
   });
 
   it("keeps ballistic debris velocity constant, damages on crossing, and absorbs it at safe regions", () => {

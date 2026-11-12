@@ -33,7 +33,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 7;
+export const SAVE_VERSION: GameState["version"] = 8;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -739,6 +739,25 @@ export function restoreSave(saved: unknown): GameState | null {
         return null;
       }
       if (
+        !Array.isArray(f.mines) ||
+        !Array.from(f.mines).every(
+          (mine) =>
+            record(mine) &&
+            vector(mine) &&
+            typeof mine.id === "string" &&
+            typeof mine.ownerId === "string" &&
+            finite(mine.age) &&
+            finite(mine.damage) &&
+            mine.damage > 0 &&
+            (mine.end === undefined ||
+              (record(mine.end) &&
+                nonnegative(mine.end.age) &&
+                ["fizzle", "pop"].includes(String(mine.end.kind)))),
+        )
+      ) {
+        return null;
+      }
+      if (
         !Array.isArray(f.shots) ||
         !Array.from(f.shots).every(
           (s) =>
@@ -754,6 +773,8 @@ export function restoreSave(saved: unknown): GameState | null {
             s.damage > 0 &&
             (s.blast === undefined ||
               (s.projectile === "missile" && finite(s.blast) && s.blast > 0)) &&
+            (s.enemyWeapon === undefined ||
+              (s.enemy && s.enemyWeapon === "ringBurst" && s.projectile === "bolt")) &&
             (s.fade === undefined ||
               (s.projectile === "dot" &&
                 record(s.fade) &&

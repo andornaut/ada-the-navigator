@@ -3,12 +3,12 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
-  enemyOnly,
   escortTuning,
   fireDamageRatio,
   type FireProfile,
   type HardpointDefinition,
   type Point,
+  RING_BOLTS,
 } from "../data/enemy-catalog.ts";
 import { MUZZLE_ART, muzzleLayout } from "../data/enemy-muzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
@@ -102,8 +102,8 @@ export interface FireIntent {
   hardpointId: string | null;
   level: FireProfile["level"];
   origin: Point;
-  /** A beam is the enemy Phaser's hitscan shot, fired after its aim line. */
-  projectile: Exclude<FireProfile["projectile"], "mine">;
+  /** A beam is a Phaser or lance shot, fired after its tell; a mine is laid where it starts. */
+  projectile: FireProfile["projectile"];
   speed: number;
   weapon: FireProfile["weapon"];
 }
@@ -726,9 +726,7 @@ export function stepEnemy(
     const interval = Math.max(0.01, profile.interval);
     const count = Math.max(1, profile.burst?.count ?? 1);
     const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
-    const projectile = profile.projectile;
-    // The enemy-only weapons are not fired yet; their cooldowns still run.
-    if (!canFire || projectile === "mine" || enemyOnly(profile.weapon)) {
+    if (!canFire) {
       return { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
     }
     let delay = Math.max(0, cooldown);
@@ -739,18 +737,31 @@ export function stepEnemy(
       }
       const volley = Math.floor((state.age + delay) / interval) * count + bolt;
       const from = spawn(origin, hardpointId, muzzleAim, volley);
-      for (const degrees of profile.angles) {
-        fire.push({
-          aim: fanHeading(muzzleAim, degrees),
-          damageRatio: fireDamageRatio(profile),
-          delay,
-          hardpointId,
-          level: profile.level,
-          origin: { ...from },
-          projectile,
-          speed: context.projectileSpeed * profile.projectileSpeedRatio,
-          weapon: profile.weapon,
-        });
+      const shot = {
+        damageRatio: fireDamageRatio(profile),
+        delay,
+        hardpointId,
+        level: profile.level,
+        projectile: profile.projectile,
+        speed: context.projectileSpeed * profile.projectileSpeedRatio,
+        weapon: profile.weapon,
+      };
+      if (profile.weapon === "ringBurst") {
+        // Bolts outward from the hull's edge, evenly around it, whatever the aim.
+        const radius = (definition.sizeRatio * context.adaWidth) / 2;
+        for (let index = 0; index < RING_BOLTS; index++) {
+          const turn = (index / RING_BOLTS) * Math.PI * 2;
+          const aim = { x: Math.cos(turn), y: Math.sin(turn) };
+          const origin = {
+            x: state.position.x + aim.x * radius,
+            y: state.position.y + aim.y * radius,
+          };
+          fire.push({ ...shot, aim, origin });
+        }
+      } else {
+        for (const degrees of profile.angles) {
+          fire.push({ ...shot, aim: fanHeading(muzzleAim, degrees), origin: { ...from } });
+        }
       }
       bolt++;
       if (bolt < count) {

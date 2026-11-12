@@ -20,7 +20,7 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemy-catalog.ts";
 import { BUILT, GALAXY_ID, ROUTE, ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -44,6 +44,8 @@ import {
   activeBeamFlashes,
   activeBlastFlashes,
   activeEnemyBeams,
+  activeRingEmissions,
+  type EnemyBeam,
   shipSpeedFraction,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
@@ -203,7 +205,6 @@ import {
   type EnemyWeaponsView,
   lance,
   mine,
-  NO_ENEMY_WEAPONS,
   readEnemyWeaponsArt,
   ringDart,
   ringEmission,
@@ -2451,7 +2452,8 @@ export class PrototypeScene extends Scene {
       }
     }
     this.drawEnemyWeapons(this.enemyWeaponsView(flight));
-    for (const shot of flight.shots) {
+    // Ring burst bolts draw as Art's darts with the enemy weapons.
+    for (const shot of flight.shots.filter((entry) => entry.enemyWeapon !== "ringBurst")) {
       const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
       const point = this.project(shot);
       const tail = this.project({
@@ -4882,20 +4884,31 @@ export class PrototypeScene extends Scene {
     }
   }
 
-  /**
-   * The model's enemy Phaser shots and enemy-only weapon state for this frame.
-   * CLEANUP (added 2026-11-12): ring bursts, mines and lances stay empty until the model carries
-   * them; then this reads them from the flight state too.
-   */
+  /** The model's enemy Phaser and enemy-only weapon state for this frame, in ms. */
   private enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
+    const tells = (kind: EnemyBeam["kind"]) =>
+      activeEnemyBeams(flight)
+        .filter((beam) => beam.kind === kind)
+        .map((beam) => ({
+          ageMs: beam.age * 1000,
+          end: beam.end,
+          muzzle: beam.muzzle,
+          stopped: beam.stopped,
+        }));
     return {
-      ...NO_ENEMY_WEAPONS,
-      phasers: activeEnemyBeams(flight).map((beam) => ({
-        ageMs: beam.age * 1000,
-        end: beam.end,
-        muzzle: beam.muzzle,
-        stopped: beam.stopped,
+      lances: tells("lance"),
+      mines: flight.mines.map((laid) => ({
+        ageMs: Math.max(0, laid.age) * 1000,
+        at: { x: laid.x, y: laid.y },
+        ...(laid.end ? { end: { ageMs: laid.end.age * 1000, kind: laid.end.kind } } : {}),
+        id: laid.id,
+        lifeMs: MINE_LAYER.lifeSeconds * 1000,
       })),
+      phasers: tells("phaser"),
+      ringBolts: flight.shots
+        .filter((shot) => shot.enemyWeapon === "ringBurst")
+        .map((shot) => ({ at: { x: shot.x, y: shot.y }, velocity: shot.velocity })),
+      rings: activeRingEmissions(flight).map((ring) => ({ ...ring, ageMs: ring.age * 1000 })),
     };
   }
 

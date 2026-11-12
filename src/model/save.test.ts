@@ -271,6 +271,40 @@ describe("combat save boundary", () => {
     expect(restoreSave(snapshot)).toBeNull();
   });
 
+  it("restores laid mines and ring burst bolts, rejecting malformed ones", () => {
+    const snapshot = combatSnapshot();
+    const flight = snapshot.flight as typeof snapshot.flight & { mines: unknown[] };
+    flight.mines = [
+      { age: 2.5, damage: 3, id: "mine:1", ownerId: "guard", x: 4, y: -6 },
+      {
+        age: 20.1,
+        damage: 3,
+        end: { age: 0.1, kind: "fizzle" },
+        id: "mine:2",
+        ownerId: "guard",
+        x: 0,
+        y: 0,
+      },
+    ];
+    snapshot.flight.shots = [
+      { ...snapshot.flight.shots[0]!, enemyWeapon: "ringBurst", projectile: "bolt" as const },
+    ] as unknown as typeof snapshot.flight.shots;
+    expect(restoreSave(JSON.stringify(snapshot))).toEqual(snapshot);
+    for (const mine of [
+      { age: 1, damage: 0, id: "m", ownerId: "guard", x: 0, y: 0 },
+      { age: 1, damage: 3, end: { age: 0, kind: "boom" }, id: "m", ownerId: "guard", x: 0, y: 0 },
+      { age: 1, damage: 3, id: 7, ownerId: "guard", x: 0, y: 0 },
+    ]) {
+      expect(
+        restoreSave(JSON.stringify({ ...snapshot, flight: { ...flight, mines: [mine] } })),
+      ).toBeNull();
+    }
+    const playerBolt = { ...snapshot.flight.shots[0]!, enemy: false };
+    expect(
+      restoreSave(JSON.stringify({ ...snapshot, flight: { ...flight, shots: [playerBolt] } })),
+    ).toBeNull();
+  });
+
   it("rejects a saved heavy whose hardpoints are another position's mounts", () => {
     // Sunflower's capital carries four weapons; Black Eye's carries eight.
     const snapshot = combatSnapshot();

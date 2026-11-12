@@ -123,6 +123,12 @@ export const ENEMY_FIRE: Readonly<Record<EnemyWeapon, Cadence>> = {
 };
 /** Seconds an enemy Phaser's fixed aim line shows before its beam fires along it. */
 export const PHASER_AIM_SECONDS = 0.4;
+/** The charged lance's tell: it tracks Ada, then holds still before its beam fires. */
+export const LANCE_TELL = { lockSeconds: 0.3, trackSeconds: 0.7 } as const;
+/** A ring burst's bolts, evenly around the hull. */
+export const RING_BOLTS = 8;
+/** Mines one ship keeps out at once, and the seconds each lasts. */
+export const MINE_LAYER = { count: 4, lifeSeconds: 20 } as const;
 /** The swarm's slower, lighter Laser and the platform's two-shot Laser bursts. */
 const ARCHETYPE_FIRE: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, Cadence>>>>> = {
   platform: { laser: { ...ENEMY_FIRE.laser, burst: { count: 2, gap: 0.15 } } },
