@@ -92,9 +92,13 @@ describe("galaxy station art", () => {
     expect(stationLoopFrame(bobbin, true, 1050).id).toBe("black-eye-station-0");
   });
 
-  it("leaves Sunflower and Cartwheel on the shared station", () => {
+  it("draws Cartwheel's seeded stations as the worn mining hub, leaving Sunflower shared", () => {
     expect(galaxy(1)).toBeUndefined();
-    expect(galaxy(2)).toBeUndefined();
+    const cartwheel = galaxy(2)!;
+    expect(cartwheel.base.frames.map(({ id }) => id)).toEqual(["outpost-hub-a", "outpost-hub-b"]);
+    // Art's hub repairs pair is keyed by its art project, not a model project id, so seeded
+    // stations stay worn; the second bay is an overlay and is left out.
+    expect([...cartwheel.projects.keys()]).toEqual(["hub-repairs"]);
   });
 
   it("loops frameIndex frames in order, frameMs each, holding frame 0 under reduced motion", () => {

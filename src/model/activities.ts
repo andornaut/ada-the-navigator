@@ -71,14 +71,12 @@ export function supplyTerms(
   const site = stations
     .filter((station) => length(station) >= JOB_TUNING.delivery.min)
     .sort((a, b) => length(a) - length(b))[0];
-  if (!site) {
+  const long = site && length(site) >= JOB_TUNING.delivery.longFrom;
+  const reward = site && byPosition(JOB_REWARDS, sector)[long ? "deliveryLong" : "deliveryShort"];
+  if (!site || reward === undefined) {
     return null;
   }
-  const long = length(site) >= JOB_TUNING.delivery.longFrom;
-  return {
-    reward: byPosition(JOB_REWARDS, sector)[long ? "deliveryLong" : "deliveryShort"],
-    target: { id: site.id, x: site.x, y: site.y },
-  };
+  return { reward, target: { id: site.id, x: site.x, y: site.y } };
 }
 
 /** Accepts the place's activity into the empty slot on its terms; false when it is not on offer. */

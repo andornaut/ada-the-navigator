@@ -51,16 +51,29 @@ export interface GalaxyStationArt<T extends StationFrame = StationFrame> {
 
 /**
  * A galaxy manifest's station art, or undefined to draw the shared station: its entries with
- * `destination` "station" or a `station` name, overlays left out, grouped by `project` (none is
- * the base). A group with `frameIndex` loops its frames in that order (the Eddy, the Bobbin); one
+ * `destination` "station" or a `station` name, else Cartwheel's mining hub frames (`destination`
+ * "hub", the art its seeded stations draw), overlays left out, grouped by `project` (none is the
+ * base). A group with `frameIndex` loops its frames in that order (the Eddy, the Bobbin); one
  * without is an A/B blink ordered by id.
  */
 export function readGalaxyStationArt<T extends GalaxyStationFrame>(
   assets: readonly T[],
 ): GalaxyStationArt<T> | undefined {
+  return (
+    readStationGroups(
+      assets,
+      (asset) => asset.destination === "station" || asset.station !== undefined,
+    ) ?? readStationGroups(assets, (asset) => asset.destination === "hub")
+  );
+}
+
+function readStationGroups<T extends GalaxyStationFrame>(
+  assets: readonly T[],
+  station: (asset: T) => boolean,
+): GalaxyStationArt<T> | undefined {
   const groups = new Map<string, T[]>();
   for (const asset of assets) {
-    if ((asset.destination === "station" || asset.station !== undefined) && !asset.overlay) {
+    if (station(asset) && !asset.overlay) {
       const key = asset.project ?? "";
       groups.set(key, [...(groups.get(key) ?? []), asset]);
     }

@@ -53,7 +53,8 @@ function tableRows(after: string): string[][] {
   );
 }
 // Landmark names by their legacy galaxy number (LandmarkGalaxy): Black Eye is 4.
-const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Black Eye"];
+// By sector: Sunflower, Cartwheel, Whirlpool, Needle, Andromeda, Black Eye.
+const GALAXY_NAMES = ["Sunflower", "Cartwheel", "Whirlpool", "Needle", "Andromeda", "Black Eye"];
 const label = (key: string) => PROTOTYPE.labels[key];
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -191,7 +192,7 @@ describe("landmarks", () => {
     expect(names[1]).toBe(names[0]);
   });
 
-  it("name all 48 landmarks, Black Eye's included, as quests.md's table does", () => {
+  it("name all 72 landmarks, twelve in every galaxy, as quests.md's table does", () => {
     const rows = tableRows("Each galaxy has four landmarks of each kind.");
     // The table lists all six galaxies in route order.
     expect(rows.map(([galaxy]) => galaxy)).toEqual(ROUTE.map((galaxy) => galaxyCard(galaxy).name));
@@ -200,9 +201,8 @@ describe("landmarks", () => {
         [1, 2, 3, 4].map((nth) => label(landmarkNameKey(galaxy, kind, nth))),
       ),
     );
-    expect(named).toHaveLength(48);
-    expect(new Set(named).size).toBe(48);
-    // Needle's and Andromeda's rows wait for their chapters, which bring their landmark names.
+    expect(named).toHaveLength(72);
+    expect(new Set(named).size).toBe(72);
     for (const galaxy of LANDMARK_GALAXIES) {
       const row = rows.find(([name]) => name === GALAXY_NAMES[galaxy - 1])!;
       const cells = row.slice(1).map((cell) => cell.split(", "));

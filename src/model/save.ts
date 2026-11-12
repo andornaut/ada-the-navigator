@@ -772,7 +772,8 @@ function jobOffer(sector: SectorId, value: unknown): boolean {
   }
   return target === "" && (value.type === "rescue" || vector(value.spot));
 }
-const SECTOR_KEYS = ["1", "2", "3"];
+// Every galaxy has stations, so job boards and held tasks.
+const SECTOR_KEYS = SECTORS.map(String);
 /** Saved job boards. */
 function jobsState(value: unknown): boolean {
   if (

@@ -209,8 +209,8 @@ describe("collections and helping", () => {
   it("counts landmarks and projects toward the game's own totals", () => {
     expect(ACHIEVEMENT_TOTALS).toEqual({
       allies: 0,
-      // Placeholders have no landmarks.
-      landmarks: { 1: 12, 2: 12, 3: 12, 4: 0, 5: 0, 6: 0 },
+      // Every galaxy has twelve landmarks.
+      landmarks: { 1: 12, 2: 12, 3: 12, 4: 12, 5: 12, 6: 12 },
       paints: Object.keys(ECONOMY.paints).length,
       projects: Object.values(PROJECTS).flat().length,
     });
@@ -231,7 +231,7 @@ describe("collections and helping", () => {
     expect(unlocked(model)).toContain(id("Cartographer"));
   });
 
-  it("keeps the allies and four-galaxy achievements locked and uncounted until they exist", () => {
+  it("counts Astra's Atlas over all six galaxies, and keeps allies uncounted until they exist", () => {
     const model = new GameModel(PROTOTYPE);
     model.recordAchievement({ id: "growers", kind: "allyMade" });
     for (const sector of [1, 2, 3] as const) {
@@ -239,10 +239,13 @@ describe("collections and helping", () => {
         model.recordAchievement({ galaxy: sector, id: site.id, kind: "landmarkCharted" });
       }
     }
-    for (const name of ["Astra's Atlas", "Friends Everywhere"]) {
-      expect(view(model, name)).toMatchObject({ unlocked: false });
-      expect(view(model, name).progress).toBeUndefined();
-    }
+    // Three galaxies' landmarks charted of the six galaxies' 72.
+    expect(view(model, "Astra's Atlas")).toMatchObject({
+      progress: { have: 36, need: 72 },
+      unlocked: false,
+    });
+    expect(view(model, "Friends Everywhere")).toMatchObject({ unlocked: false });
+    expect(view(model, "Friends Everywhere").progress).toBeUndefined();
   });
 
   it("counts charting, allies and projects toward the totals their systems supply", () => {

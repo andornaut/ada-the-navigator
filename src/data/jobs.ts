@@ -44,16 +44,20 @@ export const JOB_TUNING = {
  * before it.
  */
 export const JOB_REWARDS: Readonly<
-  Partial<Record<RoutePosition, Readonly<Record<JobRewardKind, number>>>>
+  Partial<Record<RoutePosition, Readonly<Partial<Record<JobRewardKind, number>>>>>
 > = {
   1: { deliveryLong: 25, deliveryShort: 15, hunt: 15, rescue: 25, survey: 10 },
-  2: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
-  5: { deliveryLong: 35, deliveryShort: 20, hunt: 20, rescue: 35, survey: 15 },
+  2: { deliveryLong: 35, deliveryShort: 20, hunt: 20, rescue: 35, survey: 15 },
+  3: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  4: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  5: { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+  // Black Eye's boards offer only surveys and rescues.
+  6: { rescue: 50, survey: 20 },
 };
 
 /**
- * Each built galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool").
- * Placeholders have no stations, so no jobs.
+ * Each galaxy's pool: what its jobs carry, tow and look for (quests.md "Job pool"). Black Eye's
+ * travelers only need towing.
  */
 export const JOB_POOL: Readonly<
   Partial<
@@ -82,6 +86,21 @@ export const JOB_POOL: Readonly<
     delivery: ["song shells", "star maps", "a message"],
     lost: ["music shell", "whale-call whistle"],
   },
+  4: {
+    craft: ["a stuck glider", "a pod"],
+    delivery: ["thread spools", "glass beads", "a message"],
+    lost: ["weaving shuttle", "silver bell"],
+  },
+  5: {
+    craft: ["a lost courier", "a drifting lamp buoy"],
+    delivery: ["beacon parts", "mail", "a message"],
+    lost: ["courier's badge", "lantern"],
+  },
+  6: {
+    craft: ["a traveler's pod"],
+    delivery: [],
+    lost: [],
+  },
 };
 
 /** Astra's lore lines after a job completes, one unseen line per job, for each built galaxy. */
@@ -98,15 +117,24 @@ export const JOB_LORE: Readonly<Partial<Record<SectorId, readonly string[]>>> = 
     "Whales sing to map the currents. We are both mapmakers.",
     "Currents carry seeds, rocks and songs from one side of Whirlpool to the other.",
   ],
+  4: [
+    "We see Needle from its edge, like a plate held sideways.",
+    "The Avi say a channel is learned, not won.",
+  ],
+  5: [
+    "Andromeda is so bright that people on Earth can see it without a telescope.",
+    "A beacon only helps if it tells the truth about where it is.",
+  ],
+  6: ["Not every traveler here chose to stay.", "Even a dark rim has stars."],
 };
 
 /** A landmark's kind: drawn in the galaxy's own palette. */
 export type LandmarkKind = "nebula" | "wreck" | "beacon";
 export const LANDMARK_KINDS: readonly LandmarkKind[] = ["nebula", "wreck", "beacon"];
 
-/** Galaxies one to four, Black Eye included: each names four landmarks of each kind. */
-export type LandmarkGalaxy = 1 | 2 | 3 | 4;
-export const LANDMARK_GALAXIES: readonly LandmarkGalaxy[] = [1, 2, 3, 4];
+/** Every galaxy, by sector: each names four landmarks of each kind. */
+export type LandmarkGalaxy = 1 | 2 | 3 | 4 | 5 | 6;
+export const LANDMARK_GALAXIES: readonly LandmarkGalaxy[] = [1, 2, 3, 4, 5, 6];
 
 /**
  * The player-string key of a galaxy's nth landmark (1 to 4) of a kind, in quests.md's

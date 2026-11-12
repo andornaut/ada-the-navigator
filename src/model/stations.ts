@@ -6,14 +6,14 @@ export interface StationSite extends Vec {
   id: string;
 }
 
-/**
- * Fixed per-galaxy seeds, so station sites are the same on every flight. A placeholder galaxy has
- * none, so no stations.
- */
+/** Fixed per-galaxy seeds, so station sites are the same on every flight. */
 const SECTOR_SEEDS: Readonly<Partial<Record<SectorId, number>>> = {
   1: 0x5eed_0101,
   2: 0x5eed_0202,
   3: 0x5eed_0303,
+  4: 0x5eed_0404,
+  5: 0x5eed_0505,
+  6: 0x5eed_0606,
 };
 
 function mix(seed: number, x: number, y: number): number {

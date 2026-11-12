@@ -183,14 +183,15 @@ function makeOffer(
   const fresh = order.filter((type) => !board.some((offer) => offer.type === type));
   for (const type of [...fresh, ...order.filter((type) => !fresh.includes(type))]) {
     const target = jobTarget(context, book, next, station, type);
-    if (target) {
+    const reward =
+      target &&
+      byPosition(JOB_REWARDS, context.sector)[rewardKind(type, distance(target.target, station))];
+    if (target && reward !== undefined && reward !== null) {
       book.jobs.made = made + 1;
       return {
         ...target,
         id: `job:${made}`,
-        reward: byPosition(JOB_REWARDS, context.sector)[
-          rewardKind(type, distance(target.target, station))
-        ],
+        reward,
         station: station.id,
         type,
       };

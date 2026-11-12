@@ -79,8 +79,9 @@ describe("tuning by route position", () => {
       fireRate: 1.45,
       perception: 1.4,
     });
-    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(35);
-    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(50);
+    // Job rewards follow route position (quests.md "Rewards"): Whirlpool second, Cartwheel fifth.
+    expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(35);
+    expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(50);
     expect(byPosition(sectorArchetypes, 2).retaliator).toEqual({ hp: 9 });
     expect(byPosition(sectorArchetypes, 3).retaliator).toEqual({ hp: 10 });
   });
@@ -93,7 +94,6 @@ describe("tuning by route position", () => {
       ASTEROID_FIELDS,
       CHUNK_CATALOG,
       ECONOMY.weaponDropChance,
-      JOB_REWARDS,
       sectorArchetypes,
       sectorEncounters,
       sectorEnemyTuning,
@@ -108,5 +108,13 @@ describe("tuning by route position", () => {
         expect(table[ROUTE_POSITION[galaxy]]).toBeDefined();
       }
     }
+    // Job rewards are Gameplay's per position, every galaxy having stations: positions 3 to 5
+    // pay alike, and Black Eye only surveys and rescues.
+    expect([3, 4, 5].map((position) => JOB_REWARDS[position as RoutePosition])).toEqual([
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+      { deliveryLong: 50, deliveryShort: 30, hunt: 30, rescue: 50, survey: 20 },
+    ]);
+    expect(JOB_REWARDS[6]).toEqual({ rescue: 50, survey: 20 });
   });
 });
