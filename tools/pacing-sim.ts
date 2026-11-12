@@ -29,8 +29,9 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
+  HEAVIES,
 } from "../src/data/enemy-catalog.ts";
-import { BUILT, byPosition, ROUTE_POSITION } from "../src/data/galaxies.ts";
+import { byPosition } from "../src/data/galaxies.ts";
 import { HOLODISKS } from "../src/data/holodisks.ts";
 import { JOB_TUNING, JOB_TYPES, type JobType } from "../src/data/jobs.ts";
 import { galaxyProjects } from "../src/data/projects.ts";
@@ -44,6 +45,7 @@ import {
   dropRandom,
   rollAsteroidStardust,
   rollEnemyDrop,
+  rollSalvageDrop,
   splitStardust,
 } from "../src/model/drops.ts";
 import {
@@ -69,6 +71,8 @@ import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { clearOfOreFields } from "../src/model/ore-fields.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
+import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "../src/model/upgrade-drops.ts";
+import { newEconomy } from "../src/model/upgrades.ts";
 import { addPacks, noAmmo } from "../src/model/weapons.ts";
 
 export interface Behaviour {
@@ -97,8 +101,13 @@ export interface Behaviour {
   fleeKillChance: number;
   /** Extra seconds spent chasing each fleeing enemy that is destroyed. */
   fleeChaseSeconds: number;
-  /** Fraction of a destroyed enemy's pickups (Stardust and weapons) collected. */
+  /** Fraction of a destroyed enemy's pickups (Stardust and upgrades) collected. */
   dropCollection: number;
+  /**
+   * Chance the player salvages a heavy met in open space, by destroying its weapon hardpoints,
+   * instead of breaking its hull; route guards are always destroyed.
+   */
+  salvageShare: number;
   /** Seconds spent collecting after a fight. */
   collectSeconds: number;
   /**
@@ -146,7 +155,7 @@ export interface Behaviour {
 export interface Prices {
   /** The cheapest shop weapon: the first weapon a player can buy. */
   firstWeapon: number;
-  /** Galaxy two's hub holodisk price; every sector reports the time to save it. */
+  /** Cartwheel's hub holodisk price; only Cartwheel's summary reports the time to save it. */
   holodisk: number;
   /**
    * The sector's community projects funded in table order, as the Stardust saved by each: a
@@ -160,7 +169,7 @@ export interface EconomyOverrides {
   asteroidStardust?: Partial<Record<AsteroidSize, [number, number]>>;
   discoveryStardust?: number;
   ammoPackPrice?: number;
-  weaponDropChance?: Partial<Record<SectorId, Partial<Record<EnemyArchetype, number>>>>;
+  upgradeDropChance?: Partial<EconomyCatalog["upgradeDropChance"]>;
   station?: Partial<
     Pick<EconomyCatalog["station"], "cellSize" | "chance" | "indicatorRange" | "jitter">
   >;
@@ -193,6 +202,7 @@ export const DEFAULT_BEHAVIOUR: Behaviour = {
   fleeKillChance: 0.6,
   fleeChaseSeconds: 1.5,
   dropCollection: 0.85,
+  salvageShare: 0.5,
   collectSeconds: 2,
   asteroidsPerMinute: 4,
   asteroidRange: 300,
@@ -302,6 +312,10 @@ export interface RunResult {
   weaponsFound: UpgradeWeapon[];
   /** Seconds at which the first upgrade weapon was found, or null. */
   weaponFoundSeconds: number | null;
+  /** Upgrade drops collected, by the kind of gift each gave. */
+  upgrades: Partial<Record<UpgradeGift["kind"], number>>;
+  /** Heavies salvaged rather than destroyed. */
+  salvaged: Partial<Record<EnemyArchetype, number>>;
   jumps: number;
   /** Stardust spent on ammunition packs, and the packs bought. */
   ammoSpent: number;
@@ -348,16 +362,7 @@ export function scenarioEconomy(overrides: EconomyOverrides): EconomyCatalog {
     asteroidStardust: { ...ECONOMY.asteroidStardust, ...overrides.asteroidStardust },
     discoveryStardust: overrides.discoveryStardust ?? ECONOMY.discoveryStardust,
     ammo: { ...ECONOMY.ammo, packPrice: overrides.ammoPackPrice ?? ECONOMY.ammo.packPrice },
-    // Overrides name galaxies; the catalog keys drop chances by their route positions.
-    weaponDropChance: Object.fromEntries(
-      [...BUILT].map((galaxy) => [
-        ROUTE_POSITION[galaxy],
-        {
-          ...byPosition(ECONOMY.weaponDropChance, galaxy),
-          ...overrides.weaponDropChance?.[galaxy],
-        },
-      ]),
-    ),
+    upgradeDropChance: { ...ECONOMY.upgradeDropChance, ...overrides.upgradeDropChance },
     station: { ...ECONOMY.station, ...overrides.station },
   };
 }
@@ -549,6 +554,20 @@ function killSeconds(
   return volleySeconds(behaviour, weapon, enemyDefinition(sector, archetype).hp, level);
 }
 /**
+ * Seconds of firing to disable one heavy in a galaxy: each weapon hardpoint shot down in turn,
+ * so surplus damage on one never carries to the next.
+ */
+function salvageSeconds(
+  behaviour: Behaviour,
+  sector: SectorId,
+  weapon: Weapon,
+  archetype: EnemyArchetype,
+): number {
+  return enemyDefinition(sector, archetype)
+    .hardpoints.filter((part) => part.kind === "weapon")
+    .reduce((sum, part) => sum + volleySeconds(behaviour, weapon, part.hp), 0);
+}
+/**
  * Seconds of firing to destroy one asteroid: bigger sizes hold more hit points and so cost
  * proportionally more firing time.
  */
@@ -614,7 +633,9 @@ export function simulate(input: SimulationInput): RunResult {
     jobs: {},
     seed: input.seed,
     stardust: { asteroids: 0, caches: 0, enemies: 0, guards: 0, jobs: 0 },
+    salvaged: {},
     stationSeconds: [],
+    upgrades: {},
     weaponFoundSeconds: null,
     weaponsFound: [],
   };
@@ -749,10 +770,16 @@ export function simulate(input: SimulationInput): RunResult {
       result.balance[minute] = balance;
     }
   };
-  /** Destroys one enemy and collects its drop with the player's collection efficiency. */
-  const loot = (archetype: EnemyArchetype, id: string, source: Source) => {
+  // Upgrade levels, paints and ownership as the game's economy holds them, for choosing gifts.
+  const gear = newEconomy(catalog);
+  gear.ownedWeapons = owned;
+  /**
+   * Collects one enemy's drop, destroyed or salvaged, with the player's collection efficiency.
+   * An upgrade drop's gift is chosen from what the player can use, as the game does.
+   */
+  const loot = (archetype: EnemyArchetype, id: string, source: Source, salvaged = false) => {
     const next = dropRandom(flightSeed, wreckId(id));
-    const drop = rollEnemyDrop(catalog, sector, archetype, next);
+    const drop = (salvaged ? rollSalvageDrop : rollEnemyDrop)(catalog, sector, archetype, next);
     const pieces = splitStardust(catalog.pickupCap[archetype], drop.stardust);
     const collected = pieces.reduce(
       (sum, piece) => sum + (rng() < behaviour.dropCollection ? piece : 0),
@@ -762,17 +789,20 @@ export function simulate(input: SimulationInput): RunResult {
     if (source === "enemies") {
       add(result.enemyStardust, archetype, collected);
     }
-    if (drop.weapon && rng() < behaviour.dropCollection) {
-      if (owned.includes(drop.weapon)) {
-        // A weapon Ada already owns gives a pack of its ammunition.
-        addPacks(catalog, drop.weapon, catalog.ammo.duplicatePacks, ammo);
-        result.duplicatePacks += catalog.ammo.duplicatePacks;
-      } else {
-        owned.push(drop.weapon);
-        addPacks(catalog, drop.weapon, catalog.ammo.grantPacks, ammo);
-        result.weaponsFound.push(drop.weapon);
+    if (drop.upgrade && rng() < behaviour.dropCollection) {
+      const gift = chooseUpgrade(catalog, gear, dropRandom(flightSeed, `upgrade:${id}`));
+      result.upgrades[gift.kind] = (result.upgrades[gift.kind] ?? 0) + 1;
+      if (gift.kind === "weapon") {
+        owned.push(gift.weapon);
+        addPacks(catalog, gift.weapon, catalog.ammo.grantPacks, ammo);
+        result.weaponsFound.push(gift.weapon);
         result.weaponFoundSeconds ??= time;
-        weapon = drop.weapon;
+        weapon = gift.weapon;
+      } else if (gift.kind === "ammo") {
+        addPacks(catalog, gift.weapon, 1, ammo);
+        result.duplicatePacks++;
+      } else {
+        applyUpgrade(catalog, gift, gear);
       }
     }
   };
@@ -793,11 +823,17 @@ export function simulate(input: SimulationInput): RunResult {
         shoot(packFlees ? 0 : volleySeconds(behaviour, weapon, flee ?? 0));
         continue;
       }
-      shoot(killSeconds(behaviour, sector, weapon, archetype));
+      // A heavy is salvaged by destroying its weapon hardpoints, or destroyed at 0 hull.
+      const salvaged = HEAVIES.includes(archetype) && rng() < behaviour.salvageShare;
+      shoot(
+        salvaged
+          ? salvageSeconds(behaviour, sector, weapon, archetype)
+          : killSeconds(behaviour, sector, weapon, archetype),
+      );
       advance(fleeing ? behaviour.fleeChaseSeconds : 0);
       lost++;
-      add(result.destroyed, archetype);
-      loot(archetype, `${id}:${member}`, "enemies");
+      add(salvaged ? result.salvaged : result.destroyed, archetype);
+      loot(archetype, `${id}:${member}`, "enemies", salvaged);
     }
   };
   /** Fights one pack and any escorts, advancing time as it goes. */
@@ -1237,7 +1273,7 @@ export interface Summary {
   firstStationMinutes: Distribution;
   stationGapMinutes: Distribution;
   runsWithWeaponFound: number;
-  /** Minutes until the first upgrade weapon drop is collected; unfound runs count as the run length. */
+  /** Minutes until an upgrade pickup first gives a weapon; unfound runs count as the run length. */
   weaponFoundMinutes: Distribution;
   /** Runs that found an upgrade weapon within the first 20 and 40 minutes. */
   weaponFoundBy: { 20: number; 40: number };
@@ -1250,6 +1286,10 @@ export interface Summary {
   packsPerHour: number;
   emptiedPerHour: number;
   duplicatePacksPerHour: number;
+  /** Upgrade pickups collected per hour, by the kind of gift. */
+  upgradesPerHour: Partial<Record<UpgradeGift["kind"], number>>;
+  /** Heavies salvaged per minute, by archetype. */
+  salvagedPerMinute: Partial<Record<EnemyArchetype, number>>;
 }
 
 export function summarise(
@@ -1340,6 +1380,13 @@ export function summarise(
       (_, index) => runs.filter((run) => run.projectsSeconds[index] === null).length,
     ),
     runs: runs.length,
+    salvagedPerMinute: byArchetype((run) => run.salvaged),
+    upgradesPerHour: Object.fromEntries(
+      (["weapon", "weaponLevel", "track", "paint", "ammo"] as const).map((kind) => [
+        kind,
+        perHour((run) => run.upgrades[kind] ?? 0),
+      ]),
+    ),
     runsWithWeaponFound: runs.filter((run) => run.weaponsFound.length > 0).length,
     weaponFoundBy: {
       20: runs.filter((run) => (run.weaponFoundSeconds ?? Infinity) <= 1200).length,
@@ -1574,14 +1621,19 @@ function formatDistribution(value: Distribution, digits = 1): string {
 export function formatSummary(summary: Summary): string {
   const lines = [
     `## ${summary.scenario}, sector ${summary.sector}: ${summary.runs} seeds x ${summary.minutes} min`,
-    `Prices: first weapon ${summary.prices.firstWeapon}, holodisk ${summary.prices.holodisk}, ` +
+    `Prices: first weapon ${summary.prices.firstWeapon}, ` +
       `projects ${summary.prices.projects.join(", ")} (cumulative), ` +
       `ammunition pack ${summary.packPrice}`,
     `Minutes to first weapon: ${formatDistribution(summary.firstWeaponMinutes)}; ` +
       `unreached ${summary.firstWeaponUnreached}`,
-    `Minutes to save ${summary.prices.holodisk} (Cartwheel's holodisk): ` +
-      `${formatDistribution(summary.holodiskMinutes)}; ` +
-      `unreached ${summary.holodiskUnreached}`,
+    // Only Cartwheel sells a hub holodisk.
+    ...(summary.sector === 2
+      ? [
+          `Minutes to save ${summary.prices.holodisk} (Cartwheel's holodisk): ` +
+            `${formatDistribution(summary.holodiskMinutes)}; ` +
+            `unreached ${summary.holodiskUnreached}`,
+        ]
+      : []),
     ...summary.projectsMinutes.map(
       (minutes, index) =>
         `Minutes to fund project ${index + 1} (${summary.prices.projects[index]} saved): ` +
@@ -1596,6 +1648,10 @@ export function formatSummary(summary: Summary): string {
     `Encounters met/min: ${formatRecord(summary.metPerMinute, 3)}`,
     `Encounters fought/min: ${formatRecord(summary.foughtPerMinute, 3)}`,
     `Enemies destroyed/min: ${formatRecord(summary.destroyedPerMinute, 3)}`,
+    `Heavies salvaged/min: ${formatRecord(summary.salvagedPerMinute, 3)}`,
+    `Upgrade pickups/hour: ${Object.entries(summary.upgradesPerHour)
+      .map(([kind, value]) => `${kind} ${round(value ?? 0, 2)}`)
+      .join(", ")}`,
     `Asteroids shot/min: ${round(summary.asteroidsPerMinute, 2)}; ` +
       `caches collected/min: ${round(summary.cachesPerMinute, 2)}`,
     `Asteroid sizes seen: ${formatShare(summary.asteroidSizeShare.seen)}; ` +

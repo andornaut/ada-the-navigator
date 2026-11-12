@@ -47,7 +47,7 @@ const SQUARES = new Map<number, Parts>();
 
 /**
  * A pickup's drawn outline in screen px from its position, or null to keep its circle: the
- * discovery cache, the Stardust gem, the ore nugget, or a weapon pickup's screen-aligned square
+ * discovery cache, the Stardust gem, the ore nugget, or an upgrade pickup's screen-aligned square
  * reaching half its 1.5 px outline past its radius.
  */
 export function pickupOutline(object: SpaceObject): Parts | null {
@@ -63,7 +63,7 @@ export function pickupOutline(object: SpaceObject): Parts | null {
   if (object.role === "cargo") {
     return ORE ?? null;
   }
-  if (object.weapon) {
+  if (object.upgrade) {
     const half = object.radius + 0.75;
     let square = SQUARES.get(half);
     if (!square) {

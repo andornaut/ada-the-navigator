@@ -199,6 +199,28 @@ describe("pacing simulation runs", () => {
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
+  it("collects upgrade pickups from destroyed small craft and salvaged heavies as gifts", () => {
+    const { runs, summary } = runScenario({
+      ...options,
+      minutes: 30,
+      scenario: {
+        behaviour: { salvageShare: 1 },
+        description: "",
+        economy: { upgradeDropChance: { heavy: 1, small: 1 } },
+        name: "upgrades",
+        prices: {},
+      },
+      sector: 2,
+    });
+    const total = (record: Partial<Record<string, number>>) =>
+      Object.values(record).reduce((sum: number, count) => sum + (count ?? 0), 0);
+    for (const run of runs) {
+      expect(total(run.upgrades)).toBeGreaterThan(0);
+    }
+    expect(total(summary.salvagedPerMinute)).toBeGreaterThan(0);
+    expect(summary.upgradesPerHour.track).toBeGreaterThan(0);
+  });
+
   it("fights galaxy three's capital route guards", () => {
     const { runs } = runScenario({
       ...options,

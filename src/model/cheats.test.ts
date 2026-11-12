@@ -6,6 +6,7 @@ import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
+import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -97,14 +98,7 @@ describe("grant all weapons", () => {
     const model = launched();
     const flight = model.state.flight!;
     grantAllWeapons(model.state);
-    flight.objects.push({
-      ...flight.player,
-      hp: 1,
-      id: "found",
-      kind: "pickup",
-      radius: 10,
-      weapon: "scattershot",
-    });
+    collectWeapon("scattershot", flight);
     model.step(0.01, idle);
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
     expect(model.state.economy.stardust).toBe(0);

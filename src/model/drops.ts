@@ -1,10 +1,8 @@
 import type { AsteroidSize } from "../data/asteroid-catalog.ts";
-import type { EconomyCatalog, UpgradeWeapon } from "../data/economy.ts";
+import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemy-catalog.ts";
-import { byPosition } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
-import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** Stardust pickups, from drops or discovery caches, carry an amount. */
 export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind">): boolean {
@@ -13,7 +11,8 @@ export function carriesStardust(object: Pick<SpaceObject, "amount" | "kind">): b
 
 export interface Drop {
   stardust: number;
-  weapon: UpgradeWeapon | null;
+  /** An upgrade pickup, whose gift is chosen when Ada collects it (upgrade-drops.ts). */
+  upgrade: boolean;
 }
 
 /** A deterministic uniform [0, 1) sequence for one object in one flight. */
@@ -29,9 +28,8 @@ export function dropRandom(seed: number, id: string): () => number {
 }
 
 /**
- * A destroyed enemy's drop: a small craft's Stardust plus, at its archetype's chance in the
- * galaxy, a random upgrade weapon; a destroyed heavy's twice its Stardust and no weapon.
- * Collecting a weapon Ada already owns gives a pack of its ammunition instead.
+ * A destroyed enemy's drop: a small craft's Stardust plus, at the small-craft chance, an
+ * upgrade pickup; a destroyed heavy's twice its Stardust and no upgrade.
  */
 export function rollEnemyDrop(
   catalog: EconomyCatalog,
@@ -40,18 +38,17 @@ export function rollEnemyDrop(
   next: () => number,
 ): Drop {
   if (HEAVIES.includes(archetype)) {
-    return { stardust: enemyStardust(sector, archetype) * 2, weapon: null };
+    return { stardust: enemyStardust(sector, archetype) * 2, upgrade: false };
   }
-  const drop: Drop = { stardust: enemyStardust(sector, archetype), weapon: null };
-  if (next() < byPosition(catalog.weaponDropChance, sector)[archetype]) {
-    drop.weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
-  }
-  return drop;
+  return {
+    stardust: enemyStardust(sector, archetype),
+    upgrade: next() < catalog.upgradeDropChance.small,
+  };
 }
 
 /**
- * A salvaged heavy's drop: its Stardust, half what destroying it gives, and a random upgrade
- * weapon at twice its archetype's chance in the galaxy.
+ * A salvaged heavy's drop: its Stardust, half what destroying it gives, and an upgrade pickup
+ * at the heavy chance.
  */
 export function rollSalvageDrop(
   catalog: EconomyCatalog,
@@ -59,11 +56,10 @@ export function rollSalvageDrop(
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
-  const drop: Drop = { stardust: enemyStardust(sector, archetype), weapon: null };
-  if (next() < byPosition(catalog.weaponDropChance, sector)[archetype] * 2) {
-    drop.weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
-  }
-  return drop;
+  return {
+    stardust: enemyStardust(sector, archetype),
+    upgrade: next() < catalog.upgradeDropChance.heavy,
+  };
 }
 
 export function rollAsteroidStardust(

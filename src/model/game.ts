@@ -180,8 +180,10 @@ import type {
   UseAction,
   Vec,
 } from "./types.ts";
+import { applyUpgrade, chooseUpgrade, upgradeNotice } from "./upgrade-drops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
+  collectWeapon,
   ownedForSave,
   ownedWeapons,
   selectFlightWeapon,
@@ -664,6 +666,28 @@ export class GameModel {
         economy.ammo[weapon] = flight.ammo[weapon];
       }
     }
+  }
+  /**
+   * Gives an upgrade pickup's gift, chosen from what Ada can use as she collects it and seeded
+   * by the pickup, and names it in a notice. A new weapon joins the roster with its packs and
+   * is equipped unless the switch wait runs.
+   */
+  private collectUpgrade(id: string, flight: FlightState): void {
+    this.pullLoadout();
+    const gift = chooseUpgrade(
+      ECONOMY,
+      this.state.economy,
+      dropRandom(flight.seed, `upgrade:${id}`),
+    );
+    if (gift.kind === "weapon") {
+      collectWeapon(gift.weapon, flight);
+      this.pullLoadout();
+    } else {
+      applyUpgrade(ECONOMY, gift, this.state.economy);
+      this.pushLoadout();
+    }
+    this.notify(upgradeNotice(ECONOMY, this.content.labels, gift));
+    this.syncAchievements();
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
   private pushLoadout(): void {
@@ -1242,6 +1266,9 @@ export class GameModel {
       }
       if (event.type === "enemyDestroyed") {
         this.current.destroyedEnemies++;
+      }
+      if (event.type === "upgradeCollected") {
+        this.collectUpgrade(event.id, f);
       }
       // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
       // destination.

@@ -64,7 +64,7 @@ export function spaceObjectColor(palette: SpacePalette, object: SpaceObject): nu
     case "resource":
       return palette.pointOfInterest;
     case "pickup":
-      return object.weapon ? palette.weapon : palette.active;
+      return object.upgrade ? palette.weapon : palette.active;
     case "rock":
       return palette.environmentDetail;
   }

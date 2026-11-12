@@ -51,7 +51,7 @@ import type {
   Vec,
 } from "./types.ts";
 import { newEconomy, noLevels, shipTuning } from "./upgrades.ts";
-import { noAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
+import { collectWeapon, noAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const length = (v: { x: number; y: number }) => Math.hypot(v.x, v.y);
@@ -119,10 +119,10 @@ describe("Stardust drops", () => {
       swarm: 1,
     };
     for (const [archetype, amount] of Object.entries(expected)) {
-      // A roll of 0.999 never meets a weapon drop chance.
+      // A roll of 0.999 never meets the upgrade drop chance.
       expect(rollEnemyDrop(ECONOMY, 1, archetype as EnemyArchetype, () => 0.999)).toEqual({
         stardust: amount,
-        weapon: null,
+        upgrade: false,
       });
     }
   });
@@ -154,12 +154,12 @@ describe("Stardust drops", () => {
     });
   });
 
-  it("drops twice a destroyed heavy's Stardust and never a weapon", () => {
+  it("drops twice a destroyed heavy's Stardust and never an upgrade", () => {
     for (const archetype of HEAVIES) {
       for (let index = 0; index < 400; index++) {
         expect(rollEnemyDrop(ECONOMY, 2, archetype, dropRandom(3, `h:${index}`))).toEqual({
           stardust: enemyStardust(2, archetype) * 2,
-          weapon: null,
+          upgrade: false,
         });
       }
     }
@@ -190,59 +190,46 @@ describe("Stardust drops", () => {
   });
 
   it.each([
-    [1, "swarm", 0.0025],
-    [1, "fighter", 0.0025],
-    [1, "interceptor", 0.0025],
-    [1, "retaliator", 0.0025],
-    [2, "swarm", 0.005],
-    [3, "fighter", 0.005],
+    [1, "swarm"],
+    [1, "fighter"],
+    [2, "interceptor"],
+    [3, "retaliator"],
+    [5, "fighter"],
   ] as const)(
-    "in galaxy %i drops a random upgrade weapon from %s at %f",
-    (sector, archetype, chance) => {
-      const draws = chance < 0.01 ? 200000 : 40000;
-      const weapons = new Map<string, number>();
+    "in galaxy %i drops an upgrade pickup from a destroyed %s 0.25% of the time, never extra Stardust",
+    (sector, archetype) => {
+      const draws = 200000;
+      let dropped = 0;
       for (let index = 0; index < draws; index++) {
-        const next = dropRandom(11, `wreck:${index}`);
-        const drop = rollEnemyDrop(ECONOMY, sector, archetype, next);
-        if (drop.weapon) {
-          weapons.set(drop.weapon, (weapons.get(drop.weapon) ?? 0) + 1);
-        }
+        const drop = rollEnemyDrop(ECONOMY, sector, archetype, dropRandom(11, `wreck:${index}`));
+        expect(drop.stardust).toBe(enemyStardust(sector, archetype));
+        dropped += drop.upgrade ? 1 : 0;
       }
-      const dropped = [...weapons.values()].reduce((sum, count) => sum + count, 0);
-      expect(Math.abs(dropped / draws - chance)).toBeLessThan(chance * 0.15);
-      // The pool is every shop weapon, the Phaser included.
-      expect([...weapons.keys()].sort()).toEqual([...UPGRADE_WEAPONS].sort());
-      for (const count of weapons.values()) {
-        expect(Math.abs(count / dropped - 1 / 5)).toBeLessThan(0.06);
-      }
+      expect(Math.abs(dropped / draws - 0.0025)).toBeLessThan(0.0025 * 0.15);
     },
   );
 
-  it("drops a weapon pickup whether or not Ada owns it, never extra Stardust", () => {
-    let dropped = 0;
-    for (let index = 0; index < 40000; index++) {
-      const drop = rollEnemyDrop(ECONOMY, 2, "fighter", dropRandom(3, `w:${index}`));
-      expect(drop.stardust).toBe(enemyStardust(2, "fighter"));
-      dropped += drop.weapon ? 1 : 0;
-    }
-    expect(Math.abs(dropped / 40000 - 0.005)).toBeLessThan(0.0015);
-  });
-
   it.each([
-    [3, "frigate", 0.1],
-    [3, "capital", 0.1],
-    [1, "frigate", 0.04],
-    [1, "capital", 0.1],
+    [1, "frigate"],
+    [1, "capital"],
+    [2, "platform"],
+    [3, "capital"],
+    [5, "frigate"],
   ] as const)(
-    "salvages galaxy %i's %s for its Stardust and a weapon %f of the time",
-    (sector, archetype, chance) => {
+    "drops an upgrade pickup from galaxy %i's %s 5% of the time when salvaged, never when destroyed",
+    (sector, archetype) => {
       let dropped = 0;
       for (let index = 0; index < 20000; index++) {
-        const drop = rollSalvageDrop(ECONOMY, sector, archetype, dropRandom(5, `s:${index}`));
-        expect(drop.stardust).toBe(enemyStardust(sector, archetype));
-        dropped += drop.weapon ? 1 : 0;
+        const salvaged = rollSalvageDrop(ECONOMY, sector, archetype, dropRandom(5, `s:${index}`));
+        expect(salvaged.stardust).toBe(enemyStardust(sector, archetype));
+        dropped += salvaged.upgrade ? 1 : 0;
+        const destroyed = rollEnemyDrop(ECONOMY, sector, archetype, dropRandom(5, `d:${index}`));
+        expect(destroyed).toEqual({
+          stardust: enemyStardust(sector, archetype) * 2,
+          upgrade: false,
+        });
       }
-      expect(Math.abs(dropped / 20000 - chance)).toBeLessThan(0.01);
+      expect(Math.abs(dropped / 20000 - 0.05)).toBeLessThan(0.006);
     },
   );
 
@@ -515,7 +502,7 @@ describe("Stardust drops", () => {
 });
 
 describe("discovery caches", () => {
-  it("generates Stardust caches worth 5 instead of weapon pickups", () => {
+  it("generates Stardust caches worth 5 instead of upgrade pickups", () => {
     const value = createFlight(PROTOTYPE, 1, 4242, { known: [] });
     const discoveries = new Map<string, SpaceObject>();
     for (let step = 0; step < 40; step++) {
@@ -531,7 +518,7 @@ describe("discovery caches", () => {
     expect(discoveries.size).toBeGreaterThan(0);
     for (const cache of discoveries.values()) {
       expect(cache).toMatchObject({ amount: 5 });
-      expect(cache.weapon).toBeUndefined();
+      expect(cache.upgrade).toBeUndefined();
     }
   });
 
@@ -567,7 +554,7 @@ describe("tractor beam and pickup reach", () => {
     ["Stardust gem", { amount: 1, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
     ["cache", { amount: 3, radius: 10, role: "discovery" }],
     ["ore nugget", { radius: 7, role: "cargo" }],
-    ["weapon pickup", { radius: 10, weapon: "rapidMissile" }],
+    ["upgrade pickup", { radius: 10, upgrade: true }],
   ] as const;
 
   it.each(KINDS.flatMap(([name, extra]) => TRACTOR.map((row) => [name, ...row, extra] as const)))(
@@ -642,7 +629,7 @@ describe("tractor beam and pickup reach", () => {
     ["cache", 20, { amount: 3, radius: 10, role: "discovery" }],
     ["Stardust gem", 20, { amount: 3, radius: ECONOMY.stardustPickupRadius, role: "stardust" }],
     ["ore nugget", 20, { radius: 7, role: "cargo" }],
-    ["weapon pickup", 20, { radius: 10, weapon: "rapidMissile" }],
+    ["upgrade pickup", 20, { radius: 10, upgrade: true }],
   ] as const)(
     "collects the %s within %i world units of Ada's drawn ship, not beyond",
     (_, margin, extra) => {
@@ -686,8 +673,8 @@ describe("tractor beam and pickup reach", () => {
       expect(events.filter(({ type }) => type === "collected")).toEqual([
         expect.objectContaining({ id: "inside", type: "collected" }),
       ]);
-      if ("weapon" in extra) {
-        expect(value.ownedWeapons).toContain("rapidMissile");
+      if ("upgrade" in extra) {
+        expect(events).toContainEqual({ id: "inside", type: "upgradeCollected" });
       } else if (extra.role === "cargo") {
         expect(value.cargo).toBe(before + 1);
       }
@@ -738,16 +725,16 @@ describe("tractor beam and pickup reach", () => {
     value.levels.tractor = 3;
     value.objects.push({
       hp: 1,
-      id: "weapon",
+      id: "upgrade",
       kind: "pickup",
       radius: 10,
-      weapon: "rapidMissile",
+      upgrade: true,
       // Past its 20 reach, within the level 3 tractor's 120, which pulls it in.
       x: 70,
       y: 0,
     });
-    stepFlight(PROTOTYPE, 0.001, idle, value);
-    expect(value.ownedWeapons).toEqual([]);
+    const events = stepFlight(PROTOTYPE, 0.001, idle, value);
+    expect(events.some((event) => event.type === "upgradeCollected")).toBe(false);
     expect(value.objects.find((object) => object.id === "weapon")!.x).toBeCloseTo(70 - 0.2, 6);
   });
 
@@ -755,17 +742,7 @@ describe("tractor beam and pickup reach", () => {
     const value = flight();
     value.ownedWeapons = ["rapidMissile"];
     value.ammo.rapidMissile = 7;
-    value.objects.push({
-      hp: 1,
-      id: "w",
-      kind: "pickup",
-      radius: 10,
-      weapon: "rapidMissile",
-      x: 0,
-      y: 0,
-    });
-    const events = stepFlight(PROTOTYPE, 0.01, idle, value);
-    expect(gained(events)).toBe(0);
+    expect(collectWeapon("rapidMissile", value)).toBe(false);
     expect(value.ammo.rapidMissile).toBe(7 + 200);
     expect(value.weapon).toBe("laser");
   });

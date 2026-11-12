@@ -33,7 +33,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 8;
+export const SAVE_VERSION: GameState["version"] = 9;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -279,7 +279,7 @@ function spaceObject(
     (value.cooldown === undefined || nonnegative(value.cooldown)) &&
     (value.behavior === undefined ||
       ["pursue", "shoot", "guard"].includes(String(value.behavior))) &&
-    (value.weapon === undefined || UPGRADE_WEAPONS.some((weapon) => weapon === value.weapon))
+    (value.upgrade === undefined || (value.upgrade === true && value.kind === "pickup"))
   );
 }
 function persistentWorld(

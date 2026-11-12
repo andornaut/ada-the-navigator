@@ -1,6 +1,5 @@
 import type { AsteroidSize } from "./asteroid-catalog.ts";
 import type { EnemyArchetype } from "./enemy-catalog.ts";
-import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
 
 export type UpgradeWeapon = Exclude<Weapon, "laser">;
@@ -35,12 +34,20 @@ export interface EconomyCatalog {
   /** Inclusive Stardust range released by a destroyed asteroid of each size. */
   asteroidStardust: Readonly<Record<AsteroidSize, readonly [number, number]>>;
   /**
-   * Chance by route position that a destroyed enemy drops a random upgrade weapon; a placeholder
-   * reads the built galaxy before it.
+   * Chance, the same in every galaxy, that a destroyed small craft or a salvaged heavy drops an
+   * upgrade pickup; a destroyed heavy drops none.
    */
-  weaponDropChance: Readonly<
-    Partial<Record<RoutePosition, Readonly<Record<EnemyArchetype, number>>>>
-  >;
+  upgradeDropChance: { readonly heavy: number; readonly small: number };
+  /**
+   * An upgrade drop's weights (gameplay/economy.md "Earning Stardust"): each category's, then
+   * each weapon's within Weapons. A category or weapon with nothing left leaves the pool.
+   */
+  upgradeDropWeights: {
+    readonly categories: Readonly<
+      Record<"engine" | "paint" | "shield" | "tractor" | "weapons", number>
+    >;
+    readonly weapons: Readonly<Record<Weapon, number>>;
+  };
   /**
    * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, about a minute
    * of steady fire at level 1; one shot uses one. A new weapon includes `grantPacks` packs and a
@@ -105,8 +112,6 @@ export interface EconomyCatalog {
     safeRadius: number;
   };
 }
-
-const small = { fighter: 0.005, interceptor: 0.005, retaliator: 0.005, swarm: 0.005 } as const;
 
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
@@ -214,19 +219,18 @@ export const ECONOMY: EconomyCatalog = {
   // The tractor beam's pull radius and speed by level, alike for every pickup.
   tractorRadius: { base: 60, levels: [90, 120] },
   tractorSpeed: { base: 120, levels: [160, 200] },
-  // Galaxy one drops weapons more rarely, so its first weapon is usually bought.
-  weaponDropChance: {
-    1: {
-      capital: 0.05,
-      fighter: 0.0025,
-      frigate: 0.02,
-      interceptor: 0.0025,
-      platform: 0.02,
-      retaliator: 0.0025,
-      swarm: 0.0025,
+  upgradeDropChance: { heavy: 0.05, small: 0.0025 },
+  upgradeDropWeights: {
+    categories: { engine: 1, paint: 1 / 20, shield: 1, tractor: 1, weapons: 1 },
+    // Each weapon half as likely as the one before it in weapon order.
+    weapons: {
+      heavyMissile: 8,
+      laser: 64,
+      multiLaser: 32,
+      phaser: 2,
+      rapidMissile: 16,
+      scattershot: 4,
     },
-    2: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
-    5: { ...small, capital: 0.05, frigate: 0.05, platform: 0.05 },
   },
   weaponPrices: {
     heavyMissile: 450,

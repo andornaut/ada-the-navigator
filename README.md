@@ -55,7 +55,7 @@ Travel here reaches a chosen one outside danger, and Return to Earth ends the
 flight outside danger, towing or not. Its Quests card lists the story objective
 and the held job; a line whose target is mapped selects that place. Space draws
 authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
-discovery caches, the holodisk and its beacon, Stardust, weapon pickups, missiles,
+discovery caches, the holodisk and its beacon, Stardust, upgrade pickups, missiles,
 blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,
 galaxy three's whale and family, mining deposits, cargo, hazards and traveling
 debris keep simple placeholders. See [economy](gameplay/economy.md).

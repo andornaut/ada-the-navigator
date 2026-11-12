@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "./chunk-catalog.ts";
-import { ECONOMY } from "./economy.ts";
 import { sectorArchetypes, sectorEncounters } from "./enemy-catalog.ts";
 import {
   BUILT,
@@ -111,7 +110,6 @@ describe("tuning by route position", () => {
     const tables: readonly Readonly<Partial<Record<RoutePosition, unknown>>>[] = [
       ASTEROID_FIELDS,
       CHUNK_CATALOG,
-      ECONOMY.weaponDropChance,
       JOB_REWARDS,
     ];
     for (const table of tables) {

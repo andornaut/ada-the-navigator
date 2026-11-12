@@ -149,26 +149,20 @@ describe("flight boundaries", () => {
     expect(flight.dangerFor).toBe(0);
   });
 
-  it("collects cargo without a capacity limit and retains each collected upgrade", () => {
+  it("collects cargo without a capacity limit and reports each collected upgrade pickup", () => {
     const flight = empty();
     flight.cargo = 500;
     flight.weapon = "rapidMissile";
     flight.objects.push(
       { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
-      {
-        ...flight.player,
-        hp: 1,
-        id: "multiLaser",
-        kind: "pickup",
-        radius: 10,
-        weapon: "multiLaser",
-      },
+      { ...flight.player, hp: 1, id: "drop:1", kind: "pickup", radius: 10, upgrade: true },
     );
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    const events = stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.cargo).toBe(501);
     expect(flight.objects).toHaveLength(0);
-    expect(flight.weapon).toBe("multiLaser");
-    expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
+    // The game chooses and gives the gift; the flight only reports the pickup.
+    expect(events).toContainEqual({ id: "drop:1", type: "upgradeCollected" });
+    expect(flight.weapon).toBe("rapidMissile");
   });
 
   it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {

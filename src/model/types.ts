@@ -73,7 +73,8 @@ export interface SpaceObject extends Vec {
   velocity?: Vec;
   routeId?: string;
   behavior?: "pursue" | "shoot" | "guard";
-  weapon?: Exclude<Weapon, "laser">;
+  /** An upgrade pickup; its gift is chosen when Ada collects it. */
+  upgrade?: true;
   cooldown?: number;
   /** Stardust carried by a Stardust pickup. */
   amount?: number;
@@ -304,7 +305,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 8;
+  version: 9;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];
@@ -337,6 +338,8 @@ export type FlightEvent =
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }
   | { type: "enemyDestroyed" }
+  /** Ada collected an upgrade pickup. */
+  | { id: string; type: "upgradeCollected" }
   /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
   | { id: string; type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }

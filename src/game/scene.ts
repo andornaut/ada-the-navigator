@@ -30,7 +30,6 @@ import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
-import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
@@ -327,6 +326,12 @@ import {
   towOffset,
 } from "./tow-art.ts";
 import {
+  litChevron,
+  readUpgradePickup,
+  UPGRADE_CHEVRON,
+  type UpgradePickupArt,
+} from "./upgrade-pickup.ts";
+import {
   AMBER_BEAM_GLOW,
   blast as blastEffect,
   type EffectShape,
@@ -454,6 +459,9 @@ export class PrototypeScene extends Scene {
   private drawnTops = new Map<string, number>();
   /** Each texture frame's topmost row at alpha 0.5 or more, as a fraction of its height. */
   private frameTops = new Map<string, number>();
+  /** The upgrade pickup's chevrons and climb, and when each pickup first drew, in ms. */
+  private upgradePickupArt: UpgradePickupArt | undefined;
+  private pickupSeen = new Map<string, number>();
   private hitFlashes = new HitFlashes();
   // A heavy's part frames load on demand, once per archetype.
   private partAssets: Asset[] = [];
@@ -752,15 +760,6 @@ export class PrototypeScene extends Scene {
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
-    // Weapon pickups draw their HUD glyphs rasterised at the pickup size.
-    const glyph = { displayHeight: PICKUP_GLYPH.size, displayWidth: PICKUP_GLYPH.size };
-    for (const weapon of PICKUP_GLYPH.weapons) {
-      this.queueSvg({
-        key: pickupGlyphKey(weapon),
-        path: weaponGlyphPath(weapon),
-        size: (scale) => vectorRaster(scale, glyph),
-      });
-    }
     preloadTouchChrome(this);
   }
 
@@ -862,6 +861,7 @@ export class PrototypeScene extends Scene {
     this.projectArt = readProjectArt(this.shipAssets, this.outpostArt, PROJECTS_FILE);
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
+    this.upgradePickupArt = readUpgradePickup(manifest?.assets ?? []);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
     this.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);
     this.manifest = {
@@ -2599,6 +2599,11 @@ export class PrototypeScene extends Scene {
       this.enemySprites.get(id)!.destroy();
       this.enemySprites.delete(id);
     }
+    for (const id of this.pickupSeen.keys()) {
+      if (!activeIds.has(id)) {
+        this.pickupSeen.delete(id);
+      }
+    }
     for (const [id, group] of this.salvagedGroups) {
       if (!activeIds.has(id)) {
         group.destroy();
@@ -3865,6 +3870,32 @@ export class PrototypeScene extends Scene {
   }
 
   /**
+   * The upgrade pickup's two chevrons in the square's amber (art/weapons.md "Pickups"): the
+   * climb loops from the still frame when the pickup first draws, lighting each chevron white
+   * for its step; reduced motion holds the still frame.
+   */
+  private drawUpgradeChevrons(object: SpaceObject, point: Vec, color: number): void {
+    const art = this.upgradePickupArt;
+    if (!art || !this.textures.exists(UPGRADE_CHEVRON)) {
+      return;
+    }
+    const since = this.pickupSeen.get(object.id) ?? this.time.now;
+    this.pickupSeen.set(object.id, since);
+    const lit = litChevron(art, this.reducedMotion, this.time.now - since);
+    for (const chevron of art.chevrons) {
+      const key = partKey(object.id, `chevron:${chevron.name}`);
+      const sprite = this.objectSprite(key, UPGRADE_CHEVRON)
+        .setOrigin(0.5)
+        .setPosition(point.x + chevron.offset.x, point.y + chevron.offset.y)
+        .setDepth(playDepth(point.y))
+        .setTint(chevron.name === lit ? 0xffffff : color)
+        .setTintMode(TintModes.FILL);
+      this.keyline("upgradePickup", key, sprite);
+    }
+  }
+
+
+  /**
    * A station in its galaxy's own art where it has some, its funded replacement swapped in (the
    * Loom hall), else the shared station's A/B blink; reduced motion holds frame 0. Stations draw
    * no name label.
@@ -4456,7 +4487,7 @@ export class PrototypeScene extends Scene {
           this.drawStardust(object, point, radius);
           break;
         }
-        if (this.light && object.weapon && LIGHT_FIELD.keylined.includes("weaponPickup")) {
+        if (this.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
           // The square's ink keyline: a stroke 2 keyline wider on the same path.
           this.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
           this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
@@ -4475,15 +4506,8 @@ export class PrototypeScene extends Scene {
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
-        } else if (object.weapon && this.textures.exists(pickupGlyphKey(object.weapon))) {
-          // The weapon's HUD glyph at 14px, filled in the square's amber.
-          const glyph = this.objectSprite(object.id, pickupGlyphKey(object.weapon))
-            .setDisplaySize(PICKUP_GLYPH.size, PICKUP_GLYPH.size)
-            .setOrigin(0.5)
-            .setPosition(point.x, point.y)
-            .setTint(color)
-            .setTintMode(TintModes.FILL);
-          this.keyline("weaponPickup", object.id, glyph);
+        } else if (object.upgrade) {
+          this.drawUpgradeChevrons(object, point, color);
         }
         break;
       case "resource": {

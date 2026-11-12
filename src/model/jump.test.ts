@@ -10,7 +10,7 @@ import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
-import { grantedAmmo } from "./weapons.ts";
+import { collectWeapon, grantedAmmo } from "./weapons.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -42,15 +42,9 @@ function deplete(model: GameModel): void {
   incoming(flight);
   model.step(0.01, idle);
 }
+/** Ada finds a weapon, as an upgrade pickup that gives it does. */
 function pickup(flight: FlightState, weapon: UpgradeWeapon) {
-  flight.objects.push({
-    ...flight.player,
-    hp: 1,
-    id: `p:${flight.nextId++}`,
-    kind: "pickup",
-    radius: 10,
-    weapon,
-  });
+  collectWeapon(weapon, flight);
 }
 
 /** Ada owns weapons, each with a new weapon's packs. */
@@ -194,7 +188,7 @@ describe("quantum jump home", () => {
     const flight = model.state.flight!;
     const seed = flight.seed;
     flight.objects = [
-      { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, weapon: "multiLaser", x: 900, y: 0 },
+      { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, upgrade: true, x: 900, y: 0 },
       {
         hp: 3,
         id: "lost:rock",

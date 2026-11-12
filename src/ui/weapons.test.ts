@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
-import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { conversationBoxRect } from "./layout/conversationBox.ts";
 import {
   HUD_AMMO_COUNT,
@@ -132,19 +132,5 @@ describe("HUD weapon buttons", () => {
     expect(weaponGlyphPath(weapon)).toBe(`/art/ui/icons/weapon-${weapon}.svg`);
     const file = new URL(`../../public${weaponGlyphPath(weapon)}`, import.meta.url);
     expect(existsSync(file)).toBe(true);
-  });
-
-  it("draws each pickup weapon's HUD glyph at 14px inside its pickup square", () => {
-    expect(PICKUP_GLYPH.size).toBe(14);
-    expect(PICKUP_GLYPH.weapons).toEqual([
-      "scattershot",
-      "rapidMissile",
-      "multiLaser",
-      "heavyMissile",
-      "phaser",
-    ]);
-    expect(new Set(PICKUP_GLYPH.weapons.map(pickupGlyphKey)).size).toBe(5);
-    // The glyph fits inside the square, 20 across at pickupRadius 10.
-    expect(PICKUP_GLYPH.size).toBeLessThan(2 * PROTOTYPE.tuning.flight.pickupRadius);
   });
 });

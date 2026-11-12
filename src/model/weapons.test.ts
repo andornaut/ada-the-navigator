@@ -8,7 +8,7 @@ import { ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { FlightState } from "./types.ts";
-import { noAmmo } from "./weapons.ts";
+import { collectWeapon, noAmmo } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(): GameModel {
@@ -18,16 +18,10 @@ function launched(): GameModel {
   model.state.flight!.objects = [];
   return model;
 }
+/** Ada finds a weapon, as an upgrade pickup that gives it does. */
 function pickup(model: GameModel, weapon: Exclude<Weapon, "laser">): void {
   const flight = model.state.flight!;
-  flight.objects.push({
-    ...flight.player,
-    hp: 1,
-    id: `pickup:${flight.nextId++}`,
-    kind: "pickup",
-    radius: 10,
-    weapon,
-  });
+  collectWeapon(weapon, flight);
   stepFlight(PROTOTYPE, 0.01, idle, flight);
 }
 function incoming(flight: FlightState, count = 1): void {

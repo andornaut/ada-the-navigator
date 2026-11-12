@@ -195,7 +195,7 @@ describe("Art's collision data", () => {
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
-  it("draws the cache, Stardust, ore nugget and weapon pickups with outlines", () => {
+  it("draws the cache, Stardust, ore nugget and upgrade pickups with outlines", () => {
     const pickup = (extra: Partial<SpaceObject>): SpaceObject => ({
       hp: 1,
       id: "pickup",
@@ -208,8 +208,8 @@ describe("Art's collision data", () => {
     expect(pickupOutline(pickup({ amount: 5, role: "discovery" }))).not.toBeNull();
     expect(pickupOutline(pickup({ amount: 1, role: "stardust" }))).not.toBeNull();
     expect(pickupOutline(pickup({ role: "cargo" }))).not.toBeNull();
-    // The weapon pickup's square reaches half its 1.5 px outline past its radius.
-    const square = pickupOutline(pickup({ weapon: "rapidMissile" }))!;
+    // The upgrade pickup's square reaches half its 1.5 px outline past its radius.
+    const square = pickupOutline(pickup({ upgrade: true }))!;
     expect(Math.max(...square.flat().map((at) => at.x))).toBe(10.75);
   });
 

@@ -44,7 +44,7 @@ describe("light-field rule", () => {
       shotEdge: 1,
     });
     expect(LIGHT_FIELD.keylined).toEqual(
-      expect.arrayContaining(["ship", "fighter", "asteroid", "stardust", "weaponPickup"]),
+      expect.arrayContaining(["ship", "fighter", "asteroid", "stardust", "upgradePickup"]),
     );
     // Each jet set is a flat dark outer layer and a core gradient, with no halo.
     expect(LIGHT_FIELD.jets.ship.map((layer) => layerColor(layer, 0))).toEqual([

@@ -115,7 +115,7 @@ import type {
 } from "./types.ts";
 import { noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { collectWeapon, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
+import { ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -2922,14 +2922,14 @@ export function salvage(content: PrototypeContent, flight: FlightState): boolean
     { at: flight.time, from: { x: object.x, y: object.y } },
     flight,
   );
-  if (drop.weapon) {
+  if (drop.upgrade) {
     flight.objects.push({
       hp: 1,
       id: `drop:${flight.nextId++}`,
       kind: "pickup",
       radius: content.tuning.flight.pickupRadius,
       role: "drop",
-      weapon: drop.weapon,
+      upgrade: true,
       x: object.x,
       y: object.y,
     });
@@ -2969,14 +2969,14 @@ function stepWrecks(
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );
-    if (drop.weapon) {
+    if (drop.upgrade) {
       flight.objects.push({
         hp: 1,
         id: `drop:${flight.nextId++}`,
         kind: "pickup",
         radius: content.tuning.flight.pickupRadius,
         role: "drop",
-        weapon: drop.weapon,
+        upgrade: true,
         x: object.x,
         y: object.y,
       });
@@ -3082,9 +3082,9 @@ export function stepFlight(
       } else if (carriesStardust(object)) {
         events.push({ amount: object.amount ?? 0, type: "stardust" });
         object.hp = 0;
-      } else if (object.weapon) {
-        // A found weapon Ada already owns gives a pack of its ammunition instead.
-        collectWeapon(object.weapon, flight);
+      } else if (object.upgrade) {
+        // The game chooses the gift from what Ada can use as she collects it.
+        events.push({ id: object.id, type: "upgradeCollected" });
         object.hp = 0;
       }
     }
