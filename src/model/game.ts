@@ -1,3 +1,5 @@
+import { randomStream } from "@andornaut/game-kit/random";
+
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, SUPPLY_ITEMS } from "../data/activities.ts";
 import type { CastKey } from "../data/cast.ts";
@@ -459,9 +461,12 @@ export class GameModel {
     this.talk.advance();
   }
   private beginConversations(): void {
-    this.talk.beginFlight(this.state.selectedSector, {
-      stardust: this.state.economy.stardust > 0,
-    });
+    // The line pools shuffle from the flight's own seed, so they never draw on launch seeds.
+    this.talk.beginFlight(
+      this.state.selectedSector,
+      { stardust: this.state.economy.stardust > 0 },
+      randomStream(this.state.flight?.seed ?? 1, "line-pools"),
+    );
   }
   /** Which half and screen shows now. */
   get screen(): Screen {

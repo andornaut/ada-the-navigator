@@ -236,19 +236,19 @@ export class ConversationDirector {
   private nearStations: ReadonlySet<string> | null = null;
   private queue: Request[] = [];
   private quietFor = 0;
-  private readonly random: Random;
+  private random: Random;
   private sector: SectorId | null = null;
   private readonly seen: string[];
   private shieldWarned = false;
 
   /**
    * seen is the saved list, which the director extends as conversations show; random shuffles the
-   * pools.
+   * pools until a flight gives its own.
    */
   constructor(
     conversations: readonly Conversation[],
     seen: string[],
-    random: Random = seededRandom(crypto.getRandomValues(new Uint32Array(1))[0] ?? 1),
+    random: Random = seededRandom(1),
   ) {
     this.conversations = conversations;
     this.seen = seen;
@@ -271,10 +271,15 @@ export class ConversationDirector {
 
   /**
    * A flight starts or resumes in sector. done names lessons Ada has already acted on, such as
-   * collecting Stardust before.
+   * collecting Stardust before; random, when given, shuffles the pools from now on.
    */
-  beginFlight(sector: SectorId, done: Partial<Record<Lesson, boolean>> = {}): void {
+  beginFlight(
+    sector: SectorId,
+    done: Partial<Record<Lesson, boolean>> = {},
+    random: Random = this.random,
+  ): void {
     this.reset();
+    this.random = random;
     this.sector = sector;
     this.done = { aim: false, dock: false, move: false, stardust: false, ...done };
     this.request((trigger) => trigger.kind === "lesson" && trigger.lesson === "move");
