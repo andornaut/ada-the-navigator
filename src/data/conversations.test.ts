@@ -51,6 +51,15 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 const UNBUILT_LINES = [
   "Its weapons are down. We could salvage parts and let it go.",
   "No need to wreck it.",
+  // The first meetings, whose triggers come with Gameplay's rules for them.
+  "Astra, did that rock just wave at us?",
+  "That's a Cobble. They're made of stone, and they eat the ore they mine.",
+  "Rocks that eat rocks!",
+  "So many whales! Why do they sing like that?",
+  "Whale songs carry far. It's how families find each other in the dark.",
+  "No wonder it missed them.",
+  "Who are the squid folk by the currents?",
+  "The Voron. They ride the currents with the whales and write in glowing ink.",
 ];
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");

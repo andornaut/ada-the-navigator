@@ -90,7 +90,7 @@ export const PROTOTYPE: PrototypeContent = {
     },
     2: {
       closing: [
-        "Ada and her friends include Sam. The next time someone is unkind, Ada ",
+        "Sam joins their lunch table. The next time someone is unkind, Ada ",
         "and her friends stay right beside Sam. Nobody has to stand alone.",
       ].join(""),
       dialogue: {
