@@ -55,18 +55,21 @@ Upgrades are sold at stations and are also rare drops, at the same rates in ever
 galaxy: 0.25% of destroyed small ships and 5% of salvaged frigates, platforms and
 capitals drop an upgrade pickup. A destroyed heavy drops none. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
-use. The game picks evenly among the usable categories, then evenly within the
-chosen one:
+use. The game picks a category, then an item within it. Weapons, Shield, Engine
+tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
 
-- New weapon: a weapon Ada does not own, with three packs of its ammunition.
-- Weapon level: the next level of an owned weapon, Laser included.
+- Weapons: one weapon's next step, the weapon itself with three packs of its
+  ammunition if Ada does not own it, otherwise its next level. Each weapon is
+  half as likely as the one before it: Laser 64, Multi-Laser 32, Rapid Missile
+  16, Heavy Missile 8, Scattershot 4 and Phaser 2.
 - Shield: its next level.
 - Engine tuning: its next level.
 - Tractor beam: its next level.
+- Paint: a paint scheme Ada does not own, owned but not put in use.
 
-When every category is maxed, the drop gives a paint scheme Ada does not own,
-owned but not put in use; once every scheme is owned, one pack of ammunition for
-a random owned weapon other than Laser. The pickup is one shared upgrade pickup,
+A category or weapon with nothing left to give leaves the pool, and the rest keep
+their relative weights. Once nothing is left, the drop gives one pack of
+ammunition for a random owned weapon other than Laser. The pickup is one shared upgrade pickup,
 and its contents are chosen when Ada collects it, so they fit her upgrades at that
 moment. Its notice names what it gave:
 
