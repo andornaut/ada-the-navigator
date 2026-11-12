@@ -277,6 +277,6 @@ replaceEntries(
       pivot: { x: 0, y: 0 },
     },
   ],
-  (id) => id.startsWith("cockpit"),
+  (id) => id.startsWith("aboard"),
 );
 linkData("core", { titleScreen: "/art/title-screen.json" });

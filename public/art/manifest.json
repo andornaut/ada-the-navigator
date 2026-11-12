@@ -3975,8 +3975,8 @@
       }
     },
     {
-      "id": "cockpit",
-      "path": "/art/cockpit.png",
+      "id": "aboard",
+      "path": "/art/aboard.png",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -3987,13 +3987,17 @@
         "y": 0.5
       },
       "subject": {
-        "top": 175,
-        "bottom": 298
+        "top": 172,
+        "bottom": 256
+      },
+      "focus": {
+        "x": 493.9,
+        "y": 213.9
       }
     },
     {
-      "id": "cockpit-seated",
-      "path": "/art/cockpit-seated.png",
+      "id": "aboard-emergency",
+      "path": "/art/aboard-emergency.png",
       "width": 1920,
       "height": 1080,
       "displayWidth": 960,
@@ -4004,8 +4008,80 @@
         "y": 0.5
       },
       "subject": {
-        "top": 175,
-        "bottom": 298
+        "top": 172,
+        "bottom": 256
+      },
+      "focus": {
+        "x": 493.9,
+        "y": 213.9
+      }
+    },
+    {
+      "id": "aboard-holodisk-0",
+      "path": "/art/aboard-holodisk-0.png",
+      "width": 552,
+      "height": 360,
+      "displayWidth": 276,
+      "displayHeight": 180,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 387,
+        "y": 137
+      }
+    },
+    {
+      "id": "aboard-holodisk-1",
+      "path": "/art/aboard-holodisk-1.png",
+      "width": 552,
+      "height": 360,
+      "displayWidth": 276,
+      "displayHeight": 180,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 387,
+        "y": 137
+      }
+    },
+    {
+      "id": "aboard-holodisk-2",
+      "path": "/art/aboard-holodisk-2.png",
+      "width": 552,
+      "height": 360,
+      "displayWidth": 276,
+      "displayHeight": 180,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 387,
+        "y": 137
+      }
+    },
+    {
+      "id": "aboard-holodisk-3",
+      "path": "/art/aboard-holodisk-3.png",
+      "width": 552,
+      "height": 360,
+      "displayWidth": 276,
+      "displayHeight": 180,
+      "facing": "front",
+      "pivot": {
+        "x": 0,
+        "y": 0
+      },
+      "at": {
+        "x": 387,
+        "y": 137
       }
     },
     {
@@ -32023,5 +32099,6 @@
   "titleScreen": "/art/title-screen.json",
   "jobs": "/art/jobs.json",
   "backdropLayers": "/art/backdrop.json",
-  "enemyWeapons": "/art/enemy-weapons.json"
+  "enemyWeapons": "/art/enemy-weapons.json",
+  "aboardHolodisk": "/art/aboard-holodisk.json"
 }

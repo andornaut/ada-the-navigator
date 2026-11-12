@@ -11,7 +11,7 @@
 
 ## Canvas
 
-Every storybook background, like the cockpit, is a 960 by 540 logical px canvas
+Every storybook background, like the aboard backdrop, is a 960 by 540 logical px canvas
 at 2x: a 1920 by 1080 opaque PNG with `displayWidth` 960 and `displayHeight` 540
 and the pivot at the centre. Draw it at display size under the insets, centred
 across and offset down by the [run anchor](layout.md#storybook-page), which
@@ -112,41 +112,40 @@ Full palettes are in the generator. Colours are before treatment d.
 The game names each page's location by a background key
 (`Background` in `src/data/storybook.ts`):
 
-| Key                      | Asset id                                         |
-| ------------------------ | ------------------------------------------------ |
-| `grandmaGarden`          | `story-grandma-garden`                           |
-| `gardenLot`              | `story-community-garden`                         |
-| `schoolHallway`          | `story-school-hallway`                           |
-| `kitchen`                | `story-kitchen` (key to add)                     |
-| `schoolyard`             | `story-schoolyard`                               |
-| `frontDoor`              | `story-front-door`                               |
-| `park`                   | `story-park`                                     |
-| `adaRoom`                | `story-ada-room`                                 |
-| `adaRoomUnpolished`      | `story-ada-room-unpolished` (the rock as dug up) |
-| `adaRoomNight`           | `story-ada-room-night`                           |
-| `adaRoomSleep`           | `story-ada-room-sleep` (night plus the figures)  |
-| `adaRoomMorning`         | `story-ada-room-morning`                         |
-| `adaRoomRecorder`        | `story-ada-room-recorder` (key to add)           |
-| `concertHall`            | `story-concert-hall` (key to add)                |
-| `grandmaGardenSpilled`   | `story-grandma-garden-spilled` (key to add)      |
-| `grandmaGardenReplanted` | `story-grandma-garden-replanted` (key to add)    |
-| `frontDoorMom`           | `story-front-door-mom` (key to add)              |
-| `adaRoomRecorderDad`     | `story-ada-room-recorder-dad` (key to add)       |
-| `adaRoomUnpolishedCats`  | `story-ada-room-unpolished-cats` (key to add)    |
-| `adaRoomMorningCats`     | `story-ada-room-morning-cats` (key to add)       |
-| `cockpit`                | `cockpit` ([cockpit](cockpit.md))                |
-| `cockpitSeated`          | `cockpit-seated` ([cockpit](cockpit.md))         |
+| Key                      | Asset id                                              |
+| ------------------------ | ----------------------------------------------------- |
+| `grandmaGarden`          | `story-grandma-garden`                                |
+| `gardenLot`              | `story-community-garden`                              |
+| `schoolHallway`          | `story-school-hallway`                                |
+| `kitchen`                | `story-kitchen` (key to add)                          |
+| `schoolyard`             | `story-schoolyard`                                    |
+| `frontDoor`              | `story-front-door`                                    |
+| `park`                   | `story-park`                                          |
+| `adaRoom`                | `story-ada-room`                                      |
+| `adaRoomUnpolished`      | `story-ada-room-unpolished` (the rock as dug up)      |
+| `adaRoomNight`           | `story-ada-room-night`                                |
+| `adaRoomSleep`           | `story-ada-room-sleep` (night plus the figures)       |
+| `adaRoomMorning`         | `story-ada-room-morning`                              |
+| `adaRoomRecorder`        | `story-ada-room-recorder` (key to add)                |
+| `concertHall`            | `story-concert-hall` (key to add)                     |
+| `grandmaGardenSpilled`   | `story-grandma-garden-spilled` (key to add)           |
+| `grandmaGardenReplanted` | `story-grandma-garden-replanted` (key to add)         |
+| `frontDoorMom`           | `story-front-door-mom` (key to add)                   |
+| `adaRoomRecorderDad`     | `story-ada-room-recorder-dad` (key to add)            |
+| `adaRoomUnpolishedCats`  | `story-ada-room-unpolished-cats` (key to add)         |
+| `adaRoomMorningCats`     | `story-ada-room-morning-cats` (key to add)            |
+| `aboard`                 | `aboard` ([aboard](aboard.md)) (key to add)           |
+| `aboardEmergency`        | `aboard-emergency` ([aboard](aboard.md)) (key to add) |
 
-`cockpit` is the empty cockpit, used only in the prologue: from the arrival
-narration through Astra's lines and the optional questions. `cockpitSeated`
-starts on the page where Ada sits and buckles Penny in, and covers every later
-ship-scene page: quantum jump and every later chapter's boarding and Continue,
-where they sit at once. The galaxy selector draws over its own
-[route sky](route-sky.md). Gameplay owns the page marks.
+`aboard` is Ada's ship from outside, behind every page aboard: the prologue's
+aboard pages, standing and seated alike, Astra's boarding line and the
+holodisk moment. The text carries where Ada and Penny are. `aboardEmergency`
+is the jump-home page before the sleep scene. The galaxy selector draws over
+its own [route sky](route-sky.md). Gameplay owns the page marks.
 
-On a cockpit page whose speaker is Astra, she speaks with her dialogue
-portrait; the cockpit background stays still. See
-[Astra speaking](cockpit.md#astra-speaking).
+On an aboard page whose speaker is Astra, she speaks with her dialogue
+portrait; the background stays still. See
+[Astra speaking](aboard.md#astra-speaking).
 
 ## Pages
 
@@ -161,7 +160,7 @@ their scene's background (Grandma's choice uses `story-grandma-garden`).
 
 Each background's manifest entry carries `subject: { top, bottom }`, the canvas
 rows (logical px) its key objects span, written by its generator
-(`art/tools/storybook.ts`, `art/tools/cockpit.ts`). The story page offsets the
+(`art/tools/storybook.ts`, `art/tools/aboard.ts`). The story page offsets the
 background so the band centres in the strip above the tallest panel in the
 story run ([run anchor](layout.md#storybook-page)). At a 360-high view the canvas can
 rise at most 180 (90 past centred), so a band's bottom shows only while it is
@@ -180,8 +179,8 @@ at most the panel top + 180; at 720x405 the limit is the panel top + 135.
 | `story-front-door`               | 175..280 | The coats and Penny's lead on their hooks by the door  |
 | `story-ada-room-night`           | 250..300 | The rock's glow on the desk; the sleep scene shares it |
 | `story-ada-room-morning`         | 255..348 | Ada's waking sprite on the bed, the rock on the desk   |
-| `cockpit`                        | 175..298 | The canopy dome                                        |
-| `cockpit-seated`                 | 175..298 | The canopy dome                                        |
+| `aboard`                         | 172..256 | The ship's canopy and the hull round it                |
+| `aboard-emergency`               | 172..256 | The ship's canopy and the hull round it                |
 | `story-ada-room-recorder`        | 248..293 | The rock and the recorder on the desk                  |
 | `story-concert-hall`             | 188..293 | The stage, the piano and Ada in the spotlight          |
 | `story-grandma-garden-spilled`   | 176..285 | The seedling tray on the potting table and the beds    |
@@ -191,8 +190,13 @@ Placement per story run and background: canvas top `y`, then the band's view
 rows and the tallest panel's top, at 720x360 with insets 43/43/0/19, 844x390
 with the same insets, and 1280x720 (720x405). A star marks a clamped
 placement. Runs: the first launch (chapter one's opening, then the prologue),
-a visit (a waiting chapter scene, Ada's room, boarding), the empty visit and
-the jump home (night, morning, then the visit). The four new backgrounds have
+a visit (a waiting chapter scene, Ada's room, boarding), the empty visit, the
+jump home (the jump-home page, night, morning, then the visit) and the holodisk
+moment (its narration, Astra's "Memory restored." and her memory line). Aboard
+runs follow Gameplay's aboard page list; boarding anchors on Astra's line, the
+longer "Welcome back, Navigator. A new galaxy is ready." after an unlock, and
+the holodisk moment on its longest memory line, the fourth (a run with a
+shorter line anchors on its own tallest page). The four new backgrounds have
 no pages yet; their rows assume a chapter page at Gameplay's limit (220
 characters, the heading and two choices).
 
@@ -202,10 +206,12 @@ characters, the heading and two choices).
 | `story-park`, first launch                                          | y -138: 82..147, top 229        | y -134: 86..151, top 237        | y -110: 110..175, top 285       |
 | `story-ada-room-unpolished`, first launch                           | y -162: 93..138, top 231        | y -162: 93..138, top 231        | y -135*: 120..165, top 279      |
 | `story-ada-room`, every visit, first launch, empty visit, jump home | y -171: 84..129, top 213        | y -171: 84..129, top 213        | y -135*: 120..165, top 261      |
-| `cockpit`, first launch                                             | y -180*: -5..118, top 93        | y -180*: -5..118, top 93        | y -135*: 40..163, top 141       |
-| `cockpit-seated`, first launch                                      | y -135: 40..163, top 203        | y -135: 40..163, top 203        | y -111: 64..187, top 251        |
+| `aboard`, first launch (standing, questions, seated)                | y -167.5: 4.5..88.5, top 93     | y -167.5: 4.5..88.5, top 93     | y -135*: 37..121, top 141       |
 | `story-community-garden`, visit, chapter 1 resolution               | y -178.5: 1.5..111.5, top 113   | y -178.5: 1.5..111.5, top 113   | y -135*: 45..155, top 161       |
-| `cockpit-seated`, every visit, empty visit, jump home               | y -122: 53..176, top 229        | y -122: 53..176, top 229        | y -98: 77..200, top 277         |
+| `aboard`, boarding                                                  | y -95.5: 76.5..160.5, top 237   | y -95.5: 76.5..160.5, top 237   | y -71.5: 100.5..184.5, top 285  |
+| `aboard`, boarding after an unlock                                  | y -99.5: 72.5..156.5, top 229   | y -99.5: 72.5..156.5, top 229   | y -75.5: 96.5..180.5, top 277   |
+| `aboard`, holodisk moment, fourth memory line                       | y -125.5: 46.5..130.5, top 177  | y -125.5: 46.5..130.5, top 177  | y -101.5: 70.5..154.5, top 225  |
+| `aboard-emergency`, jump home                                       | y -85.5: 86.5..170.5, top 257   | y -85.5: 86.5..170.5, top 257   | y -61.5: 110.5..194.5, top 305  |
 | `story-school-hallway`, visit, chapter 2 opening                    | y -170.5: 13.5..119.5, top 133  | y -170.5: 13.5..119.5, top 133  | y -135*: 49..155, top 181       |
 | `story-schoolyard`, visit, chapter 2 resolution                     | y -156.5: 11.5..121.5, top 133  | y -156.5: 11.5..121.5, top 133  | y -132.5: 35.5..145.5, top 181  |
 | `story-front-door`, visit, chapter 3 opening                        | y -171: 4..109, top 113         | y -171: 4..109, top 113         | y -135*: 40..145, top 161       |
@@ -220,12 +226,9 @@ characters, the heading and two choices).
 A [story figure](#story-figures) composite carries its base's band and takes
 its base's placement.
 
-Every band in the current runs clears its panel at these views except the
-cockpit's under Astra's three questions, a crop kept by design: the ship stays
-at 0.85, and with the panel top at 93 at 360-high views (141 at 720x405) the
-123-row dome loses 25 rows under the panel and 5 above the view, and 22 under
-the panel at 720x405. Every other cockpit page shows the whole dome. At
-Gameplay's limit the four new backgrounds clear too: Needle's recorder room
+Every band in the current runs clears its panel at these views, the aboard
+band under Astra's three questions included: its 84 rows fit the 93-row strip.
+At Gameplay's limit the four new backgrounds clear too: Needle's recorder room
 and concert hall rise 7 rows so their bands end by row 293, the lowest visible
 row under a 220-character page at 360-high views.
 
@@ -395,28 +398,26 @@ with Ada.
 
 ## Rock glow transition
 
-The glow plays on the press that leaves Ada's room for the cockpit: the page
-change from an `adaRoom` page to the ship scene's first page (in the prologue,
+The glow plays on the press that leaves Ada's room for the ship: the page
+change from an `adaRoom` page to the first aboard page (in the prologue,
 "Touch the glow."; at boarding, the room narration's press). Data:
 [story-transition.json](../public/art/story-transition.json), linked from the
-root manifest as `storyTransition`. Key `rockGlow` ends on `cockpit` (the
-prologue); `rockGlowSeated` is identical but ends on `cockpit-seated`
-(boarding). The game picks the entry whose final background matches the next
-page's.
+root manifest as `storyTransition`. Key `rockGlow` ends on
+[`aboard`](aboard.md), in the prologue and at every boarding alike.
 
 - `from` is the page's background, `story-ada-room`. On the press the story
   panel hides, then `steps` play in order.
 - Each step cross-fades linearly from the previous image to its `background`
   over `fadeMs`, then holds for `holdMs`. A `fadeMs` of 0 is a cut.
 - Steps: `story-ada-room-glow-1` (160 ms), `story-ada-room-glow-2` (160 ms),
-  `story-ada-room-glow-3` (200 ms, hold 240 ms), then a cut to the entry's
-  cockpit background. The ship scene's first page panel then appears.
+  `story-ada-room-glow-3` (200 ms, hold 240 ms), then a cut to `aboard`. The
+  first aboard page's panel then appears.
 - `reducedMotion` replaces `steps`: one 400 ms cross-fade from
-  `story-ada-room` to the entry's cockpit background, with no glow frames.
+  `story-ada-room` to `aboard`, with no glow frames.
 
-Needle boards from the recorder room, so key `rockGlowRecorderSeated` is the
+Needle boards from the recorder room, so key `rockGlowRecorder` is the
 same glow from `story-ada-room-recorder` through `story-ada-room-recorder-glow-1`
-to `-3` into `cockpit-seated`, with the same timing and reduced motion. Its
+to `-3` into `aboard`, with the same timing and reduced motion. Its
 frames are the recorder room with the same glow amounts, drawn 7 rows higher as
 the room is, the recorder in place on its song sheet, and carry the room's
 subject band (248..293).

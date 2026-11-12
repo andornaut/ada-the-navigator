@@ -3,9 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import type { Frame } from "@andornaut/art-kit/grid";
 
-import { dash, type DashScene, HOLO, PEARL } from "./dash.ts";
 import { placeEntries } from "./manifest.ts";
-import { region, resize, type RgbaImage } from "./paint.ts";
 import { INK } from "./palette.ts";
 import { roundHalfEven } from "./random.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
@@ -14,6 +12,9 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const sprites = `${art}ui/sprites/`;
 const uiManifest = `${art}ui/manifest.json`;
 const WHITE = "ffffff";
+// The pearl rim and hub, light to shade, and the magenta hologram band.
+const PEARL = ["ffffff", "d9dff0", "a3aacb"] as const;
+const HOLO = ["ffb3ec", "e868c8", "a83a96"] as const;
 
 // A face-on pearl disc with a magenta hologram band, lit from the upper left. `squash` below 1
 // narrows it as it turns; `glint` turns the band's highlights.
@@ -112,43 +113,6 @@ await writeSprites(
 );
 await prettify(`${art}holodisk-beacon.json`);
 
-// Insert inset: a close-up of the storybook dash cropped round the drive and Astra's face.
-const CROP = { height: 150, width: 300, x: 300, y: 168 } as const;
-const INSET = { height: 132, width: 264 } as const;
-const INSERT: readonly (readonly [string, DashScene, number])[] = [
-  ["hold", { hand: "hold" }, 400],
-  ["push", { hand: "push", player: "half" }, 250],
-  ["read", { astra: { frame: 0 }, hand: "retract", player: "in" }, 400],
-  ["restored", { astra: { frame: 2 }, player: "done" }, 600],
-];
-// Opaque painted panels as sprite frames.
-const asFrame = ({ data, height, width }: RgbaImage): Frame =>
-  Array.from({ length: height }, (_, y) =>
-    Array.from({ length: width }, (_, x) =>
-      [0, 1, 2].map((c) => data[(y * width + x) * 4 + c]!.toString(16).padStart(2, "0")).join(""),
-    ),
-  );
-await writeSprites(
-  { data: `${sprites}holodisk-insert.json`, sheet: `${sprites}holodisk-insert.png` },
-  { key: "holodisk-insert" },
-  [
-    [
-      "insert",
-      INSERT.map(([, scene]) =>
-        asFrame(
-          resize(
-            region(dash(scene), CROP.x, CROP.y, CROP.width, CROP.height),
-            INSET.width,
-            INSET.height,
-          ),
-        ),
-      ),
-      INSERT.map(([, , ms]) => ms),
-    ],
-  ],
-);
-await prettify(`${sprites}holodisk-insert.json`);
-
 // The pickup and beacon load as root manifest sprite sheets.
 const sheetEntry = (
   id: string,
@@ -178,7 +142,6 @@ type Sprite = { key: string; png: string; json: string; once: string[] };
 const manifest = JSON.parse(readFileSync(uiManifest, "utf8")) as { sprites: Sprite[] };
 const keys: readonly (readonly [string, string[]])[] = [
   ...ICONS.map(([key]) => [key, []] as const),
-  ["holodisk-insert", ["insert"]],
 ];
 manifest.sprites = [
   ...manifest.sprites.filter(({ key }) => !keys.some(([k]) => k === key)),

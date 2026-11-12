@@ -101,7 +101,7 @@ Sunflower is 10.90:1; bare `threat` there is 1.75:1.
 ## In-between
 
 `inBetween` holds the in-between dimension's ramp, darkest to lightest, and its
-shimmer. It colours the rock's glow, the cockpit's surroundings and the quantum
+shimmer. It colours the rock's glow, the aboard backdrop's field and the quantum
 jump. The roles above do not read it.
 
 | Key       | Value                                                 |

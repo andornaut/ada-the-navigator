@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "holodisk": {
+    "background": "aboard",
+    "overlays": {
+      "aboard-holodisk-0": {
+        "at": {
+          "x": 387,
+          "y": 137
+        }
+      },
+      "aboard-holodisk-1": {
+        "at": {
+          "x": 387,
+          "y": 137
+        }
+      },
+      "aboard-holodisk-2": {
+        "at": {
+          "x": 387,
+          "y": 137
+        }
+      },
+      "aboard-holodisk-3": {
+        "at": {
+          "x": 387,
+          "y": 137
+        }
+      }
+    },
+    "steps": [
+      {
+        "overlay": "aboard-holodisk-0",
+        "fadeMs": 0,
+        "holdMs": 400
+      },
+      {
+        "overlay": "aboard-holodisk-1",
+        "fadeMs": 0,
+        "holdMs": 250
+      },
+      {
+        "overlay": "aboard-holodisk-2",
+        "fadeMs": 0,
+        "holdMs": 400
+      },
+      {
+        "overlay": "aboard-holodisk-3",
+        "fadeMs": 0,
+        "holdMs": 600
+      }
+    ],
+    "durationMs": 1650,
+    "reducedMotion": [
+      {
+        "overlay": "aboard-holodisk-0",
+        "fadeMs": 0,
+        "holdMs": 0
+      },
+      {
+        "overlay": "aboard-holodisk-3",
+        "fadeMs": 300,
+        "holdMs": 0
+      }
+    ],
+    "reducedMotionMs": 300,
+    "exitFadeMs": 200
+  }
+}

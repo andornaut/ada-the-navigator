@@ -109,7 +109,7 @@ const SCHEMES: readonly Scheme[] = [
     price: PAINT_PRICE,
   },
 ];
-const [classic] = SCHEMES;
+export const classic = SCHEMES[0]!;
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 // UP projects straight up.
 const UP = 20;
@@ -522,7 +522,11 @@ function convexHull(points: readonly (readonly [number, number])[]): [number, nu
 }
 
 // The frame's polygons in draw order, in frame px rounded as the SVG writes them.
-function drawn(yaw: number, thrust: boolean, paint: Paint): { color: string; outline: V2[] }[] {
+export function drawn(
+  yaw: number,
+  thrust: boolean,
+  paint: Paint,
+): { color: string; outline: V2[] }[] {
   return model(yaw, thrust, paint)
     .map((face) => ({
       ...face,
@@ -540,7 +544,7 @@ function drawn(yaw: number, thrust: boolean, paint: Paint): { color: string; out
     });
 }
 
-function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
+function svg(yaw: number, thrust: boolean, scheme: Scheme = classic): string {
   const polygons = drawn(yaw, thrust, scheme.paint).map(({ color, outline }) => {
     const text = outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
     return `  <polygon fill="${color}" points="${text.join(" ")}"/>`;
@@ -634,69 +638,72 @@ function noses(): string {
   });
 }
 
-mkdirSync(output, { recursive: true });
-writeFileSync(`${output}ship-jets.json`, jets());
-writeFileSync(`${output}ship-nose.json`, noses());
-for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-  for (const thrust of [false, true]) {
-    writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
-  }
-}
-writeFileSync(`${output}ship.svg`, svg(UP, false));
-writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
-
-// Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
-const painted = SCHEMES.filter((scheme) => scheme !== classic);
-for (const scheme of painted) {
-  mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
+// Run directly, it writes the frames and contracts; imported (as by aboard.ts) it writes nothing.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  mkdirSync(output, { recursive: true });
+  writeFileSync(`${output}ship-jets.json`, jets());
+  writeFileSync(`${output}ship-nose.json`, noses());
   for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
-    writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
+    for (const thrust of [false, true]) {
+      writeFileSync(`${output}ship-${thrust ? "thrust-" : ""}${yaw}.svg`, svg(yaw, thrust));
+    }
   }
-}
-writeFileSync(
-  `${output}ship-paint.json`,
-  json({
-    version: 1,
-    schemes: SCHEMES.map(({ id, name, paint, price }) => ({
-      id,
-      name,
-      price,
-      ...paint,
-      canopyHighlight: highlight(paint.canopyRoof),
-    })),
-  }),
-);
+  writeFileSync(`${output}ship.svg`, svg(UP, false));
+  writeFileSync(`${output}ship-thrust.svg`, svg(UP, true));
 
-// Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
-// the paint frames, which mirror ship-N with their own path and a paint id.
-const entry = (id: string, path: string, yaw: number) => ({
-  id,
-  path,
-  width: FRAME,
-  height: FRAME,
-  displayWidth: DISPLAY,
-  displayHeight: DISPLAY,
-  facing: `world-${yaw}`,
-  directionIndex: yaw,
-  pivot: { x: 0.5, y: 0.5 },
-});
-const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
-const entries = [
-  entry("ship", "/art/ship.svg", UP),
-  entry("ship-thrust", "/art/ship-thrust.svg", UP),
-  ...yaws.flatMap((yaw) => [
-    entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
-    entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
-  ]),
-  ...painted.flatMap((scheme) =>
-    yaws.map((yaw) => ({
-      ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
-      paint: scheme.id,
-    })),
-  ),
-];
-const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
-editManifest("core", (manifest) => {
-  manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
-  manifest.shipNose = "/art/ship-nose.json";
-});
+  // Paint schemes: idle frames only; speed jets are unpainted and drawn behind them.
+  const painted = SCHEMES.filter((scheme) => scheme !== classic);
+  for (const scheme of painted) {
+    mkdirSync(`${output}paint/${scheme.id}`, { recursive: true });
+    for (let yaw = 0; yaw < SHIP_HEADINGS; yaw++) {
+      writeFileSync(`${output}paint/${scheme.id}/ship-${yaw}.svg`, svg(yaw, false, scheme));
+    }
+  }
+  writeFileSync(
+    `${output}ship-paint.json`,
+    json({
+      version: 1,
+      schemes: SCHEMES.map(({ id, name, paint, price }) => ({
+        id,
+        name,
+        price,
+        ...paint,
+        canopyHighlight: highlight(paint.canopyRoof),
+      })),
+    }),
+  );
+
+  // Ship entries open the manifest: the up aliases, then idle and thrust per heading, then
+  // the paint frames, which mirror ship-N with their own path and a paint id.
+  const entry = (id: string, path: string, yaw: number) => ({
+    id,
+    path,
+    width: FRAME,
+    height: FRAME,
+    displayWidth: DISPLAY,
+    displayHeight: DISPLAY,
+    facing: `world-${yaw}`,
+    directionIndex: yaw,
+    pivot: { x: 0.5, y: 0.5 },
+  });
+  const yaws = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => yaw);
+  const entries = [
+    entry("ship", "/art/ship.svg", UP),
+    entry("ship-thrust", "/art/ship-thrust.svg", UP),
+    ...yaws.flatMap((yaw) => [
+      entry(`ship-${yaw}`, `/art/ship-${yaw}.svg`, yaw),
+      entry(`ship-thrust-${yaw}`, `/art/ship-thrust-${yaw}.svg`, yaw),
+    ]),
+    ...painted.flatMap((scheme) =>
+      yaws.map((yaw) => ({
+        ...entry(`ship-${scheme.id}-${yaw}`, `/art/paint/${scheme.id}/ship-${yaw}.svg`, yaw),
+        paint: scheme.id,
+      })),
+    ),
+  ];
+  const isShip = ({ id }: { id: string }) => id === "ship" || id.startsWith("ship-");
+  editManifest("core", (manifest) => {
+    manifest.assets = [...entries, ...manifest.assets.filter((asset) => !isShip(asset))];
+    manifest.shipNose = "/art/ship-nose.json";
+  });
+}

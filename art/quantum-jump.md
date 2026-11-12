@@ -93,7 +93,7 @@ The field frames are the shimmer of [shimmer.ts](tools/shimmer.ts) at phases
 blended 22% toward `#dcc3f2`. Diagonal sine bands blend through `#3a2f6b`,
 `#5f4fa3`, `#7f6abd`, `#9b82d4` and `#c4a6e2`, with a faint `#8fe0f2` tint on
 the bright crests, soft `#dcc3f2` glows and `#8fe0f2` and `#f3e6ff` sparkles
-that twinkle with the phase. The cockpit background uses phase 0.
+that twinkle with the phase. The aboard backdrop uses phase 0.
 
 ## Colour
 

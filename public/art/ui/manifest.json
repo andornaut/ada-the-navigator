@@ -13,12 +13,6 @@
   ],
   "sprites": [
     {
-      "key": "holodisk-insert",
-      "png": "sprites/holodisk-insert.png",
-      "json": "sprites/holodisk-insert.json",
-      "once": ["insert"]
-    },
-    {
       "key": "icon-achievements",
       "png": "sprites/icon-achievements.png",
       "json": "sprites/icon-achievements.json",

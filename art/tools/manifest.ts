@@ -86,7 +86,7 @@ export function editManifest(file: ManifestFile, edit: (manifest: Manifest) => v
 // Manifest groups after the ship and portraits, in order. A generator replaces its own group
 // in place, so each group stays contiguous and independent of the others.
 const GROUPS = [
-  "cockpit",
+  "aboard",
   "route-",
   "holodisk",
   "quantum-jump",

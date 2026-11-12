@@ -1640,35 +1640,34 @@ function concertHall(P: Palette): Scene {
   return s;
 }
 
-/* Rock glow transition: the rock's glow washes Ada's room, then the cockpit */
+/* Rock glow transition: the rock's glow washes Ada's room, then the ship from outside */
 
 // Glow amounts of the transition frames; 1 is the approved full wash.
 const GLOW = [1 / 3, 2 / 3, 1] as const;
 
 // Each step cross-fades from the previous image to its background over fadeMs, then holds;
-// fadeMs 0 is a cut. The cockpit background is art-premise's `cockpit`.
+// fadeMs 0 is a cut. The aboard backdrop is aboard.ts's `aboard`.
 const step = (background: string, fadeMs: number, holdMs: number) => ({
   background,
   fadeMs,
   holdMs,
 });
-// The same glow from a room into either cockpit background: empty in the prologue, seated at
-// boarding. Needle boards from the recorder room, whose frames keep the recorder on the desk.
-const rockGlow = (cockpit: string, room = "story-ada-room") => ({
+// The glow from a room to the aboard backdrop, which every aboard page shares, standing or
+// seated. Needle boards from the recorder room, whose frames keep the recorder on the desk.
+const rockGlow = (room = "story-ada-room") => ({
   from: room,
   steps: [
     step(`${room}-glow-1`, 160, 0),
     step(`${room}-glow-2`, 160, 0),
     step(`${room}-glow-3`, 200, 240),
-    step(cockpit, 0, 0),
+    step("aboard", 0, 0),
   ],
-  reducedMotion: [step(cockpit, 400, 0)],
+  reducedMotion: [step("aboard", 400, 0)],
 });
 export const TRANSITION = {
   version: 1,
-  rockGlow: rockGlow("cockpit"),
-  rockGlowSeated: rockGlow("cockpit-seated"),
-  rockGlowRecorderSeated: rockGlow("cockpit-seated", "story-ada-room-recorder"),
+  rockGlow: rockGlow(),
+  rockGlowRecorder: rockGlow("story-ada-room-recorder"),
 };
 
 /* Outputs */
@@ -2176,7 +2175,7 @@ function overnight(at: (id: string) => Overlay["at"]) {
 }
 
 // Root manifest groups after the ship and portraits, in order; the story group leads.
-const LATER = ["title-", "cockpit", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
+const LATER = ["title-", "aboard", "stardust", "holodisk", "quantum-jump", "station-", "enemy-"];
 
 export function placeStoryEntries(entries: readonly { id: string }[]) {
   editManifest("core", (manifest) => {

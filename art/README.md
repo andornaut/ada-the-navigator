@@ -12,7 +12,7 @@ Cartwheel's [hub, mooring buoy and story craft](cartwheel.md) and its
 [Cartwheel props](cartwheel-props.md) (traveling debris, the ore nugget,
 stranded craft, the tow line and the ore field layouts), [Stardust](stardust.md),
 [the rock](rock.md), the
-[cockpit background](cockpit.md), the galaxy selector's [route sky](route-sky.md),
+[aboard backdrop](aboard.md), the galaxy selector's [route sky](route-sky.md),
 the [title screen art](title-screen.md),
 the [holodisk](holodisk.md), the
 [quantum jump](quantum-jump.md), the [weapon effects](weapons.md), the
