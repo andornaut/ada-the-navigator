@@ -166,7 +166,8 @@ outer `#c9a978` to `#ffe9b8` and core `#efe4cf` to `#ffffff`.
 
 ### Nose
 
-`{craft}-jets.json` also carries `nose`: 16 entries, `nose[k]` for heading `k`.
+`{craft}-jets.json` also carries `nose`: 16 entries, `nose[k]` for heading `k`,
+from [art/tools/nose.ts](tools/nose.ts), shared with every story craft.
 The nose reaches to the forward-most solid part (hull, wing, pod, ram bar or
 lamp); the 0.6-deep window panes on the walls do not count.
 

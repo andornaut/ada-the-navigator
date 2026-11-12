@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { jetsFile } from "./crafts.ts";
 import { replaceEntries } from "./manifest.ts";
+import { noses } from "./nose.ts";
 import {
   anchor,
   ENEMY_HEADINGS,
@@ -880,57 +881,6 @@ function craftFrame(craft: Craft): number {
   return Math.ceil((2 * (extent + PAD)) / STEP) * STEP;
 }
 
-// The nose tip: the midpoint of the forward-most top edge of the craft's solid parts, nearest the
-// centre line (ties to negative v). Window panes are left out: they stand 0.6 proud of their walls
-// only so they render.
-function noseTip(craft: Craft): { reach: number; tip: Point } {
-  const parts = craft.build(() => false).flat();
-  const reach = Math.max(...parts.flatMap(({ plan }) => plan.map(([, y]) => -y)));
-  const edges = parts.flatMap(({ plan, z1 }) => {
-    const front = plan.filter(([, y]) => Math.abs(y + reach) < 1e-9).map(([x]) => x);
-    return front.length === 0 ? [] : [{ v: (Math.min(...front) + Math.max(...front)) / 2, z: z1 }];
-  });
-  const { v, z } = edges.sort(
-    (a, b) => Math.abs(a.v) - Math.abs(b.v) || a.v - b.v || b.z - a.z,
-  )[0]!;
-  return { reach, tip: [...uv(reach, v), z] };
-}
-
-// World units from the pivot to the point under the nose tip on the centre line at heading `yaw`:
-// the art's projection at display scale through the inverse of the game's (x - y, (x + y) / 2).
-function noseDistance(reach: number, yaw: number): number {
-  const [x, y] = projectAt(0, 0, rotate(ENEMY_HEADINGS, yaw, [...uv(reach, 0), 0]));
-  const [sx, sy] = [x * DISPLAY_SCALE, y * DISPLAY_SCALE];
-  return round(Math.hypot(sy + sx / 2, sy - sx / 2));
-}
-
-type Point2 = readonly [number, number];
-const segmentDistance = ([px, py]: Point2, [ax, ay]: Point2, [bx, by]: Point2) => {
-  const [ex, ey] = [bx - ax, by - ay];
-  const t = Math.max(0, Math.min(1, ((px - ax) * ex + (py - ay) * ey) / (ex * ex + ey * ey)));
-  return Math.hypot(px - ax - t * ex, py - ay - t * ey);
-};
-
-// Per heading, the drawn tip in frame px and the nose distance in world units. Fails unless each
-// tip lies within 0.5 frame px of an edge of a face the heading's frame draws.
-function noses(craft: Craft, frame: number) {
-  const centre = frame / 2;
-  const { reach, tip } = noseTip(craft);
-  return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => {
-    const point = anchor(ENEMY_HEADINGS, centre, yaw, tip);
-    const gap = Math.min(
-      ...headingFaces(craft, yaw).flatMap(({ points }) => {
-        const drawn = points.map((p) => projectAt(centre, centre, p));
-        return drawn.map((a, i) => segmentDistance(point, a, drawn[(i + 1) % drawn.length]!));
-      }),
-    );
-    if (gap > 0.5) {
-      throw new Error(`${craft.name}-${yaw} nose is ${gap.toFixed(2)} frame px off the hull`);
-    }
-    return { distance: noseDistance(reach, yaw), tip: point };
-  });
-}
-
 const cartwheelJets = {
   outer: ["#c9a978", "#ffe9b8"] as [string, string],
   core: ["#efe4cf", "#ffffff"] as [string, string],
@@ -959,7 +909,7 @@ function writeCraft(dir: string, craft: Craft) {
           half: vector(ENEMY_HEADINGS, yaw, [-half, 0, 0]),
         })),
       cartwheelJets,
-      { nose: noses(craft, frame) },
+      { nose: noses((yaw) => headingFaces(craft, yaw), frame, craft) },
     ),
   );
   const display = round(frame * DISPLAY_SCALE);
