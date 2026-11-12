@@ -357,7 +357,12 @@ ammunition count string; Basic shows none.
 
 A thin status line for loading, shared by every game through game-kit (the
 progress state and its DOM progress bar). Constants: `LOADING_BAR`,
-`loadingBar.ts`, to implement.
+`src/ui/loading-bar.ts`.
+
+It shows only for loads the player waits for: the boot preload and any load
+that holds a screen or a transition until it ends (a galaxy's art before its
+flight). Work the player does not wait for, such as the offline precache, the
+service worker's install and art fetched ahead, shows no bar.
 
 | Token    | Value                                                                              | Rule                                                                                                 |
 | -------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -380,11 +385,10 @@ progress state and its DOM progress bar). Constants: `LOADING_BAR`,
   `#D8C994` the fill is 1.14:1 on the field but 12.44:1 on the ink rule under
   it, and the rule 10.90:1 on the field, so a full bar still reads; the fill
   is 4.51:1 on its track and the track 3.95:1 on the field.
-- Kit support: the DOM progress bar takes an RGB track colour, draws its
-  frame border on every side and hides a complete bar at once after its hold.
-  The 0.6 track alpha, the bottom-only rule and the 150 ms fade need either kit
-  options or Ada CSS on the bar's track, its bottom edge and its
-  `data-state="complete"`.
+- Kit support: game-kit 0.29.0's DOM progress bar draws the 0.6 track, the
+  250 ms hold and the 150 ms fade. Its frame border runs on every side, so the
+  bottom-only ink rule needs a kit option or Ada CSS on the bar's bottom edge;
+  `LOADING_BAR` does not carry it yet.
 
 ## Screens
 
