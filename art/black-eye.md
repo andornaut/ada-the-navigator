@@ -99,3 +99,22 @@ px in the station's dock schema.
 Lilac goo sits in the field's own hue, lighter, so the Blurbs read as folk of
 the violet rim and take no signal band; the station family's cream collar,
 blue lights and warm windows carry the settlement read.
+
+## Portraits
+
+Rebuild with `node art/tools/black-eye-portraits.ts`. It writes `dollop` and
+`blurb-settler` sheets (`{key}.png` and `{key}-compact.png`, ids
+`{key}-portrait` and `{key}-portrait-compact`, frame `neutral` 0) to
+`public/art/black-eye/portraits/` in the
+[conversation portrait](conversation.md) format, last in Black Eye's
+manifest. Both are Blurbs drawn from the bust parts in `art/tools/bust.ts`: a
+jelly blob over three drips that run off the frame's bottom edge, a glossy
+highlight and three bubbles.
+
+| Speaker | Key             | Crop   | Look                                                                                                                    |
+| ------- | --------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Dollop  | `dollop`        | (5, 2) | Orchid `#e48fd4` (shade `#b05aa6`, light `#ffd6f4`), a cream-dollop curl, blush                                         |
+| Settler | `blurb-settler` | (5, 3) | Every settlement greeter but Dollop: violet-blue `#a896ec`, no peak, a floating bubble, an amber scarf with a red patch |
+
+General Gadget, Black Eye's keeper once the chapter is complete, uses his named
+portrait ([Conversation portraits](conversation.md)).

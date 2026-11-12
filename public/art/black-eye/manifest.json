@@ -276,6 +276,74 @@
       "outpost": "settlement",
       "variant": "signal",
       "state": "mended"
+    },
+    {
+      "id": "blurb-settler-portrait",
+      "path": "/art/black-eye/portraits/blurb-settler.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "dollop-portrait",
+      "path": "/art/black-eye/portraits/dollop.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "blurb-settler-portrait-compact",
+      "path": "/art/black-eye/portraits/blurb-settler-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "dollop-portrait-compact",
+      "path": "/art/black-eye/portraits/dollop-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
     }
   ],
   "backdrop": "/art/black-eye/backdrop.json"

@@ -44,6 +44,7 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
 | `settler-portrait`, `settler-portrait-compact`                                                             | `happy` 0, `neutral` 1, `worried` 2                                                                      |
 | Needle's cast: `{key}-portrait`, `{key}-portrait-compact` for `reed`, `sedge`, `willow`, `marsh`           | `neutral` 0                                                                                              |
 | Andromeda's cast: `{key}-portrait`, `{key}-portrait-compact` for `settler-greeter`, `lumen`, `dial`, `cog` | `neutral` 0                                                                                              |
+| Black Eye's Blurbs: `dollop-portrait`, `blurb-settler-portrait` and their `-compact` sheets                | `neutral` 0                                                                                              |
 
 - Speaking loops run 120 ms per frame (480 ms per loop) while that speaker's
   line shows; when the line ends the portrait shows its idle frame. Reduced
@@ -67,8 +68,11 @@ Manifest `frames` names every frame. `loops` lists each speaking loop as
   marked `(happy)` shows `happy`, an unmarked line `neutral`. Penny's `upset`
   frame is unused for now.
 - General Gadget uses the `unknown-*` frames while his tab reads "Unknown
-  voice" and the `named-*` frames once it reads "General Gadget". His
+  voice" and the `named-*` frames once it reads "General Gadget", also as
+  Black Eye's station keeper. His
   compact crop is at (5, 1); Grandma's at (5, 2).
+- Dollop and the Blurb settler are in Black Eye's manifest
+  ([Black Eye](black-eye.md#portraits)).
 - Every speaker but Ada and Penny has one `neutral` frame (Gameplay's rule).
 
 ## Art

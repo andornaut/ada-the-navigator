@@ -140,7 +140,8 @@ the pickups ([Stardust](stardust.md#pickup), the
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, `needle-portraits.ts`
-Needle's Avi portraits, and `art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
+Needle's Avi portraits, `black-eye-portraits.ts` Black Eye's Blurb portraits, and
+`art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and
 `cartwheel-portraits.ts` each galaxy's cast, from the bust parts in `art/tools/bust.ts`.
 `art/tools/portraits.ts` draws the Astra, General Gadget and Grandma portraits and the compact
 conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
