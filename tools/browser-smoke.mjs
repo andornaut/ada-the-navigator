@@ -2805,23 +2805,23 @@ try {
   );
 
   // Art's overnight room (art/storybook.md "Sequence"): the shield breaks in the browser, the jump
-  // lands at night, the sleep page plays the figures, the rock's breath and the cross-fade, with
-  // Ada's waking sprite fading in with the morning, and morning follows.
+  // lands aboard in the emergency red, the sleep page plays the figures, the rock's breath and the
+  // cross-fade, with Ada's waking sprite fading in with the morning, and morning follows.
   await seedOnce(breakingSave, "ada-browser.overnight.v1");
   const storyNext = () => page.locator('.ada-story-panel:not([hidden]) [data-action="story-next"]');
   const roomShows = (background) =>
     page
       .locator(`.ada-story-background[data-background="${background}"]`)
       .waitFor({ state: "attached", timeout: 30000 });
-  await roomShows("adaRoomNight");
+  await roomShows("aboardEmergency");
   await storyNext().waitFor({ state: "visible", timeout: 30000 });
-  // The emergency jump's overlay ends before the night room is captured.
+  // The emergency jump's overlay ends before the jump-home page is captured.
   await page.waitForFunction(() => !document.querySelector(".ada-jump"), null, { timeout: 30000 });
   await page.waitForFunction(() =>
-    document.querySelector(".ada-story-art")?.style.backgroundImage.includes("ada-room-night"),
+    document.querySelector(".ada-story-art")?.style.backgroundImage.includes("aboard-emergency"),
   );
   await page.waitForTimeout(300);
-  await page.screenshot({ path: `${output}/overnight-night.png` });
+  await page.screenshot({ path: `${output}/overnight-aboard-emergency.png` });
   await storyNext().click();
   const sleepStart = Date.now();
   await roomShows("adaRoomSleep");
