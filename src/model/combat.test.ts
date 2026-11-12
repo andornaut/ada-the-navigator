@@ -7,6 +7,7 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   enemyDefinition,
+  enemyStardust,
   escortTuning,
   sectorEncounters,
 } from "../data/enemy-catalog.ts";
@@ -14,6 +15,7 @@ import { byPosition } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
+import { carriesStardust } from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import {
@@ -25,6 +27,8 @@ import {
   placeDestinationAhead,
   rollEncounter,
   routeBlocked,
+  salvage,
+  salvageTarget,
   settleRouteEncounters,
   stepFlight,
   teleport,
@@ -188,6 +192,48 @@ describe("integrated combat", () => {
     expect(stepFlight(PROTOTYPE, 0.01, idle, flight)).not.toContainEqual({
       type: "enemyDestroyed",
     });
+  });
+
+  it("salvages a disabled heavy within Talk range for its Stardust and spares it", () => {
+    // Sunflower's frigate: a 20 HP hull.
+    const flight = empty();
+    const target = ship("frigate", { x: 120, y: 0 }, enemyDefinition(1, "frigate"));
+    flight.objects.push(target);
+    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
+    target.enemy!.disabled = true;
+    expect(salvageTarget(PROTOTYPE, flight)).toBe(target);
+    flight.player = { x: 120 - PROTOTYPE.tuning.safeRadius - 1, y: 0 };
+    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
+    expect(salvage(PROTOTYPE, flight)).toBe(false);
+    flight.player = { x: 0, y: 0 };
+    expect(salvage(PROTOTYPE, flight)).toBe(true);
+    expect(target.enemy!.salvaged).toBe(true);
+    const stardust = flight.objects
+      .filter(carriesStardust)
+      .reduce((sum, object) => sum + object.amount!, 0);
+    expect(stardust).toBe(enemyStardust(1, "frigate"));
+    expect(salvageTarget(PROTOTYPE, flight)).toBeUndefined();
+    expect(salvage(PROTOTYPE, flight)).toBe(false);
+    // Shots and Ada pass through the spared ship, which neither moves nor fires.
+    flight.objects = flight.objects.filter((object) => object === target);
+    target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
+    hit(flight, { x: target.x, y: target.y }, 3);
+    flight.player = { x: target.x, y: target.y };
+    stepFlight(PROTOTYPE, 0.1, idle, flight);
+    expect(target.enemy!.hp).toBe(20);
+    expect(flight.player).toEqual({ x: target.x, y: target.y });
+    expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
+    expect(flight.objects).toContain(target);
+  });
+
+  it("unblocks a route whose guard is salvaged", () => {
+    const flight = empty();
+    ensureDestination(PROTOTYPE, "quest", flight);
+    const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
+    guard.enemy!.disabled = true;
+    expect(routeBlocked("quest", flight)).toBe(true);
+    guard.enemy!.salvaged = true;
+    expect(routeBlocked("quest", flight)).toBe(false);
   });
 
   it("stops a nonpiercing shot at a heavy's hull, lowering only the hull", () => {

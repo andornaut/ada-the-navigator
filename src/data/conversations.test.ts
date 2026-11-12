@@ -47,10 +47,6 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
 // Needle's and Andromeda's pools wait for their chapters, and the heavy-disabled reaction for
 // disabling and salvage.
-const UNBUILT_LINES = [
-  "Its weapons are down. We could salvage parts and let it go.",
-  "No need to wreck it.",
-];
 const IN_FLIGHT = passage("## In-flight conversations", " Needle: - First arrival");
 const BLACK_EYE = passage("Black Eye: - First arrival");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
@@ -103,9 +99,7 @@ describe("in-flight conversations", () => {
   });
 
   it("speak every line of the copy's in-flight section and the General's broadcasts", () => {
-    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)].filter(
-      ({ text }) => !UNBUILT_LINES.includes(text),
-    );
+    const copied = [...spokenLines(IN_FLIGHT), ...spokenLines(BROADCASTS)];
     expect(copied.length).toBeGreaterThan(30);
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
@@ -155,6 +149,7 @@ describe("in-flight conversations", () => {
       ["Penny", "Woof! Woof!"],
       ["Ada", "Penny, did you sense something, girl?"],
       ["Ada", "Our map is growing!"],
+      ["Ada", "No need to wreck it."],
       ["Ada", "Then let's make new memories."],
       ["Ada", "Maybe they can fix you too, Astra!"],
       ["Ada", "She thinks you're fun."],

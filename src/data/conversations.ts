@@ -37,6 +37,8 @@ export type ConversationTrigger =
   | { readonly kind: "meeting"; readonly sector: SectorId; readonly destination: string }
   | { readonly kind: "mapped" }
   | { readonly kind: "capital" }
+  /** A heavy disabled with its hull holding. */
+  | { readonly kind: "disabled" }
   | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
@@ -199,6 +201,16 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lore",
     repeat: "never",
     trigger: { kind: "capital" },
+  },
+  {
+    id: "reaction:disabled",
+    lines: [
+      line("astra", "Its weapons are down. We could salvage parts and let it go."),
+      happy("ada", "No need to wreck it."),
+    ],
+    priority: "lore",
+    repeat: "flight",
+    trigger: { kind: "disabled" },
   },
   {
     id: "arrival:1",

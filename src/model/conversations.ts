@@ -31,6 +31,8 @@ export interface ConversationFacts {
   readonly docked: boolean;
   /** A live enemy presses Ada (flight.ts dronesNear); damage from debris or hazards is not one. */
   readonly dronesNear: boolean;
+  /** A heavy was disabled this step, its hull holding. */
+  readonly heavyDisabled: boolean;
   /** Holodisks Ada holds: every galaxy's recovered one. */
   readonly holodisks: number;
   /** Ada is inside a space current. */
@@ -325,6 +327,9 @@ export class ConversationDirector {
     }
     if (facts.newlyMapped.length > 0 || facts.newStation) {
       this.request((trigger) => trigger.kind === "mapped");
+    }
+    if (facts.heavyDisabled) {
+      this.request((trigger) => trigger.kind === "disabled");
     }
     if (facts.capitalInSight) {
       this.request(

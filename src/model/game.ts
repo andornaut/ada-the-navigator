@@ -74,6 +74,8 @@ import {
   placeDestinationAhead,
   placeHuntingPack,
   routeBlocked,
+  salvage,
+  salvageTarget,
   settleRouteEncounters,
   stepFlight,
   syncFlightRegion,
@@ -558,6 +560,9 @@ export class GameModel {
     const job = this.jobUse();
     if (job) {
       return job;
+    }
+    if (this.salvageable()) {
+      return this.label("salvage");
     }
     const id = this.nearest();
     if (!id) {
@@ -1293,6 +1298,7 @@ export class GameModel {
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(this.content, f),
+      heavyDisabled: events.some((event) => event.type === "enemyDisabled"),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.sector, 0, f.player),
       inDanger: this.inDanger,
@@ -1564,6 +1570,10 @@ export class GameModel {
   }
   interact(): void {
     if (this.useJob()) {
+      return;
+    }
+    const flight = this.state.flight;
+    if (flight && this.salvageable() && salvage(this.content, flight)) {
       return;
     }
     const id = this.nearest();
@@ -1912,6 +1922,17 @@ export class GameModel {
   /** Whether a rescue's tow line is attached, which refuses Travel. */
   get towing(): boolean {
     return this.state.mode === "space" && Boolean(this.state.flight?.tow);
+  }
+  /** Whether Use salvages a disabled heavy here: in flight, with no conversation or card open. */
+  private salvageable(): boolean {
+    const f = this.state.flight;
+    return (
+      f !== null &&
+      this.state.mode === "space" &&
+      !this.state.dialogue &&
+      !this.state.docked &&
+      salvageTarget(this.content, f) !== undefined
+    );
   }
   /** What the Use button does for the held job here, if anything: Tow or Deliver. */
   private jobUse(): "tow" | "deliver" | null {

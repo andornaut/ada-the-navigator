@@ -28,6 +28,7 @@ const calm: ConversationFacts = {
   collectedStardust: false,
   docked: false,
   dronesNear: false,
+  heavyDisabled: false,
   holodisks: 0,
   inCurrent: false,
   inDanger: false,
@@ -93,6 +94,14 @@ describe("conversation schedule", () => {
     expect(talk.showing).toBeNull();
     run(talk, 0.15, { capitalInSight: true });
     expect(showing(talk)).toBe("reaction:capital:0");
+  });
+
+  it("reacts to a disabled heavy once each flight", () => {
+    const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
+    run(talk, 0.05, { heavyDisabled: true });
+    expect(tapThrough(talk)).toEqual(["reaction:disabled:0", "reaction:disabled:1"]);
+    run(talk, cooldownSeconds + 1, { heavyDisabled: true });
+    expect(talk.showing).toBeNull();
   });
 
   it("orders waiting conversations warning, lesson, Penny, lore", () => {

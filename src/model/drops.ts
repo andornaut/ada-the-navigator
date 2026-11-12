@@ -49,6 +49,23 @@ export function rollEnemyDrop(
   return drop;
 }
 
+/**
+ * A salvaged heavy's drop: its Stardust, half what destroying it gives, and a random upgrade
+ * weapon at twice its archetype's chance in the galaxy.
+ */
+export function rollSalvageDrop(
+  catalog: EconomyCatalog,
+  sector: SectorId,
+  archetype: EnemyArchetype,
+  next: () => number,
+): Drop {
+  const drop: Drop = { stardust: enemyStardust(sector, archetype), weapon: null };
+  if (next() < byPosition(catalog.weaponDropChance, sector)[archetype] * 2) {
+    drop.weapon = UPGRADE_WEAPONS[Math.floor(next() * UPGRADE_WEAPONS.length)] ?? "rapidMissile";
+  }
+  return drop;
+}
+
 export function rollAsteroidStardust(
   catalog: EconomyCatalog,
   size: AsteroidSize,

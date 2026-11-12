@@ -80,6 +80,7 @@ import {
   dropRandom,
   rollAsteroidStardust,
   rollEnemyDrop,
+  rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
@@ -1097,6 +1098,7 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
 
 export { relocateRouteGuards as settleRouteEncounters };
 
+/** A live guard blocks its route; a salvaged one is spared and powered down. */
 export function routeBlocked(id: string, flight: FlightState): boolean {
   // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
   return (
@@ -1748,7 +1750,10 @@ function enemies(
 ): boolean {
   let threatening = false;
   const aimVelocity = averageAimVelocity(dt, flight);
-  const objects = flight.objects.filter((object) => object.kind === "enemy" && object.hp > 0);
+  // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
+  const objects = flight.objects.filter(
+    (object) => object.kind === "enemy" && object.hp > 0 && !object.enemy?.salvaged,
+  );
   for (const object of objects) {
     // Legacy saved ships gain canonical state without resetting their damage or identity.
     if (!object.enemy) {
@@ -1830,6 +1835,7 @@ function enemies(
               ? distance(other, point) < (protectedRadius(content, other) ?? 0) + object.radius
               : other.kind === "enemy" &&
                 other.hp > 0 &&
+                !other.enemy?.salvaged &&
                 distance(other, point) < enemySpacing(object, other)),
         );
         if (!blocked) {
@@ -2048,6 +2054,7 @@ function strike(
     if (
       !["enemy", ...SCENERY].includes(object.kind) ||
       object.hp <= 0 ||
+      object.enemy?.salvaged ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
         ? !enemyTouched(ROUTE_POSITION[flight.sector], object, shot, 3)
@@ -2237,7 +2244,7 @@ function blast(
   blasts.push({ age: 0, radius, x: at.x, y: at.y });
   blastFlashes.set(flight, blasts);
   for (const object of [...flight.objects]) {
-    if (object === struck || object.kind !== "enemy" || object.hp <= 0) {
+    if (object === struck || object.kind !== "enemy" || object.hp <= 0 || object.enemy?.salvaged) {
       continue;
     }
     const position = ROUTE_POSITION[flight.sector];
@@ -2420,7 +2427,7 @@ function fireBeam(
           object,
         ),
       );
-    } else if (object.kind === "enemy" && object.enemy) {
+    } else if (object.kind === "enemy" && object.enemy && !object.enemy.salvaged) {
       // A heavy's live hardpoints take the beam first, then its hull.
       for (const part of liveParts(content, flight.sector, object)) {
         const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
@@ -2639,6 +2646,62 @@ function releaseStardust(
       y: at.y + screen.y - screen.x / 2,
     });
   });
+}
+
+/** The disabled heavy nearest Ada within Talk range that she can salvage. */
+export function salvageTarget(
+  content: PrototypeContent,
+  flight: FlightState,
+): SpaceObject | undefined {
+  return flight.objects
+    .filter(
+      (object) =>
+        object.kind === "enemy" &&
+        object.hp > 0 &&
+        object.enemy?.disabled === true &&
+        !object.enemy.salvaged &&
+        distance(object, flight.player) <= content.tuning.safeRadius,
+    )
+    .sort((a, b) => distance(a, flight.player) - distance(b, flight.player))[0];
+}
+
+/**
+ * Salvages the disabled heavy nearest Ada within Talk range: it drops its Stardust and twice the
+ * heavy weapon chance around its hull, then powers down, spared. Returns whether one was.
+ */
+export function salvage(content: PrototypeContent, flight: FlightState): boolean {
+  const object = salvageTarget(content, flight);
+  const enemy = object?.enemy;
+  if (!object || !enemy) {
+    return false;
+  }
+  enemy.salvaged = true;
+  enemy.engaged = false;
+  enemy.velocity = { x: 0, y: 0 };
+  const next = dropRandom(flight.seed, `salvage:${object.id}`);
+  const drop = rollSalvageDrop(ECONOMY, flight.sector, enemy.archetype, next);
+  releaseStardust(
+    object,
+    ECONOMY.destruction[enemy.archetype].spread,
+    next,
+    ECONOMY.pickupCap[enemy.archetype],
+    drop.stardust,
+    { at: flight.time, from: { x: object.x, y: object.y } },
+    flight,
+  );
+  if (drop.weapon) {
+    flight.objects.push({
+      hp: 1,
+      id: `drop:${flight.nextId++}`,
+      kind: "pickup",
+      radius: content.tuning.flight.pickupRadius,
+      role: "drop",
+      weapon: drop.weapon,
+      x: object.x,
+      y: object.y,
+    });
+  }
+  return true;
 }
 
 /** Reduced motion uses Art's reduced timing: a shorter fade, a later release, a tighter spread. */

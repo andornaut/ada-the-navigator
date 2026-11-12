@@ -18,7 +18,13 @@ import { WEAPON_CATALOG } from "../data/weapon-catalog.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { type Parts, worldParts } from "./convex.ts";
-import { dropRandom, rollAsteroidStardust, rollEnemyDrop, splitStardust } from "./drops.ts";
+import {
+  dropRandom,
+  rollAsteroidStardust,
+  rollEnemyDrop,
+  rollSalvageDrop,
+  splitStardust,
+} from "./drops.ts";
 import { createEnemy } from "./enemy-ai.ts";
 import { createFlight, pickupTouched, stepFlight } from "./flight.ts";
 import { HUNT_GLINT, pickupOutline } from "./pickup-body.ts";
@@ -221,6 +227,24 @@ describe("Stardust drops", () => {
     }
     expect(Math.abs(dropped / 40000 - 0.005)).toBeLessThan(0.0015);
   });
+
+  it.each([
+    [3, "frigate", 0.1],
+    [3, "capital", 0.1],
+    [1, "frigate", 0.04],
+    [1, "capital", 0.1],
+  ] as const)(
+    "salvages galaxy %i's %s for its Stardust and a weapon %f of the time",
+    (sector, archetype, chance) => {
+      let dropped = 0;
+      for (let index = 0; index < 20000; index++) {
+        const drop = rollSalvageDrop(ECONOMY, sector, archetype, dropRandom(5, `s:${index}`));
+        expect(drop.stardust).toBe(enemyStardust(sector, archetype));
+        dropped += drop.weapon ? 1 : 0;
+      }
+      expect(Math.abs(dropped / 20000 - chance)).toBeLessThan(0.01);
+    },
+  );
 
   it("splits a drop above its cap into pickups worth more than 1", () => {
     // A destroyed capital's 28 at position 1 over its 24 pickups.

@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { createEnemy } from "./enemy-ai.ts";
 import {
   ensureDestination,
   ensureRouteEncounter,
@@ -39,6 +40,27 @@ it("talks within the 160 Talk range, whatever the safe radius", () => {
   expect(model.contextLabel).toBe("Talk");
   flight.player = { x: growers.x + 170, y: growers.y };
   expect(model.contextLabel).toBeUndefined();
+});
+
+it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.startSector(1);
+  playOpening(model);
+  const flight = model.state.flight!;
+  flight.objects = [];
+  const at = { x: flight.player.x + 100, y: flight.player.y };
+  const enemy = createEnemy(
+    enemyDefinition(1, "frigate"),
+    { archetype: "frigate", id: "spared", packId: null, phase: 0 },
+    at,
+  );
+  flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
+  expect(model.contextLabel).not.toBe("Salvage");
+  enemy.disabled = true;
+  expect(model.contextLabel).toBe("Salvage");
+  model.interact();
+  expect(enemy.salvaged).toBe(true);
+  expect(model.contextLabel).not.toBe("Salvage");
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
