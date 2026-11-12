@@ -713,6 +713,8 @@ beacon light. Welcome!"
 - After the sleep scene, morning: Narration: "Astra recharges overnight. In the
   morning, the rock is warm again, and Archie and Kiwi are curled at her feet."
 - Station welcome: Welcome aboard. Trade your Stardust, or take a job.
+- Crash screen: title "Something went wrong", text "The game stopped. Reload to
+  play again.", button "Reload".
 - Saving failure: Couldn't save progress. You can keep playing, but recent
   progress may be lost if you close the game.
 - Completed story: Chapter complete. You can keep exploring.
