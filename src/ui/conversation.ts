@@ -221,12 +221,12 @@ ${PORTRAIT_RULES}
   -webkit-line-clamp:${CONVERSATION_BOX.lines}
 }
 
-/* The tab overhangs the panel's top at the end opposite the portrait; a press on it is a press on
-   the box. */
+/* The tab overhangs the panel's top at its left end, just past Ada's left portrait frame or
+   tab.inset in for every other speaker; a press on it is a press on the box. */
 .ada-conversation-name{
   position:absolute;
   top:${units(-tab.overhang)};
-  right:${units(tab.inset)};
+  left:${units(padding + portrait.frame + textGap)};
   box-sizing:border-box;
   height:${units(tab.height)};
   padding:0 ${units(tab.labelInset - tab.edge)};
@@ -239,7 +239,10 @@ ${PORTRAIT_RULES}
 }
 
 .ada-conversation[data-side="right"] .ada-conversation-name{
-  right:auto;
+  left:${units(tab.inset)}
+}
+
+.ada-conversation[data-undrawn] .ada-conversation-name{
   left:${units(tab.inset)}
 }
 ${TAB_RULES}

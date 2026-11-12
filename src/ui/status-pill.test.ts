@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { units } from "./layout/css.ts";
 import {
   blendHex,
   ShieldBar,
@@ -124,6 +125,14 @@ describe("status pill shield bar", () => {
     expect(icon).toContain("#181425");
     expect(bar).toContain(".ada-status-bar{");
     expect(bar).toMatch(/box-shadow:0 0 0 .+ #181425/);
+  });
+
+  it("puts the +N tick on the pill's row, its outlined left edge a mark gap right of the pill", () => {
+    const tick = STATUS_PILL_STYLE.split("}").find((rule) => rule.includes(".ada-status-tick{"));
+    // 6 plus the 1 outline from the pill's right edge, its 20 line box 4 inside the 28 pill.
+    expect(tick).toContain(`left:calc(100% + ${units(7)})`);
+    expect(tick).toContain(`top:${units(4)}`);
+    expect(tick).not.toContain("transform");
   });
 });
 

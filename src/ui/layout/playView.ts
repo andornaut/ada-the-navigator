@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/rect";
 import { SCREEN } from "../../data/screen.ts";
 import { PILL, TEXT_BUTTON } from "./controls.ts";
 import { HIT_RULE, hitAround } from "./hitAreas.ts";
-import { SMALL_BUTTON_GAP, SPACING } from "./tokens.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
 // and "Page bounds"), and the HUD's anchors ("HUD and overlays"). The canvas draws the logical
@@ -137,8 +137,8 @@ export const HUD_BUTTON = {
 // The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
 // non-Basic disc, height high with radius corners and padding at each end around the count in
 // TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
-// lower edge; its bottom stays clearance above the conversation box's name tab.
-export const HUD_AMMO_COUNT = { clearance: 4, height: 14, padding: 4, radius: 4, top: 40 } as const;
+// lower edge; the conversation box's top sits clearance below its bottom.
+export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;
 
 // Where a disc and a glyph sit inside their target.
 export const HUD_BUTTON_INSET = {
@@ -194,7 +194,8 @@ export function hudRowWidth(count: number): number {
 // HUD_EDGE in; it centres on the HUD row's centre line, relative to the HUD rect's top-left
 // corner, and grows rightward with the count. Parts, left to right: the 20 shield icon, a mark gap, the 96x12 bar
 // (a 1 rim, 1 ink, then the 92x8 fill area), the divider (12, 1x16, 12), the 20 Stardust icon, a
-// mark gap and the count. The +N tick's line box sits a row gap below the pill.
+// mark gap and the count. The +N tick rides the pill's row: its left edge, the outline included,
+// gap right of the pill, its line box centred on the row (top inside the pill's top).
 export const STATUS_PILL = {
   bar: { fill: { height: 8, width: 92 }, height: 12, inset: 2, rim: 1, width: 96 },
   divider: { height: 16, width: 1 },
@@ -207,7 +208,12 @@ export const STATUS_PILL = {
   markGap: SPACING.markGap,
   pill: PILL,
   stardustIcon: 20,
-  tick: { outline: 1, rise: 4, top: PILL.height + SPACING.rowGap },
+  tick: {
+    gap: SPACING.markGap,
+    outline: 1,
+    rise: 4,
+    top: (PILL.height - TYPE.label.lineHeight) / 2,
+  },
   x: PAUSE_BUTTON.hit.x + PAUSE_BUTTON.hit.width + SPACING.gap,
   xAlone: 0,
   y: HUD_ROW.centre - PILL.height / 2,

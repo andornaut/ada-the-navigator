@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
 import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
-import { conversationTabTop } from "./layout/conversationBox.ts";
+import { conversationBoxRect } from "./layout/conversationBox.ts";
 import {
   HUD_AMMO_COUNT,
   HUD_BUTTON,
@@ -91,11 +91,11 @@ describe("HUD weapon buttons", () => {
   });
 
   it("draws each count in an opaque ink pill on the disc's lower edge, clear of the name tab", () => {
-    expect(HUD_AMMO_COUNT).toEqual({ clearance: 4, height: 14, padding: 4, radius: 4, top: 40 });
+    expect(HUD_AMMO_COUNT).toEqual({ clearance: 5, height: 14, padding: 4, radius: 4, top: 40 });
     expect(AMMO_COUNT_TEXT).toEqual({ empty: "#e4574e", normal: "#ead4aa" });
     // The pill overlaps the disc's lower edge, 7.5 + 33 = 40.5 below the target's top.
     expect(HUD_AMMO_COUNT.top).toBeLessThan(HUD_BUTTON_INSET.disc + HUD_BUTTON.disc);
-    // In the view, the pill ends at least clearance above the conversation box's name tab.
+    // In the view, the conversation box's top sits clearance (5) below the pill.
     const cases: readonly (readonly [Size, Insets])[] = [
       [{ height: 360, width: 720 }, NO_INSETS],
       [
@@ -113,8 +113,9 @@ describe("HUD weapon buttons", () => {
       const insets = safeInsets(cssInsets, viewScale(css));
       const pillBottom =
         hudRect(insets, view).y + hudButtonTarget(0).y + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height;
-      expect(conversationTabTop(insets, view) - pillBottom).toBeGreaterThanOrEqual(
+      expect(conversationBoxRect(insets, view).y - pillBottom).toBeCloseTo(
         HUD_AMMO_COUNT.clearance,
+        9,
       );
     }
     expect(WEAPON_STYLE).toContain("background:#181425");

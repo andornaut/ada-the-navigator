@@ -1,7 +1,8 @@
 import type { Rect } from "@andornaut/game-kit/rect";
 
 import {
-  HUD_BUTTON,
+  HUD_AMMO_COUNT,
+  HUD_ROW,
   hudRect,
   type Insets,
   playView,
@@ -16,14 +17,14 @@ import { SPACING, TYPE } from "./tokens.ts";
 // slot in a 52 frame sits padding inside the panel, Ada's on the left and every other speaker's on
 // the right. Beside it a text column, a gap from the frame and from the far edge, holds up to two
 // left-aligned body lines centred on the panel. The 20 high name tab overhangs the panel's top by
-// half its height at the end opposite the portrait. The tab top sits a clearance below the HUD
-// button row, so every top button stays live.
+// half its height at the panel's left end. The box top sits a clearance below the weapon count
+// pills, so every top button stays live.
 
 const SLOT = 48;
 const FRAME_EDGE = 2;
 const FRAME = SLOT + 2 * FRAME_EDGE;
 const PADDING = 4;
-const TAB = { clearance: 10, edge: 1, height: 20, inset: SPACING.gap, overhang: 10, radius: 2 };
+const TAB = { edge: 1, height: 20, inset: SPACING.gap, overhang: 10, radius: 2 };
 
 export const CONVERSATION_BOX = {
   height: FRAME + 2 * PADDING,
@@ -48,10 +49,11 @@ export const CONVERSATION_BOX = {
   text: TYPE.body,
   // The text column's gap from the portrait frame and from the panel's far edge.
   textGap: SPACING.gap,
-  // From the HUD rect's top: a HUD button target, the tab clearance, then the tab's overhang. The
-  // tab clears the status pill's +N tick by 3.5, the pause press area by 15.25 and the weapon
-  // row, which reaches HUD_ROW.reach above the HUD rect, by 17.5.
-  top: HUD_BUTTON.target + TAB.clearance + TAB.overhang,
+  // From the HUD rect's top: the weapon count pills' bottom (the targets reach HUD_ROW.reach above
+  // the rect) plus HUD_AMMO_COUNT.clearance, + 51.5. The tab, overhang above it, clears the status
+  // pill and its +N tick, and starts clear of every weapon column across (art/layout.md "Tab
+  // clearance").
+  top: -HUD_ROW.reach + HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + HUD_AMMO_COUNT.clearance,
 } as const;
 
 /** The box in the logical view: centred, below the HUD rect's row, at most maxWidth within the page rect. */
@@ -67,7 +69,7 @@ export function conversationBoxRect(insets: Insets, view: Size): Rect {
   };
 }
 
-/** The name tab's top in the logical view: the HUD button row's bottom plus the tab clearance. */
+/** The name tab's top in the logical view: its overhang above the box's top. */
 export function conversationTabTop(insets: Insets, view: Size): number {
   return conversationBoxRect(insets, view).y - CONVERSATION_BOX.tab.overhang;
 }
@@ -92,10 +94,11 @@ export function conversationTextTop(lineCount: number): number {
 
 /**
  * The portrait frame, its slot, the text column and the name tab's anchor inside a box width
- * wide, for the speaker's side. The tab anchors to the panel end opposite the portrait, inset
- * from it, and overhangs the panel's top; its width follows its label. A speaker without a drawn
- * portrait has no frame or slot, and its text column takes the slot's width, textGap from each
- * end of the panel; its tab keeps its end.
+ * wide, for the speaker's side. Every tab anchors to the panel's left end and overhangs its top:
+ * tab.inset in when the portrait is on the right or absent, and just past a left portrait frame
+ * (Ada's, 64 in), so it sits over the text column's top-left; its width follows its label. A
+ * speaker without a drawn portrait has no frame or slot, and its text column takes the slot's
+ * width, textGap from each end of the panel.
  */
 export function conversationSpeakerLayout(
   drawn: boolean,
@@ -110,7 +113,11 @@ export function conversationSpeakerLayout(
   const { height, padding, portrait, tab, textGap } = CONVERSATION_BOX;
   const left = side === "left";
   const frameX = left ? padding : width - padding - portrait.frame;
-  const nameTab = { end: left ? "right" : "left", inset: tab.inset, y: -tab.overhang } as const;
+  const nameTab = {
+    end: "left",
+    inset: left && drawn ? padding + portrait.frame + textGap : tab.inset,
+    y: -tab.overhang,
+  } as const;
   const textBox = { align: "left", height: height - 2 * padding, y: padding } as const;
   if (!drawn) {
     return {

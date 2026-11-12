@@ -151,8 +151,6 @@ export function stardustCount(amount: number): string {
 }
 
 const { bar } = STATUS_PILL;
-// The count's line box top inside the pill, and so the +N tick's top below the count.
-const COUNT_TOP = (STATUS_PILL.pill.height - TYPE.label.lineHeight) / 2;
 // The tick's ink outline: its text offset by the outline width each way.
 const OUTLINE = units(STATUS_PILL.tick.outline);
 const OUTLINE_SHADOW = [
@@ -265,11 +263,13 @@ export const STATUS_PILL_STYLE = `
   line-height:${units(TYPE.label.lineHeight)};
   transform-origin:left center
 }
+/* The +N tick on the pill's row, its outlined left edge STATUS_PILL.tick.gap right of the pill;
+   it follows the pill as the count grows. */
 .ada-controls .ada-status-tick{
   position:absolute;
-  left:50%;
-  top:${units(STATUS_PILL.tick.top - COUNT_TOP)};
-  transform:translateX(-50%);
+  left:calc(100% + ${units(STATUS_PILL.tick.gap + STATUS_PILL.tick.outline)});
+  top:${units(STATUS_PILL.tick.top)};
+  line-height:${units(TYPE.label.lineHeight)};
   color:${STATUS_COLOURS.tick};
   text-shadow:${OUTLINE_SHADOW}
 }
@@ -358,7 +358,7 @@ export function createStatusPill(
     node.className = "ada-status-tick";
     node.setAttribute("aria-hidden", "true");
     node.textContent = `+${stardustCount(amount)}`;
-    count.append(node);
+    root.append(node);
     const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
     const total = timing.holdMs + timing.fadeMs;
     const hold = timing.holdMs / total;

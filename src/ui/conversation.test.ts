@@ -30,7 +30,7 @@ const squash = (value: string): string => value.replace(/\s+/gu, "");
 describe("conversation box style", () => {
   const css = rules(CONVERSATION_STYLE);
 
-  it("swaps the portrait's end and the tab's end for a right-side speaker, never the text's alignment", () => {
+  it("swaps the portrait's end and the tab's inset for a right-side speaker, never the text's alignment", () => {
     const sided = [...css].filter(([selector]) => selector.includes('[data-side="right"]'));
     expect(sided.map(([selector]) => selector)).toEqual([
       '.ada-conversation[data-side="right"]',
@@ -73,10 +73,17 @@ describe("conversation box style", () => {
     expect(css.get(".ada-conversation-text")).toContain("justify-content:center");
   });
 
-  it("overhangs the 20 high tab 10 above the panel, 8 in from its end", () => {
+  it("overhangs the 20 high tab 10 above the panel's left end: 64 past Ada's frame, else 8", () => {
     const name = css.get(".ada-conversation-name") ?? "";
     expect(name).toContain(`top:${squash(units(-10))}`);
-    expect(name).toContain(`right:${squash(units(8))}`);
+    // Ada's portrait is on the left: the tab starts SPACING.gap past its frame (4 + 52 + 8).
+    expect(name).toContain(`left:${squash(units(64))}`);
+    expect(name).not.toContain("right:");
+    for (const other of ['[data-side="right"]', "[data-undrawn]"]) {
+      expect(css.get(`.ada-conversation${other} .ada-conversation-name`)).toBe(
+        `left:${squash(units(8))}`,
+      );
+    }
     expect(name).toContain(`height:${squash(units(20))}`);
     expect(name).toContain(`border:${squash(units(1))}solid#181425`);
     expect(name).toContain(`border-radius:${squash(units(2))}`);
