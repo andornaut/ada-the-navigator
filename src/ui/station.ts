@@ -1,5 +1,6 @@
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weapon-glyphs.ts";
+import type { StationGreeting } from "../model/keepers.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -464,12 +465,16 @@ export interface StationOptions {
   readonly acceptJob: (id: string) => boolean;
   /** Why Accept refuses while the galaxy's slot is taken: a job or an activity holds it. */
   readonly busyLine: () => string;
+  /** A tap on the welcome line shows the keeper's next line. */
+  readonly advanceGreeting: () => void;
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
   readonly buy: (key: string) => void;
   /** Whether the Projects tab shows: once the galaxy's projects are offered. */
   readonly projectsShown: () => boolean;
   readonly dropJob: () => void;
+  /** The docked station keeper's line on show, or null for the generic welcome. */
+  readonly greeting: () => StationGreeting | null;
   readonly jobs: () => readonly StationJob[];
   readonly labels: StationLabels;
   readonly reducedMotion: () => boolean;
@@ -588,9 +593,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   openShop.dataset.action = "open-shop";
   const openJobs = createButton(labels.jobs);
   openJobs.dataset.action = "open-jobs";
+  // The welcome line: the keeper's greeting where the station has one, a tap showing its next line
+  // while Undock, Jobs and Shop stay live (gameplay/rules.md "Species and greeters").
+  const welcome = prose("ada-station-welcome", labels.stationWelcome);
   stationCard.body.append(
     stationBalance,
-    prose("ada-station-welcome", labels.stationWelcome),
+    welcome,
     createActions([
       { button: undock, role: "secondary" },
       { button: openJobs, role: "secondary" },
@@ -911,8 +919,24 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     list.replaceChildren(...tabContent(tab));
   };
 
+  const renderWelcome = (): void => {
+    const greeting = options.greeting();
+    welcome.textContent = greeting?.line ?? labels.stationWelcome;
+    if (greeting) {
+      welcome.dataset.keeper = greeting.keeper;
+    } else {
+      delete welcome.dataset.keeper;
+    }
+    welcome.toggleAttribute("data-more", greeting?.more ?? false);
+  };
+  welcome.addEventListener("click", () => {
+    options.advanceGreeting();
+    renderWelcome();
+  });
+
   const render = (): void => {
     renderBalances();
+    renderWelcome();
     stationCard.frame.hidden = view !== "card";
     shopCard.frame.hidden = view !== "shop";
     jobsCard.frame.hidden = view !== "jobs";

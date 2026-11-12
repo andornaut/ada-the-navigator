@@ -458,7 +458,7 @@ try {
     { PROTOTYPE },
     { ensureDestination },
     { playOpening, relaunch },
-    { restoreSave: restoreCalm },
+    { SAVE_VERSION, restoreSave: restoreCalm },
     { ACHIEVEMENTS },
   ] = await Promise.all([
     import(new URL("../src/model/game.ts", import.meta.url)),
@@ -2260,6 +2260,70 @@ try {
   events.checks.push(
     "The local map's Galaxies stays available while towing; leaving the galaxy from the galaxy " +
       "map ends the flight, the rescue still held with its craft where it was stranded",
+  );
+  // Station keepers (gameplay/rules.md "Species and greeters"): the first docking shows the
+  // keeper's three lines in the welcome line a tap apart, the last staying, with Undock live; a
+  // later docking shows one line.
+  const { stationKeeper } = await import(new URL("../src/model/keepers.ts", import.meta.url));
+  const keeperInput = relaunch(PROTOTYPE, roomInput.save());
+  const keeperFlight = keeperInput.state.flight;
+  const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
+    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+  );
+  ensureStation(PROTOTYPE, keeperSite.id, keeperFlight);
+  keeperInput.state.progress[1].stations = [
+    ...new Set([...keeperInput.state.progress[1].stations, keeperSite.id]),
+  ];
+  keeperInput.state.progress[1].greetings = {};
+  keeperFlight.objects = keeperFlight.objects.filter(({ kind }) => kind === "station");
+  keeperFlight.shots = [];
+  keeperFlight.player = { x: keeperSite.x, y: keeperSite.y };
+  keeperFlight.velocity = { x: 0, y: 0 };
+  keeperFlight.dangerFor = 0;
+  keeperInput.state.dialogue = null;
+  keeperInput.state.docked = null;
+  const keeper = stationKeeper(ECONOMY, 1, keeperSite.id);
+  await seedOnce(keeperInput.save(), "ada-browser.keeper.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  const stationCard = page.locator('[data-dialog="station"]');
+  const welcome = stationCard.locator(".ada-station-welcome");
+  const dockHere = async () => {
+    await page.locator('.ada-use[data-use="dock"]').waitFor({ state: "visible" });
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.press("Space");
+    await stationCard.waitFor({ state: "visible" });
+  };
+  await dockHere();
+  await page.screenshot({ path: `${output}/station-keeper.png` });
+  const welcomeLine = async () => ((await welcome.textContent()) ?? "").trim();
+  // The line on show, then the one after each tap in turn.
+  const tapThrough = async (taps, seen) => {
+    if (taps === 0) {
+      return seen;
+    }
+    await welcome.click();
+    return tapThrough(taps - 1, [...seen, await welcomeLine()]);
+  };
+  const greeted = await tapThrough(3, [await welcomeLine()]);
+  assert.deepEqual(
+    greeted,
+    [...keeper.greetings.first, keeper.greetings.first[2]],
+    `The first docking shows the keeper's three lines a tap apart, the last staying: ${greeted}`,
+  );
+  assert.equal(await welcome.getAttribute("data-keeper"), keeper.name, "The keeper is named");
+  await stationCard.locator('[data-action="undock"]').click();
+  await stationCard.waitFor({ state: "hidden" });
+  await dockHere();
+  assert.equal(
+    await welcomeLine(),
+    keeper.greetings.later[0],
+    "A later docking shows one later line",
+  );
+  await stationCard.locator('[data-action="undock"]').click();
+  await stationCard.waitFor({ state: "hidden" });
+  events.checks.push(
+    "A station keeper greets the first docking with three lines a tap apart in the welcome line, " +
+      "Undock live, and a later docking with one later line",
   );
   await seedOnce(safeSerialized, "ada-browser.after-save-proof.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
@@ -4417,7 +4481,11 @@ try {
   // downloads or the update-required message while it cannot. The kit's own update attempts and
   // reloads are the point here, so only this page's CSP violations count as errors.
   await portraitContext.close();
-  const newerSaved = JSON.stringify({ marker: "from a newer build", mode: "home", version: 2 });
+  const newerSaved = JSON.stringify({
+    marker: "from a newer build",
+    mode: "home",
+    version: SAVE_VERSION + 1,
+  });
   const newerContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   await newerContext.addInitScript(reportViolations);
   await newerContext.addInitScript(

@@ -99,6 +99,7 @@ import {
   rerollBoards,
   stationBoard,
 } from "./jobs.ts";
+import { greetingLines, type StationGreeting, stationKeeper } from "./keepers.ts";
 import {
   chartLandmarks,
   galaxyLandmarks,
@@ -212,7 +213,7 @@ export function newGameState(): GameState {
     started: false,
     tasks: {},
     unlocked: [1],
-    version: 1,
+    version: 2,
   };
 }
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
@@ -349,6 +350,12 @@ export class GameModel {
   private jobMoments: (JobMoment | "jobComplete")[] = [];
   /** Whether Ada has docked this flight, which marks the dock lesson done. */
   private dockedThisFlight = false;
+  // The docked station keeper's greeting: the keeper, this docking's lines and the one on show.
+  private greeting: {
+    index: number;
+    readonly keeper: string;
+    readonly lines: readonly string[];
+  } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
@@ -824,6 +831,44 @@ export class GameModel {
       undockFlight(this.state.flight);
     }
     this.state.docked = null;
+    this.greeting = null;
+  }
+  /**
+   * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
+   * first time, then one later line in turn. The docking counts as greeted at once.
+   */
+  private greet(sector: SectorId, id: string): void {
+    const keeper = stationKeeper(ECONOMY, sector, id);
+    if (!keeper) {
+      this.greeting = null;
+      return;
+    }
+    const greetings = this.state.progress[sector].greetings;
+    const docked = greetings[id] ?? 0;
+    greetings[id] = docked + 1;
+    this.greeting = {
+      index: 0,
+      keeper: keeper.name,
+      lines: greetingLines(keeper.greetings, docked),
+    };
+  }
+  /** The docked station keeper's line on show; null where the generic welcome shows. */
+  get stationGreeting(): StationGreeting | null {
+    const greeting = this.greeting;
+    return this.state.docked && greeting
+      ? {
+          keeper: greeting.keeper,
+          line: greeting.lines[greeting.index]!,
+          more: greeting.index < greeting.lines.length - 1,
+        }
+      : null;
+  }
+  /** A tap on the welcome line: the greeting's next line, the last staying on show. */
+  advanceGreeting(): void {
+    const greeting = this.greeting;
+    if (this.state.docked && greeting && greeting.index < greeting.lines.length - 1) {
+      greeting.index += 1;
+    }
   }
   /**
    * Docks at a station in Talk range: the station card opens, and a delivery job's lost item is
@@ -835,6 +880,7 @@ export class GameModel {
     }
     this.state.docked = id;
     this.dockedThisFlight = true;
+    this.greet(f.sector, id);
     const held = this.held;
     if (held?.type === "delivery" && held.station === id) {
       held.carrying = true;

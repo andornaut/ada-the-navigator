@@ -1059,6 +1059,7 @@ export class PrototypeScene extends Scene {
         });
         return accepted;
       },
+      advanceGreeting: () => this.model.advanceGreeting(),
       balance: () => ({
         amount: this.model.state.economy.stardust,
         text: amount(this.model.state.economy.stardust),
@@ -1073,6 +1074,7 @@ export class PrototypeScene extends Scene {
           }
         }),
       dropJob: () => apply(() => this.model.dropJob()),
+      greeting: () => this.model.stationGreeting,
       jobs: () =>
         this.model.jobBoard().map((job) => ({
           ...job,

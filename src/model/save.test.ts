@@ -25,7 +25,7 @@ describe("save boundary", () => {
     model.startSector(1);
     playOpening(model);
     for (const change of [
-      { version: 2 },
+      { version: SAVE_VERSION - 1 },
       { flight: {} },
       { progress: {} },
       { unlocked: [4] },
@@ -724,11 +724,12 @@ describe("deliveries to story places in older saves", () => {
 
 describe("a save from a newer version", () => {
   it("is told apart from this build's, older and malformed saves", () => {
-    expect(SAVE_VERSION).toBe(1);
-    expect(newerSave({ version: 2 })).toBe(true);
+    expect(SAVE_VERSION).toBe(2);
+    expect(newerSave({ version: SAVE_VERSION + 1 })).toBe(true);
     expect(newerSave(JSON.stringify({ mode: "home", version: 7 }))).toBe(true);
     for (const saved of [
-      { version: 1 },
+      { version: SAVE_VERSION },
+      { version: SAVE_VERSION - 1 },
       { version: 0 },
       { version: "2" },
       { version: Number.NaN },
@@ -742,6 +743,6 @@ describe("a save from a newer version", () => {
   });
 
   it("is never restored, so the game cannot read or replace it", () => {
-    expect(restoreSave({ mode: "home", version: 2 })).toBeNull();
+    expect(restoreSave({ mode: "home", version: SAVE_VERSION + 1 })).toBeNull();
   });
 });

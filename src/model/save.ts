@@ -36,7 +36,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { grantedAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -694,6 +694,16 @@ function economyState(value: unknown): value is EconomyState {
   );
 }
 /** Each paid amount is a whole number of Stardust toward one of the galaxy's projects, at most its cost. */
+/** Each greeted place is one of the galaxy's stations, greeted a whole number of times. */
+function greetingCounts(sector: SectorId, value: unknown): boolean {
+  return (
+    record(value) &&
+    Object.entries(value).every(
+      ([id, docked]) =>
+        namesStation(ECONOMY, sector, id) && Number.isSafeInteger(docked) && Number(docked) > 0,
+    )
+  );
+}
 function donations(sector: SectorId, value: unknown): boolean {
   return (
     record(value) &&
@@ -890,6 +900,7 @@ export function restoreSave(saved: unknown): GameState | null {
         !["deposited", "discoveries", "disabledEnemies"].every((k) => nonnegative(p[k])) ||
         (p.stations !== undefined && !stationIds(id as SectorId, p.stations)) ||
         (p.donated !== undefined && !donations(id as SectorId, p.donated)) ||
+        !greetingCounts(id as SectorId, p.greetings) ||
         (p.charted !== undefined && !chartedIds(id as SectorId, p.charted)) ||
         (p.revealed !== undefined && !revealedProjects(id as SectorId, p.donated, p.revealed)) ||
         (p.explored !== undefined && !validExplored(PROTOTYPE.tuning.chunkSize, p.explored)) ||
