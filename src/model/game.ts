@@ -1174,7 +1174,7 @@ export class GameModel {
    * keeps"): the held job keeps its carried item and the story its item, while undeposited ore
    * and pickups go with the flight, a towed craft returns to where it was stranded, a guided calf
    * and Pip return to their starts with the activity still held, and a scene still due its line
-   * replays at the hub next time.
+   * replays at the hub next time. An in-flight notice ends with its flight.
    */
   private endFlight(): void {
     this.closeGalaxyMapInFlight();
@@ -1191,6 +1191,7 @@ export class GameModel {
     this.state.flight = null;
     this.state.dialogue = null;
     this.state.docked = null;
+    this.state.notice = "";
   }
   returnHome(): void {
     this.home(false);

@@ -224,6 +224,41 @@ describe("quantum jump home", () => {
     expect(next.objects.some(({ id }) => id.startsWith("lost:"))).toBe(false);
   });
 
+  it.each(["shield failure", "Earth", "Jump", "Restart"] as const)(
+    "drops an in-flight notice with its flight at %s, so the next flight starts with none",
+    (ending) => {
+      const model = launched();
+      seenHome(model);
+      model.state.unlocked = [1, 3];
+      model.state.progress[3].opened = true;
+      model.state.dialogue = null;
+      const outOfAmmo = CONTENT.labels.outOfAmmo ?? "";
+      model.state.notice = outOfAmmo;
+      if (ending === "shield failure") {
+        deplete(model);
+      } else if (ending === "Earth") {
+        model.returnHome();
+      } else if (ending === "Jump") {
+        expect(model.openGalaxyMap()).toBe(true);
+        model.stepGalaxy(1);
+        expect(model.jump()).toBe(true);
+      } else {
+        model.backToTitle();
+        // Back to title keeps the flight, and with it its notice, for Continue.
+        expect(JSON.parse(model.save())).toMatchObject({ notice: outOfAmmo });
+        model.restart();
+        model.start();
+      }
+      if (ending !== "Jump") {
+        expect(model.state.mode).toBe("home");
+        expect(model.state.notice).toBe("");
+        model.startGalaxy(1);
+      }
+      expect(model.state.mode).toBe("space");
+      expect(model.state.notice).toBe("");
+    },
+  );
+
   it("says the jump-home line on its page only, never at the next boarding or flight", () => {
     const model = launched();
     model.state.flight!.cargo = 2;
