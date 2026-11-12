@@ -98,28 +98,26 @@ export function alphaMask(image: RgbaImage, threshold = 128): Mask {
   return { cells, height: H, width: W };
 }
 
-// Grow a vector drawing's mask by its own stroke half-width (frame px), in 3x3 max passes of
-// one cell each, alternating square and cross neighbourhoods to approximate a round offset.
+// Grow a vector drawing's mask by its own stroke half-width (frame px), as a round stroke grows
+// it: a cell fills when a drawn cell centre lies within the half-width of its centre. The
+// nearest drawn cell to any outside cell is an edge cell, so only edge cells stamp the disc.
 export function grow(mask: Mask, halfWidth: number): Mask {
-  const { height: H, width: W } = mask;
-  const cells = mask.cells.slice();
-  for (let pass = 0; pass < Math.round(halfWidth * SS); pass++) {
-    const src = cells.slice();
-    const square = pass % 2 === 0;
-    for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++) {
-        if (src[y * W + x]) continue;
-        for (let dy = -1; dy <= 1 && !cells[y * W + x]; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            if (!square && dx && dy) continue;
-            const [nx, ny] = [x + dx, y + dy];
-            if (nx >= 0 && ny >= 0 && nx < W && ny < H && src[ny * W + nx]) {
-              cells[y * W + x] = 1;
-              break;
-            }
-          }
+  const { cells: src, height: H, width: W } = mask;
+  const cells = src.slice();
+  const r = halfWidth * SS;
+  const R = Math.floor(r);
+  const disc: [number, number][] = [];
+  for (let dy = -R; dy <= R; dy++)
+    for (let dx = -R; dx <= R; dx++) if (dx * dx + dy * dy <= r * r) disc.push([dx, dy]);
+  const at = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && src[y * W + x] === 1;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!at(x, y) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue;
+      for (const [dx, dy] of disc) {
+        const [nx, ny] = [x + dx, y + dy];
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) cells[ny * W + nx] = 1;
       }
-  }
+    }
   return { cells, height: H, width: W };
 }
 
@@ -407,34 +405,41 @@ export function check(
 // One filled polygon as an SVG writes it, in frame px.
 export type Fill = { color: string; points: V2[] };
 
-// Whether a polygon covers a point, within NOTCH_WIDTH of its edges.
-function near(poly: readonly V2[], p: V2): boolean {
+// Whether a polygon covers a point, within `reach` of its edges.
+function near(poly: readonly V2[], p: V2, reach: number): boolean {
   const sign = Math.sign(area(poly));
   return (
     poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) * sign >= 0) ||
-    poly.some((a, i) => segDist(p, a, poly[(i + 1) % poly.length]!) <= NOTCH_WIDTH)
+    poly.some((a, i) => segDist(p, a, poly[(i + 1) % poly.length]!) <= reach)
   );
 }
 
-// The drawn silhouette of a size by size frame of unstroked fills, at the first of `tolerances`
-// that passes `check`, and its notch tips, each in the colour of the topmost fill at its apex
-// and rounded to 0.01 frame px. The frame draws the tips first, under the fills; the check
-// covers the fills plus the tips.
+// The drawn silhouette of a width by height frame of fills, at the first of `tolerances` that
+// passes `check`, and its notch tips. `halfWidth` is the fills' own stroke half-width, which
+// grows the drawing. Each tip takes the colour of the topmost fill within NOTCH_WIDTH of its
+// apex, stroke included, and rounds to 0.01 frame px. The frame draws the tips first, under the
+// fills; the check covers the fills plus the tips.
 export function traceFills(
   id: string,
   fills: readonly Fill[],
-  size: number,
+  [width, height]: readonly [number, number],
   tolerances: readonly number[],
+  halfWidth = 0,
 ): { collision: V2[][]; tips: Fill[]; tolerance: number } {
-  const mask = rasterize(
-    fills.map(({ points }) => points),
-    size,
-    size,
+  const mask = grow(
+    rasterize(
+      fills.map(({ points }) => points),
+      width,
+      height,
+    ),
+    halfWidth,
   );
   for (const [i, tolerance] of tolerances.entries()) {
     const { collision, tips } = trace(mask, tolerance);
     const drawn = tips.map((tip) => ({
-      color: fills.findLast(({ points }) => near(points, tip[1]!))?.color ?? fills[0]!.color,
+      color:
+        fills.findLast(({ points }) => near(points, tip[1]!, NOTCH_WIDTH + halfWidth))?.color ??
+        fills[0]!.color,
       points: tip.map(([x, y]) => [Number(x.toFixed(2)), Number(y.toFixed(2))] as V2),
     }));
     try {
@@ -445,8 +450,8 @@ export function traceFills(
           mask,
           rasterize(
             drawn.map(({ points }) => points),
-            size,
-            size,
+            width,
+            height,
           ),
         ),
       );

@@ -43,7 +43,26 @@ tilted axis.
   on the middle one). Coral means damage.
 - `radius`: 56.35 frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame px,
-  `[minX, minY, maxX, maxY]`. Collision radius and damage are Gameplay values.
+  `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
+  ([Collision](#collision)). Damage is a Gameplay value.
+
+### Collision
+
+Each traveling debris frame collides, makes contact and is placed by its drawn
+silhouette, contour included: `debris[i].frames[k].collision` beside `file` and
+`bounds`, an array of convex parts, each an array of `[x, y]` in frame px of
+that piece's frame (the schema of the ship's `collision[k]`). Multiply offsets
+from the pivot by `displayScale` for display px.
+
+- `art/tools/debris.ts` traces each frame's faces with the
+  [shared tracer](ship.md#shared-tracer), grown by half the 6.86 frame px
+  contour stroke (3.43), the outermost stroke. Each frame takes the first
+  Douglas-Peucker tolerance of 0.75, 0.5, 0.4 and 0.3 frame px that passes the
+  0.98 floor. No frame has a notch tip.
+- Every frame passes at 0.75: 4 to 7 parts, intersection over union 0.984
+  to 0.993 (0.981 or more against librsvg renders at 4 px per frame px), every
+  boundary within 1 frame px of the render. The plate's parts match
+  Whirlpool's `whirlpool-debris-plate`, the same model.
 
 ### Direction mark
 

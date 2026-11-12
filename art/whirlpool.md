@@ -78,8 +78,8 @@ each:
   (`contour`): 5.37:1 on the field and 1.59 to 3.30:1 on the body tones.
 - `radius`: frame px from the pivot to the farthest drawn point over all
   frames, contour included. Each frame's `bounds` is its drawn box in frame
-  px, `[minX, minY, maxX, maxY]`. Collision radius and damage are Gameplay
-  values.
+  px, `[minX, minY, maxX, maxY]`, and its `collision` is its drawn silhouette
+  ([Collision](#collision)). Damage is a Gameplay value.
 - Faces are flat polygons shaded from the world light `(-0.25, 0.45, 1)` into
   the body ramp (thresholds 0.9, 0.7, 0.45 and 0.15), with a 1.2 frame px seam
   stroke in their own fill.
@@ -100,6 +100,28 @@ reverse screen velocity, as for the [asteroid drift cue](asteroids.md#drift-cue)
 The dashes lie along the velocity, move with the piece and are drawn under
 it. Reduced motion keeps them, static.
 
+## Collision
+
+Each traveling debris frame collides, makes contact and is placed by its drawn
+silhouette, contour included: `debris[i].frames[k].collision` beside `file` and
+`bounds`, an array of convex parts, each an array of `[x, y]` in frame px of
+that piece's frame (the schema of the ship's `collision[k]`). Multiply offsets
+from the pivot by `displayScale` for display px.
+
+- `art/tools/debris.ts` traces each frame's faces with the
+  [shared tracer](ship.md#shared-tracer), grown by half the 6.86 frame px
+  contour stroke (3.43), the outermost stroke. Each frame takes the first
+  Douglas-Peucker tolerance of 0.75, 0.5, 0.4 and 0.3 frame px that passes the
+  0.98 floor. No frame has a notch tip.
+
+| Piece                     | Tolerance             | Parts   | Intersection over union |
+| ------------------------- | --------------------- | ------- | ----------------------- |
+| `whirlpool-debris-plate`  | 0.75                  | 4 to 7  | 0.984 to 0.993          |
+| `whirlpool-debris-girder` | 0.75; 0.5 for frame 3 | 5 to 10 | 0.984 to 0.991          |
+
+Against librsvg renders at 4 px per frame px: 0.981 or more, every boundary
+within 1 frame px.
+
 ## Data
 
 `currents.json`, version 1: `streaks` holds the values in the streak table
@@ -109,5 +131,5 @@ under the names given there.
 `width`), `tumble` (`frames`, `degPerSecond`), `marks` (`color`, `width`,
 `dashes[i]` with `length`, `alpha`, `behind`, `side`) and `debris[i]` with
 `id`, `frame`, `display`, `pivot`, `radius` and `frames[k]` (`file`,
-`bounds`). Manifest entries carry `tumbleIndex`, `pivot`, `debris` (the piece
+`bounds`, `collision`). Manifest entries carry `tumbleIndex`, `pivot`, `debris` (the piece
 id) and the display size as `displayWidth` and `displayHeight`.

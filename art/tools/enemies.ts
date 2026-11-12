@@ -54,7 +54,12 @@ export function svg(craft: Craft, yaw: number, tips: readonly Fill[] = []): stri
 // (no strokes, so no growth), and its notch tips.
 export function silhouettes(craft: Craft): { collision: V2[][]; tips: Fill[] }[] {
   return Array.from({ length: ENEMY_HEADINGS }, (_, yaw) =>
-    traceFills(`${craft.name} ${yaw}`, drawn(craft, yaw), craft.frame, [SILHOUETTE_TOLERANCE]),
+    traceFills(
+      `${craft.name} ${yaw}`,
+      drawn(craft, yaw),
+      [craft.frame, craft.frame],
+      [SILHOUETTE_TOLERANCE],
+    ),
   );
 }
 

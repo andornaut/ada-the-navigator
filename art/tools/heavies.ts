@@ -717,7 +717,7 @@ function sprite(
   list: readonly Face[],
 ): { svg: string; collision: V2[][] } {
   const drawn = fills(size, pivotZ, list);
-  const { collision, tips } = traceFills(id, drawn, size, SILHOUETTE_TOLERANCES);
+  const { collision, tips } = traceFills(id, drawn, [size, size], SILHOUETTE_TOLERANCES);
   return { collision, svg: svg(size, id, drawn, tips) };
 }
 

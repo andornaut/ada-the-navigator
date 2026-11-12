@@ -209,13 +209,18 @@ The ship collides, makes contact and is placed by its drawn silhouette,
 ### Shared tracer
 
 `art/tools/silhouette.ts` turns a frame's drawn alpha into convex parts in frame
-px. The [sector one enemies](enemies.md#collision) and the asteroids and
-resource rocks ([asteroid collision](asteroids.md#collision)) use it too.
+px. The [sector one enemies](enemies.md#collision), the
+[heavies](heavies.md#collision), the traveling debris
+([Cartwheel](cartwheel-props.md#collision), [Whirlpool](whirlpool.md#collision))
+and the asteroids and resource rocks
+([asteroid collision](asteroids.md#collision)) use it too.
 
 1. Rasterize at 4 cells per frame px: vector polygons by cell centre with
    nonzero winding (`rasterize`), PNG sprites by alpha at 128 or more
-   (`alphaMask`). An SVG drawing grows by its own stroke half-width (`grow`); a
-   PNG never grows, as its alpha already includes the outline.
+   (`alphaMask`). An SVG drawing grows by its own stroke half-width as a round
+   stroke does (`grow`): a cell fills when a drawn cell centre lies within the
+   half-width of its centre. A PNG never grows, as its alpha already includes
+   the outline.
 2. Trace the outer boundary along cell edges; holes and specks are dropped.
    Simplify by Douglas-Peucker, 0.75 frame px unless the caller passes another
    tolerance.
@@ -229,7 +234,7 @@ matches the drawing (enclosed background filled) with intersection over union
 0.98 or more, and no cell that one has and the other lacks lies more than 1
 frame px from the other.
 
-`traceFills` traces a frame of unstroked vector fills: it tries each given
-tolerance in order, keeps the first whose parts pass `check`, and returns the
-notch tips in the colour of the topmost fill within 0.6 frame px of each apex,
-rounded as the SVG writes them.
+`traceFills` traces a frame of vector fills, grown by their stroke half-width:
+it tries each given tolerance in order, keeps the first whose parts pass
+`check`, and returns the notch tips in the colour of the topmost fill within
+0.6 frame px of each apex (stroke included), rounded as the SVG writes them.
