@@ -1534,12 +1534,21 @@ try {
   towInput.state.dialogue = null;
   towInput.step(0.05, { ...still, use: true });
   assert.ok(towInput.towing, "The fixture is towing");
-  // Clear of the stranded site's hostiles, the tow line still attached.
+  // Clear of the stranded site's hostiles, the tow line still attached. One step generates the
+  // space around the new spot, then its drones, hazards, drifting debris and shots go and danger
+  // resets, so no generated world can put Ada in danger before the Map opens.
   for (const at of [towFlight.player, towFlight.tow]) {
     at.x -= 2500;
   }
-  towFlight.objects = towFlight.objects.filter(({ kind }) => kind !== "enemy");
+  towFlight.velocity = { x: 0, y: 0 };
+  towInput.step(0.05, still);
+  towFlight.objects = towFlight.objects.filter(
+    ({ kind }) => kind !== "enemy" && kind !== "hazard" && kind !== "debris",
+  );
+  towFlight.shots = towFlight.shots.filter((shot) => !shot.enemy);
   towFlight.dangerFor = 0;
+  towInput.state.dialogue = null;
+  assert.ok(towInput.towing, "The fixture still tows after its calm step");
   await seedOnce(towInput.save(), "ada-browser.tow-earth.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await openPause();
