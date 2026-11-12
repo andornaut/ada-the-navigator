@@ -2935,12 +2935,17 @@ try {
   });
   await seedOnce(cargoSave, "ada-browser.wide-cargo.v1");
   // Deposit is actionable once the resumed flight is live: the galaxy art its first flight waits
-  // on has loaded (the loading bar's element is gone) and the flight has stepped past the seeded
-  // save, which the scene writes back each second, with the cargo still aboard. The seeded save
-  // alone already reads as this flight before it resumes.
-  await page.waitForFunction(() => document.querySelector(".progress-bar") === null, null, {
-    timeout: 30000,
-  });
+  // on has loaded (the kit's one loading bar is hidden, idle or complete) and the flight has
+  // stepped past the seeded save, which the scene writes back each second, with the cargo still
+  // aboard. The seeded save alone already reads as this flight before it resumes.
+  await page.waitForFunction(
+    () => {
+      const bar = document.querySelector(".progress-bar");
+      return bar !== null && (bar.hidden || getComputedStyle(bar).visibility === "hidden");
+    },
+    null,
+    { timeout: 30000 },
+  );
   await page.waitForFunction(
     ({ from, key }) => {
       const state = JSON.parse(localStorage.getItem(key));
