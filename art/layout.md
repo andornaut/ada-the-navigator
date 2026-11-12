@@ -333,9 +333,10 @@ Overlap rules:
   conversation box top; they stay inside their targets' columns (the widest,
   "999m", is 38.69 of 48), so they add nothing to the clusters' horizontal
   clearance.
-- The `+N` labels sit under their counts on the item notice's row (HUD rect
-  top + 34.5 to + 58.5) and draw over the conversation box and its name tab,
-  in the item notice's layer ([Status pill](#status-pill)).
+- The `+N` labels sit just under their counts (line boxes HUD rect top + 33.5
+  to + 53.5, over the item notice's row, + 34.5 to + 58.5) and draw over the
+  conversation box and its name tab, in the item notice's layer
+  ([Status pill](#status-pill)).
 - Use's press circle reaches the conversation box's lower right (to + 111.5,
   123.5 at a top of 12): by 40.5 at the 720 base and 59.5 with phone insets.
   The conversation box always wins a press in the overlap. Use's drawn ring
@@ -379,9 +380,11 @@ on the pill's row:
 | Pickup | The Stardust count increases | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline under it | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms |
 | Ore    | The ore count increases      | As Pickup, for the ore count and an ore `+N` label in the ore tick colour                                      | As Pickup                                                                                                                                                                         |
 
-- Each `+N` label sits under its own count: its 20 line box top HUD rect top +
-  36.5 (48.5), centred on the item notice's 24 row (+ 34.5 to + 58.5), and
-  centred across on its count's slot as it is in that frame: pill left + 30 +
+- Each `+N` label sits under its own count: its 20 line box top
+  `STATUS_PILL.tick.top` 27 below the count's line box top, which is
+  `(PILL.height + TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.gap` with the
+  gap 3 below the pill's bottom edge: HUD rect top + 33.5 (45.5), and centred
+  across on its count's slot as it is in that frame: pill left + 30 +
   half the Stardust slot, and pill left + 67 + the Stardust slot + half the ore
   slot. It holds, rises 4 and fades as above, and follows its slot's centre
   when the slot changes. The two labels' centres are at least 45.90 apart (37
@@ -389,6 +392,15 @@ on the pill's row:
   wider than "+" and its own count with the outline (11.34 plus the slot, as N
   is at most the count), so the two stay at least 25.66 apart. The bump is a
   transform: it never reflows the pill.
+- Visible gap below the pill's bottom edge, to the glyphs' top (the round
+  digits, 1430/2048 em above the baseline, 4.38 below the line box top) and to
+  the 1 px ink outline above them: 7.38 and 6.38 at the start of the rise,
+  3.38 and 2.38 at its end, 4 higher. The rise never carries the tick into the
+  pill.
+- The line box (+ 33.5 to + 53.5, rising to + 29.5 to + 49.5) overlaps the
+  item notice's row (+ 34.5 to + 58.5) and the name tab's (+ 41.5 to + 61.5)
+  as before; the labels still draw above the chip, the conversation box and
+  the tab, their outline keeping them readable on each.
 - The labels draw in the [item notice](#item-notice)'s layer, above its chip,
   over the field, the conversation box and its name tab, and under the pause
   button, the pill and the weapon buttons. A label shows at once: labels never
