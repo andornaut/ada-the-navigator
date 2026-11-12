@@ -728,6 +728,23 @@ try {
     await page.locator('.ada-start-actions > [data-action="continue"]').click();
     await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   }
+  // A flight control's box once the flight layout has settled: the mode flips to space before
+  // the controls lay out after Continue, so this waits, bounded, for a non-zero box first.
+  async function settledBox(selector, timeout = 10000) {
+    try {
+      await page.waitForFunction(
+        (target) => {
+          const rect = document.querySelector(target)?.getBoundingClientRect();
+          return rect !== undefined && rect.width > 0 && rect.height > 0;
+        },
+        selector,
+        { timeout },
+      );
+    } catch {
+      assert.fail(`${selector} has no laid-out box ${timeout} ms after Continue`);
+    }
+    return page.locator(selector).boundingBox();
+  }
   // Each fixture loads in a fresh context at the same URL and viewport, carrying the stored
   // settings over: a reloaded tab keeps every earlier load's images alive until the context
   // closes, which the container's memory ceiling cannot hold across the run. A mid-flight
@@ -1586,8 +1603,7 @@ try {
   async function analogRun(logical, marker) {
     const distance = logical * stickUnit;
     await seedOnce(safeSerialized, marker);
-    const target = await page.locator('[data-control="move-joystick"]').boundingBox();
-    assert.ok(target);
+    const target = await settledBox('[data-control="move-joystick"]');
     const start = await position();
     await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
     await page.mouse.down();
@@ -1611,10 +1627,7 @@ try {
   save("analog-proof.json", { deadTravel, smallTravel, fullTravel });
   events.checks.push("Logical move-stick dead zone and partial/full throttle affect actual flight");
   await seedOnce(safeSerialized, "ada-browser.after-analog.v1");
-  const joystick = page.locator('[data-control="move-joystick"]');
-  await joystick.waitFor({ state: "visible" });
-  const bounds = await joystick.boundingBox();
-  assert.ok(bounds && bounds.width > 0 && bounds.height > 0);
+  const bounds = await settledBox('[data-control="move-joystick"]');
   const pointerStart = await position();
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   await page.mouse.down();
@@ -1635,8 +1648,8 @@ try {
   assert.deepEqual(await position(), released, "Pointer release must cancel held movement");
   events.checks.push("Pointer release cancels movement");
   await page.screenshot({ path: `${output}/phone.png` });
-  const moveBounds = await page.locator('[data-control="move-joystick"]').boundingBox();
-  const aimBounds = await page.locator('[data-control="aim-joystick"]').boundingBox();
+  const moveBounds = await settledBox('[data-control="move-joystick"]');
+  const aimBounds = await settledBox('[data-control="aim-joystick"]');
   assert.ok(moveBounds && aimBounds, "Both real joystick targets must be present");
   const touchBefore = await position();
   const touch = await context.newCDPSession(page);
@@ -1818,9 +1831,9 @@ try {
   );
   const meter = page.getByRole("meter", { name: PROTOTYPE.labels.shield, exact: true });
   assert.equal(Number(await meter.getAttribute("aria-valuenow")), PROTOTYPE.tuning.shieldMax);
+  const pill = await settledBox(".ada-status");
+  const pauseBox = await settledBox('[data-action="pause"]');
   const bar = await meter.boundingBox();
-  const pill = await page.locator(".ada-status").boundingBox();
-  const pauseBox = await page.locator('[data-action="pause"]').boundingBox();
   // The DOM UI is sized in logical px: --ada-unit CSS px each.
   const unit = await page
     .locator("#app")
@@ -3302,7 +3315,7 @@ try {
   save("portrait-weapon-alignment.json", turnedControls);
   const portraitBefore = await position();
   const portraitBounds = await Promise.all(
-    ["move", "aim"].map((side) => page.locator(`[data-control="${side}-joystick"]`).boundingBox()),
+    ["move", "aim"].map((side) => settledBox(`[data-control="${side}-joystick"]`)),
   );
   assert.ok(portraitBounds.every((box) => box && box.width > 0 && box.height > 0));
   const portraitOrigins = portraitBounds.map((box, index) => ({
