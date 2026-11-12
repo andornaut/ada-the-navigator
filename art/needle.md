@@ -220,17 +220,24 @@ conventions (layer `backdrop`, anchor `view`, parallax 0) but is drawn from
 data, not a texture: its 1.2 px core and 1 to 2 px stars would not survive the
 haze's half-resolution texture and sigma 20 blur. Needle has no haze.
 
-| Part    | Rule                                                                                                                                                       |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Line    | A straight line at `angle` -6 degrees on screen through `through` (0.5, 0.4) of the play view, fixed to the screen (`anchor` `view`, `parallax` 0)         |
-| Profile | Across the line, `color` `#CFC5BD` at alpha `sum(alpha * exp(-(d / sigma)^2))`, `d` in logical px: haze 0.06 at sigma 30, glow 0.10 at 7, core 0.08 at 1.2 |
-| Specks  | 1 px stars on the line, one per 2.2 px of its length on average, offset across it by a normal of sigma 12, `color` at alpha 0.25 to 0.8                    |
-| Stars   | 2 px `#F1ECE6` stars, one per 240 px on average, sigma 7.2 across                                                                                          |
-| Depth   | `layer` `backdrop`: over the field's background fill, under the dust specks, backdrop rocks, the channel stitch and every play object                      |
-| Seed    | Speck and star positions come from one fixed seed, so the band looks the same on every flight                                                              |
+| Part    | Rule                                                                                                                                                                      |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line    | A straight line at `angle` -6 degrees on screen through `through` (0.5, 0.4) of the play view, fixed to the screen (`anchor` `view`, `parallax` 0)                        |
+| Profile | Across the line, `color` `#CFC5BD` at alpha `sum(alpha * exp(-(d / sigma)^2))`, `d` in logical px: haze 0.06 at sigma 30, glow 0.10 at 7, core 0.08 at 1.2                |
+| Specks  | 1 px stars on the line, one per 2.2 px of its length on average, offset across it by a normal of sigma 12, `color` at alpha 0.25 to 0.8                                   |
+| Stars   | 2 px `#F1ECE6` stars, one per 240 px on average, sigma 7.2 across                                                                                                         |
+| Depth   | `layer` `backdrop`, the fixed part of [L2](backdrop.md#layers): over the sky gradient, under the planets, plates, stars, debris, the channel stitch and every play object |
+| Seed    | Speck and star positions come from one fixed seed, so the band looks the same on every flight                                                                             |
 
 - The line stays within the backdrop rocks' 1.8:1 cap: its peak (alpha 0.24)
-  is `#4F4945`, 1.78:1, and 7 px out 1.24:1. The build fails over 1.8:1.
+  is `#4F4945`, 1.78:1, and 7 px out 1.24:1. The build fails over 1.8:1. That
+  peak is Needle's brightest backdrop tone, and the
+  [backdrop caps](backdrop.md#contrast-caps) hold every other layer at or
+  under it.
+- In the [backdrop layers](backdrop.md) Needle's plates are long slivers
+  parallel to the band, sliding along it at parallax 0.15 and screening it
+  lighter or multiplying it darker as they pass; its dust streaks run along it
+  too. A graphite crescent is its one planet.
 - Specks and stars are point stars, not the line: specks run 1.83 to 6.44:1
   and the pearl stars 13.43:1, as small and sparse as the field's dust specks.
 - Reduced motion: the band is static, so it is unchanged. The

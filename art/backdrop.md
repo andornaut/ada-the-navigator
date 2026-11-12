@@ -27,19 +27,19 @@ empty stretch. Tech draws them at runtime from data; Art owns this spec.
 Back to front. Parallax is the share of the camera's projected motion a layer
 moves by. Play objects, effects and the HUD draw over all of them.
 
-| Layer        | Parallax                           | Content                                                                                                                         | Draw                                            |
-| ------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| L0 sky       | 0                                  | A diagonal gradient across the view from the background to a darker tone                                                        | One quad, fixed to the view                     |
-| L2 phenomena | 0 fixed, 0.05 far, 0.12 planets    | Fixed layers a galaxy links in `fixed` (Andromeda's [haze](galaxies.md#backdrop-haze)); nebula banks and star clusters; planets | Fixed layers first, then far items and planets  |
-| L1 plates    | 0.15                               | Large faceted plates on a seeded lattice, a few brightness steps either side of the background                                  | Darker steps `MULTIPLY`, lighter steps `SCREEN` |
-| L3 stars     | 0.3 far, 0.5 near                  | Two depths of small stars with a slow twinkle                                                                                   | Antialiased discs                               |
-| L4 debris    | 0.6 streaks, 0.7 specks, 0.8 rocks | Dust streaks, the dust specks and the [backdrop rocks](asteroids.md#backdrop)                                                   | As today, in layer coordinates                  |
+| Layer        | Parallax                           | Content                                                                                                                                                                | Draw                                            |
+| ------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| L0 sky       | 0                                  | A diagonal gradient across the view from the background to a darker tone                                                                                               | One quad, fixed to the view                     |
+| L2 phenomena | 0 fixed, 0.05 far, 0.12 planets    | Fixed layers a galaxy links in `fixed` (Andromeda's [haze](galaxies.md#backdrop-haze), Needle's [band](needle.md#space-look)); nebula banks and star clusters; planets | Fixed layers first, then far items and planets  |
+| L1 plates    | 0.15                               | Large faceted plates on a seeded lattice, a few brightness steps either side of the background                                                                         | Darker steps `MULTIPLY`, lighter steps `SCREEN` |
+| L3 stars     | 0.3 far, 0.5 near                  | Two depths of small stars with a slow twinkle                                                                                                                          | Antialiased discs                               |
+| L4 debris    | 0.6 streaks, 0.7 specks, 0.8 rocks | Dust streaks, the dust specks and the [backdrop rocks](asteroids.md#backdrop)                                                                                          | As today, in layer coordinates                  |
 
 - L1 draws over L2 although it is listed after it: plates move faster than
   every phenomenon, so they read as nearer. They are tone washes rather than
   paint: a darker plate multiplies what is under it by one grey factor and a
-  lighter plate screens it with one colour, so planets and nebulae keep their
-  shapes and hues under a plate.
+  lighter plate screens it with one colour, so the haze, the band, planets and
+  nebulae keep their shapes and hues under a plate.
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
   on the plates' Graphics, one object per mode.
 
@@ -146,7 +146,7 @@ size).
 | `plates`      | `lattice`, `split`, `jitter`, `lighter`, `pattern`, and `steps`: per step its resulting `color` over the background and its `multiply` factor or `screen` colour |
 | `planets`     | Each look's `look` (`crescent`, `gibbous`, `ringed`, `moon`), `hue` offset, `size` and `colors` (`night`, `body`, `lit`, `ring`)                                 |
 | `far`         | Each far look: `nebula` with `assets` and `colors`, or `cluster` with `colors` and `alpha`                                                                       |
-| `fixed`       | The manifest links of fixed L2 layers drawn under the plates, fixed to the view: `backdropHaze` on Andromeda, empty elsewhere                                    |
+| `fixed`       | The manifest links of fixed L2 layers drawn under the plates, fixed to the view: `backdropHaze` on Andromeda, `needleBand` on Needle, empty elsewhere            |
 | `stars`       | `color` and `alpha` per depth. The colour is Oklab L 0.83 at the galaxy's tint hue with twice its tint chroma; Sunflower cream `#FFF7DC`                         |
 | `streaks`     | `color` (`backdropLit`; on a light field `backdropSide`), `alpha`, `angle`                                                                                       |
 | `check`       | The build's measured result: cameras, today's extreme tone, the new extreme tone and each signal's contrast over both                                            |
@@ -155,8 +155,8 @@ size).
 
 The rule: no backdrop area tone is brighter than the galaxy's brightest
 backdrop tone today, or on a light field darker than its darkest. Today's
-tone is the galaxy's `backdropLit` on a dark field (Andromeda's haze core where
-brighter, measured from its texture) and `backdropSide` on Sunflower; a
+tone is the galaxy's `backdropLit` on a dark field (Andromeda's haze core or
+Needle's band peak where brighter, measured from the texture and the profile) and `backdropSide` on Sunflower; a
 placeholder's is the base field's. So Ada's white body
 and darkest hull tone `#9AABBF`, the `obstacle` coral and Sunflower's ink
 keyline never lose contrast against the backdrop. Ratios are WCAG against the
@@ -177,7 +177,8 @@ galaxy background:
   each planet and far look, takes the brightest (light field: darkest) tone
   after a 5 px grey opening, which drops point stars and 1 px lines, and fails
   if any signal's contrast over it is below its contrast over today's tone.
-- Stars and streaks are points and hairlines, as the specks are; they stay
+- Stars and streaks are points and hairlines, as the specks and the band's
+  stars are; they stay
   below the 5:1 signal floor and smaller than Stardust, with no glint or cross
   shape.
 
@@ -188,7 +189,7 @@ Measured over the sampled cameras:
 | Sunflower              | `#A1966B` 1.79:1           | `#BAB27C` 1.30:1 | Ink 6.08, 8.38                                          |
 | Cartwheel              | `#643F39` 1.63:1           | `#5E353A` 1.44:1 | Obstacle 3.37, 3.81; hull 3.87, 4.37; white 9.08, 10.26 |
 | Whirlpool              | `#26515C` 1.66:1           | `#314E63` 1.65:1 | Obstacle 3.23, 3.25; hull 3.71, 3.73; white 8.70, 8.75  |
-| Needle, placeholder    | `#49475D` 1.63:1           | `#4A4755` 1.62:1 | Obstacle 3.33, 3.36; hull 3.82, 3.86; white 8.96, 9.05  |
+| Needle                 | Band peak `#4F4945` 1.78:1 | `#4D4842` 1.74:1 | Obstacle 3.29, 3.36; hull 3.78, 3.86; white 8.86, 9.06  |
 | Andromeda              | Haze core `#6970A0` 3.12:1 | `#69709F` 3.10:1 | Obstacle 1.75, 1.77; hull 2.01, 2.03; white 4.72, 4.76  |
 | Black Eye, placeholder | `#49475D` 1.63:1           | `#3C3947` 1.30:1 | Obstacle 3.33, 4.17; hull 3.82, 4.79; white 8.96, 11.24 |
 
@@ -198,17 +199,17 @@ keyline stays at 8.8:1 or more over the darkest plate.
 
 ## Placeholder galaxies
 
-Needle and Black Eye fly as placeholders in the base space palette
-until their art is built. Each has a placeholder backdrop from the same
-generator, so it moves like every other galaxy:
+Black Eye flies as a placeholder in the base space palette until its art is
+built. It has a placeholder backdrop from the same generator, so it moves like
+every other galaxy:
 
 - Its field is the base `background` `#292734` and its rock tones the base
   `backdropLit` and `backdropSide`, as it flies.
 - Monochrome: every tone keeps the base background's own hue and chroma, with
   no hue offsets, so it adds no hue. Stars are the base hue at Oklab L 0.83.
-- One recipe for both: noise-toned triangles on a 420 by 365 lattice, one
-  grey gibbous planet look, no far items. Each galaxy's own seed gives it its
-  own sky.
+- One recipe for every placeholder: noise-toned triangles on a 420 by 365
+  lattice, one grey gibbous planet look, no far items. Each galaxy's own seed
+  gives it its own sky.
 - `public/art/{galaxy}/manifest.json` holds no assets and only the `backdrop`
   link, and the core manifest maps the galaxy's id to it. A built galaxy's art
   replaces both files; the generator never overwrites an existing manifest.

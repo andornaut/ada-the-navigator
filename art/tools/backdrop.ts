@@ -48,6 +48,13 @@ const fields = read("galaxies.json") as {
 };
 const tints = (read("asteroids.json") as { tints: Record<string, Record<string, string>> }).tints;
 const palette = (read("space-palette.json") as { colors: Record<string, string> }).colors;
+// Needle's edge-on band, the fixed part of its L2 (art/needle.md, Space look).
+const band = read("needle/band.json") as {
+  color: string;
+  through: Xy;
+  angle: number;
+  profile: { alpha: number; sigma: number }[];
+};
 // Andromeda's backdrop haze, the fixed part of its L2 (art/galaxies.md, Backdrop haze).
 const HAZE = { path: "andromeda/haze.png", texel: 2 } as const;
 
@@ -230,6 +237,7 @@ type GalaxyConfig = {
   placeholder: boolean;
 };
 
+const RAD6 = (6 * Math.PI) / 180;
 const fbm = (weight: number) => [
   { scale: 1100, weight: round(weight * 0.65), salt: "plate-n1" },
   { scale: 478, weight: round(weight * 0.35), salt: "plate-n2" },
@@ -358,7 +366,34 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
     fixed: ["backdropHaze"],
     placeholder: false,
   },
-  needle: PLACEHOLDER,
+  // Long slivers parallel to the band.
+  needle: {
+    lattice: [
+      [900 * Math.cos(-RAD6), 900 * Math.sin(-RAD6)],
+      [30, 150],
+    ],
+    split: false,
+    jitter: 0.06,
+    lighter: true,
+    pattern: {
+      noise: [{ scale: 300, weight: 0.55, salt: "plate-n1", angle: -6, stretch: 6 }],
+      wave: {
+        weight: 0.75,
+        direction: [Math.sin(RAD6), Math.cos(RAD6)],
+        period: 70,
+        warp: { kind: "noise", weight: 1.2, octave: { scale: 900, weight: 1, salt: "plate-warp" } },
+      },
+    },
+    lightHue: 20,
+    darkHue: -10,
+    skyFlip: false,
+    star: null,
+    streakAngle: -6,
+    planets: [{ look: "crescent", hue: 0, size: 0.65 }],
+    far: [],
+    fixed: ["needleBand"],
+    placeholder: false,
+  },
   "black-eye": PLACEHOLDER,
 };
 
@@ -425,22 +460,31 @@ function fieldOf(galaxy: GalaxyId): Field {
 
 /**
  * The darkest (light field) or brightest (dark field) backdrop tone today: the rock tint, or a
- * fixed L2 layer's peak where brighter (Andromeda's haze core, measured from its texture).
+ * fixed L2 layer's peak where brighter (Andromeda's haze core, measured from its texture, and
+ * Needle's band peak, its profile's summed alpha over the field).
  */
 function todayTone(galaxy: GalaxyId): Float3 {
   const field = fieldOf(galaxy);
-  const rock = float(field.tints[field.light ? "backdropSide" : "backdropLit"]!);
-  if (field.light || !CONFIG[galaxy].fixed.includes("backdropHaze")) {
-    return rock;
+  let best = float(field.tints[field.light ? "backdropSide" : "backdropLit"]!);
+  if (field.light) {
+    return best;
   }
   const bg = float(field.background);
-  let best = rock;
-  const d = hazeTexture.data;
-  for (let i = 0; i < hazeTexture.width * hazeTexture.height; i++) {
-    const c = over([d[i * 4]!, d[i * 4 + 1]!, d[i * 4 + 2]!], d[i * 4 + 3]!, bg);
+  const brighter = (c: Float3) => {
     if (luminance(c) > luminance(best)) {
       best = c;
     }
+  };
+  const { fixed } = CONFIG[galaxy];
+  if (fixed.includes("backdropHaze")) {
+    const d = hazeTexture.data;
+    for (let i = 0; i < hazeTexture.width * hazeTexture.height; i++) {
+      brighter(over([d[i * 4]!, d[i * 4 + 1]!, d[i * 4 + 2]!], d[i * 4 + 3]!, bg));
+    }
+  }
+  if (fixed.includes("needleBand")) {
+    const peak = band.profile.reduce((sum, { alpha }) => sum + alpha, 0);
+    brighter(over(float(band.color), peak, bg));
   }
   return best;
 }
@@ -809,6 +853,22 @@ function renderArea(data: GalaxyBackdrop, camera: Xy, nebulae: Texture[]): Raste
           (y + 0.5 + (dh - H) / 2) / s - 0.5,
         );
         put(y * W + x, c, c[3]);
+      }
+    }
+  }
+  // L2 fixed: the band's summed Gaussian profile across its line through `through`.
+  if (data.fixed.includes("needleBand")) {
+    const a = (band.angle * Math.PI) / 180;
+    const [px, py] = [band.through[0] * W, band.through[1] * H];
+    const colour = float(band.color);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const d = -(x + 0.5 - px) * Math.sin(a) + (y + 0.5 - py) * Math.cos(a);
+        const alpha = band.profile.reduce(
+          (sum, { alpha: k, sigma }) => sum + k * Math.exp(-((d / sigma) ** 2)),
+          0,
+        );
+        put(y * W + x, colour, alpha);
       }
     }
   }

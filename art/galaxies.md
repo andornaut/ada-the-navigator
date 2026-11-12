@@ -237,13 +237,14 @@ Every galaxy draws the shared [backdrop layers](backdrop.md) (sky, phenomena,
 plates, stars and debris) in its own field tones, from its `backdrop.json`.
 Each gets its own character within the system:
 
-| Galaxy            | Plates (L1)                                                                                            | Phenomena (L2)                                                                | Stars and streaks                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------- |
-| Sunflower         | Diamond plots along the isometric axes, like farm fields from above, stepping darker, with cream plots | A pale day moon and a small ringed planet; no far items                       | Faint cream points; streaks in `backdropSide`  |
-| Cartwheel         | Triangles in five-spoke pinwheels round far hubs, rust and peach                                       | Crescent and ringed planets; a star cluster                                   | Marker-pink stars; streaks rising to the right |
-| Whirlpool         | Triangles toned in flowing wave bands                                                                  | A ringed planet and a crescent; blue-violet nebula banks                      | Marker-teal stars                              |
-| Andromeda         | Shadow plates only, so the haze stays the light                                                        | The [spiral haze](#backdrop-haze), fixed; a lavender crescent; a star cluster | Marker-blue stars                              |
-| Needle, Black Eye | [Placeholders](backdrop.md#placeholder-galaxies): noise-toned triangles in the base field, monochrome  | One grey gibbous planet                                                       | Base-hue stars; streaks in the base rock tone  |
+| Galaxy    | Plates (L1)                                                                                            | Phenomena (L2)                                                                | Stars and streaks                              |
+| --------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------- |
+| Sunflower | Diamond plots along the isometric axes, like farm fields from above, stepping darker, with cream plots | A pale day moon and a small ringed planet; no far items                       | Faint cream points; streaks in `backdropSide`  |
+| Cartwheel | Triangles in five-spoke pinwheels round far hubs, rust and peach                                       | Crescent and ringed planets; a star cluster                                   | Marker-pink stars; streaks rising to the right |
+| Whirlpool | Triangles toned in flowing wave bands                                                                  | A ringed planet and a crescent; blue-violet nebula banks                      | Marker-teal stars                              |
+| Andromeda | Shadow plates only, so the haze stays the light                                                        | The [spiral haze](#backdrop-haze), fixed; a lavender crescent; a star cluster | Marker-blue stars                              |
+| Needle    | Long slivers parallel to the band at -6 degrees                                                        | The [edge-on band](needle.md#space-look), fixed; a graphite crescent          | Marker-silver stars; streaks along the band    |
+| Black Eye | [Placeholders](backdrop.md#placeholder-galaxies): noise-toned triangles in the base field, monochrome  | One grey gibbous planet                                                       | Base-hue stars; streaks in the base rock tone  |
 
 On Sunflower the backdrop takes no keyline: the [light-field rule](#light-fields)
 keylines play objects only, and the plates step darker within the caps, so the

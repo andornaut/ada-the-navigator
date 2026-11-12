@@ -36,7 +36,7 @@ their existing meaning and introduces no mechanics.
 The field behind play is the layered [backdrop](backdrop.md), drawn only in
 field tones. One rule caps it: no backdrop area tone is brighter than the
 galaxy's brightest backdrop tone today (`backdropLit`, or Andromeda's haze core
-where brighter), or on a light field
+or Needle's band peak where brighter), or on a light field
 darker than its darkest (`backdropSide`). So no signal, the ship or the ink
 keyline ever loses contrast against the backdrop. Within it, each layer has
 its own cap against the galaxy background (light field in brackets):
