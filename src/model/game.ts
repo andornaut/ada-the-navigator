@@ -2276,6 +2276,12 @@ export class GameModel {
       this.insertion(Number(inserted[1]) + 1);
       return;
     }
+    // A panel that hands on to another speaker's shows it next, one speaker a panel.
+    const next = id === "continue" ? this.chapter.dialogue[dialogue.context]?.then : undefined;
+    if (next) {
+      this.exchange(next);
+      return;
+    }
     this.state.dialogue = null;
   }
   /** Start: galaxy one's home opening, then the prologue, until the first flight begins. */

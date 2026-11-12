@@ -155,7 +155,8 @@ describe("storybook text", () => {
       expect(COPY).toContain(`- "${question}" Astra: "${answer}"`);
     }
     expect(COPY).toContain(
-      `Storybook pages: Previous, Next, Skip. Boarding from Ada's room: ${labels.pickUpRock}`,
+      `Storybook pages: Previous, Next, Skip. Ada's room page, before boarding: Narration: ` +
+        `"${PROTOTYPE.premise.roomRock}" then ${labels.pickUpRock}`,
     );
     expect(COPY).toContain(
       `Earth with nothing new: Narration: "${PROTOTYPE.premise.emptyHome}" then ${labels.pickUpRock}`,

@@ -940,7 +940,7 @@ try {
   // On touch the move lesson names the left stick, then shows its icon inline, hidden from screen
   // readers, which read the words alone.
   const lessonLine = astraBox.locator(".ada-conversation-line");
-  assert.equal(await lessonLine.textContent(), "Use the left stick to fly.", "Lesson words");
+  assert.equal(await lessonLine.textContent(), "Fly with the left stick.", "Lesson words");
   const lessonScale = await page.evaluate(() =>
     parseFloat(getComputedStyle(document.getElementById("app")).getPropertyValue("--ada-unit")),
   );

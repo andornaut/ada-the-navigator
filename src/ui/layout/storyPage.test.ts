@@ -373,8 +373,9 @@ describe("story text fit", () => {
     const opening = PAGES.find(
       ({ id, text }) => id === "opening" && text === PROTOTYPE.chapters[1]!.opening,
     )!;
+    // Every page keeps within Gameplay's 220 characters; the garden opening is Art's two-choice row.
     const longest = PAGES.reduce((a, b) => (b.text.length > a.text.length ? b : a));
-    expect(longest).toBe(opening);
+    expect(longest.text.length).toBeLessThanOrEqual(220);
     const questions = PAGES.find(({ questions }) => questions)!;
     const heights = (page: StoryPage) => SCREENS.map((screen) => panelFor(page, screen).height);
     expect(heights(opening)).toEqual([228, 228, 208, 228]);

@@ -63,13 +63,13 @@ describe("control help tokens", () => {
   });
 
   it("names the controls in the lessons and the landing page, keyboard wording as words", () => {
-    expect(controlHelpText(CONTROL_WORDS, LESSON_MOVE.text)).toBe("Use the left stick to fly.");
+    expect(controlHelpText(CONTROL_WORDS, LESSON_MOVE.text)).toBe("Fly with the left stick.");
     expect(controlHelpText(CONTROL_WORDS, LESSON_AIM.text)).toBe(
-      "Use the right stick to aim and fire.",
+      "Aim and fire with the right stick.",
     );
-    expect(LESSON_MOVE.desktop).toBe("Use WASD to fly.");
+    expect(LESSON_MOVE.desktop).toBe("Fly with WASD.");
     expect(controlHelpParts(LESSON_MOVE.desktop!)).toEqual([
-      { kind: "text", text: "Use WASD to fly." },
+      { kind: "text", text: "Fly with WASD." },
     ]);
     expect(controlHelpText(CONTROL_WORDS, HOME_COPY.mobile)).toBe(
       "Move with the left stick. Aim and fire with the right stick. Tap Use to interact.",
@@ -98,7 +98,7 @@ describe("control icons", () => {
       CONTROL_WORDS,
       LESSON_MOVE.text,
     ) as unknown as FakeNode[];
-    expect(nodes.map((node) => node.textContent).join("")).toBe("Use the left stick to fly.");
+    expect(nodes.map((node) => node.textContent).join("")).toBe("Fly with the left stick.");
     const unit = nodes[1]!;
     expect(unit.className).toBe("ada-control-help");
     const [name, icon] = unit.children as [FakeNode, FakeNode];

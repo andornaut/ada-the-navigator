@@ -144,7 +144,7 @@ export const PREMISE: PremiseContent = {
       questions: [
         {
           answer: [
-            "A disc that holds part of my memory. Each one you find helps me remember, maybe ",
+            "A disk that holds part of my memory. Each one you find helps me remember, maybe ",
             "even how I came to Earth, and shows me new places to jump.",
           ].join(""),
           question: "What's a holodisk?",
