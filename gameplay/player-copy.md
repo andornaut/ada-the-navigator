@@ -752,7 +752,7 @@ without an article, starting with a capital.
 | Delivery jobs, Andromeda | Beacon parts, Mail, Message                                                                                                         |
 | Delivery jobs, Cartwheel | Ore samples, Drill bits, Message                                                                                                    |
 | Lost-item hunts          | Toolbox, Watering can, Music shell, Whale-call whistle, Weaving shuttle, Silver bell, Courier's badge, Lantern, Lucky charm, Helmet |
-| Towed craft              | Seed pod, Scrap barge, Current skimmer, Pod, Stuck glider, Lost courier, Drifting lamp buoy, Ore pod, Stuck hauler                  |
+| Towed craft              | Seed pod, Scrap barge, Current skimmer, Pod, Stuck glider, Lost courier, Drifting lamp buoy, Ore pod, Stuck hauler, Traveler's pod  |
 
 Whirlpool, Needle and Cartwheel have no carried story item; Cartwheel's ore is
 cargo, not a carried item.
