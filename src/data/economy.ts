@@ -16,6 +16,8 @@ export interface PaintScheme {
   /** Player string key for the scheme's name. */
   label: string;
   price: number;
+  /** The scheme's top colour, Art's `top` in ship-paint.json, which rims its item notice. */
+  top: string;
 }
 
 export interface DestructionTiming {
@@ -181,11 +183,11 @@ export const ECONOMY: EconomyCatalog = {
   engineMaxSpeed: [190, 220],
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
-    classic: { label: "paintClassic", price: 0 },
-    cobalt: { label: "paintCobalt", price: 75 },
-    graphite: { label: "paintGraphite", price: 75 },
-    iris: { label: "paintIris", price: 75 },
-    seafoam: { label: "paintSeafoam", price: 75 },
+    classic: { label: "paintClassic", price: 0, top: "#ffffff" },
+    cobalt: { label: "paintCobalt", price: 75, top: "#6f9ff0" },
+    graphite: { label: "paintGraphite", price: 75, top: "#aab2c4" },
+    iris: { label: "paintIris", price: 75, top: "#d9ccff" },
+    seafoam: { label: "paintSeafoam", price: 75, top: "#d4f6ea" },
   },
   pickupCap: {
     capital: 24,

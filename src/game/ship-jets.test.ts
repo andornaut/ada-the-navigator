@@ -5,11 +5,14 @@ import art from "../../public/art/ship-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { hasShipHeadings } from "./ship-art.ts";
 import {
+  engineJetLayers,
   type JetDisplay,
   jetLength,
   jetTriangles,
   layerAlpha,
   layerColor,
+  levelLayers,
+  readLevelLayers,
   readShipJets,
   type ShipJets,
 } from "./ship-jets.ts";
@@ -108,6 +111,45 @@ describe("jet style from Art's file", () => {
     expect(layerAlpha(halo!, 0.6)).toBe(0);
     expect(jetTriangles(single, framePixels, 0, 0.6)).toHaveLength(2);
     expect(jetTriangles(single, framePixels, 0, 0.61)).toHaveLength(3);
+  });
+});
+
+describe("jets by Engine level", () => {
+  it.each([
+    [1, 0x70ace8, 0xb9ecff, 0xffffff],
+    [2, 0xff8f1f, 0xffd59a, 0xffffff],
+    [3, 0xa66bff, 0xe6ccff, 0xffffff],
+  ])("draws level %s in Art's colours, widths and lengths unchanged", (level, h, o, c) => {
+    const layers = engineJetLayers(jets, level);
+    expect(layers.map((layer) => layerColor(layer, 1))).toEqual([h, o, c]);
+    expect(layers.map(({ length, width }) => [length, width])).toEqual(
+      jets.layers.map(({ length, width }) => [length, width]),
+    );
+    expect(layers[0]!.alpha).toEqual(halo!.alpha);
+  });
+
+  it("repeats level 1 in the top-level layers and clamps outside 1 to 3", () => {
+    expect(engineJetLayers(jets, 1)).toEqual(jets.layers);
+    expect(engineJetLayers(jets, 0)).toEqual(engineJetLayers(jets, 1));
+    expect(engineJetLayers(jets, 5)).toEqual(engineJetLayers(jets, 3));
+    const { engineLevels: _, ...plain } = jets;
+    expect(engineJetLayers(plain, 3)).toBe(jets.layers);
+    expect(levelLayers(undefined, 2)).toBeUndefined();
+  });
+
+  it.each([
+    ["a missing level", art.engineLevels.slice(1)],
+    ["a duplicate level", [art.engineLevels[0], art.engineLevels[0], art.engineLevels[2]]],
+    ["a malformed layer", [{ level: 1, layers: [{ color: "blue", length: 1, width: 1 }] }]],
+    ["no levels", []],
+  ])("rejects %s", (_, value) => {
+    expect(readLevelLayers(value)).toBeUndefined();
+    expect(readShipJets({ ...art, engineLevels: value })).toBeUndefined();
+  });
+
+  it("reads a craft without engine levels", () => {
+    const { engineLevels: _, ...plain } = art;
+    expect(readShipJets(plain)?.engineLevels).toBeUndefined();
   });
 });
 

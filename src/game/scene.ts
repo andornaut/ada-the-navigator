@@ -272,7 +272,13 @@ import {
   shipDirection,
   thrustFrames,
 } from "./ship-art.ts";
-import { jetTriangles, readShipJets, type ShipJets } from "./ship-jets.ts";
+import {
+  engineJetLayers,
+  jetTriangles,
+  levelLayers,
+  readShipJets,
+  type ShipJets,
+} from "./ship-jets.ts";
 import { stationRow } from "./shop-view.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import {
@@ -2035,6 +2041,7 @@ export class PrototypeScene extends Scene {
     this.controls.setStatus({
       aboard: aboard && { kind: aboard.kind, label: aboardLabel(PROTOTYPE.labels, aboard) },
       capacity: this.model.shieldMax,
+      level: state.flight?.levels.shield ?? state.economy.levels.shield,
       lightField: lightGalaxy(
         this.lightGalaxies,
         state.mode === "space" ? state.flight?.sector : undefined,
@@ -2557,8 +2564,15 @@ export class PrototypeScene extends Scene {
         displayWidth: ship.displayWidth ?? 42,
         pivot: ship.pivot,
       };
-      // A light field swaps in Art's dark jet layers, with no halo, keylined with the hull.
-      const jets = this.light ? { ...this.shipJets, layers: LIGHT_FIELD.jets.ship } : this.shipJets;
+      // Ada's jets take her Engine level's layers; a light field swaps in Art's dark layers for
+      // that level, with no halo, keylined with the hull.
+      const engine = flight.levels.engine;
+      const jets = {
+        ...this.shipJets,
+        layers: this.light
+          ? (levelLayers(LIGHT_FIELD.jets.shipLevels, engine) ?? LIGHT_FIELD.jets.ship)
+          : engineJetLayers(this.shipJets, engine),
+      };
       const keyline = this.light && LIGHT_FIELD.keylined.includes("ship");
       for (const { alpha, color, points } of jetTriangles(
         jets,

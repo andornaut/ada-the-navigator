@@ -1,4 +1,5 @@
 import type { Weapon } from "../data/types.ts";
+import { UPGRADE_TIER_COLOURS } from "../data/upgrade-tiers.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
@@ -8,6 +9,8 @@ import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {
   readonly id: Weapon;
+  /** The weapon's level, 1 to 3, shown by its disc's edge colour and pips. */
+  readonly level: number;
   readonly selected: boolean;
   /** Shots left; null for Laser, which shows no count. */
   readonly ammo: number | null;
@@ -88,13 +91,32 @@ export const AMMO_COUNT_TEXT = { empty: "#e4574e", normal: "#ead4aa" } as const;
 
 const INK = "#181425";
 
-// A disc's ink edge, and with focus the shared focus ring outside it, round with the disc.
+// A disc's ink edge, its level's tier edge, halo and light-field outline (transparent at level 1
+// and on discs without a level), and with focus the shared focus ring outside it, round with the
+// disc.
+const LEVEL_SHADOWS = `inset 0 0 0 ${units(1)} var(--level-edge, transparent)`;
+const LEVEL_HALO = `0 0 0 ${units(1)} var(--level-outline, transparent),0 0 ${units(2)} ${units(
+  1,
+)} var(--level-halo, transparent)`;
 const discShadow = (focused: boolean) =>
   focused
-    ? `inset 0 0 0 var(--disc-edge) ${INK},0 0 0 ${units(FOCUS_RING.fringe)} ${INK},0 0 0 ${units(
+    ? `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},0 0 0 ${units(FOCUS_RING.fringe)} ${INK},0 0 0 ${units(
         FOCUS_RING.outset,
-      )} ${INK}`
-    : `inset 0 0 0 var(--disc-edge) ${INK}`;
+      )} ${INK},${LEVEL_HALO}`
+    : `${LEVEL_SHADOWS},inset 0 0 0 var(--disc-edge) ${INK},${LEVEL_HALO}`;
+
+/** A weapon level's pip colour (art/controls.md "Weapon level"): lavender at 1, then the tier. */
+export const LEVEL_PIPS = {
+  1: "#b8b3c9",
+  2: UPGRADE_TIER_COLOURS[2],
+  3: UPGRADE_TIER_COLOURS[3],
+} as const;
+
+/** A level's halo colour, the tier at alpha 0.45. */
+const halo = (hex: string) => {
+  const value = Number.parseInt(hex.slice(1), 16);
+  return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},0.45)`;
+};
 
 // One HUD disc button's chrome: a target that is its press area, a smooth disc centred in it, and
 // a glyph centred on the disc, drawn in CSS at logical units so it stays sharp at any scale. The
@@ -199,6 +221,41 @@ ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon:disabled{
   cursor:default
 }
+${([2, 3] as const)
+  .map(
+    (level) => `.ada-controls .ada-weapon[data-level="${level}"] .ada-disc{
+  --level-edge:${UPGRADE_TIER_COLOURS[level]};
+  --level-halo:${halo(UPGRADE_TIER_COLOURS[level])}
+}
+.ada-controls .ada-weapon-selector[data-field=light] .ada-weapon[data-level="${level}"] .ada-disc{
+  --level-outline:${INK}
+}`,
+  )
+  .join("\n")}
+/* The level's pips: one to three 4 discs in an ink outline, 7 apart, centred 12 below the disc's
+   centre, the same in every state. */
+.ada-controls .ada-pips{
+  position:absolute;
+  left:50%;
+  top:${units(HUD_BUTTON.target / 2 + 12)};
+  transform:translate(-50%,-50%);
+  display:flex;
+  gap:${units(3)};
+  pointer-events:none
+}
+.ada-controls .ada-pips > span{
+  width:${units(4)};
+  height:${units(4)};
+  border-radius:50%;
+  box-shadow:0 0 0 ${units(1)} ${INK}
+}
+${([1, 2, 3] as const)
+  .map(
+    (level) => `.ada-controls .ada-weapon[data-level="${level}"] .ada-pips > span{
+  background:${LEVEL_PIPS[level]}
+}`,
+  )
+  .join("\n")}
 `;
 
 export function createWeaponSelector(parent: HTMLElement, options: WeaponSelectorOptions) {
@@ -232,7 +289,10 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         disc.className = "ada-disc";
         disc.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
         disc.setAttribute("aria-hidden", "true");
-        button.append(disc);
+        const pips = document.createElement("span");
+        pips.className = "ada-pips";
+        pips.setAttribute("aria-hidden", "true");
+        button.append(disc, pips);
         if (choice.ammo !== null) {
           const count = document.createElement("span");
           count.className = "ada-ammo";
@@ -257,6 +317,14 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       entry.setAttribute("aria-label", weaponButtonLabel(options.labels, choice));
       entry.setAttribute("aria-pressed", String(choice.selected));
       entry.dataset.state = weaponButtonState(choice);
+      const level = String(Math.min(3, Math.max(1, Math.round(choice.level))));
+      if (entry.dataset.level !== level) {
+        entry.dataset.level = level;
+        const pips = entry.querySelector(".ada-pips")!;
+        pips.replaceChildren(
+          ...Array.from({ length: Number(level) }, () => document.createElement("span")),
+        );
+      }
       entry.title = name;
       entry.disabled = !enabled;
     }
@@ -276,6 +344,13 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     setEnabled(value: boolean): void {
       enabled = value;
       render();
+    },
+    /** Whether the field under the HUD is light, which outlines a levelled disc in ink. */
+    setLightField(light: boolean): void {
+      const field = light ? "light" : "dark";
+      if (root.dataset.field !== field) {
+        root.dataset.field = field;
+      }
     },
     setWeapons(value: readonly WeaponChoice[]): void {
       choices = value;

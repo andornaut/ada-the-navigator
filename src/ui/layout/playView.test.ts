@@ -27,7 +27,11 @@ import {
   safeInsets,
   safeRect,
   SHIELD_PILL,
+  shieldBarWidth,
+  shieldFillWidth,
+  shieldIconCentre,
   shieldPillRect,
+  shieldPillWidth,
   type Size,
   startNavOrder,
   STATUS_PILL,
@@ -352,48 +356,70 @@ describe("HUD anchors", () => {
     expect(ore! - stardust - 51.38).toBeGreaterThan(0);
   });
 
-  it("make the shield pill 202 wide: padding, the 20 icon, a mark gap and the 160x12 bar", () => {
-    expect(SHIELD_PILL.bar).toEqual({
-      fill: { height: 8, width: 156 },
-      height: 12,
-      inset: 2,
-      rim: 1,
-      width: 160,
-    });
-    expect(SHIELD_PILL.bar.width - 2 * SHIELD_PILL.bar.inset).toBe(SHIELD_PILL.bar.fill.width);
+  it("make the shield bar 120, 180 or 240 by 12 by Shield level, the pill the bar plus 42", () => {
+    expect(SHIELD_PILL.bar).toEqual({ height: 12, inset: 2, rim: 1 });
+    expect(SHIELD_PILL.bars).toEqual([120, 180, 240]);
     expect(SHIELD_PILL).toMatchObject({ bottom: TOUCH_STICK.bottom, edge: 2, icon: 20, low: 0.25 });
     expect(SHIELD_PILL.pill).toEqual(PILL);
-    expect(SHIELD_PILL.width).toBe(202);
-    expect(2 * PILL.padding + SHIELD_PILL.icon + SHIELD_PILL.markGap + SHIELD_PILL.bar.width).toBe(
-      202,
-    );
+    expect([1, 2, 3].map(shieldBarWidth)).toEqual([120, 180, 240]);
+    expect([1, 2, 3].map(shieldFillWidth)).toEqual([116, 176, 236]);
+    expect([1, 2, 3].map(shieldPillWidth)).toEqual([162, 222, 282]);
+    expect(2 * PILL.padding + SHIELD_PILL.icon + SHIELD_PILL.markGap).toBe(42);
+    // Outside 1 to 3, the nearest level.
+    expect([0, 4].map(shieldBarWidth)).toEqual([120, 240]);
   });
 
   it.each([
-    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, { x: 259, y: 292 }],
-    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, { x: 259, y: 324 }],
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, [279, 249, 219], 292],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, [279, 249, 219], 324],
     [
       "the 720 base with phone insets",
       { height: 360, width: 720 },
       { bottom: 19, left: 43, right: 43, top: 0 },
-      { x: 259, y: 273 },
+      [279, 249, 219],
+      273,
     ],
     [
       "844x390 with phone insets",
       logicalView({ height: 390, width: 844 }),
       { bottom: 19, left: 43, right: 43, top: 0 },
-      { x: 288.54, y: 273 },
+      [308.54, 278.54, 248.54],
+      273,
     ],
-  ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, at) => {
-    const rect = shieldPillRect(insets, view);
-    expect(rect.x).toBeCloseTo(at.x, 2);
-    expect(rect.y).toBe(at.y);
-    expect(rect).toMatchObject({ height: 28, width: 202 });
-    // Its bottom sits level with the sticks' drawn bottom, clear of both rings' frames across.
+  ] as const)("put the shield pill at the bottom centre at %s", (_, view, insets, xs, y) => {
     const { aim, move } = stickRestCentres(view, insets);
-    expect(rect.y + rect.height).toBe(move.y + 37);
-    expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(82);
-    expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(82);
+    for (const level of [1, 2, 3] as const) {
+      const rect = shieldPillRect(insets, view, level);
+      expect(rect.x).toBeCloseTo(xs[level - 1]!, 2);
+      expect(rect.y).toBe(y);
+      expect(rect).toMatchObject({ height: 28, width: shieldPillWidth(level) });
+      // A longer bar grows both ways about the centre.
+      expect(rect.x + rect.width / 2).toBeCloseTo(xs[0]! + 81, 2);
+      // Its bottom sits level with the sticks' drawn bottom, clear of both rings' frames across:
+      // level 3's 282 pill leaves 42 with phone insets at the 720 base, the narrowest.
+      expect(rect.y + rect.height).toBe(move.y + 37);
+      expect(rect.x - (move.x + 38)).toBeGreaterThanOrEqual(42);
+      expect(aim.x - 37 - (rect.x + rect.width)).toBeGreaterThanOrEqual(42);
+    }
+  });
+
+  it.each([
+    ["the 720 base", { height: 360, width: 720 }, NO_INSETS, 306],
+    [
+      "the 720 base with phone insets",
+      { height: 360, width: 720 },
+      { bottom: 19, left: 43, right: 43, top: 0 },
+      287,
+    ],
+    ["1280x720", logicalView({ height: 720, width: 1280 }), NO_INSETS, 338],
+  ] as const)("land a Shield notice on the pill's icon centre at %s", (_, view, insets, y) => {
+    const hud = hudRect(insets, view);
+    for (const level of [1, 2, 3] as const) {
+      const pill = shieldPillRect(insets, view, level);
+      const icon = shieldIconCentre(insets, view, level);
+      expect(icon.x + hud.x).toBeCloseTo(pill.x + 18, 9);
+      expect(icon.y + hud.y).toBe(y);
+    }
   });
 
   it("add 45 for the cargo segment and 51 plus its slot for the ore segment", () => {
@@ -579,7 +605,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [623, 283],
-    259,
+    279,
     [292, 320],
     [546, 183],
   ],
@@ -589,7 +615,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     PHONE,
     [139, 264],
     [580, 264],
-    259,
+    279,
     [273, 301],
     [503, 164],
   ],
@@ -599,7 +625,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [682, 283],
-    288.54,
+    308.54,
     [292, 320],
     [605, 183],
   ],
@@ -609,7 +635,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     PHONE,
     [139, 264],
     [639, 264],
-    288.54,
+    308.54,
     [273, 301],
     [562, 164],
   ],
@@ -619,7 +645,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, bottom: 19 },
     [96, 264],
     [682, 264],
-    288.54,
+    308.54,
     [273, 301],
     [605, 164],
   ],
@@ -629,7 +655,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, bottom: 19, left: 43 },
     [139, 264],
     [580, 264],
-    259,
+    279,
     [273, 301],
     [503, 164],
   ],
@@ -639,7 +665,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     { ...NO_INSETS, left: 47 },
     [143, 283],
     [635, 283],
-    288.54,
+    308.54,
     [292, 320],
     [558, 183],
   ],
@@ -649,7 +675,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 315],
     [623, 315],
-    259,
+    279,
     [324, 352],
     [546, 215],
   ],
@@ -659,7 +685,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [703, 283],
-    299,
+    319,
     [292, 320],
     [626, 183],
   ],
@@ -669,7 +695,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [96, 283],
     [704, 283],
-    299.67,
+    319.67,
     [292, 320],
     [627, 183],
   ],
@@ -679,7 +705,7 @@ const ART_VIEWS: readonly (readonly [string, Size, Insets, Pair, Pair, number, P
     NO_INSETS,
     [110, 283],
     [741, 283],
-    325.67,
+    345.67,
     [292, 320],
     [664, 183],
   ],

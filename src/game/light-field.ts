@@ -2,7 +2,7 @@ import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" }
 import { bySector } from "../data/galaxies.ts";
 import type { SectorId } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
-import { type JetLayer, readJetLayers } from "./ship-jets.ts";
+import { type JetLayer, readJetLayers, readLevelLayers } from "./ship-jets.ts";
 import type { BeamGlow, EffectShape, EllipseShape } from "./weapon-effects.ts";
 
 // Art's light-field rule (art/galaxies.md "Light fields"): on a galaxy whose field is light,
@@ -17,7 +17,12 @@ export interface LightField {
   readonly hudOutline: number;
   readonly indicatorStroke: number;
   readonly ink: number;
-  readonly jets: { readonly enemy: readonly JetLayer[]; readonly ship: readonly JetLayer[] };
+  readonly jets: {
+    readonly enemy: readonly JetLayer[];
+    readonly ship: readonly JetLayer[];
+    /** Ada's layers by Engine level, index 0 for level 1 (`shipLevels`). */
+    readonly shipLevels: readonly (readonly JetLayer[])[];
+  };
   readonly keyline: number;
   readonly keylined: readonly string[];
   /** The ink outline around each edge marker on a light field. */
@@ -52,12 +57,14 @@ export function readLightField(value: unknown): LightField | undefined {
   const ink = colour(rule?.ink);
   const ship = readJetLayers(jets?.ship);
   const enemy = readJetLayers(jets?.enemy);
+  const shipLevels = readLevelLayers(jets?.shipLevels);
   const widths = glow?.width;
   if (
     !rule ||
     ink === undefined ||
     !ship ||
     !enemy ||
+    !shipLevels ||
     !positive(rule.keyline) ||
     !positive(rule.shotEdge) ||
     !positive(rule.indicatorStroke) ||
@@ -84,7 +91,7 @@ export function readLightField(value: unknown): LightField | undefined {
     hudOutline: outline.width,
     indicatorStroke: rule.indicatorStroke,
     ink,
-    jets: { enemy, ship },
+    jets: { enemy, ship, shipLevels },
     keyline: rule.keyline,
     keylined: rule.keylined,
     markerOutline: rule.markerOutline,

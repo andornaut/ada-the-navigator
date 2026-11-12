@@ -4,6 +4,8 @@ import type { AmmoCounts, FlightState } from "./types.ts";
 
 export interface WeaponChoice {
   id: Weapon;
+  /** The weapon's upgrade level, 1 to 3. */
+  level: number;
   selected: boolean;
   /** Shots left; null for Laser, which is unlimited. An empty weapon refuses selection. */
   ammo: number | null;
@@ -96,7 +98,12 @@ export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const choices: WeaponChoice[] = [];
   for (const id of ["laser", ...UPGRADE_WEAPONS] as const) {
     if (id === "laser" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
-      choices.push({ ammo: shotsLeft(id, flight), id, selected: flight.weapon === id });
+      choices.push({
+        ammo: shotsLeft(id, flight),
+        id,
+        level: flight.levels.weapons[id] ?? 1,
+        selected: flight.weapon === id,
+      });
     }
   }
   return choices;

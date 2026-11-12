@@ -1,5 +1,6 @@
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
-import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
+import { tierColour } from "../data/upgrade-tiers.ts";
+import { weaponGlyphPath, weaponShopSheet } from "../data/weapon-glyphs.ts";
 import type { ItemGain } from "../model/item-gains.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
@@ -36,17 +37,20 @@ export const NOTICE_TIMING = {
 
 export type NoticeKind = "cargo" | "holodisk" | "shield" | "tow" | "upgrade" | "weapon";
 
-/** Each kind's rim and "+" accent (art/controls.md "Item notice"). */
-export const NOTICE_ACCENTS: Readonly<Record<NoticeKind, string>> = {
+/**
+ * The fixed rim and "+" accents (art/controls.md "Item notice"); a level takes its upgrade tier's
+ * colour and a paint scheme its own top colour (noticeAccent).
+ */
+export const NOTICE_ACCENTS = {
   cargo: "#feae34",
   holodisk: "#e868c8",
-  // The shield bar's blue.
-  shield: STATUS_COLOURS.shield,
   tow: "#b8bfc9",
-  // An Engine, Tractor beam or paint gain: the weapon disc's gold, as the shop's upgrades.
-  upgrade: "#bfa06f",
+  // A new weapon or its ammunition: the weapon disc's gold.
   weapon: "#bfa06f",
-};
+} as const;
+
+// A level's rim: its tier's colour, which a level 2 or 3 always has.
+const levelAccent = (level: number) => tierColour(level) ?? NOTICE_ACCENTS.weapon;
 
 const SPRITES = "/art/ui/sprites/";
 
@@ -58,6 +62,8 @@ export type NoticeTarget =
   | { readonly kind: "weapon"; readonly weapon: string };
 
 export interface Notice {
+  /** The rim and "+" colour. */
+  readonly accent: string;
   /** Identical gains share a key and merge. */
   readonly key: string;
   readonly kind: NoticeKind;
@@ -82,6 +88,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
   const label = (item: string) => fill(labels.itemNotice ?? "", { item });
   if (gain.kind === "holodisk") {
     return {
+      accent: NOTICE_ACCENTS.holodisk,
       icon: { sprite: "icon-holodisk-20" },
       key: "holodisk",
       kind: "holodisk",
@@ -92,6 +99,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
   if (gain.kind === "aboard") {
     const towing = gain.aboard.kind === "towing";
     return {
+      accent: towing ? NOTICE_ACCENTS.tow : NOTICE_ACCENTS.cargo,
       icon: { sprite: towing ? "icon-tow-20" : "icon-cargo-20" },
       key: `${gain.aboard.kind}:${gain.aboard.name}`,
       kind: towing ? "tow" : "cargo",
@@ -104,6 +112,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
     const track = TRACK_NOTICES[gain.track];
     const shield = gain.track === "shield";
     return {
+      accent: levelAccent(gain.level),
       icon: { frames: 2, sprite: track.sprite },
       key: `level:${gain.track}:${gain.level}`,
       kind: shield ? "shield" : "upgrade",
@@ -114,6 +123,7 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
   if (gain.kind === "paint") {
     const name = labels[ECONOMY.paints[gain.scheme]?.label ?? ""] ?? gain.scheme;
     return {
+      accent: ECONOMY.paints[gain.scheme]?.top ?? NOTICE_ACCENTS.weapon,
       icon: { frames: 2, sprite: "icon-shop-ship-paint" },
       key: `paint:${gain.scheme}`,
       kind: "upgrade",
@@ -128,8 +138,13 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
       : gain.kind === "weaponLevel"
         ? fill(labels.itemWeaponLevel ?? "", { n: gain.level, weapon: name })
         : name;
+  const level = gain.kind === "weaponLevel";
   return {
-    icon: { mask: weaponGlyphPath(gain.weapon) },
+    // A weapon level shows the plain 20 px shop icon, its rim the level's tier.
+    accent: level ? levelAccent(gain.level) : NOTICE_ACCENTS.weapon,
+    icon: level
+      ? { frames: 2, sprite: weaponShopSheet(gain.weapon) }
+      : { mask: weaponGlyphPath(gain.weapon) },
     key:
       gain.kind === "weaponLevel"
         ? `level:${gain.weapon}:${gain.level}`
@@ -381,7 +396,7 @@ export interface NoticePlaces {
   readonly cargo: number | null;
   /** Each weapon disc's centre across. */
   readonly weapons: ReadonlyMap<string, number>;
-  /** The shield bar's centre. */
+  /** The shield pill's icon centre. */
   readonly shield: { readonly x: number; readonly y: number };
   /** The leftmost weapon target's left edge, or null without weapons. */
   readonly leftmostTarget: number | null;
@@ -406,7 +421,7 @@ export function noticeDestination(places: NoticePlaces, target: NoticeTarget): n
   return pillCentre;
 }
 
-/** Where down the fly lands for a target: the shield bar's centre, or the HUD row's. */
+/** Where down the fly lands for a target: the shield pill's icon centre, or the HUD row's. */
 export function noticeLanding(places: NoticePlaces, target: NoticeTarget): number {
   return target.kind === "shield" ? places.shield.y : places.row;
 }
@@ -450,7 +465,7 @@ export function createItemNotices(
     const text = countedLabel(options.labels, frame.notice.label, frame.count);
     if (shown?.notice !== frame.notice) {
       shown = { count: 0, notice: frame.notice, width: 0 };
-      root.style.setProperty("--notice-accent", NOTICE_ACCENTS[frame.notice.kind]);
+      root.style.setProperty("--notice-accent", frame.notice.accent);
       if ("sprite" in frame.notice.icon) {
         const across = 100 * (frame.notice.icon.frames ?? 1);
         icon.style.background = `url('${SPRITES}${frame.notice.icon.sprite}.png') 0 0 / ${across}% 100% no-repeat`;

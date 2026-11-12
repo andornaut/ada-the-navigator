@@ -39,7 +39,7 @@ import {
   HUD_ROW,
   hudButtonTarget,
   hudRect,
-  shieldBarCentre,
+  shieldIconCentre,
   STATUS_PILL,
   statusPillWidth,
 } from "../ui/layout/playView.ts";
@@ -441,7 +441,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pill: { left, width },
       right: hud.width,
       row: HUD_ROW.centre,
-      shield: shieldBarCentre(layout.insets, view),
+      shield: shieldIconCentre(layout.insets, view, statusView?.level ?? 1),
       weapons: new Map(
         weaponIds.map((id, index) => [id, target(index) + HUD_BUTTON.target / 2] as const),
       ),
@@ -730,6 +730,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setStatus(view) {
       statusView = view;
       status.setStatus(view, performance.now());
+      weapons.setLightField(view.lightField);
     },
     setWeapons(choices) {
       weaponIds = choices.map((choice) => choice.id);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { ECONOMY } from "../data/economy.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { tierColour, UPGRADE_TIER_COLOURS } from "../data/upgrade-tiers.ts";
 import {
   countedLabel,
   EASE_IN_OUT,
@@ -59,10 +61,18 @@ describe("item notice wording", () => {
     expect(notice({ kind: "paint", scheme: "cobalt" }).label).toBe("+ Cobalt paint");
   });
 
-  it("flies a weapon level to its disc and a Shield level to the shield bar; the rest fade in place", () => {
+  it("flies a weapon level to its disc and a Shield level to the shield icon; the rest fade in place", () => {
     const level = notice({ kind: "weaponLevel", level: 2, weapon: "phaser" });
-    expect([level.kind, level.target]).toEqual(["weapon", { kind: "weapon", weapon: "phaser" }]);
-    expect("mask" in level.icon && level.icon.mask).toContain("phaser");
+    expect([level.kind, level.icon, level.target]).toEqual([
+      "weapon",
+      { frames: 2, sprite: "icon-shop-weapon-phaser" },
+      { kind: "weapon", weapon: "phaser" },
+    ]);
+    // Laser's plain shop icon is the shipped icon-shop-weapon-laser sheet.
+    expect(notice({ kind: "weaponLevel", level: 3, weapon: "laser" }).icon).toEqual({
+      frames: 2,
+      sprite: "icon-shop-weapon-laser",
+    });
     const shield = notice({ kind: "level", level: 2, track: "shield" });
     expect([shield.kind, shield.icon, shield.target]).toEqual([
       "shield",
@@ -88,15 +98,42 @@ describe("item notice wording", () => {
     expect(countedLabel(LABELS, ammo.label, 2)).toBe("+ Rapid Missile ammo ×2");
   });
 
+  it("rims a level in its upgrade tier's colour, orange at 2 and purple at 3, on every track", () => {
+    expect(UPGRADE_TIER_COLOURS).toEqual({ 2: "#ff8f1f", 3: "#a66bff" });
+    expect([1, 2, 3, 4].map(tierColour)).toEqual([null, "#ff8f1f", "#a66bff", "#a66bff"]);
+    for (const level of [2, 3] as const) {
+      const tier = UPGRADE_TIER_COLOURS[level];
+      expect(notice({ kind: "weaponLevel", level, weapon: "laser" }).accent).toBe(tier);
+      for (const track of ["engine", "shield", "tractor"] as const) {
+        expect(notice({ kind: "level", level, track }).accent).toBe(tier);
+      }
+    }
+  });
+
+  it("rims a paint scheme in its own top colour from ship-paint.json", () => {
+    expect(
+      Object.fromEntries(Object.entries(ECONOMY.paints).map(([id, { top }]) => [id, top])),
+    ).toEqual({
+      classic: "#ffffff",
+      cobalt: "#6f9ff0",
+      graphite: "#aab2c4",
+      iris: "#d9ccff",
+      seafoam: "#d4f6ea",
+    });
+    for (const [scheme, { top }] of Object.entries(ECONOMY.paints)) {
+      expect(notice({ kind: "paint", scheme: scheme as "cobalt" }).accent).toBe(top);
+    }
+  });
+
   it("gives each gain Art's icon, accent and landing place", () => {
     expect(NOTICE_ACCENTS).toEqual({
       cargo: "#feae34",
       holodisk: "#e868c8",
-      shield: "#70ace8",
       tow: "#b8bfc9",
-      upgrade: "#bfa06f",
       weapon: "#bfa06f",
     });
+    expect([holodisk.accent, parts.accent, ammo.accent]).toEqual(["#e868c8", "#feae34", "#bfa06f"]);
+    expect(notice({ kind: "weapon", weapon: "phaser" }).accent).toBe("#bfa06f");
     expect([holodisk.kind, holodisk.icon, holodisk.target]).toEqual([
       "holodisk",
       { sprite: "icon-holodisk-20" },
@@ -108,7 +145,7 @@ describe("item notice wording", () => {
       { kind: "cargo" },
     ]);
     const tow = notice({ aboard: { kind: "towing", name: "Pod" }, kind: "aboard" });
-    expect([tow.kind, tow.icon]).toEqual(["tow", { sprite: "icon-tow-20" }]);
+    expect([tow.kind, tow.icon, tow.accent]).toEqual(["tow", { sprite: "icon-tow-20" }, "#b8bfc9"]);
     expect(ammo.kind).toBe("weapon");
     expect("mask" in ammo.icon && ammo.icon.mask).toContain("rapidMissile");
     expect(ammo.target).toEqual({ kind: "weapon", weapon: "rapidMissile" });
@@ -226,21 +263,21 @@ describe("item notice geometry", () => {
     expect(chipLeft(600, 100, 50.75, 500)).toBe(400);
   });
 
-  it("lands on the cargo icon, a weapon's disc, the shield bar, or the pill's centre", () => {
+  it("lands on the cargo icon, a weapon's disc, the shield icon, or the pill's centre", () => {
     const places = {
       cargo: 200,
       leftmostTarget: 400,
       pill: { left: 50.75, width: 219.84 },
       right: 696,
       row: 16.5,
-      shield: { x: 360, y: 330 },
+      shield: { x: 297, y: 306 },
       weapons: new Map([["phaser", 520]]),
     };
     expect(noticeDestination(places, { kind: "cargo" })).toBe(200);
     expect(noticeDestination(places, { kind: "weapon", weapon: "phaser" })).toBe(520);
     expect(noticeDestination(places, { kind: "none" })).toBeCloseTo(50.75 + 219.84 / 2, 9);
-    expect(noticeDestination(places, { kind: "shield" })).toBe(360);
-    expect(noticeLanding(places, { kind: "shield" })).toBe(330);
+    expect(noticeDestination(places, { kind: "shield" })).toBe(297);
+    expect(noticeLanding(places, { kind: "shield" })).toBe(306);
     expect(noticeLanding(places, { kind: "weapon", weapon: "phaser" })).toBe(16.5);
   });
 

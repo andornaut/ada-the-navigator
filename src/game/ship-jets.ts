@@ -25,6 +25,11 @@ export interface JetLayer {
 
 /** Art's ship-jets.json, version 1. */
 export interface ShipJets {
+  /**
+   * Ada's layers by Engine level, index 0 for level 1 (`engineLevels`); absent on a craft whose
+   * file has none, which draws `layers` at every level.
+   */
+  engineLevels?: readonly (readonly JetLayer[])[];
   /** Square heading frame size in pixels. */
   frame: number;
   /** Mouths indexed by ship direction; the count must match the directional ship frames. */
@@ -110,6 +115,48 @@ export function readJetLayers(value: unknown): JetLayer[] | undefined {
   return layers;
 }
 
+/**
+ * Art's per-level jet layers, `[{ level, layers }]` with levels 1 to n each once, indexed by level
+ * less 1; undefined if the list is empty or any entry is malformed.
+ */
+export function readLevelLayers(value: unknown): JetLayer[][] | undefined {
+  if (!Array.isArray(value) || value.length === 0) {
+    return undefined;
+  }
+  const levels: JetLayer[][] = [];
+  for (const entry of value as unknown[]) {
+    const level = fields(entry)?.level;
+    const layers = readJetLayers(fields(entry)?.layers);
+    if (
+      !Number.isInteger(level) ||
+      (level as number) < 1 ||
+      (level as number) > value.length ||
+      levels[(level as number) - 1] ||
+      !layers
+    ) {
+      return undefined;
+    }
+    levels[(level as number) - 1] = layers;
+  }
+  return levels;
+}
+
+/** The layers for upgrade level `level` (outside 1 to n, the nearest), or undefined for none. */
+export function levelLayers(
+  levels: readonly (readonly JetLayer[])[] | undefined,
+  level: number,
+): readonly JetLayer[] | undefined {
+  if (!levels || levels.length === 0) {
+    return undefined;
+  }
+  return levels[Math.min(levels.length, Math.max(1, Math.round(level))) - 1];
+}
+
+/** Ada's jets at Engine level `level`: that level's layers, or `layers` without any. */
+export function engineJetLayers(jets: ShipJets, level: number): readonly JetLayer[] {
+  return levelLayers(jets.engineLevels, level) ?? jets.layers;
+}
+
 function readMouths(value: unknown): JetMouth[] | undefined {
   if (!Array.isArray(value) || value.length === 0) {
     return undefined;
@@ -156,7 +203,9 @@ export function readShipJets(value: unknown): ShipJets | undefined {
     return undefined;
   }
   const layers = readJetLayers(root.layers);
-  if (!layers) {
+  const engineLevels =
+    root.engineLevels === undefined ? undefined : readLevelLayers(root.engineLevels);
+  if (!layers || (root.engineLevels !== undefined && !engineLevels)) {
     return undefined;
   }
   const headings: JetMouth[][] = [];
@@ -175,6 +224,7 @@ export function readShipJets(value: unknown): ShipJets | undefined {
     }
   }
   return {
+    ...(engineLevels ? { engineLevels } : {}),
     frame: root.frame,
     headings,
     layers,

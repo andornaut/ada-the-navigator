@@ -6,6 +6,7 @@ import { PROTOTYPE } from "../data/prototype.ts";
 import type { Weapon } from "../data/types.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { conversationBoxRect } from "./layout/conversationBox.ts";
+import { units } from "./layout/css.ts";
 import {
   HUD_AMMO_COUNT,
   HUD_BUTTON,
@@ -23,18 +24,49 @@ import {
   AMMO_COUNT_TEXT,
   ammoCount,
   HUD_DISC_STATES,
+  LEVEL_PIPS,
   WEAPON_STYLE,
   weaponButtonLabel,
   weaponButtonState,
 } from "./weapons.ts";
 
+describe("HUD weapon levels", () => {
+  const rule = (selector: string) =>
+    WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+
+  it("pips a level in lavender at 1, then its upgrade tier's orange and purple", () => {
+    expect(LEVEL_PIPS).toEqual({ 1: "#b8b3c9", 2: "#ff8f1f", 3: "#a66bff" });
+    for (const level of [1, 2, 3] as const) {
+      expect(rule(`.ada-weapon[data-level="${level}"] .ada-pips > span`)).toContain(
+        `background:${LEVEL_PIPS[level]}`,
+      );
+    }
+    expect(rule(".ada-controls .ada-pips > span")).toContain(`width:${units(4)}`);
+    expect(rule(".ada-controls .ada-pips")).toContain(`gap:${units(3)}`);
+  });
+
+  it("edges and haloes a level 2 or 3 disc in its tier, outlined in ink on a light field", () => {
+    expect(rule('.ada-weapon[data-level="2"] .ada-disc')).toContain("--level-edge:#ff8f1f");
+    expect(rule('.ada-weapon[data-level="2"] .ada-disc')).toContain(
+      "--level-halo:rgba(255,143,31,0.45)",
+    );
+    expect(rule('.ada-weapon[data-level="3"] .ada-disc')).toContain("--level-edge:#a66bff");
+    expect(rule('[data-field=light] .ada-weapon[data-level="3"] .ada-disc')).toContain(
+      "--level-outline:",
+    );
+    expect(rule('.ada-weapon[data-level="1"] .ada-disc')).toBeUndefined();
+  });
+});
+
 describe("HUD weapon buttons", () => {
   it("shows the selected weapon as selected, an empty one as empty and the rest idle", () => {
-    expect(weaponButtonState({ ammo: null, id: "laser", selected: true })).toBe("selected");
-    expect(weaponButtonState({ ammo: 0, id: "rapidMissile", selected: true })).toBe("selected");
-    expect(weaponButtonState({ ammo: 12, id: "rapidMissile", selected: false })).toBe("idle");
-    expect(weaponButtonState({ ammo: null, id: "laser", selected: false })).toBe("idle");
-    expect(weaponButtonState({ ammo: 0, id: "phaser", selected: false })).toBe("empty");
+    const state = (ammo: number | null, id: Weapon, selected: boolean) =>
+      weaponButtonState({ ammo, id, level: 1, selected });
+    expect(state(null, "laser", true)).toBe("selected");
+    expect(state(0, "rapidMissile", true)).toBe("selected");
+    expect(state(12, "rapidMissile", false)).toBe("idle");
+    expect(state(null, "laser", false)).toBe("idle");
+    expect(state(0, "phaser", false)).toBe("empty");
   });
 
   it("labels a weapon button with its exact count, en-US grouped, and Laser with its name", () => {
@@ -52,7 +84,7 @@ describe("HUD weapon buttons", () => {
     };
     expect(PROTOTYPE.labels.weaponAmmoLabel).toBe("{weapon}, {count} left");
     const label = (id: Weapon, ammo: number | null) =>
-      weaponButtonLabel(labels, { ammo, id, selected: false });
+      weaponButtonLabel(labels, { ammo, id, level: 1, selected: false });
     expect(label("laser", null)).toBe("Laser");
     expect(label("rapidMissile", 1200)).toBe("Rapid Missile, 1,200 left");
     expect(label("phaser", 0)).toBe("Phaser, 0 left");

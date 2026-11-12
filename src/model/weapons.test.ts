@@ -40,10 +40,22 @@ function incoming(flight: FlightState, count = 1): void {
 }
 
 describe("owned upgrade weapons", () => {
+  it("gives each weapon choice its upgrade level for the disc's tier", () => {
+    const model = launched();
+    const flight = model.state.flight!;
+    pickup(model, "phaser");
+    flight.levels.weapons.laser = 3;
+    flight.levels.weapons.phaser = 2;
+    expect(model.weapons().map(({ id, level }) => [id, level])).toEqual([
+      ["laser", 3],
+      ["phaser", 2],
+    ]);
+  });
+
   it("keeps collected upgrades selectable without spending ownership or resetting fire cooldown", () => {
     const model = launched();
     const flight = model.state.flight!;
-    expect(model.weapons()).toEqual([{ ammo: null, id: "laser", selected: true }]);
+    expect(model.weapons()).toEqual([{ ammo: null, id: "laser", level: 1, selected: true }]);
     pickup(model, "rapidMissile");
     pickup(model, "multiLaser");
     flight.fireCooldown = 0.25;
@@ -58,9 +70,9 @@ describe("owned upgrade weapons", () => {
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     // Each found weapon includes three packs.
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "laser", selected: false },
-      { ammo: 600, id: "multiLaser", selected: true },
-      { ammo: 600, id: "rapidMissile", selected: false },
+      { ammo: null, id: "laser", level: 1, selected: false },
+      { ammo: 600, id: "multiLaser", level: 1, selected: true },
+      { ammo: 600, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -120,8 +132,8 @@ describe("owned upgrade weapons", () => {
     playOpening(model);
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "laser", selected: true },
-      { ammo: 600, id: "multiLaser", selected: false },
+      { ammo: null, id: "laser", level: 1, selected: true },
+      { ammo: 600, id: "multiLaser", level: 1, selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
   });
@@ -153,7 +165,12 @@ describe("owned upgrade weapons", () => {
     const saved = source.save();
     const model = relaunch(PROTOTYPE, saved);
     expect(model.save()).toBe(saved);
-    expect(model.weapons()).toContainEqual({ ammo: 42, id: "scattershot", selected: true });
+    expect(model.weapons()).toContainEqual({
+      ammo: 42,
+      id: "scattershot",
+      level: 1,
+      selected: true,
+    });
     expect(model.save()).toBe(saved);
     expect(model.selectWeapon("laser")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
@@ -258,7 +275,7 @@ describe("ammunition", () => {
     expect(model.selectWeapon("laser")).toBe(true);
     flight.weaponSwitchFor = 0;
     flight.ammo.phaser = 0;
-    expect(model.weapons()).toContainEqual({ ammo: 0, id: "phaser", selected: false });
+    expect(model.weapons()).toContainEqual({ ammo: 0, id: "phaser", level: 1, selected: false });
     expect(model.selectWeapon("phaser")).toBe(false);
     expect(flight.weapon).toBe("laser");
     model.state.docked = "station";

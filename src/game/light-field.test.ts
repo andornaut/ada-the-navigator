@@ -50,6 +50,17 @@ describe("light-field rule", () => {
     expect(LIGHT_FIELD.jets.ship.map((layer) => layerColor(layer, 0))).toEqual([
       0x1767b3, 0x2585d0,
     ]);
+    // Ada's take her Engine level's dark set: blue, orange and purple, level 1 repeating `ship`.
+    expect(
+      LIGHT_FIELD.jets.shipLevels.map((layers) =>
+        layers.flatMap((layer) => [layerColor(layer, 0), layerColor(layer, 1)]),
+      ),
+    ).toEqual([
+      [0x1767b3, 0x1767b3, 0x2585d0, 0x64caff],
+      [0xa84400, 0xa84400, 0xea6a00, 0xffb24d],
+      [0x7a3fd6, 0x7a3fd6, 0x8652e7, 0xb98cff],
+    ]);
+    expect(LIGHT_FIELD.jets.shipLevels[0]).toEqual(LIGHT_FIELD.jets.ship);
     expect(LIGHT_FIELD.jets.enemy.map((layer) => layerColor(layer, 1))).toEqual([
       0x7f4b3d, 0xd68b72,
     ]);
@@ -103,6 +114,10 @@ describe("light-field rule", () => {
     const rule = (galaxies as { lightField: Record<string, unknown> }).lightField;
     expect(readLightField({ lightField: { ...rule, ink: "ink" } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, jets: { ship: [] } } })).toBeUndefined();
+    const jets = rule.jets as Record<string, unknown>;
+    expect(
+      readLightField({ lightField: { ...rule, jets: { ...jets, shipLevels: [] } } }),
+    ).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, keyline: 0 } })).toBeUndefined();
     expect(readLightField({ lightField: { ...rule, markerOutline: 0 } })).toBeUndefined();
     expect(

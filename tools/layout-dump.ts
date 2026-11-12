@@ -84,6 +84,8 @@ export const VIEWPORT_INSETS: Readonly<Record<string, playView.Insets>> = {
 
 const SIDES: readonly playView.Side[] = ["top", "right", "bottom", "left"];
 const COUNTS = [0, 1, 2, 3, 4, 5] as const;
+// Shield levels 1 to 3, each its own bar length.
+const SHIELD_LEVELS = [1, 2, 3] as const;
 
 interface Case {
   readonly args: readonly unknown[];
@@ -150,8 +152,10 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
       call("playView.ts", "mirroredSideInset", playView.mirroredSideInset, logical);
       call("playView.ts", "mirroredSide", playView.mirroredSide, logical, playView.HUD_EDGE, view);
       call("playView.ts", "hudRect", playView.hudRect, logical, view);
-      call("playView.ts", "shieldPillRect", playView.shieldPillRect, logical, view);
-      call("playView.ts", "shieldBarCentre", playView.shieldBarCentre, logical, view);
+      for (const level of SHIELD_LEVELS) {
+        call("playView.ts", "shieldPillRect", playView.shieldPillRect, logical, view, level);
+        call("playView.ts", "shieldIconCentre", playView.shieldIconCentre, logical, view, level);
+      }
       call("playView.ts", "controlsBottom", playView.controlsBottom, logical, view);
       call(
         "conversationBox.ts",
@@ -256,6 +260,11 @@ function stateCases(call: ReturnType<typeof recorder>): void {
   }
   for (const exit of [false, true]) {
     call("playView.ts", "startNavOrder", playView.startNavOrder, exit);
+  }
+  for (const level of SHIELD_LEVELS) {
+    call("playView.ts", "shieldBarWidth", playView.shieldBarWidth, level);
+    call("playView.ts", "shieldFillWidth", playView.shieldFillWidth, level);
+    call("playView.ts", "shieldPillWidth", playView.shieldPillWidth, level);
   }
   for (const lines of [0, 1, 2, 3]) {
     call("conversationBox.ts", "conversationTextTop", conversationBox.conversationTextTop, lines);

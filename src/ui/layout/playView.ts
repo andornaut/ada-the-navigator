@@ -323,13 +323,15 @@ export function controlsBottom(insets: Insets, view: Size): number {
 }
 
 // The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20
-// shield icon, a mark gap and the 160x12 bar (a 1 rim, 1 ink, then the 156x8 fill area at inset
-// 2), 202 wide. It centres across on the HUD rect (the view's centre, as the rect mirrors); its
-// bottom sits level with the sticks' drawn bottom (controlsBottom). The same place on touch and
-// desktop.
-const SHIELD_BAR = { fill: { height: 8, width: 156 }, height: 12, inset: 2, rim: 1, width: 160 };
+// shield icon, a mark gap and the bar, whose length follows Shield level: 120, 180 or 240 by 12
+// (a 1 rim, 1 ink, then the fill area 4 shorter by 8 at inset 2), so the pill is the bar plus 42
+// wide. It centres across on the HUD rect (the view's centre, as the rect mirrors), so a longer
+// bar grows both ways; its bottom sits level with the sticks' drawn bottom (controlsBottom). The
+// same place on touch and desktop.
+const SHIELD_BARS = [120, 180, 240] as const;
 export const SHIELD_PILL = {
-  bar: SHIELD_BAR,
+  bar: { height: 12, inset: 2, rim: 1 },
+  bars: SHIELD_BARS,
   bottom: CONTROLS_BOTTOM,
   // The leading edge inside the fill's right end while the shield regenerates.
   edge: 2,
@@ -338,33 +340,45 @@ export const SHIELD_PILL = {
   low: 0.25,
   markGap: SPACING.markGap,
   pill: PILL,
-  width: 2 * PILL.padding + HUD_BUTTON.glyph + SPACING.markGap + SHIELD_BAR.width,
 } as const;
 
-/** The shield pill's rect in a logical view view big with insets. */
-export function shieldPillRect(insets: Insets, view: Size): Rect {
+/** The shield bar's length at Shield level `level`, 1 to 3 (outside that, the nearest). */
+export function shieldBarWidth(level: number): number {
+  return SHIELD_BARS[Math.min(SHIELD_BARS.length, Math.max(1, Math.round(level))) - 1]!;
+}
+
+/** The shield bar's fill area width at Shield level `level`: the bar less its inset each end. */
+export function shieldFillWidth(level: number): number {
+  return shieldBarWidth(level) - 2 * SHIELD_PILL.bar.inset;
+}
+
+/** The shield pill's width at Shield level `level`: padding, the icon, a mark gap and the bar. */
+export function shieldPillWidth(level: number): number {
+  return 2 * PILL.padding + HUD_BUTTON.glyph + SPACING.markGap + shieldBarWidth(level);
+}
+
+/** The shield pill's rect in a logical view view big with insets, at Shield level `level`. */
+export function shieldPillRect(insets: Insets, view: Size, level = 1): Rect {
   const hud = hudRect(insets, view);
   const bottom = controlsBottom(insets, view);
+  const width = shieldPillWidth(level);
   return {
     height: PILL.height,
-    width: SHIELD_PILL.width,
-    x: hud.x + hud.width / 2 - SHIELD_PILL.width / 2,
+    width,
+    x: hud.x + hud.width / 2 - width / 2,
     y: bottom - PILL.height,
   };
 }
 
-/** The shield bar's centre in HUD rect px, where an item notice for a Shield level lands. */
-export function shieldBarCentre(insets: Insets, view: Size): { x: number; y: number } {
+/**
+ * The shield pill's icon centre in HUD rect px at Shield level `level` (the pill's left + 18, on
+ * its centre line), where an item notice for a Shield level lands.
+ */
+export function shieldIconCentre(insets: Insets, view: Size, level = 1): { x: number; y: number } {
   const hud = hudRect(insets, view);
-  const pill = shieldPillRect(insets, view);
+  const pill = shieldPillRect(insets, view, level);
   return {
-    x:
-      pill.x -
-      hud.x +
-      PILL.padding +
-      SHIELD_PILL.icon +
-      SHIELD_PILL.markGap +
-      SHIELD_PILL.bar.width / 2,
+    x: pill.x - hud.x + PILL.padding + SHIELD_PILL.icon / 2,
     y: pill.y - hud.y + PILL.height / 2,
   };
 }

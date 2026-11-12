@@ -60,9 +60,9 @@ describe("weapon switching", () => {
     own(flight, ["rapidMissile", "multiLaser"]);
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "laser", selected: true },
-      { ammo: 600, id: "multiLaser", selected: false },
-      { ammo: 600, id: "rapidMissile", selected: false },
+      { ammo: null, id: "laser", level: 1, selected: true },
+      { ammo: 600, id: "multiLaser", level: 1, selected: false },
+      { ammo: 600, id: "rapidMissile", level: 1, selected: false },
     ]);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");

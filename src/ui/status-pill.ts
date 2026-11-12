@@ -1,6 +1,14 @@
 import { LIGHT_FIELD } from "../game/light-field.ts";
 import { controlsLine, font, fromHudEdge, hudCentreX, units } from "./layout/css.ts";
-import { countSlot, SHIELD_PILL, STATUS_PILL, STICK_AREA_MARGIN } from "./layout/playView.ts";
+import {
+  countSlot,
+  SHIELD_PILL,
+  shieldBarWidth,
+  shieldFillWidth,
+  shieldPillWidth,
+  STATUS_PILL,
+  STICK_AREA_MARGIN,
+} from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { ammoCount } from "./weapons.ts";
@@ -53,6 +61,8 @@ export const STATUS_TIMING = {
 
 export interface ShieldInput {
   readonly capacity: number;
+  /** Shield level, 1 to 3, which sets the bar's length. */
+  readonly level: number;
   // Whether the shield is regenerating: the recharge delay has passed and it is below capacity.
   readonly recharging: boolean;
   readonly shield: number;
@@ -60,8 +70,8 @@ export interface ShieldInput {
 
 export type ShieldTone = "empty" | "low" | "normal";
 
-// The bar as drawn: each part's start and end in the 156 fill area, the tone and the pulse (0 at
-// the low colour, 1 at the peak).
+// The bar as drawn: each part's start and end in the level's fill area, the tone and the pulse
+// (0 at the low colour, 1 at the peak).
 export interface ShieldBarView {
   readonly delay: { readonly from: number; readonly to: number } | null;
   readonly edge: boolean;
@@ -105,7 +115,7 @@ export class ShieldBar {
       this.flash = null;
     }
     this.previous = shield;
-    const area = SHIELD_PILL.bar.fill.width;
+    const area = shieldFillWidth(input.level);
     const at = (value: number) => (area * value) / capacity;
     const tone: ShieldTone =
       shield <= 0 ? "empty" : shield < SHIELD_PILL.low * capacity ? "low" : "normal";
@@ -224,9 +234,9 @@ export const STATUS_PILL_STYLE = `
   position:absolute;
   left:${hudCentreX()};
   bottom:${controlsLine(SHIELD_PILL.bottom, STICK_AREA_MARGIN)};
-  margin-left:${units(-SHIELD_PILL.width / 2)};
+  margin-left:calc(var(--shield-pill) / -2);
   box-sizing:border-box;
-  width:${units(SHIELD_PILL.width)};
+  width:var(--shield-pill);
   height:${units(SHIELD_PILL.pill.height)};
   padding:0 ${units(SHIELD_PILL.pill.padding)};
   display:flex;
@@ -235,8 +245,18 @@ export const STATUS_PILL_STYLE = `
   background:${STATUS_COLOURS.panel};
   pointer-events:none;
   --shield-mark:${STATUS_COLOURS.shield};
-  --shield-rim:${STATUS_COLOURS.rim}
+  --shield-rim:${STATUS_COLOURS.rim};
+  --shield-pill:${units(shieldPillWidth(1))};
+  --shield-bar:${units(shieldBarWidth(1))}
 }
+${SHIELD_PILL.bars
+  .map(
+    (_, index) => `.ada-controls .ada-shield[data-level="${index + 1}"]{
+  --shield-pill:${units(shieldPillWidth(index + 1))};
+  --shield-bar:${units(shieldBarWidth(index + 1))}
+}`,
+  )
+  .join("\n")}
 .ada-controls .ada-status-mark{
   flex:none;
   display:flex;
@@ -256,7 +276,7 @@ export const STATUS_PILL_STYLE = `
   position:relative;
   flex:none;
   box-sizing:border-box;
-  width:${units(bar.width)};
+  width:var(--shield-bar);
   height:${units(bar.height)};
   border:${units(bar.rim)} solid var(--shield-rim);
   background:${STATUS_COLOURS.track}
@@ -267,7 +287,7 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-bar > span{
   position:absolute;
   top:${units(bar.inset - bar.rim)};
-  height:${units(bar.fill.height)};
+  height:${units(bar.height - 2 * bar.inset)};
   left:${units(bar.inset - bar.rim)};
   width:0
 }
@@ -350,6 +370,8 @@ export interface StatusView {
   /** What Ada carries or tows and its spoken label, such as "Carrying: a crate", or null. */
   readonly aboard: { readonly kind: "carrying" | "towing"; readonly label: string } | null;
   readonly capacity: number;
+  /** Shield level, 1 to 3, which sets the shield bar's length. */
+  readonly level: number;
   // Whether the field under the HUD is light, which outlines the shield icon and bar.
   readonly lightField: boolean;
   /** Ore carried this flight, and its icon's spoken label, "Ore". */
@@ -545,6 +567,10 @@ export function createStatusPill(
     },
     setStatus(view: StatusView, nowMs: number): void {
       const bar = shieldBar.update(view, nowMs, options.reducedMotion());
+      const level = String(Math.min(SHIELD_PILL.bars.length, Math.max(1, Math.round(view.level))));
+      if (shieldRoot.dataset.level !== level) {
+        shieldRoot.dataset.level = level;
+      }
       if (shieldRoot.dataset.tone !== bar.tone) {
         shieldRoot.dataset.tone = bar.tone;
       }

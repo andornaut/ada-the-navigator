@@ -17,15 +17,32 @@ import {
   statusSegments,
 } from "./status-pill.ts";
 
-const full = { capacity: 100, recharging: false, shield: 100 };
+const full = { capacity: 100, level: 1, recharging: false, shield: 100 };
 
 describe("status pill shield bar", () => {
-  it("maps the current capacity to the 156 fill area, so a full bar has one length at every level", () => {
-    expect(new ShieldBar().update(full, 0, false).fill).toBe(156);
-    expect(new ShieldBar().update({ ...full, capacity: 140, shield: 140 }, 0, false).fill).toBe(
-      156,
-    );
-    expect(new ShieldBar().update({ ...full, shield: 50 }, 0, false).fill).toBe(78);
+  it("maps the current capacity to the Shield level's fill area: 116, 176 or 236", () => {
+    expect(new ShieldBar().update({ ...full, level: 1 }, 0, false).fill).toBe(116);
+    expect(
+      new ShieldBar().update({ ...full, capacity: 140, level: 2, shield: 140 }, 0, false).fill,
+    ).toBe(176);
+    expect(
+      new ShieldBar().update({ ...full, capacity: 180, level: 3, shield: 180 }, 0, false).fill,
+    ).toBe(236);
+    expect(new ShieldBar().update({ ...full, shield: 50 }, 0, false).fill).toBe(58);
+  });
+
+  it("lengthens the pill and bar by Shield level through its data-level", () => {
+    const style = (selector: string) =>
+      STATUS_PILL_STYLE.split("}").find((part) => part.includes(`${selector}{`));
+    for (const [level, pill, bar] of [
+      [1, 162, 120],
+      [2, 222, 180],
+      [3, 282, 240],
+    ] as const) {
+      const rule = style(`.ada-shield[data-level="${level}"]`);
+      expect(rule).toContain(`--shield-pill:${units(pill)}`);
+      expect(rule).toContain(`--shield-bar:${units(bar)}`);
+    }
   });
 
   it("is normal at 25% or more, low above 0 and below 25%, and empty at 0", () => {
@@ -38,8 +55,8 @@ describe("status pill shield bar", () => {
     const bar = new ShieldBar();
     bar.update(full, 0, false);
     const hit = bar.update({ ...full, shield: 80 }, 1000, false);
-    expect(hit.flash).toEqual({ from: 124.8, to: 156 });
-    expect(hit.delay).toEqual({ from: 124.8, to: 156 });
+    expect(hit.flash).toEqual({ from: 92.8, to: 116 });
+    expect(hit.delay).toEqual({ from: 92.8, to: 116 });
     expect(
       bar.update({ ...full, shield: 80 }, 1000 + STATUS_TIMING.flashMs, false).flash,
     ).toBeNull();
@@ -51,12 +68,12 @@ describe("status pill shield bar", () => {
     bar.update({ ...full, shield: 80 }, 1000, false);
     const soon = bar.update({ ...full, shield: 60 }, 1200, false);
     expect(soon.flash).toBeNull();
-    expect(soon.delay?.from).toBeCloseTo(93.6, 9);
-    expect(soon.delay?.to).toBe(156);
+    expect(soon.delay?.from).toBeCloseTo(69.6, 9);
+    expect(soon.delay?.to).toBe(116);
     const later = bar.update({ ...full, shield: 50 }, 1000 + STATUS_TIMING.flashEveryMs, false);
-    expect(later.flash?.from).toBe(78);
-    expect(later.flash?.to).toBeCloseTo(93.6, 9);
-    expect(later.delay?.to).toBe(156);
+    expect(later.flash?.from).toBe(58);
+    expect(later.flash?.to).toBeCloseTo(69.6, 9);
+    expect(later.delay?.to).toBe(116);
   });
 
   it("joins a hit to the delay part at once under reduced motion", () => {
@@ -64,7 +81,7 @@ describe("status pill shield bar", () => {
     bar.update(full, 0, true);
     const hit = bar.update({ ...full, shield: 80 }, 1000, true);
     expect(hit.flash).toBeNull();
-    expect(hit.delay).toEqual({ from: 124.8, to: 156 });
+    expect(hit.delay).toEqual({ from: 92.8, to: 116 });
   });
 
   it("clears the delay part when regeneration starts and draws the leading edge until capacity", () => {
@@ -97,7 +114,7 @@ describe("status pill shield bar", () => {
     expect(refill).toMatchObject({
       delay: null,
       edge: false,
-      fill: 156,
+      fill: 116,
       flash: null,
       tone: "normal",
     });
@@ -151,9 +168,11 @@ describe("status pill shield bar", () => {
 
   it("draws the shield pill as an ink PILL at the bottom centre, apart from the status pill", () => {
     const shield = STATUS_PILL_STYLE.split("}").find((part) => part.includes(".ada-shield{"));
-    expect(shield).toContain(`width:${units(202)}`);
+    // Its width follows Shield level (the pill and bar vars), centred: 162 at level 1.
+    expect(shield).toContain("width:var(--shield-pill)");
+    expect(shield).toContain(`--shield-pill:${units(162)}`);
     expect(shield).toContain(`height:${units(28)}`);
-    expect(shield).toContain(`margin-left:${units(-101)}`);
+    expect(shield).toContain("margin-left:calc(var(--shield-pill) / -2)");
     expect(shield).toContain(`background:${STATUS_COLOURS.panel}`);
     expect(shield).toContain("pointer-events:none");
   });
@@ -222,6 +241,7 @@ describe("status pill count", () => {
     const view = {
       aboard: null,
       capacity: 100,
+      level: 1,
       lightField: false,
       ore: amount,
       oreLabel: "Ore",
@@ -248,6 +268,7 @@ describe("status pill count", () => {
     const view = (stardust: number) => ({
       aboard: null,
       capacity: 100,
+      level: 1,
       lightField: false,
       ore: 0,
       oreLabel: "Ore",
