@@ -262,6 +262,13 @@ describe("galaxy map", () => {
       galaxyMap(context(model, { known: [], stations: station }, NO_LANDMARKS, null, null, done))
         .quests,
     ).toEqual([{ kind: "storyComplete" }, { kind: "jobBoards" }]);
+    // The mining hub's board counts once it is a discovered station, though it draws as its
+    // destination, not a second station place.
+    const hub = galaxyMap(
+      context(model, { known: [], stations: ["hub"] }, NO_LANDMARKS, null, null, done),
+    );
+    expect(hub.quests).toEqual([{ kind: "storyComplete" }, { kind: "jobBoards" }]);
+    expect(hub.places.some(({ id }) => id === "hub")).toBe(false);
     // No job board hint without a discovered station; nothing to do lists no lines.
     const none = { job: null, story: "", storyComplete: false };
     expect(

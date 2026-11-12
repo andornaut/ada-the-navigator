@@ -373,7 +373,7 @@ export function galaxyMap(context: MapContext): GalaxyMap {
   const jobLine: QuestLine[] =
     quests.job !== null
       ? [{ kind: "job", target: target((place) => place.job), text: quests.job }]
-      : stations.length > 0
+      : progress.stations.length > 0
         ? [{ kind: "jobBoards" }]
         : [];
   return {

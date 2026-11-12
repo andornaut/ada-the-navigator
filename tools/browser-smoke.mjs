@@ -2139,6 +2139,50 @@ try {
       "Continue resumes; the galaxy map's Earth lands on Ada's room page, which pauses to " +
       "Settings and Back to title, closing on Escape and its X",
   );
+  // The mining hub is a station: Use deposits the ore Ada carries, then docks, and once
+  // Cartwheel's space quest is complete the shop's Ship tab heads with the holodisk.
+  const hubInput = new GameModel(PROTOTYPE);
+  hubInput.state.unlocked = [1, 2];
+  hubInput.startSector(2);
+  playOpening(hubInput);
+  hubInput.state.dialogue = null;
+  Object.assign(hubInput.state.progress[2], {
+    introduced: true,
+    known: ["hub"],
+    questComplete: true,
+    resolved: true,
+    stage: 5,
+    stations: ["hub"],
+  });
+  const hubFlight = hubInput.state.flight;
+  delete hubFlight.storyScene;
+  hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
+  hubFlight.shots = [];
+  const hubAt = ensureDestination(PROTOTYPE, "hub", hubFlight);
+  hubFlight.player = { x: hubAt.x + 100, y: hubAt.y };
+  hubFlight.velocity = { x: 0, y: 0 };
+  hubFlight.dangerFor = 0;
+  hubFlight.cargo = 4;
+  hubInput.state.economy.stardust = 600;
+  assert.equal(hubInput.contextAction, "deposit", "The hub fixture starts with ore to deposit");
+  await seedOnce(hubInput.save(), "ada-browser.hub-station.v1");
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
+  await tapUse(PROTOTYPE.labels.deposit);
+  await tapUse(PROTOTYPE.labels.dock);
+  await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
+  await page.locator('[data-action="open-shop"]').click();
+  await page.locator('[data-tab="ship"]').click();
+  await page
+    .getByText(PROTOTYPE.labels.holodiskAbout, { exact: true })
+    .waitFor({ state: "visible" });
+  const hubSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
+  assert.equal(hubSaved.docked, "hub", "Dock at the hub opens its station card");
+  assert.equal(hubSaved.progress[2].deposited, hubInput.state.progress[2].deposited + 4);
+  await page.screenshot({ path: `${output}/hub-station-shop.png` });
+  events.checks.push(
+    "The mining hub deposits the ore Ada carries, then docks with Use, and its shop's Ship tab " +
+      "heads with the holodisk once Cartwheel's space quest is complete",
+  );
   // Towing never refuses the local map's Galaxies; leaving the galaxy from the galaxy map ends the
   // flight with the held rescue still held, its craft back where it was stranded.
   const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));

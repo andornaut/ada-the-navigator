@@ -564,14 +564,14 @@ export class GameModel {
       return undefined;
     }
     // At a station an action due there comes before Dock (gameplay/rules.md).
-    if (this.current.stations.includes(id)) {
-      return this.supplyDue(id) ? "deliver" : "dock";
-    }
     if (id === HUB_STATION) {
       if ((this.state.flight?.cargo ?? 0) > 0) {
         return "deposit";
       }
       return this.hubSceneDue ? undefined : "dock";
+    }
+    if (this.current.stations.includes(id)) {
+      return this.supplyDue(id) ? "deliver" : "dock";
     }
     if ((id === "workshop" || id === "salvagers") && this.current.questItem) {
       return "deliver";
@@ -614,7 +614,9 @@ export class GameModel {
         id,
         label: this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name,
       })),
-      ...this.current.stations.map((id) => ({ id, label: this.label("station") })),
+      ...this.current.stations
+        .filter((id) => !this.current.known.includes(id))
+        .map((id) => ({ id, label: this.label("station") })),
     ];
   }
   /** Ada's shield capacity with bought upgrades. */
@@ -1258,6 +1260,14 @@ export class GameModel {
         this.current.stage = 2;
       }
     }
+    // However the hub became known, it is one of Cartwheel's discovered stations.
+    if (
+      f.sector === 2 &&
+      this.current.known.includes(HUB_STATION) &&
+      !this.current.stations.includes(HUB_STATION)
+    ) {
+      this.current.stations.push(HUB_STATION);
+    }
     const charted = chartLandmarks(f.sector, this.current, f.player);
     mapped.push(...charted);
     for (const id of charted) {
@@ -1561,7 +1571,7 @@ export class GameModel {
     if (!id || !f) {
       return;
     }
-    if (this.current.stations.includes(id)) {
+    if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
         this.finishActivity(f.sector);
       } else {

@@ -726,7 +726,7 @@ function stationIds(sector: SectorId, value: unknown): boolean {
     strings(value) &&
     Array.isArray(value) &&
     new Set(value).size === value.length &&
-    value.every((id) => stationById(ECONOMY, sector, String(id)) !== null)
+    value.every((id) => namesStation(ECONOMY, sector, String(id)))
   );
 }
 

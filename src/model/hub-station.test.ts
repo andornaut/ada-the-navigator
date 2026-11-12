@@ -24,9 +24,8 @@ function atHub(resolved = false): GameModel {
   }
   const f = model.state.flight!;
   const hub = ensureDestination(PROTOTYPE, HUB_STATION, f);
-  if (!progress.known.includes(HUB_STATION)) {
-    progress.known.push(HUB_STATION);
-  }
+  progress.known = [...new Set([...progress.known, HUB_STATION])];
+  progress.stations = [...new Set([...progress.stations, HUB_STATION])];
   f.objects = f.objects.filter((object) => !object.enemy);
   f.player = { x: hub.x + 100, y: hub.y };
   f.velocity = { x: 0, y: 0 };
@@ -36,6 +35,16 @@ function atHub(resolved = false): GameModel {
 }
 
 describe("the mining hub as a station", () => {
+  it("joins the galaxy's discovered stations once discovered, listed once", () => {
+    const model = atHub();
+    const progress = model.state.progress[2];
+    progress.stations = [];
+    model.step(0.05, idle);
+    expect(progress.stations).toEqual([HUB_STATION]);
+    expect(model.destinations().filter(({ id }) => id === HUB_STATION)).toHaveLength(1);
+    expect(restoreSave(model.save())?.progress[2].stations).toEqual([HUB_STATION]);
+  });
+
   it("offers Deposit while Ada carries ore, then Dock, with no Talk", () => {
     const model = atHub();
     const f = model.state.flight!;
