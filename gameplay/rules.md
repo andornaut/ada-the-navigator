@@ -711,9 +711,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Laser shot deals 1 damage. Enemies fire the same weapons, always at level 1
   with Ada's level 1 damage, blast, spread and reach, plus three enemy-only
   weapons; each enemy
-  keeps its own cadence and projectile speed (see
-  [Ships](ships.md#enemy-weapons)). An enemy Heavy Missile hit
-  (10) can empty a full base shield, so it flies slowly and fires rarely.
+  keeps its own cadence, and enemy projectiles fly at 0.6 times Ada's level 1
+  speed for the weapon (see [Ships](ships.md#enemy-weapons)). An enemy Heavy
+  Missile hit (10) can empty a full base shield, so it fires rarely.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Both reach a fixed 370 world units at
   every level, one play view with a small margin, so flight time follows speed. Rapid Missile flies at 500, 600 and

@@ -164,7 +164,8 @@ Enemy aim is natural rather than perfect, and every aimed enemy weapon follows i
 Enemies fire the same weapons Ada does, plus three weapons only they carry. Every
 enemy weapon is level 1, with Ada's level 1 damage, blast, spread and reach (see
 [Flight and combat](rules.md#flight-and-combat)), so no enemy hit grows with the
-route. Each enemy's fire cadence and projectile speed stay its own, so attacks
+route. Each enemy's fire cadence stays its own and its projectiles fly at 0.6 times
+Ada's level 1 speed, so attacks
 stay readable and dodgeable. Enemies carry no ammunition. Enemy pressure rises
 with position through fire rate, aim lead, group sizes, encounter rates and heavy
 weapon mounts, not weapon levels. Enemy damage has no cap; the pacing simulation
@@ -201,21 +202,21 @@ enemy Heavy Missile flies slowly and its Phaser shows a thin aim line for 0.4
 seconds before the beam fires. The aim line stays where it started, so Ada can
 move off it.
 
-| Enemy weapon  | Interval | Projectile speed | Notes                                                         |
-| ------------- | -------: | ---------------: | ------------------------------------------------------------- |
-| Laser         |    1.4 s |             ×1.7 | `swarm` 1.8 s and ×1.5; platform two-shot bursts 0.15 s apart |
-| Multi-Laser   |    2.2 s |             ×1.7 | The level's fan                                               |
-| Rapid Missile |    2.0 s |             ×1.3 | Its blast damages Ada                                         |
-| Heavy Missile |    4.0 s |             ×0.6 | Its blast damages Ada                                         |
-| Scattershot   |    2.4 s |             ×1.7 | Ada's dot count, range and fade                               |
-| Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                          |
+| Enemy weapon  | Interval | Projectile speed | Notes                                                |
+| ------------- | -------: | ---------------: | ---------------------------------------------------- |
+| Laser         |    1.4 s |              300 | `swarm` 1.8 s; platform two-shot bursts 0.15 s apart |
+| Multi-Laser   |    2.2 s |              240 | The level's fan                                      |
+| Rapid Missile |    2.0 s |              300 | Its blast damages Ada                                |
+| Heavy Missile |    4.0 s |              240 | Its blast damages Ada                                |
+| Scattershot   |    2.4 s |              360 | Ada's dot count, range and fade                      |
+| Phaser        |    3.0 s |          Hitscan | 0.4 s aim line first                                 |
 
-Intervals are before the position's fire rate. Projectile speeds multiply the
-base enemy projectile speed, a fixed 200 world units per second. Damage is Ada's level 1
+Intervals are before the position's fire rate. An enemy projectile flies at 0.6 times
+Ada's level 1 speed for that weapon, in world units per second, with no cap. Damage is Ada's level 1
 damage for that weapon. The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
-  at ×1.2.
+  at 240 world units per second.
 - **Mine layer:** drops a stationary mine behind the ship every 5 seconds, at most
   4 at a time. A mine deals 3 damage when Ada's drawn ship touches its drawn
   silhouette, then is gone; Ada's shots
