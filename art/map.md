@@ -63,9 +63,9 @@ names and "{percent}% mapped" (`gameplay/player-copy.md`).
 - A charted landmark's pip is a filled cream `#ead4aa` disc. An uncharted
   landmark's pip is a 1 px `#b8b3c9` ring of the same diameter, hollow, so the
   two read apart by shape as well as colour.
-- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 368.75
-  wide at the smallest view (720 logical, phone insets 43), 430.75 at the 720
-  base. At 368.75 the column may be 195.75 wide, room for 24 pips; each galaxy
+- The header may reach Quests less `SPACING.gap` (`mapHeaderCap`): 357 wide
+  at the smallest view (720 logical, phone insets 43), 419 at the 720 base. At
+  357 the column may be 184 wide, room for 23 pips; each galaxy
   has 12 landmarks, 4 of each kind.
 - The header keeps the 48 row, so the fit region's top, `maxScale` and the
   1020 separation are unchanged.
@@ -119,20 +119,18 @@ Two secondary `TEXT_BUTTON`s on the HUD row of every galaxy's Map, left to
 right: "Quests", then "Galaxies" (Gameplay). Constant:
 `MAP_SCREEN.hudRow`, to implement.
 
-- Geometry: 48 high, top on the Map's HUD row (`mapRowTop`, HUD rect top -
-  7.5). Each is its own label plus
-  `2 * TEXT_BUTTON.inset` wide: Quests 54.25 + 32 = 86.25, Galaxies
-  66 + 32 = 98 (`TYPE.label` widths 54.24 and 65.83, up to the quarter
-  pixel). They are separate controls, not an action row, each sized to its
-  own label.
+- Geometry: an action row of one width, as every action row: 48 high, top on
+  the Map's HUD row (`mapRowTop`, HUD rect top - 7.5), each button the wider
+  label plus `2 * TEXT_BUTTON.inset`: Galaxies 66 (`TYPE.label` 65.83, up to
+  the quarter pixel; Quests is 54.24) + 32 = 98, so both are 98 wide.
 - Galaxies' right edge is `SMALL_BUTTON_GAP` (24) left of the close tool's
   disc, which is small: `hudRect.right - 33 - 24`. Quests ends `BUTTON_GAP`
   (16) left of Galaxies. Neither moves with the header's width.
 
-| View, logical            | Header, up to | Quests        | Galaxies   | Tool column left |
-| ------------------------ | ------------- | ------------- | ---------- | ---------------- |
-| 720x360                  | 12 to 442.75  | 450.75 to 537 | 553 to 651 | 667.5            |
-| 720x360, phone insets 43 | 43 to 411.75  | 419.75 to 506 | 522 to 620 | 636.5            |
+| View, logical            | Header, up to | Quests     | Galaxies   | Tool column left |
+| ------------------------ | ------------- | ---------- | ---------- | ---------------- |
+| 720x360                  | 12 to 431     | 439 to 537 | 553 to 651 | 667.5            |
+| 720x360, phone insets 43 | 43 to 400     | 408 to 506 | 522 to 620 | 636.5            |
 
 - Each button is its press area (48, `HIT_RULE.minTarget`). The fit region,
   the tool column and the place panel are unchanged: the row sits above the
