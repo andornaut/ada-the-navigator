@@ -282,7 +282,7 @@ backdrop.
 ## Status pill
 
 The in-flight status pill holds the shield bar, the Stardust count and, while
-Ada carries them, her ore and her job item or towed craft, beside the pause
+Ada carries them, her ore and her job or story item or towed craft, beside the pause
 button. Geometry, states and timing are `STATUS_PILL` in
 [Layout](layout.md#status-pill). The panel and the bar's track are
 translucent ink; every mark and the count draw fully opaque over them.
@@ -300,6 +300,7 @@ translucent ink; every mark and the count draw fully opaque over them.
 | Divider         | `#57536e` | 1x16 rule between segments                              |
 | Count           | `#ead4aa` | Cream `TYPE.label`, the Stardust and ore counts         |
 | Stardust tick   | `#f4d98a` | `+N` label, Stardust body gold, with a 1 px ink outline |
+| Ore tick        | `#eaa676` | `+N` label, ore's light rust, with a 1 px ink outline   |
 
 The panel is ink at 0.65 over the field. The track is its own ink layer at
 0.65 drawn over the pill panel, not a hole in it: 0.8775 combined over the
@@ -346,10 +347,11 @@ the fill.
   track; it stays told from the fill by lightness.
 - The delay part is told from the fill by lightness (1.88:1) and from the low
   fill by hue; it holds 3:1 against the track over every galaxy field.
-- The `+N` label sits on the field, not the panel: gold is 10.56:1 on
-  `#292734` and 1.19:1 on Sunflower's `#D8C994`, where its ink outline
-  (10.90:1 on the field) carries it; the outline (12.99:1 against gold) keeps
-  it legible over bright objects.
+- The `+N` labels sit on the field, not the panel: Stardust gold is 10.56:1
+  on `#292734` and 1.19:1 on Sunflower's `#D8C994`, ore rust 7.12:1 and
+  1.24:1, where the ink outline (10.90:1 on the field) carries them; the
+  outline (12.99:1 against gold, 8.76:1 against rust) keeps them legible over
+  bright objects. The rust tick is 7.04:1 or more on every dark field.
 - The low pulse changes colour, not brightness alone, at 1 Hz; the hit flash
   is one 100 ms flash per hit, at most three per second. Nothing flickers.
 
@@ -364,7 +366,7 @@ edge `#181425`, so on a light field it needs no added outline.
 | Key             | Shows                                   | Colours                                                                                         |
 | --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `icon-ore-20`   | A nugget and a pebble                   | Ore's palette ([ore nugget](cartwheel-props.md#ore-nugget)), rim lit `#eaa070`, shade `#d68a54` |
-| `icon-cargo-20` | A strapped crate, any job item          | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
+| `icon-cargo-20` | A strapped crate, any carried item      | The Map's job orange `#feae34`, shade `#c9781c`, strap cream `#ead4aa`                          |
 | `icon-tow-20`   | The tow hook on its line, a towed craft | The tow line's core `#b8bfc9` and edge `#4f5462`                                                |
 
 | Mark          | Colour    | Base, on the panel | Dark fields, on the panel | Sunflower, on the panel | On its ink edge |
@@ -382,6 +384,58 @@ vector of the `icon-shop-shield` silhouette (a heater shield with its left
 half filled), cream `#ead4aa` like the [weapon icons](weapon-icons.md), drawn
 as a CSS mask with smooth sampling. `icon-shop-shield` stays the shop's pixel
 glyph; at 20 px the two differ only in edge pixels.
+
+## Item notice
+
+A small chip under the status pill that names a gain other than Stardust or
+ore (Gameplay's item notices), then flies its icon to where the gain shows
+and vanishes. Geometry, motion and timing are `ITEM_NOTICE` in
+[Layout](layout.md#item-notice).
+
+The chip is opaque ink with a 1 px rim in the gain's accent colour, its icon
+and Gameplay's label: "+ {item}", "+ {weapon}", "+ {weapon} ammo" or
+"+ Holodisk", with "×N" after a merged label. The label is `TYPE.label`,
+cream, with the "+" in the rim's accent colour.
+
+| Gain                           | Icon                                      | Rim and "+" | Lands on                   |
+| ------------------------------ | ----------------------------------------- | ----------- | -------------------------- |
+| Job, story or lost item        | `icon-cargo-20`                           | `#feae34`   | The pill's cargo segment   |
+| Towed craft                    | `icon-tow-20`                             | `#b8bfc9`   | The pill's cargo segment   |
+| New weapon, or a weapon's ammo | `weapon-<id>.svg`, a cream `#ead4aa` mask | `#bfa06f`   | That weapon's disc         |
+| Holodisk                       | `icon-holodisk-20`                        | `#e868c8`   | Nothing: it fades in place |
+
+The accents are the job orange and tow steel of the cargo icons, the selected
+weapon disc's gold and the holodisk's pink. Pixel icons draw nearest
+neighbour; the weapon glyph is the HUD disc's mask with smooth sampling.
+
+| Part         | Colour    |   Base | Sunflower | Cartwheel | Whirlpool | Black Eye | `#ffffff` |
+| ------------ | --------- | -----: | --------: | --------: | --------: | --------: | --------: |
+| Panel        | `#181425` | 1.23:1 |   10.90:1 |    1.22:1 |    1.24:1 |    1.04:1 |   18.02:1 |
+| Cargo rim    | `#feae34` | 7.89:1 |    1.12:1 |    7.96:1 |    7.80:1 |    9.35:1 |    1.86:1 |
+| Tow rim      | `#b8bfc9` | 7.90:1 |    1.12:1 |    7.97:1 |    7.81:1 |    9.36:1 |    1.85:1 |
+| Weapon rim   | `#bfa06f` | 5.91:1 |    1.50:1 |    5.96:1 |    5.84:1 |    7.00:1 |    2.48:1 |
+| Holodisk rim | `#e868c8` | 5.05:1 |    1.75:1 |    5.10:1 |    4.99:1 |    5.98:1 |    2.90:1 |
+
+Parts against the field under the chip.
+
+| Mark on the panel | Colour    | Contrast |
+| ----------------- | --------- | -------: |
+| Label             | `#ead4aa` |  12.44:1 |
+| Cargo "+"         | `#feae34` |   9.71:1 |
+| Tow "+"           | `#b8bfc9` |   9.72:1 |
+| Weapon "+"        | `#bfa06f` |   7.27:1 |
+| Holodisk "+"      | `#e868c8` |   6.22:1 |
+
+- The panel is opaque, so the label reads the same on every field and over
+  bright objects. On the dark fields the rim outlines the chip (4.99:1 or
+  more); on Sunflower the ink panel outlines it (10.90:1) and the rim is an
+  accent only.
+- The "+" colour repeats the rim's; the label and icon carry the meaning, so
+  the accent never stands alone.
+- The chip takes no input (`pointer-events: none`) and draws under the HUD
+  controls, so it never covers or blocks the pause button, the pill or a
+  weapon disc, even in flight. The label is announced through a polite live
+  region (`aria-live="polite"`); the chip itself is `aria-hidden`.
 
 ## Top-right HUD icon buttons
 

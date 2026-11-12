@@ -242,6 +242,7 @@ left: 41 at 844x390 without insets, 10.92 inside the game area's right edge
 | Pause        | Touch only (desktop pauses with Escape): 35x35 frame, 33 disc, drawn edge on the HUD rect's top-left corner (frame 1 outside it), so the disc spans 12 to 45 on both axes at the 720 base; vector art in [Controls](controls.md#pause); press `hitAround(frame)` = 52.5, HUD rect left and top - 9.75 to + 42.75                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `PAUSE_BUTTON`, `playView.ts`                                                       |
 | Weapons      | One `HUD_ROW` of `HUD_BUTTON` targets, `HUD_BUTTON.gap` apart: target `i` from the right at `x = right + 7.5 - 48 - 57 * i`, `y = top - 7.5`; disc and glyph centred in it (disc at 7.5, glyph at 14), so the rightmost disc's drawn right edge and every disc's drawn top sit on the HUD rect (disc 675 to 708, 12 to 45 at the 720 base); the target is the press area (48, `HIT_RULE.minTarget`), 4.5 to 52.5 at a top of 12; each non-Basic weapon carries its [count pill](#weapon-count-pill) under the disc                                                                                                                                                                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `hudButtonTarget(index)`, `playView.ts`                               |
 | Status pill  | One `PILL` holding the shield bar and the Stardust count: left edge `SPACING.gap` right of the pause press area (`PAUSE_BUTTON.hit` right + `SPACING.gap` = HUD rect left + 50.75, 62.75 at the 720 base) while the pause button shows, and on the HUD rect's left edge (`STATUS_PILL.xAlone` 0, so 12) while it is hidden; centred on the HUD row's centre line (HUD rect top + 16.5, so the pill spans HUD rect top + 2.5 to + 30.5, 14.5 to 42.5); grows rightward with the count. Parts and states in [Status pill](#status-pill)                                                                                                                                                                                                                                                                                                                                                                                                           | `STATUS_PILL`, `playView.ts`, to implement                                          |
+| Item notice  | A 24-high chip under the status pill, top HUD rect top + 34.5 (46.5), centred under where the gain lands and clamped between the pill's left edge and `SPACING.pageInset` left of the leftmost weapon target; draws over the conversation box and under the HUD controls; takes no input. See [Item notice](#item-notice)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `ITEM_NOTICE`, `itemNotice.ts`, to implement                                        |
 | Sticks       | 75 frames; ring drawn edges 32 in from the game area's side (`TOUCH_STICK.side`), `mirroredSide(insets, 32, view)` from each view edge (the larger side inset replaces the 32 on both sides), measured from the view's whole-pixel width, and 32 above the game area's bottom (`TOUCH_STICK.bottom`), `min(playView bottom - 32, view bottom - inset - 32)` (the bottom inset adds to the 32, clearing the home bar), so the two sticks mirror each other: rings 32 to 105 and 615 to 688, 255 to 328, at the 720 base; 43 to 116 and 604 to 677, 236 to 309, with phone insets (43, 43, 19); 61 to 134 and 645 to 718 at 844x390; drawn knob reach 12 inside the ring; move input reach 40 (`TOUCH_STICK.moveReach`) and deadzone 2.4 (logical); from the rest centre a thumb has about 68 to the outer and bottom edges; the move stick draws a speed line from the origin to the thumb, not clamped to the ring; the aim stick draws no line | `TOUCH_STICK`, `touchControls.ts`, to implement; now `sticks.ts`                    |
 | Use          | Context action: a `TEXT_BUTTON.height` face with a 2 ink border and radius 8, label in `TYPE.label`, width from the label plus `TEXT_BUTTON.inset`; centred horizontally on the HUD rect (the view's centre, as the rect mirrors), bottom level with the sticks' drawn bottom, `USE_BUTTON.bottom` = `TOUCH_STICK.bottom` 32 above the game area's bottom (face 280 to 328 at the 720 base, 261 to 309 with phone insets); press `hitAround(face)`; shown only while an interaction is available                                                                                                                                                                                                                                                                                                                                                                                                                                                | `USE_BUTTON`, `touchControls.ts`, to implement                                      |
 | Settings     | Start screen only: a `HUD_BUTTON` in the [nav disc states](achievements-icon.md#states) with `settings.svg` (20, vector) as its glyph mask, drawn with smooth sampling; target `hudButtonTarget(0)`, its disc's drawn right edge and top on the HUD rect's top-right corner; `hudButtonTarget(1)` while Exit shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `HUD_BUTTON`, `playView.ts`                                                         |
@@ -307,7 +308,7 @@ on the pill's row:
 | Mark gap      | `SPACING.markGap`                                                                                                                                                                                     |
 | Count         | Gameplay's count, at most four characters ("9999", "10k" to "999k", "1m" to "999m"), in `TYPE.label` on its 20 line, left-aligned in a fixed `STATUS_PILL.count` slot of 40.92 ("999m", the widest)   |
 | Ore segment   | While Ada carries ore: a divider, `icon-ore-20`, `SPACING.markGap`, the ore count in its 40.92 slot                                                                                                   |
-| Cargo segment | While she carries a job item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                                    |
+| Cargo segment | While she carries a job or story item or tows a craft, last: a divider and `icon-cargo-20` or `icon-tow-20`                                                                                           |
 | Width         | Fixed by the segments shown: 229.92 (shield and Stardust), 321.84 with ore (adds 91.92), 366.84 with ore and cargo (cargo adds 45), 274.92 with cargo and no ore; a count never moves the pill's edge |
 
 The fill area maps the current capacity (Gameplay: 100 plus 20% per level) to
@@ -327,23 +328,112 @@ with fractional widths.
 | Low    | Above 0 and below 25% of capacity         | Fill in the low colour; icon and rim pulse; a delay part keeps the delay colour                                                                                    | Pulse: low colour to the pulse peak and back, sine, 1000 ms per cycle, while low; ends at once at 25%                                                                                                                                      | Icon and rim hold the low colour                              |
 | Empty  | The shield reaches 0                      | Empty track; icon and rim in the low colour, no pulse                                                                                                              | Held until the depletion outcome: Astra's jump home, or (upgrade selected) the refill, which draws full at once with no flash or edge                                                                                                      | Same                                                          |
 | Pickup | The Stardust count increases              | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline shows on the pill's row, `SPACING.markGap` right of the pill | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms. A pickup while it shows adds to N and restarts the hold | No bump or rise; the label holds 450 ms and fades over 150 ms |
+| Ore    | The ore count increases                   | As Pickup, for the ore count and an ore `+N` label in the ore tick colour                                                                                          | As Pickup                                                                                                                                                                                                                                  | As Pickup                                                     |
 
 - The `+N` label's left edge, its outline included, is `SPACING.markGap` (6)
   right of the pill's right edge, and its 20 line box centres on the pill's
   row (HUD rect top + 6.5 to + 26.5, so 18.5 to 38.5); it follows the pill as
   the count grows. The bump is a transform: it never reflows the pill.
+- While both show, the ore `+N` label's left edge is `SPACING.markGap` right
+  of the Stardust label's right edge, outlines included; alone, it takes the
+  Stardust label's place. Each keeps its own hold and fade.
 - The pill shows during flight. It hides with the pause button while a modal
   card or storybook page shows. On desktop, where the pause button is hidden,
   the pill is the leftmost art and moves to the HUD rect's left edge, so the
   left side keeps `HUD_EDGE` in both input modes.
 - A segment shows while it has something to show and leaves when empty, at
   once; the pill's right edge moves only then. The ore segment holds ore
-  carried this flight; the cargo segment the carried job item or the towed
-  craft, one at a time.
+  carried this flight; the cargo segment the carried job or story item or the
+  towed craft, one at a time.
 - The pill takes no input. The shield bar is a meter (Gameplay's shield label,
   value and capacity) and the counts a status (Gameplay's Stardust and Ore
   labels, and the item or craft name for the cargo segment); the icons are
   decorative.
+
+### Item notice
+
+Constants: `ITEM_NOTICE`, `itemNotice.ts`, to implement. Colours, icons and
+contrast are in [Controls](controls.md#item-notice). Gameplay's rule: every
+gain but Stardust and ore shows one, queued one at a time.
+
+| Part     | Geometry                                                                                                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chip     | `ITEM_NOTICE.height` 24, radius 4, opaque ink, a 1 rim inside the edge                                                                                                   |
+| Contents | `PILL.padding` 8, the 20 icon centred on the chip's row (2 above and below), `SPACING.markGap` 6, the label, 8                                                           |
+| Label    | `TYPE.label` on its 20 line, one line; width = 42 + the label                                                                                                            |
+| Top      | `ITEM_NOTICE.top`: HUD rect top + 34.5 (46.5), `SPACING.rowGap` (4) below the pill's bottom; bottom + 58.5 (70.5)                                                        |
+| Across   | Centred on the destination's centre x, then clamped: left edge at least the pill's left edge, right edge at most the leftmost weapon target's left - `SPACING.pageInset` |
+| Layer    | Over the field and the conversation box, under the pause button, the pill, the `+N` labels and the weapon buttons; `pointer-events: none`                                |
+
+Destinations, at HUD rect top + 16.5 (the HUD row's centre line) on the y axis:
+
+| Gain                           | Destination centre x                                  |
+| ------------------------------ | ----------------------------------------------------- |
+| Job, story or lost item, a tow | The cargo segment's icon: pill left + pill width - 18 |
+| New weapon, a weapon's ammo    | That weapon's disc: its target's left + 24            |
+| Holodisk                       | None; the chip centres on the pill and fades in place |
+
+The cargo segment and a new weapon's disc appear at pickup (Gameplay), so the
+row may already have shifted; the fly reads the destination each frame and
+lands where it is.
+
+Motion, one notice at a time:
+
+| Phase    | Duration                                | Easing                                        | Motion                                                                                                                                                                                                                                                                                   |
+| -------- | --------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Appear   | 180                                     | Ease-out, `cubic-bezier(0.33, 1, 0.68, 1)`    | Opacity 0 to 1 and `translateY` -8 to 0: out from under the pill                                                                                                                                                                                                                         |
+| Hold     | 1200, or 600 while another notice waits | None                                          | Still                                                                                                                                                                                                                                                                                    |
+| Collapse | 140                                     | Ease-in-out, `cubic-bezier(0.65, 0, 0.35, 1)` | The label fades out over the first 84; the panel shrinks to the 24 square round the icon (left edge + 6, width to 24); the icon stays put                                                                                                                                                |
+| Fly      | 300                                     | Ease-in-out, as Collapse                      | The square's centre follows a quadratic curve from the icon's centre (chip left + 18, HUD rect top + 46.5) through the control point (destination x, start y + 6) to the destination centre; the panel and rim fade 1 to 0, the icon stays opaque and passes under the destination's art |
+| Arrive   | 200                                     | Ease-out                                      | The chip is removed; the cargo segment's icon or the weapon's glyph bumps, scale 1 to 1.12 to 1, origin centre, as the count's bump                                                                                                                                                      |
+
+A holodisk's notice replaces Collapse, Fly and Arrive with one 300 ease-out
+phase that rises 4 and fades out in place. A notice takes 1820 from appear to
+landing, a holodisk's 1680. Under reduced motion every notice fades in over
+150 linear, holds as above and fades out over 150 linear, in place, with no
+collapse, fly or bump.
+
+- Queue: notices show in gain order; the next appears `ITEM_NOTICE.gap` 120
+  after the previous one lands or fades. When a gain queues during a hold,
+  that hold ends at 600 if still ahead, else at once.
+- Merge: a gain with the same label as a waiting or holding notice joins it;
+  the label shows the total, "+ Rapid Missile ammo ×2", and a holding notice
+  restarts its hold. Once a notice's Collapse starts, an identical gain queues
+  a new one. The chip keeps its centring rule and moves at once to fit its
+  new width.
+- The chip hides with the pill while a modal card or storybook page shows,
+  and its timeline pauses until play resumes. Leaving flight clears the queue.
+- The chip never waits for the conversation box. It covers at most the box's
+  top 7 (63.5 to 70.5) and, when it sits over one, part of a name tab (53.5
+  to 73.5); a two-line text block's first line box starts 3 below it.
+- Across, the chip shares rows with the weapon count pills (to + 46.5) and
+  the pause press area (to + 42.75); the clamp keeps it 16 from every weapon
+  target, and its left edge is the pill's, 8 right of the pause press area.
+
+Label room (the clamp's width less 42), with the pause button showing; with
+it hidden the pill starts 50.75 further left and the room grows by as much:
+
+| View                  | Pill left | Four weapons |   Five |    Six |
+| --------------------- | --------: | -----------: | -----: | -----: |
+| 720x360, 1280x720     |     62.75 |       375.75 | 318.75 | 261.75 |
+| 720x360, phone insets |     93.75 |       313.75 | 256.75 | 199.75 |
+| 844x390               |     91.75 |       376.83 | 319.83 | 262.83 |
+| 844x390, insets 43    |     93.75 |       372.83 | 315.83 | 258.83 |
+
+The widest labels: "+ Heavy Missile ammo ×9" 193.00 (6.75 to spare in the
+smallest room), "+ Drifting lamp buoy" 155.12, "+ Heavy Missile" 118.74. A
+label wider than its room draws in `TYPE.body` instead ("+ Heavy Missile ammo
+×99" is 201.90 bold and 192.96 regular); it never wraps or truncates.
+
+Holds at the 720 base, with the pause button showing:
+
+| Case                                         | Chip           |     Destination centre | Clearance to the leftmost target |
+| -------------------------------------------- | -------------- | ---------------------: | -------------------------------: |
+| "+ Spare parts", ore and cargo, four weapons | 336.67, 480.50 |         411.59 (cargo) |                     16 (clamped) |
+| "+ Scrap barge", cargo only, four weapons    | 245.53, 393.81 |         319.67 (cargo) |                           102.69 |
+| "+ Phaser", the fifth weapon                 | 314.34, 423.50 |        691.50 (Phaser) |                     16 (clamped) |
+| "+ Holodisk", ore, four weapons              | 161.99, 285.35 |          223.67 (pill) |                           211.15 |
+| "+ Heavy Missile ammo ×9", insets, six       | 100.50, 335.50 | 546.50 (Heavy Missile) |                     16 (clamped) |
 
 ### Weapon count pill
 
