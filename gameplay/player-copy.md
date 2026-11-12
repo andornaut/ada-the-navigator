@@ -285,8 +285,6 @@ Opening: "Penny waits by the door. It's time for a walk, but Ada would rather ke
 playing. 'Nobody has to take me for a walk,' she complains. She loves Penny, but
 hasn't considered how much Penny depends on her."
 
-Mom, after the opening: "Penny's been waiting by the door all morning, Ada."
-
 Choices:
 
 - "Wonder why walks matter so much."
@@ -298,6 +296,8 @@ Branch pages, then the story rejoins:
   choose a path. Every walk is her chance to explore."
 - "Think about what Penny can choose.": "Ada can go anywhere she likes, even other
   galaxies. Penny can only go where Ada takes her."
+
+Mom, after the branch page: "Penny's been waiting by the door all morning, Ada."
 
 Space dialogue, in story order:
 
