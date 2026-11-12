@@ -169,7 +169,7 @@ Ada's level 1 speed, so attacks
 stay readable and dodgeable. Enemies carry no ammunition. Enemy pressure rises
 with position through fire rate, aim lead, group sizes, encounter rates and heavy
 weapon mounts, not weapon levels. Enemy damage has no cap; the pacing simulation
-reports the damage Ada takes per minute in boss fights.
+reports each weapon's kill times against frigates and capitals.
 
 | Archetype     | Positions 1–2 | Positions 3–4 | Positions 5–6 |
 | ------------- | ------------- | ------------- | ------------- |
