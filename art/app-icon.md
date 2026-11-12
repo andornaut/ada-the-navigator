@@ -42,12 +42,14 @@ edges remain inside that circle. Only background extends outside the safe zone. 
 
 ## Export and integration
 
-Edit the native SVG master. It holds the polygons of `ship.svg` verbatim, in
-order, inside one group with `translate(-22.4 -3.2) scale(5.8)`, which centres
-the frame's bounding box on the canvas and fits it inside radius 185 px. Each
-polygon also has a stroke of its own fill colour, 0.12 frame px wide with round
-joins, which hides antialiasing seams between faces. When the ship model
-changes, copy the new `ship.svg` polygons in the same way.
+Rebuild the vector master with `node art/tools/app-icon.ts`. It draws the
+nose-up pose (heading 20) from the shared [ship model](ship.md), the polygons
+of `ship.svg` in order, inside one group with
+`translate(-22.4 -3.2) scale(5.8)`, which centres the frame's bounding box on
+the canvas and fits it inside radius 185 px. Each polygon also has a stroke of
+its own fill colour, 0.12 frame px wide with round joins, which hides
+antialiasing seams between faces. Reruns are byte-identical while the model is
+unchanged; after a model change, rebuild it and the exports below.
 
 Export each PNG directly at its listed dimensions with local
 `rsvg-convert --width SIZE --height SIZE --output OUTPUT icon.svg`. Assemble

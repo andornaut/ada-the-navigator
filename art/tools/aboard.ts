@@ -1,5 +1,6 @@
 // The aboard backdrop: Ada's ship from outside over the in-between field, behind every page
-// aboard. Drawn from the ship model in ship.ts at heading 25, then muted as story backdrops are.
+// aboard. Drawn from the shared ship model (ship-model.ts) at heading 25, then muted as story
+// backdrops are.
 // Usage: node art/tools/aboard.ts writes public/art/aboard.png, the holodisk overlay frames
 // aboard-holodisk-0 to -3, aboard-emergency.png and aboard-holodisk.json, places their core
 // manifest entries and links the sequence as `aboardHolodisk`. Contract: art/aboard.md.
@@ -25,7 +26,7 @@ import {
 import { json } from "./projection.ts";
 import { SPACE_BG } from "./palette.ts";
 import { centredView, DESIGN, shimmer, type View } from "./shimmer.ts";
-import { classic, drawn } from "./ship.ts";
+import { classic, drawn, FRAME } from "./ship-model.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
@@ -49,7 +50,7 @@ const EMERGENCY = { glow: "#ff6a6a", engine: "#ff8a7a", light: "#e05a5a", deep: 
 
 // Frame px to canvas logical px.
 const toCanvas = ([x, y]: Xy): Xy => [CENTRE[0] + (x - 48) * SCALE, CENTRE[1] + (y - 48) * SCALE];
-const faces = drawn(HEADING, false, classic.paint);
+const faces = drawn(FRAME / 2, classic.paint, { yaw: HEADING });
 
 // The canopy roof's bounds on the canvas, logical px: the dome the subject band holds and the
 // point the drive and Astra's light key from.

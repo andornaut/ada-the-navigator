@@ -188,7 +188,9 @@ as locked.
 ## Selector preview
 
 The [galaxy selector](layout.md#galaxy-selector) panel shows one preview per
-galaxy, `preview` in the data. Tech captures each one; Art owns this spec.
+galaxy, `preview` in the data. Tech captures each one with `make previews`;
+Art owns this spec. The captures show the current ship sprite, so recapture
+them after a [ship model](ship.md) change.
 
 - Capture the galaxy's space view with no HUD, touch controls, notices, panels
   or cards, at 1 px per logical px.

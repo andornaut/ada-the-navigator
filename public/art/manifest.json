@@ -4249,6 +4249,30 @@
       }
     },
     {
+      "id": "quantum-jump-tunnel",
+      "path": "/art/quantum-jump-tunnel.png",
+      "width": 960,
+      "height": 3780,
+      "displayWidth": 960,
+      "displayHeight": 540,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 960,
+      "frameHeight": 540,
+      "frames": {
+        "t0": 0,
+        "t1": 1,
+        "t2": 2,
+        "t3": 3,
+        "t4": 4,
+        "t5": 5,
+        "jump": 6
+      }
+    },
+    {
       "id": "stardust",
       "path": "/art/stardust.png",
       "width": 36,

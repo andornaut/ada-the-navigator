@@ -2,8 +2,34 @@
   "version": 1,
   "durationMs": 1000,
   "frames": [
-    { "name": "space", "startMs": 0, "ms": 100 },
-    { "name": "charge", "startMs": 100, "ms": 150, "glow": "full", "streak": 1 },
+    { "name": "space", "startMs": 0, "ms": 100, "steps": [{ "ms": 100 }] },
+    {
+      "name": "charge",
+      "startMs": 100,
+      "ms": 150,
+      "glow": "full",
+      "streak": 1,
+      "steps": [
+        {
+          "ms": 50,
+          "glow": "full",
+          "ship": { "pose": "sprite", "scale": 1, "turn": 0.333 },
+          "streak": 1
+        },
+        {
+          "ms": 50,
+          "glow": "full",
+          "ship": { "pose": "sprite", "scale": 1, "turn": 0.667 },
+          "streak": 1
+        },
+        {
+          "ms": 50,
+          "glow": "full",
+          "ship": { "pose": "sprite", "scale": 1, "turn": 1 },
+          "streak": 1
+        }
+      ]
+    },
     {
       "name": "close",
       "startMs": 250,
@@ -12,7 +38,33 @@
       "field": "close",
       "glow": "full",
       "white": 0.3,
-      "streak": 1.4
+      "streak": 1.4,
+      "steps": [
+        {
+          "ms": 50,
+          "glow": "full",
+          "iris": { "reach": 0.86 },
+          "ship": { "pose": "bank-8", "scale": 1.25, "white": 0.1 },
+          "streak": 1.4,
+          "tunnel": "t0"
+        },
+        {
+          "ms": 50,
+          "glow": "full",
+          "iris": { "reach": 0.74 },
+          "ship": { "pose": "bank-16", "scale": 1.55, "white": 0.2 },
+          "streak": 1.4,
+          "tunnel": "t1"
+        },
+        {
+          "ms": 50,
+          "glow": "full",
+          "iris": { "reach": 0.62 },
+          "ship": { "pose": "bank-24", "scale": 1.9, "white": 0.3 },
+          "streak": 1.4,
+          "tunnel": "t2"
+        }
+      ]
     },
     {
       "name": "tight",
@@ -21,9 +73,38 @@
       "iris": { "radius": 66 },
       "field": "tight",
       "glow": "full",
-      "white": 0.7
+      "white": 0.7,
+      "steps": [
+        {
+          "ms": 60,
+          "glow": "full",
+          "ship": { "pose": "bank-30", "scale": 2.6, "white": 0.2 },
+          "tunnel": "t3"
+        },
+        {
+          "ms": 60,
+          "glow": "full",
+          "ship": { "pose": "bank-30", "scale": 3.2, "white": 0.3 },
+          "tunnel": "t4"
+        }
+      ]
     },
-    { "name": "jump", "startMs": 520, "ms": 80, "field": "jump", "star": true, "bright": true },
+    {
+      "name": "jump",
+      "startMs": 520,
+      "ms": 80,
+      "field": "jump",
+      "star": true,
+      "bright": true,
+      "steps": [
+        {
+          "ms": 80,
+          "ship": { "pose": "stretch-30", "scale": 3.3, "white": 0.7 },
+          "star": true,
+          "tunnel": "jump"
+        }
+      ]
+    },
     {
       "name": "open",
       "startMs": 600,
@@ -32,7 +113,51 @@
       "iris": { "radius": 120 },
       "field": "open",
       "glow": "mid",
-      "white": 0.6
+      "white": 0.6,
+      "steps": [
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 46 },
+          "ship": { "pose": "settle-24", "scale": 2.8, "white": 0.35 },
+          "tunnel": "t0"
+        },
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 90 },
+          "ship": { "pose": "settle-16", "scale": 2.3, "white": 0.25 },
+          "tunnel": "t1"
+        },
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 140 },
+          "ship": { "pose": "settle-10", "scale": 1.85, "white": 0.15 },
+          "tunnel": "t2"
+        },
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 196 },
+          "ship": { "pose": "settle-5", "scale": 1.55, "white": 0.1 },
+          "tunnel": "t3"
+        },
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 258 },
+          "ship": { "pose": "sprite", "scale": 1.3, "white": 0.05 },
+          "tunnel": "t4"
+        },
+        {
+          "ms": 50,
+          "glow": "mid",
+          "iris": { "radius": 320 },
+          "ship": { "pose": "sprite", "scale": 1.1 },
+          "tunnel": "t5"
+        }
+      ]
     },
     {
       "name": "clear",
@@ -41,9 +166,159 @@
       "destination": true,
       "iris": { "reach": 0.925 },
       "field": "clear",
-      "glow": "low"
+      "glow": "low",
+      "steps": [
+        {
+          "ms": 50,
+          "glow": "low",
+          "iris": { "reach": 0.86 },
+          "ship": { "pose": "sprite", "scale": 1 },
+          "tunnel": "t0"
+        },
+        {
+          "ms": 50,
+          "glow": "low",
+          "iris": { "reach": 0.96 },
+          "ship": { "pose": "sprite", "scale": 1 },
+          "tunnel": "t1"
+        }
+      ]
     }
   ],
+  "warp": {
+    "heading": 24,
+    "frame": 256,
+    "displayScale": 0.4375,
+    "tunnel": "quantum-jump-tunnel",
+    "poses": [
+      {
+        "id": "bank-8",
+        "roll": 8,
+        "stretch": 1,
+        "squash": 1,
+        "thrust": false,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/bank-8.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/bank-8.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/bank-8.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/bank-8.svg",
+          "iris": "/art/quantum-jump-ship/iris/bank-8.svg"
+        }
+      },
+      {
+        "id": "bank-16",
+        "roll": 16,
+        "stretch": 1,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/bank-16.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/bank-16.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/bank-16.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/bank-16.svg",
+          "iris": "/art/quantum-jump-ship/iris/bank-16.svg"
+        }
+      },
+      {
+        "id": "bank-24",
+        "roll": 24,
+        "stretch": 1,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/bank-24.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/bank-24.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/bank-24.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/bank-24.svg",
+          "iris": "/art/quantum-jump-ship/iris/bank-24.svg"
+        }
+      },
+      {
+        "id": "bank-30",
+        "roll": 30,
+        "stretch": 1,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/bank-30.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/bank-30.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/bank-30.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/bank-30.svg",
+          "iris": "/art/quantum-jump-ship/iris/bank-30.svg"
+        }
+      },
+      {
+        "id": "stretch-30",
+        "roll": 30,
+        "stretch": 3.2,
+        "squash": 0.85,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/stretch-30.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/stretch-30.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/stretch-30.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/stretch-30.svg",
+          "iris": "/art/quantum-jump-ship/iris/stretch-30.svg"
+        }
+      },
+      {
+        "id": "settle-24",
+        "roll": 24,
+        "stretch": 1.8,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/settle-24.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/settle-24.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/settle-24.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/settle-24.svg",
+          "iris": "/art/quantum-jump-ship/iris/settle-24.svg"
+        }
+      },
+      {
+        "id": "settle-16",
+        "roll": 16,
+        "stretch": 1.3,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/settle-16.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/settle-16.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/settle-16.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/settle-16.svg",
+          "iris": "/art/quantum-jump-ship/iris/settle-16.svg"
+        }
+      },
+      {
+        "id": "settle-10",
+        "roll": 10,
+        "stretch": 1.1,
+        "squash": 1,
+        "thrust": true,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/settle-10.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/settle-10.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/settle-10.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/settle-10.svg",
+          "iris": "/art/quantum-jump-ship/iris/settle-10.svg"
+        }
+      },
+      {
+        "id": "settle-5",
+        "roll": 5,
+        "stretch": 1,
+        "squash": 1,
+        "thrust": false,
+        "paths": {
+          "classic": "/art/quantum-jump-ship/classic/settle-5.svg",
+          "cobalt": "/art/quantum-jump-ship/cobalt/settle-5.svg",
+          "seafoam": "/art/quantum-jump-ship/seafoam/settle-5.svg",
+          "graphite": "/art/quantum-jump-ship/graphite/settle-5.svg",
+          "iris": "/art/quantum-jump-ship/iris/settle-5.svg"
+        }
+      }
+    ]
+  },
   "iris": {
     "rim": { "colour": "#dcc3f2", "from": 0, "to": 3 },
     "line": { "colour": "#8fe0f2", "at": 5, "width": 1 }
@@ -62,6 +337,7 @@
       { "fromMs": 400, "toMs": 550, "show": "still" },
       { "fromMs": 550, "toMs": 750, "crossFade": ["still", "destination"] },
       { "fromMs": 750, "toMs": 900, "show": "destination" }
-    ]
+    ],
+    "ship": { "holdToMs": 550, "crossFadeToMs": 750 }
   }
 }

@@ -1,11 +1,21 @@
 # Ship geometry
 
-- Rebuild with `node art/tools/ship.ts` when resources are available.
-  The single module uses Node builtins and writes directly to `public/art/`.
+- Rebuild with `node art/tools/ship.ts` when resources are available. It uses
+  Node builtins and writes directly to `public/art/`.
+- The model is [ship-model.ts](tools/ship-model.ts), a module with no side
+  effects: `drawn(pivot, paint, pose)` returns a pose's polygons in draw order.
+  Every ship drawing imports it rather than copying the geometry:
+  [ship.ts](tools/ship.ts), the [aboard backdrop](aboard.md), the
+  [quantum jump](quantum-jump.md#warp-ship) and the [app icon](app-icon.md).
+  A model change regenerates all four.
+- A pose is a heading (`yaw`) and `thrust`, plus optional `roll` (degrees
+  about the hull's forward axis), `stretch` along the hull and `squash` across
+  it, about the pivot and before the heading turn. Sprite frames use the bare
+  heading, so their numbers are the heading rotation's exactly.
 - Exports: `ship-{0..31}.svg`, `ship-thrust-{0..31}.svg`, `ship-jets.json`,
   `ship-nose.json` and the [paint schemes](#paint-schemes). Frames, jets and
-  nose all derive from the one model in the module, so a model change
-  regenerates them together.
+  nose all derive from the one model, so a model change regenerates them
+  together.
   `ship.svg` and `ship-thrust.svg` are byte-identical aliases of index 20 (up).
 - Transparent 96 by 96 viewport, pivot (48, 48), display 42 by 42.
   Keep the viewport intact and render the selected frame with rotation zero.

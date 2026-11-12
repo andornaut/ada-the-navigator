@@ -18,10 +18,9 @@ jump-home page.
 
 ## Ship
 
-- The ship model in [ship.ts](tools/ship.ts) (`drawn`, the Classic paint), the
-  same faces as the `ship-25` sprite frame: heading 25 of 32, up and to the
-  right, the engine mouths toward the viewer. Importing `ship.ts` writes
-  nothing; run directly, it writes the sprite frames.
+- The shared ship model in [ship-model.ts](tools/ship-model.ts) (`drawn`, the
+  Classic paint), the same faces as the `ship-25` sprite frame: heading 25 of
+  32, up and to the right, the engine mouths toward the viewer.
 - 5.85 logical px per frame px, the frame centre on canvas (476, 245), so the
   canopy spans canvas rows 172 to 256.
 - A soft engine glow from each mouth (the `ship-jets.json` anchors at heading
