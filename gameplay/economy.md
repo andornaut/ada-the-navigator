@@ -15,8 +15,8 @@ without jobs as the pacing simulation measures it:
 |        5 | Cartwheel |            about 15 |
 |        6 | Phantom   | measured once built |
 
-Every pacing target is a price divided by that income: the first weapon (225)
-takes about 25 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
+Every pacing target is a price divided by that income: the first weapon (400)
+takes about 50 minutes of Sunflower play, saving 500 for Cartwheel's holodisk
 about 30 minutes of Cartwheel play, and a galaxy's projects the time their total
 takes at its income after its story ends. Exploring finds a station every few
 minutes.
@@ -151,11 +151,11 @@ until she returns to a galaxy that unlocks it.
 
 | Item           | Effect                                                                                                                        | Prices    |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------- |
-| Multi-Laser    | Owned weapon                                                                                                                  | 225       |
-| Rapid Missile  | Owned weapon                                                                                                                  | 375       |
-| Heavy Missile  | Owned weapon                                                                                                                  | 450       |
-| Scattershot    | Owned weapon                                                                                                                  | 525       |
-| Phaser         | Owned weapon                                                                                                                  | 600       |
+| Multi-Laser    | Owned weapon                                                                                                                  | 400       |
+| Rapid Missile  | Owned weapon                                                                                                                  | 500       |
+| Heavy Missile  | Owned weapon                                                                                                                  | 600       |
+| Scattershot    | Owned weapon                                                                                                                  | 800       |
+| Phaser         | Owned weapon                                                                                                                  | 1000      |
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser) | See below |
 | Shield         | Levels 2 and 3: capacity 15, then 20; recharge delay 15, then 10 s; empty to full 45, then 30 s                               | 450, 900  |
 | Engine tuning  | Levels 2 and 3: top speed 190, then 220; each −10% acceleration and braking seconds                                           | 180, 360  |
@@ -163,7 +163,8 @@ until she returns to a galaxy that unlocks it.
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                  | 75 each   |
 
 Weapon upgrades cost 25% more for each later weapon in weapon order, compounded
-from Laser's and rounded up to the next 100:
+from Laser's and rounded up to the next 100. Each weapon's purchase price
+matches its level 2 upgrade:
 
 | Weapon        | Level 2 | Level 3 |
 | ------------- | ------: | ------: |
