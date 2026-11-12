@@ -489,7 +489,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
   "Settings" and "Back to title". Ship opens a card titled "Ship" with a close
   X, back to the pause card, in two sections. "Cargo" lists Stardust, ore
-  carried this flight, "Holodisks: {n} of 6", and the carried job item or towed
+  carried this flight, "Holodisks: {n} of 6", and the carried job or story item or towed
   craft when there is one. "Equipment" lists the shield, engine and tractor
   beam, each with its level ("Level {n} of 3"); every owned weapon in
   the weapon icons' order with its level and, apart from Laser, its ammunition;
@@ -649,21 +649,27 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - The shield and Stardust share one status pill at the top left, beside the pause
   button: a shield icon and bar, a divider and the Stardust count. While Ada
   carries ore, a divider and an ore icon with its count follow; while she carries
-  a job item or tows a craft, a divider and its icon follow last. Each segment
-  leaves when empty. Ore gains show "+N" ticks like Stardust's.
+  a job or story item or tows a craft, a divider and its icon follow last. Each
+  segment leaves when empty. Ore gains show "+N" ticks like Stardust's. The bar
+  is blue, turning red when the shield is low (below 25%) or empty, and shows
+  hits, the recharge delay and regeneration. Low shield never relies on color
+  alone: the bar also pulses, held steady under reduced motion, and Astra says
+  "Shield low!".
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
   a story item, a lost item, a job item, a new weapon or an ammunition pack from
   a weapon drop, or a towed craft), a small notice shows just below the status
-  pill, then moves to where the gain shows (its pill segment, or the weapon
-  icons for a weapon or ammunition) and vanishes. Every notice reads "+ {item}",
-  whether the item was found, received or attached. Item names drop their article and start
-  with a capital ("Spare parts", "Message"). Gains close together queue, one
-  notice at a time. Item notices add to, and never replace, the notices in the
-  conversation box's slot, such as "Job complete" and "Out of ammo.". Under
-  reduced motion a notice fades in place. The bar is blue,
-  turning red when the shield is low (below 25%) or empty, and shows hits, the
-  recharge delay and regeneration. Low shield never relies on color alone: the bar
-  also pulses, held steady under reduced motion, and Astra says "Shield low!".
+  pill, then moves to where the gain shows and vanishes: the carried-item pill
+  segment for story, lost and job items and towed craft, or the weapon icons for
+  a weapon or ammunition. A holodisk has no segment, so its notice fades in
+  place. A new weapon's icon appears at pickup and the notice flies to it. Every
+  notice reads "+ {item}", or "+ {weapon} ammo" for ammunition. Item names drop
+  their article and start with a capital ("Spare parts", "Message"). Gains close
+  together queue, one notice at a time; identical gains merge into one notice
+  ("+ Rapid Missile ammo ×2"), and each waiting notice holds half as long while
+  others wait. A notice may pass briefly over the conversation box's top edge
+  and name tab in flight. Item notices add to, and never replace, the notices in
+  the conversation box's slot, such as "Job complete" and "Out of ammo.". Under
+  reduced motion a notice fades in place.
 - Game and save notices, such as the save-failure notice, show briefly in the
   conversation box's slot and style, without a portrait. A notice shows at once,
   ahead of ordinary conversation lines, which resume after it.
