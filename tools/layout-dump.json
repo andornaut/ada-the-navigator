@@ -23,6 +23,11 @@
         "lineHeight": 20,
         "padding": 16,
         "rowGap": 4
+      },
+      "UI_FONT_FACE": {
+        "ascent": 0.9052734375,
+        "capHeight": 0.68798828125,
+        "descent": 0.2119140625
       }
     },
     "contentCard.ts": {
@@ -911,6 +916,38 @@
   },
   "functions": {
     "cardFrame.ts": {
+      "capTop": [
+        {
+          "args": [
+            {
+              "lineHeight": 20,
+              "size": 16,
+              "weight": 400
+            }
+          ],
+          "result": 4.5390625
+        },
+        {
+          "args": [
+            {
+              "lineHeight": 28,
+              "size": 24,
+              "weight": 700
+            }
+          ],
+          "result": 5.80859375
+        },
+        {
+          "args": [
+            {
+              "lineHeight": 20,
+              "size": 16,
+              "weight": 700
+            }
+          ],
+          "result": 4.5390625
+        }
+      ],
       "cardHeaderLayout": [
         {
           "args": [
@@ -1123,6 +1160,47 @@
             true
           ],
           "result": 50
+        }
+      ],
+      "listCardHeader": [
+        {
+          "args": [
+            {
+              "lineHeight": 20,
+              "size": 16,
+              "weight": 400
+            }
+          ],
+          "result": {
+            "bodyTop": 50,
+            "titleTop": 14.205078125
+          }
+        },
+        {
+          "args": [
+            {
+              "lineHeight": 28,
+              "size": 24,
+              "weight": 700
+            }
+          ],
+          "result": {
+            "bodyTop": 50,
+            "titleTop": 14.83984375
+          }
+        },
+        {
+          "args": [
+            {
+              "lineHeight": 20,
+              "size": 16,
+              "weight": 700
+            }
+          ],
+          "result": {
+            "bodyTop": 50,
+            "titleTop": 14.205078125
+          }
         }
       ]
     },

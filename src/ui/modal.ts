@@ -625,11 +625,7 @@ function fitCard(
   const first = groups[0];
   const { bodyTop, titleTop } = list
     ? listCardHeader(TYPE.label)
-    : cardHeaderLayout(
-    close,
-    first ? Number(first.dataset.inkTop ?? 0) : undefined,
-    titleHeight,
-  );
+    : cardHeaderLayout(close, first ? Number(first.dataset.inkTop ?? 0) : undefined, titleHeight);
   // Layout measures from the card's outer edge; its content starts inside the frame.
   card.style.setProperty("--title-top", units(titleTop - CARD_CONTENT.frameBorder));
   card.style.setProperty("--body-gap", units(bodyTop - titleTop - (titleHeight ?? 0)));

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ACHIEVEMENTS } from "../data/achievements.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { SCREEN } from "../data/screen.ts";
-import { lineCount, measure } from "../testing/text-measure.ts";
+import { lineCount, measure } from "../testing/text-metrics.ts";
 import {
   achievementColumnWidth,
   achievementPage,

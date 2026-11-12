@@ -274,6 +274,10 @@ function stateCases(call: ReturnType<typeof recorder>): void {
       }
     }
   }
+  for (const role of [tokens.TYPE.body, tokens.TYPE.heading, tokens.TYPE.label]) {
+    call("cardFrame.ts", "capTop", cardFrame.capTop, role);
+    call("cardFrame.ts", "listCardHeader", cardFrame.listCardHeader, role);
+  }
   for (const close of [false, true]) {
     call("cardFrame.ts", "cardTitleReserve", cardFrame.cardTitleReserve, close);
     for (const firstInkTop of [undefined, 4, 6.5]) {
