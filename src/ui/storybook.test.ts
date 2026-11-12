@@ -161,7 +161,7 @@ describe("storybook page", () => {
     expect(storyTabColour("Astra")).toBe(TAB_COLOURS.astra);
     expect(storyTabColour("Ada")).toBe(TAB_COLOURS.ada);
     expect(storyTabColour("General Gadget")).toBe(TAB_COLOURS.generalNamed);
-    expect(storyTabColour("Grandma")).toBe(AWAITING_TAB);
+    expect(storyTabColour("Elder Loom")).toBe(AWAITING_TAB);
     // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
     const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
     for (const name of ["Mom", "Dad"]) {
@@ -203,8 +203,8 @@ describe("story page portraits", () => {
   it("resolve Astra's 32 sheet, drawn at 2x in the 68 frame", () => {
     expect(astra).toEqual({ named: false, side: "right", speaker: "astra" });
     const sheet = asset("astra-portrait")!;
-    expect(STORY_PORTRAITS.astra.url).toBe(sheet.path);
-    expect(sheet.width / sheet.frameWidth!).toBe(STORY_PORTRAITS.astra.frames);
+    expect(STORY_PORTRAITS.astra!.url).toBe(sheet.path);
+    expect(sheet.width / sheet.frameWidth!).toBe(STORY_PORTRAITS.astra!.frames);
     expect(STORY_PANEL.portrait).toEqual({ frame: 68, image: 64, inset: 2 });
     expect(rule('.ada-controls .ada-story-portrait[data-speaker="astra"]')).toContain(
       `background:url('${sheet.path}') 0 0 / ${units(5 * 64)} ${units(64)} no-repeat`,
@@ -219,12 +219,24 @@ describe("story page portraits", () => {
     const ids = { ada: "ada", astra: "astra", general: "gadget", penny: "penny" } as const;
     for (const [speaker, id] of Object.entries(ids)) {
       const sheet = asset(`${id}-portrait`)!;
-      expect(STORY_PORTRAITS[speaker as keyof typeof ids].url).toBe(sheet.path);
+      expect(STORY_PORTRAITS[speaker as keyof typeof ids]!.url).toBe(sheet.path);
       expect(sheet.width / sheet.frameWidth!).toBe(
-        STORY_PORTRAITS[speaker as keyof typeof ids].frames,
+        STORY_PORTRAITS[speaker as keyof typeof ids]!.frames,
       );
       expect(sheet.frames).toEqual(asset(`${id}-portrait-compact`)!.frames);
     }
+  });
+
+  it("show Grandma's portrait in her neutral frame, at the right, on her own tab", () => {
+    const sheet = asset("grandma-portrait")!;
+    const portrait = storyPortrait("Grandma")!;
+    expect(portrait).toEqual({ named: false, side: "right", speaker: "grandma" });
+    expect(STORY_PORTRAITS.grandma).toEqual({ frames: 1, url: sheet.path });
+    expect(storyPortraitFrame(false, portrait, 0.25)).toBe(sheet.frames!.neutral);
+    expect(storyTabColour("Grandma")).toBe("#f0b4d0");
+    expect(rule('.ada-controls .ada-story-portrait[data-speaker="grandma"]')).toContain(
+      `background:url('${sheet.path}') 0 0 / ${units(64)} ${units(64)} no-repeat`,
+    );
   });
 
   it("put Ada at the left and every other speaker at the right, never mirrored", () => {
@@ -242,7 +254,7 @@ describe("story page portraits", () => {
 
   it("show no portrait for narration or a speaker Art has not drawn", () => {
     expect(storyPortrait(undefined)).toBeNull();
-    expect(storyPortrait("Grandma")).toBeNull();
+    expect(storyPortrait("Mom")).toBeNull();
     expect(storyPortrait("Workshop")).toBeNull();
   });
 

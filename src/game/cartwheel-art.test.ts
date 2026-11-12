@@ -30,6 +30,8 @@ const manifest = ART_MANIFEST as unknown as {
   resourceRocks: string;
 };
 const assets = manifest.assets;
+// A cast portrait sheet ({key}-portrait or {key}-portrait-compact), in any galaxy's manifest.
+const portrait = (id: string) => /^[a-z]+(-[a-z]+)*-portrait(-compact)?$/.test(id);
 
 describe("Cartwheel art", () => {
   it("loads the hub, buoy, story craft, debris and claim jumpers from Cartwheel's manifest", () => {
@@ -52,18 +54,39 @@ describe("Cartwheel art", () => {
     );
     // The miner, which other galaxies also fly, is in core with the shared art.
     expect(sets.get(null)).toEqual(expect.arrayContaining(["craft-miner-0", "craft-miner-15"]));
-    // Hub, buoy, three story craft, debris, the claim family's 97 hull frames, the stranded ore
-    // pod's blink pairs and hauler's frames, and the claim jumpers' part frames.
-    const parts = cartwheel.filter((id) => {
+    // Every Cartwheel entry is in one family, counted from the manifest: the hub, the buoy, the
+    // three story craft, debris, the claim family's hull frames, the stranded ore pod's blink pairs
+    // and hauler's frames, the claim jumpers' part frames, and the cast's portraits, which any
+    // galaxy's manifest may carry.
+    const part = (id: string) => {
       const entry = assets.find((asset) => asset.id === id)!;
       return entry.hardpoint !== undefined || entry.top !== undefined;
-    });
-    expect(cartwheel).toHaveLength(6 + 2 + 3 * 16 + 8 + 6 * 16 + 1 + 16 * 2 + 16 + parts.length);
-    expect(cartwheel.filter((id) => id.startsWith("craft-stranded-"))).toHaveLength(48);
-    expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id))).toBe(true);
+    };
+    const families: readonly (readonly [string, (id: string) => boolean, number?])[] = [
+      ["hub", (id) => id.startsWith("outpost-hub-"), 6],
+      ["buoy", (id) => id.startsWith("mooring-buoy-"), 2],
+      ["story craft", (id) => /^craft-(blocker|visitor[12])-/.test(id), 3 * 16],
+      ["debris", (id) => id.startsWith("cartwheel-debris-"), 8],
+      ["claim hulls", (id) => id.startsWith("enemy-claim-") && !part(id), 6 * 16 + 1],
+      ["stranded", (id) => id.startsWith("craft-stranded-"), 16 * 2 + 16],
+      ["claim parts", part],
+      ["portraits", portrait],
+    ];
+    for (const id of cartwheel) {
+      expect(
+        families.filter(([, member]) => member(id)).map(([name]) => name),
+        id,
+      ).toHaveLength(1);
+    }
+    for (const [name, member, count] of families) {
+      if (count !== undefined) {
+        expect(cartwheel.filter(member), name).toHaveLength(count);
+      }
+    }
+    expect(sets.get(3)!.every((id) => /^(whale|whirlpool)-/.test(id) || portrait(id))).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     // Sunflower's outposts load with the boot set from Sunflower's own manifest.
-    expect(sets.get(1)!.every((id) => id.startsWith("outpost-"))).toBe(true);
+    expect(sets.get(1)!.every((id) => id.startsWith("outpost-") || portrait(id))).toBe(true);
     expect(sets.get(1)).toEqual(
       expect.arrayContaining(["outpost-growers-a", "outpost-workshop-b"]),
     );

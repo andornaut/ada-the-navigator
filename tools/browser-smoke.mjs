@@ -711,8 +711,8 @@ try {
     "Astra speaks in the prologue's cockpit",
   );
   // Each dialogue page shows its speaker's 32 portrait in the 68 frame: Ada at the inner left,
-  // Astra at the inner right; narration and a speaker Art has not drawn show none.
-  const sheets = { Ada: "ada", Astra: "astra" };
+  // Astra and Grandma at the inner right; narration and a speaker Art has not drawn show none.
+  const sheets = { Ada: "ada", Astra: "astra", Grandma: "grandma" };
   for (const { background, portrait, speaker, text } of launchPages) {
     const sheet = sheets[speaker];
     if (!sheet) {
@@ -724,6 +724,10 @@ try {
     assert.match(portrait.image, new RegExp(`/art/portraits/${sheet}\\.png`, "u"));
     assert.equal(portrait.side, sheet === "ada" ? "left" : "right", `${speaker}'s side`);
   }
+  assert.ok(
+    launchPages.some(({ portrait }) => portrait?.speaker === "grandma"),
+    "Grandma speaks with her portrait in her garden",
+  );
   const adaPage = launchPages.find(({ portrait }) => portrait?.speaker === "ada");
   const astraPages = launchPages.filter(({ portrait }) => portrait?.speaker === "astra");
   assert.ok(adaPage && astraPages.length, "Ada and Astra both speak with portraits");

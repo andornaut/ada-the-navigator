@@ -1,3 +1,4 @@
+import { CAST, CAST_FRAMES, type CastKey, castSheet, STORY_CAST } from "../data/cast.ts";
 import { GENERAL_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import type { Background } from "../data/storybook.ts";
 import type { StoryChoice, StoryPage } from "../model/storybook.ts";
@@ -93,20 +94,31 @@ function tallestView(page: StoryPage): StoryPageView {
 // The breath's alpha curve as linear keyframes, fine enough to follow the cosine.
 const BREATH_SAMPLES = 24;
 
+// The speakers with a portrait sheet: the conversation box's own and the cast's.
+export type StoryPortraitId = keyof typeof COMPACT_PORTRAITS | CastKey;
+
+// The cast keys whose story pages speak (data/cast.ts STORY_CAST).
+const STORY_CAST_KEYS = [...new Set(Object.values(STORY_CAST))];
+
 // Each speaker's 32 portrait sheet for the storybook panel (art/conversation.md "Sizes"): the same
 // frames as the compact sheet, drawn at 2x in the 68 frame.
-export const STORY_PORTRAITS = {
+export const STORY_PORTRAITS: Readonly<
+  Partial<Record<StoryPortraitId, { readonly frames: number; readonly url: string }>>
+> = {
   ada: { frames: 2, url: "/art/portraits/ada.png" },
   astra: { frames: 5, url: "/art/portraits/astra.png" },
   general: { frames: 10, url: "/art/portraits/gadget.png" },
   penny: { frames: 3, url: "/art/portraits/penny.png" },
-} as const satisfies Record<keyof typeof COMPACT_PORTRAITS, { frames: number; url: string }>;
+  ...Object.fromEntries(
+    STORY_CAST_KEYS.map((key) => [key, { frames: CAST_FRAMES.frames, url: castSheet(key, false) }]),
+  ),
+};
 
 /** A story page speaker with a portrait, on its side, with whether the General is named. */
 export interface StoryPortrait {
   readonly named: boolean;
   readonly side: "left" | "right";
-  readonly speaker: keyof typeof STORY_PORTRAITS;
+  readonly speaker: StoryPortraitId;
 }
 
 /** The portrait for a page's speaker name; null for narration or a speaker Art has not drawn. */
@@ -114,7 +126,11 @@ export function storyPortrait(name: string | undefined): StoryPortrait | null {
   if (name === GENERAL_NAMED.name) {
     return { named: true, side: SPEAKERS.general.side, speaker: "general" };
   }
-  const speaker = (Object.keys(STORY_PORTRAITS) as StoryPortrait["speaker"][]).find(
+  const cast = name === undefined ? undefined : STORY_CAST[name];
+  if (cast) {
+    return { named: false, side: "right", speaker: cast };
+  }
+  const speaker = (Object.keys(COMPACT_PORTRAITS) as (keyof typeof COMPACT_PORTRAITS)[]).find(
     (id) => SPEAKERS[id].name === name,
   );
   return speaker ? { named: false, side: SPEAKERS[speaker].side, speaker } : null;
@@ -126,11 +142,15 @@ export const STORY_TAB_COLOURS: Readonly<Record<string, string>> = {
   Mom: "#9fd98a",
 };
 
-/** The speaker's name tab fill: their story or conversation tab, or the neutral one. */
+/** The speaker's name tab fill: their story, cast or conversation tab, or the neutral one. */
 export function storyTabColour(name: string): string {
   const story = STORY_TAB_COLOURS[name];
   if (story) {
     return story;
+  }
+  const cast = STORY_CAST[name];
+  if (cast) {
+    return CAST[cast].tab;
   }
   if (name === GENERAL_NAMED.name) {
     return TAB_COLOURS.generalNamed ?? AWAITING_TAB;
@@ -140,16 +160,25 @@ export function storyTabColour(name: string): string {
 }
 
 /**
- * The sheet frame a page's portrait shows elapsed seconds after the page appears: Ada's and
- * Penny's neutral face, or Astra's or the General's speaking loop at 120 ms a frame, held on
- * its first frame under reduced motion.
+ * The sheet frame a page's portrait shows elapsed seconds after the page appears: a cast
+ * member's one neutral frame, Ada's and Penny's neutral face, or Astra's or the General's
+ * speaking loop at 120 ms a frame, held on its first frame under reduced motion.
  */
 export function storyPortraitFrame(
   reducedMotion: boolean,
   portrait: StoryPortrait,
   elapsed: number,
 ): number {
-  return portraitFrame(reducedMotion, { ...portrait, elapsed, mood: "neutral" });
+  const { speaker } = portrait;
+  if (!Object.hasOwn(COMPACT_PORTRAITS, speaker)) {
+    return CAST_FRAMES.neutral;
+  }
+  return portraitFrame(reducedMotion, {
+    ...portrait,
+    elapsed,
+    mood: "neutral",
+    speaker: speaker as keyof typeof COMPACT_PORTRAITS,
+  });
 }
 
 const { image: PORTRAIT_IMAGE, inset: PORTRAIT_EDGE } = STORY_PANEL.portrait;
@@ -534,7 +563,10 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       face.style.backgroundPositionX = units(-index * PORTRAIT_IMAGE);
     };
     draw();
-    if ("speaking" in COMPACT_PORTRAITS[portrait.speaker]) {
+    const compact = Object.hasOwn(COMPACT_PORTRAITS, portrait.speaker)
+      ? COMPACT_PORTRAITS[portrait.speaker as keyof typeof COMPACT_PORTRAITS]
+      : undefined;
+    if (compact && "speaking" in compact) {
       portraitTimer = setInterval(() => {
         ticks += 1;
         draw();

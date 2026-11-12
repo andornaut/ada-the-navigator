@@ -1,3 +1,4 @@
+import { CAST, SPEAKER_CAST } from "../data/cast.ts";
 import {
   type Conversation,
   CONVERSATION_PRIORITIES,
@@ -104,11 +105,18 @@ export function holodisksHeld(
   return Object.values(progress).filter((p) => p?.holodisk).length;
 }
 
-/** The name on a speaker's tab: the General's is unknown until the third holodisk is in. */
+/**
+ * The name on a speaker's tab: a cast member's own name in place of the copy's role label, and the
+ * General's unknown until the third holodisk is in.
+ */
 export function speakerName(
   progress: Readonly<Partial<Record<SectorId, Pick<SectorProgress, "holodisk">>>>,
   speaker: Speaker,
 ): string {
+  const cast = SPEAKER_CAST[speaker];
+  if (cast) {
+    return CAST[cast].name;
+  }
   return speaker === "general" && holodisksHeld(progress) >= GENERAL_NAMED.holodisks
     ? GENERAL_NAMED.name
     : SPEAKERS[speaker].name;

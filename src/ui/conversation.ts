@@ -1,3 +1,4 @@
+import { CAST, CAST_FRAMES, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood, Speaker } from "../data/conversations.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units, VIEW_HOST_ID } from "./layout/css.ts";
@@ -45,24 +46,16 @@ export const COMPACT_PORTRAITS = {
   },
 } as const;
 
-// The community projects' thank-you speakers, whom Art has not drawn yet: the box shows them no
-// portrait frame, and their text takes the slot's width.
-// CLEANUP (added 2026-11-11): until Art gives them compact portraits and tab colours, they keep
-// no frame and their tab takes the unnamed General's neutral fill.
-export const AWAITING_ART = [
-  "grower",
-  "miner",
-  "salvager",
-  "station",
-  "whaleFamily",
-  "workshop",
-] as const;
-export const AWAITING_TAB = "#b8b3c9";
+// The cast speakers' compact sheets (data/cast.ts), each its one neutral frame.
+const CAST_COMPACT = Object.fromEntries(
+  Object.entries(SPEAKER_CAST).map(([speaker, key]) => [
+    speaker,
+    { frames: CAST_FRAMES.frames, url: castSheet(key, true) },
+  ]),
+) as Readonly<Record<string, { readonly frames: number; readonly url: string }>>;
 
-/** Whether speaker has no drawn portrait, so the box shows it no frame. */
-export function isUndrawn(speaker: string): boolean {
-  return (AWAITING_ART as readonly string[]).includes(speaker);
-}
+/** The tab fill of a story speaker with no tab of their own, the unnamed General's. */
+export const AWAITING_TAB = "#b8b3c9";
 
 /** Each speaking frame's time. */
 export const SPEAKING_FRAME_MS = 120;
@@ -86,9 +79,8 @@ export function portraitFrame(
     const moods: Readonly<Partial<Record<Mood, number>>> = COMPACT_PORTRAITS[line.speaker].moods;
     return moods[line.mood] ?? moods.neutral!;
   }
-  // A speaker Art has not drawn has no sheet, and the box shows no frame.
-  if (isUndrawn(line.speaker)) {
-    return 0;
+  if (SPEAKER_CAST[line.speaker]) {
+    return CAST_FRAMES.neutral;
   }
   if (line.speaker === "astra") {
     return loop(COMPACT_PORTRAITS.astra.speaking);
@@ -97,7 +89,7 @@ export function portraitFrame(
 }
 
 // Each speaker's sheet, sized so one frame fills the portrait; portraitFrame picks the frame.
-const PORTRAIT_RULES = Object.entries(COMPACT_PORTRAITS)
+const PORTRAIT_RULES = Object.entries({ ...COMPACT_PORTRAITS, ...CAST_COMPACT })
   .map(
     ([speaker, sheet]) => `
 .ada-conversation-portrait[data-speaker="${speaker}"]{
@@ -115,7 +107,9 @@ export const TAB_COLOURS = {
   general: "#b8b3c9",
   generalNamed: "#d68b72",
   penny: "#feae34",
-  ...Object.fromEntries(AWAITING_ART.map((speaker) => [speaker, AWAITING_TAB])),
+  ...Object.fromEntries(
+    Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, CAST[key].tab]),
+  ),
 } as Readonly<Record<string, string>>;
 
 const TAB_RULES = Object.entries(TAB_COLOURS)
@@ -200,15 +194,6 @@ ${PORTRAIT_RULES}
   margin-left:${units(textGap - padding)}
 }
 
-.ada-conversation[data-undrawn] .ada-conversation-frame{
-  display:none
-}
-
-.ada-conversation[data-undrawn] .ada-conversation-text{
-  margin-left:${units(textGap - padding)};
-  margin-right:${units(textGap - padding)}
-}
-
 .ada-conversation-line{
   margin:0;
   font:${font(text)};
@@ -242,9 +227,6 @@ ${PORTRAIT_RULES}
   left:${units(tab.inset)}
 }
 
-.ada-conversation[data-undrawn] .ada-conversation-name{
-  left:${units(tab.inset)}
-}
 ${TAB_RULES}
 `;
 
@@ -292,7 +274,6 @@ export function createConversationBox(onAdvance: () => void): ConversationBox {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;
           root.toggleAttribute("data-named", line.named);
-          root.toggleAttribute("data-undrawn", isUndrawn(line.speaker));
           face.dataset.speaker = line.speaker;
           name.textContent = line.name;
           words.textContent = desktop && line.desktop !== undefined ? line.desktop : line.text;

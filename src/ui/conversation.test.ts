@@ -2,12 +2,12 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
+import { GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
-  AWAITING_ART,
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
-  isUndrawn,
   portraitFrame,
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
@@ -57,14 +57,6 @@ describe("conversation box style", () => {
     expect(css.get(".ada-conversation-portrait")).toContain(`width:${squash(units(44))}`);
   });
 
-  it("shows a speaker without a drawn portrait no frame, its text 8 from both panel ends", () => {
-    expect(css.get(".ada-conversation[data-undrawn] .ada-conversation-frame")).toBe("display:none");
-    // The 4 padding plus 4: the text column keeps textGap from each end.
-    expect(css.get(".ada-conversation[data-undrawn] .ada-conversation-text")).toBe(
-      `margin-left:${squash(units(4))};margin-right:${squash(units(4))}`,
-    );
-  });
-
   it("wraps a line to at most two body lines centred on the panel", () => {
     const line = css.get(".ada-conversation-line") ?? "";
     expect(line).toContain("white-space:normal");
@@ -79,11 +71,9 @@ describe("conversation box style", () => {
     // Ada's portrait is on the left: the tab starts SPACING.gap past its frame (4 + 52 + 8).
     expect(name).toContain(`left:${squash(units(64))}`);
     expect(name).not.toContain("right:");
-    for (const other of ['[data-side="right"]', "[data-undrawn]"]) {
-      expect(css.get(`.ada-conversation${other} .ada-conversation-name`)).toBe(
-        `left:${squash(units(8))}`,
-      );
-    }
+    expect(css.get('.ada-conversation[data-side="right"] .ada-conversation-name')).toBe(
+      `left:${squash(units(8))}`,
+    );
     expect(name).toContain(`height:${squash(units(20))}`);
     expect(name).toContain(`border:${squash(units(1))}solid#181425`);
     expect(name).toContain(`border-radius:${squash(units(2))}`);
@@ -128,17 +118,28 @@ describe("conversation box style", () => {
       expect(css.get(`.ada-conversation[data-speaker="${speaker}"] .ada-conversation-name`)).toBe(
         `background:${TAB_COLOURS[speaker as keyof typeof TAB_COLOURS]}`,
       );
-      // A speaker Art has not drawn yet has no sheet until it lands.
-      if ((AWAITING_ART as readonly string[]).includes(speaker)) {
-        expect(COMPACT_PORTRAITS).not.toHaveProperty(speaker);
-      } else {
-        expect(COMPACT_PORTRAITS).toHaveProperty(speaker);
-      }
+      const cast = SPEAKER_CAST[speaker as keyof typeof SPEAKER_CAST];
+      const url = cast
+        ? castSheet(cast, true)
+        : COMPACT_PORTRAITS[speaker as keyof typeof COMPACT_PORTRAITS].url;
+      expect(css.get(`.ada-conversation-portrait[data-speaker="${speaker}"]`), speaker).toContain(
+        `url('${url}')`,
+      );
     }
     for (const sheet of Object.values(COMPACT_PORTRAITS)) {
       const asset = MANIFEST.assets.find(({ path }) => path === sheet.url);
       expect(asset, sheet.url).toBeDefined();
       expect(asset!.width / (asset!.frameWidth ?? 1)).toBe(sheet.frames);
+    }
+  });
+
+  it("tabs each cast speaker in its own colour from Art's table", () => {
+    const controls = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    for (const [speaker, key] of Object.entries(SPEAKER_CAST)) {
+      const { name, tab } = CAST[key];
+      expect(TAB_COLOURS[speaker]).toBe(tab);
+      expect(controls, name).toContain(`| ${name} tab`);
+      expect(controls).toMatch(new RegExp(`\\| ${name} tab +\\| \`${tab}\``));
     }
   });
 });
@@ -192,13 +193,20 @@ describe("conversation portraits", () => {
     ).toEqual([1, 1, 1]);
   });
 
-  it("never loop the General's frames for a thank-you speaker Art has not drawn", () => {
-    for (const speaker of AWAITING_ART) {
-      expect(isUndrawn(speaker)).toBe(true);
-      expect(portraitFrame(false, { ...line, elapsed: 0.25, speaker })).toBe(0);
-    }
-    for (const speaker of Object.keys(COMPACT_PORTRAITS)) {
-      expect(isUndrawn(speaker)).toBe(false);
+  it("show a cast speaker's neutral frame, by its manifest name, never the General's loop", () => {
+    for (const [speaker, key] of Object.entries(SPEAKER_CAST)) {
+      const home = CAST[key].home;
+      const manifest =
+        home === "core"
+          ? MANIFEST
+          : GALAXY_MANIFESTS.get(({ cartwheel: 2, sunflower: 1, whirlpool: 3 } as const)[home])!;
+      const sheet = (manifest.assets as typeof MANIFEST.assets).find(
+        ({ id }) => id === `${key}-portrait-compact`,
+      );
+      expect(sheet?.path, key).toBe(castSheet(key, true));
+      expect(
+        portraitFrame(false, { ...line, elapsed: 0.25, speaker: speaker as keyof typeof SPEAKERS }),
+      ).toBe(sheet!.frames!.neutral);
     }
   });
 
