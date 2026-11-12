@@ -353,9 +353,10 @@ is the ellipse at `R` 16, filled coral at `0.15 a` and stroked coral 2 px at
 
 ### Charged lance
 
-`lance`. A frigate's lance tracks Ada, locks, then fires a beam across the game
-area along the locked line. The line runs from the turret's muzzle to the edge of
-the game area or the first obstacle on it.
+`lance`. A frigate's lance tracks Ada, locks, then fires a beam along the
+locked line. Gameplay sets its length: as long as the game area is wide, in
+on-screen px. The line runs from the turret's muzzle for that length, or to the
+first obstacle on it.
 
 | Time        | Line                                                                                          |
 | ----------- | --------------------------------------------------------------------------------------------- |
@@ -376,8 +377,9 @@ the game area or the first obstacle on it.
 | Core  | white      | 2.4 to 1.6                           | `a`      |
 
 - Muzzle bloom: discs of radius `7 w` coral `0.3 a`, `4.5 w` coral `0.9 a` and
-  `2.5 w` white `a`. A beam that leaves the game area needs no end fade; one
-  stopped by an obstacle ends hard there with the enemy spark at scale 1.35.
+  `2.5 w` white `a`. A beam at full length fades every layer linearly to
+  alpha 0 over its last 28 px, as a Phaser miss does; one stopped by an
+  obstacle ends hard there with the enemy spark at scale 1.35.
 
 Light field: the glow is ink, width 10 to 7.5 times `w`, alpha `0.9 a`; the
 bloom's outer disc is ink at `0.6 a`. The lines and the charge disc follow the
