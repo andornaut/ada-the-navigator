@@ -276,20 +276,13 @@ describe("repeatable activities", () => {
     expect(model.indicatorTargets).toContainEqual(
       expect.objectContaining({ id: site.id, kind: "job", x: site.x, y: site.y }),
     );
-    // Lost on leaving the galaxy, and the issuer is the target until Talk there replaces it.
+    // Kept with the activity on leaving the galaxy (rules.md "What each event keeps").
     flight.dangerFor = 0;
     model.returnHome();
-    expect(heldActivity(1, model.state)?.carrying).toBe(false);
+    expect(heldActivity(1, model.state)?.carrying).toBe(true);
     model.startSector(1);
     playOpening(model);
     model.state.dialogue = null;
-    flyTo(model, "growers");
-    expect(model.indicatorTargets.some(({ id, kind }) => id === "growers" && kind === "job")).toBe(
-      true,
-    );
-    model.interact();
-    expect(model.state.dialogue).toMatchObject({ context: "activityActive:growers" });
-    expect(heldActivity(1, model.state)?.carrying).toBe(true);
     // At the station Use delivers, before Dock.
     const before = model.state.economy.stardust;
     ensureStation(PROTOTYPE, site.id, model.state.flight!);

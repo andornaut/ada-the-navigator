@@ -1922,8 +1922,8 @@ try {
       "panel, left of the tool column, and the selected target pans clear of the panel's " +
       "rendered height",
   );
-  // Back to title from a flight in danger: the start screen, the flight ended and saved at home
-  // with no sleep scene; Continue resumes in the cockpit.
+  // Back to title from a flight in danger: the start screen with the flight kept and saved, no
+  // sleep scene; Continue resumes that flight exactly (rules.md "What each event keeps").
   await seedOnce(dangerInput.save(), "ada-browser.danger-title.v1");
   await openPause();
   await page.locator('[data-action="pause-backToTitle"]').click();
@@ -1931,10 +1931,11 @@ try {
   await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
   const titled = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.ok(
-    titled.mode === "home" &&
-      titled.flight === null &&
+    titled.mode === "space" &&
+      titled.flight !== null &&
+      titled.flight.seed === dangerInput.state.flight.seed &&
       titled.economy.stardust === dangerInput.state.economy.stardust,
-    "Back to title ends the flight with progress saved",
+    "Back to title keeps the flight saved for Continue",
   );
   assert.equal(
     await page.locator(".ada-story-panel:not([hidden])").count(),
@@ -1955,11 +1956,11 @@ try {
     "The start screen holds only Continue and Restart",
   );
   await page.locator('[data-action="continue"]').click();
-  await page.locator(".ada-story-panel:not([hidden])").waitFor({ state: "visible" });
+  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   assert.equal(
     await page.locator('[data-action="continue"]').isVisible(),
     false,
-    "Continue resumes from the title",
+    "Continue resumes the flight from the title",
   );
   // The local map's Galaxies opens the galaxy map over the paused flight: its ship on the galaxy
   // Ada is flying in, whose default action reads Stay here, and its close X on the HUD rect's
@@ -2138,8 +2139,8 @@ try {
   await page.locator('[data-action="pause-backToTitle"]').click();
   await page.locator('[data-action="continue"]').waitFor({ state: "visible" });
   events.checks.push(
-    "Back to title ends a flight in danger with progress saved and no sleep scene, and " +
-      "Continue resumes; the galaxy map's Earth lands on Ada's room page, which pauses to " +
+    "Back to title keeps a flight in danger with progress saved and no sleep scene, and " +
+      "Continue resumes it; the galaxy map's Earth lands on Ada's room page, which pauses to " +
       "Settings and Back to title, closing on Escape and its X",
   );
   // The mining hub is a station: Use deposits the ore Ada carries, then docks, and once
