@@ -459,6 +459,8 @@ export class PrototypeScene extends Scene {
   private drawnTops = new Map<string, number>();
   /** Each texture frame's topmost row at alpha 0.5 or more, as a fraction of its height. */
   private frameTops = new Map<string, number>();
+  /** Enemies drawn as vector placeholders this frame, while their frames load. */
+  private enemyPlaceholders = 0;
   /** The upgrade pickup's chevrons and climb, and when each pickup first drew, in ms. */
   private upgradePickupArt: UpgradePickupArt | undefined;
   private pickupSeen = new Map<string, number>();
@@ -2412,9 +2414,11 @@ export class PrototypeScene extends Scene {
         this.landmarkSprites.delete(key);
       }
     }
+    this.enemyPlaceholders = 0;
     for (const object of flight.objects) {
       this.drawObject(object);
     }
+    this.shell.setEnemyArt(this.enemyPlaceholders === 0);
     this.drawStoryShips(flight);
     this.drawGuidedCalf();
     this.drawRockBreaks();
@@ -2868,6 +2872,7 @@ export class PrototypeScene extends Scene {
       this.drawEnemySprite(art, point, object.id, enemy);
       return;
     }
+    this.enemyPlaceholders++;
     const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     // Hull and hardpoints share the hull's rotating local frame.
     const local = (x: number, y: number): Vec => {

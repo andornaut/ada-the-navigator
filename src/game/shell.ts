@@ -190,6 +190,14 @@ export class StoryShell {
     this.status.dataset.asteroids = ready ? "art" : "placeholder";
   }
 
+  /** Marks the status line while every enemy in view draws Art's frames, not its placeholder. */
+  setEnemyArt(ready: boolean): void {
+    const value = ready ? "art" : "placeholder";
+    if (this.status.dataset.enemies !== value) {
+      this.status.dataset.enemies = value;
+    }
+  }
+
   setSavingAvailable(available: boolean): void {
     const text = available ? "" : (PROTOTYPE.labels.savingUnavailable ?? "");
     if (this.savingStatus.textContent !== text) {
