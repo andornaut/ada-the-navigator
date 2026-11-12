@@ -49,18 +49,25 @@ interface HardpointBase {
 export type HardpointDefinition = HardpointBase &
   ({ kind: "engine" | "command" } | { fire: FireProfile; kind: "weapon" });
 /**
- * Movement behaviours an engaged enemy uses. None holds a standoff distance: each one
- * chases, escapes or alternates between the two. `retaliate` is the `aggression` trigger and
- * `flee` is the `morale` rule; capital battles assign `escort` to their fighters.
+ * Movement behaviours an engaged enemy uses. Small craft fight with their weapons, not their
+ * hulls: each holds its `standoff` band from Ada and never presses in to ram (gameplay/ships.md
+ * "Behaviours"). `retaliate` is the `aggression` trigger and `flee` is the `morale` rule; capital
+ * battles assign `escort` to their fighters.
  */
 export type Behaviour =
-  /** Pursues Ada directly and keeps pressing in. */
+  /** Closes to the standoff band, then holds there, strafing sideways and firing. */
   | { kind: "chase" }
-  /** Chases with erratic wobble and peer separation. */
+  /** Holds the band with erratic wobble and peer separation, so a pack rings Ada. */
   | { kind: "swarm" }
-  /** Rushes in; pulls away for `retreatSeconds` when hit or after `burstVolleys` volleys. */
+  /**
+   * Rushes to the band's near edge and fires; after `burstVolleys` volleys or a hit it pulls out
+   * for at least `retreatSeconds` and past the far edge, then comes back.
+   */
   | { burstVolleys: number; kind: "hitAndRun"; retreatSeconds: number }
-  /** Flies straight through once within `passDistance`, loops back beyond `loopDistance`. */
+  /**
+   * Makes firing passes beside Ada, never closer than `passDistance`, and loops back beyond
+   * `loopDistance`.
+   */
   | { kind: "strafe"; loopDistance: number; passDistance: number }
   /** Advances on Ada at `speedFraction` of maximum speed while its turrets fire. */
   | { kind: "siege"; speedFraction: number };
@@ -83,6 +90,8 @@ export interface EnemyDefinition {
   physics: ShipPhysics;
   pursuit: { homeRadius: number; maxSeconds: number; unseenSeconds: number };
   sizeRatio: number;
+  /** A small craft's standoff band from Ada, in world units; heavies have none. */
+  standoff?: { far: number; near: number };
   steering: { separation: number; wobble: number };
 }
 
@@ -285,6 +294,7 @@ export const enemyCatalog = {
     ...base,
     behaviour: { burstVolleys: 3, kind: "hitAndRun", retreatSeconds: 1.6 },
     physics: SHIP_PHYSICS.fighter,
+    standoff: { far: 350, near: 250 },
   },
   frigate: {
     ...base,
@@ -302,11 +312,13 @@ export const enemyCatalog = {
   },
   interceptor: {
     ...base,
-    behaviour: { kind: "strafe", loopDistance: 420, passDistance: 90 },
+    behaviour: { kind: "strafe", loopDistance: 420, passDistance: 150 },
     engagement: 260,
     hp: 3,
     physics: SHIP_PHYSICS.interceptor,
     sizeRatio: 0.75,
+    // Its band when a roster gives it chase or hitAndRun.
+    standoff: { far: 250, near: 150 },
   },
   platform: {
     ...base,
@@ -336,6 +348,7 @@ export const enemyCatalog = {
     hp: 8,
     physics: SHIP_PHYSICS.retaliator,
     sizeRatio: 2,
+    standoff: { far: 350, near: 250 },
   },
   swarm: {
     ...base,
@@ -345,6 +358,7 @@ export const enemyCatalog = {
     morale: { individualHpRatio: 0.5, packLossRatio: 0.4 },
     physics: SHIP_PHYSICS.swarm,
     sizeRatio: 0.65,
+    standoff: { far: 300, near: 200 },
     steering: { separation: 85, wobble: 0.65 },
   },
 } satisfies Record<string, EnemyDefinition>;

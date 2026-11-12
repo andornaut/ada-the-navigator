@@ -279,10 +279,37 @@ function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefi
       );
 }
 
+/** A strafe's approach aims this many pass distances beside Ada, so momentum keeps it clear. */
+const STRAFE_PASS_OFFSET = 2;
+/** A strafe starts its pass, holding its course, within this many pass distances of Ada. */
+const STRAFE_PASS_ENTRY = 2.5;
+/** A pass whose course would come within this many pass distances of Ada bends away from her. */
+const STRAFE_FLOOR_MARGIN = 1.8;
+
+/** The side a ship circles or passes Ada on, +1 or -1, fixed for the ship by its phase. */
+const circlingSide = (state: EnemyState): number => (Math.cos(state.phase) >= 0 ? 1 : -1);
+
 /**
- * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns
- * after its retreat; strafe flies straight through within its pass distance and loops back
- * beyond its loop distance. Leaving the engagement resets to a fresh attack.
+ * Steering that holds `band` from Ada along `aim`: straight in beyond the far edge, straight out
+ * inside the near edge, and sideways on `side` across the band, blending through it.
+ */
+function holdBand(
+  band: { far: number; near: number },
+  aim: Point,
+  distance: number,
+  side: number,
+): Point {
+  const half = (band.far - band.near) / 2;
+  const radial = Math.max(-1, Math.min(1, (distance - band.near - half) / half));
+  const across = Math.sqrt(1 - radial * radial) * side;
+  return { x: aim.x * radial - aim.y * across, y: aim.y * radial + aim.x * across };
+}
+
+/**
+ * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns once
+ * its retreat time has passed and it is beyond its band's far edge; strafe holds its course for a
+ * pass once near Ada and loops back beyond its loop distance. Leaving the engagement resets to a
+ * fresh attack.
  */
 function nextTactic(
   definition: EnemyDefinition,
@@ -311,11 +338,15 @@ function nextTactic(
     if (tactic.phase === "attack" && (hit || tactic.volleys >= behaviour.burstVolleys)) {
       return enter("retreat");
     }
-    if (tactic.phase === "retreat" && tactic.seconds >= behaviour.retreatSeconds) {
+    if (
+      tactic.phase === "retreat" &&
+      tactic.seconds >= behaviour.retreatSeconds &&
+      distance >= (definition.standoff?.far ?? 0)
+    ) {
       return enter("attack");
     }
   } else if (behaviour.kind === "strafe") {
-    if (tactic.phase === "attack" && distance <= behaviour.passDistance) {
+    if (tactic.phase === "attack" && distance <= behaviour.passDistance * STRAFE_PASS_ENTRY) {
       return enter("pass");
     }
     if (tactic.phase === "pass" && distance >= behaviour.loopDistance) {
@@ -325,12 +356,16 @@ function nextTactic(
   return tactic;
 }
 
-/** Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. */
+/**
+ * Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. `aim`
+ * points at Ada, `distance` away.
+ */
 function steering(
   definition: EnemyDefinition,
   context: EnemyContext,
   maxSpeed: number,
   aim: Point,
+  distance: number,
   state: EnemyState,
 ): Point {
   if (state.returning) {
@@ -345,6 +380,16 @@ function steering(
   const push = separation(definition, context, state);
   const toward = (scale: number): Point =>
     unit({ x: aim.x * scale + push.x, y: aim.y * scale + push.y });
+  const side = circlingSide(state);
+  const band = definition.standoff;
+  /** Holds `edges` from Ada, or presses in without a band (a heavy). */
+  const hold = (edges = band): Point => {
+    if (!edges) {
+      return toward(1);
+    }
+    const held = holdBand(edges, aim, distance, side);
+    return unit({ x: held.x + push.x, y: held.y + push.y });
+  };
   const capital = escorted(context, state);
   if (capital) {
     // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
@@ -354,7 +399,7 @@ function steering(
       context.player.y - capital.position.y,
     );
     if (reach <= escortTuning.interceptRadius + hull) {
-      return toward(1);
+      return hold();
     }
     const gap = hull + escortTuning.stationGap;
     const station = {
@@ -366,21 +411,47 @@ function steering(
   const behaviour = definition.behaviour;
   switch (behaviour.kind) {
     case "chase":
-      return toward(1);
+      return hold();
     case "swarm": {
-      // Sinusoidal phase makes the chase erratic without query-dependent RNG.
+      // Sinusoidal phase makes the hold erratic without query-dependent RNG.
       const wobble = Math.sin(state.age * 3 + state.phase) * definition.steering.wobble;
+      const held = band ? holdBand(band, aim, distance, side) : aim;
       return unit({
-        x: aim.x - aim.y * wobble + push.x,
-        y: aim.y + aim.x * wobble + push.y,
+        x: held.x - held.y * wobble + push.x,
+        y: held.y + held.x * wobble + push.y,
       });
     }
-    case "hitAndRun":
-      return state.tactic.phase === "retreat" ? toward(-1) : toward(1);
+    case "hitAndRun": {
+      if (state.tactic.phase === "retreat") {
+        return toward(-1);
+      }
+      // The attack holds a band centred on the standoff band's near edge.
+      const half = band ? (band.far - band.near) / 2 : 0;
+      return hold(band && { far: band.near + half, near: band.near - half });
+    }
     case "strafe": {
-      // A pass keeps its course, so momentum carries the ship past Ada before it loops back.
-      const course = unit(state.velocity);
-      return state.tactic.phase === "pass" && magnitude(course) ? course : toward(1);
+      const floor = behaviour.passDistance;
+      if (state.tactic.phase === "pass") {
+        // A pass keeps its course, so momentum carries the ship past Ada before it loops back. A
+        // course that would come within the floor's margin bends away from her.
+        const course = magnitude(state.velocity) ? unit(state.velocity) : aim;
+        const along = Math.max(0, (aim.x * course.x + aim.y * course.y) * distance);
+        const miss = {
+          x: aim.x * distance - course.x * along,
+          y: aim.y * distance - course.y * along,
+        };
+        const gap = magnitude(miss);
+        const away = gap > 1e-9 ? { x: -miss.x / gap, y: -miss.y / gap } : { x: -aim.x, y: -aim.y };
+        const margin = floor * STRAFE_FLOOR_MARGIN;
+        const bend = Math.max(0, Math.min(1, (margin - gap) / (margin - floor * 0.8))) * 2;
+        return unit({ x: course.x + away.x * bend, y: course.y + away.y * bend });
+      }
+      // The approach aims beside Ada, so the pass goes by rather than at her.
+      const offset = floor * STRAFE_PASS_OFFSET * side;
+      return unit({
+        x: aim.x * distance - aim.y * offset + push.x,
+        y: aim.y * distance + aim.x * offset + push.y,
+      });
     }
     case "siege":
       break;
@@ -471,7 +542,7 @@ export function stepEnemy(
   // its own physics, while its maximum speed still bounds saved momentum.
   const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
-  const request = steering(definition, context, speed, aim, next);
+  const request = steering(definition, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
     next.velocity = { x: 0, y: 0 };

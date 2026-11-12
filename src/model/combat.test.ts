@@ -1208,11 +1208,12 @@ describe("ship contact", () => {
     expect(separating(flight, normal, object)).toBeCloseTo(sceneryRecoil, 9);
   });
 
-  it.each(["swarm", "fighter"] as const)(
-    "keeps a chasing %s bouncing off Ada's drawn ship without overlap, sticking or damage",
+  it.each(["fighter", "retaliator"] as const)(
+    "bounces Ada's drawn ship off a %s she flies into, without overlap, sticking or damage",
     (archetype) => {
+      // Small craft hold a standoff band, so Ada, faster than these two, closes the gap herself.
       const flight = empty();
-      const chaser = ship(archetype, { x: flight.player.x + 200, y: flight.player.y });
+      const chaser = ship(archetype, { x: flight.player.x + 60, y: flight.player.y });
       chaser.enemy!.engaged = true;
       flight.objects.push(chaser);
       let touches = 0;
@@ -1220,7 +1221,14 @@ describe("ship contact", () => {
       for (let frame = 0; frame < 60 * 6; frame++) {
         chaser.enemy!.primaryCooldown = 999;
         silence(chaser);
-        stepFlight(PROTOTYPE, 1 / 60, idle, flight);
+        const toward = { x: chaser.x - flight.player.x, y: chaser.y - flight.player.y };
+        const reach = Math.hypot(toward.x, toward.y) || 1;
+        stepFlight(
+          PROTOTYPE,
+          1 / 60,
+          { ...idle, move: { x: toward.x / reach, y: toward.y / reach } },
+          flight,
+        );
         overlap = Math.max(overlap, overlapOf(flight, chaser)?.depth ?? 0);
         touches += overlapOf(flight, chaser, 0.5) ? 1 : 0;
       }

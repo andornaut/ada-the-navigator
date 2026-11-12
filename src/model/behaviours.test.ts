@@ -117,7 +117,7 @@ describe("hitAndRun", () => {
 });
 
 describe("strafe", () => {
-  it("flies through past Ada on momentum and loops back for another pass", () => {
+  it("passes beside Ada on momentum and loops back for another pass", () => {
     const behaviour = enemyCatalog.interceptor.behaviour;
     expect(behaviour.kind).toBe("strafe");
     if (behaviour.kind !== "strafe") {
@@ -142,14 +142,14 @@ describe("strafe", () => {
       },
     });
     expect(phases.slice(0, 4)).toEqual(["attack", "pass", "attack", "pass"]);
-    expect(closest).toBeLessThan(behaviour.passDistance);
+    expect(closest).toBeGreaterThanOrEqual(behaviour.passDistance);
     expect(crossed).toBe(true);
     expect(farthestAfterPass).toBeGreaterThanOrEqual(behaviour.loopDistance);
   });
 });
 
 describe("swarm", () => {
-  it("chases erratically while peers separate", () => {
+  it("closes in erratically while peers separate", () => {
     const ships = [
       { x: 500, y: 0 },
       { x: 505, y: 4 },
@@ -194,7 +194,7 @@ describe("flee", () => {
 });
 
 describe("retaliate", () => {
-  it("ignores Ada until hit, then chases her", () => {
+  it("ignores Ada until hit, then attacks from its band", () => {
     const ships = [spawn("retaliator", { x: 200, y: 0 }, false)];
     const idle = run(ships, 180);
     expect(ships[0]!.engaged).toBe(false);
@@ -203,7 +203,9 @@ describe("retaliate", () => {
     ships[0] = damageEnemy(enemyCatalog.retaliator, { amount: 1, hardpointId: null }, ships[0]!);
     const attack = run(ships, 180);
     expect(attack.shots[0]).toBeGreaterThan(0);
-    expect(range(ships[0]!)).toBeLessThan(100);
+    const band = enemyCatalog.retaliator.standoff;
+    expect(range(ships[0]!)).toBeGreaterThan(band.near - 50);
+    expect(range(ships[0]!)).toBeLessThan(band.far + 50);
   });
 });
 
@@ -238,11 +240,13 @@ describe("escort", () => {
     expect(Math.hypot(escort.position.x - station, escort.position.y)).toBeLessThan(15);
   });
 
-  it("intercepts Ada when she comes close to its capital", () => {
+  it("intercepts Ada when she comes close to its capital, holding its band from her", () => {
     const ships = battle();
-    const near = { x: 400, y: 0 };
-    run(ships, 120, { context: (peers) => context(peers, near) });
+    const near = { x: 600, y: 0 };
+    expect(near.x).toBeLessThanOrEqual(escortTuning.interceptRadius + hull);
+    run(ships, 180, { context: (peers) => context(peers, near) });
     expect(ships[1]!.position.x).toBeGreaterThan(station + 120);
+    expect(range(ships[1]!, near)).toBeGreaterThan(enemyCatalog.fighter.standoff.near - 60);
   });
 
   it("falls back to its own attack behaviour without a loaded capital", () => {
@@ -275,35 +279,106 @@ describe("siege", () => {
   });
 });
 
-describe("no standoff", () => {
-  it.each(["swarm", "fighter", "interceptor", "retaliator"] as const)(
-    "keeps %s coming close to Ada instead of holding a band",
+describe("standoff", () => {
+  const bands = {
+    fighter: enemyCatalog.fighter.standoff,
+    interceptor: enemyCatalog.interceptor.standoff,
+    retaliator: enemyCatalog.retaliator.standoff,
+    swarm: enemyCatalog.swarm.standoff,
+  };
+  /** An attacking ship at `point`; a retaliator attacks once hit. */
+  const attacker = (
+    archetype: keyof typeof bands,
+    point: { x: number; y: number },
+    phase = 0.7,
+  ) => {
+    const ship = { ...spawn(archetype, point), phase };
+    return archetype === "retaliator"
+      ? damageEnemy(enemyCatalog.retaliator, { amount: 1, hardpointId: null }, ship)
+      : ship;
+  };
+  /** Ranges from Ada each frame after the first `settle` seconds. */
+  const ranges = (ship: EnemyState, seconds: number, settle: number): number[] => {
+    const ships = [ship];
+    const seen: number[] = [];
+    let frame = 0;
+    run(ships, Math.round(seconds / dt), {
+      each: () => {
+        if (++frame > settle / dt) {
+          seen.push(range(ships[0]!));
+        }
+      },
+    });
+    return seen;
+  };
+
+  it("gives Gameplay's bands to the small craft and none to heavies", () => {
+    expect(bands).toEqual({
+      fighter: { far: 350, near: 250 },
+      interceptor: { far: 250, near: 150 },
+      retaliator: { far: 350, near: 250 },
+      swarm: { far: 300, near: 200 },
+    });
+    for (const heavy of ["frigate", "capital", "platform"] as const) {
+      expect(enemyCatalog[heavy]).not.toHaveProperty("standoff");
+    }
+  });
+
+  it.each(["swarm", "retaliator"] as const)(
+    "holds %s inside its band once it has closed in, strafing rather than stopping",
     (archetype) => {
-      const start = spawn(archetype, { x: 500, y: 0 });
-      // A retaliator attacks once hit.
-      const ships = [
-        archetype === "retaliator"
-          ? damageEnemy(enemyCatalog.retaliator, { amount: 1, hardpointId: null }, start)
-          : start,
-      ];
-      const later: number[] = [];
-      let frame = 0;
-      run(ships, 60 * 14, {
-        each: () => {
-          if (++frame > 60 * 6) {
-            later.push(range(ships[0]!));
-          }
-        },
-      });
-      expect(ships[0]!.returning).toBe(false);
-      // Old engaged craft held about 0.7 of their 360-unit engagement range, 252 units.
-      expect(Math.min(...later)).toBeLessThan(60);
+      const band = bands[archetype];
+      for (const point of [
+        { x: 500, y: 0 },
+        { x: -300, y: 300 },
+      ]) {
+        const seen = ranges(attacker(archetype, point), 14, 6);
+        expect(Math.min(...seen)).toBeGreaterThan(band.near - 50);
+        expect(Math.max(...seen)).toBeLessThan(band.far + 50);
+      }
+      // Holding the band still moves it around Ada.
+      const ships = [attacker(archetype, { x: 500, y: 0 })];
+      run(ships, 60 * 6);
+      expect(Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y)).toBeGreaterThan(
+        enemyCatalog[archetype].physics.maxSpeed * 0.5,
+      );
     },
   );
 
-  it("leaves no orbit band in the catalog", () => {
-    for (const definition of Object.values(enemyCatalog)) {
-      expect(Object.keys(definition.steering).sort()).toEqual(["separation", "wobble"]);
+  it.each(["swarm", "fighter"] as const)(
+    "backs %s off when Ada is inside its band",
+    (archetype) => {
+      const band = bands[archetype];
+      const ships = [attacker(archetype, { x: 60, y: 20 })];
+      run(ships, 60 * 3);
+      expect(range(ships[0]!)).toBeGreaterThan(band.near - 60);
+    },
+  );
+
+  it.each(["swarm", "fighter", "retaliator", "interceptor"] as const)(
+    "never presses %s in to ram a waiting Ada",
+    (archetype) => {
+      for (const [point, phase] of [
+        [{ x: 500, y: 0 }, 0.7],
+        [{ x: -300, y: 300 }, 4],
+        [{ x: 0, y: -600 }, 2.5],
+      ] as const) {
+        expect(Math.min(...ranges(attacker(archetype, point, phase), 14, 0))).toBeGreaterThan(150);
+      }
+    },
+  );
+
+  it("keeps the interceptor's passes no closer than its floor from every side", () => {
+    const behaviour = enemyCatalog.interceptor.behaviour;
+    expect(behaviour).toMatchObject({ kind: "strafe", loopDistance: 420, passDistance: 150 });
+    if (behaviour.kind !== "strafe") {
+      return;
+    }
+    for (let index = 0; index < 8; index++) {
+      const angle = (index * Math.PI) / 4;
+      const point = { x: Math.cos(angle) * 600, y: Math.sin(angle) * 600 };
+      const closest = Math.min(...ranges(attacker("interceptor", point, index), 20, 0));
+      expect(closest).toBeGreaterThanOrEqual(behaviour.passDistance);
     }
   });
 });
