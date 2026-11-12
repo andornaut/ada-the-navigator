@@ -678,7 +678,8 @@ beacon light. Welcome!"
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
 - Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title. On Ada's room page: Settings, Back to title.
-- Start screen top right: Achievements, Settings.
+- Start screen top right: Achievements, Settings, Exit (label and accessible
+  name Exit).
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.
 - Galaxy selection: Galaxy {number}, Earth, Jump; Previous and Next as the
   accessible labels for Left and Right. A locked galaxy's name and text: ... A

@@ -519,7 +519,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   shows "Unavailable while you are in danger." The close X, an outside tap, back
   and Escape resume. Settings opened from the pause card returns to it when closed.
   On the start screen, Settings opens from its own button, as in Chibi, and
-  Achievements sits immediately left of it in the same form; the start card
+  Achievements sits immediately left of it in the same form. Exit, as in Archie,
+  sits right of Settings, at the far top right, where it can act: in an installed app the platform lets
+  close (Chrome's Android app, Chrome and Edge desktop app windows) it closes the
+  app, and in a browser tab it goes to the site's home page. Installed apps that
+  cannot close hide it. Q exits wherever Exit shows. The start card
   holds only Start, or Continue and Restart. Achievements is on the start
   screen only.
 - Weapon and pause controls use icons inspired by Chibi, with accessible labels.
