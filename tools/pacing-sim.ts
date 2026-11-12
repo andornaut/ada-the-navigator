@@ -1657,8 +1657,8 @@ export function formatSummary(summary: Summary): string {
       const saved = summary.prices.projects[index]!;
       return (
         `Minutes to fund project ${index + 1} (${saved} saved): ` +
-        `${formatDistribution(minutes)}; unreached ${summary.projectsUnreached[index]}` +
-        target(saved)
+        `${formatDistribution(minutes)}; ` +
+        `unreached ${summary.projectsUnreached[index]}${target(saved)}`
       );
     }),
     `Stardust/min without guards: ${formatDistribution(summary.stardustPerMinute)}; ` +
