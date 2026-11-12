@@ -132,7 +132,8 @@ describe("jets by Engine level", () => {
     expect(engineJetLayers(jets, 1)).toEqual(jets.layers);
     expect(engineJetLayers(jets, 0)).toEqual(engineJetLayers(jets, 1));
     expect(engineJetLayers(jets, 5)).toEqual(engineJetLayers(jets, 3));
-    const { engineLevels: _, ...plain } = jets;
+    const plain: ShipJets = { ...jets };
+    delete plain.engineLevels;
     expect(engineJetLayers(plain, 3)).toBe(jets.layers);
     expect(levelLayers(undefined, 2)).toBeUndefined();
   });
@@ -140,7 +141,7 @@ describe("jets by Engine level", () => {
   it.each([
     ["a missing level", art.engineLevels.slice(1)],
     ["a duplicate level", [art.engineLevels[0], art.engineLevels[0], art.engineLevels[2]]],
-    ["a malformed layer", [{ level: 1, layers: [{ color: "blue", length: 1, width: 1 }] }]],
+    ["a malformed layer", [{ layers: [{ color: "blue", length: 1, width: 1 }], level: 1 }]],
     ["no levels", []],
   ])("rejects %s", (_, value) => {
     expect(readLevelLayers(value)).toBeUndefined();
@@ -148,7 +149,8 @@ describe("jets by Engine level", () => {
   });
 
   it("reads a craft without engine levels", () => {
-    const { engineLevels: _, ...plain } = art;
+    const plain: Record<string, unknown> = { ...art };
+    delete plain.engineLevels;
     expect(readShipJets(plain)?.engineLevels).toBeUndefined();
   });
 });
