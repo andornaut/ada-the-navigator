@@ -1,3 +1,4 @@
+import type { CastKey } from "./cast.ts";
 import type { SectorId } from "./types.ts";
 
 // Station keepers (gameplay/rules.md "Species and greeters", gameplay/player-copy.md
@@ -16,8 +17,8 @@ export interface GalaxyKeepers {
   readonly greetings: KeeperGreetings;
   /** Cartwheel's mining hub's own lines, which Quartz alone greets with. */
   readonly hub?: KeeperGreetings;
-  /** Its keepers by rank. Cartwheel's first, Quartz, keeps the mining hub alone. */
-  readonly names: readonly [string, string, string];
+  /** Its keepers by rank, as cast keys. Cartwheel's first, Quartz, keeps the mining hub alone. */
+  readonly keepers: readonly [CastKey, CastKey, CastKey];
 }
 
 export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
@@ -34,7 +35,7 @@ export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
         "Hello, friend. The shop is open, and the job board is full.",
       ],
     },
-    names: ["Saffron", "Bramble", "Nectar"],
+    keepers: ["saffron", "bramble", "nectar"],
   },
   2: {
     // Every Cartwheel station but the hub, Slate's or Garnet's.
@@ -62,7 +63,7 @@ export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
         "Back again. There's always room at the hub.",
       ],
     },
-    names: ["Quartz", "Slate", "Garnet"],
+    keepers: ["quartz", "slate", "garnet"],
   },
   3: {
     greetings: {
@@ -77,7 +78,7 @@ export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
         "Back so soon? The whales were singing about you.",
       ],
     },
-    names: ["Ripple", "Coral", "Brine"],
+    keepers: ["ripple", "coral", "brine"],
   },
   4: {
     greetings: {
@@ -92,7 +93,7 @@ export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
         "Hello again. Stay as long as you need.",
       ],
     },
-    names: ["Sedge", "Willow", "Marsh"],
+    keepers: ["sedge", "willow", "marsh"],
   },
   5: {
     greetings: {
@@ -107,7 +108,7 @@ export const KEEPERS: Readonly<Partial<Record<SectorId, GalaxyKeepers>>> = {
         "Back again! Come in, out of the dark.",
       ],
     },
-    names: ["Lumen", "Dial", "Cog"],
+    keepers: ["lumen", "dial", "cog"],
   },
 };
 

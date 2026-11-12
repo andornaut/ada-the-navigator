@@ -43,7 +43,7 @@ function dockAndRead(model: GameModel): string[] {
   model.interact();
   expect(model.state.docked).not.toBeNull();
   const lines = [model.stationGreeting!.line];
-  while (model.stationGreeting!.more) {
+  while (model.stationGreeting!.index < model.stationGreeting!.count - 1) {
     model.advanceGreeting();
     lines.push(model.stationGreeting!.line);
   }
@@ -55,20 +55,20 @@ describe("station keepers", () => {
     for (const sector of [1, 3] as const) {
       const sites = nearest(sector, 4);
       expect(sites.map(({ id }) => stationRank(ECONOMY, sector, id))).toEqual([0, 1, 2, 3]);
-      expect(sites.map(({ id }) => stationKeeper(ECONOMY, sector, id)?.name)).toEqual([
-        ...KEEPERS[sector]!.names,
-        KEEPERS[sector]!.names[0],
+      expect(sites.map(({ id }) => stationKeeper(ECONOMY, sector, id)?.key)).toEqual([
+        ...KEEPERS[sector]!.keepers,
+        KEEPERS[sector]!.keepers[0],
       ]);
     }
   });
 
   it("keeps Cartwheel's hub for Quartz, with its own lines, and gives its stations Slate and Garnet", () => {
     const hub = stationKeeper(ECONOMY, 2, HUB_STATION)!;
-    expect(hub.name).toBe("Quartz");
+    expect(hub.key).toBe("quartz");
     expect(hub.greetings).toBe(KEEPERS[2]!.hub);
     expect(hub.greetings.first[0]).toBe("Welcome to the hub! Mind the dust. I'm the keeper here.");
     const names = nearest(2, 4).map(({ id }) => stationKeeper(ECONOMY, 2, id));
-    expect(names.map((keeper) => keeper?.name)).toEqual(["Slate", "Garnet", "Slate", "Garnet"]);
+    expect(names.map((keeper) => keeper?.key)).toEqual(["slate", "garnet", "slate", "garnet"]);
     expect(names.every((keeper) => keeper?.greetings === KEEPERS[2]!.greetings)).toBe(true);
   });
 
@@ -114,9 +114,10 @@ describe("a keeper's greeting at the station card", () => {
     const keeper = stationKeeper(ECONOMY, 1, station.id)!;
     expect(dockAndRead(model)).toEqual(keeper.greetings.first);
     expect(model.stationGreeting).toEqual({
-      keeper: keeper.name,
+      count: 3,
+      index: 2,
+      keeper: keeper.key,
       line: keeper.greetings.first[2],
-      more: false,
     });
     model.advanceGreeting();
     expect(model.stationGreeting!.line).toBe(keeper.greetings.first[2]);

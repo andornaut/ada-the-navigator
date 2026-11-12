@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, SUPPLY_ITEMS } from "../data/activities.ts";
+import type { CastKey } from "../data/cast.ts";
 import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -353,7 +354,7 @@ export class GameModel {
   // The docked station keeper's greeting: the keeper, this docking's lines and the one on show.
   private greeting: {
     index: number;
-    readonly keeper: string;
+    readonly keeper: CastKey;
     readonly lines: readonly string[];
   } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
@@ -848,7 +849,7 @@ export class GameModel {
     greetings[id] = docked + 1;
     this.greeting = {
       index: 0,
-      keeper: keeper.name,
+      keeper: keeper.key,
       lines: greetingLines(keeper.greetings, docked),
     };
   }
@@ -857,13 +858,14 @@ export class GameModel {
     const greeting = this.greeting;
     return this.state.docked && greeting
       ? {
+          count: greeting.lines.length,
+          index: greeting.index,
           keeper: greeting.keeper,
           line: greeting.lines[greeting.index]!,
-          more: greeting.index < greeting.lines.length - 1,
         }
       : null;
   }
-  /** A tap on the welcome line: the greeting's next line, the last staying on show. */
+  /** A tap on the keeper block: the greeting's next line, the last staying on show. */
   advanceGreeting(): void {
     const greeting = this.greeting;
     if (this.state.docked && greeting && greeting.index < greeting.lines.length - 1) {

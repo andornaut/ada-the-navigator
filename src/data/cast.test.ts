@@ -7,9 +7,11 @@ import { CAST, CAST_FRAMES, type CastKey, castSheet, SPEAKER_CAST, STORY_CAST } 
 import { SPEAKERS } from "./conversations.ts";
 import { GALAXY_ID } from "./galaxies.ts";
 import { PROJECTS } from "./projects.ts";
+import type { SectorId } from "./types.ts";
 
 const CONTROLS = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
 const CONVERSATION = readFileSync(new URL("../../art/conversation.md", import.meta.url), "utf8");
+const STATION = readFileSync(new URL("../../art/station.md", import.meta.url), "utf8");
 
 // The manifest a key's sheets live in: the core one, or its galaxy's.
 function homeManifest(key: CastKey): { assets: readonly { id: string; path: string }[] } {
@@ -18,7 +20,7 @@ function homeManifest(key: CastKey): { assets: readonly { id: string; path: stri
     return CORE_MANIFEST as unknown as { assets: { id: string; path: string }[] };
   }
   const sector = Number(Object.entries(GALAXY_ID).find(([, id]) => id === home)![0]);
-  return GALAXY_MANIFESTS.get(sector as 1 | 2 | 3)!;
+  return GALAXY_MANIFESTS.get(sector as SectorId)!;
 }
 
 type Sheet = {
@@ -50,7 +52,12 @@ describe("the cast", () => {
     const keys = [...CONVERSATION.matchAll(/^\| [^|]+\| [^|]+\| `([a-z]+)` +\| \(/gm)].map(
       ([, key]) => key,
     );
-    expect(new Set(Object.keys(CAST))).toEqual(new Set([...keys, "grandma"]));
+    // The station keepers, Needle's and Andromeda's among them.
+    const keepers = [...STATION.matchAll(/^\| \w+ +\| \w+ +\| `([a-z]+)` +\| `#/gm)].map(
+      ([, key]) => key,
+    );
+    expect(keepers).toHaveLength(15);
+    expect(new Set(Object.keys(CAST))).toEqual(new Set([...keys, ...keepers, "grandma"]));
     for (const { name, tab } of Object.values(CAST)) {
       expect(CONTROLS).toMatch(new RegExp(`\\| ${name} tab +\\| \`${tab}\``));
     }

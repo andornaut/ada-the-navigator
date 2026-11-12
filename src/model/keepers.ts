@@ -1,3 +1,4 @@
+import type { CastKey } from "../data/cast.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type KeeperGreetings, KEEPERS } from "../data/keepers.ts";
 import type { SectorId } from "../data/types.ts";
@@ -9,17 +10,19 @@ import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
 // stations take Slate and Garnet in turn. Ranks come from the station generator alone, never from
 // saved state.
 
-/** What the station card's welcome line shows from a keeper. */
+/** What the station card's keeper block shows: the keeper and the docking's line on show. */
 export interface StationGreeting {
-  readonly keeper: string;
+  /** How many lines this docking shows: three the first time, then one. */
+  readonly count: number;
+  /** The line on show, from 0. */
+  readonly index: number;
+  readonly keeper: CastKey;
   readonly line: string;
-  /** Whether a tap shows another line. */
-  readonly more: boolean;
 }
 
 export interface StationKeeper {
   readonly greetings: KeeperGreetings;
-  readonly name: string;
+  readonly key: CastKey;
 }
 
 /**
@@ -48,17 +51,17 @@ export function stationKeeper(
   if (!keepers) {
     return null;
   }
-  const { greetings, names } = keepers;
+  const { greetings, keepers: keys } = keepers;
   if (sector === 2 && id === HUB_STATION) {
-    return { greetings: keepers.hub ?? greetings, name: names[0] };
+    return { greetings: keepers.hub ?? greetings, key: keys[0] };
   }
   const rank = stationRank(catalog, sector, id);
   if (rank === null) {
     return null;
   }
   // Cartwheel's other stations take its second and third keepers in turn.
-  const name = sector === 2 ? names[1 + (rank % 2)]! : names[rank % names.length]!;
-  return { greetings, name };
+  const key = sector === 2 ? keys[1 + (rank % 2)]! : keys[rank % keys.length]!;
+  return { greetings, key };
 }
 
 /**

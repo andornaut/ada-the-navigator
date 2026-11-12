@@ -1,6 +1,7 @@
 import type { Weapon } from "../data/types.ts";
 import { weaponShopSheet } from "../data/weapon-glyphs.ts";
 import type { StationGreeting } from "../model/keepers.ts";
+import { createKeeperBlock } from "./keeper-block.ts";
 import { BUTTON_SLICE, FOCUS_RING, PILL, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import {
@@ -383,6 +384,8 @@ export interface StationLabels {
   readonly jobDropCancel: string;
   readonly jobDropTitle: string;
   readonly jobs: string;
+  /** The keeper block's name while it shows the next line. */
+  readonly nextLine: string;
   readonly owned: string;
   readonly projectFunded: string;
   readonly projects: string;
@@ -465,7 +468,7 @@ export interface StationOptions {
   readonly acceptJob: (id: string) => boolean;
   /** Why Accept refuses while the galaxy's slot is taken: a job or an activity holds it. */
   readonly busyLine: () => string;
-  /** A tap on the welcome line shows the keeper's next line. */
+  /** A tap on the keeper block shows the keeper's next line. */
   readonly advanceGreeting: () => void;
   /** The station card's balance: the amount alone and its line, such as "260 Stardust". */
   readonly balance: () => { readonly amount: number; readonly text: string };
@@ -593,12 +596,20 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   openShop.dataset.action = "open-shop";
   const openJobs = createButton(labels.jobs);
   openJobs.dataset.action = "open-jobs";
-  // The welcome line: the keeper's greeting where the station has one, a tap showing its next line
-  // while Undock, Jobs and Shop stay live (gameplay/rules.md "Species and greeters").
-  const welcome = prose("ada-station-welcome", labels.stationWelcome);
+  // The keeper's block: the greeting where the station has one, a tap showing its next line while
+  // Undock, Jobs and Shop stay live (gameplay/rules.md "Species and greeters"). When its last line
+  // shows, focus on it moves to Shop, where the card's focus starts.
+  const keeper = createKeeperBlock({
+    advance: () => {
+      options.advanceGreeting();
+      keeper.render(options.greeting());
+    },
+    focusAfter: () => openShop,
+    labels: { nextLine: labels.nextLine, welcome: labels.stationWelcome },
+  });
   stationCard.body.append(
     stationBalance,
-    welcome,
+    keeper.element(),
     createActions([
       { button: undock, role: "secondary" },
       { button: openJobs, role: "secondary" },
@@ -919,24 +930,9 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     list.replaceChildren(...tabContent(tab));
   };
 
-  const renderWelcome = (): void => {
-    const greeting = options.greeting();
-    welcome.textContent = greeting?.line ?? labels.stationWelcome;
-    if (greeting) {
-      welcome.dataset.keeper = greeting.keeper;
-    } else {
-      delete welcome.dataset.keeper;
-    }
-    welcome.toggleAttribute("data-more", greeting?.more ?? false);
-  };
-  welcome.addEventListener("click", () => {
-    options.advanceGreeting();
-    renderWelcome();
-  });
-
   const render = (): void => {
     renderBalances();
-    renderWelcome();
+    keeper.render(options.greeting());
     stationCard.frame.hidden = view !== "card";
     shopCard.frame.hidden = view !== "shop";
     jobsCard.frame.hidden = view !== "jobs";

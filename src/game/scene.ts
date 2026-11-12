@@ -1095,6 +1095,7 @@ export class PrototypeScene extends Scene {
         jobDropCancel: label("jobDropCancel"),
         jobDropTitle: label("jobDropTitle"),
         jobs: label("jobs"),
+        nextLine: label("nextLine"),
         owned: label("owned"),
         projectFunded: label("projectFunded"),
         projects: label("projects"),

@@ -497,6 +497,7 @@ export const PROTOTYPE: PrototypeContent = {
     motionNote: "Skips screen shakes",
     moveControls: "Move controls",
     next: "Next",
+    nextLine: "Next line",
     ore: "Ore",
     outOfAmmo: "Out of ammo.",
     owned: "Owned",

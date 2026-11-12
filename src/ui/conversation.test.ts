@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { CAST, castSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
+import type { SectorId } from "../data/types.ts";
 import { GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
   COMPACT_PORTRAITS,
@@ -199,7 +201,9 @@ describe("conversation portraits", () => {
       const manifest =
         home === "core"
           ? MANIFEST
-          : GALAXY_MANIFESTS.get(({ cartwheel: 2, sunflower: 1, whirlpool: 3 } as const)[home])!;
+          : GALAXY_MANIFESTS.get(
+              Number(Object.entries(GALAXY_ID).find(([, id]) => id === home)![0]) as SectorId,
+            )!;
       const sheet = (manifest.assets as typeof MANIFEST.assets).find(
         ({ id }) => id === `${key}-portrait-compact`,
       );
