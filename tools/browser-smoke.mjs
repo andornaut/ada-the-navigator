@@ -1533,8 +1533,10 @@ try {
     const box = (node) => node.getBoundingClientRect();
     const lines = [...screen.querySelectorAll(".ada-map-detail:not([hidden])")];
     const jobLine = lines.at(-1);
+    const target = screen.querySelector('.ada-map-places [data-place="growers"]');
     return {
-      chip: box(screen.querySelector('.ada-map-places [data-place="growers"]')),
+      chip: box(target),
+      face: getComputedStyle(target).backgroundColor,
       jobHeight: jobLine ? box(jobLine).height : 0,
       jobText: jobLine?.textContent ?? "",
       lineHeight: jobLine ? parseFloat(getComputedStyle(jobLine).lineHeight) : 0,
@@ -1543,6 +1545,11 @@ try {
     };
   });
   assert.match(jobPanel.jobText, /^Job: Deliver /u, "The job's target shows its Job line");
+  assert.equal(
+    jobPanel.face,
+    "rgb(254, 174, 52)",
+    "A held job's target chip has main's orange face",
+  );
   assert.ok(
     jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
     `A long Job line wraps inside the panel: ${JSON.stringify(jobPanel)}`,
@@ -1556,8 +1563,9 @@ try {
     `Selecting pans the chip clear of the wrapped panel: ${JSON.stringify(jobPanel)}`,
   );
   events.checks.push(
-    "A held job's long Job line wraps in the place panel, left of the tool column, and the " +
-      "selected target pans clear of the panel's rendered height",
+    "A held job's target chip has main's orange face; its long Job line wraps in the place " +
+      "panel, left of the tool column, and the selected target pans clear of the panel's " +
+      "rendered height",
   );
   // Back to title from a flight in danger: the start screen, the flight ended and saved at home
   // with no sleep scene; Continue resumes in the cockpit.

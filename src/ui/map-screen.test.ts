@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import { PROTOTYPE } from "../data/prototype.ts";
 import type { MapPlace, MapSymbol } from "../model/map.ts";
+import { MAP_FACES } from "./layout/mapScreen.ts";
 import {
+  chipFace,
   emptyPanelHeight,
   MAP_SCREEN_STYLE,
   mapDistance,
@@ -158,7 +160,11 @@ describe("map screen place panel", () => {
   });
 
   it("keeps main's job marks: an orange face on a target and a diamond for a job's own spot", () => {
-    expect(MAP_SCREEN_STYLE).toContain(".ada-map-place[data-job]{\n  --face:#feae34");
+    // The chip's inline face is its only face: no stylesheet rule competes with it.
+    expect(chipFace(place("station", { job: true }))).toBe("#feae34");
+    expect(chipFace(place("job", { job: true, kind: "job" }))).toBe("#feae34");
+    expect(chipFace(place("station"))).toBe(MAP_FACES.station);
+    expect(MAP_SCREEN_STYLE).not.toMatch(/\[data-job\]\{[^}]*--face/u);
     expect(MAP_SCREEN_STYLE).toContain('.ada-map-place[data-kind="job"]{');
     expect(MAP_SCREEN_STYLE).toContain("rotate(45deg)");
   });

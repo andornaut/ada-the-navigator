@@ -284,9 +284,6 @@ export const MAP_SCREEN_STYLE = `
   color:${MAP_COLORS.ink};
   pointer-events:none
 }
-.ada-controls .ada-map-screen .ada-map-place[data-job]{
-  --face:${MAP_JOB_FACE}
-}
 .ada-controls .ada-map-screen .ada-map-place::before{
   content:"";
   width:${units(MAP_SYMBOL.glyph)};
@@ -650,12 +647,17 @@ function adaArrow(): SVGSVGElement {
 }
 
 // A place's chip node: its face, glyph, kind and marks.
+/** A chip's face colour: main's orange for a held job's target or spot, else its symbol's face. */
+export function chipFace(place: Pick<MapPlace, "job" | "symbol">): string {
+  return place.job ? MAP_JOB_FACE : MAP_FACES[place.symbol];
+}
+
 function dressChip(chip: HTMLElement, place: MapPlace): void {
   chip.className = "ada-map-place";
   chip.dataset.place = place.id;
   chip.dataset.kind = place.kind;
   chip.dataset.symbol = place.symbol;
-  chip.style.setProperty("--face", MAP_FACES[place.symbol]);
+  chip.style.setProperty("--face", chipFace(place));
   const glyph = MAP_GLYPHS[place.symbol];
   if (glyph) {
     chip.style.setProperty("--glyph", `url('${ICONS}${glyph}.svg')`);
