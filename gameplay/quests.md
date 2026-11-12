@@ -219,7 +219,7 @@ rewards.
   repeat arrow, in place of a job type's icon; its title is the activity's name.
   Its detail line is its goal: "Carry
   supplies to a station.", "Guide a whale calf home.", "Light the gates of a
-  practice channel.", "Fly a parcel with Pip." or "Deposit 30 resources at the
+  practice channel.", "Fly a parcel with Pip." or "Deposit 30 ore at the
   hub."
 - Holding one outpost's supply run, Talk at another outpost refuses Accept with
   "Finish your activity first."
@@ -230,7 +230,7 @@ rewards.
 | Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |       35 |
 | Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |       50 |
 | Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |       55 |
-| Cartwheel | Mining contract   | The hub             | Deposit 30 resources at the hub; partial loads count.             |       60 |
+| Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |       60 |
 
 - **Supply run**: follows the delivery job rules in full, 3000 minimum
   included: the outpost's item goes to a known station at least 3000 world
@@ -272,23 +272,23 @@ Activity lines:
 - Grower: "Fresh food for the station traders. Would you carry it?"
 - Workshop: "A station ordered these repaired tools. Could you take them?"
 - Salvager: "A station shop needs these spare parts. Will you bring them?"
-- Station: "Contract open: deposit 30 resources here. Partial loads count."
+- Station: "Contract open: deposit 30 ore here. Partial loads count."
 - Whale family: "One of our young ones swam off to play. Could you guide them
   home? Stay close. They follow friends."
 - Pip: "I've got a parcel for the far settlement. Fly with me? It's less scary
   with company."
 - Elder Loom: "The practice channel is open. Thread it again, slowly."
 
-| Key                 | Text                                        |
-| ------------------- | ------------------------------------------- |
-| `activityTake`      | Accept                                      |
-| `activitySkip`      | Not now                                     |
-| `activityBusy`      | Finish your activity first.                 |
-| `activityDrop`      | Drop this activity?                         |
-| `supplyObjective`   | Carry {item} to {destination}.              |
-| `contractObjective` | Deposit resources at the hub: {have} of 30. |
-| `calfFind`          | Find the whale calf.                        |
-| `calfGuide`         | Guide the calf home.                        |
+| Key                 | Text                                  |
+| ------------------- | ------------------------------------- |
+| `activityTake`      | Accept                                |
+| `activitySkip`      | Not now                               |
+| `activityBusy`      | Finish your activity first.           |
+| `activityDrop`      | Drop this activity?                   |
+| `supplyObjective`   | Carry {item} to {destination}.        |
+| `contractObjective` | Deposit ore at the hub: {have} of 30. |
+| `calfFind`          | Find the whale calf.                  |
+| `calfGuide`         | Guide the calf home.                  |
 
 Templates carry no article; every destination has a sentence name with its
 article, used in objectives and job titles: a station is "the station", an

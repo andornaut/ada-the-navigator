@@ -464,11 +464,11 @@ saw at school." Dad: "That sounds hard to watch. What do you think you could do?
 
 Space dialogue, in story order:
 
-Station, on arrival and on deposits between milestones: "Welcome. Shoot resource
-rocks and collect what they release. Bring cargo here to deposit it. Partial
+Station, on arrival and on deposits between milestones: "Welcome. Shoot ore
+rocks and collect the ore they release. Bring it here to deposit it. Partial
 loads count, and you can travel back when you're out of danger."
-Ask more: "Independent miners bring resources here for transport. There is
-docking space for everyone."
+Ask more: "Independent miners bring ore here for transport. There is docking
+space for everyone."
 
 Ada, first deposit milestone: "That pilot cut across the miner's approach and made
 them retreat. There are free docks. Why won't they let that miner through?"
@@ -508,8 +508,8 @@ they stay supportive instead of leaving them alone."
 Objectives, in order:
 
 1. Explore the galaxy.
-2. Mine resource rocks and deposit cargo at the hub.
-3. Keep depositing resources and talk with the miner.
+2. Mine ore rocks and deposit the ore at the hub.
+3. Keep depositing ore and talk with the miner.
 4. Speak with regular visitors about approaching together.
 5. Join the miner's approach at the hub.
 6. Buy the holodisk at the hub.
@@ -676,8 +676,10 @@ beacon light. Welcome!"
   adventure?" then Pick up the rock.
 - Actions: Talk, Deliver, Deposit, Continue, Ask more, Use, Salvage.
 - Disabled heavy banner: Disabled.
-- Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust.
-- Pause: Pause (button label), Paused, Resume, Map, Settings, Back to title. On Ada's room page: Settings, Back to title.
+- Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.
+- Cargo card: Cargo; Stardust; Ore; Holodisks: {n} of 6; Carrying: {item};
+  Towing: {craft}; {weapon} ammunition: {count}.
+- Pause: Pause (button label), Paused, Resume, Map, Cargo, Settings, Back to title. On Ada's room page: Settings, Back to title.
 - Start screen top right: Achievements, Settings, Exit (label and accessible
   name Exit).
 - Storybook pages: Previous, Next, Skip. Boarding from Ada's room: Pick up the rock.

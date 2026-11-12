@@ -365,7 +365,8 @@ route guards, since Cartwheel's danger is at the ore fields. Each scene plays
 first, and its dialogue line follows when the scene ends. A scene cut short by
 the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
 
-Resource rocks come in medium and large classes, colliding and taking hits
+Player text calls resource rocks "ore rocks" and their pieces "ore". Resource
+rocks come in medium and large classes, colliding and taking hits
 like asteroids. A medium rock has 3 HP and releases 3 pieces, a large rock 5 HP
 and 5 pieces; two of every three are medium. Cartwheel has no damaging hazards.
 
@@ -477,7 +478,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - Ada's maximum movement speed is provisionally 160 world units per second,
   190 and 220 at engine levels 2 and 3.
 - The space screen shows only essentials: the joysticks, weapon icons, the
-  status pill (shield and Stardust) and a pause button. There is no travel or destinations panel and
+  status pill (shield, Stardust and what Ada carries) and a pause button. There is no travel or destinations panel and
   no settings gear in space.
 - Space shows no in-world name labels. Each named destination has a distinct
   look by role, the current objective's destination is marked by the direction
@@ -485,8 +486,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
-  one shape, in a full-width stack: "Resume" (primary), "Map", "Settings" and
-  "Back to title". The card shows no objective text, and neither does space;
+  one shape, in a full-width stack: "Resume" (primary), "Map", "Cargo",
+  "Settings" and "Back to title". Cargo opens a card titled "Cargo" with a close
+  X, back to the pause card, listing what Ada has: Stardust; ore carried this
+  flight; "Holodisks: {n} of 6"; then, only when present, the carried job item or
+  towed craft and each owned weapon's ammunition. The card shows no objective text, and neither does space;
   in flight the direction indicator is the objective cue.
   The Map's header shows the galaxy name with its landmark pips and
   "{percent}% mapped" below them, then a "Quests" button and "Return to Earth".
@@ -638,7 +642,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   flight is lost; weapons, levels, Stardust, purchases and story progress persist,
   and the next flight generates a new layout. See [Economy](economy.md).
 - The shield and Stardust share one status pill at the top left, beside the pause
-  button: a shield icon and bar, a divider and the Stardust count. The bar is blue,
+  button: a shield icon and bar, a divider and the Stardust count. While Ada
+  carries ore, a divider and an ore icon with its count follow; while she carries
+  a job item or tows a craft, a divider and its icon follow last. Each segment
+  leaves when empty. The bar is blue,
   turning red when the shield is low (below 25%) or empty, and shows hits, the
   recharge delay and regeneration. Low shield never relies on color alone: the bar
   also pulses, held steady under reduced motion, and Astra says "Shield low!".
