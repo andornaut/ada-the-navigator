@@ -20,7 +20,7 @@ the [holodisk](holodisk.md), the
 Andromeda's [settlers' station, settlements, guide beacons, Pip's mail scooter, project world changes and Munix portraits](andromeda.md),
 its [garnet drones](andromeda.md#garnet-drones) and [backdrop haze](galaxies.md#backdrop-haze),
 [Needle](needle.md)'s Weavers' station, ring gates, channels, the Eye, Elder
-Loom's glider and portrait and the crimson drones, Black Eye's
+Loom's saucer and portrait and the crimson drones, Black Eye's
 [station and Blurb settlements](black-eye.md), character portraits, and the
 [storybook](storybook.md) Earth backgrounds with Ada's and her family's storybook sprites.
 The station jobs have [job art in space](jobs.md) (landmarks, the search area
@@ -76,7 +76,7 @@ river debris, project frames, the nebula banks and the `whales`, `whirlpoolCurre
 station, the settlements, the guide beacons, their project frames, the garnet
 drones, the Munix portraits, the backdrop haze and the `backdropHaze` link;
 Needle the Weavers' station and its Loom hall, the ring gates, channel debris,
-Channel lights, Elder Loom's glider and portrait, the crimson drones and the
+Channel lights, Elder Loom's saucer and portrait, the crimson drones and the
 `needleGates`, `needleChannels`, `needleEye` and `needleBand` links;
 Black Eye its station, the Blurb settlements and its smoke-bank nebulae.
 Sunflower, Whirlpool and Cartwheel each also hold their cast's portraits;

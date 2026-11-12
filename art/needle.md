@@ -3,7 +3,7 @@
 Needle's space art: the [Weavers' station](#weavers-station) and its Loom
 hall, the [ring gates](#ring-gates), the [channels](#channels) with their
 stitched edges, harmless debris and the Eye's layout, the
-[edge-on band](#space-look), [Elder Loom's glider](#elder-looms-glider) and
+[edge-on band](#space-look), [Elder Loom's saucer](#elder-looms-saucer) and
 [portrait](#elder-looms-portrait), the [crimson drones](#needle-drones) and the
 [world changes](#world-changes). Everything here is in
 [Needle's manifest](../public/art/needle/manifest.json) (except the
@@ -252,16 +252,20 @@ haze's half-resolution texture and sigma 20 blur. Needle has no haze.
 - Reduced motion: the band is static, so it is unchanged. The
   [selector preview](galaxies.md#selector-preview) capture includes it.
 
-## Elder Loom's glider
+## Elder Loom's saucer
 
 Rebuild with `node art/tools/needle-craft.ts`. It writes `glider-{0..15}.svg`
-and `glider-jets.json` and replaces its `craft-glider-` entries.
+and `glider-jets.json` and replaces its `craft-glider-` entries; the craft keeps
+its `glider` ids and files. The model is
+[art/tools/saucer-model.ts](tools/saucer-model.ts).
 
-A long-winged pearl sailplane: a slender fuselage, straight wings with lavender
-thread bands near the tips and blue wingtip lights, a T-tail, a smoked lavender
-canopy with a warm pane and two small steel motor nacelles under the wing
-roots. Length 48 and span 67 model units (1.12 by 1.56 Ada widths). Not coral,
-amber or Ada's white and blue, and no Gadget insignia.
+A pearl saucer with a lavender thread band round its rim, a raised upper deck
+and a smoked lavender bridge dome with a warm pane; two short pearl nacelles
+slung low on struts from the rear flanks, with lavender tail bands and blue bow
+lamps; a small pearl stern pod between them and blue lamps at the rim's beam.
+No wings or tail. Modelled in design units and built at 1.2 times: length 50.7
+and span 43 model units (1.18 by 1.0 Ada widths). Not coral, amber or Ada's
+white and blue, and no Gadget insignia.
 
 - A non-hostile story craft in the [Cartwheel story craft](cartwheel.md#story-craft)
   contract: 16 headings in 22.5 degree steps (heading `k` faces world angle
@@ -269,38 +273,38 @@ amber or Ada's white and blue, and no Gadget insignia.
   `craft-glider-{k}` with `craft` `glider`, `directionIndex` `k` and `facing`
   `world-{k}`. Frame 96 (display 42), pivot `(0.5, 0.5)`; render the selected
   frame with rotation zero.
+- Groups draw far to near; a group resting on the saucer top (11.4) draws after
+  every group below it.
 - `glider-jets.json` uses the [enemy speed jets](enemies.md#speed-jets) schema
   (version 1, outer and core layers, no halo, length
   `(6 + 24 f²) * sqrt(frame / 96)`) in the story craft's civil palette: outer
-  `#c9a978` to `#ffe9b8`, core `#efe4cf` to `#ffffff`. Two mouths 3 wide at
-  the nacelle tails, `(u, v, z)` `(0.5, ±7, 4.8)`, clear of the fuselage at
-  every heading.
+  `#c9a978` to `#ffe9b8`, core `#efe4cf` to `#ffffff`. Two mouths 3.6 wide at
+  the nacelle tails, `(u, v, z)` `(-25.92, ±15.6, 5.76)`.
 - The same file carries `nose`, 16 entries, as the story craft do, from
   [art/tools/nose.ts](tools/nose.ts), shared with Pip's mail scooter. `nose[k]`
   gives `distance`, the world units from the pivot to the point under the nose
-  on the centre line (the hull's tip, reach 23), and `tip`, the drawn tip in
-  frame px; the build fails unless each tip lies within 0.5 frame px of a drawn
-  edge. A docked or berthed glider holds with its pivot on the berth point
-  moved along `outward` by `nose[k].distance`.
+  on the centre line (the rim band's bow, reach 25.5), and `tip`, the drawn tip
+  in frame px; the build fails unless each tip lies within 0.5 frame px of a
+  drawn edge. A docked or berthed saucer holds with its pivot on the berth
+  point moved along `outward` by `nose[k].distance`.
 
 | Headings     | `distance` |
 | ------------ | ---------: |
-| 2, 10        |     10.063 |
-| 1, 3, 9, 11  |      9.877 |
-| 0, 4, 8, 12  |      9.413 |
-| 5, 7, 13, 15 |      8.925 |
-| 6, 14        |      8.714 |
+| 2, 10        |     11.157 |
+| 1, 3, 9, 11  |     10.951 |
+| 0, 4, 8, 12  |     10.436 |
+| 5, 7, 13, 15 |      9.895 |
+| 6, 14        |      9.662 |
 
 | Role           | Colour    | Contrast |
 | -------------- | --------- | -------: |
 | Pearl hull     | `#e9e3da` |  12.37:1 |
 | Pearl side     | `#b3aba1` |   6.95:1 |
 | Lavender bands | `#c4afcc` |   7.78:1 |
-| Canopy         | `#6f6688` |   2.95:1 |
-| Nacelles       | `#8d8a99` |   4.68:1 |
-| Wingtip lights | `#70ace8` |   6.58:1 |
+| Bridge dome    | `#6f6688` |   2.95:1 |
+| Lamps          | `#70ace8` |   6.58:1 |
 
-The silhouette's edge median is 6.07:1.
+The silhouette's edge median is 4.55:1 to 6.63:1 over the headings.
 
 ## Elder Loom's portrait
 
