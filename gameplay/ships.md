@@ -64,12 +64,12 @@ mixes and matches behaviours and their parameters. Small craft fight with their
 weapons, not their hulls: each holds a standoff band from Ada, strafing sideways
 and firing, and backs off when she comes inside it. They never press in to ram.
 
-| Archetype     | Standoff band (world units)          |
-| ------------- | ------------------------------------ |
-| `swarm`       | 200–300                              |
-| `fighter`     | 250–350                              |
-| `retaliator`  | 250–350                              |
-| `interceptor` | Firing passes, never closer than 150 |
+| Archetype     | Standoff band (world units)                                                             |
+| ------------- | --------------------------------------------------------------------------------------- |
+| `swarm`       | 200–300                                                                                 |
+| `fighter`     | 250–350                                                                                 |
+| `retaliator`  | 250–350                                                                                 |
+| `interceptor` | 150–250 with `chase` or `hitAndRun`; with `strafe`, firing passes never closer than 150 |
 
 | Behaviour   | Movement                                                                                     |
 | ----------- | -------------------------------------------------------------------------------------------- |
