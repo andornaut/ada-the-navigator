@@ -88,7 +88,8 @@ text or dialogue in a readable panel at the bottom.
 
 A story run is every Earth and aboard page shown in a row between two points of
 play: it starts when Ada leaves the start screen, a flight or the galaxy map,
-and ends at the galaxy map or on Ada's room page with its named action. Next
+or with Ada's room page's named action, and ends at the galaxy map or on Ada's
+room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
 boundaries within the run, and is disabled only on the run's first page. The
 run that starts with Ada's room page's named action counts that room page as
