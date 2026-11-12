@@ -347,6 +347,40 @@ ammunition count string; Basic shows none.
 - Count strings fit one line at every value: the widest pill (38.69) leaves
   9.31 inside the 48 target and 18.31 between neighbouring pills.
 
+### Loading bar
+
+A thin status line for loading, shared by every game through game-kit (the
+progress state and its DOM progress bar). Constants: `LOADING_BAR`,
+`loadingBar.ts`, to implement.
+
+| Token    | Value                                                           | Rule                                                                                                 |
+| -------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Position | The logical view's top edge, x 0 to the view width, y 0 to 3    | The view, not the game area: it spans the bands and ignores the safe insets                          |
+| Height   | 3                                                               | Logical px (`calc(var(--ada-unit) * 3)`)                                                             |
+| Layer    | Above all UI, the modal dim included                            | Takes no input (`pointer-events: none`)                                                              |
+| Fill     | The UI cream `#ead4aa`, opaque, from the left                   | Width `value * view width` for known progress                                                        |
+| Track    | Ink `#181425` at 0.6                                            | The unfilled part while the bar shows                                                                |
+| Known    | Fills to 100%, holds 250 ms, then fades out over 150 ms         | Then the element is removed                                                                          |
+| Unknown  | game-kit's travelling segment, 30% of the width (`segment` 0.3) | The kit's cycle; it ends at once when the work ends. Reduced motion keeps the segment, as in the kit |
+| Idle     | Nothing shows: no element, no track                             | A new load mounts the bar again                                                                      |
+
+- HUD clearance: the bar ends at y 3. The HUD rows' drawn art starts at
+  `HUD_EDGE` (12), 9 below it; the Map's HUD row, the highest drawn art, at
+  4.5, 1.5 below. Press areas that reach above 3 (the pause press area from
+  2.25) stay live, since the bar takes no input.
+- Contrast: the fill is 11.55:1 on its track over the dark field `#292734` and
+  10.11:1 on the field itself; the track is 1.14:1 there, so the dark-field
+  bar reads by its fill. Over Sunflower's `#D8C994` the fill is 4.51:1 on its
+  track and the track 3.95:1 on the field, but the fill on the field is
+  1.14:1, so a nearly full or full bar barely shows there.
+- Open, for the Sunflower case: a 1 opaque ink rule along the bar's bottom
+  (fill and track 2 high above it) keeps the full bar visible on every field
+  (ink 10.90:1 on Sunflower, cream 12.44:1 on ink) at the same 3 height.
+- Kit support: the DOM progress bar takes an RGB track colour and hides a
+  complete bar at once after its hold. The 0.6 track alpha and the 150 ms
+  fade need either kit options or Ada CSS on the bar's track and its
+  `data-state="complete"`.
+
 ## Screens
 
 Each screen lists its anchor and groups in order. Every distance comes from a
