@@ -591,14 +591,23 @@ page-control row stack 24 apart, and Previous and Next sit 24 apart. The garden
 opening's choice column is 56 + 24 + 56 + 24 + 36 = 196 (both labels wrap; 176
 at 844x390 without insets, where the first fits one line) beside its text
 column: the 36 heading and six lines in the 349 column (192), or five in the
-wider ones (166). Gameplay's copy builds 56 story pages: 53 from the
-prologue, room, boarding and chapter scenes, and the overnight recharge's 3
-(night, the textless sleep scene and morning, from rules text). The longest is
-chapter one's opening at 205 characters; 218 characters, six lines in the 349
-column and five in the wider ones, is Gameplay's limit case. Astra's three
-questions with Continue need 3 * 36 + 2 * 24 + 24 + 36 = 216, so 248 with the
-padding, the tallest page, under the 280.5 cap at 360-high views: every page
-fits without scrolling.
+wider ones (166). Astra's three questions with Continue need 3 * 36 + 2 * 24 +
+24 + 36 = 216, so 248 with the padding, the tallest page, under the 280.5 cap at
+360-high views: every page fits without scrolling.
+
+Gameplay's copy, by group:
+
+| Group      | Pages | Pages in it                                                                                    |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------- |
+| Chapters   | 26    | Chapter one 12 (with the first launch's garden arrival and farewell), chapters two and three 7 |
+| Prologue   | 26    | 23 lines, the Miso and Pepper page among them, and Astra's 3 answers                           |
+| Ada's room | 2     | The room page and the empty visit's                                                            |
+| Boarding   | 3     | The room narration, Astra's line and her new-galaxy line                                       |
+| Overnight  | 3     | Night, the sleep scene and morning                                                             |
+
+That is 60 pages, 59 of them with text: the sleep scene has none. The longest is chapter
+one's opening at 205 characters. 218 characters, six lines in the 349 column
+and five in the wider ones, is Gameplay's limit case.
 
 The limits give, not the layout. A wrapped label adds 20 to its face (56). At
 720x360 with insets the cap is 341 - 60.5 = 280.5, so the choice column may
