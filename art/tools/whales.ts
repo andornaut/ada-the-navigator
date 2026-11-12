@@ -630,7 +630,13 @@ writeFileSync(
     kinds,
   }),
 );
-placeEntries("whirlpool", "whale-", entries as { id: string }[]);
+// The whale and the smaller adult are also Black Eye finale allies, so their frames are shared
+// art in core; the calves are Whirlpool's alone. Whirlpool's entries go first, so no id is ever in
+// both.
+const SHARED = ["whale", "adult"];
+const shared = (entry: object) => SHARED.includes((entry as { kind: string }).kind);
+placeEntries("whirlpool", "whale-", entries.filter((entry) => !shared(entry)) as { id: string }[]);
+placeEntries("core", "whale-", entries.filter(shared) as { id: string }[]);
 
 // Whirlpool's manifest names the whale data.
 linkData("whirlpool", { whales: "/art/whales.json" });

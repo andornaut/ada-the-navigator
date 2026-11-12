@@ -3,7 +3,10 @@
 - Rebuild with `node art/tools/cartwheel.ts`. It writes `public/art/cartwheel/`
   and replaces its own entries in place in
   [Cartwheel's manifest](../public/art/cartwheel/manifest.json): the hub and
-  the mooring buoy open it; the story craft follow the claim jumpers.
+  the mooring buoy open it; the story craft follow the claim jumpers. The
+  miner's `craft-miner-` entries are in the
+  [core manifest](../public/art/manifest.json), since the Black Eye finale
+  draws it too; their files stay in `public/art/cartwheel/`.
 - `node art/tools/cartwheel.ts --alternates <dir>` also writes the unused
   designs (the pale cream visitor `visitor3` and the plough blocker
   `blocker-plough`) with their entries to `<dir>`, outside `public/art/`.

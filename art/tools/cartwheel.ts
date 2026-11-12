@@ -1032,13 +1032,18 @@ replaceEntries(
   [...hubEntries, ...buoyEntries],
   () => true,
 );
-const craftIds = new RegExp(`^craft-(${crafts.map(({ name }) => name).join("|")})-\\d+$`);
+// The miner is also a Black Eye finale ally, so its frames are shared art in core; the other
+// story craft are Cartwheel's alone. Cartwheel's entries go first, so no id is ever in both.
+const craftIds = (names: readonly string[]) => new RegExp(`^craft-(${names.join("|")})-\\d+$`);
+const SHARED = ["miner"];
+const isShared = (entry: { id: string }) => craftIds(SHARED).test(entry.id);
 replaceEntries(
   "cartwheel",
-  (id) => craftIds.test(id),
-  craftEntries,
+  (id) => craftIds(crafts.map(({ name }) => name)).test(id),
+  craftEntries.filter((entry) => !isShared(entry)),
   (id) => id.startsWith("cartwheel-debris-") || id.startsWith("craft-stranded-"),
 );
+replaceEntries("core", (id) => craftIds(SHARED).test(id), craftEntries.filter(isShared));
 
 const flag = process.argv.indexOf("--alternates");
 if (flag !== -1) {

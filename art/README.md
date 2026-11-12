@@ -58,14 +58,16 @@ entry or data link that exactly one galaxy uses is in that galaxy's manifest,
 generic art included; one that several galaxies or none use (boot, HUD, UI,
 Ada, story) is in core. Usage follows the game's content data: Sunflower holds
 its outposts and their project frames; Cartwheel the hub, mooring buoy, claim
-jumpers, story and stranded craft, traveling debris and the `cartwheelDebris`
-and `oreField` links; Whirlpool the whales, river debris, project frames and the
+jumpers, story craft other than the miner, stranded craft, traveling debris
+and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves, river debris, project frames and the
 `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
-Andromeda the settlers'
-station, the settlements, the guide beacons, Pip's mail scooter, their
-project frames, the garnet drones, Pip's and the settler's portraits, the
-backdrop haze and the `backdropHaze` link. The station, discovery cache,
-coral family, ore nugget and `tow` serve every galaxy and stay in core.
+Andromeda the settlers' station, the settlements, the guide beacons, Pip's mail
+scooter, their project frames, the garnet drones, Pip's and the settler's
+portraits, the backdrop haze and the `backdropHaze` link. The station, discovery
+cache, coral family, ore nugget and `tow` serve every galaxy and stay in core,
+as do the miner, the whale and the smaller adult, which the Black Eye finale
+also draws. Core entries keep their files' paths, so a galaxy's art stays in its
+folder wherever its entries are listed.
 Tech loads core at boot and a galaxy's manifest with its set.
 
 Generators write through `art/tools/manifest.ts`, naming the target manifest;
