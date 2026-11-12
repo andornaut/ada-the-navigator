@@ -37,7 +37,7 @@ describe("weapon levels", () => {
   });
 
   it("sets Gameplay's level 1 values", () => {
-    const basic = weaponAt("basic", 1);
+    const laser = weaponAt("laser", 1);
     expect(weaponAt("rapidMissile", 1)).toMatchObject({
       blastRadius: 25,
       damageRatio: 1.5,
@@ -55,11 +55,11 @@ describe("weapon levels", () => {
     expect([1, 2, 3].map((level) => weaponAt("heavyMissile", level).blastRadius)).toEqual([
       60, 72, 85,
     ]);
-    // The Phaser's 4x damage at a 4x interval matches Basic's single-target output.
+    // The Phaser's 4x damage at a 4x interval matches Laser's single-target output.
     const phaser = weaponAt("phaser", 1);
     expect(phaser).toMatchObject({ beamRange: 320, projectileKind: "beam" });
-    expect(phaser.damageRatio).toBe(basic.damageRatio * 4);
-    expect(phaser.intervalSeconds).toBeCloseTo(basic.intervalSeconds * 4, 9);
+    expect(phaser.damageRatio).toBe(laser.damageRatio * 4);
+    expect(phaser.intervalSeconds).toBeCloseTo(laser.intervalSeconds * 4, 9);
   });
 
   it("grows each weapon only along its own dimensions", () => {
@@ -69,7 +69,7 @@ describe("weapon levels", () => {
         rest.some((level) => JSON.stringify(level[key]) !== JSON.stringify(first[key])),
       );
     };
-    expect(changed("basic").sort()).toEqual(["damageRatio", "intervalSeconds"]);
+    expect(changed("laser").sort()).toEqual(["damageRatio", "intervalSeconds"]);
     expect(changed("rapidMissile").sort()).toEqual(["damageRatio", "intervalSeconds"]);
     expect(changed("heavyMissile").sort()).toEqual([
       "blastRadius",
@@ -86,7 +86,7 @@ describe("weapon levels", () => {
   });
 
   it("clamps levels outside 1 to 3", () => {
-    expect(weaponAt("basic", 0)).toBe(WEAPON_CATALOG.basic[0]);
-    expect(weaponAt("basic", 9)).toBe(WEAPON_CATALOG.basic[2]);
+    expect(weaponAt("laser", 0)).toBe(WEAPON_CATALOG.laser[0]);
+    expect(weaponAt("laser", 9)).toBe(WEAPON_CATALOG.laser[2]);
   });
 });

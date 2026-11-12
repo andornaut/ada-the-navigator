@@ -1,6 +1,7 @@
 import { ACHIEVEMENTS_STYLE } from "./achievements-card.ts";
 import { CONTROL_HELP_STYLE } from "./control-help.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
+import { DISABLED_BANNER_STYLE } from "./disabled-banner.ts";
 import { ITEM_NOTICE_STYLE } from "./item-notice.ts";
 import { KEEPER_STYLE } from "./keeper-block.ts";
 import { LOADING_STYLE } from "./loading-bar.ts";
@@ -34,6 +35,7 @@ export const UI_STYLESHEET = [
   WEAPON_STYLE,
   STATUS_PILL_STYLE,
   ITEM_NOTICE_STYLE,
+  DISABLED_BANNER_STYLE,
   MAP_SCREEN_STYLE,
   PAUSE_GRID_STYLE,
   SHIP_CARD_STYLE,

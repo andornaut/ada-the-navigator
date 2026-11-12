@@ -41,7 +41,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "chase",
       copy: "Crane",
-      cost: 250,
+      cost: 265,
       icon: "icon-project-workshop-crane",
       id: "workshopCrane",
       name: "Workshop crane",
@@ -52,7 +52,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "escort",
       copy: "Beacons",
-      cost: 175,
+      cost: 225,
       icon: "icon-project-salvage-beacons",
       id: "salvageBeacons",
       name: "Salvage beacons",
@@ -65,7 +65,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "chase",
       copy: "DockingBay",
-      cost: 400,
+      cost: 600,
       icon: "icon-project-docking-bay",
       id: "dockingBay",
       name: "Second docking bay",
@@ -76,7 +76,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "escort",
       copy: "HubRepairs",
-      cost: 300,
+      cost: 450,
       icon: "icon-project-hub-repairs",
       id: "hubRepairs",
       name: "Hub repairs",
@@ -89,7 +89,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "current",
       copy: "Nursery",
-      cost: 300,
+      cost: 450,
       icon: "icon-project-nursery-beacon",
       id: "nurseryBeacon",
       name: "Nursery beacon",
@@ -100,7 +100,7 @@ export const PROJECTS: Readonly<Partial<Record<SectorId, readonly CommunityProje
     {
       ally: "escort",
       copy: "CurrentBuoys",
-      cost: 250,
+      cost: 375,
       icon: "icon-project-current-buoys",
       id: "currentBuoys",
       name: "Current-map buoys",

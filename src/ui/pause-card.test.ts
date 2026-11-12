@@ -95,7 +95,7 @@ const SHIP: ShipView = {
   shield: 2,
   stardust: 1234,
   tractor: 1,
-  weapons: [{ ammo: null, id: "basic", level: 1 }],
+  weapons: [{ ammo: null, id: "laser", level: 1 }],
 };
 
 beforeEach(() => {

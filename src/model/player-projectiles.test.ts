@@ -36,7 +36,7 @@ describe("pure player projectile volleys", () => {
   );
 
   it("gives bolts and dots no blast and refuses the hitscan Phaser", () => {
-    for (const weapon of ["basic", "multiLaser", "scattershot"] as const) {
+    for (const weapon of ["laser", "multiLaser", "scattershot"] as const) {
       for (const shot of planPlayerVolley(WEAPON_CATALOG[weapon][0], context).projectiles) {
         expect(shot.blast).toBeUndefined();
       }
@@ -133,7 +133,7 @@ describe("pure player projectile volleys", () => {
   it("does not fire on zero aim or mutate the supplied origin, heading or authored definition", () => {
     const before = JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot[0] });
     expect(
-      planPlayerVolley(WEAPON_CATALOG.basic[0], { ...context, aim: { x: 0, y: 0 } }).projectiles,
+      planPlayerVolley(WEAPON_CATALOG.laser[0], { ...context, aim: { x: 0, y: 0 } }).projectiles,
     ).toEqual([]);
     planPlayerVolley(WEAPON_CATALOG.scattershot[0], context);
     expect(JSON.stringify({ context, definition: WEAPON_CATALOG.scattershot[0] })).toBe(before);

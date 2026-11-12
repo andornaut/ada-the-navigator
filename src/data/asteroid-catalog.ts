@@ -315,25 +315,3 @@ export const ASTEROID_ART: AsteroidArtCatalog = required(readAsteroidCatalog(ART
 
 /** Art's resource rocks, or undefined when the file does not read; shots read their silhouettes. */
 export const RESOURCE_ART: ResourceRockCatalog | undefined = readResourceRocks(RESOURCE_FILE);
-
-/**
- * CLEANUP (added 2026-11-11): saves from before Art's footprints name the former seeded
- * placeholder variants; each maps to the Art rock it was drawn as. Remove once every saved
- * flight has been reopened on this version.
- */
-export const LEGACY_ASTEROIDS: Readonly<Record<string, string>> = {
-  "placeholder-huge-0": "asteroid-h1",
-  "placeholder-huge-1": "asteroid-h2",
-  "placeholder-huge-2": "asteroid-h3",
-  "placeholder-large-0": "asteroid-l3",
-  "placeholder-large-1": "asteroid-l2",
-  "placeholder-large-2": "asteroid-l1",
-  "placeholder-medium-0": "asteroid-m1",
-  "placeholder-medium-1": "asteroid-m2",
-  "placeholder-medium-2": "asteroid-m3",
-  "placeholder-medium-3": "asteroid-m4",
-  "placeholder-small-0": "asteroid-s2",
-  "placeholder-small-1": "asteroid-s4",
-  "placeholder-small-2": "asteroid-s1",
-  "placeholder-small-3": "asteroid-s3",
-};

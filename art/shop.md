@@ -49,7 +49,7 @@ Opens on docking. The close X, an outside tap, back and Escape all act as Undock
 4. Item list: the selected tab's row groups, in a vertical scroll viewport.
 
 The Weapons tab holds the [ammunition row group](#ammunition-rows), when Ada
-owns any non-Basic weapon, then its item row group. The Projects tab holds the
+owns any non-Laser weapon, then its item row group. The Projects tab holds the
 galaxy's project rows ([Community projects](projects.md)). The Ship tab holds the
 upgrade row group, then the paint group: the paint heading
 (`icon-shop-ship-paint`, then `shipPaint` in white) and the paint row group.
@@ -108,8 +108,8 @@ unaffordable row both use their disabled colour.
 
 ### Ammunition rows
 
-One row per owned non-Basic weapon, in the HUD order (Rapid Missile,
-Multi-Laser, Heavy Missile, Scattershot, Phaser), in its own row group before
+One row per owned non-Laser weapon, in the HUD order (Multi-Laser,
+Rapid Missile, Heavy Missile, Scattershot, Phaser), in its own row group before
 the weapon rows, so the repeat purchase shows without scrolling.
 
 | Part       | Art                                                                                      |

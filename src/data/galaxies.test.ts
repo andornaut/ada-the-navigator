@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "./chunk-catalog.ts";
-import { ECONOMY } from "./economy.ts";
-import { sectorArchetypes, sectorEncounters, sectorEnemyTuning } from "./enemy-catalog.ts";
+import { sectorArchetypes, sectorEncounters } from "./enemy-catalog.ts";
 import {
   BUILT,
   byPosition,
@@ -17,6 +16,7 @@ import {
 } from "./galaxies.ts";
 import { JOB_REWARDS } from "./jobs.ts";
 import { GALAXIES, galaxyCard } from "./storybook.ts";
+import type { SectorId } from "./types.ts";
 
 const named = (ids: readonly number[]) => ids.map((id) => galaxyCard(id as 1).name);
 
@@ -63,27 +63,45 @@ describe("the galaxy route", () => {
 
 describe("tuning by route position", () => {
   it("keeps each built galaxy's tuning as it was, now at its route position", () => {
-    // Sunflower's, Cartwheel's and Whirlpool's values, unchanged.
-    expect(byPosition(sectorEnemyTuning, 1)).toEqual({
-      encounterRate: 1.2,
-      fireRate: 1.15,
-      perception: 1.2,
-    });
-    expect(byPosition(sectorEnemyTuning, 2)).toEqual({
-      encounterRate: 1.3,
-      fireRate: 1.3,
-      perception: 1.3,
-    });
-    expect(byPosition(sectorEnemyTuning, 3)).toEqual({
-      encounterRate: 1.35,
-      fireRate: 1.45,
-      perception: 1.4,
-    });
     // Job rewards follow route position (quests.md "Rewards"): Whirlpool second, Cartwheel fifth.
     expect(byPosition(JOB_REWARDS, 3).deliveryLong).toBe(35);
     expect(byPosition(JOB_REWARDS, 2).deliveryLong).toBe(50);
-    expect(byPosition(sectorArchetypes, 2).retaliator).toEqual({ hp: 9 });
-    expect(byPosition(sectorArchetypes, 3).retaliator).toEqual({ hp: 10 });
+    // Whirlpool's hunters chase; Cartwheel's interceptors hit and run.
+    expect(byPosition(sectorArchetypes, 3).fighter).toEqual({ behaviour: { kind: "chase" } });
+    expect(byPosition(sectorArchetypes, 2).interceptor?.behaviour.kind).toBe("hitAndRun");
+  });
+
+  it("gives Needle and Andromeda their own rosters and Black Eye Cartwheel's", () => {
+    // Galaxies: Needle 4, Andromeda 5, Black Eye 6, Cartwheel 2 (gameplay/ships.md rosters).
+    const roster = (sector: SectorId) =>
+      byPosition(sectorEncounters, sector).map(({ archetype, groupSize, weight }) => [
+        archetype,
+        groupSize,
+        weight,
+      ]);
+    expect(roster(4)).toEqual([
+      ["swarm", [6, 8], 0.2],
+      ["fighter", [3, 4], 0.25],
+      ["interceptor", [2, 2], 0.25],
+      ["retaliator", [1, 1], 0.08],
+      ["frigate", [1, 1], 0.15],
+      ["capital", [1, 1], 0.07],
+    ]);
+    expect(roster(5)).toEqual([
+      ["swarm", [6, 8], 0.2],
+      ["fighter", [3, 4], 0.3],
+      ["interceptor", [2, 2], 0.15],
+      ["retaliator", [1, 1], 0.1],
+      ["frigate", [1, 2], 0.18],
+      ["capital", [1, 1], 0.07],
+    ]);
+    expect(byPosition(sectorEncounters, 4).at(-1)!.escorts).toEqual({
+      archetype: "fighter",
+      count: 5,
+    });
+    expect(byPosition(sectorArchetypes, 4)).toEqual({ fighter: { behaviour: { kind: "chase" } } });
+    expect(byPosition(sectorArchetypes, 5)).toEqual({});
+    expect(byPosition(sectorEncounters, 6)).toBe(byPosition(sectorEncounters, 2));
   });
 
   it("gives each placeholder the tuning of the built galaxy before it on the route", () => {
@@ -93,10 +111,6 @@ describe("tuning by route position", () => {
     const tables: readonly Readonly<Partial<Record<RoutePosition, unknown>>>[] = [
       ASTEROID_FIELDS,
       CHUNK_CATALOG,
-      ECONOMY.weaponDropChance,
-      sectorArchetypes,
-      sectorEncounters,
-      sectorEnemyTuning,
     ];
     for (const table of tables) {
       // Needle and Andromeda read Whirlpool's, Black Eye Cartwheel's.

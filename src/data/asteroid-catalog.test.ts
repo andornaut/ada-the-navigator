@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_ART, LEGACY_ASTEROIDS, readAsteroidCatalog } from "./asteroid-catalog.ts";
+import { ASTEROID_ART, readAsteroidCatalog } from "./asteroid-catalog.ts";
 import { BUILT } from "./galaxies.ts";
 import { GALAXIES } from "./storybook.ts";
 
@@ -25,16 +25,6 @@ describe("Art's asteroid catalog, version 1", () => {
     expect(catalog.stone).toHaveLength(5);
     // The model's catalog is this file, read at import.
     expect(ASTEROID_ART).toEqual(catalog);
-  });
-
-  it("names a legacy placeholder's rock of the same size class for every old id", () => {
-    const sizes = new Map(catalog.asteroids.map((rock) => [rock.id, rock.size]));
-    const ids = Object.keys(LEGACY_ASTEROIDS);
-    expect(ids).toHaveLength(14);
-    for (const [legacy, id] of Object.entries(LEGACY_ASTEROIDS)) {
-      expect(sizes.get(id), legacy).toBe(legacy.split("-")[1]);
-    }
-    expect(new Set(Object.values(LEGACY_ASTEROIDS)).size).toBe(14);
   });
 
   it("gives small and medium rocks 24 spin frames and large and huge one still frame", () => {

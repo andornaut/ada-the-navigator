@@ -37,6 +37,10 @@ export type ConversationTrigger =
   | { readonly kind: "meeting"; readonly sector: SectorId; readonly destination: string }
   | { readonly kind: "mapped" }
   | { readonly kind: "capital" }
+  /** A heavy disabled with its hull holding. */
+  | { readonly kind: "disabled" }
+  /** A guard still blocks the destination Ada reached; one variant of the pool plays. */
+  | { readonly kind: "guard" }
   | { readonly kind: "current" }
   | { readonly kind: "shieldLow" }
   | { readonly kind: "drones" }
@@ -199,6 +203,48 @@ export const CONVERSATIONS: readonly Conversation[] = [
     priority: "lore",
     repeat: "never",
     trigger: { kind: "capital" },
+  },
+  {
+    id: "reaction:disabled",
+    lines: [
+      line("astra", "Its weapons are down. We could salvage parts and let it go."),
+      happy("ada", "No need to wreck it."),
+    ],
+    priority: "lore",
+    repeat: "flight",
+    trigger: { kind: "disabled" },
+  },
+  // A guard still blocks the destination Ada reached: once per destination each flight, one
+  // variant at random.
+  {
+    id: "warning:guard:1",
+    lines: [
+      line("astra", "Something's guarding this place. Here it comes!"),
+      line("ada", "Get ready, Penny."),
+    ],
+    priority: "warning",
+    repeat: "flight",
+    trigger: { kind: "guard" },
+  },
+  {
+    id: "warning:guard:2",
+    lines: [
+      line("astra", "We can't visit yet. A guard ship is watching."),
+      line("ada", "Then let's deal with it."),
+    ],
+    priority: "warning",
+    repeat: "flight",
+    trigger: { kind: "guard" },
+  },
+  {
+    id: "warning:guard:3",
+    lines: [
+      line("astra", "A guard is blocking the way in. Stop its weapons first."),
+      line("ada", "Okay. I'm ready."),
+    ],
+    priority: "warning",
+    repeat: "flight",
+    trigger: { kind: "guard" },
   },
   {
     id: "arrival:1",

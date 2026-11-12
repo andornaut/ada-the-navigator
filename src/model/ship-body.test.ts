@@ -95,6 +95,7 @@ describe("Ada's drawn ship", () => {
         flight.player = { x: 100, y: 100 };
         flight.shots = [
           {
+            damage: 1,
             enemy: true,
             hitIds: [],
             id: "shot",
@@ -109,7 +110,7 @@ describe("Ada's drawn ship", () => {
         return flight.shield;
       };
       // A shot's 3-unit reach: 1 unit inside the tip hits, 3.5 past it misses.
-      expect(shield(-1)).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.enemyDamage);
+      expect(shield(-1)).toBe(PROTOTYPE.tuning.shieldMax - PROTOTYPE.tuning.hazardDamage);
       expect(shield(3.5)).toBe(PROTOTYPE.tuning.shieldMax);
       expect(
         shipTouches(

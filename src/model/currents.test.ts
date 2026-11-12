@@ -184,13 +184,13 @@ describe("space currents", () => {
     // A current without a river, so no river rock on the centre line meets the ship.
     const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point, tangent } = middle(current);
-    const top = PROTOTYPE.tuning.maxSpeed;
+    const top = PROTOTYPE.tuning.physics.maxSpeed;
     for (const sense of [0, 1, -1]) {
       const flight = emptyFlight(point);
       flight.velocity = { x: tangent.x * top * sense, y: tangent.y * top * sense };
       const before = { ...flight.player };
       stepFlight(PROTOTYPE, 1 / 600, idle, flight);
-      // Riding the centre line makes top + 70, pushing against it top - 70.
+      // Riding the centre line makes 160 + 70 = 230, pushing against it 160 - 70 = 90.
       const along =
         ((flight.player.x - before.x) * tangent.x + (flight.player.y - before.y) * tangent.y) * 600;
       expect(along).toBeCloseTo(top * sense + CURRENTS.peakFlow, -1);

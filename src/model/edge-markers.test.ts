@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BLOCKING_MARKER_KINDS,
   EDGE_MARKER_GLYPHS,
   EDGE_MARKERS,
   edgeMarkerInset,
@@ -9,11 +10,13 @@ import {
 import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { SectorId } from "../data/types.ts";
+import { logicalView, NO_INSETS, playView, safeGameArea } from "../ui/layout/playView.ts";
 import {
   createEdgeMarkerTracker,
   type EdgeMarkerFlight,
   edgeMarkerKind,
   edgePoint,
+  GAME_AREA,
   gameAreaPoint,
   inGameArea,
 } from "./edge-markers.ts";
@@ -38,6 +41,7 @@ function enemy(archetype: EnemyArchetype, at: Vec, id = "drone"): SpaceObject {
 /** A flight the test moves its objects through, with Ada at the origin. */
 interface TestFlight extends EdgeMarkerFlight {
   objects: SpaceObject[];
+  summonedGuards?: string[];
 }
 function flight(objects: SpaceObject[], sector: SectorId = 1): TestFlight {
   return { objects, player: { x: 0, y: 0 }, sector };
@@ -76,9 +80,22 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerKind({ ...enemy("fighter", NEAR), hp: 0 })).toBeNull();
   });
 
-  it("draws enemies as a 6 disc, heavies as a 10 disc and stations as a 10 diamond", () => {
+  it("marks a heavy that still blocks its route as guard, and as heavy once it is disabled", () => {
+    expect(BLOCKING_MARKER_KINDS).toEqual({ heavy: "guard" });
+    for (const archetype of ["frigate", "capital", "platform"] as const) {
+      const guard = { ...enemy(archetype, NEAR), routeId: "quest" };
+      expect(edgeMarkerKind(guard)).toBe("guard");
+      guard.enemy!.disabled = true;
+      expect(edgeMarkerKind(guard)).toBe("heavy");
+    }
+    // A small craft guarding a route, such as the holodisk leader, keeps the enemy marker.
+    expect(edgeMarkerKind({ ...enemy("fighter", NEAR), routeId: "holodisk" })).toBe("enemy");
+  });
+
+  it("draws enemies as a 6 disc, heavies as a 10 disc, guards barred and stations as a diamond", () => {
     expect(EDGE_MARKER_GLYPHS).toEqual({
       enemy: { disc: 6 },
+      guard: { bar: { height: 2, width: 7 }, disc: 10 },
       heavy: { disc: 10 },
       station: { diamond: 10, stroke: 2 },
     });
@@ -88,6 +105,8 @@ describe("edge marker kinds", () => {
     expect(edgeMarkerInset(0, "enemy")).toBe(4);
     expect(edgeMarkerInset(1, "enemy")).toBe(5);
     expect(edgeMarkerInset(0, "heavy")).toBe(6);
+    expect(edgeMarkerInset(0, "guard")).toBe(6);
+    expect(edgeMarkerInset(1, "guard")).toBe(7);
     expect(edgeMarkerInset(1, "station")).toBe(7);
   });
 });
@@ -105,6 +124,52 @@ describe("edge marker lifecycle", () => {
     // Back in the game area, the object itself shows and the marker goes.
     Object.assign(drone, NEAR);
     expect(tracker.update(state, new Set())).toEqual([]);
+  });
+
+  it("marks a summoned guard off screen before it is seen, until it reaches the game area", () => {
+    const tracker = createEdgeMarkerTracker();
+    const guard = { ...enemy("capital", { x: range + 500, y: 0 }, "guard"), routeId: "quest" };
+    const state = flight([guard]);
+    expect(tracker.update(state, new Set())).toEqual([]);
+    state.summonedGuards = ["guard"];
+    // Past the range and never seen, it is still marked, as a guard.
+    expect(tracker.update(state, new Set())).toEqual([
+      { bar: 1, id: "guard", kind: "guard", x: range + 500, y: 0 },
+    ]);
+    // A direction indicator on it still draws instead.
+    expect(tracker.update(state, new Set(["guard"]))).toEqual([]);
+    Object.assign(guard, NEAR);
+    expect(tracker.update(state, new Set())).toEqual([]);
+    // Released once seen, it follows the usual rule: seen, then left, so marked.
+    delete state.summonedGuards;
+    Object.assign(guard, OFF);
+    expect(tracker.update(state, new Set())).toEqual([
+      { bar: 1, id: "guard", kind: "guard", ...OFF },
+    ]);
+  });
+
+  it("keeps a disabled guard's marker, fading its bar out over 150 ms as it becomes a heavy", () => {
+    expect(EDGE_MARKERS.swapMs).toBe(150);
+    const tracker = createEdgeMarkerTracker();
+    const guard = { ...enemy("frigate", NEAR, "guard"), routeId: "quest" };
+    const state = flight([guard]);
+    tracker.update(state, new Set(), 900);
+    Object.assign(guard, OFF);
+    expect(tracker.update(state, new Set(), 1000)).toEqual([
+      { bar: 1, id: "guard", kind: "guard", ...OFF },
+    ]);
+    // Its weapons go; its hull holds, so it keeps a marker, now the heavy's.
+    guard.enemy!.disabled = true;
+    expect(guard.hp).toBeGreaterThan(0);
+    expect(tracker.update(state, new Set(), 1000)).toEqual([
+      { bar: 1, id: "guard", kind: "heavy", ...OFF },
+    ]);
+    const bar = (now: number) => tracker.update(state, new Set(), now)[0]!.bar;
+    expect(bar(1075)).toBeCloseTo(0.5, 9);
+    expect(bar(1120)).toBeCloseTo(0.2, 9);
+    expect(tracker.update(state, new Set(), 1150)).toEqual([
+      { id: "guard", kind: "heavy", ...OFF },
+    ]);
   });
 
   it("never marks an object that was never in the game area", () => {
@@ -221,7 +286,7 @@ describe("edge marker placement", () => {
         ["bottom-left", corner(inset, edge.bottom), ["left", "bottom"]],
         ["bottom-right", corner(edge.right, edge.bottom), ["right", "bottom"]],
       ] as const) {
-        const at = edgePoint(inset, from, to);
+        const at = edgePoint(GAME_AREA, inset, from, to);
         const room = {
           bottom: SCREEN.height - (at.y + half),
           left: at.x - half,
@@ -255,7 +320,7 @@ describe("edge marker placement", () => {
       { x: inset, y: bottom },
     ],
   ] as const)("sits on the inset rect along the ray, %s", (_, to, expected) => {
-    const point = edgePoint(inset, centre, to);
+    const point = edgePoint(GAME_AREA, inset, centre, to);
     expect(point.x).toBeCloseTo(expected.x, 9);
     expect(point.y).toBeCloseTo(expected.y, 9);
     // On the ray from the centre toward the object.
@@ -267,7 +332,7 @@ describe("edge marker placement", () => {
   it("follows the object's direction from Ada at any angle", () => {
     for (let turn = 0; turn < 16; turn++) {
       const angle = (turn / 16) * 2 * Math.PI;
-      const point = edgePoint(inset, centre, {
+      const point = edgePoint(GAME_AREA, inset, centre, {
         x: centre.x + 5000 * Math.cos(angle),
         y: centre.y + 5000 * Math.sin(angle),
       });
@@ -279,5 +344,32 @@ describe("edge marker placement", () => {
       expect(point.y).toBeGreaterThanOrEqual(inset - 1e-9);
       expect(point.y).toBeLessThanOrEqual(bottom + 1e-9);
     }
+  });
+});
+
+describe("edge markers inside the safe game area", () => {
+  // art/layout.md "Edge markers": each view's safe game area and the 10-across kinds' centre
+  // lines on a dark field, in logical view px. Phone insets are 43 at the sides and 19 below.
+  const phone = { bottom: 19, left: 43, right: 43, top: 0 };
+  const wide = logicalView({ height: 390, width: 844 });
+  it.each([
+    ["720x360", SCREEN, NO_INSETS, [0, 720, 0, 360], [6, 714, 6, 354]],
+    ["720x360, phone insets", SCREEN, phone, [43, 677, 0, 341], [49, 671, 6, 335]],
+    ["844x390", wide, NO_INSETS, [29, 749, 0, 360], [35, 743, 6, 354]],
+    ["844x390, insets 43", wide, phone, [43, 736.08, 0, 341], [49, 730.08, 6, 335]],
+  ] as const)("%s", (_, view, insets, safe, centres) => {
+    const area = safeGameArea(insets, view);
+    const left = playView(view).x;
+    expect(area.x + left).toBeCloseTo(safe[0], 2);
+    expect(area.x + area.width + left).toBeCloseTo(safe[1], 2);
+    expect(area.y).toBeCloseTo(safe[2], 9);
+    expect(area.y + area.height).toBeCloseTo(safe[3], 9);
+    const inset = edgeMarkerInset(0, "guard");
+    const from = { x: area.x + area.width / 2, y: area.y + area.height / 2 };
+    const at = (to: Vec) => edgePoint(area, inset, from, to);
+    expect(at({ x: -1e5, y: from.y }).x + left).toBeCloseTo(centres[0], 2);
+    expect(at({ x: 1e5, y: from.y }).x + left).toBeCloseTo(centres[1], 2);
+    expect(at({ x: from.x, y: -1e5 }).y).toBeCloseTo(centres[2], 9);
+    expect(at({ x: from.x, y: 1e5 }).y).toBeCloseTo(centres[3], 9);
   });
 });

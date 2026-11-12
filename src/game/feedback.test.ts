@@ -45,11 +45,11 @@ describe("model feedback", () => {
     expect(feedback.observe(100, state)).toEqual([]);
   });
 
-  it("does not report switching back to basic fire as a pickup", () => {
+  it("does not report switching back to laser fire as a pickup", () => {
     const { feedback, flight, state } = launched();
     flight.weapon = "rapidMissile";
     feedback.observe(100, state);
-    flight.weapon = "basic";
+    flight.weapon = "laser";
     expect(feedback.observe(100, state)).not.toContain("pickup");
   });
 
@@ -73,7 +73,7 @@ describe("model feedback", () => {
     flight.objects = [{ hp: 4, id: "target", kind: "enemy", radius: 10, x: 20, y: 30 }];
     feedback.observe(100, state);
     flight.objects = [];
-    state.progress[1].disabledEnemies++;
+    state.progress[1].destroyedEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
     expect(feedback.pulses.at(-1)).toMatchObject({ kind: "disabled", x: 20, y: 30 });
   });
@@ -93,7 +93,7 @@ describe("model feedback", () => {
         y: 30,
       },
     ];
-    state.progress[1].disabledEnemies++;
+    state.progress[1].destroyedEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
     expect(feedback.pulses).toEqual([]);
   });
@@ -120,7 +120,7 @@ describe("model feedback", () => {
     feedback.observe(100, state);
     syncFlightRegion(PROTOTYPE, flight);
     flight.objects = [];
-    state.progress[1].disabledEnemies++;
+    state.progress[1].destroyedEnemies++;
     expect(feedback.observe(100, state)).toEqual(["disabled"]);
     expect(feedback.pulses).toEqual([{ age: 0, kind: "disabled", x: 20, y: 30 }]);
     expect(feedback.observe(100, state)).toEqual([]);
@@ -146,7 +146,7 @@ describe("model feedback", () => {
     ];
     expect(feedback.observe(100, state)).toEqual([]);
     expect(feedback.pulses).toEqual([]);
-    expect(state.progress[1].disabledEnemies).toBe(0);
+    expect(state.progress[1].destroyedEnemies).toBe(0);
   });
 
   it("distinguishes deposits and discontinuous travel from ordinary motion", () => {

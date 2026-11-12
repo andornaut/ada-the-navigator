@@ -26,22 +26,50 @@ export interface HeadingPart {
   pivot?: Vec;
 }
 
+/** A filled weapon mount at one position tier: its weapon, top design and aim rule. */
+export interface TierMount {
+  /** `target` turns with the turret's world aim; `aft` holds aim `(k + 8) mod 16` at heading k. */
+  aim: "aft" | "target";
+  top: string;
+  weapon: string;
+}
+
+/** One route-position tier of a mount heavy; a mount it leaves null draws its capped plate. */
+export interface LayoutTier {
+  mounts: ReadonlyMap<string, TierMount | null>;
+  positions: readonly [number, number];
+}
+
 /** Art's `{archetype}-hardpoints.json`, version 1; positions are hull frame px. */
 export interface HardpointLayout {
+  /** The weapon mount ids in fill order; empty for a craft without tiers. */
+  fill: readonly string[];
   frame: number;
   hardpoints: readonly {
+    /** Whether the mount has capped plate frames. */
+    capped: boolean;
     id: string;
     role: string;
     states: readonly string[];
+    /** The top the hardpoint carries at every tier, or null when it has none or its tier decides. */
     top: string | null;
   }[];
-  /** Per hull heading: layer ids far to near, `hull` among them, and each part's placement. */
-  headings: readonly { order: readonly string[]; parts: ReadonlyMap<string, HeadingPart> }[];
+  /**
+   * Per hull heading: layer ids far to near, `hull` among them, each part's placement and the
+   * Disabled banner's centre.
+   */
+  headings: readonly {
+    banner?: Vec;
+    order: readonly string[];
+    parts: ReadonlyMap<string, HeadingPart>;
+  }[];
+  /** Mount loadouts by route position; empty when every hardpoint carries its own top. */
+  tiers: readonly LayoutTier[];
   /** Per top design and aim index: barrel tips in frame px relative to the pivot. */
   tops: ReadonlyMap<string, readonly (readonly Vec[])[]>;
 }
 
-/** A composed craft's part frames: bases by hardpoint and state, tops by design. */
+/** A composed craft's part frames: bases by hardpoint and state (with `capped`), tops by design. */
 export interface PartArt<T extends EnemyFrame = EnemyFrame> {
   bases: ReadonlyMap<string, ReadonlyMap<string, readonly T[]>>;
   layout: HardpointLayout;
@@ -292,12 +320,26 @@ export function readHardpointLayout(
       !Array.isArray(states) ||
       !states.every((state) => state === "intact" || state === "destroyed") ||
       new Set(states).size !== states.length ||
-      (part.top !== null && typeof part.top !== "string")
+      (part.top !== null && typeof part.top !== "string") ||
+      (part.capped !== undefined && typeof part.capped !== "boolean")
     ) {
       return undefined;
     }
-    hardpoints.push({ id: part.id, role: part.role, states, top: part.top });
+    hardpoints.push({
+      capped: part.capped === true,
+      id: part.id,
+      role: part.role,
+      states,
+      top: part.top,
+    });
   }
+  const mounts = readMounts(hardpoints, root.fill, root.tiers);
+  if (!mounts) {
+    return undefined;
+  }
+  const { fill, tiers } = mounts;
+  // A hardpoint carries a top when it has its own or any tier gives it one.
+  const tiered = (id: string) => tiers.some((tier) => tier.mounts.get(id));
   const ids = ["hull", ...hardpoints.map((part) => part.id)].sort();
   const headings = readIndexed(root.headings, (heading) => {
     const order = heading.order;
@@ -315,16 +357,30 @@ export function readHardpointLayout(
       const definition = hardpoints.find((part) => part.id === placed?.id);
       const anchor = readVec(placed?.anchor);
       const pivot = readVec(placed?.pivot);
-      if (!definition || !anchor || parts.has(definition.id) || (definition.top && !pivot)) {
+      if (
+        !definition ||
+        !anchor ||
+        parts.has(definition.id) ||
+        ((definition.top || tiered(definition.id)) && !pivot)
+      ) {
         return undefined;
       }
       parts.set(definition.id, pivot ? { anchor, pivot } : { anchor });
     }
-    return parts.size === hardpoints.length ? { order: order as string[], parts } : undefined;
+    const banner = readVec(heading.banner);
+    if (parts.size !== hardpoints.length || (heading.banner !== undefined && !banner)) {
+      return undefined;
+    }
+    const placed = { order: order as string[], parts };
+    return banner ? { ...placed, banner } : placed;
   });
   const topsRoot = fields(root.tops);
   const tops = new Map<string, Vec[][]>();
-  for (const design of new Set(hardpoints.flatMap((part) => part.top ?? []))) {
+  const designs = [
+    ...hardpoints.flatMap((part) => part.top ?? []),
+    ...tiers.flatMap((tier) => [...tier.mounts.values()].flatMap((mount) => mount?.top ?? [])),
+  ];
+  for (const design of new Set(designs)) {
     const aims = readIndexed(topsRoot?.[design], (aim) => {
       const muzzles = Array.isArray(aim.muzzles) ? aim.muzzles.map(readVec) : [];
       return muzzles.length > 0 && muzzles.every(Boolean) ? (muzzles as Vec[]) : undefined;
@@ -334,7 +390,107 @@ export function readHardpointLayout(
     }
     tops.set(design, aims);
   }
-  return headings ? { frame: root.frame, hardpoints, headings, tops } : undefined;
+  return headings ? { fill, frame: root.frame, hardpoints, headings, tiers, tops } : undefined;
+}
+
+/**
+ * A mount heavy's `fill` and `tiers`, or empty ones for a craft without either. Every tier maps
+ * exactly the fill's mounts, each to a weapon with a top and aim or to null for a mount with
+ * capped plates.
+ */
+function readMounts(
+  hardpoints: HardpointLayout["hardpoints"],
+  fillValue: unknown,
+  tiersValue: unknown,
+): Pick<HardpointLayout, "fill" | "tiers"> | undefined {
+  if (fillValue === undefined && tiersValue === undefined) {
+    return { fill: [], tiers: [] };
+  }
+  if (
+    !Array.isArray(fillValue) ||
+    !Array.isArray(tiersValue) ||
+    !fillValue.every((id) => hardpoints.some((part) => part.id === id)) ||
+    new Set(fillValue).size !== fillValue.length
+  ) {
+    return undefined;
+  }
+  const fill = fillValue as string[];
+  const tiers: LayoutTier[] = [];
+  for (const entry of tiersValue as unknown[]) {
+    const tier = fields(entry);
+    const positions = tier?.positions;
+    const listed = fields(tier?.mounts);
+    if (
+      !Array.isArray(positions) ||
+      positions.length !== 2 ||
+      !positions.every(Number.isInteger) ||
+      positions[0] > positions[1] ||
+      !listed ||
+      JSON.stringify(Object.keys(listed).sort()) !== JSON.stringify([...fill].sort())
+    ) {
+      return undefined;
+    }
+    const mounts = new Map<string, TierMount | null>();
+    for (const id of fill) {
+      const mount = listed[id];
+      if (mount === null) {
+        if (!hardpoints.find((part) => part.id === id)!.capped) {
+          return undefined;
+        }
+        mounts.set(id, null);
+        continue;
+      }
+      const armed = fields(mount);
+      if (
+        typeof armed?.weapon !== "string" ||
+        typeof armed.top !== "string" ||
+        (armed.aim !== "target" && armed.aim !== "aft")
+      ) {
+        return undefined;
+      }
+      mounts.set(id, { aim: armed.aim, top: armed.top, weapon: armed.weapon });
+    }
+    tiers.push({ mounts, positions: [positions[0] as number, positions[1] as number] });
+  }
+  return tiers.length ? { fill, tiers } : undefined;
+}
+
+/**
+ * The tier holding route `position`: a position past the last tier reads the last one, and one
+ * before the first reads the first. Undefined for a craft without tiers.
+ */
+export function layoutTier(
+  layout: Pick<HardpointLayout, "tiers">,
+  position: number,
+): LayoutTier | undefined {
+  const tiers = [...layout.tiers].sort((a, b) => a.positions[0] - b.positions[0]);
+  const last = tiers.at(-1);
+  return (
+    tiers.find(({ positions }) => positions[0] <= position && position <= positions[1]) ??
+    (last && position > last.positions[1] ? last : tiers[0])
+  );
+}
+
+/**
+ * What a hardpoint carries at route `position`: `capped` for a mount the tier leaves null, else
+ * its top design (null for none) and whether that top holds the aft aim.
+ */
+export function mountedTop(
+  layout: HardpointLayout,
+  position: number,
+  hardpoint: string,
+): "capped" | { aft: boolean; top: string | null } {
+  const tier = layoutTier(layout, position);
+  if (tier?.mounts.has(hardpoint)) {
+    const mount = tier.mounts.get(hardpoint);
+    return mount ? { aft: mount.aim === "aft", top: mount.top } : "capped";
+  }
+  return { aft: false, top: layout.hardpoints.find((part) => part.id === hardpoint)?.top ?? null };
+}
+
+/** A top's aim index: its turret's world aim, or `(k + 8) mod 16` for an aft top at heading k. */
+export function topAim(aft: boolean, heading: number, aim: Vec): number {
+  return aft ? (heading + ENEMY_HEADINGS / 2) % ENEMY_HEADINGS : aimIndex(aim);
 }
 
 /** Sixteen sized frames, one per index, each with its exact id and matching fields. */
@@ -357,8 +513,8 @@ function partSet<T extends EnemyFrame>(
 
 /**
  * The layout's part frames: `enemy-{a}-{h}-{state}-{k}` for each listed state of each
- * hardpoint and `enemy-{a}-{t}-top-{i}` for each turret top design, all sixteen of each, or
- * undefined when any is missing.
+ * hardpoint, `enemy-{a}-{h}-capped-{k}` for each cappable mount and `enemy-{a}-{t}-top-{i}` for
+ * each top design, all sixteen of each, or undefined when any is missing.
  */
 export function readPartArt<T extends EnemyFrame>(
   archetype: string,
@@ -370,7 +526,7 @@ export function readPartArt<T extends EnemyFrame>(
   const bases = new Map<string, Map<string, T[]>>();
   for (const part of layout.hardpoints) {
     const states = new Map<string, T[]>();
-    for (const state of part.states) {
+    for (const state of part.capped ? [...part.states, "capped"] : part.states) {
       const frames = partSet(
         own,
         (index) => `${prefix}${archetype}-${part.id}-${state}-${index}`,
@@ -458,6 +614,8 @@ export interface PartPose {
   aim: (hardpoint: string) => Vec;
   /** Whether the hardpoint still stands. */
   intact: (hardpoint: string) => boolean;
+  /** The galaxy's route position, which picks a mount heavy's tier. */
+  position: number;
 }
 
 /** Hull frame px to display px about the hull sprite's pivot. */
@@ -468,7 +626,8 @@ function hullOffset(hull: EnemyFrame, frame: number, at: Vec): Vec {
 
 /**
  * The composed frame far to near: in the heading's layer order, the hull or each hardpoint's
- * base for its state at its anchor, then an intact turret's top for its aim at its pivot.
+ * base for its state at its anchor, then an intact turret's top for its aim at its pivot. A mount
+ * the position's tier leaves unused draws its capped plate and no top.
  */
 export function composeEnemy<T extends EnemyFrame>(
   art: EnemyArt<T>,
@@ -480,7 +639,7 @@ export function composeEnemy<T extends EnemyFrame>(
   if (!parts || index === undefined) {
     return [{ frame: hull, hardpoint: null, layer: "base", offset: { x: 0, y: 0 } }];
   }
-  const { frame, hardpoints, headings } = parts.layout;
+  const { frame, headings } = parts.layout;
   const heading = headings[index]!;
   const sprites: PartSprite<T>[] = [];
   for (const id of heading.order) {
@@ -488,10 +647,11 @@ export function composeEnemy<T extends EnemyFrame>(
       sprites.push({ frame: hull, hardpoint: null, layer: "base", offset: { x: 0, y: 0 } });
       continue;
     }
-    const definition = hardpoints.find((part) => part.id === id)!;
     const placed = heading.parts.get(id)!;
-    const intact = pose.intact(id);
-    const base = parts.bases.get(id)?.get(intact ? "intact" : "destroyed")?.[index];
+    const mount = mountedTop(parts.layout, pose.position, id);
+    const intact = mount !== "capped" && pose.intact(id);
+    const state = mount === "capped" ? "capped" : intact ? "intact" : "destroyed";
+    const base = parts.bases.get(id)?.get(state)?.[index];
     if (base) {
       sprites.push({
         frame: base,
@@ -500,9 +660,9 @@ export function composeEnemy<T extends EnemyFrame>(
         offset: hullOffset(hull, frame, placed.anchor),
       });
     }
-    if (intact && definition.top && placed.pivot) {
+    if (intact && mount.top && placed.pivot) {
       sprites.push({
-        frame: parts.tops.get(definition.top)![aimIndex(pose.aim(id))]!,
+        frame: parts.tops.get(mount.top)![topAim(mount.aft, index, pose.aim(id))]!,
         hardpoint: id,
         layer: "top",
         offset: hullOffset(hull, frame, placed.pivot),
@@ -514,7 +674,8 @@ export function composeEnemy<T extends EnemyFrame>(
 
 /**
  * Barrel tips of an intact turret in display px from the hull sprite position: its pivot plus
- * each muzzle of the top at its aim, or none for a destroyed turret or a turretless part.
+ * each muzzle of its tier's top at its aim, or none for a destroyed turret, a capped mount or a
+ * turretless part.
  */
 export function turretMuzzles(
   art: EnemyArt,
@@ -523,15 +684,27 @@ export function turretMuzzles(
   hardpoint: string,
 ): Vec[] {
   const parts = art.parts;
-  const definition = parts?.layout.hardpoints.find((part) => part.id === hardpoint);
-  const pivot = parts?.layout.headings[hullHeading(art, hull) ?? -1]?.parts.get(hardpoint)?.pivot;
-  if (!parts || !definition?.top || !pivot || !pose.intact(hardpoint)) {
+  const heading = hullHeading(art, hull) ?? -1;
+  const pivot = parts?.layout.headings[heading]?.parts.get(hardpoint)?.pivot;
+  const mount = parts && mountedTop(parts.layout, pose.position, hardpoint);
+  if (!parts || !mount || mount === "capped" || !mount.top || !pivot || !pose.intact(hardpoint)) {
     return [];
   }
-  const muzzles = parts.layout.tops.get(definition.top)![aimIndex(pose.aim(hardpoint))]!;
+  const aim = topAim(mount.aft, heading, pose.aim(hardpoint));
+  const muzzles = parts.layout.tops.get(mount.top)![aim]!;
   return muzzles.map((muzzle) =>
     hullOffset(hull, parts.layout.frame, { x: pivot.x + muzzle.x, y: pivot.y + muzzle.y }),
   );
+}
+
+/**
+ * The Disabled banner's centre for the drawn hull heading, display px from the hull sprite
+ * position, or undefined for a craft whose layout has no banner.
+ */
+export function bannerOffset(art: EnemyArt, hull: EnemyFrame): Vec | undefined {
+  const parts = art.parts;
+  const banner = parts?.layout.headings[hullHeading(art, hull) ?? -1]?.banner;
+  return parts && banner ? hullOffset(hull, parts.layout.frame, banner) : undefined;
 }
 
 /**

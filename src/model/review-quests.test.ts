@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
+import { enemyStardust } from "../data/enemy-catalog.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { playOpening } from "../testing/launch.ts";
+import { rollEnemyDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
@@ -118,7 +120,8 @@ describe("job board review decisions", () => {
     expect(model.state.tasks[1]).toBeUndefined();
   });
 
-  it("drops 4 Stardust from a turret platform at position 1", () => {
-    expect(ECONOMY.enemyStardust.platform).toBe(4);
+  it("drops 4 Stardust from a salvaged turret platform at position 1, twice that destroyed", () => {
+    expect(enemyStardust(1, "platform")).toBe(4);
+    expect(rollEnemyDrop(ECONOMY, 1, "platform", () => 0.999).stardust).toBe(8);
   });
 });

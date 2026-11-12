@@ -128,12 +128,13 @@ Classic frame.
 | Scheme   | Price | Top       | Front sides | Rear sides | Canopy roof | Canopy sides | Highlight |
 | -------- | ----: | --------- | ----------- | ---------- | ----------- | ------------ | --------- |
 | Classic  |     0 | `#ffffff` | `#d4dfe9`   | `#abbfce`  | `#2585d0`   | `#1767b3`    | `#87bce5` |
-| Cobalt   |    50 | `#6f9ff0` | `#4f7fd0`   | `#3a62a8`  | `#eef5ff`   | `#b4c8e6`    | `#f6faff` |
-| Seafoam  |    50 | `#d4f6ea` | `#a7dcc9`   | `#80bba8`  | `#14697a`   | `#0d4c59`    | `#7eadb6` |
-| Graphite |    50 | `#aab2c4` | `#858ea4`   | `#666f86`  | `#59d0ff`   | `#2a92cc`    | `#a4e5ff` |
-| Iris     |    50 | `#d9ccff` | `#b2a0ec`   | `#8f7cd0`  | `#3a2b8c`   | `#271c66`    | `#938ac0` |
+| Cobalt   |    75 | `#6f9ff0` | `#4f7fd0`   | `#3a62a8`  | `#eef5ff`   | `#b4c8e6`    | `#f6faff` |
+| Seafoam  |    75 | `#d4f6ea` | `#a7dcc9`   | `#80bba8`  | `#14697a`   | `#0d4c59`    | `#7eadb6` |
+| Graphite |    75 | `#aab2c4` | `#858ea4`   | `#666f86`  | `#59d0ff`   | `#2a92cc`    | `#a4e5ff` |
+| Iris     |    75 | `#d9ccff` | `#b2a0ec`   | `#8f7cd0`  | `#3a2b8c`   | `#271c66`    | `#938ac0` |
 
-- Classic is the free default and is the `ship-{0..31}.svg` set.
+- Classic is the free default and is the `ship-{0..31}.svg` set. Every other
+  scheme costs Gameplay's paint price, 75 Stardust.
 - Other schemes export idle frames only:
   `paint/{cobalt,seafoam,graphite,iris}/ship-{0..31}.svg`. Draw speed jets
   behind them exactly as for Classic. There are no painted thrust frames.

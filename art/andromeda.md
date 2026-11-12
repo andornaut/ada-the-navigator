@@ -229,9 +229,14 @@ the open. Sunflower keeps the coral originals and Cartwheel the
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
   coral family; only fills change. Every SVG and shards file goes through the
   colour swap below, every jets file through the garnet jet colours, and the
-  tool stops on any colour outside the family. Hardpoints files are the coral
-  family's, unchanged; destruction uses the shared `destruction.json` timing
-  and flash with the garnet shards.
+  tool stops on any colour outside the family. Jets files keep the coral
+  per-heading [collision](enemies.md#collision), and the frames draw the coral
+  notch tips. Hardpoints files are the coral
+  family's, byte-identical, with the [weapon mounts](heavies.md#mounts): every
+  mount, its capped plate and the tops of each position tier (`fill`, `tiers`),
+  the [Disabled banner](heavies.md#disabled-banner) centres and the collision.
+  Destruction uses the shared `destruction.json` timing and flash with the
+  garnet shards.
 - File names are the coral names in `public/art/andromeda/enemies/`. Ids are
   the coral ids with `enemy-garnet-` in place of `enemy-`, such as
   `enemy-garnet-frigate-3` and `enemy-garnet-capital-turret-top-9`. Each entry

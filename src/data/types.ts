@@ -4,7 +4,13 @@ import type { ShipPhysics } from "./ship-physics.ts";
 
 export type SectorId = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
-  "basic" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
+  "laser" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
+/** Weapons only enemies carry (gameplay/ships.md "Enemy weapons"). */
+export type EnemyOnlyWeapon = "chargedLance" | "mineLayer" | "ringBurst";
+/** Any weapon an enemy fires: the shared weapons and the enemy-only ones. */
+export type EnemyWeapon = Weapon | EnemyOnlyWeapon;
+/** A weapon level; level 1 is the base and levels 2 and 3 are bought or reached by position. */
+export type WeaponLevel = 1 | 2 | 3;
 
 export interface ChapterContent {
   name: string;
@@ -114,18 +120,26 @@ export interface PrototypeContent {
   update: { accept: string; cancel: string; title: string };
   tuning: {
     chunkSize: number;
-    /** Base maximum speed; every ship's physics speedRatio scales it. */
-    maxSpeed: number;
     /** Fraction of Ada's maximum speed requested by the smallest movement input past the dead zone. */
     minSpeedFraction: number;
     /** Exponent applied to movement deflection before scaling toward Ada's maximum speed. */
     speedCurveExponent: number;
-    /** Ada's ship physics. */
+    /** Ada's ship physics at her base engine. */
     physics: ShipPhysics;
+    /** The shield's capacity at its base level, in HP; 1 damage removes 1 HP. */
     shieldMax: number;
+    /** Seconds after Ada was last hit or in battle before the base shield recharges. */
     shieldRechargeDelay: number;
-    shieldRechargeRate: number;
-    enemyDamage: number;
+    /** Seconds the base shield takes to refill from empty, whatever its capacity. */
+    shieldFillSeconds: number;
+    /** Damage a traveling debris rock or a marked hazard deals per hit. */
+    hazardDamage: number;
+    /**
+     * World units beyond half the game area's width that the battle square reaches from
+     * Ada along each axis; the shield never recharges while an attacker is inside it.
+     */
+    battleMargin: number;
+    /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
     enemyProjectileSpeed: number;
     miningMilestones: readonly [number, number, number];
     introFreshDistance: number;
@@ -149,7 +163,8 @@ export interface PrototypeContent {
       pursuitSpeedFactor: number;
       damageInterval: number;
       enemyFireInterval: number;
-      projectileSpeedFactor: number;
+      /** Ada's base projectile speed, whatever her engine level; weapon speed ratios multiply it. */
+      projectileSpeed: number;
       projectileLifetime: number;
       enemyProjectileLifetime: number;
       shipRadius: number;

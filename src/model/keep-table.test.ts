@@ -73,9 +73,10 @@ describe("what each event keeps (rules.md)", () => {
     const flight = model.state.flight!;
     flight.objects = [];
     delete flight.tow;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = 1;
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "hit",

@@ -1,7 +1,8 @@
-// Galaxy one heavies (frigate and capital): hull frames, per-hardpoint state sprites, shared
-// aimed turret tops, `{craft}-hardpoints.json` and `{craft}-jets.json`. Hardpoint positions come
-// only from Gameplay's catalog export, tools/enemy-hardpoints.json; each hardpoint model is drawn
-// around its own origin. Contract: art/heavies.md.
+// Heavies (frigate, capital and Gadget's capital): hull frames, per-hardpoint state sprites and
+// capped plates, shared aimed turret tops, `{craft}-hardpoints.json` with the mount tiers and
+// `{craft}-jets.json`. Art's layout holds every hardpoint and weapon mount position; the catalog
+// export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
+// drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir>]
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -60,6 +61,24 @@ export const ember = "#f0a07c";
 
 export type Role = "command" | "engine" | "turret";
 export type State = "intact" | "destroyed";
+// A weapon mount the position tier leaves unused draws its capped plate.
+export type SpriteState = State | "capped";
+// Gameplay's weapon kinds (gameplay/ships.md "Enemy weapons").
+export type WeaponKind =
+  | "laser"
+  | "multiLaser"
+  | "rapidMissile"
+  | "heavyMissile"
+  | "phaser"
+  | "chargedLance"
+  | "ringBurst"
+  | "mineLayer";
+export type Top = { name: string; z: number; parts: HeavyPart[]; muzzles: Point[] };
+// A weapon's top design on one heavy class, and how it aims: at its target, or fixed aft of
+// the hull heading.
+export type Weapon = { top: Top; aim: "target" | "aft" };
+// One position tier: the weapon on every mount, or null for a capped plate.
+export type Tier = { positions: [number, number]; mounts: Record<string, WeaponKind | null> };
 // `key` names a host part; a part with `on` draws straight after its host.
 export type HeavyPart = Part & { key?: string; on?: string };
 
@@ -73,7 +92,10 @@ export type Model = {
   destroyed?: HeavyPart[];
   // The aimed top at aim 0 (forward is negative Y), drawn by world aim with its pivot at height z.
   // Hardpoints whose tops share a `name` share one sprite set, so their parts must be identical.
-  top?: { name: string; z: number; parts: HeavyPart[]; muzzles: Point[] };
+  // A weapon mount on a tiered heavy has none: its tier's weapon supplies it.
+  top?: Top;
+  // The capped plate a weapon mount shows when its tier leaves it unused.
+  capped?: HeavyPart[];
   // Engine jet mouths around the origin.
   jets?: { mouths: [number, number][]; width: number; z: number };
 };
@@ -87,13 +109,20 @@ export type HeavyCraft = {
   // Hull parts without hardpoints, model units; the first part is the hull slab.
   hull: Part[];
   hullTop: number;
-  hardpoints: { id: string; model: Model }[];
+  // Hull width in Ada widths: `offset` fractions scale by it.
+  sizeRatio: number;
+  // Art's hardpoint layout, in output order. `offset` is [x, y] in fractions of hull width in
+  // the hull's local frame (-y forward, +x starboard).
+  hardpoints: { id: string; offset: [number, number]; model: Model }[];
   // The hull never turns: frame 0 is the hull layer for every heading.
   fixed?: true;
+  // Weapon mounts filled by position tier: the fill order, the tiers and each weapon's top.
+  mounts?: { fill: string[]; tiers: Tier[]; weapons: Partial<Record<WeaponKind, Weapon>> };
 };
 
-// Offsets input: tools/enemy-hardpoints.json, which Tech exports from Gameplay's catalog.
-// `offset` is [x, y] in fractions of hull width; `order` is the catalog order.
+// Offsets input: tools/enemy-hardpoints.json, which Tech exports from Gameplay's catalog. Every
+// hardpoint it lists must match Art's id, role and offset; Art may carry mounts it does not list
+// yet. `offset` is [x, y] in fractions of hull width; `order` is the catalog order.
 export type InputHardpoint = { id: string; role: Role; offset: [number, number]; order: number };
 export type InputCraft = { sizeRatio: number; hardpoints: InputHardpoint[] };
 export type Offsets = { version: 1; archetypes: Record<string, InputCraft> };
@@ -153,26 +182,18 @@ export function wreck(
   ];
 }
 
-// A deck turret: a fixed collar and an aimed top (head, amber barrels, hatch). Destroyed: a low
-// scorched stump with a breach, no top.
-function turret(name: string, r: number, deck: number, barrels: 1 | 2): Model {
+// A deck weapon mount's base: a fixed collar; destroyed, a low scorched stump with a breach.
+// `capped` adds the plate the mount shows when its position tier leaves it unused: a low plate
+// disc with a dark seam ring and four bolts, no hardpoint.
+function mountBase(r: number, deck: number, capped = false): Model {
   const mount = deck + 1.5;
-  const crown = deck + 4;
-  const head: Plan = [
-    [-r, -r * 0.35],
-    [-r * 0.45, -r],
-    [r * 0.45, -r],
-    [r, -r * 0.35],
-    [r, r * 0.55],
-    [r * 0.5, r],
-    [-r * 0.5, r],
-    [-r, r * 0.55],
-  ];
-  const offsets = barrels === 2 ? [-r * 0.36, r * 0.36] : [0];
-  const w = barrels === 2 ? r * 0.22 : r * 0.32;
-  const length = barrels === 2 ? r * 2.5 : r * 2.8;
   const collar = ring(0, 0, r * 0.85, 8, Math.PI / 8);
   const stump = { key: "stump", z: deck + 1.6 };
+  const bolt = (i: number): Plan => {
+    const a = Math.PI / 4 + (i * Math.PI) / 2;
+    const [x, y] = [Math.cos(a) * r * 0.62, Math.sin(a) * r * 0.62];
+    return box(x - 1, y - 1, x + 1, y + 1);
+  };
   return {
     role: "turret",
     z: deck,
@@ -181,32 +202,325 @@ function turret(name: string, r: number, deck: number, barrels: 1 | 2): Model {
       { plan: collar, z0: deck, z1: stump.z, top: scorch, side: scorchSide, key: stump.key },
       ...wreck(0, 0, r, deck, stump, true),
     ],
-    top: {
-      name,
-      z: mount,
-      parts: [
-        { plan: head, z0: mount, z1: crown, top: turretTop, side: coralRear, key: "head" },
-        ...offsets.map((dx): HeavyPart => ({
-          plan: box(dx - w, -length, dx + w, -r * 0.4),
-          z0: crown - 2,
-          z1: crown + 0.6,
-          top: amber,
-          side: amberSide,
-        })),
-        // The hatch on the turret top reads the aim at small sizes.
-        {
-          plan: box(-r * 0.3, r * 0.15, r * 0.3, r * 0.6),
-          z0: crown,
-          z1: crown,
-          top: visor,
-          side: visor,
-          on: "head",
-        },
-      ],
-      muzzles: offsets.map((dx): Point => [dx, -length, crown - 0.7]),
-    },
+    ...(capped
+      ? {
+          capped: [
+            {
+              plan: ring(0, 0, r * 0.9, 8, Math.PI / 8),
+              z0: deck,
+              z1: deck + 0.8,
+              top: plate,
+              side: coralSide,
+              key: "cap",
+            },
+            ...hosted(
+              "cap",
+              [
+                { plan: ring(0, 0, r * 0.45, 8, Math.PI / 8), z0: deck + 0.8, z1: deck + 0.8 },
+                ...[0, 1, 2, 3].map((i) => ({ plan: bolt(i), z0: deck + 0.8, z1: deck + 0.8 })),
+              ].map((part) => ({ ...part, top: coralRear, side: coralRear })),
+            ),
+          ],
+        }
+      : {}),
   };
 }
+
+const turretHead = (r: number): Plan => [
+  [-r, -r * 0.35],
+  [-r * 0.45, -r],
+  [r * 0.45, -r],
+  [r, -r * 0.35],
+  [r, r * 0.55],
+  [r * 0.5, r],
+  [-r * 0.5, r],
+  [-r, r * 0.55],
+];
+
+// The hatch on a turret top reads the aim at small sizes.
+const hatch = (r: number, z: number, plan: Plan = box(-r * 0.3, r * 0.15, r * 0.3, r * 0.6)) => ({
+  plan,
+  z0: z,
+  z1: z,
+  top: visor,
+  side: visor,
+  on: "head",
+});
+
+// The barrel top: head, amber barrels, hatch. Frigate `gun` has one barrel, capital `turret` two.
+function barrelTop(name: string, r: number, deck: number, barrels: 1 | 2): Top {
+  const mount = deck + 1.5;
+  const crown = deck + 4;
+  const offsets = barrels === 2 ? [-r * 0.36, r * 0.36] : [0];
+  const w = barrels === 2 ? r * 0.22 : r * 0.32;
+  const length = barrels === 2 ? r * 2.5 : r * 2.8;
+  return {
+    name,
+    z: mount,
+    parts: [
+      { plan: turretHead(r), z0: mount, z1: crown, top: turretTop, side: coralRear, key: "head" },
+      ...offsets.map((dx): HeavyPart => ({
+        plan: box(dx - w, -length, dx + w, -r * 0.4),
+        z0: crown - 2,
+        z1: crown + 0.6,
+        top: amber,
+        side: amberSide,
+      })),
+      hatch(r, crown),
+    ],
+    muzzles: offsets.map((dx): Point => [dx, -length, crown - 0.7]),
+  };
+}
+
+// A top's head on the collar, from `mount` to `z1`.
+const head = (plan: Plan, mount: number, z1: number): HeavyPart => ({
+  plan,
+  z0: mount,
+  z1,
+  top: turretTop,
+  side: coralRear,
+  key: "head",
+});
+
+// A quad along angle a from radius r0 to r1, 2w wide.
+function spoke(a: number, r0: number, r1: number, w: number): Plan {
+  const [c, s] = [Math.cos(a), Math.sin(a)];
+  return [
+    [c * r0 - s * w, s * r0 + c * w],
+    [c * r1 - s * w, s * r1 + c * w],
+    [c * r1 + s * w, s * r1 - c * w],
+    [c * r0 + s * w, s * r0 - c * w],
+  ];
+}
+
+// Rapid Missile: a squared pod with four amber missile caps.
+function pod(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 5];
+  const tubes = [-0.38, 0.38].flatMap((x) => [-0.5, 0.05].map((y) => [x * r, y * r] as const));
+  return {
+    name: "pod",
+    z: mount,
+    parts: [
+      head(box(-r * 0.85, -r * 0.95, r * 0.85, r * 0.9), mount, crown),
+      ...tubes.map(([x, y]): HeavyPart => ({
+        plan: box(x - r * 0.24, y - r * 0.24, x + r * 0.24, y + r * 0.24),
+        z0: crown,
+        z1: crown + 0.8,
+        top: amber,
+        side: amberSide,
+        on: "head",
+      })),
+      hatch(r, crown, box(-r * 0.5, r * 0.5, r * 0.5, r * 0.78)),
+    ],
+    muzzles: tubes.map(([x, y]): Point => [x, y - r * 0.3, crown + 0.4]),
+  };
+}
+
+// Heavy Missile: one plate missile on a rail with an amber warhead and band.
+function rail(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  return {
+    name: "rail",
+    z: mount,
+    parts: [
+      head(turretHead(r), mount, crown),
+      {
+        plan: box(-r * 0.34, -r * 1.9, r * 0.34, r * 0.5),
+        z0: crown - 1,
+        z1: crown + 2,
+        top: plate,
+        side: coralSide,
+        key: "body",
+      },
+      {
+        plan: [
+          [-r * 0.34, -r * 1.9],
+          [0, -r * 2.6],
+          [r * 0.34, -r * 1.9],
+        ],
+        z0: crown - 1,
+        z1: crown + 2,
+        top: amber,
+        side: amberSide,
+      },
+      {
+        plan: box(-r * 0.34, -r * 1.2, r * 0.34, -r * 0.95),
+        z0: crown + 2,
+        z1: crown + 2,
+        top: amber,
+        side: amber,
+        on: "body",
+      },
+      hatch(r, crown),
+    ],
+    muzzles: [[0, -r * 2.6, crown + 0.5]],
+  };
+}
+
+// Phaser: a round emitter dish with a dark lens and one long thin amber emitter.
+function dish(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  return {
+    name: "dish",
+    z: mount,
+    parts: [
+      head(ring(0, 0, r, 12), mount, crown + 0.5),
+      {
+        plan: box(-r * 0.13, -r * 3.1, r * 0.13, -r * 0.5),
+        z0: crown - 1,
+        z1: crown,
+        top: amber,
+        side: amberSide,
+      },
+      { ...hatch(r, crown + 0.5, ring(0, -r * 0.15, r * 0.5, 12)) },
+      { ...hatch(r, crown + 0.5, ring(0, -r * 0.15, r * 0.22, 12)), top: amber, side: amber },
+    ],
+    muzzles: [[0, -r * 3.1, crown - 0.5]],
+  };
+}
+
+// Charged lance: twin plate rails like the prow tines and an amber charge crystal between them.
+function lance(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  const rail: Plan = [
+    [-r * 0.66, -r * 0.4],
+    [-r * 0.6, -r * 3.3],
+    [-r * 0.34, -r * 3.0],
+    [-r * 0.34, -r * 0.4],
+  ];
+  return {
+    name: "lance",
+    z: mount,
+    parts: [
+      head(turretHead(r), mount, crown + 0.5),
+      { plan: rail, z0: crown - 1.5, z1: crown + 1, top: plate, side: coralSide },
+      { plan: flipX(rail), z0: crown - 1.5, z1: crown + 1, top: plate, side: coralSide },
+      {
+        plan: [
+          [0, -r * 2.7],
+          [r * 0.24, -r * 1.7],
+          [0, -r * 0.7],
+          [-r * 0.24, -r * 1.7],
+        ],
+        z0: crown - 1,
+        z1: crown + 1.5,
+        top: amber,
+        side: amberSide,
+      },
+      hatch(r, crown + 0.5),
+    ],
+    muzzles: [[0, -r * 3.2, crown]],
+  };
+}
+
+// Ring burst: a twelve-sided dome with eight amber studs round its rim, one per bolt.
+function dome(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4];
+  const angles = Array.from({ length: 8 }, (_, i) => (i * Math.PI) / 4);
+  return {
+    name: "dome",
+    z: mount,
+    parts: [
+      head(ring(0, 0, r * 0.95, 12), mount, crown + 1),
+      ...angles.map((a): HeavyPart => ({
+        plan: spoke(a, r * 0.8, r * 1.3, r * 0.14),
+        z0: crown - 0.5,
+        z1: crown + 0.5,
+        top: amber,
+        side: amberSide,
+      })),
+      hatch(r, crown + 1, ring(0, 0, r * 0.4, 8, Math.PI / 8)),
+    ],
+    muzzles: angles.map((a): Point => [Math.cos(a) * r * 1.3, Math.sin(a) * r * 1.3, crown]),
+  };
+}
+
+// Mine layer: a hopper with two amber mines ready on top and a dark chute at the rear. It does
+// not aim: it faces aft.
+function hopper(r: number, deck: number): Top {
+  const [mount, crown] = [deck + 1.5, deck + 4.5];
+  return {
+    name: "hopper",
+    z: mount,
+    parts: [
+      head(box(-r * 0.85, -r * 0.8, r * 0.85, r * 0.8), mount, crown),
+      {
+        plan: box(-r * 0.42, r * 0.8, r * 0.42, r * 1.35),
+        z0: mount,
+        z1: crown - 1,
+        top: visor,
+        side: visorSide,
+      },
+      ...[-0.38, 0.38].map((x): HeavyPart => ({
+        ...hatch(r, crown, ring(x * r, -r * 0.2, r * 0.3, 8, Math.PI / 8)),
+        top: amber,
+        side: amber,
+      })),
+    ],
+    muzzles: [[0, r * 1.35, mount + 1]],
+  };
+}
+
+// The weapon table for a class whose Laser top is `laser`.
+function weapons(deck: number, laser: Top): Partial<Record<WeaponKind, Weapon>> {
+  const aimed = (top: Top): Weapon => ({ aim: "target", top });
+  return {
+    laser: aimed(laser),
+    multiLaser: aimed(barrelTop("turret", 12, deck, 2)),
+    rapidMissile: aimed(pod(12, deck)),
+    heavyMissile: aimed(rail(12, deck)),
+    phaser: aimed(dish(12, deck)),
+    chargedLance: aimed(lance(12, deck)),
+    ringBurst: aimed(dome(12, deck)),
+    mineLayer: { aim: "aft", top: hopper(12, deck) },
+  };
+}
+
+// Position tiers 1-2, 3-4 and 5-6 (gameplay/ships.md "Enemy weapons").
+const tier = (positions: [number, number], mounts: Tier["mounts"]): Tier => ({
+  mounts,
+  positions,
+});
+const FRIGATE_TIERS: Tier[] = [
+  tier([1, 2], { port: "laser", starboard: "laser", spine: null, bow: null }),
+  tier([3, 4], { port: "laser", starboard: "laser", spine: "rapidMissile", bow: null }),
+  tier([5, 6], { port: "laser", starboard: "laser", spine: "rapidMissile", bow: "chargedLance" }),
+];
+const CAPITAL_FILL = [
+  "weapon-left",
+  "weapon-right",
+  "weapon-rear-left",
+  "weapon-rear-right",
+  "claw-left",
+  "claw-right",
+  "stern-left",
+  "stern-right",
+];
+const capitalTier = (positions: [number, number], kinds: (WeaponKind | null)[]): Tier =>
+  tier(positions, Object.fromEntries(CAPITAL_FILL.map((id, i) => [id, kinds[i] ?? null])));
+const CAPITAL_TIERS: Tier[] = [
+  capitalTier([1, 2], ["laser", "laser", "multiLaser", "multiLaser"]),
+  capitalTier(
+    [3, 4],
+    ["laser", "laser", "multiLaser", "multiLaser", "rapidMissile", "heavyMissile"],
+  ),
+  capitalTier(
+    [5, 6],
+    [
+      "laser",
+      "laser",
+      "rapidMissile",
+      "rapidMissile",
+      "phaser",
+      "heavyMissile",
+      "ringBurst",
+      "mineLayer",
+    ],
+  ),
+];
+// Mounts that some tier leaves unused carry a capped plate.
+const cappable = (tiers: readonly Tier[], id: string) =>
+  tiers.some((t) => (t.mounts[id] ?? null) === null);
 
 // Frigate: a long hunter with twin prow tines, broadside guns and a stern engine block.
 const FRIGATE_Z = 8;
@@ -289,8 +603,8 @@ export const frigate: HeavyCraft = {
       side: coralSide,
       rear: coralRear,
     },
-    // Salvage plates: a dorsal spine ahead of the engine block and two sponson patches.
-    { plan: box(-8, -6, 8, 32), z0: FRIGATE_Z, z1: FRIGATE_Z + 1.5, top: plate, side: coralSide },
+    // Salvage plates: a dorsal spine under the spine mount and two sponson patches.
+    { plan: box(-8, -6, 8, 14), z0: FRIGATE_Z, z1: FRIGATE_Z + 1.5, top: plate, side: coralSide },
     { plan: box(-60, 20, -44, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
     { plan: box(44, 20, 60, 28), z0: FRIGATE_Z, z1: FRIGATE_Z + 1, top: plate, side: coralSide },
     {
@@ -301,13 +615,31 @@ export const frigate: HeavyCraft = {
       side: visorSide,
       loose: true,
     },
-    ...insignia(0, -36, 9, FRIGATE_Z),
+    // On bare deck between the spine plate and the engine block.
+    ...insignia(0, 25, 7, FRIGATE_Z),
   ],
+  sizeRatio: 4,
+  // Weapons fill the sponson pair, then the centreline spine, then the centreline bow.
   hardpoints: [
-    { id: "engine", model: frigateEngine },
-    { id: "port", model: turret("gun", 12, FRIGATE_Z, 1) },
-    { id: "starboard", model: turret("gun", 12, FRIGATE_Z, 1) },
+    { id: "engine", offset: [0, 0.3], model: frigateEngine },
+    ...(
+      [
+        ["port", [-0.3, 0]],
+        ["starboard", [0.3, 0]],
+        ["spine", [0, 0.025]],
+        ["bow", [0, -0.22]],
+      ] as const
+    ).map(([id, offset]) => ({
+      id,
+      offset: [...offset] as [number, number],
+      model: mountBase(12, FRIGATE_Z, cappable(FRIGATE_TIERS, id)),
+    })),
   ],
+  mounts: {
+    fill: ["port", "starboard", "spine", "bow"],
+    tiers: FRIGATE_TIERS,
+    weapons: weapons(FRIGATE_Z, barrelTop("gun", 12, FRIGATE_Z, 1)),
+  },
 };
 
 // Capital: a broad flagship with a great claw prow, a command tower, two stern nacelles and
@@ -402,8 +734,9 @@ const POD_BROKEN: Plan = [
   [-13, 24],
   [-13, -20],
 ];
-function nacelle(port: boolean): Model {
-  const side = (plan: Plan) => (port ? flipX(plan) : plan);
+function nacelle(port: boolean, scale = 1): Model {
+  const scaled = (plan: Plan): Plan => plan.map(([x, y]) => [x * scale, y * scale] as const);
+  const side = (plan: Plan) => (port ? flipX(scaled(plan)) : scaled(plan));
   const z1 = 15;
   const wreckZ = 9;
   return {
@@ -429,7 +762,7 @@ function nacelle(port: boolean): Model {
       // The pod stands beside the hull, so no hull scorch paint.
       ...wreck(0, -2, 11, wreckZ, { key: "wreck", z: wreckZ }, false),
     ],
-    jets: { mouths: [[0, 30]], width: 12, z: 6 },
+    jets: { mouths: [[0, 30 * scale]], width: 12, z: 6 },
   };
 }
 
@@ -472,16 +805,189 @@ export const capital: HeavyCraft = {
     { plan: box(-74, 14, -52, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
     { plan: box(52, 14, 74, 34), z0: CAPITAL_Z, z1: CAPITAL_Z + 1, top: plate, side: coralSide },
   ],
+  sizeRatio: 5,
+  // Weapons fill pairs: shoulders, wings, claw arms, stern deck.
   hardpoints: [
-    { id: "command", model: command },
-    { id: "engine-left", model: nacelle(true) },
-    { id: "engine-right", model: nacelle(false) },
-    // Bolt and missile turrets share one design and one top set.
-    ...["weapon-left", "weapon-right", "weapon-rear-left", "weapon-rear-right"].map((id) => ({
-      id,
-      model: turret("turret", 12, CAPITAL_Z, 2),
-    })),
+    { id: "command", offset: [0, 0], model: command },
+    { id: "engine-left", offset: [-0.25, 0.4], model: nacelle(true) },
+    { id: "engine-right", offset: [0.25, 0.4], model: nacelle(false) },
+    ...mounts(CAPITAL_Z, [
+      [-0.35, -0.3],
+      [-0.42, 0.08],
+      [-0.15, -0.45],
+      [-0.1, 0.31],
+    ]),
   ],
+  mounts: {
+    fill: CAPITAL_FILL,
+    tiers: CAPITAL_TIERS,
+    weapons: weapons(CAPITAL_Z, barrelTop("turret", 12, CAPITAL_Z, 2)),
+  },
+};
+
+// The eight capital-class weapon mounts in fill order, from the port offset of each pair.
+function mounts(deck: number, pairs: readonly (readonly [number, number])[]) {
+  return CAPITAL_FILL.map((id, i) => {
+    const [x, y] = pairs[Math.floor(i / 2)]!;
+    return {
+      id,
+      offset: [i % 2 === 0 ? x : -x, y] as [number, number],
+      model: mountBase(12, deck, cappable(CAPITAL_TIERS, id)),
+    };
+  });
+}
+
+// Gadget: General Gadget's own capital in Black Eye. A serrated claw hull with a raised dorsal
+// ridge; the command tower carries two stepped ear fins. The capital's mounts and tiers.
+const GADGET_Z = 12;
+const GADGET_TOWER: Plan = [
+  [-16, -26],
+  [16, -26],
+  [25, -12],
+  [25, 15],
+  [14, 26],
+  [-14, 26],
+  [-25, 15],
+  [-25, -12],
+];
+// A stepped fin rising to a point: three shrinking prisms read a pointed ear in the iso view,
+// the middle step plate-coloured like an inner ear.
+function ear(base: Plan, z: number, height: number): HeavyPart[] {
+  const cx = base.reduce((sum, [x]) => sum + x, 0) / base.length;
+  const cy = base.reduce((sum, [, y]) => sum + y, 0) / base.length;
+  return [1, 0.62, 0.28].map((k, i) => ({
+    plan: base.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k] as const),
+    z0: z + (i * height) / 3,
+    z1: z + ((i + 1) * height) / 3,
+    top: i === 1 ? plate : coral,
+    side: coralSide,
+    rear: coralRear,
+  }));
+}
+const EAR: Plan = [
+  [27, 18],
+  [6, 24],
+  [22, -4],
+];
+const gadgetCommand: Model = (() => {
+  const top = GADGET_Z + 16;
+  const wreckTop = GADGET_Z + 9;
+  return {
+    role: "command",
+    z: top,
+    intact: [
+      {
+        plan: GADGET_TOWER,
+        z0: GADGET_Z,
+        z1: top,
+        top: coral,
+        side: coralSide,
+        rear: coralRear,
+        key: "tower",
+      },
+      { plan: box(-14, -24, 14, -16), z0: top, z1: top + 2.5, top: visor, side: visorSide },
+      ...ear(flipX(EAR), top, 18),
+      ...ear(EAR, top, 18),
+    ],
+    destroyed: [
+      {
+        plan: GADGET_TOWER,
+        z0: GADGET_Z,
+        z1: wreckTop,
+        top: scorch,
+        side: scorchSide,
+        rear: scorchSide,
+        key: "wreck",
+      },
+      // The ears' stumps and the broken visor.
+      ...[flipX(EAR), EAR].map((plan): HeavyPart => ({
+        plan,
+        z0: wreckTop,
+        z1: wreckTop + 3,
+        top: scorch,
+        side: scorchSide,
+      })),
+      {
+        plan: [
+          [-14, -24],
+          [-3, -24],
+          [0, -20],
+          [4, -24],
+          [14, -24],
+          [14, -16],
+          [-14, -16],
+        ],
+        z0: wreckTop,
+        z1: wreckTop + 1,
+        top: breach,
+        side: breach,
+      },
+      ...wreck(-6, 4, 10, GADGET_Z, { key: "wreck", z: wreckTop }, true),
+    ],
+  };
+})();
+
+export const gadget: HeavyCraft = {
+  name: "gadget",
+  title: "Gadget",
+  frame: 560,
+  source: "heavies",
+  hullTop: GADGET_Z,
+  hull: [
+    {
+      plan: mirror([
+        [0, -46],
+        [10, -56],
+        [16, -100],
+        [10, -118],
+        [26, -142],
+        [44, -130],
+        [52, -112],
+        [62, -94],
+        [90, -88],
+        [102, -72],
+        [108, -46],
+        [124, -32],
+        [114, -16],
+        [122, 6],
+        [112, 26],
+        [118, 44],
+        [80, 60],
+        [64, 64],
+        [46, 64],
+        [44, 76],
+        [40, 96],
+        [0, 104],
+      ]),
+      z0: 0,
+      z1: GADGET_Z,
+      top: coral,
+      side: coralSide,
+      rear: coralRear,
+    },
+    // Two wing patches and a raised dorsal ridge from the tower to the stern.
+    { plan: box(-86, 14, -60, 36), z0: GADGET_Z, z1: GADGET_Z + 1, top: plate, side: coralSide },
+    { plan: box(60, 14, 86, 36), z0: GADGET_Z, z1: GADGET_Z + 1, top: plate, side: coralSide },
+    { plan: box(-5, 30, 5, 78), z0: GADGET_Z, z1: GADGET_Z + 3, top: coralRear, side: coralSide },
+    ...insignia(0, -36, 8, GADGET_Z),
+  ],
+  sizeRatio: 5,
+  hardpoints: [
+    { id: "command", offset: [0, 0], model: gadgetCommand },
+    { id: "engine-left", offset: [-0.27, 0.44], model: nacelle(true, 1.1) },
+    { id: "engine-right", offset: [0.27, 0.44], model: nacelle(false, 1.1) },
+    ...mounts(GADGET_Z, [
+      [-0.36, -0.3],
+      [-0.44, 0.1],
+      [-0.16, -0.48],
+      [-0.11, 0.33],
+    ]),
+  ],
+  mounts: {
+    fill: CAPITAL_FILL,
+    tiers: CAPITAL_TIERS,
+    weapons: weapons(GADGET_Z, barrelTop("turret", 12, GADGET_Z, 2)),
+  },
 };
 
 // Retaliator: its gun is the hull weapon's aim mount, not a hardpoint. Held out of the export
@@ -507,9 +1013,11 @@ export function retaliatorCraft(): HeavyCraft {
     source: "enemies",
     hullTop: deck,
     hull: source.parts.filter((part) => !part.turret),
+    sizeRatio: 2,
     hardpoints: [
       {
         id: "turret",
+        offset: [0, 0],
         model: {
           role: "turret",
           z: deck,
@@ -565,28 +1073,31 @@ export function planOffset(sizeRatio: number, [x, y]: readonly [number, number])
 
 export type Placed = { id: string; model: Model; origin: [number, number] };
 
-// Each art hardpoint at its catalog origin, in catalog order. Ids and roles must match exactly.
+// Each art hardpoint at its origin, in Art's order. Every hardpoint the catalog export lists for
+// the craft must exist in Art with the same role and offset, and the export's size ratio must
+// match; Art's mounts the export does not list yet are kept.
 export function place(input: Offsets, craft: HeavyCraft): Placed[] {
   const entry = input.archetypes[craft.name];
-  if (!entry) {
-    throw new Error(`offsets: no ${craft.name} entry`);
+  if (entry && entry.sizeRatio !== craft.sizeRatio) {
+    throw new Error(`offsets: ${craft.name} sizeRatio ${entry.sizeRatio}, art ${craft.sizeRatio}`);
   }
-  const art = craft.hardpoints.map(({ id }) => id).toSorted();
-  const given = entry.hardpoints.map(({ id }) => id).toSorted();
-  if (art.join() !== given.join()) {
-    throw new Error(
-      `offsets: ${craft.name} hardpoints ${given.join()} differ from art ${art.join()}`,
-    );
+  for (const { id, offset, role } of entry?.hardpoints ?? []) {
+    const art = craft.hardpoints.find((hardpoint) => hardpoint.id === id);
+    if (!art) {
+      throw new Error(`offsets: ${craft.name} hardpoint ${id} is not in the art`);
+    }
+    if (role !== art.model.role) {
+      throw new Error(`offsets: ${craft.name} ${id} is ${role}, art draws ${art.model.role}`);
+    }
+    if (offset[0] !== art.offset[0] || offset[1] !== art.offset[1]) {
+      throw new Error(`offsets: ${craft.name} ${id} at ${offset.join()}, art ${art.offset.join()}`);
+    }
   }
-  return entry.hardpoints
-    .toSorted((a, b) => a.order - b.order)
-    .map(({ id, offset, role }) => {
-      const { model } = craft.hardpoints.find((hardpoint) => hardpoint.id === id)!;
-      if (role !== model.role) {
-        throw new Error(`offsets: ${craft.name} ${id} is ${role}, art draws ${model.role}`);
-      }
-      return { id, model, origin: planOffset(entry.sizeRatio, offset) };
-    });
+  return craft.hardpoints.map(({ id, model, offset }) => ({
+    id,
+    model,
+    origin: planOffset(craft.sizeRatio, offset),
+  }));
 }
 
 // ---------------------------------------------------------------- projection and order
@@ -609,6 +1120,36 @@ export function hardpointAnchor(
 
 export function states(model: Model): State[] {
   return model.destroyed ? ["intact", "destroyed"] : ["intact"];
+}
+
+// Every sprite state a hardpoint draws: its states, then its capped plate.
+function spriteStates(model: Model): SpriteState[] {
+  return [...states(model), ...(model.capped ? (["capped"] as const) : [])];
+}
+
+const stateParts = (model: Model, state: SpriteState): HeavyPart[] =>
+  state === "intact" ? model.intact : state === "destroyed" ? model.destroyed! : model.capped!;
+
+// The top designs a hardpoint can carry: its own, or its tiers' weapons'.
+function topsOf(craft: HeavyCraft, id: string, model: Model): Top[] {
+  if (model.top) return [model.top];
+  const kinds = (craft.mounts?.tiers ?? []).map((tier) => tier.mounts[id] ?? null);
+  return kinds.flatMap((kind) => (kind ? [craft.mounts!.weapons[kind]!.top] : []));
+}
+
+// The pivot height of a hardpoint's tops; every top a mount carries shares it.
+function topZ(craft: HeavyCraft, id: string, model: Model): number | undefined {
+  const zs = new Set(topsOf(craft, id, model).map(({ z }) => z));
+  if (zs.size > 1) throw new Error(`${craft.name} ${id}: tops at different heights`);
+  return [...zs][0];
+}
+
+// The one top a hardpoint carries at every tier, or null when it varies or can be capped.
+function fixedTop(craft: HeavyCraft, id: string, model: Model): string | null {
+  if (model.top) return model.top.name;
+  const kinds = (craft.mounts?.tiers ?? []).map((tier) => tier.mounts[id] ?? null);
+  const names = new Set(kinds.map((kind) => (kind ? craft.mounts!.weapons[kind]!.top.name : null)));
+  return names.size === 1 && !names.has(null) ? [...names][0]! : null;
 }
 
 // Layer order for one heading: hardpoints whose intact base rests on the hull top draw after the
@@ -737,7 +1278,7 @@ function offset(id: string, dx: number, dy: number, parts: readonly V2[][]): V2[
 // pivot.
 export type Collision = {
   hull: V2[][][];
-  bases: Map<string, Partial<Record<State, V2[][][]>>>;
+  bases: Map<string, Partial<Record<SpriteState, V2[][][]>>>;
   tops: Map<string, V2[][][]>;
 };
 
@@ -785,8 +1326,8 @@ export function build(
   for (const { id, model, origin } of placed) {
     // Base sprites render in hull coordinates so shading matches the composed frame exactly.
     const pivot = (yaw: number) => rotate(ENEMY_HEADINGS, yaw, [origin[0], origin[1], model.z]);
-    const lists = states(model).map((state) => {
-      const parts = translate(origin, state === "intact" ? model.intact : model.destroyed!);
+    const lists = spriteStates(model).map((state) => {
+      const parts = translate(origin, stateParts(model, state));
       return {
         state,
         byYaw: yaws.map((yaw) =>
@@ -803,7 +1344,7 @@ export function build(
       0,
       lists.flatMap(({ byYaw }) => byYaw),
     );
-    const bases: Partial<Record<State, V2[][][]>> = {};
+    const bases: Partial<Record<SpriteState, V2[][][]>> = {};
     for (const { byYaw, state } of lists) {
       bases[state] = [];
       for (const yaw of yaws) {
@@ -819,7 +1360,7 @@ export function build(
     collision.bases.set(id, bases);
   }
 
-  for (const top of sharedTops(craft.name, placed)) {
+  for (const top of sharedTops(craft, placed)) {
     const byAim = yaws.map((aim) =>
       partOrder(aim, hullTop, top.parts).flatMap((part) => faces(aim, part)),
     );
@@ -842,20 +1383,28 @@ export function build(
 
 const minus = ([x, y, z]: Point, [px, py, pz]: Point): Point => [x - px, y - py, z - pz];
 
-// One entry per top design, in first-use order; designs sharing a name must be identical.
-export function sharedTops(craft: string, placed: readonly Placed[]): NonNullable<Model["top"]>[] {
-  const tops = new Map<string, NonNullable<Model["top"]>>();
+// One entry per top design, in first-use order (hardpoints, then tiers); designs sharing a name
+// must be identical.
+export function sharedTops(craft: HeavyCraft, placed: readonly Placed[]): Top[] {
+  const tops = new Map<string, Top>();
   for (const { id, model } of placed) {
-    if (!model.top) {
-      continue;
+    for (const top of topsOf(craft, id, model)) {
+      const seen = tops.get(top.name);
+      if (seen && JSON.stringify(seen) !== JSON.stringify(top)) {
+        throw new Error(`${craft.name} ${id}: top ${top.name} differs from its shared design`);
+      }
+      tops.set(top.name, top);
     }
-    const seen = tops.get(model.top.name);
-    if (seen && JSON.stringify(seen) !== JSON.stringify(model.top)) {
-      throw new Error(`${craft} ${id}: top ${model.top.name} differs from its shared design`);
-    }
-    tops.set(model.top.name, model.top);
   }
   return [...tops.values()];
+}
+
+// The Disabled banner's centre in hull frame px: the pivot x and the centre y of the hull
+// layer's drawn bounds at that heading.
+function banner(frame: number, hull: readonly V2[][] | undefined): [number, number] | undefined {
+  if (!hull) return undefined;
+  const ys = hull.flat().map(([, y]) => y);
+  return [frame / 2, Math.round(((Math.min(...ys) + Math.max(...ys)) / 2) * 100) / 100];
 }
 
 // Engine jet mouths for one heading, each tagged with its engine hardpoint.
@@ -886,30 +1435,51 @@ export function hardpointsFile(
       id,
       role: model.role,
       states: states(model),
-      top: model.top?.name ?? null,
+      top: fixedTop(craft, id, model),
+      ...(craft.mounts ? { capped: model.capped !== undefined } : {}),
     })),
+    ...(craft.mounts
+      ? {
+          fill: craft.mounts.fill,
+          tiers: craft.mounts.tiers.map(({ mounts, positions }) => ({
+            positions,
+            mounts: Object.fromEntries(
+              craft.mounts!.fill.map((id) => {
+                const kind = mounts[id] ?? null;
+                const weapon = kind ? craft.mounts!.weapons[kind]! : undefined;
+                return [
+                  id,
+                  weapon ? { weapon: kind, top: weapon.top.name, aim: weapon.aim } : null,
+                ];
+              }),
+            ),
+          })),
+        }
+      : {}),
     headings: yaws.map((yaw) => ({
       index: yaw,
       order: layerOrder(yaw, craft, placed),
       hardpoints: placed.map(({ id, model, origin }) => {
         const bases = collision?.bases.get(id);
+        const z = topZ(craft, id, model);
         return {
           id,
           anchor: hardpointAnchor(craft.frame, yaw, origin, model.z),
-          ...(model.top ? { pivot: hardpointAnchor(craft.frame, yaw, origin, model.top.z) } : {}),
+          ...(z === undefined ? {} : { pivot: hardpointAnchor(craft.frame, yaw, origin, z) }),
           ...(bases
             ? {
                 collision: Object.fromEntries(
-                  states(model).map((state) => [state, bases[state]![yaw]!]),
+                  spriteStates(model).map((state) => [state, bases[state]![yaw]!]),
                 ),
               }
             : {}),
         };
       }),
       ...(collision?.hull[yaw] ? { collision: collision.hull[yaw] } : {}),
+      ...(collision?.hull[yaw] ? { banner: banner(craft.frame, collision.hull[yaw]) } : {}),
     })),
     tops: Object.fromEntries(
-      sharedTops(craft.name, placed).map((top) => [
+      sharedTops(craft, placed).map((top) => [
         top.name,
         yaws.map((aim) => ({
           index: aim,
@@ -923,8 +1493,11 @@ export function hardpointsFile(
   });
 }
 
+// The coral heavies, which Cartwheel's claim family recolours, and Gadget's own capital.
+const drawn: HeavyCraft[] = [...heavies, gadget];
+
 // Manifest ids this tool owns: every `enemy-{craft}-` entry of the crafts it draws.
-const owns = (id: string) => heavies.some(({ name }) => id.startsWith(`enemy-${name}-`));
+const owns = (id: string) => drawn.some(({ name }) => id.startsWith(`enemy-${name}-`));
 
 async function main() {
   const args = process.argv.slice(2);
@@ -938,7 +1511,7 @@ async function main() {
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
-  const results = heavies.map((craft) => build(craft, place(offsets, craft)));
+  const results = drawn.map((craft) => build(craft, place(offsets, craft)));
   mkdirSync(dir, { recursive: true });
   const entries: Entry[] = [];
   for (const result of results) {

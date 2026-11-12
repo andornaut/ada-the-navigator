@@ -44,6 +44,8 @@ interface Scheme {
 }
 
 const white = "#ffffff";
+// Every scheme but Classic costs Gameplay's paint price (gameplay/economy.md, Ship paint).
+const PAINT_PRICE = 75;
 // Classic is the free default and writes the unprefixed ship frames.
 const SCHEMES: readonly Scheme[] = [
   {
@@ -68,7 +70,7 @@ const SCHEMES: readonly Scheme[] = [
       rearSides: "#3a62a8",
       top: "#6f9ff0",
     },
-    price: 50,
+    price: PAINT_PRICE,
   },
   {
     id: "seafoam",
@@ -80,7 +82,7 @@ const SCHEMES: readonly Scheme[] = [
       rearSides: "#80bba8",
       top: "#d4f6ea",
     },
-    price: 50,
+    price: PAINT_PRICE,
   },
   {
     id: "graphite",
@@ -92,7 +94,7 @@ const SCHEMES: readonly Scheme[] = [
       rearSides: "#666f86",
       top: "#aab2c4",
     },
-    price: 50,
+    price: PAINT_PRICE,
   },
   {
     id: "iris",
@@ -104,7 +106,7 @@ const SCHEMES: readonly Scheme[] = [
       rearSides: "#8f7cd0",
       top: "#d9ccff",
     },
-    price: 50,
+    price: PAINT_PRICE,
   },
 ];
 const [classic] = SCHEMES;

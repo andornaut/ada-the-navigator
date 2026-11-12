@@ -2,6 +2,9 @@ import { wreckId } from "../model/flight.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 
+/** A frame-to-frame jump of Ada's ship farther than this, in world units, reads as a teleport. */
+export const TELEPORT_DISTANCE = 20;
+
 export type FeedbackKind =
   "hit" | "disabled" | "damage" | "shield" | "pickup" | "deposit" | "teleport";
 export interface FeedbackPulse extends Vec {
@@ -17,7 +20,7 @@ interface Snapshot {
   weapon: string;
   stardust: number;
   deposited: number;
-  disabledEnemies: number;
+  destroyedEnemies: number;
   impacts: Set<string>;
   objects: Map<string, { enemy: boolean; hp: number; parts: Map<string, number>; point: Vec }>;
 }
@@ -49,7 +52,7 @@ export class ModelFeedback {
     const next: Snapshot = {
       cargo: flight.cargo,
       deposited: state.progress[flight.sector].deposited,
-      disabledEnemies: state.progress[flight.sector].disabledEnemies,
+      destroyedEnemies: state.progress[flight.sector].destroyedEnemies,
       impacts: new Set(flight.shots.flatMap((shot) => shot.hitIds.map((id) => `${shot.id}:${id}`))),
       objects: new Map(
         flight.objects.map((object) => [
@@ -98,7 +101,7 @@ export class ModelFeedback {
     if (
       next.cargo > previous.cargo ||
       next.stardust > previous.stardust ||
-      (next.weapon !== "basic" && next.weapon !== previous.weapon)
+      (next.weapon !== "laser" && next.weapon !== previous.weapon)
     ) {
       emit("pickup", next.player);
     }
@@ -127,15 +130,15 @@ export class ModelFeedback {
         destroyed(id, disabled || object.hp <= 0 ? "disabled" : "hit", object.point);
       }
     }
-    let removedDisabled = Math.max(0, next.disabledEnemies - previous.disabledEnemies);
+    let removedDestroyed = Math.max(0, next.destroyedEnemies - previous.destroyedEnemies);
     const archived = archivedObjectIds(flight);
     for (const [id, before] of previous.objects) {
       if (next.objects.has(id) || archived.has(id)) {
         continue;
       }
-      if (before.enemy && removedDisabled > 0) {
+      if (before.enemy && removedDestroyed > 0) {
         destroyed(id, "disabled", before.point);
-        removedDisabled--;
+        removedDestroyed--;
       } else if (
         flight.shots.some(
           (shot) => shot.hitIds.includes(id) && !previous.impacts.has(`${shot.id}:${id}`),

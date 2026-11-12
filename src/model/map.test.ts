@@ -25,7 +25,7 @@ import {
 } from "./map.ts";
 import { restoreSave } from "./save.ts";
 import { stationInCell, stationsNear } from "./stations.ts";
-import type { GameState, SectorProgress } from "./types.ts";
+import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
 function flying() {
@@ -461,10 +461,8 @@ describe("galaxy map", () => {
     }
   });
 
-  it("loads a save without an explored record as empty, and refuses an invalid record", () => {
+  it("keeps a saved explored record and refuses an invalid one", () => {
     const saved = JSON.parse(new GameModel(PROTOTYPE).save()) as GameState;
-    delete (saved.progress[2] as Partial<SectorProgress>).explored;
-    expect(restoreSave(saved)?.progress[2].explored).toEqual([]);
     saved.progress[2].explored = ["0,0", "1,-1"];
     expect(restoreSave(saved)?.progress[2].explored).toEqual(["0,0", "1,-1"]);
     for (const bad of [["0,0", "0,0"], ["200,0"], ["x"], {}]) {

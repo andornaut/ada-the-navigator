@@ -2,15 +2,20 @@ import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunk-catalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   type EncounterEntry,
+  encounterRate,
+  encounterTable,
+  ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
   enemyEncounterTuning,
+  enemyOnly,
   escortTuning,
-  sectorEncounters,
-  sectorEnemyTuning,
+  LANCE_TELL,
+  MINE_LAYER,
+  PHASER_AIM_SECONDS,
 } from "../data/enemy-catalog.ts";
-import { byPosition } from "../data/galaxies.ts";
+import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxy-features.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
@@ -37,16 +42,20 @@ import {
 } from "./asteroids.ts";
 import { planChunk } from "./chunk-templates.ts";
 import { currentInCell, currentsNear, flowAt, inCurrent, pointOnCurrent } from "./currents.ts";
+import { gameAreaPoint, inGameArea } from "./edge-markers.ts";
 import {
+  averageVelocity,
   createEnemy,
   damageEnemy,
-  enemyEffects,
+  enemyDefeated,
+  type FireIntent,
   hardpointOffset,
   stepDebris,
   stepEnemy,
 } from "./enemy-ai.ts";
 import {
   activateFlightRegion,
+  activateRouteEncounter,
   ACTIVE_CHUNK_RADIUS,
   beginFlightStep,
   escortPackId,
@@ -75,14 +84,16 @@ import {
   dropRandom,
   rollAsteroidStardust,
   rollEnemyDrop,
+  rollSalvageDrop,
   splitStardust,
 } from "./drops.ts";
 import { enemyHull, enemyPartOutline } from "./enemy-body.ts";
 import { landmarkSites } from "./landmarks.ts";
+import { MINE_REACH, mineSpin, mineTouches } from "./mine-shape.ts";
 import { nosePoint } from "./nose.ts";
 import { clearOfOreFields, oreFieldsNear } from "./ore-fields.ts";
 import { pickupOutline } from "./pickup-body.ts";
-import { planPlayerVolley } from "./player-projectiles.ts";
+import { planPlayerVolley, projectileReach } from "./player-projectiles.ts";
 import { shipBody, shipCircleContact, shipNearSegment, shipTouches } from "./ship-body.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./ship-physics.ts";
 import { HUB_STATION, stationById, stationsNear } from "./stations.ts";
@@ -91,6 +102,7 @@ import type {
   FlightEvent,
   FlightInput,
   FlightState,
+  Mine,
   PickupRelease,
   SectorProgress,
   Shot,
@@ -99,7 +111,7 @@ import type {
 } from "./types.ts";
 import { noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { collectWeapon, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
+import { ensureOwnedWeapons, grantedAmmo, shotsLeft, spendShot } from "./weapons.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -108,6 +120,17 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
  * no field; a restored or newly pressed stick starts from the velocity heading.
  */
 const movementHeadings = new WeakMap<FlightState, Vec>();
+/**
+ * Ada's velocity averaged for enemy aim per flight (ENEMY_AIM.velocitySeconds). It is transient
+ * like the movement heading: a restored or new flight starts it at her current velocity.
+ */
+const aimVelocities = new WeakMap<FlightState, Vec>();
+/** Ada's averaged velocity for enemy aim after `dt` more seconds at her current velocity. */
+function averageAimVelocity(dt: number, flight: FlightState): Vec {
+  const next = averageVelocity(dt, aimVelocities.get(flight) ?? flight.velocity, flight.velocity);
+  aimVelocities.set(flight, next);
+  return next;
+}
 // Whether the current step runs under reduced motion, which holds every rock on frame 0.
 const reducedMotions = new WeakMap<FlightState, boolean>();
 /**
@@ -755,7 +778,7 @@ export function encounterSpacing(content: PrototypeContent, sector: SectorId): n
     3,
     Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
   );
-  return base / Math.sqrt(byPosition(sectorEnemyTuning, sector).encounterRate);
+  return base / Math.sqrt(encounterRate(sector));
 }
 
 /** Ships too heavy to drift with a current, and the fixed platform. */
@@ -820,8 +843,8 @@ function generateRegion(
     const [low, high] = enemyEncounterTuning.debris.count;
     const count = low + Math.floor(next() * (high - low + 1));
     const angle = next() * Math.PI * 2;
-    const [slow, fast] = enemyEncounterTuning.debris.speedRatio;
-    const speed = content.tuning.maxSpeed * (slow + next() * (fast - slow));
+    const [slow, fast] = enemyEncounterTuning.debris.speed;
+    const speed = slow + next() * (fast - slow);
     for (let i = 0; i < count; i++) {
       const point = { x: center.x + (next() - 0.5) * size, y: center.y + (next() - 0.5) * size };
       const id = `ballistic:${x},${y}:${i}`;
@@ -845,7 +868,7 @@ function generateRegion(
   const packId = `pack:${x},${y}`;
   const countRoll = next();
   const { archetype, count, escorts } = rollEncounter(
-    byPosition(sectorEncounters, flight.sector),
+    encounterTable(flight.sector),
     countRoll,
     next(),
   );
@@ -957,13 +980,52 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
   prunePackState(flight);
 }
 
+/**
+ * A capital that holds the spacing between capitals: live, not destroyed and not salvaged. A
+ * salvaged hulk stays where Ada left it (gameplay/ships.md "State").
+ */
 function capital(object: SpaceObject): boolean {
   return (
     object.kind === "enemy" &&
     object.hp > 0 &&
     object.enemy?.archetype === "capital" &&
-    !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated
+    !enemyDefeated(object.enemy) &&
+    !object.enemy.salvaged
   );
+}
+
+/**
+ * How far a ship's drawn hull reaches from its position on screen: at its own heading, or at
+ * any heading for a ship that may turn. Without Art's outline, twice its hit radius.
+ */
+function hullReach(object: SpaceObject, anyHeading: boolean): number {
+  const enemy = object.enemy;
+  const facings = anyHeading
+    ? Array.from({ length: 16 }, (_, index) => ({
+        x: Math.cos((index * Math.PI) / 8),
+        y: Math.sin((index * Math.PI) / 8),
+      }))
+    : [enemy?.facing ?? { x: 1, y: 0 }];
+  let reach = 0;
+  for (const facing of facings) {
+    const hull = enemy ? enemyHull({ archetype: enemy.archetype, facing }) : null;
+    if (!hull) {
+      return object.radius * 2;
+    }
+    for (const point of hull.flat()) {
+      reach = Math.max(reach, Math.hypot(point.x, point.y));
+    }
+  }
+  return reach;
+}
+
+/** Whether a ship placed at `point` would overlap a salvaged hulk's drawn hull on screen. */
+function overlapsHulk(guard: SpaceObject, point: Vec, hulk: SpaceObject): boolean {
+  const dx = point.x - hulk.x;
+  const dy = point.y - hulk.y;
+  // The play view's isometric projection of the world offset, in screen px.
+  const apart = Math.hypot(dx - dy, (dx + dy) / 2);
+  return apart < hullReach(guard, true) + hullReach(hulk, false);
 }
 
 function capitalGap(): number {
@@ -1007,8 +1069,7 @@ function relocateRouteGuards(content: PrototypeContent, flight: FlightState): vo
         object.kind === "enemy" &&
         persistentObject(object) &&
         object.hp > 0 &&
-        (!object.enemy ||
-          !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated),
+        (!object.enemy || (!enemyDefeated(object.enemy) && !object.enemy.salvaged)),
     ),
     flight,
   );
@@ -1035,8 +1096,11 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
         !(capital(guard) && capital(object) && guardSet.has(object) && !positions.has(object)) &&
         ["enemy", "rock", "resource", "debris"].includes(object.kind) &&
         object.hp > 0 &&
-        distance(positions.get(object) ?? object, point) <
-          Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object)),
+        // A salvaged hulk keeps no spacing, but nothing settles onto its drawn hull.
+        (object.enemy?.salvaged
+          ? overlapsHulk(guard, point, object)
+          : distance(positions.get(object) ?? object, point) <
+            Math.max(object.radius + guard.radius + 20, enemySpacing(guard, object))),
     );
   // Reserve valid existing capital positions before searching for displaced or newly added guards.
   for (const guard of guards) {
@@ -1076,11 +1140,65 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
 
 export { relocateRouteGuards as settleRouteEncounters };
 
+/**
+ * The first time each flight Ada comes within Talk range of a destination its guard still blocks
+ * (gameplay/rules.md "Space encounters and feedback"), the guard is cued: a dormant retained
+ * guard loads, and each blocking guard is summoned toward Ada, marked at the edge until it is on
+ * screen (edge-markers.ts). The game has Astra say a guard line on the event.
+ */
+function cueGuards(content: PrototypeContent, flight: FlightState, events: FlightEvent[]): void {
+  const cued = flight.objects.filter(
+    (object) =>
+      object.kind === "destination" &&
+      !flight.guardCues?.includes(object.id) &&
+      distance(object, flight.player) <= content.tuning.talkRange &&
+      routeBlocked(object.id, flight),
+  );
+  for (const destination of cued) {
+    (flight.guardCues ??= []).push(destination.id);
+    activateRouteEncounter(content, destination.id, flight);
+    for (const guard of flight.objects) {
+      if (
+        guard.kind === "enemy" &&
+        guard.routeId === destination.id &&
+        guard.hp > 0 &&
+        !guard.enemy?.disabled &&
+        !flight.summonedGuards?.includes(guard.id)
+      ) {
+        (flight.summonedGuards ??= []).push(guard.id);
+      }
+    }
+    events.push({ id: destination.id, type: "guardCue" });
+  }
+}
+
+/** A summoned guard fights as usual once it is on screen, disabled, destroyed or gone. */
+function releaseSummonedGuards(flight: FlightState): void {
+  if (!flight.summonedGuards) {
+    return;
+  }
+  flight.summonedGuards = flight.summonedGuards.filter((id) => {
+    const guard = flight.objects.find((object) => object.id === id);
+    return (
+      guard !== undefined &&
+      guard.hp > 0 &&
+      !guard.enemy?.disabled &&
+      !inGameArea(gameAreaPoint(flight.player, guard))
+    );
+  });
+  if (!flight.summonedGuards.length) {
+    delete flight.summonedGuards;
+  }
+}
+
+/** A guard blocks its route until it is disabled or destroyed (gameplay/rules.md). */
 export function routeBlocked(id: string, flight: FlightState): boolean {
   // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
   return (
     retainedRouteBlocked(id, flight) ||
-    flight.objects.some((object) => object.routeId === id && liveEnemy(object))
+    flight.objects.some(
+      (object) => object.routeId === id && liveEnemy(object) && !object.enemy?.disabled,
+    )
   );
 }
 
@@ -1378,7 +1496,7 @@ export function createFlight(
     ammo: grantedAmmo([]),
     levels: noLevels(),
     ownedWeapons: [],
-    weapon: "basic",
+    weapon: "laser",
   },
 ): FlightState {
   const levels = structuredClone(loadout.levels);
@@ -1392,6 +1510,7 @@ export function createFlight(
     freshChunk: "0,0",
     freshDistance: 0,
     levels,
+    mines: [],
     nextId: 0,
     objects: [],
     ownedWeapons: [...loadout.ownedWeapons],
@@ -1404,8 +1523,8 @@ export function createFlight(
     time: 0,
     velocity: { x: 0, y: 0 },
     visited: {},
-    // An empty saved selection starts the flight on Basic.
-    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "basic" : loadout.weapon,
+    // An empty saved selection starts the flight on Laser.
+    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "laser" : loadout.weapon,
     weaponSwitchFor: 0,
     world: { notables: {}, version: 1 },
   };
@@ -1463,7 +1582,7 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
-  // One shot uses one; emptying the weapon switches to Basic after this shot.
+  // One shot uses one; emptying the weapon switches to Laser after this shot.
   if (spendShot(flight)) {
     events.push({ type: "outOfAmmo" });
   }
@@ -1478,7 +1597,7 @@ function fire(
     aim,
     baseDamage: content.tuning.flight.playerShotDamage,
     baseLifetime: content.tuning.flight.projectileLifetime,
-    baseSpeed: content.tuning.maxSpeed * content.tuning.flight.projectileSpeedFactor,
+    baseSpeed: content.tuning.flight.projectileSpeed,
     origin,
     viewportWidth,
   });
@@ -1497,11 +1616,39 @@ function fire(
   flight.fireCooldown += volley.interval;
 }
 
-function damage(content: PrototypeContent, flight: FlightState): void {
+/**
+ * Whether Ada is in battle: an enemy chasing or attacking her is inside the battle square,
+ * centred on her and reaching half the game area's width plus the battle margin along each axis.
+ * Idle enemies, retaliators not yet hit, fleeing or returning enemies and disabled heavies do not
+ * count.
+ */
+export function inBattle(
+  content: PrototypeContent,
+  viewportWidth: number,
+  flight: Pick<FlightState, "objects" | "player">,
+): boolean {
+  const reach = viewportWidth / 2 + content.tuning.battleMargin;
+  return flight.objects.some((object) => {
+    const enemy = object.enemy;
+    return (
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      enemy !== undefined &&
+      enemy.engaged &&
+      !enemy.returning &&
+      !enemy.fleeing &&
+      !enemy.disabled &&
+      Math.abs(object.x - flight.player.x) <= reach &&
+      Math.abs(object.y - flight.player.y) <= reach
+    );
+  });
+}
+/** Removes `amount` HP from Ada's shield unless she is in a safe area. */
+function damage(content: PrototypeContent, amount: number, flight: FlightState): void {
   if (safe(content, flight.player, flight)) {
     return;
   }
-  flight.shield = Math.max(0, flight.shield - content.tuning.enemyDamage);
+  flight.shield = Math.max(0, flight.shield - amount);
   flight.sinceDamage = 0;
   flight.dangerFor = content.tuning.dangerReleaseSeconds;
 }
@@ -1519,23 +1666,16 @@ export function movementSpeedFraction(
   }
   return tuning.minSpeedFraction + (1 - tuning.minSpeedFraction) * m ** tuning.speedCurveExponent;
 }
-/** Ada's maximum speed: the base maximum scaled by her physics speedRatio. */
-function adaMaxSpeed(tuning: Pick<PrototypeContent["tuning"], "maxSpeed" | "physics">): number {
-  return tuning.maxSpeed * tuning.physics.speedRatio;
-}
 /**
- * Current ship speed as a fraction of Ada's tuned maximum speed (base times her engine
- * tuning), clamped to [0, 1], for jets. Flights without levels use the base speed.
+ * Current ship speed as a fraction of Ada's maximum speed at her engine level, clamped to
+ * [0, 1], for jets. Flights without levels use the base engine.
  */
 export function shipSpeedFraction(
   content: PrototypeContent,
   flight: Pick<FlightState, "velocity"> & Partial<Pick<FlightState, "levels">>,
 ): number {
   const physics = shipTuning(ECONOMY, content, flight.levels ?? noLevels()).physics;
-  return speedFraction(
-    adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics }),
-    flight.velocity,
-  );
+  return speedFraction(physics.maxSpeed, flight.velocity);
 }
 /**
  * Whether Ada's drawn ship reaches a pickup at `center`, by the one pickup rule: within the
@@ -1584,7 +1724,7 @@ export function towing<
   T extends {
     accelerationSeconds: number;
     brakingSeconds: number;
-    speedRatio: number;
+    maxSpeed: number;
     turnSeconds: number;
   },
 >(flight: Pick<FlightState, "tow">, physics: T): T {
@@ -1596,7 +1736,7 @@ export function towing<
     ...physics,
     accelerationSeconds: physics.accelerationSeconds * responseScale,
     brakingSeconds: physics.brakingSeconds * responseScale,
-    speedRatio: physics.speedRatio * topSpeedScale,
+    maxSpeed: physics.maxSpeed * topSpeedScale,
     turnSeconds: physics.turnSeconds * turnScale,
   };
 }
@@ -1607,9 +1747,8 @@ function move(
   flight: FlightState,
 ): void {
   const magnitude = Math.min(1, length(input.move));
-  // Engine tuning changes only Ada's physics; enemies keep reading the base maxSpeed.
   const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
-  const top = adaMaxSpeed({ maxSpeed: content.tuning.maxSpeed, physics });
+  const top = physics.maxSpeed;
   const motion = stepShipMotion(
     physics,
     dt,
@@ -1681,6 +1820,7 @@ function presses(targetable: boolean, flight: FlightState, object: SpaceObject):
     state.engaged &&
     !state.returning &&
     !state.fleeing &&
+    !state.disabled &&
     distance(object, flight.player) <= enemyDefinition(flight.sector, state.archetype).perception
   );
 }
@@ -1699,12 +1839,17 @@ export function dronesNear(content: PrototypeContent, flight: FlightState): bool
 function enemies(
   content: PrototypeContent,
   dt: number,
+  viewportWidth: number,
   flight: FlightState,
   events: FlightEvent[],
   shotDelays: Map<string, number>,
 ): boolean {
   let threatening = false;
-  const objects = flight.objects.filter((object) => object.kind === "enemy" && object.hp > 0);
+  const aimVelocity = averageAimVelocity(dt, flight);
+  // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
+  const objects = flight.objects.filter(
+    (object) => object.kind === "enemy" && object.hp > 0 && !object.enemy?.salvaged,
+  );
   for (const object of objects) {
     // Legacy saved ships gain canonical state without resetting their damage or identity.
     if (!object.enemy) {
@@ -1737,17 +1882,20 @@ function enemies(
           drawnOf(flight, obstacle),
         ),
     );
+    const before = { x: object.x, y: object.y };
     const intent = stepEnemy(
       definition,
       {
-        adaSpeed: content.tuning.maxSpeed,
         adaWidth: content.tuning.flight.shipRadius * 2,
         dormantPackMembers: retainedPackMembers(content, flight),
         dt,
         initialPackSizes: combat(flight).initialPackSizes,
+        lead: ENEMY_AIM.lead[ROUTE_POSITION[flight.sector]],
         peers,
         player: flight.player,
-        speedCapRatio: enemyEncounterTuning.speedCapRatio,
+        playerVelocity: aimVelocity,
+        projectileSpeed: content.tuning.enemyProjectileSpeed,
+        summoned: flight.summonedGuards?.includes(object.id) ?? false,
         targetable,
         visibility: visible ? "visible" : "occluded",
       },
@@ -1756,7 +1904,7 @@ function enemies(
     object.enemy = intent.state;
     if (intent.effects.defeated) {
       destroyEnemy(object, flight);
-      events.push({ type: "enemyDisabled" });
+      events.push({ type: "enemyDestroyed" });
       continue;
     }
     let velocity = intent.velocity;
@@ -1785,6 +1933,7 @@ function enemies(
               ? distance(other, point) < (protectedRadius(content, other) ?? 0) + object.radius
               : other.kind === "enemy" &&
                 other.hp > 0 &&
+                !other.enemy?.salvaged &&
                 distance(other, point) < enemySpacing(object, other)),
         );
         if (!blocked) {
@@ -1810,22 +1959,149 @@ function enemies(
     object.enemy.position = { x: object.x, y: object.y };
     bounceShips(content, flight, object);
     threatening ||= presses(targetable, flight, object);
+    const rings = new Map<number, Vec[]>();
     for (const fire of intent.fire) {
+      const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
+      const shared = enemyOnly(fire.weapon) ? null : weaponAt(fire.weapon, fire.level);
+      if (fire.projectile === "beam") {
+        chargeEnemyBeam(amount, shared?.beamRange ?? 0, before, fire, object.id, flight);
+        continue;
+      }
+      if (fire.projectile === "mine") {
+        layMine(amount, fire, object.id, flight);
+        continue;
+      }
+      if (fire.weapon === "ringBurst") {
+        rings.set(fire.delay, [...(rings.get(fire.delay) ?? []), fire.origin]);
+      }
       const id = `shot:${flight.nextId++}`;
       shotDelays.set(id, fire.delay);
+      // A shared weapon keeps its range, fade and blast whoever fires it.
+      const lifetime = content.tuning.flight.enemyProjectileLifetime;
+      const reach = shared
+        ? projectileReach(shared, fire.aim, fire.speed, viewportWidth, lifetime)
+        : { life: lifetime };
       flight.shots.push({
         ...fire.origin,
+        ...(shared?.blastRadius ? { blast: shared.blastRadius } : {}),
+        damage: amount,
         enemy: true,
+        ...(fire.weapon === "ringBurst" ? { enemyWeapon: "ringBurst" as const } : {}),
+        ...reach,
         hitIds: [],
         id,
-        life: content.tuning.flight.enemyProjectileLifetime,
         piercing: false,
         projectile: fire.projectile,
         velocity: { x: fire.aim.x * fire.speed, y: fire.aim.y * fire.speed },
       });
     }
+    for (const [delay, origins] of rings) {
+      const emissions = ringEmissions.get(flight) ?? [];
+      emissions.push({ age: -delay, at: { ...before }, origins, spawnRadius: object.radius });
+      ringEmissions.set(flight, emissions);
+    }
   }
   return threatening;
+}
+
+/** A ring burst's emission at its hull, view-only and never saved. */
+export interface RingEmission {
+  age: number;
+  at: Vec;
+  origins: readonly Vec[];
+  spawnRadius: number;
+}
+const ringEmissions = new WeakMap<FlightState, RingEmission[]>();
+/** How long a ring burst's emission shows (art/weapons.md "Ring burst"). */
+const RING_EMISSION_SECONDS = 0.18;
+
+/** The flight's ring burst emissions still showing. */
+export function activeRingEmissions(flight: FlightState): readonly RingEmission[] {
+  return ringEmissions.get(flight) ?? [];
+}
+
+/** Lays a mine where the mine layer fires, unless its ship already has its most out. */
+function layMine(
+  damage: number,
+  fire: Pick<FireIntent, "delay" | "origin">,
+  ownerId: string,
+  flight: FlightState,
+): void {
+  const out = flight.mines.filter((mine) => mine.ownerId === ownerId && !mine.end).length;
+  if (out >= MINE_LAYER.count) {
+    return;
+  }
+  flight.mines.push({
+    age: -fire.delay,
+    damage,
+    id: `mine:${flight.nextId++}`,
+    ownerId,
+    x: fire.origin.x,
+    y: fire.origin.y,
+  });
+}
+
+/** How long a mine's fizzle and pop play (art/weapons.md "Mine"). */
+const MINE_END_SECONDS = { fizzle: 0.2, pop: 0.22 } as const;
+/** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
+const SHOT_PARTS: Parts = [
+  [
+    { x: -3, y: -3 },
+    { x: 3, y: -3 },
+    { x: 3, y: 3 },
+    { x: -3, y: 3 },
+  ],
+];
+
+/** The mine's spin for collision, as drawn: still under reduced motion. */
+function spinOf(flight: FlightState, mine: Mine): number {
+  return mineSpin(reducedMotions.get(flight) ?? false, Math.max(0, mine.age));
+}
+
+/** Whether a mine still collides: laid, and neither fizzling nor popped. */
+function armed(mine: Mine): boolean {
+  return mine.end === undefined && mine.age >= 0;
+}
+
+/**
+ * Ages each mine: one touching Ada's drawn ship pops and damages her; one past its life fizzles,
+ * harmless. Each goes once its fizzle or pop has played.
+ */
+function stepMines(content: PrototypeContent, dt: number, flight: FlightState): void {
+  const body = shipBody(flight.facing);
+  for (const mine of flight.mines) {
+    mine.age += dt;
+    if (mine.end) {
+      mine.end.age += dt;
+    } else if (mine.age >= MINE_LAYER.lifeSeconds) {
+      mine.end = { age: mine.age - MINE_LAYER.lifeSeconds, kind: "fizzle" };
+    } else if (armed(mine) && mineTouches(spinOf(flight, mine), mine, body, flight.player)) {
+      damage(content, mine.damage, flight);
+      mine.end = { age: 0, kind: "pop" };
+    }
+  }
+  flight.mines = flight.mines.filter(
+    (mine) => !mine.end || mine.end.age < MINE_END_SECONDS[mine.end.kind],
+  );
+}
+
+/** Ada's shot pops each armed mine it touches that it has not; true once the shot is spent. */
+function strikeMines(shot: Shot, flight: FlightState): boolean {
+  for (const mine of flight.mines) {
+    if (
+      armed(mine) &&
+      !shot.hitIds.includes(mine.id) &&
+      mineTouches(spinOf(flight, mine), mine, SHOT_PARTS, shot)
+    ) {
+      shot.hitIds.push(mine.id);
+      mine.end = { age: 0, kind: "pop" };
+      if (!shot.piercing) {
+        shot.life = 0;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function segmentDistance(point: Vec, start: Vec, end: Vec): number {
@@ -1869,7 +2145,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
       placeRiverRock(flight, object);
       object.cooldown = Math.max(0, (object.cooldown ?? 0) - dt);
       if (debrisTouchesAda(flight, object, from, object) && !object.cooldown) {
-        damage(content, flight);
+        damage(content, content.tuning.hazardDamage, flight);
         object.cooldown = content.tuning.flight.damageInterval;
       }
       continue;
@@ -1900,7 +2176,7 @@ function moveDebris(content: PrototypeContent, dt: number, flight: FlightState):
     }
     if (debrisTouchesAda(flight, object, object, next.position)) {
       if (!object.cooldown) {
-        damage(content, flight);
+        damage(content, content.tuning.hazardDamage, flight);
         object.cooldown = content.tuning.flight.damageInterval;
       }
     }
@@ -1929,24 +2205,38 @@ function shots(
       if (shot.enemy) {
         if (safe(content, shot, flight)) {
           shot.life = 0;
-        } else if (shipTouches(flight.facing, flight.player, shot, 3)) {
-          damage(content, flight);
-          shot.life = 0;
+          continue;
+        }
+        const struck = shipTouches(flight.facing, flight.player, shot, 3);
+        const blocked = flight.objects.some(
+          (object) =>
+            SCENERY.includes(object.kind) &&
+            object.hp > 0 &&
+            sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)),
+        );
+        if (!struck && !blocked) {
+          continue;
+        }
+        shot.life = 0;
+        // A missile's blast damages Ada within its radius, once, however it struck.
+        if (shot.blast !== undefined) {
+          const blasts = blastFlashes.get(flight) ?? [];
+          blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
+          blastFlashes.set(flight, blasts);
         }
         if (
-          flight.objects.some(
-            (object) =>
-              SCENERY.includes(object.kind) &&
-              object.hp > 0 &&
-              sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)),
-          )
+          struck ||
+          (shot.blast !== undefined && shipTouches(flight.facing, flight.player, shot, shot.blast))
         ) {
-          shot.life = 0;
+          damage(content, shot.damage, flight);
         }
         continue;
       }
       if (shot.damage === undefined) {
         shot.life = 0;
+        continue;
+      }
+      if (strikeMines(shot, flight)) {
         continue;
       }
       strike(content, shot, flight, events);
@@ -1979,20 +2269,16 @@ function strike(
     if (
       !["enemy", ...SCENERY].includes(object.kind) ||
       object.hp <= 0 ||
+      object.enemy?.salvaged ||
       shot.hitIds.includes(object.id) ||
       (object.kind === "enemy"
-        ? !enemyTouched(object, shot, 3)
+        ? !enemyTouched(ROUTE_POSITION[flight.sector], object, shot, 3)
         : !sceneryContact(object, shot, 3, frameOf(flight, object), drawnOf(flight, object)))
     ) {
       continue;
     }
     shot.hitIds.push(object.id);
-    const part = hitPart(content, partReach(content), 3, shot, object);
-    // Large hulls only consume a shot at a live hardpoint; this keeps interior parts reachable.
-    if (part === undefined) {
-      shot.hitIds.pop();
-      continue;
-    }
+    const part = hitPart(content, flight.sector, partReach(content), 3, shot, object);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
       blast(content, shot.damage, shot.blast, shot, object, flight, events);
@@ -2014,13 +2300,14 @@ function partReach(content: PrototypeContent): number {
 /** A multipart enemy's live hardpoints, in world coordinates. */
 function liveParts(
   content: PrototypeContent,
+  sector: SectorId,
   object: SpaceObject,
 ): { id: string; x: number; y: number }[] {
   const enemy = object.enemy;
   if (!enemy) {
     return [];
   }
-  const definition = enemyCatalog[enemy.archetype];
+  const definition = enemyDefinition(sector, enemy.archetype);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
     .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
@@ -2034,7 +2321,12 @@ function liveParts(
  * Whether a strike of `reach` at `point` touches an enemy where it is drawn: its hull or, on a
  * heavy, a hardpoint's base or top; its hull circle without Art's outline.
  */
-function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
+function enemyTouched(
+  position: RoutePosition,
+  object: SpaceObject,
+  point: Vec,
+  reach: number,
+): boolean {
   const enemy = object.enemy;
   const hull = enemy && enemyHull(enemy);
   if (!enemy || !hull) {
@@ -2043,35 +2335,35 @@ function enemyTouched(object: SpaceObject, point: Vec, reach: number): boolean {
   return (
     outlineContact(hull, object, point, reach) !== null ||
     enemy.hardpoints.some((part) => {
-      const outline = enemyPartOutline(enemy, part.id);
+      const outline = enemyPartOutline(position, enemy, part.id);
       return outline !== null && outlineContact(outline, object, point, reach) !== null;
     })
   );
 }
 
 /**
- * The hardpoint a strike at `point` lands on: null for the hull of a ship without hardpoints
- * and for scenery, undefined when a multipart ship has no live hardpoint in reach. A drawn
- * hardpoint is in reach when the strike's `tolerance` touches its base or top; one without Art's
- * outline when its anchor is within `reach`.
+ * The live hardpoint a strike at `point` lands on, before the hull; null for the hull alone and
+ * for scenery. A drawn hardpoint is in reach when the strike's `tolerance` touches its base or
+ * top; one without Art's outline when its anchor is within `reach`.
  */
 function hitPart(
   content: PrototypeContent,
+  sector: SectorId,
   reach: number,
   tolerance: number,
   point: Vec,
   object: SpaceObject,
-): string | null | undefined {
+): string | null {
   const enemy = object.enemy;
   if (object.kind !== "enemy" || !enemy) {
     return null;
   }
-  if (!enemyCatalog[enemy.archetype].hardpoints.length) {
+  if (!enemy.hardpoints.length) {
     return null;
   }
   let nearest: { id: string; gap: number } | undefined;
-  for (const part of liveParts(content, object)) {
-    const outline = enemyPartOutline(enemy, part.id);
+  for (const part of liveParts(content, sector, object)) {
+    const outline = enemyPartOutline(ROUTE_POSITION[sector], enemy, part.id);
     const contact = outline && outlineContact(outline, object, point, tolerance);
     // A drawn part ranks by overlap depth, deepest first; an undrawn one by its anchor gap.
     const gap = outline ? (contact ? -contact.depth : Infinity) : distance(point, part);
@@ -2079,7 +2371,7 @@ function hitPart(
       nearest = { gap, id: part.id };
     }
   }
-  return nearest?.id;
+  return nearest?.id ?? null;
 }
 
 /** Damages an enemy (at a hardpoint, or its hull for null) or scenery, then resolves its loss. */
@@ -2095,9 +2387,13 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyCatalog[object.enemy.archetype];
+    const definition = enemyDefinition(flight.sector, object.enemy.archetype);
+    const disabled = object.enemy.disabled;
     object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
-    object.hp = enemyEffects(definition, object.enemy).defeated ? 0 : Math.max(1, object.enemy.hp);
+    object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
+    if (object.hp > 0 && !disabled && object.enemy.disabled) {
+      events.push({ id: object.id, type: "enemyDisabled" });
+    }
   } else {
     object.hp -= amount;
   }
@@ -2106,7 +2402,7 @@ function hit(
   }
   if (object.kind === "enemy") {
     destroyEnemy(object, flight);
-    events.push({ type: "enemyDisabled" });
+    events.push({ type: "enemyDestroyed" });
   }
   if (object.asteroid) {
     events.push({
@@ -2162,12 +2458,18 @@ function blast(
   const blasts = blastFlashes.get(flight) ?? [];
   blasts.push({ age: 0, radius, x: at.x, y: at.y });
   blastFlashes.set(flight, blasts);
+  for (const mine of flight.mines) {
+    if (armed(mine) && distance(mine, at) <= radius) {
+      mine.end = { age: 0, kind: "pop" };
+    }
+  }
   for (const object of [...flight.objects]) {
-    if (object === struck || object.kind !== "enemy" || object.hp <= 0) {
+    if (object === struck || object.kind !== "enemy" || object.hp <= 0 || object.enemy?.salvaged) {
       continue;
     }
-    const part = hitPart(content, radius + partReach(content), radius, at, object);
-    if (part === undefined || (part === null && !enemyTouched(object, at, radius))) {
+    const position = ROUTE_POSITION[flight.sector];
+    const part = hitPart(content, flight.sector, radius + partReach(content), radius, at, object);
+    if (part === null && !enemyTouched(position, object, at, radius)) {
       continue;
     }
     hit(content, amount, part, object, flight, events);
@@ -2345,18 +2647,18 @@ function fireBeam(
           object,
         ),
       );
-    } else if (object.kind === "enemy" && object.enemy) {
-      const hull = enemyHull(object.enemy);
-      if (enemyCatalog[object.enemy.archetype].hardpoints.length) {
-        for (const part of liveParts(content, object)) {
-          const outline = enemyPartOutline(object.enemy, part.id);
-          if (outline) {
-            drawn(object, part.id, outline);
-          } else {
-            consider(object, part.id, part, partReach(content));
-          }
+    } else if (object.kind === "enemy" && object.enemy && !object.enemy.salvaged) {
+      // A heavy's live hardpoints take the beam first, then its hull.
+      for (const part of liveParts(content, flight.sector, object)) {
+        const outline = enemyPartOutline(ROUTE_POSITION[flight.sector], object.enemy, part.id);
+        if (outline) {
+          drawn(object, part.id, outline);
+        } else {
+          consider(object, part.id, part, partReach(content));
         }
-      } else if (hull) {
+      }
+      const hull = enemyHull(object.enemy);
+      if (hull) {
         drawn(object, null, hull);
       } else {
         consider(object, null, object, object.radius);
@@ -2364,6 +2666,28 @@ function fireBeam(
     }
   }
   const struck = first as { object: SpaceObject; part: string | null; at: number } | null;
+  // A mine nearer than whatever else the beam meets pops and stops it.
+  let popped: { at: number; mine: Mine } | null = null;
+  for (const mine of flight.mines) {
+    const at = armed(mine)
+      ? rayCircle(origin, direction, struck?.at ?? range, mine, MINE_REACH + BEAM.halfWidth)
+      : null;
+    if (at !== null && (!popped || at < popped.at)) {
+      popped = { at, mine };
+    }
+  }
+  if (popped) {
+    popped.mine.end = { age: 0, kind: "pop" };
+    const flashes = beamFlashes.get(flight) ?? [];
+    flashes.push({
+      age: 0,
+      from: origin,
+      hit: true,
+      to: { x: origin.x + direction.x * popped.at, y: origin.y + direction.y * popped.at },
+    });
+    beamFlashes.set(flight, flashes);
+    return;
+  }
   const reach = struck ? struck.at : range;
   const flashes = beamFlashes.get(flight) ?? [];
   flashes.push({
@@ -2381,6 +2705,200 @@ function fireBeam(
       struck.object,
       flight,
       events,
+    );
+  }
+}
+
+/**
+ * An enemy Phaser or charged lance shot and its tell: a Phaser's aim line is fixed where it
+ * started; a lance's line follows its ship and tracks Ada, then holds still. The beam fires
+ * along the line. `end` stops at the first obstacle, and at Ada once the beam hits her.
+ * View-only timing, never saved: a restored flight drops a shot still in its tell.
+ */
+export interface EnemyBeam {
+  /** Seconds since the tell appeared. */
+  age: number;
+  damage: number;
+  direction: Vec;
+  end: Vec;
+  fired: boolean;
+  hardpointId: string | null;
+  kind: "lance" | "phaser";
+  muzzle: Vec;
+  /** The muzzle's offset from its ship, which a lance's line follows while it tracks. */
+  offset: Vec;
+  ownerId: string;
+  range: number;
+  /** Whether an obstacle, or Ada on firing, stopped the line short of its range. */
+  stopped: boolean;
+}
+/** When each beam fires after its tell begins, and how long its beam then shows. */
+const BEAM_TIMING = {
+  // art/weapons.md "Charged lance": the beam shows for 300 ms.
+  lance: {
+    fires: LANCE_TELL.trackSeconds + LANCE_TELL.lockSeconds,
+    shows: Math.max(0.3, BEAM.sparkSeconds),
+  },
+  phaser: { fires: PHASER_AIM_SECONDS, shows: Math.max(BEAM.flashSeconds, BEAM.sparkSeconds) },
+} as const;
+
+/** A unit world heading's length on screen. */
+function projectedLength(heading: Vec): number {
+  return Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
+}
+const enemyBeams = new WeakMap<FlightState, EnemyBeam[]>();
+
+/** The flight's enemy Phaser shots still aiming or showing. */
+export function activeEnemyBeams(flight: FlightState): readonly EnemyBeam[] {
+  return enemyBeams.get(flight) ?? [];
+}
+
+/** How far along a line from `origin` the first live obstacle stops it, within `range`. */
+function obstacleStop(origin: Vec, direction: Vec, range: number, flight: FlightState): number {
+  let stop = range;
+  for (const object of flight.objects) {
+    if (SCENERY.includes(object.kind) && object.hp > 0) {
+      const entry = sceneryEntry(
+        origin,
+        direction,
+        stop,
+        frameOf(flight, object),
+        drawnOf(flight, object),
+        object,
+      );
+      stop = entry === null ? stop : Math.min(stop, entry);
+    }
+  }
+  return stop;
+}
+
+/**
+ * Starts an enemy Phaser's or lance's tell along its aim from the muzzle; its delay counts
+ * toward the tell. `ship` is where the ship was when it fired.
+ */
+function chargeEnemyBeam(
+  damage: number,
+  range: number,
+  ship: Vec,
+  fire: Pick<FireIntent, "aim" | "delay" | "hardpointId" | "origin" | "weapon">,
+  ownerId: string,
+  flight: FlightState,
+): void {
+  const span = length(fire.aim);
+  const kind = fire.weapon === "chargedLance" ? "lance" : "phaser";
+  if (!span || (kind === "phaser" && range <= 0)) {
+    return;
+  }
+  const beams = enemyBeams.get(flight) ?? [];
+  beams.push({
+    age: -fire.delay,
+    damage,
+    direction: { x: fire.aim.x / span, y: fire.aim.y / span },
+    end: { ...fire.origin },
+    fired: false,
+    hardpointId: fire.hardpointId,
+    kind,
+    muzzle: { ...fire.origin },
+    offset: { x: fire.origin.x - ship.x, y: fire.origin.y - ship.y },
+    ownerId,
+    range,
+    stopped: false,
+  });
+  enemyBeams.set(flight, beams);
+}
+
+/** Whether a lance's ship and mount can still fire it: alive, armed and powered. */
+function lanceHolds(beam: EnemyBeam, flight: FlightState): SpaceObject | undefined {
+  const owner = flight.objects.find((object) => object.id === beam.ownerId);
+  const enemy = owner?.enemy;
+  return owner &&
+    owner.hp > 0 &&
+    enemy &&
+    !enemy.disabled &&
+    !enemy.salvaged &&
+    enemy.hardpoints.some((part) => part.id === beam.hardpointId && part.hp > 0)
+    ? owner
+    : undefined;
+}
+
+/**
+ * Ages each enemy Phaser and lance shot. A lance's line follows its ship and aims at Ada while
+ * it tracks, then holds still, and runs as far as the game area is wide on screen; it goes out
+ * if its ship or mount can no longer fire. Each line stops at the first obstacle. When its tell
+ * ends the beam fires along it and damages Ada where it first meets her drawn ship within the
+ * beam half-width. Each shows for its beam and spark, then goes.
+ */
+function stepEnemyBeams(
+  content: PrototypeContent,
+  dt: number,
+  viewportWidth: number,
+  flight: FlightState,
+): void {
+  const beams = enemyBeams.get(flight);
+  if (!beams) {
+    return;
+  }
+  const out = new Set<EnemyBeam>();
+  for (const beam of beams) {
+    beam.age += dt;
+    if (beam.fired) {
+      continue;
+    }
+    if (beam.kind === "lance") {
+      const owner = lanceHolds(beam, flight);
+      if (!owner) {
+        out.add(beam);
+        continue;
+      }
+      if (beam.age < LANCE_TELL.trackSeconds) {
+        beam.muzzle = { x: owner.x + beam.offset.x, y: owner.y + beam.offset.y };
+        const toward = { x: flight.player.x - beam.muzzle.x, y: flight.player.y - beam.muzzle.y };
+        const span = length(toward);
+        if (span) {
+          beam.direction = { x: toward.x / span, y: toward.y / span };
+        }
+      }
+      beam.range = viewportWidth / projectedLength(beam.direction);
+    }
+    const stop = obstacleStop(beam.muzzle, beam.direction, beam.range, flight);
+    let reach = stop;
+    if (beam.age >= BEAM_TIMING[beam.kind].fires) {
+      beam.fired = true;
+      for (let at = 0; at <= stop; at = at < stop && at + 2 > stop ? stop : at + 2) {
+        const point = {
+          x: beam.muzzle.x + beam.direction.x * at,
+          y: beam.muzzle.y + beam.direction.y * at,
+        };
+        if (shipTouches(flight.facing, flight.player, point, BEAM.halfWidth)) {
+          reach = at;
+          damage(content, beam.damage, flight);
+          break;
+        }
+      }
+    }
+    beam.stopped = reach < beam.range;
+    beam.end = {
+      x: beam.muzzle.x + beam.direction.x * reach,
+      y: beam.muzzle.y + beam.direction.y * reach,
+    };
+  }
+  enemyBeams.set(
+    flight,
+    beams.filter(
+      (beam) =>
+        !out.has(beam) && beam.age < BEAM_TIMING[beam.kind].fires + BEAM_TIMING[beam.kind].shows,
+    ),
+  );
+}
+
+/** Ages each ring burst emission until it has shown. */
+function stepRingEmissions(dt: number, flight: FlightState): void {
+  const emissions = ringEmissions.get(flight);
+  if (emissions) {
+    emissions.forEach((emission) => (emission.age += dt));
+    ringEmissions.set(
+      flight,
+      emissions.filter((emission) => emission.age < RING_EMISSION_SECONDS),
     );
   }
 }
@@ -2453,6 +2971,62 @@ function releaseStardust(
   });
 }
 
+/** The disabled heavy nearest Ada within Talk range that she can salvage. */
+export function salvageTarget(
+  content: PrototypeContent,
+  flight: FlightState,
+): SpaceObject | undefined {
+  return flight.objects
+    .filter(
+      (object) =>
+        object.kind === "enemy" &&
+        object.hp > 0 &&
+        object.enemy?.disabled === true &&
+        !object.enemy.salvaged &&
+        distance(object, flight.player) <= content.tuning.talkRange,
+    )
+    .sort((a, b) => distance(a, flight.player) - distance(b, flight.player))[0];
+}
+
+/**
+ * Salvages the disabled heavy nearest Ada within Talk range: it drops its Stardust and twice the
+ * heavy weapon chance around its hull, then powers down, spared. Returns whether one was.
+ */
+export function salvage(content: PrototypeContent, flight: FlightState): boolean {
+  const object = salvageTarget(content, flight);
+  const enemy = object?.enemy;
+  if (!object || !enemy) {
+    return false;
+  }
+  enemy.salvaged = true;
+  enemy.engaged = false;
+  enemy.velocity = { x: 0, y: 0 };
+  const next = dropRandom(flight.seed, `salvage:${object.id}`);
+  const drop = rollSalvageDrop(ECONOMY, flight.sector, enemy.archetype, next);
+  releaseStardust(
+    object,
+    ECONOMY.destruction[enemy.archetype].spread,
+    next,
+    ECONOMY.pickupCap[enemy.archetype],
+    drop.stardust,
+    { at: flight.time, from: { x: object.x, y: object.y } },
+    flight,
+  );
+  if (drop.upgrade) {
+    flight.objects.push({
+      hp: 1,
+      id: `drop:${flight.nextId++}`,
+      kind: "pickup",
+      radius: content.tuning.flight.pickupRadius,
+      role: "drop",
+      upgrade: true,
+      x: object.x,
+      y: object.y,
+    });
+  }
+  return true;
+}
+
 /** Reduced motion uses Art's reduced timing: a shorter fade, a later release, a tighter spread. */
 function stepWrecks(
   content: PrototypeContent,
@@ -2485,14 +3059,14 @@ function stepWrecks(
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );
-    if (drop.weapon) {
+    if (drop.upgrade) {
       flight.objects.push({
         hp: 1,
         id: `drop:${flight.nextId++}`,
         kind: "pickup",
         radius: content.tuning.flight.pickupRadius,
         role: "drop",
-        weapon: drop.weapon,
+        upgrade: true,
         x: object.x,
         y: object.y,
       });
@@ -2565,8 +3139,12 @@ export function stepFlight(
       fire(content, input.viewportWidth ?? SCREEN.width, flight.facing, flight, events);
     }
     const shotDelays = new Map<string, number>();
-    const threat = enemies(content, slice, flight, events, shotDelays);
+    const viewportWidth = input.viewportWidth ?? SCREEN.width;
+    const threat = enemies(content, slice, viewportWidth, flight, events, shotDelays);
+    stepEnemyBeams(content, slice, viewportWidth, flight);
+    stepRingEmissions(slice, flight);
     shots(content, slice, flight, events, shotDelays);
+    stepMines(content, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);
     for (const object of flight.objects) {
       if (
@@ -2575,7 +3153,7 @@ export function stepFlight(
       ) {
         object.cooldown = Math.max(0, (object.cooldown ?? 0) - slice);
         if (!object.cooldown) {
-          damage(content, flight);
+          damage(content, content.tuning.hazardDamage, flight);
           object.cooldown = content.tuning.flight.damageInterval;
         }
       }
@@ -2594,9 +3172,9 @@ export function stepFlight(
       } else if (carriesStardust(object)) {
         events.push({ amount: object.amount ?? 0, type: "stardust" });
         object.hp = 0;
-      } else if (object.weapon) {
-        // A found weapon Ada already owns gives a pack of its ammunition instead.
-        collectWeapon(object.weapon, flight);
+      } else if (object.upgrade) {
+        // The game chooses the gift from what Ada can use as she collects it.
+        events.push({ id: object.id, type: "upgradeCollected" });
         object.hp = 0;
       }
     }
@@ -2617,6 +3195,10 @@ export function stepFlight(
     // Snap the switch wait to zero within float error of its end.
     const wait = flight.weaponSwitchFor - slice;
     flight.weaponSwitchFor = wait > 1e-9 ? wait : 0;
+    // Battle holds the recharge delay at its start, as a hit does.
+    if (inBattle(content, input.viewportWidth ?? SCREEN.width, flight)) {
+      flight.sinceDamage = 0;
+    }
     if (flight.sinceDamage >= ship.shieldRechargeDelay) {
       flight.shield = Math.min(ship.shieldMax, flight.shield + ship.shieldRechargeRate * slice);
     }
@@ -2625,6 +3207,8 @@ export function stepFlight(
     }
   }
   syncFlightRegion(content, flight);
+  releaseSummonedGuards(flight);
+  cueGuards(content, flight, events);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&

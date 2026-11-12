@@ -1,7 +1,7 @@
 /** Movement tuning shared by every ship; times are exponential time constants in seconds. */
 export interface ShipPhysics {
-  /** Maximum speed as a fraction of Ada's base maximum speed. */
-  speedRatio: number;
+  /** Maximum speed in world units per second. */
+  maxSpeed: number;
   /** Time constant for velocity to approach a non-zero target. */
   accelerationSeconds: number;
   /** Time constant for velocity to approach zero with no target. */
@@ -13,7 +13,7 @@ export interface ShipPhysics {
 }
 
 const physics = (
-  speedRatio: number,
+  maxSpeed: number,
   accelerationSeconds: number,
   brakingSeconds: number,
   turnSeconds: number,
@@ -22,7 +22,7 @@ const physics = (
   accelerationSeconds,
   aimTurnSeconds,
   brakingSeconds,
-  speedRatio,
+  maxSpeed,
   turnSeconds,
 });
 
@@ -40,15 +40,18 @@ export const SHARED_SHIP_PHYSICS: SharedShipPhysics = {
   restSpeedFraction: 0.01,
 };
 
-/** Provisional tuning for Ada's ship and every enemy archetype. */
+/**
+ * Provisional tuning for Ada's ship and every enemy archetype (gameplay/ships.md "Values"). Ada's
+ * maximum speed is her base engine's; engine levels raise it.
+ */
 export const SHIP_PHYSICS = {
-  ada: physics(1, 0.36, 0.55, 0.22, 0.07),
-  capital: physics(0.2, 2.5, 3, 2, 0.5),
-  fighter: physics(0.8, 0.4, 0.5, 0.3, 0.15),
-  frigate: physics(0.4, 1.5, 2, 1.2, 0.4),
-  interceptor: physics(1.1, 0.9, 1.2, 0.6, 0.12),
+  ada: physics(160, 0.36, 0.55, 0.22, 0.07),
+  capital: physics(40, 2.5, 3, 2, 0.5),
+  fighter: physics(140, 0.4, 0.5, 0.3, 0.15),
+  frigate: physics(80, 1.5, 2, 1.2, 0.4),
+  interceptor: physics(200, 0.9, 1.2, 0.6, 0.12),
   // Fixed in place: only its turrets turn. The movement constants never act at speed 0.
   platform: physics(0, 1, 1, 1, 0.3),
-  retaliator: physics(0.45, 1.2, 1.5, 0.9, 0.35),
-  swarm: physics(0.9, 0.2, 0.25, 0.12, 0.1),
+  retaliator: physics(90, 1.2, 1.5, 0.9, 0.35),
+  swarm: physics(160, 0.2, 0.25, 0.12, 0.1),
 } satisfies Record<string, ShipPhysics>;

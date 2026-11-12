@@ -94,19 +94,19 @@ describe("pacing simulation runs", () => {
 
   it("spends firing time on each asteroid in proportion to its size's hit points", () => {
     const hp = ASTEROID_FIELDS[1]!.hp;
-    const basic = weaponAt("basic", 1);
-    // Basic deals one hit point per volley, so each hit point costs one interval over the hit rate.
+    const laser = weaponAt("laser", 1);
+    // Laser deals one hit point per volley, so each hit point costs one interval over the hit rate.
     for (const size of ASTEROID_SIZES) {
-      expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", size)).toBeCloseTo(
-        (hp[size] * basic.intervalSeconds) / DEFAULT_BEHAVIOUR.hitRate,
+      expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", size)).toBeCloseTo(
+        (hp[size] * laser.intervalSeconds) / DEFAULT_BEHAVIOUR.hitRate,
       );
     }
     const halfAim = { ...DEFAULT_BEHAVIOUR, hitRate: DEFAULT_BEHAVIOUR.hitRate / 2 };
-    expect(asteroidKillSeconds(halfAim, 1, "basic", "huge")).toBeCloseTo(
-      2 * asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", "huge"),
+    expect(asteroidKillSeconds(halfAim, 1, "laser", "huge")).toBeCloseTo(
+      2 * asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", "huge"),
     );
     expect(asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "heavyMissile", "huge")).toBeLessThan(
-      asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "basic", "huge"),
+      asteroidKillSeconds(DEFAULT_BEHAVIOUR, 1, "laser", "huge"),
     );
     const { runs, summary } = runScenario({
       ...options,
@@ -158,10 +158,8 @@ describe("pacing simulation runs", () => {
   });
 
   it("applies value overrides to drops and caches", () => {
-    const catalog = scenarioEconomy({ discoveryStardust: 3, enemyStardust: { swarm: 7 } });
+    const catalog = scenarioEconomy({ discoveryStardust: 3 });
     expect(catalog.discoveryStardust).toBe(3);
-    expect(catalog.enemyStardust.swarm).toBe(7);
-    expect(catalog.enemyStardust.fighter).toBe(ECONOMY.enemyStardust.fighter);
     const base = runScenario({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "base", prices: {} },
@@ -201,6 +199,28 @@ describe("pacing simulation runs", () => {
     expect(stations(ECONOMY.station.indicatorRange)).toBeGreaterThan(2 * stations(0));
   });
 
+  it("collects upgrade pickups from destroyed small craft and salvaged heavies as gifts", () => {
+    const { runs, summary } = runScenario({
+      ...options,
+      minutes: 30,
+      scenario: {
+        behaviour: { salvageShare: 1 },
+        description: "",
+        economy: { upgradeDropChance: { heavy: 1, small: 1 } },
+        name: "upgrades",
+        prices: {},
+      },
+      sector: 2,
+    });
+    const total = (record: Partial<Record<string, number>>) =>
+      Object.values(record).reduce((sum: number, count) => sum + (count ?? 0), 0);
+    for (const run of runs) {
+      expect(total(run.upgrades)).toBeGreaterThan(0);
+    }
+    expect(total(summary.salvagedPerMinute)).toBeGreaterThan(0);
+    expect(summary.upgradesPerHour.track).toBeGreaterThan(0);
+  });
+
   it("fights galaxy three's capital route guards", () => {
     const { runs } = runScenario({
       ...options,
@@ -223,7 +243,8 @@ describe("pacing simulation runs", () => {
       behaviour: { ...DEFAULT_BEHAVIOUR, jobs: true },
       minutes: 40,
       scenario,
-      seeds: 4,
+      // Deliveries are the rarest job; six runs take at least one.
+      seeds: 6,
     });
     const completed = (type: "survey" | "delivery" | "rescue" | "hunt") =>
       withJobs.runs.reduce((sum, run) => sum + (run.jobs[type] ?? 0), 0);
@@ -264,19 +285,19 @@ describe("pacing simulation runs", () => {
       }).summary;
     expect(SCENARIOS.armed!.startWeapons).toEqual(["heavyMissile", "scattershot", "phaser"]);
     const base = armed(ECONOMY.ammo.packPrice);
-    expect(base.packPrice).toBe(6);
+    expect(base.packPrice).toBe(9);
     expect(base.packsPerHour).toBeGreaterThan(0);
     expect(base.ammoSpentPerMinute).toBeCloseTo(
       (base.packsPerHour / 60) * ECONOMY.ammo.packPrice,
       6,
     );
-    // Typical use of the stronger weapons costs about a sixth of income.
+    // Typical use of the stronger weapons costs a modest share of income (gameplay/economy.md).
     expect(base.ammoShareOfIncome).toBeGreaterThan(0.1);
-    expect(base.ammoShareOfIncome).toBeLessThan(0.25);
+    expect(base.ammoShareOfIncome).toBeLessThan(0.3);
     expect(armed(ECONOMY.ammo.packPrice * 2).ammoSpentPerMinute).toBeGreaterThan(
       base.ammoSpentPerMinute * 1.5,
     );
-    // A player who never restocks spends nothing and runs out to Basic.
+    // A player who never restocks spends nothing and runs out to Laser.
     const unstocked = armed(ECONOMY.ammo.packPrice, 0);
     expect(unstocked.ammoSpentPerMinute).toBe(0);
     expect(unstocked.emptiedPerHour).toBeGreaterThan(0);

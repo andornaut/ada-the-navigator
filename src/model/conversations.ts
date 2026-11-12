@@ -31,6 +31,13 @@ export interface ConversationFacts {
   readonly docked: boolean;
   /** A live enemy presses Ada (flight.ts dronesNear); damage from debris or hazards is not one. */
   readonly dronesNear: boolean;
+  /**
+   * Destinations whose blocking guard was cued this step (flight.ts cueGuards), each with a
+   * uniform pick in [0, 1) that chooses its guard line.
+   */
+  readonly guardCues: readonly { readonly destination: string; readonly pick: number }[];
+  /** A heavy was disabled this step, its hull holding. */
+  readonly heavyDisabled: boolean;
   /** Holodisks Ada holds: every galaxy's recovered one. */
   readonly holodisks: number;
   /** Ada is inside a space current. */
@@ -325,6 +332,18 @@ export class ConversationDirector {
     }
     if (facts.newlyMapped.length > 0 || facts.newStation) {
       this.request((trigger) => trigger.kind === "mapped");
+    }
+    if (facts.heavyDisabled) {
+      this.request((trigger) => trigger.kind === "disabled");
+    }
+    // Each cued destination plays one guard line, picked at random from the pool.
+    const guardLines = this.conversations.filter(({ trigger }) => trigger.kind === "guard");
+    for (const { destination, pick } of facts.guardCues) {
+      const conversation =
+        guardLines[Math.min(guardLines.length - 1, Math.floor(pick * guardLines.length))];
+      if (conversation) {
+        this.enqueue({ conversation, holds: always, instance: `guard:${sector}:${destination}` });
+      }
     }
     if (facts.capitalInSight) {
       this.request(

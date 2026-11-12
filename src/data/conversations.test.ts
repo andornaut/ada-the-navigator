@@ -46,11 +46,8 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 }
 
 // Black Eye's pool waits for a Black Eye flight: no galaxy past Whirlpool can be flown yet.
-// Needle's and Andromeda's pools wait for their chapters, and the heavy-disabled reaction for
-// disabling and salvage.
+// Needle's and Andromeda's pools wait for their chapters.
 const UNBUILT_LINES = [
-  "Its weapons are down. We could salvage parts and let it go.",
-  "No need to wreck it.",
   // The first meetings, whose triggers come with Gameplay's rules for them.
   "Astra, did that rock just wave at us?",
   "That's a Cobble. They're made of stone, and they eat the ore they mine.",
@@ -171,6 +168,7 @@ describe("in-flight conversations", () => {
       ["Penny", "Woof! Woof!"],
       ["Ada", "Penny, did you sense something, girl?"],
       ["Ada", "Our map is growing!"],
+      ["Ada", "No need to wreck it."],
       ["Ada", "Then let's make new memories."],
       ["Ada", "Maybe they can fix you too, Astra!"],
       ["Ada", "She thinks you're fun."],

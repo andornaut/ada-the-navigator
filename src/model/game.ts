@@ -75,6 +75,8 @@ import {
   placeDestinationAhead,
   placeHuntingPack,
   routeBlocked,
+  salvage,
+  salvageTarget,
   settleRouteEncounters,
   stepFlight,
   syncFlightRegion,
@@ -124,7 +126,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
-import { restoreSave } from "./save.ts";
+import { restoreSave, SAVE_VERSION } from "./save.ts";
 import {
   buy,
   fill,
@@ -181,8 +183,10 @@ import type {
   UseAction,
   Vec,
 } from "./types.ts";
+import { applyUpgrade, chooseUpgrade } from "./upgrade-drops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
+  collectWeapon,
   ownedForSave,
   ownedWeapons,
   selectFlightWeapon,
@@ -214,7 +218,7 @@ export function newGameState(): GameState {
     started: false,
     tasks: {},
     unlocked: [1],
-    version: 2,
+    version: SAVE_VERSION,
   };
 }
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
@@ -381,7 +385,7 @@ export class GameModel {
   constructor(content: PrototypeContent, saved?: unknown) {
     this.content = content;
     this.state = restoreSave(saved) ?? newGameState();
-    // A save from before achievements unlocks what it already reached, without notices.
+    // Achievements the save already reached unlock without notices.
     unlockAchievements(ACHIEVEMENTS, ACHIEVEMENT_TOTALS, this.state.achievements, this.state);
     this.talk = new ConversationDirector(
       [...CONVERSATIONS, ...PROJECT_THANKS],
@@ -575,6 +579,9 @@ export class GameModel {
     if (job) {
       return job;
     }
+    if (this.salvageable()) {
+      return "salvage";
+    }
     const id = this.nearest();
     if (!id) {
       return undefined;
@@ -663,10 +670,10 @@ export class GameModel {
     const owned = ownedForSave(flight);
     economy.ownedWeapons = owned;
     // A granted weapon in use saves as the last real selection that is still owned.
-    if (flight.weapon === "basic" || owned.includes(flight.weapon)) {
+    if (flight.weapon === "laser" || owned.includes(flight.weapon)) {
       economy.weapon = flight.weapon;
-    } else if (economy.weapon !== "basic" && !owned.includes(economy.weapon)) {
-      economy.weapon = "basic";
+    } else if (economy.weapon !== "laser" && !owned.includes(economy.weapon)) {
+      economy.weapon = "laser";
     }
     economy.levels = structuredClone(flight.levels);
     // A granted weapon's flight ammunition stays out of the economy.
@@ -675,6 +682,27 @@ export class GameModel {
         economy.ammo[weapon] = flight.ammo[weapon];
       }
     }
+  }
+  /**
+   * Gives an upgrade pickup's gift, chosen from what Ada can use as she collects it and seeded
+   * by the pickup; the HUD's item notice names it from what Ada then holds. A new weapon joins
+   * the roster with its packs and is equipped unless the switch wait runs.
+   */
+  private collectUpgrade(id: string, flight: FlightState): void {
+    this.pullLoadout();
+    const gift = chooseUpgrade(
+      ECONOMY,
+      this.state.economy,
+      dropRandom(flight.seed, `upgrade:${id}`),
+    );
+    if (gift.kind === "weapon") {
+      collectWeapon(gift.weapon, flight);
+      this.pullLoadout();
+    } else {
+      applyUpgrade(ECONOMY, gift, this.state.economy);
+      this.pushLoadout();
+    }
+    this.syncAchievements();
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
   private pushLoadout(): void {
@@ -1291,8 +1319,11 @@ export class GameModel {
         this.current.stations.push(event.id);
         newStation = true;
       }
-      if (event.type === "enemyDisabled") {
-        this.current.disabledEnemies++;
+      if (event.type === "enemyDestroyed") {
+        this.current.destroyedEnemies++;
+      }
+      if (event.type === "upgradeCollected") {
+        this.collectUpgrade(event.id, f);
       }
       // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
       // destination.
@@ -1349,6 +1380,12 @@ export class GameModel {
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(this.content, f),
+      guardCues: events.flatMap((event) =>
+        event.type === "guardCue"
+          ? [{ destination: event.id, pick: dropRandom(f.seed, `guard-line:${event.id}`)() }]
+          : [],
+      ),
+      heavyDisabled: events.some((event) => event.type === "enemyDisabled"),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.sector, 0, f.player),
       inDanger: this.inDanger,
@@ -1620,6 +1657,10 @@ export class GameModel {
   }
   interact(): void {
     if (this.useJob()) {
+      return;
+    }
+    const flight = this.state.flight;
+    if (flight && this.salvageable() && salvage(this.content, flight)) {
       return;
     }
     const id = this.nearest();
@@ -1982,6 +2023,17 @@ export class GameModel {
   get towing(): boolean {
     return this.state.mode === "space" && Boolean(this.state.flight?.tow);
   }
+  /** Whether Use salvages a disabled heavy here: in flight, with no conversation or card open. */
+  private salvageable(): boolean {
+    const f = this.state.flight;
+    return (
+      f !== null &&
+      this.state.mode === "space" &&
+      !this.state.dialogue &&
+      !this.state.docked &&
+      salvageTarget(this.content, f) !== undefined
+    );
+  }
   /** A delivery's or a supply run's item is aboard in flight: Travel here refuses, as towing. */
   get carrying(): boolean {
     if (this.state.mode !== "space" || !this.state.flight) {
@@ -2102,16 +2154,7 @@ export class GameModel {
         f,
       );
     }
-    stepCalf(
-      f.sector,
-      {
-        accelerationSeconds: this.content.tuning.physics.accelerationSeconds,
-        maxSpeed: this.content.tuning.maxSpeed,
-      },
-      dt,
-      f.player,
-      f.calf,
-    );
+    stepCalf(f.sector, this.content.tuning.physics, dt, f.player, f.calf);
     if (calfHome(family, f.calf)) {
       delete f.calf;
       this.finishActivity(f.sector);

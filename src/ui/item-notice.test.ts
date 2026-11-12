@@ -8,6 +8,7 @@ import {
   gainNotice,
   NOTICE_ACCENTS,
   noticeDestination,
+  noticeLanding,
   NoticeQueue,
 } from "./item-notice.ts";
 import { chipLeft, chipWidth, flyPoint, ITEM_NOTICE } from "./layout/itemNotice.ts";
@@ -46,6 +47,42 @@ describe("item notice wording", () => {
     );
   });
 
+  it("names an upgrade drop's level or paint scheme as + {item}", () => {
+    expect(notice({ kind: "weaponLevel", level: 2, weapon: "laser" }).label).toBe(
+      "+ Laser level 2",
+    );
+    expect(notice({ kind: "level", level: 3, track: "shield" }).label).toBe("+ Shield level 3");
+    expect(notice({ kind: "level", level: 2, track: "engine" }).label).toBe("+ Engine level 2");
+    expect(notice({ kind: "level", level: 2, track: "tractor" }).label).toBe(
+      "+ Tractor beam level 2",
+    );
+    expect(notice({ kind: "paint", scheme: "cobalt" }).label).toBe("+ Cobalt paint");
+  });
+
+  it("flies a weapon level to its disc and a Shield level to the shield bar; the rest fade in place", () => {
+    const level = notice({ kind: "weaponLevel", level: 2, weapon: "phaser" });
+    expect([level.kind, level.target]).toEqual(["weapon", { kind: "weapon", weapon: "phaser" }]);
+    expect("mask" in level.icon && level.icon.mask).toContain("phaser");
+    const shield = notice({ kind: "level", level: 2, track: "shield" });
+    expect([shield.kind, shield.icon, shield.target]).toEqual([
+      "shield",
+      { frames: 2, sprite: "icon-shop-shield" },
+      { kind: "shield" },
+    ]);
+    for (const [gain, sprite] of [
+      [{ kind: "level", level: 2, track: "engine" }, "icon-shop-engine-tuning"],
+      [{ kind: "level", level: 2, track: "tractor" }, "icon-shop-tractor-beam"],
+      [{ kind: "paint", scheme: "cobalt" }, "icon-shop-ship-paint"],
+    ] as const) {
+      const upgrade = notice(gain);
+      expect([upgrade.kind, upgrade.icon, upgrade.target]).toEqual([
+        "upgrade",
+        { frames: 2, sprite },
+        { kind: "none" },
+      ]);
+    }
+  });
+
   it("adds ×{n} to a merged label", () => {
     expect(countedLabel(LABELS, ammo.label, 1)).toBe("+ Rapid Missile ammo");
     expect(countedLabel(LABELS, ammo.label, 2)).toBe("+ Rapid Missile ammo ×2");
@@ -55,7 +92,9 @@ describe("item notice wording", () => {
     expect(NOTICE_ACCENTS).toEqual({
       cargo: "#feae34",
       holodisk: "#e868c8",
+      shield: "#70ace8",
       tow: "#b8bfc9",
+      upgrade: "#bfa06f",
       weapon: "#bfa06f",
     });
     expect([holodisk.kind, holodisk.icon, holodisk.target]).toEqual([
@@ -187,18 +226,22 @@ describe("item notice geometry", () => {
     expect(chipLeft(600, 100, 50.75, 500)).toBe(400);
   });
 
-  it("lands on the cargo icon, a weapon's disc, or the pill's centre", () => {
+  it("lands on the cargo icon, a weapon's disc, the shield bar, or the pill's centre", () => {
     const places = {
       cargo: 200,
       leftmostTarget: 400,
       pill: { left: 50.75, width: 219.84 },
       right: 696,
       row: 16.5,
+      shield: { x: 360, y: 330 },
       weapons: new Map([["phaser", 520]]),
     };
     expect(noticeDestination(places, { kind: "cargo" })).toBe(200);
     expect(noticeDestination(places, { kind: "weapon", weapon: "phaser" })).toBe(520);
     expect(noticeDestination(places, { kind: "none" })).toBeCloseTo(50.75 + 219.84 / 2, 9);
+    expect(noticeDestination(places, { kind: "shield" })).toBe(360);
+    expect(noticeLanding(places, { kind: "shield" })).toBe(330);
+    expect(noticeLanding(places, { kind: "weapon", weapon: "phaser" })).toBe(16.5);
   });
 
   it("flies on a quadratic curve through the destination's x, 6 below the start", () => {

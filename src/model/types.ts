@@ -73,7 +73,8 @@ export interface SpaceObject extends Vec {
   velocity?: Vec;
   routeId?: string;
   behavior?: "pursue" | "shoot" | "guard";
-  weapon?: Exclude<Weapon, "basic">;
+  /** An upgrade pickup; its gift is chosen when Ada collects it. */
+  upgrade?: true;
   cooldown?: number;
   /** Stardust carried by a Stardust pickup. */
   amount?: number;
@@ -82,7 +83,10 @@ export interface SpaceObject extends Vec {
 }
 export interface Shot extends Vec {
   projectile?: "bolt" | "missile" | "dot";
-  damage?: number;
+  /** An enemy-only weapon's bolt, which draws as its own. */
+  enemyWeapon?: "ringBurst";
+  /** HP a hit removes. */
+  damage: number;
   /** World radius of a player missile's blast, which damages every enemy in it. */
   blast?: number;
   fade?: ProjectileFade;
@@ -92,6 +96,17 @@ export interface Shot extends Vec {
   life: number;
   piercing: boolean;
   hitIds: string[];
+}
+/** A laid enemy mine (gameplay/ships.md "Enemy weapons"), still until it bursts or fades. */
+export interface Mine extends Vec {
+  /** Seconds since it was laid. */
+  age: number;
+  damage: number;
+  /** Its fizzle at the end of its life, or its pop, still playing; it no longer collides. */
+  end?: { age: number; kind: "fizzle" | "pop" };
+  id: string;
+  /** The ship that laid it. */
+  ownerId: string;
 }
 /** Only inactive notable records and permanent defeat tombstones survive chunk eviction. */
 export interface PersistentWorldState {
@@ -123,9 +138,13 @@ export interface FlightState {
   dangerFor: number;
   cargo: number;
   weapon: Weapon;
-  ownedWeapons?: Exclude<Weapon, "basic">[];
+  ownedWeapons?: Exclude<Weapon, "laser">[];
   /** Run-only weapons from the grant cheat; they never enter saved ownership. */
-  grantedWeapons?: Exclude<Weapon, "basic">[];
+  grantedWeapons?: Exclude<Weapon, "laser">[];
+  /** Destinations whose blocking guard has been cued this flight (flight.ts cueGuards). */
+  guardCues?: string[];
+  /** Cued guards flying toward Ada until they are on screen. */
+  summonedGuards?: string[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
   /** Shots left per upgrade weapon, mirrored from the economy; granted weapons keep their own. */
@@ -137,6 +156,8 @@ export interface FlightState {
   /** Guide a calf's calf in this flight, once placed at its start (model/calf.ts). */
   calf?: GuidedCalf;
   fireCooldown: number;
+  /** Enemy mines laid this flight. */
+  mines: Mine[];
   objects: SpaceObject[];
   shots: Shot[];
   chunks: string[];
@@ -153,7 +174,7 @@ export interface SectorProgress {
   deposited: number;
   questItem: string | null;
   discoveries: number;
-  disabledEnemies: number;
+  destroyedEnemies: number;
   /** Discovered station ids, which are travel destinations. */
   stations: string[];
   /**
@@ -260,12 +281,12 @@ export interface JobsState {
   /** Jobs made so far, which seeds the next. */
   made: number;
 }
-/** Shots left for each upgrade weapon; Basic is unlimited. No cap. */
+/** Shots left for each upgrade weapon; Laser is unlimited. No cap. */
 export type AmmoCounts = Record<UpgradeWeapon, number>;
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
+  /** The Shield upgrade, which sets both its capacity and its recharge. */
   shield: number;
-  shieldRecharge: number;
   engine: number;
   tractor: number;
 }
@@ -292,7 +313,8 @@ export interface DialogueState {
   context: string;
 }
 export interface GameState {
-  version: 2;
+  /** The save format; a save of another version is reset, not migrated. */
+  version: 10;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];
@@ -303,7 +325,7 @@ export interface GameState {
   docked: string | null;
   economy: EconomyState;
   notice: string;
-  /** The prologue plays once; saves already past the start count it as seen. */
+  /** The prologue plays once. */
   prologueSeen: boolean;
   /** Astra announces a newly unlocked galaxy once, at the next boarding. */
   announceGalaxy: boolean;
@@ -320,11 +342,15 @@ export interface GameState {
 }
 export type FlightEvent =
   | { type: "depleted" }
-  /** The equipped weapon ran out of ammunition and Ada switched to Basic. */
+  /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }
-  | { type: "enemyDisabled" }
+  | { type: "enemyDestroyed" }
+  /** Ada collected an upgrade pickup. */
+  | { id: string; type: "upgradeCollected" }
+  /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
+  | { id: string; type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
   | {
@@ -338,4 +364,6 @@ export type FlightEvent =
     }
   | { type: "discovered"; id: string }
   /** A pickup collected at contact, for the view's zip into the ship; it changes no state. */
-  | { type: "collected"; id: string; lostItem?: true; x: number; y: number };
+  | { type: "collected"; id: string; lostItem?: true; x: number; y: number }
+  /** Ada came within Talk range of a destination its guard still blocks, first time this flight. */
+  | { id: string; type: "guardCue" };

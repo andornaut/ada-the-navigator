@@ -20,8 +20,8 @@ function screenToWorld(screen: Point): Point {
 /**
  * World offset from the hull centre to a turret's drawn barrel tip: the pivot of the hull's
  * drawn heading plus the muzzle of the top's drawn aim frame, cycling through the top's barrels
- * by `volley`. Undefined when the art defines no muzzle for that turret, which keeps the model
- * origin.
+ * by `volley`; an aft top's drawn aim is `(k + 8) mod 16` at hull heading k. Undefined when the
+ * art defines no muzzle for that turret, which keeps the model origin.
  */
 export function muzzleOffset(
   layout: MuzzleLayout | undefined,
@@ -31,8 +31,10 @@ export function muzzleOffset(
   volley: number,
 ): Point | undefined {
   const part = layout?.turrets.get(turret);
-  const pivot = part?.pivots[drawnIndex(facing)];
-  const tips = part?.tips[drawnIndex(aim)];
+  const heading = drawnIndex(facing);
+  const pivot = part?.pivots[heading];
+  const tips =
+    part?.tips[part.aft ? (heading + DRAWN_DIRECTIONS / 2) % DRAWN_DIRECTIONS : drawnIndex(aim)];
   if (!pivot || !tips?.length) {
     return undefined;
   }

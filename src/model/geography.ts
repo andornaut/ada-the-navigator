@@ -1,6 +1,5 @@
-import { enemyCatalog } from "../data/enemy-catalog.ts";
 import type { PrototypeContent } from "../data/types.ts";
-import { enemyEffects } from "./enemy-ai.ts";
+import { enemyDefeated } from "./enemy-ai.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 
@@ -36,16 +35,17 @@ function near(first: Vec, second: Vec): boolean {
     Math.abs(first.y - second.y) <= ACTIVE_CHUNK_RADIUS
   );
 }
-/**
- * An enemy still in the fight: alive and not defeated. A disabled heavy (every required
- * hardpoint destroyed) is defeated whatever its hull HP, so it no longer guards a route.
- */
+/** A live enemy: not destroyed, and not a salvaged heavy, which is spared and powered down. */
 export function liveEnemy(object: SpaceObject): boolean {
   return (
     object.kind === "enemy" &&
     object.hp > 0 &&
-    (!object.enemy || !enemyEffects(enemyCatalog[object.enemy.archetype], object.enemy).defeated)
+    (!object.enemy || (!enemyDefeated(object.enemy) && !object.enemy.salvaged))
   );
+}
+/** A guard that still blocks its route: neither disabled nor destroyed. */
+function blockingGuard(object: SpaceObject): boolean {
+  return liveEnemy(object) && !object.enemy?.disabled;
 }
 export function persistentObject(object: SpaceObject): boolean {
   return (
@@ -90,7 +90,7 @@ function account(
       delete index.packs[packId];
     }
   }
-  if (object.routeId) {
+  if (object.routeId && blockingGuard(object)) {
     const guards = index.routes.get(object.routeId) ?? new Set<string>();
     if (add) {
       guards.add(object.id);
@@ -136,7 +136,7 @@ export function retainedRouteBlocked(id: string, flight: FlightState): boolean {
   return index
     ? Boolean(index.routes.get(id)?.size)
     : Object.values(flight.world.notables).some(
-        (object) => object !== null && object.routeId === id && liveEnemy(object),
+        (object) => object !== null && object.routeId === id && blockingGuard(object),
       );
 }
 function activate(content: PrototypeContent, id: string, flight: FlightState): void {
@@ -211,6 +211,8 @@ export function syncFlightRegion(content: PrototypeContent, flight: FlightState)
     if (
       object.kind === "destination" ||
       object.id.startsWith("whale-debris:") ||
+      // A summoned guard stays loaded while it flies toward Ada (flight.ts cueGuards).
+      flight.summonedGuards?.includes(object.id) ||
       near(coordinates(content, object), center)
     ) {
       active.push(object);

@@ -561,6 +561,13 @@ Reactions:
   the glowing parts."
 - A heavy disabled, first time each flight: Astra: "Its weapons are down. We
   could salvage parts and let it go." Ada: "No need to wreck it." (happy)
+- A guard still blocks the destination Ada reached, one variant in turn:
+  - Astra: "Something's guarding this place. Here it comes!" Ada: "Get ready,
+    Penny."
+  - Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
+    with it."
+  - Astra: "A guard is blocking the way in. Stop its weapons first." Ada: "Okay.
+    I'm ready."
 
 Sunflower:
 
@@ -726,7 +733,8 @@ beacon light. Welcome!"
 - Disabled heavy banner: Disabled.
 - Status labels: Shield, Cargo, Stardust, Ore.
 - Item notices, always "+ {item}": "+ Holodisk", "+ Spare parts", "+ {weapon}",
-  "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
+  "+ {weapon} level {n}", "+ Shield level {n}", "+ Engine level {n}", "+ Tractor
+  beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
   " ×{n}".
 - Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6, Carrying:
   {item}, Towing: {craft}; Equipment: Shield, Engine, Tractor beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition

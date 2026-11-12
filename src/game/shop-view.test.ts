@@ -12,7 +12,7 @@ const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.
 
 describe("shop rows on the station view", () => {
   it("maps items to Art's shop glyphs", () => {
-    // Basic is never for sale; its sheet draws in its upgrade composite.
+    // Laser is never for sale; its sheet draws in its upgrade composite.
     for (const weapon of [
       "rapidMissile",
       "multiLaser",
@@ -30,13 +30,12 @@ describe("shop rows on the station view", () => {
         "disabled",
       ]);
     }
-    expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "basic" })).toEqual({
+    expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "laser" })).toEqual({
       kind: "upgrade",
-      weapon: "basic",
+      weapon: "laser",
     });
     for (const [track, key] of [
       ["shield", "icon-shop-shield"],
-      ["shieldRecharge", "icon-shop-shield-recharge"],
       ["engine", "icon-shop-engine-tuning"],
       ["tractor", "icon-shop-tractor-beam"],
     ] as const) {
@@ -65,7 +64,7 @@ describe("shop rows on the station view", () => {
   });
 
   it("puts paint rows in their own group with levels and prices for the rest", () => {
-    const economy = { ...newEconomy(ECONOMY), stardust: 90 };
+    const economy = { ...newEconomy(ECONOMY), stardust: 130 };
     const rows = shopRows(ECONOMY, economy, "ship").map((row) =>
       stationRow(ECONOMY, PROTOTYPE.labels, economy.stardust, row),
     );
@@ -74,11 +73,11 @@ describe("shop rows on the station view", () => {
       group: "items",
       level: "Level 1 of 3",
       name: "Shield",
-      price: 150,
+      price: 450,
       state: "unaffordable",
     });
-    expect(rows[3]).toMatchObject({ name: "Tractor beam", price: 80, state: "forSale" });
-    expect(rows.slice(4).map((row) => [row.group, row.name, row.state])).toEqual([
+    expect(rows[2]).toMatchObject({ name: "Tractor beam", price: 120, state: "forSale" });
+    expect(rows.slice(3).map((row) => [row.group, row.name, row.state])).toEqual([
       ["paint", "Classic", "inUse"],
       ["paint", "Cobalt", "forSale"],
       ["paint", "Seafoam", "forSale"],

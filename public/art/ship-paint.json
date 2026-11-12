@@ -15,7 +15,7 @@
     {
       "id": "cobalt",
       "name": "Cobalt",
-      "price": 50,
+      "price": 75,
       "canopyRoof": "#eef5ff",
       "canopySides": "#b4c8e6",
       "frontSides": "#4f7fd0",
@@ -26,7 +26,7 @@
     {
       "id": "seafoam",
       "name": "Seafoam",
-      "price": 50,
+      "price": 75,
       "canopyRoof": "#14697a",
       "canopySides": "#0d4c59",
       "frontSides": "#a7dcc9",
@@ -37,7 +37,7 @@
     {
       "id": "graphite",
       "name": "Graphite",
-      "price": 50,
+      "price": 75,
       "canopyRoof": "#59d0ff",
       "canopySides": "#2a92cc",
       "frontSides": "#858ea4",
@@ -48,7 +48,7 @@
     {
       "id": "iris",
       "name": "Iris",
-      "price": 50,
+      "price": 75,
       "canopyRoof": "#3a2b8c",
       "canopySides": "#271c66",
       "frontSides": "#b2a0ec",

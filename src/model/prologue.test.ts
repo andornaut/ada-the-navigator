@@ -335,34 +335,10 @@ describe("prologue", () => {
 });
 
 describe("prologue save flag", () => {
-  const legacy = (change: (state: Record<string, unknown>) => void = () => {}) => {
-    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-    delete state.prologueSeen;
-    change(state);
-    return restoreSave(state);
-  };
-
   it("round-trips", () => {
     const model = new GameModel(PROTOTYPE);
     model.state.prologueSeen = true;
     expect(restoreSave(model.save())?.prologueSeen).toBe(true);
-  });
-
-  it("plays the prologue for a save that has not started", () => {
-    expect(legacy()?.prologueSeen).toBe(false);
-  });
-
-  it("skips it for a save past the start", () => {
-    const launched = new GameModel(PROTOTYPE);
-    launched.startSector(1);
-    const flying = JSON.parse(launched.save()) as Record<string, unknown>;
-    delete flying.prologueSeen;
-    expect(restoreSave(flying)?.prologueSeen).toBe(true);
-    expect(legacy((state) => (state.unlocked = [1, 2]))?.prologueSeen).toBe(true);
-    expect(
-      legacy((state) => ((state.progress as Record<string, { stage: number }>)[1]!.stage = 1))
-        ?.prologueSeen,
-    ).toBe(true);
   });
 
   it("rejects a malformed flag", () => {

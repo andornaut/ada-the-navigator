@@ -15,7 +15,7 @@ const VIEW: ShipView = {
   stardust: 1_234_567,
   tractor: 3,
   weapons: [
-    { ammo: null, id: "basic", level: 2 },
+    { ammo: null, id: "laser", level: 2 },
     { ammo: 42, id: "rapidMissile", level: 1 },
   ],
 };

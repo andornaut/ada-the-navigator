@@ -1,15 +1,19 @@
 import {
+  ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
   type EnemyDefinition,
   escortTuning,
+  fireDamageRatio,
   type FireProfile,
   type HardpointDefinition,
   type Point,
+  RING_BOLTS,
 } from "../data/enemy-catalog.ts";
-import { MUZZLE_LAYOUTS } from "../data/enemy-muzzles.ts";
+import { MUZZLE_ART, muzzleLayout } from "../data/enemy-muzzles.ts";
 import { SHARED_SHIP_PHYSICS } from "../data/ship-physics.ts";
 import { muzzleOffset } from "./muzzles.ts";
+import { fanHeading } from "./player-projectiles.ts";
 import {
   direction,
   hullOffset,
@@ -43,6 +47,11 @@ export interface EnemyState {
   /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
   aim: Point | null;
   archetype: EnemyArchetype;
+  /**
+   * A heavy with every weapon hardpoint destroyed: it stops attacking and steering, coasts to
+   * rest and no longer counts for battle (gameplay/ships.md "Heavy hull and disabling").
+   */
+  disabled: boolean;
   engaged: boolean;
   /** The capital this ship escorts, or null. */
   escortOf: string | null;
@@ -53,6 +62,7 @@ export interface EnemyState {
   /** Smoothed movement heading; null at rest or with no movement request. */
   heading: Point | null;
   home: Point;
+  /** Hull hp; a heavy's is its hull HP (gameplay/ships.md "Heavy hull and disabling"). */
   hp: number;
   id: string;
   lastSeen: Point | null;
@@ -63,32 +73,50 @@ export interface EnemyState {
   primaryCooldown: number;
   pursuitSeconds: number;
   returning: boolean;
+  /** A disabled heavy Ada salvaged: powered down, passable and drawn dimmed. */
+  salvaged: boolean;
   tactic: TacticState;
   velocity: Point;
 }
 export interface EnemyContext {
   dormantPackMembers?: Readonly<Record<string, number>>;
-  adaSpeed: number;
   adaWidth: number;
   dt: number;
   initialPackSizes: Readonly<Record<string, number>>;
+  /** The route position's lead (ENEMY_AIM.lead). */
+  lead: number;
   peers: readonly EnemyState[];
   player: Point;
-  speedCapRatio: number;
+  /** Ada's velocity averaged for aim (ENEMY_AIM.velocitySeconds). */
+  playerVelocity: Point;
+  /** Base enemy projectile speed; each fire profile's projectileSpeedRatio multiplies it. */
+  projectileSpeed: number;
+  /**
+   * A cued route guard (flight.ts cueGuards): it flies straight at Ada at full speed, past its
+   * pursuit limits and holding its fire, until she sees it.
+   */
+  summoned?: boolean;
   targetable: boolean;
   visibility: "visible" | "occluded" | "unknown";
 }
 export interface FireIntent {
   aim: Point;
+  /** The weapon's damage at its level as a multiple of base shot damage. */
+  damageRatio: number;
   delay: number;
   hardpointId: string | null;
+  level: FireProfile["level"];
   origin: Point;
-  profileId: string;
+  /** A beam is a Phaser or lance shot, fired after its tell; a mine is laid where it starts. */
   projectile: FireProfile["projectile"];
   speed: number;
+  weapon: FireProfile["weapon"];
 }
 export interface EnemyEffects {
+  /** The hull is at 0 HP: the ship is destroyed. */
   defeated: boolean;
+  /** Every weapon hardpoint is destroyed: the heavy stops attacking and steering. */
+  disabled: boolean;
   disabledHardpoints: string[];
   /** True when every engine is disabled. */
   movementStopped: boolean;
@@ -107,23 +135,87 @@ const magnitude = (point: Point): number => Math.hypot(point.x, point.y);
 const unit = direction;
 const UP: Point = { x: 0, y: -1 };
 
-/** Maximum speed after the shared speed cap. */
-export function enemyMaxSpeed(
-  definition: EnemyDefinition,
-  adaSpeed: number,
-  speedCapRatio: number,
-): number {
-  return adaSpeed * Math.max(0, Math.min(speedCapRatio, definition.physics.speedRatio));
+/** A ship's seeded value in [0, 1) from its id, fixed for its life. */
+function seeded(id: string, salt: number): number {
+  let value = 2166136261 ^ salt;
+  for (let index = 0; index < id.length; index++) {
+    value = Math.imul(value ^ id.charCodeAt(index), 16777619);
+  }
+  return (value >>> 0) / 2 ** 32;
+}
+
+const rotate = (vector: Point, angle: number): Point => ({
+  x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+  y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle),
+});
+
+/**
+ * Ada's averaged velocity for aim after `dt` more seconds at `current`: an exponential average
+ * with time constant ENEMY_AIM.velocitySeconds.
+ */
+export function averageVelocity(dt: number, previous: Point, current: Point): Point {
+  const blend = 1 - Math.exp(-dt / ENEMY_AIM.velocitySeconds);
+  return {
+    x: previous.x + (current.x - previous.x) * blend,
+    y: previous.y + (current.y - previous.y) * blend,
+  };
+}
+
+/**
+ * A ship's lead skill for its life: the position's `lead` times 1 plus a seeded share up to
+ * ENEMY_AIM.skillSpread either way, within [0, 1].
+ */
+export function leadSkill(lead: number, id: string): number {
+  const spread = (seeded(id, 1) * 2 - 1) * ENEMY_AIM.skillSpread;
+  return Math.max(0, Math.min(1, lead * (1 + spread)));
+}
+
+/**
+ * The sideways aim drift at `age` seconds, in radians: a smooth seeded swing of up to
+ * ENEMY_AIM.driftRadians either way with period ENEMY_AIM.driftPeriod, never random per shot.
+ */
+export function aimDrift(id: string, age: number): number {
+  const phase = seeded(id, 2) * Math.PI * 2;
+  return ENEMY_AIM.driftRadians * Math.sin((age * Math.PI * 2) / ENEMY_AIM.driftPeriod + phase);
+}
+
+/**
+ * Where a shot from `origin` at `speed` aims to meet a target moving at `velocity`: the target
+ * led by `skill` of its movement until the shot arrives, never behind it and never more than
+ * ENEMY_AIM.maxLeadSeconds of its movement. A shot that cannot catch the target takes the cap.
+ */
+export function leadPoint(
+  origin: Point,
+  target: Point,
+  velocity: Point,
+  speed: number,
+  skill: number,
+): Point {
+  const offset = { x: target.x - origin.x, y: target.y - origin.y };
+  // The arrival time t solves |offset + velocity t| = speed t.
+  const a = velocity.x ** 2 + velocity.y ** 2 - speed ** 2;
+  const b = 2 * (offset.x * velocity.x + offset.y * velocity.y);
+  const c = offset.x ** 2 + offset.y ** 2;
+  let arrival: number = ENEMY_AIM.maxLeadSeconds;
+  if (Math.abs(a) < 1e-9) {
+    arrival = b < 0 ? -c / b : arrival;
+  } else {
+    const root = b * b - 4 * a * c;
+    if (root >= 0) {
+      const times = [(-b - Math.sqrt(root)) / (2 * a), (-b + Math.sqrt(root)) / (2 * a)];
+      arrival = Math.min(...times.filter((time) => time >= 0), arrival);
+    }
+  }
+  const lead = Math.min(Math.max(0, Math.min(1, skill)) * arrival, ENEMY_AIM.maxLeadSeconds);
+  return { x: target.x + velocity.x * lead, y: target.y + velocity.y * lead };
 }
 
 /** Current speed as a fraction of the enemy's maximum speed, clamped to [0, 1], for jets. */
 export function enemySpeedFraction(
   definition: EnemyDefinition,
-  adaSpeed: number,
-  speedCapRatio: number,
   state: Pick<EnemyState, "velocity">,
 ): number {
-  return speedFraction(enemyMaxSpeed(definition, adaSpeed, speedCapRatio), state.velocity);
+  return speedFraction(definition.physics.maxSpeed, state.velocity);
 }
 
 /** World-axis offset of a hardpoint from the hull centre for the given hull facing. */
@@ -137,18 +229,10 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
-/** Saved enemy state; older saves lack orientation, aim, escort and behaviour state. */
-export type SavedEnemyState = Omit<
-  EnemyState,
-  "aim" | "escortOf" | "facing" | "hardpoints" | "heading" | "tactic"
-> & {
-  aim?: Point | null;
-  escortOf?: string | null;
-  facing?: Point;
-  hardpoints: (Omit<HardpointState, "aim"> & { aim?: Point | null })[];
-  heading?: Point | null;
-  tactic?: TacticState;
-};
+/** Whether an enemy is destroyed: its hull at 0 HP, whatever its hardpoints. */
+export function enemyDefeated(state: Pick<EnemyState, "hp">): boolean {
+  return state.hp <= 0;
+}
 
 /** Hull plus hardpoint hp; a drop between steps means the ship was hit. */
 export function enemyIntegrity(state: Pick<EnemyState, "hardpoints" | "hp">): number {
@@ -162,45 +246,18 @@ const freshTactic = (integrity: number): TacticState => ({
   volleys: 0,
 });
 
-/** Keeps a saved unit vector bit-for-bit so restored simulation stays deterministic. */
-const savedDirection = (value: Point | null | undefined): Point | null => {
-  if (!value || !magnitude(value)) {
-    return null;
-  }
-  return Math.abs(magnitude(value) - 1) <= 1e-9 ? { ...value } : direction(value);
-};
-
-/**
- * Completes state from a save: a missing facing starts from the velocity direction, or up
- * when stopped; a missing heading or aim starts unset; a missing escort is none; a missing
- * behaviour state starts a fresh attack at the saved hp.
- */
-export function restoreEnemyState(saved: SavedEnemyState): EnemyState {
-  const hardpoints = saved.hardpoints.map((part) => ({ ...part, aim: savedDirection(part.aim) }));
-  return {
-    ...saved,
-    aim: savedDirection(saved.aim),
-    escortOf: saved.escortOf ?? null,
-    facing: savedDirection(saved.facing) ?? savedDirection(saved.velocity) ?? { ...UP },
-    hardpoints,
-    heading: savedDirection(saved.heading),
-    tactic: saved.tactic
-      ? { ...saved.tactic }
-      : freshTactic(enemyIntegrity({ hardpoints, hp: saved.hp })),
-  };
-}
-
 export function enemyEffects(definition: EnemyDefinition, state: EnemyState): EnemyEffects {
   const disabledHardpoints = definition.hardpoints
     .filter((part) => !state.hardpoints.some((value) => value.id === part.id && value.hp > 0))
     .map((part) => part.id);
-  const required = definition.hardpoints.filter((part) => part.required);
   const engines = definition.hardpoints.filter((part) => part.kind === "engine");
   const working = engines.filter((part) => !disabledHardpoints.includes(part.id)).length;
+  const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
   return {
-    defeated: required.length
-      ? required.every((part) => disabledHardpoints.includes(part.id))
-      : state.hp <= 0,
+    defeated: enemyDefeated(state),
+    disabled:
+      state.disabled ||
+      (weapons.length > 0 && weapons.every((part) => disabledHardpoints.includes(part.id))),
     disabledHardpoints,
     movementStopped: engines.length > 0 && working === 0,
     thrust: engines.length ? working / engines.length : 1,
@@ -222,6 +279,7 @@ export function createEnemy(
     age: 0,
     aim: null,
     ...identity,
+    disabled: false,
     engaged: false,
     escortOf: identity.escortOf ?? null,
     facing: { ...UP },
@@ -241,12 +299,16 @@ export function createEnemy(
     primaryCooldown: 0,
     pursuitSeconds: 0,
     returning: false,
+    salvaged: false,
     tactic: freshTactic(definition.hardpoints.reduce((sum, part) => sum + part.hp, definition.hp)),
     velocity: { x: 0, y: 0 },
   };
 }
 
-/** Null selects the hull. Required hardpoints cannot be bypassed by hull damage. */
+/**
+ * Every hit lowers the hull; a hit at a hardpoint (null selects the hull alone) also damages
+ * that hardpoint. Destroying a heavy's last weapon hardpoint disables it for good.
+ */
 export function damageEnemy(
   definition: EnemyDefinition,
   hit: { amount: number; hardpointId: string | null },
@@ -261,7 +323,7 @@ export function damageEnemy(
   ) {
     return state;
   }
-  return {
+  const next: EnemyState = {
     ...state,
     engaged: true,
     hardpoints: state.hardpoints.map((part) =>
@@ -269,8 +331,9 @@ export function damageEnemy(
         ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
         : { ...part },
     ),
-    hp: hit.hardpointId === null ? Math.max(0, state.hp - hit.amount) : state.hp,
+    hp: Math.max(0, state.hp - hit.amount),
   };
+  return { ...next, disabled: enemyEffects(definition, next).disabled };
 }
 
 /** Push away from nearby live peers, strongest when closest. */
@@ -310,21 +373,44 @@ function arrive(
   return { x: (offset.x / distance) * arrival, y: (offset.y / distance) * arrival };
 }
 
-/** The live capital an escort guards, if it is loaded. */
+/** The live capital an escort guards, if it is loaded and not disabled. */
 function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
   return state.escortOf === null
     ? undefined
-    : context.peers.find(
-        (peer) =>
-          peer.id === state.escortOf &&
-          (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-      );
+    : context.peers.find((peer) => peer.id === state.escortOf && peer.hp > 0 && !peer.disabled);
+}
+
+/** A strafe's approach aims this many pass distances beside Ada, so momentum keeps it clear. */
+const STRAFE_PASS_OFFSET = 2;
+/** A strafe starts its pass, holding its course, within this many pass distances of Ada. */
+const STRAFE_PASS_ENTRY = 2.5;
+/** A pass whose course would come within this many pass distances of Ada bends away from her. */
+const STRAFE_FLOOR_MARGIN = 1.8;
+
+/** The side a ship circles or passes Ada on, +1 or -1, fixed for the ship by its phase. */
+const circlingSide = (state: EnemyState): number => (Math.cos(state.phase) >= 0 ? 1 : -1);
+
+/**
+ * Steering that holds `band` from Ada along `aim`: straight in beyond the far edge, straight out
+ * inside the near edge, and sideways on `side` across the band, blending through it.
+ */
+function holdBand(
+  band: { far: number; near: number },
+  aim: Point,
+  distance: number,
+  side: number,
+): Point {
+  const half = (band.far - band.near) / 2;
+  const radial = Math.max(-1, Math.min(1, (distance - band.near - half) / half));
+  const across = Math.sqrt(1 - radial * radial) * side;
+  return { x: aim.x * radial - aim.y * across, y: aim.y * radial + aim.x * across };
 }
 
 /**
- * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns
- * after its retreat; strafe flies straight through within its pass distance and loops back
- * beyond its loop distance. Leaving the engagement resets to a fresh attack.
+ * Advances the behaviour phase. Hit-and-run pulls away after a hit or a burst and returns once
+ * its retreat time has passed and it is beyond its band's far edge; strafe holds its course for a
+ * pass once near Ada and loops back beyond its loop distance. Leaving the engagement resets to a
+ * fresh attack.
  */
 function nextTactic(
   definition: EnemyDefinition,
@@ -353,11 +439,15 @@ function nextTactic(
     if (tactic.phase === "attack" && (hit || tactic.volleys >= behaviour.burstVolleys)) {
       return enter("retreat");
     }
-    if (tactic.phase === "retreat" && tactic.seconds >= behaviour.retreatSeconds) {
+    if (
+      tactic.phase === "retreat" &&
+      tactic.seconds >= behaviour.retreatSeconds &&
+      distance >= (definition.standoff?.far ?? 0)
+    ) {
       return enter("attack");
     }
   } else if (behaviour.kind === "strafe") {
-    if (tactic.phase === "attack" && distance <= behaviour.passDistance) {
+    if (tactic.phase === "attack" && distance <= behaviour.passDistance * STRAFE_PASS_ENTRY) {
       return enter("pass");
     }
     if (tactic.phase === "pass" && distance >= behaviour.loopDistance) {
@@ -367,12 +457,16 @@ function nextTactic(
   return tactic;
 }
 
-/** Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. */
+/**
+ * Desired movement as a fraction of maximum speed: a unit vector, or shorter on arrival. `aim`
+ * points at Ada, `distance` away.
+ */
 function steering(
   definition: EnemyDefinition,
   context: EnemyContext,
   maxSpeed: number,
   aim: Point,
+  distance: number,
   state: EnemyState,
 ): Point {
   if (state.returning) {
@@ -387,6 +481,16 @@ function steering(
   const push = separation(definition, context, state);
   const toward = (scale: number): Point =>
     unit({ x: aim.x * scale + push.x, y: aim.y * scale + push.y });
+  const side = circlingSide(state);
+  const band = definition.standoff;
+  /** Holds `edges` from Ada, or presses in without a band (a heavy). */
+  const hold = (edges = band): Point => {
+    if (!edges) {
+      return toward(1);
+    }
+    const held = holdBand(edges, aim, distance, side);
+    return unit({ x: held.x + push.x, y: held.y + push.y });
+  };
   const capital = escorted(context, state);
   if (capital) {
     // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
@@ -396,7 +500,7 @@ function steering(
       context.player.y - capital.position.y,
     );
     if (reach <= escortTuning.interceptRadius + hull) {
-      return toward(1);
+      return hold();
     }
     const gap = hull + escortTuning.stationGap;
     const station = {
@@ -408,21 +512,47 @@ function steering(
   const behaviour = definition.behaviour;
   switch (behaviour.kind) {
     case "chase":
-      return toward(1);
+      return hold();
     case "swarm": {
-      // Sinusoidal phase makes the chase erratic without query-dependent RNG.
+      // Sinusoidal phase makes the hold erratic without query-dependent RNG.
       const wobble = Math.sin(state.age * 3 + state.phase) * definition.steering.wobble;
+      const held = band ? holdBand(band, aim, distance, side) : aim;
       return unit({
-        x: aim.x - aim.y * wobble + push.x,
-        y: aim.y + aim.x * wobble + push.y,
+        x: held.x - held.y * wobble + push.x,
+        y: held.y + held.x * wobble + push.y,
       });
     }
-    case "hitAndRun":
-      return state.tactic.phase === "retreat" ? toward(-1) : toward(1);
+    case "hitAndRun": {
+      if (state.tactic.phase === "retreat") {
+        return toward(-1);
+      }
+      // The attack holds a band centred on the standoff band's near edge.
+      const half = band ? (band.far - band.near) / 2 : 0;
+      return hold(band && { far: band.near + half, near: band.near - half });
+    }
     case "strafe": {
-      // A pass keeps its course, so momentum carries the ship past Ada before it loops back.
-      const course = unit(state.velocity);
-      return state.tactic.phase === "pass" && magnitude(course) ? course : toward(1);
+      const floor = behaviour.passDistance;
+      if (state.tactic.phase === "pass") {
+        // A pass keeps its course, so momentum carries the ship past Ada before it loops back. A
+        // course that would come within the floor's margin bends away from her.
+        const course = magnitude(state.velocity) ? unit(state.velocity) : aim;
+        const along = Math.max(0, (aim.x * course.x + aim.y * course.y) * distance);
+        const miss = {
+          x: aim.x * distance - course.x * along,
+          y: aim.y * distance - course.y * along,
+        };
+        const gap = magnitude(miss);
+        const away = gap > 1e-9 ? { x: -miss.x / gap, y: -miss.y / gap } : { x: -aim.x, y: -aim.y };
+        const margin = floor * STRAFE_FLOOR_MARGIN;
+        const bend = Math.max(0, Math.min(1, (margin - gap) / (margin - floor * 0.8))) * 2;
+        return unit({ x: course.x + away.x * bend, y: course.y + away.y * bend });
+      }
+      // The approach aims beside Ada, so the pass goes by rather than at her.
+      const offset = floor * STRAFE_PASS_OFFSET * side;
+      return unit({
+        x: aim.x * distance - aim.y * offset + push.x,
+        y: aim.y * distance + aim.x * offset + push.y,
+      });
     }
     case "siege":
       break;
@@ -449,22 +579,21 @@ export function stepEnemy(
   }
   const effects = enemyEffects(definition, state);
   const observed = context.targetable && context.visibility === "visible";
-  const target = observed ? context.player : (state.lastSeen ?? state.position);
+  const summoned = context.summoned === true;
+  const target = observed || summoned ? context.player : (state.lastSeen ?? state.position);
   const delta = { x: target.x - state.position.x, y: target.y - state.position.y };
   const aim = unit(delta);
   const packSize = state.packId === null ? 0 : (context.initialPackSizes[state.packId] ?? 0);
   const alive =
-    context.peers.filter(
-      (peer) =>
-        peer.packId === state.packId &&
-        (peer.hp > 0 || peer.hardpoints.some((part) => part.hp > 0)),
-    ).length + (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
+    context.peers.filter((peer) => peer.packId === state.packId && peer.hp > 0).length +
+    (state.packId === null ? 0 : (context.dormantPackMembers?.[state.packId] ?? 0));
   const packFlee = packSize > 1 && 1 - alive / packSize >= definition.morale.packLossRatio;
   const next: EnemyState = {
     ...state,
     age: state.age + context.dt,
     engaged:
       state.engaged ||
+      summoned ||
       (context.targetable &&
         context.visibility === "visible" &&
         definition.aggression === "sight" &&
@@ -476,7 +605,7 @@ export function stepEnemy(
         state.hp / definition.hp <= definition.morale.individualHpRatio),
     hardpoints: state.hardpoints.map((part) => ({ ...part })),
   };
-  if (observed) {
+  if (observed || summoned) {
     next.lastSeen = { ...context.player };
     next.lastSeenAge = 0;
   } else {
@@ -487,7 +616,10 @@ export function stepEnemy(
     ? Math.hypot(context.player.x - state.home.x, context.player.y - state.home.y)
     : 0;
   const homeDistance = Math.hypot(state.position.x - state.home.x, state.position.y - state.home.y);
-  if (
+  if (summoned) {
+    next.returning = false;
+    next.pursuitSeconds = 0;
+  } else if (
     next.engaged &&
     (next.pursuitSeconds >= definition.pursuit.maxSeconds ||
       homeDistance >= definition.pursuit.homeRadius ||
@@ -508,12 +640,22 @@ export function stepEnemy(
       next.pursuitSeconds = 0;
     }
   }
-  next.tactic = nextTactic(definition, next, magnitude(delta), state);
+  // An escort without a live capital fights by hitAndRun.
+  const acting =
+    state.escortOf !== null && !escorted(context, state)
+      ? { ...definition, behaviour: definition.escortFallback }
+      : definition;
+  next.tactic = nextTactic(acting, next, magnitude(delta), state);
   // Each working engine gives an equal share of top speed; losing one slows the ship through
-  // its own physics, while the shared cap still bounds saved momentum.
-  const fullSpeed = enemyMaxSpeed(definition, context.adaSpeed, context.speedCapRatio);
+  // its own physics, while its maximum speed still bounds saved momentum.
+  const fullSpeed = definition.physics.maxSpeed;
   const speed = fullSpeed * effects.thrust;
-  const request = steering(definition, context, speed, aim, next);
+  // A disabled heavy stops steering and coasts to rest.
+  const request = effects.disabled
+    ? { x: 0, y: 0 }
+    : summoned
+      ? aim
+      : steering(acting, context, speed, aim, magnitude(delta), next);
   const physics = definition.physics;
   if (effects.defeated || effects.movementStopped || (next.returning && homeDistance <= 5)) {
     next.velocity = { x: 0, y: 0 };
@@ -549,26 +691,39 @@ export function stepEnemy(
   }
   const fire: FireIntent[] = [];
   const canFire =
+    !summoned &&
     !effects.defeated &&
+    !effects.disabled &&
     !next.returning &&
     !next.fleeing &&
     next.engaged &&
     context.targetable &&
     context.visibility === "visible" &&
     magnitude(delta) <= definition.engagement;
-  /** Weapons track the target independently of the hull, turning with aimTurnSeconds. */
-  const track = (origin: Point, current: Point | null): Point | null => {
-    const wanted = unit({ x: target.x - origin.x, y: target.y - origin.y });
-    if (!magnitude(wanted)) {
+  const skill = leadSkill(context.lead, state.id);
+  const drift = aimDrift(state.id, state.age);
+  /**
+   * Weapons track the target independently of the hull, turning with aimTurnSeconds. An aimed
+   * weapon leads a seen Ada by the ship's skill at its shot's speed, then drifts sideways.
+   */
+  const track = (origin: Point, current: Point | null, profile: FireProfile): Point | null => {
+    // A hitscan beam aims at Ada directly.
+    const direct = profile.projectile === "beam";
+    const speed = context.projectileSpeed * profile.projectileSpeedRatio;
+    const velocity = observed && !direct ? context.playerVelocity : { x: 0, y: 0 };
+    const point = leadPoint(origin, target, velocity, speed, skill);
+    const line = unit({ x: point.x - origin.x, y: point.y - origin.y });
+    if (!magnitude(line)) {
       return current;
     }
+    const wanted = direct ? line : rotate(line, drift);
     return current ? turnToward(context.dt, physics.aimTurnSeconds, wanted, current) : wanted;
   };
   let volleys = 0;
   // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
   // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
   // the continuous aim. Other weapons fire from the model origin.
-  const layout = MUZZLE_LAYOUTS[state.archetype];
+  const layout = muzzleLayout(definition, MUZZLE_ART[state.archetype]);
   const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
     const offset =
       turret === null ? undefined : muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
@@ -600,19 +755,31 @@ export function stepEnemy(
       }
       const volley = Math.floor((state.age + delay) / interval) * count + bolt;
       const from = spawn(origin, hardpointId, muzzleAim, volley);
-      for (const angle of profile.angles) {
-        fire.push({
-          aim: {
-            x: muzzleAim.x * Math.cos(angle) - muzzleAim.y * Math.sin(angle),
-            y: muzzleAim.x * Math.sin(angle) + muzzleAim.y * Math.cos(angle),
-          },
-          delay,
-          hardpointId,
-          origin: { ...from },
-          profileId: profile.id,
-          projectile: profile.projectile,
-          speed: context.adaSpeed * profile.projectileSpeedRatio,
-        });
+      const shot = {
+        damageRatio: fireDamageRatio(profile),
+        delay,
+        hardpointId,
+        level: profile.level,
+        projectile: profile.projectile,
+        speed: context.projectileSpeed * profile.projectileSpeedRatio,
+        weapon: profile.weapon,
+      };
+      if (profile.weapon === "ringBurst") {
+        // Bolts outward from the hull's edge, evenly around it, whatever the aim.
+        const radius = (definition.sizeRatio * context.adaWidth) / 2;
+        for (let index = 0; index < RING_BOLTS; index++) {
+          const turn = (index / RING_BOLTS) * Math.PI * 2;
+          const aim = { x: Math.cos(turn), y: Math.sin(turn) };
+          const origin = {
+            x: state.position.x + aim.x * radius,
+            y: state.position.y + aim.y * radius,
+          };
+          fire.push({ ...shot, aim, origin });
+        }
+      } else {
+        for (const degrees of profile.angles) {
+          fire.push({ ...shot, aim: fanHeading(muzzleAim, degrees), origin: { ...from } });
+        }
       }
       bolt++;
       if (bolt < count) {
@@ -624,7 +791,7 @@ export function stepEnemy(
     }
     return { burst: bolt, cooldown: delay - context.dt };
   };
-  next.aim = track(state.position, state.aim);
+  next.aim = track(state.position, state.aim, definition.fire);
   const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0
@@ -635,7 +802,7 @@ export function stepEnemy(
       // Muzzles sit on the hull as it faced at the start of the step.
       const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
       const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
-      value.aim = track(origin, value.aim);
+      value.aim = track(origin, value.aim, part.fire);
       const fired = cycle(
         part.fire,
         origin,

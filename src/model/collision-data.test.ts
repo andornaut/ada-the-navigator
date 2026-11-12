@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, RESOURCE_ART } from "../data/asteroid-catalog.ts";
-import { type EnemyArchetype, enemyCatalog } from "../data/enemy-catalog.ts";
+import { type EnemyArchetype, enemyCatalog, type EnemyDefinition } from "../data/enemy-catalog.ts";
 import type { SectorId } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { debrisSilhouette } from "./debris-body.ts";
@@ -57,14 +57,18 @@ describe("Art's collision data", () => {
   it.each([
     ["frigate", ["enemies", "cartwheel/enemies"]],
     ["capital", ["enemies", "cartwheel/enemies"]],
+    ["gadget", ["enemies"]],
     ["platform", ["cartwheel/enemies"]],
   ] as const)("gives the %s its hull, hardpoint and top silhouettes", (archetype, families) => {
     for (const family of families) {
       const file = json(`${family}/${archetype}-hardpoints.json`) as {
-        hardpoints: { id: string }[];
+        hardpoints: { capped?: boolean; id: string }[];
         headings: {
           collision: unknown;
-          hardpoints: { collision: { destroyed: unknown; intact: unknown }; id: string }[];
+          hardpoints: {
+            collision: { capped?: unknown; destroyed: unknown; intact: unknown };
+            id: string;
+          }[];
         }[];
         tops: Record<string, { collision: unknown }[]>;
       };
@@ -76,6 +80,8 @@ describe("Art's collision data", () => {
         );
         for (const part of heading.hardpoints) {
           expect(parts(part.collision.intact) && parts(part.collision.destroyed)).toBe(true);
+          const capped = file.hardpoints.find(({ id }) => id === part.id)!.capped === true;
+          expect(parts(part.collision.capped), `${part.id} capped`).toBe(capped);
         }
       }
       for (const aims of Object.values(file.tops)) {
@@ -85,9 +91,9 @@ describe("Art's collision data", () => {
     }
   });
 
-  it("gives every enemy archetype a drawn hull and every heavy hardpoint a drawn outline", () => {
+  it("draws every enemy hull, and every heavy hardpoint and mount at every position", () => {
     for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-      const definition = enemyCatalog[archetype];
+      const definition: EnemyDefinition = enemyCatalog[archetype];
       for (let heading = 0; heading < 16; heading++) {
         const enemy = createEnemy(
           definition,
@@ -96,10 +102,64 @@ describe("Art's collision data", () => {
         );
         enemy.facing = facing(heading);
         expect(enemyHull(enemy), `${archetype} ${heading}`).not.toBeNull();
-        for (const part of definition.hardpoints) {
-          expect(enemyPartOutline(enemy, part.id), `${archetype} ${part.id}`).not.toBeNull();
+        const ids = [
+          ...definition.hardpoints.map((part) => part.id),
+          ...(definition.mounts?.fill ?? []),
+        ];
+        for (const position of [1, 2, 3, 4, 5, 6] as const) {
+          for (const id of ids) {
+            expect(
+              enemyPartOutline(position, enemy, id),
+              `${archetype} ${id} ${position}`,
+            ).not.toBeNull();
+          }
         }
       }
+    }
+  });
+
+  it("outlines a mount its tier leaves unused as its capped plate and an aft top opposite the hull", () => {
+    const file = json("enemies/capital-hardpoints.json") as {
+      headings: {
+        hardpoints: {
+          collision: Record<string, Raw>;
+          id: string;
+          pivot?: number[];
+        }[];
+      }[];
+      tops: Record<string, { collision: Raw }[]>;
+    };
+    const enemy = createEnemy(
+      enemyCatalog.capital,
+      { archetype: "capital", id: "capital", packId: null, phase: 0 },
+      { x: 0, y: 0 },
+    );
+    enemy.facing = facing(3);
+    enemy.aim = facing(6);
+    const placed = file.headings[3]!.hardpoints.find((part) => part.id === "stern-right")!;
+    const scale = (parts: Raw, origin: number[]) =>
+      parts.map((part) =>
+        part.map(([x, y]) => ({ x: (x! + origin[0]!) * 0.4375, y: (y! + origin[1]!) * 0.4375 })),
+      );
+    const centre = [-240, -240];
+    for (const position of [1, 2, 3, 4] as const) {
+      expect(enemyPartOutline(position, enemy, "stern-right")).toEqual(
+        scale(placed.collision.capped!, centre),
+      );
+    }
+    // The mine layer's hopper holds aim (3 + 8) mod 16 whatever the turret's aim.
+    const pivot = [placed.pivot![0]! - 240, placed.pivot![1]! - 240];
+    const armed = [
+      ...scale(placed.collision.intact!, centre),
+      ...scale(file.tops.hopper![11]!.collision, pivot),
+    ];
+    for (const position of [5, 6] as const) {
+      const outline = enemyPartOutline(position, enemy, "stern-right")!;
+      expect(outline).toHaveLength(armed.length);
+      outline.flat().forEach((at, index) => {
+        expect(at.x).toBeCloseTo(armed.flat()[index]!.x, 9);
+        expect(at.y).toBeCloseTo(armed.flat()[index]!.y, 9);
+      });
     }
   });
 
@@ -135,7 +195,7 @@ describe("Art's collision data", () => {
     expect(frames.every((frame) => parts(frame.collision))).toBe(true);
   });
 
-  it("draws the cache, Stardust, ore nugget and weapon pickups with outlines", () => {
+  it("draws the cache, Stardust, ore nugget and upgrade pickups with outlines", () => {
     const pickup = (extra: Partial<SpaceObject>): SpaceObject => ({
       hp: 1,
       id: "pickup",
@@ -148,8 +208,8 @@ describe("Art's collision data", () => {
     expect(pickupOutline(pickup({ amount: 5, role: "discovery" }))).not.toBeNull();
     expect(pickupOutline(pickup({ amount: 1, role: "stardust" }))).not.toBeNull();
     expect(pickupOutline(pickup({ role: "cargo" }))).not.toBeNull();
-    // The weapon pickup's square reaches half its 1.5 px outline past its radius.
-    const square = pickupOutline(pickup({ weapon: "rapidMissile" }))!;
+    // The upgrade pickup's square reaches half its 1.5 px outline past its radius.
+    const square = pickupOutline(pickup({ upgrade: true }))!;
     expect(Math.max(...square.flat().map((at) => at.x))).toBe(10.75);
   });
 

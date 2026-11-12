@@ -18,7 +18,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -39,20 +39,25 @@ function fixture() {
   // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
   content.tuning.flight.arrivalCalm = 0;
   content.tuning.flight.objectsPerChunk = 0;
-  content.tuning.enemyDamage = 0;
+  // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+  content.tuning.flight.playerShotDamage = 1e-6;
   for (let seed = 0; seed < 256; seed++) {
     const flight = createFlight(content, 1, seed, progress);
-    const members = flight.objects.filter((object) => object.enemy?.archetype === "swarm");
-    if (members.length === 4 && members[0]?.enemy?.packId) {
+    // A four-member fighter group: galaxy one's swarm packs start at five.
+    const members = flight.objects.filter(
+      (object) => object.enemy?.archetype === "fighter" && object.enemy.escortOf === null,
+    );
+    const packId = members[0]?.enemy?.packId;
+    if (members.length === 4 && packId && members.every((m) => m.enemy?.packId === packId)) {
       const model = new GameModel(content);
       model.state.flight = flight;
       model.state.mode = "space";
       // A flight has begun, as startSector records.
       model.state.started = true;
-      return { content, model, packId: members[0].enemy.packId };
+      return { content, model, packId };
     }
   }
-  throw new Error("No four-member swarm fixture");
+  throw new Error("No four-member fighter fixture");
 }
 function members(model: GameModel, packId: string): SpaceObject[] {
   return model.state.flight!.objects.filter((object) => object.enemy?.packId === packId);
@@ -64,7 +69,7 @@ function reposition(object: SpaceObject, x: number, y = 100): void {
 }
 function defeat(model: GameModel, object: SpaceObject): void {
   const flight = model.state.flight!;
-  const before = model.state.progress[1].disabledEnemies;
+  const before = model.state.progress[1].destroyedEnemies;
   flight.shots.push({
     damage: object.enemy!.hp,
     enemy: false,
@@ -77,7 +82,7 @@ function defeat(model: GameModel, object: SpaceObject): void {
     y: object.y,
   });
   model.step(0.001, idle);
-  expect(model.state.progress[1].disabledEnemies).toBe(before + 1);
+  expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
   expect(flight.objects).not.toContain(object);
 }
 function regenerate(content: typeof PROTOTYPE, model: GameModel, packId: string): void {
@@ -104,7 +109,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(model, packId)).toHaveLength(1);
     expect(flight.combat!.initialPackSizes[packId]).toBe(4);
     expect(flight.combat!.unloadedPackMembers).toEqual({ [packId]: 2 });
-    expect(model.state.progress[1].disabledEnemies).toBe(1);
+    expect(model.state.progress[1].destroyedEnemies).toBe(1);
     model.step(0.001, idle);
     expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
     const resumed = relaunch(content, model.save());
@@ -184,7 +189,7 @@ describe("casualty-preserving pack retention", () => {
       expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(2);
       model.step(0.001, idle);
       expect(members(model, packId)[0]!.enemy!.fleeing).toBe(false);
-      expect(model.state.progress[1].disabledEnemies).toBe(1);
+      expect(model.state.progress[1].destroyedEnemies).toBe(1);
       expect(restoreSave(model.save())).toEqual(model.state);
     },
   );
@@ -194,7 +199,8 @@ describe("casualty-preserving pack retention", () => {
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
     content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
-    content.tuning.enemyDamage = 0;
+    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+    content.tuning.flight.playerShotDamage = 1e-6;
     let found: { flight: ReturnType<typeof createFlight>; packId: string } | undefined;
     for (let seed = 0; seed < 512 && !found; seed++) {
       const flight = createFlight(content, 1, seed, progress);
@@ -227,7 +233,7 @@ describe("casualty-preserving pack retention", () => {
     expect(members(resumed, packId)).toHaveLength(3);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
-    expect(resumed.state.progress[1].disabledEnemies).toBe(0);
+    expect(resumed.state.progress[1].destroyedEnemies).toBe(0);
     expect(members(resumed, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
     expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
     expect(restoreSave(resumed.save())).toEqual(resumed.state);
@@ -378,7 +384,8 @@ describe("per-role encounter restore", () => {
     // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
     content.tuning.flight.arrivalCalm = 0;
     content.tuning.flight.objectsPerChunk = 0;
-    content.tuning.enemyDamage = 0;
+    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
+    content.tuning.flight.playerShotDamage = 1e-6;
     for (let seed = 0; seed < 4000; seed++) {
       const flight = createFlight(content, 1, seed, progress);
       const escort = flight.objects.find((object) => object.enemy?.escortOf);
@@ -404,9 +411,9 @@ describe("per-role encounter restore", () => {
       object.enemy = damageEnemy(definition, { amount: 99, hardpointId: part.id }, object.enemy!);
     }
     object.enemy = damageEnemy(definition, { amount: 99, hardpointId: null }, object.enemy!);
-    const before = model.state.progress[1].disabledEnemies;
+    const before = model.state.progress[1].destroyedEnemies;
     model.step(0.001, idle);
-    expect(model.state.progress[1].disabledEnemies).toBe(before + 1);
+    expect(model.state.progress[1].destroyedEnemies).toBe(before + 1);
   };
   /** Takes Ada and the kept ships far enough away to unload the battle's cell, then back. */
   function revisit(

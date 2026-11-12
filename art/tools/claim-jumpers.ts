@@ -310,9 +310,10 @@ export const platform: HeavyCraft = {
   source: "heavies",
   hullTop: DECK,
   hull: platformHull,
+  sizeRatio: 3,
   hardpoints: [
-    { id: "port", model: platformTurret() },
-    { id: "starboard", model: platformTurret() },
+    { id: "port", offset: [-0.29, 0], model: platformTurret() },
+    { id: "starboard", offset: [0.29, 0], model: platformTurret() },
   ],
   fixed: true,
 };

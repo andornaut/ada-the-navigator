@@ -20,23 +20,9 @@ export const AMMO_KIND = {
   phaser: "energy",
   rapidMissile: "missile",
   scattershot: "shell",
-} as const satisfies Record<Exclude<Weapon, "basic">, string>;
+} as const satisfies Record<Exclude<Weapon, "laser">, string>;
 
 /** The two-frame shop sheet of a weapon's ammunition kind, drawn alone in an ammunition row. */
-export function ammoShopSheet(weapon: Exclude<Weapon, "basic">): string {
+export function ammoShopSheet(weapon: Exclude<Weapon, "laser">): string {
   return `icon-shop-ammo-${AMMO_KIND[weapon]}`;
-}
-
-/**
- * A weapon pickup's glyph (art/weapons.md "Pickups"): the weapon's 20px HUD glyph drawn at 14px
- * in amber, centred on the pickup, for every weapon that drops as a pickup.
- */
-export const PICKUP_GLYPH = {
-  size: 14,
-  weapons: ["scattershot", "rapidMissile", "multiLaser", "heavyMissile", "phaser"],
-} as const satisfies { size: number; weapons: readonly Weapon[] };
-
-/** The texture key of a weapon's pickup glyph. */
-export function pickupGlyphKey(weapon: Weapon): string {
-  return `pickup-glyph-${weapon}`;
 }

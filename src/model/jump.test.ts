@@ -10,7 +10,7 @@ import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightInput, FlightState, GameState } from "./types.ts";
 import { noLevels } from "./upgrades.ts";
-import { grantedAmmo, noAmmo } from "./weapons.ts";
+import { collectWeapon, grantedAmmo } from "./weapons.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -26,6 +26,7 @@ function launched(): GameModel {
 function incoming(flight: FlightState): void {
   flight.shots.push({
     ...flight.player,
+    damage: 1,
     enemy: true,
     hitIds: [],
     id: `hit:${flight.nextId++}`,
@@ -37,19 +38,13 @@ function incoming(flight: FlightState): void {
 function deplete(model: GameModel): void {
   const flight = model.state.flight!;
   flight.objects = [];
-  flight.shield = PROTOTYPE.tuning.enemyDamage;
+  flight.shield = PROTOTYPE.tuning.hazardDamage;
   incoming(flight);
   model.step(0.01, idle);
 }
+/** Ada finds a weapon, as an upgrade pickup that gives it does. */
 function pickup(flight: FlightState, weapon: UpgradeWeapon) {
-  flight.objects.push({
-    ...flight.player,
-    hp: 1,
-    id: `p:${flight.nextId++}`,
-    kind: "pickup",
-    radius: 10,
-    weapon,
-  });
+  collectWeapon(weapon, flight);
 }
 
 /** Ada owns weapons, each with a new weapon's packs. */
@@ -65,9 +60,9 @@ describe("weapon switching", () => {
     own(flight, ["rapidMissile", "multiLaser"]);
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "basic", selected: true },
-      { ammo: 600, id: "rapidMissile", selected: false },
+      { ammo: null, id: "laser", selected: true },
       { ammo: 600, id: "multiLaser", selected: false },
+      { ammo: 600, id: "rapidMissile", selected: false },
     ]);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");
@@ -91,11 +86,11 @@ describe("weapon switching", () => {
       flight.objects = [];
       flight.dangerFor = dangerFor;
       stepFlight(PROTOTYPE, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
-      expect(model.selectWeapon("basic")).toBe(false);
+      expect(model.selectWeapon("laser")).toBe(false);
       stepFlight(PROTOTYPE, 0.06, idle, flight);
       expect(flight.weaponSwitchFor).toBe(0);
-      expect(model.selectWeapon("basic")).toBe(true);
-      expect(flight.weapon).toBe("basic");
+      expect(model.selectWeapon("laser")).toBe(true);
+      expect(flight.weapon).toBe("laser");
     }
   });
 
@@ -144,7 +139,7 @@ describe("quantum jump home", () => {
   // Depletes the shield with the flight's objects in place.
   function depleteHere(model: GameModel): void {
     const flight = model.state.flight!;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     incoming(flight);
     model.step(0.01, idle);
   }
@@ -161,7 +156,7 @@ describe("quantum jump home", () => {
     flight.weapon = "rapidMissile";
     flight.levels.weapons.rapidMissile = 3;
     flight.levels.weapons.multiLaser = 2;
-    flight.levels.weapons.basic = 2;
+    flight.levels.weapons.laser = 2;
     model.state.economy.stardust = 30;
     seenHome(model);
     deplete(model);
@@ -173,7 +168,7 @@ describe("quantum jump home", () => {
       weapon: "rapidMissile",
     });
     expect(model.state.economy.levels.weapons).toMatchObject({
-      basic: 2,
+      laser: 2,
       multiLaser: 2,
       rapidMissile: 3,
     });
@@ -193,7 +188,7 @@ describe("quantum jump home", () => {
     const flight = model.state.flight!;
     const seed = flight.seed;
     flight.objects = [
-      { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, weapon: "multiLaser", x: 900, y: 0 },
+      { hp: 1, id: "lost:pickup", kind: "pickup", radius: 10, upgrade: true, x: 900, y: 0 },
       {
         hp: 3,
         id: "lost:rock",
@@ -434,35 +429,35 @@ describe("shop through the model", () => {
     model.state.economy.stardust = 400;
     expect(model.requestPurchase({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "confirm",
-      left: 250,
-      price: 150,
+      left: 175,
+      price: 225,
     });
     expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "bought",
-      price: 150,
+      price: 225,
     });
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic", "rapidMissile"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     model.undock();
     model.returnHome();
     model.startSector(1);
     playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic", "rapidMissile"]);
-    expect(model.state.economy.stardust).toBe(250);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
+    expect(model.state.economy.stardust).toBe(175);
   });
 
   it("raises the shield capacity and current charge when a shield level is bought", () => {
     const model = docked();
-    model.state.economy.stardust = 150;
-    model.state.flight!.shield = 50;
+    model.state.economy.stardust = 450;
+    model.state.flight!.shield = 5;
     model.buy({ kind: "track", track: "shield" });
-    expect(model.shieldMax).toBeCloseTo(150, 9);
-    expect(model.state.flight!.shield).toBeCloseTo(100, 9);
+    expect(model.shieldMax).toBe(15);
+    expect(model.state.flight!.shield).toBe(10);
     expect(model.state.flight!.levels.shield).toBe(2);
   });
 
   it("applies an owned paint scheme at once and saves it with purchases", () => {
     const model = docked();
-    model.state.economy.stardust = 50;
+    model.state.economy.stardust = 75;
     model.buy({ kind: "paint", scheme: "iris" });
     expect(model.selectPaint("classic")).toBe(true);
     expect(model.selectPaint("seafoam")).toBe(false);
@@ -502,127 +497,6 @@ describe("economy save", () => {
     expect(restored.state.economy.levels.weapons.scattershot).toBe(3);
   });
 
-  it("migrates older saves to an empty economy with three packs per owned weapon", () => {
-    const model = launched();
-    model.state.flight!.ownedWeapons = ["multiLaser"];
-    model.state.flight!.weapon = "multiLaser";
-    const legacy = JSON.parse(model.save()) as Record<string, unknown> & {
-      flight: Record<string, unknown>;
-      progress: Record<string, Record<string, unknown>>;
-    };
-    delete legacy.economy;
-    delete legacy.docked;
-    for (const progress of Object.values(legacy.progress)) {
-      delete progress.stations;
-    }
-    delete legacy.flight.levels;
-    delete legacy.flight.weaponSwitchFor;
-    legacy.flight.dockId = null;
-    legacy.flight.ammo = 7;
-    legacy.flight.weaponLockFor = 2.5;
-    const restored = restoreSave(legacy)!;
-    expect(restored).not.toBeNull();
-    expect(restored.economy).toEqual({
-      ammo: { ...noAmmo(), multiLaser: 600 },
-      levels: noLevels(),
-      ownedWeapons: ["multiLaser"],
-      paint: "classic",
-      paints: ["classic"],
-      stardust: 0,
-      weapon: "multiLaser",
-    });
-    expect(restored.docked).toBeNull();
-    expect(restored.progress[1].stations).toEqual([]);
-    expect(restored.flight).toMatchObject({ levels: noLevels(), weaponSwitchFor: 0 });
-    // Stations have no dock to be inside, so the flight keeps no dock id.
-    expect("dockId" in restored.flight!).toBe(false);
-    // The single legacy ammunition count gives way to the economy's per-weapon counts.
-    expect(restored.flight!.ammo).toEqual(restored.economy.ammo);
-    expect("weaponLockFor" in restored.flight!).toBe(false);
-    const home = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-    delete home.economy;
-    expect(restoreSave(home)?.economy.stardust).toBe(0);
-    // An economy saved before ammunition gives each owned weapon three packs.
-    const owner = launched();
-    owner.state.economy.ownedWeapons = ["phaser", "scattershot"];
-    owner.state.flight!.ownedWeapons = ["phaser", "scattershot"];
-    const before = JSON.parse(owner.save()) as Record<
-      "economy" | "flight",
-      Record<string, unknown>
-    >;
-    delete before.economy.ammo;
-    delete before.flight.ammo;
-    const ammo = { ...noAmmo(), phaser: 165, scattershot: 390 };
-    expect(restoreSave(before)?.economy.ammo).toEqual(ammo);
-    expect(restoreSave(before)?.flight?.ammo).toEqual(ammo);
-  });
-
-  it("migrates Missiles and Triple Laser and their bought levels to the five-weapon roster", () => {
-    const model = launched();
-    const flight = model.state.flight!;
-    flight.objects.push({ hp: 1, id: "found", kind: "pickup", radius: 10, x: 400, y: 400 });
-    const save = JSON.parse(model.save()) as Record<string, unknown>;
-    // The old roster's levels counted purchases from 0 to 3; the tractor had two.
-    const legacyLevels = (missiles: number, tripleLaser: number) => ({
-      engine: 3,
-      shield: 1,
-      shieldRecharge: 2,
-      tractor: 2,
-      weapons: { basic: 0, missiles, scattershot: 1, tripleLaser },
-    });
-    const legacy = {
-      ...save,
-      economy: {
-        ...(save.economy as object),
-        levels: legacyLevels(1, 3),
-        ownedWeapons: ["missiles", "tripleLaser"],
-        weapon: "tripleLaser",
-      },
-      flight: {
-        ...(save.flight as Record<string, unknown>),
-        grantedWeapons: ["scattershot"],
-        levels: legacyLevels(2, 0),
-        objects: (save.flight as { objects: object[] }).objects.map((object) =>
-          "id" in object && object.id === "found" ? { ...object, weapon: "missiles" } : object,
-        ),
-        ownedWeapons: ["missiles", "scattershot"],
-        weapon: "missiles",
-      },
-    };
-    const restored = restoreSave(JSON.stringify(legacy))!;
-    expect(restored).not.toBeNull();
-    expect(restored.economy).toMatchObject({
-      levels: {
-        engine: 3,
-        shield: 2,
-        shieldRecharge: 2,
-        tractor: 3,
-        weapons: {
-          basic: 1,
-          heavyMissile: 1,
-          multiLaser: 3,
-          phaser: 1,
-          rapidMissile: 2,
-          scattershot: 2,
-        },
-      },
-      ownedWeapons: ["rapidMissile", "multiLaser"],
-      weapon: "multiLaser",
-    });
-    expect(restored.flight).toMatchObject({
-      grantedWeapons: ["scattershot"],
-      ownedWeapons: ["rapidMissile", "scattershot"],
-      weapon: "rapidMissile",
-    });
-    expect(restored.flight!.levels.weapons).toMatchObject({ multiLaser: 1, rapidMissile: 2 });
-    expect(restored.flight!.objects.find((object) => object.id === "found")?.weapon).toBe(
-      "rapidMissile",
-    );
-    // A migrated save restores unchanged after it is saved again.
-    const again = relaunch(PROTOTYPE, JSON.stringify(restored));
-    expect(again.state.economy).toEqual(restored.economy);
-  });
-
   it.each([
     ["negative Stardust", (save: GameState) => (save.economy.stardust = -1)],
     ["fractional Stardust", (save: GameState) => (save.economy.stardust = 1.5)],
@@ -638,10 +512,6 @@ describe("economy save", () => {
     [
       "ammunition for an unknown weapon",
       (save: GameState) => Object.assign(save.economy.ammo, { laser: 3 }),
-    ],
-    [
-      "a negative legacy lock",
-      (save: GameState) => Object.assign(save.flight!, { weaponLockFor: -1 }),
     ],
     [
       "docking at home",

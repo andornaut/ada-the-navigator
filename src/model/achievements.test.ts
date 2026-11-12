@@ -334,14 +334,4 @@ describe("notices and persistence", () => {
     expect(restoreSave({ ...saved, achievements: { ...saved.achievements, jobs: -1 } })).toBeNull();
     expect(restoreSave({ ...saved, achievements: { unlocked: "x" } })).toBeNull();
   });
-
-  it("unlocks what a save from before achievements reached, without a notice", () => {
-    const flying = launched();
-    const saved = JSON.parse(flying.save());
-    delete saved.achievements;
-    const model = new GameModel(PROTOTYPE, saved);
-    expect(unlocked(model)).toEqual([id("New Navigator")]);
-    model.step(1 / 60, idle);
-    expect(model.state.notice).not.toContain("Achievement");
-  });
 });

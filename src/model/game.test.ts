@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { enemyCatalog } from "../data/enemy-catalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemy-catalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/story-ships.ts";
 import type { SectorId } from "../data/types.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { createEnemy } from "./enemy-ai.ts";
 import {
   ensureDestination,
   ensureRouteEncounter,
@@ -21,7 +22,7 @@ function launch(model: GameModel, sector: SectorId = 1) {
   model.startSector(sector);
 }
 
-it("talks within the 160 Talk range, whatever the safe radius", () => {
+it("talks and salvages within the 160 Talk range, whatever the safe radius", () => {
   expect(PROTOTYPE.tuning.talkRange).toBe(160);
   // A smaller safe radius leaves the interaction range alone.
   const content = { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, safeRadius: 40 } };
@@ -39,6 +40,36 @@ it("talks within the 160 Talk range, whatever the safe radius", () => {
   expect(model.contextLabel).toBe("Talk");
   flight.player = { x: growers.x + 170, y: growers.y };
   expect(model.contextLabel).toBeUndefined();
+  const at = { x: flight.player.x + 150, y: flight.player.y };
+  const enemy = createEnemy(
+    enemyDefinition(1, "frigate"),
+    { archetype: "frigate", id: "spared", packId: null, phase: 0 },
+    at,
+  );
+  enemy.disabled = true;
+  flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
+  expect(model.contextLabel).toBe("Salvage");
+});
+
+it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
+  const model = new GameModel(PROTOTYPE);
+  model.startSector(1);
+  playOpening(model);
+  const flight = model.state.flight!;
+  flight.objects = [];
+  const at = { x: flight.player.x + 100, y: flight.player.y };
+  const enemy = createEnemy(
+    enemyDefinition(1, "frigate"),
+    { archetype: "frigate", id: "spared", packId: null, phase: 0 },
+    at,
+  );
+  flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
+  expect(model.contextLabel).not.toBe("Salvage");
+  enemy.disabled = true;
+  expect(model.contextLabel).toBe("Salvage");
+  model.interact();
+  expect(enemy.salvaged).toBe(true);
+  expect(model.contextLabel).not.toBe("Salvage");
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;
@@ -426,7 +457,7 @@ it("keeps remaining whale debris aligned when an unknown encounter is placed ahe
   const debris = f.objects.filter((o) => o.id.startsWith("whale-debris:"));
   const offsets = debris.map((o) => ({ x: o.x - whale.x, y: o.y - whale.y }));
   f.player = { x: whale.x + PROTOTYPE.tuning.chunkSize * 4, y: whale.y };
-  f.velocity = { x: PROTOTYPE.tuning.maxSpeed, y: 0 };
+  f.velocity = { x: PROTOTYPE.tuning.physics.maxSpeed, y: 0 };
   const chunkSize = PROTOTYPE.tuning.chunkSize;
   f.freshChunk = `${Math.floor(f.player.x / chunkSize)},${Math.floor(f.player.y / chunkSize)}`;
   model.step(0.01, { ...idle, move: { x: 1, y: 0 } });
@@ -453,9 +484,7 @@ it("discovers a cleared required approach after reversing away from its first lo
   expect(pending).toBeDefined();
   const guard = flight.objects.find((object) => object.routeId === "growers")!;
   expect(guard.enemy).toBeDefined();
-  for (const part of guard.enemy!.hardpoints) {
-    part.hp = 0;
-  }
+  guard.enemy!.hp = 0;
   const originalX = pending!.x;
   expect(originalX - flight.player.x).toBeGreaterThan(content.tuning.chunkSize);
   expect(model.state.progress[1].known).toEqual([]);
@@ -562,14 +591,16 @@ describe("Use at an outpost", () => {
   it("offers Talk once the guard is disabled, its hull still standing nearby", () => {
     const { flight, model } = besideGrowers();
     const guard = ensureRouteEncounter(PROTOTYPE, "growers", flight)!;
-    const required = new Set(
-      enemyCatalog.frigate.hardpoints.filter((part) => part.required).map(({ id }) => id),
+    // Its weapons go: every weapon hardpoint destroyed disables it.
+    const weapons = new Set(
+      enemyCatalog.frigate.hardpoints.filter((part) => part.kind === "weapon").map(({ id }) => id),
     );
     for (const hardpoint of guard.enemy!.hardpoints) {
-      if (required.has(hardpoint.id)) {
+      if (weapons.has(hardpoint.id)) {
         hardpoint.hp = 0;
       }
     }
+    guard.enemy!.disabled = true;
     expect(guard.hp).toBeGreaterThan(0);
     model.step(0.05, idle);
     model.state.dialogue = null;

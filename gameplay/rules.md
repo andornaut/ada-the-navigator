@@ -262,12 +262,12 @@ them. All values are provisional tuning:
   open space, never overlap or close into loops, and keep 800 world units clear
   of stations, story destinations, landmarks and quantum jump arrivals. Asteroids
   are not placed in currents, and chunk generation keeps them clear.
-- The flow adds to a ship's own velocity as drift, outside its physics and speed
-  cap: riding a current gives Ada up to 270 world units per second, and pushing
-  against its centre still makes 130. Ada steers, docks and fights normally in a
+- The flow adds to a ship's own velocity as drift, outside its physics and
+  maximum speed: riding a current gives Ada at her base engine up to 230 world
+  units per second, and pushing against its centre still makes 90. Ada steers, docks and fights normally in a
   current.
 - Currents never trap Ada. The peak flow stays well below her slowest top speed,
-  towing included (130), every current ends in open space, and she can always
+  towing included (104), every current ends in open space, and she can always
   leave across it.
 - Small enemy craft drift fully. Frigates, capitals, platforms, stations and
   whales do not drift. Inactive retained ships do not drift.
@@ -504,8 +504,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   to 1 at full reach, target speed is
   `maxSpeed * (minSpeedFraction + (1 - minSpeedFraction) * m ^ speedCurveExponent)`.
   Provisional values are `minSpeedFraction` 0.04 and `speedCurveExponent` 2.5:
-  about 8 world units per second just past the deadzone, 14 at a quarter, 42 at
-  half, 102 at three quarters and 200 at full. Keyboard movement is full deflection.
+  at the base engine's 160, about 6 world units per second just past the
+  deadzone, 11 at a quarter, 34 at half, 82 at three quarters and 160 at full. Keyboard movement is full deflection.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
   not with stick deflection.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
@@ -533,10 +533,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   speakers up close.
 - Talk range is 160 world units, centre to centre: from Ada's position to the
   object's, with no hull or drawn-size radius. It is one value for Use at a
-  settlement, outpost, station or the hub (their discovery and Dock included)
-  and for Salvage on a disabled heavy; when several are in range, the nearest
-  wins, and a destination on a blocked route is excluded. Other ranges are their
-  own values: tow attach 120 and station discovery 320.
+  settlement, outpost, station or the hub, Dock included, and for Salvage on a
+  disabled heavy; when several are in range, the nearest wins, and a destination
+  on a blocked route is excluded. Other ranges are their own values: tow attach
+  120, and station discovery uses its own 320.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
@@ -650,9 +650,11 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   bought at shops (see [Economy](economy.md#ammunition)).
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
-  [Economy](economy.md). Icon pickups, presented like Chibi's power-ups,
-  equip their weapon at any time unless the switch wait is running, and retain
-  other owned weapons; during the wait the weapon is added without equipping it.
+  [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
+  power-ups, gives its upgrade on collection (see
+  [Economy](economy.md#earning-stardust)). A new weapon from it is equipped at
+  once unless the switch wait is running, when it is added without equipping;
+  other owned weapons are kept.
 - Every weapon and the shield have three levels. For most weapons each level
   multiplies effective output (damage times fire rate times how often it hits)
   by about 1.5, so level 3 is about 2.25 times level 1; Heavy Missile and
@@ -685,6 +687,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   blast and spread at the same level, plus three enemy-only weapons; each enemy
   keeps its own cadence and projectile speed (see
   [Ships](ships.md#enemy-weapons)).
+- Ada's base projectile speed is a fixed 600 world units per second, whatever
+  her engine level; weapon speed ratios multiply it.
 - Ada's shots and Phaser beams leave from her ship's nose, and weapon ranges are
   measured from there.
 - Fan angles are measured in the projected aim plane. Rotate there before
@@ -739,13 +743,15 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   follow last. Each segment leaves when empty. Stardust and ore gains show "+N"
   ticks just below their counts.
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
-  a story item, a lost item, a job item, a new weapon or an ammunition pack from
-  a weapon drop, or a towed craft), a small notice shows just below the status
+  a story item, a lost item, a job item, anything from an upgrade drop, or a
+  towed craft), a small notice shows just below the status
   pill, then moves to where the gain shows and vanishes: the carried-item pill
-  segment for story, lost and job items and towed craft, or the weapon icons for
-  a weapon or ammunition. A holodisk has no segment, so its notice fades in
-  place. A new weapon's icon appears at pickup and the notice flies to it. Every
-  notice reads "+ {item}", or "+ {weapon} ammo" for ammunition. Item names drop
+  segment for story, lost and job items and towed craft, the weapon icons for a
+  weapon, weapon level or ammunition, or the shield bar for a Shield level. A
+  holodisk, an Engine or Tractor beam level and a paint scheme have no HUD place,
+  so their notices fade in place. A new weapon's icon appears at pickup and the notice flies to it. Every
+  notice reads "+ {item}"; an upgrade drop's notice names what it gave (see
+  [Economy](economy.md#earning-stardust)). Item names drop
   their article and start with a capital ("Spare parts", "Message"). Gains close
   together queue, one notice at a time; identical gains merge into one notice
   ("+ Rapid Missile ammo ×2"), and each waiting notice holds half as long while
@@ -937,10 +943,12 @@ undiscovered station within range. Optional discovery caches and ordinary
 resource rocks get none; Penny senses those instead. A discovery
 cache lights when Ada comes within 160 world units. The holodisk is collected on
 contact, like other pickups. The pause menu's Map (the local map) is the only map of a galaxy; there is no minimap.
-Edge markers show where off-screen objects Ada has already seen are. Three kinds
+Edge markers show where off-screen objects Ada has already seen are. Four kinds
 each have their own look: enemy (swarms, fighters, interceptors and
-retaliators), heavy (frigates, capital ships, platforms and General Gadget) and
-station (stations and outposts). Friendly objects she flies through (story ships,
+retaliators), heavy (frigates, capital ships, platforms and General Gadget),
+guard and station (stations and outposts). A guard is a heavy that still blocks
+a route: it shows the guard marker, its own image, in place of the heavy marker,
+and switches to the heavy marker once it is disabled. Friendly objects she flies through (story ships,
 whales, wrecks and landmarks) get none. An object gets a marker only after it
 has been on Ada's screen and then left it. The marker stays while the object is
 within 1400 world units of Ada, one range for every kind; past 1400 the object is
@@ -993,8 +1001,12 @@ shots. No missile homes.
 
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
-block required quest routes in the first five galaxies. Black Eye's story and
-conclusion remain to be designed.
+block required quest routes in the first five galaxies. A guard stops blocking
+its route once it is disabled or destroyed. The first time each flight that Ada
+comes within Talk range of a destination its guard still blocks, Astra says a
+guard line, the guard gets its guard edge marker even if Ada has not seen it yet,
+and the guard wakes and flies toward Ada until it is on screen, then fights as
+usual. Black Eye's story and conclusion remain to be designed.
 
 ## Verification priorities
 

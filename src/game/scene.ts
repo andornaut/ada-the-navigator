@@ -20,8 +20,8 @@ import { CHEAT_COPY } from "../data/cheat-copy.ts";
 import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
-import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import { BUILT, GALAXY_ID, ROUTE } from "../data/galaxies.ts";
+import { enemyCatalog, enemyDefinition, MINE_LAYER } from "../data/enemy-catalog.ts";
+import { BUILT, GALAXY_ID, ROUTE, ROUTE_POSITION } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -30,7 +30,6 @@ import { SCREEN } from "../data/screen.ts";
 import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/story-ships.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
-import { PICKUP_GLYPH, pickupGlyphKey, weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import { coarsePointer } from "../input/coarse-pointer.ts";
 import { createControls } from "../input/controls.ts";
 import { loadingProgress, type WaitedLoad } from "../loading/progress.ts";
@@ -40,9 +39,16 @@ import { type Current, currentsNear, flowFraction } from "../model/currents.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { createEdgeMarkerTracker, edgePoint } from "../model/edge-markers.ts";
 import { enemySpeedFraction } from "../model/enemy-ai.ts";
-import { activeBeamFlashes, activeBlastFlashes, shipSpeedFraction } from "../model/flight.ts";
+import {
+  activeBeamFlashes,
+  activeBlastFlashes,
+  activeEnemyBeams,
+  activeRingEmissions,
+  type EnemyBeam,
+  shipSpeedFraction,
+} from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
-import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
+import { type GainSnapshot, gainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { newerSave } from "../model/save.ts";
@@ -74,9 +80,11 @@ import {
 import { backReleased } from "../ui/back-stack.ts";
 import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/device-settings.ts";
+import { createBannerLayer, type PlacedBanner } from "../ui/disabled-banner.ts";
 import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
+import { safeGameArea } from "../ui/layout/playView.ts";
 import { type MapField, mapScreenLabels } from "../ui/map-screen.ts";
 import { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
@@ -169,6 +177,7 @@ import {
   USE_CALLOUT_DEPTH,
 } from "./draw-order.ts";
 import {
+  bannerOffset,
   composedArchetypes,
   composeEnemy,
   type EnemyArt,
@@ -186,9 +195,23 @@ import {
   galaxyFamily,
   HitFlashes,
   type PartPose,
+  type PartSprite,
   selectEnemyFrame,
 } from "./enemy-art.ts";
-import { type FeedbackPulse, FeedbackSound, ModelFeedback } from "./feedback.ts";
+import {
+  type EnemyEffect,
+  enemyInkEdges,
+  enemyPhaser,
+  type EnemyWeaponsArt,
+  type EnemyWeaponsView,
+  lance,
+  mine,
+  readEnemyWeaponsArt,
+  ringDart,
+  ringEmission,
+} from "./enemy-weapons-art.ts";
+import { type FeedbackPulse, FeedbackSound, ModelFeedback, TELEPORT_DISTANCE } from "./feedback.ts";
+import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavy-states.ts";
 import {
   beaconLandmarkFrame,
   dashes,
@@ -304,6 +327,12 @@ import {
   type TowLine,
   towOffset,
 } from "./tow-art.ts";
+import {
+  litChevron,
+  readUpgradePickup,
+  UPGRADE_CHEVRON,
+  type UpgradePickupArt,
+} from "./upgrade-pickup.ts";
 import {
   AMBER_BEAM_GLOW,
   blast as blastEffect,
@@ -432,6 +461,11 @@ export class PrototypeScene extends Scene {
   private drawnTops = new Map<string, number>();
   /** Each texture frame's topmost row at alpha 0.5 or more, as a fraction of its height. */
   private frameTops = new Map<string, number>();
+  /** Enemies drawn as vector placeholders this frame, while their frames load. */
+  private enemyPlaceholders = 0;
+  /** The upgrade pickup's chevrons and climb, and when each pickup first drew, in ms. */
+  private upgradePickupArt: UpgradePickupArt | undefined;
+  private pickupSeen = new Map<string, number>();
   private hitFlashes = new HitFlashes();
   // A heavy's part frames load on demand, once per archetype.
   private partAssets: Asset[] = [];
@@ -470,6 +504,15 @@ export class PrototypeScene extends Scene {
   private flightClock = 0;
   private reveals = new Map<string, number>();
   private revealGroups = new Map<string, GameObjects.RenderTexture>();
+  /** The Disabled banners' HTML layer over the canvas, and this frame's banners. */
+  private bannerLayer: ReturnType<typeof createBannerLayer> | undefined;
+  private banners: PlacedBanner[] = [];
+  /** Art's enemy-only weapon effects, once enemy-weapons.json loads and validates. */
+  private enemyWeaponsArt: EnemyWeaponsArt | undefined;
+  /** Each mine's graphics, sorted with the play objects by its centre's screen y, by mine id. */
+  private mineInk = new Map<string, Phaser.GameObjects.Graphics>();
+  /** Each salvaged heavy composed into one texture, dimmed as a group, by enemy id. */
+  private salvagedGroups = new Map<string, GameObjects.RenderTexture>();
   // Whirlpool's nursery beacon and current-map buoys (whirlpool-projects.ts), the buoys' sprites
   // by buoy, and the whales' current with the family position it was found from.
   private whirlpoolProjects: WhirlpoolProjects<Asset> | undefined;
@@ -667,6 +710,9 @@ export class PrototypeScene extends Scene {
       if (manifest.quantumJump) {
         this.load.json("quantum-jump", manifest.quantumJump);
       }
+      if (manifest.enemyWeapons) {
+        this.load.json("enemy-weapons", manifest.enemyWeapons);
+      }
       if (manifest.titleScreen) {
         this.load.json(TITLE_SCREEN_KEY, manifest.titleScreen);
       }
@@ -718,15 +764,6 @@ export class PrototypeScene extends Scene {
     this.load.json("art-manifest", "/art/manifest.json");
     this.load.json("destruction", DESTRUCTION_PATH);
     this.load.json("ship-jets", "/art/ship-jets.json");
-    // Weapon pickups draw their HUD glyphs rasterised at the pickup size.
-    const glyph = { displayHeight: PICKUP_GLYPH.size, displayWidth: PICKUP_GLYPH.size };
-    for (const weapon of PICKUP_GLYPH.weapons) {
-      this.queueSvg({
-        key: pickupGlyphKey(weapon),
-        path: weaponGlyphPath(weapon),
-        size: (scale) => vectorRaster(scale, glyph),
-      });
-    }
     preloadTouchChrome(this);
   }
 
@@ -774,6 +811,12 @@ export class PrototypeScene extends Scene {
     followZoom();
     this.scale.on(Scale.Events.RESIZE, followZoom);
     this.events.once(Scenes.Events.SHUTDOWN, () => this.scale.off(Scale.Events.RESIZE, followZoom));
+    const host = document.getElementById(VIEW_HOST_ID);
+    if (host) {
+      const layer = createBannerLayer(document, host, PROTOTYPE.labels.disabledBanner ?? "");
+      this.bannerLayer = layer;
+      this.events.once(Scenes.Events.SHUTDOWN, () => layer.destroy());
+    }
     this.ink = this.add.graphics();
     // Enemy jets draw behind enemy sprites; shots and feedback draw above both.
     this.enemyJets = this.add.graphics().setDepth(1);
@@ -815,12 +858,14 @@ export class PrototypeScene extends Scene {
       );
     }
     this.readEnemyArt();
+    this.enemyWeaponsArt = readEnemyWeaponsArt(this.cache.json.get("enemy-weapons"));
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
     this.outpostArt = readOutpostArt(this.shipAssets);
     this.projectArt = readProjectArt(this.shipAssets, this.outpostArt, PROJECTS_FILE);
     this.stardustArt = readStardustArt(this.shipAssets);
     this.cacheArt = readLoopArt(this.shipAssets, "discovery-cache", CACHE_FRAMES);
+    this.upgradePickupArt = readUpgradePickup(manifest?.assets ?? []);
     this.holodiskArt = readLoopArt(this.shipAssets, "holodisk", HOLODISK_FRAMES);
     this.coreAssetIds = (manifest?.assets ?? []).map(({ id }) => id);
     this.manifest = {
@@ -1034,8 +1079,8 @@ export class PrototypeScene extends Scene {
         ammo: PROTOTYPE.labels.weaponAmmoLabel ?? "",
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
-          basic: PROTOTYPE.labels.weaponBasic ?? "",
           heavyMissile: PROTOTYPE.labels.weaponHeavyMissile ?? "",
+          laser: PROTOTYPE.labels.weaponLaser ?? "",
           multiLaser: PROTOTYPE.labels.weaponMultiLaser ?? "",
           phaser: PROTOTYPE.labels.weaponPhaser ?? "",
           rapidMissile: PROTOTYPE.labels.weaponRapidMissile ?? "",
@@ -1936,7 +1981,7 @@ export class PrototypeScene extends Scene {
   }
 
   private observeFeedback(): void {
-    const kinds = this.feedback.observe(PROTOTYPE.tuning.maxSpeed * 0.1, this.model.state);
+    const kinds = this.feedback.observe(TELEPORT_DISTANCE, this.model.state);
     this.feedbackSound.play(kinds);
     if (this.screenShake && kinds.includes("damage")) {
       const camera = this.cameras.main;
@@ -1962,12 +2007,7 @@ export class PrototypeScene extends Scene {
       }
       return;
     }
-    const ship = this.model.ship;
-    const snapshot: GainSnapshot = {
-      aboard: ship.aboard,
-      holodisks: ship.holodisks,
-      weapons: ship.weapons.map(({ ammo, id }) => ({ ammo, id })),
-    };
+    const snapshot = gainSnapshot(this.model.state.economy.paints, this.model.ship);
     if (this.held?.flight === flight) {
       const gains = itemGains(Boolean(this.model.state.docked), this.held.snapshot, snapshot);
       if (gains.length > 0) {
@@ -2307,6 +2347,7 @@ export class PrototypeScene extends Scene {
     this.towInk.clear();
     this.towSprite.setVisible(false);
     this.keyed = [];
+    this.banners = [];
     this.passable = [];
     this.towDepth = undefined;
     for (const sprite of this.enemySprites.values()) {
@@ -2326,6 +2367,10 @@ export class PrototypeScene extends Scene {
     }
     this.landmarksDrawn.clear();
     this.glintSprite?.setVisible(false);
+    for (const group of this.salvagedGroups.values()) {
+      group.setVisible(false);
+    }
+
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
@@ -2337,6 +2382,7 @@ export class PrototypeScene extends Scene {
       this.edgeMarkers.update(null, new Set());
       this.drawKeylines();
       this.drawUseCallout(undefined);
+      this.bannerLayer?.place([]);
       return;
     }
     this.light = lightGalaxy(this.lightGalaxies, flight.sector);
@@ -2372,9 +2418,11 @@ export class PrototypeScene extends Scene {
         this.landmarkSprites.delete(key);
       }
     }
+    this.enemyPlaceholders = 0;
     for (const object of flight.objects) {
       this.drawObject(object);
     }
+    this.shell.setEnemyArt(this.enemyPlaceholders === 0);
     this.drawStoryShips(flight);
     this.drawGuidedCalf();
     this.drawRockBreaks();
@@ -2411,7 +2459,9 @@ export class PrototypeScene extends Scene {
         this.drawEffect(spark, this.edges(["hitSpark"], spark));
       }
     }
-    for (const shot of flight.shots) {
+    this.drawEnemyWeapons(this.enemyWeaponsView(flight));
+    // Ring burst bolts draw as Art's darts with the enemy weapons.
+    for (const shot of flight.shots.filter((entry) => entry.enemyWeapon !== "ringBurst")) {
       const color = shot.enemy ? this.palette.obstacle : this.palette.weapon;
       const point = this.project(shot);
       const tail = this.project({
@@ -2557,8 +2607,21 @@ export class PrototypeScene extends Scene {
       this.enemySprites.get(id)!.destroy();
       this.enemySprites.delete(id);
     }
+    for (const id of this.pickupSeen.keys()) {
+      if (!activeIds.has(id)) {
+        this.pickupSeen.delete(id);
+      }
+    }
+    for (const [id, group] of this.salvagedGroups) {
+      if (!activeIds.has(id)) {
+        group.destroy();
+        this.salvagedGroups.delete(id);
+      }
+    }
+
     this.drawKeylines();
     this.drawUseCallout(flight);
+    this.bannerLayer?.place(this.banners);
   }
 
   /**
@@ -2807,12 +2870,13 @@ export class PrototypeScene extends Scene {
       );
       return;
     }
-    const definition = enemyCatalog[enemy.archetype];
+    const definition = enemyDefinition(this.model.state.flight!.sector, enemy.archetype);
     const art = this.familyArt(enemy.archetype);
     if (art) {
       this.drawEnemySprite(art, point, object.id, enemy);
       return;
     }
+    this.enemyPlaceholders++;
     const width = definition.sizeRatio * PROTOTYPE.tuning.flight.shipRadius * 2;
     // Hull and hardpoints share the hull's rotating local frame.
     const local = (x: number, y: number): Vec => {
@@ -2935,7 +2999,9 @@ export class PrototypeScene extends Scene {
   /**
    * Authored frames already include perspective; jets are not clipped to the frame. A composed
    * craft draws its hull and hardpoint bases in the heading's layer order with intact turret
-   * tops at their aim, a hit hardpoint flashing white, and jets only from intact engines.
+   * tops at their aim, a hit hardpoint flashing white, and jets only from intact engines. A
+   * disabled heavy shows the Disabled banner above every layer; a salvaged one draws dimmed as
+   * one group with no jets.
    */
   private drawEnemySprite(
     art: EnemyArt<Asset>,
@@ -2946,12 +3012,23 @@ export class PrototypeScene extends Scene {
     const frame = selectEnemyFrame(art, enemy.facing);
     const state = (hardpoint: string) => enemy.hardpoints.find((part) => part.id === hardpoint);
     // A turret mount without hardpoint state, such as the retaliator's, aims with the hull
-    // weapon and stands while the hull does.
+    // weapon and stands while the hull does. The galaxy's route position picks the mount tier.
+    const sector = this.model.state.flight?.sector;
     const pose: PartPose = {
       aim: (hardpoint) => state(hardpoint)?.aim ?? enemy.aim ?? enemy.facing,
       intact: (hardpoint) => (state(hardpoint)?.hp ?? 1) > 0,
+      position: sector === undefined ? 1 : ROUTE_POSITION[sector],
     };
-    composeEnemy(art, pose, frame).forEach((part, index) => {
+    const sprites = composeEnemy(art, pose, frame);
+    if (enemy.salvaged) {
+      this.drawSalvaged(id, enemy.archetype, sprites, point);
+      return;
+    }
+    const banner = showsBanner(enemy) ? bannerOffset(art, frame) : undefined;
+    if (banner) {
+      this.banners.push({ at: { x: point.x + banner.x, y: point.y + banner.y }, id });
+    }
+    sprites.forEach((part, index) => {
       const key = part.hardpoint === null ? id : `${id}#${part.layer}:${part.hardpoint}`;
       const sprite = this.objectSprite(key, part.frame.id)
         .setDisplaySize(part.frame.displayWidth!, part.frame.displayHeight!)
@@ -2968,12 +3045,7 @@ export class PrototypeScene extends Scene {
         sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
       }
     });
-    const speed = enemySpeedFraction(
-      enemyCatalog[enemy.archetype],
-      PROTOTYPE.tuning.maxSpeed,
-      enemyEncounterTuning.speedCapRatio,
-      enemy,
-    );
+    const speed = enemySpeedFraction(enemyCatalog[enemy.archetype], enemy);
     // A light field swaps in Art's dark enemy jet layers.
     const jets =
       this.light && art.jets
@@ -2990,6 +3062,69 @@ export class PrototypeScene extends Scene {
         point.y + points[2].y,
       );
     }
+  }
+
+  /**
+   * A salvaged heavy (art/heavies.md "Salvaged dimming"): its composed frame, with its keyline on
+   * a light field, drawn into one texture at the raster scale, mixed toward its grey and shown at
+   * the group alpha, so overlapping layers never show through each other.
+   */
+  private drawSalvaged(
+    id: string,
+    archetype: string,
+    sprites: readonly PartSprite<Asset>[],
+    point: Vec,
+  ): void {
+    const grow = this.light && LIGHT_FIELD.keylined.includes(archetype) ? LIGHT_FIELD.keyline : 0;
+    const bounds = spritesBounds(sprites);
+    const left = Math.floor(point.x + bounds.left - grow - 1);
+    const top = Math.floor(point.y + bounds.top - grow - 1);
+    const width = Math.ceil(point.x + bounds.right + grow + 1) - left;
+    const height = Math.ceil(point.y + bounds.bottom + grow + 1) - top;
+    const r = this.rasters.scale;
+    const texels = { height: densityTexels(r, height), width: densityTexels(r, width) };
+    let group = this.salvagedGroups.get(id);
+    if (!group || group.width !== texels.width || group.height !== texels.height) {
+      group?.destroy();
+      group = this.add.renderTexture(0, 0, texels.width, texels.height).setOrigin(0, 0);
+      this.filterTexture(group.texture.key, "linear");
+      group.enableFilters().filters?.internal.addColorMatrix().colorMatrix.set(salvagedMatrix());
+      this.salvagedGroups.set(id, group);
+    }
+    group.clear();
+    const stamps = sprites.map((part) => {
+      const frame = this.textures.getFrame(part.frame.id);
+      return {
+        config: {
+          originX: part.frame.pivot.x,
+          originY: part.frame.pivot.y,
+          scaleX: (r * part.frame.displayWidth!) / frame.width,
+          scaleY: (r * part.frame.displayHeight!) / frame.height,
+        },
+        frame,
+        x: point.x + part.offset.x - left,
+        y: point.y + part.offset.y - top,
+      };
+    });
+    if (grow > 0) {
+      for (const { config, frame, x, y } of stamps) {
+        const silhouette = this.keylineSilhouette({ frame });
+        for (const offset of silhouette ? keylineOffsets(grow) : []) {
+          group.stamp(silhouette!, undefined, r * (x + offset.x), r * (y + offset.y), config);
+        }
+      }
+    }
+    for (const { config, frame, x, y } of stamps) {
+      group.stamp(frame.texture.key, undefined, r * x, r * y, config);
+    }
+    group.render();
+    group
+      .setDisplaySize(width, height)
+      .setPosition(left, top)
+      .setDepth(playDepth(point.y))
+      .setAlpha(SALVAGED.alpha)
+      .setVisible(true);
+    this.passes(group);
   }
 
   /**
@@ -3265,9 +3400,13 @@ export class PrototypeScene extends Scene {
     const indicated = new Set(this.model.indicatorTargets.map(({ id }) => id));
     const centre = this.project(flight.player);
     const outline = LIGHT_FIELD.markerOutline;
-    for (const marker of this.edgeMarkers.update(flight, indicated)) {
+    const { insets, view } = this.controls.layout();
+    // Inside the safe game area: never under a notch, a curved corner or the home bar.
+    const area = safeGameArea(insets, view);
+    for (const marker of this.edgeMarkers.update(flight, indicated, this.time.now)) {
       // The outermost drawn pixel, the ink outline included on a light field, sits 1 in.
       const at = edgePoint(
+        area,
         edgeMarkerInset(this.light ? outline : 0, marker.kind),
         centre,
         this.project(marker),
@@ -3297,6 +3436,13 @@ export class PrototypeScene extends Scene {
       }
       this.edgeMarkerInk.fillStyle(this.palette.threat, 1);
       this.edgeMarkerInk.fillCircle(at.x, at.y, radius);
+      // A guard's ink bar; a guard just disabled fades it out, or drops it under reduced motion.
+      const bar = marker.kind === "guard" || !this.reducedMotion ? (marker.bar ?? 0) : 0;
+      if (bar > 0) {
+        const { height, width } = EDGE_MARKER_GLYPHS.guard.bar;
+        this.edgeMarkerInk.fillStyle(LIGHT_FIELD.ink, bar);
+        this.edgeMarkerInk.fillRect(at.x - width / 2, at.y - height / 2, width, height);
+      }
     }
   }
 
@@ -3742,6 +3888,32 @@ export class PrototypeScene extends Scene {
       .clearTint()
       .setRotation(0)
       .setVisible(true);
+  }
+
+  /**
+   * The upgrade pickup's two chevrons in the square's amber (art/weapons.md "Pickups"): the
+   * climb loops from the still frame when the pickup first draws, lighting each chevron white
+   * for its step; reduced motion holds the still frame.
+   */
+  private drawUpgradeChevrons(object: SpaceObject, point: Vec, color: number): void {
+    const art = this.upgradePickupArt;
+    if (!art || !this.textures.exists(UPGRADE_CHEVRON)) {
+      return;
+    }
+    const since = this.pickupSeen.get(object.id) ?? this.time.now;
+    this.pickupSeen.set(object.id, since);
+    const lit = litChevron(art, this.reducedMotion, this.time.now - since);
+    for (const chevron of art.chevrons) {
+      const key = partKey(object.id, `chevron:${chevron.name}`);
+      const sprite = this.objectSprite(key, UPGRADE_CHEVRON)
+        .setOrigin(0.5)
+        .setDisplaySize(art.size.width, art.size.height)
+        .setPosition(point.x + chevron.offset.x, point.y + chevron.offset.y)
+        .setDepth(playDepth(point.y))
+        .setTint(chevron.name === lit ? 0xffffff : color)
+        .setTintMode(TintModes.FILL);
+      this.keyline("upgradePickup", key, sprite);
+    }
   }
 
   /**
@@ -4336,7 +4508,7 @@ export class PrototypeScene extends Scene {
           this.drawStardust(object, point, radius);
           break;
         }
-        if (this.light && object.weapon && LIGHT_FIELD.keylined.includes("weaponPickup")) {
+        if (this.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
           // The square's ink keyline: a stroke 2 keyline wider on the same path.
           this.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
           this.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
@@ -4355,15 +4527,8 @@ export class PrototypeScene extends Scene {
         if (object.role === "cargo") {
           this.ink.fillStyle(color);
           this.ink.fillCircle(point.x, point.y, radius / 3);
-        } else if (object.weapon && this.textures.exists(pickupGlyphKey(object.weapon))) {
-          // The weapon's HUD glyph at 14px, filled in the square's amber.
-          const glyph = this.objectSprite(object.id, pickupGlyphKey(object.weapon))
-            .setDisplaySize(PICKUP_GLYPH.size, PICKUP_GLYPH.size)
-            .setOrigin(0.5)
-            .setPosition(point.x, point.y)
-            .setTint(color)
-            .setTintMode(TintModes.FILL);
-          this.keyline("weaponPickup", object.id, glyph);
+        } else if (object.upgrade) {
+          this.drawUpgradeChevrons(object, point, color);
         }
         break;
       case "resource": {
@@ -4716,8 +4881,11 @@ export class PrototypeScene extends Scene {
    * Fills and strokes Art's weapon effect shapes on the overlay, in order, over their ink
    * edges, if any.
    */
-  private drawEffect(shapes: readonly EffectShape[], edges: readonly EffectShape[] = []): void {
-    const graphics = this.overlay;
+  private drawEffect(
+    shapes: readonly EffectShape[],
+    edges: readonly EffectShape[] = [],
+    graphics: Phaser.GameObjects.Graphics = this.overlay,
+  ): void {
     for (const shape of [...edges, ...shapes]) {
       switch (shape.kind) {
         case "polygon":
@@ -4755,8 +4923,92 @@ export class PrototypeScene extends Scene {
           }
           break;
         case "taper":
-          this.drawTaper(shape);
+          this.drawTaper(shape, graphics);
           break;
+      }
+    }
+  }
+
+  /** The model's enemy Phaser and enemy-only weapon state for this frame, in ms. */
+  private enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
+    const tells = (kind: EnemyBeam["kind"]) =>
+      activeEnemyBeams(flight)
+        .filter((beam) => beam.kind === kind)
+        .map((beam) => ({
+          ageMs: beam.age * 1000,
+          end: beam.end,
+          muzzle: beam.muzzle,
+          stopped: beam.stopped,
+        }));
+    return {
+      lances: tells("lance"),
+      mines: flight.mines.map((laid) => ({
+        ageMs: Math.max(0, laid.age) * 1000,
+        at: { x: laid.x, y: laid.y },
+        ...(laid.end ? { end: { ageMs: laid.end.age * 1000, kind: laid.end.kind } } : {}),
+        id: laid.id,
+        lifeMs: MINE_LAYER.lifeSeconds * 1000,
+      })),
+      phasers: tells("phaser"),
+      ringBolts: flight.shots
+        .filter((shot) => shot.enemyWeapon === "ringBurst")
+        .map((shot) => ({ at: { x: shot.x, y: shot.y }, velocity: shot.velocity })),
+      rings: activeRingEmissions(flight).map((ring) => ({ ...ring, ageMs: ring.age * 1000 })),
+    };
+  }
+
+  /**
+   * Art's enemy-only weapon effects and the enemy Phaser in the effect layer, each over its ink
+   * edges on a light field; each mine sorts with the play objects by its centre's screen y.
+   */
+  private drawEnemyWeapons(view: EnemyWeaponsView): void {
+    const art = this.enemyWeaponsArt;
+    const used = new Set<string>();
+    if (art) {
+      const light = this.light;
+      const motion = this.reducedMotion;
+      const draw = (effect: EnemyEffect, graphics?: Phaser.GameObjects.Graphics) =>
+        this.drawEffect(
+          effect.shapes,
+          light ? enemyInkEdges(art.colours.ink, art.lightField.edge, effect.edged) : [],
+          graphics,
+        );
+      for (const ring of view.rings) {
+        const origins = ring.origins.map((origin) => this.project(origin));
+        draw(
+          ringEmission(art, this.project(ring.at), ring.spawnRadius, origins, motion, ring.ageMs),
+        );
+      }
+      for (const bolt of view.ringBolts) {
+        draw(ringDart(art, this.project(bolt.at), bolt.velocity));
+      }
+      const screen = (tell: EnemyWeaponsView["lances"][number]) => ({
+        ...tell,
+        end: this.project(tell.end),
+        muzzle: this.project(tell.muzzle),
+      });
+      for (const tell of view.lances) {
+        draw(lance(art, screen(tell), light, motion));
+      }
+      for (const tell of view.phasers) {
+        draw(enemyPhaser(art, screen(tell), light, motion));
+      }
+      for (const dropped of view.mines) {
+        const centre = this.project(dropped.at);
+        let graphics = this.mineInk.get(dropped.id);
+        if (!graphics) {
+          graphics = this.add.graphics();
+          this.mineInk.set(dropped.id, graphics);
+        }
+        graphics.clear().setDepth(playDepth(centre.y)).setVisible(true);
+        draw(mine(art, centre, dropped, motion), graphics);
+        used.add(dropped.id);
+      }
+    }
+    for (const [id, graphics] of this.mineInk) {
+      if (!used.has(id)) {
+        graphics.destroy();
+        this.mineInk.delete(id);
       }
     }
   }
@@ -4792,7 +5044,7 @@ export class PrototypeScene extends Scene {
   }
 
   /** A taper as two triangles whose vertex alphas run linearly from tail to head. */
-  private drawTaper(shape: TaperShape): void {
+  private drawTaper(shape: TaperShape, graphics: Phaser.GameObjects.Graphics = this.overlay): void {
     const { colour, head, tail } = shape;
     const dx = head.at.x - tail.at.x;
     const dy = head.at.y - tail.at.y;
@@ -4810,7 +5062,6 @@ export class PrototypeScene extends Scene {
     const tailRight = side(tail, -1);
     const headLeft = side(head, 1);
     const headRight = side(head, -1);
-    const graphics = this.overlay;
     // Each triangle takes its three corners' alphas from the first three gradient slots.
     graphics.fillGradientStyle(colour, colour, colour, colour, tail.alpha, head.alpha, tail.alpha);
     graphics.fillTriangle(tailLeft.x, tailLeft.y, headLeft.x, headLeft.y, tailRight.x, tailRight.y);

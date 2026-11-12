@@ -4,15 +4,13 @@ import { ECONOMY } from "../data/economy.ts";
 import { sectorEncounters } from "../data/enemy-catalog.ts";
 import { byPosition, SECTORS } from "../data/galaxies.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
-import { galaxyCard } from "../data/storybook.ts";
 import type { SectorId } from "../data/types.ts";
 import { readStory } from "../testing/launch.ts";
 import { currentInCell } from "./currents.ts";
 import { createFlight, stepFlight } from "./flight.ts";
-import { GameModel, newProgress } from "./game.ts";
+import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { oreFieldInCell } from "./ore-fields.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -168,58 +166,5 @@ describe("unlocking along the route", () => {
     cartwheel.finishRouteFlight();
     expect(cartwheel.selectedGalaxy).toBe(6);
     expect(cartwheel.selectedPosition).toBe(6);
-  });
-});
-
-describe("saves from before the placeholder galaxies", () => {
-  // A three-galaxy save: progress for galaxies 1 to 3 only, Sunflower complete and Cartwheel
-  // unlocked under the old order.
-  function legacySave(): Record<string, unknown> {
-    const model = new GameModel(PROTOTYPE);
-    Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
-    Object.assign(model.state.progress[1], {
-      charted: [],
-      deposited: 12,
-      holodisk: true,
-      introduced: true,
-      known: ["growers", "workshop", "salvagers"],
-      opened: true,
-      questComplete: true,
-      resolved: true,
-      stage: 4,
-    });
-    Object.assign(model.state.progress[2], { introduced: true, known: ["hub"], stage: 2 });
-    model.state.economy.stardust = 345;
-    const saved = JSON.parse(model.save()) as Record<string, unknown>;
-    const progress = saved.progress as Record<string, unknown>;
-    for (const id of PLACEHOLDERS) {
-      delete progress[id];
-    }
-    return saved;
-  }
-
-  it("loads with every galaxy's progress intact, the placeholders new", () => {
-    const saved = legacySave();
-    const restored = restoreSave(JSON.stringify(saved));
-    expect(restored).not.toBeNull();
-    const progress = saved.progress as Record<string, unknown>;
-    for (const id of [1, 2, 3] as const) {
-      expect(restored!.progress[id]).toEqual(progress[id]);
-    }
-    for (const id of PLACEHOLDERS) {
-      expect(restored!.progress[id]).toEqual(newProgress());
-    }
-    expect(restored!.economy.stardust).toBe(345);
-    expect(restored!.selectedSector).toBe(1);
-  });
-
-  it("keeps every stored unlock and adds the route's: Whirlpool after Sunflower", () => {
-    const restored = restoreSave(JSON.stringify(legacySave()))!;
-    expect(restored.unlocked).toEqual([1, 2, 3]);
-    const model = new GameModel(PROTOTYPE, JSON.stringify(legacySave()));
-    expect(galaxyCard(3).name).toBe("Whirlpool");
-    expect(model.isUnlocked(3)).toBe(true);
-    expect(model.isUnlocked(2)).toBe(true);
-    expect(model.isUnlocked(4)).toBe(false);
   });
 });

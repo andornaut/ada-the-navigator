@@ -403,9 +403,11 @@ describe("tow handling", () => {
       ...physics,
       accelerationSeconds: physics.accelerationSeconds * 2,
       brakingSeconds: physics.brakingSeconds * 2,
-      speedRatio: physics.speedRatio * 0.65,
+      maxSpeed: physics.maxSpeed * 0.65,
       turnSeconds: physics.turnSeconds * 1.5,
     });
+    // The base engine's 160 tows at 104 (gameplay/rules.md).
+    expect(towing({ tow: { x: 0, y: 0 } }, physics).maxSpeed).toBeCloseTo(104, 9);
   });
 
   it("slows a flight with a craft in tow", () => {
@@ -745,7 +747,7 @@ describe("jobs in play", () => {
       tractor: 1,
     });
     expect(ship.weapons.map(({ id }) => id)).toEqual(model.weapons().map(({ id }) => id));
-    expect(ship.weapons[0]).toEqual({ ammo: null, id: "basic", level: 1 });
+    expect(ship.weapons[0]).toEqual({ ammo: null, id: "laser", level: 1 });
   });
 
   it("restore saved jobs, charted landmarks and the tow, and reject invalid ones", () => {
@@ -755,10 +757,6 @@ describe("jobs in play", () => {
     model.state.flight!.tow = { x: 1, y: 2 };
     const saved = JSON.parse(model.save()) as ReturnType<typeof newGameState>;
     expect(restoreSave(saved)).toEqual(model.state);
-    const legacy = structuredClone(saved) as Partial<typeof saved>;
-    delete legacy.jobs;
-    delete legacy.tasks;
-    expect(restoreSave(legacy)).toMatchObject(emptyBook());
     const badLandmark = structuredClone(saved);
     badLandmark.progress[1].charted = ["landmark:1:99"];
     expect(restoreSave(badLandmark)).toBeNull();

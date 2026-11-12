@@ -174,6 +174,7 @@ describe("station safe area", () => {
     flight.dangerFor = 2;
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "incoming",
@@ -252,7 +253,7 @@ describe("station discovery and docking", () => {
     model.step(1, { ...idle, move: { x: 1, y: 0 } });
     expect(flight.time).toBe(time);
     expect(flight.player).toEqual(position);
-    expect(model.selectWeapon("basic")).toBe(false);
+    expect(model.selectWeapon("laser")).toBe(false);
     const saved = model.save();
     expect(restoreSave(saved)?.docked).toBe(site.id);
     model.undock();

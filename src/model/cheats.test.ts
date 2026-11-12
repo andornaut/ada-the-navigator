@@ -6,6 +6,7 @@ import { playOpening, relaunch } from "../testing/launch.ts";
 import { grantAllWeapons } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { stationsNear } from "./stations.ts";
+import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -25,7 +26,7 @@ describe("grant all weapons", () => {
       cargo: 12345,
       fireCooldown: 0.37,
       ownedWeapons: ["multiLaser"],
-      shield: 42,
+      shield: 4.2,
       weapon: "multiLaser",
     });
     model.save();
@@ -45,7 +46,7 @@ describe("grant all weapons", () => {
       "scattershot",
       "phaser",
     ]);
-    expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 42 });
+    expect(flight).toMatchObject({ cargo: 12345, fireCooldown: 0.37, shield: 4.2 });
     expect(flight.weapon).toBe("multiLaser");
     const serialized = model.save();
     expect(model.state.economy).toEqual(economy);
@@ -60,11 +61,11 @@ describe("grant all weapons", () => {
     grantAllWeapons(model.state);
     model.state.flight!.weapon = "rapidMissile";
     model.save();
-    expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "basic" });
+    expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "laser" });
     model.returnHome();
     model.startSector(1);
     playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser"]);
   });
 
   it("keeps every saved weapon and Stardust when a granted weapon is equipped in a jump", () => {
@@ -75,9 +76,10 @@ describe("grant all weapons", () => {
     grantAllWeapons(model.state);
     flight.weapon = "rapidMissile";
     model.state.economy.stardust = 30;
-    flight.shield = PROTOTYPE.tuning.enemyDamage;
+    flight.shield = PROTOTYPE.tuning.hazardDamage;
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "hit",
@@ -96,30 +98,23 @@ describe("grant all weapons", () => {
     const model = launched();
     const flight = model.state.flight!;
     grantAllWeapons(model.state);
-    flight.objects.push({
-      ...flight.player,
-      hp: 1,
-      id: "found",
-      kind: "pickup",
-      radius: 10,
-      weapon: "scattershot",
-    });
+    collectWeapon("scattershot", flight);
     model.step(0.01, idle);
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot"]);
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!.id;
-    model.state.economy.stardust = 150;
+    model.state.economy.stardust = 225;
     expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "bought",
-      price: 150,
+      price: 225,
     });
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "rapidMissile"]);
     expect(flight.grantedWeapons).toEqual(["multiLaser", "heavyMissile", "phaser"]);
-    // The HUD discs run Basic, Rapid, Multi-Laser, Heavy, Scattershot, Phaser.
+    // The HUD discs run Laser, Multi-Laser, Rapid, Heavy, Scattershot, Phaser.
     expect(model.weapons().map((choice) => choice.id)).toEqual([
-      "basic",
-      "rapidMissile",
+      "laser",
       "multiLaser",
+      "rapidMissile",
       "heavyMissile",
       "scattershot",
       "phaser",

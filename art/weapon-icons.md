@@ -13,7 +13,7 @@ direct DOM URL `weapon-${id}.svg`.
 
 | ID             | Path                                          | Icon semantics                                        |
 | -------------- | --------------------------------------------- | ----------------------------------------------------- |
-| `basic`        | `public/art/ui/icons/weapon-basic.svg`        | One bolt: a 4 px capsule head on a 2 px trail         |
+| `laser`        | `public/art/ui/icons/weapon-laser.svg`        | One bolt: a 4 px capsule head on a 2 px trail         |
 | `rapidMissile` | `public/art/ui/icons/weapon-rapidMissile.svg` | Two slim staggered darts, each with a trail dash      |
 | `multiLaser`   | `public/art/ui/icons/weapon-multiLaser.svg`   | Three 2 px bolts fanning from one origin              |
 | `heavyMissile` | `public/art/ui/icons/weapon-heavyMissile.svg` | One deep body, warhead seam, rear fins, heavy exhaust |
@@ -34,7 +34,7 @@ Rebuild with `node art/tools/weapon-icons.ts`.
 | `ammo-energy.svg`         | `e6708a0245b46f5a0b30861f8e7563fcd7da2f24cdf60e0fd8a12bbe47740701` |
 | `ammo-missile.svg`        | `4b206ed8131c1699b460d8a6eae65f53f2a49a3490d03a4f00f489494928e836` |
 | `ammo-shell.svg`          | `14108bd554451ee974486a4a053a6e2525ac8afc8c3820ab520947c5e886f16c` |
-| `weapon-basic.svg`        | `94d4d1eae303b381f8d76baeba70e1cd0622a0d9c6fab3bb5998aacd60da6907` |
+| `weapon-laser.svg`        | `94d4d1eae303b381f8d76baeba70e1cd0622a0d9c6fab3bb5998aacd60da6907` |
 | `weapon-heavyMissile.svg` | `2ad7a6243bba7c6adea5f73c012fd1def43f4b5560f5f7532a42f8685408c829` |
 | `weapon-multiLaser.svg`   | `1075f62fb2856d21b711c9d78f2c048b1c5a513302b6921e3cabe26dc198e247` |
 | `weapon-phaser.svg`       | `688ed92c17cc1a6414bb4ba515b52420c1d005f70e85bcc57edafee3388f9838` |
@@ -62,9 +62,9 @@ the state colours of [Controls](controls.md#top-right-hud-icon-buttons).
 
 The top-right weapon selector draws the 20 px icons as masks on its 33 px discs;
 [Controls](controls.md#top-right-hud-icon-buttons) defines their states and
-colours. It shows owned weapons only, left to right in the order Basic, Rapid
-Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser. The same 20 px SVGs draw at 14 px in amber inside
-[weapon pickups](weapons.md#pickups). Each non-Basic disc
+colours. It shows owned weapons only, left to right in the order Laser, Multi-Laser,
+Rapid Missile, Heavy Missile, Scattershot, Phaser. The
+[upgrade pickup](weapons.md#pickups) shows no weapon glyph. Each non-Laser disc
 carries its ammunition [count pill](controls.md#ammunition-count), and an empty
 weapon's glyph dims to `#75748c`.
 

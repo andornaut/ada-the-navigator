@@ -2,7 +2,7 @@ import type { EnemyArchetype } from "./enemy-catalog.ts";
 
 /** Provisional holodisk values, to be tuned through playtesting. */
 export const HOLODISKS: {
-  /** Galaxy two's hub sells its holodisk for this many Stardust. */
+  /** Cartwheel's hub sells its holodisk for this many Stardust (gameplay/rules.md). */
   readonly hubPrice: number;
   /** Galaxy three's holodisk guard: a route-blocking leader with a pack around it. */
   readonly guard: {

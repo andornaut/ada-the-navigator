@@ -235,17 +235,13 @@ describe("donating at a station", () => {
     expect(shown).toContain(thanks);
   });
 
-  it("keeps donations and reveals across a save, and loads saves from before them", () => {
+  it("keeps donations and reveals across a save", () => {
     const model = docked(1000);
     model.donate("greenhouseRing");
     expect(model.revealWorldChange(1, "greenhouseRing")).toBe(true);
-    const saved = JSON.parse(model.save()) as { progress: Record<string, Record<string, unknown>> };
     const restored = new GameModel(PROTOTYPE, model.save()).state.progress[1];
     expect(restored.donated).toEqual({ greenhouseRing: cost("greenhouseRing") });
     expect(restored.revealed).toEqual(["greenhouseRing"]);
-    delete saved.progress["1"]!.donated;
-    delete saved.progress["1"]!.revealed;
-    expect(restoreSave(saved)?.progress[1]).toMatchObject({ donated: {}, revealed: [] });
   });
 
   it("rejects a save revealing a project twice, unfunded or from another galaxy", () => {

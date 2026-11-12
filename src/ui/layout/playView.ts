@@ -82,6 +82,19 @@ export function playView(view: Size): Rect {
   };
 }
 
+// The safe game area in game-area px: the play view clamped by safeRect(insets, SAFE_MARGIN.edge,
+// view), each edge moved in by its own inset, then measured from the play view's corner. Edge
+// markers sit inside it (art/layout.md "Edge markers").
+export function safeGameArea(insets: Insets, view: Size): Rect {
+  const area = playView(view);
+  const safe = safeRect(insets, SAFE_MARGIN.edge, view);
+  const left = Math.max(area.x, safe.x);
+  const top = Math.max(area.y, safe.y);
+  const right = Math.min(area.x + area.width, safe.x + safe.width);
+  const bottom = Math.min(area.y + area.height, safe.y + safe.height);
+  return { height: bottom - top, width: right - left, x: left - area.x, y: top - area.y };
+}
+
 // The game area's gap from each side of the view: the left one, used for the right side too, so
 // sides mirror even when the bands differ by a pixel.
 export function gameAreaGap(view: Size): number {
@@ -135,7 +148,7 @@ export const HUD_BUTTON = {
 } as const;
 
 // The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
-// non-Basic disc, height high with radius corners and padding at each end around the count in
+// non-Laser disc, height high with radius corners and padding at each end around the count in
 // TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
 // lower edge; the conversation box's top sits clearance below its bottom.
 export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;
@@ -337,5 +350,21 @@ export function shieldPillRect(insets: Insets, view: Size): Rect {
     width: SHIELD_PILL.width,
     x: hud.x + hud.width / 2 - SHIELD_PILL.width / 2,
     y: bottom - PILL.height,
+  };
+}
+
+/** The shield bar's centre in HUD rect px, where an item notice for a Shield level lands. */
+export function shieldBarCentre(insets: Insets, view: Size): { x: number; y: number } {
+  const hud = hudRect(insets, view);
+  const pill = shieldPillRect(insets, view);
+  return {
+    x:
+      pill.x -
+      hud.x +
+      PILL.padding +
+      SHIELD_PILL.icon +
+      SHIELD_PILL.markGap +
+      SHIELD_PILL.bar.width / 2,
+    y: pill.y - hud.y + PILL.height / 2,
   };
 }

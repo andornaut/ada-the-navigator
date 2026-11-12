@@ -214,6 +214,27 @@ CPUs per container and read-only source/artifact mounts. Fetch
 `mcr.microsoft.com/playwright/mcp:v0.0.83` before starting. Browser starts obey the
 same local load restriction as the source gates.
 
+The smoke has a 180 second limit.
+
+### Art review captures
+
+Art's review screenshots run separately from the gating smoke, against the same
+gate evidence and in the same containers:
+
+```bash
+node tools/browser-check.mjs start --captures .check-results/ada-check-UUID
+node tools/browser-check.mjs collect ada-captures-UUID
+```
+
+The run (`tools/browser-captures.mjs`) has its own 120 second limit. It captures
+the heavies by mount tier, the disabled and salvaged heavies, the enemy weapons at
+full and reduced motion, the upgrade pickup's climb, and galaxy one's rock spin and
+footprint overlay. Each fixture is a canonical save. The flight is held still
+until every enemy and rock in view draws Art's frames (`data-enemies` and
+`data-asteroids` on `#game-status`). Frames are then taken at stepped times on a
+paused page clock. A capture run fails only on a page error, a failed request or
+a fixture that never draws Art's frames; Art reviews the images.
+
 Browser smoke coverage supports prototype integration review; it does not
 establish story completeness or gameplay balance. Review the collected results
 for the exact source revision before claiming a behavior is verified.

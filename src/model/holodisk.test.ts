@@ -9,7 +9,7 @@ import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./ship-body.ts";
-import type { GameState, SectorProgress } from "./types.ts";
+import type { SectorProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -425,15 +425,6 @@ describe("galaxy three's holodisk", () => {
 });
 
 describe("holodisk save", () => {
-  const legacy = (unlocked: SectorId[]) => {
-    const state = JSON.parse(new GameModel(PROTOTYPE).save()) as GameState;
-    state.unlocked = unlocked;
-    for (const id of [1, 2, 3] as const) {
-      delete (state.progress[id] as Partial<SectorProgress>).holodisk;
-    }
-    return restoreSave(state)!;
-  };
-
   it("round-trips the recovered flags", () => {
     const model = new GameModel(PROTOTYPE);
     model.state.progress[2].holodisk = true;
@@ -445,33 +436,13 @@ describe("holodisk save", () => {
     ]);
   });
 
-  it("counts earlier holodisks as recovered for galaxies already unlocked", () => {
-    const flags = (state: GameState) =>
-      [1, 2, 3].map((id) => state.progress[id as SectorId].holodisk);
-    expect(flags(legacy([1]))).toEqual([false, false, false]);
-    expect(flags(legacy([1, 2]))).toEqual([true, false, false]);
-    expect(flags(legacy([1, 2, 3]))).toEqual([true, true, false]);
-  });
-
   it("rejects a malformed flag", () => {
     const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     (state.progress as Record<string, Record<string, unknown>>)[1]!.holodisk = "yes";
     expect(restoreSave(state)).toBeNull();
   });
 
-  it("migrates the announcement: a later galaxy unlocked but not begun is announced", () => {
-    const old = (unlocked: SectorId[], begun = false) => {
-      const state = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
-      delete state.announceGalaxy;
-      state.unlocked = unlocked;
-      if (begun) {
-        (state.progress as Record<string, Record<string, unknown>>)[2]!.introduced = true;
-      }
-      return restoreSave(state)!.announceGalaxy;
-    };
-    expect(old([1])).toBe(false);
-    expect(old([1, 2])).toBe(true);
-    expect(old([1, 2], true)).toBe(false);
+  it("rejects a malformed announcement flag", () => {
     const malformed = JSON.parse(new GameModel(PROTOTYPE).save()) as Record<string, unknown>;
     malformed.announceGalaxy = 1;
     expect(restoreSave(malformed)).toBeNull();

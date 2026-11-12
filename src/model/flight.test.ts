@@ -10,6 +10,7 @@ import {
   createFlight,
   dronesNear,
   ensureDestination,
+  inBattle,
   movementSpeedFraction,
   placeDestinationAhead,
   shipSpeedFraction,
@@ -24,7 +25,7 @@ import { noLevels } from "./upgrades.ts";
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -68,7 +69,7 @@ describe("flight boundaries", () => {
     flight.player = { x: 100, y: 100 };
     const right = { ...idle, move: { x: 1, y: 0 } };
     stepFlight(PROTOTYPE, 1, right, flight);
-    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.maxSpeed * 0.6);
+    expect(flight.freshDistance).toBeGreaterThan(PROTOTYPE.tuning.physics.maxSpeed * 0.6);
     const target = ensureDestination(PROTOTYPE, "hub", flight);
     target.x = 100;
     target.y = 100;
@@ -108,6 +109,7 @@ describe("flight boundaries", () => {
     expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax);
     flight.shots = [0, 1].map((n) => ({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: `hit${n}`,
@@ -116,11 +118,11 @@ describe("flight boundaries", () => {
       velocity: { x: 0, y: 0 },
     }));
     stepFlight(PROTOTYPE, 0.01, idle, flight);
-    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.enemyDamage);
+    expect(flight.shield).toBe(PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage);
     flight.objects = [];
     stepFlight(PROTOTYPE, PROTOTYPE.tuning.shieldRechargeDelay + 1, idle, flight);
     expect(flight.shield).toBeGreaterThan(
-      PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.enemyDamage,
+      PROTOTYPE.tuning.shieldMax - 2 * PROTOTYPE.tuning.hazardDamage,
     );
   });
 
@@ -135,6 +137,7 @@ describe("flight boundaries", () => {
     expect(teleport(PROTOTYPE, target.id, flight)).toBe(true);
     flight.shots.push({
       ...flight.player,
+      damage: 1,
       enemy: true,
       hitIds: [],
       id: "arrival-hit",
@@ -147,26 +150,20 @@ describe("flight boundaries", () => {
     expect(flight.dangerFor).toBe(0);
   });
 
-  it("collects cargo without a capacity limit and retains each collected upgrade", () => {
+  it("collects cargo without a capacity limit and reports each collected upgrade pickup", () => {
     const flight = empty();
     flight.cargo = 500;
     flight.weapon = "rapidMissile";
     flight.objects.push(
       { ...flight.player, hp: 1, id: "cargo", kind: "pickup", radius: 10, role: "cargo" },
-      {
-        ...flight.player,
-        hp: 1,
-        id: "multiLaser",
-        kind: "pickup",
-        radius: 10,
-        weapon: "multiLaser",
-      },
+      { ...flight.player, hp: 1, id: "drop:1", kind: "pickup", radius: 10, upgrade: true },
     );
-    stepFlight(PROTOTYPE, 0.01, idle, flight);
+    const events = stepFlight(PROTOTYPE, 0.01, idle, flight);
     expect(flight.cargo).toBe(501);
     expect(flight.objects).toHaveLength(0);
-    expect(flight.weapon).toBe("multiLaser");
-    expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
+    // The game chooses and gives the gift; the flight only reports the pickup.
+    expect(events).toContainEqual({ id: "drop:1", type: "upgradeCollected" });
+    expect(flight.weapon).toBe("rapidMissile");
   });
 
   it("clears consecutive targets with nonpiercing bolts and releases cargo from destroyed resource rocks", () => {
@@ -194,10 +191,10 @@ describe("flight boundaries", () => {
       },
       { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
     ];
-    flight.weapon = "basic";
+    flight.weapon = "laser";
     const events = stepFlight(PROTOTYPE, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
-    expect(events).toContainEqual({ type: "enemyDisabled" });
+    expect(events).toContainEqual({ type: "enemyDestroyed" });
     expect(flight.objects.filter((o) => o.role === "cargo")).toHaveLength(
       RESOURCE_ROCKS.classes.medium.pieces,
     );
@@ -320,7 +317,7 @@ describe("drones near", () => {
 });
 
 describe("directional handling", () => {
-  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const maxSpeed = PROTOTYPE.tuning.physics.maxSpeed;
   const physics = PROTOTYPE.tuning.physics;
   const vectorOnly: PrototypeContent = {
     ...PROTOTYPE,
@@ -421,7 +418,7 @@ describe("directional handling", () => {
       6,
     );
     expect(degrees(flight.shots[0]!.velocity, flight.facing)).toBeLessThan(1e-9);
-    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic[0].intervalSeconds, 9);
+    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.laser[0].intervalSeconds, 9);
     frames(PROTOTYPE, 5, aim, flight);
     expect(degrees(flight.facing, aim.aim)).toBeCloseTo(
       90 * Math.exp(-0.1 / physics.aimTurnSeconds),
@@ -549,7 +546,7 @@ describe("directional handling", () => {
 });
 
 describe("analog movement speed", () => {
-  const maxSpeed = PROTOTYPE.tuning.maxSpeed;
+  const maxSpeed = PROTOTYPE.tuning.physics.maxSpeed;
   const speed = (flight: FlightState) => Math.hypot(flight.velocity.x, flight.velocity.y);
   function cruise(move: Vec): FlightState {
     const flight = empty();
@@ -561,11 +558,11 @@ describe("analog movement speed", () => {
   }
 
   it.each([
-    [1e-9, 8],
-    [0.25, 14],
-    [0.5, 42],
-    [0.75, 102],
-    [1, 200],
+    [1e-9, 6],
+    [0.25, 11],
+    [0.5, 34],
+    [0.75, 82],
+    [1, 160],
   ])("targets about Gameplay's speed at %s deflection", (deflection, expected) => {
     const fraction = movementSpeedFraction(PROTOTYPE.tuning, deflection);
     expect(fraction * maxSpeed).toBeCloseTo(expected, -0.5);
@@ -633,7 +630,7 @@ describe("analog movement speed", () => {
 describe("ship speed fraction", () => {
   it.each([
     [{ x: 0, y: 0 }, 0],
-    [{ x: 60, y: 80 }, 0.5],
+    [{ x: 48, y: 64 }, 0.5],
     [{ x: -200, y: 0 }, 1],
     [{ x: 300, y: 400 }, 1],
   ])("reports %j as %s of maxSpeed", (velocity, expected) => {
@@ -643,7 +640,10 @@ describe("ship speed fraction", () => {
   it("is zero for a non-positive maxSpeed", () => {
     expect(
       shipSpeedFraction(
-        { ...PROTOTYPE, tuning: { ...PROTOTYPE.tuning, maxSpeed: 0 } },
+        {
+          ...PROTOTYPE,
+          tuning: { ...PROTOTYPE.tuning, physics: { ...PROTOTYPE.tuning.physics, maxSpeed: 0 } },
+        },
         { velocity: { x: 1, y: 0 } },
       ),
     ).toBe(0);
@@ -660,5 +660,67 @@ describe("ship speed fraction", () => {
     expect(shipSpeedFraction(PROTOTYPE, { levels: noLevels(), velocity: { x: 200, y: 0 } })).toBe(
       1,
     );
+  });
+});
+
+describe("shield in battle", () => {
+  type EnemyChange = Partial<NonNullable<FlightState["objects"][number]["enemy"]>>;
+  /** A flight with one swarm craft at `offset` from Ada, in the given state. */
+  function withEnemy(offset: Vec, change: EnemyChange): FlightState {
+    const flight = empty();
+    const point = { x: flight.player.x + offset.x, y: flight.player.y + offset.y };
+    const enemy = {
+      ...createEnemy(
+        enemyCatalog.swarm,
+        { archetype: "swarm", id: "enemy:battle", packId: null, phase: 0 },
+        point,
+      ),
+      engaged: true,
+      ...change,
+    };
+    flight.objects.push({ ...point, enemy, hp: 2, id: "enemy:battle", kind: "enemy", radius: 9 });
+    return flight;
+  }
+
+  it("counts an attacker inside the square, 424 from Ada on the 720-wide view", () => {
+    expect(720 / 2 + PROTOTYPE.tuning.battleMargin).toBe(424);
+    for (const offset of [
+      { x: 424, y: 0 },
+      { x: -424, y: 424 },
+      { x: 0, y: -400 },
+    ]) {
+      expect(inBattle(PROTOTYPE, 720, withEnemy(offset, {}))).toBe(true);
+    }
+    for (const offset of [
+      { x: 425, y: 0 },
+      { x: 0, y: -425 },
+    ]) {
+      expect(inBattle(PROTOTYPE, 720, withEnemy(offset, {}))).toBe(false);
+    }
+  });
+
+  it.each([{ engaged: false }, { fleeing: true }, { returning: true }, { disabled: true }])(
+    "ignores a ship with %j",
+    (change) => {
+      expect(inBattle(PROTOTYPE, 720, withEnemy({ x: 100, y: 0 }, change))).toBe(false);
+    },
+  );
+
+  it("holds the recharge while an attacker stays close, then waits the full delay", () => {
+    const flight = withEnemy({ x: 300, y: 0 }, {});
+    // The attacker's shots barely scratch, so only battle can hold the recharge.
+    const harmless = structuredClone(PROTOTYPE);
+    harmless.tuning.flight.playerShotDamage = 1e-9;
+    flight.shield = 4;
+    flight.sinceDamage = PROTOTYPE.tuning.shieldRechargeDelay;
+    stepFlight(harmless, 3, idle, flight);
+    expect(flight.shield).toBeCloseTo(4, 3);
+    // Out of the fight, the shield waits its delay, then refills 10 HP over 60 seconds.
+    flight.objects = [];
+    flight.shots = [];
+    stepFlight(harmless, PROTOTYPE.tuning.shieldRechargeDelay - 0.1, idle, flight);
+    expect(flight.shield).toBeCloseTo(4, 3);
+    stepFlight(harmless, 0.1 + 6, idle, flight);
+    expect(flight.shield).toBeCloseTo(4 + (10 / 60) * 6, 1);
   });
 });

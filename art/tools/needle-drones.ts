@@ -24,7 +24,7 @@ import {
   visorSide,
 } from "./crafts.ts";
 import { shards } from "./destruction.ts";
-import { jets, svg } from "./enemies.ts";
+import { jets, silhouettes, svg } from "./enemies.ts";
 import {
   build,
   burn,
@@ -122,10 +122,15 @@ const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
 const files = new Map<string, string>();
 const entries: Entry[] = [];
 for (const craft of crafts) {
+  // The coral silhouettes: notch tips drawn into the frames and collision in the jets file.
+  const traced = silhouettes(craft);
   for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-    files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw));
+    files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
   }
-  files.set(`${craft.name}-jets.json`, jets(craft));
+  files.set(
+    `${craft.name}-jets.json`,
+    jets(craft, (yaw) => traced[yaw]!.collision),
+  );
   files.set(`${craft.name}-shards.json`, shards(craft));
   entries.push(...hullEntries(craft.name, craft.frame).map(needleEntry));
 }

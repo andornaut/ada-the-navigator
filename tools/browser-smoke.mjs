@@ -1,24 +1,22 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+import {
+  asteroidFixture,
+  backdropSeed,
+  hideOverCanvas,
+  logicalSize,
+  observe as observeEvents,
+  output,
+  previewOnly,
+  reportViolations,
+  save,
+  storageKey,
+} from "./browser-support.mjs";
 import { SMOKE_LIMIT_SECONDS } from "./smoke-limit.mjs";
 
-const output = "/tmp/evidence";
-const storageKey = "ada-the-navigator.prototype.v1";
 const events = { errors: [], failedRequests: [], badResponses: [], checks: [] };
-mkdirSync(output, { recursive: true });
-
-function save(name, value) {
-  writeFileSync(`${output}/${name}`, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-// A canvas's size in logical px: its CSS size over the fit of the 720x360 base view. Its backing
-// is in device pixels.
-function logicalSize(canvas) {
-  const fit = Math.min(canvas.offsetWidth / 720, canvas.offsetHeight / 360);
-  return { width: canvas.offsetWidth / fit, height: canvas.offsetHeight / fit };
-}
 
 const watchdog = setTimeout(() => {
   save("events.json", events);
@@ -28,33 +26,6 @@ const watchdog = setTimeout(() => {
   });
   process.exit(124);
 }, SMOKE_LIMIT_SECONDS * 1000);
-
-// Hides the HTML that draws over the canvas while its pixels are sampled, and returns the call
-// that shows it again. Each element's own style is set through CSSOM, which the page's CSP allows
-// where an injected <style> is blocked.
-async function hideOverCanvas(target) {
-  const selector = ".ada-conversation,.ada-shield,.ada-item-notice,#game-status,#save-status";
-  await target.evaluate((list) => {
-    for (const node of document.querySelectorAll(list)) {
-      node.style.setProperty("visibility", "hidden", "important");
-    }
-  }, selector);
-  return () =>
-    target.evaluate((list) => {
-      for (const node of document.querySelectorAll(list)) {
-        node.style.removeProperty("visibility");
-      }
-    }, selector);
-}
-
-// A CSP violation in any page logs a console error, which the run's error check fails on.
-function reportViolations() {
-  document.addEventListener("securitypolicyviolation", (event) => {
-    console.error(
-      `CSP violation: ${event.effectiveDirective} blocked ${event.blockedURI || "inline"}`,
-    );
-  });
-}
 
 // The screen wake lock as the game asks for it: held counts the sentinels not yet released.
 function fakeWakeLock() {
@@ -191,33 +162,8 @@ try {
     await page.locator('[data-action="close-settings"]').click();
     await resumeIfPaused();
   }
-  function observe(observed) {
-    observed.on("pageerror", (error) => events.errors.push(error.message));
-    observed.on("console", (message) => {
-      if (message.type() === "error") {
-        events.errors.push(message.text());
-      }
-    });
-    observed.on("requestfailed", (request) =>
-      events.failedRequests.push({
-        url: request.url(),
-        error: request.failure()?.errorText,
-      }),
-    );
-    observed.on("response", (response) => {
-      if (response.status() >= 400) {
-        events.badResponses.push({ url: response.url(), status: response.status() });
-      }
-    });
-  }
+  const observe = (observed) => observeEvents(events, observed);
   observe(page);
-  // No outside requests are needed to render the built prototype.
-  function previewOnly(route) {
-    if (new URL(route.request().url()).origin === "http://ada-preview:4173") {
-      return route.continue();
-    }
-    return route.abort("blockedbyclient");
-  }
   await context.route("**/*", previewOnly);
   async function iconLinks() {
     assert.equal(
@@ -1275,7 +1221,7 @@ try {
     );
   }, storageKey);
   const persisted = await readSave();
-  assert.equal(persisted.version, 1);
+  assert.equal(persisted.version, SAVE_VERSION);
   await page.reload();
   await continueFlight();
   const resumed = await readSave();
@@ -2567,7 +2513,7 @@ try {
   equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
   // Each with a new weapon's three packs.
   Object.assign(equipment.state.flight.ammo, { multiLaser: 600, rapidMissile: 600 });
-  equipment.state.flight.weapon = "basic";
+  equipment.state.flight.weapon = "laser";
   const equipmentSave = equipment.save();
   assert.deepEqual(relaunch(PROTOTYPE, equipmentSave).state, equipment.state);
   save("equipment-fixture.json", {
@@ -2620,7 +2566,7 @@ try {
       weapon: glyph.closest(".ada-weapon").dataset.weapon,
     })),
   );
-  assert.equal(weaponImages.length, 3, "Basic and both owned upgrades require weapon glyphs");
+  assert.equal(weaponImages.length, 3, "Laser and both owned upgrades require weapon glyphs");
   for (const icon of weaponImages) {
     assert.ok(icon.decorative, "Weapon glyphs must not duplicate button names");
     assert.ok(
@@ -2819,9 +2765,10 @@ try {
       ),
     "Projectile fixture must be outside every active protected destination",
   );
-  damaged.state.flight.shield = PROTOTYPE.tuning.enemyDamage;
+  damaged.state.flight.shield = PROTOTYPE.tuning.hazardDamage;
   damaged.state.flight.shots.push({
     ...damaged.state.flight.player,
+    damage: PROTOTYPE.tuning.hazardDamage,
     enemy: true,
     hitIds: [],
     id: "browser-shield-break",
@@ -3278,7 +3225,7 @@ try {
     rapidMissile: 600,
     scattershot: 390,
   });
-  weaponModel.state.flight.weapon = "basic";
+  weaponModel.state.flight.weapon = "laser";
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];
   const weaponSave = weaponModel.save();
@@ -3707,52 +3654,19 @@ try {
     "A Cartwheel flight loads the claim platform's hull and, once Cartwheel's manifest has loaded, " +
       "its part frames",
   );
-  const [
-    { ASTEROID_ART, readAsteroidCatalog },
-    asteroidArt,
-    { orbitMotion },
-    { DEVICE_STORAGE_KEYS },
-  ] = await Promise.all([
+  const [{ readAsteroidCatalog }, asteroidArt] = await Promise.all([
     import(new URL("../src/data/asteroid-catalog.ts", import.meta.url)),
     import(new URL("../src/game/asteroid-art.ts", import.meta.url)),
-    import(new URL("../src/model/asteroids.ts", import.meta.url)),
-    import(new URL("../src/ui/device-settings.ts", import.meta.url)),
   ]);
   const asteroidResponse = await page.request.get("http://ada-preview:4173/art/asteroids.json");
   assert.equal(asteroidResponse.status(), 200, "Art's asteroid catalog must be served");
   const rockArt = readAsteroidCatalog(await asteroidResponse.json());
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
-  const toScreen = (world) => ({ x: 360 + world.x - world.y, y: 180 + (world.x + world.y) / 2 });
-  // The first flight seed whose backdrop field shows a rock in the asteroid fixture's open
-  // top-centre area, clear of its play rocks (shown), or none in view at all. Backdrop rocks lie
-  // in their layer, about the camera's world position times the rocks' parallax (art/backdrop.md).
+  // Backdrop rocks lie in their layer, about the camera's world position times the rocks'
+  // parallax (art/backdrop.md).
   const rockParallax = (
     await (await page.request.get("http://ada-preview:4173/art/backdrop.json")).json()
   ).debris.rocks.parallax;
-  function backdropSeed(shown, player) {
-    const { cell } = asteroidArt.BACKDROP_FIELD;
-    const camera = { x: player.x * rockParallax, y: player.y * rockParallax };
-    const cx = Math.floor(camera.x / cell);
-    const cy = Math.floor(camera.y / cell);
-    for (let seed = 1; seed < 2000; seed++) {
-      let near = false;
-      let visible = false;
-      for (let x = cx - 4; x <= cx + 4; x++) {
-        for (let y = cy - 4; y <= cy + 4; y++) {
-          const rock = asteroidArt.backdropRock(rockArt, seed, x, y);
-          if (rock) {
-            const at = toScreen({ x: rock.x - camera.x, y: rock.y - camera.y });
-            near ||= at.x > 250 && at.x < 340 && at.y > 70 && at.y < 140;
-            visible ||= at.x > -120 && at.x < 840 && at.y > -80 && at.y < 440;
-          }
-        }
-      }
-      if (shown ? near : !visible) {
-        return seed;
-      }
-    }
-    throw new Error(`No backdrop seed ${shown ? "shows" : "hides"} a rock near Ada`);
-  }
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
@@ -3766,7 +3680,7 @@ try {
     flight.objects = [];
     flight.shots = [];
     // No backdrop rock in view, so the sampled regions see only the combat and empty space.
-    flight.seed = backdropSeed(false, flight.player);
+    flight.seed = backdropSeed(rockArt, rockParallax, false, flight.player);
     const origin = { ...flight.player };
     const definition = enemyCatalog[archetype];
     assert.ok(definition.hardpoints.length > 1, "Large enemies require distinct hardpoints");
@@ -3791,6 +3705,7 @@ try {
     });
     if (missile) {
       flight.shots.push({
+        damage: PROTOTYPE.tuning.flight.playerShotDamage,
         enemy: true,
         hitIds: [],
         id: "browser-combat:missile",
@@ -4063,70 +3978,9 @@ try {
       "and missile with Art's composed frames in renderer screenshots",
   );
 
-  // Art review captures (art/asteroids.md): one rock of each size and a drifting rock around
-  // Ada in each galaxy, with a backdrop rock in view, and galaxy one's spin over four seconds.
-  // Pivots sit at rock bases, so each rock rises above its point; the top centre stays open.
-  const ROCK_SCREEN = {
-    small: { x: -280, y: -110 },
-    medium: { x: -230, y: 120 },
-    large: { x: -40, y: 165 },
-    huge: { x: 235, y: 150 },
-  };
-  const toWorld = (screen) => ({ x: screen.x / 2 + screen.y, y: screen.y - screen.x / 2 });
-  function asteroidFixture(sector, drifting = true) {
-    const model = new GameModel(PROTOTYPE);
-    model.state.unlocked = [1, 2, 3];
-    model.startSector(sector);
-    playOpening(model);
-    assert.ok(model.state.flight, `Asteroid fixture requires galaxy ${sector}'s flight`);
-    const flight = model.state.flight;
-    model.state.progress[sector].introduced = true;
-    model.state.dialogue = null;
-    flight.objects = [];
-    flight.shots = [];
-    flight.seed = backdropSeed(true, flight.player);
-    const origin = { ...flight.player };
-    for (const [size, screen] of Object.entries(ROCK_SCREEN)) {
-      const art = ASTEROID_ART.asteroids.find((entry) => entry.size === size);
-      const offset = toWorld(screen);
-      flight.objects.push({
-        asteroid: art.id,
-        hp: 99,
-        id: `browser-rock:${size}`,
-        kind: "rock",
-        radius: art.footprintRadius,
-        x: origin.x + offset.x,
-        y: origin.y + offset.y,
-      });
-    }
-    const small = ASTEROID_ART.asteroids.find((entry) => entry.size === "small");
-    const centre = toWorld({ x: -200, y: -130 });
-    // Adding 0 turns -0 into 0, which a save's JSON round-trip would otherwise change.
-    const orbit = {
-      phase: 0 - 0.3 * flight.time,
-      radius: 30,
-      rate: 0.3,
-      x: origin.x + centre.x,
-      y: origin.y + centre.y,
-    };
-    const motion = orbitMotion(flight.time, orbit);
-    if (drifting) {
-      flight.objects.push({
-        asteroid: small.id,
-        hp: 99,
-        id: "browser-rock:drifting",
-        kind: "rock",
-        orbit,
-        radius: small.footprintRadius,
-        velocity: { x: motion.velocity.x + 0, y: motion.velocity.y + 0 },
-        x: motion.position.x + 0,
-        y: motion.position.y + 0,
-      });
-    }
-    const serialized = model.save();
-    assert.deepEqual(restoreSave(serialized), model.state, "Canonical restore accepts rocks");
-    return serialized;
-  }
+  // Art's rocks in each galaxy (art/asteroids.md): one rock of each size and a drifting rock
+  // around Ada, with a backdrop rock in view, draw in stone over the tinted backdrop field. The
+  // spin frames and footprint overlay are review captures (browser-captures.mjs).
   async function stonePixels(image, ramps) {
     return page.evaluate(
       async ({ encoded, ramps }) => {
@@ -4176,7 +4030,7 @@ try {
     return pixels;
   }
   async function captureGalaxy(sector) {
-    const serialized = asteroidFixture(sector);
+    const serialized = asteroidFixture(rockArt, rockParallax, sector);
     save(`asteroid-fixture-${sector}.json`, {
       scope: "Canonical rock layout for Art review of sprites, drift chips and the backdrop field",
       state: JSON.parse(serialized),
@@ -4201,89 +4055,14 @@ try {
     assert.ok(first.backdrop > 20, `Galaxy ${sector} must draw its tinted backdrop rocks`);
   }
   await captureGalaxy(1);
-  // Small and medium rocks turn 4 to 18 degrees a second: 15 degree frames change within seconds.
-  await page.waitForTimeout(2000);
-  await captureRocks(1, "asteroids-spin-1.png");
-  await page.waitForTimeout(2000);
-  await captureRocks(1, "asteroids-spin-2.png");
   await captureGalaxy(2);
   await captureGalaxy(3);
-  // Art's footprint overlay: still rocks under reduced motion, so each draws and collides with
-  // frame 0; each rock's footprint is outlined over the sprite, with its pivot marked.
-  const reducedKey = DEVICE_STORAGE_KEYS.reducedMotion;
-  await page.evaluate((key) => localStorage.setItem(key, "on"), reducedKey);
-  const overlayFixture = asteroidFixture(1, false);
-  await seedOnce(overlayFixture, "ada-browser.asteroid-overlay.v1");
-  await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
-  await page
-    .locator('#game-status[data-asteroids="art"]')
-    .waitFor({ state: "attached", timeout: 30000 });
-  const overlayCanvas = page.locator("#game-canvas > canvas");
-  await overlayCanvas.waitFor({ state: "visible" });
-  const overlayImage = await overlayCanvas.screenshot();
-  const overlayState = await readSave();
-  const outlines = overlayState.flight.objects
-    .filter((object) => object.id.startsWith("browser-rock:"))
-    .map((object) => {
-      const at = toScreen({
-        x: object.x - overlayState.flight.player.x,
-        y: object.y - overlayState.flight.player.y,
-      });
-      const outline = asteroidArt.footprintOutline(asteroidArt.rockArt(object.asteroid), 0);
-      return {
-        at,
-        edges: outline.edges.map(([start, end]) => [
-          { x: at.x + start.x, y: at.y + start.y },
-          { x: at.x + end.x, y: at.y + end.y },
-        ]),
-        id: object.asteroid,
-      };
-    });
-  const overlayIntrinsic = await overlayCanvas.evaluate(logicalSize);
-  const overlayPng = await page.evaluate(
-    async ({ encoded, intrinsic, outlines }) => {
-      const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-      const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
-      const sample = document.createElement("canvas");
-      sample.width = bitmap.width;
-      sample.height = bitmap.height;
-      const drawing = sample.getContext("2d");
-      drawing.drawImage(bitmap, 0, 0);
-      bitmap.close();
-      const scale = sample.width / intrinsic.width;
-      const left = Math.max(0, (intrinsic.width - 720) / 2);
-      const map = (point) => [(point.x + left) * scale, point.y * scale];
-      drawing.lineWidth = 2;
-      drawing.strokeStyle = "#ff00ff";
-      drawing.fillStyle = "#ff00ff";
-      for (const outline of outlines) {
-        drawing.beginPath();
-        for (const [start, end] of outline.edges) {
-          drawing.moveTo(...map(start));
-          drawing.lineTo(...map(end));
-        }
-        drawing.stroke();
-        const [x, y] = map(outline.at);
-        drawing.fillRect(x - 3, y - 3, 6, 6);
-      }
-      return sample.toDataURL("image/png").split(",")[1];
-    },
-    { encoded: overlayImage.toString("base64"), intrinsic: overlayIntrinsic, outlines },
-  );
-  writeFileSync(`${output}/asteroids-footprints.png`, Buffer.from(overlayPng, "base64"));
-  await page.evaluate((key) => localStorage.removeItem(key), reducedKey);
   save("asteroid-art-proof.json", {
-    scope: "Rendered canonical rock fixtures; screenshot review by Art required",
+    scope: "Stone and backdrop pixels in each galaxy's canonical rock fixture",
     captures: asteroidCaptures,
-    footprints: {
-      image: "asteroids-footprints.png",
-      rocks: outlines.map(({ at, id }) => ({ id, pivot: at })),
-      scope: "Frame 0 footprints in magenta over the sprites, under reduced motion",
-    },
   });
   events.checks.push(
-    "Art's rocks draw in neutral stone in every galaxy over a tinted backdrop field, with spin " +
-      "captures for review",
+    "Art's rocks draw in neutral stone in every galaxy over a tinted backdrop field",
   );
 
   // At 844x390 the Settings card fits the view with every row's note: the Move and Aim controls
@@ -4454,10 +4233,10 @@ try {
     .locator("#game-canvas")
     .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
     .waitFor({ state: "visible" });
-  const portraitWeapon = page.locator('button[data-weapon="basic"]');
+  const portraitWeapon = page.locator('button[data-weapon="laser"]');
   await portraitWeapon.waitFor({ state: "visible" });
   const turnedControls = await page.evaluate(() => {
-    const weapon = document.querySelector('button[data-weapon="basic"]').getBoundingClientRect();
+    const weapon = document.querySelector('button[data-weapon="laser"]').getBoundingClientRect();
     const pause = document.querySelector('[data-action="pause"]').getBoundingClientRect();
     const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
     const inverse = new DOMMatrixReadOnly(getComputedStyle(document.body).transform).inverse();
@@ -4476,7 +4255,7 @@ try {
         weapon.top >= canvas.top - 1 &&
         weapon.bottom <= canvas.bottom + 1,
       accessibleName: document
-        .querySelector('button[data-weapon="basic"]')
+        .querySelector('button[data-weapon="laser"]')
         .getAttribute("aria-label"),
     };
   });
@@ -4488,7 +4267,7 @@ try {
     turnedControls.insideCanvas,
     "Turned weapon button must remain inside the visible canvas",
   );
-  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponBasic);
+  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponLaser);
   save("portrait-weapon-alignment.json", turnedControls);
   const portraitBefore = await position();
   const portraitBounds = await Promise.all(

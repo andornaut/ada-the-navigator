@@ -92,7 +92,7 @@ const nose = noseOffset({ x: 1, y: 0 });
 const ahead = (distance: number) => nose.x + distance;
 
 describe("Phaser hitscan beam", () => {
-  it("strikes only the nearest enemy along its line, for 4x Basic damage", () => {
+  it("strikes only the nearest enemy along its line, for 4x Laser damage", () => {
     const flight = beam([retaliator("far", 200, nose.y), retaliator("near", 100, nose.y)]);
     expect(hp(flight, "near")).toBe(8 - 4);
     expect(hp(flight, "far")).toBe(8);
@@ -196,7 +196,7 @@ describe("Ada's shot origin", () => {
   it.each(Array.from({ length: 16 }, (_, index) => index))(
     "fires from the nose of heading %i along her smoothed facing",
     (index) => {
-      const { flight } = launched("basic");
+      const { flight } = launched("laser");
       flight.ownedWeapons = [];
       const facing = { x: Math.cos((index * Math.PI) / 8), y: Math.sin((index * Math.PI) / 8) };
       flight.facing = facing;
@@ -214,7 +214,7 @@ describe("Ada's shot origin", () => {
   );
 
   it("strikes an obstacle the nose starts inside at once instead of passing through", () => {
-    const { flight } = launched("basic");
+    const { flight } = launched("laser");
     flight.ownedWeapons = [];
     flight.facing = { x: 1, y: 0 };
     // A small rock just touching Ada's 10-unit hull, the nose inside it. A bolt checks contact
@@ -286,7 +286,7 @@ describe("integrated weapon projectiles", () => {
   });
 
   it("keeps the destruction flash of an enemy a bolt destroys", () => {
-    const { flight } = launched("basic");
+    const { flight } = launched("laser");
     flight.ownedWeapons = [];
     flight.facing = { x: 1, y: 0 };
     // One bolt's damage destroys it.

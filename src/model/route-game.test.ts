@@ -44,9 +44,7 @@ describe("required route approach encounters", () => {
       expect(resumed.state).toEqual(model.state);
       const next = resumed.state.flight!;
       const restoredGuard = next.objects.find((object) => object.routeId === target.id)!;
-      for (const part of restoredGuard.enemy!.hardpoints) {
-        part.hp = 0;
-      }
+      restoredGuard.enemy!.hp = 0;
       resumed.step(1 / 60, idle);
       expect(resumed.state.progress[sector].introduced).toBe(true);
       expect(resumed.state.progress[sector].known).toContain(target.id);

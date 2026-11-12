@@ -37,7 +37,7 @@ import type { SectorProgress, SpaceObject, Vec } from "./types.ts";
 const progress: SectorProgress = {
   charted: [],
   deposited: 0,
-  disabledEnemies: 0,
+  destroyedEnemies: 0,
   discoveries: 0,
   donated: {},
   explored: [],
@@ -276,7 +276,7 @@ describe("rock silhouettes", () => {
   });
 
   it("strike a real shot through the drawn top of a rock, not one just above it", () => {
-    const speed = PROTOTYPE.tuning.maxSpeed * PROTOTYPE.tuning.flight.projectileSpeedFactor;
+    const speed = PROTOTYPE.tuning.flight.projectileSpeed;
     const art = ASTEROID_ART.asteroids.find((entry) => entry.id === "asteroid-l1")!;
     const object = drawnRocks.find((entry) => entry.art === art)!.object;
     const top = Math.min(
@@ -353,8 +353,8 @@ describe("rock silhouettes", () => {
           flight.player = { ...start };
           flight.facing = facing;
           flight.velocity = {
-            x: move.x * PROTOTYPE.tuning.maxSpeed,
-            y: move.y * PROTOTYPE.tuning.maxSpeed,
+            x: move.x * PROTOTYPE.tuning.physics.maxSpeed,
+            y: move.y * PROTOTYPE.tuning.physics.maxSpeed,
           };
           let reached = false;
           for (let step = 0; step < 16; step++) {
