@@ -86,7 +86,11 @@ describe("Cartwheel art", () => {
       }
     }
     expect(
-      sets.get(3)!.every((id) => /^(whale|whirlpool|nebula-whirlpool)-/.test(id) || portrait(id)),
+      sets
+        .get(3)!
+        .every(
+          (id) => /^(whale|whirlpool|nebula-whirlpool|craft-stranded)-/.test(id) || portrait(id),
+        ),
     ).toBe(true);
     expect(sets.get(3)!.filter((id) => id.startsWith("whirlpool-debris-"))).toHaveLength(16);
     // Sunflower's outposts load with the boot set from Sunflower's own manifest.
