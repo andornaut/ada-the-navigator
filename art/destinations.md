@@ -14,11 +14,11 @@ scale with the display size like every other manifest value. SVGs that declare
 their display size declare the scaled one; the trading station's and
 Sunflower's outposts' declare their frame, as before.
 
-| Scale                             | Value | Assets                                                                                                                                                                                                                                                            |
-| --------------------------------- | ----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Destination (`DESTINATION_SCALE`) |   1.5 | The [trading station](station.md); Sunflower's [outposts](outposts.md) and their project frames; Andromeda's [settlers' station, courier school, settlements, guide beacons and spare beacon](andromeda.md); Needle's [Weavers' station and Loom hall](needle.md) |
-| Hub (`HUB_SCALE`)                 |  1.25 | Cartwheel's [hub](cartwheel.md), repaired and with its second bay: it is already built at about 1.55 times the outposts' proportions                                                                                                                              |
-| None                              |     1 | Ships, story craft, the mooring buoy, gates, channel lamps, whales and every other asset                                                                                                                                                                          |
+| Scale                             | Value | Assets                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Destination (`DESTINATION_SCALE`) |   1.5 | The [trading station](station.md); Sunflower's [outposts](outposts.md) and their project frames; Andromeda's [settlers' station, courier school, settlements, guide beacons and spare beacon](andromeda.md); Needle's [Weavers' station and Loom hall](needle.md#weavers-station); Black Eye's [station](black-eye.md#station) |
+| Hub (`HUB_SCALE`)                 |  1.25 | Cartwheel's [hub](cartwheel.md), repaired and with its second bay: it is already built at about 1.55 times the outposts' proportions                                                                                                                                                                                           |
+| None                              |     1 | Ships, story craft, the mooring buoy, gates, channel lamps, whales and every other asset                                                                                                                                                                                                                                       |
 
 Every guide beacon state shares the dark beacon's frame and scale, so the chain
 and the story beacon stay alike and a state change swaps in place.
@@ -86,8 +86,10 @@ the outposts' and settlements' decorative dock points and mouths grow with the
 scale, linearly; nothing else changes. Stations have no dock: Ada enters one by
 Use, the Dock action. Display px from the pivot; world units through the game's projection
 `(x - y, (x + y) / 2)`. Silhouette radius is frame A and the top is over every blink frame, at the
-display size, measured at 4 times; the earlier radius is the same divided by
-the scale.
+display size, measured at 4 times (over all 8 rotation frames for Black Eye's
+station); the earlier radius is the same divided by the scale. The Dock
+callout's centre sits `top + 20` above the pivot: the Weavers' station's 74.8
+and Black Eye's station's 72.5.
 
 | Asset             | Scale | Display           | Silhouette radius (was) | Top above pivot | Dock world offset    | Mouth circle radius (was) |
 | ----------------- | ----: | ----------------- | ----------------------: | --------------: | -------------------- | ------------------------: |
@@ -100,17 +102,20 @@ the scale.
 | Hamlet            |   1.5 | 52.5 by 52.5      |             21.8 (14.5) |            20.2 | (15.778, 15.778)     |              5.115 (3.41) |
 | Lamp house        |   1.5 | 42 by 52.5        |             28.6 (19.1) |            28.5 | (13.921, 13.921)     |             4.547 (3.031) |
 | Dark beacon       |   1.5 | 31.5 by 42        |             27.8 (18.5) |            27.2 | none                 |                      none |
-| Weavers' station  |   1.5 | 210 by 84         |            105.9 (70.6) |            39.2 | none, entered by Use |                      none |
+| Weavers' station  |   1.5 | 220.5 by 84       |            106.5 (71.0) |            54.8 | none, entered by Use |                      none |
+| Black Eye station |   1.5 | 189 by 73.5       |             90.2 (60.1) |            52.5 | none, entered by Use |                      none |
 
 - **Use range**: 160 world units from the centre still reaches past every
-  drawn edge; the closest is the Weavers' station, 54 past its silhouette.
+  drawn edge; the closest is the Weavers' station, 53 past its silhouette, and
+  Black Eye's station is 70 past its own.
 - **Stations**: no dock point, mouth or mouth circle; the closed collars carry
   no docking contact. The story craft's mouths stay: the hub's two berths and
   its second bay, the Weavers' station's berths and the courier school's pier.
 - **Clearance**: every rule stated as an object's silhouette radius plus a
   margin (large rocks keep theirs plus 160 clear of stations, destinations and
   launch points) grows by the radius increase in the table, for example 18.8 for
-  the trading station and 35.3 for the Weavers' station. Centre-to-centre
+  the trading station, 35.5 for the Weavers' station and 30.1 for Black Eye's
+  station. Centre-to-centre
   spacings are unchanged: 8000 between stations, 1200 between story
   destinations and from them to stations, 2000 from launches. The callout
   fills the 30 px from 3 to 33 px above a destination's top and is pass-through.

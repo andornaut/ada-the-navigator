@@ -5,6 +5,10 @@
   which sit before the `enemy-*` entries.
 - Solid model in the [ship geometry](ship.md) projection and culling, with a
   fixed orientation: no headings and no screen rotation.
+- The shared station for every galaxy without its own station art. Cartwheel's
+  [hub](cartwheel.md), Andromeda's [settlers' station](andromeda.md),
+  Needle's [Weavers' station](needle.md#weavers-station) and Black Eye's
+  [station](black-eye.md#station) take its place in their galaxies.
 
 ## Design
 
