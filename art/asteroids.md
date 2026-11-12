@@ -138,7 +138,11 @@ Tech:
   stations, destinations and launch points, and stay out of passages. Any
   clearance written as radius plus margin uses `silhouetteRadius`;
   centre-to-centre spacings are unchanged.
-- Draw play objects in ascending pivot screen y.
+- Draw play objects in ascending pivot screen y, except that Ada's ship draws
+  in front of every pass-through object it overlaps: stations and docks,
+  outposts and destinations, story ships and buoys, towed craft, whales and the
+  calf, wrecks, the holodisk and landmarks. Those carry no `collision`; solid
+  objects (rocks, debris, enemies and heavies) contact where drawn.
 
 ## Drift cue
 
