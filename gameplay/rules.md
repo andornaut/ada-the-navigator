@@ -265,13 +265,14 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   noticeable momentum and swings wide on sharp turns.
 - Left joystick moves with analog speed and a short noticeable drag to reach full
   speed. Provisional movement reach is 40 logical pixels with a 2.4 logical pixel
-  deadzone, scaling with the view like every layout value;
-  the long reach gives finer low-speed control. The drawn knob stays inside the ring, as in
+  deadzone, scaling with the view like every layout value; the long reach gives
+  finer low-speed control, and from the ring's default position it fits inside
+  the game area. The drawn knob stays inside the ring, as in
   Chibi. Each joystick draws a line from its origin to the thumb's actual position,
   extending past the ring however far the thumb travels, so the line shows the
-  drag. Both joysticks' drawn rings sit 40 logical pixels in from the game area's side
-  edges and 30 above its bottom, mirrored, with the Use button's bottom also 30
-  above it. The move ring lights its left or right marker only when the
+  drag. Both joysticks' drawn rings sit 32 logical pixels in from the game area's
+  outer side edges and 32 above its bottom, mirrored, as in Chibi, with the Use
+  button's bottom also 32 above it. The move ring lights its left or right marker only when the
   move direction is within 67.5 degrees of that side.
 - Speed rises steeply with stick deflection so the difference is clearly
   noticeable: small deflections give slow, controlled maneuvering and full
