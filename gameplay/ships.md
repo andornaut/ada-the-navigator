@@ -40,18 +40,18 @@ hull. Hardpoint and hull weapons aim independently of the hull with
 | Ship          | Size (Ada widths) | `maxSpeed` | `accelerationSeconds` | `brakingSeconds` | `turnSeconds` | `aimTurnSeconds` |
 | ------------- | ----------------: | ---------: | --------------------: | ---------------: | ------------: | ---------------: |
 | Ada           |                 1 |        160 |                  0.36 |             0.55 |          0.22 |             0.07 |
-| `swarm`       |              0.65 |        180 |                  0.20 |             0.25 |          0.12 |             0.10 |
-| `fighter`     |                 1 |        160 |                  0.40 |             0.50 |          0.30 |             0.15 |
-| `interceptor` |              0.75 |        220 |                  0.90 |             1.20 |          0.60 |             0.12 |
+| `swarm`       |              0.65 |        160 |                  0.20 |             0.25 |          0.12 |             0.10 |
+| `fighter`     |                 1 |        140 |                  0.40 |             0.50 |          0.30 |             0.15 |
+| `interceptor` |              0.75 |        200 |                  0.90 |             1.20 |          0.60 |             0.12 |
 | `retaliator`  |                 2 |         90 |                  1.20 |             1.50 |          0.90 |             0.35 |
 | `frigate`     |                 4 |         80 |                   1.5 |              2.0 |           1.2 |             0.40 |
 | `capital`     |                 5 |         40 |                   2.5 |              3.0 |           2.0 |             0.50 |
 | `platform`    |                 3 |          0 |                     – |                – |             – |             0.30 |
 
 Ada's 160 is her base engine; engine levels 2 and 3 raise it to 190 and 220.
-Enemy speeds are fixed and the same in every galaxy: the swarm and interceptor
-outrun a new Ada, engine level 2 outruns the swarm, and level 3 matches the
-interceptor. Ada's ship has noticeable momentum: it takes about a second to reach full speed,
+Enemy speeds are fixed and the same in every galaxy: the swarm matches a new
+Ada and the interceptor outruns her, engine level 2 outruns every enemy but the
+interceptor, and level 3 outruns them all. Ada's ship has noticeable momentum: it takes about a second to reach full speed,
 coasts for about a second and a half when the stick is released, and swings wide on sharp
 turns. Small enemies are nimble, the interceptor is fast but carries its momentum
 through overshooting passes, and larger ships are progressively heavier.
@@ -60,26 +60,34 @@ The `platform` is fixed in place and only turns its turrets.
 ## Behaviours
 
 Enemy movement comes from a data-driven behaviour library, so each archetype
-mixes and matches behaviours and their parameters. Enemies never pace or kite:
-none holds a fixed distance or circles at a standoff band. Each one chases,
-escapes, or alternates between the two.
+mixes and matches behaviours and their parameters. Small craft fight with their
+weapons, not their hulls: each holds a standoff band from Ada, strafing sideways
+and firing, and backs off when she comes inside it. They never press in to ram.
+
+| Archetype     | Standoff band (world units)          |
+| ------------- | ------------------------------------ |
+| `swarm`       | 200–300                              |
+| `fighter`     | 250–350                              |
+| `retaliator`  | 250–350                              |
+| `interceptor` | Firing passes, never closer than 150 |
 
 | Behaviour   | Movement                                                                                     |
 | ----------- | -------------------------------------------------------------------------------------------- |
-| `chase`     | Pursues Ada directly and keeps pressing in, firing as it comes.                              |
-| `hitAndRun` | Rushes in, then pulls away when hit or after a burst of fire, and comes back.                |
-| `strafe`    | Flies straight through past Ada, carried by momentum, then loops back for another pass.      |
-| `swarm`     | Chases with erratic wobble and peer separation, so a pack surrounds Ada.                     |
+| `chase`     | Closes to its standoff band, then holds there, strafing sideways and firing.                 |
+| `hitAndRun` | Rushes to the near edge of its band, fires a burst, pulls out past the far edge, comes back. |
+| `strafe`    | Makes firing passes beside Ada, carried by momentum, then loops back for another pass.       |
+| `swarm`     | Holds its band with erratic wobble and peer separation, so a pack rings Ada at range.        |
 | `flee`      | Runs away; triggered by morale (low hull, pack losses) and ends the encounter for that ship. |
 | `retaliate` | Ignores Ada until hit, then switches to its attack behaviour.                                |
 | `escort`    | Stays near its capital and intercepts Ada when she comes close to it.                        |
 | `siege`     | Advances slowly on Ada while its hardpoint turrets fire; used by frigates and capitals.      |
 
 Provisional parameters: `hitAndRun` retreats after 3 volleys or a hit, for its
-position's retreat time ([Difficulty](#difficulty)); `strafe` passes within 90 world units and loops back beyond 420; `siege`
+position's retreat time ([Difficulty](#difficulty)); `strafe` passes no closer than 150 world units and loops back beyond 420; `siege`
 advances at half top speed; `escort` holds station 60 beyond its capital's hull,
 intercepts Ada within 600 and falls back to `hitAndRun` without its capital.
-Chasers press in to close range and bounce off on contact. Finite pursuit and return home still apply.
+A ship that touches Ada still bounces off without damage. Finite pursuit and
+return home still apply.
 When an encounter regenerates, its survivors are restored by role, so a destroyed
 capital never returns as an escort or the reverse. The first galaxy is mildly
 more aggressive than the base catalog, and difficulty rises along the route (see
@@ -87,9 +95,9 @@ more aggressive than the base catalog, and difficulty rises along the route (see
 
 ## Difficulty
 
-Difficulty rises from the first galaxy to the sixth along five levers: tougher
-enemies, stronger enemy weapons, denser encounters, more and better-armed heavies,
-and more aggressive behaviour. Each galaxy's roster sets its encounters and
+Difficulty rises from the first galaxy to the sixth along six levers: tougher
+enemies, stronger enemy weapons, better aim, denser encounters, more and
+better-armed heavies, and more aggressive behaviour. Each galaxy's roster sets its encounters and
 behaviours. Everything in this section follows route position, so a galaxy moved
 along the route keeps its roster and takes its new position's difficulty. Ada keeps
 pace by buying shield, weapon and engine upgrades, and by flying better. The
@@ -106,14 +114,14 @@ deals 1 damage.
 
 Small craft:
 
-| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | `hitAndRun` retreat | Notice | Fire | Encounters |
-| -------: | ------: | --------: | ------------: | -----------: | ----------: | ------------------: | -----: | ---: | ---------: |
-|        1 |       2 |         4 |             3 |            8 |          +0 |               1.6 s |   +20% | +15% |       +20% |
-|        2 |       2 |         5 |             3 |            9 |          +0 |               1.5 s |   +30% | +30% |       +30% |
-|        3 |       3 |         5 |             4 |           10 |          +1 |               1.4 s |   +40% | +45% |       +35% |
-|        4 |       3 |         6 |             4 |           11 |          +1 |               1.2 s |   +45% | +50% |       +40% |
-|        5 |       3 |         6 |             5 |           11 |          +2 |               1.1 s |   +50% | +55% |       +40% |
-|        6 |       3 |         6 |             5 |           12 |          +2 |               1.0 s |   +50% | +60% |       +40% |
+| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | `hitAndRun` retreat | Lead | Notice |  Fire | Encounters |
+| -------: | ------: | --------: | ------------: | -----------: | ----------: | ------------------: | ---: | -----: | ----: | ---------: |
+|        1 |       2 |         4 |             3 |            8 |          +1 |               1.6 s |  50% |   +20% |  +44% |       +50% |
+|        2 |       2 |         5 |             3 |            9 |          +1 |               1.5 s |  60% |   +30% |  +63% |       +63% |
+|        3 |       3 |         5 |             4 |           10 |          +2 |               1.4 s |  70% |   +40% |  +81% |       +69% |
+|        4 |       3 |         6 |             4 |           11 |          +2 |               1.2 s |  80% |   +45% |  +88% |       +75% |
+|        5 |       3 |         6 |             5 |           11 |          +3 |               1.1 s |  90% |   +50% |  +94% |       +75% |
+|        6 |       3 |         6 |             5 |           12 |          +3 |               1.0 s | 100% |   +50% | +100% |       +75% |
 
 Heavies:
 
@@ -127,7 +135,12 @@ Heavies:
 |        6 |         6 |             48 |               4 |             96 |               8 |        ×1.5 |
 
 - Small-craft columns are hull HP. The group bonus adds to both ends of every
-  `swarm` and `fighter` group range. Notice, fire and encounter rates are relative to the base catalog.
+  `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
+  aim allows for: every aimed enemy weapon aims at where Ada will be when the
+  shot arrives if she keeps her current velocity, scaled by the lead, so 50%
+  aims halfway between where she is and where she will be. Hitscan beams and the
+  lance's tracking line aim at Ada directly. Notice, fire and encounter rates are
+  relative to the base catalog.
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP. A `platform` hull has half the frigate hull.
 - Heavy share multiplies the roster's `frigate` and `capital` weights; the weights

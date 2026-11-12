@@ -89,8 +89,8 @@ not yet designed, so the station card shows no quest board until it is.
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                              | 80, 160  |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                    | 50 each  |
 
-Enemy speeds are fixed, so engine tuning lets Ada outrun the swarm at level 2 and
-match the interceptor at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
+Enemy speeds are fixed, so engine tuning lets Ada outrun every enemy but the
+interceptor at level 2 and all of them at level 3. The shop follows Archie's Pet shop pattern: tabs, owned
 items marked Owned, and a purchase confirm with Buy and Cancel. The shop's close X, an
 outside tap, back and Escape return to the station card. An item Ada cannot
 afford stays visible with a flat disabled face, stays focusable and tappable,
