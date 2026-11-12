@@ -9,8 +9,9 @@ describe("split art manifest", () => {
       1: "/art/sunflower/manifest.json",
       2: "/art/cartwheel/manifest.json",
       3: "/art/whirlpool/manifest.json",
+      5: "/art/andromeda/manifest.json",
     });
-    expect([...GALAXY_MANIFESTS.keys()]).toEqual([1, 2, 3]);
+    expect([...GALAXY_MANIFESTS.keys()]).toEqual([1, 2, 3, 5]);
     expect(galaxyManifestKey(2)).toBe("art-manifest-galaxy-2");
   });
 

@@ -38,7 +38,7 @@ describe("Cartwheel art", () => {
       const set = galaxyAsset(GALAXY_MANIFESTS, asset);
       sets.set(set, [...(sets.get(set) ?? []), asset.id]);
     }
-    expect([...sets.keys()].sort()).toEqual([1, 2, 3, null].sort());
+    expect([...sets.keys()].sort()).toEqual([1, 2, 3, 5, null].sort());
     const cartwheel = sets.get(2)!;
     expect(cartwheel).toEqual(
       expect.arrayContaining([

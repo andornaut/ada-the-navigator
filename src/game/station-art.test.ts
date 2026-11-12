@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
-import { ART_MANIFEST } from "../testing/public-art.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import {
   readOutpostArt,
   readStationArt,
@@ -54,9 +54,14 @@ describe("station art", () => {
 describe("outpost art", () => {
   it("reads both blink frames for each sector one outpost, keyed by its destination id", () => {
     // Only entries with an outpost field are outposts; the hub's carry destination "hub".
-    const roles = manifest.assets.flatMap((asset) => (asset.outpost ? [asset.outpost] : []));
+    const sunflower = GALAXY_MANIFESTS.get(1)!.assets as unknown as typeof manifest.assets;
+    const roles = sunflower.flatMap((asset) => (asset.outpost ? [asset.outpost] : []));
     expect([...new Set(roles)].sort()).toEqual(["growers", "salvagers", "workshop"]);
-    expect([...outposts.keys()].sort()).toEqual(["growers", "salvagers", "workshop"]);
+    expect([...readOutpostArt(sunflower).keys()].sort()).toEqual([
+      "growers",
+      "salvagers",
+      "workshop",
+    ]);
     expect(
       manifest.assets
         .filter((asset) => asset.id.startsWith("outpost-hub-"))

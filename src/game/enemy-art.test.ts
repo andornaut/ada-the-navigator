@@ -126,7 +126,8 @@ describe("enemy frame sets", () => {
       );
     }, 0);
     expect(parts).toHaveLength(expected);
-    expect(expected).toBe(784);
+    // The coral, claim and garnet families' composed heavies.
+    expect(expected).toBe(1136);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -455,8 +456,9 @@ describe("enemy SVGs", () => {
     const heavies = (
       manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
     ).filter(({ archetype }) => ["capital", "frigate", "platform"].includes(archetype ?? ""));
-    // The coral and claim frigates and capitals, 384 frames each, and the claim platform's 81.
-    expect(heavies).toHaveLength(384 * 2 + 81);
+    // The coral, claim and garnet frigates and capitals, 384 frames each, and the claim
+    // platform's 81.
+    expect(heavies).toHaveLength(384 * 3 + 81);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";

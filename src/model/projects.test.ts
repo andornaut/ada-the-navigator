@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CONVERSATION_TUNING, SPEAKERS } from "../data/conversations.ts";
+import { BUILT } from "../data/galaxies.ts";
 import { PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
+import { GALAXIES } from "../data/storybook.ts";
 import { playOpening } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import {
@@ -113,7 +115,19 @@ describe("community projects", () => {
     const ids = Object.values(PROJECTS)
       .flat()
       .map(({ id }) => id);
-    expect(Object.keys(art.projects).every((id) => ids.includes(id))).toBe(true);
+    // Art draws ahead: a project not built yet is a placeholder galaxy's in Gameplay's table.
+    const unbuilt = GALAXIES.filter(({ galaxy }) => !BUILT.has(galaxy)).map(({ name }) => name);
+    for (const id of Object.keys(art.projects).filter((project) => !ids.includes(project))) {
+      const name = ECONOMY_DOC.split("\n")
+        .find((line) => line.includes(`\`${id}\``))
+        ?.split("|")[1]
+        ?.trim();
+      const row = ECONOMY_DOC.split("\n").find((line) => line.startsWith(`| ${name} `));
+      expect(
+        unbuilt.some((galaxy) => row?.includes(`| ${galaxy} `)),
+        id,
+      ).toBe(true);
+    }
     for (const { copy, id, name } of Object.values(PROJECTS).flat()) {
       const row = ECONOMY_DOC.split("\n").find(
         (line) => line.startsWith(`| ${name} `) && line.includes(`\`${id}\``),
