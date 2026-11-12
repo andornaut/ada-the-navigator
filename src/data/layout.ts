@@ -368,6 +368,8 @@ export const SHIELD_PILL = {
   low: 0.25,
   markGap: SPACING.markGap,
   pill: PILL,
+  // The recharge-delay strip's thickness along the inside of the bar's bottom edge.
+  rechargeStrip: 2,
 } as const;
 
 // conversationBox (src/ui/layout/conversationBox.ts)

@@ -272,6 +272,21 @@ export function shieldFillWidth(level: number): number {
   return shieldBarWidth(level) - 2 * SHIELD_PILL.bar.inset;
 }
 
+/**
+ * The recharge-delay strip at Shield level `level` (gameplay/rules.md): inside the bar's rim
+ * along its bottom edge, its full length the bar's inside, filled from the left to `fraction`.
+ */
+export function shieldRechargeStrip(
+  level: number,
+  fraction: number,
+): { height: number; width: number } {
+  const inside = shieldBarWidth(level) - 2 * SHIELD_PILL.bar.rim;
+  return {
+    height: SHIELD_PILL.rechargeStrip,
+    width: inside * Math.max(0, Math.min(1, fraction)),
+  };
+}
+
 /** The shield pill's width at Shield level `level`: padding, the icon, a mark gap and the bar. */
 export function shieldPillWidth(level: number): number {
   return 2 * PILL.padding + HUD_BUTTON.glyph + SPACING.markGap + shieldBarWidth(level);

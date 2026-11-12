@@ -930,8 +930,10 @@ export function refreshScene(scene: UiContext): void {
     ),
     ore: scene.model.ship.ore,
     oreLabel: CONTENT.labels.ore ?? "",
+    rechargeDelay: CONTENT.tuning.shieldRechargeDelay,
     recharging: scene.model.shieldRecharging,
     shield: state.flight?.shield ?? 0,
+    sinceDamage: state.flight?.sinceDamage ?? 0,
     stardust: state.economy.stardust,
     stardustLabel: fill(CONTENT.labels.stardustAmount ?? "", {
       amount: stardustCount(state.economy.stardust),

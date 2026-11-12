@@ -6,6 +6,7 @@ import {
   shieldBarWidth,
   shieldFillWidth,
   shieldPillWidth,
+  shieldRechargeStrip,
   STATUS_PILL,
   STICK_AREA_MARGIN,
 } from "./layout/playView.ts";
@@ -30,6 +31,8 @@ export const STATUS_COLOURS = {
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
   oreTick: "#eaa676",
   panel: "rgb(24 20 37 / 0.65)",
+  // The recharge-delay strip: the bar's blue until Art pins its own.
+  recharge: "#70ace8",
   rim: "#9a96ad",
   shield: "#70ace8",
   shieldDelay: "#4f7aa6",
@@ -64,7 +67,11 @@ export interface ShieldInput {
   readonly level: number;
   // Whether the shield is regenerating: the recharge delay has passed and it is below capacity.
   readonly recharging: boolean;
+  // Seconds from the last damage until recharge starts.
+  readonly rechargeDelay: number;
   readonly shield: number;
+  // Seconds since Ada was last damaged.
+  readonly sinceDamage: number;
 }
 
 export type ShieldTone = "empty" | "low" | "normal";
@@ -77,6 +84,9 @@ export interface ShieldBarView {
   readonly fill: number;
   readonly flash: { readonly from: number; readonly to: number } | null;
   readonly pulse: number;
+  // The recharge-delay strip's fill from 0 to 1 while the delay runs; null while the shield is
+  // full or regenerating, when it is hidden.
+  readonly recharge: number | null;
   readonly tone: ShieldTone;
 }
 
@@ -123,6 +133,12 @@ export class ShieldBar {
         ? { from: at(shield), to: at(this.delayMark) }
         : null;
     const flash = this.flash ? { from: at(this.flash.from), to: at(this.flash.to) } : null;
+    const recharge =
+      shield >= capacity || input.recharging
+        ? null
+        : input.rechargeDelay > 0
+          ? Math.max(0, Math.min(1, input.sinceDamage / input.rechargeDelay))
+          : 1;
     return {
       delay,
       edge: input.recharging && shield > 0 && shield < capacity,
@@ -132,6 +148,7 @@ export class ShieldBar {
         tone === "low" && !reducedMotion
           ? (1 - Math.cos((2 * Math.PI * nowMs) / STATUS_TIMING.pulseMs)) / 2
           : 0,
+      recharge,
       tone,
     };
   }
@@ -325,6 +342,14 @@ ${SHIELD_PILL.bars
 .ada-controls .ada-status-edge{
   background:${STATUS_COLOURS.flash}
 }
+/* The recharge-delay strip: a steady fill inside the rim along the bar's bottom edge, under the
+   light-field outline, which draws outside the bar. */
+.ada-controls .ada-status-bar > .ada-status-recharge{
+  top:auto;
+  bottom:0;
+  left:0;
+  background:${STATUS_COLOURS.recharge}
+}
 .ada-controls .ada-status-divider{
   flex:none;
   width:${units(STATUS_PILL.divider.width)};
@@ -399,7 +424,11 @@ export interface StatusView {
   readonly ore: number;
   readonly oreLabel: string;
   readonly recharging: boolean;
+  // Seconds from the last damage until recharge starts.
+  readonly rechargeDelay: number;
   readonly shield: number;
+  // Seconds since Ada was last damaged.
+  readonly sinceDamage: number;
   readonly stardust: number;
   // The count's spoken label, such as "260 Stardust".
   readonly stardustLabel: string;
@@ -527,13 +556,15 @@ export function createStatusPill(
   meter.setAttribute("role", "meter");
   meter.setAttribute("aria-label", options.shieldLabel);
   meter.setAttribute("aria-valuemin", "0");
-  const [fill, delay, flash, edge] = ["fill", "delay", "flash", "edge"].map((part) => {
-    const node = document.createElement("span");
-    node.className = `ada-status-${part}`;
-    node.setAttribute("aria-hidden", "true");
-    meter.append(node);
-    return node;
-  }) as [HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement];
+  const [fill, delay, flash, edge, recharge] = ["fill", "delay", "flash", "edge", "recharge"].map(
+    (part) => {
+      const node = document.createElement("span");
+      node.className = `ada-status-${part}`;
+      node.setAttribute("aria-hidden", "true");
+      meter.append(node);
+      return node;
+    },
+  ) as [HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement, HTMLSpanElement];
   shieldRoot.append(shieldMark, meter);
   const sparkle = document.createElement("span");
   sparkle.className = "ada-status-stardust";
@@ -609,6 +640,12 @@ export function createStatusPill(
       place(delay, bar.delay?.from ?? 0, bar.delay?.to ?? 0);
       place(flash, bar.flash?.from ?? 0, bar.flash?.to ?? 0);
       place(edge, Math.max(0, bar.fill - SHIELD_PILL.edge), bar.edge ? bar.fill : 0);
+      recharge.hidden = bar.recharge === null;
+      if (bar.recharge !== null) {
+        const strip = shieldRechargeStrip(Number(level), bar.recharge);
+        recharge.style.width = units(strip.width);
+        recharge.style.height = units(strip.height);
+      }
       meter.setAttribute("aria-valuemax", String(view.capacity));
       meter.setAttribute("aria-valuenow", String(Math.max(0, Math.round(view.shield))));
       stardust.set(view.stardust, view.stardustLabel, nowMs);

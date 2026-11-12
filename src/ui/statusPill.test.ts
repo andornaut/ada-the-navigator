@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { units } from "./layout/css.ts";
-import { countSlot, STATUS_PILL } from "./layout/playView.ts";
+import { countSlot, shieldRechargeStrip, STATUS_PILL } from "./layout/playView.ts";
 import {
   blendHex,
   CARGO_ICONS,
@@ -18,7 +18,14 @@ import {
   statusSegments,
 } from "./statusPill.ts";
 
-const full = { capacity: 100, level: 1, recharging: false, shield: 100 };
+const full = {
+  capacity: 100,
+  level: 1,
+  rechargeDelay: 30,
+  recharging: false,
+  shield: 100,
+  sinceDamage: 30,
+};
 
 describe("status pill shield bar", () => {
   it("maps the current capacity to the Shield level's fill area: 116, 176 or 236", () => {
@@ -93,6 +100,25 @@ describe("status pill shield bar", () => {
     expect(regen.delay).toBeNull();
     expect(regen.edge).toBe(true);
     expect(bar.update(full, 6000, false).edge).toBe(false);
+  });
+
+  it("fills the recharge-delay strip while the delay runs, hidden when full or regenerating", () => {
+    const fraction = (change: Partial<typeof full>) =>
+      new ShieldBar().update({ ...full, ...change }, 0, false).recharge;
+    // Damage empties it; it fills with the time since, full as recharge starts.
+    expect(fraction({ shield: 60, sinceDamage: 0 })).toBe(0);
+    expect(fraction({ shield: 60, sinceDamage: 12 })).toBeCloseTo(0.4, 9);
+    expect(fraction({ shield: 60, sinceDamage: 30 })).toBe(1);
+    expect(fraction({ shield: 0, sinceDamage: 15 })).toBeCloseTo(0.5, 9);
+    // Hidden while the shield is full or regenerating, with or without reduced motion.
+    expect(fraction({})).toBeNull();
+    expect(fraction({ recharging: true, shield: 60, sinceDamage: 31 })).toBeNull();
+    expect(
+      new ShieldBar().update({ ...full, shield: 60, sinceDamage: 12 }, 0, true).recharge,
+    ).toBeCloseTo(0.4, 9);
+    // Its full length is the bar's inside at each Shield level, 2 thick.
+    expect(shieldRechargeStrip(1, 1)).toEqual({ height: 2, width: 118 });
+    expect(shieldRechargeStrip(3, 0.5)).toEqual({ height: 2, width: 119 });
   });
 
   it("pulses icon and rim while low, holding the low colour under reduced motion", () => {
@@ -274,8 +300,10 @@ describe("status pill count", () => {
       lightField: false,
       ore: amount,
       oreLabel: "Ore",
+      rechargeDelay: 30,
       recharging: false,
       shield: 100,
+      sinceDamage: 30,
       stardust: amount,
       stardustLabel: `${exact} Stardust`,
     };
@@ -311,8 +339,10 @@ describe("status pill count", () => {
       lightField: false,
       ore: amount + 1,
       oreLabel: "Ore",
+      rechargeDelay: 30,
       recharging: false,
       shield: 100,
+      sinceDamage: 30,
       stardust: amount,
       stardustLabel: `${amount} Stardust`,
     });
@@ -338,8 +368,10 @@ describe("status pill count", () => {
       lightField: false,
       ore: 0,
       oreLabel: "Ore",
+      rechargeDelay: 30,
       recharging: false,
       shield: 100,
+      sinceDamage: 30,
       stardust,
       stardustLabel: `${stardust} Stardust`,
     });
