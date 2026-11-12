@@ -652,7 +652,14 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
 - With no aim input, the ship turns toward its movement direction with the same aim
   damping. Centered aim does not fire.
 - Laser fire has unlimited ammunition; every other weapon has its own ammunition,
-  bought at shops (see [Economy](economy.md#ammunition)).
+  bought at shops or found as ammo pack drops (see
+  [Economy](economy.md#ammunition)).
+- Weapon order (Laser, Multi-Laser, Rapid Missile, Heavy Missile, Scattershot,
+  Phaser) is also the order of power and rarity: each later weapon costs more,
+  drops less often, gets fewer seconds of fire per ammo pack and deals more
+  single-target damage per second at level 1 (Laser 3.6, Multi-Laser 3.3 per
+  bolt with 3 bolts, Rapid Missile 5, Heavy Missile 6.7, Scattershot 7.8 with
+  every dot hitting, Phaser 10.7).
 - Laser is the starter weapon. The other weapons are Multi-Laser, Rapid
   Missile, Heavy Missile, Scattershot and Phaser, bought at station shops or found as rare drops; see
   [Economy](economy.md). The shared upgrade pickup, presented like Chibi's
@@ -681,12 +688,13 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   - Scattershot: a shotgun of visual dots across -30 to 30 degrees, 7 at level 1,
     then 9, then 11. Its range is a fixed 360 world units on every device, and
     levels add only dots. Up close every dot hits;
-    at range the spread covers more area but fewer dots hit. Dots do not apply
-    damage over time.
+    at range the spread covers more area but fewer dots hit. A level 1 dot deals
+    0.5 times Laser damage, every 0.45 s; levels 2 and 3 share 1.5 and 2.25 times
+    the level 1 volley across their dots. Dots do not apply damage over time.
   - Phaser: a hitscan beam. Each shot hits instantly along the aim from the ship
     out to a set range (provisionally 320 world units), stopping at the first enemy
     or obstacle it meets, then shows briefly as a visible beam. It fires
-    intermittently, 4 times slower than Laser fire, and deals 4 times Laser damage
+    intermittently, 4 times slower than Laser fire, and deals 12 times Laser damage
     to the enemy it hits; levels grow its range and damage.
 - A missile, Ada's or an enemy's, explodes when it touches a ship it can hit or
   an obstacle, or at the end of its reach. Its blast damages every enemy within its radius, never Ada. An enemy
@@ -798,7 +806,7 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   silhouette over all its frames, so a turning or spinning object stays clear
   on every frame; margins and centre-to-centre spacings stay as stated. Pickups
   are deliberately forgiving: every pickup (Stardust, ore nugget, discovery
-  cache, weapon, a holodisk floating in space and a hunt job's lost item)
+  cache, weapon, ammo pack, a holodisk floating in space and a hunt job's lost item)
   follows one rule: it collects within 20 world units of Ada's drawn ship, about
   half the ship's length, measured to its own drawn outline, and zips into the
   ship over 0.15 seconds as it collects. The tractor beam pulls every pickup the

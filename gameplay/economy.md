@@ -25,7 +25,7 @@ minutes.
 
 Destroyed enemy ships and asteroids release Stardust as small glinting pickups.
 Ada's ship has a tractor beam, with no visual of its own, that draws every
-pickup (Stardust, ore nuggets, discovery caches, weapons, a floating holodisk and
+pickup (Stardust, ore nuggets, discovery caches, weapons, ammo packs, a floating holodisk and
 a hunt job's lost item) within its pull radius toward her at its pull speed,
 all kinds alike. A pickup collects within 20 world units of Ada's drawn ship, the
 one pickup rule (see [Rules](rules.md)). Base pull radius is 60 world units and
@@ -83,7 +83,8 @@ tuning and Tractor beam have equal weight, and Paint 1/20 of that weight:
 
 A category or weapon with nothing left to give leaves the pool, and the rest keep
 their relative weights. Once nothing is left, the drop gives one pack of
-ammunition for a random owned weapon other than Laser. The pickup is one shared upgrade pickup,
+ammunition for an owned weapon other than Laser, chosen by the ammo pack weights
+below. The pickup is one shared upgrade pickup,
 and its contents are chosen when Ada collects it, so they fit her upgrades at that
 moment. Its notice names what it gave:
 
@@ -96,6 +97,13 @@ moment. Its notice names what it gave:
 | Tractor beam  | + Tractor beam level {n} |
 | Paint scheme  | + {paint} paint          |
 | Ammunition    | + {weapon} ammo          |
+
+Destroyed small craft also drop an ammo pack 5% of the time, separately from
+upgrades, once Ada owns a weapon other than Laser. Like the upgrade pickup, its
+contents are chosen when Ada collects it: one pack for an owned weapon other
+than Laser, each weapon half as likely as the one before it in weapon order
+(Multi-Laser 16, Rapid Missile 8, Heavy Missile 4, Scattershot 2, Phaser 1, among
+owned weapons). Its notice is "+ {weapon} ammo".
 
 Story mining deposits keep their
 existing cargo role and do not drop Stardust.
@@ -122,8 +130,8 @@ undock.
 
 | Item           | Effect                                                                                          | Prices   |
 | -------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| Multi-Laser    | Owned weapon                                                                                    | 375      |
-| Rapid Missile  | Owned weapon                                                                                    | 225      |
+| Multi-Laser    | Owned weapon                                                                                    | 225      |
+| Rapid Missile  | Owned weapon                                                                                    | 375      |
 | Heavy Missile  | Owned weapon                                                                                    | 450      |
 | Scattershot    | Owned weapon                                                                                    | 525      |
 | Phaser         | Owned weapon                                                                                    | 600      |
@@ -162,15 +170,15 @@ Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
 count, so Phaser energy is separate from Multi-Laser energy. Each volley uses
 one, so a Multi-Laser fan or a Scattershot spread costs one.
 
-Ammunition comes from the shop, sold per weapon in packs of about a minute of
-steady fire at level 1: Rapid Missile 200, Multi-Laser 200, Scattershot 130 and
-Phaser 55. Heavy Missile ammo is rarer: 25 per pack, about 30 seconds. Buying or finding a weapon includes three packs. An
-upgrade drop gives one pack only once every upgrade and paint scheme is owned. There
-are no separate ammunition pickups. A pack's shop row shows its name, such as "Rapid Missile
+Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust, and
+later weapons in weapon order get fewer seconds of level 1 fire per pack:
+Multi-Laser 200 (60 seconds), Rapid Missile 165 (50), Heavy Missile 33 (40),
+Scattershot 67 (30) and Phaser 18 (20). Buying or finding a weapon includes
+three packs. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Prices are light: typical use of the stronger
-weapons costs about a quarter of Stardust income, provisionally 9 Stardust per
-pack and 18 for Heavy Missile, tuned by the pacing simulation. Ammunition persists across flights and the
+weapons costs about a quarter of Stardust income, checked by the pacing
+simulation. Ammunition persists across flights and the
 jump home.
 
 When the selected weapon runs out, Ada switches to Laser at once, ignoring the
