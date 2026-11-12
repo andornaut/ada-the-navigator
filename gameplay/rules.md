@@ -714,13 +714,15 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   follow last. Each segment leaves when empty. Stardust and ore gains show "+N"
   ticks just below their counts.
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
-  a story item, a lost item, a job item, a new weapon or an ammunition pack from
-  a weapon drop, or a towed craft), a small notice shows just below the status
+  a story item, a lost item, a job item, anything from an upgrade drop, or a
+  towed craft), a small notice shows just below the status
   pill, then moves to where the gain shows and vanishes: the carried-item pill
-  segment for story, lost and job items and towed craft, or the weapon icons for
-  a weapon or ammunition. A holodisk has no segment, so its notice fades in
-  place. A new weapon's icon appears at pickup and the notice flies to it. Every
-  notice reads "+ {item}", or "+ {weapon} ammo" for ammunition. Item names drop
+  segment for story, lost and job items and towed craft, the weapon icons for a
+  weapon, weapon level or ammunition, or the shield bar for a Shield level. A
+  holodisk, an Engine or Tractor beam level and a paint scheme have no HUD place,
+  so their notices fade in place. A new weapon's icon appears at pickup and the notice flies to it. Every
+  notice reads "+ {item}"; an upgrade drop's notice names what it gave (see
+  [Economy](economy.md#earning-stardust)). Item names drop
   their article and start with a capital ("Spare parts", "Message"). Gains close
   together queue, one notice at a time; identical gains merge into one notice
   ("+ Rapid Missile ammo ×2"), and each waiting notice holds half as long while

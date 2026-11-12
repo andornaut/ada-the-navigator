@@ -1,3 +1,4 @@
+import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { weaponGlyphPath } from "../data/weapon-glyphs.ts";
 import type { ItemGain } from "../model/item-gains.ts";
 import { fill, weaponName } from "../model/shop.ts";
@@ -9,8 +10,9 @@ import { STATUS_COLOURS } from "./status-pill.ts";
 
 // Item notices (gameplay/rules.md, art/layout.md "Item notice", art/controls.md "Item notice"): a
 // small ink chip under the status pill names a gain other than Stardust or ore, "+ {item}", then
-// collapses to its icon and flies it to where the gain shows: the pill's cargo segment or the
-// weapon's disc. A holodisk's fades in place. One shows at a time, in gain order.
+// collapses to its icon and flies it to where the gain shows: the pill's cargo segment, the
+// weapon's disc or the shield bar. A holodisk's, an Engine or Tractor beam level's and a paint
+// scheme's fade in place. One shows at a time, in gain order.
 
 /** The notices' timing in ms (art/layout.md "Item notice"). */
 export const NOTICE_TIMING = {
@@ -32,22 +34,27 @@ export const NOTICE_TIMING = {
   reducedFadeMs: 150,
 } as const;
 
-export type NoticeKind = "cargo" | "holodisk" | "tow" | "weapon";
+export type NoticeKind = "cargo" | "holodisk" | "shield" | "tow" | "upgrade" | "weapon";
 
 /** Each kind's rim and "+" accent (art/controls.md "Item notice"). */
 export const NOTICE_ACCENTS: Readonly<Record<NoticeKind, string>> = {
   cargo: "#feae34",
   holodisk: "#e868c8",
+  // The shield bar's blue.
+  shield: STATUS_COLOURS.shield,
   tow: "#b8bfc9",
+  // An Engine, Tractor beam or paint gain: the weapon disc's gold, as the shop's upgrades.
+  upgrade: "#bfa06f",
   weapon: "#bfa06f",
 };
 
 const SPRITES = "/art/ui/sprites/";
 
-/** Where a notice lands: the pill's cargo segment, a weapon's disc, or nowhere. */
+/** Where a notice lands: the pill's cargo segment, a weapon's disc, the shield bar, or nowhere. */
 export type NoticeTarget =
   | { readonly kind: "cargo" }
   | { readonly kind: "none" }
+  | { readonly kind: "shield" }
   | { readonly kind: "weapon"; readonly weapon: string };
 
 export interface Notice {
@@ -56,12 +63,19 @@ export interface Notice {
   readonly kind: NoticeKind;
   /** The label without its count, such as "+ Rapid Missile ammo". */
   readonly label: string;
-  /** A sprite under SPRITES, or a weapon glyph masked in cream. */
-  readonly icon: { readonly sprite: string } | { readonly mask: string };
+  /** A sprite under SPRITES (its first of `frames` frames across), or a weapon glyph in cream. */
+  readonly icon: { readonly frames?: number; readonly sprite: string } | { readonly mask: string };
   readonly target: NoticeTarget;
 }
 
 type Labels = Readonly<Record<string, string>>;
+
+/** Each upgrade track's shop icon and its level's item label. */
+const TRACK_NOTICES: Readonly<Record<UpgradeTrack, { label: string; sprite: string }>> = {
+  engine: { label: "itemEngineLevel", sprite: "icon-shop-engine-tuning" },
+  shield: { label: "itemShieldLevel", sprite: "icon-shop-shield" },
+  tractor: { label: "itemTractorLevel", sprite: "icon-shop-tractor-beam" },
+};
 
 /** A gain's notice: its label, icon, accent and landing place. */
 export function gainNotice(labels: Labels, gain: ItemGain): Notice {
@@ -86,12 +100,42 @@ export function gainNotice(labels: Labels, gain: ItemGain): Notice {
       target: { kind: "cargo" },
     };
   }
+  if (gain.kind === "level") {
+    const track = TRACK_NOTICES[gain.track];
+    const shield = gain.track === "shield";
+    return {
+      icon: { frames: 2, sprite: track.sprite },
+      key: `level:${gain.track}:${gain.level}`,
+      kind: shield ? "shield" : "upgrade",
+      label: label(fill(labels[track.label] ?? "", { n: gain.level })),
+      target: { kind: shield ? "shield" : "none" },
+    };
+  }
+  if (gain.kind === "paint") {
+    const name = labels[ECONOMY.paints[gain.scheme]?.label ?? ""] ?? gain.scheme;
+    return {
+      icon: { frames: 2, sprite: "icon-shop-ship-paint" },
+      key: `paint:${gain.scheme}`,
+      kind: "upgrade",
+      label: label(fill(labels.itemPaint ?? "", { paint: name })),
+      target: { kind: "none" },
+    };
+  }
   const name = weaponName(labels, gain.weapon);
+  const item =
+    gain.kind === "ammo"
+      ? fill(labels.itemAmmo ?? "", { weapon: name })
+      : gain.kind === "weaponLevel"
+        ? fill(labels.itemWeaponLevel ?? "", { n: gain.level, weapon: name })
+        : name;
   return {
     icon: { mask: weaponGlyphPath(gain.weapon) },
-    key: `${gain.kind}:${gain.weapon}`,
+    key:
+      gain.kind === "weaponLevel"
+        ? `level:${gain.weapon}:${gain.level}`
+        : `${gain.kind}:${gain.weapon}`,
     kind: "weapon",
-    label: label(gain.kind === "ammo" ? fill(labels.itemAmmo ?? "", { weapon: name }) : name),
+    label: label(item),
     target: { kind: "weapon", weapon: gain.weapon },
   };
 }
@@ -337,6 +381,8 @@ export interface NoticePlaces {
   readonly cargo: number | null;
   /** Each weapon disc's centre across. */
   readonly weapons: ReadonlyMap<string, number>;
+  /** The shield bar's centre. */
+  readonly shield: { readonly x: number; readonly y: number };
   /** The leftmost weapon target's left edge, or null without weapons. */
   readonly leftmostTarget: number | null;
   /** The HUD row's centre line, where the fly lands. */
@@ -354,7 +400,15 @@ export function noticeDestination(places: NoticePlaces, target: NoticeTarget): n
   if (target.kind === "weapon") {
     return places.weapons.get(target.weapon) ?? pillCentre;
   }
+  if (target.kind === "shield") {
+    return places.shield.x;
+  }
   return pillCentre;
+}
+
+/** Where down the fly lands for a target: the shield bar's centre, or the HUD row's. */
+export function noticeLanding(places: NoticePlaces, target: NoticeTarget): number {
+  return target.kind === "shield" ? places.shield.y : places.row;
 }
 
 export function createItemNotices(
@@ -398,7 +452,8 @@ export function createItemNotices(
       shown = { count: 0, notice: frame.notice, width: 0 };
       root.style.setProperty("--notice-accent", NOTICE_ACCENTS[frame.notice.kind]);
       if ("sprite" in frame.notice.icon) {
-        icon.style.background = `url('${SPRITES}${frame.notice.icon.sprite}.png') 0 0 / 100% 100% no-repeat`;
+        const across = 100 * (frame.notice.icon.frames ?? 1);
+        icon.style.background = `url('${SPRITES}${frame.notice.icon.sprite}.png') 0 0 / ${across}% 100% no-repeat`;
         icon.style.removeProperty("mask");
         icon.style.removeProperty("-webkit-mask");
       } else {
@@ -499,7 +554,8 @@ export function createItemNotices(
             x: left + iconLeft + ITEM_NOTICE.icon / 2,
             y: ITEM_NOTICE.top + ITEM_NOTICE.height / 2,
           };
-          const point = flyPoint(from, { x: target, y: places.row }, EASE_IN_OUT(t));
+          const to = { x: target, y: noticeLanding(places, frame.notice.target) };
+          const point = flyPoint(from, to, EASE_IN_OUT(t));
           shift = { x: point.x - from.x, y: point.y - from.y };
           panelOpacity = 1 - EASE_IN_OUT(t);
         }

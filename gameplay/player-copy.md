@@ -689,7 +689,8 @@ beacon light. Welcome!"
 - Disabled heavy banner: Disabled.
 - Status labels: Objective, Nearby discovery, Shield, Cargo, Stardust, Ore.
 - Item notices, always "+ {item}": "+ Holodisk", "+ Spare parts", "+ {weapon}",
-  "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
+  "+ {weapon} level {n}", "+ Shield level {n}", "+ Engine level {n}", "+ Tractor
+  beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
   " ×{n}".
 - Ship card: Ship; Cargo: Stardust, Ore, Holodisks: {n} of 6, Carrying:
   {item}, Towing: {craft}; Equipment: Shield, Engine, Tractor beam and each owned weapon's name with Level {n} of 3, a weapon's ammunition

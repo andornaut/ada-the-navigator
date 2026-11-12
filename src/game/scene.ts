@@ -48,7 +48,7 @@ import {
   shipSpeedFraction,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
-import { type GainSnapshot, itemGains } from "../model/item-gains.ts";
+import { type GainSnapshot, gainSnapshot, itemGains } from "../model/item-gains.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { newerSave } from "../model/save.ts";
@@ -2000,12 +2000,7 @@ export class PrototypeScene extends Scene {
       }
       return;
     }
-    const ship = this.model.ship;
-    const snapshot: GainSnapshot = {
-      aboard: ship.aboard,
-      holodisks: ship.holodisks,
-      weapons: ship.weapons.map(({ ammo, id }) => ({ ammo, id })),
-    };
+    const snapshot = gainSnapshot(this.model.state.economy.paints, this.model.ship);
     if (this.held?.flight === flight) {
       const gains = itemGains(Boolean(this.model.state.docked), this.held.snapshot, snapshot);
       if (gains.length > 0) {

@@ -39,6 +39,7 @@ import {
   HUD_ROW,
   hudButtonTarget,
   hudRect,
+  shieldBarCentre,
   STATUS_PILL,
   statusPillWidth,
 } from "../ui/layout/playView.ts";
@@ -334,6 +335,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         status.bumpCargo();
       } else if (target.kind === "weapon") {
         weapons.bump(target.weapon);
+      } else if (target.kind === "shield") {
+        status.bumpShield();
       }
     },
     reducedMotion: () => reducedMotion,
@@ -420,7 +423,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   // Where the item notice's chip and destinations sit now, in HUD rect px.
   const noticePlaces = (): NoticePlaces => {
-    const hud = hudRect(layout.insets, canvasSize(sceneFit(scene)));
+    const view = canvasSize(sceneFit(scene));
+    const hud = hudRect(layout.insets, view);
     const left = pauseButton.hidden ? STATUS_PILL.xAlone : STATUS_PILL.x;
     const ore = statusView?.ore ?? 0;
     const aboard = Boolean(statusView?.aboard);
@@ -437,6 +441,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       pill: { left, width },
       right: hud.width,
       row: HUD_ROW.centre,
+      shield: shieldBarCentre(layout.insets, view),
       weapons: new Map(
         weaponIds.map((id, index) => [id, target(index) + HUD_BUTTON.target / 2] as const),
       ),

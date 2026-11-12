@@ -352,3 +352,19 @@ export function shieldPillRect(insets: Insets, view: Size): Rect {
     y: bottom - PILL.height,
   };
 }
+
+/** The shield bar's centre in HUD rect px, where an item notice for a Shield level lands. */
+export function shieldBarCentre(insets: Insets, view: Size): { x: number; y: number } {
+  const hud = hudRect(insets, view);
+  const pill = shieldPillRect(insets, view);
+  return {
+    x:
+      pill.x -
+      hud.x +
+      PILL.padding +
+      SHIELD_PILL.icon +
+      SHIELD_PILL.markGap +
+      SHIELD_PILL.bar.width / 2,
+    y: pill.y - hud.y + PILL.height / 2,
+  };
+}

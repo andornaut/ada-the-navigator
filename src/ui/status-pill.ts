@@ -450,6 +450,18 @@ function createCounter(
   };
 }
 
+/** An item notice's landing bump: the art scales 1 to bumpScale to 1. */
+function bump(element: HTMLElement): void {
+  element.animate(
+    [
+      { transform: "scale(1)" },
+      { transform: `scale(${STATUS_TIMING.bumpScale})` },
+      { transform: "scale(1)" },
+    ],
+    { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
+  );
+}
+
 export function createStatusPill(
   parent: HTMLElement,
   options: { readonly reducedMotion: () => boolean; readonly shieldLabel: string },
@@ -517,14 +529,11 @@ export function createStatusPill(
   return {
     /** An item notice landed on the cargo segment: its icon bumps, as the count does. */
     bumpCargo(): void {
-      aboardIcon.animate(
-        [
-          { transform: "scale(1)" },
-          { transform: `scale(${STATUS_TIMING.bumpScale})` },
-          { transform: "scale(1)" },
-        ],
-        { duration: STATUS_TIMING.bumpMs, easing: "ease-out" },
-      );
+      bump(aboardIcon);
+    },
+    /** An item notice landed on the shield bar: the shield icon bumps. */
+    bumpShield(): void {
+      bump(icon);
     },
     dispose: () => {
       root.remove();

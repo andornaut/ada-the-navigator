@@ -1,6 +1,6 @@
 import type { EconomyCatalog, UpgradeTrack, UpgradeWeapon } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
-import { fill, SHIP_TRACKS, weaponName } from "./shop.ts";
+import { SHIP_TRACKS } from "./shop.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -125,37 +125,4 @@ export function applyUpgrade(
       addPacks(catalog, gift.weapon, 1, economy.ammo);
       break;
   }
-}
-
-const TRACK_NOTICES: Readonly<Record<UpgradeTrack, string>> = {
-  engine: "upgradeEngine",
-  shield: "upgradeShield",
-  tractor: "upgradeTractor",
-};
-
-/** The notice naming what a gift gave (gameplay/economy.md). */
-export function upgradeNotice(
-  catalog: EconomyCatalog,
-  labels: Readonly<Record<string, string>>,
-  gift: UpgradeGift,
-): string {
-  const template = (key: string) => labels[key] ?? "";
-  switch (gift.kind) {
-    case "weapon":
-      return fill(template("upgradeWeapon"), { weapon: weaponName(labels, gift.weapon) });
-    case "weaponLevel":
-      return fill(template("upgradeWeaponLevel"), {
-        n: gift.level,
-        weapon: weaponName(labels, gift.weapon),
-      });
-    case "track":
-      return fill(template(TRACK_NOTICES[gift.track]), { n: gift.level });
-    case "paint":
-      return fill(template("upgradePaint"), {
-        paint: labels[catalog.paints[gift.scheme]?.label ?? ""] ?? gift.scheme,
-      });
-    case "ammo":
-      break;
-  }
-  return fill(template("upgradeAmmo"), { weapon: weaponName(labels, gift.weapon) });
 }

@@ -6,8 +6,9 @@ import type { Weapon } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
 import { dropRandom } from "./drops.ts";
 import { GameModel } from "./game.ts";
+import { gainSnapshot, type ItemGain, itemGains } from "./item-gains.ts";
 import type { EconomyState } from "./types.ts";
-import { applyUpgrade, chooseUpgrade, type UpgradeGift, upgradeNotice } from "./upgrade-drops.ts";
+import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "./upgrade-drops.ts";
 import { newEconomy } from "./upgrades.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -150,28 +151,29 @@ describe("upgrade drop selection", () => {
     );
   });
 
-  it("applies one level, a weapon with three packs, and names each gift in its notice", () => {
+  it("applies one level, a weapon with three packs, a paint scheme or one pack", () => {
     const economy = newEconomy(ECONOMY);
     applyUpgrade(ECONOMY, { kind: "weapon", weapon: "heavyMissile" }, economy);
     expect(economy.ownedWeapons).toEqual(["heavyMissile"]);
     expect(economy.ammo.heavyMissile).toBe(3 * ECONOMY.ammo.pack.heavyMissile);
     applyUpgrade(ECONOMY, { kind: "track", level: 2, track: "shield" }, economy);
     expect(economy.levels.shield).toBe(2);
-    const notice = (gift: UpgradeGift) => upgradeNotice(ECONOMY, PROTOTYPE.labels, gift);
-    expect(notice({ kind: "weapon", weapon: "heavyMissile" })).toBe("+ Heavy Missile");
-    expect(notice({ kind: "weaponLevel", level: 2, weapon: "laser" })).toBe("+ Laser level 2");
-    expect(notice({ kind: "track", level: 3, track: "shield" })).toBe("+ Shield level 3");
-    expect(notice({ kind: "track", level: 2, track: "engine" })).toBe("+ Engine level 2");
-    expect(notice({ kind: "track", level: 2, track: "tractor" })).toBe("+ Tractor beam level 2");
-    expect(notice({ kind: "paint", scheme: "cobalt" })).toBe("+ Cobalt paint");
-    expect(notice({ kind: "ammo", weapon: "phaser" })).toBe("+ Phaser ammo");
+    applyUpgrade(ECONOMY, { kind: "weaponLevel", level: 2, weapon: "laser" }, economy);
+    expect(economy.levels.weapons.laser).toBe(2);
+    applyUpgrade(ECONOMY, { kind: "paint", scheme: "cobalt" }, economy);
+    expect(economy.paints).toContain("cobalt");
+    applyUpgrade(ECONOMY, { kind: "ammo", weapon: "heavyMissile" }, economy);
+    expect(economy.ammo.heavyMissile).toBe(4 * ECONOMY.ammo.pack.heavyMissile);
   });
 });
 
 describe("collecting an upgrade pickup", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   /** A flight with only `gift` left to give, and an upgrade pickup on Ada. */
-  function onlyLeft(gift: "shield" | "rapidMissile"): GameModel {
+  function onlyLeft(gift: "shield" | "rapidMissile"): {
+    gains: readonly ItemGain[];
+    model: GameModel;
+  } {
     const model = new GameModel(PROTOTYPE);
     model.startSector(1);
     playOpening(model);
@@ -190,24 +192,26 @@ describe("collecting an upgrade pickup", () => {
     flight.objects = [
       { ...flight.player, hp: 1, id: "drop:1", kind: "pickup", radius: 10, upgrade: true },
     ];
+    const before = gainSnapshot(model.state.economy.paints, model.ship);
     model.step(0.01, idle);
-    return model;
+    const gains = itemGains(false, before, gainSnapshot(model.state.economy.paints, model.ship));
+    return { gains, model };
   }
 
-  it("gives the one level left to both the economy and the flight and names it", () => {
-    const model = onlyLeft("shield");
+  it("gives the one level left to both the economy and the flight, an item notice's gain", () => {
+    const { gains, model } = onlyLeft("shield");
     expect(model.state.flight!.objects).toHaveLength(0);
     expect(model.state.economy.levels.shield).toBe(2);
     expect(model.state.flight!.levels.shield).toBe(2);
-    expect(model.state.notice).toBe("+ Shield level 2");
+    expect(gains).toEqual([{ kind: "level", level: 2, track: "shield" }]);
   });
 
   it("gives a new weapon as a find: owned, with its packs, and equipped", () => {
-    const model = onlyLeft("rapidMissile");
+    const { gains, model } = onlyLeft("rapidMissile");
     const flight = model.state.flight!;
     expect(model.state.economy.ownedWeapons).toContain("rapidMissile");
     expect(flight.weapon).toBe("rapidMissile");
     expect(flight.ammo.rapidMissile).toBeGreaterThanOrEqual(3 * ECONOMY.ammo.pack.rapidMissile);
-    expect(model.state.notice).toBe("+ Rapid Missile");
+    expect(gains).toEqual([{ kind: "weapon", weapon: "rapidMissile" }]);
   });
 });
