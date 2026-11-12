@@ -701,9 +701,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   uses its silhouette radius, the greatest distance from its pivot to its drawn
   silhouette over all its frames, so a turning or spinning object stays clear
   on every frame; margins and centre-to-centre spacings stay as stated. Two
-  contacts are deliberately forgiving: a pickup (discovery cache, Stardust, ore
-  nugget, weapon or a hunt job's lost item) collects within 4 world units of Ada's drawn ship, and docking
-  uses the dock's mouth circle (see [Economy](economy.md#stations)).
+  contacts are deliberately forgiving: a pickup collects near Ada's drawn ship,
+  and docking uses the dock's mouth circle (see [Economy](economy.md#stations)).
+  Stardust collects within 4 world units of the ship, since the tractor beam
+  gathers it. Every other pickup (discovery cache, ore nugget, weapon or a hunt
+  job's lost item) collects within 20 world units, about half the ship's length,
+  and zips into the ship over 0.15 seconds as it collects.
 - Ada's ship bounces off asteroids and other ordinary scenery with a little recoil
   and keeps moving; it never sticks. Scenery deals no damage. Attacks and marked
   hazards damage the shield.
