@@ -25,43 +25,51 @@ palette are in [art/tools/needle-common.ts](tools/needle-common.ts).
 
 ## Weavers' station
 
-Needle's station, entered by Use. Rebuild with `node art/tools/needle-station.ts`; it
-writes `station-{a,b}.svg` and `station-hall-{a,b}.svg` and replaces its
-`needle-station-` entries, which open Needle's manifest.
+Needle's station, the Whorl, entered by Use. Rebuild with
+`node art/tools/needle-station.ts`; it writes `station-{a,b}.svg` and
+`station-hall-{a,b}.svg` and replaces its `needle-station-` entries, which
+open Needle's manifest.
 
-- A spool hub: pearl flanges round a core wound in lavender and silver thread,
-  a domed cabin with warm windows, the spindle mast and a blue beacon.
-- A loom frame to screen left: a sill, two posts and a lintel strung with nine
-  silver warp threads behind a band of woven lavender cloth with rose and sage
-  weft stripes.
-- A bobbin rack behind the hub (lavender, rose and sage thread), a mooring arm
-  and post to screen right, and an arm toward the viewer ending in the station
-  family's closed collar with two warm windows: no mouth or approach lights.
-- Fixed orientation: no headings and no screen rotation. 5.7 Ada wingspans
-  across (the trading station is 3.0).
+- A spindle core: a lower point under the ring, a pearl base module with warm
+  windows, a shaft wound with a cop of lavender, rose and silver thread, a
+  tapered tip and the blue mast beacon.
+- A woven habitat ring 120 units across on five thin silver thread spokes at
+  uneven angles: two threads, lavender outside and silver inside, cross over
+  and under each other every segment, with warm windows and a thin silver band
+  round the outer wall.
+- Two straight needle masts at ring height along the screen-horizontal axes,
+  the long one to the left and the short one to the right. Each ends in a
+  story-craft berth: the station family's mouth collar on the world plane, its
+  mouth facing outward, with an open needle's eye and a lamp on top.
+- No dock: Ada enters by Use. Fixed orientation: no headings and no screen
+  rotation. 4.8 Ada wingspans from berth to berth.
 
 | Field               | Value                                                                     |
 | ------------------- | ------------------------------------------------------------------------- |
 | Ids                 | `needle-station-a`, `-b`; Loom hall `needle-station-hall-a`, `-b`         |
-| Frame               | 320 by 128 frame px; display 210 by 84                                    |
-| Pivot               | `(0.5, 0.5)`: the hub base on the world plane                             |
+| Frame               | 336 by 128 frame px; display 220.5 by 84                                  |
+| Pivot               | `(0.5, 0.6875)`: the core base on the world plane                         |
 | `facing`            | `fixed`                                                                   |
 | `frameMs`           | 700                                                                       |
 | `destination`       | `station`; `variant` `base` or `loom-hall`                                |
-| `berths`, base      | `(0.783, 64)` outward `[-1, 0]`; `(250.631, 64)` outward `[1, 0]`; 24.495 |
-| `berths`, Loom hall | `(0.783, 64)` outward `[-1, 0]`; `(299.621, 64)` outward `[1, 0]`; 24.495 |
+| `berths`, base      | `(8.783, 88)` outward `[-1, 0]`; `(258.631, 88)` outward `[1, 0]`; 24.495 |
+| `berths`, Loom hall | `(8.783, 88)` outward `[-1, 0]`; `(307.621, 88)` outward `[1, 0]`; 24.495 |
 
-- `berths` use the outposts' dock schema: the point on the world plane in
-  frame px, the outward screen direction and the drawn width. A craft at a
-  berth holds just beyond its point along `outward`. Ada uses the station
-  without docking, so it has no `dock`.
-- The berths are the loom's outer post (left) and the mooring post (right).
-  The Loom hall moves the right berth out to the hall's end, so read `berths`
-  from the frame in use.
-- Blink as the station: frame A lights the mast beacon `#70ace8` and the
-  collar windows, B dims them; the loom post and mooring post
-  (or hall end) beacons blink opposite the mast. Unlit blue `#3f5878`. Reduced
-  motion shows A.
+- `berths` use the outposts' dock schema: the mouth's centre on the world
+  plane in frame px, the outward screen direction and the drawn mouth width. A
+  craft at a berth holds just beyond its point along `outward`.
+- The berth faces sit 130 (left), 74 (right) and, with the Loom hall, 114
+  (right) model units from the core along the screen-horizontal axes, so the
+  berths keep their world offsets from the pivot at 1.5x: (-52.243, 52.243),
+  (29.738, -29.738) and the Loom hall's (45.813, -45.813). Read `berths` from
+  the frame in use.
+- Blink, 700 ms: frame A lights the mast beacon `#70ace8`, the berth collars'
+  corner lights and the right eye's lamp; B lights the left eye's lamp and dims
+  the rest. Unlit blue `#3f5878`, dim lamp `#8c7c60`. Reduced motion shows A.
+- Silhouette radius 106.5 and top 54.8 above the pivot at 1.5x; the Dock
+  callout's centre sits 74.8 above the pivot
+  ([Destinations](destinations.md#collision-silhouette-dock-and-clearance)).
+  Pass-through, with no `collision`, as every destination.
 
 ### Palette
 
@@ -73,21 +81,22 @@ writes `station-{a,b}.svg` and `station-hall-{a,b}.svg` and replaces its
 | Lavender thread, roof  | `#c4afcc` |   7.78:1 |
 | Lavender side          | `#8f7c9c` |   4.16:1 |
 | Rose thread            | `#e3b7c0` |   8.87:1 |
-| Sage thread            | `#b9cfae` |   9.47:1 |
 | Warm windows, lanterns | `#ffe9b8` |  13.22:1 |
+| Lamp dim               | `#8c7c60` |   3.88:1 |
 | Blue lights            | `#70ace8` |   6.58:1 |
 
-The silhouette's edge median is 5.95:1, with 90% of edge pixels at 3:1 or more.
+The silhouette's edge median is 5.65:1, with 95% of edge pixels at 3:1 or more.
 
 ### Loom hall
 
 `loomHall` replaces the station frames: draw `needle-station-hall-a` and `-b`
-in place of `needle-station-a` and `-b`. The mooring arm and post become a
-short link and a long teaching hall: pearl walls with eight warm windows on the
-near side, a stepped lavender roof with three warm lanterns, a lavender porch
-with a lit door toward the viewer's side and a beacon on the far end. Frame
-and pivot are unchanged; the right berth moves to the hall's end. The hall sorts
-in depth with the hub, so it is a replacement, not an overlay.
+in place of `needle-station-a` and `-b`. The right needle mast runs on to the
+hall's end, and a teaching hall stands along it outside the ring: pearl walls
+with five warm windows on the near side, a stepped lavender roof with three
+warm lanterns and a lavender porch with a lit door toward the viewer. Frame
+and pivot are unchanged; the right berth moves to the hall's end, 114 units
+out. The hall sorts in depth with the ring, so it is a replacement, not an
+overlay.
 
 ## Ring gates
 
