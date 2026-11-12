@@ -223,6 +223,9 @@ describe("status pill count", () => {
     hidden = false;
     readonly style = { setProperty: vi.fn() } as Record<string, unknown>;
     textContent = "";
+    animate(): { cancel: () => void; finished: Promise<void> } {
+      return { cancel: vi.fn(), finished: new Promise(() => undefined) };
+    }
     append(...nodes: FakeNode[]): void {
       this.children.push(...nodes);
     }
@@ -292,6 +295,34 @@ describe("status pill count", () => {
     expect(style(".ada-status-stardust")).toContain(`margin-right:${units(4)}`);
     expect(style(".ada-status-ore")).toContain(`margin-right:${units(4)}`);
     expect(style(".ada-status-divider")).toContain(`margin:0 ${units(6)}`);
+  });
+
+  it.each([
+    [9999, "+9999"],
+    [44_449, "+44.4k"],
+    [100_000, "+100k"],
+    [10_000_000, "+10m"],
+  ] as const)("ticks a gain of %d as %s under each count", (gain, text) => {
+    const { slot, status } = pill();
+    const view = (amount: number) => ({
+      aboard: null,
+      capacity: 100,
+      level: 1,
+      lightField: false,
+      ore: amount + 1,
+      oreLabel: "Ore",
+      recharging: false,
+      shield: 100,
+      stardust: amount,
+      stardustLabel: `${amount} Stardust`,
+    });
+    status.setStatus(view(0), 0);
+    status.setStatus(view(gain), 16);
+    for (const kind of ["stardust", "ore"]) {
+      const tick = slot(kind).children.find((node) => node.className === "ada-status-tick");
+      expect(tick?.textContent).toBe(text);
+      expect(tick?.getAttribute("aria-hidden")).toBe("true");
+    }
   });
 
   it("sizes each count's slot to the count, at least one digit, in tabular figures", () => {

@@ -159,8 +159,8 @@ export function shieldMarkColour(tone: ShieldTone, pulse: number): string {
     : STATUS_COLOURS.low;
 }
 
-// An exact count, en-US grouped: the counts' accessible labels, the +N ticks and the Ship card
-// (gameplay/economy.md). The pill draws its counts with pillCount.
+// An exact count, en-US grouped: the counts' accessible labels and the Ship card
+// (gameplay/economy.md). The pill draws its counts and +N ticks with pillCount.
 const COUNT_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 export function stardustCount(amount: number): string {
   return COUNT_FORMAT.format(Math.max(0, Math.floor(amount)));
@@ -446,7 +446,7 @@ function createCounter(
     node.className = "ada-status-tick";
     node.dataset.kind = kind;
     node.setAttribute("aria-hidden", "true");
-    node.textContent = `+${stardustCount(total)}`;
+    node.textContent = `+${pillCount(total)}`;
     slot.append(node);
     const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
     const duration = timing.holdMs + timing.fadeMs;
