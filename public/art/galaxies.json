@@ -52,6 +52,7 @@
       }
     },
     "indicatorStroke": 4,
+    "markerOutline": 1,
     "jets": {
       "ship": [
         {

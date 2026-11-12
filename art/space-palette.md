@@ -16,6 +16,7 @@ and contrast for points of interest, obstacles and active elements.
 | `active`            | `#65C9BF` | Brighter saturated mint for existing active elements.                         |
 | `weapon`            | `#F0BD68` | Bright warm amber for existing weapon signals.                                |
 | `shipHardpoint`     | `#70ACE8` | Bright cool blue accents for existing ship hardpoints.                        |
+| `threat`            | `#FF6B6B` | Red for off-screen enemy edge markers only.                                   |
 
 In a galaxy, `background`, `environment` and `environmentDetail` come from that
 galaxy's [field hues](galaxies.md); the values above are the tint origin and the
@@ -33,6 +34,30 @@ their existing meaning and introduces no mechanics.
 Preserve the selected ship's white body and opaque blue canopy. Hardpoint color
 is an accent, not a replacement hull palette. This palette is for space visuals;
 the borrowed UI palette remains separate.
+
+## Edge markers
+
+A seen object outside the view shows a marker on the game area's border,
+flush, its centre 8 logical px in from the edge, on the line from the view's
+centre to the object. Markers draw on the canvas above every play object and
+under the HTML HUD, at alpha 1. Sizes are logical px, scaled by `s`.
+
+| Kind                                             | Glyph                                               | Colour            |
+| ------------------------------------------------ | --------------------------------------------------- | ----------------- |
+| Enemy (swarm, fighter, interceptor, retaliator)  | Filled disc, 6 across                               | `threat`          |
+| Heavy (frigate, capital, platform, General Gadget) | Filled disc, 10 across                            | `threat`          |
+| Station (seen stations and outposts)             | Unfilled square diamond, 10 tall and 10 wide, 2 stroke inside that extent, miter joins | `pointOfInterest` |
+
+`threat` is the one red in space, used only for these markers. It is at least
+5.2:1 on every dark galaxy's background (Whirlpool 5.22:1, the default 5.28:1,
+Cartwheel 5.32:1, Black Eye 6.25:1). It matches `obstacle` in luminance
+(1.03:1), so the dot shape and the border position, not lightness, tell the
+markers apart from coral art. `pointOfInterest` is 7.1:1 or more there.
+
+On a light field (`tint.light`) each marker draws over an ink outline
+(`lightField.markerOutline` 1): a disc over an ink disc 1 larger in radius,
+the diamond over an ink stroke 2 wider (4) on the same path. Ink on Sunflower
+is 10.90:1; bare `threat` there is 1.75:1.
 
 ## In-between
 

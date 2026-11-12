@@ -74,6 +74,8 @@ const LIGHT_FIELD = {
   shotEdge: 1,
   phaser: { glow: { width: [6.5, 4], alpha: 0.9 }, bloom: { radius: 5, alpha: 0.6 } },
   indicatorStroke: 4,
+  // Edge markers' ink outline, as the Scattershot dot's (space-palette.md, Edge markers).
+  markerOutline: 1,
   jets: {
     ship: [
       { name: "outer", colors: ["#1767b3", "#1767b3"], width: 1.6, length: 1 },

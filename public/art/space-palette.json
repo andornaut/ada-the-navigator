@@ -8,7 +8,8 @@
     "obstacle": "#D68B72",
     "active": "#65C9BF",
     "weapon": "#F0BD68",
-    "shipHardpoint": "#70ACE8"
+    "shipHardpoint": "#70ACE8",
+    "threat": "#FF6B6B"
   },
   "inBetween": {
     "ramp": ["#1F1A38", "#3A2F6B", "#5F4FA3", "#9B82D4", "#DCC3F2"],
