@@ -43,6 +43,8 @@ const BOLT_SPEED_RATIOS = {
   laser: [500 / 600, 1, 700 / 600],
   multiLaser: [400 / 600, 500 / 600, 1],
 } as const;
+/** Laser and Multi-Laser bolts reach 1200 world units at every level and speed. */
+const BOLT_REACH = 1200;
 const fan = (count: number, spread: number) =>
   Array.from({ length: count }, (_, index) => -spread + (2 * spread * index) / (count - 1));
 
@@ -85,7 +87,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world
-  // units per second.
+  // units per second, reaching 1200 at each.
   laser: [
     {
       ...projectile,
@@ -93,6 +95,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1,
       intervalSeconds: 0.28,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.laser[0],
     },
     {
@@ -101,6 +104,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.25,
       intervalSeconds: 0.28 / 1.2,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.laser[1],
     },
     {
@@ -109,11 +113,12 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.5,
       intervalSeconds: 0.28 / 1.5,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.laser[2],
     },
   ],
   // Bolt count grows hits 4/3 then 5/3 across the same -20 to 20 fan; damage makes up the rest.
-  // Its bolts fly 400, 500 and 600 world units per second.
+  // Its bolts fly 400, 500 and 600 world units per second, reaching 1200 at each.
   multiLaser: [
     {
       ...projectile,
@@ -121,6 +126,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.multiLaser[0],
     },
     {
@@ -129,6 +135,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.125,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.multiLaser[1],
     },
     {
@@ -137,6 +144,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 1.35,
       intervalSeconds: 0.3,
       projectileKind: "bolt",
+      rangeWorld: BOLT_REACH,
       speedRatio: BOLT_SPEED_RATIOS.multiLaser[2],
     },
   ],

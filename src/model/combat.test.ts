@@ -1008,7 +1008,11 @@ describe("combat admission and subframe firing", () => {
     expect(shot).toBeDefined();
     expect(shot.x).toBeCloseTo(300 + shot.velocity.x * elapsed, 10);
     expect(shot.y).toBeCloseTo(shot.velocity.y * elapsed, 10);
-    expect(shot.life).toBeCloseTo(CONTENT.tuning.flight.enemyProjectileLifetime - elapsed, 10);
+    // A Laser bolt reaches 1200 whoever fires it: its lifetime is that over its speed.
+    expect(shot.life).toBeCloseTo(
+      1200 / Math.hypot(shot.velocity.x, shot.velocity.y) - elapsed,
+      10,
+    );
     const before = { life: shot.life, x: shot.x, y: shot.y };
     stepFlight(CONTENT, dt, idle, flight);
     expect(shot.x).toBeCloseTo(before.x + shot.velocity.x * dt, 10);

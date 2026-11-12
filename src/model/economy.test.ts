@@ -788,19 +788,23 @@ describe("upgrade effects", () => {
     ["multiLaser", 1, 400],
     ["multiLaser", 2, 500],
     ["multiLaser", 3, 600],
-  ] as const)("fires %s at level %i at %i world units per second", (weapon, level, speed) => {
-    const value = flight();
-    value.weapon = weapon;
-    value.ammo.multiLaser = 5;
-    value.levels.weapons[weapon] = level;
-    stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
-    expect(value.shots.length).toBeGreaterThan(0);
-    for (const { life, velocity } of value.shots) {
-      expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(speed, 6);
-      // A bolt has no world range: it flies the base lifetime at any speed.
-      expect(life).toBeCloseTo(CONTENT.tuning.flight.projectileLifetime, 1);
-    }
-  });
+  ] as const)(
+    "fires %s at level %i at %i world units per second, reaching 1200",
+    (weapon, level, speed) => {
+      const value = flight();
+      value.weapon = weapon;
+      value.ammo.multiLaser = 5;
+      value.levels.weapons[weapon] = level;
+      stepFlight(CONTENT, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+      expect(value.shots.length).toBeGreaterThan(0);
+      for (const { fade, life, velocity } of value.shots) {
+        expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(speed, 6);
+        // The bolt's lifetime is its reach over its speed, less the step it has flown; no fade.
+        expect((life + 1 / 60) * speed).toBeCloseTo(1200, 6);
+        expect(fade).toBeUndefined();
+      }
+    },
+  );
 
   it("fires the equipped weapon at its own level", () => {
     const value = flight();

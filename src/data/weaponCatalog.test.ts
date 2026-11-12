@@ -94,6 +94,19 @@ describe("weapon levels", () => {
     speeds("multiLaser").forEach((speed, index) =>
       expect(speed).toBeCloseTo([400, 500, 600][index]!, 9),
     );
+    // Each bolt reaches 1200 at every level; its lifetime follows from its speed.
+    for (const weapon of ["laser", "multiLaser"] as const) {
+      expect(
+        WEAPON_CATALOG[weapon].map(({ fadeStartFraction, rangeWorld }) => [
+          rangeWorld,
+          fadeStartFraction,
+        ]),
+      ).toEqual([
+        [1200, null],
+        [1200, null],
+        [1200, null],
+      ]);
+    }
     // The other projectile weapons keep their ratios at every level.
     expect(speeds("rapidMissile").map((speed) => speed / 600)).toEqual([1.3, 1.3, 1.3]);
     expect(speeds("heavyMissile").map((speed) => speed / 600)).toEqual([0.6, 0.6, 0.6]);
