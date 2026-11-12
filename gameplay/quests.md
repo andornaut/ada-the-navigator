@@ -318,24 +318,24 @@ the next flight. A Penny find is a point of interest Penny sensed that Ada then
 reaches within 160 world units, counted once per point. Restart keeps the find
 count and starts a new list of found points.
 
-| Name               | Condition                                          |
-| ------------------ | -------------------------------------------------- |
-| New Navigator      | Finish the prologue.                               |
-| The Garden Begins  | Complete the Sunflower chapter.                    |
-| Time to Explore    | Complete the Whirlpool chapter.                    |
-| Steady Hands       | Complete the Needle chapter.                       |
-| Truth Teller       | Complete the Andromeda chapter.                    |
-| Room for Everyone  | Complete the Cartwheel chapter.                    |
-| Blockade Breaker   | Break General Gadget's blockade in Black Eye.      |
-| Cartographer       | Chart every landmark in one galaxy.                |
-| Astra's Atlas      | Chart every landmark in all six galaxies.          |
-| Helping Hand       | Complete a station job.                            |
-| Good Neighbor      | Complete 25 station jobs or repeatable activities. |
-| Friends Everywhere | Make every project ally.                           |
-| Good Cause         | Fund a community project.                          |
-| Community Builder  | Fund every community project.                      |
-| Good Nose          | Reach 10 things Penny sensed.                      |
-| Full Palette       | Own every ship paint.                              |
+| Name               | Condition                                           |
+| ------------------ | --------------------------------------------------- |
+| New Navigator      | Finish the prologue.                                |
+| The Garden Begins  | Complete the Sunflower chapter.                     |
+| Time to Explore    | Complete the Whirlpool chapter.                     |
+| Steady Hands       | Complete the Needle chapter.                        |
+| Truth Teller       | Complete the Andromeda chapter.                     |
+| Room for Everyone  | Complete the Cartwheel chapter.                     |
+| Blockade Breaker   | Break General Gadget's blockade in Black Eye.       |
+| Cartographer       | Chart every landmark in one galaxy.                 |
+| Astra's Atlas      | Chart every landmark in all six galaxies.           |
+| Helping Hand       | Complete a station job.                             |
+| Good Neighbor      | Complete 25 station jobs or repeatable activities.  |
+| Friends Everywhere | Make every optional ally: quest and project allies. |
+| Good Cause         | Fund a community project.                           |
+| Community Builder  | Fund every community project.                       |
+| Good Nose          | Reach 10 things Penny sensed.                       |
+| Full Palette       | Own every ship paint.                               |
 
 The card lists every achievement in table order; none is hidden. A locked entry
 shows its full name and condition in muted grey with a grey badge; an unlocked
@@ -349,7 +349,7 @@ however often Restart lets Ada repeat it:
 | Cartographer       | Landmarks ever charted in the galaxy with the most           |
 | Astra's Atlas      | Landmarks ever charted across all six galaxies               |
 | Good Neighbor      | Station jobs and repeatable activities ever completed, of 25 |
-| Friends Everywhere | Project allies ever made                                     |
+| Friends Everywhere | Optional allies ever made                                    |
 | Community Builder  | Community projects ever funded                               |
 | Good Nose          | Penny finds ever made, of 10                                 |
 | Full Palette       | Ship paints ever owned, Classic included                     |
