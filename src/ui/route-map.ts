@@ -328,6 +328,13 @@ export const ROUTE_MAP_STYLE = `
   top:${fromHudEdge("top", -(CARD_CLOSE.hit.height - CARD_CLOSE.art.height) / 2)};
   right:${fromHudEdge("right", -(CARD_CLOSE.hit.width - CARD_CLOSE.art.width) / 2)}
 }
+/* A quantum jump from the map: the panel, actions and close X go, then the warp ship covers Ada's. */
+.ada-controls .ada-route[data-jumping] .ada-route-panel,
+.ada-controls .ada-route[data-jumping] .ada-route-action,
+.ada-controls .ada-route[data-jumping] .ada-close,
+.ada-controls .ada-route[data-ship-covered] .ada-route-ship{
+  visibility:hidden
+}
 `;
 
 /** A leg's open and locked stamps in play-view px, and where each sits along the route. */
@@ -770,11 +777,19 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
     order[(next + order.length) % order.length]!.focus();
   });
   return {
+    /** The warp ship now draws over Ada's, which hides until the map closes. */
+    coverShip(): void {
+      screen.dataset.shipCovered = "";
+    },
     dispose(): void {
       stop();
       screen.remove();
     },
     isOpen: () => view !== null,
+    /** A quantum jump begins: the panel, Earth, Jump and the close X hide until the map closes. */
+    jump(): void {
+      screen.dataset.jumping = "";
+    },
     /** The sky, ground, figures and ship frames, once loaded. */
     setArt(next: RouteMapArt): void {
       art = next;
@@ -797,6 +812,13 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
         restShip(view.ship);
       }
     },
+    /** Ada's heading frame as drawn: at rest, the galaxy's rest heading. */
+    shipHeading(): number | null {
+      if (frame >= 0) {
+        return frame % 100;
+      }
+      return view ? routeHeading(restingTangent(view.ship)) : null;
+    },
     show(next: RouteMapView | null): void {
       const signature = JSON.stringify(next);
       if (signature === shown) {
@@ -810,6 +832,8 @@ export function createRouteMap(root: HTMLElement, options: RouteMapOptions) {
         stop();
         unlock = null;
         delete screen.dataset.flight;
+        delete screen.dataset.jumping;
+        delete screen.dataset.shipCovered;
         drawnLocked = new Set();
         move = null;
         return;

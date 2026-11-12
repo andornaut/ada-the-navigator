@@ -49,7 +49,7 @@ import {
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { type GainSnapshot, gainSnapshot, itemGains } from "../model/item-gains.ts";
-import { SHIP_HEADINGS } from "../model/nose.ts";
+import { SHIP_HEADINGS, shipHeading } from "../model/nose.ts";
 import { projectileOpacity } from "../model/player-projectiles.ts";
 import { newerSave } from "../model/save.ts";
 import { hullOffset } from "../model/ship-physics.ts";
@@ -81,7 +81,12 @@ import { backReleased } from "../ui/back-stack.ts";
 import { type ConversationBox, createConversationBox } from "../ui/conversation.ts";
 import { screenShakes } from "../ui/device-settings.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabled-banner.ts";
-import { createJumpOverlay, type JumpScene, type SheetArt } from "../ui/jump-overlay.ts";
+import {
+  createJumpOverlay,
+  type JumpScene,
+  type SheetArt,
+  type WarpPaint,
+} from "../ui/jump-overlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
@@ -236,14 +241,7 @@ import {
 } from "./light-field.ts";
 import { readSave, stopSaving, writeSave } from "./persistence.ts";
 import { zipAt } from "./pickup-zip.ts";
-import {
-  canvasSize,
-  fitPlayCamera,
-  parentFit,
-  sceneFit,
-  shakeIntensity,
-  viewShift,
-} from "./play-camera.ts";
+import { fitPlayCamera, parentFit, sceneFit, shakeIntensity, viewShift } from "./play-camera.ts";
 import {
   boundsOnScreen,
   type OutpostPart,
@@ -253,7 +251,7 @@ import {
   readProjectArt,
   revealAlpha,
 } from "./project-art.ts";
-import { cockpitFocus, readQuantumJump } from "./quantum-jump.ts";
+import { readQuantumJump } from "./quantum-jump.ts";
 import {
   markerHue,
   readRouteArt,
@@ -625,13 +623,15 @@ export class PrototypeScene extends Scene {
   private savingUnavailable = false;
   private boxOccupant: BoxOccupant | null = null;
   // Art's quantum jump: the overlay, whether a jump is playing (flight pauses), whether the
-  // presentation holds the source scene, and the last drawn space scene's specks.
+  // presentation holds the source scene, whether the warp ship covers Ada's, the last drawn space
+  // scene's specks, and the warp ship's paint: its source and the scheme last loaded.
   private quantum: ReturnType<typeof createJumpOverlay> | null = null;
   private jumping = false;
   private holdSource = false;
+  private warpCover = false;
   private specks: Vec[] = [];
-  // A galaxy jump hides the selector card and its dim, so the jump plays over the cockpit alone.
-  private hideSelector = false;
+  private warpPaint: (() => WarpPaint) | null = null;
+  private warpScheme = "";
   // Painted ship frames load only for the scheme in use.
   private paintAssets: Asset[] = [];
   private paintLoads = new Set<string>();
@@ -913,9 +913,8 @@ export class PrototypeScene extends Scene {
       this.quantum.play({
         destination: () => this.jumpScene(),
         emergency: false,
-        onDone: () => {
-          this.jumping = false;
-        },
+        onCover: () => this.coverShip(),
+        onDone: () => this.endJump(),
         onSwitch: () => apply(action),
         reducedMotion: this.reducedMotion,
         source: this.jumpScene(),
@@ -1261,16 +1260,17 @@ export class PrototypeScene extends Scene {
         : undefined;
     };
     const jumpData = readQuantumJump(this.cache.json.get("quantum-jump"));
-    const [field, glow, star] = [
+    const [field, glow, star, tunnel] = [
       sheet("quantum-jump-field"),
       sheet("quantum-jump-glow"),
       sheet("quantum-jump-star"),
+      jumpData && sheet(jumpData.warp.tunnel),
     ];
     this.quantum =
-      jumpData && field && glow && star
-        ? createJumpOverlay(this.controls.overlay, { field, glow, jump: jumpData, star })
+      jumpData && field && glow && star && tunnel
+        ? createJumpOverlay(this.controls.overlay, { field, glow, jump: jumpData, star, tunnel })
         : null;
-    // The home half: storybook pages, galaxy selection over the cockpit and Restart's confirm.
+    // The home half: storybook pages, galaxy selection and Restart's confirm.
     this.storybook = createStorybook(this.controls.overlay, {
       labels: { next: label("next"), previous: label("previous"), skip: label("skip") },
       onChoose: (index) => apply(() => this.model.storyChoose(index)),
@@ -1294,6 +1294,9 @@ export class PrototypeScene extends Scene {
       // In flight Earth ends the flight with the jump home; at boarding it is the room at once.
       onEarth: () => {
         if (this.model.galaxyMapShownInFlight) {
+          if (this.quantum && !this.jumping) {
+            this.galaxies.jump();
+          }
           leaveFlight(() => this.model.leaveCockpit());
         } else {
           apply(() => this.model.leaveCockpit());
@@ -1307,12 +1310,11 @@ export class PrototypeScene extends Scene {
           apply(() => this.model.jump());
           this.controls.closePause();
         } else if (selected !== null && this.model.isUnlocked(selected)) {
-          this.hideSelector = Boolean(this.quantum) && !this.jumping;
-          leaveFlight(() => {
-            this.hideSelector = false;
-            this.model.jump();
-          });
-          this.refresh();
+          // The map is the jump's source: its panel, actions and close X go at once.
+          if (this.quantum && !this.jumping) {
+            this.galaxies.jump();
+          }
+          leaveFlight(() => this.model.jump());
         } else {
           apply(() => this.model.jump());
         }
@@ -1330,6 +1332,11 @@ export class PrototypeScene extends Scene {
     if (routeArt) {
       this.galaxies.setArt(routeArt);
     }
+    // The warp ship: the paint's poses, and its idle frames for the sprite steps.
+    this.warpPaint = () => ({
+      scheme: this.model.state.economy.paint,
+      sprites: routeShipFrames(routeAssets, this.paintInUse(), false),
+    });
     this.routeGalaxies = () =>
       ROUTE.map((galaxy) => {
         const card = galaxyCard(galaxy);
@@ -1810,9 +1817,8 @@ export class PrototypeScene extends Scene {
       this.quantum.play({
         destination: () => this.jumpScene(),
         emergency: true,
-        onDone: () => {
-          this.jumping = false;
-        },
+        onCover: () => this.coverShip(),
+        onDone: () => this.endJump(),
         onSwitch: () => {
           this.holdSource = false;
         },
@@ -2032,6 +2038,11 @@ export class PrototypeScene extends Scene {
 
   private refresh(): void {
     const state = this.model.state;
+    // The warp ship loads the paint in use, again on a paint change.
+    if (this.quantum && this.warpPaint && state.economy.paint !== this.warpScheme) {
+      this.warpScheme = state.economy.paint;
+      this.quantum.setPaint(this.warpPaint());
+    }
     const enabled = state.mode === "space" && !state.dialogue && !state.docked;
     if (enabled !== this.enabled) {
       this.enabled = enabled;
@@ -2109,7 +2120,7 @@ export class PrototypeScene extends Scene {
     const panel = this.model.selectedPosition;
     const ship = this.model.shipPosition;
     this.galaxies.show(
-      selected !== null && panel !== null && ship !== null && !this.hideSelector
+      selected !== null && panel !== null && ship !== null
         ? {
             flight: this.model.routeFlight,
             galaxies: this.routeGalaxies(),
@@ -2386,7 +2397,7 @@ export class PrototypeScene extends Scene {
     for (const rock of this.rockBreaks) {
       rock.sprite?.setVisible(false);
     }
-    this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
+    this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space" && !this.warpCover);
     this.drawBackdropLayer(flight && this.model.state.mode === "space" ? flight.sector : null);
     this.drawBackdropLayers(flight && this.model.state.mode === "space" ? flight : null);
     if (!flight || this.model.state.mode !== "space") {
@@ -3778,36 +3789,45 @@ export class PrototypeScene extends Scene {
     }
   }
 
-  /** The scene the quantum jump plays over now: the flight, the cockpit or the home page. */
+  /**
+   * The scene the quantum jump plays over now, centred on the play view: the galaxy map with Ada's
+   * route ship, the flight, or a page without her ship.
+   */
   private jumpScene(): JumpScene {
-    if (this.model.state.mode === "space" && this.model.state.flight) {
+    const flight = this.model.state.flight;
+    if (!this.galaxies.isOpen() && this.model.state.mode === "space" && flight) {
       return this.spaceJumpScene();
     }
-    const view = canvasSize(sceneFit(this));
-    const center = { x: view.width / 2, y: view.height / 2 };
-    const background = this.model.storyView?.page.background;
-    const cockpit = this.model.selectedGalaxy !== null || background?.startsWith("cockpit");
-    return { center: cockpit ? cockpitFocus(view) : center, ship: null, specks: [] };
+    const offset = viewShift(sceneFit(this)).x;
+    const center = { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 };
+    return {
+      center,
+      heading: this.galaxies.isOpen() ? this.galaxies.shipHeading() : null,
+      specks: [],
+    };
   }
 
   /** The flight as last drawn: the ship at the play view's centre and the visible specks. */
   private spaceJumpScene(): JumpScene {
     const offset = viewShift(sceneFit(this)).x;
-    const center = { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 };
-    const source = this.ship.texture.getSourceImage() as CanvasImageSource;
+    const flight = this.model.state.flight;
     return {
-      center,
-      ship: this.ship.visible
-        ? {
-            height: this.ship.displayHeight,
-            image: source,
-            width: this.ship.displayWidth,
-            x: center.x - this.ship.displayWidth * this.ship.originX,
-            y: center.y - this.ship.displayHeight * this.ship.originY,
-          }
-        : null,
+      center: { x: offset + SCREEN.width / 2, y: SCREEN.height / 2 },
+      heading: flight ? shipHeading(flight.facing) : null,
       specks: this.specks.map((speck) => ({ x: speck.x + offset, y: speck.y })),
     };
+  }
+
+  /** The warp ship draws over Ada's: hide hers, in flight and on the galaxy map, until the end. */
+  private coverShip(): void {
+    this.warpCover = true;
+    this.ship.setVisible(false);
+    this.galaxies.coverShip();
+  }
+
+  private endJump(): void {
+    this.jumping = false;
+    this.warpCover = false;
   }
 
   /**
