@@ -69,11 +69,17 @@ describe("Cartwheel art", () => {
     );
     const boot = sets.get(null)!;
     expect(boot).toEqual(expect.arrayContaining(["ship", "station-a", "ore-nugget"]));
+    // Core holds the craft and whales several galaxies draw, and no galaxy's own art.
     expect(
       boot.some((id) =>
-        /^(craft-|outpost-|mooring-buoy-|cartwheel-debris-|whale-|whirlpool-)/.test(id),
+        /^(outpost-|mooring-buoy-|cartwheel-debris-|whale-calf-|whirlpool-)/.test(id),
       ),
     ).toBe(false);
+    expect(
+      [
+        ...new Set(boot.flatMap((id) => /^(craft-[a-z]+|whale-[a-z]+)-/.exec(id)?.[1] ?? [])),
+      ].sort(),
+    ).toEqual(["craft-miner", "craft-pip", "whale-adult", "whale-whale"]);
   });
 
   it("reads the hub by destination: worn, repaired and the second bay overlay", () => {
