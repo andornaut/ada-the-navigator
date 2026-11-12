@@ -494,6 +494,12 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   look by role, the current objective's destination is marked by the direction
   indicator, and the Use disc's action symbol and the conversation name tab identify
   speakers up close.
+- Talk range is 160 world units, centre to centre: from Ada's position to the
+  object's, with no hull or drawn-size radius. It is one value for Use at a
+  settlement, outpost or the hub (and their discovery) and for Salvage on a
+  disabled heavy; when several are in range, the nearest wins, and a destination
+  on a blocked route is excluded. Other ranges are their own values: tow attach
+  120 and station discovery 320, and docking happens by flying into the dock.
 - Pause, as in Chibi: the pause button at the top left opens a card titled
   "Paused" over the dimmed game, which pauses play, with a close X. Its buttons,
   one shape, in a full-width stack: "Resume" (primary), "Map", "Ship",
