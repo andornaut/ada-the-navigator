@@ -13,6 +13,7 @@ import {
   rotate,
   vector,
 } from "./projection.ts";
+import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 
 // A silhouette face draws the convex hull of its projected points, as an underlay that
 // hides antialiasing seams between the facets of a convex solid.
@@ -518,8 +519,9 @@ function convexHull(points: readonly (readonly [number, number])[]): [number, nu
   return [...chain(sorted), ...chain(sorted.toReversed())];
 }
 
-function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
-  const polygons = model(yaw, thrust, scheme.paint)
+// The frame's polygons in draw order, in frame px rounded as the SVG writes them.
+function drawn(yaw: number, thrust: boolean, paint: Paint): { color: string; outline: V2[] }[] {
+  return model(yaw, thrust, paint)
     .map((face) => ({
       ...face,
       points: face.points.map((point) => rotate(SHIP_HEADINGS, yaw, point)),
@@ -529,9 +531,18 @@ function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
     .map(({ color, points, silhouette }) => {
       const projected = points.map((point) => projectAt(48, 48, point));
       const outline = silhouette === true ? convexHull(projected) : projected;
-      const text = outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
-      return `  <polygon fill="${color}" points="${text.join(" ")}"/>`;
+      return {
+        color,
+        outline: outline.map(([x, y]): V2 => [Number(x.toFixed(2)), Number(y.toFixed(2))]),
+      };
     });
+}
+
+function svg(yaw: number, thrust: boolean, scheme: Scheme = classic!): string {
+  const polygons = drawn(yaw, thrust, scheme.paint).map(({ color, outline }) => {
+    const text = outline.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
+    return `  <polygon fill="${color}" points="${text.join(" ")}"/>`;
+  });
   return [
     '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">',
     `  <title>Ship ${yaw}${thrust ? " thrust" : " idle"}${scheme === classic ? "" : ` ${scheme.name}`}</title>`,
@@ -574,7 +585,34 @@ function jets(): string {
   return json(contract);
 }
 
-// Nose per heading in frame px, projected like the frames; shots leave from here.
+// Douglas-Peucker tolerance for the ship's silhouette, in frame px. The default 0.75 leaves the
+// long straight edges of the small hull below the intersection-over-union floor.
+const SILHOUETTE_TOLERANCE = 0.5;
+
+// The drawn silhouette of idle heading `yaw` as convex parts in frame px, traced from the
+// frame's fills (no strokes, so no growth) and checked against them. Paint schemes share the
+// geometry; every scheme must trace to the same parts.
+function collision(yaw: number): V2[][] {
+  const traced = SCHEMES.map((scheme) => {
+    const mask = rasterize(
+      drawn(yaw, false, scheme.paint).map(({ outline }) => outline),
+      FRAME,
+      FRAME,
+    );
+    const { collision: parts, tips } = trace(mask, SILHOUETTE_TOLERANCE);
+    if (tips.length) throw new Error(`ship ${yaw} ${scheme.id}: the outline has a notch tip`);
+    check(`ship ${yaw} ${scheme.id}`, parts, mask);
+    return parts;
+  });
+  const [first] = traced;
+  if (traced.some((parts) => JSON.stringify(parts) !== JSON.stringify(first))) {
+    throw new Error(`ship ${yaw}: paint schemes trace to different collision parts`);
+  }
+  return first!;
+}
+
+// Nose and drawn silhouette per heading in frame px, projected like the frames; shots leave
+// from the nose.
 function noses(): string {
   return json({
     version: 1,
@@ -583,6 +621,7 @@ function noses(): string {
     noses: Array.from({ length: SHIP_HEADINGS }, (_, yaw) =>
       anchor(SHIP_HEADINGS, FRAME / 2, yaw, nose()),
     ),
+    collision: Array.from({ length: SHIP_HEADINGS }, (_, yaw) => collision(yaw)),
   });
 }
 

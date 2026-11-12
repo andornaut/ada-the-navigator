@@ -294,7 +294,7 @@ radius in world units.
 ## Collision
 
 The drawn silhouette (`collision`) of each frame is traced from the drawing
-itself:
+itself by the [shared tracer](ship.md#shared-tracer), `art/tools/silhouette.ts`:
 
 1. Fill the frame's visible projected facets into a grid of 4 cells per frame px
    and grow it by half the 1.2 px seam stroke.

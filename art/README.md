@@ -96,7 +96,10 @@ debris SVGs are deterministic exports from `art/tools/ship.ts`, `art/tools/enemi
 `art/tools/whirlpool.ts`, with the heavies' layered
 sprites from `art/tools/heavies.ts` and Cartwheel's claim jumpers from
 `art/tools/claim-jumpers.ts`; edit the generators and
-regenerate the matching outputs. Reused portrait PNGs remain byte-identical to their documented source exports,
+regenerate the matching outputs. `art/tools/silhouette.ts` is the shared
+[tracer](ship.md#shared-tracer) that turns a frame's drawn alpha into convex
+collision parts, for [the ship](ship.md#collision) and the
+[asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
 `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
 compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets

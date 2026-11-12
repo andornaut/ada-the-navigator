@@ -13,6 +13,20 @@ import { format, resolveConfig } from "prettier";
 import { linkData } from "./manifest.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { depth, facesViewer, json, type Point, projectAt } from "./projection.ts";
+import {
+  area,
+  check,
+  convexParts,
+  cross,
+  dist,
+  grow,
+  rasterize,
+  segDist,
+  strictlyConvex,
+  trace,
+  union,
+  type V2,
+} from "./silhouette.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const svgDir = `${art}asteroids/`;
@@ -368,8 +382,6 @@ function crystals(
 
 // ------------------------------------------------------------------ silhouette
 
-type V2 = [number, number];
-
 function projected(faces: readonly Painted[], pivot: V2): (Painted & { pts: V2[] })[] {
   return faces
     .filter(({ face }) => facesViewer(face))
@@ -398,168 +410,8 @@ function extent(faces: readonly Face[]): {
   return { maxX, maxY, minX, minY };
 }
 
-// Fill triangles into a grid at SS cells per frame px (cell centres), then trace the outer
-// boundary along cell edges, simplify it and split it into convex parts.
-const SS = 4;
 // Seam stroke width in frame px: hides anti-aliasing cracks between facets.
 const SEAM = 1.2;
-
-function silhouette(tris: readonly V2[][], w: number, h: number): V2[] {
-  const W = w * SS;
-  const H = h * SS;
-  const grid = new Uint8Array(W * H);
-  for (const t of tris) {
-    const ys = t.map((p) => p[1] * SS);
-    const y0 = Math.max(0, Math.floor(Math.min(...ys)));
-    const y1 = Math.min(H - 1, Math.ceil(Math.max(...ys)));
-    for (let y = y0; y <= y1; y++) {
-      const cy = y + 0.5;
-      let lo = Infinity;
-      let hi = -Infinity;
-      for (let i = 0; i < t.length; i++) {
-        const [ax, ay] = [t[i]![0] * SS, t[i]![1] * SS];
-        const [bx, by] = [t[(i + 1) % t.length]![0] * SS, t[(i + 1) % t.length]![1] * SS];
-        if ((ay <= cy && by > cy) || (by <= cy && ay > cy)) {
-          const x = ax + ((cy - ay) / (by - ay)) * (bx - ax);
-          lo = Math.min(lo, x);
-          hi = Math.max(hi, x);
-        }
-      }
-      if (lo > hi) continue;
-      for (
-        let x = Math.max(0, Math.ceil(lo - 0.5));
-        x <= Math.min(W - 1, Math.floor(hi - 0.5));
-        x++
-      ) {
-        grid[y * W + x] = 1;
-      }
-    }
-  }
-  // The same-colour seam stroke (SEAM frame px) grows the drawing by SEAM / 2: grow the grid to
-  // match, in 3x3 max passes of one cell each.
-  for (let pass = 0; pass < Math.round((SEAM / 2) * SS); pass++) {
-    const src = grid.slice();
-    for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++) {
-        if (src[y * W + x]) continue;
-        // Alternate square and cross neighbourhoods to approximate a round offset.
-        const square = pass % 2 === 0;
-        for (let dy = -1; dy <= 1 && !grid[y * W + x]; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            if (!square && dx && dy) continue;
-            const [nx, ny] = [x + dx, y + dy];
-            if (nx >= 0 && ny >= 0 && nx < W && ny < H && src[ny * W + nx]) {
-              grid[y * W + x] = 1;
-              break;
-            }
-          }
-      }
-  }
-  const at = (x: number, y: number) => (x >= 0 && y >= 0 && x < W && y < H ? grid[y * W + x]! : 0);
-  // Directed boundary edges with the filled cell on the left (y down): key = start corner.
-  const next = new Map<number, number[]>();
-  const key = (x: number, y: number) => y * (W + 1) + x;
-  const add = (x0: number, y0: number, x1: number, y1: number) => {
-    const k = key(x0, y0);
-    (next.get(k) ?? next.set(k, []).get(k)!).push(key(x1, y1));
-  };
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      if (!at(x, y)) continue;
-      if (!at(x, y - 1)) add(x + 1, y, x, y);
-      if (!at(x, y + 1)) add(x, y + 1, x + 1, y + 1);
-      if (!at(x - 1, y)) add(x, y, x, y + 1);
-      if (!at(x + 1, y)) add(x + 1, y + 1, x + 1, y);
-    }
-  // The longest boundary loop is the outer outline; holes and specks are dropped.
-  let best: number[] = [];
-  const used = new Set<string>();
-  for (const [start, ends] of next) {
-    for (const first of ends) {
-      if (used.has(`${start}>${first}`)) continue;
-      const loop = [start];
-      let a = start;
-      let b = first;
-      while (true) {
-        used.add(`${a}>${b}`);
-        if (b === start) break;
-        loop.push(b);
-        const options = next.get(b)!.filter((c) => !used.has(`${b}>${c}`));
-        a = b;
-        b = options[0]!;
-      }
-      if (loop.length > best.length) best = loop;
-    }
-  }
-  const pts: V2[] = best.map((k) => [(k % (W + 1)) / SS, Math.floor(k / (W + 1)) / SS]);
-  return simplifyClosed(pts, 0.75);
-}
-
-// A notch narrower than NOTCH_ANGLE tapers into a hairline of background that a raster closes
-// at a different depth from the drawing. Its tip, up to where the notch is NOTCH_WIDTH frame px
-// wide, is filled in the drawing (under the facets) and cut from the outline, so both end at the
-// same chord.
-const NOTCH_ANGLE = 30;
-const NOTCH_WIDTH = 0.6;
-
-function fillNotches(outline: readonly V2[]): { outline: V2[]; tips: V2[][] } {
-  const sign = Math.sign(area(outline));
-  const out: V2[] = [];
-  const tips: V2[][] = [];
-  for (const [i, v] of outline.entries()) {
-    const a = outline[(i + outline.length - 1) % outline.length]!;
-    const b = outline[(i + 1) % outline.length]!;
-    const [la, lb] = [dist(a, v), dist(b, v)];
-    const ua: V2 = [(a[0] - v[0]) / la, (a[1] - v[1]) / la];
-    const ub: V2 = [(b[0] - v[0]) / lb, (b[1] - v[1]) / lb];
-    const opening = Math.acos(Math.max(-1, Math.min(1, ua[0] * ub[0] + ua[1] * ub[1])));
-    if (cross(a, v, b) * sign >= 0 || (opening * 180) / Math.PI >= NOTCH_ANGLE) {
-      out.push(v);
-      continue;
-    }
-    // Along each wall to the chord NOTCH_WIDTH wide, kept short of the neighbouring vertices.
-    const s = Math.min(NOTCH_WIDTH / (2 * Math.sin(opening / 2)), la / 2, lb / 2);
-    const pa: V2 = [v[0] + ua[0] * s, v[1] + ua[1] * s];
-    const pb: V2 = [v[0] + ub[0] * s, v[1] + ub[1] * s];
-    out.push(pa, pb);
-    tips.push([pa, v, pb]);
-  }
-  return { outline: out, tips };
-}
-
-function simplifyClosed(pts: V2[], tol: number): V2[] {
-  // Split at the point farthest from the first and Douglas-Peucker each half.
-  let far = 0;
-  for (let i = 0; i < pts.length; i++)
-    if (dist(pts[0]!, pts[i]!) > dist(pts[0]!, pts[far]!)) far = i;
-  const a = dp(pts.slice(0, far + 1), tol);
-  const b = dp([...pts.slice(far), pts[0]!], tol);
-  return [...a.slice(0, -1), ...b.slice(0, -1)];
-}
-
-function dp(pts: V2[], tol: number): V2[] {
-  if (pts.length < 3) return pts;
-  const [a, b] = [pts[0]!, pts.at(-1)!];
-  let idx = 0;
-  let max = 0;
-  for (let i = 1; i < pts.length - 1; i++) {
-    const d = segDist(pts[i]!, a, b);
-    if (d > max) [max, idx] = [d, i];
-  }
-  if (max <= tol) return [a, b];
-  return [...dp(pts.slice(0, idx + 1), tol).slice(0, -1), ...dp(pts.slice(idx), tol)];
-}
-
-const dist = (a: V2, b: V2) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-function segDist(p: V2, a: V2, b: V2): number {
-  const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
-  const l = dx * dx + dy * dy;
-  const t = l ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l)) : 0;
-  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
-}
-
-const cross = (o: V2, a: V2, b: V2) =>
-  (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
 
 // Whether a convex polygon covers a point, within SEAM / 2 of its edges.
 function covers(poly: readonly V2[], p: V2): boolean {
@@ -568,77 +420,6 @@ function covers(poly: readonly V2[], p: V2): boolean {
     const b = poly[(i + 1) % poly.length]!;
     return cross(a, b, p) * sign >= 0 || segDist(p, a, b) <= SEAM / 2;
   });
-}
-
-function area(poly: readonly V2[]): number {
-  let s = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const [a, b] = [poly[i]!, poly[(i + 1) % poly.length]!];
-    s += a[0] * b[1] - b[0] * a[1];
-  }
-  return s / 2;
-}
-
-// Ear-clip triangulation, then Hertel-Mehlhorn: drop each diagonal whose removal keeps both
-// neighbours convex. At most four times the minimum number of convex parts.
-function convexParts(poly: V2[]): V2[][] {
-  const P = area(poly) > 0 ? poly : poly.toReversed(); // y-down: positive = clockwise on screen
-  const idx = P.map((_, i) => i);
-  const tris: number[][] = [];
-  const inside = (p: V2, a: V2, b: V2, c: V2) =>
-    cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
-  let guard = 0;
-  while (idx.length > 3 && guard++ < 10000) {
-    let clipped = false;
-    for (let i = 0; i < idx.length; i++) {
-      const [ia, ib, ic] = [
-        idx[(i + idx.length - 1) % idx.length]!,
-        idx[i]!,
-        idx[(i + 1) % idx.length]!,
-      ];
-      const [a, b, c] = [P[ia]!, P[ib]!, P[ic]!];
-      if (cross(a, b, c) <= 1e-9) continue;
-      if (idx.some((j) => j !== ia && j !== ib && j !== ic && inside(P[j]!, a, b, c))) continue;
-      tris.push([ia, ib, ic]);
-      idx.splice(i, 1);
-      clipped = true;
-      break;
-    }
-    if (!clipped) idx.splice(0, 1); // degenerate collinear vertex
-  }
-  tris.push([...idx]);
-  let parts = tris.map((t) => [...t]);
-  const convex = (ring: number[]) =>
-    ring.every(
-      (_, i) =>
-        cross(P[ring[i]!]!, P[ring[(i + 1) % ring.length]!]!, P[ring[(i + 2) % ring.length]!]!) >=
-        -1e-9,
-    );
-  let merged = true;
-  while (merged) {
-    merged = false;
-    outer: for (let a = 0; a < parts.length; a++)
-      for (let b = a + 1; b < parts.length; b++) {
-        const A = parts[a]!;
-        const B = parts[b]!;
-        for (let i = 0; i < A.length; i++) {
-          const [u, v] = [A[i]!, A[(i + 1) % A.length]!];
-          const j = B.findIndex((x, k) => x === v && B[(k + 1) % B.length] === u);
-          if (j < 0) continue;
-          // Splice B into A along the shared edge u-v.
-          const tail = [];
-          for (let k = 2; k < B.length; k++) tail.push(B[(j + k) % B.length]!);
-          const ring = [...A.slice(0, i + 1), ...tail, ...A.slice(i + 1)];
-          if (!convex(ring)) continue;
-          parts[a] = ring;
-          parts.splice(b, 1);
-          merged = true;
-          break outer;
-        }
-      }
-  }
-  parts = parts.filter((r) => r.length >= 3);
-  return parts.map((r) => r.map((i) => P[i]!));
 }
 
 // ------------------------------------------------------------------ render
@@ -688,18 +469,6 @@ function world([x, y]: Point): V2 {
   const sx = (DISPLAY * (x - y) * Math.sqrt(3)) / 2;
   const sy = (DISPLAY * (x + y)) / 2;
   return [sx / 2 + sy, sy - sx / 2];
-}
-
-// Strictly convex with one turn sign, as the game's reader requires after rounding.
-function strictlyConvex(part: readonly V2[]): boolean {
-  let sign = 0;
-  for (let i = 0; i < part.length; i++) {
-    const c = cross(part[i]!, part[(i + 1) % part.length]!, part[(i + 2) % part.length]!);
-    if (Math.abs(c) < 1e-9) continue;
-    if (sign && Math.sign(c) !== sign) return false;
-    sign = Math.sign(c);
-  }
-  return part.length >= 3 && sign !== 0;
 }
 
 // The base ring as convex parts in world units from the pivot, from the same posed model.
@@ -764,22 +533,23 @@ function build(
     const polys = projected(faces, pivot);
     const file = frames > 1 ? `${id}-${k}.svg` : `${id}.svg`;
     const fills = polys.map(({ face, pts, ramp: own }) => ({ fill: tone(face, own), pts }));
-    const { outline, tips } = fillNotches(
-      silhouette(
+    // The same-colour seam stroke grows the drawing by SEAM / 2.
+    const drawn = grow(
+      rasterize(
         polys.map((p) => p.pts),
         w,
         h,
       ),
+      SEAM / 2,
     );
+    const { collision, outline, tips } = trace(drawn);
     // A tip takes the colour of the topmost facet over its apex.
     const filled = tips.map((pts) => ({
       fill: fills.findLast((f) => covers(f.pts, pts[1]!))?.fill ?? ramp.at(-1)!,
       pts: pts.map(([x, y]) => [r2(x), r2(y)] as V2),
     }));
     writeFileSync(`${svgDir}${file}`, svgFrame(`${id} ${k}`, w, h, fills, declared, filled));
-    const collision = convexParts(outline).map((part) =>
-      part.map(([x, y]) => [r2(x), r2(y)] as V2),
-    );
+    check(`${id} ${k}`, collision, union(drawn, rasterize(tips, w, h)));
     return { collision, file, footprint: footprint(`${id} ${k}`, bases[k]!), outline };
   });
   const radius = Math.max(...built.flatMap((b) => b.outline.map((p) => dist(p, pivot))));

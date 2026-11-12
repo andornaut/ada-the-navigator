@@ -184,3 +184,47 @@ links it as `shipNose`.
   forward tip at the skirt top, local (0, -32, 1.2), projected like the frames, so it is the drawn
   tip vertex of `ship-k`. Its offset from the pivot (48, 48) times
   `displayScale` gives display px from the ship's position.
+- `collision[k]` is idle heading `k`'s drawn silhouette, 32 entries in heading
+  order: an array of convex parts, each an array of `[x, y]` in frame px, the
+  schema of the asteroids' `frames[k].collision`. See [Collision](#collision).
+
+## Collision
+
+The ship collides, makes contact and is placed by its drawn silhouette,
+`ship-nose.json` `collision[k]` for heading `k`. Offsets from the pivot
+(48, 48) times `displayScale` give display px.
+
+- `art/tools/ship.ts` traces each idle frame's fills with the shared tracer
+  (below). The frames have no strokes, so the drawing is not grown. Douglas-Peucker
+  runs at 0.5 frame px: at the default 0.75 the hull's long straight edges
+  leave headings 15, 17, 19 and 21 below the 0.98 floor.
+- Paint schemes share the geometry. The generator traces every scheme and fails
+  unless all five give the same parts, so the one set serves every paint.
+- The parts cover the hull; thrust flames and speed jets have none.
+- No heading has a notch tip; the generator fails if one appears.
+- Results: 3 to 7 parts per heading, intersection over union 0.982 to 0.993
+  (0.981 or more against librsvg renders at 4 px per frame px) and every
+  boundary within 0.5 frame px of the drawing.
+
+### Shared tracer
+
+`art/tools/silhouette.ts` turns a frame's drawn alpha into convex parts in frame
+px. The asteroids and resource rocks use it too ([asteroid
+collision](asteroids.md#collision)).
+
+1. Rasterize at 4 cells per frame px: vector polygons by cell centre with
+   nonzero winding (`rasterize`), PNG sprites by alpha at 128 or more
+   (`alphaMask`). An SVG drawing grows by its own stroke half-width (`grow`); a
+   PNG never grows, as its alpha already includes the outline.
+2. Trace the outer boundary along cell edges; holes and specks are dropped.
+   Simplify by Douglas-Peucker, 0.75 frame px unless the caller passes another
+   tolerance.
+3. Cut every notch tip narrower than 30 degrees at the chord 0.6 frame px wide.
+   The caller draws the returned tip triangles into the frame.
+4. Ear-clip the outline and merge the triangles while they stay convex
+   (Hertel-Mehlhorn). Coordinates round to 0.01 frame px.
+
+`check` fails the build unless every part is strictly convex, the parts' union
+matches the drawing (enclosed background filled) with intersection over union
+0.98 or more, and no cell that one has and the other lacks lies more than 1
+frame px from the other.
