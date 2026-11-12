@@ -17,7 +17,7 @@ There is no separate native-command container interface.
 ## Runner and hook compatibility
 
 The delivery runner and detached receipt adapter keep their direct
-`tests/container/check` categories and `internal:*` commands. Hook and type
+`tests/container/check` categories and their recipes. Hook and type
 checks belong to `lint`; tests use at most four workers; build writes `dist/`
 and performs the Wrangler packaging dry run. The custom Node.js 24.22.2 Dockerfile
 and published kit pins are unchanged.

@@ -108,17 +108,20 @@ npm ci && \
 Open the local URL printed by Vite for the website, then follow Play to `/play/`.
 The website and game use the same origin and browser save key. Dependency
 installation enables the Husky pre-commit hook, which formats staged files and
-runs ESLint and markdownlint on them. Native npm scripts run their tools directly
-on the host; Make wraps isolated checks in the custom dependency image used by CI.
+runs ESLint and markdownlint on them. The npm scripts call the project's check
+recipes (`tests/container/check`) as Chibi's and Archie's do; every recipe but
+`typecheck` and the Vite build runs only inside the check container, which Make
+starts from the custom dependency image used by CI.
 
 | Command                                | Does                                                                       |
 | -------------------------------------- | -------------------------------------------------------------------------- |
 | `make check`                           | Lint, test and build in the container profile, the default Make target     |
 | `make lint`, `make test`, `make build` | One category each; CI runs `make lint` for `Lint` and `make test build`    |
 | `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews/` |
-| `npm run check`                        | Scratch hook proof, types, lint, tests, build and the Wrangler dry run     |
-| `npm run lint`                         | ShellCheck 0.11.0 (on `PATH`), Prettier, ESLint and markdownlint           |
-| `npm test`                             | Vitest, with at most four workers                                          |
+| `npm run check`                        | The whole chain in the container: lint, the tests and the build            |
+| `npm run typecheck`                    | TypeScript alone, anywhere, a plain Node container included                |
+| `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and markdownlint, in the container     |
+| `npm test`                             | Vitest with at most four workers, then the seeded worlds, in the container |
 | `npm run test:game-kit`                | The game-owned game-kit consumer tests, with Vitest's runner config loader |
 | `npm run build`                        | Vite build, writing `dist/`                                                |
 | `npm run preview`                      | Build, then serve `dist/` with `wrangler dev`                              |
@@ -143,6 +146,6 @@ not rebuild. No application Worker entrypoint or deploy-time build command is
 configured. The account, disabled workers.dev and preview URLs, logs and traces
 are set there.
 
-The isolated gate validates Wrangler packaging with
-`npm run deploy:wrangler:dry-run`, which does not deploy. See [isolated checks](docs/checks.md) for gate evidence.
+The isolated gate's build category validates Wrangler packaging with a dry run,
+which does not deploy. See [isolated checks](docs/checks.md) for gate evidence.
 Credentials are not part of this repository.

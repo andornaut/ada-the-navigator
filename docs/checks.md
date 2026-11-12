@@ -2,16 +2,19 @@
 
 ## Native commands and Make
 
-Native npm scripts run directly in the invoking environment and never enter
-Make. Choose the execution environment for the task. Preserve resource admission,
+The npm scripts call the check recipes in `tests/container/check` directly and
+never enter Make; every recipe but `typecheck` and `bundle` refuses outside the
+check container. Choose the execution environment for the task. Preserve resource admission,
 load below 20, four CPUs, four test workers and the configured memory ceilings.
 
 | Command                                | Work                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run check`                        | Scratch hook proof, types, lint, tests, build and the Wrangler dry run    |
-| `npm run lint`                         | ShellCheck 0.11.0, Prettier, ESLint and Markdown lint                     |
-| `npm test`                             | Vitest, with at most four workers                                         |
-| `npm run build`                        | Vite, writing `dist/`                                                     |
+| `npm run check`                        | `check`: `lint`, `test` and `build`, in `CHECK_TASKS` order               |
+| `npm run typecheck`                    | `typecheck`: TypeScript alone, runnable in a plain Node container         |
+| `npm run lint`                         | `lint-only`: ShellCheck 0.11.0, Prettier, ESLint and Markdown lint        |
+| `npm test`                             | `test`: Vitest with at most four workers, then the seeded worlds          |
+| `npm run test:game-kit`                | The game-owned game-kit consumer tests, run directly by Vitest            |
+| `npm run build`                        | `bundle`: Vite, writing `dist/`                                           |
 | `make check`                           | Complete container profile, the default Make target                       |
 | `make lint`, `make test`, `make build` | Optional aliases for this repository's categories                         |
 | `make previews`                        | Rebuild, then recapture the galaxy selector previews in `public/previews` |
@@ -19,12 +22,14 @@ load below 20, four CPUs, four test workers and the configured memory ceilings.
 Hook verification creates its own scratch Git repository and preserves the
 caller's working files and index. `--output <proof.json>` selects explicit hook
 evidence; the default output remains in owned scratch. Normal staged-file
-formatting and fixes are unchanged. `internal:*` scripts retain the direct
-commands used by the delivery runner and inner dispatcher.
+formatting and fixes are unchanged. The container's `lint` category is
+`typecheck`, the hook proof and `lint-only`; its `build` category is `bundle` and
+the Wrangler packaging dry run. The recipes hold the direct commands the delivery
+runner, the container and the npm scripts use.
 
 Tests launch flights from one pinned seed sequence (`src/test-setup.ts`), so a
 flight's world is the same on every run. The container's test category also
-runs `internal:worlds` (`tools/test-worlds.mjs`), which repeats the suite under
+runs `tools/test-worlds.mjs`, which repeats the suite under
 three further sequences through `ADA_LAUNCH_SEED`, so a test that passes only in
 the default world fails there. `ADA_LAUNCH_SEED=<n> npm test` replays one world.
 
@@ -92,7 +97,7 @@ and the inner dispatcher; Make and `tools/checks.mjs` build it on demand, and
 dispatches the same inner checks. The kit copies the read-only checkout into `/tmp/work`, installs locked
 dependencies as UID 19001, disconnects networking and runs the three configured
 `tests/container/check` categories directly. Native and scheduled lint both use
-`internal:lint`, including ShellCheck. No runtime download provisions ShellCheck.
+`lint-only`, including ShellCheck. No runtime download provisions ShellCheck.
 
 ## Detached receipt compatibility
 
@@ -130,7 +135,7 @@ scratch. `startup.json` records the image ID. The `lint` mode dispatches inner `
 `test` and `all` dispatch inner `lint`, `test` and `build`. This includes hook
 acceptance/rejection, types, the full tests, build and the Wrangler packaging dry run.
 All categories invoke `tests/container/check` directly, without Make or Docker
-inside the container. `internal:*` scripts are the only category command source.
+inside the container. Its recipes are the only category command source.
 Published kit API coverage belongs to the application tests.
 
 Containers use UID/GID 19001, the checkout supplemental group, `HOME=/tmp`,
@@ -161,14 +166,9 @@ to the allowlist.
 with compatibility date `2026-11-10`, its shared account and custom domain, and
 logs and traces enabled. No application Worker entrypoint is configured.
 
-The bus-compatible Wrangler packaging check uses the built assets, in the chosen
-Node.js 24.22.2 environment:
-
-```bash
-npm run deploy:wrangler:dry-run
-```
-
-This runs pinned Wrangler with `deploy --config wrangler.jsonc --no-bundle --dry-run`.
+The bus-compatible Wrangler packaging check uses the built assets, as the last
+step of the container's `build` category, after `bundle`. It runs pinned Wrangler
+with `deploy --config wrangler.jsonc --no-bundle --dry-run`.
 Root `wrangler.jsonc` points `assets.directory` to `./dist` and defines no Worker
 entrypoint or build command. This route needs the gated `dist/` and locked
 `node_modules/`, without a deployment rebuild. The dry run is part of the
