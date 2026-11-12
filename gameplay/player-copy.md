@@ -648,6 +648,9 @@ Black Eye:
 
 ## Greeters
 
+On a first docking the greeting is one button that shows the next line on each
+tap; its accessible name is "Next line".
+
 Station keepers, first docking (three lines), then later dockings (one line, in
 turn):
 
