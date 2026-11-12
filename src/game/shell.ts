@@ -112,16 +112,16 @@ export class StoryShell {
         : state.started
           ? ([
               {
-                action: "continue",
-                label: CONTENT.labels.continue ?? "",
-                role: "primary",
-                run: this.actions.continueGame,
-              },
-              {
                 action: "restart",
                 label: CONTENT.labels.restart ?? "",
                 role: "secondary",
                 run: this.actions.restart,
+              },
+              {
+                action: "continue",
+                label: CONTENT.labels.continue ?? "",
+                role: "primary",
+                run: this.actions.continueGame,
               },
             ] as const)
           : ([
@@ -156,7 +156,11 @@ export class StoryShell {
     if (restore) {
       restore.focus();
     } else if (screen === "start" || state.dialogue) {
-      shown.querySelector<HTMLButtonElement>("button")?.focus();
+      // Focus starts on the primary action, else the first.
+      (
+        shown.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
+        shown.querySelector<HTMLButtonElement>("button")
+      )?.focus();
     }
   }
 

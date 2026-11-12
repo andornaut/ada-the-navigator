@@ -410,7 +410,8 @@ ${STORY_PORTRAIT_RULES}
 }
 
 /* Previous at the left and Next at the right, each half the column less the gap; a named action
-   too wide for its half fills the column on its own row above Previous. */
+   too wide for its half fills the column on its own row below Previous, which moves to the right
+   half: the primary stays at the column's bottom right. */
 .ada-controls .ada-story-controls{
   flex:none;
   margin-top:auto;
@@ -420,7 +421,7 @@ ${STORY_PORTRAIT_RULES}
   gap:${units(SMALL_BUTTON_GAP)}
 }
 .ada-controls .ada-story-controls.ada-story-wide{
-  grid-template-areas:"next next" "previous .";
+  grid-template-areas:". previous" "next next";
 }
 .ada-controls .ada-story-controls > [data-action="story-previous"]{
   grid-area:previous
@@ -617,7 +618,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.disabled = !page.canGoBack;
     next.hidden = !page.next;
     next.textContent = page.action ?? labels.next;
-    // A named action wider than its half takes the column's full row above Previous: its face at
+    // A named action wider than its half takes the column's full row below Previous: its face at
     // its label's width, measured against Previous's half. The press area's pseudo-element
     // overflows the face, so the face's own box is measured, not its scroll width.
     controls.classList.remove("ada-story-wide");
@@ -629,7 +630,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       next.getBoundingClientRect().width > previous.getBoundingClientRect().width + 0.5;
     next.style.width = "";
     controls.classList.toggle("ada-story-wide", wide);
-    controls.replaceChildren(...(wide ? [next, previous] : [previous, next]));
+    // Previous first in either layout, so focus order follows the rows.
     // A page past Gameplay's limits scrolls its choices, the page controls fixed below: one whose
     // page controls fall below the choice column at the panel's top cap.
     choices.classList.remove("ada-story-scrolls");

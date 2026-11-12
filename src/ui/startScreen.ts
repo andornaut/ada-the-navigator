@@ -92,7 +92,7 @@ ${(Object.keys(actions.left) as StartAction[])
 `;
 
 export interface StartScreenContent {
-  /** In tab order: the default (Continue, or Start) first, then Restart. */
+  /** In tab order, left to right: Restart, then the primary default (Continue, or Start). */
   readonly actions: readonly {
     readonly action: StartAction;
     readonly label: string;

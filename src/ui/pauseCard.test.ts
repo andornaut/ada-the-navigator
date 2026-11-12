@@ -169,27 +169,27 @@ const texts = (node: FakeElement): string[] => [
 ];
 
 describe("Paused card", () => {
-  it("is Resume over a two-column grid of Map, Ship, Settings and Back to title, with no objective", () => {
+  it("is a two-column grid of Map, Ship, Settings and Back to title over Resume, with no objective", () => {
     const { body, pause } = cards();
     pause.setState(state({ job: "Chart the Sleepy Tug" }));
     expect(body.children).toHaveLength(1);
     const actions = body.children[0]!;
     expect(actions.className).toContain("ada-stack");
-    expect(actions.children[0]!.dataset.action).toBe("pause-resume");
-    expect(actions.children[1]!.className).toContain("ada-pause-grid");
+    expect(actions.children[0]!.className).toContain("ada-pause-grid");
+    expect(actions.children[1]!.dataset.action).toBe("pause-resume");
     expect(shownActions(actions)).toEqual([
-      "pause-resume",
       "pause-map",
       "pause-ship",
       "pause-settings",
       "pause-backToTitle",
+      "pause-resume",
     ]);
     expect(buttonsOf(actions).map((node) => node.textContent)).toEqual([
-      "Resume",
       "Map",
       "Ship",
       "Settings",
       "Back to title",
+      "Resume",
     ]);
   });
 
@@ -204,7 +204,7 @@ describe("Paused card", () => {
       null,
       null,
     ]);
-    actions[4]!.click();
+    actions[3]!.click();
     expect(options.onBackToTitle).toHaveBeenCalledOnce();
   });
 

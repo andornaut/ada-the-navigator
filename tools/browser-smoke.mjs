@@ -1490,7 +1490,7 @@ try {
   ];
   await seedOnce(dangerInput.save(), "ada-browser.danger-context.v1");
   await openPause();
-  // In flight the card shows Resume over Map, Ship, Settings and Back to title, every one
+  // In flight the card shows Map, Ship, Settings and Back to title over Resume, every one
   // available in danger.
   const pauseActions = () => page.locator('[data-dialog="pause"] .ada-stack button:not([hidden])');
   assert.deepEqual(
@@ -1502,13 +1502,13 @@ try {
       ]),
     ),
     [
-      ["pause-resume", CONTENT.labels.resume, null],
       ["pause-map", CONTENT.labels.map, null],
       ["pause-ship", CONTENT.labels.ship, null],
       ["pause-settings", CONTENT.labels.settings, null],
       ["pause-backToTitle", CONTENT.labels.backToTitle, null],
+      ["pause-resume", CONTENT.labels.resume, null],
     ],
-    "The in-flight Paused card shows Resume, Map, Ship, Settings and Back to title, all " +
+    "The in-flight Paused card shows Map, Ship, Settings, Back to title and Resume, all " +
       "available in danger",
   );
   await page.screenshot({ path: `${output}/pause-flight-danger.png` });
@@ -3151,8 +3151,8 @@ try {
   );
   assert.deepEqual(
     startScreens["saved-720"].actions.map(([action]) => action),
-    ["continue", "restart"],
-    "A save offers Continue, then Restart, in tab order",
+    ["restart", "continue"],
+    "A save offers Restart, then Continue, in tab order, as they read left to right",
   );
   assert.equal(startScreens["new-720"].focused, "start", "Start is the default");
   assert.equal(startScreens["saved-720"].focused, "continue", "Continue is the default");

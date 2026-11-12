@@ -24,8 +24,9 @@ export function galaxiesAvailable(inDanger: boolean): boolean {
   return !inDanger;
 }
 
-// The Paused card's actions for its place, top to bottom. Back to title stays available in
-// danger; Map still opens, where Travel here and Galaxies are unavailable instead.
+// The Paused card's actions for its place, top to bottom: the primary Resume last, at the
+// bottom. Back to title stays available in danger; Map still opens, where Travel here and
+// Galaxies are unavailable instead.
 export function pauseActions(place: PausePlace): readonly PauseActionView[] {
   if (place === "room") {
     return [
@@ -34,11 +35,11 @@ export function pauseActions(place: PausePlace): readonly PauseActionView[] {
     ];
   }
   return [
-    { available: true, id: "resume", role: "primary" },
     { available: true, id: "map", role: "secondary" },
     { available: true, id: "ship", role: "secondary" },
     { available: true, id: "settings", role: "secondary" },
     { available: true, id: "backToTitle", role: "secondary" },
+    { available: true, id: "resume", role: "primary" },
   ];
 }
 

@@ -120,9 +120,9 @@ describe("storybook page", () => {
     expect(rule(".ada-controls .ada-story-controls")).toContain(
       "grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)",
     );
-    // A named action too wide for its half fills the row above Previous.
+    // A named action too wide for its half fills the row below Previous, at the bottom right.
     expect(rule(".ada-controls .ada-story-controls.ada-story-wide")).toContain(
-      'grid-template-areas:"next next" "previous ."',
+      'grid-template-areas:". previous" "next next"',
     );
   });
 

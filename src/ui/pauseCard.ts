@@ -74,7 +74,7 @@ function stack(): HTMLDivElement {
   return group;
 }
 
-/** The Paused card's grid: two equal columns of standard buttons under Resume. */
+/** The Paused card's grid: two equal columns of standard buttons over Resume. */
 export const PAUSE_GRID_STYLE = `
 ${UI_SCOPE} .ada-actions.ada-pause-grid{
   grid-auto-flow:row;
@@ -120,6 +120,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   paused.card.dataset.dialog = "pause";
   const actions = stack();
   const others = grid();
+  actions.append(others);
   const buttons = new Map<PauseAction, HTMLButtonElement>();
   const text: Record<PauseAction, string> = {
     backToTitle: labels.backToTitle,
@@ -128,15 +129,14 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     settings: labels.settings,
     ship: labels.ship,
   };
-  // Every action is built once, in flight's order; each place shows its own. Resume spans the
-  // card; the rest fill the grid in order, so the room's two share its first row.
+  // Every action is built once, in flight's order; each place shows its own. The rest fill the
+  // grid in order, so the room's two share its first row; Resume spans the card below it.
   for (const { id, role } of pauseActions("flight")) {
     const button = createButton(text[id], role);
     button.dataset.action = `pause-${id}`;
     buttons.set(id, button);
     (id === "resume" ? actions : others).append(button);
   }
-  actions.append(others);
   paused.body.append(actions);
   const ship = createCard({
     closeAction: "close-ship",
@@ -188,7 +188,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       return;
     }
     paused.fit();
-    (actions.querySelector<HTMLButtonElement>("button:not([hidden])") ?? paused.close).focus();
+    // Focus starts on the primary Resume, else the first action shown.
+    (
+      actions.querySelector<HTMLButtonElement>(".ada-primary:not([hidden])") ??
+      actions.querySelector<HTMLButtonElement>("button:not([hidden])") ??
+      paused.close
+    ).focus();
   };
   // What the Ship card last showed, so its rows rebuild only on a change.
   let shipShown: string | undefined;
