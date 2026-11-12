@@ -43,6 +43,10 @@ export function liveEnemy(object: SpaceObject): boolean {
     (!object.enemy || (!enemyDefeated(object.enemy) && !object.enemy.salvaged))
   );
 }
+/** A guard that still blocks its route: neither disabled nor destroyed. */
+function blockingGuard(object: SpaceObject): boolean {
+  return liveEnemy(object) && !object.enemy?.disabled;
+}
 export function persistentObject(object: SpaceObject): boolean {
   return (
     object.persistent === true ||
@@ -86,7 +90,7 @@ function account(
       delete index.packs[packId];
     }
   }
-  if (object.routeId) {
+  if (object.routeId && blockingGuard(object)) {
     const guards = index.routes.get(object.routeId) ?? new Set<string>();
     if (add) {
       guards.add(object.id);
@@ -132,7 +136,7 @@ export function retainedRouteBlocked(id: string, flight: FlightState): boolean {
   return index
     ? Boolean(index.routes.get(id)?.size)
     : Object.values(flight.world.notables).some(
-        (object) => object !== null && object.routeId === id && liveEnemy(object),
+        (object) => object !== null && object.routeId === id && blockingGuard(object),
       );
 }
 function activate(content: PrototypeContent, id: string, flight: FlightState): void {

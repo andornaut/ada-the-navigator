@@ -241,12 +241,13 @@ describe("integrated combat", () => {
     expect(flight.objects).toContain(target);
   });
 
-  it("unblocks a route whose guard is salvaged", () => {
+  it("unblocks a route once its guard is disabled, salvaged or not", () => {
     const flight = empty();
     ensureDestination(PROTOTYPE, "quest", flight);
     const guard = ensureRouteEncounter(PROTOTYPE, "quest", flight)!;
-    guard.enemy!.disabled = true;
     expect(routeBlocked("quest", flight)).toBe(true);
+    guard.enemy!.disabled = true;
+    expect(routeBlocked("quest", flight)).toBe(false);
     guard.enemy!.salvaged = true;
     expect(routeBlocked("quest", flight)).toBe(false);
   });

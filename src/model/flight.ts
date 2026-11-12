@@ -1102,12 +1102,14 @@ function placeGuards(content: PrototypeContent, guards: SpaceObject[], flight: F
 
 export { relocateRouteGuards as settleRouteEncounters };
 
-/** A live guard blocks its route; a salvaged one is spared and powered down. */
+/** A guard blocks its route until it is disabled or destroyed (gameplay/rules.md). */
 export function routeBlocked(id: string, flight: FlightState): boolean {
   // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
   return (
     retainedRouteBlocked(id, flight) ||
-    flight.objects.some((object) => object.routeId === id && liveEnemy(object))
+    flight.objects.some(
+      (object) => object.routeId === id && liveEnemy(object) && !object.enemy?.disabled,
+    )
   );
 }
 
