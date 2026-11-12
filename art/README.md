@@ -63,7 +63,8 @@ and the `cartwheelDebris` and `oreField` links; Whirlpool the whale calves,
 river debris, project frames and the `whales`, `whirlpoolCurrents`, `whirlpoolDebris` and `whirlpoolProjects` links;
 Andromeda the settlers' station, the settlements, the guide beacons, their
 project frames, the garnet drones, Pip's and the settler's portraits, the
-backdrop haze and the `backdropHaze` link. The station, discovery cache, coral
+backdrop haze and the `backdropHaze` link. Sunflower, Whirlpool and Cartwheel each
+also hold their cast's portraits; General Gadget's and Grandma's are in core. The station, discovery cache, coral
 family, ore nugget and `tow` serve every galaxy and stay in core, as do the
 miner, the whale, the smaller adult and Pip's mail scooter, which the Black Eye
 finale also draws. Core entries keep their files' paths, so a galaxy's art
@@ -117,9 +118,11 @@ the pickups ([Stardust](stardust.md#pickup), the
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
-`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits from the bust parts in
-`art/tools/bust.ts`. `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
-compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
+`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits, and
+`art/tools/sunflower-portraits.ts`, `whirlpool-portraits.ts` and `cartwheel-portraits.ts`
+each galaxy's cast, from the bust parts in `art/tools/bust.ts`. `art/tools/portraits.ts`
+draws the Astra, General Gadget and Grandma portraits and the compact conversation sheets
+([Conversation portraits](conversation.md)). No generated kit source or assets
 from another game's build pipeline are required.
 
 The toolkit's `buildCommand(options, argv)` supports `check.paths`, optional

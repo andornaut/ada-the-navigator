@@ -4394,6 +4394,176 @@
         "y": 0.8
       },
       "project": "currentBuoys"
+    },
+    {
+      "id": "brine-portrait",
+      "path": "/art/whirlpool/portraits/brine.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "coral-portrait",
+      "path": "/art/whirlpool/portraits/coral.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "family-portrait",
+      "path": "/art/whirlpool/portraits/family.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "marlo-portrait",
+      "path": "/art/whirlpool/portraits/marlo.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "ripple-portrait",
+      "path": "/art/whirlpool/portraits/ripple.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "brine-portrait-compact",
+      "path": "/art/whirlpool/portraits/brine-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "coral-portrait-compact",
+      "path": "/art/whirlpool/portraits/coral-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "family-portrait-compact",
+      "path": "/art/whirlpool/portraits/family-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "marlo-portrait-compact",
+      "path": "/art/whirlpool/portraits/marlo-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "ripple-portrait-compact",
+      "path": "/art/whirlpool/portraits/ripple-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
     }
   ],
   "whales": "/art/whales.json",

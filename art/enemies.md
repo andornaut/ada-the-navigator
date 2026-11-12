@@ -47,8 +47,8 @@ its drawn length and width, so the narrow hull keeps a forgiving hit area.
 
 One mark for the whole fleet: an ink `#181425` horseshoe claw opening toward
 the nose, its prong tips hooked inward, closing on an amber `#f0bd68` disc.
-Ink on the coral hull is 6.69:1. The same mark is General Gadget's voice
-portrait ([Conversation portraits](conversation.md)).
+Ink on the coral hull is 6.69:1. The same mark is the medal and cap badge on
+General Gadget's portrait ([Conversation portraits](conversation.md)).
 
 - Two flat `decal` parts per craft in `crafts.ts`: the claw outline (radius
   `r`) and a 12-sided disc of radius `0.26 r` centred `0.2 r` forward of the

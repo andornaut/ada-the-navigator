@@ -5,6 +5,8 @@ import type { Colour, Frame } from "@andornaut/art-kit/grid";
 import { decodePng } from "@andornaut/art-kit/png";
 import type { Tag } from "@andornaut/art-kit/raster";
 
+import { crop } from "./bust.ts";
+import { gadget, grandma, GRANDMA_CROP } from "./core-busts.ts";
 import { editManifest } from "./manifest.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
@@ -13,22 +15,13 @@ const output = `${art}portraits/`;
 
 // Portrait sheets: 32 px frames for the storybook panel and 22 px compact frames that the
 // conversation box draws at 2x. Ada and Penny compact frames are crops of their reused sheets;
-// Astra and General Gadget are drawn here at both sizes.
+// Astra is drawn here at both sizes, and General Gadget and Grandma come from core-busts.ts.
 const FULL = 32;
 const COMPACT = 22;
 const IDLE_MS = 1000;
 const SPEAK_MS = 120;
 
 const INK = "181425";
-const NAVY_LIGHT = "3a4466";
-const LOCKED = "1d2032";
-const STATIC = "5a6988";
-const AMBER = "f0bd68";
-const AMBER_SIDE = "b98a40";
-const CORAL = "d68b72";
-const CORAL_SIDE = "a8654f";
-const CORAL_REAR = "7f4b3d";
-const CORAL_DEEP = "5e3a33";
 
 // Astra's teal, anchored on the in-between shimmer `#8fe0f2`, and the in-between's darkest value.
 const A_GLOW = "1d4a63";
@@ -48,28 +41,6 @@ function set(frame: Frame, x: number, y: number, colour: Colour): void {
   const row = frame[y];
   if (row && x >= 0 && x < row.length) {
     row[x] = colour;
-  }
-}
-
-// Bresenham line, one pixel wide.
-function line(frame: Frame, [x0, y0]: Point, [x1, y1]: Point, colour: string): void {
-  const [dx, dy] = [Math.abs(x1 - x0), -Math.abs(y1 - y0)];
-  const [sx, sy] = [x0 < x1 ? 1 : -1, y0 < y1 ? 1 : -1];
-  let [x, y, error] = [x0, y0, dx + dy];
-  for (;;) {
-    set(frame, x, y, colour);
-    if (x === x1 && y === y1) {
-      return;
-    }
-    const twice = 2 * error;
-    if (twice >= dy) {
-      error += dy;
-      x += sx;
-    }
-    if (twice <= dx) {
-      error += dx;
-      y += sy;
-    }
   }
 }
 
@@ -93,62 +64,6 @@ function covered(test: (x: number, y: number) => boolean, x: number, y: number):
     }
   }
   return count >= 8;
-}
-
-function octagon(cx: number, cy: number, r: number): Point[] {
-  const k = r * Math.tan(Math.PI / 8);
-  return [
-    [cx - k, cy - r],
-    [cx + k, cy - r],
-    [cx + r, cy - k],
-    [cx + r, cy + k],
-    [cx + k, cy + r],
-    [cx - k, cy + r],
-    [cx - r, cy + k],
-    [cx - r, cy - k],
-  ];
-}
-
-// The drones' claw insignia (see crafts.ts): a horseshoe pincer opening up, closing on a disc.
-const CLAW_HALF: readonly Point[] = [
-  [0, 1],
-  [0.5, 0.87],
-  [0.87, 0.5],
-  [1, 0],
-  [1, -0.6],
-  [0.78, -1],
-  [0.2, -0.92],
-  [0.36, -0.68],
-  [0.5, -0.45],
-  [0.5, 0],
-  [0.44, 0.25],
-  [0.25, 0.44],
-  [0, 0.5],
-];
-const CLAW_DISC = { y: -0.2, r: 0.26 };
-
-function claw(cx: number, cy: number, r: number): Point[] {
-  const half = CLAW_HALF.map(([x, y]): Point => [cx + x * r, cy + y * r]);
-  const flip = ([x, y]: Point): Point => [2 * cx - x, y];
-  const [outer, inner] = [half.slice(0, 7), half.slice(7)];
-  return [
-    ...outer,
-    ...inner,
-    ...inner.slice(0, -1).toReversed().map(flip),
-    ...outer.slice(1).toReversed().map(flip),
-  ];
-}
-
-// Deterministic static (mulberry32).
-function random(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function hexagon(cx: number, cy: number, r: number): Point[] {
@@ -335,148 +250,6 @@ function astra(g: Astra, speaking: number | null): Frame {
   return frame;
 }
 
-type Gadget = {
-  size: number;
-  centre: Point;
-  plate: number;
-  edge: number;
-  claw: number;
-  clawDrop: number;
-  shade: number;
-  bands: readonly [number, number, number, number];
-  bandLimit: number;
-  specks: number;
-  speckRows: readonly [number, number];
-  traceRow: number;
-  traceX: number;
-  idleTrace: readonly [number, number];
-  waves: readonly (readonly number[])[];
-};
-
-const GADGET: Readonly<Record<"full" | "compact", Gadget>> = {
-  full: {
-    size: FULL,
-    centre: [15.5, 13],
-    plate: 11,
-    edge: 12,
-    claw: 8.6,
-    clawDrop: 0.5,
-    shade: 8.5,
-    bands: [4, 3, 13, 5],
-    bandLimit: 24,
-    specks: 26,
-    speckRows: [2, 25],
-    traceRow: 27,
-    traceX: 3,
-    idleTrace: [3, 28],
-    // Hard zigzag amplitude at x = 3, 5, ..., 31, never rounded.
-    waves: [
-      [0, 2, -3, 1, -1, 3, -2, 0, 2, -1, 3, -3, 1, -2, 0],
-      [0, -1, 3, -2, 2, -3, 1, -1, 3, 0, -2, 2, -3, 1, 0],
-      [0, 3, -1, -3, 2, 0, -2, 3, -1, -3, 1, 2, -1, -2, 0],
-      [0, -2, 1, 3, -3, 2, -1, -2, 1, 3, -2, -1, 2, -1, 0],
-    ],
-  },
-  compact: {
-    size: COMPACT,
-    centre: [10.5, 8.5],
-    plate: 7.6,
-    edge: 8.4,
-    claw: 6,
-    clawDrop: 0.4,
-    shade: 5.9,
-    bands: [3, 2, 9, 3],
-    bandLimit: 16,
-    specks: 12,
-    speckRows: [2, 16],
-    traceRow: 19,
-    traceX: 1,
-    idleTrace: [2, 19],
-    // Amplitude at x = 1, 3, ..., 21.
-    waves: [
-      [0, 2, -2, 1, -1, 2, -2, 0, 2, -1, 0],
-      [0, -1, 2, -2, 1, -2, 1, -1, 2, -2, 0],
-      [0, 2, -1, -2, 2, 0, -2, 2, -1, 1, 0],
-      [0, -2, 1, 2, -2, 1, -1, -2, 1, 2, 0],
-    ],
-  },
-};
-
-// General Gadget's faceless voice: static, the drones' claw on a coral octagon, and a hard amber
-// trace. Unknown voice: the roundel is dim and torn by two glitch bands. Named: clean and lit.
-function gadget(g: Gadget, known: boolean, speaking: number | null): Frame {
-  const step = speaking ?? 0;
-  const frame = blank(g.size);
-  const next = random(g.size * 1000 + step * 31 + (known ? 0 : 500));
-  const noise = known ? 0.07 : 0.13;
-  for (const [y, row] of frame.entries()) {
-    for (const x of row.keys()) {
-      const v = next();
-      row[x] = v < noise * 0.45 ? NAVY_LIGHT : v < noise ? LOCKED : null;
-    }
-    if ((y + step) % 4 === 0) {
-      for (const x of row.keys()) {
-        if (next() < 0.55) {
-          row[x] = LOCKED;
-        }
-      }
-    }
-  }
-  const [cx, cy] = g.centre;
-  const plate = octagon(cx, cy, g.plate);
-  const edge = octagon(cx, cy, g.edge);
-  const mark = claw(cx, cy + g.clawDrop, g.claw);
-  const hub = [cx, cy + g.clawDrop + CLAW_DISC.y * g.claw, CLAW_DISC.r * g.claw + 0.2] as const;
-  const colours = known
-    ? { hub: AMBER, plate: CORAL, shade: CORAL_SIDE }
-    : { hub: AMBER_SIDE, plate: CORAL_REAR, shade: CORAL_DEEP };
-  for (const [y, row] of frame.entries()) {
-    for (const x of row.keys()) {
-      if (covered((px, py) => inside(edge, px, py), x, y)) {
-        row[x] = INK;
-      }
-      if (covered((px, py) => inside(plate, px, py), x, y)) {
-        row[x] = x - cx + (y - cy) > g.shade ? colours.shade : colours.plate;
-      }
-      if (covered((px, py) => inside(mark, px, py), x, y)) {
-        row[x] = INK;
-      }
-      if (covered((px, py) => (px - hub[0]) ** 2 + (py - hub[1]) ** 2 <= hub[2] ** 2, x, y)) {
-        row[x] = colours.hub;
-      }
-    }
-  }
-  if (!known) {
-    const [a, aStep, b, bStep] = g.bands;
-    const span = g.bandLimit - 4;
-    const bands = [((a + step * aStep) % span) + 2, ((b + step * bStep) % span) + 2];
-    const shifts = [2 + (step % 2), -3 + (step % 2)];
-    const snapshot = frame.map((row) => [...row]);
-    for (const [i, band] of bands.entries()) {
-      for (let y = band; y < Math.min(band + 2, g.bandLimit); y++) {
-        for (const x of frame[y]!.keys()) {
-          frame[y]![x] = snapshot[y]![x - shifts[i]!] ?? null;
-        }
-      }
-    }
-    const [top, bottom] = g.speckRows;
-    for (let i = 0; i < g.specks; i++) {
-      const x = Math.floor(next() * g.size);
-      const y = top + Math.floor(next() * (bottom - top));
-      set(frame, x, y, [NAVY_LIGHT, LOCKED, STATIC][Math.floor(next() * 3)]!);
-    }
-  }
-  if (speaking === null) {
-    line(frame, [g.idleTrace[0], g.traceRow], [g.idleTrace[1], g.traceRow], AMBER_SIDE);
-  } else {
-    const points = g.waves[speaking]!.map((a, i): Point => [g.traceX + 2 * i, g.traceRow - a]);
-    for (let i = 1; i < points.length; i++) {
-      line(frame, points[i - 1]!, points[i]!, AMBER);
-    }
-  }
-  return frame;
-}
-
 const SPEAKING = [0, 1, 2, 3];
 
 function astraTags(g: Astra): Tag[] {
@@ -486,15 +259,19 @@ function astraTags(g: Astra): Tag[] {
   ];
 }
 
-function gadgetTags(g: Gadget): Tag[] {
-  return [false, true].flatMap((known): Tag[] => {
-    const state = known ? "named" : "unknown";
+function gadgetTags(compact: boolean): Tag[] {
+  return [false, true].flatMap((named): Tag[] => {
+    const state = named ? "named" : "unknown";
     return [
-      [`${state}-idle`, [gadget(g, known, null)], IDLE_MS],
-      [`${state}-speaking`, SPEAKING.map((i) => gadget(g, known, i)), SPEAK_MS],
+      [`${state}-idle`, [gadget(named, null, compact)], IDLE_MS],
+      [`${state}-speaking`, SPEAKING.map((i) => gadget(named, i, compact)), SPEAK_MS],
     ];
   });
 }
+
+const grandmaTags = (compact: boolean): Tag[] => [
+  ["neutral", [compact ? crop(grandma(), GRANDMA_CROP) : grandma()], IDLE_MS],
+];
 
 interface AsepriteData {
   frames: Record<string, { duration: number; frame: { x: number; y: number } }>;
@@ -533,7 +310,8 @@ type Sheet = { id: string; key: string; size: number; tags: Tag[] };
 
 const sheets: Sheet[] = [
   { id: "astra-portrait", key: "astra", size: FULL, tags: astraTags(ASTRA.full) },
-  { id: "gadget-portrait", key: "gadget", size: FULL, tags: gadgetTags(GADGET.full) },
+  { id: "gadget-portrait", key: "gadget", size: FULL, tags: gadgetTags(false) },
+  { id: "grandma-portrait", key: "grandma", size: FULL, tags: grandmaTags(false) },
   {
     id: "ada-portrait-compact",
     key: "ada-compact",
@@ -550,7 +328,13 @@ const sheets: Sheet[] = [
     id: "gadget-portrait-compact",
     key: "gadget-compact",
     size: COMPACT,
-    tags: gadgetTags(GADGET.compact),
+    tags: gadgetTags(true),
+  },
+  {
+    id: "grandma-portrait-compact",
+    key: "grandma-compact",
+    size: COMPACT,
+    tags: grandmaTags(true),
   },
   {
     id: "penny-portrait-compact",

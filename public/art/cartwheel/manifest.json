@@ -11161,6 +11161,210 @@
         "y": 0.5
       },
       "craft": "stranded-hauler"
+    },
+    {
+      "id": "garnet-portrait",
+      "path": "/art/cartwheel/portraits/garnet.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "jasper-portrait",
+      "path": "/art/cartwheel/portraits/jasper.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "mica-portrait",
+      "path": "/art/cartwheel/portraits/mica.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "opal-portrait",
+      "path": "/art/cartwheel/portraits/opal.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "quartz-portrait",
+      "path": "/art/cartwheel/portraits/quartz.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "slate-portrait",
+      "path": "/art/cartwheel/portraits/slate.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "garnet-portrait-compact",
+      "path": "/art/cartwheel/portraits/garnet-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "jasper-portrait-compact",
+      "path": "/art/cartwheel/portraits/jasper-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "mica-portrait-compact",
+      "path": "/art/cartwheel/portraits/mica-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "opal-portrait-compact",
+      "path": "/art/cartwheel/portraits/opal-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "quartz-portrait-compact",
+      "path": "/art/cartwheel/portraits/quartz-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "slate-portrait-compact",
+      "path": "/art/cartwheel/portraits/slate-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
     }
   ],
   "cartwheelDebris": "/art/cartwheel/debris.json",

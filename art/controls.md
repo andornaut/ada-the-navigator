@@ -160,6 +160,24 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | Lumen tab          | `#fde58a` | The lantern's light                          |
 | Dial tab           | `#d0d8ff` | The periwinkle shell                         |
 | Cog tab            | `#a8f0c0` | The green LEDs                               |
+| Clover tab         | `#8fd16a` | The clover leaf cap                          |
+| Rivet tab          | `#ff9f6b` | The workshop apron                           |
+| Patch tab          | `#d0c0a0` | The scrap backpack                           |
+| Saffron tab        | `#ffcf8f` | The saffron fur                              |
+| Bramble tab        | `#d6e88a` | The berry beret's leaves                     |
+| Nectar tab         | `#ffc2d6` | The pink bow                                 |
+| Marlo tab          | `#a59ff0` | The lavender hull                            |
+| Whale family tab   | `#eadcff` | The family's pale hull                       |
+| Ripple tab         | `#a8f0c8` | The seafoam mantle                           |
+| Coral tab          | `#f7b0c4` | The pink mantle                              |
+| Brine tab          | `#7fc0f0` | The deep blue mantle                         |
+| Quartz tab         | `#d8ccf4` | The quartz crown                             |
+| Slate tab          | `#a8c8b8` | The slate seams                              |
+| Garnet tab         | `#ec8f9e` | The garnet crystals                          |
+| Mica tab           | `#ffd36b` | The hard hat                                 |
+| Opal tab           | `#f5a8d8` | The rose scarf                               |
+| Jasper tab         | `#f0b080` | The ochre bands                              |
+| Grandma tab        | `#f0b4d0` | The rose cardigan                            |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
@@ -185,6 +203,24 @@ sits on open space.
 | Lumen          | `#181425` | `#fde58a`                                  | 14.37:1  |
 | Dial           | `#181425` | `#d0d8ff`                                  | 12.82:1  |
 | Cog            | `#181425` | `#a8f0c0`                                  | 13.63:1  |
+| Clover         | `#181425` | `#8fd16a`                                  | 9.86:1   |
+| Rivet          | `#181425` | `#ff9f6b`                                  | 8.94:1   |
+| Patch          | `#181425` | `#d0c0a0`                                  | 10.06:1  |
+| Saffron        | `#181425` | `#ffcf8f`                                  | 12.50:1  |
+| Bramble        | `#181425` | `#d6e88a`                                  | 13.53:1  |
+| Nectar         | `#181425` | `#ffc2d6`                                  | 11.96:1  |
+| Marlo          | `#181425` | `#a59ff0`                                  | 7.56:1   |
+| Whale family   | `#181425` | `#eadcff`                                  | 13.88:1  |
+| Ripple         | `#181425` | `#a8f0c8`                                  | 13.69:1  |
+| Coral          | `#181425` | `#f7b0c4`                                  | 10.26:1  |
+| Brine          | `#181425` | `#7fc0f0`                                  | 9.18:1   |
+| Quartz         | `#181425` | `#d8ccf4`                                  | 11.89:1  |
+| Slate          | `#181425` | `#a8c8b8`                                  | 9.97:1   |
+| Garnet         | `#181425` | `#ec8f9e`                                  | 7.71:1   |
+| Mica           | `#181425` | `#ffd36b`                                  | 12.68:1  |
+| Opal           | `#181425` | `#f5a8d8`                                  | 9.84:1   |
+| Jasper         | `#181425` | `#f0b080`                                  | 9.63:1   |
+| Grandma        | `#181425` | `#f0b4d0`                                  | 10.42:1  |
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over

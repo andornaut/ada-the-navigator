@@ -3039,6 +3039,22 @@
       }
     },
     {
+      "id": "grandma-portrait",
+      "path": "/art/portraits/grandma.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
       "id": "penny-portrait",
       "path": "/art/portraits/penny.png",
       "width": 96,
@@ -3192,6 +3208,24 @@
             "ms": 120
           }
         ]
+      }
+    },
+    {
+      "id": "grandma-portrait-compact",
+      "path": "/art/portraits/grandma-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
       }
     },
     {
