@@ -406,6 +406,8 @@ describe("tow handling", () => {
       maxSpeed: physics.maxSpeed * 0.65,
       turnSeconds: physics.turnSeconds * 1.5,
     });
+    // The base engine's 160 tows at 104 (gameplay/rules.md).
+    expect(towing({ tow: { x: 0, y: 0 } }, physics).maxSpeed).toBeCloseTo(104, 9);
   });
 
   it("slows a flight with a craft in tow", () => {

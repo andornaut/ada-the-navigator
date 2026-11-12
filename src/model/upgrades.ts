@@ -70,7 +70,10 @@ export function shipTuning(
       ...base,
       accelerationSeconds: base.accelerationSeconds * seconds,
       brakingSeconds: base.brakingSeconds * seconds,
-      maxSpeed: base.maxSpeed * multiplier(effects.engineSpeed, levels.engine),
+      maxSpeed: leveledValue(
+        { base: base.maxSpeed, levels: catalog.engineMaxSpeed },
+        levels.engine,
+      ),
     },
     shieldMax: content.tuning.shieldMax * multiplier(effects.shieldCapacity, levels.shield),
     shieldRechargeDelay:

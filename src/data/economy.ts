@@ -60,14 +60,12 @@ export interface EconomyCatalog {
    */
   weaponUpgradePrices: readonly number[];
   trackPrices: Readonly<Record<UpgradeTrack, readonly number[]>>;
+  /** Ada's maximum speed at engine levels 2 and 3; level 1 is her ship physics' own. */
+  engineMaxSpeed: readonly [number, number];
   /** Multipliers on the base value at levels 1, 2 and 3. */
   effects: Readonly<
     Record<
-      | "engineSeconds"
-      | "engineSpeed"
-      | "shieldCapacity"
-      | "shieldRechargeDelay"
-      | "shieldRechargeRate",
+      "engineSeconds" | "shieldCapacity" | "shieldRechargeDelay" | "shieldRechargeRate",
       readonly [number, number, number]
     >
   >;
@@ -171,11 +169,10 @@ export const ECONOMY: EconomyCatalog = {
     },
   },
   discoveryStardust: 5,
-  // Engine tuning: +5% top speed and -10% acceleration and braking seconds per level. Shield
-  // capacity 100, 150, 225. Recharge about x1.5 per level: delay /1.2 and rate x1.25 each.
+  // Engine tuning: -10% acceleration and braking seconds per level. Shield capacity 100, 150,
+  // 225. Recharge about x1.5 per level: delay /1.2 and rate x1.25 each.
   effects: {
     engineSeconds: [1, 0.9, 0.8],
-    engineSpeed: [1, 1.05, 1.1],
     shieldCapacity: [1, 1.5, 2.25],
     shieldRechargeDelay: [1, 1 / 1.2, 1 / 1.44],
     shieldRechargeRate: [1, 1.25, 1.5625],
@@ -190,6 +187,8 @@ export const ECONOMY: EconomyCatalog = {
     retaliator: 4,
     swarm: 1,
   },
+  // Engine levels 2 and 3 raise Ada's 160 to 190, then 220 (gameplay/economy.md).
+  engineMaxSpeed: [190, 220],
   paintOrder: ["classic", "cobalt", "seafoam", "graphite", "iris"],
   paints: {
     classic: { label: "paintClassic", price: 0 },

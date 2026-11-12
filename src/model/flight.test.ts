@@ -560,11 +560,11 @@ describe("analog movement speed", () => {
   }
 
   it.each([
-    [1e-9, 8],
-    [0.25, 14],
-    [0.5, 42],
-    [0.75, 102],
-    [1, 200],
+    [1e-9, 6],
+    [0.25, 11],
+    [0.5, 34],
+    [0.75, 82],
+    [1, 160],
   ])("targets about Gameplay's speed at %s deflection", (deflection, expected) => {
     const fraction = movementSpeedFraction(PROTOTYPE.tuning, deflection);
     expect(fraction * maxSpeed).toBeCloseTo(expected, -0.5);
@@ -632,7 +632,7 @@ describe("analog movement speed", () => {
 describe("ship speed fraction", () => {
   it.each([
     [{ x: 0, y: 0 }, 0],
-    [{ x: 60, y: 80 }, 0.5],
+    [{ x: 48, y: 64 }, 0.5],
     [{ x: -200, y: 0 }, 1],
     [{ x: 300, y: 400 }, 1],
   ])("reports %j as %s of maxSpeed", (velocity, expected) => {

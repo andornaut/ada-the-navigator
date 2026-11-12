@@ -714,9 +714,9 @@ describe("tractor beam and pickup reach", () => {
 
 describe("upgrade effects", () => {
   it.each([
-    [1, 100, 1, 1, 1, 1],
-    [2, 150, 1 / 1.2, 1.25, 1.05, 0.9],
-    [3, 225, 1 / 1.44, 1.5625, 1.1, 0.8],
+    [1, 100, 1, 1, 160, 1],
+    [2, 150, 1 / 1.2, 1.25, 190, 0.9],
+    [3, 225, 1 / 1.44, 1.5625, 220, 0.8],
   ])(
     "applies shield, recharge and engine level %i",
     (level, shield, delay, rate, speed, seconds) => {
@@ -728,7 +728,7 @@ describe("upgrade effects", () => {
       expect(tuning.shieldRechargeRate).toBeCloseTo(base.shieldRechargeRate * rate, 9);
       // Recharge output (rate over delay) grows about 1.5 times per level.
       expect(rate / delay).toBeCloseTo(1.5 ** (level - 1), 9);
-      expect(tuning.physics.maxSpeed).toBeCloseTo(base.physics.maxSpeed * speed, 9);
+      expect(tuning.physics.maxSpeed).toBe(speed);
       expect(tuning.physics.accelerationSeconds).toBeCloseTo(
         base.physics.accelerationSeconds * seconds,
         9,
@@ -737,6 +737,17 @@ describe("upgrade effects", () => {
       expect(tuning.physics.turnSeconds).toBe(base.physics.turnSeconds);
     },
   );
+
+  it.each([1, 2, 3])("fires Ada's Basic at 600 at engine level %i", (level) => {
+    const value = flight();
+    value.levels.engine = level;
+    stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
+    const { velocity } = value.shots[0]!;
+    expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(
+      600 * WEAPON_CATALOG.basic[0].speedRatio,
+      6,
+    );
+  });
 
   it("fires the equipped weapon at its own level", () => {
     const value = flight();
