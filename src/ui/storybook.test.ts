@@ -19,6 +19,7 @@ import {
   STORY_PORTRAITS,
   STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
+  storyControlsLayout,
   storyPortrait,
   storyPortraitFrame,
   storyTabColour,
@@ -108,6 +109,21 @@ describe("storybook page", () => {
     expect(controls).not.toContain("overflow");
   });
 
+  it("sets a named action beside Previous whenever both fit at their own widths", () => {
+    // Previous's own width (art/layout.md "Page controls"), in the 228 floor and 262.23 column.
+    const previous = 99.59;
+    // Next (66.68) and Continue (101.32) fit their 102 half.
+    expect(storyControlsLayout(228, previous, 66.68)).toBe("halves");
+    expect(storyControlsLayout(228, previous, 101.32)).toBe("halves");
+    // A synthetic action past its 102 half that fits Art's sum: 99.59 + 24 + 104 = 227.59.
+    expect(storyControlsLayout(228, previous, 104)).toBe("beside");
+    // Past the column at its own width: Art's named actions go below Previous at every column.
+    expect(storyControlsLayout(228, previous, 106)).toBe("below");
+    for (const action of [151.98, 160.04, 216.26]) {
+      expect(storyControlsLayout(262.23, previous, action)).toBe("below");
+    }
+  });
+
   it("keeps small story buttons SMALL_BUTTON_GAP apart in every direction", () => {
     expect(SMALL_BUTTON_GAP).toBe(24);
     for (const selector of [
@@ -120,7 +136,11 @@ describe("storybook page", () => {
     expect(rule(".ada-controls .ada-story-controls")).toContain(
       "grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)",
     );
-    // A named action too wide for its half fills the row below Previous, at the bottom right.
+    // A named action too wide for its half sits beside Previous at an uneven split while both fit,
+    // else fills the row below Previous, at the bottom right.
+    expect(rule(".ada-controls .ada-story-controls.ada-story-beside")).toContain(
+      "grid-template-columns:max-content minmax(0, 1fr)",
+    );
     expect(rule(".ada-controls .ada-story-controls.ada-story-wide")).toContain(
       'grid-template-areas:"previous ." "next next"',
     );

@@ -409,9 +409,11 @@ ${STORY_PORTRAIT_RULES}
   width:100%
 }
 
-/* Previous at the left and Next at the right, each half the column less the gap; a named action
-   too wide for its half fills the column on its own row SMALL_BUTTON_GAP below Previous, which
-   keeps its left half (art/layout.md "Named action"). */
+/* Previous at the left and Next at the right, each half the column less the gap. A named action
+   too wide for its half sits beside Previous, Previous at its own width and the action taking the
+   rest, when the two fit side by side at their own widths; otherwise it fills the column on its
+   own row SMALL_BUTTON_GAP below Previous, which keeps its left half (art/layout.md "Named
+   action"). */
 .ada-controls .ada-story-controls{
   flex:none;
   margin-top:auto;
@@ -419,6 +421,9 @@ ${STORY_PORTRAIT_RULES}
   grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:"previous next";
   gap:${units(SMALL_BUTTON_GAP)}
+}
+.ada-controls .ada-story-controls.ada-story-beside{
+  grid-template-columns:max-content minmax(0, 1fr)
 }
 .ada-controls .ada-story-controls.ada-story-wide{
   grid-template-areas:"previous ." "next next";
@@ -445,6 +450,25 @@ ${STORY_PORTRAIT_RULES}
   right:${fromHudEdge("right", STORY_SKIP.right.corner)}
 }
 `;
+
+/** How a page's Previous and primary share the choice column's bottom. */
+export type StoryControlsLayout = "below" | "beside" | "halves";
+
+/**
+ * The page controls' layout in a choice column `column` wide, from Previous's and the primary's
+ * own widths, in logical px (art/layout.md "Named action"): halves while the primary fits its half,
+ * beside Previous while both fit the column with SMALL_BUTTON_GAP between, else below Previous.
+ */
+export function storyControlsLayout(
+  column: number,
+  previous: number,
+  primary: number,
+): StoryControlsLayout {
+  if (primary <= (column - SMALL_BUTTON_GAP) / 2 + 0.5) {
+    return "halves";
+  }
+  return previous + SMALL_BUTTON_GAP + primary <= column + 0.5 ? "beside" : "below";
+}
 
 /**
  * A storybook page: the full location background with its bottom spread of text and choices,
@@ -618,18 +642,26 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.disabled = !page.canGoBack;
     next.hidden = !page.next;
     next.textContent = page.action ?? labels.next;
-    // A named action wider than its half takes the column's full row below Previous: its face at
-    // its label's width, measured against Previous's half. The press area's pseudo-element
-    // overflows the face, so the face's own box is measured, not its scroll width.
-    controls.classList.remove("ada-story-wide");
+    // A named action too wide for its half sits beside Previous when both fit at their own widths,
+    // else on the column's full row below it. Each face is measured at its label's width; the
+    // press area's pseudo-element overflows the face, so the face's own box is measured.
+    controls.classList.remove("ada-story-beside", "ada-story-wide");
     controls.replaceChildren(previous, next);
-    next.style.width = "max-content";
-    const wide =
-      page.next &&
-      page.action !== undefined &&
-      next.getBoundingClientRect().width > previous.getBoundingClientRect().width + 0.5;
-    next.style.width = "";
-    controls.classList.toggle("ada-story-wide", wide);
+    let layout: StoryControlsLayout = "halves";
+    if (page.next && page.action !== undefined) {
+      const unit = readViewUnit(controls);
+      previous.style.width = "max-content";
+      next.style.width = "max-content";
+      layout = storyControlsLayout(
+        controls.getBoundingClientRect().width / unit,
+        previous.getBoundingClientRect().width / unit,
+        next.getBoundingClientRect().width / unit,
+      );
+      previous.style.width = "";
+      next.style.width = "";
+    }
+    controls.classList.toggle("ada-story-beside", layout === "beside");
+    controls.classList.toggle("ada-story-wide", layout === "below");
     // Previous first in either layout, so focus order follows the rows.
     // A page past Gameplay's limits scrolls its choices, the page controls fixed below: one whose
     // page controls fall below the choice column at the panel's top cap.
