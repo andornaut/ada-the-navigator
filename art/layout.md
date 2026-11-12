@@ -76,23 +76,23 @@ becomes logical px, so UI now grows with the canvas:
 
 ## Spacing tokens
 
-| Token            | Value | Rule                                                                                                   | Constant                                                                           |
-| ---------------- | ----- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| Row gap          | 4     | Between rows of one list that are not buttons: item rows, text rows                                    | `SPACING.rowGap`, `tokens.ts`, to implement; now `CARD.rowGap`                     |
-| Group gap        | 8     | Between card groups and row parts                                                                      | `SPACING.gap`, `tokens.ts`, to implement; now `CARD.gap`                           |
-| Column gap       | 8     | Between columns that are not buttons                                                                   | `SPACING.columnGap`, `tokens.ts`, to implement                                     |
-| Mark gap         | 6     | From an inline icon to its label inside one control or pill                                            | `SPACING.markGap`, `tokens.ts`, to implement                                       |
-| Button gap       | 16    | Between standard button faces side by side: action rows and grid columns                               | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`), to implement                    |
-| Small button gap | 24    | Between faces when either is a small button (face under 48 high), in any direction                     | `SMALL_BUTTON_GAP`, `tokens.ts` (game-kit `SMALL_BUTTON_GAP`), to implement        |
-| Stack button gap | 8     | Between standard button faces stacked vertically: action stacks, control rows, grid rows, line buttons | `STACK_BUTTON_GAP`, `tokens.ts` (game-kit 0.27.0 `STACK_BUTTON_GAP`), to implement |
-| HUD edge         | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                                          |
-| Control edge     | 8     | The HUD safe-rect margin                                                                               | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                               |
-| Page inset       | 16    | Modals and page content from the view edge                                                             | `SPACING.pageInset`, `tokens.ts`, to implement; now `.ada-modal` padding           |
-| Panel padding    | 16    | Inside cards and the story panel, including the 2 px frame                                             | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding`      |
-| Body line box    | 20    | 16 px text (body, labels, supporting)                                                                  | `TYPE.body.lineHeight`, `tokens.ts`, to implement                                  |
-| Heading line box | 28    | 24 px bold titles                                                                                      | `TYPE.heading.lineHeight`, `tokens.ts`, to implement                               |
-| Count line box   | 14    | 12 px bold HUD weapon counts                                                                           | `TYPE.count.lineHeight`, `tokens.ts`, to implement                                 |
-| Story line box   | 26    | 18 px storybook text column                                                                            | `TYPE.story.lineHeight`, `tokens.ts`, to implement                                 |
+| Token            | Value | Rule                                                                                                   | Constant                                                                      |
+| ---------------- | ----- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Row gap          | 4     | Between rows of one list that are not buttons: item rows, text rows                                    | `SPACING.rowGap`, `tokens.ts`, to implement; now `CARD.rowGap`                |
+| Group gap        | 8     | Between card groups and row parts                                                                      | `SPACING.gap`, `tokens.ts`, to implement; now `CARD.gap`                      |
+| Column gap       | 8     | Between columns that are not buttons                                                                   | `SPACING.columnGap`, `tokens.ts`, to implement                                |
+| Mark gap         | 6     | From an inline icon to its label inside one control or pill                                            | `SPACING.markGap`, `tokens.ts`, to implement                                  |
+| Button gap       | 16    | Between standard button faces side by side: action rows and grid columns                               | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`)                             |
+| Small button gap | 24    | Between faces when either is a small button (face under 48 high), in any direction                     | `SMALL_BUTTON_GAP`, `tokens.ts` (game-kit `SMALL_BUTTON_GAP`)                 |
+| Stack button gap | 8     | Between standard button faces stacked vertically: action stacks, control rows, grid rows, line buttons | `STACK_BUTTON_GAP`, `tokens.ts` (game-kit `STACK_BUTTON_GAP`)                 |
+| HUD edge         | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                                     |
+| Control edge     | 8     | The HUD safe-rect margin                                                                               | `CONTROL_EDGE`, `playView.ts` (Chibi `CONTROL_EDGE`)                          |
+| Page inset       | 16    | Modals and page content from the view edge                                                             | `SPACING.pageInset`, `tokens.ts`, to implement; now `.ada-modal` padding      |
+| Panel padding    | 16    | Inside cards and the story panel, including the 2 px frame                                             | `SPACING.panelPadding` = game-kit `MODAL_CONTENT.padding`; now `CARD.padding` |
+| Body line box    | 20    | 16 px text (body, labels, supporting)                                                                  | `TYPE.body.lineHeight`, `tokens.ts`, to implement                             |
+| Heading line box | 28    | 24 px bold titles                                                                                      | `TYPE.heading.lineHeight`, `tokens.ts`, to implement                          |
+| Count line box   | 14    | 12 px bold HUD weapon counts                                                                           | `TYPE.count.lineHeight`, `tokens.ts`, to implement                            |
+| Story line box   | 26    | 18 px storybook text column                                                                            | `TYPE.story.lineHeight`, `tokens.ts`, to implement                            |
 
 Type roles: `TYPE.heading` 24 bold on 28; `TYPE.body` 16 regular on 20;
 `TYPE.label` 16 bold on 20; `TYPE.story` 18 regular on 26, for the storybook
@@ -462,9 +462,6 @@ every aspect.
 
 Rects in logical px. Insets are left and right 43, bottom 19, top 0; at 844x390
 the logical view is 779.08x360 and `x0` is 29.
-Restart, Continue and Achievements use the button gaps, to implement: the
-code still sets Restart and Continue `SPACING.gap` apart (164 and 364 at 720) and the nav discs at a 56 pitch (Achievements 611.5 at 720, 580.5 with
-insets). The HUD rect, Settings and every other rect match the code.
 
 | Part           | 720x360                     | 720x360, insets             | 844x390                       | 844x390, insets               |
 | -------------- | --------------------------- | --------------------------- | ----------------------------- | ----------------------------- |
