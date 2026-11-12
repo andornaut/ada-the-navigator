@@ -189,7 +189,7 @@ import type {
   UseAction,
   Vec,
 } from "./types.ts";
-import { applyUpgrade, chooseUpgrade } from "./upgradeDrops.ts";
+import { applyUpgrade, chooseAmmoPack, chooseUpgrade } from "./upgradeDrops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
 import {
   collectWeapon,
@@ -719,6 +719,22 @@ export class GameModel {
       this.pushLoadout();
     }
     this.syncAchievements();
+  }
+  /**
+   * Gives an ammo pack pickup's pack, for an owned weapon other than Laser chosen by the ammo pack
+   * weights as Ada collects it and seeded by the pickup; the item notice names it.
+   */
+  private collectAmmoPack(id: string, flight: FlightState): void {
+    this.pullLoadout();
+    const weapon = chooseAmmoPack(
+      ECONOMY,
+      this.state.economy.ownedWeapons,
+      dropRandom(flight.seed, `ammo:${id}`),
+    );
+    if (weapon) {
+      applyUpgrade(ECONOMY, { kind: "ammo", weapon }, this.state.economy);
+      this.pushLoadout();
+    }
   }
   /** Purchases change the economy, which then refreshes the flight's loadout. */
   private pushLoadout(): void {
@@ -1333,6 +1349,9 @@ export class GameModel {
       }
       if (event.type === "upgradeCollected") {
         this.collectUpgrade(event.id, f);
+      }
+      if (event.type === "ammoCollected") {
+        this.collectAmmoPack(event.id, f);
       }
       // Touching the guarded holodisk recovers it, like a pickup; it never becomes a travel
       // destination.

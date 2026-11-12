@@ -43,6 +43,7 @@ import { ASTEROID_SHAPES, orbitMotion, placementRadius } from "../src/model/aste
 import { planChunk } from "../src/model/chunkTemplates.ts";
 import {
   dropRandom,
+  rollAmmoDrop,
   rollAsteroidStardust,
   rollEnemyDrop,
   rollSalvageDrop,
@@ -71,7 +72,12 @@ import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { clearOfOreFields } from "../src/model/oreFields.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
-import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "../src/model/upgradeDrops.ts";
+import {
+  applyUpgrade,
+  chooseAmmoPack,
+  chooseUpgrade,
+  type UpgradeGift,
+} from "../src/model/upgradeDrops.ts";
 import { newEconomy } from "../src/model/upgrades.ts";
 import { addPacks, noAmmo } from "../src/model/weapons.ts";
 
@@ -324,6 +330,8 @@ export interface RunResult {
   packsBought: number;
   /** Packs gained from dropped weapons Ada already owned. */
   duplicatePacks: number;
+  /** Ammo pack pickups collected from destroyed small craft. */
+  ammoDrops: number;
   /** Times the equipped weapon ran out of ammunition. */
   emptied: number;
   /** Station jobs completed, by type. */
@@ -637,6 +645,7 @@ export function simulate(input: SimulationInput): RunResult {
     cachesCollected: 0,
     destroyed: {},
     duplicatePacks: 0,
+    ammoDrops: 0,
     emptied: 0,
     enemyStardust: {},
     firstWeaponSeconds: null,
@@ -821,6 +830,18 @@ export function simulate(input: SimulationInput): RunResult {
         result.duplicatePacks++;
       } else {
         applyUpgrade(catalog, gift, gear);
+      }
+    }
+    const ammoRoll = dropRandom(flightSeed, `ammo:${wreckId(id)}`);
+    if (
+      !salvaged &&
+      rollAmmoDrop(catalog, owned, archetype, ammoRoll) &&
+      rng() < behaviour.dropCollection
+    ) {
+      const pack = chooseAmmoPack(catalog, owned, dropRandom(flightSeed, `ammo:${id}`));
+      if (pack) {
+        addPacks(catalog, pack, 1, ammo);
+        result.ammoDrops++;
       }
     }
   };
@@ -1304,6 +1325,7 @@ export interface Summary {
   packsPerHour: number;
   emptiedPerHour: number;
   duplicatePacksPerHour: number;
+  ammoDropsPerHour: number;
   /** Upgrade pickups collected per hour, by the kind of gift. */
   upgradesPerHour: Partial<Record<UpgradeGift["kind"], number>>;
   /** Heavies salvaged per minute, by archetype. */
@@ -1370,6 +1392,7 @@ export function summarise(
     cachesPerMinute: perMinute(runs.reduce((sum, run) => sum + run.cachesCollected, 0)),
     destroyedPerMinute: byArchetype((run) => run.destroyed),
     duplicatePacksPerHour: perHour((run) => run.duplicatePacks),
+    ammoDropsPerHour: perHour((run) => run.ammoDrops),
     emptiedPerHour: perHour((run) => run.emptied),
     enemyStardustPerMinute: byArchetype((run) => run.enemyStardust),
     firstStationMinutes: distribution(times((run) => run.stationSeconds[0] ?? null)),
@@ -1692,7 +1715,8 @@ export function formatSummary(summary: Summary): string {
     `Ammunition: ${round(summary.ammoSpentPerMinute, 2)} Stardust/min, ` +
       `${round(summary.ammoShareOfIncome * 100, 1)}% of income; packs bought/hour ` +
       `${round(summary.packsPerHour, 1)}, weapons emptied/hour ${round(summary.emptiedPerHour, 1)}, ` +
-      `duplicate packs/hour ${round(summary.duplicatePacksPerHour, 2)}`,
+      `duplicate packs/hour ${round(summary.duplicatePacksPerHour, 2)}, ` +
+      `ammo pack drops/hour ${round(summary.ammoDropsPerHour, 2)}`,
     `Jobs completed/hour: ${Object.entries(summary.jobsPerHour)
       .map(([type, value]) => `${type} ${round(value ?? 0, 2)}`)
       .join(", ")}`,

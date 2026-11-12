@@ -285,7 +285,7 @@ describe("pacing simulation runs", () => {
       }).summary;
     expect(SCENARIOS.armed!.startWeapons).toEqual(["heavyMissile", "scattershot", "phaser"]);
     const base = armed(ECONOMY.ammo.packPrice);
-    expect(base.packPrice).toBe(9);
+    expect(base.packPrice).toBe(10);
     expect(base.packsPerHour).toBeGreaterThan(0);
     expect(base.ammoSpentPerMinute).toBeCloseTo(
       (base.packsPerHour / 60) * ECONOMY.ammo.packPrice,

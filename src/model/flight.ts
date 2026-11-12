@@ -82,6 +82,7 @@ import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
 import {
   carriesStardust,
   dropRandom,
+  rollAmmoDrop,
   rollAsteroidStardust,
   rollEnemyDrop,
   rollSalvageDrop,
@@ -3104,6 +3105,23 @@ function stepWrecks(
         y: object.y,
       });
     }
+    // The ammo roll has its own stream, so it never moves the Stardust's spread.
+    const owned = (flight.ownedWeapons ?? []).filter(
+      (weapon) => !flight.grantedWeapons?.includes(weapon),
+    );
+    const ammo = dropRandom(flight.seed, `ammo:${object.id}`);
+    if (rollAmmoDrop(ECONOMY, owned, object.wreck.archetype, ammo)) {
+      flight.objects.push({
+        ammoPack: true,
+        hp: 1,
+        id: `drop:${flight.nextId++}`,
+        kind: "pickup",
+        radius: content.tuning.flight.pickupRadius,
+        role: "drop",
+        x: object.x,
+        y: object.y,
+      });
+    }
   }
 }
 
@@ -3208,6 +3226,9 @@ export function stepFlight(
       } else if (object.upgrade) {
         // The game chooses the gift from what Ada can use as she collects it.
         events.push({ id: object.id, type: "upgradeCollected" });
+        object.hp = 0;
+      } else if (object.ammoPack) {
+        events.push({ id: object.id, type: "ammoCollected" });
         object.hp = 0;
       }
     }

@@ -115,7 +115,7 @@ describe("pure player projectile volleys", () => {
           const dx = shot.velocity.x * shot.life;
           const dy = shot.velocity.y * shot.life;
           expect(Math.hypot(dx, dy)).toBeCloseTo(360);
-          expect(shot.damage).toBeCloseTo(context.baseDamage * 0.35);
+          expect(shot.damage).toBeCloseTo(context.baseDamage * 0.46);
           expect(shot.projectile).toBe("dot");
           expect(shot.fade?.projectedRange).toBe(360);
         }

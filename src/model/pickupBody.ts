@@ -63,7 +63,8 @@ export function pickupOutline(object: SpaceObject): Parts | null {
   if (object.role === "cargo") {
     return ORE ?? null;
   }
-  if (object.upgrade) {
+  // The upgrade and ammo pack pickups share one square.
+  if (object.upgrade || object.ammoPack) {
     const half = object.radius + 0.75;
     let square = SQUARES.get(half);
     if (!square) {

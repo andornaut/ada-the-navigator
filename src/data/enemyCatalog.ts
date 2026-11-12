@@ -1,6 +1,6 @@
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./shipPhysics.ts";
-import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, WeaponLevel } from "./types.ts";
+import type { EnemyOnlyWeapon, EnemyWeapon, GalaxyNumber, Weapon, WeaponLevel } from "./types.ts";
 import { weaponAt } from "./weaponCatalog.ts";
 
 export interface Point {
@@ -662,14 +662,25 @@ export const ENEMY_ONLY_DAMAGE: Readonly<Record<EnemyOnlyWeapon, number>> = {
 };
 
 /**
+ * Enemy Phaser and Scattershot damage per hit at levels 1, 2 and 3, lower than Ada's so one
+ * enemy hit never empties a base shield (gameplay/ships.md "Enemy weapons"): Phaser 4, and a
+ * Scattershot dot 0.35 at level 1, levels 2 and 3 sharing 1.5 and 2.25 times that volley.
+ */
+export const ENEMY_DAMAGE: Readonly<Partial<Record<Weapon, readonly [number, number, number]>>> = {
+  phaser: [4, 6, 9],
+  scattershot: [0.35, (0.35 * 1.5 * 7) / 9, (0.35 * 2.25 * 7) / 11],
+};
+
+/**
  * A profile's damage per hit as a multiple of base shot damage: a shared weapon's at its level,
- * the same whoever fires it, or an enemy-only weapon's own.
+ * the same whoever fires it unless ENEMY_DAMAGE lowers it, or an enemy-only weapon's own.
  */
 export function fireDamageRatio(profile: Pick<FireProfile, "level" | "weapon">): number {
   const weapon = profile.weapon;
-  return enemyOnly(weapon)
-    ? ENEMY_ONLY_DAMAGE[weapon]
-    : weaponAt(weapon, profile.level).damageRatio;
+  if (enemyOnly(weapon)) {
+    return ENEMY_ONLY_DAMAGE[weapon];
+  }
+  return ENEMY_DAMAGE[weapon]?.[profile.level - 1] ?? weaponAt(weapon, profile.level).damageRatio;
 }
 
 /** Natural enemy aim for every aimed enemy weapon (gameplay/ships.md "Enemy aim"). */

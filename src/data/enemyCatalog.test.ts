@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ENEMY_DAMAGE,
   ENEMY_FIRE,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
+  fireDamageRatio,
   type FireProfile,
   type WeaponMounts,
 } from "./enemyCatalog.ts";
@@ -76,6 +78,25 @@ describe("heavy weapon mounts", () => {
       }
     },
   );
+});
+
+describe("enemy weapon damage", () => {
+  it("keeps enemy Phaser and Scattershot below Ada's, the other shared weapons as hers", () => {
+    expect(fireDamageRatio({ level: 1, weapon: "phaser" })).toBe(4);
+    expect(weaponAt("phaser", 1).damageRatio).toBe(9);
+    expect(fireDamageRatio({ level: 1, weapon: "scattershot" })).toBe(0.35);
+    expect(weaponAt("scattershot", 1).damageRatio).toBe(0.46);
+    // Levels 2 and 3 share 1.5 and 2.25 times the level 1 volley across their dots.
+    const volley = (level: 1 | 2 | 3) =>
+      fireDamageRatio({ level, weapon: "scattershot" }) *
+      weaponAt("scattershot", level).anglesDegrees.length;
+    expect(volley(2) / volley(1)).toBeCloseTo(1.5, 9);
+    expect(volley(3) / volley(1)).toBeCloseTo(2.25, 9);
+    expect(Object.keys(ENEMY_DAMAGE).sort()).toEqual(["phaser", "scattershot"]);
+    for (const weapon of ["laser", "multiLaser", "rapidMissile", "heavyMissile"] as const) {
+      expect(fireDamageRatio({ level: 2, weapon })).toBe(weaponAt(weapon, 2).damageRatio);
+    }
+  });
 });
 
 describe("enemy fire profiles", () => {

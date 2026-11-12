@@ -277,7 +277,8 @@ function spaceObject(
     (value.cooldown === undefined || nonnegative(value.cooldown)) &&
     (value.behavior === undefined ||
       ["pursue", "shoot", "guard"].includes(String(value.behavior))) &&
-    (value.upgrade === undefined || (value.upgrade === true && value.kind === "pickup"))
+    (value.upgrade === undefined || (value.upgrade === true && value.kind === "pickup")) &&
+    (value.ammoPack === undefined || (value.ammoPack === true && value.kind === "pickup"))
   );
 }
 function persistentWorld(

@@ -30,15 +30,22 @@ function launched(weapon: Weapon) {
   return { flight, model };
 }
 
-function retaliator(id: string, x: number, y: number): SpaceObject {
+function retaliator(
+  id: string,
+  x: number,
+  y: number,
+  hp: number = enemyCatalog.retaliator.hp,
+): SpaceObject {
   const definition = enemyCatalog.retaliator;
+  const enemy = createEnemy(
+    definition,
+    { archetype: "retaliator", id, packId: null, phase: 0 },
+    { x, y },
+  );
+  enemy.hp = hp;
   return {
-    enemy: createEnemy(
-      definition,
-      { archetype: "retaliator", id, packId: null, phase: 0 },
-      { x, y },
-    ),
-    hp: definition.hp,
+    enemy,
+    hp,
     id,
     kind: "enemy",
     radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
@@ -92,21 +99,25 @@ const nose = noseOffset({ x: 1, y: 0 });
 const ahead = (distance: number) => nose.x + distance;
 
 describe("Phaser hitscan beam", () => {
-  it("strikes only the nearest enemy along its line, for 4x Laser damage", () => {
-    const flight = beam([retaliator("far", 200, nose.y), retaliator("near", 100, nose.y)]);
-    expect(hp(flight, "near")).toBe(8 - 4);
-    expect(hp(flight, "far")).toBe(8);
+  // A retaliator sturdy enough to survive a level 3 beam, so each hit shows in its hit points.
+  const STURDY = 30;
+  const sturdy = (id: string, x: number, y: number) => retaliator(id, x, y, STURDY);
+
+  it("strikes only the nearest enemy along its line, for 9x Laser damage", () => {
+    const flight = beam([sturdy("far", 200, nose.y), sturdy("near", 100, nose.y)]);
+    expect(hp(flight, "near")).toBe(STURDY - 9);
+    expect(hp(flight, "far")).toBe(STURDY);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(flight.fireCooldown).toBeCloseTo(0.28 * 4, 9);
   });
 
   it("stops at a rock in front, sparing the enemy behind it", () => {
     const flight = beam([
-      retaliator("behind", 150, nose.y),
+      sturdy("behind", 150, nose.y),
       { hp: 10, id: "rock", kind: "rock", radius: 20, x: 80, y: nose.y },
     ]);
-    expect(hp(flight, "behind")).toBe(8);
-    expect(hp(flight, "rock")).toBe(10 - 4);
+    expect(hp(flight, "behind")).toBe(STURDY);
+    expect(hp(flight, "rock")).toBe(10 - 9);
     expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - reach(20), 9);
   });
 
@@ -118,29 +129,26 @@ describe("Phaser hitscan beam", () => {
         .map((at) => at.y),
     );
     const edge = nose.y - top + BEAM.halfWidth;
-    const grazed = beam([retaliator("enemy", 150, edge - 0.5)]);
-    expect(hp(grazed, "enemy")).toBe(4);
-    const missed = beam([retaliator("enemy", 150, edge + 0.5)]);
-    expect(hp(missed, "enemy")).toBe(8);
+    const grazed = beam([sturdy("enemy", 150, edge - 0.5)]);
+    expect(hp(grazed, "enemy")).toBe(STURDY - 9);
+    const missed = beam([sturdy("enemy", 150, edge + 0.5)]);
+    expect(hp(missed, "enemy")).toBe(STURDY);
   });
 
   it.each([
-    [1, 320, 4],
-    [2, 384, 6],
-    [3, 460.8, 9],
+    [1, 320, 9],
+    [2, 384, 13.5],
+    [3, 460.8, 20.25],
   ])("reaches %i: range %f from the nose, damage %f", (level, range, damage) => {
     // The farthest hull the beam's end still reaches within its half-width.
     const end = { x: ahead(range), y: nose.y };
     const farthest = edgeOf((t) => beamTouches({ x: end.x + t, y: nose.y }, end));
     const edge = end.x + farthest - 0.5;
-    const struck = beam([retaliator("enemy", edge, nose.y)], level);
-    // A retaliator has 8 hit points, so level 3 destroys it in one shot.
-    if (damage < 8) {
-      expect(hp(struck, "enemy")).toBe(8 - damage);
-    } else {
-      expect(alive(struck, "enemy")).toBe(false);
-    }
-    expect(hp(beam([retaliator("enemy", edge + 1, nose.y)], level), "enemy")).toBe(8);
+    const struck = beam([sturdy("enemy", edge, nose.y)], level);
+    expect(hp(struck, "enemy")).toBe(STURDY - damage);
+    expect(hp(beam([sturdy("enemy", edge + 1, nose.y)], level), "enemy")).toBe(STURDY);
+    // One shot at any level destroys a retaliator's own 8 hit points.
+    expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(false);
   });
 
   it("flashes from the nose to the hit point, or to full range on a miss, spark included", () => {
@@ -170,7 +178,7 @@ describe("Phaser hitscan beam", () => {
   it("strikes an obstacle at the nose at once", () => {
     // A rock over Ada's drawn nose: she is pushed off it and the beam meets it where it leaves.
     const flight = beam([{ hp: 10, id: "rock", kind: "rock", radius: 2, x: 12, y: nose.y }]);
-    expect(hp(flight, "rock")).toBe(10 - 4);
+    expect(hp(flight, "rock")).toBe(10 - 9);
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
@@ -181,12 +189,12 @@ describe("Phaser hitscan beam", () => {
     const { flight, model } = launched("phaser");
     flight.ownedWeapons = ["phaser"];
     flight.facing = { x: 1, y: 0 };
-    flight.objects = [retaliator("enemy", 100, 0)];
+    flight.objects = [sturdy("enemy", 100, 0)];
     // Hold fire for one interval: exactly one shot.
     for (let slice = 0; slice < 60; slice++) {
       stepFlight(CONTENT, 1 / 60, right, flight);
     }
-    expect(hp(flight, "enemy")).toBe(8 - 4);
+    expect(hp(flight, "enemy")).toBe(STURDY - 9);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(model.save()).not.toContain("flash");
   });
@@ -313,7 +321,7 @@ describe("integrated weapon projectiles", () => {
     flight.fireCooldown = 100;
     flight.objects = [{ hp: 3, id: "target", kind: "rock", radius: 4, x: 30, y: 0 }];
     stepFlight(CONTENT, 0.1, idle, flight);
-    expect(flight.objects[0]!.hp).toBeCloseTo(2.65);
+    expect(flight.objects[0]!.hp).toBeCloseTo(3 - 0.46);
     expect(flight.shots).toHaveLength(0);
   });
 

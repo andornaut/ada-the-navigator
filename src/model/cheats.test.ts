@@ -104,12 +104,12 @@ describe("grant all weapons", () => {
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!.id;
     model.state.economy.stardust = 225;
-    expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
+    expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "bought",
       price: 225,
     });
-    expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "rapidMissile"]);
-    expect(flight.grantedWeapons).toEqual(["multiLaser", "heavyMissile", "phaser"]);
+    expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "multiLaser"]);
+    expect(flight.grantedWeapons).toEqual(["rapidMissile", "heavyMissile", "phaser"]);
     // The HUD discs run Laser, Multi-Laser, Rapid, Heavy, Scattershot, Phaser.
     expect(model.weapons().map((choice) => choice.id)).toEqual([
       "laser",

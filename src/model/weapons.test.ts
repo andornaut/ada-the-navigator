@@ -72,7 +72,7 @@ describe("owned upgrade weapons", () => {
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
       { ammo: 600, id: "multiLaser", level: 1, selected: true },
-      { ammo: 600, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 495, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -280,9 +280,9 @@ describe("ammunition", () => {
     expect(flight.weapon).toBe("laser");
     model.state.docked = "station";
     model.state.economy.stardust = 10;
-    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 9 });
-    expect(flight.ammo.phaser).toBe(55);
-    expect(model.state.economy.stardust).toBe(1);
+    expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 10 });
+    expect(flight.ammo.phaser).toBe(18);
+    expect(model.state.economy.stardust).toBe(0);
     model.state.docked = null;
     expect(model.selectWeapon("phaser")).toBe(true);
   });
@@ -315,11 +315,11 @@ describe("ammunition", () => {
     expect(grantAllWeapons(model.state)).toBe(true);
     const flight = model.state.flight!;
     expect(flight.ammo).toEqual({
-      heavyMissile: 150,
+      heavyMissile: 99,
       multiLaser: 600,
-      phaser: 165,
-      rapidMissile: 600,
-      scattershot: 390,
+      phaser: 54,
+      rapidMissile: 495,
+      scattershot: 201,
     });
     model.step(0.01, idle);
     expect(model.state.economy.ammo).toEqual(noAmmo());

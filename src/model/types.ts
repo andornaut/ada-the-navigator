@@ -75,6 +75,8 @@ export interface SpaceObject extends Vec {
   behavior?: "pursue" | "shoot" | "guard";
   /** An upgrade pickup; its gift is chosen when Ada collects it. */
   upgrade?: true;
+  /** An ammo pack pickup; its weapon is chosen when Ada collects it. */
+  ammoPack?: true;
   cooldown?: number;
   /** Stardust carried by a Stardust pickup. */
   amount?: number;
@@ -352,6 +354,7 @@ export type FlightEvent =
   | { type: "enemyDestroyed" }
   /** Ada collected an upgrade pickup. */
   | { id: string; type: "upgradeCollected" }
+  | { id: string; type: "ammoCollected" }
   /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
   | { id: string; type: "enemyDisabled" }
   | { type: "debrisCleared"; id: string }

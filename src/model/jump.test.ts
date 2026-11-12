@@ -62,7 +62,7 @@ describe("weapon switching", () => {
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
       { ammo: 600, id: "multiLaser", level: 1, selected: false },
-      { ammo: 600, id: "rapidMissile", level: 1, selected: false },
+      { ammo: 495, id: "rapidMissile", level: 1, selected: false },
     ]);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");
@@ -428,21 +428,21 @@ describe("shop through the model", () => {
   it("adds a bought weapon to the flight's roster and keeps it on later flights", () => {
     const model = docked();
     model.state.economy.stardust = 400;
-    expect(model.requestPurchase({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
+    expect(model.requestPurchase({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "confirm",
       left: 175,
       price: 225,
     });
-    expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
+    expect(model.buy({ kind: "weapon", weapon: "multiLaser" })).toEqual({
       kind: "bought",
       price: 225,
     });
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "multiLaser"]);
     model.undock();
     model.returnHome();
     model.startGalaxy(1);
     playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "multiLaser"]);
     expect(model.state.economy.stardust).toBe(175);
   });
 

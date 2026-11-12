@@ -151,14 +151,14 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(600),
     },
   ],
-  // 4x Laser damage at a 4x Laser interval matches Laser's single-target output. Damage alone
-  // makes each single-target 1.5 step; range growth to 384 and 460.8 is a bonus.
+  // 9x Laser damage at a 4x Laser interval, the strongest single-target fire at level 1. Damage
+  // alone makes each single-target 1.5 step; range growth to 384 and 460.8 is a bonus.
   phaser: [
     {
       ...projectile,
       anglesDegrees: [0],
       beamRange: 320,
-      damageRatio: 4,
+      damageRatio: 9,
       intervalSeconds: 1.12,
       projectileKind: "beam",
     },
@@ -166,7 +166,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       beamRange: 384,
-      damageRatio: 6,
+      damageRatio: 13.5,
       intervalSeconds: 1.12,
       projectileKind: "beam",
     },
@@ -174,7 +174,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       ...projectile,
       anglesDegrees: [0],
       beamRange: 460.8,
-      damageRatio: 9,
+      damageRatio: 20.25,
       intervalSeconds: 1.12,
       projectileKind: "beam",
     },
@@ -214,13 +214,13 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(700),
     },
   ],
-  // Up close every dot hits, so dots grow hits 9/7 then 11/7 across -30 to 30, reach grows a
-  // little, and damage makes up the rest.
+  // A level 1 dot deals 0.46. Up close every dot hits, so dots grow hits 9/7 then 11/7 across -30
+  // to 30, and damage makes up the rest of the 1.5 and 2.25 times level 1 volley.
   scattershot: [
     {
       ...projectile,
       anglesDegrees: fan(7, 30),
-      damageRatio: 0.35,
+      damageRatio: 0.46,
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",
@@ -229,7 +229,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     {
       ...projectile,
       anglesDegrees: fan(9, 30),
-      damageRatio: (0.35 * 1.5 * 7) / 9,
+      damageRatio: (0.46 * 1.5 * 7) / 9,
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",
@@ -238,7 +238,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     {
       ...projectile,
       anglesDegrees: fan(11, 30),
-      damageRatio: (0.35 * 2.25 * 7) / 11,
+      damageRatio: (0.46 * 2.25 * 7) / 11,
       fadeStartFraction: 0.65,
       intervalSeconds: 0.45,
       projectileKind: "dot",

@@ -859,7 +859,11 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
         drawStardust(scene, object, point, radius);
         break;
       }
-      if (scene.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
+      if (
+        scene.light &&
+        (object.upgrade || object.ammoPack) &&
+        LIGHT_FIELD.keylined.includes("upgradePickup")
+      ) {
         // The square's ink keyline: a stroke 2 keyline wider on the same path.
         scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
         scene.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
@@ -878,7 +882,8 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
       if (object.role === "cargo") {
         scene.ink.fillStyle(color);
         scene.ink.fillCircle(point.x, point.y, radius / 3);
-      } else if (object.upgrade) {
+      } else if (object.upgrade || object.ammoPack) {
+        // An ammo pack draws the upgrade pickup's square and chevrons in the pickup colour.
         drawUpgradeChevrons(scene, object, point, color);
       }
       break;

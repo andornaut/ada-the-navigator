@@ -51,11 +51,16 @@ export interface EconomyCatalog {
     readonly weapons: Readonly<Record<Weapon, number>>;
   };
   /**
-   * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, about a minute
-   * of steady fire at level 1; one shot uses one. A new weapon includes `grantPacks` packs and a
-   * found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack (provisional).
+   * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, fewer seconds of
+   * level 1 fire for each later weapon; one shot uses one. A new weapon includes `grantPacks`
+   * packs and a found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack. A
+   * destroyed small craft drops an ammo pack pickup at `dropChance` once Ada owns a weapon other
+   * than Laser; its pack is for an owned weapon by `dropWeights`, as is an upgrade drop's pack once
+   * nothing else is left.
    */
   ammo: {
+    dropChance: number;
+    dropWeights: Readonly<Record<UpgradeWeapon, number>>;
     duplicatePacks: number;
     grantPacks: number;
     pack: Readonly<Record<UpgradeWeapon, number>>;
@@ -118,12 +123,15 @@ export interface EconomyCatalog {
 // Provisional tuning from gameplay/economy.md; station geometry is Tech's provisional layout.
 export const ECONOMY: EconomyCatalog = {
   ammo: {
+    dropChance: 0.05,
+    // Each weapon half as likely as the one before it in weapon order.
+    dropWeights: { heavyMissile: 4, multiLaser: 16, phaser: 1, rapidMissile: 8, scattershot: 2 },
     duplicatePacks: 1,
     grantPacks: 3,
-    pack: { heavyMissile: 50, multiLaser: 200, phaser: 55, rapidMissile: 200, scattershot: 130 },
-    // The pacing sim's armed scenario: typical use of the stronger weapons costs about a quarter
-    // of Stardust income at 9.
-    packPrice: 9,
+    // Level 1 fire per pack: Multi-Laser 60 s, Rapid Missile 50, Heavy Missile 40, Scattershot 30
+    // and Phaser 20.
+    pack: { heavyMissile: 33, multiLaser: 200, phaser: 18, rapidMissile: 165, scattershot: 67 },
+    packPrice: 10,
   },
   asteroidStardust: { huge: [3, 3], large: [2, 2], medium: [1, 1], small: [0, 1] },
   defaultPaint: "classic",
@@ -236,9 +244,9 @@ export const ECONOMY: EconomyCatalog = {
   },
   weaponPrices: {
     heavyMissile: 450,
-    multiLaser: 375,
+    multiLaser: 225,
     phaser: 600,
-    rapidMissile: 225,
+    rapidMissile: 375,
     scattershot: 525,
   },
   weaponSwitchSeconds: 1,

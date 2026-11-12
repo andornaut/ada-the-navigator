@@ -4,11 +4,11 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { playOpening } from "../testing/launch.ts";
-import { dropRandom } from "./drops.ts";
+import { dropRandom, rollAmmoDrop } from "./drops.ts";
 import { GameModel } from "./game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "./itemGains.ts";
 import type { EconomyState } from "./types.ts";
-import { applyUpgrade, chooseUpgrade, type UpgradeGift } from "./upgradeDrops.ts";
+import { applyUpgrade, chooseAmmoPack, chooseUpgrade, type UpgradeGift } from "./upgradeDrops.ts";
 import { newEconomy } from "./upgrades.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
@@ -129,16 +129,27 @@ describe("upgrade drop selection", () => {
     expect(economy.paint).toBe(ECONOMY.defaultPaint);
   });
 
-  it("falls back to one ammunition pack for a random owned weapon other than Laser", () => {
+  it("falls back to one ammunition pack for an owned weapon by the ammo pack weights", () => {
     const economy = maxed();
     economy.paints = [...ECONOMY.paintOrder];
-    const weapons = new Set<string>();
-    for (let index = 0; index < 400; index++) {
+    const counts = new Map<string, number>();
+    const draws = 31000;
+    for (let index = 0; index < draws; index++) {
       const gift = chooseUpgrade(ECONOMY, economy, dropRandom(4, `a:${index}`));
       expect(gift.kind).toBe("ammo");
-      weapons.add(gift.kind === "ammo" ? gift.weapon : "");
+      const weapon = gift.kind === "ammo" ? gift.weapon : "";
+      counts.set(weapon, (counts.get(weapon) ?? 0) + 1);
     }
-    expect([...weapons].sort()).toEqual([...UPGRADE_WEAPONS].sort());
+    // Multi-Laser 16, Rapid Missile 8, Heavy Missile 4, Scattershot 2 and Phaser 1, of 31.
+    for (const [weapon, weight] of [
+      ["multiLaser", 16],
+      ["rapidMissile", 8],
+      ["heavyMissile", 4],
+      ["scattershot", 2],
+      ["phaser", 1],
+    ] as const) {
+      expect((counts.get(weapon) ?? 0) / draws).toBeCloseTo(weight / 31, 2);
+    }
     const before = economy.ammo.phaser;
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "phaser" }, economy);
     expect(economy.ammo.phaser).toBe(before + ECONOMY.ammo.pack.phaser);
@@ -164,6 +175,56 @@ describe("upgrade drop selection", () => {
     expect(economy.paints).toContain("cobalt");
     applyUpgrade(ECONOMY, { kind: "ammo", weapon: "heavyMissile" }, economy);
     expect(economy.ammo.heavyMissile).toBe(4 * ECONOMY.ammo.pack.heavyMissile);
+  });
+});
+
+describe("ammo pack drops", () => {
+  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+
+  it("drops from a destroyed small craft at 5% once Ada owns a weapon other than Laser", () => {
+    const rolls = (owned: readonly Weapon[], archetype: "fighter" | "frigate") =>
+      Array.from({ length: 20000 }, (_, index) =>
+        rollAmmoDrop(ECONOMY, owned, archetype, dropRandom(9, `ammo:${index}`)),
+      ).filter(Boolean).length / 20000;
+    expect(ECONOMY.ammo.dropChance).toBe(0.05);
+    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.05, 2);
+    expect(rolls([], "fighter")).toBe(0);
+    expect(rolls(["laser"], "fighter")).toBe(0);
+    expect(rolls(["scattershot"], "frigate")).toBe(0);
+  });
+
+  it("holds a pack for an owned weapon other than Laser, by the weights among those owned", () => {
+    const pick = (owned: readonly Weapon[], index: number) =>
+      chooseAmmoPack(ECONOMY, owned, dropRandom(3, `p:${index}`));
+    expect(pick([], 0)).toBeNull();
+    expect(pick(["laser"], 0)).toBeNull();
+    // Rapid Missile 8 to Phaser 1 when only those two are owned.
+    const draws = 9000;
+    const rapid = Array.from({ length: draws }, (_, index) =>
+      pick(["phaser", "rapidMissile"], index),
+    ).filter((weapon) => weapon === "rapidMissile").length;
+    expect(rapid / draws).toBeCloseTo(8 / 9, 2);
+  });
+
+  it("gives its pack as Ada collects it, an item notice's ammo gain", () => {
+    const model = new GameModel(CONTENT);
+    model.startGalaxy(1);
+    playOpening(model);
+    const flight = model.state.flight!;
+    model.state.economy.ownedWeapons = ["scattershot"];
+    flight.ownedWeapons = ["scattershot"];
+    flight.ammo.scattershot = 5;
+    model.state.economy.ammo.scattershot = 5;
+    flight.objects = [
+      { ...flight.player, ammoPack: true, hp: 1, id: "drop:1", kind: "pickup", radius: 10 },
+    ];
+    const before = gainSnapshot(model.state.economy.paints, model.ship);
+    model.step(0.01, idle);
+    const gains = itemGains(false, before, gainSnapshot(model.state.economy.paints, model.ship));
+    expect(model.state.flight!.objects).toHaveLength(0);
+    expect(model.state.flight!.ammo.scattershot).toBe(5 + ECONOMY.ammo.pack.scattershot);
+    expect(model.state.economy.ammo.scattershot).toBe(5 + ECONOMY.ammo.pack.scattershot);
+    expect(gains).toEqual([{ kind: "ammo", weapon: "scattershot" }]);
   });
 });
 

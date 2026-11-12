@@ -81,11 +81,18 @@ describe("weapon levels", () => {
     expect([1, 2, 3].map((level) => weaponAt("heavyMissile", level).blastRadius)).toEqual([
       60, 72, 85,
     ]);
-    // The Phaser's 4x damage at a 4x interval matches Laser's single-target output.
+    // The Phaser deals 9x Laser damage at a 4x interval, then 13.5 and 20.25.
     const phaser = weaponAt("phaser", 1);
     expect(phaser).toMatchObject({ beamRange: 320, projectileKind: "beam" });
-    expect(phaser.damageRatio).toBe(laser.damageRatio * 4);
+    expect(phaser.damageRatio).toBe(laser.damageRatio * 9);
     expect(phaser.intervalSeconds).toBeCloseTo(laser.intervalSeconds * 4, 9);
+    expect(WEAPON_CATALOG.phaser.map((level) => level.damageRatio)).toEqual([9, 13.5, 20.25]);
+    // A level 1 Scattershot dot deals 0.46; levels 2 and 3 share 1.5 and 2.25 times that volley.
+    const volley = (level: WeaponDefinition) => level.damageRatio * level.anglesDegrees.length;
+    const [dot1, dot2, dot3] = WEAPON_CATALOG.scattershot;
+    expect(dot1!.damageRatio).toBe(0.46);
+    expect(volley(dot2!) / volley(dot1!)).toBeCloseTo(1.5, 9);
+    expect(volley(dot3!) / volley(dot1!)).toBeCloseTo(2.25, 9);
   });
 
   it("grows each weapon only along its own dimensions", () => {
@@ -151,6 +158,28 @@ describe("weapon levels", () => {
     );
     speeds("heavyMissile").forEach((speed) => expect(speed).toBeCloseTo(400, 9));
     expect(speeds("scattershot").map((speed) => speed / 600)).toEqual([1, 1, 1]);
+  });
+
+  it("orders the weapons by level 1 single-target damage per second", () => {
+    // Every bolt or dot of a fan hitting, except Multi-Laser's, counted per bolt.
+    const perSecond = (weapon: Weapon, hits = WEAPON_CATALOG[weapon][0].anglesDegrees.length) =>
+      (WEAPON_CATALOG[weapon][0].damageRatio * hits) / WEAPON_CATALOG[weapon][0].intervalSeconds;
+    const ladder = [
+      perSecond("laser"),
+      perSecond("multiLaser", 1),
+      perSecond("rapidMissile"),
+      perSecond("heavyMissile"),
+      perSecond("scattershot"),
+      perSecond("phaser"),
+    ];
+    [3.6, 3.3, 5, 6.7, 7.2, 8.0].forEach((value, index) =>
+      expect(ladder[index]).toBeCloseTo(value, 1),
+    );
+    // Above Laser, each weapon in weapon order is stronger than the one before it.
+    for (let index = 3; index < ladder.length; index++) {
+      expect(ladder[index]!).toBeGreaterThan(ladder[index - 1]!);
+    }
+    expect(perSecond("multiLaser")).toBeGreaterThan(perSecond("laser"));
   });
 
   it("clamps levels outside 1 to 3", () => {

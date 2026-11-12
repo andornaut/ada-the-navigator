@@ -1,7 +1,7 @@
 import type { AsteroidSize } from "../data/asteroidCatalog.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { type EnemyArchetype, enemyStardust, HEAVIES } from "../data/enemyCatalog.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, Weapon } from "../data/types.ts";
 import type { SpaceObject } from "./types.ts";
 
 /** Stardust pickups, from drops or discovery caches, carry an amount. */
@@ -44,6 +44,23 @@ export function rollEnemyDrop(
     stardust: enemyStardust(galaxy, archetype),
     upgrade: next() < catalog.upgradeDropChance.small,
   };
+}
+
+/**
+ * Whether a destroyed small craft drops an ammo pack pickup: at the ammo drop chance, apart from
+ * its upgrade roll, once Ada owns a weapon other than Laser; a destroyed heavy never does.
+ */
+export function rollAmmoDrop(
+  catalog: EconomyCatalog,
+  owned: readonly Weapon[],
+  archetype: EnemyArchetype,
+  next: () => number,
+): boolean {
+  return (
+    !HEAVIES.includes(archetype) &&
+    owned.some((weapon) => weapon !== "laser") &&
+    next() < catalog.ammo.dropChance
+  );
 }
 
 /**

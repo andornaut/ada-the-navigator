@@ -35,8 +35,8 @@ function weighted<T>(next: () => number, entries: readonly (readonly [T, number]
  * weight (Weapons, Shield, Engine tuning, Tractor beam and Paint), then an item within it.
  * Weapons gives one weapon's next step by the weapon's weight: the weapon itself if Ada does not
  * own it, else its next level. A category or weapon with nothing left leaves the pool and the
- * rest keep their relative weights; with nothing left, one pack for a random owned weapon other
- * than Laser.
+ * rest keep their relative weights; with nothing left, one pack for an owned weapon other than
+ * Laser, as an ammo pack pickup gives (chooseAmmoPack).
  */
 export function chooseUpgrade(
   catalog: EconomyCatalog,
@@ -95,7 +95,25 @@ export function chooseUpgrade(
   if (pool.length) {
     return weighted(next, pool)();
   }
-  return { kind: "ammo", weapon: pick(next, UPGRADE_WEAPONS.filter(owned)) };
+  return { kind: "ammo", weapon: chooseAmmoPack(catalog, economy.ownedWeapons, next)! };
+}
+
+/**
+ * The weapon an ammo pack is for, chosen as Ada collects it: an owned weapon other than Laser by
+ * the ammo pack weights; null while she owns none.
+ */
+export function chooseAmmoPack(
+  catalog: EconomyCatalog,
+  owned: readonly Weapon[],
+  next: () => number,
+): UpgradeWeapon | null {
+  const weapons = UPGRADE_WEAPONS.filter((weapon) => owned.includes(weapon));
+  return weapons.length
+    ? weighted(
+        next,
+        weapons.map((weapon) => [weapon, catalog.ammo.dropWeights[weapon]] as const),
+      )
+    : null;
 }
 
 /**
