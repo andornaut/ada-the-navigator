@@ -507,7 +507,8 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   at the base engine's 160, about 6 world units per second just past the
   deadzone, 11 at a quarter, 34 at half, 82 at three quarters and 160 at full. Keyboard movement is full deflection.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
-  not with stick deflection.
+  not with stick deflection. Their colour follows engine tuning: pale blue at
+  base, orange at Engine level 2 and purple at level 3, on every paint scheme.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
@@ -702,7 +703,10 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser, the order
   weapons take everywhere they are listed (shop weapon and ammunition rows and
   the Ship card); only owned
-  weapons show an icon. Switching preserves
+  weapons show an icon. Each icon shows its weapon's level: at level 1 it looks
+  as it does today; at levels 2 and 3 its ring turns orange, then purple, and one
+  to three pips under the icon give the level, so it never relies on colour alone.
+  Orange and purple mark level 2 and level 3 the same way on the jets. Switching preserves
   ownership of the other weapons. Ada can switch at any time, including in combat;
   after a switch the next switch waits 1 second (provisional).
 - Enemy behavior uses data-defined archetypes and reusable behavior rules for
@@ -732,8 +736,9 @@ relents. The detailed scenes, enemies and home chapter remain to be designed; se
   weapons, levels, Stardust, purchases and story progress persist, and the next
   flight generates a new layout. See [Economy](economy.md) and
   [What each event keeps](#what-each-event-keeps).
-- The shield is a 160 logical pixel bar at the bottom centre, between the sticks,
-  with a shield icon. The bar is blue, turning red when the shield is low (below
+- The shield is a bar at the bottom centre, between the sticks, with a shield
+  icon. Its length follows shield capacity: 120 logical pixels at base, 180 at
+  Shield level 2 and 240 at level 3, so each upgrade visibly lengthens it. The bar is blue, turning red when the shield is low (below
   25%) or empty, and shows hits, the recharge delay and regeneration. Low shield
   never relies on color alone: the bar also pulses, held steady under reduced
   motion, and Astra says "Shield low!".
