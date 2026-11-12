@@ -19,7 +19,7 @@ const E = "....................";
 
 const GLYPHS: Readonly<Record<string, readonly string[]>> = {
   // A bolt with a short trail: a 4 px capsule head on a 2 px trail, one piece.
-  basic: [
+  laser: [
     E,
     E,
     E,

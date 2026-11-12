@@ -30,20 +30,20 @@ import {
 
 describe("HUD weapon buttons", () => {
   it("shows the selected weapon as selected, an empty one as empty and the rest idle", () => {
-    expect(weaponButtonState({ ammo: null, id: "basic", selected: true })).toBe("selected");
+    expect(weaponButtonState({ ammo: null, id: "laser", selected: true })).toBe("selected");
     expect(weaponButtonState({ ammo: 0, id: "rapidMissile", selected: true })).toBe("selected");
     expect(weaponButtonState({ ammo: 12, id: "rapidMissile", selected: false })).toBe("idle");
-    expect(weaponButtonState({ ammo: null, id: "basic", selected: false })).toBe("idle");
+    expect(weaponButtonState({ ammo: null, id: "laser", selected: false })).toBe("idle");
     expect(weaponButtonState({ ammo: 0, id: "phaser", selected: false })).toBe("empty");
   });
 
-  it("labels a weapon button with its exact count, en-US grouped, and Basic with its name", () => {
+  it("labels a weapon button with its exact count, en-US grouped, and Laser with its name", () => {
     const labels = {
       ammo: PROTOTYPE.labels.weaponAmmoLabel!,
       group: "",
       names: {
-        basic: "Basic",
         heavyMissile: "Heavy Missile",
+        laser: "Laser",
         multiLaser: "Multi-Laser",
         phaser: "Phaser",
         rapidMissile: "Rapid Missile",
@@ -53,7 +53,7 @@ describe("HUD weapon buttons", () => {
     expect(PROTOTYPE.labels.weaponAmmoLabel).toBe("{weapon}, {count} left");
     const label = (id: Weapon, ammo: number | null) =>
       weaponButtonLabel(labels, { ammo, id, selected: false });
-    expect(label("basic", null)).toBe("Basic");
+    expect(label("laser", null)).toBe("Laser");
     expect(label("rapidMissile", 1200)).toBe("Rapid Missile, 1,200 left");
     expect(label("phaser", 0)).toBe("Phaser, 0 left");
     expect(label("multiLaser", 9999)).toBe("Multi-Laser, 9,999 left");
@@ -122,7 +122,7 @@ describe("HUD weapon buttons", () => {
   });
 
   it.each([
-    "basic",
+    "laser",
     "rapidMissile",
     "multiLaser",
     "heavyMissile",

@@ -1272,7 +1272,7 @@ try {
     );
   }, storageKey);
   const persisted = await readSave();
-  assert.equal(persisted.version, 3);
+  assert.equal(persisted.version, 4);
   await page.reload();
   await continueFlight();
   const resumed = await readSave();
@@ -2401,7 +2401,7 @@ try {
   equipment.state.flight.ownedWeapons = ["rapidMissile", "multiLaser"];
   // Each with a new weapon's three packs.
   Object.assign(equipment.state.flight.ammo, { multiLaser: 600, rapidMissile: 600 });
-  equipment.state.flight.weapon = "basic";
+  equipment.state.flight.weapon = "laser";
   const equipmentSave = equipment.save();
   assert.deepEqual(relaunch(PROTOTYPE, equipmentSave).state, equipment.state);
   save("equipment-fixture.json", {
@@ -2454,7 +2454,7 @@ try {
       weapon: glyph.closest(".ada-weapon").dataset.weapon,
     })),
   );
-  assert.equal(weaponImages.length, 3, "Basic and both owned upgrades require weapon glyphs");
+  assert.equal(weaponImages.length, 3, "Laser and both owned upgrades require weapon glyphs");
   for (const icon of weaponImages) {
     assert.ok(icon.decorative, "Weapon glyphs must not duplicate button names");
     assert.ok(
@@ -3112,7 +3112,7 @@ try {
     rapidMissile: 600,
     scattershot: 390,
   });
-  weaponModel.state.flight.weapon = "basic";
+  weaponModel.state.flight.weapon = "laser";
   weaponModel.state.flight.objects = [];
   weaponModel.state.flight.shots = [];
   const weaponSave = weaponModel.save();
@@ -4288,10 +4288,10 @@ try {
     .locator("#game-canvas")
     .getByRole("button", { name: PROTOTYPE.labels.talk, exact: true })
     .waitFor({ state: "visible" });
-  const portraitWeapon = page.locator('button[data-weapon="basic"]');
+  const portraitWeapon = page.locator('button[data-weapon="laser"]');
   await portraitWeapon.waitFor({ state: "visible" });
   const turnedControls = await page.evaluate(() => {
-    const weapon = document.querySelector('button[data-weapon="basic"]').getBoundingClientRect();
+    const weapon = document.querySelector('button[data-weapon="laser"]').getBoundingClientRect();
     const pause = document.querySelector('[data-action="pause"]').getBoundingClientRect();
     const canvas = document.querySelector("#game-canvas > canvas").getBoundingClientRect();
     const inverse = new DOMMatrixReadOnly(getComputedStyle(document.body).transform).inverse();
@@ -4310,7 +4310,7 @@ try {
         weapon.top >= canvas.top - 1 &&
         weapon.bottom <= canvas.bottom + 1,
       accessibleName: document
-        .querySelector('button[data-weapon="basic"]')
+        .querySelector('button[data-weapon="laser"]')
         .getAttribute("aria-label"),
     };
   });
@@ -4322,7 +4322,7 @@ try {
     turnedControls.insideCanvas,
     "Turned weapon button must remain inside the visible canvas",
   );
-  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponBasic);
+  assert.equal(turnedControls.accessibleName, PROTOTYPE.labels.weaponLaser);
   save("portrait-weapon-alignment.json", turnedControls);
   const portraitBefore = await position();
   const portraitBounds = await Promise.all(

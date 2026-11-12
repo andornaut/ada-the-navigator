@@ -18,7 +18,7 @@ function launched(): GameModel {
   model.state.flight!.objects = [];
   return model;
 }
-function pickup(model: GameModel, weapon: Exclude<Weapon, "basic">): void {
+function pickup(model: GameModel, weapon: Exclude<Weapon, "laser">): void {
   const flight = model.state.flight!;
   flight.objects.push({
     ...flight.player,
@@ -48,7 +48,7 @@ describe("owned upgrade weapons", () => {
   it("keeps collected upgrades selectable without spending ownership or resetting fire cooldown", () => {
     const model = launched();
     const flight = model.state.flight!;
-    expect(model.weapons()).toEqual([{ ammo: null, id: "basic", selected: true }]);
+    expect(model.weapons()).toEqual([{ ammo: null, id: "laser", selected: true }]);
     pickup(model, "rapidMissile");
     pickup(model, "multiLaser");
     flight.fireCooldown = 0.25;
@@ -57,15 +57,15 @@ describe("owned upgrade weapons", () => {
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.fireCooldown).toBe(0.25);
     flight.weaponSwitchFor = 0;
-    expect(model.selectWeapon("basic")).toBe(true);
+    expect(model.selectWeapon("laser")).toBe(true);
     flight.weaponSwitchFor = 0;
     expect(model.selectWeapon("multiLaser")).toBe(true);
     expect(flight.ownedWeapons).toEqual(["rapidMissile", "multiLaser"]);
     // Each found weapon includes three packs.
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "basic", selected: false },
-      { ammo: 600, id: "rapidMissile", selected: false },
+      { ammo: null, id: "laser", selected: false },
       { ammo: 600, id: "multiLaser", selected: true },
+      { ammo: 600, id: "rapidMissile", selected: false },
     ]);
     const before = model.save();
     expect(model.selectWeapon("scattershot")).toBe(false);
@@ -89,7 +89,7 @@ describe("owned upgrade weapons", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     model.state.flight!.weaponSwitchFor = 0;
-    expect(model.selectWeapon("basic")).toBe(true);
+    expect(model.selectWeapon("laser")).toBe(true);
     pickup(model, "rapidMissile");
     pickup(model, "rapidMissile");
     expect(model.state.flight!.ownedWeapons).toEqual(["rapidMissile"]);
@@ -107,11 +107,11 @@ describe("owned upgrade weapons", () => {
     expect(flight.shield).toBe(0);
   });
 
-  it("jumps home on basic depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
+  it("jumps home on laser depletion despite reserves, preserving story and upgrades for a fresh flight", () => {
     const model = launched();
     pickup(model, "multiLaser");
     model.state.flight!.weaponSwitchFor = 0;
-    expect(model.selectWeapon("basic")).toBe(true);
+    expect(model.selectWeapon("laser")).toBe(true);
     const flight = model.state.flight!;
     const seed = flight.seed;
     model.state.progress[1].deposited = 42;
@@ -125,7 +125,7 @@ describe("owned upgrade weapons", () => {
     playOpening(model);
     expect(model.state.flight!.seed).not.toBe(seed);
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "basic", selected: true },
+      { ammo: null, id: "laser", selected: true },
       { ammo: 600, id: "multiLaser", selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
@@ -160,7 +160,7 @@ describe("owned upgrade weapons", () => {
     expect(model.save()).toBe(saved);
     expect(model.weapons()).toContainEqual({ ammo: 42, id: "scattershot", selected: true });
     expect(model.save()).toBe(saved);
-    expect(model.selectWeapon("basic")).toBe(true);
+    expect(model.selectWeapon("laser")).toBe(true);
     expect(model.state.flight!.ownedWeapons).toEqual(["scattershot"]);
     // The switch wait is saved, so the resumed flight waits it out before switching back.
     const resumed = relaunch(PROTOTYPE, model.save());
@@ -177,7 +177,7 @@ describe("owned upgrade weapons", () => {
     for (const ownedWeapons of [
       null,
       {},
-      ["basic"],
+      ["laser"],
       ["unknown"],
       ["rapidMissile", "rapidMissile"],
       ["rapidMissile", 1],
@@ -200,7 +200,7 @@ describe("owned upgrade weapons", () => {
     const model = launched();
     pickup(model, "multiLaser");
     model.state.dialogue = { choices: [], context: "test", text: "", title: "" };
-    expect(model.selectWeapon("basic")).toBe(false);
+    expect(model.selectWeapon("laser")).toBe(false);
     model.state.dialogue = null;
     model.returnHome();
     expect(model.selectWeapon("multiLaser")).toBe(false);
@@ -240,7 +240,7 @@ it("collects every nearby cargo piece above the former limit and preserves large
 describe("ammunition", () => {
   const aim = { ...idle, aim: { x: 0, y: -1 } };
 
-  it("switches to Basic at once when the equipped weapon runs out, ignoring the switch wait", () => {
+  it("switches to Laser at once when the equipped weapon runs out, ignoring the switch wait", () => {
     const model = launched();
     pickup(model, "rapidMissile");
     const flight = model.state.flight!;
@@ -250,7 +250,7 @@ describe("ammunition", () => {
     flight.ammo.rapidMissile = 1;
     model.step(0.01, aim);
     expect(flight.ammo.rapidMissile).toBe(0);
-    expect(flight.weapon).toBe("basic");
+    expect(flight.weapon).toBe("laser");
     expect(model.state.notice).toBe("Out of ammo.");
     expect(model.state.economy.ammo.rapidMissile).toBe(0);
   });
@@ -260,12 +260,12 @@ describe("ammunition", () => {
     pickup(model, "phaser");
     const flight = model.state.flight!;
     flight.weaponSwitchFor = 0;
-    expect(model.selectWeapon("basic")).toBe(true);
+    expect(model.selectWeapon("laser")).toBe(true);
     flight.weaponSwitchFor = 0;
     flight.ammo.phaser = 0;
     expect(model.weapons()).toContainEqual({ ammo: 0, id: "phaser", selected: false });
     expect(model.selectWeapon("phaser")).toBe(false);
-    expect(flight.weapon).toBe("basic");
+    expect(flight.weapon).toBe("laser");
     model.state.docked = "station";
     model.state.economy.stardust = 10;
     expect(model.buy({ kind: "ammo", weapon: "phaser" })).toEqual({ kind: "bought", price: 6 });

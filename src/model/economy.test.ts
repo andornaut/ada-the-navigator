@@ -492,7 +492,7 @@ describe("discovery caches", () => {
     // The base pull: 120 a second from within 60.
     expect(value.objects[0]!.x).toBeCloseTo(60 - 12, 6);
     expect(gained(stepFlight(PROTOTYPE, 1, idle, value))).toBe(5);
-    expect(value.weapon).toBe("basic");
+    expect(value.weapon).toBe("laser");
     expect(value.ownedWeapons).toEqual([]);
   });
 });
@@ -708,7 +708,7 @@ describe("tractor beam and pickup reach", () => {
     const events = stepFlight(PROTOTYPE, 0.01, idle, value);
     expect(gained(events)).toBe(0);
     expect(value.ammo.rapidMissile).toBe(7 + 200);
-    expect(value.weapon).toBe("basic");
+    expect(value.weapon).toBe("laser");
   });
 });
 
@@ -738,23 +738,23 @@ describe("upgrade effects", () => {
     },
   );
 
-  it.each([1, 2, 3])("fires Ada's Basic at 600 at engine level %i", (level) => {
+  it.each([1, 2, 3])("fires Ada's Laser at 600 at engine level %i", (level) => {
     const value = flight();
     value.levels.engine = level;
     stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
     const { velocity } = value.shots[0]!;
     expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(
-      600 * WEAPON_CATALOG.basic[0].speedRatio,
+      600 * WEAPON_CATALOG.laser[0].speedRatio,
       6,
     );
   });
 
   it("fires the equipped weapon at its own level", () => {
     const value = flight();
-    value.levels.weapons.basic = 3;
+    value.levels.weapons.laser = 3;
     stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, value);
     expect(value.shots[0]!.damage).toBeCloseTo(PROTOTYPE.tuning.flight.playerShotDamage * 1.5, 9);
-    expect(value.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic[2].intervalSeconds, 9);
+    expect(value.fireCooldown).toBeCloseTo(WEAPON_CATALOG.laser[2].intervalSeconds, 9);
     const other = flight();
     other.levels.weapons.rapidMissile = 3;
     stepFlight(PROTOTYPE, 1 / 60, { ...idle, aim: { x: 1, y: 0 } }, other);
@@ -772,7 +772,7 @@ describe("upgrade effects", () => {
         ammo: noAmmo(),
         levels,
         ownedWeapons: [],
-        weapon: "basic",
+        weapon: "laser",
       },
     );
     value.objects = [];
@@ -819,22 +819,22 @@ describe("upgrade effects", () => {
 describe("shop purchases", () => {
   const rich = (stardust = 5000): EconomyState => ({ ...newEconomy(ECONOMY), stardust });
 
-  it("lists weapons, an upgrade row for Basic and each owned weapon, and owned ammunition", () => {
+  it("lists weapons, an upgrade row for Laser and each owned weapon, and owned ammunition", () => {
     const economy = rich();
     expect(shopRows(ECONOMY, economy, "weapons")).toEqual([
-      {
-        inUse: false,
-        item: { kind: "weapon", weapon: "rapidMissile" },
-        level: null,
-        owned: false,
-        price: 150,
-      },
       {
         inUse: false,
         item: { kind: "weapon", weapon: "multiLaser" },
         level: null,
         owned: false,
         price: 250,
+      },
+      {
+        inUse: false,
+        item: { kind: "weapon", weapon: "rapidMissile" },
+        level: null,
+        owned: false,
+        price: 150,
       },
       {
         inUse: false,
@@ -859,7 +859,7 @@ describe("shop purchases", () => {
       },
       {
         inUse: false,
-        item: { kind: "weaponUpgrade", weapon: "basic" },
+        item: { kind: "weaponUpgrade", weapon: "laser" },
         level: { current: 1, max: 3 },
         owned: false,
         price: 150,
@@ -871,7 +871,7 @@ describe("shop purchases", () => {
     });
     const rows = shopRows(ECONOMY, economy, "weapons");
     // The owned weapon's ammunition row leads the tab, before the weapon rows.
-    expect(rows[2]).toMatchObject({ owned: true, price: null });
+    expect(rows[1]).toMatchObject({ owned: true, price: null });
     expect(rows.at(-1)).toMatchObject({ item: { kind: "weaponUpgrade", weapon: "multiLaser" } });
     expect(rows[0]).toEqual({
       inUse: false,
@@ -914,7 +914,7 @@ describe("shop purchases", () => {
   });
 
   it.each([
-    [{ kind: "weaponUpgrade", weapon: "basic" }, [150, 300]],
+    [{ kind: "weaponUpgrade", weapon: "laser" }, [150, 300]],
     [{ kind: "track", track: "shield" }, [300, 600]],
     [{ kind: "track", track: "engine" }, [120, 240]],
     [{ kind: "track", track: "tractor" }, [80, 160]],
@@ -1013,10 +1013,10 @@ describe("shop purchases", () => {
     economy.paints.push("iris");
     const states = (tab: "weapons" | "ship") =>
       shopRows(ECONOMY, economy, tab).map((row) => shopRowState(economy.stardust, row));
-    // Rapid Missile, Multi-Laser, Heavy Missile, Scattershot, Phaser, then the Basic upgrade.
+    // Multi-Laser, Rapid Missile, Heavy Missile, Scattershot, Phaser, then the Laser upgrade.
     expect(states("weapons")).toEqual([
-      "forSale",
       "unaffordable",
+      "forSale",
       "unaffordable",
       "unaffordable",
       "unaffordable",
@@ -1061,8 +1061,8 @@ describe("shop purchases", () => {
   it("names the five shop weapons and their upgrades", () => {
     const labels = PROTOTYPE.labels;
     expect(UPGRADE_WEAPONS.map((weapon) => weaponName(labels, weapon))).toEqual([
-      "Rapid Missile",
       "Multi-Laser",
+      "Rapid Missile",
       "Heavy Missile",
       "Scattershot",
       "Phaser",
@@ -1071,14 +1071,14 @@ describe("shop purchases", () => {
       "Multi-Laser upgrade",
     );
     expect(UPGRADE_WEAPONS.map((weapon) => ECONOMY.weaponPrices[weapon])).toEqual([
-      150, 250, 300, 350, 400,
+      250, 150, 300, 350, 400,
     ]);
   });
 
   it("names items and fills confirm strings from the player strings", () => {
     const labels = PROTOTYPE.labels;
     const name = (item: Parameters<typeof itemName>[2]) => itemName(ECONOMY, labels, item);
-    expect(name({ kind: "weaponUpgrade", weapon: "basic" })).toBe("Basic upgrade");
+    expect(name({ kind: "weaponUpgrade", weapon: "laser" })).toBe("Laser upgrade");
     expect(name({ kind: "track", track: "shield" })).toBe("Shield");
     expect(name({ kind: "track", track: "engine" })).toBe("Engine tuning");
     expect(name({ kind: "track", track: "tractor" })).toBe("Tractor beam");

@@ -1033,8 +1033,8 @@ export class PrototypeScene extends Scene {
         ammo: PROTOTYPE.labels.weaponAmmoLabel ?? "",
         group: PROTOTYPE.labels.weapon ?? "",
         names: {
-          basic: PROTOTYPE.labels.weaponBasic ?? "",
           heavyMissile: PROTOTYPE.labels.weaponHeavyMissile ?? "",
+          laser: PROTOTYPE.labels.weaponLaser ?? "",
           multiLaser: PROTOTYPE.labels.weaponMultiLaser ?? "",
           phaser: PROTOTYPE.labels.weaponPhaser ?? "",
           rapidMissile: PROTOTYPE.labels.weaponRapidMissile ?? "",

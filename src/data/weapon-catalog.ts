@@ -44,30 +44,6 @@ const fan = (count: number, spread: number) =>
  * extra bolts or dots count as hits; blast and beam range growth is a bonus on top.
  */
 export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
-  // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5.
-  basic: [
-    {
-      ...projectile,
-      anglesDegrees: [0],
-      damageRatio: 1,
-      intervalSeconds: 0.28,
-      projectileKind: "bolt",
-    },
-    {
-      ...projectile,
-      anglesDegrees: [0],
-      damageRatio: 1.25,
-      intervalSeconds: 0.28 / 1.2,
-      projectileKind: "bolt",
-    },
-    {
-      ...projectile,
-      anglesDegrees: [0],
-      damageRatio: 1.5,
-      intervalSeconds: 0.28 / 1.5,
-      projectileKind: "bolt",
-    },
-  ],
   // Fire rate (1.2, 1.0, 0.8 s) and damage make each single-target 1.5 step; the blast's growth
   // to 72 and 85 is a bonus against groups.
   heavyMissile: [
@@ -99,6 +75,30 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: 0.6,
     },
   ],
+  // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5.
+  laser: [
+    {
+      ...projectile,
+      anglesDegrees: [0],
+      damageRatio: 1,
+      intervalSeconds: 0.28,
+      projectileKind: "bolt",
+    },
+    {
+      ...projectile,
+      anglesDegrees: [0],
+      damageRatio: 1.25,
+      intervalSeconds: 0.28 / 1.2,
+      projectileKind: "bolt",
+    },
+    {
+      ...projectile,
+      anglesDegrees: [0],
+      damageRatio: 1.5,
+      intervalSeconds: 0.28 / 1.5,
+      projectileKind: "bolt",
+    },
+  ],
   // Bolt count grows hits 4/3 then 5/3 across the same -20 to 20 fan; damage makes up the rest.
   multiLaser: [
     {
@@ -123,7 +123,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       projectileKind: "bolt",
     },
   ],
-  // 4x Basic damage at a 4x Basic interval matches Basic's single-target output. Damage alone
+  // 4x Laser damage at a 4x Laser interval matches Laser's single-target output. Damage alone
   // makes each single-target 1.5 step; range growth to 384 and 460.8 is a bonus.
   phaser: [
     {

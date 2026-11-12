@@ -229,12 +229,6 @@
       "once": []
     },
     {
-      "key": "icon-shop-shield-recharge",
-      "png": "sprites/icon-shop-shield-recharge.png",
-      "json": "sprites/icon-shop-shield-recharge.json",
-      "once": []
-    },
-    {
       "key": "icon-shop-ship-paint",
       "png": "sprites/icon-shop-ship-paint.png",
       "json": "sprites/icon-shop-ship-paint.json",
@@ -253,15 +247,15 @@
       "once": []
     },
     {
-      "key": "icon-shop-weapon-basic",
-      "png": "sprites/icon-shop-weapon-basic.png",
-      "json": "sprites/icon-shop-weapon-basic.json",
-      "once": []
-    },
-    {
       "key": "icon-shop-weapon-heavyMissile",
       "png": "sprites/icon-shop-weapon-heavyMissile.png",
       "json": "sprites/icon-shop-weapon-heavyMissile.json",
+      "once": []
+    },
+    {
+      "key": "icon-shop-weapon-laser",
+      "png": "sprites/icon-shop-weapon-laser.png",
+      "json": "sprites/icon-shop-weapon-laser.json",
       "once": []
     },
     {

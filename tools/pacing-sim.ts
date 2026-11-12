@@ -485,8 +485,8 @@ const DAMAGE = tuning.flight.playerShotDamage;
  * the player buys nothing, so found weapons stay at level 1.
  */
 const ON_TARGET: Readonly<Record<Weapon, number>> = {
-  basic: 1,
   heavyMissile: 1,
+  laser: 1,
   multiLaser: 1.4,
   phaser: 1,
   rapidMissile: 1,
@@ -645,24 +645,24 @@ export function simulate(input: SimulationInput): RunResult {
   // A starting loadout carries over from earlier galaxies with a new weapon's packs each; its
   // first weapon is equipped.
   const owned: UpgradeWeapon[] = [...input.startWeapons];
-  let weapon: Weapon = owned[0] ?? "basic";
+  let weapon: Weapon = owned[0] ?? "laser";
   const ammo = noAmmo();
   for (const each of owned) {
     addPacks(catalog, each, catalog.ammo.grantPacks, ammo);
   }
   /**
    * Spends a volley's shot for each interval of `seconds` fired with the equipped weapon. An
-   * emptied weapon switches to Basic, and the player re-equips the first owned weapon with
+   * emptied weapon switches to Laser, and the player re-equips the first owned weapon with
    * ammunition left. A fight's remaining time keeps the weapon it started with.
    */
   const spend = (seconds: number) => {
-    if (weapon === "basic") {
+    if (weapon === "laser") {
       return;
     }
     ammo[weapon] = Math.max(0, ammo[weapon] - seconds / weaponAt(weapon, 1).intervalSeconds);
     if (ammo[weapon] === 0) {
       result.emptied++;
-      weapon = owned.find((each) => ammo[each] > 0) ?? "basic";
+      weapon = owned.find((each) => ammo[each] > 0) ?? "laser";
     }
   };
   /** Fires for `seconds` with the equipped weapon, advancing time. */
@@ -682,8 +682,8 @@ export function simulate(input: SimulationInput): RunResult {
         result.packsBought++;
       }
     }
-    if (weapon === "basic") {
-      weapon = owned.find((each) => ammo[each] > 0) ?? "basic";
+    if (weapon === "laser") {
+      weapon = owned.find((each) => ammo[each] > 0) ?? "laser";
     }
   };
   const declined = new Set<string>();

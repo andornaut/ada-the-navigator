@@ -42,7 +42,7 @@ describe("shop row taps", () => {
 describe("weapon shop glyphs", () => {
   it("draws every weapon's two-frame shop sheet", () => {
     for (const weapon of [
-      "basic",
+      "laser",
       "rapidMissile",
       "multiLaser",
       "heavyMissile",

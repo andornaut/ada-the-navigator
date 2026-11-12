@@ -5,13 +5,16 @@ import type { AmmoCounts, FlightState } from "./types.ts";
 export interface WeaponChoice {
   id: Weapon;
   selected: boolean;
-  /** Shots left; null for Basic, which is unlimited. An empty weapon refuses selection. */
+  /** Shots left; null for Laser, which is unlimited. An empty weapon refuses selection. */
   ammo: number | null;
 }
-/** Shop order, cheapest first; the drop pool and the cheat grant use the same list. */
+/**
+ * The upgrade weapons in display order after Laser (gameplay/rules.md), for the HUD, the shop,
+ * ammunition and the Ship card; the drop pool and the cheat grant use the same list.
+ */
 export const UPGRADE_WEAPONS = [
-  "rapidMissile",
   "multiLaser",
+  "rapidMissile",
   "heavyMissile",
   "scattershot",
   "phaser",
@@ -41,17 +44,17 @@ export function grantedAmmo(owned: readonly UpgradeWeapon[]): AmmoCounts {
   return ammo;
 }
 
-/** Shots left for weapon, or null for Basic. */
+/** Shots left for weapon, or null for Laser. */
 export function shotsLeft(weapon: Weapon, flight: Pick<FlightState, "ammo">): number | null {
-  return weapon === "basic" ? null : flight.ammo[weapon];
+  return weapon === "laser" ? null : flight.ammo[weapon];
 }
 
 /**
- * Spends one shot of the equipped weapon. When that empties it, Ada switches to Basic at once,
+ * Spends one shot of the equipped weapon. When that empties it, Ada switches to Laser at once,
  * ignoring the switch wait, and this returns true.
  */
 export function spendShot(flight: FlightState): boolean {
-  if (flight.weapon === "basic") {
+  if (flight.weapon === "laser") {
     return false;
   }
   const left = Math.max(0, flight.ammo[flight.weapon] - 1);
@@ -59,7 +62,7 @@ export function spendShot(flight: FlightState): boolean {
   if (left > 0) {
     return false;
   }
-  flight.weapon = "basic";
+  flight.weapon = "laser";
   return true;
 }
 
@@ -77,7 +80,7 @@ function switchTo(weapon: Weapon, flight: FlightState): void {
 /** Selection participates in the owned upgrade roster. */
 export function ensureOwnedWeapons(flight: FlightState) {
   const owned = (flight.ownedWeapons ??= []);
-  if (flight.weapon !== "basic" && !owned.includes(flight.weapon)) {
+  if (flight.weapon !== "laser" && !owned.includes(flight.weapon)) {
     owned.push(flight.weapon);
   }
   return owned;
@@ -91,8 +94,8 @@ export function ownedForSave(flight: FlightState): UpgradeWeapon[] {
 
 export function ownedWeapons(flight: FlightState): WeaponChoice[] {
   const choices: WeaponChoice[] = [];
-  for (const id of ["basic", ...UPGRADE_WEAPONS] as const) {
-    if (id === "basic" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
+  for (const id of ["laser", ...UPGRADE_WEAPONS] as const) {
+    if (id === "laser" || flight.weapon === id || flight.ownedWeapons?.includes(id)) {
       choices.push({ ammo: shotsLeft(id, flight), id, selected: flight.weapon === id });
     }
   }

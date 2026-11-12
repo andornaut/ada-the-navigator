@@ -14,7 +14,7 @@ export interface ShipTuning {
   tractorSpeed: number;
 }
 
-/** A new save's economy: no Stardust, Basic only and the free paint scheme. */
+/** A new save's economy: no Stardust, Laser only and the free paint scheme. */
 export function newEconomy(catalog: EconomyCatalog): EconomyState {
   return {
     ammo: noAmmo(),
@@ -23,7 +23,7 @@ export function newEconomy(catalog: EconomyCatalog): EconomyState {
     paint: catalog.defaultPaint,
     paints: [catalog.defaultPaint],
     stardust: 0,
-    weapon: "basic",
+    weapon: "laser",
   };
 }
 
@@ -34,8 +34,8 @@ export function noLevels(): UpgradeLevels {
     shield: 1,
     tractor: 1,
     weapons: {
-      basic: 1,
       heavyMissile: 1,
+      laser: 1,
       multiLaser: 1,
       phaser: 1,
       rapidMissile: 1,

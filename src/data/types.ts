@@ -4,7 +4,7 @@ import type { ShipPhysics } from "./ship-physics.ts";
 
 export type SectorId = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
-  "basic" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
+  "laser" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
 /** Weapons only enemies carry (gameplay/ships.md "Enemy weapons"). */
 export type EnemyOnlyWeapon = "chargedLance" | "mineLayer" | "ringBurst";
 /** Any weapon an enemy fires: the shared weapons and the enemy-only ones. */

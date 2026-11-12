@@ -101,7 +101,7 @@ export class ModelFeedback {
     if (
       next.cargo > previous.cargo ||
       next.stardust > previous.stardust ||
-      (next.weapon !== "basic" && next.weapon !== previous.weapon)
+      (next.weapon !== "laser" && next.weapon !== previous.weapon)
     ) {
       emit("pickup", next.player);
     }

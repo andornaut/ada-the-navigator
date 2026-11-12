@@ -193,7 +193,7 @@ describe("flight boundaries", () => {
       },
       { hp: 1, id: "resource", kind: "resource", radius: 10, x: 190, y: 100 },
     ];
-    flight.weapon = "basic";
+    flight.weapon = "laser";
     const events = stepFlight(PROTOTYPE, 1, { ...idle, aim: { x: 1, y: 0 } }, flight);
     expect(events).toContainEqual({ id: "debris", type: "debrisCleared" });
     expect(events).toContainEqual({ type: "enemyDisabled" });
@@ -420,7 +420,7 @@ describe("directional handling", () => {
       6,
     );
     expect(degrees(flight.shots[0]!.velocity, flight.facing)).toBeLessThan(1e-9);
-    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.basic[0].intervalSeconds, 9);
+    expect(flight.fireCooldown).toBeCloseTo(WEAPON_CATALOG.laser[0].intervalSeconds, 9);
     frames(PROTOTYPE, 5, aim, flight);
     expect(degrees(flight.facing, aim.aim)).toBeCloseTo(
       90 * Math.exp(-0.1 / physics.aimTurnSeconds),

@@ -32,7 +32,7 @@ import { chunkCoordinates, validVisitedPages } from "./visited.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 /** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 3;
+export const SAVE_VERSION: GameState["version"] = 4;
 
 /**
  * Whether saved was written by a newer build: its version is above SAVE_VERSION. Such a save is
@@ -365,7 +365,7 @@ function weaponOwnership(value: unknown, selected: unknown): boolean {
     Array.isArray(value) &&
     Array.from(value).every((weapon) => UPGRADE_WEAPONS.some((id) => id === weapon)) &&
     new Set(value).size === value.length &&
-    (selected === "basic" || value.includes(selected))
+    (selected === "laser" || value.includes(selected))
   );
 }
 
@@ -715,7 +715,7 @@ export function restoreSave(saved: unknown): GameState | null {
       // Run-only granted weapons are a subset of the flight's roster.
       if (
         f.grantedWeapons !== undefined &&
-        (!weaponOwnership(f.grantedWeapons, "basic") ||
+        (!weaponOwnership(f.grantedWeapons, "laser") ||
           !Array.isArray(f.ownedWeapons) ||
           !(f.grantedWeapons as unknown[]).every((weapon) =>
             (f.ownedWeapons as unknown[]).includes(weapon),

@@ -647,10 +647,10 @@ export class GameModel {
     const owned = ownedForSave(flight);
     economy.ownedWeapons = owned;
     // A granted weapon in use saves as the last real selection that is still owned.
-    if (flight.weapon === "basic" || owned.includes(flight.weapon)) {
+    if (flight.weapon === "laser" || owned.includes(flight.weapon)) {
       economy.weapon = flight.weapon;
-    } else if (economy.weapon !== "basic" && !owned.includes(economy.weapon)) {
-      economy.weapon = "basic";
+    } else if (economy.weapon !== "laser" && !owned.includes(economy.weapon)) {
+      economy.weapon = "laser";
     }
     economy.levels = structuredClone(flight.levels);
     // A granted weapon's flight ammunition stays out of the economy.

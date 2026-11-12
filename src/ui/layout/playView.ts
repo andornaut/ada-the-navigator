@@ -135,7 +135,7 @@ export const HUD_BUTTON = {
 } as const;
 
 // The weapon count pill (art/layout.md "Weapon count pill"): an opaque ink pill under each
-// non-Basic disc, height high with radius corners and padding at each end around the count in
+// non-Laser disc, height high with radius corners and padding at each end around the count in
 // TYPE.count, centred on the disc, its top `top` below the target's top so it overlaps the disc's
 // lower edge; the conversation box's top sits clearance below its bottom.
 export const HUD_AMMO_COUNT = { clearance: 5, height: 14, padding: 4, radius: 4, top: 40 } as const;

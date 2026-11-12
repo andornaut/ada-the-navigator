@@ -73,7 +73,7 @@ export interface SpaceObject extends Vec {
   velocity?: Vec;
   routeId?: string;
   behavior?: "pursue" | "shoot" | "guard";
-  weapon?: Exclude<Weapon, "basic">;
+  weapon?: Exclude<Weapon, "laser">;
   cooldown?: number;
   /** Stardust carried by a Stardust pickup. */
   amount?: number;
@@ -123,9 +123,9 @@ export interface FlightState {
   dangerFor: number;
   cargo: number;
   weapon: Weapon;
-  ownedWeapons?: Exclude<Weapon, "basic">[];
+  ownedWeapons?: Exclude<Weapon, "laser">[];
   /** Run-only weapons from the grant cheat; they never enter saved ownership. */
-  grantedWeapons?: Exclude<Weapon, "basic">[];
+  grantedWeapons?: Exclude<Weapon, "laser">[];
   /** The ship's bought upgrade levels, mirrored from the economy for this flight. */
   levels: UpgradeLevels;
   /** Shots left per upgrade weapon, mirrored from the economy; granted weapons keep their own. */
@@ -255,7 +255,7 @@ export interface JobsState {
   /** Jobs made so far, which seeds the next. */
   made: number;
 }
-/** Shots left for each upgrade weapon; Basic is unlimited. No cap. */
+/** Shots left for each upgrade weapon; Laser is unlimited. No cap. */
 export type AmmoCounts = Record<UpgradeWeapon, number>;
 export interface UpgradeLevels {
   weapons: Record<Weapon, number>;
@@ -288,7 +288,7 @@ export interface DialogueState {
 }
 export interface GameState {
   /** The save format; a save of another version is reset, not migrated. */
-  version: 3;
+  version: 4;
   mode: "home" | "space";
   selectedSector: SectorId;
   unlocked: SectorId[];
@@ -316,7 +316,7 @@ export interface GameState {
 }
 export type FlightEvent =
   | { type: "depleted" }
-  /** The equipped weapon ran out of ammunition and Ada switched to Basic. */
+  /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
   | { type: "stationDiscovered"; id: string }

@@ -1,6 +1,6 @@
 {
   "frames": {
-    "icon-shop-weapon-basic 0.aseprite": {
+    "icon-shop-weapon-laser 0.aseprite": {
       "frame": { "x": 0, "y": 0, "w": 20, "h": 20 },
       "rotated": false,
       "trimmed": false,
@@ -8,7 +8,7 @@
       "sourceSize": { "w": 20, "h": 20 },
       "duration": 100
     },
-    "icon-shop-weapon-basic 1.aseprite": {
+    "icon-shop-weapon-laser 1.aseprite": {
       "frame": { "x": 20, "y": 0, "w": 20, "h": 20 },
       "rotated": false,
       "trimmed": false,
@@ -20,7 +20,7 @@
   "meta": {
     "app": "http://www.aseprite.org/",
     "version": "1.2.30-x64",
-    "image": "icon-shop-weapon-basic.png",
+    "image": "icon-shop-weapon-laser.png",
     "format": "RGBA8888",
     "size": { "w": 40, "h": 20 },
     "scale": "1",

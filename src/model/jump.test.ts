@@ -65,9 +65,9 @@ describe("weapon switching", () => {
     own(flight, ["rapidMissile", "multiLaser"]);
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
-      { ammo: null, id: "basic", selected: true },
-      { ammo: 600, id: "rapidMissile", selected: false },
+      { ammo: null, id: "laser", selected: true },
       { ammo: 600, id: "multiLaser", selected: false },
+      { ammo: 600, id: "rapidMissile", selected: false },
     ]);
     expect(model.selectWeapon("rapidMissile")).toBe(true);
     expect(flight.weapon).toBe("rapidMissile");
@@ -91,11 +91,11 @@ describe("weapon switching", () => {
       flight.objects = [];
       flight.dangerFor = dangerFor;
       stepFlight(PROTOTYPE, ECONOMY.weaponSwitchSeconds - 0.05, idle, flight);
-      expect(model.selectWeapon("basic")).toBe(false);
+      expect(model.selectWeapon("laser")).toBe(false);
       stepFlight(PROTOTYPE, 0.06, idle, flight);
       expect(flight.weaponSwitchFor).toBe(0);
-      expect(model.selectWeapon("basic")).toBe(true);
-      expect(flight.weapon).toBe("basic");
+      expect(model.selectWeapon("laser")).toBe(true);
+      expect(flight.weapon).toBe("laser");
     }
   });
 
@@ -161,7 +161,7 @@ describe("quantum jump home", () => {
     flight.weapon = "rapidMissile";
     flight.levels.weapons.rapidMissile = 3;
     flight.levels.weapons.multiLaser = 2;
-    flight.levels.weapons.basic = 2;
+    flight.levels.weapons.laser = 2;
     model.state.economy.stardust = 30;
     seenHome(model);
     deplete(model);
@@ -173,7 +173,7 @@ describe("quantum jump home", () => {
       weapon: "rapidMissile",
     });
     expect(model.state.economy.levels.weapons).toMatchObject({
-      basic: 2,
+      laser: 2,
       multiLaser: 2,
       rapidMissile: 3,
     });
@@ -437,12 +437,12 @@ describe("shop through the model", () => {
       kind: "bought",
       price: 150,
     });
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic", "rapidMissile"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     model.undock();
     model.returnHome();
     model.startSector(1);
     playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic", "rapidMissile"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser", "rapidMissile"]);
     expect(model.state.economy.stardust).toBe(250);
   });
 

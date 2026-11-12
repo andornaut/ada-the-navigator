@@ -1391,7 +1391,7 @@ export function createFlight(
     ammo: grantedAmmo([]),
     levels: noLevels(),
     ownedWeapons: [],
-    weapon: "basic",
+    weapon: "laser",
   },
 ): FlightState {
   const levels = structuredClone(loadout.levels);
@@ -1417,8 +1417,8 @@ export function createFlight(
     time: 0,
     velocity: { x: 0, y: 0 },
     visited: {},
-    // An empty saved selection starts the flight on Basic.
-    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "basic" : loadout.weapon,
+    // An empty saved selection starts the flight on Laser.
+    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "laser" : loadout.weapon,
     weaponSwitchFor: 0,
     world: { notables: {}, version: 1 },
   };
@@ -1476,7 +1476,7 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const definition = weaponAt(flight.weapon, flight.levels.weapons[flight.weapon]);
-  // One shot uses one; emptying the weapon switches to Basic after this shot.
+  // One shot uses one; emptying the weapon switches to Laser after this shot.
   if (spendShot(flight)) {
     events.push({ type: "outOfAmmo" });
   }

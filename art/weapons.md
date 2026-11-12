@@ -11,7 +11,7 @@ timed against them. `src/data/weapon-catalog.ts` holds the current tuning.
 
 | Weapon        | Interval | Speed | Damage       | Effect                        |
 | ------------- | -------- | ----- | ------------ | ----------------------------- |
-| Basic         | 0.28 s   | x1    | x1           | Bolt                          |
+| Laser         | 0.28 s   | x1    | x1           | Bolt                          |
 | Rapid Missile | 0.30 s   | x1.3  | x1.5         | Missile, blast R 25           |
 | Heavy Missile | 1.2 s    | x0.6  | x8 and blast | Missile, blast R 60, 72, 85   |
 | Multi-Laser   | 0.3 s    | x1    | x1           | Fan of 3, 4, 5 bolts by level |
@@ -49,7 +49,7 @@ range; their strokes and timings do not change by level.
 
 ## Bolt and dot
 
-Unchanged. The Basic and Multi-Laser bolt is a 1.5 px amber line from the head
+Unchanged. The Laser and Multi-Laser bolt is a 1.5 px amber line from the head
 back by `screen velocity x 0.035 s` (29.7 px at heading 14), butt caps. The
 Scattershot dot is an amber disc, radius 1.5.
 

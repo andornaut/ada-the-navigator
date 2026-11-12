@@ -45,11 +45,11 @@ describe("model feedback", () => {
     expect(feedback.observe(100, state)).toEqual([]);
   });
 
-  it("does not report switching back to basic fire as a pickup", () => {
+  it("does not report switching back to laser fire as a pickup", () => {
     const { feedback, flight, state } = launched();
     flight.weapon = "rapidMissile";
     feedback.observe(100, state);
-    flight.weapon = "basic";
+    flight.weapon = "laser";
     expect(feedback.observe(100, state)).not.toContain("pickup");
   });
 

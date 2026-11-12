@@ -20,10 +20,10 @@ export const AMMO_KIND = {
   phaser: "energy",
   rapidMissile: "missile",
   scattershot: "shell",
-} as const satisfies Record<Exclude<Weapon, "basic">, string>;
+} as const satisfies Record<Exclude<Weapon, "laser">, string>;
 
 /** The two-frame shop sheet of a weapon's ammunition kind, drawn alone in an ammunition row. */
-export function ammoShopSheet(weapon: Exclude<Weapon, "basic">): string {
+export function ammoShopSheet(weapon: Exclude<Weapon, "laser">): string {
   return `icon-shop-ammo-${AMMO_KIND[weapon]}`;
 }
 

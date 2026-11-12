@@ -9,12 +9,12 @@ import { refuse } from "./refusal.ts";
 export interface WeaponChoice {
   readonly id: Weapon;
   readonly selected: boolean;
-  /** Shots left; null for Basic, which shows no count. */
+  /** Shots left; null for Laser, which shows no count. */
   readonly ammo: number | null;
 }
 
 export interface WeaponLabels {
-  /** A non-Basic weapon button's accessible label, `weaponAmmoLabel`: "{weapon}, {count} left". */
+  /** A non-Laser weapon button's accessible label, `weaponAmmoLabel`: "{weapon}, {count} left". */
   readonly ammo: string;
   readonly group: string;
   readonly names: Readonly<Record<Weapon, string>>;
@@ -23,7 +23,7 @@ export interface WeaponLabels {
 const SHOTS_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
 /**
- * A weapon button's accessible label: Basic's name, or the weapon and its exact count, en-US
+ * A weapon button's accessible label: Laser's name, or the weapon and its exact count, en-US
  * grouped ("Rapid Missile, 1,200 left"), not the pill's four-character form.
  */
 export function weaponButtonLabel(labels: WeaponLabels, choice: WeaponChoice): string {

@@ -12,7 +12,7 @@ const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.
 
 describe("shop rows on the station view", () => {
   it("maps items to Art's shop glyphs", () => {
-    // Basic is never for sale; its sheet draws in its upgrade composite.
+    // Laser is never for sale; its sheet draws in its upgrade composite.
     for (const weapon of [
       "rapidMissile",
       "multiLaser",
@@ -30,9 +30,9 @@ describe("shop rows on the station view", () => {
         "disabled",
       ]);
     }
-    expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "basic" })).toEqual({
+    expect(itemGlyph(ECONOMY, { kind: "weaponUpgrade", weapon: "laser" })).toEqual({
       kind: "upgrade",
-      weapon: "basic",
+      weapon: "laser",
     });
     for (const [track, key] of [
       ["shield", "icon-shop-shield"],

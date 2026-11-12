@@ -480,8 +480,8 @@ and white on `#3a4466` while pressed.
   the selected weapon keeps its selected look throughout.
 - Focus-visible is the shared focus ring, `FOCUS_RING.outset` outside the disc
   and round with it, over any state.
-- Empty applies to a non-Basic weapon with no ammunition left. It is never
-  selected: when the selected weapon fires its last shot, Basic is selected in
+- Empty applies to a non-Laser weapon with no ammunition left. It is never
+  selected: when the selected weapon fires its last shot, Laser is selected in
   the same frame, ignoring the switch wait, and the empty disc takes the Empty
   look. A tap on an empty weapon plays the refusal cue with the glyph as its
   label until ammunition is bought. The empty glyph is the idle lavender mixed
@@ -489,8 +489,8 @@ and white on `#3a4466` while pressed.
 
 ### Ammunition count
 
-Each owned non-Basic weapon shows its ammunition count in an opaque ink pill
-on the disc's lower edge; Basic shows none. Geometry is `HUD_AMMO_COUNT` in
+Each owned non-Laser weapon shows its ammunition count in an opaque ink pill
+on the disc's lower edge; Laser shows none. Geometry is `HUD_AMMO_COUNT` in
 [Layout](layout.md#weapon-count-pill).
 
 | State          | Pill          | Count text                  | Contrast |
@@ -513,7 +513,7 @@ on the disc's lower edge; Basic shows none. Geometry is `HUD_AMMO_COUNT` in
 - The count updates on every shot with no animation. The pill is decorative
   (`aria-hidden`); the weapon button's accessible label carries the count in
   Gameplay's strings.
-- Out of ammunition: the emptied disc shows Empty and its red "0", Basic is
+- Out of ammunition: the emptied disc shows Empty and its red "0", Laser is
   selected at once, and Gameplay's `outOfAmmo` notice ("Out of ammo.") shows
   in the conversation slot as a [notice](layout.md#hud-and-overlays): no
   portrait or tab, a tap dismisses it, and an interrupted conversation line

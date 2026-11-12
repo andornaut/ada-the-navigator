@@ -3,7 +3,7 @@ import type { EnemyArchetype } from "./enemy-catalog.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { Weapon } from "./types.ts";
 
-export type UpgradeWeapon = Exclude<Weapon, "basic">;
+export type UpgradeWeapon = Exclude<Weapon, "laser">;
 export type UpgradeTrack = "shield" | "engine" | "tractor";
 
 /** A tuning value with its level 1 base and one value per bought level from level 2. */
@@ -43,7 +43,7 @@ export interface EconomyCatalog {
     Partial<Record<RoutePosition, Readonly<Record<EnemyArchetype, number>>>>
   >;
   /**
-   * Ammunition for every upgrade weapon (Basic is unlimited): each pack's shots, about a minute
+   * Ammunition for every upgrade weapon (Laser is unlimited): each pack's shots, about a minute
    * of steady fire at level 1; one shot uses one. A new weapon includes `grantPacks` packs and a
    * found duplicate gives `duplicatePacks`. `packPrice` is Stardust per pack (provisional).
    */

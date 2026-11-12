@@ -37,10 +37,10 @@ playable story. See [dialogue and objectives](gameplay/player-copy.md).
 
 Flight has independent movement and aim, a rechargeable shield and contextual
 interactions; the status pill shows the shield and Ada's Stardust. Ada has six
-weapons: Basic, always available, and five upgrades (Rapid Missile, Multi-Laser,
+weapons: Laser, always available, and five upgrades (Multi-Laser, Rapid Missile,
 Heavy Missile, Scattershot and Phaser). Each has three levels and fires from the
-ship's nose. Basic is unlimited; each upgrade has its own ammunition count, shown
-under its icon, and Ada switches to Basic when the equipped one runs out. Enemies,
+ship's nose. Laser is unlimited; each upgrade has its own ammunition count, shown
+under its icon, and Ada switches to Laser when the equipped one runs out. Enemies,
 asteroids and discovery caches release Stardust, which station shops exchange for
 weapons, weapon levels, ammunition packs, ship upgrades and paint schemes; enemies
 also drop weapons rarely, and a dropped weapon Ada owns gives a pack of its

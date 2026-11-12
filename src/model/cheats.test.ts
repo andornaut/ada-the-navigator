@@ -60,11 +60,11 @@ describe("grant all weapons", () => {
     grantAllWeapons(model.state);
     model.state.flight!.weapon = "rapidMissile";
     model.save();
-    expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "basic" });
+    expect(model.state.economy).toMatchObject({ ownedWeapons: [], weapon: "laser" });
     model.returnHome();
     model.startSector(1);
     playOpening(model);
-    expect(model.weapons().map((choice) => choice.id)).toEqual(["basic"]);
+    expect(model.weapons().map((choice) => choice.id)).toEqual(["laser"]);
   });
 
   it("keeps every saved weapon and Stardust when a granted weapon is equipped in a jump", () => {
@@ -115,11 +115,11 @@ describe("grant all weapons", () => {
     });
     expect(model.state.economy.ownedWeapons).toEqual(["scattershot", "rapidMissile"]);
     expect(flight.grantedWeapons).toEqual(["multiLaser", "heavyMissile", "phaser"]);
-    // The HUD discs run Basic, Rapid, Multi-Laser, Heavy, Scattershot, Phaser.
+    // The HUD discs run Laser, Multi-Laser, Rapid, Heavy, Scattershot, Phaser.
     expect(model.weapons().map((choice) => choice.id)).toEqual([
-      "basic",
-      "rapidMissile",
+      "laser",
       "multiLaser",
+      "rapidMissile",
       "heavyMissile",
       "scattershot",
       "phaser",

@@ -58,7 +58,7 @@ function level(economy: EconomyState, item: ShopItem): number {
 }
 
 function weaponOwned(economy: EconomyState, weapon: Weapon): boolean {
-  return weapon === "basic" || economy.ownedWeapons.includes(weapon);
+  return weapon === "laser" || economy.ownedWeapons.includes(weapon);
 }
 
 export function shopRow(catalog: EconomyCatalog, economy: EconomyState, item: ShopItem): ShopRow {
@@ -133,7 +133,7 @@ export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
 
 /**
  * A tab's rows. Weapons lists an ammunition row for each owned upgrade weapon, then the
- * upgrade weapons, then an upgrade row for Basic and each owned upgrade weapon. Ship lists the
+ * upgrade weapons, then an upgrade row for Laser and each owned upgrade weapon. Ship lists the
  * upgrade tracks, then the paint schemes.
  */
 export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: ShopTab): ShopRow[] {
@@ -144,7 +144,7 @@ export function shopRows(catalog: EconomyCatalog, economy: EconomyState, tab: Sh
             (weapon): ShopItem => ({ kind: "ammo", weapon }),
           ),
           ...UPGRADE_WEAPONS.map((weapon): ShopItem => ({ kind: "weapon", weapon })),
-          ...(["basic", ...UPGRADE_WEAPONS] as const)
+          ...(["laser", ...UPGRADE_WEAPONS] as const)
             .filter((weapon) => weaponOwned(economy, weapon))
             .map((weapon): ShopItem => ({ kind: "weaponUpgrade", weapon })),
         ]
@@ -226,8 +226,8 @@ export function fill(template: string, values: Readonly<Record<string, string | 
 }
 
 const WEAPON_LABELS: Readonly<Record<Weapon, string>> = {
-  basic: "weaponBasic",
   heavyMissile: "weaponHeavyMissile",
+  laser: "weaponLaser",
   multiLaser: "weaponMultiLaser",
   phaser: "weaponPhaser",
   rapidMissile: "weaponRapidMissile",
