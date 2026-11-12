@@ -27,6 +27,7 @@ const progress: SectorProgress = {
   discoveries: 0,
   donated: {},
   explored: [],
+  greetings: {},
   holodisk: false,
   introduced: false,
   known: [],
