@@ -1,21 +1,24 @@
 import type { ProgressSnapshot } from "@andornaut/game-kit/progressState";
 
-// The loading bar's schedule: a load of known progress fills left
-// to right, holds full for fullMs and then goes; work of unknown total shows the travelling
-// segment until it ends, then goes at once; with nothing loading there is no bar element at all.
+// The loading bar's schedule: a load of known progress fills left to right, holds full for
+// fullMs, fades out over fadeMs and then goes; work of unknown total shows the travelling segment
+// until it ends, then goes at once; with nothing loading there is no bar element at all.
 // Foreground loads (the game's own) show over background work (the offline precache), which
 // shows again once a foreground load has gone.
 
 /** A mounted bar: the kit's DOM progress bar (web/progress/dom/progressBar). */
 export interface LoadingBar {
+  /** Starts or cancels the fade out after a full hold. */
+  fade(fading: boolean): void;
   remove(): void;
   report(snapshot: ProgressSnapshot): void;
 }
 
-/** What the schedule needs from the page: mounting a bar and a timer for the full hold. */
+/** What the schedule needs from the page: mounting a bar and a timer for the hold and fade. */
 export interface LoadingBarPort {
   clearTimeout(handle: unknown): void;
   create(): LoadingBar;
+  readonly fadeMs: number;
   readonly fullMs: number;
   setTimeout(handler: () => void, ms: number): unknown;
 }
@@ -40,7 +43,9 @@ export function followLoading(
   let bar: LoadingBar | undefined;
   // Whether the bar shows a measured share, which only a foreground load reports.
   let measured = false;
+  // The full hold's or the fade's timer, while a finished measured load ends.
   let hold: unknown;
+  let fading = false;
   const drop = () => {
     bar?.remove();
     bar = undefined;
@@ -48,19 +53,30 @@ export function followLoading(
   };
   const render = (): void => {
     if (hold !== undefined) {
-      // The full hold runs out before background work shows; a new foreground load cuts it short.
+      // The hold and fade run out before background work shows; a new foreground load cuts them
+      // short and shows on the same bar.
       if (!foreground.active) {
         return;
       }
       port.clearTimeout(hold);
       hold = undefined;
+      if (fading) {
+        fading = false;
+        bar?.fade(false);
+      }
     }
     if (bar !== undefined && measured && !foreground.active) {
-      bar.report(IDLE);
+      const ending = bar;
+      ending.report(IDLE);
       hold = port.setTimeout(() => {
-        hold = undefined;
-        drop();
-        render();
+        fading = true;
+        ending.fade(true);
+        hold = port.setTimeout(() => {
+          hold = undefined;
+          fading = false;
+          drop();
+          render();
+        }, port.fadeMs);
       }, port.fullMs);
       return;
     }

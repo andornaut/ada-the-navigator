@@ -1,26 +1,29 @@
 import { createProgressState, type ProgressSnapshot } from "@andornaut/game-kit/progressState";
 import { describe, expect, it } from "vitest";
 
+import { LOADING_BAR } from "../ui/loading-bar.ts";
 import { followLoading, type LoaderLike, trackLoader } from "./loadingBar.ts";
 
-const FULL_MS = 250;
+const { fadeMs: FADE_MS, fullMs: FULL_MS } = LOADING_BAR;
 
 /** A page whose bars record what they show, with a clock the test advances. */
 function page() {
-  const bars: { removed: boolean; shown: ProgressSnapshot[] }[] = [];
+  const bars: { fading: boolean; removed: boolean; shown: ProgressSnapshot[] }[] = [];
   let now = 0;
   const timers = new Map<number, { at: number; handler: () => void }>();
   let next = 0;
   const port = {
     clearTimeout: (handle: unknown) => timers.delete(handle as number),
     create: () => {
-      const bar = { removed: false, shown: [] as ProgressSnapshot[] };
+      const bar = { fading: false, removed: false, shown: [] as ProgressSnapshot[] };
       bars.push(bar);
       return {
+        fade: (fading: boolean) => (bar.fading = fading),
         remove: () => (bar.removed = true),
         report: (s: ProgressSnapshot) => bar.shown.push(s),
       };
     },
+    fadeMs: FADE_MS,
     fullMs: FULL_MS,
     setTimeout: (handler: () => void, ms: number) => {
       next += 1;
@@ -56,7 +59,7 @@ describe("the loading bar", () => {
     expect(bars).toHaveLength(0);
   });
 
-  it("fills a measured load to full, holds it, then removes the element", () => {
+  it("fills a measured load to full, holds it, fades it out, then removes the element", () => {
     const { advance, bars, foreground, mounted } = loading();
     const load = foreground.begin();
     load.progress(0.4);
@@ -67,9 +70,25 @@ describe("the loading bar", () => {
     // The kit's bar shows complete, full, for the hold.
     expect(bars[0]!.shown.at(-1)).toEqual({ active: false, value: undefined });
     advance(FULL_MS - 1);
+    expect(bars[0]!.fading).toBe(false);
+    advance(1);
+    expect(bars[0]!.fading).toBe(true);
+    advance(FADE_MS - 1);
     expect(mounted()).toHaveLength(1);
     advance(1);
     expect(mounted()).toHaveLength(0);
+  });
+
+  it("sets Art's look: 3 high, cream on ink at 0.6, a 250 ms hold, a 150 ms fade, a 30% segment", () => {
+    expect(LOADING_BAR).toEqual({
+      fadeMs: 150,
+      fill: "#ead4aa",
+      fullMs: 250,
+      height: 3,
+      segment: 0.3,
+      track: "#181425",
+      trackOpacity: 0.6,
+    });
   });
 
   it("shows work of unknown total as the travelling segment, removed as soon as it ends", () => {
@@ -89,21 +108,26 @@ describe("the loading bar", () => {
     load.progress(0.5);
     expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 0.5 });
     load.finish();
+    // The fade starts when the hold ends.
     advance(FULL_MS);
+    advance(FADE_MS);
     expect(mounted()).toHaveLength(1);
     expect(mounted()[0]!.shown).toEqual([{ active: true, value: undefined }]);
     install.finish();
     expect(mounted()).toHaveLength(0);
   });
 
-  it("lets a new load cut a full hold short and fill the same bar again", () => {
+  it("lets a new load cut a fade short and fill the same bar again", () => {
     const { advance, bars, foreground, mounted } = loading();
     const first = foreground.begin();
     first.progress(1);
     first.finish();
-    const second = foreground.begin();
-    second.progress(0.2);
     advance(FULL_MS);
+    expect(bars[0]!.fading).toBe(true);
+    const second = foreground.begin();
+    expect(bars[0]!.fading).toBe(false);
+    second.progress(0.2);
+    advance(FULL_MS + FADE_MS);
     expect(mounted()).toHaveLength(1);
     expect(bars).toHaveLength(1);
     expect(bars[0]!.shown.at(-1)).toEqual({ active: true, value: 0.2 });

@@ -6,6 +6,7 @@ import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { slice, units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
+import { LOADING_LAYER, LOADING_STYLE } from "./loading-bar.ts";
 import {
   actionOrder,
   BUTTON_SLICE,
@@ -198,13 +199,15 @@ describe("modal stacking", () => {
   it("draws an open modal above every other control in its layer", () => {
     const modal = MODAL_STYLE.slice(MODAL_STYLE.indexOf(`${UI_SCOPE} .ada-modal{`));
     expect(modal.slice(0, modal.indexOf("}"))).toContain(`z-index:${MODAL_LAYER}`);
-    // The page's own layers stack the controls layer itself, not the controls inside it.
+    // The page's own layers stack the controls layer itself, not the controls inside it. The
+    // loading bar is the one layer above open modals.
     const pageLayers = [
       ".ada-controls{",
       ".ada-controls.ada-",
       "#game-status{",
       "#save-status{",
       ".ada-conversation{",
+      ".ada-loading{",
     ];
     const ui = new URL("./", import.meta.url);
     const sources = readdirSync(ui)
@@ -227,5 +230,18 @@ describe("modal stacking", () => {
       }
     }
     expect(checked).toBeGreaterThan(0);
+  });
+
+  it("draws the loading bar above every layer, open modals included", () => {
+    const ui = new URL("./", import.meta.url);
+    const layers = readdirSync(ui)
+      .filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"))
+      .flatMap((name) => [
+        ...readFileSync(new URL(name, ui), "utf8").matchAll(/z-index:\s*(\d+)/gu),
+      ])
+      .map((match) => Number(match[1]));
+    expect(LOADING_STYLE).toContain(`.ada-loading{`);
+    expect(LOADING_STYLE).toContain(`z-index:${LOADING_LAYER};`);
+    expect(LOADING_LAYER).toBeGreaterThan(Math.max(MODAL_LAYER, ...layers));
   });
 });

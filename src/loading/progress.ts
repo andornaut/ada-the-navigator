@@ -11,29 +11,32 @@ import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePla
 import { SCREEN } from "../data/screen.ts";
 import { VIEW_PROPERTIES } from "../ui/layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
-import { TEXT_TOKENS } from "../ui/modal.ts";
+import { LOADING_BAR, LOADING_STYLE } from "../ui/loading-bar.ts";
 import { followLoading } from "./loadingBar.ts";
 
 // The game's loads and the offline precache, shown as one loading bar along the top edge of the
-// play area. The game's own loads (Phaser's loader: the boot preload, a galaxy's art and any
-// later art) measure their share; the precache reports activity only, with no share.
+// play area (src/ui/loading-bar.ts). The game's own loads (Phaser's loader: the boot preload, a
+// galaxy's art and any later art) measure their share; the precache reports activity only.
 
 /** The game's own loads, measured. */
 export const loadingProgress = createProgressState();
 /** The service worker's precache, of unknown total. */
 export const installProgress = createProgressState();
 
-// The bar: 2 logical px tall across the play area's whole width, the UI's cream fill on its ink
-// track. The pending segment, a quarter of the track, crosses it every 1.5 s, and a measured load
-// that finishes holds full for 250 ms (progressBar.css's defaults, as in Chibi).
-export const LOADING_BAR = { height: 2 } as const;
-export const LOADING_TIMING: DomProgressTiming = { cycleMs: 1500, fullMs: 250, segment: 0.25 };
 const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
-export const LOADING_STYLE: ProgressBarStyle = {
+const STYLE: ProgressBarStyle = {
   border: 0,
-  fills: [colour(TEXT_TOKENS.label)],
-  frame: colour(TEXT_TOKENS.buttonLabel),
-  track: colour(TEXT_TOKENS.buttonLabel),
+  fills: [colour(LOADING_BAR.fill)],
+  frame: colour(LOADING_BAR.track),
+  track: colour(LOADING_BAR.track),
+};
+// The kit's complete state hides the bar after its full hold; here that is the hold and the fade,
+// so the bar stays visible while it fades and is removed as it hides. The pending segment crosses
+// the track every 1.5 s, as in Chibi.
+const TIMING: DomProgressTiming = {
+  cycleMs: 1500,
+  fullMs: LOADING_BAR.fullMs + LOADING_BAR.fadeMs,
+  segment: LOADING_BAR.segment,
 };
 const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
 
@@ -50,9 +53,9 @@ export function offlineActivity(activity: OfflineActivity): void {
 }
 
 /**
- * Mounts the loading bar's host along the top of parent, the play area, drawn in logical px and
- * scaled to parent's width and view unit. A bar element exists only while something loads.
- * Returns the function that removes it.
+ * Mounts the loading bar's host along the top of parent, the play area: drawn in logical px,
+ * stretched to parent's whole width and scaled by its view unit, insets ignored. A bar element
+ * exists only while something loads. Returns the function that removes it.
  */
 export function mountLoading(parent: HTMLElement): () => void {
   const document = parent.ownerDocument;
@@ -60,18 +63,13 @@ export function mountLoading(parent: HTMLElement): () => void {
   if (!window) {
     return () => undefined;
   }
+  const sheet = document.createElement("style");
+  sheet.textContent = LOADING_STYLE;
+  document.head.append(sheet);
   const host = document.createElement("div");
   host.className = "ada-loading";
-  Object.assign(host.style, {
-    height: `${FRAME.height}px`,
-    left: "0",
-    pointerEvents: "none",
-    position: "absolute",
-    top: "0",
-    transformOrigin: "0 0",
-    width: `${FRAME.width}px`,
-    zIndex: "40",
-  });
+  host.style.width = `${FRAME.width}px`;
+  host.style.height = `${FRAME.height}px`;
   const fit = () => {
     const unit = Number.parseFloat(getComputedStyle(parent).getPropertyValue(VIEW_PROPERTIES.unit));
     const across = parent.clientWidth / FRAME.width;
@@ -86,15 +84,22 @@ export function mountLoading(parent: HTMLElement): () => void {
     {
       clearTimeout: (handle) => window.clearTimeout(handle as number),
       create: () => {
-        const bar = createDomProgressBar(host, LOADING_STYLE, FRAME, LOADING_TIMING);
+        const bar = createDomProgressBar(host, STYLE, FRAME, TIMING);
         // Named for the game, as Chibi's is, with no string of its own.
         const name = parent.getAttribute("aria-label");
         if (name) {
           bar.element.setAttribute("aria-label", name);
         }
-        return bar;
+        return {
+          fade: (fading) => {
+            bar.element.toggleAttribute("data-fading", fading);
+          },
+          remove: bar.remove,
+          report: bar.report,
+        };
       },
-      fullMs: LOADING_TIMING.fullMs,
+      fadeMs: LOADING_BAR.fadeMs,
+      fullMs: LOADING_BAR.fullMs,
       setTimeout: (handler, ms) => window.setTimeout(handler, ms),
     },
     { background: installProgress, foreground: loadingProgress },
@@ -104,5 +109,6 @@ export function mountLoading(parent: HTMLElement): () => void {
     window.removeEventListener("resize", fit);
     window.removeEventListener(VIEW_SCALE_EVENT, fit);
     host.remove();
+    sheet.remove();
   };
 }
