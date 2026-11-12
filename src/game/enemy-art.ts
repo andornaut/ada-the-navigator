@@ -73,6 +73,38 @@ export const CLAIM_WIRED: ReadonlySet<string> = new Set([
   "swarm",
 ]);
 
+/** Andromeda's garnet family (art/heavies.md): Gadget's drones recoloured, no platform. */
+export const GARNET = "enemy-garnet-";
+
+/** A galaxy's own enemy family: its manifest's entries with `family` and the `prefix` ids. */
+export interface EnemyFamily {
+  readonly family: string;
+  /** The galaxy that flies it, by stable galaxy id. */
+  readonly galaxy: string;
+  readonly prefix: string;
+  /** The archetypes it draws; the rest keep Gadget's coral family. */
+  readonly wired: ReadonlySet<string>;
+}
+
+/** Each galaxy's own enemy family; every other galaxy flies Gadget's coral family. */
+export const GALAXY_FAMILIES: readonly EnemyFamily[] = [
+  { family: "claim", galaxy: "cartwheel", prefix: CLAIM, wired: CLAIM_WIRED },
+  {
+    family: "garnet",
+    galaxy: "andromeda",
+    prefix: GARNET,
+    wired: new Set(["capital", "fighter", "frigate", "interceptor", "retaliator", "swarm"]),
+  },
+];
+
+/** The family a galaxy draws an archetype in, or undefined for Gadget's coral family. */
+export function galaxyFamily(
+  galaxy: string | undefined,
+  archetype: string,
+): EnemyFamily | undefined {
+  return GALAXY_FAMILIES.find((entry) => entry.galaxy === galaxy && entry.wired.has(archetype));
+}
+
 /**
  * Hull frames per archetype for one family's id prefix: complete sixteen-heading sets from
  * `{prefix}{archetype}-{index}` entries, or one `{prefix}{archetype}` frame with facing `fixed`

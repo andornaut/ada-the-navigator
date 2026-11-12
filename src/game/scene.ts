@@ -19,7 +19,7 @@ import { destinationDrawn } from "../data/destinations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { EDGE_MARKER_GLYPHS, edgeMarkerInset } from "../data/edge-markers.ts";
 import { enemyCatalog, enemyEncounterTuning } from "../data/enemy-catalog.ts";
-import { BUILT, ROUTE } from "../data/galaxies.ts";
+import { BUILT, GALAXY_ID, ROUTE } from "../data/galaxies.ts";
 import { CURRENTS } from "../data/galaxy-features.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PROTOTYPE } from "../data/prototype.ts";
@@ -107,6 +107,7 @@ import {
   playDepth,
   rockArt,
 } from "./asteroid-art.ts";
+import { type BackdropHaze, readBackdropHaze } from "./backdrop-haze.ts";
 import {
   craftArt,
   craftFrameSets,
@@ -140,16 +141,16 @@ import {
   boxWith,
   drawnBox,
   EDGE_MARKER_DEPTH,
+  HAZE_DEPTH,
   type PassableDraw,
   type Placed,
 } from "./draw-order.ts";
 import {
-  CLAIM,
-  CLAIM_WIRED,
   composedArchetypes,
   composeEnemy,
   type EnemyArt,
   enemyArt,
+  type EnemyFamily,
   type EnemyFrame,
   enemyFrameSets,
   enemyHardpointsPath,
@@ -158,6 +159,8 @@ import {
   enemyPartFrame,
   enemyPartsToLoad,
   enemyShardsPath,
+  GALAXY_FAMILIES,
+  galaxyFamily,
   HitFlashes,
   type PartPose,
   selectEnemyFrame,
@@ -435,9 +438,10 @@ export class PrototypeScene extends Scene {
   // The guided calf's heading, kept while it rests.
   private calfHeading = 0;
   // Cartwheel's claim jumpers; a claim archetype without loaded art draws the coral family's.
-  private claimArt = new Map<string, EnemyArt<Asset>>();
-  private claimShards = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
-  private claimPartAssets: readonly Asset[] = [];
+  // Each galaxy family's art, shards and part frames (GALAXY_FAMILIES), by family.
+  private familyArts = new Map<string, Map<string, EnemyArt<Asset>>>();
+  private familyShards = new Map<string, Map<string, NonNullable<ReturnType<typeof readShards>>>>();
+  private familyParts = new Map<string, readonly Asset[]>();
   private debrisArt: ReadonlyMap<SectorId, DebrisArt> = new Map();
   private streakSpec: StreakSpec | undefined;
   private resourceRocks: ReadonlyMap<string, AsteroidArt> = new Map();
@@ -455,6 +459,9 @@ export class PrototypeScene extends Scene {
   // Art's rocks and backdrop; their frames load on demand.
   private readonly asteroidArt = ASTEROID_ART;
   private backdropSprites = new Map<string, GameObjects.Image>();
+  // Each galaxy's loaded backdrop haze, and the one image that draws it.
+  private hazes = new Map<SectorId, BackdropHaze>();
+  private hazeImage: GameObjects.Image | null = null;
   // Rock SVGs requested from the loader, and whether new ones wait for a start.
   private rockRequests = new Set<string>();
   private rockQueued = false;
@@ -694,9 +701,14 @@ export class PrototypeScene extends Scene {
     this.partAssets = (manifest?.assets ?? []).filter(
       (asset) => enemyPartFrame(asset) && asset.family === undefined,
     );
-    this.claimPartAssets = (manifest?.assets ?? []).filter(
-      (asset) => enemyPartFrame(asset) && asset.family === "claim",
-    );
+    for (const { family } of GALAXY_FAMILIES) {
+      this.familyParts.set(
+        family,
+        (manifest?.assets ?? []).filter(
+          (asset) => enemyPartFrame(asset) && asset.family === family,
+        ),
+      );
+    }
     this.readEnemyArt();
     // Art without its loaded textures or data keeps the placeholders.
     this.stationArt = readStationArt(this.shipAssets);
@@ -1273,10 +1285,12 @@ export class PrototypeScene extends Scene {
         ...galaxy.links,
         assets: [...this.manifest.assets, ...galaxy.assets],
       };
-      this.claimPartAssets = [
-        ...this.claimPartAssets,
-        ...galaxy.assets.filter((asset) => enemyPartFrame(asset) && asset.family === "claim"),
-      ];
+      for (const { family } of GALAXY_FAMILIES) {
+        this.familyParts.set(family, [
+          ...(this.familyParts.get(family) ?? []),
+          ...galaxy.assets.filter((asset) => enemyPartFrame(asset) && asset.family === family),
+        ]);
+      }
     }
     const assets = galaxy.assets;
     for (const asset of assets) {
@@ -1287,21 +1301,27 @@ export class PrototypeScene extends Scene {
         this.load.json(`craft-jets-${craft}`, enemyJetsPath(craft, frames[0]!));
       }
     }
-    for (const [archetype, frames] of enemyFrameSets(assets, CLAIM)) {
-      if (!CLAIM_WIRED.has(archetype)) {
-        continue;
-      }
-      if (frames.length > 1) {
-        this.load.json(`claim-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
-      }
-      // Shards, as in coral, for the archetypes Art's destruction data covers.
-      if (this.destruction && Object.hasOwn(this.destruction.archetypes, archetype)) {
-        this.load.json(`claim-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
-      }
-      if (composedArchetypes(this.claimPartAssets).has(archetype)) {
-        this.load.json(`claim-hardpoints-${archetype}`, enemyHardpointsPath(archetype, frames[0]!));
+    for (const { family, prefix, wired } of GALAXY_FAMILIES) {
+      for (const [archetype, frames] of enemyFrameSets(assets, prefix)) {
+        if (!wired.has(archetype)) {
+          continue;
+        }
+        if (frames.length > 1) {
+          this.load.json(`${family}-jets-${archetype}`, enemyJetsPath(archetype, frames[0]!));
+        }
+        // Shards, as in coral, for the archetypes Art's destruction data covers.
+        if (this.destruction && Object.hasOwn(this.destruction.archetypes, archetype)) {
+          this.load.json(`${family}-shards-${archetype}`, enemyShardsPath(archetype, frames[0]!));
+        }
+        if (composedArchetypes(this.familyParts.get(family) ?? []).has(archetype)) {
+          this.load.json(
+            `${family}-hardpoints-${archetype}`,
+            enemyHardpointsPath(archetype, frames[0]!),
+          );
+        }
       }
     }
+    this.queueHaze(sector, galaxy);
     // The galaxy's own data files, named by its manifest's links.
     for (const [key, path] of [
       ["cartwheel-debris", galaxy.links.cartwheelDebris],
@@ -1316,14 +1336,63 @@ export class PrototypeScene extends Scene {
     }
   }
 
+  /**
+   * A galaxy's backdrop haze: its haze.json, then the texture it names, which draws with linear
+   * filtering since its half-resolution texels must never show.
+   */
+  private queueHaze(sector: SectorId, galaxy: GalaxyManifest<Asset>): void {
+    const path = galaxy.links.backdropHaze;
+    const key = `backdrop-haze-${sector}`;
+    if (!path || this.hazes.has(sector) || this.cache.json.exists(key)) {
+      return;
+    }
+    this.load.once(`filecomplete-json-${key}`, () => {
+      const haze = readBackdropHaze(galaxy.assets, this.cache.json.get(key));
+      if (!haze) {
+        return;
+      }
+      const ready = () => {
+        this.filterTexture(haze.asset, "linear");
+        this.hazes.set(sector, haze);
+      };
+      if (this.textures.exists(haze.asset)) {
+        ready();
+      } else {
+        this.load.once(`filecomplete-image-${haze.asset}`, ready);
+        this.load.image(haze.asset, haze.path);
+      }
+    });
+    this.load.json(key, path);
+  }
+
+  /** The flight's galaxy's backdrop haze, fixed on the play view's centre, or none. */
+  private drawHaze(sector: SectorId | null): void {
+    const haze = sector === null ? undefined : this.hazes.get(sector);
+    if (!haze) {
+      this.hazeImage?.setVisible(false);
+      return;
+    }
+    this.hazeImage ??= this.add.image(0, 0, haze.asset).setDepth(HAZE_DEPTH);
+    this.hazeImage
+      .setTexture(haze.asset)
+      .setOrigin(0.5, 0.5)
+      .setPosition(SCREEN.width / 2, SCREEN.height / 2)
+      .setDisplaySize(haze.width, haze.height)
+      .setVisible(true);
+  }
+
   /** Reads the galaxy art whose textures and data have loaded. */
   private readGalaxyArt(): void {
     this.readEnemyArt();
-    for (const archetype of CLAIM_WIRED) {
-      const shards = readShards(this.cache.json.get(`claim-shards-${archetype}`));
-      if (shards) {
-        this.claimShards.set(archetype, shards);
+    for (const { family, wired } of GALAXY_FAMILIES) {
+      const read = new Map<string, NonNullable<ReturnType<typeof readShards>>>();
+      for (const archetype of wired) {
+        const shards = readShards(this.cache.json.get(`${family}-shards-${archetype}`));
+        if (shards) {
+          read.set(archetype, shards);
+        }
       }
+      this.familyShards.set(family, read);
     }
     const loaded = this.manifest.assets.filter((asset) => this.textures.exists(asset.id));
     this.towLine = readTowLine(this.cache.json.get("tow"));
@@ -1676,28 +1745,37 @@ export class PrototypeScene extends Scene {
       this.shipAssets,
       enemyFrameSets(this.shipAssets),
     );
-    const loaded = this.manifest.assets.filter(
-      (asset) => asset.family === "claim" && this.textures.exists(asset.id),
-    );
-    const claim = enemyArt(
-      (archetype) => this.cache.json.get(`claim-jets-${archetype}`),
-      (archetype) => this.cache.json.get(`claim-hardpoints-${archetype}`),
-      composedArchetypes(this.claimPartAssets),
-      loaded,
-      enemyFrameSets(loaded, CLAIM),
-      CLAIM,
-    );
-    this.claimArt = new Map([...claim].filter(([archetype]) => CLAIM_WIRED.has(archetype)));
+    for (const { family, prefix, wired } of GALAXY_FAMILIES) {
+      const loaded = this.manifest.assets.filter(
+        (asset) => asset.family === family && this.textures.exists(asset.id),
+      );
+      const art = enemyArt(
+        (archetype) => this.cache.json.get(`${family}-jets-${archetype}`),
+        (archetype) => this.cache.json.get(`${family}-hardpoints-${archetype}`),
+        composedArchetypes(this.familyParts.get(family) ?? []),
+        loaded,
+        enemyFrameSets(loaded, prefix),
+        prefix,
+      );
+      this.familyArts.set(family, new Map([...art].filter(([archetype]) => wired.has(archetype))));
+    }
   }
 
-  /** The family a galaxy's craft are drawn in: Cartwheel's claim jumpers, else Gadget's coral. */
-  private claimed(archetype: string): boolean {
-    return this.model.state.flight?.sector === 2 && CLAIM_WIRED.has(archetype);
+  /**
+   * The family the flight's galaxy draws a craft in: its own (Cartwheel's claim jumpers,
+   * Andromeda's garnet drones), else Gadget's coral.
+   */
+  private familyOf(archetype: string): EnemyFamily | undefined {
+    const sector = this.model.state.flight?.sector;
+    return galaxyFamily(sector === undefined ? undefined : GALAXY_ID[sector], archetype);
   }
 
   /** A craft's art in its galaxy's family, while that family's frames are loaded. */
   private familyArt(archetype: string): EnemyArt<Asset> | undefined {
-    return this.claimed(archetype) ? this.claimArt.get(archetype) : this.enemyArt.get(archetype);
+    const family = this.familyOf(archetype);
+    return family
+      ? this.familyArts.get(family.family)?.get(archetype)
+      : this.enemyArt.get(archetype);
   }
 
   /**
@@ -1706,20 +1784,20 @@ export class PrototypeScene extends Scene {
    * keeps its vector placeholder.
    */
   private loadEnemyParts(archetype: string): void {
-    const claim = this.claimed(archetype);
+    const family = this.familyOf(archetype);
     const sector = this.model.state.flight?.sector;
-    // Coral parts are in the core manifest; claim parts in their galaxy's, which may not have
-    // loaded when the craft first draws.
+    // Coral parts are in the core manifest; a galaxy family's in its galaxy's, which may not
+    // have loaded when the craft first draws.
     const parts = enemyPartsToLoad(
-      !claim || (sector !== undefined && this.galaxyManifests.has(sector)),
+      !family || (sector !== undefined && this.galaxyManifests.has(sector)),
       (id) => this.textures.exists(id),
-      claim ? this.claimPartAssets : this.partAssets,
+      family ? (this.familyParts.get(family.family) ?? []) : this.partAssets,
       archetype,
     );
     if (parts === null) {
       return;
     }
-    this.partLoads.add(`${claim ? "claim" : "coral"}:${archetype}`);
+    this.partLoads.add(`${family?.family ?? "coral"}:${archetype}`);
     if (parts.length === 0) {
       return;
     }
@@ -1903,6 +1981,7 @@ export class PrototypeScene extends Scene {
       rock.sprite?.setVisible(false);
     }
     this.ship.setVisible(Boolean(flight) && this.model.state.mode === "space");
+    this.drawHaze(flight && this.model.state.mode === "space" ? flight.sector : null);
     if (!flight || this.model.state.mode !== "space") {
       // Leaving the flight forgets every seen object.
       this.edgeMarkers.update(null, new Set());
@@ -3519,7 +3598,8 @@ export class PrototypeScene extends Scene {
       return;
     }
     const data = this.destruction;
-    const shards = (this.claimed(wreck.archetype) ? this.claimShards : this.shards).get(
+    const family = this.familyOf(wreck.archetype);
+    const shards = (family ? this.familyShards.get(family.family) : this.shards)?.get(
       wreck.archetype,
     );
     const timing = data?.archetypes[wreck.archetype];
@@ -3607,7 +3687,7 @@ export class PrototypeScene extends Scene {
 
   private drawObject(object: SpaceObject): void {
     // A heavy anywhere in the loaded region starts loading its parts before it comes into view.
-    const family = object.enemy && this.claimed(object.enemy.archetype) ? "claim" : "coral";
+    const family = (object.enemy && this.familyOf(object.enemy.archetype)?.family) ?? "coral";
     if (object.enemy && !this.partLoads.has(`${family}:${object.enemy.archetype}`)) {
       this.loadEnemyParts(object.enemy.archetype);
     }

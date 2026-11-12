@@ -28,6 +28,8 @@ import {
   enemyJetsPath,
   enemyJetTriangles,
   enemyPartFrame,
+  GALAXY_FAMILIES,
+  galaxyFamily,
   HIT_FLASH_MS,
   HitFlashes,
   hullHeading,
@@ -545,5 +547,26 @@ describe("claim jumper art", () => {
       expect(ids(wrecked).some((id) => id.includes("-destroyed-"))).toBe(true);
       expect(ids(wrecked).some((id) => id.includes("-intact-"))).toBe(false);
     }
+  });
+});
+
+describe("galaxy enemy families", () => {
+  it("draws Cartwheel's claim jumpers and Andromeda's garnet drones, else Gadget's coral", () => {
+    expect(galaxyFamily("cartwheel", "platform")?.family).toBe("claim");
+    expect(galaxyFamily("andromeda", "swarm")?.family).toBe("garnet");
+    // Andromeda has no garnet platform, and the other galaxies fly the coral family.
+    expect(galaxyFamily("andromeda", "platform")).toBeUndefined();
+    expect(galaxyFamily("sunflower", "swarm")).toBeUndefined();
+    expect(galaxyFamily(undefined, "swarm")).toBeUndefined();
+  });
+
+  it("finds every garnet archetype's full frame set in Andromeda's manifest", () => {
+    const garnet = GALAXY_FAMILIES.find(({ family }) => family === "garnet")!;
+    const assets = (manifest.assets as unknown as (EnemyFrame & { family?: string })[]).filter(
+      (asset) => asset.family === "garnet",
+    );
+    expect([...enemyFrameSets(assets, garnet.prefix).keys()].sort()).toEqual(
+      [...garnet.wired].sort(),
+    );
   });
 });

@@ -24,6 +24,8 @@ export interface CoreManifest<T> {
 
 /** A galaxy manifest's data links, by the names the scene loads them under. */
 export interface GalaxyLinks {
+  /** The galaxy's backdrop haze placement (haze.json). */
+  readonly backdropHaze?: string;
   readonly cartwheelDebris?: string;
   readonly oreField?: string;
   readonly whales?: string;
@@ -38,6 +40,7 @@ export interface GalaxyManifest<T> {
 }
 
 const LINKS: readonly (keyof GalaxyLinks)[] = [
+  "backdropHaze",
   "cartwheelDebris",
   "oreField",
   "whales",

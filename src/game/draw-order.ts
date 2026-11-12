@@ -88,3 +88,9 @@ export function adaDepth(
     pivotDepth,
   );
 }
+
+/**
+ * A galaxy's backdrop haze (art/galaxies.md "Backdrop haze"): over the field's background fill,
+ * under the backdrop rocks (-1), the dust specks and every play object.
+ */
+export const HAZE_DEPTH = -2;
