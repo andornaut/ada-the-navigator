@@ -116,8 +116,8 @@ the pickups ([Stardust](stardust.md#pickup), the
 [ore nugget](cartwheel-props.md#ore-nugget), [weapon pickups](weapons.md#pickups))
 and the [asteroids](asteroids.md#collision). Reused portrait PNGs remain byte-identical to their documented source exports,
 and their sprite metadata changes only the local image filename.
-`art/tools/andromeda-portraits.ts` adapts Pip's and the settler's portraits from
-Archie sources in `art/sources/`. `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
+`art/tools/andromeda-portraits.ts` draws Andromeda's Munix portraits from the bust parts in
+`art/tools/bust.ts`. `art/tools/portraits.ts` draws the Astra and General Gadget portraits and the
 compact conversation sheets ([Conversation portraits](conversation.md)). No generated kit source or assets
 from another game's build pipeline are required.
 

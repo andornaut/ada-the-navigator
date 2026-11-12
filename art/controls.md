@@ -154,6 +154,12 @@ HUD visible and live. Geometry is `CONVERSATION_BOX` in
 | General Gadget tab | `#d68b72` | The drones' coral hull                       |
 | Mom tab            | `#9fd98a` | Her green cardigan                           |
 | Dad tab            | `#c4a6ec` | His purple T-shirt                           |
+| Pip tab            | `#9fb0ff` | The courier cap                              |
+| Wick tab           | `#e0b48e` | The settler's brown coat                     |
+| Settler tab        | `#f0c0e0` | The greeter's rose hat                       |
+| Lumen tab          | `#fde58a` | The lantern's light                          |
+| Dial tab           | `#d0d8ff` | The periwinkle shell                         |
+| Cog tab            | `#a8f0c0` | The green LEDs                               |
 
 Tabs, labels, lines and portraits are fully opaque; only the panel is
 translucent. Tab labels are `TYPE.label` in ink; lines are `TYPE.body` in
@@ -173,6 +179,12 @@ sits on open space.
 | Penny label    | `#181425` | `#feae34`                                  | 9.71:1   |
 | Unknown voice  | `#181425` | `#b8b3c9`                                  | 8.86:1   |
 | General Gadget | `#181425` | `#d68b72`                                  | 6.69:1   |
+| Pip            | `#181425` | `#9fb0ff`                                  | 8.69:1   |
+| Wick           | `#181425` | `#e0b48e`                                  | 9.51:1   |
+| Settler        | `#181425` | `#f0c0e0`                                  | 11.43:1  |
+| Lumen          | `#181425` | `#fde58a`                                  | 14.37:1  |
+| Dial           | `#181425` | `#d0d8ff`                                  | 12.82:1  |
+| Cog            | `#181425` | `#a8f0c0`                                  | 13.63:1  |
 
 The panel composites to `#1e1b2a` over the base field, `#5b534c` over
 Sunflower, `#241923` over Cartwheel, `#161d2a` over Whirlpool, `#1d1424` over

@@ -269,9 +269,10 @@ Speed jets ramp slow to fast, in place of Gadget's jet colours:
 
 ## Portraits
 
-Pip's and the settler's conversation and storybook portraits, adapted from
-Archie portrait sheets ([provenance](portraits.md#andromeda-adaptations)). Rebuild
-with `node art/tools/andromeda-portraits.ts`; it writes
+Andromeda's conversation and storybook portraits, drawn as Munix, Andromeda's
+androids, in the chibi bust style of the set: Pip, Wick (the story's settler,
+on the `settler` sheet), the settlements' greeter and the station keepers. Rebuild with
+`node art/tools/andromeda-portraits.ts`; it writes
 `public/art/andromeda/portraits/` and replaces its own entries at the end of
 Andromeda's manifest. Sizes, frames, the frame and face colours and the
 integer nearest-neighbour scale follow
@@ -283,13 +284,34 @@ integer nearest-neighbour scale follow
 | `pip-portrait-compact`     | `pip-compact.png`       | The same, 22 px, displayed at 44    |
 | `settler-portrait`         | `settler.png`, 96 by 32 | `happy` 0, `neutral` 1, `worried` 2 |
 | `settler-portrait-compact` | `settler-compact.png`   | The same, 22 px, displayed at 44    |
+| `settler-greeter-portrait` | `settler-greeter.png`   | `neutral` 0                         |
+| `lumen-portrait`           | `lumen.png`             | `neutral` 0                         |
+| `dial-portrait`            | `dial.png`              | `neutral` 0                         |
+| `cog-portrait`             | `cog.png`               | `neutral` 0                         |
 
+- A Munix: a pearl dome `#e9e3da` (shade `#b3aba1`, light `#ffffff`) with a
+  seam over the crown, periwinkle ear discs, a metal neck `#8b9bb4` and a
+  beacon antenna, its ball lit `#fee761`. The face is a dark screen `#232845`
+  with LED eyes and mouth `#8ff3ff`.
+- Moods show on the screen: `happy` LED arcs, a smile and pink cheek LEDs
+  `#f6757a`; `neutral` tall LED eyes and a short line; `worried` slanted LED
+  brows, a wobbling mouth and the set's sweat drop.
 - Pip: a young courier under a periwinkle cap `#8f9cf0` (brim and shade
-  `#5b6093`) with a white badge, a periwinkle jacket and a tan satchel strap
-  `#e4a672` with an amber buckle.
-- The settler: a brimmed hat and coat with a periwinkle tie `#5b6093`.
-- Compact frames are exact 22 by 22 crops from the hat or cap to the chin: Pip
-  at (4, 5), the settler at (5, 4).
+  `#5b6093`) with a white badge and the antenna through it, a periwinkle jacket
+  with a panel seam and a tan satchel strap `#e4a672` with an amber buckle.
+- Wick, on the `settler` sheet: a brimmed hat `#b86f50` with a periwinkle band,
+  a brown coat `#c28569`, a pearl collar and a periwinkle tie `#5b6093`.
+- The settlements' greeter (tab "Settler"), every settler but Wick: a rose
+  bobble hat `#f2a7c6` (shade `#c46f98`) with a white pompom and the antenna
+  through it, and a rose sweater with a periwinkle stripe and a pearl collar.
+- The station keepers, each with the keepers' mic boom: Lumen, a lantern
+  antenna lit `#fee761` and warm `#ffe9a0` LEDs on a periwinkle body; Dial, a
+  periwinkle shell `#b9c2f7`, big pearl dial ears, twin lit antennae and a
+  pearl body; Cog, a silver shell `#c0cbdc`, a cog crown round a lit hub, green
+  `#9ff7a0` LEDs and a deep periwinkle body.
+- Each `-compact` sheet is the exact 22 by 22 crop of its 32 frames: Pip, Wick
+  and Dial at (5, 2), the greeter, Lumen and Cog at (5, 1), from the antenna
+  ball or crown to the chin.
 
 ## Palette
 

@@ -8462,6 +8462,142 @@
         "neutral": 1,
         "worried": 2
       }
+    },
+    {
+      "id": "cog-portrait",
+      "path": "/art/andromeda/portraits/cog.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "dial-portrait",
+      "path": "/art/andromeda/portraits/dial.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "lumen-portrait",
+      "path": "/art/andromeda/portraits/lumen.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "settler-greeter-portrait",
+      "path": "/art/andromeda/portraits/settler-greeter.png",
+      "width": 32,
+      "height": 32,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "cog-portrait-compact",
+      "path": "/art/andromeda/portraits/cog-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "dial-portrait-compact",
+      "path": "/art/andromeda/portraits/dial-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "lumen-portrait-compact",
+      "path": "/art/andromeda/portraits/lumen-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
+    },
+    {
+      "id": "settler-greeter-portrait-compact",
+      "path": "/art/andromeda/portraits/settler-greeter-compact.png",
+      "width": 22,
+      "height": 22,
+      "displayWidth": 44,
+      "displayHeight": 44,
+      "facing": "front",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "frameWidth": 22,
+      "frameHeight": 22,
+      "frames": {
+        "neutral": 0
+      }
     }
   ],
   "backdropHaze": "/art/andromeda/haze.json"
