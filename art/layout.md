@@ -590,6 +590,57 @@ ammunition count string; Laser shows none.
 - Count strings fit one line at every value: the widest pill (38.69) leaves
   9.31 inside the 48 target and 18.31 between neighbouring pills.
 
+### Edge markers
+
+Constants: `EDGE_MARKERS`, `EDGE_MARKER_GLYPHS`, `src/data/edge-markers.ts`;
+glyphs and colours in [Space palette](space-palette.md#edge-markers). Each
+marker's centre is where the ray from the view's centre toward its object meets
+the marker rect: the game area intersected with
+`safeRect(insets, SAFE_MARGIN.edge, view)`, moved in on every side by
+`edgeMarkerInset`, the glyph's half extent plus the light-field outline (1 on
+a light field, 0 on a dark one) plus `EDGE_MARKERS.gap` 1. So every marker's
+outermost drawn pixel sits 1 inside the safe game area, never under a notch,
+a curved corner or the home bar.
+
+| Kind                     | Half extent | Inset, dark | Inset, light |
+| ------------------------ | ----------: | ----------: | -----------: |
+| Enemy                    |           3 |           4 |            5 |
+| Heavy, guard and station |           5 |           6 |            7 |
+
+Safe game area and the centre lines of the 10-across kinds (dark field; on a light
+field each line moves 1 further in, and an enemy's lines sit 2 further out):
+
+| View                  | Safe game area, x and y | Left, right centres | Top, bottom centres | Corners                                        |
+| --------------------- | ----------------------- | ------------------- | ------------------- | ---------------------------------------------- |
+| 720x360, 1280x720     | 0 to 720, 0 to 360      | 6, 714              | 6, 354              | (6, 6), (714, 6), (6, 354), (714, 354)         |
+| 720x360, phone insets | 43 to 677, 0 to 341     | 49, 671             | 6, 335              | (49, 6), (671, 6), (49, 335), (671, 335)       |
+| 844x390               | 29 to 749, 0 to 360     | 35, 743             | 6, 354              | (35, 6), (743, 6), (35, 354), (743, 354)       |
+| 844x390, insets 43    | 43 to 736.08, 0 to 341  | 49, 730.08          | 6, 335              | (49, 6), (730.08, 6), (49, 335), (730.08, 335) |
+
+Phone insets are 43 left and right, 0 top and 19 bottom. The marker rect takes
+each edge's own inset, so a one-sided notch moves only its side.
+
+Clearance along the edges, from the band the 10-across markers can occupy
+(dark field; a light field's band is 2 deeper):
+
+| Edge and control                                 | 720x360 | Phone insets | 844x390 | 844x390, insets 43 |
+| ------------------------------------------------ | ------: | -----------: | ------: | -----------------: |
+| Top band to the pause and weapon discs           |       1 |            1 |       1 |                  1 |
+| Side band to the pause and weapon discs          |       1 |      11 over |       1 |            11 over |
+| Side band to the stick rings                     |      29 |      11 over |      29 |                 15 |
+| Bottom band to the sticks and shield pill bottom |      29 |           29 |      29 |                 29 |
+
+- Markers draw under the sticks (`STICK_DEPTHS`) and the HTML HUD, so an
+  overlap hides part of a marker and never covers a control.
+- Top band: 1 to 11 on a dark field and 1 to 13 on a light one; the discs start
+  at 12, so a light-field marker directly behind a disc loses 1 row to it.
+- With phone insets the side bands (44 to 54, or 44 to 56 lit) share their
+  columns with the pause disc and the outermost weapon disc, which start at
+  the same 43 inset: a side marker in the HUD row's span (12 to 58.5, count
+  pills included) sits under that disc. At 720x360 with phone insets the stick
+  rings start at the 43 inset too, so a side marker in the rings' span (228 to 301) sits under the open ring's band, and shows through its clear centre.
+- The shield pill and the Use disc sit 29 or more from every band.
+
 ### Loading bar
 
 A thin status line for loading, shared by every game through game-kit (the
