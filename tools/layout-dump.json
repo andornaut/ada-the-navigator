@@ -397,6 +397,7 @@
       },
       "STATUS_PILL": {
         "cargoIcon": 20,
+        "count": 40.92,
         "divider": {
           "height": 16,
           "width": 1
@@ -19353,27 +19354,31 @@
       "statusPillWidth": [
         {
           "args": [
-            0
+            false,
+            false
           ],
-          "result": 42
+          "result": 82.92
         },
         {
           "args": [
-            26.7
+            false,
+            true
           ],
-          "result": 68.7
+          "result": 127.92
         },
         {
           "args": [
-            48.94
+            true,
+            false
           ],
-          "result": 90.94
+          "result": 174.84
         },
         {
           "args": [
-            109.37
+            true,
+            true
           ],
-          "result": 151.37
+          "result": 219.84
         }
       ],
       "viewScale": [

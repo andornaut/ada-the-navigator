@@ -200,13 +200,16 @@ export function hudRowWidth(count: number): number {
 // edge is a gap right of the pause press area while the pause button shows, and on the HUD rect's
 // left edge (xAlone) while it is hidden, so the leftmost drawn art always sits HUD_EDGE in; it
 // centres on the HUD row's centre line, relative to the HUD rect's top-left corner. Parts, left
-// to right: the 20 Stardust icon, a mark gap and the count; while Ada carries ore, a divider (12,
-// 1x16, 12), the 20 ore icon, a mark gap and its count; while she carries a job or story item or
-// tows a craft, a divider and its 20 icon last. A +N tick sits under its count, centred across on
+// to right: the 20 Stardust icon, a mark gap and the count in its fixed slot; while Ada carries
+// ore, a divider (12, 1x16, 12), the 20 ore icon, a mark gap and its count in another; while she
+// carries a job or story item or tows a craft, a divider and its 20 icon last. The segments shown
+// fix the width, so a count never moves the pill's edge. A +N tick sits under its count, centred across on
 // it, its 20 line box top tick.top below the count's (HUD rect top + 36.5, on the item notice's
 // row).
 export const STATUS_PILL = {
   cargoIcon: 20,
+  // A count's slot: "999m", the widest four-character count, in TYPE.label.
+  count: 40.92,
   divider: { height: 16, width: 1 },
   dividerGap: 12,
   markGap: SPACING.markGap,
@@ -223,14 +226,20 @@ export const STATUS_PILL = {
   y: HUD_ROW.centre - PILL.height / 2,
 } as const;
 
-// The pill's width for a countWidth count: the padding, the Stardust icon and its mark gap, plus
-// the count; an ore count of oreWidth adds a divider with its gaps, the ore icon, a mark gap and
-// the count, and something aboard a divider and its icon.
-export function statusPillWidth(countWidth: number, oreWidth?: number, aboard = false): number {
-  const { cargoIcon, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
+// The pill's width for the segments shown: the padding, the Stardust icon, its mark gap and count
+// slot; ore adds a divider with its gaps, the ore icon, a mark gap and a count slot, and something
+// aboard a divider with its gaps and its icon.
+export function statusPillWidth(ore: boolean, aboard: boolean): number {
+  const { cargoIcon, count, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
   const segment = 2 * dividerGap + divider.width + cargoIcon;
-  const ore = oreWidth === undefined ? 0 : segment + markGap + oreWidth;
-  return 2 * pill.padding + stardustIcon + markGap + countWidth + ore + (aboard ? segment : 0);
+  return (
+    2 * pill.padding +
+    stardustIcon +
+    markGap +
+    count +
+    (ore ? segment + markGap + count : 0) +
+    (aboard ? segment : 0)
+  );
 }
 
 // The shield pill (art/layout.md "Shield pill"): one PILL at the bottom centre holding the 20

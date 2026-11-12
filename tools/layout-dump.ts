@@ -226,9 +226,11 @@ function viewportCases(call: ReturnType<typeof recorder>): void {
 }
 
 function stateCases(call: ReturnType<typeof recorder>): void {
-  // Count widths: none, "125", "12,500" and the widest the four-weapon clearance allows.
-  for (const countWidth of [0, 26.7, 48.94, 109.37]) {
-    call("playView.ts", "statusPillWidth", playView.statusPillWidth, countWidth);
+  // The segments shown: Stardust alone, with ore, with cargo, and with both.
+  for (const ore of [false, true]) {
+    for (const aboard of [false, true]) {
+      call("playView.ts", "statusPillWidth", playView.statusPillWidth, ore, aboard);
+    }
   }
   for (const inner of [400, 602, 661.08, 715.08, 1000]) {
     call("storyPage.ts", "storyChoiceWidth", storyPage.storyChoiceWidth, inner);

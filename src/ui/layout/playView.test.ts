@@ -43,6 +43,8 @@ import {
 } from "./touchControls.ts";
 import { playLayout, uncoveredInsets, viewProperties } from "./viewScale.ts";
 
+const PHONE: Insets = { bottom: 19, left: 43, right: 43, top: 0 };
+
 describe("view scale", () => {
   it.each([
     [844, 390, 1.0833, 779.08, 360, 52],
@@ -293,10 +295,24 @@ describe("HUD anchors", () => {
     expect(countTop + STATUS_PILL.tick.top - (STATUS_PILL.y + PILL.height)).toBe(SPACING.markGap);
   });
 
-  it("measure the pill as 42 plus the count, with no shield in it", () => {
-    expect(statusPillWidth(0)).toBe(42);
-    expect(statusPillWidth(40.92)).toBeCloseTo(82.92, 9);
+  it("fix the pill's width by its segments: 82.92, 174.84 with ore, 219.84 with both, 127.92 with cargo", () => {
+    expect(STATUS_PILL.count).toBe(40.92);
+    expect(statusPillWidth(false, false)).toBeCloseTo(82.92, 9);
+    expect(statusPillWidth(true, false)).toBeCloseTo(174.84, 9);
+    expect(statusPillWidth(true, true)).toBeCloseTo(219.84, 9);
+    expect(statusPillWidth(false, true)).toBeCloseTo(127.92, 9);
     expect("bar" in STATUS_PILL).toBe(false);
+  });
+
+  it("centre each +N tick on its count slot, pill left + 54.46 for Stardust and + 146.38 for ore", () => {
+    const { cargoIcon, count, divider, dividerGap, markGap, pill, stardustIcon } = STATUS_PILL;
+    const stardust = pill.padding + stardustIcon + markGap + count / 2;
+    const ore =
+      stardust + count / 2 + 2 * dividerGap + divider.width + cargoIcon + markGap + count / 2;
+    expect(stardust).toBeCloseTo(54.46, 9);
+    expect(ore).toBeCloseTo(146.38, 9);
+    // The widest label, "+9,999" with its outline, 51.38: the two never meet.
+    expect(ore - stardust - 51.38).toBeGreaterThan(0);
   });
 
   it("make the shield pill 202 wide: padding, the 20 icon, a mark gap and the 160x12 bar", () => {
@@ -343,28 +359,37 @@ describe("HUD anchors", () => {
     expect(aim.x - 36 - (rect.x + rect.width)).toBeGreaterThanOrEqual(142);
   });
 
-  it("add 45 per cargo segment (a divider with its gaps and a 20 icon), and the ore count after a mark gap", () => {
+  it("add 45 for the cargo segment and 91.92 for the ore segment", () => {
     expect(STATUS_PILL.cargoIcon).toBe(20);
-    expect(statusPillWidth(26.7, undefined, true) - statusPillWidth(26.7)).toBeCloseTo(45, 9);
-    expect(statusPillWidth(26.7, 17.8) - statusPillWidth(26.7)).toBeCloseTo(
-      45 + SPACING.markGap + 17.8,
-      9,
-    );
-    expect(statusPillWidth(26.7, 17.8, true) - statusPillWidth(26.7)).toBeCloseTo(
-      90 + SPACING.markGap + 17.8,
-      9,
-    );
+    expect(statusPillWidth(false, true) - statusPillWidth(false, false)).toBeCloseTo(45, 9);
+    expect(statusPillWidth(true, false) - statusPillWidth(false, false)).toBeCloseTo(91.92, 9);
   });
 
-  it("keep the pill with a 109.37 count a page inset clear of four weapons", () => {
-    // 720 with phone insets; the +N labels sit under their counts, adding nothing across.
-    const view = { height: 360, width: 720 };
-    const hud = hudRect({ bottom: 19, left: 43, right: 43, top: 0 }, view);
-    const pillRight = hud.x + STATUS_PILL.x + statusPillWidth(109.37);
-    const leftmost = hud.x + hud.width + hudButtonTarget(3).x;
-    expect(leftmost).toBe(465.5);
-    expect(leftmost - pillRight).toBeGreaterThan(SPACING.pageInset);
-  });
+  it.each([
+    ["720x360", { height: 360, width: 720 }, NO_INSETS, 62.75, 382.5, 83.91],
+    ["720x360 with phone insets", { height: 360, width: 720 }, PHONE, 93.75, 351.5, 21.91],
+    [
+      "844x390 with phone insets",
+      logicalView({ height: 390, width: 844 }),
+      PHONE,
+      93.75,
+      410.58,
+      80.99,
+    ],
+  ] as const)(
+    "keep the widest pill a page inset clear of six weapons at %s",
+    (_, view, insets, left, leftmost, clearance) => {
+      const hud = hudRect(insets, view);
+      const pillLeft = hud.x + STATUS_PILL.x;
+      const first = hud.x + hud.width + hudButtonTarget(5).x;
+      expect(pillLeft).toBeCloseTo(left, 2);
+      expect(first).toBeCloseTo(leftmost, 2);
+      expect(first - SPACING.pageInset - pillLeft - statusPillWidth(true, true)).toBeCloseTo(
+        clearance,
+        2,
+      );
+    },
+  );
 });
 
 // Every screen the game draws on, CSS px: the user's wide phone (about 2000x899 device px at DPR
@@ -421,7 +446,12 @@ describe.each(SCREENS)("every control inside the game area at %o", (screen) => {
     it(`with ${name}, puts the pause disc, the status pill and four weapon discs in it`, () => {
       const inside = (rect: Rect) => contains(area, rect) && contains(hud, rect);
       expect(inside(fromLeft({ height: 33, width: 33, x: 0, y: 0 }))).toBe(true);
-      const pill = { height: 28, width: statusPillWidth(40), x: STATUS_PILL.x, y: STATUS_PILL.y };
+      const pill = {
+        height: 28,
+        width: statusPillWidth(true, true),
+        x: STATUS_PILL.x,
+        y: STATUS_PILL.y,
+      };
       expect(contains(area, fromLeft(pill))).toBe(true);
       for (const index of [0, 1, 2, 3]) {
         const target = fromRight(hudButtonTarget(index));

@@ -3,6 +3,7 @@ import { font, fromAreaBottom, fromHudEdge, hudCentreX, units } from "./layout/c
 import { SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
+import { ammoCount } from "./weapons.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill
 // beside pause holding the Stardust count, then, while Ada carries them, her ore count and the job
@@ -149,7 +150,8 @@ export function shieldMarkColour(tone: ShieldTone, pulse: number): string {
     : STATUS_COLOURS.low;
 }
 
-// The count as Gameplay shows it: a whole number with thousands separators.
+// An exact count, en-US grouped: the counts' accessible labels, the +N ticks and the Ship card
+// (gameplay/economy.md). The pill draws its counts in four characters with ammoCount.
 const COUNT_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 export function stardustCount(amount: number): string {
   return COUNT_FORMAT.format(Math.max(0, Math.floor(amount)));
@@ -312,10 +314,13 @@ export const STATUS_PILL_STYLE = `
 .ada-controls .ada-status-cargo[data-kind=towing]{
   ${cargoIcon(CARGO_ICONS.towing)}
 }
-/* A count's slot: the tick hangs from it, so the count's bump never moves the tick. */
+/* A count's fixed slot, the count left-aligned in it: the tick hangs from it, so neither a count
+   nor its bump moves the tick or the pill's edge. */
 .ada-controls .ada-status-slot{
   position:relative;
-  display:inline-block
+  flex:none;
+  display:inline-block;
+  width:${units(STATUS_PILL.count)}
 }
 .ada-controls .ada-status-slot[hidden]{
   display:none
@@ -364,6 +369,7 @@ function createCounter(
 ): {
   readonly count: HTMLSpanElement;
   readonly slot: HTMLSpanElement;
+  // The count, its exact accessible label (null: the exact count alone) and the time.
   readonly set: (value: number, label: string | null, nowMs: number) => void;
 } {
   const slot = document.createElement("span");
@@ -425,12 +431,13 @@ function createCounter(
   return {
     count,
     set(value, label, nowMs) {
-      const next = stardustCount(value);
+      const next = ammoCount(value);
       if (text.data !== next) {
         text.data = next;
       }
-      if (label !== null && count.getAttribute("aria-label") !== label) {
-        count.setAttribute("aria-label", label);
+      const spoken = label ?? stardustCount(value);
+      if (count.getAttribute("aria-label") !== spoken) {
+        count.setAttribute("aria-label", spoken);
       }
       if (shown !== undefined && value > shown) {
         gain(value - shown, nowMs);

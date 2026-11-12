@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { units } from "./layout/css.ts";
 import {
   blendHex,
   CARGO_ICONS,
+  createStatusPill,
   ShieldBar,
   shieldMarkColour,
   stardustCount,
@@ -158,11 +159,88 @@ describe("status pill shield bar", () => {
 });
 
 describe("status pill count", () => {
-  it("shows the count with thousands separators", () => {
+  it("gives exact counts en-US grouped for labels, ticks and the Ship card", () => {
     expect(stardustCount(0)).toBe("0");
     expect(stardustCount(125)).toBe("125");
     expect(stardustCount(12500)).toBe("12,500");
     expect(stardustCount(1234567)).toBe("1,234,567");
+  });
+
+  // A stand-in for the DOM members the pill uses.
+  class FakeNode {
+    readonly attributes = new Map<string, string>();
+    children: FakeNode[] = [];
+    className = "";
+    data = "";
+    readonly dataset: Record<string, string> = {};
+    hidden = false;
+    readonly style = { setProperty: vi.fn() } as Record<string, unknown>;
+    textContent = "";
+    append(...nodes: FakeNode[]): void {
+      this.children.push(...nodes);
+    }
+    getAttribute(name: string): string | null {
+      return this.attributes.get(name) ?? null;
+    }
+    removeAttribute(name: string): void {
+      this.attributes.delete(name);
+    }
+    setAttribute(name: string, value: string): void {
+      this.attributes.set(name, value);
+    }
+  }
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+  const pill = () => {
+    vi.stubGlobal("document", {
+      createElement: () => new FakeNode(),
+      createTextNode: () => new FakeNode(),
+    });
+    const parent = new FakeNode();
+    const status = createStatusPill(parent as unknown as HTMLElement, {
+      reducedMotion: () => true,
+      shieldLabel: "Shield",
+    });
+    const root = parent.children[0]!;
+    const count = (kind: string) =>
+      root.children.find((node) => node.className.includes(`ada-status-${kind}-slot`))!
+        .children[0]!;
+    return { count, status };
+  };
+
+  it.each([
+    [9999, "9999", "9,999"],
+    [10_000, "10k", "10,000"],
+    [999_999, "999k", "999,999"],
+    [1_000_000, "1m", "1,000,000"],
+    [999_999_999, "999m", "999,999,999"],
+    [1_234_567_890, "999m", "1,234,567,890"],
+  ] as const)("draws %d as %s in four characters, its label exact", (amount, shown, exact) => {
+    const { count, status } = pill();
+    const view = {
+      aboard: null,
+      capacity: 100,
+      lightField: false,
+      ore: amount,
+      oreLabel: "Ore",
+      recharging: false,
+      shield: 100,
+      stardust: amount,
+      stardustLabel: `${exact} Stardust`,
+    };
+    status.setStatus(view, 0);
+    for (const kind of ["stardust", "ore"]) {
+      expect(count(kind).children[0]!.data).toBe(shown);
+      expect(shown.length).toBeLessThanOrEqual(4);
+    }
+    expect(count("stardust").getAttribute("aria-label")).toBe(`${exact} Stardust`);
+    expect(count("ore").getAttribute("aria-label")).toBe(exact);
+  });
+
+  it("sets each count in its fixed 40.92 slot", () => {
+    const slot = STATUS_PILL_STYLE.split("}").find((part) => part.includes(".ada-status-slot{"));
+    expect(slot).toContain(`width:${units(40.92)}`);
   });
 });
 

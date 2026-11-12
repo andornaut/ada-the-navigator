@@ -87,6 +87,7 @@ import { createRestartCard } from "../ui/restart-card.ts";
 import { createRouteMap, type RouteMapView } from "../ui/route-map.ts";
 import { aboardLabel, type ShipView } from "../ui/ship-card.ts";
 import { createStationView } from "../ui/station.ts";
+import { stardustCount } from "../ui/status-pill.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen } from "../ui/title-screen.ts";
 import {
@@ -1746,7 +1747,7 @@ export class PrototypeScene extends Scene {
       shield: state.flight?.shield ?? 0,
       stardust: state.economy.stardust,
       stardustLabel: fill(PROTOTYPE.labels.stardustAmount ?? "", {
-        amount: state.economy.stardust,
+        amount: stardustCount(state.economy.stardust),
       }),
     });
     this.station.setOpen(state.mode === "space" && Boolean(state.docked));
