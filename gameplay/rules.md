@@ -95,8 +95,10 @@ that ends in a named action, such as "Pick up the rock.", shows that action in
 place of Next. Skip passes every remaining page and scene of the run, taking the
 default path through choices and leaving optional questions unasked, and stops
 where play resumes: galaxy selection when the run leads aboard, or Ada's room
-page with its named action. Skip shows on every page except that room page and
-the sleep scene. A scene's effects (a chapter opened or resolved, the prologue
+page with its named action. Skip shows only where it passes at least one page that Next, or the page's named
+action, would show. It is hidden on the last page before galaxy selection, on
+the page before Ada's room page, on that room page and on the sleep scene. Skip sits in the top-right corner, apart from
+Previous and Next, so tapping quickly through pages cannot skip a run. A scene's effects (a chapter opened or resolved, the prologue
 seen) apply as the scene ends; Previous back into an ended scene does not undo
 them. Choice buttons are
 all secondary, with focus on the first. A choice page offers
