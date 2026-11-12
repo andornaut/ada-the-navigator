@@ -127,10 +127,17 @@ Tech:
 - Every asteroid can be destroyed; HP and Stardust follow [Classes](#classes).
 - Drifting rocks follow seeded closed loops that never overlap other rocks, so
   rocks never bounce off each other.
+- Every hit, bounce, pickup, dock and tow contact uses drawn silhouettes, and
+  placement keeps drawn objects from overlapping on screen.
 - Shots hit, and ships (Ada's and enemies') bounce off, a rock's current
   frame's drawn silhouette (`collision`). Rocks deal no damage.
-- Large and huge rocks keep their `footprintRadius` plus 160 world units clear of
-  stations, destinations and launch points, and stay out of passages.
+- A rock's `silhouetteRadius` is the greatest distance from its pivot to a
+  `collision` vertex over all its frames, in display px. Tech derives it at
+  load from the parts; the data stores no radius for it.
+- Large and huge rocks keep their `silhouetteRadius` plus 160 clear of
+  stations, destinations and launch points, and stay out of passages. Any
+  clearance written as radius plus margin uses `silhouetteRadius`;
+  centre-to-centre spacings are unchanged.
 - Draw play objects in ascending pivot screen y.
 
 ## Drift cue
@@ -191,7 +198,8 @@ timing:
     - `collision`: the drawn silhouette as convex `[x, y]` parts in frame px.
       Use it for shot hits, ship contact, drawing bounds and the drift cue.
     - `footprint`: the rock's base on the world plane as convex `[x, y]`
-      parts in world units from the pivot. Use it for placement and spawning.
+      parts in world units from the pivot. Play does not use it: contact and
+      placement use `collision`.
 - `backdrop`: `sideScale`, `rule` (`lift`, `chromaScale`, `lightDrop`) and `sprites`, each
   with `id`, `file`, `frame`, `display`, `pivot` and `tint` (`backdropLit`).
 - `tints`: `backdropLit` and `backdropSide` for `base` and each galaxy id.
@@ -312,9 +320,8 @@ resource rock reads apart from plain stone at 1x without relying on hue.
 
 - Each `resource-{shape}` uses its plain `asteroid-{shape}`'s seed, aspect,
   width and scale, so its base ring, `footprint` parts and `footprintRadius`
-  are identical frame for frame; the build fails if they differ. Place them
-  on the footprints and collide on the drawn silhouettes exactly as for
-  asteroids.
+  are identical frame for frame; the build fails if they differ. Place and
+  collide them on the drawn silhouettes exactly as for asteroids.
 - Medium rocks spin through the same 24 frames as medium asteroids; large
   rocks have one still frame. Drift data is the class's, as for asteroids.
 - The cluster grows from the crown facets nearest the highest one, each
@@ -352,7 +359,7 @@ crystals (at most 1.31 frame px²) filled as the traced outline drops it:
 intersection over union 0.991 or more, and no boundary more than 1 frame px
 from the drawing. Six frames fill a notch tip between crystals: `resource-m1`
 frames 1 and 6 and `resource-m3` frames 1, 6, 7 and 14; no plain rock has one.
-Shots and ships collide with the drawn silhouette; placement and spawning use the footprints.
+Contact and placement use the drawn silhouette, as for asteroids.
 
 `resource-rocks.json`, version 1: `displayScale`, `stone`, `ore` and `rocks`.
 Each `rocks[i]` has the `asteroids[i]` schema ([Data](#data)), so the asteroid
