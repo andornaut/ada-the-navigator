@@ -96,7 +96,9 @@ room page with its named action. Next
 turns one page. Previous returns to the page shown before, across scene
 boundaries within the run, and is disabled only on the run's first page. The
 run that starts with Ada's room page's named action counts that room page as
-its first, so Previous on the boarding page that follows returns to it. A page
+its first, so Previous on the boarding page that follows returns to it. On the
+"Welcome back, Navigator." page, Previous returns to where boarding began: Ada's
+room page after picking up the rock, or the start screen after Continue. A page
 that ends in a named action, such as "Pick up the rock.", shows that action in
 place of Next. Skip passes every remaining page and scene of the run, taking the
 default path through choices and leaving optional questions unasked, and stops
@@ -194,9 +196,9 @@ action reads "Stay here" in place of Jump: it closes both maps and resumes the
 flight with no jump and no new layout. Jump to another galaxy ends the current
 flight, with story progress saved, and quantum jumps into the chosen galaxy;
 Earth ends the flight and jumps Ada home to her room. The galaxy map has the
-close X, which with back and Escape returns to where it opened from: to the
-local map in flight, or to Ada's room, without a jump, at boarding, as Earth
-does there.
+close X, which with back and Escape goes one step back, to the page Ada just
+left: the local map in flight, or the "Welcome back, Navigator." page at
+boarding. Earth is the way home from boarding.
 
 Galaxies are named after real galaxies' nicknames, in the route order above.
 Every unlocked galaxy stays replayable in any order. Its resolved story stays
