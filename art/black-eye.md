@@ -121,19 +121,20 @@ Ids are `outpost-{variant}-{state}-{a|b}`, files
 share one frame and pivot, so a state change or a blink swaps the sprite in
 place. Frames are multiples of 16 px with the pivot on the vertical centre
 line at an exact fraction; each SVG's intrinsic size is its display size
-(`frame * 0.4375`) and its `viewBox` the frame in frame px. Manifest `width`
+(`frame * 0.4375 * 1.5`, the [destination scale](destinations.md#scale)) and
+its `viewBox` the frame in frame px; frame-px pivots and docks are unchanged. Manifest `width`
 and `height` are the frame and `displayWidth` and `displayHeight` the display
 size. `facing` is `fixed`.
 
-| Variant   | Frame px | Display  | Pivot          | Dock `(x, y)`  | Dock width |
-| --------- | -------- | -------- | -------------- | -------------- | ---------: |
-| `homes`   | 96, 96   | 42 by 42 | `(0.5, 0.375)` | `(48, 61.456)` |     22.045 |
-| `harbour` | 112, 80  | 49 by 35 | `(0.5, 0.4)`   | `(56, 57.456)` |     22.045 |
-| `signal`  | 80, 112  | 35 by 49 | `(0.5, 0.5)`   | `(40, 81.456)` |     22.045 |
+| Variant   | Frame px | Display      | Pivot          | Dock `(x, y)`  | Dock width |
+| --------- | -------- | ------------ | -------------- | -------------- | ---------: |
+| `homes`   | 96, 96   | 63 by 63     | `(0.5, 0.375)` | `(48, 61.456)` |     22.045 |
+| `harbour` | 112, 80  | 73.5 by 52.5 | `(0.5, 0.4)`   | `(56, 57.456)` |     22.045 |
+| `signal`  | 80, 112  | 52.5 by 73.5 | `(0.5, 0.5)`   | `(40, 81.456)` |     22.045 |
 
 Pivots lie on the world plane at the float's centre. The dock entrance is the
 mouth's centre on the world plane, 36 units along the dock axis and 25.456
-frame px below the pivot; `dock.outward` is `[0, 1]`. Dock values are frame
+frame px (16.706 display px at 1.5x) below the pivot; `dock.outward` is `[0, 1]`. Dock values are frame
 px in the station's dock schema.
 
 ### Blink

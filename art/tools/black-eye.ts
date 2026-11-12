@@ -7,7 +7,15 @@ import { fileURLToPath } from "node:url";
 import * as m from "./black-eye-models.ts";
 import { replaceEntries } from "./manifest.ts";
 import { type Point, projectAt, round } from "./projection.ts";
-import { along, BLINK_MS, DISPLAY_SCALE, DOCK, type Face, polygons } from "./solid.ts";
+import {
+  along,
+  BLINK_MS,
+  DESTINATION_SCALE,
+  DISPLAY_SCALE,
+  DOCK,
+  type Face,
+  polygons,
+} from "./solid.ts";
 
 const output = fileURLToPath(new URL("../../public/art/black-eye/", import.meta.url));
 const PATH = "/art/black-eye/";
@@ -49,7 +57,7 @@ function svgFile(title: string, frame: Layout, faces: readonly Face[]): string {
     return `  <polygon fill="${color}" points="${projected.join(" ")}"/>`;
   });
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * DISPLAY_SCALE)}" height="${round(frame.height * DISPLAY_SCALE)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE)}" height="${round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE)}" viewBox="0 0 ${frame.width} ${frame.height}">`,
     `  <title>${title}</title>`,
     ...shapes,
     "</svg>",
@@ -100,8 +108,8 @@ const entries = settlements.flatMap(({ build, title, variant }) => {
       path: `${PATH}${item.file}.svg`,
       width: frame.width,
       height: frame.height,
-      displayWidth: round(frame.width * DISPLAY_SCALE),
-      displayHeight: round(frame.height * DISPLAY_SCALE),
+      displayWidth: round(frame.width * DISPLAY_SCALE * DESTINATION_SCALE),
+      displayHeight: round(frame.height * DISPLAY_SCALE * DESTINATION_SCALE),
       facing: "fixed",
       pivot: { x: 0.5, y: frame.above / frame.height },
       frameMs: BLINK_MS,
