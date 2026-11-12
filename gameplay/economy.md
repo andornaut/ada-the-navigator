@@ -99,11 +99,11 @@ moment. Its notice names what it gave:
 | Paint scheme  | + {paint} paint          |
 | Ammunition    | + {weapon} ammo          |
 
-Destroyed small craft also drop an ammo pack 5% of the time, separately from
+Destroyed small craft also drop an ammo pack 7.5% of the time, separately from
 upgrades, once Ada owns a weapon other than Laser. Like the upgrade pickup, its
 contents are chosen when Ada collects it: one pack for an owned weapon other
-than Laser, each weapon half as likely as the one before it in weapon order
-(Multi-Laser 16, Rapid Missile 8, Heavy Missile 4, Scattershot 2, Phaser 1, among
+than Laser, each weapon about three quarters as likely as the one before it in
+weapon order (Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7, Phaser 5, among
 owned weapons). Its notice is "+ {weapon} ammo".
 
 Story mining deposits keep their
@@ -193,8 +193,8 @@ one, so a Multi-Laser fan or a Scattershot spread costs one.
 
 Ammunition is sold per weapon in the shop. Every pack costs 10 Stardust, and
 later weapons in weapon order get fewer seconds of level 1 fire per pack:
-Multi-Laser 200 (60 seconds), Rapid Missile 100 (50), Heavy Missile 20 (40),
-Scattershot 30 (30) and Phaser 20 (20). Buying or finding a weapon includes
+Multi-Laser 300 (90 seconds), Rapid Missile 160 (80), Heavy Missile 35 (70),
+Scattershot 60 (60) and Phaser 50 (50). Buying or finding a weapon includes
 three packs. A pack's shop row shows its name, such as "Rapid Missile
 ammo", with the pack size, such as "×200", on a second line, as levelled rows
 show their level. Typical use of the stronger weapons costs about 15 to 35% of Stardust income,
