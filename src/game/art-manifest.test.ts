@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
 
+import { GALAXY_ID, SECTORS } from "../data/galaxies.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/public-art.ts";
 import { galaxyManifestKey, galaxyManifestPaths, readGalaxyManifest } from "./art-manifest.ts";
 
 describe("split art manifest", () => {
   it("maps each galaxy to its manifest from the core manifest, keyed by stable galaxy id", () => {
-    expect(galaxyManifestPaths(CORE_MANIFEST.galaxies)).toEqual({
-      1: "/art/sunflower/manifest.json",
-      2: "/art/cartwheel/manifest.json",
-      3: "/art/whirlpool/manifest.json",
-      5: "/art/andromeda/manifest.json",
-    });
-    expect([...GALAXY_MANIFESTS.keys()]).toEqual([1, 2, 3, 5]);
+    // Every galaxy Art has drawn, by its stable id, at /art/{id}/manifest.json.
+    const drawn = SECTORS.filter((sector) =>
+      Object.hasOwn(CORE_MANIFEST.galaxies, GALAXY_ID[sector]),
+    );
+    expect(drawn).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]));
+    expect(galaxyManifestPaths(CORE_MANIFEST.galaxies)).toEqual(
+      Object.fromEntries(
+        drawn.map((sector) => [sector, `/art/${GALAXY_ID[sector]}/manifest.json`]),
+      ),
+    );
+    expect([...GALAXY_MANIFESTS.keys()]).toEqual(drawn);
     expect(galaxyManifestKey(2)).toBe("art-manifest-galaxy-2");
   });
 

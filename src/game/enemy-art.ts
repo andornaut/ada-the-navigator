@@ -73,8 +73,20 @@ export const CLAIM_WIRED: ReadonlySet<string> = new Set([
   "swarm",
 ]);
 
-/** Andromeda's garnet family (art/heavies.md): Gadget's drones recoloured, no platform. */
+/**
+ * Andromeda's garnet and Needle's crimson families (art/heavies.md): Gadget's drones and heavies
+ * recoloured, with no platform.
+ */
 export const GARNET = "enemy-garnet-";
+export const NEEDLE = "enemy-needle-";
+const RECOLOURED: ReadonlySet<string> = new Set([
+  "capital",
+  "fighter",
+  "frigate",
+  "interceptor",
+  "retaliator",
+  "swarm",
+]);
 
 /** A galaxy's own enemy family: its manifest's entries with `family` and the `prefix` ids. */
 export interface EnemyFamily {
@@ -89,12 +101,8 @@ export interface EnemyFamily {
 /** Each galaxy's own enemy family; every other galaxy flies Gadget's coral family. */
 export const GALAXY_FAMILIES: readonly EnemyFamily[] = [
   { family: "claim", galaxy: "cartwheel", prefix: CLAIM, wired: CLAIM_WIRED },
-  {
-    family: "garnet",
-    galaxy: "andromeda",
-    prefix: GARNET,
-    wired: new Set(["capital", "fighter", "frigate", "interceptor", "retaliator", "swarm"]),
-  },
+  { family: "garnet", galaxy: "andromeda", prefix: GARNET, wired: RECOLOURED },
+  { family: "needle", galaxy: "needle", prefix: NEEDLE, wired: RECOLOURED },
 ];
 
 /** The family a galaxy draws an archetype in, or undefined for Gadget's coral family. */

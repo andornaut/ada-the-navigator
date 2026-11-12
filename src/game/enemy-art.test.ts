@@ -128,8 +128,10 @@ describe("enemy frame sets", () => {
       );
     }, 0);
     expect(parts).toHaveLength(expected);
-    // The coral, claim and garnet families' composed heavies.
-    expect(expected).toBe(1136);
+    // The coral and claim families' composed heavies, and each recoloured family's frigate and
+    // capital.
+    const recoloured = GALAXY_FAMILIES.filter(({ wired }) => !wired.has("platform")).length;
+    expect(expected).toBe(784 + 352 * recoloured);
     expect(parts.some((asset) => /^enemy-[a-z]+-\d+$/i.test(asset.id))).toBe(false);
   });
 
@@ -458,9 +460,8 @@ describe("enemy SVGs", () => {
     const heavies = (
       manifest.assets as (EnemyFrame & { height: number; path: string; width: number })[]
     ).filter(({ archetype }) => ["capital", "frigate", "platform"].includes(archetype ?? ""));
-    // The coral, claim and garnet frigates and capitals, 384 frames each, and the claim
-    // platform's 81.
-    expect(heavies).toHaveLength(384 * 3 + 81);
+    // Each family's frigate and capital, 384 frames, and the claim platform's 81.
+    expect(heavies).toHaveLength(384 * (1 + GALAXY_FAMILIES.length) + 81);
     for (const asset of heavies) {
       const svg = readFileSync(new URL(`../../public${asset.path}`, import.meta.url), "utf8");
       const root = /<svg\b[^>]*>/u.exec(svg)?.[0] ?? "";
@@ -554,6 +555,7 @@ describe("galaxy enemy families", () => {
   it("draws Cartwheel's claim jumpers and Andromeda's garnet drones, else Gadget's coral", () => {
     expect(galaxyFamily("cartwheel", "platform")?.family).toBe("claim");
     expect(galaxyFamily("andromeda", "swarm")?.family).toBe("garnet");
+    expect(galaxyFamily("needle", "capital")?.family).toBe("needle");
     // Andromeda has no garnet platform, and the other galaxies fly the coral family.
     expect(galaxyFamily("andromeda", "platform")).toBeUndefined();
     expect(galaxyFamily("sunflower", "swarm")).toBeUndefined();
