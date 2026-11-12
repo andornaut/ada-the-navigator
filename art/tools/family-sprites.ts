@@ -595,28 +595,28 @@ export function catCurled(cat: Cat): Sprite {
 
 /* Ada and Penny watching the sky: the route map's ground layer */
 
-// Evening light on a sprite: every colour but the ink edge mixed `DUSK.amount` toward the space
+// Evening light on a sprite: every colour but its outline mixed `DUSK.amount` toward the space
 // background, then a warm rim on the sunset side (the viewer's left) and along the top edges of
-// the left half, inside the ink outline.
-const DUSK = { colour: "#292734", amount: 0.42, rim: "#f0bd68", rimMix: 0.6 } as const;
+// the left half, inside the outline. The outline is the ink edge, or the walker's own outline.
+const DUSK = { colour: "#292734", amount: 0.2, rim: "#f0bd68", rimMix: 0.65 } as const;
 
-function eveningLight(image: RgbaImage): RgbaImage {
+function eveningLight(image: RgbaImage, outlines: readonly string[] = [INK]): RgbaImage {
   const { width, height, data } = image;
-  const ink = rgb(INK);
+  const lines = outlines.map(rgb);
   const dusk = rgb(DUSK.colour);
   const rim = rgb(DUSK.rim);
   const i = (x: number, y: number) => (y * width + x) * 4;
   const opaque = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < width && y < height && data[i(x, y) + 3]! > 0;
   const isInk = (x: number, y: number) =>
-    opaque(x, y) && [0, 1, 2].every((c) => data[i(x, y) + c] === ink[c]);
+    opaque(x, y) && lines.some((line) => [0, 1, 2].every((c) => data[i(x, y) + c] === line[c]));
   const out = blankImage(width, height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (!opaque(x, y)) continue;
       const p = i(x, y);
       if (isInk(x, y)) {
-        out.data.set([...ink, 255], p);
+        out.data.set(data.subarray(p, p + 4), p);
         continue;
       }
       const edge = (nx: number, ny: number) => !opaque(nx, ny) || isInk(nx, ny);
@@ -631,65 +631,135 @@ function eveningLight(image: RgbaImage): RgbaImage {
   return out;
 }
 
+// Archie's back-view walker (art/sources/walker-ada-idle.png): its painted box (30 by 55, as
+// Ada's 30 by 56 storybook sprites), its centre line and the hair's hem, and each of its colours
+// as a part and Ada's palette key. Its brown outline, and the hair colours it reuses as outline
+// below the hair, join the part they border; the redraw gives every silhouette Ada's ink edge.
+const WALKER_BACK = { x: 9, y: 15, width: 30, height: 55, centre: 15, hairBottom: 33 } as const;
+type WalkerPart = "bow" | "hair" | "ear" | "shirt" | "arms" | "shorts" | "legs" | "shoes";
+const WALKER_HAIR = ["#262b44", "#3a4466", "#5a6988", "#8b9bb4", "#181425"];
+const WALKER_KEYS: Readonly<Record<string, string>> = {
+  "#262b44": "s", // hair
+  "#3a4466": "k", // hair strand
+  "#5a6988": "k", // hair light
+  "#8b9bb4": "k", // hair rim
+  "#181425": "s", // hair shade
+  "#b55088": "h", // bow
+  "#fee761": "P", // shirt
+  "#feae34": "m", // shirt shade
+  "#b86f50": "w", // skin
+  "#c28569": "L", // skin light
+  "#0099db": "b", // shorts
+  "#124e89": "B", // shorts shade
+  "#ffffff": "W", // shoe
+  "#c0cbdc": "c", // shoe shade
+};
+// Ada's fit: the head (hair, ear and bow) scaled about the hair's hem centre, and the body's widths,
+// as fractions of the walker's.
+export const ADA_FIT = { head: 0.9, body: 0.9 } as const;
+
+function walkerParts() {
+  const walker = decodePng(readFileSync(`${sources}walker-ada-idle.png`));
+  const { width, height, hairBottom } = WALKER_BACK;
+  const parts = new Map<string, WalkerPart>();
+  const keys = new Map<string, string>();
+  const opaque: string[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = ((WALKER_BACK.y + y) * walker.width + WALKER_BACK.x + x) * 4;
+      if (walker.data[i + 3] === 0) continue;
+      const c = `#${[0, 1, 2].map((k) => walker.data[i + k]!.toString(16).padStart(2, "0")).join("")}`;
+      opaque.push(at(x, y));
+      let p: WalkerPart | undefined;
+      if (c === "#f6757a") p = y < 6 ? "bow" : "shoes";
+      else if (c === "#b55088") p = "bow";
+      else if (WALKER_HAIR.includes(c)) p = y <= hairBottom ? "hair" : undefined;
+      else if (c === "#fee761" || c === "#feae34") p = "shirt";
+      else if (c === "#b86f50" || c === "#c28569") p = y < 30 ? "ear" : y < 45 ? "arms" : "legs";
+      else if (c === "#0099db" || c === "#124e89") p = "shorts";
+      else if (c === "#ffffff" || c === "#c0cbdc") p = "shoes";
+      if (!p) continue;
+      parts.set(at(x, y), p);
+      keys.set(at(x, y), c === "#f6757a" ? (p === "bow" ? "y" : "q") : WALKER_KEYS[c]!);
+    }
+  }
+  // Each outline px joins the part most of its neighbours belong to.
+  for (let pass = 0; pass < 4; pass++) {
+    for (const p of opaque) {
+      if (parts.has(p)) continue;
+      const [x, y] = xy(p);
+      const votes = new Map<WalkerPart, number>();
+      for (const [dx, dy, w] of [
+        [1, 0, 2],
+        [-1, 0, 2],
+        [0, 1, 2],
+        [0, -1, 2],
+        [1, 1, 1],
+        [-1, 1, 1],
+        [1, -1, 1],
+        [-1, -1, 1],
+      ] as const) {
+        const n = parts.get(at(x + dx, y + dy));
+        if (n) votes.set(n, (votes.get(n) ?? 0) + w);
+      }
+      const best = [...votes].sort((l, r) => r[1] - l[1])[0];
+      if (best) parts.set(p, best[0]);
+    }
+  }
+  return { parts, keys };
+}
+
 /**
- * Ada from behind, looking up at the sky: her head tipped back so the crown sits two rows lower
- * than on her front sprites, the back hair over her shoulders to the shirt's middle, the bow on
- * her crown, and her hands clasped behind her back. Walker-ada's colours, about 2.5 heads tall
- * like her other storybook sprites. Feet on the bottom row; scale 1.
+ * Ada from behind, looking up at the sky, redrawn from Archie's back-view walker in Ada's sprite
+ * style: her wavy hair, the bow on her crown, the shirt whose sleeves cover her shoulders, her
+ * forearms and hands at her sides, the two-tone shorts, legs and shoes. Each part is the walker's
+ * resampled by area to `fit` (the head in both axes about the hem's centre, the body across),
+ * coloured from the walker's px in Ada's palette and hair colours, with Ada's ink edge round the
+ * silhouette, then the evening light. Feet on the bottom row; scale 1.
  */
-export function adaSkywatch(): Sprite {
-  const g = grid(WIDTH, 56);
-  const cx = CENTRE;
-  // Shoes from behind: white heels, a grey shade row and the pink sole.
-  for (const [x0, x1] of [
-    [14, 19],
-    [24, 29],
-  ] as const) {
-    part(g, spans({ ...run(51, 53, x0 - 1, x1 + 1), 54: [x0, x1] }), (_x, y) =>
-      y === 53 ? "c" : y === 54 ? "q" : "W",
-    );
+export function adaSkywatch(fit: { head: number; body: number } = ADA_FIT): Sprite {
+  const { parts, keys } = walkerParts();
+  const { width, height, centre, hairBottom } = WALKER_BACK;
+  const head = (p: WalkerPart) => p === "hair" || p === "bow" || p === "ear";
+  // A target point's source point for a part.
+  const source = (p: WalkerPart, x: number, y: number) =>
+    head(p)
+      ? [centre + (x - centre) / fit.head, hairBottom + 1 + (y - hairBottom - 1) / fit.head]
+      : [centre + (x - centre) / fit.body, y];
+  const N = 4;
+  const g = grid(width, height);
+  const owner = new Map<string, WalkerPart>();
+  for (const name of ["legs", "shoes", "arms", "shorts", "shirt", "hair", "ear", "bow"] as const) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let cover = 0;
+        for (let i = 0; i < N; i++) {
+          for (let j = 0; j < N; j++) {
+            const [sx, sy] = source(name, x + (i + 0.5) / N, y + (j + 0.5) / N);
+            if (parts.get(at(Math.floor(sx!), Math.floor(sy!))) === name) cover++;
+          }
+        }
+        if (cover * 2 < N * N) continue;
+        const [sx, sy] = source(name, x + 0.5, y + 0.5);
+        const s = at(Math.floor(sx!), Math.floor(sy!));
+        const k = parts.get(s) === name ? keys.get(s) : undefined;
+        put(g, x, y, k ?? "H");
+        owner.set(at(x, y), name);
+      }
+    }
   }
-  // Legs, weight on her left leg (the viewer's left): skin, lit on their left side.
-  legs(g, 43, 51, [14, 19], [24, 29], (x) => (x === 15 || x === 25 ? "L" : "w"));
-  // Shorts, shaded on the right, with the back seam.
-  part(g, spans(run(39, 44, 12, 31)), (x) => (x >= 25 ? "B" : "b"));
-  for (let y = 40; y <= 44; y++) put(g, 21, y, "H");
-  // The shirt: shoulders as wide as her head, to an A-line hem, shaded on the right.
-  part(
-    g,
-    spans({ 23: [14, 29], 24: [11, 32], ...run(25, 34, 10, 33), ...run(35, 39, 11, 32) }),
-    (x) => (x >= 26 ? "m" : "P"),
-  );
-  // Arms down her back to clasped hands over the hem: 3 px strokes, sleeves at the shoulder.
-  for (const path of [
-    [
-      [10, 26],
-      [10, 31],
-      [14, 35],
-      [19, 37],
-    ],
-    [
-      [33, 26],
-      [33, 31],
-      [29, 35],
-      [24, 37],
-    ],
-  ] as const) {
-    part(g, limb(path, 1), (_x, y) => (y <= 28 ? "P" : "w"));
-  }
-  part(g, union(disc(cx - 1.5, 37.5, 2.6, 2.2), disc(cx + 1.5, 37.5, 2.6, 2.2)), "w");
-  // The back hair: the head's oval and a tapering fall to the shirt's middle, the shoulders
-  // showing beside it; strands lit on the left.
-  const hair = union(
-    disc(cx, 13, 10.5, 10),
-    spans({ ...run(20, 27, 13, 30), 28: [14, 29], 29: [15, 28], 30: [17, 26] }),
-  );
-  part(g, hair, (x, y) => (x % 4 === 1 && x < cx + 2 && y > 5 && y < 29 ? "k" : "s"));
-  // The bow on her crown.
-  part(g, union(disc(cx + 2, 3, 2.4, 2), disc(cx + 7, 3, 2.4, 2)), "h");
-  put(g, cx + 4.5, 3, "y");
-  put(g, cx + 1.5, 2, "y");
-  return { ...sprite(g, ADA), image: eveningLight(sprite(g, ADA).image) };
+  // Ada's ink edge round the silhouette.
+  const ink = [...owner].filter(([p]) => {
+    const [x, y] = xy(p);
+    return [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].some(([dx, dy]) => !owner.has(at(x + dx!, y + dy!)));
+  });
+  for (const [p] of ink) put(g, ...xy(p), "H");
+  return { ...sprite(g, ADA, centre), image: eveningLight(sprite(g, ADA, centre).image) };
 }
 
 // Archie's Penny: golden coat, shade and highlight, ears, and her blue harness.

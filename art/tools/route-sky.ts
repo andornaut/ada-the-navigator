@@ -18,30 +18,30 @@ const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 export const SKY = { width: 960, height: 540, density: 2, offset: 120 } as const;
 // The ground strip: its bottom on the view's bottom, its centre on the play view's centre. The
 // grass line runs `grass` below its top, with the afterglow above it.
-export const GROUND = { width: 960, height: 120, density: 2, grass: 70 } as const;
+export const GROUND = { width: 960, height: 120, density: 2, grass: 86 } as const;
 // Ada and Penny on the ground canvas: each sprite's foot centre, left of Earth (play x 160).
 export const FIGURES = {
   ada: { x: SKY.offset + 93, y: 112 },
   penny: { x: SKY.offset + 116, y: 112 },
 } as const;
 
-// The chart the guard keeps dark, in play view px (art/layout.md "Galaxy selector").
-const CENTRES: readonly (readonly [number, number])[] = [
-  [132, 53],
-  [360, 53],
-  [588, 53],
-  [588, 125],
-  [360, 125],
-  [132, 125],
-];
-const BEND = 0.08;
-// Behind each marker, each label pill (the widest name's pill and 6 to spare each side), every
-// leg, and the close X's corner at every view up to the canvas's right edge.
+// The chart the guard keeps dark, in play view px (art/layout.md "Galaxy selector"): one circular
+// arc through the end markers' centres and its top, the six markers at equal angles along it.
+export const ARC = { x: 360, halfWidth: 264, ends: 122, top: 46 } as const;
+const sag = ARC.ends - ARC.top;
+const RADIUS = (ARC.halfWidth ** 2 + sag ** 2) / (2 * sag);
+const SPAN = Math.asin(ARC.halfWidth / RADIUS);
+const onArc = (angle: number) =>
+  [ARC.x + RADIUS * Math.sin(angle), ARC.top + RADIUS * (1 - Math.cos(angle))] as const;
+export const CENTRES: readonly (readonly [number, number])[] = Array.from({ length: 6 }, (_, i) =>
+  onArc(-SPAN + (i * 2 * SPAN) / 5),
+);
+// Behind each marker, each label pill (the widest name's pill and 6 to spare each side) and every
+// leg.
 export const GUARD = {
   marker: 21,
   label: { halfWidth: 56, top: 15, bottom: 43 },
   leg: 6,
-  corner: { x0: 600, y0: 0, x1: SKY.width - SKY.offset, y1: 56 },
   sigma: 3,
   gain: 1.6,
   // Highest WCAG relative luminance behind a mark: 6.5:1 for the #B8B3C9 dashes and "..."
@@ -237,25 +237,25 @@ function spiral(sky: Buffer, cx: number, cy: number, size: number, tilt: number,
 const P = (x: number, y: number) => [x + SKY.offset, y] as const;
 
 function phenomena(sky: Buffer) {
-  // Andromeda's blue: a tilted spiral between Sunflower and Whirlpool.
-  spiral(sky, ...P(246, 90), 26, 0.38, -0.25);
-  // Cartwheel's coral: a ring galaxy with a cream nucleus, between Whirlpool and Needle.
-  const [rx, ry] = P(474, 91);
+  // Andromeda's blue: a tilted spiral under the arc, left of its middle.
+  spiral(sky, ...P(290, 126), 26, 0.38, -0.25);
+  // Cartwheel's coral: a ring galaxy with a cream nucleus, under the arc, right of its middle.
+  const [rx, ry] = P(452, 120);
   const outer = gauss(rx, ry, 15, 6.5, 0.15);
   const inner = gauss(rx, ry, 10, 4.2, 0.15);
   sky.add("#f3b6ac", outer.window, (x, y) => Math.max(0, outer.at(x, y) - inner.at(x, y)) * 0.65);
   const nucleus = gauss(rx, ry, 2.2, 1.6);
   sky.add("#ead4aa", nucleus.window, (x, y) => nucleus.at(x, y) * 0.7);
-  // Needle's silver: an edge-on galaxy right of Andromeda.
-  const needle = gauss(...P(676, 168), 26, 2.2, -0.21);
+  // Needle's silver: an edge-on galaxy over the arc's right end.
+  const needle = gauss(...P(652, 34), 26, 2.2, -0.21);
   sky.add("#cfc5bd", needle.window, (x, y) => needle.at(x, y) * 0.45);
-  const bulge = gauss(...P(676, 168), 4, 2.4, -0.21);
+  const bulge = gauss(...P(652, 34), 4, 2.4, -0.21);
   sky.add("#ead4aa", bulge.window, (x, y) => bulge.at(x, y) * 0.45);
-  // Black Eye's pink nebula with a Whirlpool teal knot, at the left edge.
+  // Black Eye's pink nebula with a Whirlpool teal knot, over the arc's left end.
   const cloud = valueNoise(8, SKY.width, SKY.height, 22);
-  const pink = gauss(...P(36, 170), 42, 26, 0.4);
+  const pink = gauss(...P(48, 46), 42, 26, 0.4);
   sky.add("#e9b4dc", pink.window, (x, y) => pink.at(x, y) * (0.2 + 0.25 * cloud(x, y)));
-  const knot = gauss(...P(56, 186), 20, 14, 0.4);
+  const knot = gauss(...P(68, 62), 20, 14, 0.4);
   sky.add("#94d3e3", knot.window, (x, y) => knot.at(x, y) * (0.12 + 0.18 * cloud(x, y)));
   // Whirlpool's teal: a planetary nebula ring with a shimmer core, under Andromeda.
   const ring = gauss(...P(600, 196), 7, 7);
@@ -287,27 +287,9 @@ function normal(random: Random) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * random.random());
 }
 
-// Quadratic legs bent as Chibi's bentCurve: the control point is the chord's midpoint pushed
-// BEND of the chord to the left of travel on even legs and to the right on odd ones.
+// The legs: the arc between consecutive markers.
 function legPoints(): (readonly [number, number])[] {
-  const points: (readonly [number, number])[] = [];
-  for (let i = 0; i < CENTRES.length - 1; i++) {
-    const [a, b] = [CENTRES[i]!, CENTRES[i + 1]!];
-    const side = i % 2 === 0 ? 1 : -1;
-    const control = [
-      (a[0] + b[0]) / 2 + side * BEND * (b[1] - a[1]),
-      (a[1] + b[1]) / 2 - side * BEND * (b[0] - a[0]),
-    ];
-    for (let k = 0; k <= 240; k++) {
-      const t = k / 240;
-      const u = 1 - t;
-      points.push([
-        u * u * a[0] + 2 * u * t * control[0]! + t * t * b[0],
-        u * u * a[1] + 2 * u * t * control[1]! + t * t * b[1],
-      ]);
-    }
-  }
-  return points;
+  return Array.from({ length: 1201 }, (_, k) => onArc(-SPAN + (k * 2 * SPAN) / 1200));
 }
 
 // The guard's footprint on the sky's pixels: 1 inside a chart mark's keep-out, else 0.
@@ -345,7 +327,7 @@ function footprint(width: number, height: number, density: number, pad = 0): Flo
       return dx * dx + (y - cy) ** 2 <= r * r;
     });
   };
-  const { label, corner } = GUARD;
+  const { label } = GUARD;
   for (const [mx, my] of CENTRES.map(([cx, cy]) => P(cx, cy))) {
     disc(mx, my, GUARD.marker + pad);
     stadium(
@@ -355,7 +337,6 @@ function footprint(width: number, height: number, density: number, pad = 0): Flo
       my + label.bottom + pad,
     );
   }
-  fill(P(corner.x0, 0)[0] - pad, corner.y0, SKY.width, corner.y1 + pad, () => true);
   for (const [x, y] of legPoints()) disc(...P(x, y), GUARD.leg + pad);
   return mask;
 }
@@ -455,7 +436,7 @@ export function routeSky(): RgbaImage {
 
 const AFTERGLOW = "#d68b72"; // space palette obstacle coral
 const RIM = "#f0bd68"; // space palette weapon amber
-const GRASS = { near: "#1c2620", far: "#2a3a2a", tip: "#4e6a3e" } as const;
+const GRASS = { near: "#293a2c", far: "#3d5638", tip: "#86a65e" } as const;
 
 export function routeGround(): RgbaImage {
   const d = GROUND.density;
@@ -490,8 +471,8 @@ export function routeGround(): RgbaImage {
       }
       const grass = cover / (N * N);
       const top = Math.min(...tops);
-      const depth = Math.min(1, Math.max(0, (y - edge(x)) / 50));
-      const lit = y < top + 1.4 ? 0.25 + 0.6 * s : 0;
+      const depth = Math.min(1, Math.max(0, (y - edge(x)) / (GROUND.height - GROUND.grass)));
+      const lit = y < top + 2 ? 0.45 + 0.45 * s : 0;
       const g = [0, 1, 2].map((k) => {
         const base = far[k]! * (1 - depth) + near[k]! * depth;
         const rimmed = tip[k]! * 0.5 + rim[k]! * 0.5;

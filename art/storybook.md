@@ -244,7 +244,7 @@ and `sampling: "nearest"`.
 | --------------------- | --------- | ------- | ---------- | ------------------------ | ------------------------------------------- |
 | `story-ada-playing`   | 44 x 56   | 1       | (480, 221) | `story-concert-hall`     | Playing the recorder, feet on the spotlight |
 | `story-ada-waking`    | 48 x 42   | 2       | (249, 264) | `story-ada-room-morning` | Stretching and yawning, kneeling in bed     |
-| `story-ada-skywatch`  | 26 x 53   | 1       | (201, 59)  | `route-ground`           | From behind, looking up at the sky          |
+| `story-ada-skywatch`  | 28 x 52   | 1       | (199, 60)  | `route-ground`           | From behind, looking up at the sky          |
 | `story-penny-sitting` | 23 x 28   | 1       | (228, 84)  | `route-ground`           | Penny sitting beside her, looking up        |
 
 - Scale: one sprite px is 1 logical px in the concert hall and 2 in Ada's room,
@@ -280,13 +280,17 @@ and `sampling: "nearest"`.
   head, eyes shut and a small open yawn. The duvet's bunched edge covers her
   lap, in the morning page's treated blanket colour sampled at canvas px
   (492, 776), with a fold shade 24 darker and the ink edge.
-- Skywatch: Ada from behind in the same colours and build, her head tipped
-  back so the crown sits two rows lower than on her front sprites, the back
-  hair over her shoulders to the shirt's middle with strands `#3a4466` on its
-  left, the bow `#b55088` on her crown, shoulders as wide as her head showing
-  beside the hair, and her arms down her back to hands clasped over the hem.
-  Her shoes show their heels, a `#c0cbdc` shade row and the sole. On the route
-  ground's scale 1, beside Penny ([route sky](route-sky.md)).
+- Skywatch: Ada from behind, looking up at the sky, redrawn from Archie's
+  back-view walker (`art/sources/walker-ada-idle.png`, 30 x 55) in Ada's
+  style: her wavy hair with its ear, the bow `#b55088` on her crown, the shirt
+  whose sleeves cover her shoulders, her forearms and hands at her sides, the
+  two-tone shorts, legs and shoes. Each part is the walker's resampled by area
+  to 0.9 of its widths (`ADA_FIT`): the head (hair, ear and bow) also 0.9 tall
+  about the hair hem's centre, the body across only, so head 27, shoulders 27,
+  torso 16 and 28 x 52 overall against the walker's 30, 29 and 18. Colours are
+  the walker's in Ada's palette, its hair lights as Ada's `#3a4466`, with
+  Ada's ink edge round the silhouette in place of its brown outline. On the
+  route ground's scale 1, beside Penny ([route sky](route-sky.md)).
 - Penny sitting: Archie's `dog-penny` colours (coat `#feae34`, shade and ears
   `#f77622`, highlight `#fee761`, harness `#124e89` with a `#0099db` top row)
   on the same ink edges and flat shading, from behind: her head lifted so the
@@ -294,8 +298,8 @@ and `sampling: "nearest"`.
   and her tail curled on the grass to her right. About half Ada's height
   seated. `art/tools/family-sprites.ts` draws both.
 - Evening light, on the two route sprites only: every colour but the ink edge
-  mixed 42% toward `#292734`, then the pixels on the sunset side (the viewer's
-  left) and along the top edges of the left half mixed 60% toward amber
+  mixed 20% toward `#292734`, then the pixels on the sunset side (the viewer's
+  left) and along the top edges of the left half mixed 65% toward amber
   `#f0bd68`, inside the ink outline.
 - Penny stays painted on the morning page; her crisp sprite shows on the route
   ground only.

@@ -3912,18 +3912,18 @@
     {
       "id": "story-ada-skywatch",
       "path": "/art/story/ada-skywatch.png",
-      "width": 26,
-      "height": 53,
-      "displayWidth": 26,
-      "displayHeight": 53,
+      "width": 28,
+      "height": 52,
+      "displayWidth": 28,
+      "displayHeight": 52,
       "facing": "front",
       "pivot": {
         "x": 0,
         "y": 0
       },
       "at": {
-        "x": 201,
-        "y": 59
+        "x": 199,
+        "y": 60
       },
       "scale": 1,
       "sampling": "nearest"
