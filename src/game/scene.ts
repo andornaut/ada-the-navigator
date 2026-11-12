@@ -882,6 +882,15 @@ export class PrototypeScene extends Scene {
       }
       jumpThen(action);
     };
+    // The galaxy map's close X, back and Escape: in flight the local map again, focus back on its
+    // Galaxies; at boarding Ada's room, whose page focuses its own action.
+    const closeGalaxyMap = (): void => {
+      const inFlight = this.model.galaxyMapShownInFlight;
+      apply(() => this.model.closeGalaxyMap());
+      if (inFlight) {
+        this.controls.focusGalaxies();
+      }
+    };
     this.shell = new StoryShell({
       choose: (id) => apply(() => this.model.choose(id)),
       continueGame: () => apply(() => this.model.continueGame()),
@@ -1221,7 +1230,7 @@ export class PrototypeScene extends Scene {
         stay: label("stayHere"),
       },
       // In flight, the local map it opened from; at boarding, Ada's room, as Earth.
-      onClose: () => apply(() => this.model.closeGalaxyMap()),
+      onClose: closeGalaxyMap,
       // In flight Earth ends the flight with the jump home; at boarding it is the room at once.
       onEarth: () => {
         if (this.model.galaxyMapShownInFlight) {
@@ -1289,10 +1298,12 @@ export class PrototypeScene extends Scene {
         back: () => apply(() => this.model.storyPrevious()),
         isOpen: () => this.model.screen === "story" && !this.model.roomPage && !this.settingsOpen,
       }),
-      // Back and Escape on the galaxy map: where it opened from, as its close X.
+      // Back and Escape on the galaxy map: where it opened from, as its close X. In flight it opens
+      // over the Paused card's local map, so it is the innermost card while that card is open.
       this.controls.registerBack({
-        back: () => apply(() => this.model.closeGalaxyMap()),
-        isOpen: () => this.galaxies.isOpen() && !this.settingsOpen,
+        back: closeGalaxyMap,
+        isOpen: () =>
+          this.galaxies.isOpen() && (this.model.galaxyMapShownInFlight || !this.settingsOpen),
       }),
       this.controls.registerBack({
         back: () => this.restartCard.close(),

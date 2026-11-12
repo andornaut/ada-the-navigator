@@ -1967,6 +1967,10 @@ try {
   const roomInput = relaunch(PROTOTYPE, safeSerialized);
   roomInput.state.progress[1].opened = true;
   roomInput.state.prologueSeen = true;
+  // Whirlpool open too, its opening played, so the galaxy map has another galaxy to jump to and
+  // Earth still lands on the room page.
+  roomInput.state.unlocked = [1, 3];
+  roomInput.state.progress[3].opened = true;
   await seedOnce(roomInput.save(), "ada-browser.room-pause.v1");
   await page.locator('#game-status[data-mode="space"]').waitFor({ state: "attached" });
   await openPause();
@@ -2044,7 +2048,50 @@ try {
   await galaxyClose.click();
   await galaxyMap.waitFor({ state: "hidden" });
   assert.ok(await localMap.isVisible(), "The galaxy map's close X returns to the local map");
+  assert.equal(await focusedAction(), "map-galaxies", "Focus returns to the local map's Galaxies");
+  // Escape closes the galaxy map back to the local map too, focus again on Galaxies.
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.waitFor({ state: "visible" });
+  await page.keyboard.press("Escape");
+  await galaxyMap.waitFor({ state: "hidden" });
+  assert.ok(await localMap.isVisible(), "Escape closes the galaxy map back to the local map");
+  assert.equal(await focusedAction(), "map-galaxies", "Escape returns focus to Galaxies");
+  // Jump to another unlocked galaxy: Right moves the ship to Whirlpool, where Jump reads Jump, and
+  // the flight there begins.
+  await localMap.locator('[data-action="map-galaxies"]').click();
+  await galaxyMap.waitFor({ state: "visible" });
+  await galaxyMap.locator('[data-action="galaxy-jump"]').focus();
+  await page.keyboard.press("ArrowRight");
+  await page.waitForFunction(
+    (label) =>
+      document.querySelector('.ada-route[data-dialog="galaxies"] h2')?.textContent?.trim() ===
+      label,
+    PROTOTYPE.labels.galaxyNumber.replace("{number}", "2"),
+  );
+  assert.equal(
+    (await galaxyMap.locator('[data-action="galaxy-jump"]').textContent())?.trim(),
+    PROTOTYPE.labels.jump,
+    "Jump reads Jump on another galaxy",
+  );
+  await galaxyMap.locator('[data-action="galaxy-jump"]').click();
+  await galaxyMap.waitFor({ state: "hidden" });
+  const jumped = await page
+    .waitForFunction(
+      (key) => {
+        const saved = JSON.parse(localStorage.getItem(key));
+        return saved?.mode === "space" && saved.flight?.sector === 3;
+      },
+      storageKey,
+      { timeout: 15000 },
+    )
+    .then(
+      () => true,
+      () => false,
+    );
+  assert.ok(jumped, "Jump to another galaxy from the galaxy map ends in Whirlpool's flight");
   // Earth: the flight ends with the jump home.
+  await openPause();
+  await page.locator('[data-action="pause-map"]').click();
   await localMap.locator('[data-action="map-galaxies"]').click();
   await galaxyMap.waitFor({ state: "visible" });
   await galaxyMap.locator('[data-action="galaxy-home"]').click();
@@ -2059,8 +2106,9 @@ try {
   );
   events.checks.push(
     "The local map's Galaxies opens the galaxy map on the galaxy Ada is flying in, with Stay here " +
-      "and its close X; Stay here resumes the same flight, the X returns to the local map, and " +
-      "Earth ends the flight home",
+      "and its close X; Stay here resumes the same flight, the X and Escape return to the local " +
+      "map with focus on Galaxies, Jump to another galaxy flies there, and Earth ends the flight " +
+      "home",
   );
   const roomPause = page.locator('[data-action="pause"]');
   if (await roomPause.isVisible()) {
@@ -3373,6 +3421,20 @@ try {
       () => false,
     );
   assert.ok(escapedRoom, "Escape from galaxy selection shows Ada's room");
+  // Focus moves to the room page's own action once its page shows.
+  const roomFocused = await page
+    .waitForFunction(
+      () =>
+        document.activeElement?.dataset.action === "story-next" &&
+        Boolean(document.activeElement.closest(".ada-story-panel:not([hidden])")),
+      null,
+      { timeout: 5000 },
+    )
+    .then(
+      () => true,
+      () => false,
+    );
+  assert.ok(roomFocused, "Closing the galaxy map at boarding focuses the room's action");
   events.checks.push(
     "The galaxy map lays the markers left to right on one arc with its close X last in Tab " +
       "order; Left and Right follow screen order and skip locked galaxies, and Escape returns " +

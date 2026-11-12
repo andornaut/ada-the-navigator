@@ -121,6 +121,8 @@ export interface Controls {
   closeSettings(): void;
   // Closes the Paused card and the local map, resuming the flight.
   closePause(): void;
+  // Focuses the local map's Galaxies, as the galaxy map over it closes.
+  focusGalaxies(): void;
   // Opens the Achievements card, as the start screen's Achievements does.
   openAchievements(): void;
   // Adds a card that back and Escape close while it is open, innermost so far.
@@ -661,6 +663,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         parent.style.position = previousPosition;
       }
     },
+    focusGalaxies: () => pause.focusGalaxies(),
     openAchievements: () => achievements.open(),
     openSettings: () => {
       cheats.close();

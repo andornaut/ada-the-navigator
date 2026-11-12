@@ -337,6 +337,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       mapScreen.dispose();
       modal.remove();
     },
+    /** The local map's Galaxies takes focus again once the galaxy map over it closes. */
+    focusGalaxies(): void {
+      if (mapOpen()) {
+        mapScreen.focusGalaxies();
+      }
+    },
     isOpen: () => open,
     mapOpen,
     open: () => setOpen(true),

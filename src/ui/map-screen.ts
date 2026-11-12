@@ -1363,6 +1363,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       screen.remove();
     },
     element: screen,
+    /** Focuses Galaxies, as the galaxy map it opened closes back to the local map. */
+    focusGalaxies(): void {
+      galaxies.focus();
+    },
     isOpen: () => !screen.hidden,
     /** Opens at the opening fit with nothing selected, focus on close. */
     open(): void {

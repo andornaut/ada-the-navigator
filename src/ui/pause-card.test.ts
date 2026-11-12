@@ -272,4 +272,13 @@ describe("Ship card", () => {
     expect(texts(ship.children[0]!)).toContain("5");
     expect(texts(ship.children[0]!)).not.toContain("1,234");
   });
+
+  it("leaves focus alone on a galaxy map close while the local map is closed", () => {
+    const { pause } = cards();
+    pause.setState(state());
+    pause.open();
+    focusLog.length = 0;
+    pause.focusGalaxies();
+    expect(focusLog).toEqual([]);
+  });
 });
