@@ -116,9 +116,9 @@ Small craft:
 
 | Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | `hitAndRun` retreat | Lead | Notice |  Fire | Encounters |
 | -------: | ------: | --------: | ------------: | -----------: | ----------: | ------------------: | ---: | -----: | ----: | ---------: |
-|        1 |       2 |         4 |             3 |            8 |          +1 |               1.6 s |  25% |   +20% |  +44% |       +50% |
-|        2 |       2 |         5 |             3 |            9 |          +1 |               1.5 s |  60% |   +30% |  +63% |       +63% |
-|        3 |       3 |         5 |             4 |           10 |          +2 |               1.4 s |  70% |   +40% |  +81% |       +69% |
+|        1 |       2 |         4 |             3 |            8 |          +1 |               1.6 s |  20% |   +20% |  +44% |       +50% |
+|        2 |       2 |         5 |             3 |            9 |          +1 |               1.5 s |  40% |   +30% |  +63% |       +63% |
+|        3 |       3 |         5 |             4 |           10 |          +2 |               1.4 s |  60% |   +40% |  +81% |       +69% |
 |        4 |       3 |         6 |             4 |           11 |          +2 |               1.2 s |  80% |   +45% |  +88% |       +75% |
 |        5 |       3 |         6 |             5 |           11 |          +3 |               1.1 s |  90% |   +50% |  +94% |       +75% |
 |        6 |       3 |         6 |             5 |           12 |          +3 |               1.0 s | 100% |   +50% | +100% |       +75% |
@@ -136,15 +136,28 @@ Heavies:
 
 - Small-craft columns are hull HP. The group bonus adds to both ends of every
   `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
-  aim allows for: every aimed enemy weapon aims at where Ada will be when the
-  shot arrives if she keeps her current velocity, scaled by the lead, so 50%
-  aims halfway between where she is and where she will be. Hitscan beams and the
-  lance's tracking line aim at Ada directly. Notice, fire and encounter rates are
+  aim allows for (see [Enemy aim](#enemy-aim)). Notice, fire and encounter rates are
   relative to the base catalog.
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP. A `platform` hull has half the frigate hull.
 - Heavy share multiplies the roster's `frigate` and `capital` weights; the weights
   then renormalize. Placed platforms are not weighted.
+
+### Enemy aim
+
+Enemy aim is natural rather than perfect, and every aimed enemy weapon follows it:
+
+- **Lead skill:** each enemy keeps one lead skill for its life: its position's
+  Lead, varied by about 10% either way per ship.
+- **Prediction:** it aims at where Ada will be when the shot arrives, from her
+  velocity averaged over about the last 0.3 seconds, scaled by its lead skill;
+  50% aims halfway between where she is and where she will be. A sudden jink
+  makes its shots trail briefly before they catch up.
+- **Drift:** a slow sideways drift, up to about 4 degrees either side of the line
+  of fire, changing smoothly over a second or two, never random per shot.
+- **Limits:** a shot never aims behind Ada's current position, and the lead never
+  exceeds about 1 second of her movement.
+- **Direct aim:** hitscan beams and the lance's tracking line aim at Ada directly.
 
 ### Enemy weapons
 
